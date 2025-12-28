@@ -7,15 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  Type,
-  Image,
-  MessageSquare,
-  HelpCircle,
-  Mail,
-  Zap,
-  Star,
-} from 'lucide-react';
+import { Type, Image, MessageSquare, HelpCircle, Mail, Zap, Star } from 'lucide-react';
 import type { Section, PageName } from '@macon/contracts';
 
 interface AddSectionDialogProps {
@@ -60,7 +52,8 @@ const SECTION_OPTIONS: SectionOption[] = [
     defaultSection: {
       type: 'text',
       headline: 'Section Headline',
-      content: 'Add your content here. You can write multiple paragraphs by using blank lines to separate them.',
+      content:
+        'Add your content here. You can write multiple paragraphs by using blank lines to separate them.',
       imagePosition: 'left',
     },
   },
@@ -131,12 +124,7 @@ const SECTION_OPTIONS: SectionOption[] = [
  *
  * Displays all available section types with descriptions
  */
-export function AddSectionDialog({
-  open,
-  onOpenChange,
-  onAdd,
-  pageType,
-}: AddSectionDialogProps) {
+export function AddSectionDialog({ open, onOpenChange, onAdd, pageType }: AddSectionDialogProps) {
   const handleSelect = (option: SectionOption) => {
     onAdd(option.defaultSection);
   };

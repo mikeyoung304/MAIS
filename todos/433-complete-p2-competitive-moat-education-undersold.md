@@ -1,6 +1,7 @@
 # Competitive Moat: Education Component Undersold
 
 ## Metadata
+
 - **ID:** 433
 - **Status:** pending
 - **Priority:** P2
@@ -20,11 +21,13 @@ The HANDLED competitive moat is weak. The tech stack (website, booking, payments
 5. Community potential is unrealized — members could network but this isn't emphasized
 
 **Quote from Architecture Strategist:**
+
 > "Before scaling marketing, validate that the monthly Zoom calls are actually creating community value and that the newsletter is genuinely differentiated. These are the only defensible assets."
 
 ## Proposed Solutions
 
 ### Option A: Elevate Education in Hero Messaging
+
 - Add education to hero subheadline prominently
 - Create "What members learned this month" preview section
 - Add named curator with credibility (founder bio)
@@ -35,6 +38,7 @@ The HANDLED competitive moat is weak. The tech stack (website, booking, payments
 **Risk:** Low
 
 ### Option B: Create Dedicated "The Collective" Section
+
 - New section between Features and Pricing
 - Showcase community aspect: "Join 47 photographers, therapists, and coaches"
 - Include testimonial about the Zoom calls specifically
@@ -45,6 +49,7 @@ The HANDLED competitive moat is weak. The tech stack (website, booking, payments
 **Risk:** Low
 
 ### Option C: Reposition as "Membership + Community" Product
+
 - Restructure entire homepage around community-first
 - Tech becomes "what you get" rather than the headline
 - Emphasize peer learning and network
@@ -55,11 +60,13 @@ The HANDLED competitive moat is weak. The tech stack (website, booking, payments
 **Risk:** Medium — may confuse existing positioning
 
 ## Recommended Action
+
 _To be filled during triage_
 
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/app/page.tsx` (homepage)
 - `docs/design/BRAND_VOICE_GUIDE.md` (if messaging changes)
 - `docs/design/HANDLED_BRAND_POSITIONING.md` (strategy alignment)
@@ -73,8 +80,8 @@ _To be filled during triage_
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                   |
+| ---------- | ------- | --------------------------------------- |
 | 2025-12-27 | Created | From brand review multi-agent synthesis |
 
 ## Resources

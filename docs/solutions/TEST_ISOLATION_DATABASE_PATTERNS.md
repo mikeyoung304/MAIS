@@ -9,6 +9,7 @@ This guide provides database-level patterns for preventing test isolation issues
 ## Pattern 1: Tenant-Scoped Data Validation
 
 ### Problem
+
 Tests can leak data between tenants if queries don't filter properly by `tenantId`.
 
 ### Solution: Test Tenant Isolation
@@ -99,6 +100,7 @@ expect(count).toBe(expectedCount);
 ## Pattern 2: Foreign Key Constraint-Safe Cleanup
 
 ### Problem
+
 Tests fail with foreign key constraint violations when cleanup order is wrong.
 
 ### Solution: Dependency-Aware Cleanup
@@ -208,6 +210,7 @@ it('should completely cleanup without FK violations', async () => {
 ## Pattern 3: Concurrent Data Access Testing
 
 ### Problem
+
 Race conditions in parallel tests can cause data conflicts.
 
 ### Solution: Test Concurrent Bookings (Serialization)
@@ -288,6 +291,7 @@ describe.sequential('Concurrent Booking Prevention', () => {
 ```
 
 **Why use `.sequential()`:**
+
 - These tests modify shared resource (availability calendar)
 - Concurrent execution causes unpredictable results
 - Sequential ensures test order is deterministic
@@ -297,6 +301,7 @@ describe.sequential('Concurrent Booking Prevention', () => {
 ## Pattern 4: Cache Isolation in Multi-Tenant Systems
 
 ### Problem
+
 Cache can leak data between tenants if keys don't include `tenantId`.
 
 ### Solution: Tenant-Scoped Cache Keys
@@ -390,8 +395,8 @@ describe('Cache Isolation', () => {
     // Verify
     const stats = await ctx.cache.getStats();
     expect(stats.misses).toBeGreaterThanOrEqual(1); // Tenant A
-    expect(stats.hits).toBeGreaterThanOrEqual(1);   // Tenant B
-    expect(pkgsA[0].priceCents).toBe(250000);       // Updated value
+    expect(stats.hits).toBeGreaterThanOrEqual(1); // Tenant B
+    expect(pkgsA[0].priceCents).toBe(250000); // Updated value
   });
 });
 ```
@@ -405,9 +410,9 @@ function validateCacheKeyFormat(key: string, tenantId: string): void {
   if (!key.startsWith(expectedPrefix)) {
     throw new Error(
       `Cache key security violation!\n` +
-      `Expected: ${expectedPrefix}*\n` +
-      `Actual: ${key}\n` +
-      `This is a security vulnerability: data could leak between tenants!`
+        `Expected: ${expectedPrefix}*\n` +
+        `Actual: ${key}\n` +
+        `This is a security vulnerability: data could leak between tenants!`
     );
   }
 }
@@ -424,6 +429,7 @@ it('should validate cache key format', () => {
 ## Pattern 5: Unique Test Data Generation
 
 ### Problem
+
 Hardcoded test data causes conflicts when tests run in parallel.
 
 ### Solution: Factory-Based Unique ID Generation
@@ -480,6 +486,7 @@ Test A                          Test B (parallel)
 ## Pattern 6: Migration Testing
 
 ### Problem
+
 Tests may fail if database schema changes aren't properly applied.
 
 ### Solution: Migration Validation in Tests
@@ -550,6 +557,7 @@ describe('Schema Migrations', () => {
 ## Pattern 7: State Pollution Detection
 
 ### Problem
+
 Tests pollute database state for subsequent tests without visible errors.
 
 ### Solution: State Validation Tests
@@ -632,4 +640,3 @@ Multi-Tenant:
 - `server/test/helpers/integration-setup.ts` - MAIS helper implementation
 - `server/prisma/schema.prisma` - MAIS database schema with FK definitions
 - `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` - Multi-tenant architecture
-

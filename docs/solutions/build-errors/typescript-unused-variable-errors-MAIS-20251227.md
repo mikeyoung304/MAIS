@@ -5,10 +5,10 @@ component: typescript-build
 severity: high
 symptoms:
   - "Render build failed with TS6133: 'variable' is declared but never read"
-  - "~49 unused variable warnings across 20 files"
-  - "noUnusedLocals and noUnusedParameters compiler options enforced in production"
-  - "Build passes locally but fails on Render due to stricter tsconfig"
-  - "Second build failure after incorrectly prefixing variables that ARE used"
+  - '~49 unused variable warnings across 20 files'
+  - 'noUnusedLocals and noUnusedParameters compiler options enforced in production'
+  - 'Build passes locally but fails on Render due to stricter tsconfig'
+  - 'Second build failure after incorrectly prefixing variables that ARE used'
 root_cause: |
   TypeScript strict mode with noUnusedLocals/noUnusedParameters flags treats unused
   variables as errors in production builds. Many API route handlers and mock adapters
@@ -34,8 +34,8 @@ files_affected:
 verified: true
 date_solved: 2025-12-27
 related_commits:
-  - f6ad73c  # Initial fix - prefix unused variables (20 files, 49 instances)
-  - 27a9298  # Revert - 4 variables were actually used in function body
+  - f6ad73c # Initial fix - prefix unused variables (20 files, 49 instances)
+  - 27a9298 # Revert - 4 variables were actually used in function body
 tags:
   - typescript
   - build-errors
@@ -76,7 +76,7 @@ Prefix **truly unused** parameters with underscore (`_`) to suppress TS6133 warn
 ```typescript
 // BEFORE - TypeScript error: 'req' is declared but never read
 router.get('/profile', async (req: Request, res: Response, next: NextFunction) => {
-  const tenantId = getTenantId(res);  // Only res is used
+  const tenantId = getTenantId(res); // Only res is used
   // ...
 });
 
@@ -123,12 +123,12 @@ async findTimeslotBookings(
 
 Four variables were incorrectly prefixed because they **were** used in the function body:
 
-| Variable | Function | Why It Was Used |
-|----------|----------|-----------------|
-| `serviceId` | `findTimeslotBookings` | `logger.debug({ serviceId: serviceId \|\| 'all' })` |
-| `serviceId` | `findTimeslotBookingsInRange` | `logger.debug({ serviceId: serviceId \|\| 'all' })` |
-| `tenantId` | `findAppointments` | `logger.debug({ tenantId, filters })` |
-| `balanceAmountCents` | `completeBalancePayment` | `(booking as any).balancePaidAmount = balanceAmountCents` |
+| Variable             | Function                      | Why It Was Used                                           |
+| -------------------- | ----------------------------- | --------------------------------------------------------- |
+| `serviceId`          | `findTimeslotBookings`        | `logger.debug({ serviceId: serviceId \|\| 'all' })`       |
+| `serviceId`          | `findTimeslotBookingsInRange` | `logger.debug({ serviceId: serviceId \|\| 'all' })`       |
+| `tenantId`           | `findAppointments`            | `logger.debug({ tenantId, filters })`                     |
+| `balanceAmountCents` | `completeBalancePayment`      | `(booking as any).balancePaidAmount = balanceAmountCents` |
 
 This caused a **second build failure** that required a follow-up commit to fix.
 
@@ -177,7 +177,9 @@ async findById(_tenantId: string, id: string): Promise<Booking | null> {
 export function sanitizeInput(options: SanitizeOptions = {}) {
   return (req: Request, _res: Response, next: NextFunction) => {
     // Only req and next are used, res is not
-    if (req.body) { /* ... */ }
+    if (req.body) {
+      /* ... */
+    }
     next();
   };
 }

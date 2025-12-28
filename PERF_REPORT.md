@@ -24,18 +24,18 @@ This performance audit analyzed the MAIS multi-tenant platform across database q
 
 ## TOP 10 Performance Hotspots
 
-| Rank | File:Line | Issue | Impact | Priority |
-|------|-----------|-------|--------|----------|
-| 1 | `server/src/services/catalog.service.ts:106-111` | N+1 query in getPackageBySlug | High | P0 |
-| 2 | `server/src/services/availability.service.ts:43-62` | Sequential async calls in checkAvailability | High | P1 |
-| 3 | `server/src/services/commission.service.ts:161-209` | Separate tenant query + add-ons query | Medium | P1 |
-| 4 | `apps/web/src/lib/tenant.ts:427-439` | Sequential fetch in getTenantStorefrontData | Medium | P1 |
-| 5 | `server/src/adapters/prisma/booking.repository.ts:365-370` | Unbounded findAll query | High | P0 |
-| 6 | `server/src/adapters/prisma/catalog.repository.ts:142-175` | Double query for add-on ownership verification | Low | P2 |
-| 7 | `apps/web/src/components/tenant/sections/*` | Missing React.memo on section components | Medium | P1 |
-| 8 | `client/src/features/*` | Limited useMemo/useCallback usage | Low | P2 |
-| 9 | `server/prisma/schema.prisma` | Missing partial index for balance due bookings | Medium | P2 |
-| 10 | `server/src/services/segment.service.ts:94-160` | Cache bypass on fallback paths | Low | P2 |
+| Rank | File:Line                                                  | Issue                                          | Impact | Priority |
+| ---- | ---------------------------------------------------------- | ---------------------------------------------- | ------ | -------- |
+| 1    | `server/src/services/catalog.service.ts:106-111`           | N+1 query in getPackageBySlug                  | High   | P0       |
+| 2    | `server/src/services/availability.service.ts:43-62`        | Sequential async calls in checkAvailability    | High   | P1       |
+| 3    | `server/src/services/commission.service.ts:161-209`        | Separate tenant query + add-ons query          | Medium | P1       |
+| 4    | `apps/web/src/lib/tenant.ts:427-439`                       | Sequential fetch in getTenantStorefrontData    | Medium | P1       |
+| 5    | `server/src/adapters/prisma/booking.repository.ts:365-370` | Unbounded findAll query                        | High   | P0       |
+| 6    | `server/src/adapters/prisma/catalog.repository.ts:142-175` | Double query for add-on ownership verification | Low    | P2       |
+| 7    | `apps/web/src/components/tenant/sections/*`                | Missing React.memo on section components       | Medium | P1       |
+| 8    | `client/src/features/*`                                    | Limited useMemo/useCallback usage              | Low    | P2       |
+| 9    | `server/prisma/schema.prisma`                              | Missing partial index for balance due bookings | Medium | P2       |
+| 10   | `server/src/services/segment.service.ts:94-160`            | Cache bypass on fallback paths                 | Low    | P2       |
 
 ---
 
@@ -158,6 +158,7 @@ WHERE status = 'DEPOSIT_PAID' AND balancePaidAt IS NULL;
 **File:** `server/src/lib/core/events.ts:234-242`
 
 The InProcessEventEmitter correctly implements:
+
 - Unsubscribe functions returned from subscribe()
 - clearAll() method for shutdown cleanup
 - Exported via di.ts for graceful shutdown
@@ -220,7 +221,7 @@ const [packages, segments] = await Promise.all([
 ```typescript
 const tenant = await this.prisma.tenant.findUnique({
   where: { id: tenantId },
-  select: { commissionPercent: true, slug: true },  // GOOD - uses select
+  select: { commissionPercent: true, slug: true }, // GOOD - uses select
 });
 ```
 
@@ -252,6 +253,7 @@ export const TextSection = React.memo(function TextSection({ ... }) {
 ```
 
 **Affected Files:**
+
 - `apps/web/src/components/tenant/sections/TextSection.tsx`
 - `apps/web/src/components/tenant/sections/GallerySection.tsx`
 - `apps/web/src/components/tenant/sections/HeroSection.tsx`
@@ -264,6 +266,7 @@ export const TextSection = React.memo(function TextSection({ ... }) {
 **File:** `apps/web/src/components/booking/DateBookingWizard.tsx`
 
 This component correctly implements:
+
 - React.memo on step sub-components (lines 72, 125, 170, 247)
 - useMemo for derived state (unavailableDates, steps, formValidation)
 - useCallback for handlers (handleDateSelect, updateCustomerDetails)
@@ -279,6 +282,7 @@ This component correctly implements:
 The legacy Vite client uses TanStack Query (good!) but has limited React.memo usage.
 
 **Files needing review:**
+
 - `client/src/features/admin/dashboard/components/*`
 - `client/src/features/storefront/*`
 
@@ -291,6 +295,7 @@ The legacy Vite client uses TanStack Query (good!) but has limited React.memo us
 **File:** `server/src/lib/cache-helpers.ts`
 
 The caching infrastructure is well-designed:
+
 - `cachedOperation()` wrapper for get-or-fetch pattern
 - `buildCacheKey()` enforces tenant isolation
 - TTL of 15 minutes (900s) for catalog data
@@ -314,12 +319,12 @@ await this.cache?.set(cacheKey, segment, 900);
 
 ### P2 - Inconsistent Cache TTL
 
-| Location | TTL | Data Type |
-|----------|-----|-----------|
-| CatalogService | 900s (15m) | Packages, Add-ons |
-| SegmentService | 900s (15m) | Segments |
-| SegmentService stats | 300s (5m) | Segment stats |
-| GCalAdapter | 300s (5m) | Calendar availability |
+| Location             | TTL        | Data Type             |
+| -------------------- | ---------- | --------------------- |
+| CatalogService       | 900s (15m) | Packages, Add-ons     |
+| SegmentService       | 900s (15m) | Segments              |
+| SegmentService stats | 300s (5m)  | Segment stats         |
+| GCalAdapter          | 300s (5m)  | Calendar availability |
 
 **Recommendation:** Document TTL strategy. Current values seem reasonable for the data volatility.
 
@@ -330,6 +335,7 @@ await this.cache?.set(cacheKey, segment, 900);
 ### Good Implementations Found
 
 **File:** `server/src/services/scheduling-availability.service.ts:586`
+
 ```typescript
 const [allBookings, allAvailabilityRules] = await Promise.all([
   this.bookingRepo.getTimeslotBookingsInRange(tenantId, startDate, endDate, serviceId),
@@ -338,6 +344,7 @@ const [allBookings, allAvailabilityRules] = await Promise.all([
 ```
 
 **File:** `server/src/routes/health.routes.ts:150`
+
 ```typescript
 const [stripeCheck, postmarkCheck, calendarCheck] = await Promise.all([
   healthService.checkStripe(),
@@ -371,11 +378,13 @@ const [addOns, tenant] = await Promise.all([
 ## Priority Summary
 
 ### P0 - Critical (Fix This Sprint)
+
 1. **CatalogService N+1 query** - Use existing `getPackageBySlugWithAddOns()` method
 2. **BookingRepository unbounded findAll** - Add pagination/limit
 3. (Already addressed) Prisma schema indexing - Comprehensive, no issues
 
 ### P1 - High (Next Sprint)
+
 1. **AvailabilityService sequential checks** - Use Promise.all
 2. **Commission service sequential queries** - Parallelize
 3. **Next.js section components** - Add React.memo
@@ -383,6 +392,7 @@ const [addOns, tenant] = await Promise.all([
 5. **getTenantStorefrontData** - Consider pre-fetching
 
 ### P2 - Optimization Backlog
+
 1. GCalAdapter LRU cache size limit
 2. Missing partial index for balance due bookings
 3. Legacy client memoization audit
@@ -396,6 +406,7 @@ const [addOns, tenant] = await Promise.all([
 ## Appendix: Files Analyzed
 
 ### Server
+
 - `server/prisma/schema.prisma` - 707 lines, comprehensive indexes
 - `server/src/services/catalog.service.ts` - N+1 pattern identified
 - `server/src/services/availability.service.ts` - Sequential async
@@ -407,11 +418,13 @@ const [addOns, tenant] = await Promise.all([
 - `server/src/lib/core/events.ts` - Proper cleanup implementation
 
 ### Frontend (Next.js)
+
 - `apps/web/src/lib/tenant.ts` - Good cache() usage
 - `apps/web/src/components/booking/DateBookingWizard.tsx` - Well-memoized
 - `apps/web/src/components/tenant/sections/*` - Missing React.memo
 
 ### Frontend (Legacy Vite)
+
 - `client/src/features/*` - Limited memoization, uses TanStack Query
 
 ---

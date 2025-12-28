@@ -24,10 +24,7 @@ export async function GET() {
     const token = await getBackendToken();
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const response = await fetch(`${API_BASE_URL}/v1/tenant-admin/landing-page`, {
@@ -49,10 +46,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     logger.error('Landing page API error', { error, method: 'GET' });
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -66,10 +60,7 @@ export async function PUT(request: NextRequest) {
     const token = await getBackendToken();
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -96,9 +87,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     logger.error('Landing page API error', { error, method: 'PUT' });
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

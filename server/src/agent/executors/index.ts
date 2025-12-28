@@ -54,7 +54,9 @@ async function verifyOwnership<T>(
   });
   if (!entity) {
     const modelName = model.charAt(0).toUpperCase() + model.slice(1);
-    throw new Error(`${modelName} "${id}" not found or you do not have permission to access it. Verify the ${model} ID belongs to your business.`);
+    throw new Error(
+      `${modelName} "${id}" not found or you do not have permission to access it. Verify the ${model} ID belongs to your business.`
+    );
   }
   return entity as T;
 }
@@ -66,16 +68,17 @@ async function verifyOwnership<T>(
 export function registerAllExecutors(prisma: PrismaClient): void {
   // upsert_package - Create or update package
   registerProposalExecutor('upsert_package', async (tenantId, payload) => {
-    const { packageId, slug, title, description, priceCents, photoUrl, bookingType, active } = payload as {
-      packageId?: string;
-      slug?: string;
-      title: string;
-      description?: string;
-      priceCents: number;
-      photoUrl?: string;
-      bookingType?: string;
-      active?: boolean;
-    };
+    const { packageId, slug, title, description, priceCents, photoUrl, bookingType, active } =
+      payload as {
+        packageId?: string;
+        slug?: string;
+        title: string;
+        description?: string;
+        priceCents: number;
+        photoUrl?: string;
+        bookingType?: string;
+        active?: boolean;
+      };
 
     if (packageId) {
       // CRITICAL: Verify tenant ownership before update (prevent cross-tenant access)
@@ -84,7 +87,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!existingPackage) {
-        throw new Error(`Package "${packageId}" not found or you do not have permission to modify it. Verify the package ID and try again.`);
+        throw new Error(
+          `Package "${packageId}" not found or you do not have permission to modify it. Verify the package ID and try again.`
+        );
       }
 
       // Update existing package (now safe after tenant verification)
@@ -110,7 +115,12 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     }
 
     // Create new package - generate slug if not provided
-    const generatedSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const generatedSlug =
+      slug ||
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
     const created = await prisma.package.create({
       data: {
@@ -144,7 +154,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!existingPackage) {
-      throw new Error(`Package "${packageId}" not found or you do not have permission to delete it. Verify the package ID belongs to your business.`);
+      throw new Error(
+        `Package "${packageId}" not found or you do not have permission to delete it. Verify the package ID belongs to your business.`
+      );
     }
 
     // Soft delete by deactivating (safer than hard delete, now safe after tenant verification)
@@ -249,7 +261,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
         select: { branding: true },
       });
       branding = {
-        ...(tenant?.branding as Record<string, unknown> || {}),
+        ...((tenant?.branding as Record<string, unknown>) || {}),
         logo: logoUrl,
       };
     }
@@ -307,7 +319,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     logger.info({ tenantId }, 'Landing page updated via agent');
     return {
       action: 'updated',
-      updatedSections: Object.keys(payload).filter(k => payload[k as keyof typeof payload] !== undefined),
+      updatedSections: Object.keys(payload).filter(
+        (k) => payload[k as keyof typeof payload] !== undefined
+      ),
     };
   });
 
@@ -330,7 +344,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!existingAddOn) {
-        throw new Error(`Add-on "${addOnId}" not found or you do not have permission to modify it. Verify the add-on ID and try again.`);
+        throw new Error(
+          `Add-on "${addOnId}" not found or you do not have permission to modify it. Verify the add-on ID and try again.`
+        );
       }
 
       // Update existing add-on (now safe after tenant verification)
@@ -356,7 +372,12 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     }
 
     // Create new add-on - generate slug if not provided
-    const generatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const generatedSlug =
+      slug ||
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
     const created = await prisma.addOn.create({
       data: {
@@ -390,7 +411,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!existingAddOn) {
-      throw new Error(`Add-on "${addOnId}" not found or you do not have permission to delete it. Verify the add-on ID belongs to your business.`);
+      throw new Error(
+        `Add-on "${addOnId}" not found or you do not have permission to delete it. Verify the add-on ID belongs to your business.`
+      );
     }
 
     // Soft delete by deactivating (safer than hard delete, now safe after tenant verification)
@@ -421,11 +444,15 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!booking) {
-      throw new Error(`Booking "${bookingId}" not found or you do not have permission to cancel it. Verify the booking ID belongs to your business.`);
+      throw new Error(
+        `Booking "${bookingId}" not found or you do not have permission to cancel it. Verify the booking ID belongs to your business.`
+      );
     }
 
     if (booking.status === 'CANCELED' || booking.status === 'REFUNDED') {
-      throw new Error(`Booking "${bookingId}" is already ${booking.status.toLowerCase()}. No further cancellation is needed.`);
+      throw new Error(
+        `Booking "${bookingId}" is already ${booking.status.toLowerCase()}. No further cancellation is needed.`
+      );
     }
 
     // Update booking status
@@ -458,15 +485,16 @@ export function registerAllExecutors(prisma: PrismaClient): void {
   // create_booking - Manual booking creation
   // Uses advisory lock + transaction to prevent double-booking race conditions (ADR-013)
   registerProposalExecutor('create_booking', async (tenantId, payload) => {
-    const { packageId, date, customerName, customerEmail, customerPhone, notes, totalPrice } = payload as {
-      packageId: string;
-      date: string;
-      customerName: string;
-      customerEmail: string;
-      customerPhone?: string;
-      notes?: string;
-      totalPrice: number;
-    };
+    const { packageId, date, customerName, customerEmail, customerPhone, notes, totalPrice } =
+      payload as {
+        packageId: string;
+        date: string;
+        customerName: string;
+        customerEmail: string;
+        customerPhone?: string;
+        notes?: string;
+        totalPrice: number;
+      };
 
     const bookingDate = new Date(date);
 
@@ -484,7 +512,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!pkg) {
-        throw new Error(`Package "${packageId}" not found, inactive, or you do not have permission to book it. Use get_packages to find available packages.`);
+        throw new Error(
+          `Package "${packageId}" not found, inactive, or you do not have permission to book it. Use get_packages to find available packages.`
+        );
       }
 
       // Check availability AFTER acquiring lock (prevents race condition)
@@ -497,7 +527,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (existingBooking) {
-        throw new Error(`Date ${date} is already booked. Use check_availability to find an open date, then try again.`);
+        throw new Error(
+          `Date ${date} is already booked. Use check_availability to find an open date, then try again.`
+        );
       }
 
       // Find or create customer within transaction
@@ -563,12 +595,16 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!booking) {
-      throw new Error(`Booking "${bookingId}" not found or you do not have permission to refund it. Verify the booking ID belongs to your business.`);
+      throw new Error(
+        `Booking "${bookingId}" not found or you do not have permission to refund it. Verify the booking ID belongs to your business.`
+      );
     }
 
     // Verify refund is still valid
     if (booking.refundStatus === 'COMPLETED') {
-      throw new Error(`Booking "${bookingId}" has already been fully refunded. No additional refund is possible.`);
+      throw new Error(
+        `Booking "${bookingId}" has already been fully refunded. No additional refund is possible.`
+      );
     }
 
     const existingRefundAmount = booking.refundAmount || 0;
@@ -604,16 +640,17 @@ export function registerAllExecutors(prisma: PrismaClient): void {
 
   // upsert_segment - Create or update segment
   registerProposalExecutor('upsert_segment', async (tenantId, payload) => {
-    const { segmentId, slug, name, heroTitle, heroSubtitle, description, sortOrder, active } = payload as {
-      segmentId?: string;
-      slug: string;
-      name: string;
-      heroTitle: string;
-      heroSubtitle?: string;
-      description?: string;
-      sortOrder?: number;
-      active?: boolean;
-    };
+    const { segmentId, slug, name, heroTitle, heroSubtitle, description, sortOrder, active } =
+      payload as {
+        segmentId?: string;
+        slug: string;
+        name: string;
+        heroTitle: string;
+        heroSubtitle?: string;
+        description?: string;
+        sortOrder?: number;
+        active?: boolean;
+      };
 
     if (segmentId) {
       // CRITICAL: Verify tenant ownership before update
@@ -622,7 +659,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       });
 
       if (!existingSegment) {
-        throw new Error(`Segment "${segmentId}" not found or you do not have permission to modify it. Verify the segment ID and try again.`);
+        throw new Error(
+          `Segment "${segmentId}" not found or you do not have permission to modify it. Verify the segment ID and try again.`
+        );
       }
 
       // Update existing segment
@@ -681,7 +720,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!existingSegment) {
-      throw new Error(`Segment "${segmentId}" not found or you do not have permission to delete it. Verify the segment ID belongs to your business.`);
+      throw new Error(
+        `Segment "${segmentId}" not found or you do not have permission to delete it. Verify the segment ID belongs to your business.`
+      );
     }
 
     // Soft delete by deactivating
@@ -713,7 +754,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!booking) {
-      throw new Error(`Booking "${bookingId}" not found or you do not have permission to update it. Verify the booking ID belongs to your business.`);
+      throw new Error(
+        `Booking "${bookingId}" not found or you do not have permission to update it. Verify the booking ID belongs to your business.`
+      );
     }
 
     // If newDate is set, wrap in transaction with advisory lock and availability check
@@ -735,7 +778,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
         });
 
         if (conflictingBooking) {
-          throw new Error(`Date ${newDate} is already booked. Use check_availability to find an open date, then try again.`);
+          throw new Error(
+            `Date ${newDate} is already booked. Use check_availability to find an open date, then try again.`
+          );
         }
 
         // Build updates
@@ -760,7 +805,10 @@ export function registerAllExecutors(prisma: PrismaClient): void {
           data: updates,
         });
 
-        logger.info({ tenantId, bookingId, changes: Object.keys(updates) }, 'Booking updated via agent');
+        logger.info(
+          { tenantId, bookingId, changes: Object.keys(updates) },
+          'Booking updated via agent'
+        );
 
         return {
           action: 'updated',
@@ -788,7 +836,10 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       data: updates,
     });
 
-    logger.info({ tenantId, bookingId, changes: Object.keys(updates) }, 'Booking updated via agent');
+    logger.info(
+      { tenantId, bookingId, changes: Object.keys(updates) },
+      'Booking updated via agent'
+    );
 
     return {
       action: 'updated',
@@ -840,12 +891,16 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     });
 
     if (!tenant) {
-      throw new Error('Business profile not found. This is an unexpected error - please contact support.');
+      throw new Error(
+        'Business profile not found. This is an unexpected error - please contact support.'
+      );
     }
 
     // Double-check status (race condition protection)
     if (tenant.subscriptionStatus !== 'NONE') {
-      throw new Error(`Cannot start trial: your current subscription status is "${tenant.subscriptionStatus}". Trial is only available for new accounts with status "NONE".`);
+      throw new Error(
+        `Cannot start trial: your current subscription status is "${tenant.subscriptionStatus}". Trial is only available for new accounts with status "NONE".`
+      );
     }
 
     await prisma.tenant.update({

@@ -1797,7 +1797,10 @@ export function createTenantAdminRoutes(
       if (status === 'TRIALING' && tenant.trialEndsAt) {
         const now = new Date();
         const trialEnd = new Date(tenant.trialEndsAt);
-        daysRemaining = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        daysRemaining = Math.max(
+          0,
+          Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        );
 
         // Auto-expire if trial has ended
         if (daysRemaining === 0) {
@@ -1845,7 +1848,10 @@ export function createTenantAdminRoutes(
       if (tenant.trialEndsAt) {
         const now = new Date();
         const trialEnd = new Date(tenant.trialEndsAt);
-        const daysRemaining = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        const daysRemaining = Math.max(
+          0,
+          Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        );
 
         res.json({
           message: 'Trial already started',

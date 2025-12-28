@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "365"
+issue_id: '365'
 tags: [code-review, performance, nextjs]
 dependencies: []
 ---
@@ -33,6 +33,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
 ```
 
 Same issue in:
+
 - `apps/web/src/app/t/_domain/page.tsx`
 
 **Impact:** P2 - 100ms+ added to every tenant page SSR
@@ -40,6 +41,7 @@ Same issue in:
 ## Proposed Solutions
 
 ### Option 1: Use React Cache
+
 - **Description:** Wrap fetch function with React cache()
 - **Pros:** Automatic deduplication, no code changes to callers
 - **Cons:** Only works within same request
@@ -47,6 +49,7 @@ Same issue in:
 - **Risk:** Low
 
 **Fix:**
+
 ```typescript
 import { cache } from 'react';
 
@@ -56,6 +59,7 @@ export const getTenantStorefrontData = cache(async (slug: string) => {
 ```
 
 ### Option 2: Fetch in Layout, Pass via Context
+
 - **Description:** Fetch once in layout, pass to page via context
 - **Pros:** Explicit data flow
 - **Cons:** More complex, harder to type
@@ -75,8 +79,8 @@ export const getTenantStorefrontData = cache(async (slug: string) => {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings               |
+| ---------- | -------------------------- | ----------------------- |
 | 2025-12-25 | Created during code review | Performance issue found |
 
 ## Resources

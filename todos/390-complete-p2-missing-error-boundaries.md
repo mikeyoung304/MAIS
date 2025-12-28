@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "390"
+issue_id: '390'
 tags:
   - next.js
   - error-handling
@@ -20,6 +20,7 @@ dependencies: []
 **Pages missing error.tsx:**
 
 ### Protected Tenant Routes (6 pages)
+
 1. `apps/web/src/app/(protected)/tenant/dashboard/`
 2. `apps/web/src/app/(protected)/tenant/packages/`
 3. `apps/web/src/app/(protected)/tenant/payments/`
@@ -28,11 +29,13 @@ dependencies: []
 6. `apps/web/src/app/(protected)/tenant/scheduling/`
 
 ### Auth Routes (3 pages)
+
 7. `apps/web/src/app/login/`
 8. `apps/web/src/app/signup/`
 9. `apps/web/src/app/forgot-password/`
 
 ### Booking Success Routes (2 pages)
+
 10. `apps/web/src/app/t/_domain/book/success/`
 11. `apps/web/src/app/t/[slug]/book/success/`
 
@@ -41,6 +44,7 @@ dependencies: []
 ## Proposed Solutions
 
 ### Option 1: Add error.tsx to each directory (Recommended)
+
 - Copy template pattern to each missing directory
 - Customize error messages per context
 
@@ -50,6 +54,7 @@ dependencies: []
 **Risk:** Low
 
 ### Option 2: Add single error.tsx at route group level
+
 - Add to `(protected)/` and `t/` route groups only
 - Generic error handling for all child routes
 
@@ -65,6 +70,7 @@ Option 1 - Add individual error.tsx files for better UX
 ## Technical Details
 
 **Template pattern:**
+
 ```typescript
 'use client';
 
@@ -103,8 +109,8 @@ export default function Error({
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                        | Learnings                                 |
+| ---------- | ----------------------------- | ----------------------------------------- |
 | 2025-12-25 | Created from multi-agent scan | Found during error handling gaps analysis |
 
 ## Resources

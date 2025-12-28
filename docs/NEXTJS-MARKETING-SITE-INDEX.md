@@ -12,12 +12,12 @@ This research package provides complete guidance for building multi-page marketi
 
 ### Files in This Package
 
-| Document | Purpose | Audience | Read Time |
-|----------|---------|----------|-----------|
-| **NEXTJS-14-MARKETING-SITE-PATTERNS.md** | Comprehensive reference covering ISR, multi-page structures, components, and config-driven sites | Architects, lead devs | 30 min |
-| **CORPORATE-WEBSITE-IMPLEMENTATION.md** | Step-by-step guide to build marketing.mais.co using tenant pattern | Developers implementing features | 20 min |
-| **ISR-REVALIDATION-DECISIONS.md** | Decision tree and detailed guidance for choosing revalidation strategy | Developers building pages | 15 min |
-| **NEXTJS-14-QUICK-REFERENCE.md** | Cheat sheet with code examples for common patterns | All developers | 10 min (lookup) |
+| Document                                 | Purpose                                                                                          | Audience                         | Read Time       |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------- | --------------- |
+| **NEXTJS-14-MARKETING-SITE-PATTERNS.md** | Comprehensive reference covering ISR, multi-page structures, components, and config-driven sites | Architects, lead devs            | 30 min          |
+| **CORPORATE-WEBSITE-IMPLEMENTATION.md**  | Step-by-step guide to build marketing.mais.co using tenant pattern                               | Developers implementing features | 20 min          |
+| **ISR-REVALIDATION-DECISIONS.md**        | Decision tree and detailed guidance for choosing revalidation strategy                           | Developers building pages        | 15 min          |
+| **NEXTJS-14-QUICK-REFERENCE.md**         | Cheat sheet with code examples for common patterns                                               | All developers                   | 10 min (lookup) |
 
 ---
 
@@ -28,6 +28,7 @@ This research package provides complete guidance for building multi-page marketi
 **Goal:** Understand the overall approach
 
 **Read in order:**
+
 1. Section: "ISR Patterns & Best Practices" in **NEXTJS-14-MARKETING-SITE-PATTERNS.md**
 2. Section: "Multi-Page Site Structure" in **NEXTJS-14-MARKETING-SITE-PATTERNS.md**
 3. Section: "Reusable Component Architecture" in **NEXTJS-14-MARKETING-SITE-PATTERNS.md**
@@ -43,6 +44,7 @@ This research package provides complete guidance for building multi-page marketi
 **Goal:** Implement marketing.mais.co
 
 **Follow this path:**
+
 1. Read **CORPORATE-WEBSITE-IMPLEMENTATION.md** - complete step-by-step guide
 2. Use **NEXTJS-14-QUICK-REFERENCE.md** as lookup during implementation
 3. Reference **ISR-REVALIDATION-DECISIONS.md** when deciding page caching strategy
@@ -50,6 +52,7 @@ This research package provides complete guidance for building multi-page marketi
 **Time:** 1-2 hours for basic implementation
 
 **Setup:**
+
 - 5 min: Create route structure (Step 1)
 - 10 min: Add config file (Step 2)
 - 15 min: Implement pages (Steps 3-5)
@@ -62,6 +65,7 @@ This research package provides complete guidance for building multi-page marketi
 **Goal:** Add a page consistently with current architecture
 
 **Quick path:**
+
 1. Look up page type in **ISR-REVALIDATION-DECISIONS.md** decision matrix
 2. Find code example in **NEXTJS-14-QUICK-REFERENCE.md**
 3. Copy pattern, adjust for your content
@@ -76,6 +80,7 @@ This research package provides complete guidance for building multi-page marketi
 **Goal:** Debug cache behavior
 
 **Read:**
+
 1. **ISR-REVALIDATION-DECISIONS.md** - Section "ISR Gotchas & Fixes"
 2. **ISR-REVALIDATION-DECISIONS.md** - Section "Troubleshooting"
 3. Reference "Caching Strategies" in **NEXTJS-14-MARKETING-SITE-PATTERNS.md** if needed
@@ -95,6 +100,7 @@ This research package provides complete guidance for building multi-page marketi
 **How:** Export `export const revalidate = 3600` (TTL in seconds)
 
 **Patterns:**
+
 - Time-based: Set TTL, regenerate on next request after expiry
 - On-demand: Webhook triggers `revalidatePath()` immediately
 - Fallback: Combine both (on-demand with time-based fallback)
@@ -106,17 +112,20 @@ This research package provides complete guidance for building multi-page marketi
 ### Multi-Page Structure
 
 **Root layout (required):**
+
 ```
 app/layout.tsx → <html><body>{children}</body></html>
 ```
 
 **Route groups:** Organize without affecting URLs
+
 ```
 app/(marketing)/page.tsx → /
 app/(admin)/dashboard/page.tsx → /dashboard
 ```
 
 **Nested layouts:** Shared header/footer per section
+
 ```
 app/(marketing)/layout.tsx → Adds nav + footer
   ├── page.tsx → /
@@ -124,6 +133,7 @@ app/(marketing)/layout.tsx → Adds nav + footer
 ```
 
 **Special files:**
+
 - `page.tsx` - Route content
 - `layout.tsx` - Shared wrapper
 - `error.tsx` - Error boundary
@@ -139,12 +149,14 @@ app/(marketing)/layout.tsx → Adds nav + footer
 **Pattern:** Compose pages from reusable sections (hero, text, gallery, etc.)
 
 **Benefits:**
+
 - Easy to add/edit sections without code changes
 - Consistent styling
 - Works with config-driven CMS
 - Same pattern as tenant storefronts
 
 **7 core section types:**
+
 - `hero` - Hero banner with CTA
 - `text` - Rich text + image
 - `gallery` - Image grid
@@ -154,11 +166,9 @@ app/(marketing)/layout.tsx → Adds nav + footer
 - `cta` - Call-to-action
 
 **Implementation:**
+
 ```tsx
-<SectionRenderer
-  sections={pages.home.sections}
-  tenant={brandingData}
-/>
+<SectionRenderer sections={pages.home.sections} tenant={brandingData} />
 ```
 
 **See:** NEXTJS-14-MARKETING-SITE-PATTERNS.md section "Reusable Component Architecture"
@@ -170,12 +180,14 @@ app/(marketing)/layout.tsx → Adds nav + footer
 **Pattern:** Define pages as configuration instead of hardcoding
 
 **Benefits:**
+
 - Easy CMS integration
 - No code deploy needed for content changes
 - A/B testing without code
 - Matches existing tenant storefront pattern
 
 **Implementation:**
+
 ```typescript
 export const CORPORATE_PAGES_CONFIG: PagesConfig = {
   home: {
@@ -265,16 +277,19 @@ How many routes do you have?
 ### Example 1: Blog Site
 
 **Structure:**
+
 - Home page (ISR 60s)
 - Blog list (ISR 3600s)
 - Blog post (Static params + 86400s)
 
 **Why:**
+
 - Home updates frequently (hero/nav changes)
 - Blog list updates daily (new posts)
 - Blog posts rarely change (only corrections)
 
 **Code:**
+
 ```typescript
 // Home: Frequent updates
 export const revalidate = 60;
@@ -294,16 +309,19 @@ export const revalidate = 86400;
 ### Example 2: Multi-Tenant Storefront (MAIS)
 
 **Structure:**
+
 - Tenant home (ISR 60s + on-demand)
 - Tenant about (ISR 3600s + on-demand)
 - Tenant services (ISR 3600s + on-demand)
 
 **Why:**
+
 - Users edit frequently
 - Need quick cache invalidation
 - Fallback ISR handles webhook failures
 
 **Implementation:**
+
 ```typescript
 export const revalidate = 60; // Fallback
 
@@ -324,12 +342,14 @@ export default async function TenantPage({ params }) {
 ### Example 3: Corporate Site (MAIS)
 
 **Structure:**
+
 - Home (ISR 60s)
 - About (ISR 3600s)
 - Blog (static params + 86400s)
 - Contact (no cache, form submits elsewhere)
 
 **Why:**
+
 - Home: A/B testing, metrics
 - About: Occasional edits
 - Blog: Content rarely changes
@@ -343,32 +363,33 @@ export default async function TenantPage({ params }) {
 
 ### Lighthouse Scores
 
-| Page | Target | Notes |
-|------|--------|-------|
-| Home | 95+ | Hero image optimized, minimal JS |
-| Blog list | 90+ | Many images, pagination OK |
-| Blog post | 90+ | Text-heavy, one image |
-| About | 95+ | Mostly text and images |
+| Page      | Target | Notes                            |
+| --------- | ------ | -------------------------------- |
+| Home      | 95+    | Hero image optimized, minimal JS |
+| Blog list | 90+    | Many images, pagination OK       |
+| Blog post | 90+    | Text-heavy, one image            |
+| About     | 95+    | Mostly text and images           |
 
 ### Time to First Byte (TTFB)
 
-| Scenario | Target | Achieved |
-|----------|--------|----------|
-| Cached (ISR hit) | <100ms | ISR + CDN |
-| Warm regeneration | <500ms | ISR after TTL |
-| Cold (first request) | <1s | Build time acceptable |
+| Scenario             | Target | Achieved              |
+| -------------------- | ------ | --------------------- |
+| Cached (ISR hit)     | <100ms | ISR + CDN             |
+| Warm regeneration    | <500ms | ISR after TTL         |
+| Cold (first request) | <1s    | Build time acceptable |
 
 ### Cache Hit Rate
 
 **Target:** > 95% for marketing sites (high repeat traffic)
 
 **Measure with Vercel Analytics:**
+
 ```typescript
 import { recordEvent } from '@vercel/analytics';
 
 recordEvent({
   name: 'cache_hit',
-  parameters: { path: pathname }
+  parameters: { path: pathname },
 });
 ```
 
@@ -377,18 +398,21 @@ recordEvent({
 ## Migration Path: From Tenant to Corporate
 
 **MAIS's tenant system already uses this architecture:**
+
 - Section-based rendering ✅
 - ISR (60s) ✅
 - Config-driven pages ✅
 - Multi-page sites ✅
 
 **To build corporate site, reuse:**
+
 1. `SectionRenderer` component (in tenant/components)
 2. Section type schemas (in contracts)
 3. ISR pattern (60s baseline)
 4. Config structure (PagesConfig)
 
 **New additions:**
+
 1. Corporate-specific config file
 2. Blog system with dynamic routes
 3. Page-specific customizations
@@ -400,16 +424,19 @@ recordEvent({
 ## Recommended Reading Order
 
 **If you have 30 minutes:**
+
 1. NEXTJS-14-MARKETING-SITE-PATTERNS.md - Overview (15 min)
 2. NEXTJS-14-QUICK-REFERENCE.md - Cheat sheet (5 min)
 3. ISR-REVALIDATION-DECISIONS.md - Decision matrix (10 min)
 
 **If you have 2 hours:**
+
 1. NEXTJS-14-MARKETING-SITE-PATTERNS.md - Full read (45 min)
 2. CORPORATE-WEBSITE-IMPLEMENTATION.md - Implementation guide (45 min)
 3. ISR-REVALIDATION-DECISIONS.md - Deep dive (30 min)
 
 **If implementing immediately:**
+
 1. CORPORATE-WEBSITE-IMPLEMENTATION.md - Step by step (follow along, code)
 2. NEXTJS-14-QUICK-REFERENCE.md - Lookup during implementation
 3. ISR-REVALIDATION-DECISIONS.md - When making cache decisions
@@ -495,9 +522,9 @@ A: Yes! That's the entire design. One set of components, different data sources.
 
 ## Document Versions
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-12-26 | Initial research package |
+| Version | Date       | Changes                  |
+| ------- | ---------- | ------------------------ |
+| 1.0     | 2025-12-26 | Initial research package |
 
 ---
 
@@ -505,4 +532,3 @@ A: Yes! That's the entire design. One set of components, different data sources.
 **For:** MAIS Platform (Macon AI Solutions)
 **Author:** Claude Code Research
 **Status:** Production-Ready
-

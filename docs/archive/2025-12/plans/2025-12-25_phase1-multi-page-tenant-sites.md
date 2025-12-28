@@ -15,12 +15,12 @@ Add multi-page structure to tenant storefronts, transforming the single landing 
 
 ### Reviewer Verdicts
 
-| Reviewer | Verdict | Status |
-|----------|---------|--------|
-| SpecFlow Analyzer | Analysis Complete | Feedback Incorporated |
-| DHH-Style | YELLOW | Simplified per feedback |
-| Senior Engineer | YELLOW | Route groups added |
-| Code Simplicity | YELLOW | Files consolidated |
+| Reviewer          | Verdict           | Status                  |
+| ----------------- | ----------------- | ----------------------- |
+| SpecFlow Analyzer | Analysis Complete | Feedback Incorporated   |
+| DHH-Style         | YELLOW            | Simplified per feedback |
+| Senior Engineer   | YELLOW            | Route groups added      |
+| Code Simplicity   | YELLOW            | Files consolidated      |
 
 ---
 
@@ -64,6 +64,7 @@ apps/web/src/app/t/[slug]/
 ```
 
 **Key Decisions:**
+
 1. **Route groups** isolate site pages from booking flow - booking keeps its own header
 2. **Custom domains** get the same layout via `_domain/layout.tsx`
 3. **FAQ inlined** as single client component (not two files)
@@ -76,18 +77,21 @@ apps/web/src/app/t/[slug]/
 ### 1. Booking Flow Isolation (Senior Engineer)
 
 The booking page has its own "Back to {tenant}" header. Using a route group `(site)` ensures:
+
 - Site pages (`/t/[slug]/`, `/about`, `/services`, etc.) get TenantNav + TenantFooter
 - Booking pages (`/t/[slug]/book/*`) keep their standalone experience
 
 ### 2. Custom Domain Parity (Senior Engineer)
 
 Custom domains (`janephotography.com`) route via `/t/_domain/`. Must add:
+
 - `apps/web/src/app/t/[slug]/_domain/layout.tsx` - mirrors `(site)/layout.tsx`
 - All subpages under `_domain/` with same structure
 
 ### 3. FAQ Simplification (All Reviewers)
 
 Instead of `page.tsx` + `FAQPageClient.tsx`, use single file:
+
 ```typescript
 // faq/page.tsx - Single client component with server data fetching
 'use client';
@@ -97,6 +101,7 @@ Instead of `page.tsx` + `FAQPageClient.tsx`, use single file:
 ### 4. Accessibility Enhancements (SpecFlow)
 
 Required for enterprise-grade quality:
+
 - Skip link: "Skip to main content" in TenantNav
 - ARIA labels: `aria-label="Main navigation"`, `aria-label="Footer navigation"`
 - Focus trap: Mobile menu traps focus when open
@@ -106,6 +111,7 @@ Required for enterprise-grade quality:
 ### 5. Error Boundaries (SpecFlow)
 
 Every new route needs `error.tsx` and `loading.tsx`:
+
 - `about/error.tsx`, `about/loading.tsx`
 - `services/error.tsx`, `services/loading.tsx`
 - `faq/error.tsx`, `faq/loading.tsx`
@@ -173,12 +179,14 @@ apps/web/src/
 **File:** `apps/web/src/app/t/[slug]/(site)/layout.tsx`
 
 **Requirements:**
+
 - Server Component fetching `getTenantStorefrontData(slug)`
 - Passes tenant to TenantNav and TenantFooter
 - Handles 404 with `notFound()`
 - Applies `min-h-screen` and flex layout
 
 **Acceptance Criteria:**
+
 - [ ] Layout fetches tenant data once per request
 - [ ] Navigation renders on all site pages
 - [ ] Footer renders on all site pages
@@ -192,6 +200,7 @@ apps/web/src/
 **File:** `apps/web/src/components/tenant/TenantNav.tsx`
 
 **Requirements:**
+
 - Client component with mobile menu state
 - Skip link: "Skip to main content" (first focusable element)
 - ARIA: `<nav aria-label="Main navigation">`
@@ -201,6 +210,7 @@ apps/web/src/
 - Reduced motion support for animations
 
 **Navigation Items:**
+
 - Home → `/t/{slug}`
 - Services → `/t/{slug}/services`
 - About → `/t/{slug}/about`
@@ -209,6 +219,7 @@ apps/web/src/
 - Book Now (CTA) → `/t/{slug}#packages`
 
 **Acceptance Criteria:**
+
 - [ ] Skip link visible on focus
 - [ ] Sticky header with blur backdrop
 - [ ] Logo + tenant name displayed
@@ -226,11 +237,13 @@ apps/web/src/
 **File:** `apps/web/src/components/tenant/TenantFooter.tsx`
 
 **Requirements:**
+
 - Server component (no interactivity)
 - ARIA: `<footer role="contentinfo">`, `<nav aria-label="Footer navigation">`
 - `rel="noopener noreferrer"` on external links
 
 **Acceptance Criteria:**
+
 - [ ] Displays tenant logo and name
 - [ ] Navigation links to all pages
 - [ ] Copyright with dynamic year
@@ -242,12 +255,14 @@ apps/web/src/
 ### Task 4: Move and Refactor Landing Page
 
 **Changes:**
+
 1. Move `page.tsx` and `TenantLandingPage.tsx` into `(site)/`
 2. Remove footer from `TenantLandingPage.tsx` (now in layout)
 3. Remove `min-h-screen` (now in layout)
 4. Add `id="main-content"` for skip link target
 
 **Acceptance Criteria:**
+
 - [ ] Footer removed from component
 - [ ] Page works with new layout
 - [ ] All existing sections unchanged
@@ -263,16 +278,19 @@ apps/web/src/
 **Data Source:** `tenant.branding?.landingPage?.about`
 
 **Sections:**
+
 1. Hero with headline
 2. Content with optional image (left/right position)
 3. CTA section (sage background)
 
 **SEO:**
+
 - Title: `About | {tenant.name}`
 - Description: First 160 chars of about content or fallback
 - OpenGraph tags
 
 **Acceptance Criteria:**
+
 - [ ] Page renders with tenant about content
 - [ ] Falls back to default content if not configured
 - [ ] Image displays when configured (with position)
@@ -288,16 +306,19 @@ apps/web/src/
 **Data Source:** `packages[]`, `segments[]`
 
 **Features:**
+
 - Groups packages by segment (if segments exist)
 - Empty state when no active packages
 - Package cards with image, title, price, description, add-ons
 - "Book Now" links to booking flow
 
 **SEO:**
+
 - Title: `Services | {tenant.name}`
 - Description: "Explore our services and packages"
 
 **Acceptance Criteria:**
+
 - [ ] All active packages displayed
 - [ ] Grouped by segment if segments exist
 - [ ] Empty state for no packages
@@ -315,6 +336,7 @@ apps/web/src/
 **Data Source:** `tenant.branding?.landingPage?.faq`
 
 **Requirements:**
+
 - Single client component with inline accordion
 - First item open by default
 - Keyboard navigation (Arrow Up/Down between items)
@@ -322,12 +344,14 @@ apps/web/src/
 - Empty state when no FAQs
 
 **Accessibility:**
+
 - `aria-expanded` on buttons
 - `aria-controls` linking to answer panels
 - `id` on answer panels
 - Arrow key navigation between FAQ items
 
 **Acceptance Criteria:**
+
 - [ ] Accordion displays all FAQ items
 - [ ] First item open by default
 - [ ] Keyboard navigation works (Arrow keys)
@@ -340,16 +364,19 @@ apps/web/src/
 ### Task 8: Create Contact Page
 
 **Files:**
+
 - `apps/web/src/app/t/[slug]/(site)/contact/page.tsx`
 - `apps/web/src/app/t/[slug]/(site)/contact/ContactForm.tsx`
 
 **Form Fields:**
+
 - Name (required)
 - Email (required, validated)
 - Phone (optional)
 - Message (required, textarea)
 
 **Form Behavior:**
+
 - Client-side validation before submit
 - Loading state during submission
 - Success state with "Send Another" option
@@ -358,12 +385,14 @@ apps/web/src/
 - **Phase 2:** Calls `POST /v1/inquiries`
 
 **Accessibility:**
+
 - Labels linked to inputs via `htmlFor`
 - Error messages with `aria-describedby`
 - Loading state with `aria-busy`
 - Focus management after submit
 
 **Acceptance Criteria:**
+
 - [ ] Form collects all fields
 - [ ] Client-side validation works
 - [ ] Loading state during submission
@@ -379,6 +408,7 @@ apps/web/src/
 **Files:** `error.tsx` in each route folder
 
 **Pattern:**
+
 ```typescript
 'use client';
 export default function Error({ error, reset }) {
@@ -387,6 +417,7 @@ export default function Error({ error, reset }) {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Each route has error.tsx
 - [ ] Errors logged via logger
 - [ ] User-friendly error message
@@ -399,11 +430,13 @@ export default function Error({ error, reset }) {
 **Files:** `loading.tsx` in each route folder
 
 **Pattern:**
+
 - Skeleton matching page structure
 - `animate-pulse` for loading animation
 - No spinners (use skeletons)
 
 **Acceptance Criteria:**
+
 - [ ] Each route has loading.tsx
 - [ ] Skeleton matches page layout
 - [ ] Uses `animate-pulse`
@@ -415,6 +448,7 @@ export default function Error({ error, reset }) {
 **Files:** Mirror `(site)/` structure in `_domain/`
 
 **Requirements:**
+
 - `_domain/layout.tsx` - Same as `(site)/layout.tsx`
 - `_domain/about/page.tsx` - Same as `(site)/about/page.tsx`
 - etc.
@@ -422,6 +456,7 @@ export default function Error({ error, reset }) {
 **Alternative:** Use a shared layout at `/t/layout.tsx` level with conditional rendering based on route.
 
 **Acceptance Criteria:**
+
 - [ ] Custom domain users see navigation
 - [ ] All subpages work on custom domains
 - [ ] No visual difference between slug and custom domain
@@ -433,6 +468,7 @@ export default function Error({ error, reset }) {
 **File:** `e2e/tests/tenant-multi-page.spec.ts`
 
 **Test Cases:**
+
 1. Navigation between all pages (desktop)
 2. Mobile menu open/close
 3. Mobile navigation
@@ -446,11 +482,13 @@ export default function Error({ error, reset }) {
 11. Custom domain navigation (if applicable)
 
 **Accessibility Tests:**
+
 - Axe/Lighthouse accessibility audit
 - Keyboard-only navigation
 - Screen reader announcements
 
 **Acceptance Criteria:**
+
 - [ ] All E2E tests pass
 - [ ] Lighthouse Accessibility: 90+
 - [ ] Lighthouse Performance: 90+
@@ -460,18 +498,18 @@ export default function Error({ error, reset }) {
 
 ## Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| All pages render correctly | 100% |
-| Navigation works (desktop + mobile) | 100% |
-| Lighthouse Performance | 90+ |
-| Lighthouse SEO | 100 |
-| Lighthouse Accessibility | 90+ |
-| ISR revalidation working | 60s |
-| Console errors | 0 |
-| E2E tests passing | 100% |
-| Custom domain parity | 100% |
-| Booking flow unchanged | 100% |
+| Metric                              | Target |
+| ----------------------------------- | ------ |
+| All pages render correctly          | 100%   |
+| Navigation works (desktop + mobile) | 100%   |
+| Lighthouse Performance              | 90+    |
+| Lighthouse SEO                      | 100    |
+| Lighthouse Accessibility            | 90+    |
+| ISR revalidation working            | 60s    |
+| Console errors                      | 0      |
+| E2E tests passing                   | 100%   |
+| Custom domain parity                | 100%   |
+| Booking flow unchanged              | 100%   |
 
 ---
 
@@ -480,6 +518,7 @@ export default function Error({ error, reset }) {
 The following backend work is deferred to Phase 2:
 
 ### Contact Form API
+
 ```typescript
 // POST /v1/inquiries
 // Headers: X-Tenant-Key
@@ -488,6 +527,7 @@ The following backend work is deferred to Phase 2:
 ```
 
 **Requirements:**
+
 - Rate limiting: 5 inquiries per IP per hour
 - Email validation (beyond HTML5)
 - Spam prevention (honeypot or CAPTCHA)
@@ -495,6 +535,7 @@ The following backend work is deferred to Phase 2:
 - Store in database for CRM
 
 ### Extended LandingPageConfig
+
 ```typescript
 pages: {
   about: { enabled: boolean, metaTitle?: string },
@@ -505,6 +546,7 @@ pages: {
 ```
 
 ### Analytics Events
+
 - `page_view` - Track tenant page views
 - `contact_form_submitted` - Track form submissions
 - `booking_started` - Track booking flow entry
@@ -513,13 +555,13 @@ pages: {
 
 ## Resolved Questions
 
-| Question | Decision | Rationale |
-|----------|----------|-----------|
-| Booking flow navigation | Keep separate header | Best practice - focused booking experience |
-| Custom domain parity | Add now | Enterprise quality requires parity |
-| Contact form backend | Phase 2 | Simulate success, document API spec |
-| FAQ implementation | Full accordion | Quality over speed |
-| Plan format | Full plan + checklist | Both for different audiences |
+| Question                | Decision              | Rationale                                  |
+| ----------------------- | --------------------- | ------------------------------------------ |
+| Booking flow navigation | Keep separate header  | Best practice - focused booking experience |
+| Custom domain parity    | Add now               | Enterprise quality requires parity         |
+| Contact form backend    | Phase 2               | Simulate success, document API spec        |
+| FAQ implementation      | Full accordion        | Quality over speed                         |
+| Plan format             | Full plan + checklist | Both for different audiences               |
 
 ---
 

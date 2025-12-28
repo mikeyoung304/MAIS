@@ -27,7 +27,7 @@ MAIS authenticates API requests using Bearer tokens:
 // Client sends token explicitly
 fetch('/v1/packages', {
   headers: {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
     'X-Tenant-Key': 'pk_live_bella-weddings_abc123',
   },
 });
@@ -45,12 +45,12 @@ CSRF (Cross-Site Request Forgery) attacks exploit a fundamental browser behavior
 
 **Attack Comparison:**
 
-| Attack Vector | Cookie Auth | Bearer Token Auth |
-|--------------|-------------|-------------------|
-| Hidden form submission | Vulnerable | **Protected** - No token sent |
-| Image tag request | Vulnerable | **Protected** - No token sent |
-| JavaScript fetch from attacker site | Vulnerable | **Protected** - Cannot read our token |
-| XSS + token theft | N/A (different attack) | Vulnerable (see Remaining Risks) |
+| Attack Vector                       | Cookie Auth            | Bearer Token Auth                     |
+| ----------------------------------- | ---------------------- | ------------------------------------- |
+| Hidden form submission              | Vulnerable             | **Protected** - No token sent         |
+| Image tag request                   | Vulnerable             | **Protected** - No token sent         |
+| JavaScript fetch from attacker site | Vulnerable             | **Protected** - Cannot read our token |
+| XSS + token theft                   | N/A (different attack) | Vulnerable (see Remaining Risks)      |
 
 **OWASP Guidance:**
 
@@ -139,12 +139,12 @@ Without these credentials, requests fail regardless of CORS policy.
 
 **Mitigations in Place:**
 
-| Mitigation | Implementation | Location |
-|------------|----------------|----------|
-| Content Security Policy | Strict CSP with script-src restrictions | `/server/src/app.ts` lines 56-104 |
-| Input Sanitization | DOMPurify middleware for user input | `/server/src/middleware/sanitize.ts` |
-| React Auto-escaping | React escapes JSX output by default | All React components |
-| CSP Violation Reporting | Logged to `/v1/csp-violations` | `/server/src/routes/csp-violations.routes.ts` |
+| Mitigation              | Implementation                          | Location                                      |
+| ----------------------- | --------------------------------------- | --------------------------------------------- |
+| Content Security Policy | Strict CSP with script-src restrictions | `/server/src/app.ts` lines 56-104             |
+| Input Sanitization      | DOMPurify middleware for user input     | `/server/src/middleware/sanitize.ts`          |
+| React Auto-escaping     | React escapes JSX output by default     | All React components                          |
+| CSP Violation Reporting | Logged to `/v1/csp-violations`          | `/server/src/routes/csp-violations.routes.ts` |
 
 **CSP Configuration:**
 
@@ -256,6 +256,7 @@ if (tenant && tenant.allowedOrigins.includes(origin)) {
 ```
 
 **Benefits:**
+
 - More restrictive
 - Audit trail of which domains access which tenant
 - Protection against unauthorized widget embedding
@@ -273,6 +274,7 @@ if (isSensitiveOperation(req.path)) {
 ```
 
 **Benefits:**
+
 - Additional protection for sensitive operations
 - Defense in depth against token theft
 

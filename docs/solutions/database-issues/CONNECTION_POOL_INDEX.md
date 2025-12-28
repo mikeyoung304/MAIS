@@ -34,12 +34,12 @@ Supabase Session mode supports ~60 connections.
 
 ### Core Documents
 
-| Document | Duration | Purpose |
-|----------|----------|---------|
-| [Quick Checklist](CONNECTION_POOL_QUICK_CHECKLIST.md) | 2 min | Before writing tests |
-| [Code Examples](CONNECTION_POOL_CODE_EXAMPLES.md) | 10 min | Copy-paste implementations |
-| [Detection Patterns](CONNECTION_POOL_DETECTION_PATTERNS.md) | 5 min | Find violations (grep/ESLint) |
-| [Prevention Strategy](CONNECTION_POOL_EXHAUSTION_PREVENTION.md) | 30 min | Full explanation |
+| Document                                                        | Duration | Purpose                       |
+| --------------------------------------------------------------- | -------- | ----------------------------- |
+| [Quick Checklist](CONNECTION_POOL_QUICK_CHECKLIST.md)           | 2 min    | Before writing tests          |
+| [Code Examples](CONNECTION_POOL_CODE_EXAMPLES.md)               | 10 min   | Copy-paste implementations    |
+| [Detection Patterns](CONNECTION_POOL_DETECTION_PATTERNS.md)     | 5 min    | Find violations (grep/ESLint) |
+| [Prevention Strategy](CONNECTION_POOL_EXHAUSTION_PREVENTION.md) | 30 min   | Full explanation              |
 
 ### Quick Reference
 

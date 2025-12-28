@@ -260,10 +260,7 @@ export const getTenantBySlug = cache(async (slug: string): Promise<TenantPublicD
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new TenantApiError(
-      `Failed to fetch tenant: ${errorBody}`,
-      response.status
-    );
+    throw new TenantApiError(`Failed to fetch tenant: ${errorBody}`, response.status);
   }
 
   return response.json();
@@ -305,10 +302,7 @@ export const getTenantByDomain = cache(async (domain: string): Promise<TenantPub
       throw new TenantNotFoundError(domain);
     }
     const errorBody = await response.text();
-    throw new TenantApiError(
-      `Failed to fetch tenant by domain: ${errorBody}`,
-      response.status
-    );
+    throw new TenantApiError(`Failed to fetch tenant by domain: ${errorBody}`, response.status);
   }
 
   return response.json();
@@ -336,10 +330,7 @@ export async function getTenantPackages(apiKeyPublic: string) {
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new TenantApiError(
-      `Failed to fetch packages: ${errorBody}`,
-      response.status
-    );
+    throw new TenantApiError(`Failed to fetch packages: ${errorBody}`, response.status);
   }
 
   return response.json();
@@ -385,7 +376,7 @@ export interface PackageData {
   description: string | null;
   priceCents: number;
   tier: 'BASIC' | 'STANDARD' | 'PREMIUM' | 'CUSTOM';
-  active?: boolean;   // Legacy field
+  active?: boolean; // Legacy field
   isActive?: boolean; // New field from backend
   segmentId: string | null;
   bookingType?: 'DATE' | 'APPOINTMENT';
@@ -467,10 +458,7 @@ export async function getTenantPackageBySlug(
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new TenantApiError(
-      `Failed to fetch package: ${errorBody}`,
-      response.status
-    );
+    throw new TenantApiError(`Failed to fetch package: ${errorBody}`, response.status);
   }
 
   return response.json();
@@ -518,10 +506,7 @@ export async function getUnavailableDates(
  * @param date - Date in YYYY-MM-DD format
  * @returns Whether the date is available
  */
-export async function checkDateAvailability(
-  apiKeyPublic: string,
-  date: string
-): Promise<boolean> {
+export async function checkDateAvailability(apiKeyPublic: string, date: string): Promise<boolean> {
   const url = `${API_BASE_URL}/v1/availability?date=${encodeURIComponent(date)}`;
 
   const response = await fetch(url, {

@@ -73,30 +73,38 @@ Cancel booking       → tool_cancel_booking     → Primitive: DELETE /v1/booki
 # MAIS Agent System Prompt
 
 ## Identity
+
 You are [Agent Name], an AI assistant for [Business Domain].
 
 Your role:
+
 - [Primary responsibility]
 - [Authority boundary: what you can/cannot decide alone]
 - [Who you represent: individual user vs admin vs system]
 
 ## Capabilities
+
 You can use these tools:
+
 - tool_create_booking: Schedule appointments
 - tool_check_availability: Check open slots
 - tool_cancel_booking: Cancel existing bookings
-[... full tool list ...]
+  [... full tool list ...]
 
 ## Decision Framework
 
 ### Trust Tier 1 (No Confirmation)
+
 Execute immediately:
+
 - Reading data (view calendar, check balance, list appointments)
 - Viewing configuration (non-sensitive)
 - Status checks (health, availability)
 
 ### Trust Tier 2 (Soft Confirmation)
+
 Ask before executing, but don't block:
+
 - Creating low-risk resources (bookings within business hours)
 - Modifying user-owned content (customer notes)
 - Soft updates (preferences, tags)
@@ -104,7 +112,9 @@ Ask before executing, but don't block:
 Example: "I'll create a booking for 2:00 PM tomorrow. Does that work?"
 
 ### Trust Tier 3 (Hard Confirmation)
+
 Require explicit approval to proceed:
+
 - Payment transactions (refunds, charges, updates)
 - Cancellations (cannot be reversed)
 - Sensitive updates (password, email, API keys)
@@ -115,26 +125,31 @@ Example: "This action will charge $500. Please type 'CONFIRM REFUND' to proceed.
 ## Examples
 
 ### Example 1: T1 (Read-Only)
+
 User: "What's my calendar look like next week?"
 Agent: Uses tool_check_availability → Returns availability without asking
 
 ### Example 2: T2 (Soft Confirm)
+
 User: "Book me for tomorrow at 2 PM"
 Agent: "I found an open slot tomorrow at 2 PM. I'll create the booking now."
 Agent: Uses tool_create_booking
 
 ### Example 3: T3 (Hard Confirm)
+
 User: "Issue a $200 refund to customer alice@example.com"
 Agent: "This will refund $200. Type 'CONFIRM REFUND alice@example.com' to proceed."
 Waits for explicit confirmation before using tool_create_refund
 
 ## Reasoning Style
+
 - Be concise and direct
 - Show your work: "Checking your calendar... Found 3 open slots"
 - Explain trade-offs: "Morning slots are busier; afternoon is quieter"
 - Default to honesty: Admit when you're uncertain or hitting a limitation
 
 ## Important Constraints
+
 - You CANNOT bypass the approval mechanism
 - All refunds require explicit user confirmation
 - You CANNOT access data from other tenants
@@ -154,7 +169,7 @@ interface AgentContext {
   tenantId: string;
   userName: string;
   businessName: string;
-  availableTools: string[];              // Which tools user can access
+  availableTools: string[]; // Which tools user can access
   trustTierOverrides?: Record<string, TrustTier>; // Special rules per tool
   featureFlags?: Record<string, boolean>; // A/B testing, beta features
   timezone: string;
@@ -323,6 +338,7 @@ A complete system prompt balances identity, decision framework, and constraints.
 # System Prompt: [Agent Name]
 
 ## Role & Authority
+
 - **What you do:** [Clear primary responsibility]
 - **What you decide:** [Autonomous decisions]
 - **What you ask about:** [Requires confirmation]
@@ -331,11 +347,13 @@ A complete system prompt balances identity, decision framework, and constraints.
 ## Tool Inventory
 
 ### Data Access Tools (T1)
+
 - tool_list_bookings: Fetch user's bookings
 - tool_check_availability: Check available time slots
 - tool_view_customer: Look up customer details
 
 ### Action Tools (T2 & T3)
+
 - tool_create_booking: Schedule appointment (T2 - soft ask)
 - tool_cancel_booking: Cancel appointment (T3 - hard ask)
 - tool_issue_refund: Refund payment (T3 - hard ask)
@@ -343,17 +361,18 @@ A complete system prompt balances identity, decision framework, and constraints.
 
 ## Trust Framework
 
-| Tier | Behavior | Examples |
-|------|----------|----------|
+| Tier | Behavior | Examples                                       |
+| ---- | -------- | ---------------------------------------------- |
 | T1   | Execute  | List bookings, check availability, view config |
-| T2   | Soft ask | Create booking, send email, update notes |
-| T3   | Hard ask | Refund, cancel, change password |
+| T2   | Soft ask | Create booking, send email, update notes       |
+| T3   | Hard ask | Refund, cancel, change password                |
 
 ## Examples
 
 [Include 5-10 user request → agent response examples]
 
 ## Constraints
+
 - Never skip tenant validation
 - Always explain refusals
 - Ask clarifying questions if uncertain
@@ -369,33 +388,37 @@ Exhaustively list user actions and corresponding tools.
 # Capability Map: Salon Scheduling Agent
 
 ## Booking Management
-| User Action | Tool | Trust Tier | Notes |
-|-------------|------|-----------|-------|
-| View my calendar | tool_list_bookings | T1 | Returns user's bookings |
-| Check open slots | tool_check_availability | T1 | Returns time slots |
-| Book an appointment | tool_create_booking | T2 | Soft confirm: "Booking 2 PM tomorrow?" |
-| Change appointment time | tool_update_booking | T2 | Requires same time availability |
-| Cancel appointment | tool_cancel_booking | T3 | Hard confirm: "Type CONFIRM CANCEL" |
+
+| User Action             | Tool                    | Trust Tier | Notes                                  |
+| ----------------------- | ----------------------- | ---------- | -------------------------------------- |
+| View my calendar        | tool_list_bookings      | T1         | Returns user's bookings                |
+| Check open slots        | tool_check_availability | T1         | Returns time slots                     |
+| Book an appointment     | tool_create_booking     | T2         | Soft confirm: "Booking 2 PM tomorrow?" |
+| Change appointment time | tool_update_booking     | T2         | Requires same time availability        |
+| Cancel appointment      | tool_cancel_booking     | T3         | Hard confirm: "Type CONFIRM CANCEL"    |
 
 ## Customer Management
-| User Action | Tool | Trust Tier | Notes |
-|-------------|------|-----------|-------|
-| View customer profile | tool_view_customer | T1 | Returns public customer data |
-| Update customer notes | tool_update_customer_notes | T2 | Soft confirm |
-| Send message to customer | tool_send_email | T2 | Soft confirm with email preview |
+
+| User Action              | Tool                       | Trust Tier | Notes                           |
+| ------------------------ | -------------------------- | ---------- | ------------------------------- |
+| View customer profile    | tool_view_customer         | T1         | Returns public customer data    |
+| Update customer notes    | tool_update_customer_notes | T2         | Soft confirm                    |
+| Send message to customer | tool_send_email            | T2         | Soft confirm with email preview |
 
 ## Payment
-| User Action | Tool | Trust Tier | Notes |
-|-------------|------|-----------|-------|
-| Check payment status | tool_view_payment | T1 | View only, no actions |
-| Issue refund | tool_create_refund | T3 | Hard confirm: requires code |
+
+| User Action          | Tool               | Trust Tier | Notes                       |
+| -------------------- | ------------------ | ---------- | --------------------------- |
+| Check payment status | tool_view_payment  | T1         | View only, no actions       |
+| Issue refund         | tool_create_refund | T3         | Hard confirm: requires code |
 
 ## Config
-| User Action | Tool | Trust Tier | Notes |
-|-------------|------|-----------|-------|
-| View business settings | tool_view_config | T1 | Read-only |
-| Update business hours | tool_update_config | T2 | Soft confirm |
-| Change webhook settings | tool_update_webhooks | T3 | Hard confirm |
+
+| User Action             | Tool                 | Trust Tier | Notes        |
+| ----------------------- | -------------------- | ---------- | ------------ |
+| View business settings  | tool_view_config     | T1         | Read-only    |
+| Update business hours   | tool_update_config   | T2         | Soft confirm |
+| Change webhook settings | tool_update_webhooks | T3         | Hard confirm |
 ```
 
 ### Pattern C: Trust Tier Workflow
@@ -566,8 +589,7 @@ app.post('/api/agent/approve', async (req, res) => {
   }
 
   // 3. Route by trust tier
-  const trustTier = session.context.trustTierOverrides[request.toolName]
-    || tool.defaultTrustTier;
+  const trustTier = session.context.trustTierOverrides[request.toolName] || tool.defaultTrustTier;
 
   if (trustTier === 'T1') {
     const result = await tool.execute(session, request.parameters);
@@ -611,14 +633,14 @@ app.post('/api/agent/approve', async (req, res) => {
 
 This design was validated through **6 parallel specialist agents** covering:
 
-| Reviewer | Focus | Key Finding |
-|----------|-------|------------|
-| **Architecture** | System design, layers | Single context layer is simpler than 3-layer refresh |
-| **Security** | Injection, isolation, auth | Server-side approval prevents prompt injection bypass |
-| **UX** | Confirmation fatigue | Trust tiers reduce unnecessary asks (T1 runs free) |
-| **Agent-Native** | Prompt-native patterns | Tools-as-primitives enable reasoning, not workflows |
-| **Implementation** | Feasibility | Approval mechanism fits Express middleware pattern |
-| **Simplicity** | Over-engineering | No dynamic context refresh needed—tools fetch fresh data |
+| Reviewer           | Focus                      | Key Finding                                              |
+| ------------------ | -------------------------- | -------------------------------------------------------- |
+| **Architecture**   | System design, layers      | Single context layer is simpler than 3-layer refresh     |
+| **Security**       | Injection, isolation, auth | Server-side approval prevents prompt injection bypass    |
+| **UX**             | Confirmation fatigue       | Trust tiers reduce unnecessary asks (T1 runs free)       |
+| **Agent-Native**   | Prompt-native patterns     | Tools-as-primitives enable reasoning, not workflows      |
+| **Implementation** | Feasibility                | Approval mechanism fits Express middleware pattern       |
+| **Simplicity**     | Over-engineering           | No dynamic context refresh needed—tools fetch fresh data |
 
 ### What Worked Well
 
@@ -789,12 +811,16 @@ const response = await fetch('/api/agent/approve', {
 ```typescript
 // ❌ BAD: Same confirmation code for all requests
 const CONFIRMATION_CODE = 'CONFIRM';
-if (userInput === CONFIRMATION_CODE) { executeRefund(); }
+if (userInput === CONFIRMATION_CODE) {
+  executeRefund();
+}
 
 // ✅ GOOD: Generate unique code per request
 const challenge = generateChallenge(request.toolName);
 // e.g., "CONFIRM REFUND alice@example.com 7f3a2c9e"
-if (userInput === challenge.code) { executeRefund(); }
+if (userInput === challenge.code) {
+  executeRefund();
+}
 ```
 
 ---
@@ -832,14 +858,13 @@ if (userInput === challenge.code) { executeRefund(); }
 
 This pattern provides a complete, battle-tested approach to building production AI agents:
 
-| Component | Pattern | Benefit |
-|-----------|---------|---------|
-| **Capability Map** | User Action → Tool | Complete feature coverage |
-| **System Prompt** | Identity + Trust Tiers | Clear decision framework |
-| **Context Injection** | Load once at session start | Simple state management |
-| **Approval Workflow** | Server-side T3 gating | Injection-resistant |
-| **Tool Primitives** | One action per tool | Composable reasoning |
-| **Tenant Isolation** | Inject tenantId from context | Secure multi-tenancy |
+| Component             | Pattern                      | Benefit                   |
+| --------------------- | ---------------------------- | ------------------------- |
+| **Capability Map**    | User Action → Tool           | Complete feature coverage |
+| **System Prompt**     | Identity + Trust Tiers       | Clear decision framework  |
+| **Context Injection** | Load once at session start   | Simple state management   |
+| **Approval Workflow** | Server-side T3 gating        | Injection-resistant       |
+| **Tool Primitives**   | One action per tool          | Composable reasoning      |
+| **Tenant Isolation**  | Inject tenantId from context | Secure multi-tenancy      |
 
 **Key Insight:** Simplicity wins. One context layer + primitive tools + server-side approval is better than complex refresh patterns or client-side gating.
-

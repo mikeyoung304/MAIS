@@ -18,10 +18,7 @@ interface TenantSiteLayoutProps {
  * The booking flow (/book/*) does NOT use this layout,
  * keeping its focused checkout experience.
  */
-export default async function TenantSiteLayout({
-  children,
-  params,
-}: TenantSiteLayoutProps) {
+export default async function TenantSiteLayout({ children, params }: TenantSiteLayoutProps) {
   const { slug } = await params;
 
   try {

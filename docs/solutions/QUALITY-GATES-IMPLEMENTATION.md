@@ -86,6 +86,7 @@ fi
 ```
 
 Make it executable:
+
 ```bash
 chmod +x scripts/validate-config-duplication.sh
 ```
@@ -135,6 +136,7 @@ fi
 ```
 
 Make it executable:
+
 ```bash
 chmod +x scripts/track-lint-errors.sh
 ```
@@ -180,6 +182,7 @@ exit 0
 ```
 
 Make it executable:
+
 ```bash
 chmod +x .husky/pre-commit
 ```
@@ -200,11 +203,7 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: 'module',
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier',
-  ],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   plugins: ['@typescript-eslint'],
   env: {
     node: true,
@@ -271,6 +270,7 @@ tests/
 ```
 
 Verify no duplication:
+
 ```bash
 grep -c "ignorePatterns" .eslintrc.cjs  # Should output 0 or only comments
 ```
@@ -301,6 +301,7 @@ Update `tsconfig.json`:
 ```
 
 Verify compilation:
+
 ```bash
 npm run typecheck
 # Should pass with no errors
@@ -426,10 +427,10 @@ export default defineConfig(({ mode }) => {
         // CRITICAL: Always-on thresholds (even in CI)
         // Per-suite targets that each test run can meet independently
         thresholds: {
-          lines: 30,       // Unit tests baseline
-          branches: 60,    // Critical paths
-          functions: 35,   // Service methods
-          statements: 30,  // Matches lines
+          lines: 30, // Unit tests baseline
+          branches: 60, // Critical paths
+          functions: 35, // Service methods
+          statements: 30, // Matches lines
         },
 
         reportsDirectory: './coverage',
@@ -454,18 +455,18 @@ Create `docs/quality/COVERAGE_BASELINE_HISTORY.md`:
 
 ## Current Baseline (as of 2025-12-26)
 
-| Metric | Local | CI | Target |
-|--------|-------|----|---------|
-| Lines | 43.27% | 30% | 80% |
-| Branches | 81.11% | 60% | 75% |
-| Functions | 46.7% | 35% | 80% |
-| Statements | 43.27% | 30% | 80% |
+| Metric     | Local  | CI  | Target |
+| ---------- | ------ | --- | ------ |
+| Lines      | 43.27% | 30% | 80%    |
+| Branches   | 81.11% | 60% | 75%    |
+| Functions  | 46.7%  | 35% | 80%    |
+| Statements | 43.27% | 30% | 80%    |
 
 ## Historical Trend
 
-| Date | Lines | Branches | Functions | Notes |
-|------|-------|----------|-----------|-------|
-| 2025-12-26 | 43.27% | 81.11% | 46.7% | Initial measurement |
+| Date       | Lines  | Branches | Functions | Notes               |
+| ---------- | ------ | -------- | --------- | ------------------- |
+| 2025-12-26 | 43.27% | 81.11%   | 46.7%     | Initial measurement |
 
 ## How to Update Baseline
 
@@ -480,14 +481,17 @@ When coverage metrics improve significantly:
 ## Coverage Improvement Plan
 
 ### Short-term (By 2025-12-31)
+
 - [ ] Reach 40% lines coverage
 - [ ] Maintain 60% branches
 
 ### Medium-term (By 2026-01-31)
+
 - [ ] Reach 50% lines coverage
 - [ ] Reach 45% functions coverage
 
 ### Long-term (By 2026-03-31)
+
 - [ ] Target 80% lines coverage
 - [ ] Target 75% branches coverage
 - [ ] Target 80% functions coverage
@@ -508,10 +512,10 @@ Create `docs/quality/LINT_ERROR_BASELINE_HISTORY.md`:
 
 ## Historical Trend
 
-| Date | Errors | Warnings | Δ Errors | Notes |
-|------|--------|----------|----------|-------|
-| 2025-12-20 | 612 | - | - | Initial state |
-| 2025-12-26 | 305 | 54 | -307 | Phase cleanup |
+| Date       | Errors | Warnings | Δ Errors | Notes         |
+| ---------- | ------ | -------- | -------- | ------------- |
+| 2025-12-20 | 612    | -        | -        | Initial state |
+| 2025-12-26 | 305    | 54       | -307     | Phase cleanup |
 
 ## Error Distribution (estimate)
 
@@ -533,16 +537,19 @@ When error count changes significantly:
 ## Error Reduction Plan
 
 ### Phase 1: Type-related (120 errors)
+
 - Timeline: 2025-12-31
 - Strategy: Fix Zod/ts-rest type mismatches
 - Status: Not started
 
 ### Phase 2: Unused Imports (80 errors)
+
 - Timeline: 2026-01-15
 - Strategy: Use cleanup tools and manual review
 - Status: Not started
 
 ### Phase 3: Console Statements (45 errors)
+
 - Timeline: 2026-01-31
 - Strategy: Replace with logger utility
 - Status: Not started
@@ -608,7 +615,7 @@ npm run test:unit -- --coverage
 
 Add to the project's CLAUDE.md:
 
-```markdown
+````markdown
 ## Quality Gates (Added 2025-12-26)
 
 This project enforces 4 quality gates to prevent regressions:
@@ -641,6 +648,7 @@ npm run typecheck              # Type safety
 npm run lint                   # Lint errors
 npm run test:unit -- --coverage  # Coverage
 ```
+````
 
 All must pass before push. CI will verify again.
 
@@ -653,7 +661,8 @@ When metrics improve:
 3. Update baseline in config file (see Phase 6)
 4. Create PR with "chore: update [x] baseline" commit message
 5. Include rationale in PR description
-```
+
+````
 
 ### Step 8.2: Create Team Runbook
 
@@ -698,9 +707,10 @@ grep -l "ignorePatterns" .eslintignore  # If this has it, that's the bug
 
 # Fix: Delete from secondary file, keep in primary
 # ESLint: Keep patterns ONLY in .eslintignore
-```
+````
 
 ### "Undefined variable" error
+
 ```bash
 # Find undefined variables
 npm run lint -- --rule "no-undef:error" 2>&1 | grep "is not defined"
@@ -712,6 +722,7 @@ npm test -- --grep "methodName"  # Test the changed method
 ```
 
 ### "Lint errors increased"
+
 ```bash
 # See new errors
 npm run lint 2>&1 | head -30
@@ -726,6 +737,7 @@ git add -A && git commit -m "fix: resolve lint errors"
 ```
 
 ### "Coverage below threshold"
+
 ```bash
 # See uncovered lines
 npm run test:unit -- --coverage
@@ -748,19 +760,23 @@ git add -A && git commit -m "test: improve coverage for [module]"
 ## Regular Maintenance
 
 ### Weekly
+
 - Monitor baseline trends
 - Note if coverage or lint improving
 - Celebrate improvements in standup
 
 ### Monthly
+
 - Review `docs/quality/` files
 - Update baselines if metrics improved significantly
 - Plan next sprint's quality improvements
 
 ### Quarterly
+
 - Full quality audit
 - Update thresholds if needed
 - Review effectiveness of gates
+
 ```
 
 ---
@@ -817,16 +833,18 @@ git add -A && git commit -m "test: improve coverage for [module]"
 1. **Now:** Pick one phase and implement it
 2. **This week:** Complete all phases
 3. **Before merge:** Commit changes with message:
-   ```
-   feat: implement 4-gate quality prevention system
+```
 
-   - Config duplication detection
-   - Mechanical replacement validation
-   - Lint regression tracking (305 baseline)
-   - Coverage threshold enforcement (30% min)
+feat: implement 4-gate quality prevention system
 
-   Fixes: Prevents issues from commits 21a9b3a and similar
-   ```
+- Config duplication detection
+- Mechanical replacement validation
+- Lint regression tracking (305 baseline)
+- Coverage threshold enforcement (30% min)
+
+Fixes: Prevents issues from commits 21a9b3a and similar
+
+```
 4. **After merge:** Share quick-start guide with team
 
 ---
@@ -837,3 +855,4 @@ git add -A && git commit -m "test: improve coverage for [module]"
 - **Quick Reference:** `docs/solutions/QUALITY-GATES-QUICK-START.md`
 - **CI Configuration:** `.github/workflows/main-pipeline.yml`
 - **Quality Metrics:** `docs/quality/QUALITY_METRICS.md`
+```

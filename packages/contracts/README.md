@@ -27,13 +27,13 @@ import {
 
 The `Contracts` object defines all ts-rest API contracts organized by domain:
 
-| Contract Group | Description | Example Endpoints |
-|---------------|-------------|-------------------|
-| Public | Customer-facing endpoints | `getPackages`, `getAvailability`, `createCheckout` |
-| Tenant Auth | Tenant login/signup | `tenantLogin`, `tenantSignup`, `forgotPassword` |
-| Tenant Admin | Dashboard management | `tenantAdminGetPackages`, `tenantAdminCreateSegment` |
-| Platform Admin | Platform-wide operations | `platformGetAllTenants`, `platformCreateTenant` |
-| Scheduling | Time-slot appointments | `getAvailableSlots`, `createAppointmentCheckout` |
+| Contract Group | Description               | Example Endpoints                                    |
+| -------------- | ------------------------- | ---------------------------------------------------- |
+| Public         | Customer-facing endpoints | `getPackages`, `getAvailability`, `createCheckout`   |
+| Tenant Auth    | Tenant login/signup       | `tenantLogin`, `tenantSignup`, `forgotPassword`      |
+| Tenant Admin   | Dashboard management      | `tenantAdminGetPackages`, `tenantAdminCreateSegment` |
+| Platform Admin | Platform-wide operations  | `platformGetAllTenants`, `platformCreateTenant`      |
+| Scheduling     | Time-slot appointments    | `getAvailableSlots`, `createAppointmentCheckout`     |
 
 ### DTOs (`dto.ts`)
 
@@ -55,29 +55,29 @@ Complete configuration system for tenant storefronts.
 
 The landing page system supports **7 page types**:
 
-| Page | Description | Always Enabled |
-|------|-------------|----------------|
-| `home` | Main landing page with hero | Yes |
-| `about` | Business information | No |
-| `services` | Package/service listings | No |
-| `faq` | Frequently asked questions | No |
-| `contact` | Contact information | No |
-| `gallery` | Image showcase | No |
-| `testimonials` | Customer reviews | No |
+| Page           | Description                 | Always Enabled |
+| -------------- | --------------------------- | -------------- |
+| `home`         | Main landing page with hero | Yes            |
+| `about`        | Business information        | No             |
+| `services`     | Package/service listings    | No             |
+| `faq`          | Frequently asked questions  | No             |
+| `contact`      | Contact information         | No             |
+| `gallery`      | Image showcase              | No             |
+| `testimonials` | Customer reviews            | No             |
 
 ### Section Types
 
 Each page contains flexible sections. **7 section types** are available:
 
-| Type | Schema | Description |
-|------|--------|-------------|
-| `hero` | `HeroSectionSchema` | Banner with headline, subheadline, CTA |
-| `text` | `TextSectionSchema` | Content block with optional image |
-| `gallery` | `GallerySectionSchema` | Image showcase with optional Instagram link |
-| `testimonials` | `TestimonialsSectionSchema` | Customer reviews with ratings |
-| `faq` | `FAQSectionSchema` | Questions and answers |
-| `contact` | `ContactSectionSchema` | Contact information display |
-| `cta` | `CTASectionSchema` | Call-to-action block |
+| Type           | Schema                      | Description                                 |
+| -------------- | --------------------------- | ------------------------------------------- |
+| `hero`         | `HeroSectionSchema`         | Banner with headline, subheadline, CTA      |
+| `text`         | `TextSectionSchema`         | Content block with optional image           |
+| `gallery`      | `GallerySectionSchema`      | Image showcase with optional Instagram link |
+| `testimonials` | `TestimonialsSectionSchema` | Customer reviews with ratings               |
+| `faq`          | `FAQSectionSchema`          | Questions and answers                       |
+| `contact`      | `ContactSectionSchema`      | Contact information display                 |
+| `cta`          | `CTASectionSchema`          | Call-to-action block                        |
 
 ### Default Configuration
 
@@ -134,14 +134,15 @@ import { SafeUrlSchema } from '@macon/contracts';
 
 // Allowed: https://, http://
 SafeUrlSchema.parse('https://example.com'); // OK
-SafeUrlSchema.parse('http://example.com');  // OK
+SafeUrlSchema.parse('http://example.com'); // OK
 
 // Blocked: javascript:, data:, vbscript:, etc.
 SafeUrlSchema.parse('javascript:alert(1)'); // Throws
-SafeUrlSchema.parse('data:text/html,...');  // Throws
+SafeUrlSchema.parse('data:text/html,...'); // Throws
 ```
 
 Features:
+
 - Max 2048 characters (RFC 7230 recommended limit)
 - Protocol allowlist (https, http only)
 - Handles mixed-case attacks (`JaVaScRiPt:`)
@@ -167,43 +168,44 @@ Validates Instagram handles and normalizes by removing `@` prefix:
 ```typescript
 import { InstagramHandleSchema } from '@macon/contracts';
 
-InstagramHandleSchema.parse('@studio_name');  // Returns: 'studio_name'
-InstagramHandleSchema.parse('studio_name');   // Returns: 'studio_name'
+InstagramHandleSchema.parse('@studio_name'); // Returns: 'studio_name'
+InstagramHandleSchema.parse('studio_name'); // Returns: 'studio_name'
 InstagramHandleSchema.parse('invalid@chars'); // Throws
 ```
 
 Rules:
+
 - Max 30 characters (Instagram limit)
 - Allowed: letters, numbers, periods, underscores
 - Optional `@` prefix (normalized/removed)
 
 ## Type Reference Table
 
-| Export | Type | Description |
-|--------|------|-------------|
-| `Contracts` | ts-rest router | All API contracts |
-| `PackageDtoSchema` | Zod schema | Package response shape |
-| `BookingDtoSchema` | Zod schema | Booking response shape |
-| `CreateCheckoutDtoSchema` | Zod schema | Checkout request body |
-| `TenantPublicDtoSchema` | Zod schema | Public tenant info |
-| `LandingPageConfigSchema` | Zod schema | Full landing page config |
-| `PagesConfigSchema` | Zod schema | Pages configuration |
-| `PageConfigSchema` | Zod schema | Single page config |
-| `SectionSchema` | Zod union | Discriminated union of section types |
-| `SafeUrlSchema` | Zod schema | XSS-safe URL validation |
-| `SafeImageUrlSchema` | Zod schema | Safe image URL validation |
-| `InstagramHandleSchema` | Zod schema | Instagram handle validation |
-| `DEFAULT_PAGES_CONFIG` | `PagesConfig` | Default pages for new tenants |
-| `PAGE_NAMES` | `const array` | All page name strings |
-| `PageName` | Type | Union of page name literals |
-| `Section` | Type | Union of all section types |
-| `HeroSection` | Type | Hero section shape |
-| `TextSection` | Type | Text section shape |
-| `GallerySection` | Type | Gallery section shape |
-| `TestimonialsSection` | Type | Testimonials section shape |
-| `FAQSection` | Type | FAQ section shape |
-| `ContactSection` | Type | Contact section shape |
-| `CTASection` | Type | CTA section shape |
+| Export                    | Type           | Description                          |
+| ------------------------- | -------------- | ------------------------------------ |
+| `Contracts`               | ts-rest router | All API contracts                    |
+| `PackageDtoSchema`        | Zod schema     | Package response shape               |
+| `BookingDtoSchema`        | Zod schema     | Booking response shape               |
+| `CreateCheckoutDtoSchema` | Zod schema     | Checkout request body                |
+| `TenantPublicDtoSchema`   | Zod schema     | Public tenant info                   |
+| `LandingPageConfigSchema` | Zod schema     | Full landing page config             |
+| `PagesConfigSchema`       | Zod schema     | Pages configuration                  |
+| `PageConfigSchema`        | Zod schema     | Single page config                   |
+| `SectionSchema`           | Zod union      | Discriminated union of section types |
+| `SafeUrlSchema`           | Zod schema     | XSS-safe URL validation              |
+| `SafeImageUrlSchema`      | Zod schema     | Safe image URL validation            |
+| `InstagramHandleSchema`   | Zod schema     | Instagram handle validation          |
+| `DEFAULT_PAGES_CONFIG`    | `PagesConfig`  | Default pages for new tenants        |
+| `PAGE_NAMES`              | `const array`  | All page name strings                |
+| `PageName`                | Type           | Union of page name literals          |
+| `Section`                 | Type           | Union of all section types           |
+| `HeroSection`             | Type           | Hero section shape                   |
+| `TextSection`             | Type           | Text section shape                   |
+| `GallerySection`          | Type           | Gallery section shape                |
+| `TestimonialsSection`     | Type           | Testimonials section shape           |
+| `FAQSection`              | Type           | FAQ section shape                    |
+| `ContactSection`          | Type           | Contact section shape                |
+| `CTASection`              | Type           | CTA section shape                    |
 
 ## Build
 

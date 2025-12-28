@@ -47,9 +47,7 @@ export function ScrollingIdentity() {
     <span className="inline-block min-w-[320px] sm:min-w-[480px] md:min-w-[600px]">
       <span
         className={`inline-block transition-all duration-200 ease-out ${
-          isAnimating
-            ? 'opacity-0 -translate-y-1'
-            : 'opacity-100 translate-y-0'
+          isAnimating ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-0'
         }`}
       >
         <span className="text-sage">{current.profession}</span>

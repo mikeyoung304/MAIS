@@ -4,15 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Package,
-  Plus,
-  Pencil,
-  Trash2,
-  Loader2,
-  AlertCircle,
-  DollarSign,
-} from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader2, AlertCircle, DollarSign } from 'lucide-react';
 
 interface PackageDto {
   id: string;
@@ -129,7 +121,8 @@ export default function TenantPackagesPage() {
             </div>
             <h3 className="mb-2 font-semibold text-text-primary">No packages yet</h3>
             <p className="mb-6 max-w-sm text-sm text-text-muted">
-              Packages define what services you offer to customers. Create your first package to start accepting bookings.
+              Packages define what services you offer to customers. Create your first package to
+              start accepting bookings.
             </p>
             <Button variant="sage" className="rounded-full">
               <Plus className="mr-2 h-4 w-4" />
@@ -150,9 +143,7 @@ export default function TenantPackagesPage() {
                   <CardTitle className="text-lg">{pkg.name}</CardTitle>
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      pkg.isActive
-                        ? 'bg-sage/10 text-sage'
-                        : 'bg-neutral-100 text-text-muted'
+                      pkg.isActive ? 'bg-sage/10 text-sage' : 'bg-neutral-100 text-text-muted'
                     }`}
                   >
                     {pkg.isActive ? 'Active' : 'Inactive'}
@@ -176,11 +167,7 @@ export default function TenantPackagesPage() {
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 rounded-full"
-                  >
+                  <Button size="sm" variant="outline" className="flex-1 rounded-full">
                     <Pencil className="mr-2 h-3 w-3" />
                     Edit
                   </Button>

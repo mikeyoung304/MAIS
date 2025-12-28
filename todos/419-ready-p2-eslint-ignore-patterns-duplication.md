@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p2
-issue_id: "419"
+issue_id: '419'
 tags: [code-review, eslint, configuration, maintainability]
 dependencies: []
-completed_at: "2025-12-26"
+completed_at: '2025-12-26'
 ---
 
 # Consolidate Duplicate ESLint Ignore Patterns
@@ -16,6 +16,7 @@ ESLint ignore patterns are duplicated between `.eslintrc.cjs` (ignorePatterns) a
 ## Findings
 
 - **`.eslintrc.cjs` ignorePatterns (lines 23-35):**
+
   ```javascript
   ignorePatterns: [
     'dist', 'node_modules', 'coverage', '*.cjs', '*.js',
@@ -37,11 +38,13 @@ ESLint ignore patterns are duplicated between `.eslintrc.cjs` (ignorePatterns) a
 **Approach:** Remove `ignorePatterns` from `.eslintrc.cjs`, rely solely on `.eslintignore`.
 
 **Pros:**
+
 - `.eslintignore` is ESLint's standard mechanism
 - Easier to read (one file vs embedded in config)
 - `.eslintignore` already has more comprehensive patterns
 
 **Cons:**
+
 - Requires verifying all patterns are in `.eslintignore`
 
 **Effort:** 30 minutes
@@ -55,9 +58,11 @@ ESLint ignore patterns are duplicated between `.eslintrc.cjs` (ignorePatterns) a
 **Approach:** Delete `.eslintignore`, move all patterns to `.eslintrc.cjs`.
 
 **Pros:**
+
 - All configuration in one file
 
 **Cons:**
+
 - `.eslintignore` is more readable for long lists
 - Can't be shared across multiple ESLint configs easily
 
@@ -78,6 +83,7 @@ ESLint ignore patterns are duplicated between `.eslintrc.cjs` (ignorePatterns) a
 ## Technical Details
 
 **Affected files:**
+
 - `.eslintrc.cjs` - remove ignorePatterns array
 - `.eslintignore` - verify complete
 
@@ -94,6 +100,7 @@ ESLint ignore patterns are duplicated between `.eslintrc.cjs` (ignorePatterns) a
 **By:** Claude Code (Architecture Strategist agent)
 
 **Actions:**
+
 - Identified duplication during commit 21a9b3a review
 - Documented overlap between files
 

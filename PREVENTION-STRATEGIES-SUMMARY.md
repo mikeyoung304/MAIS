@@ -18,9 +18,11 @@ Comprehensive prevention strategies have been created for two critical issues en
 ## Created Documentation
 
 ### 1. Main Prevention Strategy Document
+
 **File:** `docs/solutions/NEXTJS-ISR-AND-API-MISMATCH-PREVENTION.md` (32 KB)
 
 **Content:**
+
 - **Issue 1: ISR Cache Stale Data** (4 strategies)
   - Problem description and root causes
   - Development workflow for detecting stale data
@@ -48,9 +50,11 @@ Comprehensive prevention strategies have been created for two critical issues en
 ---
 
 ### 2. Quick Reference Guide
+
 **File:** `docs/solutions/PREVENTION-QUICK-REFERENCE-NEXTJS.md` (4.5 KB)
 
 **Content:**
+
 - Issue summaries (one paragraph each)
 - Quick detection methods
 - Quick fixes for both issues
@@ -65,9 +69,11 @@ Comprehensive prevention strategies have been created for two critical issues en
 ---
 
 ### 3. Implementation Guide
+
 **File:** `docs/guides/IMPLEMENTING-ISR-CACHE-STRATEGIES.md` (12 KB)
 
 **Content:**
+
 - **Strategy 1: Disable ISR During Development**
   - Step-by-step instructions
   - Verification steps
@@ -102,9 +108,11 @@ Comprehensive prevention strategies have been created for two critical issues en
 ---
 
 ### 4. Code Review Checklist
+
 **File:** `docs/guides/CODE-REVIEW-API-CONTRACTS-CHECKLIST.md` (16 KB)
 
 **Content:**
+
 - **Quick Start** - Copy-paste checklist for reviews
 - **Section 1: Reviewing API Calls** (5 items with examples)
   - Verify contract exists
@@ -140,12 +148,14 @@ Comprehensive prevention strategies have been created for two critical issues en
 **Core Concept:** ISR has multiple cache layers that can show stale data
 
 **Main Strategies:**
+
 1. **Disable** - Set `revalidate: 0` for instant feedback during development
 2. **On-Demand** - Use `revalidatePath()` to invalidate after updates
 3. **Query Param** - Add `?fresh=1` to bypass cache for debugging
 4. **Clear Cache** - Remove `.next` folder when cache is stuck
 
 **Decision Making:**
+
 - Branding/rare changes: `revalidate: 3600` (1 hour)
 - Package details/moderate changes: `revalidate: 300` (5 minutes)
 - Availability/frequent changes: `revalidate: 60` (1 minute)
@@ -156,12 +166,14 @@ Comprehensive prevention strategies have been created for two critical issues en
 **Core Concept:** Client URLs must match contract definitions exactly
 
 **Main Strategies:**
+
 1. **Contract First** - Define endpoint in contracts BEFORE implementing
 2. **Verification** - Search contracts file and copy path exactly
 3. **Automation** - Use validation script to catch mismatches
 4. **Testing** - E2E tests verify endpoints are reachable
 
 **Decision Making:**
+
 - Always use ts-rest client when possible (type-safe)
 - If manual fetch, copy path from contract file exactly
 - Include required headers (X-Tenant-Key, Authorization)
@@ -211,6 +223,7 @@ Include this in your PR template:
 These prevention strategies complement the existing CLAUDE.md guidance:
 
 **From CLAUDE.md (Multi-tenant isolation):**
+
 ```typescript
 // All queries must filter by tenantId
 const packages = await prisma.package.findMany({
@@ -219,25 +232,26 @@ const packages = await prisma.package.findMany({
 ```
 
 **This prevention strategy adds:**
+
 ```typescript
 // For Next.js, ISR revalidation timing
-export const revalidate = 60;  // Prevents stale cache
+export const revalidate = 60; // Prevents stale cache
 
 // API contract validation
-const url = `${API_BASE_URL}/v1/packages`;  // Must match contract
+const url = `${API_BASE_URL}/v1/packages`; // Must match contract
 ```
 
 ---
 
 ## Quick Stats
 
-| Document | Size | Read Time | Best For |
-|----------|------|-----------|----------|
-| Main Prevention | 32 KB | 20 min | Complete understanding |
-| Quick Reference | 4.5 KB | 5 min | Quick lookup |
-| Implementation | 12 KB | 15 min | Hands-on implementation |
-| Code Review | 16 KB | 10 min | PR reviews |
-| **Total** | **64.5 KB** | **50 min** | **Complete training** |
+| Document        | Size        | Read Time  | Best For                |
+| --------------- | ----------- | ---------- | ----------------------- |
+| Main Prevention | 32 KB       | 20 min     | Complete understanding  |
+| Quick Reference | 4.5 KB      | 5 min      | Quick lookup            |
+| Implementation  | 12 KB       | 15 min     | Hands-on implementation |
+| Code Review     | 16 KB       | 10 min     | PR reviews              |
+| **Total**       | **64.5 KB** | **50 min** | **Complete training**   |
 
 ---
 
@@ -245,25 +259,27 @@ const url = `${API_BASE_URL}/v1/packages`;  // Must match contract
 
 **In MAIS Codebase:**
 
-| File | Purpose |
-|------|---------|
-| `packages/contracts/src/api.v1.ts` | API contract definitions (source of truth) |
-| `apps/web/src/lib/tenant.ts` | Tenant data fetching (SSR functions) |
-| `apps/web/src/lib/api.ts` | ts-rest API client (type-safe client) |
-| `apps/web/src/app/t/[slug]/(site)/page.tsx` | Landing page with ISR |
-| `apps/web/src/app/t/[slug]/book/[packageSlug]/page.tsx` | Booking page with ISR |
+| File                                                    | Purpose                                    |
+| ------------------------------------------------------- | ------------------------------------------ |
+| `packages/contracts/src/api.v1.ts`                      | API contract definitions (source of truth) |
+| `apps/web/src/lib/tenant.ts`                            | Tenant data fetching (SSR functions)       |
+| `apps/web/src/lib/api.ts`                               | ts-rest API client (type-safe client)      |
+| `apps/web/src/app/t/[slug]/(site)/page.tsx`             | Landing page with ISR                      |
+| `apps/web/src/app/t/[slug]/book/[packageSlug]/page.tsx` | Booking page with ISR                      |
 
 ---
 
 ## Related Issues Prevented
 
 ### ISR Cache Issues
+
 1. **Stale package data** - Tenant updates price, customer sees old price
 2. **Stale availability** - Date was booked, customer still sees it available
 3. **Stale branding** - Tenant updates logo, customer sees old logo
 4. **Cache stuck** - Data updates but page never refreshes
 
 ### API Mismatch Issues
+
 1. **404 errors** - Client calls wrong URL, gets not found
 2. **Missing data** - Extra URL segment causes endpoint mismatch
 3. **Auth failures** - Missing X-Tenant-Key header causes 401
@@ -312,8 +328,8 @@ test('all Express routes have contract definitions');
 
 ### Version History
 
-| Date | Change |
-|------|--------|
+| Date         | Change                                                 |
+| ------------ | ------------------------------------------------------ |
 | Dec 25, 2025 | Initial creation (4 documents, comprehensive coverage) |
 
 ---
@@ -348,6 +364,7 @@ Use this to share prevention strategies with your team:
 **Two critical issues have been comprehensively documented with prevention strategies, implementation guides, and code review checklists.**
 
 Developers now have:
+
 - Clear understanding of root causes
 - Multiple concrete strategies to prevent each issue
 - Step-by-step implementation guides with working examples
@@ -355,4 +372,3 @@ Developers now have:
 - Quick reference materials for daily development
 
 The prevention strategies are not theoretical - they include actual code examples, E2E tests, and integration tests that can be implemented immediately.
-

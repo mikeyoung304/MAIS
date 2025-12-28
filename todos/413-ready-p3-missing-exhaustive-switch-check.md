@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "413"
+issue_id: '413'
 tags:
   - code-review
   - typescript
@@ -17,6 +17,7 @@ dependencies: []
 The SectionRenderer switch statement has a `default: return null` case that silently ignores unhandled section types. TypeScript's exhaustive check pattern would catch missing cases at compile time.
 
 **Why This Matters:**
+
 - If a new section type is added to the schema, the renderer silently returns null
 - Bug could go unnoticed until production
 - TypeScript can prevent this with exhaustive checks
@@ -26,13 +27,14 @@ The SectionRenderer switch statement has a `default: return null` case that sile
 **Location:** `apps/web/src/components/tenant/SectionRenderer.tsx` (lines 50-112)
 
 **Evidence:**
+
 ```typescript
 switch (section.type) {
   case 'hero': // ...
   case 'text': // ...
   // ...
   default:
-    return null;  // Silent failure
+    return null; // Silent failure
 }
 ```
 
@@ -50,11 +52,13 @@ default: {
 ```
 
 **Pros:**
+
 - Compile-time error if new section type added
 - No runtime impact
 - TypeScript best practice
 
 **Cons:**
+
 - Slightly more complex
 
 **Effort:** Small
@@ -63,6 +67,7 @@ default: {
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/components/tenant/SectionRenderer.tsx`
 
 ## Acceptance Criteria
@@ -73,6 +78,6 @@ default: {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                           |
+| ---------- | ------------------------ | ----------------------------------- |
 | 2025-12-25 | Created from code review | Type safety improvement opportunity |

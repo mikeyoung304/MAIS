@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "348"
+issue_id: '348'
 tags: [code-review, data-integrity, naming, security]
 dependencies: []
 ---
@@ -22,7 +22,7 @@ The `onPaymentCompleted` method calls `getPackageBySlugWithAddOns(tenantId, inpu
 // The variable is named packageId but it's actually a slug
 const pkgWithAddOns = await this.catalogRepo.getPackageBySlugWithAddOns(
   tenantId,
-  input.packageId  // This is actually a SLUG, not an ID
+  input.packageId // This is actually a SLUG, not an ID
 );
 ```
 
@@ -31,6 +31,7 @@ const pkgWithAddOns = await this.catalogRepo.getPackageBySlugWithAddOns(
 ## Proposed Solutions
 
 ### Option A: Rename input parameter (Recommended)
+
 - **Pros:** Clear intent, prevents misuse, self-documenting
 - **Cons:** Breaking change to internal interface
 - **Effort:** Small
@@ -45,6 +46,7 @@ input: {
 ```
 
 ### Option B: Add validation guard
+
 - **Pros:** Catches misuse at runtime
 - **Cons:** Adds complexity, doesn't fix root cause
 - **Effort:** Small
@@ -52,12 +54,16 @@ input: {
 
 ```typescript
 if (input.packageId.startsWith('pkg_')) {
-  logger.error({ packageId: input.packageId }, 'onPaymentCompleted called with package ID instead of slug');
+  logger.error(
+    { packageId: input.packageId },
+    'onPaymentCompleted called with package ID instead of slug'
+  );
   throw new Error('Invalid parameter: expected slug, got ID');
 }
 ```
 
 ### Option C: Document in JSDoc
+
 - **Pros:** No code change
 - **Cons:** Easy to miss, doesn't prevent bugs
 - **Effort:** Small
@@ -81,8 +87,8 @@ Option A - Rename the parameter to `packageSlug` throughout the call chain.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                             |
+| ---------- | ------------------------ | ------------------------------------- |
 | 2024-12-24 | Created from code review | data-integrity-guardian agent finding |
 
 ## Resources

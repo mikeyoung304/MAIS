@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p1
-issue_id: "418"
+issue_id: '418'
 tags: [code-review, bug, mock-adapter, typescript]
 dependencies: []
-completed_at: "2025-12-26"
+completed_at: '2025-12-26'
 ---
 
 # Fix Undefined tenantId Reference in Mock Adapter getAddOnsForSegment
@@ -29,6 +29,7 @@ async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]
 ```
 
 **Similar patterns verified safe:**
+
 - Line 222: `getPackageWithAddOns` uses `tenantId` correctly (not prefixed)
 - Line 255: `getPackage` uses `tenantId` correctly (not prefixed)
 - Line 357: `getPackagesBySegmentWithAddOns` uses `tenantId` correctly (has `tenantId` param)
@@ -45,11 +46,13 @@ async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]
 ```
 
 **Pros:**
+
 - Simple one-line fix
 - Consistent with the underscore prefix pattern
 - Maintains the "mock ignores tenantId" contract
 
 **Cons:**
+
 - None
 
 **Effort:** 5 minutes
@@ -63,10 +66,12 @@ async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]
 **Approach:** Add stricter TypeScript checking to catch undefined variable usage.
 
 **Pros:**
+
 - Prevents similar bugs in future
 - Catches other potential issues
 
 **Cons:**
+
 - May produce false positives for intentional unused variables
 - Additional complexity
 
@@ -88,9 +93,11 @@ async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/adapters/mock/index.ts:366`
 
 **Related components:**
+
 - Segment-based add-on queries in catalog service
 - Any code path that calls `catalogRepo.getAddOnsForSegment()` in mock mode
 
@@ -110,11 +117,13 @@ async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]
 **By:** Claude Code (multi-agent review)
 
 **Actions:**
+
 - Security Sentinel agent identified the bug during commit 21a9b3a review
 - Code Simplicity agent confirmed via grep pattern matching
 - Architecture Strategist verified no other instances exist
 
 **Learnings:**
+
 - Mechanical sed replacements need thorough testing
 - Consider adding lint rule for undefined variable detection
 

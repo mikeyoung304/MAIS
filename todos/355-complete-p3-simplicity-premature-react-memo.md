@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "355"
+issue_id: '355'
 tags: [code-review, simplicity, react, over-engineering]
 dependencies: []
 ---
@@ -17,6 +17,7 @@ All four wizard step components are wrapped in `React.memo()` but are simple pre
 ## Findings
 
 **Files:**
+
 - `client/src/features/storefront/date-booking/ConfirmationStep.tsx:14`
 - `client/src/features/storefront/date-booking/CustomerDetailsStep.tsx:14`
 - `client/src/features/storefront/date-booking/DateSelectionStep.tsx:16`
@@ -34,6 +35,7 @@ const ConfirmationStep = React.memo(({ package: pkg }: ConfirmationStepProps) =>
 ## Proposed Solutions
 
 ### Option A: Remove React.memo wrappers (Recommended)
+
 - **Pros:** Simpler code, no overhead
 - **Cons:** None - these components benefit little from memoization
 - **Effort:** Small
@@ -64,8 +66,8 @@ Option A - Remove React.memo from all four step components.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | code-simplicity-reviewer finding |
 
 ## Resources

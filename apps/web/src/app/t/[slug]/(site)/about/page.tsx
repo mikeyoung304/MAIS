@@ -40,9 +40,7 @@ export async function generateMetadata({ params }: AboutPageProps): Promise<Meta
       openGraph: {
         title: `About | ${tenant.name}`,
         description,
-        images: config?.about?.imageUrl
-          ? [{ url: config.about.imageUrl }]
-          : [],
+        images: config?.about?.imageUrl ? [{ url: config.about.imageUrl }] : [],
       },
       robots: {
         index: true,

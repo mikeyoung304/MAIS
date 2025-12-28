@@ -157,14 +157,14 @@ Cancel note: "No contracts. Cancel anytime."
 
 ## Words to Use
 
-| Use                    | Instead of                      |
-| ---------------------- | ------------------------------- |
-| service pros           | small businesses, entrepreneurs |
-| handle / handled       | manage, streamline, optimize    |
-| clients                | customers, users                |
-| what's worth knowing   | insights, learnings             |
-| actually               | seamlessly, effortlessly        |
-| no pitch               | no obligation, risk-free        |
+| Use                  | Instead of                      |
+| -------------------- | ------------------------------- |
+| service pros         | small businesses, entrepreneurs |
+| handle / handled     | manage, streamline, optimize    |
+| clients              | customers, users                |
+| what's worth knowing | insights, learnings             |
+| actually             | seamlessly, effortlessly        |
+| no pitch             | no obligation, risk-free        |
 
 ## Words to Avoid
 
@@ -222,18 +222,18 @@ text-muted: '#4A4440'    // Warm gray (body copy)
 
 ```tsx
 // Buttons
-variant="sage"           // Primary CTAs
-variant="outline"        // Secondary actions
+variant = 'sage'; // Primary CTAs
+variant = 'outline'; // Secondary actions
 
 // Icons & accents
-bg-sage/10               // Icon backgrounds
-text-sage                // Accent text, checkmarks
+bg - sage / 10; // Icon backgrounds
+text - sage; // Accent text, checkmarks
 
 // Section backgrounds
-bg-surface               // Default
-bg-neutral-50            // Alternating sections
-bg-sage                  // Final CTA section
-bg-text-primary          // Footer
+bg - surface; // Default
+bg - neutral - 50; // Alternating sections
+bg - sage; // Final CTA section
+bg - text - primary; // Footer
 ```
 
 ### Typography Scale

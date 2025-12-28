@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "356"
+issue_id: '356'
 tags: [code-review, simplicity, cleanup]
 dependencies: []
 ---
@@ -19,12 +19,9 @@ After fetching `pkgWithAddOns`, there's a redundant assignment `const pkg = pkgW
 **File:** `server/src/services/booking.service.ts:715-716`
 
 ```typescript
-const pkgWithAddOns = await this.catalogRepo.getPackageBySlugWithAddOns(
-  tenantId,
-  input.packageId
-);
+const pkgWithAddOns = await this.catalogRepo.getPackageBySlugWithAddOns(tenantId, input.packageId);
 // ... null check ...
-const pkg = pkgWithAddOns;  // <-- Redundant assignment
+const pkg = pkgWithAddOns; // <-- Redundant assignment
 ```
 
 **Agent:** code-simplicity-reviewer
@@ -32,22 +29,21 @@ const pkg = pkgWithAddOns;  // <-- Redundant assignment
 ## Proposed Solutions
 
 ### Option A: Use pkgWithAddOns directly
+
 - **Pros:** Removes indirection
 - **Cons:** Longer variable name
 - **Effort:** Small
 - **Risk:** Low
 
 ### Option B: Name it pkg from the start (Recommended)
+
 - **Pros:** Clean, consistent with rest of codebase
 - **Cons:** None
 - **Effort:** Small
 - **Risk:** Low
 
 ```typescript
-const pkg = await this.catalogRepo.getPackageBySlugWithAddOns(
-  tenantId,
-  input.packageId
-);
+const pkg = await this.catalogRepo.getPackageBySlugWithAddOns(tenantId, input.packageId);
 ```
 
 ## Recommended Action
@@ -68,8 +64,8 @@ Option B - Rename to `pkg` at declaration.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | code-simplicity-reviewer finding |
 
 ## Resources

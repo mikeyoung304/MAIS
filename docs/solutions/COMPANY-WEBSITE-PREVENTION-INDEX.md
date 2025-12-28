@@ -11,11 +11,13 @@
 This prevention strategy consists of 5 documents. Read them in order:
 
 ### 1. **Quick Reference** (30 seconds)
+
 **File:** `COMPANY-VS-TENANT-QUICK-CHECK.md`
 
 **When to use:** Before writing any page code. Print and pin to monitor.
 
 **Contains:**
+
 - 30-second decision tree: "Is this company or tenant content?"
 - Quick URL patterns
 - Pre-commit checklist
@@ -26,11 +28,13 @@ This prevention strategy consists of 5 documents. Read them in order:
 ---
 
 ### 2. **Comprehensive Prevention Strategy** (15 minutes)
+
 **File:** `COMPANY-WEBSITE-TENANT-CONFUSION-PREVENTION.md`
 
 **When to use:** First time reading, or when onboarding new team members.
 
 **Contains:**
+
 - Part 1: Architectural decision framework
 - Part 2: Code review checklist
 - Part 3: Pre-deployment checklist
@@ -45,11 +49,13 @@ This prevention strategy consists of 5 documents. Read them in order:
 ---
 
 ### 3. **Code Review Checklist** (During reviews)
+
 **File:** `COMPANY-WEBSITE-CODE-REVIEW-CHECKLIST.md`
 
 **When to use:** Reviewing any PR that touches pages/routing in `apps/web/src/app/`.
 
 **Contains:**
+
 - Pre-review questions to ask author
 - Specific code patterns to search for (grep commands)
 - Company page checklist
@@ -65,11 +71,13 @@ This prevention strategy consists of 5 documents. Read them in order:
 ---
 
 ### 4. **Testing Strategies** (For QA and devs)
+
 **File:** `COMPANY-WEBSITE-TESTING-STRATEGIES.md`
 
 **When to use:** Writing tests or validating before deployment.
 
 **Contains:**
+
 - Part 1: Unit testing (verify no DB lookups in company pages)
 - Part 2: Integration testing (database state independence)
 - Part 3: E2E testing with Playwright
@@ -81,6 +89,7 @@ This prevention strategy consists of 5 documents. Read them in order:
 ---
 
 ### 5. **This Index**
+
 **File:** `COMPANY-WEBSITE-PREVENTION-INDEX.md`
 
 Navigation and quick reference for all prevention documents.
@@ -135,30 +144,35 @@ If you can't clearly answer, ask for clarification before coding.
 ### If You're...
 
 **...writing a new company page (/, /features, /signup, etc.):**
+
 1. Read: `COMPANY-VS-TENANT-QUICK-CHECK.md` (30 sec)
 2. Pattern: No `getTenantBySlug()` call
 3. Content: Hardcode features, pricing, CTAs
 4. Test: Verify works without database
 
-**...writing a new tenant page (/t/[slug]/, /t/_domain/, etc.):**
+**...writing a new tenant page (/t/[slug]/, /t/\_domain/, etc.):**
+
 1. Read: `COMPANY-VS-TENANT-QUICK-CHECK.md` (30 sec)
 2. Pattern: Must call `getTenantBySlug()`
 3. Content: Use tenant configuration
 4. Test: Verify 404s for missing tenants
 
 **...reviewing a PR with routing changes:**
+
 1. Ask author: "Is this company or tenant content?"
 2. Use: `COMPANY-WEBSITE-CODE-REVIEW-CHECKLIST.md`
 3. Verify: Correct patterns and tests
 4. Check: Database state (no company tenants)
 
 **...writing tests:**
+
 1. Reference: `COMPANY-WEBSITE-TESTING-STRATEGIES.md`
 2. Unit tests: No DB lookups in company pages
 3. Integration tests: Tenant pages 404 on missing tenants
 4. E2E tests: Full workflow validation
 
 **...deploying to production:**
+
 1. Checklist: Pre-deployment section in main guide
 2. Verify: `npm run typecheck` and all tests pass
 3. Check: Database state (no company tenants)
@@ -209,29 +223,30 @@ MAIS Application Structure
 
 ### Application Files
 
-| File | Purpose |
-|------|---------|
-| `apps/web/src/app/page.tsx` | Root homepage (company content) |
-| `apps/web/src/app/signup/page.tsx` | Signup page (company) |
-| `apps/web/src/app/t/[slug]/(site)/page.tsx` | Tenant home (dynamic) |
-| `apps/web/src/app/t/_domain/page.tsx` | Custom domain home (dynamic) |
-| `apps/web/src/middleware.ts` | Custom domain rewriting, auth checks |
-| `apps/web/src/lib/tenant.ts` | Tenant data fetching functions |
+| File                                        | Purpose                              |
+| ------------------------------------------- | ------------------------------------ |
+| `apps/web/src/app/page.tsx`                 | Root homepage (company content)      |
+| `apps/web/src/app/signup/page.tsx`          | Signup page (company)                |
+| `apps/web/src/app/t/[slug]/(site)/page.tsx` | Tenant home (dynamic)                |
+| `apps/web/src/app/t/_domain/page.tsx`       | Custom domain home (dynamic)         |
+| `apps/web/src/middleware.ts`                | Custom domain rewriting, auth checks |
+| `apps/web/src/lib/tenant.ts`                | Tenant data fetching functions       |
 
 ### Prevention Files (This Strategy)
 
-| File | Purpose |
-|------|---------|
-| `docs/solutions/COMPANY-VS-TENANT-QUICK-CHECK.md` | 30-second decision tree |
+| File                                                            | Purpose                          |
+| --------------------------------------------------------------- | -------------------------------- |
+| `docs/solutions/COMPANY-VS-TENANT-QUICK-CHECK.md`               | 30-second decision tree          |
 | `docs/solutions/COMPANY-WEBSITE-TENANT-CONFUSION-PREVENTION.md` | Full guide (this you're reading) |
-| `docs/solutions/COMPANY-WEBSITE-CODE-REVIEW-CHECKLIST.md` | PR review checklist |
-| `docs/solutions/COMPANY-WEBSITE-TESTING-STRATEGIES.md` | Test patterns |
+| `docs/solutions/COMPANY-WEBSITE-CODE-REVIEW-CHECKLIST.md`       | PR review checklist              |
+| `docs/solutions/COMPANY-WEBSITE-TESTING-STRATEGIES.md`          | Test patterns                    |
 
 ---
 
 ## Common Scenarios
 
 ### Scenario 1: Adding a new company feature page
+
 1. Read: `COMPANY-VS-TENANT-QUICK-CHECK.md`
 2. Create: `src/app/features/page.tsx`
 3. Code: Hardcode content, no tenant lookup
@@ -239,6 +254,7 @@ MAIS Application Structure
 5. Review: Use company page checklist
 
 ### Scenario 2: Fixing a tenant page bug
+
 1. Read: `COMPANY-VS-TENANT-QUICK-CHECK.md`
 2. Verify: Has `getTenantBySlug()` call
 3. Verify: Has `if (!tenant) notFound()` check
@@ -246,12 +262,14 @@ MAIS Application Structure
 5. Review: Use tenant page checklist
 
 ### Scenario 3: Adding a new company domain
+
 1. Update: `middleware.ts` → `KNOWN_DOMAINS`
 2. Verify: Domain won't route to `/t/_domain`
 3. Test: Domain serves company content
 4. Deploy: Verify company pages work
 
 ### Scenario 4: Creating a tenant for a demo
+
 1. Don't: Create a tenant with company slug
 2. Do: Use `npm run create-tenant` with unique slug
 3. Verify: Tenant appears in `/t/[slug]`
@@ -264,26 +282,31 @@ MAIS Application Structure
 ### What Tests Catch
 
 ✓ **Company pages don't use database:**
+
 ```typescript
 expect(getTenantBySlug).not.toHaveBeenCalled();
 ```
 
 ✓ **Tenant pages require tenants:**
+
 ```typescript
 expect(getTenantBySlug).toHaveBeenCalledWith(slug);
 ```
 
 ✓ **Missing tenant returns 404:**
+
 ```typescript
 expect(response.status).toBe(404);
 ```
 
 ✓ **Tenant isolation (no data leakage):**
+
 ```typescript
 expect(page.text()).not.toContain(OTHER_TENANT_NAME);
 ```
 
 ✓ **No "company tenants" exist:**
+
 ```typescript
 const handled = await db.tenant.findUnique({ where: { slug: 'handled' } });
 expect(handled).toBeNull();
@@ -293,15 +316,15 @@ expect(handled).toBeNull();
 
 ## Glossary
 
-| Term | Definition |
-|------|-----------|
-| **Company Content** | HANDLED platform marketing (features, pricing, homepage) |
-| **Tenant Content** | Individual service professional's storefront |
-| **Tenant Storefront** | The `/t/[slug]` or custom domain website |
-| **Tenant Lookup** | `getTenantBySlug()` or `getTenantByDomain()` call |
-| **Data Isolation** | Ensuring Tenant A doesn't see Tenant B's data |
-| **KNOWN_DOMAINS** | List of company domains in middleware (prevents custom domain routing) |
-| **Multi-Tenant** | Multiple users (tenants) with separate data and storefronts |
+| Term                  | Definition                                                             |
+| --------------------- | ---------------------------------------------------------------------- |
+| **Company Content**   | HANDLED platform marketing (features, pricing, homepage)               |
+| **Tenant Content**    | Individual service professional's storefront                           |
+| **Tenant Storefront** | The `/t/[slug]` or custom domain website                               |
+| **Tenant Lookup**     | `getTenantBySlug()` or `getTenantByDomain()` call                      |
+| **Data Isolation**    | Ensuring Tenant A doesn't see Tenant B's data                          |
+| **KNOWN_DOMAINS**     | List of company domains in middleware (prevents custom domain routing) |
+| **Multi-Tenant**      | Multiple users (tenants) with separate data and storefronts            |
 
 ---
 
@@ -315,10 +338,12 @@ expect(handled).toBeNull();
 4. Reference the code review or testing checklists
 
 **If you're reviewing code:**
+
 - Use `COMPANY-WEBSITE-CODE-REVIEW-CHECKLIST.md`
 - Search for red flag patterns (see "Common Issues to Catch")
 
 **If you're writing tests:**
+
 - Use `COMPANY-WEBSITE-TESTING-STRATEGIES.md`
 - Copy test patterns and adapt for your routes
 
@@ -338,4 +363,3 @@ expect(handled).toBeNull();
 - **App Structure:** `apps/web/README.md`
 - **Prevention Strategies:** `docs/solutions/PREVENTION-STRATEGIES-INDEX.md`
 - **Multi-Tenant Guide:** `docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md`
-

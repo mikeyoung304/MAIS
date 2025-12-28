@@ -4,12 +4,7 @@
  */
 
 import { AppError, DatabaseError, ExternalServiceError, NetworkError, TimeoutError } from './base';
-import {
-  ConflictError,
-  NotFoundError,
-  ValidationError,
-  InternalServerError,
-} from './http';
+import { ConflictError, NotFoundError, ValidationError, InternalServerError } from './http';
 import { PaymentError, PaymentFailedError, InsufficientFundsError } from './business';
 
 // Duck-typed Prisma error interface (compatible with Prisma 6+)

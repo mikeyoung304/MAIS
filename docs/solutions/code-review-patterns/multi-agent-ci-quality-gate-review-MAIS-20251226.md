@@ -1,9 +1,9 @@
 ---
-schema_version: "CORA-1.0"
+schema_version: 'CORA-1.0'
 document_type: solution
-title: "Multi-Agent Code Review: CI Quality Gate Fixes"
-created_at: "2025-12-26"
-updated_at: "2025-12-26"
+title: 'Multi-Agent Code Review: CI Quality Gate Fixes'
+created_at: '2025-12-26'
+updated_at: '2025-12-26'
 status: completed
 severity: p1-p2
 effort: 2_hours
@@ -11,7 +11,7 @@ risk: low
 project: MAIS
 domain: ci-cd
 tags: [code-review, ci-cd, eslint, coverage, quality-gates, multi-agent]
-related_issues: ["418", "419", "421", "422"]
+related_issues: ['418', '419', '421', '422']
 affected_files:
   - server/src/adapters/mock/index.ts
   - .eslintrc.cjs
@@ -19,7 +19,14 @@ affected_files:
   - .github/workflows/main-pipeline.yml
 commit: 136a948
 discovery_method: multi-agent-code-review
-review_agents: [security-sentinel, code-simplicity-reviewer, architecture-strategist, performance-oracle, devops-harmony-analyst]
+review_agents:
+  [
+    security-sentinel,
+    code-simplicity-reviewer,
+    architecture-strategist,
+    performance-oracle,
+    devops-harmony-analyst,
+  ]
 ---
 
 # Multi-Agent Code Review: CI Quality Gate Fixes
@@ -32,12 +39,12 @@ During quality remediation of commit `21a9b3a`, a multi-agent code review discov
 
 ## Findings Overview
 
-| # | Issue | Priority | Category | Status |
-|---|-------|----------|----------|--------|
-| 418 | Mock adapter undefined `tenantId` | P1 | Runtime Bug | Fixed |
-| 419 | ESLint ignorePatterns duplication | P2 | Configuration | Fixed |
-| 421 | CI coverage thresholds disabled | P2 | Quality Gate | Fixed |
-| 422 | Lint regression undetected | P2 | Quality Gate | Fixed |
+| #   | Issue                             | Priority | Category      | Status |
+| --- | --------------------------------- | -------- | ------------- | ------ |
+| 418 | Mock adapter undefined `tenantId` | P1       | Runtime Bug   | Fixed  |
+| 419 | ESLint ignorePatterns duplication | P2       | Configuration | Fixed  |
+| 421 | CI coverage thresholds disabled   | P2       | Quality Gate  | Fixed  |
+| 422 | Lint regression undetected        | P2       | Quality Gate  | Fixed  |
 
 ---
 
@@ -80,6 +87,7 @@ The undefined variable only surfaces at runtime. TypeScript doesn't flag undefin
 ### Problem
 
 ESLint ignore patterns were defined in TWO places:
+
 - `.eslintrc.cjs` (ignorePatterns array)
 - `.eslintignore` file
 
@@ -90,17 +98,29 @@ This created maintenance burden and drift risk.
 ```javascript
 // BEFORE .eslintrc.cjs
 module.exports = {
-  rules: { /* ... */ },
+  rules: {
+    /* ... */
+  },
   ignorePatterns: [
-    'dist', 'node_modules', 'coverage', '*.cjs', '*.js',
-    'generated', 'apps/web', '**/test/templates/**',
-    'server/scripts/**', '**/update-tenant-passwords.ts', 'tests/**',
+    'dist',
+    'node_modules',
+    'coverage',
+    '*.cjs',
+    '*.js',
+    'generated',
+    'apps/web',
+    '**/test/templates/**',
+    'server/scripts/**',
+    '**/update-tenant-passwords.ts',
+    'tests/**',
   ],
 };
 
 // AFTER .eslintrc.cjs
 module.exports = {
-  rules: { /* ... */ },
+  rules: {
+    /* ... */
+  },
   // Note: ignorePatterns defined in .eslintignore file
 };
 ```
@@ -121,8 +141,8 @@ Coverage thresholds were completely disabled in CI:
 
 ```typescript
 thresholds: process.env.CI
-  ? undefined  // Disabled in CI!
-  : { lines: 43, branches: 75, functions: 46, statements: 43 }
+  ? undefined // Disabled in CI!
+  : { lines: 43, branches: 75, functions: 46, statements: 43 };
 ```
 
 This allowed coverage regression to go undetected in PRs.
@@ -163,7 +183,7 @@ ESLint used `continue-on-error: true`, masking new lint errors:
 ```yaml
 - name: Run ESLint
   run: npm run lint
-  continue-on-error: true  # Always "succeeds"
+  continue-on-error: true # Always "succeeds"
 ```
 
 New lint violations could be merged without detection.
@@ -210,11 +230,11 @@ No change → 305 errors → PASSES
 
 After applying all fixes:
 
-| Check | Result |
-|-------|--------|
-| `npm run typecheck` | Passed |
-| `npm run lint` | 305 errors (matches baseline) |
-| `npm run test:unit` | 819 tests passed |
+| Check               | Result                        |
+| ------------------- | ----------------------------- |
+| `npm run typecheck` | Passed                        |
+| `npm run lint`      | 305 errors (matches baseline) |
+| `npm run test:unit` | 819 tests passed              |
 
 ---
 
@@ -245,6 +265,7 @@ Automated find-replace (sed, IDE refactoring) can introduce subtle bugs when var
 ### 2. Never Fully Disable Quality Gates
 
 Disabling coverage/lint checks creates blind spots. Instead:
+
 - Use realistic thresholds
 - Implement delta/ratchet checks
 - Track baselines explicitly
@@ -260,6 +281,7 @@ Duplicate configuration across files leads to drift and confusion.
 ### 4. Multi-Agent Review Catches What Humans Miss
 
 Six specialized agents found issues a single reviewer might overlook:
+
 - Security Sentinel → Undefined variable bug
 - Architecture Strategist → Configuration duplication
 - DevOps Harmony → Disabled quality gates

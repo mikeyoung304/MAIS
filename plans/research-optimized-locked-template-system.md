@@ -58,30 +58,45 @@ const SectionSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('gallery'),
     headline: z.string().max(60).default('Our Work'),
-    images: z.array(z.object({
-      url: z.string().url(),
-      alt: z.string().max(200),
-    })).min(1).max(50),
+    images: z
+      .array(
+        z.object({
+          url: z.string().url(),
+          alt: z.string().max(200),
+        })
+      )
+      .min(1)
+      .max(50),
     instagramHandle: z.string().max(30).optional(),
   }),
   z.object({
     type: z.literal('testimonials'),
     headline: z.string().max(60).default('What Clients Say'),
-    items: z.array(z.object({
-      quote: z.string().min(10).max(300),
-      authorName: z.string().min(1).max(100),
-      authorRole: z.string().max(50).optional(),
-      authorPhotoUrl: z.string().url().optional(),
-      rating: z.number().min(1).max(5).default(5),
-    })).min(1).max(12),
+    items: z
+      .array(
+        z.object({
+          quote: z.string().min(10).max(300),
+          authorName: z.string().min(1).max(100),
+          authorRole: z.string().max(50).optional(),
+          authorPhotoUrl: z.string().url().optional(),
+          rating: z.number().min(1).max(5).default(5),
+        })
+      )
+      .min(1)
+      .max(12),
   }),
   z.object({
     type: z.literal('faq'),
     headline: z.string().max(60).default('FAQ'),
-    items: z.array(z.object({
-      question: z.string().min(1).max(200),
-      answer: z.string().min(1).max(1000),
-    })).min(1).max(20),
+    items: z
+      .array(
+        z.object({
+          question: z.string().min(1).max(200),
+          answer: z.string().min(1).max(1000),
+        })
+      )
+      .min(1)
+      .max(20),
   }),
   z.object({
     type: z.literal('contact'),
@@ -130,7 +145,15 @@ export type LandingPageConfig = z.infer<typeof LandingPageConfigSchema>;
 ```typescript
 import type { LandingPageConfig } from '@macon/contracts';
 
-const PAGE_ORDER = ['home', 'about', 'services', 'gallery', 'testimonials', 'faq', 'contact'] as const;
+const PAGE_ORDER = [
+  'home',
+  'about',
+  'services',
+  'gallery',
+  'testimonials',
+  'faq',
+  'contact',
+] as const;
 
 const PAGE_LABELS: Record<string, string> = {
   home: 'Home',
@@ -148,12 +171,10 @@ export interface NavItem {
 }
 
 export function getNavigationItems(config: LandingPageConfig): NavItem[] {
-  return PAGE_ORDER
-    .filter(page => config.pages[page]?.enabled)
-    .map(page => ({
-      label: PAGE_LABELS[page],
-      path: page === 'home' ? '' : `/${page}`,
-    }));
+  return PAGE_ORDER.filter((page) => config.pages[page]?.enabled).map((page) => ({
+    label: PAGE_LABELS[page],
+    path: page === 'home' ? '' : `/${page}`,
+  }));
 }
 
 // Legacy export for backward compatibility during transition
@@ -242,10 +263,7 @@ import { getNavigationItems } from './navigation';
 
 export function TenantNav({ tenant, basePath }: Props) {
   const config = tenant.branding?.landingPage as LandingPageConfig;
-  const navItems = useMemo(
-    () => getNavigationItems(config),
-    [config]
-  );
+  const navItems = useMemo(() => getNavigationItems(config), [config]);
 
   // ... rest of component uses navItems instead of NAV_ITEMS
 }
@@ -297,9 +315,18 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
           type: 'faq',
           headline: 'Frequently Asked Questions',
           items: [
-            { question: 'How do I book?', answer: 'Browse our services and complete the booking form.' },
-            { question: 'What is your cancellation policy?', answer: 'Cancel up to 48 hours before for a full refund.' },
-            { question: 'Do you offer custom packages?', answer: 'Yes! Contact us to discuss your needs.' },
+            {
+              question: 'How do I book?',
+              answer: 'Browse our services and complete the booking form.',
+            },
+            {
+              question: 'What is your cancellation policy?',
+              answer: 'Cancel up to 48 hours before for a full refund.',
+            },
+            {
+              question: 'Do you offer custom packages?',
+              answer: 'Yes! Contact us to discuss your needs.',
+            },
           ],
         },
       ],
@@ -329,9 +356,7 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
         {
           type: 'testimonials',
           headline: 'What Clients Say',
-          items: [
-            { quote: 'Wonderful experience!', authorName: 'Happy Client', rating: 5 },
-          ],
+          items: [{ quote: 'Wonderful experience!', authorName: 'Happy Client', rating: 5 }],
         },
       ],
     },
@@ -443,11 +468,13 @@ migrate()
 ### Step 8: Clean Up Dead Code (30 min)
 
 **Remove:**
+
 - `AccommodationSectionConfigSchema` from landing-page.ts
 - `accommodation` from valid sections in routes
 - Old section toggle logic in `TenantLandingPage.tsx`
 
 **Update:**
+
 - `TenantLandingPage.tsx` to use new `SectionRenderer`
 - API contracts if needed
 
@@ -455,16 +482,16 @@ migrate()
 
 ## Files to Create/Modify
 
-| File | Action | Effort |
-|------|--------|--------|
-| `packages/contracts/src/landing-page.ts` | UPDATE - new schema | 1 hour |
-| `apps/web/src/components/tenant/navigation.ts` | UPDATE - dynamic nav | 30 min |
-| `apps/web/src/components/tenant/SectionRenderer.tsx` | NEW | 30 min |
-| `apps/web/src/components/tenant/sections/*.tsx` | NEW - 7 small components | 1 hour |
-| `apps/web/src/components/tenant/TenantNav.tsx` | UPDATE - use dynamic nav | 30 min |
-| `apps/web/src/components/tenant/TenantFooter.tsx` | UPDATE - use dynamic nav | 15 min |
-| `apps/web/src/app/t/[slug]/(site)/*/page.tsx` | UPDATE - check enabled | 30 min |
-| `server/scripts/migrate-to-page-config.ts` | NEW | 1 hour |
+| File                                                 | Action                   | Effort |
+| ---------------------------------------------------- | ------------------------ | ------ |
+| `packages/contracts/src/landing-page.ts`             | UPDATE - new schema      | 1 hour |
+| `apps/web/src/components/tenant/navigation.ts`       | UPDATE - dynamic nav     | 30 min |
+| `apps/web/src/components/tenant/SectionRenderer.tsx` | NEW                      | 30 min |
+| `apps/web/src/components/tenant/sections/*.tsx`      | NEW - 7 small components | 1 hour |
+| `apps/web/src/components/tenant/TenantNav.tsx`       | UPDATE - use dynamic nav | 30 min |
+| `apps/web/src/components/tenant/TenantFooter.tsx`    | UPDATE - use dynamic nav | 15 min |
+| `apps/web/src/app/t/[slug]/(site)/*/page.tsx`        | UPDATE - check enabled   | 30 min |
+| `server/scripts/migrate-to-page-config.ts`           | NEW                      | 1 hour |
 
 **Total: ~6 hours of focused work**
 
@@ -495,6 +522,7 @@ migrate()
 ## Rollback Plan
 
 If something goes wrong:
+
 1. The migration only updates `landingPageConfig` JSON
 2. Old data structure still works with old code
 3. Revert code, old config still renders
@@ -530,5 +558,5 @@ If something goes wrong:
 
 ---
 
-*Simplified based on DHH, Kieran, and Code Simplicity reviews*
-*Last updated: December 2025*
+_Simplified based on DHH, Kieran, and Code Simplicity reviews_
+_Last updated: December 2025_

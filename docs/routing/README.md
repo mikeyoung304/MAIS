@@ -16,20 +16,20 @@ MAIS tenant storefronts use:
 
 For Next.js patterns and implementation, see:
 
-| Document | Purpose |
-|----------|---------|
-| [ADR-014: Next.js App Router Migration](../adrs/ADR-014-nextjs-app-router-migration.md) | Architecture decisions and rationale |
-| [Migration Lessons Learned](../solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md) | 10 key lessons from the migration |
-| `apps/web/README.md` | Next.js app-specific documentation |
+| Document                                                                                                         | Purpose                              |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| [ADR-014: Next.js App Router Migration](../adrs/ADR-014-nextjs-app-router-migration.md)                          | Architecture decisions and rationale |
+| [Migration Lessons Learned](../solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md) | 10 key lessons from the migration    |
+| `apps/web/README.md`                                                                                             | Next.js app-specific documentation   |
 
 ## Active Routing Docs
 
-| Document | Purpose | Status |
-|----------|---------|--------|
-| [INDEX.md](./INDEX.md) | Documentation index and quick reference | **Updated** |
-| [VERCEL_MULTI_TENANT_DEPLOYMENT.md](./VERCEL_MULTI_TENANT_DEPLOYMENT.md) | Deployment with custom domains | **Active** |
-| [ARCHITECTURE_DIAGRAM.md](./ARCHITECTURE_DIAGRAM.md) | Visual architecture diagrams | **Active** |
-| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | Quick lookup patterns | **Partial** |
+| Document                                                                 | Purpose                                 | Status      |
+| ------------------------------------------------------------------------ | --------------------------------------- | ----------- |
+| [INDEX.md](./INDEX.md)                                                   | Documentation index and quick reference | **Updated** |
+| [VERCEL_MULTI_TENANT_DEPLOYMENT.md](./VERCEL_MULTI_TENANT_DEPLOYMENT.md) | Deployment with custom domains          | **Active**  |
+| [ARCHITECTURE_DIAGRAM.md](./ARCHITECTURE_DIAGRAM.md)                     | Visual architecture diagrams            | **Active**  |
+| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)                               | Quick lookup patterns                   | **Partial** |
 
 ## Archived (React Router v7)
 

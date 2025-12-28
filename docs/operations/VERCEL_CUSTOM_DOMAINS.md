@@ -10,12 +10,12 @@ MAIS tenant websites support custom domains (e.g., `janephotography.com` instead
 
 Custom domains on Vercel require a paid plan:
 
-| Feature | Hobby (Free) | Pro ($20/mo) |
-|---------|--------------|--------------|
-| Custom domains | 1 per project | Unlimited |
-| SSL certificates | Automatic | Automatic |
-| Wildcard domains | No | Yes |
-| Domain redirects | Limited | Unlimited |
+| Feature          | Hobby (Free)  | Pro ($20/mo) |
+| ---------------- | ------------- | ------------ |
+| Custom domains   | 1 per project | Unlimited    |
+| SSL certificates | Automatic     | Automatic    |
+| Wildcard domains | No            | Yes          |
+| Domain redirects | Limited       | Unlimited    |
 
 ## Setup Steps
 
@@ -37,6 +37,7 @@ Custom domains on Vercel require a paid plan:
 The tenant needs to update their DNS provider with:
 
 **Option A: CNAME Record (recommended for subdomains)**
+
 ```
 Type: CNAME
 Name: www
@@ -44,6 +45,7 @@ Value: cname.vercel-dns.com
 ```
 
 **Option B: A Record (required for apex domains)**
+
 ```
 Type: A
 Name: @
@@ -118,11 +120,11 @@ Renders tenant landing page
 
 ## Cost Analysis
 
-| Tenants | Monthly Cost |
-|---------|--------------|
-| 1-10 | $20 (Pro plan) |
-| 11-50 | $20 (Pro plan) |
-| 51+ | $20 (Pro plan) |
+| Tenants | Monthly Cost   |
+| ------- | -------------- |
+| 1-10    | $20 (Pro plan) |
+| 11-50   | $20 (Pro plan) |
+| 51+     | $20 (Pro plan) |
 
 Vercel Pro includes unlimited custom domains, so cost doesn't scale with tenant count.
 
@@ -132,17 +134,14 @@ Vercel API supports programmatic domain management:
 
 ```typescript
 // Add domain via API
-const response = await fetch(
-  `https://api.vercel.com/v10/projects/${projectId}/domains`,
-  {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${VERCEL_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ name: 'janephotography.com' }),
-  }
-);
+const response = await fetch(`https://api.vercel.com/v10/projects/${projectId}/domains`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${VERCEL_TOKEN}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ name: 'janephotography.com' }),
+});
 ```
 
 This enables self-service domain setup in the tenant admin dashboard.

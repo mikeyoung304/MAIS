@@ -107,9 +107,7 @@ export default function BillingPage() {
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in-up">
       <div>
         <h1 className="font-serif text-3xl font-bold text-text-primary">Billing</h1>
-        <p className="mt-2 text-text-muted">
-          Manage your HANDLED subscription
-        </p>
+        <p className="mt-2 text-text-muted">Manage your HANDLED subscription</p>
       </div>
 
       {/* Success message */}
@@ -139,9 +137,7 @@ export default function BillingPage() {
               <CheckCircle className="h-5 w-5 text-green-600" />
               Active Subscription
             </CardTitle>
-            <CardDescription>
-              You&apos;re subscribed to HANDLED Professional
-            </CardDescription>
+            <CardDescription>You&apos;re subscribed to HANDLED Professional</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-1">
@@ -163,9 +159,7 @@ export default function BillingPage() {
               <CreditCard className="h-5 w-5 text-sage" />
               HANDLED Professional
             </CardTitle>
-            <CardDescription>
-              Everything you need to grow your business
-            </CardDescription>
+            <CardDescription>Everything you need to grow your business</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-baseline gap-1">
@@ -182,9 +176,7 @@ export default function BillingPage() {
               ))}
             </ul>
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button
               variant="sage"

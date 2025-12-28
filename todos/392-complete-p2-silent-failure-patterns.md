@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "392"
+issue_id: '392'
 tags:
   - ux
   - error-handling
@@ -18,6 +18,7 @@ Several components silently swallow errors and show default/empty states instead
 ## Findings
 
 **1. Dashboard Stats Silent Failure**
+
 - **File:** `apps/web/src/app/(protected)/tenant/dashboard/page.tsx` (lines 100-107)
 - **Issue:** Shows "0" for all stats when API fails
 - **User sees:** Empty dashboard with zeros
@@ -31,12 +32,14 @@ catch (error) {
 ```
 
 **2. Date Availability Silent Failure**
+
 - **File:** `apps/web/src/components/booking/DateBookingWizard.tsx` (lines 379-395)
 - **Issue:** No try/catch around `checkDateAvailability()` call
 - **User sees:** Date selection appears to do nothing
 - **Should see:** Error toast or inline message
 
 **3. Dashboard Slug Resolution**
+
 - **File:** `apps/web/src/app/(protected)/tenant/dashboard/page.tsx` (lines 48-59)
 - **Issue:** If slug fetch fails, links render as `/t/null`
 - **User sees:** Broken navigation links
@@ -45,6 +48,7 @@ catch (error) {
 ## Proposed Solutions
 
 ### Option 1: Add error states to each component (Recommended)
+
 - Add `error` state alongside `loading` state
 - Show error UI when API fails
 - Include retry button
@@ -55,6 +59,7 @@ catch (error) {
 **Risk:** Low
 
 ### Option 2: Use React Error Boundaries
+
 - Let errors propagate to error.tsx
 - Simpler component code
 
@@ -70,6 +75,7 @@ Option 1 - Add proper error states with retry
 ## Technical Details
 
 **Example pattern:**
+
 ```typescript
 const [error, setError] = useState<string | null>(null);
 
@@ -96,8 +102,8 @@ if (error) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                        | Learnings                                 |
+| ---------- | ----------------------------- | ----------------------------------------- |
 | 2025-12-25 | Created from multi-agent scan | Found during error handling gaps analysis |
 
 ## Resources

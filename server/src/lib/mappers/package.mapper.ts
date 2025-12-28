@@ -48,7 +48,11 @@ function mapAddOn(addOn: AddOn): AddOnDto {
 export function mapPackageToDto(pkg: PackageWithAddOns): PackageDto {
   // Map grouping to tier for frontend consumption
   // Frontend uses tier for display sorting and tier label lookup
-  const tier = (pkg.grouping?.toUpperCase() ?? 'BASIC') as 'BASIC' | 'STANDARD' | 'PREMIUM' | 'CUSTOM';
+  const tier = (pkg.grouping?.toUpperCase() ?? 'BASIC') as
+    | 'BASIC'
+    | 'STANDARD'
+    | 'PREMIUM'
+    | 'CUSTOM';
 
   return {
     id: pkg.id,

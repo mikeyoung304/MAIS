@@ -35,8 +35,7 @@ export async function generateMetadata({ searchParams }: DomainPageProps): Promi
     const tenant = await getTenantByDomain(validatedDomain);
 
     const metaDescription =
-      tenant.branding?.landingPage?.hero?.subheadline ||
-      `Book services with ${tenant.name}`;
+      tenant.branding?.landingPage?.hero?.subheadline || `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,

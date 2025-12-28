@@ -17,6 +17,7 @@ dependencies: []
 ## Problem
 
 The FAQ accordion uses `max-height: 500px` for open state animations. This works but has limitations:
+
 - Very long answers may be truncated
 - Animation timing is based on 500px regardless of actual content height
 - Short answers animate slowly relative to their height
@@ -40,13 +41,11 @@ Consider using CSS Grid animation trick for smooth height transitions:
 <div
   className="grid transition-all duration-300 motion-reduce:transition-none"
   style={{
-    gridTemplateRows: isOpen ? '1fr' : '0fr'
+    gridTemplateRows: isOpen ? '1fr' : '0fr',
   }}
 >
-  <div className="overflow-hidden">
-    {/* Content */}
-  </div>
-</div>
+  <div className="overflow-hidden">{/* Content */}</div>
+</div>;
 
 // Or use ResizeObserver for dynamic max-height
 const [contentHeight, setContentHeight] = useState(0);
@@ -63,7 +62,7 @@ useEffect(() => {
 
 <div style={{ maxHeight: isOpen ? contentHeight : 0 }}>
   <div ref={contentRef}>Content</div>
-</div>
+</div>;
 ```
 
 ## Acceptance Criteria

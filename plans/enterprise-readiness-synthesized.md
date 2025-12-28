@@ -9,6 +9,7 @@
 ## Executive Summary
 
 The original 20-area audit was **over-scoped by 70%**. After multi-agent review:
+
 - 12 areas already solved or YAGNI
 - 3 areas need immediate execution (not research)
 - 5 areas deferred until actual pain occurs
@@ -20,6 +21,7 @@ The original 20-area audit was **over-scoped by 70%**. After multi-agent review:
 ## Phase 1: Documentation Cleanup (Day 1)
 
 ### Problem
+
 - 208 files in `docs/solutions/`
 - Multiple INDEX/SUMMARY/PREVENTION/QUICK-REFERENCE versions of same topic
 - Reviewers unanimous: "Delete documentation, don't add more"
@@ -27,37 +29,44 @@ The original 20-area audit was **over-scoped by 70%**. After multi-agent review:
 ### Files to Archive
 
 **Pattern 1: Redundant Prevention Guides (20 files)**
+
 ```
 docs/solutions/*-PREVENTION-*.md
 ```
 
 **Pattern 2: Index Files (14 files)**
+
 ```
 docs/solutions/*-INDEX*.md
 ```
 
 **Pattern 3: Summary Files (15 files)**
+
 ```
 docs/solutions/*-SUMMARY*.md
 ```
 
 **Pattern 4: Quick Reference Duplicates (17 files)**
+
 ```
 docs/solutions/*-QUICK-*.md
 ```
 
 **Pattern 5: Checklist Files (6 files)**
+
 ```
 docs/solutions/*-CHECKLIST*.md
 ```
 
 ### What to Keep
+
 - `docs/adrs/` - Architecture Decision Records (immutable)
 - `docs/solutions/best-practices/` - Consolidated best practices
 - `docs/guides/` - How-to guides
 - Root docs: ARCHITECTURE.md, CLAUDE.md, DEVELOPING.md, TESTING.md
 
 ### Archive Script
+
 ```bash
 #!/bin/bash
 # Run from MAIS root directory
@@ -82,6 +91,7 @@ echo "Remaining in docs/solutions: $(find docs/solutions -name '*.md' | wc -l)"
 ## Phase 2: Immediate Fixes (Days 2-3)
 
 ### 2.1 Fix Failing Tests
+
 **Priority:** P0 | **Effort:** 2-4 hours
 
 ```bash
@@ -93,6 +103,7 @@ npm test -- --watch
 ```
 
 ### 2.2 ESLint Rules
+
 **Priority:** P1 | **Effort:** 30 minutes
 
 ```bash
@@ -111,11 +122,13 @@ npm run lint -- --fix
 ```
 
 ### 2.3 Error Boundary
+
 **Priority:** P1 | **Effort:** 30 minutes
 
 Create `client/src/components/ErrorBoundary.tsx` if not exists, wrap App root.
 
 ### 2.4 Accessibility Quick Pass
+
 **Priority:** P1 | **Effort:** 4 hours
 
 ```bash
@@ -133,11 +146,13 @@ Run on 5 critical pages: homepage, booking, checkout, admin dashboard, login.
 ## Phase 3: Frontend Test Coverage (Days 4-5)
 
 ### Critical Flows to Test
+
 1. **Auth flow:** signup → login → logout
 2. **Booking flow:** select package → choose date → checkout
 3. **Admin flow:** login → manage packages → view bookings
 
 ### Test Pattern
+
 ```typescript
 // client/src/features/auth/__tests__/auth-flow.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -152,6 +167,7 @@ describe('Auth Flow', () => {
 ```
 
 ### Coverage Target
+
 - 3 integration tests for critical user journeys
 - Focus on flow coverage, not line coverage
 
@@ -160,12 +176,14 @@ describe('Auth Flow', () => {
 ## Phase 4: Database Constraints (Day 6)
 
 ### Add Missing FK Constraints
+
 ```bash
 cd server
 npm exec prisma migrate dev --name add-cascade-constraints
 ```
 
 ### Verify Cascade Behavior
+
 ```sql
 -- Test tenant deletion cascades
 BEGIN;
@@ -179,30 +197,30 @@ ROLLBACK;
 
 ## Deferred (Do When It Hurts)
 
-| Area | Trigger | Action |
-|------|---------|--------|
-| Type Safety | Touch file with `as any` | Fix that instance |
-| Performance | Lighthouse score < 80 | Run bundle analysis |
-| Index Optimization | Query > 100ms | Add specific index |
-| Component Deduplication | 3rd copy created | Extract shared component |
-| API Versioning | Breaking change needed | Add /v2 endpoint |
+| Area                    | Trigger                  | Action                   |
+| ----------------------- | ------------------------ | ------------------------ |
+| Type Safety             | Touch file with `as any` | Fix that instance        |
+| Performance             | Lighthouse score < 80    | Run bundle analysis      |
+| Index Optimization      | Query > 100ms            | Add specific index       |
+| Component Deduplication | 3rd copy created         | Extract shared component |
+| API Versioning          | Breaking change needed   | Add /v2 endpoint         |
 
 ---
 
 ## Deleted from Original Plan
 
-| Area | Reason |
-|------|--------|
+| Area                        | Reason                            |
+| --------------------------- | --------------------------------- |
 | God Component Decomposition | Already refactored (git: dd59512) |
-| Cascade Deletion Research | Already implemented |
-| Webhook Reliability | Already built (ADR-009) |
-| API Documentation | Already exists (api-docs.ts) |
-| Error Boundaries | Already implemented |
-| Distributed Tracing | YAGNI - monolith architecture |
-| File Size Limits | Cargo cult engineering |
-| Contract Versioning | No external consumers |
-| Documentation Gap Analysis | Need less docs, not more |
-| Metrics Dashboard | Premature - no production traffic |
+| Cascade Deletion Research   | Already implemented               |
+| Webhook Reliability         | Already built (ADR-009)           |
+| API Documentation           | Already exists (api-docs.ts)      |
+| Error Boundaries            | Already implemented               |
+| Distributed Tracing         | YAGNI - monolith architecture     |
+| File Size Limits            | Cargo cult engineering            |
+| Contract Versioning         | No external consumers             |
+| Documentation Gap Analysis  | Need less docs, not more          |
+| Metrics Dashboard           | Premature - no production traffic |
 
 ---
 
@@ -219,12 +237,12 @@ ROLLBACK;
 
 ## Timeline
 
-| Day | Focus | Deliverable |
-|-----|-------|-------------|
-| 1 | Doc cleanup | 70+ files archived |
+| Day | Focus           | Deliverable               |
+| --- | --------------- | ------------------------- |
+| 1   | Doc cleanup     | 70+ files archived        |
 | 2-3 | Immediate fixes | Tests green, ESLint rules |
-| 4-5 | Frontend tests | 3 integration tests |
-| 6 | DB constraints | Migration applied |
+| 4-5 | Frontend tests  | 3 integration tests       |
+| 6   | DB constraints  | Migration applied         |
 
 **Total:** 6 days of focused execution, not 20 research areas.
 
@@ -293,4 +311,4 @@ echo "To undo: mv $ARCHIVE_DIR/*.md $SOLUTIONS_DIR/"
 
 ---
 
-*Synthesized from 3 expert reviews. Ship the product.*
+_Synthesized from 3 expert reviews. Ship the product._

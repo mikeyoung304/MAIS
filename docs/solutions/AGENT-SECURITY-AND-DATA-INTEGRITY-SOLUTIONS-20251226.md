@@ -9,6 +9,7 @@
 Resolved 10 critical security and data integrity issues identified by parallel code review agents. These fixes prevent unauthorized access, race conditions, prompt injection attacks, and data corruption in the MAIS Business Growth Agent.
 
 **Categories:**
+
 - P1 (Critical): 5 security/race conditions
 - P2 (Important): 4 data integrity/validation issues
 - P3 (Enhancement): 1 robustness improvement
@@ -24,6 +25,7 @@ Resolved 10 critical security and data integrity issues identified by parallel c
 **Solution:** PostgreSQL advisory locks with transactions (ADR-013 pattern)
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/executors/index.ts:22-32
 function hashTenantDate(tenantId: string, date: string): number {
@@ -63,12 +65,14 @@ return await prisma.$transaction(async (tx) => {
 ```
 
 **Key Security Points:**
+
 - FNV-1a hash algorithm converts `tenantId:date` to deterministic 32-bit integer
 - Lock acquired BEFORE availability check eliminates race window
 - Lock automatically released when transaction commits/aborts
 - Errors throw before write, maintaining atomicity
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/executors/index.ts:459-548`
 
 ---
@@ -80,6 +84,7 @@ return await prisma.$transaction(async (tx) => {
 **Solution:** Advisory lock + availability check before date change
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/executors/index.ts:701-800
 registerProposalExecutor('update_booking', async (tenantId, payload) => {
@@ -142,12 +147,14 @@ registerProposalExecutor('update_booking', async (tenantId, payload) => {
 ```
 
 **Key Security Points:**
+
 - Advisory lock acquired BEFORE checking conflicts
 - Current booking excluded from conflict check to allow same-date reschedule
 - Reminder fields reset when date changes (calendar sync)
 - Non-date changes use simple update (no transaction overhead)
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/executors/index.ts:701-800`
 
 ---
@@ -159,6 +166,7 @@ registerProposalExecutor('update_booking', async (tenantId, payload) => {
 **Solution:** Dynamic trust tier based on status change and availability check
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/tools/write-tools.ts:1094-1212
 export const updateBookingTool: AgentTool = {
@@ -172,9 +180,9 @@ export const updateBookingTool: AgentTool = {
     // - notes only → T2
     // - status progression (non-cancel) → T2
     const hasDateChange = !!newDate;
-    const isCancellation = status?.toUpperCase() === 'CANCELED' ||
-                          status?.toUpperCase() === 'CANCELLED';
-    const trustTier = (hasDateChange || isCancellation) ? 'T3' : 'T2';
+    const isCancellation =
+      status?.toUpperCase() === 'CANCELED' || status?.toUpperCase() === 'CANCELLED';
+    const trustTier = hasDateChange || isCancellation ? 'T3' : 'T2';
 
     // If date change, verify new date is available
     if (newDate) {
@@ -220,12 +228,14 @@ export const updateBookingTool: AgentTool = {
 ```
 
 **Key Security Points:**
+
 - Cancellation status detected and escalated to T3
 - Cancellation requires explicit user confirmation (prevents prompt injection)
 - Date changes also T3 (user consent needed before rescheduling)
 - Notes-only updates remain T2 for efficiency
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/write-tools.ts:1090-1212`
 
 ---
@@ -237,6 +247,7 @@ export const updateBookingTool: AgentTool = {
 **Solution:** Hard confirmation for deposit percentage and balance due changes
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/tools/write-tools.ts:1222-1301
 export const updateDepositSettingsTool: AgentTool = {
@@ -276,11 +287,15 @@ export const updateDepositSettingsTool: AgentTool = {
     const changes: string[] = [];
     if (depositPercent !== undefined) {
       const currentPercent = tenant.depositPercent ? Number(tenant.depositPercent) : null;
-      changes.push(`deposit: ${currentPercent ?? 'full payment'} → ${depositPercent ?? 'full payment'}%`);
+      changes.push(
+        `deposit: ${currentPercent ?? 'full payment'} → ${depositPercent ?? 'full payment'}%`
+      );
     }
 
     if (balanceDueDays !== undefined) {
-      changes.push(`balance due: ${tenant.balanceDueDays ?? 'unset'} → ${balanceDueDays} days before`);
+      changes.push(
+        `balance due: ${tenant.balanceDueDays ?? 'unset'} → ${balanceDueDays} days before`
+      );
     }
 
     // CRITICAL: T3 hard confirmation for financial changes
@@ -290,6 +305,7 @@ export const updateDepositSettingsTool: AgentTool = {
 ```
 
 **Executor Implementation:**
+
 ```typescript
 // server/src/agent/executors/index.ts:802-830
 registerProposalExecutor('update_deposit_settings', async (tenantId, payload) => {
@@ -321,11 +337,13 @@ registerProposalExecutor('update_deposit_settings', async (tenantId, payload) =>
 ```
 
 **Key Security Points:**
+
 - T3 hard confirmation prevents financial changes without explicit user consent
 - Validation ensures deposit is 0-100% and days are non-negative
 - Changes logged with full context for audit trail
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/write-tools.ts:1222-1301`
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/executors/index.ts:802-830`
 
@@ -338,11 +356,13 @@ registerProposalExecutor('update_deposit_settings', async (tenantId, payload) =>
 **Solution:** Dynamic T2/T3 escalation based on booking count
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/tools/write-tools.ts:298-352
 export const deleteAddOnTool: AgentTool = {
   name: 'delete_addon',
-  description: 'Delete an add-on (soft delete). Requires confirmation if add-on has existing bookings.',
+  description:
+    'Delete an add-on (soft delete). Requires confirmation if add-on has existing bookings.',
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const addOnId = params.addOnId as string;
@@ -369,9 +389,7 @@ export const deleteAddOnTool: AgentTool = {
         addOnName: sanitizeForContext(addOn.name, 50),
         price: `$${(addOn.price / 100).toFixed(2)}`,
         bookingCount: addOn._count.bookingRefs,
-        ...(hasBookings
-          ? { warning: 'This add-on has existing bookings that reference it' }
-          : {}),
+        ...(hasBookings ? { warning: 'This add-on has existing bookings that reference it' } : {}),
       };
 
       return createProposal(context, 'delete_addon', operation, trustTier, payload, preview);
@@ -384,6 +402,7 @@ export const deleteAddOnTool: AgentTool = {
 ```
 
 **Executor Implementation:**
+
 ```typescript
 // server/src/agent/executors/index.ts:383-408
 registerProposalExecutor('delete_addon', async (tenantId, payload) => {
@@ -414,6 +433,7 @@ registerProposalExecutor('delete_addon', async (tenantId, payload) => {
 ```
 
 **Key Security Points:**
+
 - Count bookings referencing add-on before deletion
 - T3 escalation if bookings exist (prevents data loss)
 - T2 if no bookings (standard operation)
@@ -421,6 +441,7 @@ registerProposalExecutor('delete_addon', async (tenantId, payload) => {
 - Preview includes booking count and warning
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/write-tools.ts:298-352`
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/executors/index.ts:383-408`
 
@@ -435,12 +456,14 @@ registerProposalExecutor('delete_addon', async (tenantId, payload) => {
 **Solution:** Verified unified field mapping in read-tools and write-tools
 
 **Key Points:**
+
 - All customer reads use `customer.name`, `customer.email`, `customer.phone`
 - All customer writes map consistently
 - Phone field optional (nullable in schema)
 - Email required and validated
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/read-tools.ts` (verified)
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/write-tools.ts` (verified)
 
@@ -453,6 +476,7 @@ registerProposalExecutor('delete_addon', async (tenantId, payload) => {
 **Solution:** Added specific error codes and detailed error messages
 
 **Pattern:**
+
 ```typescript
 // Before (generic)
 return { success: false, error: 'Error creating proposal' };
@@ -466,11 +490,13 @@ return {
 ```
 
 **Error Code Pattern:**
+
 - `{TOOL_NAME}_ERROR` for all tool-level errors
 - Includes user-actionable guidance (e.g., "Verify the package ID...")
 - Preserves underlying error message for logging
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/write-tools.ts` (all tools)
 
 ---
@@ -482,6 +508,7 @@ return {
 **Solution:** Extended sanitization with Unicode normalization and pattern detection
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/tools/types.ts (inferred from sanitizeForContext usage)
 export function sanitizeForContext(input: string, maxLength: number = 100): string {
@@ -501,6 +528,7 @@ export function sanitizeForContext(input: string, maxLength: number = 100): stri
 ```
 
 **Injection Patterns Detected:**
+
 1. **Control character injection:** `\x00-\x1F`, `\x7F`
 2. **Unicode lookalikes:** `ᴀ` → `A`, `ᴅ` → `D` (via NFKC normalization)
 3. **Whitespace collapse:** Prevents "no-op" space injection
@@ -513,6 +541,7 @@ export function sanitizeForContext(input: string, maxLength: number = 100): stri
 10. **Comment-based payload:** NFKC removes Unicode comment markers
 
 **Usage:**
+
 ```typescript
 // Sanitize user-provided strings for agent context
 const operation = `Delete add-on "${sanitizeForContext(addOn.name, 50)}"`;
@@ -523,6 +552,7 @@ const preview = {
 ```
 
 **Key Points:**
+
 - NFKC normalization prevents Unicode lookalike attacks
 - Control characters stripped before context
 - Whitespace normalized (no sneaky zero-width chars)
@@ -530,6 +560,7 @@ const preview = {
 - Applied to all user-provided strings in operation/preview
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/proposals/proposal.service.ts:5` (Unicode normalization comment)
 - All write-tools and executors use `sanitizeForContext()` for user input
 
@@ -542,6 +573,7 @@ const preview = {
 **Solution:** Dynamic trust tier based on price change magnitude
 
 **Implementation:**
+
 ```typescript
 // server/src/agent/tools/write-tools.ts:59-83
 const SIGNIFICANT_PRICE_CHANGE_THRESHOLD = {
@@ -577,9 +609,8 @@ export const upsertPackageTool: AgentTool = {
       if (isSignificantPriceChange(oldPriceCents, newPriceCents)) {
         trustTier = 'T3'; // Escalate to hard confirmation
         const absoluteChange = Math.abs(newPriceCents - oldPriceCents);
-        const relativeChange = oldPriceCents > 0
-          ? ((absoluteChange / oldPriceCents) * 100).toFixed(1)
-          : 'N/A';
+        const relativeChange =
+          oldPriceCents > 0 ? ((absoluteChange / oldPriceCents) * 100).toFixed(1) : 'N/A';
         const direction = newPriceCents > oldPriceCents ? 'increase' : 'decrease';
         priceChangeWarning = `Significant price ${direction}: $${(absoluteChange / 100).toFixed(2)} (${relativeChange}%)`;
       }
@@ -599,6 +630,7 @@ export const upsertPackageTool: AgentTool = {
 ```
 
 **Trust Tier Logic:**
+
 - **T2 (soft confirm):** New packages, minor price changes (≤20% and ≤$100)
 - **T3 (hard confirm):** >20% relative change OR >$100 absolute change
 - **Example escalations:**
@@ -609,12 +641,14 @@ export const upsertPackageTool: AgentTool = {
   - $100 → $201 (101% increase, >$100) = T3
 
 **Key Security Points:**
+
 - Threshold calculated as percentage OR absolute change (either triggers T3)
 - Zero-to-price edge case handled separately
 - Price change warning shown in preview
 - User must explicitly confirm before significant price change applies
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/tools/write-tools.ts:59-202`
 
 ---
@@ -628,6 +662,7 @@ export const upsertPackageTool: AgentTool = {
 **Solution:** NFKC normalization in `sanitizeForContext()` function
 
 **Implementation:**
+
 ```typescript
 // Inferred from usage pattern in proposal.service.ts:5
 export function sanitizeForContext(input: string, maxLength: number = 100): string {
@@ -650,22 +685,24 @@ export function sanitizeForContext(input: string, maxLength: number = 100): stri
 
 **Unicode Attack Patterns Prevented:**
 
-| Attack Pattern | Example | NFKC Result |
-|---|---|---|
-| Lookalike letters | `ᴀbcd` (MODIFIER A) | `abcd` |
-| Ligatures | `ﬁnance` | `finance` |
-| Roman numerals | `Ⅻ` (ROMAN XII) | `XII` |
-| Half-width/full-width | `Ａ` (FULLWIDTH A) | `A` |
-| Super/subscript | `ᴬ` (SUPERSCRIPT A) | `A` |
-| Mathematical alphanumeric | `𝐀` (DOUBLE-STRUCK A) | `A` |
+| Attack Pattern            | Example               | NFKC Result |
+| ------------------------- | --------------------- | ----------- |
+| Lookalike letters         | `ᴀbcd` (MODIFIER A)   | `abcd`      |
+| Ligatures                 | `ﬁnance`              | `finance`   |
+| Roman numerals            | `Ⅻ` (ROMAN XII)       | `XII`       |
+| Half-width/full-width     | `Ａ` (FULLWIDTH A)    | `A`         |
+| Super/subscript           | `ᴬ` (SUPERSCRIPT A)   | `A`         |
+| Mathematical alphanumeric | `𝐀` (DOUBLE-STRUCK A) | `A`         |
 
 **Key Security Points:**
+
 - NFKC is compatibility normalization (maximally compatible)
 - Works on all Unicode strings (not just ASCII)
 - Idempotent: `normalize('NFKC').normalize('NFKC')` = same result
 - Applied to all operation names and preview strings
 
 **Files Modified:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/proposals/proposal.service.ts` (Unicode normalization usage)
 - All write-tools and executors use `sanitizeForContext()` with NFKC
 
@@ -692,7 +729,7 @@ async function verifyOwnership<T>(
     const modelName = model.charAt(0).toUpperCase() + model.slice(1);
     throw new Error(
       `${modelName} "${id}" not found or you do not have permission to access it. ` +
-      `Verify the ${model} ID belongs to your business.`
+        `Verify the ${model} ID belongs to your business.`
     );
   }
   return entity as T;
@@ -700,6 +737,7 @@ async function verifyOwnership<T>(
 ```
 
 **Usage Pattern:**
+
 ```typescript
 // Before update
 const existingPackage = await prisma.package.findFirst({
@@ -713,7 +751,9 @@ if (!existingPackage) {
 // Now safe to update
 const updated = await prisma.package.update({
   where: { id: packageId },
-  data: { /* changes */ },
+  data: {
+    /* changes */
+  },
 });
 ```
 
@@ -737,6 +777,7 @@ async function executeToolWithContext(toolName: string, params: Record<string, u
 ```
 
 **Benefits:**
+
 - Reduces database queries (buildContext fetches tenant config)
 - Ensures consistency (same context for all tools in session)
 - Prevents race conditions from context inconsistency
@@ -746,16 +787,19 @@ async function executeToolWithContext(toolName: string, params: Record<string, u
 ## Testing & Verification
 
 ### Unit Tests
+
 ```bash
 npm run test:unit -- --grep "agent.*proposal\|advisor.*lock\|sanitize"
 ```
 
 ### Integration Tests
+
 ```bash
 npm run test:integration -- --grep "create_booking.*race\|update_booking.*availability"
 ```
 
 ### E2E Tests
+
 ```bash
 npm run test:e2e -- e2e/tests/agent-*.spec.ts
 ```
@@ -790,6 +834,7 @@ updateBooking(tenantId2, bookingIdFromTenant1); // Error: not found ✓
 ## Files Modified
 
 **Core Files:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/agent/executors/index.ts` (263 lines added)
   - Advisory lock implementation (`hashTenantDate`)
   - All 15 proposal executors with tenant verification
@@ -826,14 +871,16 @@ updateBooking(tenantId2, bookingIdFromTenant1); // Error: not found ✓
    - Multi-step operation? → Single transaction
 
 3. **Verify Tenant Ownership:**
+
    ```typescript
    const entity = await prisma.model.findFirst({
      where: { id, tenantId }, // Always filter by tenantId
    });
-   if (!entity) throw new Error("Not found or not owned");
+   if (!entity) throw new Error('Not found or not owned');
    ```
 
 4. **Sanitize User Input:**
+
    ```typescript
    const operation = `Update ${sanitizeForContext(userInput, 50)}`;
    ```

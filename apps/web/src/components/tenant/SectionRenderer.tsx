@@ -36,11 +36,7 @@ interface SectionRendererProps {
  * />
  * ```
  */
-export function SectionRenderer({
-  sections,
-  tenant,
-  basePath = '',
-}: SectionRendererProps) {
+export function SectionRenderer({ sections, tenant, basePath = '' }: SectionRendererProps) {
   if (!sections || sections.length === 0) {
     return null;
   }
@@ -52,78 +48,28 @@ export function SectionRenderer({
         switch (section.type) {
           case 'hero':
             return (
-              <HeroSection
-                key={`hero-${index}`}
-                {...section}
-                tenant={tenant}
-                basePath={basePath}
-              />
+              <HeroSection key={`hero-${index}`} {...section} tenant={tenant} basePath={basePath} />
             );
           case 'text':
-            return (
-              <TextSection
-                key={`text-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <TextSection key={`text-${index}`} {...section} tenant={tenant} />;
           case 'gallery':
-            return (
-              <GallerySection
-                key={`gallery-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <GallerySection key={`gallery-${index}`} {...section} tenant={tenant} />;
           case 'testimonials':
             return (
-              <TestimonialsSection
-                key={`testimonials-${index}`}
-                {...section}
-                tenant={tenant}
-              />
+              <TestimonialsSection key={`testimonials-${index}`} {...section} tenant={tenant} />
             );
           case 'faq':
-            return (
-              <FAQSection
-                key={`faq-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <FAQSection key={`faq-${index}`} {...section} tenant={tenant} />;
           case 'contact':
-            return (
-              <ContactSection
-                key={`contact-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <ContactSection key={`contact-${index}`} {...section} tenant={tenant} />;
           case 'cta':
             return (
-              <CTASection
-                key={`cta-${index}`}
-                {...section}
-                tenant={tenant}
-                basePath={basePath}
-              />
+              <CTASection key={`cta-${index}`} {...section} tenant={tenant} basePath={basePath} />
             );
           case 'pricing':
-            return (
-              <PricingSection
-                key={`pricing-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <PricingSection key={`pricing-${index}`} {...section} tenant={tenant} />;
           case 'features':
-            return (
-              <FeaturesSection
-                key={`features-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <FeaturesSection key={`features-${index}`} {...section} tenant={tenant} />;
           default: {
             const _exhaustive: never = section;
             return _exhaustive;

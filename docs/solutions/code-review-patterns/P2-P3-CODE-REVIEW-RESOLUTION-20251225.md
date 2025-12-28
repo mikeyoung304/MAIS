@@ -62,7 +62,7 @@ function formatPrice(cents: number): string {
 }
 
 const packages = data.packages
-  .filter(pkg => pkg.active)
+  .filter((pkg) => pkg.active)
   .sort((a, b) => {
     const tierOrder = { BASIC: 0, STANDARD: 1, PREMIUM: 2, CUSTOM: 3 };
     return (tierOrder[a.tier] ?? 99) - (tierOrder[b.tier] ?? 99);
@@ -206,11 +206,7 @@ export const NAV_ITEMS: NavItem[] = [
  * @param domainParam - Optional domain query param for custom domains
  * @returns Full href for the navigation link
  */
-export function buildNavHref(
-  basePath: string,
-  item: NavItem,
-  domainParam?: string
-): string {
+export function buildNavHref(basePath: string, item: NavItem, domainParam?: string): string {
   // For home page with domain param, return root with param
   if (item.path === '' && domainParam) {
     return `/${domainParam}`;
@@ -240,7 +236,7 @@ export function buildNavHref(
 import { formatPrice } from '@/lib/format';
 import { sortPackagesByTier } from '@/lib/packages';
 
-const packages = data.packages.filter(pkg => pkg.active);
+const packages = data.packages.filter((pkg) => pkg.active);
 const sorted = sortPackagesByTier(packages);
 ```
 
@@ -373,6 +369,7 @@ const t3 = await getTenantByDomain('example.com'); // Calls API again (cache is 
 ### Problem
 
 Domain route handlers accepted query parameters directly without validation, creating:
+
 - Security risk: Invalid domains could cause crashes
 - UX issue: Unclear error messages
 
@@ -516,6 +513,7 @@ export default function Error({
 ```
 
 **Files added:**
+
 - `/apps/web/src/app/t/_domain/error.tsx` (root)
 - `/apps/web/src/app/t/_domain/about/error.tsx`
 - `/apps/web/src/app/t/_domain/contact/error.tsx`
@@ -919,6 +917,7 @@ This resolution used a structured approach to handle 15 findings efficiently:
 ### Phase 1: Grouping (5 minutes)
 
 Group findings by category:
+
 - **Duplication** (5 items) → Extract utilities
 - **Request optimization** (2 items) → Add `cache()` and validation
 - **Error handling** (2 items) → Add error boundaries
@@ -1084,4 +1083,3 @@ When reviewing Next.js storefronts, check for:
 - [ ] Navigation/validation logic memoized to prevent unnecessary renders
 - [ ] All TypeScript errors resolved (no `any` except library limitations)
 - [ ] E2E tests pass for modified routes
-

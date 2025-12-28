@@ -5,14 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  User,
-  Building2,
-  Key,
-  AlertTriangle,
-  Copy,
-  CheckCircle,
-} from 'lucide-react';
+import { User, Building2, Key, AlertTriangle, Copy, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 
 /**
@@ -75,19 +68,13 @@ export default function TenantSettingsPage() {
             <Key className="h-5 w-5 text-sage" />
             API Keys
           </CardTitle>
-          <CardDescription>
-            Use these keys to integrate with the HANDLED API
-          </CardDescription>
+          <CardDescription>Use these keys to integrate with the HANDLED API</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Public API Key</Label>
             <div className="flex gap-2">
-              <Input
-                value={apiKeyPublic}
-                disabled
-                className="bg-neutral-50 font-mono text-sm"
-              />
+              <Input value={apiKeyPublic} disabled className="bg-neutral-50 font-mono text-sm" />
               <Button
                 variant="outline"
                 size="icon"
@@ -112,7 +99,8 @@ export default function TenantSettingsPage() {
               <div>
                 <p className="font-medium text-yellow-800">Secret Key</p>
                 <p className="mt-1 text-sm text-yellow-700">
-                  Your secret key is hidden for security. Contact support if you need to regenerate it.
+                  Your secret key is hidden for security. Contact support if you need to regenerate
+                  it.
                 </p>
               </div>
             </div>
@@ -131,8 +119,8 @@ export default function TenantSettingsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-text-muted">
-            Business settings configuration coming soon. This will include timezone,
-            currency preferences, and notification settings.
+            Business settings configuration coming soon. This will include timezone, currency
+            preferences, and notification settings.
           </p>
         </CardContent>
       </Card>
@@ -150,9 +138,7 @@ export default function TenantSettingsPage() {
           <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 p-4">
             <div>
               <p className="font-medium text-text-primary">Sign Out</p>
-              <p className="text-sm text-text-muted">
-                Sign out of your account on this device
-              </p>
+              <p className="text-sm text-text-muted">Sign out of your account on this device</p>
             </div>
             <Button
               variant="outline"
@@ -170,11 +156,7 @@ export default function TenantSettingsPage() {
                 Permanently delete your account and all data
               </p>
             </div>
-            <Button
-              variant="outline"
-              disabled
-              className="border-red-200 text-red-600 opacity-50"
-            >
+            <Button variant="outline" disabled className="border-red-200 text-red-600 opacity-50">
               Delete Account
             </Button>
           </div>

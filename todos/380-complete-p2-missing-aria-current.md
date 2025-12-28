@@ -35,20 +35,20 @@ Add `aria-current="page"` to active links:
 
 ```tsx
 // TenantNav.tsx - Desktop navigation
-{navItems.map((item) => (
-  <Link
-    key={item.href}
-    href={item.href}
-    aria-current={isActiveLink(item.href) ? 'page' : undefined}
-    className={`text-sm font-medium transition-colors ${
-      isActiveLink(item.href)
-        ? 'text-sage'
-        : 'text-text-muted hover:text-text-primary'
-    }`}
-  >
-    {item.label}
-  </Link>
-))}
+{
+  navItems.map((item) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      aria-current={isActiveLink(item.href) ? 'page' : undefined}
+      className={`text-sm font-medium transition-colors ${
+        isActiveLink(item.href) ? 'text-sage' : 'text-text-muted hover:text-text-primary'
+      }`}
+    >
+      {item.label}
+    </Link>
+  ));
+}
 
 // Mobile navigation - same pattern
 <Link
@@ -60,7 +60,7 @@ Add `aria-current="page"` to active links:
   tabIndex={isOpen ? 0 : -1}
 >
   {item.label}
-</Link>
+</Link>;
 ```
 
 ## Acceptance Criteria

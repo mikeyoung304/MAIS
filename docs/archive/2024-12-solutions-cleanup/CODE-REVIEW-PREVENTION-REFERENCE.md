@@ -23,31 +23,31 @@ const { packageSlug } = useParams<{ packageSlug: string }>();
 await api.getPackageBySlug({ params: { slug: packageSlug } });
 
 // ❌ WRONG
-const { packageId } = useParams<{ packageId: string }>();  // API expects 'slug'
+const { packageId } = useParams<{ packageId: string }>(); // API expects 'slug'
 ```
 
 ### Rule 2: Use Context-Specific Names
 
 ```typescript
 // ✅ CORRECT
-const databaseId = pkg.id;           // Integer primary key from database
-const urlSlug = pkg.slug;            // User-friendly URL string
-const bookingToken = pkg.tokenId;    // Special token identifier
+const databaseId = pkg.id; // Integer primary key from database
+const urlSlug = pkg.slug; // User-friendly URL string
+const bookingToken = pkg.tokenId; // Special token identifier
 
 // ❌ WRONG
-const packageId = pkg.id;     // Which kind of ID? Ambiguous
-const identifier = pkg.slug;  // Slug is NOT an identifier
+const packageId = pkg.id; // Which kind of ID? Ambiguous
+const identifier = pkg.slug; // Slug is NOT an identifier
 ```
 
 ### Rule 3: Function Signatures Make Intent Clear
 
 ```typescript
 // ✅ CORRECT
-async function getPackageBySlug(slug: string): Promise<PackageDto> { }
-async function getPackageById(id: number): Promise<PackageDto> { }
+async function getPackageBySlug(slug: string): Promise<PackageDto> {}
+async function getPackageById(id: number): Promise<PackageDto> {}
 
 // ❌ WRONG
-async function getPackage(identifier: any): Promise<PackageDto> { }  // What is identifier?
+async function getPackage(identifier: any): Promise<PackageDto> {} // What is identifier?
 ```
 
 ### Review Checklist
@@ -124,10 +124,7 @@ catch (error) {
 // ✅ CORRECT - Inherits from AppError, generic message
 export class PackageNotAvailableError extends PackageError {
   constructor() {
-    super(
-      'The requested package is not available for booking',
-      'PACKAGE_NOT_AVAILABLE'
-    );
+    super('The requested package is not available for booking', 'PACKAGE_NOT_AVAILABLE');
     this.name = 'PackageNotAvailableError';
   }
 }
@@ -135,7 +132,7 @@ export class PackageNotAvailableError extends PackageError {
 // ❌ WRONG - Includes details
 export class PackageNotFoundError extends Error {
   constructor(packageId: string) {
-    super(`Package ${packageId} not found`);  // Reveals ID
+    super(`Package ${packageId} not found`); // Reveals ID
   }
 }
 ```
@@ -294,8 +291,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Container } from '@/ui/Container';
 
 // ❌ WRONG - Unused imports
-import { useQuery, useMutation } from '@tanstack/react-query';  // useMutation not used
-import { Container, Grid } from '@/ui/Container';  // Grid not used
+import { useQuery, useMutation } from '@tanstack/react-query'; // useMutation not used
+import { Container, Grid } from '@/ui/Container'; // Grid not used
 ```
 
 ### Rule 2: No Dead Code
@@ -378,16 +375,16 @@ function Other() {
 
 Stop and investigate if you see any of these:
 
-| Flag | Why | Action |
-|------|-----|--------|
-| `packageId` in route params | Doesn't match API contract | Ask about intent |
-| Error includes `${packageId}` | Security vulnerability | Request fix |
-| Error reveals schema/columns | Security vulnerability | Request fix |
-| Object created in render | Breaks memo optimization | Add useMemo |
-| `memo` without object props | Premature optimization | Remove memo |
-| Magic number in 2+ places | Maintenance issue | Move to constant |
-| Unused import | Code quality | Remove |
-| `useCallback` without memo child | Wasted optimization | Remove |
+| Flag                             | Why                        | Action           |
+| -------------------------------- | -------------------------- | ---------------- |
+| `packageId` in route params      | Doesn't match API contract | Ask about intent |
+| Error includes `${packageId}`    | Security vulnerability     | Request fix      |
+| Error reveals schema/columns     | Security vulnerability     | Request fix      |
+| Object created in render         | Breaks memo optimization   | Add useMemo      |
+| `memo` without object props      | Premature optimization     | Remove memo      |
+| Magic number in 2+ places        | Maintenance issue          | Move to constant |
+| Unused import                    | Code quality               | Remove           |
+| `useCallback` without memo child | Wasted optimization        | Remove           |
 
 ---
 
@@ -419,18 +416,18 @@ grep "^export function" client/src/features/storefront/*.tsx | grep -v memo
 
 ### When Should I Use X?
 
-| Question | Answer | Usage |
-|----------|--------|-------|
-| Constant that never changes? | YES | Module level constant |
-| Object created in render? | YES | Check if passes to memo'ed child |
-|   → Passes to memo'ed child? | YES | Wrap with useMemo |
-|   → Doesn't pass to memo child? | NO | Don't wrap |
-| Function passed to memo'ed child? | YES | Wrap with useCallback |
-| Component gets memo'ed? | Gets object props | YES, add memo |
-|   | Gets only primitives | NO, no benefit |
-|   | Used in list | YES, add memo |
-| Is this error message safe? | No sensitive info | YES, okay to send |
-|   | Has IDs/columns/schema | NO, log only |
+| Question                          | Answer                 | Usage                            |
+| --------------------------------- | ---------------------- | -------------------------------- |
+| Constant that never changes?      | YES                    | Module level constant            |
+| Object created in render?         | YES                    | Check if passes to memo'ed child |
+| → Passes to memo'ed child?        | YES                    | Wrap with useMemo                |
+| → Doesn't pass to memo child?     | NO                     | Don't wrap                       |
+| Function passed to memo'ed child? | YES                    | Wrap with useCallback            |
+| Component gets memo'ed?           | Gets object props      | YES, add memo                    |
+|                                   | Gets only primitives   | NO, no benefit                   |
+|                                   | Used in list           | YES, add memo                    |
+| Is this error message safe?       | No sensitive info      | YES, okay to send                |
+|                                   | Has IDs/columns/schema | NO, log only                     |
 
 ---
 
@@ -471,13 +468,13 @@ grep "^export function" client/src/features/storefront/*.tsx | grep -v memo
 
 ## Prevention Documents
 
-| Document | Size | Purpose | Read Time |
-|----------|------|---------|-----------|
-| CODE-REVIEW-PREVENTION-QUICK-CHECKLIST.md | 6.7 KB | Use during review | 2 min |
-| CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md | 20 KB | Detailed explanations | 15 min |
-| IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md | 16 KB | Working code examples | 10 min |
-| CODE-REVIEW-PREVENTION-INDEX.md | 10 KB | Navigation & links | 5 min |
-| CODE-REVIEW-PREVENTION-REFERENCE.md | This file | Quick lookup | 3 min |
+| Document                                       | Size      | Purpose               | Read Time |
+| ---------------------------------------------- | --------- | --------------------- | --------- |
+| CODE-REVIEW-PREVENTION-QUICK-CHECKLIST.md      | 6.7 KB    | Use during review     | 2 min     |
+| CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md  | 20 KB     | Detailed explanations | 15 min    |
+| IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md | 16 KB     | Working code examples | 10 min    |
+| CODE-REVIEW-PREVENTION-INDEX.md                | 10 KB     | Navigation & links    | 5 min     |
+| CODE-REVIEW-PREVENTION-REFERENCE.md            | This file | Quick lookup          | 3 min     |
 
 ---
 

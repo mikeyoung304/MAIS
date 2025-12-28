@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "364"
+issue_id: '364'
 tags: [code-review, performance, nextjs]
 dependencies: []
 ---
@@ -18,13 +18,13 @@ TenantLandingPage and DateBookingWizard use raw `<img>` tags instead of Next.js 
 
 **File:** `apps/web/src/app/t/[slug]/TenantLandingPage.tsx`
 
-| Line | Issue |
-|------|-------|
-| 80 | `<img src={pkg.photoUrl} />` (Package photo) |
-| 227 | `<img src={landingConfig.about.imageUrl} />` (About section) |
-| 265 | `<img src={testimonial.imageUrl} />` (Testimonials) |
-| 299 | `<img src={image.url} />` (Gallery - 4+ images) |
-| 381 | `<img src={tenant.branding.logoUrl} />` (Footer logo) |
+| Line | Issue                                                        |
+| ---- | ------------------------------------------------------------ |
+| 80   | `<img src={pkg.photoUrl} />` (Package photo)                 |
+| 227  | `<img src={landingConfig.about.imageUrl} />` (About section) |
+| 265  | `<img src={testimonial.imageUrl} />` (Testimonials)          |
+| 299  | `<img src={image.url} />` (Gallery - 4+ images)              |
+| 381  | `<img src={tenant.branding.logoUrl} />` (Footer logo)        |
 
 **File:** `apps/web/src/components/booking/DateBookingWizard.tsx`
 | Line | Issue |
@@ -32,6 +32,7 @@ TenantLandingPage and DateBookingWizard use raw `<img>` tags instead of Next.js 
 | 80 | `<img src={pkg.photoUrl} />` |
 
 **next.config.js already configured:**
+
 - Supabase and Unsplash remotePatterns are set up
 - Component just ignores `next/image`
 
@@ -40,6 +41,7 @@ TenantLandingPage and DateBookingWizard use raw `<img>` tags instead of Next.js 
 ## Proposed Solutions
 
 ### Option 1: Replace with Next.js Image Component (Required)
+
 - **Description:** Change `<img>` to `<Image>` from next/image
 - **Pros:** Automatic WebP, lazy loading, responsive sizing
 - **Cons:** Requires specifying width/height or fill
@@ -47,6 +49,7 @@ TenantLandingPage and DateBookingWizard use raw `<img>` tags instead of Next.js 
 - **Risk:** Low
 
 **Example Fix:**
+
 ```typescript
 import Image from 'next/image';
 
@@ -70,6 +73,7 @@ import Image from 'next/image';
 ## Technical Details
 
 **Files to Modify:**
+
 - `apps/web/src/app/t/[slug]/TenantLandingPage.tsx` (5 instances)
 - `apps/web/src/components/booking/DateBookingWizard.tsx` (1 instance)
 
@@ -85,8 +89,8 @@ import Image from 'next/image';
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings               |
+| ---------- | -------------------------- | ----------------------- |
 | 2025-12-25 | Created during code review | Performance issue found |
 
 ## Resources

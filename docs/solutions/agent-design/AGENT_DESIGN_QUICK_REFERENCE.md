@@ -25,11 +25,11 @@ Print this and pin it above your desk.
 
 ## Trust Tiers at a Glance
 
-| Tier | When | Flow | Example |
-|------|------|------|---------|
-| **T1** | Safe reads | Execute immediately | "You have 3 open slots" |
-| **T2** | Low-risk writes | Soft ask, execute if no refusal | "I'll book 2 PM?" → Execute |
-| **T3** | High-risk/irreversible | Hard ask, require code | "Type CONFIRM REFUND" → Verify → Execute |
+| Tier   | When                   | Flow                            | Example                                  |
+| ------ | ---------------------- | ------------------------------- | ---------------------------------------- |
+| **T1** | Safe reads             | Execute immediately             | "You have 3 open slots"                  |
+| **T2** | Low-risk writes        | Soft ask, execute if no refusal | "I'll book 2 PM?" → Execute              |
+| **T3** | High-risk/irreversible | Hard ask, require code          | "Type CONFIRM REFUND" → Verify → Execute |
 
 ## Capability Map Template
 
@@ -37,16 +37,19 @@ Print this and pin it above your desk.
 # Tools Available
 
 ## Data Tools (T1 - Execute)
+
 - tool_list_bookings: Fetch user's bookings
 - tool_check_availability: Check time slots
 - tool_view_customer: Look up customer details
 
 ## Action Tools (T2 - Soft Ask)
+
 - tool_create_booking: Schedule appointment
 - tool_send_email: Contact customer
 - tool_update_notes: Update customer notes
 
 ## High-Risk Tools (T3 - Hard Ask)
+
 - tool_create_refund: Issue refund (requires confirmation)
 - tool_cancel_booking: Cancel appointment (irreversible)
 - tool_reset_password: Change password
@@ -58,34 +61,42 @@ Print this and pin it above your desk.
 # System Prompt: [Agent Name]
 
 ## Role
+
 You are [job title]. You can:
+
 - [Autonomous action 1]
 - [Autonomous action 2]
 
 You must ask before:
+
 - [Confirmation action 1]
 - [Confirmation action 2]
 
 You cannot:
+
 - [Hard boundary 1]
 - [Hard boundary 2]
 
 ## Decision Rules
+
 - Ask with "I'll [action]. Does that work?"
 - Require confirmation with "Type 'CONFIRM [ACTION]' to proceed"
 - Never access data from other tenants
 - Treat privacy as critical
 
 ## Tools
+
 [List all available tools with brief descriptions]
 
 ## Examples
+
 [5-10 user request → agent response examples]
 ```
 
 ## Implementation Checklist
 
 ### Design
+
 - [ ] User actions mapped to tools (exhaustive)
 - [ ] Tools are primitives (one action each)
 - [ ] Trust tiers assigned to all tools
@@ -93,6 +104,7 @@ You cannot:
 - [ ] Confirmation code format defined
 
 ### Code
+
 - [ ] Session context loads at auth time
 - [ ] Context is immutable for session duration
 - [ ] `/api/agent/approve` endpoint routing by trust tier
@@ -100,6 +112,7 @@ You cannot:
 - [ ] Confirmation codes stored with 5-min expiry
 
 ### Testing
+
 - [ ] T1 tools execute without ask
 - [ ] T2 tools execute after soft ask
 - [ ] T3 tools blocked without confirmation code
@@ -109,14 +122,14 @@ You cannot:
 
 ## Common Errors & Fixes
 
-| Error | Wrong Approach | Right Approach |
-|-------|---|---|
-| Tools are workflows | tool_schedule_and_send | tool_schedule + tool_send |
-| 3-layer context refresh | Load context 3 times | Load once, tools fetch data |
-| Client-side approval | Confirmation in UI | Confirmation verified server |
-| Hardcoded confirmation | Same code for all | Unique code per request |
-| Dynamic tool availability | Recalc every request | Calc once at session init |
-| Parameter-based tenantId | Extract from params | Inject from context |
+| Error                     | Wrong Approach         | Right Approach               |
+| ------------------------- | ---------------------- | ---------------------------- |
+| Tools are workflows       | tool_schedule_and_send | tool_schedule + tool_send    |
+| 3-layer context refresh   | Load context 3 times   | Load once, tools fetch data  |
+| Client-side approval      | Confirmation in UI     | Confirmation verified server |
+| Hardcoded confirmation    | Same code for all      | Unique code per request      |
+| Dynamic tool availability | Recalc every request   | Calc once at session init    |
+| Parameter-based tenantId  | Extract from params    | Inject from context          |
 
 ## Code Template: Approval Endpoint
 
@@ -133,8 +146,7 @@ app.post('/api/agent/approve', async (req, res) => {
   if (!tool) return res.status(400).json({});
 
   // 3. Get trust tier (with per-user overrides)
-  const tier = session.context.trustTierOverrides[request.toolName]
-    ?? tool.trustTier;
+  const tier = session.context.trustTierOverrides[request.toolName] ?? tool.trustTier;
 
   // 4. Route by tier
   if (tier === 'T1' || tier === 'T2') {
@@ -180,11 +192,7 @@ const tool_create_booking = {
     }
 
     // Check availability (returns fresh data)
-    const available = await availabilityService.check(
-      tenantId,
-      params.date,
-      params.duration
-    );
+    const available = await availabilityService.check(tenantId, params.date, params.duration);
     if (!available) {
       throw new BookingConflictError(params.date);
     }
@@ -236,14 +244,14 @@ interface AgentSession {
 
 ## Anti-Patterns Cheat Sheet
 
-| Bad | Good | Why |
-|-----|------|-----|
-| `tool_schedule_and_send` | `tool_schedule` + `tool_send` | Primitives compose |
-| Refresh context 3x | Load once | Simpler state |
-| Client-side approval | Server-side gating | Injection-resistant |
-| `params.tenantId` | `session.tenantId` | Never trust params |
-| Same confirmation code | Unique per request | Prevents replay |
-| Recalc tools each time | Calc at session start | Simpler + faster |
+| Bad                      | Good                          | Why                 |
+| ------------------------ | ----------------------------- | ------------------- |
+| `tool_schedule_and_send` | `tool_schedule` + `tool_send` | Primitives compose  |
+| Refresh context 3x       | Load once                     | Simpler state       |
+| Client-side approval     | Server-side gating            | Injection-resistant |
+| `params.tenantId`        | `session.tenantId`            | Never trust params  |
+| Same confirmation code   | Unique per request            | Prevents replay     |
+| Recalc tools each time   | Calc at session start         | Simpler + faster    |
 
 ## When to Apply This Pattern
 
@@ -263,4 +271,3 @@ interface AgentSession {
 - Full design: [AGENT_DESIGN_SYSTEM_PATTERNS.md](./AGENT_DESIGN_SYSTEM_PATTERNS.md)
 - Multi-tenant security: [/CLAUDE.md](/CLAUDE.md)
 - Architecture: [/ARCHITECTURE.md](/ARCHITECTURE.md)
-

@@ -7,7 +7,7 @@ problem_type: workflow-automation
 component: code-review-system
 severity: P2
 
-title: "Multi-Agent Parallel Code Review with Automated Triage and Fixes"
+title: 'Multi-Agent Parallel Code Review with Automated Triage and Fixes'
 
 tags:
   - multi-agent
@@ -20,11 +20,11 @@ tags:
   - locked-template-system
 
 related_files:
-  - ".claude/skills/user/workflows/review.md"
-  - ".claude/skills/user/triage.md"
-  - ".claude/skills/user/resolve_parallel.md"
-  - "docs/guides/PARALLEL-TODO-RESOLUTION-WITH-PLAYWRIGHT-VERIFICATION.md"
-  - "docs/solutions/methodology/multi-agent-code-review-process.md"
+  - '.claude/skills/user/workflows/review.md'
+  - '.claude/skills/user/triage.md'
+  - '.claude/skills/user/resolve_parallel.md'
+  - 'docs/guides/PARALLEL-TODO-RESOLUTION-WITH-PLAYWRIGHT-VERIFICATION.md'
+  - 'docs/solutions/methodology/multi-agent-code-review-process.md'
 ---
 
 # Multi-Agent Parallel Code Review Workflow
@@ -36,6 +36,7 @@ A comprehensive code review workflow using 6 specialized AI agents running in pa
 ## Problem Statement
 
 Manual code reviews suffer from:
+
 - **Time constraints**: Large changesets take hours to review properly
 - **Inconsistent coverage**: Single reviewers miss issues outside their expertise
 - **Unstructured findings**: Comments lack severity classification
@@ -48,14 +49,14 @@ Manual code reviews suffer from:
 
 Launch all review agents simultaneously using the Task tool with `run_in_background: true`:
 
-| Agent | Focus Area |
-|-------|------------|
-| Security Sentinel | Authentication, authorization, input validation, secrets |
-| Architecture Strategist | Multi-tenant isolation, layered patterns, DI |
-| Performance Oracle | N+1 queries, caching, async patterns, resource leaks |
-| Code Simplicity Reviewer | Complexity, dead code, over-engineering |
-| Data Integrity Guardian | Transactions, race conditions, validation |
-| Pattern Recognition Specialist | Consistency, anti-patterns |
+| Agent                          | Focus Area                                               |
+| ------------------------------ | -------------------------------------------------------- |
+| Security Sentinel              | Authentication, authorization, input validation, secrets |
+| Architecture Strategist        | Multi-tenant isolation, layered patterns, DI             |
+| Performance Oracle             | N+1 queries, caching, async patterns, resource leaks     |
+| Code Simplicity Reviewer       | Complexity, dead code, over-engineering                  |
+| Data Integrity Guardian        | Transactions, race conditions, validation                |
+| Pattern Recognition Specialist | Consistency, anti-patterns                               |
 
 ### Phase 2: Findings Aggregation
 
@@ -63,16 +64,19 @@ Collect results using TaskOutput and categorize by priority:
 
 ```markdown
 ## P1 - Critical (Must Fix Before Merge)
+
 - Missing security validation
 - Data integrity issues
 - Breaking changes
 
 ## P2 - Important (Should Fix)
+
 - Performance issues
 - Architecture concerns
 - Type safety gaps
 
 ## P3 - Nice to Have
+
 - Code style improvements
 - Minor optimizations
 - Documentation updates
@@ -85,15 +89,17 @@ Use `AskUserQuestion` for ambiguous findings:
 ```typescript
 // Clarify prioritization with user
 AskUserQuestion({
-  questions: [{
-    question: "How should we handle finding #406?",
-    header: "Priority",
-    options: [
-      { label: "Keep P1 - Block merge", description: "Fix now" },
-      { label: "Downgrade to P2", description: "Fix in next sprint" }
-    ],
-    multiSelect: false
-  }]
+  questions: [
+    {
+      question: 'How should we handle finding #406?',
+      header: 'Priority',
+      options: [
+        { label: 'Keep P1 - Block merge', description: 'Fix now' },
+        { label: 'Downgrade to P2', description: 'Fix in next sprint' },
+      ],
+      multiSelect: false,
+    },
+  ],
 });
 ```
 
@@ -103,14 +109,14 @@ Launch fix agents simultaneously, grouping related issues:
 
 ```typescript
 // Launch 8 parallel fix agents in a single message
-Task({ description: "Fix 404: Create _domain routes", run_in_background: true })
-Task({ description: "Fix 405: Add error logging", run_in_background: true })
-Task({ description: "Fix 406: HeroSection images", run_in_background: true })
-Task({ description: "Fix 407: Migration data integrity", run_in_background: true })
-Task({ description: "Fix 408-409: Admin + schema", run_in_background: true })
-Task({ description: "Fix 410-411: Centralize conversion", run_in_background: true })
-Task({ description: "Fix 412-414: Props + components", run_in_background: true })
-Task({ description: "Fix 416-417: Loading + types", run_in_background: true })
+Task({ description: 'Fix 404: Create _domain routes', run_in_background: true });
+Task({ description: 'Fix 405: Add error logging', run_in_background: true });
+Task({ description: 'Fix 406: HeroSection images', run_in_background: true });
+Task({ description: 'Fix 407: Migration data integrity', run_in_background: true });
+Task({ description: 'Fix 408-409: Admin + schema', run_in_background: true });
+Task({ description: 'Fix 410-411: Centralize conversion', run_in_background: true });
+Task({ description: 'Fix 412-414: Props + components', run_in_background: true });
+Task({ description: 'Fix 416-417: Loading + types', run_in_background: true });
 ```
 
 ### Phase 5: Verification
@@ -140,11 +146,11 @@ Use `run_in_background: true` to avoid blocking:
 
 ```typescript
 Task({
-  subagent_type: "general-purpose",
-  description: "Fix security issue",
-  prompt: "...",
-  run_in_background: true  // Critical for parallelism
-})
+  subagent_type: 'general-purpose',
+  description: 'Fix security issue',
+  prompt: '...',
+  run_in_background: true, // Critical for parallelism
+});
 ```
 
 ### 3. Result Collection
@@ -153,8 +159,8 @@ Use TaskOutput to collect results after agents complete:
 
 ```typescript
 // Collect all results
-TaskOutput({ task_id: "agent_id_1" })
-TaskOutput({ task_id: "agent_id_2" })
+TaskOutput({ task_id: 'agent_id_1' });
+TaskOutput({ task_id: 'agent_id_2' });
 // ... for all agents
 ```
 
@@ -164,31 +170,37 @@ Create structured todo files for audit trail:
 
 ```markdown
 # todos/404-ready-p1-missing-domain-routes.md
+
 ---
-status: ready  # ready | in_progress | complete
+
+status: ready # ready | in_progress | complete
 priority: p1
 issue_id: "404"
 tags:
-  - code-review
-  - next-js
+
+- code-review
+- next-js
+
 ---
 
 ## Problem Statement
+
 ...
 
 ## Acceptance Criteria
+
 - [ ] Routes created
 - [ ] TypeScript passes
 ```
 
 ## Metrics from Real Usage
 
-| Metric | Sequential | Parallel | Improvement |
-|--------|------------|----------|-------------|
-| Review time (14 findings) | ~45 min | ~8 min | 5.6x faster |
-| Fix implementation | ~60 min | ~12 min | 5x faster |
-| Coverage consistency | Variable | Comprehensive | More thorough |
-| Audit trail | None | Full | Complete history |
+| Metric                    | Sequential | Parallel      | Improvement      |
+| ------------------------- | ---------- | ------------- | ---------------- |
+| Review time (14 findings) | ~45 min    | ~8 min        | 5.6x faster      |
+| Fix implementation        | ~60 min    | ~12 min       | 5x faster        |
+| Coverage consistency      | Variable   | Comprehensive | More thorough    |
+| Audit trail               | None       | Full          | Complete history |
 
 ## Prevention Strategies
 
@@ -223,15 +235,18 @@ The workflow was used to review the Locked Template System implementation:
 **Input:** 14 uncommitted files on main branch
 
 **Review Phase (6 agents, ~3 min):**
+
 - 4 P1 Critical findings
 - 5 P2 Important findings
 - 5 P3 Nice-to-have findings
 
 **Triage Phase (~2 min):**
+
 - 4 questions clarified with user
 - 1 finding marked "won't fix" (industry standard practice)
 
 **Fix Phase (8 agents, ~5 min):**
+
 - All 13 approved fixes implemented in parallel
 - TypeScript verification passed
 
@@ -245,6 +260,6 @@ The workflow was used to review the Locked Template System implementation:
 
 ## Version History
 
-| Date | Change | Commits |
-|------|--------|---------|
+| Date       | Change                | Commits          |
+| ---------- | --------------------- | ---------------- |
 | 2025-12-25 | Initial documentation | 7894417, 5ba3e0a |

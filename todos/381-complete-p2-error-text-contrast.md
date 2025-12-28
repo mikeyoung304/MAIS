@@ -44,6 +44,7 @@ Use `text-red-600` or `text-red-700` which provide better contrast:
 ```
 
 Contrast ratios:
+
 - `red-500` (#ef4444) on white: ~4.0:1 (fails AA for small text)
 - `red-600` (#dc2626) on white: ~5.1:1 (passes AA)
 - `red-700` (#b91c1c) on white: ~6.5:1 (passes AA)

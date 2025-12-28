@@ -91,7 +91,8 @@ function isSignificantPriceChange(oldPriceCents: number, newPriceCents: number):
  */
 export const upsertPackageTool: AgentTool = {
   name: 'upsert_package',
-  description: 'Create a new package or update an existing one. Includes title, description, pricing, and photos. Large price changes (>20% or >$100) require additional confirmation.',
+  description:
+    'Create a new package or update an existing one. Includes title, description, pricing, and photos. Large price changes (>20% or >$100) require additional confirmation.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -159,9 +160,8 @@ export const upsertPackageTool: AgentTool = {
         if (isSignificantPriceChange(oldPriceCents, newPriceCents)) {
           trustTier = 'T3';
           const absoluteChange = Math.abs(newPriceCents - oldPriceCents);
-          const relativeChange = oldPriceCents > 0
-            ? ((absoluteChange / oldPriceCents) * 100).toFixed(1)
-            : 'N/A';
+          const relativeChange =
+            oldPriceCents > 0 ? ((absoluteChange / oldPriceCents) * 100).toFixed(1) : 'N/A';
           const direction = newPriceCents > oldPriceCents ? 'increase' : 'decrease';
           priceChangeWarning = `Significant price ${direction}: $${(absoluteChange / 100).toFixed(2)} (${relativeChange}%)`;
         }
@@ -208,7 +208,8 @@ export const upsertPackageTool: AgentTool = {
  */
 export const upsertAddOnTool: AgentTool = {
   name: 'upsert_addon',
-  description: 'Create a new add-on or update an existing one. Add-ons are optional extras for packages.',
+  description:
+    'Create a new add-on or update an existing one. Add-ons are optional extras for packages.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -297,7 +298,8 @@ export const upsertAddOnTool: AgentTool = {
  */
 export const deleteAddOnTool: AgentTool = {
   name: 'delete_addon',
-  description: 'Delete an add-on (soft delete - marks as inactive). Requires confirmation if add-on has existing bookings.',
+  description:
+    'Delete an add-on (soft delete - marks as inactive). Requires confirmation if add-on has existing bookings.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -333,9 +335,7 @@ export const deleteAddOnTool: AgentTool = {
         addOnName: sanitizeForContext(addOn.name, 50),
         price: `$${(addOn.price / 100).toFixed(2)}`,
         bookingCount: addOn._count.bookingRefs,
-        ...(hasBookings
-          ? { warning: 'This add-on has existing bookings that reference it' }
-          : {}),
+        ...(hasBookings ? { warning: 'This add-on has existing bookings that reference it' } : {}),
       };
 
       return createProposal(context, 'delete_addon', operation, trustTier, payload, preview);
@@ -599,7 +599,8 @@ export const updateLandingPageTool: AgentTool = {
  */
 export const requestFileUploadTool: AgentTool = {
   name: 'request_file_upload',
-  description: 'Get instructions for uploading a file (logo, photo, etc.). The user will need to upload via UI.',
+  description:
+    'Get instructions for uploading a file (logo, photo, etc.). The user will need to upload via UI.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -717,7 +718,8 @@ export const cancelBookingTool: AgentTool = {
  */
 export const createBookingTool: AgentTool = {
   name: 'create_booking',
-  description: 'Create a manual booking (for phone orders, walk-ins). ALWAYS requires explicit confirmation. Checks availability before creating.',
+  description:
+    'Create a manual booking (for phone orders, walk-ins). ALWAYS requires explicit confirmation. Checks availability before creating.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -785,7 +787,7 @@ export const createBookingTool: AgentTool = {
       if (existingBooking) {
         return {
           success: false,
-          error: `Date ${dateStr} is already booked. Please choose another date.`
+          error: `Date ${dateStr} is already booked. Please choose another date.`,
         };
       }
 
@@ -797,7 +799,7 @@ export const createBookingTool: AgentTool = {
       if (blackout) {
         return {
           success: false,
-          error: `Date ${dateStr} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}`
+          error: `Date ${dateStr} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}`,
         };
       }
 
@@ -844,7 +846,8 @@ export const createBookingTool: AgentTool = {
  */
 export const processRefundTool: AgentTool = {
   name: 'process_refund',
-  description: 'Process a refund for a booking. Can do full or partial refund. ALWAYS requires explicit confirmation.',
+  description:
+    'Process a refund for a booking. Can do full or partial refund. ALWAYS requires explicit confirmation.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -893,9 +896,7 @@ export const processRefundTool: AgentTool = {
         return { success: false, error: 'No refundable amount available for this booking' };
       }
 
-      const refundAmount = amountCents
-        ? Math.min(amountCents, maxRefundable)
-        : maxRefundable;
+      const refundAmount = amountCents ? Math.min(amountCents, maxRefundable) : maxRefundable;
 
       const isFullRefund = refundAmount >= maxRefundable;
       const customerName = booking.customer?.name || 'Unknown Customer';
@@ -1035,7 +1036,8 @@ export const upsertSegmentTool: AgentTool = {
  */
 export const deleteSegmentTool: AgentTool = {
   name: 'delete_segment',
-  description: 'Delete a segment (soft delete - marks as inactive). Requires confirmation if segment has packages.',
+  description:
+    'Delete a segment (soft delete - marks as inactive). Requires confirmation if segment has packages.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -1068,9 +1070,7 @@ export const deleteSegmentTool: AgentTool = {
       const preview: Record<string, unknown> = {
         segmentName: sanitizeForContext(segment.name, 50),
         packageCount: segment._count.packages,
-        ...(hasPackages
-          ? { warning: 'This segment has packages that will be orphaned' }
-          : {}),
+        ...(hasPackages ? { warning: 'This segment has packages that will be orphaned' } : {}),
       };
 
       return createProposal(context, 'delete_segment', operation, trustTier, payload, preview);
@@ -1096,7 +1096,8 @@ export const deleteSegmentTool: AgentTool = {
  */
 export const updateBookingTool: AgentTool = {
   name: 'update_booking',
-  description: 'Update booking: reschedule, add notes, or change status. Date changes require confirmation.',
+  description:
+    'Update booking: reschedule, add notes, or change status. Date changes require confirmation.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -1147,8 +1148,9 @@ export const updateBookingTool: AgentTool = {
       // - notes only → T2
       // - status progression (non-cancel) → T2
       const hasDateChange = !!newDate;
-      const isCancellation = status?.toUpperCase() === 'CANCELED' || status?.toUpperCase() === 'CANCELLED';
-      const trustTier = (hasDateChange || isCancellation) ? 'T3' : 'T2';
+      const isCancellation =
+        status?.toUpperCase() === 'CANCELED' || status?.toUpperCase() === 'CANCELLED';
+      const trustTier = hasDateChange || isCancellation ? 'T3' : 'T2';
 
       // If date change, check availability
       if (newDate) {
@@ -1176,7 +1178,10 @@ export const updateBookingTool: AgentTool = {
         });
 
         if (blackout) {
-          return { success: false, error: `Date ${newDate} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}` };
+          return {
+            success: false,
+            error: `Date ${newDate} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}`,
+          };
         }
       }
 
@@ -1201,7 +1206,14 @@ export const updateBookingTool: AgentTool = {
         changes,
       };
 
-      return createProposal(context, 'update_booking', operation, trustTier as 'T2' | 'T3', payload, preview);
+      return createProposal(
+        context,
+        'update_booking',
+        operation,
+        trustTier as 'T2' | 'T3',
+        payload,
+        preview
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, bookingId }, 'Error in update_booking tool');
@@ -1224,7 +1236,8 @@ export const updateBookingTool: AgentTool = {
  */
 export const updateDepositSettingsTool: AgentTool = {
   name: 'update_deposit_settings',
-  description: 'Configure deposit requirements for bookings. Set percentage (0-100) or null for full payment.',
+  description:
+    'Configure deposit requirements for bookings. Set percentage (0-100) or null for full payment.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -1272,12 +1285,16 @@ export const updateDepositSettingsTool: AgentTool = {
       if (depositPercent !== undefined) {
         payload.depositPercent = depositPercent;
         const currentPercent = tenant.depositPercent ? Number(tenant.depositPercent) : null;
-        changes.push(`deposit: ${currentPercent ?? 'full payment'} → ${depositPercent ?? 'full payment'}%`);
+        changes.push(
+          `deposit: ${currentPercent ?? 'full payment'} → ${depositPercent ?? 'full payment'}%`
+        );
       }
 
       if (balanceDueDays !== undefined) {
         payload.balanceDueDays = balanceDueDays;
-        changes.push(`balance due: ${tenant.balanceDueDays ?? 'unset'} → ${balanceDueDays} days before`);
+        changes.push(
+          `balance due: ${tenant.balanceDueDays ?? 'unset'} → ${balanceDueDays} days before`
+        );
       }
 
       if (changes.length === 0) {
@@ -1310,7 +1327,8 @@ export const updateDepositSettingsTool: AgentTool = {
  */
 export const startTrialTool: AgentTool = {
   name: 'start_trial',
-  description: 'Start a 14-day trial for the business. Only available if no trial has been started.',
+  description:
+    'Start a 14-day trial for the business. Only available if no trial has been started.',
   inputSchema: {
     type: 'object',
     properties: {},

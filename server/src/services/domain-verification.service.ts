@@ -117,10 +117,7 @@ export class DomainVerificationService {
       },
     });
 
-    logger.info(
-      { tenantId, domain: normalizedDomain },
-      'Domain added for verification'
-    );
+    logger.info({ tenantId, domain: normalizedDomain }, 'Domain added for verification');
 
     return this.toDomainInfo(tenantDomain);
   }
@@ -132,10 +129,7 @@ export class DomainVerificationService {
    * @param domainId - Domain ID to verify
    * @returns Verification result
    */
-  async verifyDomain(
-    tenantId: string,
-    domainId: string
-  ): Promise<VerificationResult> {
+  async verifyDomain(tenantId: string, domainId: string): Promise<VerificationResult> {
     // Fetch domain and verify ownership
     const tenantDomain = await this.prisma.tenantDomain.findFirst({
       where: { id: domainId, tenantId },
@@ -196,10 +190,7 @@ export class DomainVerificationService {
         },
       });
 
-      logger.info(
-        { tenantId, domain: tenantDomain.domain },
-        'Domain verified successfully'
-      );
+      logger.info({ tenantId, domain: tenantDomain.domain }, 'Domain verified successfully');
     } else {
       logger.debug(
         {
@@ -280,10 +271,7 @@ export class DomainVerificationService {
       }),
     ]);
 
-    logger.info(
-      { tenantId, domainId, domain: domain.domain },
-      'Primary domain updated'
-    );
+    logger.info({ tenantId, domainId, domain: domain.domain }, 'Primary domain updated');
 
     // Fetch updated domain
     const updated = await this.prisma.tenantDomain.findUnique({
@@ -312,10 +300,7 @@ export class DomainVerificationService {
       where: { id: domainId },
     });
 
-    logger.info(
-      { tenantId, domainId, domain: domain.domain },
-      'Domain removed'
-    );
+    logger.info({ tenantId, domainId, domain: domain.domain }, 'Domain removed');
   }
 
   /**

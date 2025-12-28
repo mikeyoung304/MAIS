@@ -11,6 +11,10 @@ if git diff --cached --name-only | grep -q "server/prisma/schema.prisma"; then
   fi
 fi
 
+# Run lint-staged (auto-format staged files with prettier)
+echo "Formatting staged files..."
+npx lint-staged
+
 # Run documentation validation
 echo "Validating documentation standards..."
 ./scripts/validate-docs.sh

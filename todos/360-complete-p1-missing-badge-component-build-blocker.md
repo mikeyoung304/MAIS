@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "360"
+issue_id: '360'
 tags: [code-review, build, typescript]
 dependencies: []
 ---
@@ -17,16 +17,19 @@ The tenant domains page imports a `Badge` component that does not exist. This ca
 ## Findings
 
 **File:** `apps/web/src/app/(protected)/tenant/domains/page.tsx:15`
+
 ```typescript
-import { Badge } from '@/components/ui/badge';  // ❌ Module not found
+import { Badge } from '@/components/ui/badge'; // ❌ Module not found
 ```
 
 **Error:**
+
 ```
 error TS2307: Cannot find module '@/components/ui/badge' or its corresponding type declarations.
 ```
 
 **Available UI Components:**
+
 - button, card, input, label, dialog, alert, input-enhanced, stepper
 
 **Impact:** P1 - Build fails, blocks deployment
@@ -34,6 +37,7 @@ error TS2307: Cannot find module '@/components/ui/badge' or its corresponding ty
 ## Proposed Solutions
 
 ### Option 1: Create Badge Component (Recommended)
+
 - **Description:** Create minimal Badge component matching shadcn/ui pattern
 - **Pros:** Proper component library completion
 - **Cons:** Small development effort
@@ -41,6 +45,7 @@ error TS2307: Cannot find module '@/components/ui/badge' or its corresponding ty
 - **Risk:** Low
 
 ### Option 2: Replace with Label/Alert
+
 - **Description:** Use existing Label or Alert component instead
 - **Pros:** No new component needed
 - **Cons:** May not match design intent
@@ -94,8 +99,8 @@ export { Badge, badgeVariants };
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings           |
+| ---------- | -------------------------- | ------------------- |
 | 2025-12-25 | Created during code review | Build blocker found |
 
 ## Resources

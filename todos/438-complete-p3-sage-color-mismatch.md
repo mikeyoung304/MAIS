@@ -1,6 +1,7 @@
 # Sage Color Mismatch Between Config and Guide
 
 ## Metadata
+
 - **ID:** 438
 - **Status:** pending
 - **Priority:** P3
@@ -17,6 +18,7 @@ The Tailwind config defines sage as `#4A7C6F` but the Brand Voice Guide specifie
 - `docs/design/BRAND_VOICE_GUIDE.md`: `sage: '#7B9E87'`
 
 The difference:
+
 - Guide: `#7B9E87` — lighter, more muted sage
 - Config: `#4A7C6F` — darker, more saturated teal-green
 
@@ -25,6 +27,7 @@ Both are acceptable greens, but they should match for brand consistency.
 ## Proposed Solutions
 
 ### Option A: Update Config to Match Guide
+
 Change Tailwind to `#7B9E87`
 
 **Pros:** Matches documented brand
@@ -33,6 +36,7 @@ Change Tailwind to `#7B9E87`
 **Risk:** Low
 
 ### Option B: Update Guide to Match Config
+
 Change guide to `#4A7C6F`
 
 **Pros:** No code changes, current look is intentional
@@ -41,11 +45,13 @@ Change guide to `#4A7C6F`
 **Risk:** Low
 
 ## Recommended Action
+
 Verify which color was the intentional design decision, then align.
 
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/tailwind.config.js`
 - `docs/design/BRAND_VOICE_GUIDE.md`
 
@@ -56,6 +62,6 @@ Verify which color was the intentional design decision, then align.
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                 |
+| ---------- | ------- | ------------------------------------- |
 | 2025-12-27 | Created | From brand review - Design Specialist |

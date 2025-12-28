@@ -279,13 +279,11 @@ export const agentChatLimiter = rateLimit({
   skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
   validate: false, // Disable validation - we handle IPv6 with normalizeIp()
   handler: (_req: Request, res: Response) => {
-    logger.warn(
-      { tenantId: res.locals.tenantAuth?.tenantId },
-      'Agent chat rate limit exceeded'
-    );
+    logger.warn({ tenantId: res.locals.tenantAuth?.tenantId }, 'Agent chat rate limit exceeded');
     res.status(429).json({
       error: 'too_many_agent_requests',
-      message: 'You\'ve reached the message limit. Please wait a few minutes before sending more messages.',
+      message:
+        "You've reached the message limit. Please wait a few minutes before sending more messages.",
     });
   },
 });

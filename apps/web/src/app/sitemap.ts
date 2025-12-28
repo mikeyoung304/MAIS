@@ -48,14 +48,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (response.ok) {
       const slugs = await response.json();
-      tenantPages = slugs.map(
-        ({ slug, updatedAt }: { slug: string; updatedAt: string }) => ({
-          url: `${APP_URL}/t/${slug}`,
-          lastModified: new Date(updatedAt),
-          changeFrequency: 'weekly' as const,
-          priority: 0.8,
-        })
-      );
+      tenantPages = slugs.map(({ slug, updatedAt }: { slug: string; updatedAt: string }) => ({
+        url: `${APP_URL}/t/${slug}`,
+        lastModified: new Date(updatedAt),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }));
     }
   } catch (error) {
     // Log error but don't fail sitemap generation

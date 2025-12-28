@@ -135,9 +135,7 @@ export function AdminSidebar() {
       {!isCollapsed && (
         <div className="flex-1">
           <span className="font-medium">{item.label}</span>
-          {item.description && (
-            <p className="text-xs opacity-70">{item.description}</p>
-          )}
+          {item.description && <p className="text-xs opacity-70">{item.description}</p>}
         </div>
       )}
     </Link>
@@ -213,9 +211,7 @@ export function AdminSidebar() {
           <div className="border-t border-neutral-100 p-4">
             {!isCollapsed && (
               <div className="mb-3">
-                <p className="truncate text-sm font-medium text-text-primary">
-                  {user?.email}
-                </p>
+                <p className="truncate text-sm font-medium text-text-primary">{user?.email}</p>
                 <p className="text-xs text-text-muted">
                   {isImpersonating() ? 'Admin (Impersonating)' : role}
                 </p>

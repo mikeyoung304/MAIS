@@ -50,15 +50,16 @@ Root package.json workspaces:
 
 ### 1.2 Build Scripts Analysis
 
-| Workspace | Build Command | Status | Notes |
-|-----------|--------------|--------|-------|
-| `@macon/contracts` | `tsc -b --force` | OK | Force flag ensures clean rebuilds |
-| `@macon/shared` | `tsc -b --force` | OK | Force flag ensures clean rebuilds |
-| `@macon/api` (server) | `tsc -b` | OK | Standard TypeScript build |
-| `@macon/web` (client) | `vite build` | OK | Vite production build |
-| `@macon/web-next` | `next build` | OK | Next.js production build |
+| Workspace             | Build Command    | Status | Notes                             |
+| --------------------- | ---------------- | ------ | --------------------------------- |
+| `@macon/contracts`    | `tsc -b --force` | OK     | Force flag ensures clean rebuilds |
+| `@macon/shared`       | `tsc -b --force` | OK     | Force flag ensures clean rebuilds |
+| `@macon/api` (server) | `tsc -b`         | OK     | Standard TypeScript build         |
+| `@macon/web` (client) | `vite build`     | OK     | Vite production build             |
+| `@macon/web-next`     | `next build`     | OK     | Next.js production build          |
 
 **Build Order Dependency:**
+
 1. `packages/contracts` (must build first)
 2. `packages/shared` (depends on contracts)
 3. `server` (depends on contracts, shared)
@@ -69,6 +70,7 @@ Root package.json workspaces:
 **Current behavior:** `npm run build --workspaces --if-present` builds in alphabetical order, which may cause issues.
 
 **Files:**
+
 - `/Users/mikeyoung/CODING/MAIS/package.json` (lines 12-35)
 - `/Users/mikeyoung/CODING/MAIS/packages/contracts/package.json`
 - `/Users/mikeyoung/CODING/MAIS/packages/shared/package.json`
@@ -77,17 +79,18 @@ Root package.json workspaces:
 
 **Status: Strict Mode Enabled - Good**
 
-| Config | Strict | Target | Issues |
-|--------|--------|--------|--------|
-| `tsconfig.base.json` | Yes | ES2022 | None |
-| `server/tsconfig.json` | Yes | ES2022 | `noUnusedLocals: false` (relaxed) |
-| `client/tsconfig.json` | Yes | ES2020 | None |
-| `apps/web/tsconfig.json` | Yes | ES2020 | None |
-| `packages/contracts/tsconfig.json` | Extends base | - | Uses composite mode |
+| Config                             | Strict       | Target | Issues                            |
+| ---------------------------------- | ------------ | ------ | --------------------------------- |
+| `tsconfig.base.json`               | Yes          | ES2022 | None                              |
+| `server/tsconfig.json`             | Yes          | ES2022 | `noUnusedLocals: false` (relaxed) |
+| `client/tsconfig.json`             | Yes          | ES2020 | None                              |
+| `apps/web/tsconfig.json`           | Yes          | ES2020 | None                              |
+| `packages/contracts/tsconfig.json` | Extends base | -      | Uses composite mode               |
 
 **Finding [P2]:** Root `tsconfig.json` only contains references, no `typecheck` script at root.
 
 **Files:**
+
 - `/Users/mikeyoung/CODING/MAIS/tsconfig.json`
 - `/Users/mikeyoung/CODING/MAIS/tsconfig.base.json`
 - `/Users/mikeyoung/CODING/MAIS/server/tsconfig.json`
@@ -97,6 +100,7 @@ Root package.json workspaces:
 **Status: Excellent**
 
 A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAIS/scripts/verify-build.sh` that:
+
 - Cleans build artifacts
 - Verifies `--force` flags on package builds
 - Builds packages in dependency order
@@ -110,15 +114,15 @@ A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAI
 
 ### 2.1 Workflow Files Inventory
 
-| Workflow | Trigger | Purpose | Status |
-|----------|---------|---------|--------|
-| `main-pipeline.yml` | Push/PR all branches | Full CI pipeline | Active |
-| `deploy-staging.yml` | Push to develop | Staging deployment | Active |
-| `deploy-production.yml` | Push to main/tags | Production deployment | Active |
-| `drift-check.yml` | Daily 9 AM UTC | Schema drift detection | Active |
-| `cache-warmup.yml` | Daily 2 AM UTC | Dependency cache warming | Active |
-| `database-maintenance.yml` | Manual dispatch | DB maintenance tasks | Active |
-| `e2e.yml` | Manual dispatch | **LEGACY** (uses pnpm) | **Deprecated** |
+| Workflow                   | Trigger              | Purpose                  | Status         |
+| -------------------------- | -------------------- | ------------------------ | -------------- |
+| `main-pipeline.yml`        | Push/PR all branches | Full CI pipeline         | Active         |
+| `deploy-staging.yml`       | Push to develop      | Staging deployment       | Active         |
+| `deploy-production.yml`    | Push to main/tags    | Production deployment    | Active         |
+| `drift-check.yml`          | Daily 9 AM UTC       | Schema drift detection   | Active         |
+| `cache-warmup.yml`         | Daily 2 AM UTC       | Dependency cache warming | Active         |
+| `database-maintenance.yml` | Manual dispatch      | DB maintenance tasks     | Active         |
+| `e2e.yml`                  | Manual dispatch      | **LEGACY** (uses pnpm)   | **Deprecated** |
 
 **Files:** `/Users/mikeyoung/CODING/MAIS/.github/workflows/`
 
@@ -127,6 +131,7 @@ A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAI
 **File:** `/Users/mikeyoung/CODING/MAIS/.github/workflows/main-pipeline.yml`
 
 **Strengths:**
+
 - Proper concurrency control with cancel-in-progress
 - Comprehensive job matrix (9 parallel jobs)
 - PR comments on failures
@@ -134,6 +139,7 @@ A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAI
 - PostgreSQL service container for integration tests
 
 **Jobs Included:**
+
 1. Documentation Validation
 2. Multi-Tenant Pattern Validation (security)
 3. Lint & Format Check
@@ -161,6 +167,7 @@ A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAI
 ### 2.3 Deployment Pipelines
 
 **Staging (`deploy-staging.yml`):**
+
 - Triggers on push to `develop` branch
 - Runs pre-deployment tests
 - Deploys API to Render
@@ -168,6 +175,7 @@ A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAI
 - Runs E2E tests against staging
 
 **Production (`deploy-production.yml`):**
+
 - Triggers on push to `main` or version tags
 - Pre-deployment checks (version tag validation, breaking change detection)
 - Comprehensive testing before deploy
@@ -187,6 +195,7 @@ A comprehensive build verification script exists at `/Users/mikeyoung/CODING/MAI
 **Finding [P2]:** `/Users/mikeyoung/CODING/MAIS/.github/workflows/e2e.yml` is deprecated but still exists.
 
 The file header explicitly states:
+
 ```yaml
 # DISABLED: This workflow is outdated (uses pnpm instead of npm, wrong paths)
 # E2E tests are handled by main-pipeline.yml instead
@@ -225,32 +234,33 @@ next: critical
 
 **Finding [P2]:** ts-rest version mismatch across workspaces:
 
-| Workspace | @ts-rest/core | @ts-rest/express | @ts-rest/open-api |
-|-----------|---------------|------------------|-------------------|
-| apps/web | ^3.51.0 | - | - |
-| server | ^3.52.1 | ^3.52.1 | ^3.52.1 |
-| packages/contracts | ^3.52.1 | - | ^3.52.1 |
+| Workspace          | @ts-rest/core | @ts-rest/express | @ts-rest/open-api |
+| ------------------ | ------------- | ---------------- | ----------------- |
+| apps/web           | ^3.51.0       | -                | -                 |
+| server             | ^3.52.1       | ^3.52.1          | ^3.52.1           |
+| packages/contracts | ^3.52.1       | -                | ^3.52.1           |
 
 **Finding [P2]:** Zod version mismatch:
 
-| Workspace | zod |
-|-----------|-----|
-| apps/web | ^3.23.8 |
-| server | ^3.24.0 |
+| Workspace          | zod     |
+| ------------------ | ------- |
+| apps/web           | ^3.23.8 |
+| server             | ^3.24.0 |
 | packages/contracts | ^3.24.0 |
 
 ### 3.3 Vitest Version Mismatch
 
 **Finding [P2]:** Vitest versions differ between workspaces:
 
-| Workspace | vitest |
-|-----------|--------|
-| server | ^3.2.4 |
-| client | ^4.0.15 |
+| Workspace | vitest  |
+| --------- | ------- |
+| server    | ^3.2.4  |
+| client    | ^4.0.15 |
 
 ### 3.4 Duplicate Dependencies
 
 **Finding [P2]:** `@radix-ui/react-separator` appears in both root and workspaces:
+
 - Root: `^1.1.8`
 - Should only be in client/apps workspaces
 
@@ -265,7 +275,8 @@ next: critical
 **File:** `/Users/mikeyoung/CODING/MAIS/.gitignore`
 
 **Coverage:**
-- Environment files (.env*) - OK
+
+- Environment files (.env\*) - OK
 - Node modules - OK
 - Build outputs (dist, .next) - OK
 - Test artifacts - OK
@@ -282,6 +293,7 @@ next: critical
 **File:** `/Users/mikeyoung/CODING/MAIS/.husky/pre-commit`
 
 **Hooks Configured:**
+
 1. Documentation validation (`./scripts/validate-docs.sh`)
 2. Unit tests (`npm run test:unit`)
 3. TypeScript type checking (`npm run typecheck`)
@@ -325,6 +337,7 @@ services:
 ```
 
 **Strengths:**
+
 - Proper build command with workspace dependencies
 - Health check path configured
 - Sensitive env vars marked with `sync: false`
@@ -356,6 +369,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 **File:** `/Users/mikeyoung/CODING/MAIS/server/Dockerfile`
 
 **Strengths:**
+
 - Multi-stage build (base, builder, production-deps, production)
 - Security: Non-root user (nodejs:1001)
 - Proper layer caching
@@ -377,6 +391,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 | `/health` | Legacy endpoint, supports `?deep=true` | Active |
 
 **Features:**
+
 - Database connectivity check
 - External service checks (Stripe, Postmark, Calendar)
 - 60-second response caching
@@ -389,6 +404,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 ### 6.1 Documentation Inventory
 
 **Root Level Documentation:**
+
 - `README.md` - Comprehensive (846 lines)
 - `CONTRIBUTING.md` - Comprehensive (654 lines)
 - `ARCHITECTURE.md` - Available
@@ -399,6 +415,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 - `.env.example` - Well-documented with tiers
 
 **Workspace Documentation:**
+
 - `apps/web/README.md` - Comprehensive (328 lines)
 
 ### 6.2 Documentation Validation
@@ -408,6 +425,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 **File:** `/Users/mikeyoung/CODING/MAIS/scripts/validate-docs.sh`
 
 **Checks:**
+
 1. Files in approved directory structure
 2. Naming conventions (ADR format, timestamps)
 3. Secret scanning (informational)
@@ -426,33 +444,33 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 
 ### P0 - Critical (Fix Immediately)
 
-| ID | Issue | Location | Impact |
-|----|-------|----------|--------|
+| ID   | Issue                                       | Location                | Impact                             |
+| ---- | ------------------------------------------- | ----------------------- | ---------------------------------- |
 | P0-1 | **Next.js critical security vulnerability** | `apps/web/package.json` | Authorization bypass in middleware |
 
 ### P1 - High Priority (Fix This Sprint)
 
-| ID | Issue | Location | Impact |
-|----|-------|----------|--------|
-| P1-1 | ESLint has `continue-on-error: true` | `main-pipeline.yml:97` | 900+ lint errors not enforced |
-| P1-2 | No Next.js deployment workflow | `.github/workflows/` | apps/web not deployed |
-| P1-3 | Vercel configured for legacy client only | `vercel.json` | Next.js not deployed to production |
-| P1-4 | Missing unified build script with dependency order | `package.json` | Build order may be wrong |
+| ID   | Issue                                              | Location               | Impact                             |
+| ---- | -------------------------------------------------- | ---------------------- | ---------------------------------- |
+| P1-1 | ESLint has `continue-on-error: true`               | `main-pipeline.yml:97` | 900+ lint errors not enforced      |
+| P1-2 | No Next.js deployment workflow                     | `.github/workflows/`   | apps/web not deployed              |
+| P1-3 | Vercel configured for legacy client only           | `vercel.json`          | Next.js not deployed to production |
+| P1-4 | Missing unified build script with dependency order | `package.json`         | Build order may be wrong           |
 
 ### P2 - Medium Priority (Fix Next Sprint)
 
-| ID | Issue | Location | Impact |
-|----|-------|----------|--------|
-| P2-1 | Deprecated e2e.yml workflow exists | `.github/workflows/e2e.yml` | Confusion, maintenance burden |
-| P2-2 | ts-rest version mismatch | Multiple package.json | Potential type issues |
-| P2-3 | Zod version mismatch | Multiple package.json | Potential schema issues |
-| P2-4 | Vitest version mismatch | client vs server | Test behavior differences |
-| P2-5 | @radix-ui/react-separator in root | `package.json` | Unnecessary dependency |
-| P2-6 | Pre-commit runs 771 unit tests | `.husky/pre-commit` | Slow commit experience |
-| P2-7 | Integration tests have `continue-on-error` | `deploy-production.yml:161` | Flaky tests not blocking |
-| P2-8 | No .npmrc file | Root | No npm config standardization |
-| P2-9 | Render plan is `free` | `render.yaml` | Not production-grade |
-| P2-10 | Missing DEPLOYMENT.md | `docs/` | No deployment guide |
+| ID    | Issue                                      | Location                    | Impact                        |
+| ----- | ------------------------------------------ | --------------------------- | ----------------------------- |
+| P2-1  | Deprecated e2e.yml workflow exists         | `.github/workflows/e2e.yml` | Confusion, maintenance burden |
+| P2-2  | ts-rest version mismatch                   | Multiple package.json       | Potential type issues         |
+| P2-3  | Zod version mismatch                       | Multiple package.json       | Potential schema issues       |
+| P2-4  | Vitest version mismatch                    | client vs server            | Test behavior differences     |
+| P2-5  | @radix-ui/react-separator in root          | `package.json`              | Unnecessary dependency        |
+| P2-6  | Pre-commit runs 771 unit tests             | `.husky/pre-commit`         | Slow commit experience        |
+| P2-7  | Integration tests have `continue-on-error` | `deploy-production.yml:161` | Flaky tests not blocking      |
+| P2-8  | No .npmrc file                             | Root                        | No npm config standardization |
+| P2-9  | Render plan is `free`                      | `render.yaml`               | Not production-grade          |
+| P2-10 | Missing DEPLOYMENT.md                      | `docs/`                     | No deployment guide           |
 
 ---
 
@@ -461,6 +479,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 ### Immediate Actions (This Week)
 
 1. **Update Next.js to 14.2.32+**
+
    ```bash
    cd apps/web
    npm install next@14.2.32
@@ -483,6 +502,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
    - Remove `continue-on-error: true` from pipeline
 
 2. **Standardize dependency versions**
+
    ```json
    // All workspaces should use:
    "@ts-rest/core": "^3.52.1"
@@ -520,6 +540,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 ## Appendix: File References
 
 ### Build System
+
 - `/Users/mikeyoung/CODING/MAIS/package.json`
 - `/Users/mikeyoung/CODING/MAIS/server/package.json`
 - `/Users/mikeyoung/CODING/MAIS/client/package.json`
@@ -528,6 +549,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 - `/Users/mikeyoung/CODING/MAIS/packages/shared/package.json`
 
 ### CI/CD Workflows
+
 - `/Users/mikeyoung/CODING/MAIS/.github/workflows/main-pipeline.yml`
 - `/Users/mikeyoung/CODING/MAIS/.github/workflows/deploy-staging.yml`
 - `/Users/mikeyoung/CODING/MAIS/.github/workflows/deploy-production.yml`
@@ -537,6 +559,7 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 - `/Users/mikeyoung/CODING/MAIS/.github/workflows/e2e.yml` (deprecated)
 
 ### TypeScript Configuration
+
 - `/Users/mikeyoung/CODING/MAIS/tsconfig.json`
 - `/Users/mikeyoung/CODING/MAIS/tsconfig.base.json`
 - `/Users/mikeyoung/CODING/MAIS/server/tsconfig.json`
@@ -545,16 +568,19 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 - `/Users/mikeyoung/CODING/MAIS/packages/contracts/tsconfig.json`
 
 ### Deployment Configuration
+
 - `/Users/mikeyoung/CODING/MAIS/render.yaml`
 - `/Users/mikeyoung/CODING/MAIS/vercel.json`
 - `/Users/mikeyoung/CODING/MAIS/server/Dockerfile`
 
 ### Repository Hygiene
+
 - `/Users/mikeyoung/CODING/MAIS/.gitignore`
 - `/Users/mikeyoung/CODING/MAIS/.husky/pre-commit`
 - `/Users/mikeyoung/CODING/MAIS/.env.example`
 
 ### Documentation
+
 - `/Users/mikeyoung/CODING/MAIS/README.md`
 - `/Users/mikeyoung/CODING/MAIS/CONTRIBUTING.md`
 - `/Users/mikeyoung/CODING/MAIS/apps/web/README.md`
@@ -562,4 +588,4 @@ The Next.js app (`apps/web`) has no Vercel configuration.
 
 ---
 
-*Report generated by Agent D2 - CI/CD & Build System Audit*
+_Report generated by Agent D2 - CI/CD & Build System Audit_

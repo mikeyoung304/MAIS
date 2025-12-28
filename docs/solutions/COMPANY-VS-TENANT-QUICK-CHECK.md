@@ -42,15 +42,15 @@ B) Yes - it's user/tenant-specific data
 
 ## Quick URL Check
 
-| URL Pattern | Type | Requires Database | Example |
-|-------------|------|-------------------|---------|
-| `/` | Company | No | Homepage |
-| `/signup` | Company | No | Signup page |
-| `/features` | Company | No | Features list |
-| `/pricing` | Company | No | Pricing page |
-| `/t/jane-photography` | Tenant | Yes | Tenant storefront |
-| `/t/jane-photography/about` | Tenant | Yes | Tenant about page |
-| `janephotography.com` (custom) | Tenant | Yes | Custom domain |
+| URL Pattern                    | Type    | Requires Database | Example           |
+| ------------------------------ | ------- | ----------------- | ----------------- |
+| `/`                            | Company | No                | Homepage          |
+| `/signup`                      | Company | No                | Signup page       |
+| `/features`                    | Company | No                | Features list     |
+| `/pricing`                     | Company | No                | Pricing page      |
+| `/t/jane-photography`          | Tenant  | Yes               | Tenant storefront |
+| `/t/jane-photography/about`    | Tenant  | Yes               | Tenant about page |
+| `janephotography.com` (custom) | Tenant  | Yes               | Custom domain     |
 
 ---
 
@@ -126,4 +126,3 @@ These are COMPANY domains. Use static pages instead.
 - Full guide: `docs/solutions/COMPANY-WEBSITE-TENANT-CONFUSION-PREVENTION.md`
 - Architecture: `ARCHITECTURE.md` (section: "Dual Routing Pattern")
 - App structure: `apps/web/README.md`
-

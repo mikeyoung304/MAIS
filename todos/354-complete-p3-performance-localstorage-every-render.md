@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "354"
+issue_id: '354'
 tags: [code-review, performance, react]
 dependencies: []
 ---
@@ -28,18 +28,18 @@ const tenantKey = localStorage.getItem('impersonationTenantKey') || 'default';
 ## Proposed Solutions
 
 ### Option A: Use useMemo (Recommended)
+
 - **Pros:** Single read at component mount
 - **Cons:** Won't pick up changes during session
 - **Effort:** Small
 - **Risk:** Low
 
 ```typescript
-const tenantKey = useMemo(() =>
-  localStorage.getItem('impersonationTenantKey') || 'default',
-[]);
+const tenantKey = useMemo(() => localStorage.getItem('impersonationTenantKey') || 'default', []);
 ```
 
 ### Option B: Use useState with initializer
+
 - **Pros:** Can add setter if needed
 - **Cons:** Slightly more code
 - **Effort:** Small
@@ -63,8 +63,8 @@ Option A - Wrap in useMemo with empty dependency array.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | performance-oracle agent finding |
 
 ## Resources

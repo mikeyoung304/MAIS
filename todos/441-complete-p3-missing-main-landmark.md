@@ -1,6 +1,7 @@
 # Missing Main Landmark Element
 
 ## Metadata
+
 - **ID:** 441
 - **Status:** pending
 - **Priority:** P3
@@ -10,6 +11,7 @@
 ## Problem Statement
 
 The homepage root is a `<div>` instead of properly wrapping content in `<main>`. This affects:
+
 1. Screen reader navigation (users can't jump to main content)
 2. Document outline for agents/crawlers
 3. Accessibility compliance
@@ -17,6 +19,7 @@ The homepage root is a `<div>` instead of properly wrapping content in `<main>`.
 ## Findings
 
 Current structure in `apps/web/src/app/page.tsx`:
+
 ```tsx
 <div className="min-h-screen bg-surface">
   <nav>...</nav>
@@ -28,6 +31,7 @@ Current structure in `apps/web/src/app/page.tsx`:
 ```
 
 Should be:
+
 ```tsx
 <div className="min-h-screen bg-surface">
   <nav>...</nav>
@@ -43,6 +47,7 @@ Should be:
 ## Proposed Solutions
 
 ### Option A: Wrap Sections in Main (Recommended)
+
 Add `<main>` element around content sections
 
 **Effort:** Small
@@ -51,9 +56,11 @@ Add `<main>` element around content sections
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/app/page.tsx`
 
 **Change:**
+
 ```diff
   <div className="min-h-screen bg-surface">
     <nav>...</nav>
@@ -66,6 +73,7 @@ Add `<main>` element around content sections
 ```
 
 Also update skip link if present:
+
 ```tsx
 <a href="#main-content" className="sr-only focus:not-sr-only">
   Skip to main content
@@ -80,6 +88,6 @@ Also update skip link if present:
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                     |
+| ---------- | ------- | ----------------------------------------- |
 | 2025-12-27 | Created | From brand review - Agent-Native Reviewer |

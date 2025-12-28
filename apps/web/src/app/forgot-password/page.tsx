@@ -84,19 +84,14 @@ export default function ForgotPasswordPage() {
                 Check Your Email
               </h2>
               <p className="mb-6 text-text-muted">
-                If an account exists for{' '}
-                <strong className="text-text-primary">{email}</strong>, you will
-                receive a password reset link shortly.
+                If an account exists for <strong className="text-text-primary">{email}</strong>, you
+                will receive a password reset link shortly.
               </p>
               <p className="mb-6 text-sm text-text-muted">
                 Didn&apos;t receive the email? Check your spam folder or try again.
               </p>
               <div className="flex flex-col gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsSubmitted(false)}
-                  className="w-full"
-                >
+                <Button variant="outline" onClick={() => setIsSubmitted(false)} className="w-full">
                   Try Another Email
                 </Button>
                 <Button variant="sage" asChild className="w-full">
@@ -133,9 +128,7 @@ export default function ForgotPasswordPage() {
         <Card>
           <CardHeader>
             <CardTitle>Forgot Password</CardTitle>
-            <CardDescription>
-              Enter your email to receive a reset link
-            </CardDescription>
+            <CardDescription>Enter your email to receive a reset link</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -164,12 +157,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                variant="sage"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" variant="sage" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -31,6 +31,7 @@ The FAQAccordion component accepts a `tenantName` prop but doesn't appear to use
 ## Solution
 
 Either:
+
 1. Remove the unused prop if it's truly not needed
 2. Use it for something meaningful (e.g., "Contact {tenantName}" in CTA)
 

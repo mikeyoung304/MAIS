@@ -301,6 +301,7 @@ const MAIS_EMAIL = 'mike@maconheadshots.com';
 ### Scope of Change
 
 The email is used in the seed for:
+
 - Creating the MAIS tenant admin account
 - Password reset flows
 - Administrative notifications
@@ -350,13 +351,13 @@ npm test
 
 ## Key Takeaways
 
-| Issue | Root Cause | Solution | Lesson |
-|-------|-----------|----------|--------|
-| heroImageUrl | Property name mismatch | Use correct property name | Verify against source schema |
-| depositPaid | Unsafe type assertion | Validate before asserting | Check `in` operator first |
-| tenantId | Parameter reference error | Reference correct parameter | Match parameter names carefully |
-| AvailabilityService | Strict type incompatibility | Use `as unknown as Type` | Bypass with two-step assertion |
-| MAIS email | Outdated seed value | Update seed and production DB | Synchronize configuration sources |
+| Issue               | Root Cause                  | Solution                      | Lesson                            |
+| ------------------- | --------------------------- | ----------------------------- | --------------------------------- |
+| heroImageUrl        | Property name mismatch      | Use correct property name     | Verify against source schema      |
+| depositPaid         | Unsafe type assertion       | Validate before asserting     | Check `in` operator first         |
+| tenantId            | Parameter reference error   | Reference correct parameter   | Match parameter names carefully   |
+| AvailabilityService | Strict type incompatibility | Use `as unknown as Type`      | Bypass with two-step assertion    |
+| MAIS email          | Outdated seed value         | Update seed and production DB | Synchronize configuration sources |
 
 ---
 

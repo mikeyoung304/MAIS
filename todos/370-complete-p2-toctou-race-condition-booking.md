@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "370"
+issue_id: '370'
 tags: [code-review, booking, race-condition]
 dependencies: []
 ---
@@ -19,6 +19,7 @@ The availability check happens BEFORE checkout creation, creating a Time-of-Chec
 **File:** `server/src/services/booking.service.ts:402-414`
 
 **Race Condition Timeline:**
+
 1. User A checks availability for Dec 25 → Available ✓
 2. User B checks availability for Dec 25 → Available ✓
 3. User A starts checkout → Creates Stripe session
@@ -26,6 +27,7 @@ The availability check happens BEFORE checkout creation, creating a Time-of-Chec
 5. User A completes payment → 409 conflict AFTER payment
 
 **Current Protection:**
+
 - Database constraint `@@unique([tenantId, date, bookingType])` catches at final step
 - But user already paid → requires refund
 
@@ -34,6 +36,7 @@ The availability check happens BEFORE checkout creation, creating a Time-of-Chec
 ## Proposed Solutions
 
 ### Option 1: Advisory Lock Before Checkout Creation
+
 - **Description:** Hold database lock during checkout creation
 - **Pros:** Prevents race condition at source
 - **Cons:** Brief lock hold time
@@ -41,6 +44,7 @@ The availability check happens BEFORE checkout creation, creating a Time-of-Chec
 - **Risk:** Low - already have advisory lock pattern
 
 ### Option 2: Tentative Reservation
+
 - **Description:** Create "pending" booking before checkout, confirm on payment
 - **Pros:** Reserves date during checkout
 - **Cons:** Need cleanup job for abandoned reservations
@@ -48,6 +52,7 @@ The availability check happens BEFORE checkout creation, creating a Time-of-Chec
 - **Risk:** Medium
 
 ### Option 3: Accept and Handle Gracefully
+
 - **Description:** Keep current behavior, improve error handling
 - **Pros:** No backend changes
 - **Cons:** Still requires refunds
@@ -66,7 +71,7 @@ The availability check happens BEFORE checkout creation, creating a Time-of-Chec
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-25 | Created during code review | Race condition identified |
-| | | Related: TODO-309 (marked complete but issue persists) |
+| Date       | Action                     | Learnings                                              |
+| ---------- | -------------------------- | ------------------------------------------------------ |
+| 2025-12-25 | Created during code review | Race condition identified                              |
+|            |                            | Related: TODO-309 (marked complete but issue persists) |

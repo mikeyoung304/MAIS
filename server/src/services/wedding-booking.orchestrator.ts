@@ -12,7 +12,10 @@
 import type { CatalogRepository } from '../lib/ports';
 import type { CreateBookingInput } from '../lib/entities';
 import type { AvailabilityService } from './availability.service';
-import type { CheckoutSessionFactory, CreateCheckoutSessionInput } from './checkout-session.factory';
+import type {
+  CheckoutSessionFactory,
+  CreateCheckoutSessionInput,
+} from './checkout-session.factory';
 import type { WeddingDepositService } from './wedding-deposit.service';
 import {
   NotFoundError,

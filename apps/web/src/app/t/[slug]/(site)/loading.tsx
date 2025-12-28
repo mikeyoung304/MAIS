@@ -36,10 +36,7 @@ export default function TenantPageLoading() {
 
           <div className="mt-16 grid gap-8 md:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg"
-              >
+              <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
                 <div className="h-6 w-24 rounded bg-neutral-200" />
                 <div className="mt-4 h-10 w-32 rounded bg-neutral-200" />
                 <div className="mt-6 space-y-3">

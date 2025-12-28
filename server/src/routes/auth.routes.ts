@@ -177,7 +177,9 @@ export class UnifiedAuthController {
 
     // Prevent nested impersonation (security: avoid impersonation chains)
     if (payload.impersonating) {
-      throw new UnauthorizedError('Cannot impersonate while already impersonating. Exit current impersonation first.');
+      throw new UnauthorizedError(
+        'Cannot impersonate while already impersonating. Exit current impersonation first.'
+      );
     }
 
     // Get tenant details

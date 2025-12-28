@@ -12,13 +12,13 @@
 
 The following decisions were made after multi-agent review with quality-first mandate:
 
-| Decision | Options Considered | Final Choice | Rationale |
-|----------|-------------------|--------------|-----------|
-| **Web Search Scope** | (A) Open search (B) Curated sources only | **(B) Curated Sources** | Domain allowlist prevents injection/SSRF, ensures quality research data |
-| **Token Budget** | (A) Hard limits (B) Soft warnings at 80% | **(B) Soft Warnings** | Alerts allow graceful handling without abrupt conversation cuts |
-| **Approval Granularity** | (A) Binary approve/reject (B) Approve with edits | **(B) Approve with Edits** | Tenants can refine AI proposals, reducing back-and-forth cycles |
-| **Observability** | (A) Basic logging (B) Structured logging (C) Full tracing | **(B) Structured Logging** | JSON logs with correlation IDs; OpenTelemetry tracing deferred to Phase 5 |
-| **Test Coverage** | (A) 70% (B) 80% (C) 90%+ | **(B) 80% Coverage** | Balances quality with velocity; critical paths (security, isolation) get 95%+ |
+| Decision                 | Options Considered                                        | Final Choice               | Rationale                                                                     |
+| ------------------------ | --------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| **Web Search Scope**     | (A) Open search (B) Curated sources only                  | **(B) Curated Sources**    | Domain allowlist prevents injection/SSRF, ensures quality research data       |
+| **Token Budget**         | (A) Hard limits (B) Soft warnings at 80%                  | **(B) Soft Warnings**      | Alerts allow graceful handling without abrupt conversation cuts               |
+| **Approval Granularity** | (A) Binary approve/reject (B) Approve with edits          | **(B) Approve with Edits** | Tenants can refine AI proposals, reducing back-and-forth cycles               |
+| **Observability**        | (A) Basic logging (B) Structured logging (C) Full tracing | **(B) Structured Logging** | JSON logs with correlation IDs; OpenTelemetry tracing deferred to Phase 5     |
+| **Test Coverage**        | (A) 70% (B) 80% (C) 90%+                                  | **(B) 80% Coverage**       | Balances quality with velocity; critical paths (security, isolation) get 95%+ |
 
 ### Reviewer Consensus
 
@@ -39,15 +39,15 @@ Build an AI system that transforms MAIS onboarding into a **storefront architect
 
 **Core Value Proposition:**
 
-| Traditional Onboarding | MAIS Advisor System |
-|------------------------|---------------------|
-| Form fields | Deep conversation |
-| Generic templates | Researched, specific packages |
+| Traditional Onboarding   | MAIS Advisor System                  |
+| ------------------------ | ------------------------------------ |
+| Form fields              | Deep conversation                    |
+| Generic templates        | Researched, specific packages        |
 | User figures out pricing | Agent calculates from goals + market |
-| User writes copy | Agent generates conversion copy |
-| User picks segments | Agent defines precise avatars |
-| One-time setup | Ongoing advisory relationship |
-| Recommends | Actually creates in the system |
+| User writes copy         | Agent generates conversion copy      |
+| User picks segments      | Agent defines precise avatars        |
+| One-time setup           | Ongoing advisory relationship        |
+| Recommends               | Actually creates in the system       |
 
 **The agent doesn't just advise - it builds their business in MAIS.**
 
@@ -78,6 +78,7 @@ Build an AI system that transforms MAIS onboarding into a **storefront architect
 ### Current State
 
 Small business owners joining MAIS face a "blank canvas" problem:
+
 - They must define their own customer segments
 - They guess at pricing without market research
 - They write their own marketing copy (often poorly)
@@ -95,6 +96,7 @@ Small business owners joining MAIS face a "blank canvas" problem:
 ### Opportunity
 
 An AI advisor that:
+
 1. Conducts deep discovery conversations (like a consultant)
 2. Researches their specific market and competition
 3. Designs optimal customer segments and pricing tiers
@@ -163,45 +165,45 @@ Luxury Tier ($750): "Full Brand Suite"
 
 > **The Foundational Principle:** Whatever the user can do, the agent can do. Many things the developer can do, the agent can do.
 
-| Principle | Application |
-|-----------|-------------|
+| Principle                | Application                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
 | **Features Are Prompts** | Interview flow, pricing logic, copy generation - all defined in system prompts, not hardcoded |
-| **Tools Are Primitives** | `create_package`, `store_item`, `web_search` - primitives, not workflow tools |
-| **Action Parity** | If a user can create packages in the UI, the agent gets `create_package` tool |
-| **Dynamic Context** | System prompt includes tenant's current segments, packages, market data |
-| **Trust Intelligence** | Define WHAT to achieve ("create compelling packages"), not micromanage HOW |
+| **Tools Are Primitives** | `create_package`, `store_item`, `web_search` - primitives, not workflow tools                 |
+| **Action Parity**        | If a user can create packages in the UI, the agent gets `create_package` tool                 |
+| **Dynamic Context**      | System prompt includes tenant's current segments, packages, market data                       |
+| **Trust Intelligence**   | Define WHAT to achieve ("create compelling packages"), not micromanage HOW                    |
 
 ### Anti-Patterns to Avoid
 
 ```typescript
 // BAD: Workflow tool encodes business logic
-tool("process_onboarding", async ({ answers }) => {
-  const segments = categorize(answers);        // Logic in tool
-  const packages = createTiers(segments);      // Logic in tool
-  const pricing = calculatePricing(answers);   // Logic in tool
+tool('process_onboarding', async ({ answers }) => {
+  const segments = categorize(answers); // Logic in tool
+  const packages = createTiers(segments); // Logic in tool
+  const pricing = calculatePricing(answers); // Logic in tool
   return { segments, packages, pricing };
 });
 
 // GOOD: Primitives let agent figure it out
-tool("store_interview_data", { key, value })
-tool("create_customer_segment", { tenantId, name, avatar })
-tool("create_package", { segmentId, tier, name, price, description })
+tool('store_interview_data', { key, value });
+tool('create_customer_segment', { tenantId, name, avatar });
+tool('create_package', { segmentId, tier, name, price, description });
 // Prompt says: "Based on the interview, create segments and packages..."
 ```
 
 ### Action Parity Map
 
-| UI Action | Agent Tool | Status |
-|-----------|------------|--------|
-| Create package | `create_package` | New |
-| Update package | `update_package` | New |
-| Delete package | `delete_package` | Existing (admin) |
-| Create segment | `create_customer_segment` | New |
-| Update segment | `update_customer_segment` | New |
-| Delete segment | `delete_customer_segment` | New |
-| Update branding | `update_branding` | Existing |
-| View packages | `read_tenant_packages` | New |
-| View analytics | `read_segment_performance` | Future |
+| UI Action       | Agent Tool                 | Status           |
+| --------------- | -------------------------- | ---------------- |
+| Create package  | `create_package`           | New              |
+| Update package  | `update_package`           | New              |
+| Delete package  | `delete_package`           | Existing (admin) |
+| Create segment  | `create_customer_segment`  | New              |
+| Update segment  | `update_customer_segment`  | New              |
+| Delete segment  | `delete_customer_segment`  | New              |
+| Update branding | `update_branding`          | Existing         |
+| View packages   | `read_tenant_packages`     | New              |
+| View analytics  | `read_segment_performance` | Future           |
 
 ---
 
@@ -247,39 +249,44 @@ Phase 5: Preferences
 ```
 
 **Completeness Criteria:**
+
 ```typescript
 interface InterviewCompleteness {
-  businessType: boolean;        // What do they do
-  location: boolean;            // Where they operate
-  incomeGoal: boolean;          // Financial target
-  currentServices: boolean;     // What they offer now
+  businessType: boolean; // What do they do
+  location: boolean; // Where they operate
+  incomeGoal: boolean; // Financial target
+  currentServices: boolean; // What they offer now
   segments: {
-    count: number;              // At least 1, ideally 3
-    hasAvatar: boolean[];       // Each segment has avatar details
-    specificity: number[];      // Rating 1-5 per segment
+    count: number; // At least 1, ideally 3
+    hasAvatar: boolean[]; // Each segment has avatar details
+    specificity: number[]; // Rating 1-5 per segment
   };
-  differentiator: boolean;      // What makes them unique
+  differentiator: boolean; // What makes them unique
 }
 ```
 
 **Tools:**
+
 - `store_interview_data(key, value)` - Store interview answers
 - `check_interview_completeness()` - Verify all required info collected
 - `trigger_research_pipeline(tenantId)` - Hand off to Builder
 
 **System Prompt Structure:**
+
 ```markdown
 # Onboarding Interviewer
 
 You are helping a new MAIS member design their business storefront.
 
 ## Your Goals
+
 1. Understand their business deeply
 2. Identify 2-3 distinct customer segments with specific avatars
 3. Understand their income goals and work preferences
 4. Discover what makes them unique
 
 ## Interview Approach
+
 - Start casual, build rapport
 - Ask follow-up questions for specificity
 - When they say "professionals", ask "what kind?"
@@ -287,6 +294,7 @@ You are helping a new MAIS member design their business storefront.
 - Goal: Get to avatar specificity like "LinkedIn hungry, $100k+, bad photo"
 
 ## When You Have Enough
+
 - At least 1 customer segment with specific avatar
 - Clear income goal
 - Understanding of current services
@@ -375,6 +383,7 @@ Stage 5: Advisor Configuration
 ```
 
 **Tools:**
+
 - `web_search(query)` - Search internet for research
 - `create_customer_segment(tenantId, name, avatar, painPoints)` - Create segment in MAIS
 - `create_package(segmentId, tier, name, price, description, features)` - Create package
@@ -419,6 +428,7 @@ Calculate pricing using this framework:
 **Purpose:** Ongoing coaching relationship after onboarding
 
 **Knows:**
+
 - Business deeply (from interview)
 - Market research (from Builder)
 - Segments and packages (created during onboarding)
@@ -452,6 +462,7 @@ Analytics (Future):
 ```
 
 **Tools:**
+
 - `read_tenant_packages()` - View current packages
 - `update_package(packageId, updates)` - Modify package
 - `draft_social_post(platform, topic)` - Generate social content
@@ -479,20 +490,28 @@ based in ${tenant.location}.
 - Business Model: ${tenant.businessModel}
 
 ## Customer Segments
-${segments.map(s => `
+${segments
+  .map(
+    (s) => `
 ### ${s.name}
 Avatar: ${s.avatar}
 Pain Points: ${s.painPoints.join(', ')}
-`).join('')}
+`
+  )
+  .join('')}
 
 ## Current Packages
-${packages.map(p => `
+${packages
+  .map(
+    (p) => `
 - ${p.name} (${p.segment.name} - ${p.tier}): $${p.price}
   ${p.features.join(', ')}
-`).join('')}
+`
+  )
+  .join('')}
 
 ## Recent Activity
-${recentActivity.map(a => `- ${a.date}: ${a.description}`).join('\n')}
+${recentActivity.map((a) => `- ${a.date}: ${a.description}`).join('\n')}
 
 ## Your Role
 1. Help refine packages based on market feedback
@@ -557,16 +576,16 @@ ${recentActivity.map(a => `- ${a.date}: ${a.description}`).join('\n')}
 
 ### Integration with Existing MAIS Patterns
 
-| Component | Existing Pattern | Advisor Integration |
-|-----------|-----------------|---------------------|
-| **Multi-Tenant** | `req.tenantId` + scoped queries | All agent tools validate `tenantId` |
-| **DI Container** | `server/src/di.ts` | Add `advisorService`, `advisorQueue` |
-| **Event System** | `BookingEvents`, `emitter.emit()` | Add `AdvisorEvents.ONBOARDING_COMPLETE` |
-| **BullMQ Queue** | `webhook-queue.ts` | Add `advisor-queue.ts` for Builder |
-| **Prisma Schema** | `server/prisma/schema.prisma` | Add `AdvisorSession`, `AdvisorMessage` |
-| **ts-rest** | `packages/contracts/` | Add `advisor.contract.ts` |
-| **Audit Trail** | `ConfigChangeLog` with `agentId` | Track all agent mutations |
-| **NextAuth** | Session + HTTP-only token | Pass context to agent backend |
+| Component         | Existing Pattern                  | Advisor Integration                     |
+| ----------------- | --------------------------------- | --------------------------------------- |
+| **Multi-Tenant**  | `req.tenantId` + scoped queries   | All agent tools validate `tenantId`     |
+| **DI Container**  | `server/src/di.ts`                | Add `advisorService`, `advisorQueue`    |
+| **Event System**  | `BookingEvents`, `emitter.emit()` | Add `AdvisorEvents.ONBOARDING_COMPLETE` |
+| **BullMQ Queue**  | `webhook-queue.ts`                | Add `advisor-queue.ts` for Builder      |
+| **Prisma Schema** | `server/prisma/schema.prisma`     | Add `AdvisorSession`, `AdvisorMessage`  |
+| **ts-rest**       | `packages/contracts/`             | Add `advisor.contract.ts`               |
+| **Audit Trail**   | `ConfigChangeLog` with `agentId`  | Track all agent mutations               |
+| **NextAuth**      | Session + HTTP-only token         | Pass context to agent backend           |
 
 ### Request Flow: Onboarding Chat
 
@@ -1128,9 +1147,7 @@ export type AdvisorError =
   | { type: 'INVALID_STATE_TRANSITION'; from: string; to: string; allowed: string[] };
 
 // Result type for operations
-export type Result<T, E = AdvisorError> =
-  | { success: true; data: T }
-  | { success: false; error: E };
+export type Result<T, E = AdvisorError> = { success: true; data: T } | { success: false; error: E };
 
 // Usage with exhaustive checking
 function handleError(error: AdvisorError): Response {
@@ -1161,8 +1178,8 @@ Soft warnings at 80% with graceful handling:
 // server/src/agents/services/token-budget.service.ts
 
 export interface TokenBudgetConfig {
-  maxInputTokens: number;   // Per message
-  maxOutputTokens: number;  // Per message
+  maxInputTokens: number; // Per message
+  maxOutputTokens: number; // Per message
   maxSessionTokens: number; // Total session
   warningThreshold: number; // 0.8 = 80%
 }
@@ -1179,7 +1196,10 @@ export interface TokenUsage {
 export class TokenBudgetService {
   constructor(private readonly config: TokenBudgetConfig) {}
 
-  async trackUsage(sessionId: SessionId, usage: { input: number; output: number }): Promise<TokenUsage> {
+  async trackUsage(
+    sessionId: SessionId,
+    usage: { input: number; output: number }
+  ): Promise<TokenUsage> {
     const session = await this.getSessionUsage(sessionId);
     const newTotal = session.total + usage.input + usage.output;
     const percentUsed = newTotal / this.config.maxSessionTokens;
@@ -1223,7 +1243,7 @@ JSON logging with request tracing:
 // server/src/agents/lib/logger.ts
 
 export interface AgentLogContext {
-  correlationId: string;    // Request trace ID
+  correlationId: string; // Request trace ID
   tenantId: TenantId;
   sessionId?: SessionId;
   agentType?: 'onboarding' | 'builder' | 'advisor';
@@ -1240,7 +1260,13 @@ export const agentLogger = {
     });
   },
 
-  toolCall: (context: AgentLogContext, tool: string, input: unknown, result: unknown, durationMs: number) => {
+  toolCall: (
+    context: AgentLogContext,
+    tool: string,
+    input: unknown,
+    result: unknown,
+    durationMs: number
+  ) => {
     logger.info('Agent tool call', {
       ...context,
       toolName: tool,
@@ -1261,7 +1287,7 @@ export const agentLogger = {
 
 // Correlation ID middleware
 export function correlationMiddleware(req: Request, res: Response, next: NextFunction) {
-  const correlationId = req.headers['x-correlation-id'] as string || cuid();
+  const correlationId = (req.headers['x-correlation-id'] as string) || cuid();
   req.correlationId = correlationId;
   res.setHeader('x-correlation-id', correlationId);
   next();
@@ -1294,7 +1320,7 @@ export const SEARCH_DOMAIN_ALLOWLIST = [
   '17hats.com',
 
   // Photography Specific (example vertical)
-  'ppa.com',           // Professional Photographers of America
+  'ppa.com', // Professional Photographers of America
   'rangefinder.com',
   'fstoppers.com',
 
@@ -1308,7 +1334,7 @@ export function isAllowedDomain(url: string): boolean {
   try {
     const { hostname } = new URL(url);
     return SEARCH_DOMAIN_ALLOWLIST.some(
-      domain => hostname === domain || hostname.endsWith(`.${domain}`)
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
     );
   } catch {
     return false;
@@ -1335,54 +1361,64 @@ export const VERTICAL_ALLOWLISTS: Record<string, string[]> = {
 
 export const onboardingTools: Tool[] = [
   {
-    name: "store_interview_data",
-    description: "Store a piece of interview data collected from the tenant",
+    name: 'store_interview_data',
+    description: 'Store a piece of interview data collected from the tenant',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
         key: {
-          type: "string",
+          type: 'string',
           enum: [
-            "businessType", "location", "yearsInBusiness", "teamSize",
-            "incomeGoal", "currentRevenue", "hoursPerWeek",
-            "currentServices", "desiredServices", "signatureOffering", "differentiator",
-            "customerSegment", "advisorName", "advisorPersonality"
+            'businessType',
+            'location',
+            'yearsInBusiness',
+            'teamSize',
+            'incomeGoal',
+            'currentRevenue',
+            'hoursPerWeek',
+            'currentServices',
+            'desiredServices',
+            'signatureOffering',
+            'differentiator',
+            'customerSegment',
+            'advisorName',
+            'advisorPersonality',
           ],
-          description: "The data field to store"
+          description: 'The data field to store',
         },
         value: {
-          type: ["string", "number", "array", "object"],
-          description: "The value to store"
-        }
+          type: ['string', 'number', 'array', 'object'],
+          description: 'The value to store',
+        },
       },
-      required: ["key", "value"]
-    }
+      required: ['key', 'value'],
+    },
   },
 
   {
-    name: "check_interview_completeness",
-    description: "Check if the interview has collected all required information",
+    name: 'check_interview_completeness',
+    description: 'Check if the interview has collected all required information',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {},
-      required: []
-    }
+      required: [],
+    },
   },
 
   {
-    name: "trigger_research_pipeline",
-    description: "Hand off to the Builder pipeline when interview is complete",
+    name: 'trigger_research_pipeline',
+    description: 'Hand off to the Builder pipeline when interview is complete',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
         message: {
-          type: "string",
-          description: "Message to show tenant while building"
-        }
+          type: 'string',
+          description: 'Message to show tenant while building',
+        },
       },
-      required: []
-    }
-  }
+      required: [],
+    },
+  },
 ];
 ```
 
@@ -1393,142 +1429,142 @@ export const onboardingTools: Tool[] = [
 
 export const builderTools: Tool[] = [
   {
-    name: "web_search",
-    description: "Search the internet for market research",
+    name: 'web_search',
+    description: 'Search the internet for market research',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
         query: {
-          type: "string",
-          description: "Search query"
+          type: 'string',
+          description: 'Search query',
         },
         purpose: {
-          type: "string",
-          enum: ["pricing", "competition", "marketing", "trends"],
-          description: "What this search is for"
-        }
+          type: 'string',
+          enum: ['pricing', 'competition', 'marketing', 'trends'],
+          description: 'What this search is for',
+        },
       },
-      required: ["query", "purpose"]
-    }
+      required: ['query', 'purpose'],
+    },
   },
 
   {
-    name: "create_customer_segment",
-    description: "Create a customer segment in MAIS",
+    name: 'create_customer_segment',
+    description: 'Create a customer segment in MAIS',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        tenantId: { type: "string" },
-        name: { type: "string", description: "Segment name (e.g., 'Corporate Climbers')" },
-        avatar: { type: "string", description: "Detailed avatar description" },
+        tenantId: { type: 'string' },
+        name: { type: 'string', description: "Segment name (e.g., 'Corporate Climbers')" },
+        avatar: { type: 'string', description: 'Detailed avatar description' },
         painPoints: {
-          type: "array",
-          items: { type: "string" },
-          description: "List of customer pain points"
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of customer pain points',
         },
         buyingTriggers: {
-          type: "array",
-          items: { type: "string" },
-          description: "What triggers a purchase"
-        }
+          type: 'array',
+          items: { type: 'string' },
+          description: 'What triggers a purchase',
+        },
       },
-      required: ["tenantId", "name", "avatar"]
-    }
+      required: ['tenantId', 'name', 'avatar'],
+    },
   },
 
   {
-    name: "create_package",
-    description: "Create a service package in MAIS",
+    name: 'create_package',
+    description: 'Create a service package in MAIS',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        tenantId: { type: "string" },
-        segmentId: { type: "string" },
-        tier: { type: "string", enum: ["entry", "popular", "luxury"] },
-        name: { type: "string" },
-        slug: { type: "string" },
-        price: { type: "number" },
-        description: { type: "string" },
-        features: { type: "array", items: { type: "string" } },
-        bookingType: { type: "string", enum: ["DATE", "TIMESLOT"] }
+        tenantId: { type: 'string' },
+        segmentId: { type: 'string' },
+        tier: { type: 'string', enum: ['entry', 'popular', 'luxury'] },
+        name: { type: 'string' },
+        slug: { type: 'string' },
+        price: { type: 'number' },
+        description: { type: 'string' },
+        features: { type: 'array', items: { type: 'string' } },
+        bookingType: { type: 'string', enum: ['DATE', 'TIMESLOT'] },
       },
-      required: ["tenantId", "segmentId", "tier", "name", "slug", "price", "features"]
-    }
+      required: ['tenantId', 'segmentId', 'tier', 'name', 'slug', 'price', 'features'],
+    },
   },
 
   {
-    name: "set_package_copy",
-    description: "Set marketing copy for a package",
+    name: 'set_package_copy',
+    description: 'Set marketing copy for a package',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        packageId: { type: "string" },
-        headline: { type: "string", description: "Punchy headline for the package" },
-        subtext: { type: "string", description: "Conversion-focused subtext" },
-        imageGuidance: { type: "string", description: "Guidance for what image to use" }
+        packageId: { type: 'string' },
+        headline: { type: 'string', description: 'Punchy headline for the package' },
+        subtext: { type: 'string', description: 'Conversion-focused subtext' },
+        imageGuidance: { type: 'string', description: 'Guidance for what image to use' },
       },
-      required: ["packageId", "headline"]
-    }
+      required: ['packageId', 'headline'],
+    },
   },
 
   {
-    name: "store_market_research",
-    description: "Store market research results",
+    name: 'store_market_research',
+    description: 'Store market research results',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        tenantId: { type: "string" },
-        competitorPricing: { type: "object" },
-        pricingBenchmarks: { type: "object" },
-        industryTrends: { type: "string" },
-        marketingChannels: { type: "array", items: { type: "string" } }
+        tenantId: { type: 'string' },
+        competitorPricing: { type: 'object' },
+        pricingBenchmarks: { type: 'object' },
+        industryTrends: { type: 'string' },
+        marketingChannels: { type: 'array', items: { type: 'string' } },
       },
-      required: ["tenantId"]
-    }
+      required: ['tenantId'],
+    },
   },
 
   {
-    name: "create_marketing_playbook",
-    description: "Create marketing playbook for tenant",
+    name: 'create_marketing_playbook',
+    description: 'Create marketing playbook for tenant',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        tenantId: { type: "string" },
-        platforms: { type: "array", items: { type: "string" } },
-        contentIdeas: { type: "array", items: { type: "object" } },
-        funnelStrategy: { type: "string" }
+        tenantId: { type: 'string' },
+        platforms: { type: 'array', items: { type: 'string' } },
+        contentIdeas: { type: 'array', items: { type: 'object' } },
+        funnelStrategy: { type: 'string' },
       },
-      required: ["tenantId", "platforms"]
-    }
+      required: ['tenantId', 'platforms'],
+    },
   },
 
   {
-    name: "generate_advisor_config",
-    description: "Generate and store custom advisor configuration",
+    name: 'generate_advisor_config',
+    description: 'Generate and store custom advisor configuration',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        tenantId: { type: "string" },
-        name: { type: "string" },
-        personality: { type: "string", enum: ["professional", "friendly", "expert"] }
+        tenantId: { type: 'string' },
+        name: { type: 'string' },
+        personality: { type: 'string', enum: ['professional', 'friendly', 'expert'] },
       },
-      required: ["tenantId"]
-    }
+      required: ['tenantId'],
+    },
   },
 
   {
-    name: "notify_tenant",
-    description: "Send notification to tenant",
+    name: 'notify_tenant',
+    description: 'Send notification to tenant',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        tenantId: { type: "string" },
-        message: { type: "string" },
-        type: { type: "string", enum: ["info", "success", "warning"] }
+        tenantId: { type: 'string' },
+        message: { type: 'string' },
+        type: { type: 'string', enum: ['info', 'success', 'warning'] },
       },
-      required: ["tenantId", "message"]
-    }
-  }
+      required: ['tenantId', 'message'],
+    },
+  },
 ];
 ```
 
@@ -1539,90 +1575,90 @@ export const builderTools: Tool[] = [
 
 export const advisorTools: Tool[] = [
   {
-    name: "read_tenant_packages",
-    description: "Get all packages for the current tenant",
+    name: 'read_tenant_packages',
+    description: 'Get all packages for the current tenant',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        segmentId: { type: "string", description: "Optional: filter by segment" },
-        includeInactive: { type: "boolean", default: false }
-      }
-    }
+        segmentId: { type: 'string', description: 'Optional: filter by segment' },
+        includeInactive: { type: 'boolean', default: false },
+      },
+    },
   },
 
   {
-    name: "update_package",
+    name: 'update_package',
     description: "Update a package's details",
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        packageId: { type: "string" },
+        packageId: { type: 'string' },
         updates: {
-          type: "object",
+          type: 'object',
           properties: {
-            name: { type: "string" },
-            price: { type: "number" },
-            description: { type: "string" },
-            features: { type: "array", items: { type: "string" } },
-            headline: { type: "string" },
-            subtext: { type: "string" }
-          }
-        }
+            name: { type: 'string' },
+            price: { type: 'number' },
+            description: { type: 'string' },
+            features: { type: 'array', items: { type: 'string' } },
+            headline: { type: 'string' },
+            subtext: { type: 'string' },
+          },
+        },
       },
-      required: ["packageId", "updates"]
-    }
+      required: ['packageId', 'updates'],
+    },
   },
 
   {
-    name: "draft_social_post",
-    description: "Generate a social media post draft",
+    name: 'draft_social_post',
+    description: 'Generate a social media post draft',
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        platform: { type: "string", enum: ["instagram", "linkedin", "facebook", "twitter"] },
-        topic: { type: "string" },
-        segment: { type: "string", description: "Optional: target segment" },
-        style: { type: "string", enum: ["promotional", "educational", "engaging", "testimonial"] }
+        platform: { type: 'string', enum: ['instagram', 'linkedin', 'facebook', 'twitter'] },
+        topic: { type: 'string' },
+        segment: { type: 'string', description: 'Optional: target segment' },
+        style: { type: 'string', enum: ['promotional', 'educational', 'engaging', 'testimonial'] },
       },
-      required: ["platform", "topic"]
-    }
+      required: ['platform', 'topic'],
+    },
   },
 
   {
-    name: "read_tenant_analytics",
+    name: 'read_tenant_analytics',
     description: "Get analytics for tenant's packages/segments",
     input_schema: {
-      type: "object",
+      type: 'object',
       properties: {
-        metric: { type: "string", enum: ["bookings", "revenue", "conversion"] },
-        segmentId: { type: "string" },
-        dateRange: { type: "string", enum: ["week", "month", "quarter", "year"] }
-      }
-    }
-  },
-
-  {
-    name: "create_action_plan",
-    description: "Create an action plan for achieving goals",
-    input_schema: {
-      type: "object",
-      properties: {
-        goal: { type: "string" },
-        timeframe: { type: "string", enum: ["week", "month", "quarter"] },
-        currentState: { type: "string" }
+        metric: { type: 'string', enum: ['bookings', 'revenue', 'conversion'] },
+        segmentId: { type: 'string' },
+        dateRange: { type: 'string', enum: ['week', 'month', 'quarter', 'year'] },
       },
-      required: ["goal", "timeframe"]
-    }
+    },
   },
 
   {
-    name: "read_marketing_playbook",
+    name: 'create_action_plan',
+    description: 'Create an action plan for achieving goals',
+    input_schema: {
+      type: 'object',
+      properties: {
+        goal: { type: 'string' },
+        timeframe: { type: 'string', enum: ['week', 'month', 'quarter'] },
+        currentState: { type: 'string' },
+      },
+      required: ['goal', 'timeframe'],
+    },
+  },
+
+  {
+    name: 'read_marketing_playbook',
     description: "Get the tenant's marketing playbook",
     input_schema: {
-      type: "object",
-      properties: {}
-    }
-  }
+      type: 'object',
+      properties: {},
+    },
+  },
 ];
 ```
 
@@ -1663,6 +1699,7 @@ export const advisorTools: Tool[] = [
    - File: `packages/contracts/src/advisor.contract.ts`
 
 **Deliverables:**
+
 - Working session creation/management
 - Message storage with audit trail
 - TypeScript types for all new models
@@ -1705,6 +1742,7 @@ export const advisorTools: Tool[] = [
    - File: `apps/web/src/app/(protected)/onboarding/page.tsx`
 
 **Deliverables:**
+
 - Working interview chat experience
 - Interview data captured and stored
 - Handoff to Builder pipeline
@@ -1749,6 +1787,7 @@ export const advisorTools: Tool[] = [
    - File: `apps/web/src/app/(protected)/onboarding/building/page.tsx`
 
 **Deliverables:**
+
 - Working async pipeline
 - Segments and packages created automatically
 - Marketing copy generated
@@ -1789,6 +1828,7 @@ export const advisorTools: Tool[] = [
    - File: `apps/web/src/app/(protected)/tenant/dashboard/page.tsx`
 
 **Deliverables:**
+
 - Working advisor chat
 - Package management via conversation
 - Social media content generation
@@ -1834,6 +1874,7 @@ export const advisorTools: Tool[] = [
 ### Functional Requirements
 
 **Onboarding Agent:**
+
 - [ ] Can conduct discovery conversation with new tenant
 - [ ] Collects all required interview data
 - [ ] Achieves avatar specificity goal ("LinkedIn hungry, $100k+")
@@ -1841,6 +1882,7 @@ export const advisorTools: Tool[] = [
 - [ ] Stores all data with tenantId isolation
 
 **Builder Pipeline:**
+
 - [ ] Performs web research for market context
 - [ ] Creates 2-3 customer segments with avatars
 - [ ] Creates 3-tier packages per segment
@@ -1850,6 +1892,7 @@ export const advisorTools: Tool[] = [
 - [ ] Configures custom advisor
 
 **Custom Advisor:**
+
 - [ ] Knows business context from onboarding
 - [ ] Can read and update packages
 - [ ] Generates social media content
@@ -1859,17 +1902,20 @@ export const advisorTools: Tool[] = [
 ### Non-Functional Requirements
 
 **Security:**
+
 - [ ] All queries scoped by tenantId
 - [ ] Tool calls validated for tenant ownership
 - [ ] Audit trail for all mutations
 - [ ] Rate limiting on Claude API calls
 
 **Performance:**
+
 - [ ] Chat response < 3s (streaming)
 - [ ] Builder pipeline < 10 min total
 - [ ] Context injection < 500ms
 
 **Reliability:**
+
 - [ ] Graceful handling of Claude API errors
 - [ ] BullMQ job retries with backoff
 - [ ] Session recovery on reconnection
@@ -1967,31 +2013,34 @@ describe('State Machine', () => {
 
 ## Risk Analysis
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Claude API rate limits | Medium | High | Token budgeting, caching, graceful degradation |
-| Web research returning poor data | High | Medium | Fallback prompts, manual research option |
-| Multi-tenant data leakage | Low | Critical | Strict tenantId validation, audit logging |
-| Long onboarding conversations | Medium | Medium | Completeness checks, gentle nudges |
-| Generated packages not useful | Medium | High | Human review step, easy editing |
-| High API costs | Medium | Medium | Token tracking, model tiering |
-| Builder pipeline failures | Medium | Medium | Retry logic, partial progress saving |
+| Risk                             | Likelihood | Impact   | Mitigation                                     |
+| -------------------------------- | ---------- | -------- | ---------------------------------------------- |
+| Claude API rate limits           | Medium     | High     | Token budgeting, caching, graceful degradation |
+| Web research returning poor data | High       | Medium   | Fallback prompts, manual research option       |
+| Multi-tenant data leakage        | Low        | Critical | Strict tenantId validation, audit logging      |
+| Long onboarding conversations    | Medium     | Medium   | Completeness checks, gentle nudges             |
+| Generated packages not useful    | Medium     | High     | Human review step, easy editing                |
+| High API costs                   | Medium     | Medium   | Token tracking, model tiering                  |
+| Builder pipeline failures        | Medium     | Medium   | Retry logic, partial progress saving           |
 
 ### Mitigation Strategies
 
 **Claude API Costs:**
+
 - Use Claude Haiku for simple tools
 - Use Claude Sonnet for research
 - Use Claude Opus for complex reasoning only
 - Cache repeated context injections
 
 **Research Quality:**
+
 - Curated research query templates
 - Multiple search refinements
 - Human review option before package creation
 - Easy editing after creation
 
 **Security:**
+
 - Defensive programming in all tool implementations
 - Every tool validates tenantId before execution
 - ConfigChangeLog tracks all agent mutations
@@ -2010,6 +2059,7 @@ describe('State Machine', () => {
 **Gap:** Agent tools must enforce `tenantId` at every operation.
 
 **Resolution:**
+
 ```typescript
 // Every tool implementation must:
 async executeToolCall(context: AgentContext, toolCall: ToolCall) {
@@ -2036,6 +2086,7 @@ async executeToolCall(context: AgentContext, toolCall: ToolCall) {
 **Gap:** No validation of search results, potential for injection/SSRF.
 
 **Resolution:**
+
 - Allowlist search domains (trustworthy industry sources)
 - Validate content type (HTML only)
 - Sanitize parsed data before storage
@@ -2048,6 +2099,7 @@ async executeToolCall(context: AgentContext, toolCall: ToolCall) {
 **Gap:** "Check completeness" is undefined.
 
 **Resolution:** Add explicit completeness schema:
+
 ```typescript
 interface CompletenessResult {
   isComplete: boolean;
@@ -2062,6 +2114,7 @@ interface CompletenessResult {
 ```
 
 **Minimum Requirements:**
+
 - Business type + location (required)
 - Income goal (required)
 - At least 1 customer segment with avatar (required)
@@ -2073,6 +2126,7 @@ interface CompletenessResult {
 **Gap:** No formula for tier pricing.
 
 **Resolution:** Define pricing calculation in system prompt:
+
 ```markdown
 ## Pricing Calculation Framework
 
@@ -2099,6 +2153,7 @@ interface CompletenessResult {
 **Gap:** Avatar structure not defined.
 
 **Resolution:** Add to Segment model:
+
 ```prisma
 model CustomerSegment {
   // ... existing fields
@@ -2116,6 +2171,7 @@ model CustomerSegment {
 **Gap:** No tenant review step between Builder and Advisor.
 
 **Resolution:** Add proposal model:
+
 ```prisma
 model AgentProposal {
   id String @id @default(cuid())
@@ -2132,6 +2188,7 @@ model AgentProposal {
 ```
 
 **Flow Update:**
+
 ```
 Builder Pipeline completes
     ↓
@@ -2206,6 +2263,7 @@ Custom Advisor unlocked
 #### Tool Contract Definitions
 
 All agent tools must be defined as ts-rest contracts:
+
 ```
 packages/contracts/src/agents/
 ├── onboarding.contract.ts    # store_interview_data, check_completeness, trigger_pipeline
@@ -2216,51 +2274,57 @@ packages/contracts/src/agents/
 
 #### Error Recovery Guide
 
-| Error | Agent | Recovery |
-|-------|-------|----------|
-| Web search timeout | Builder | Retry 3x with backoff, fallback to cached industry data |
-| Web search returns nothing | Builder | Notify tenant, request manual market info |
-| Claude API rate limit | All | Queue with exponential backoff |
-| Interview session expired | Onboarding | Offer to resume or start fresh |
-| Package creation fails | Builder | Save proposal as draft, alert admin |
-| Tenant never approves | Builder | Send reminder at 24h, 72h, then archive |
+| Error                      | Agent      | Recovery                                                |
+| -------------------------- | ---------- | ------------------------------------------------------- |
+| Web search timeout         | Builder    | Retry 3x with backoff, fallback to cached industry data |
+| Web search returns nothing | Builder    | Notify tenant, request manual market info               |
+| Claude API rate limit      | All        | Queue with exponential backoff                          |
+| Interview session expired  | Onboarding | Offer to resume or start fresh                          |
+| Package creation fails     | Builder    | Save proposal as draft, alert admin                     |
+| Tenant never approves      | Builder    | Send reminder at 24h, 72h, then archive                 |
 
 ### Summary Table
 
-| Gap | Priority | Status | Resolution |
-|-----|----------|--------|------------|
-| Multi-tenant isolation | P0 | Addressed | Validate tenantId in all tools |
-| Web search safety | P0 | Addressed | Allowlist domains, sanitize results |
-| Interview completeness | P1 | Addressed | Explicit criteria + scoring |
-| Pricing strategy | P1 | Addressed | Framework in system prompt |
-| Avatar schema | P1 | Addressed | Extended Segment model |
-| Approval workflow | P1 | Addressed | AgentProposal model + flow |
-| State machine | P2 | Addressed | Documented above |
-| Tool contracts | P2 | Addressed | ts-rest contract structure |
-| Error recovery | P2 | Addressed | Recovery table above |
+| Gap                    | Priority | Status    | Resolution                          |
+| ---------------------- | -------- | --------- | ----------------------------------- |
+| Multi-tenant isolation | P0       | Addressed | Validate tenantId in all tools      |
+| Web search safety      | P0       | Addressed | Allowlist domains, sanitize results |
+| Interview completeness | P1       | Addressed | Explicit criteria + scoring         |
+| Pricing strategy       | P1       | Addressed | Framework in system prompt          |
+| Avatar schema          | P1       | Addressed | Extended Segment model              |
+| Approval workflow      | P1       | Addressed | AgentProposal model + flow          |
+| State machine          | P2       | Addressed | Documented above                    |
+| Tool contracts         | P2       | Addressed | ts-rest contract structure          |
+| Error recovery         | P2       | Addressed | Recovery table above                |
 
 ---
 
 ## Alternative Approaches Considered
 
 ### Option 1: Single Mega-Agent
+
 **Approach:** One agent handles interview, research, and creation
 **Rejected because:** Context window limitations, harder to debug, less specialization
 
 ### Option 2: Human-in-the-Loop Research
+
 **Approach:** Agent collects interview data, human does research, agent creates packages
 **Rejected because:** Adds friction, defeats automation purpose, doesn't scale
 
 ### Option 3: Template-Based Packages
+
 **Approach:** Pre-built package templates user selects from
 **Rejected because:** Not personalized, doesn't leverage AI, generic results
 
 ### Option 4: External Research Service
+
 **Approach:** Use third-party API for market research (Crunchbase, SEMrush)
 **Rejected because:** Cost, API dependencies, less flexible than web search
 
 ### Chosen Approach: Three-Agent Pipeline
+
 **Rationale:**
+
 - Clear separation of concerns
 - Each agent optimized for its task
 - Async pipeline allows background processing
@@ -2276,26 +2340,31 @@ packages/contracts/src/agents/
 > Focus on Phases 1-5 to deliver a production-quality system.
 
 ### Phase 6 (Future): Analytics Integration
+
 - Segment performance tracking
 - Pricing optimization suggestions
 - A/B testing recommendations
 
 ### Phase 7 (Future): Multi-Language Support
+
 - Interview in tenant's preferred language
 - Localized copy generation
 - Market research for different regions
 
 ### Phase 8 (Future): Agent Collaboration
+
 - Multiple advisors for different domains
 - Specialist agents (pricing, marketing, operations)
 - Agent handoff protocols
 
 ### Phase 9 (Future): Self-Improvement
+
 - Learning from successful tenants
 - Package performance feedback loops
 - Continuous prompt optimization
 
 **Why these are deferred:**
+
 - Phases 1-5 deliver complete, production-ready functionality
 - Adding more complexity before validating core system increases risk
 - Analytics requires booking data to be meaningful
@@ -2306,6 +2375,7 @@ packages/contracts/src/agents/
 ## References
 
 ### Internal References
+
 - `server/prisma/schema.prisma` - Existing models (Segment, Package, Tenant)
 - `server/src/di.ts` - Dependency injection patterns
 - `server/src/lib/ports.ts` - Repository interfaces
@@ -2314,12 +2384,14 @@ packages/contracts/src/agents/
 - `apps/web/src/lib/auth.ts` - NextAuth configuration
 
 ### External References
+
 - [Claude API Tool Use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
 - [Model Context Protocol](https://modelcontextprotocol.io/docs/develop/build-server)
 - [BullMQ Documentation](https://bullmq.io/)
 - [Anthropic Multi-Agent Research](https://www.anthropic.com/engineering/multi-agent-research-system)
 
 ### Skill References
+
 - `/Users/mikeyoung/.claude/plugins/every-marketplace/plugins/compound-engineering/skills/agent-native-architecture/SKILL.md`
 - `references/action-parity-discipline.md`
 - `references/mcp-tool-design.md`
@@ -2344,35 +2416,42 @@ Be warm, curious, and supportive. You're like a business consultant meeting a ne
 ## What You Need to Learn
 
 ### 1. Business Basics
+
 - What do they do? (be specific - "photographer" isn't enough)
 - Where are they located? (city/region matters for pricing)
 - How long have they been in business?
 - What's their current setup? (solo, team, studio, mobile)
 
 ### 2. Financial Context
+
 - What's their income goal? (monthly or yearly)
 - What are they earning now? (if they're comfortable sharing)
 - How many hours/week do they want to work?
 - What's their average project size currently?
 
 ### 3. Services
+
 - What services do they currently offer?
 - What services do they WANT to offer?
 - What's their signature offering?
 - What makes them different from competitors?
 
 ### 4. Customers (MOST IMPORTANT)
+
 For each customer type they serve, get specific:
+
 - Demographics: age range, income level, profession
 - Psychographics: pain points, desires, objections
 - Specificity goal: "LinkedIn hungry, $100k+, bad photo" level
 
 Ask follow-up questions like:
+
 - "When you say professionals, what kind?"
 - "Describe your ideal client walking through the door"
 - "Why do they choose you over others?"
 
 ### 5. Preferences
+
 - Do they have a preference for their advisor's name?
 - What personality style do they prefer? (professional, friendly, expert)
 
@@ -2385,6 +2464,7 @@ Ask follow-up questions like:
 ## When You're Done
 
 You have enough when:
+
 - You understand at least 1-2 distinct customer segments
 - Each segment has a specific avatar (not generic)
 - You know their income goal
@@ -2411,6 +2491,7 @@ You are architecting a storefront for a MAIS member based on their interview dat
 ## Research Protocol
 
 Search for:
+
 - "[business type] [city] pricing" - understand local rates
 - "[business type] packages examples" - see package structures
 - "[business type] marketing strategies" - learn what works
@@ -2419,6 +2500,7 @@ Search for:
 ## Segment Architecture
 
 For each segment:
+
 - Name: Short, memorable (e.g., "Corporate Climbers")
 - Avatar: Specific description with demographics + psychographics
 - Pain points: 3-5 specific problems they have
@@ -2429,18 +2511,21 @@ For each segment:
 For each segment, create 3 tiers:
 
 ### Entry Tier
+
 - Price: Accessible, low commitment
 - Goal: Build trust, get them in the door
 - Features: Core deliverable, minimal
 - Copy: Emphasize low barrier to entry
 
 ### Popular Tier (Mark as "Most Popular")
+
 - Price: 2-3x entry
 - Goal: Best value perception, most should buy this
 - Features: Full service, good value
 - Copy: Emphasize comprehensiveness
 
 ### Luxury Tier
+
 - Price: 4-6x entry
 - Goal: Premium positioning, highest margin
 - Features: VIP experience, extras
@@ -2457,12 +2542,14 @@ For each segment, create 3 tiers:
 ## Copy Guidelines
 
 Headlines should:
+
 - Lead with transformation, not features
 - Speak to identity ("Look like the leader you are")
 - Be specific when possible
 - Under 10 words
 
 Subtext should:
+
 - Support the headline
 - Address an objection
 - Create urgency or exclusivity
@@ -2471,6 +2558,7 @@ Subtext should:
 ## Your Tools
 
 Use these in order:
+
 1. `web_search(query, purpose)` - Research the market
 2. `store_market_research(...)` - Save research findings
 3. `create_customer_segment(...)` - Create segments
@@ -2518,6 +2606,6 @@ apps/web/src/
 
 ---
 
-*Generated with Claude Code - ✅ Approved 2025-12-26*
+_Generated with Claude Code - ✅ Approved 2025-12-26_
 
-*Reviewed by: DHH Rails Reviewer, Kieran TypeScript Reviewer, Code Simplicity Reviewer*
+_Reviewed by: DHH Rails Reviewer, Kieran TypeScript Reviewer, Code Simplicity Reviewer_

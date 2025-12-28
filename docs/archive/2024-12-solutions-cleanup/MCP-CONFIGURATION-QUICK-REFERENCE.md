@@ -39,27 +39,28 @@
 
 ## Environment Variable Sources
 
-| Source | How to Use | Example |
-|--------|-----------|---------|
-| **Shell Export** | Add to .zshrc/.bashrc | `export DATABASE_URL="..."` |
-| **.mcp.json Config** | Add env section to server | `"env": { "DATABASE_URL": "..." }` |
-| **Claude Code Settings** | Auto-discovered | Prisma reads project config |
-| **.env Files** | ❌ DOESN'T WORK | Don't use for MCP |
+| Source                   | How to Use                | Example                            |
+| ------------------------ | ------------------------- | ---------------------------------- |
+| **Shell Export**         | Add to .zshrc/.bashrc     | `export DATABASE_URL="..."`        |
+| **.mcp.json Config**     | Add env section to server | `"env": { "DATABASE_URL": "..." }` |
+| **Claude Code Settings** | Auto-discovered           | Prisma reads project config        |
+| **.env Files**           | ❌ DOESN'T WORK           | Don't use for MCP                  |
 
 ---
 
 ## Current MAIS MCP Servers
 
-| Server | Status | Setup | Tests |
-|--------|--------|-------|-------|
-| prisma | ✅ Active | Auto | `npm test` |
-| playwright | ✅ Active | Auto | `npm run test:e2e` |
+| Server     | Status    | Setup | Tests              |
+| ---------- | --------- | ----- | ------------------ |
+| prisma     | ✅ Active | Auto  | `npm test`         |
+| playwright | ✅ Active | Auto  | `npm run test:e2e` |
 
 ---
 
 ## Adding New Server - 5 Steps
 
 ### 1. Decision
+
 ```bash
 # Check if overlap exists
 grep -i "postgres\|sql\|database" .mcp.json
@@ -68,6 +69,7 @@ grep -i "postgres\|sql\|database" .mcp.json
 ```
 
 ### 2. Update Configuration
+
 ```json
 {
   "mcpServers": {
@@ -80,31 +82,38 @@ grep -i "postgres\|sql\|database" .mcp.json
 ```
 
 ### 3. Document Setup
+
 **Add to DEVELOPING.md:**
+
 ```markdown
 ### New Server Setup
+
 1. Export vars: `export VAR1="..."`
 2. Grant permission in Claude Code settings
 3. Test: `claude --help` (no warnings)
 ```
 
 ### 4. Grant Permission
+
 1. Claude Code → Settings → MCP Servers
 2. Find your server
 3. Click "Grant Permission"
 4. Restart Claude Code
 
 ### 5. Create PR
+
 ```markdown
 ## MCP: Add [Server Name]
 
 **Use Case:** [What problem does this solve?]
 
 **Setup:**
+
 - Requires [env vars]
 - See DEVELOPING.md
 
 **Testing:**
+
 - [ ] Tested locally
 - [ ] Permissions granted
 - [ ] Startup time < 2s overhead
@@ -216,6 +225,7 @@ source ~/.zshrc
 ## Environment Variable Sources Explained
 
 ### ✅ CORRECT: Shell Export
+
 ```bash
 # In ~/.zshrc or ~/.bashrc
 export DATABASE_URL="postgresql://..."
@@ -226,6 +236,7 @@ claude
 ```
 
 ### ✅ CORRECT: MCP Config
+
 ```json
 {
   "mcpServers": {
@@ -241,6 +252,7 @@ claude
 ```
 
 ### ❌ WRONG: .env Files
+
 ```bash
 # In .env
 DATABASE_URL="postgresql://..."
@@ -265,12 +277,14 @@ DATABASE_URL="postgresql://..."
 ## Decision Log: Current Servers
 
 ### Prisma ✅
+
 - **Why:** Schema introspection, migrations
 - **Startup:** < 200ms
 - **Use Frequency:** Multiple daily during DB work
 - **Status:** Keep
 
 ### Playwright ✅
+
 - **Why:** E2E test automation
 - **Startup:** None (lazy)
 - **Use Frequency:** Daily during test dev
@@ -281,6 +295,7 @@ DATABASE_URL="postgresql://..."
 ## When to Remove a Server
 
 Remove MCP server if:
+
 - Not used by team in past month
 - Causes > 1s startup slowdown
 - Overlaps with another server
@@ -288,6 +303,7 @@ Remove MCP server if:
 - Creates frequent warnings
 
 **Process:**
+
 1. Create issue proposing removal
 2. Wait 48 hours for team feedback
 3. If no objections, remove in PR

@@ -21,7 +21,12 @@ import type { BookingService } from '../services/booking.service';
 import type { CacheServicePort } from '../lib/ports';
 import { CreateDateBookingDtoSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, BookingConflictError, InvalidBookingTypeError, PackageNotAvailableError } from '../lib/errors';
+import {
+  NotFoundError,
+  BookingConflictError,
+  InvalidBookingTypeError,
+  PackageNotAvailableError,
+} from '../lib/errors';
 import { publicSchedulingLimiter } from '../middleware/rateLimiter';
 
 /** TTL for idempotency cache entries (1 hour in seconds) */
@@ -123,7 +128,12 @@ export function createPublicDateBookingRoutes(
       }
 
       logger.info(
-        { tenantId, packageId: input.packageId, date: input.date, hasIdempotencyKey: !!idempotencyKey },
+        {
+          tenantId,
+          packageId: input.packageId,
+          date: input.date,
+          hasIdempotencyKey: !!idempotencyKey,
+        },
         'Date booking checkout initiated'
       );
 
@@ -193,10 +203,7 @@ export function createPublicDateBookingRoutes(
         return;
       }
       if (error instanceof PackageNotAvailableError) {
-        logger.warn(
-          { tenantId, packageId },
-          'Date booking attempted with inactive package'
-        );
+        logger.warn({ tenantId, packageId }, 'Date booking attempted with inactive package');
         res.status(400).json({
           error: 'Package not available',
           message: 'This package is no longer available for booking.',

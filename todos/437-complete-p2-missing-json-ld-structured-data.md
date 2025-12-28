@@ -1,6 +1,7 @@
 # Missing JSON-LD Structured Data
 
 ## Metadata
+
 - **ID:** 437
 - **Status:** pending
 - **Priority:** P2
@@ -10,6 +11,7 @@
 ## Problem Statement
 
 The homepage has no JSON-LD structured data (schema.org markup). This hurts:
+
 1. SEO — search engines can't understand pricing, services, or organization info
 2. Agent accessibility — AI agents summarizing the page have no machine-readable data
 3. Rich snippets — no enhanced search results (pricing, ratings, etc.)
@@ -27,6 +29,7 @@ The homepage has no JSON-LD structured data (schema.org markup). This hurts:
 ## Proposed Solutions
 
 ### Option A: Add via Next.js Metadata (Recommended)
+
 Use Next.js metadata API to inject JSON-LD
 
 ```tsx
@@ -66,6 +69,7 @@ export default function HomePage() {
 **Risk:** Low
 
 ### Option B: Minimal Organization Schema Only
+
 Just add basic organization info, skip pricing
 
 ```json
@@ -83,14 +87,17 @@ Just add basic organization info, skip pricing
 **Risk:** Low
 
 ## Recommended Action
+
 Option A — Add comprehensive structured data
 
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/app/page.tsx` — add JSON-LD script
 
 **Schemas to Include:**
+
 - `Organization` — company info
 - `SoftwareApplication` — product type
 - `Offer` — pricing tiers
@@ -106,8 +113,8 @@ Option A — Add comprehensive structured data
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                     |
+| ---------- | ------- | ----------------------------------------- |
 | 2025-12-27 | Created | From brand review - Agent-Native Reviewer |
 
 ## Resources

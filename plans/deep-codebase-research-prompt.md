@@ -5,6 +5,7 @@
 This prompt drives a comprehensive enterprise-readiness audit of the MAIS multi-tenant SaaS platform. Based on parallel analysis by 10 specialized agents examining 490 source files, 844 markdown documents, 488 git commits, and 771+ tests, we have identified 20 critical research areas requiring deep investigation.
 
 **Platform Snapshot:**
+
 - 130 server TypeScript files, 353 client files
 - 16 Prisma migrations, 89 database indexes
 - 13 Architecture Decision Records
@@ -19,6 +20,7 @@ This prompt drives a comprehensive enterprise-readiness audit of the MAIS multi-
 You are conducting a comprehensive enterprise-readiness audit of the MAIS codebase. Your goal is to systematically analyze each of the 20 research areas below, identify specific issues, and provide actionable remediation plans with code examples.
 
 **Codebase Context:**
+
 - Multi-tenant modular monolith (Express + React + Prisma + PostgreSQL)
 - Ports/adapters architecture with dependency injection
 - ts-rest + Zod for type-safe API contracts
@@ -26,6 +28,7 @@ You are conducting a comprehensive enterprise-readiness audit of the MAIS codeba
 - Target: Enterprise SaaS with tenant data isolation
 
 **Research Methodology:**
+
 1. Read all relevant source files for each area
 2. Cross-reference with documentation and ADRs
 3. Identify gaps between documented patterns and implementation
@@ -37,15 +40,18 @@ You are conducting a comprehensive enterprise-readiness audit of the MAIS codeba
 ## The 20 Deep Research Areas
 
 ### AREA 1: God Component Decomposition
+
 **Priority:** P1 | **Files:** 5 components >400 lines
 
 **Research Scope:**
+
 - `server/src/services/booking.service.ts` (1394 lines) - Needs domain separation
 - `server/src/routes/tenant-admin.routes.ts` (1317 lines) - Route handler bloat
 - `client/src/features/admin/AdminCalendar.tsx` (estimated >400 lines)
 - Other large service/component files
 
 **Questions to Answer:**
+
 1. What cohesive sub-domains exist within each god component?
 2. Which responsibilities can be extracted to dedicated services?
 3. What's the refactoring strategy that maintains backward compatibility?
@@ -56,9 +62,11 @@ You are conducting a comprehensive enterprise-readiness audit of the MAIS codeba
 ---
 
 ### AREA 2: Type Safety Enforcement
+
 **Priority:** P1 | **Metrics:** 242 `as any`, 4 `z.any()`, 14 route type assertions
 
 **Research Scope:**
+
 ```bash
 # Find all type safety violations
 grep -r "as any" server/src/ client/src/
@@ -67,6 +75,7 @@ grep -r ": any" server/src/ --include="*.ts"
 ```
 
 **Questions to Answer:**
+
 1. Which `as any` instances are legitimate library limitations (ts-rest/Express)?
 2. Which can be replaced with proper type guards or generics?
 3. Are `z.any()` schemas in contracts actually typed at runtime?
@@ -77,14 +86,17 @@ grep -r ": any" server/src/ --include="*.ts"
 ---
 
 ### AREA 3: Tenant Cascade Deletion Safety (P0)
+
 **Priority:** P0 (CRITICAL) | **Risk:** Data integrity, orphaned records
 
 **Research Scope:**
+
 - `server/prisma/schema.prisma` - All tenant relationships
 - `server/src/services/` - Deletion logic
 - Database constraints and cascade behavior
 
 **Questions to Answer:**
+
 1. What happens when a tenant is deleted? Are all child records cleaned up?
 2. Are there orphaned record scenarios (bookings without tenants)?
 3. What's the cascade delete order to prevent FK violations?
@@ -95,9 +107,11 @@ grep -r ": any" server/src/ --include="*.ts"
 ---
 
 ### AREA 4: Foreign Key Constraint Gaps
+
 **Priority:** P1 | **Files:** Customer, Package, TenantSettings
 
 **Research Scope:**
+
 ```sql
 -- Audit FK constraints
 SELECT tc.table_name, kcu.column_name, ccu.table_name AS references_table
@@ -108,6 +122,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY';
 ```
 
 **Questions to Answer:**
+
 1. Which relationships lack explicit `onDelete` behavior?
 2. Are there dangling references possible in Customer→Booking relationships?
 3. What's the migration strategy for adding constraints to existing data?
@@ -118,14 +133,17 @@ WHERE tc.constraint_type = 'FOREIGN KEY';
 ---
 
 ### AREA 5: CI Pipeline Stability
+
 **Priority:** P1 | **Metrics:** 29 CI fix commits (indicates instability)
 
 **Research Scope:**
+
 - `.github/workflows/` - All workflow files
 - Git log for "ci:" prefixed commits
 - Test flakiness patterns
 
 **Questions to Answer:**
+
 1. What are the recurring CI failure modes?
 2. Are there timing-dependent tests causing flakiness?
 3. Is the CI matrix (Node versions, OS) appropriate?
@@ -136,14 +154,17 @@ WHERE tc.constraint_type = 'FOREIGN KEY';
 ---
 
 ### AREA 6: API Documentation Generation
+
 **Priority:** P2 | **Gap:** No auto-generated API docs
 
 **Research Scope:**
+
 - `packages/contracts/` - All contract definitions
 - Existing documentation in `docs/reference/`
 - ts-rest documentation capabilities
 
 **Questions to Answer:**
+
 1. Can we auto-generate OpenAPI from ts-rest contracts?
 2. What documentation is missing for each endpoint?
 3. Should we use Swagger UI or a static site generator?
@@ -154,14 +175,17 @@ WHERE tc.constraint_type = 'FOREIGN KEY';
 ---
 
 ### AREA 7: Frontend Test Coverage
+
 **Priority:** P1 | **Metrics:** Only 5 test files for 353 source files
 
 **Research Scope:**
+
 - `client/src/**/*.test.tsx` - Existing tests
 - `client/src/features/` - Feature modules needing coverage
 - `e2e/` - E2E test coverage
 
 **Questions to Answer:**
+
 1. What's the current line/branch coverage percentage?
 2. Which critical user flows lack test coverage?
 3. What testing patterns should we standardize (RTL, MSW)?
@@ -172,14 +196,17 @@ WHERE tc.constraint_type = 'FOREIGN KEY';
 ---
 
 ### AREA 8: Console.log Cleanup
+
 **Priority:** P2 | **Metrics:** 407 console.log occurrences
 
 **Research Scope:**
+
 ```bash
 grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ```
 
 **Questions to Answer:**
+
 1. Which console.logs are debug artifacts vs. intentional?
 2. Should we use a logger abstraction in the client?
 3. What ESLint rules prevent new console.log additions?
@@ -190,14 +217,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 9: Error Boundary Coverage
+
 **Priority:** P2 | **Risk:** Uncaught errors crash entire app
 
 **Research Scope:**
+
 - `client/src/` - Error boundary implementations
 - React error handling patterns
 - Sentry integration points
 
 **Questions to Answer:**
+
 1. Do all route-level components have error boundaries?
 2. Are async errors (TanStack Query) properly captured?
 3. What's the user experience when an error occurs?
@@ -208,14 +238,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 10: Large File Decomposition Strategy
+
 **Priority:** P2 | **Files:** di.ts (745 lines), routes files
 
 **Research Scope:**
+
 - `server/src/di.ts` - DI container complexity
 - Route files exceeding 500 lines
 - Service files with multiple domains
 
 **Questions to Answer:**
+
 1. Can di.ts be split into domain-specific containers?
 2. Are there route handlers doing too much business logic?
 3. What's the ideal file size threshold (300 lines?)?
@@ -226,14 +259,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 11: Database Index Optimization
+
 **Priority:** P2 | **Current:** 89 indexes
 
 **Research Scope:**
+
 - `server/prisma/schema.prisma` - Index definitions
 - Slow query patterns
 - Missing composite indexes
 
 **Questions to Answer:**
+
 1. Are there queries running without index support?
 2. Are composite indexes ordered correctly for query patterns?
 3. Are there redundant or unused indexes?
@@ -244,14 +280,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 12: Contract Versioning Strategy
+
 **Priority:** P2 | **Risk:** Breaking API changes
 
 **Research Scope:**
+
 - `packages/contracts/` - Current contract structure
 - API versioning patterns
 - Client compatibility
 
 **Questions to Answer:**
+
 1. How do we version breaking API changes?
 2. Is there a deprecation policy for old endpoints?
 3. How do mobile clients handle API version mismatches?
@@ -262,14 +301,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 13: Component Duplication Consolidation
+
 **Priority:** P2 | **Estimated:** 10-15 duplicated patterns
 
 **Research Scope:**
+
 - `client/src/ui/` - Shared components
 - `client/src/features/*/components/` - Feature components
 - Similar form patterns
 
 **Questions to Answer:**
+
 1. What UI patterns are duplicated across features?
 2. Are there inconsistent button/input/card implementations?
 3. What belongs in shared `ui/` vs feature-specific?
@@ -280,14 +322,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 14: Form Handling Standardization
+
 **Priority:** P2 | **Pattern:** react-hook-form + Zod
 
 **Research Scope:**
+
 - All form components
 - Validation patterns
 - Error display consistency
 
 **Questions to Answer:**
+
 1. Are all forms using react-hook-form consistently?
 2. Is Zod validation shared between client and server?
 3. Are error messages user-friendly and consistent?
@@ -298,15 +343,18 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 15: Accessibility Audit
+
 **Priority:** P1 | **Compliance:** WCAG 2.1 AA target
 
 **Research Scope:**
+
 - All interactive components
 - Color contrast
 - Keyboard navigation
 - Screen reader compatibility
 
 **Questions to Answer:**
+
 1. Do all interactive elements have proper ARIA labels?
 2. Is keyboard navigation working for all flows?
 3. Are color contrasts meeting AA standards?
@@ -317,15 +365,18 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 16: Performance Optimization
+
 **Priority:** P2 | **Areas:** Image loading, bundle size, API calls
 
 **Research Scope:**
+
 - Bundle analysis
 - Image optimization
 - API waterfall patterns
 - React re-render analysis
 
 **Questions to Answer:**
+
 1. What's the current bundle size and can it be reduced?
 2. Are images lazy-loaded with proper placeholders?
 3. Are there API call waterfalls that could be parallelized?
@@ -336,14 +387,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 17: Documentation Gap Analysis
+
 **Priority:** P2 | **Files:** 844 markdown, gaps in API/component docs
 
 **Research Scope:**
+
 - All documentation directories
 - README completeness
 - Onboarding documentation
 
 **Questions to Answer:**
+
 1. What documentation is outdated or contradictory?
 2. Are all public APIs documented?
 3. Is the developer onboarding path clear?
@@ -354,14 +408,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 18: Webhook Reliability Enhancement
+
 **Priority:** P1 | **Pattern:** Dead-letter queue (ADR-009)
 
 **Research Scope:**
+
 - `server/src/routes/webhooks.routes.ts`
 - WebhookEvent model
 - Retry logic
 
 **Questions to Answer:**
+
 1. Is the dead-letter queue being processed?
 2. What's the retry strategy for failed webhooks?
 3. Are there monitoring alerts for DLQ depth?
@@ -372,14 +429,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 19: Distributed Tracing Implementation
+
 **Priority:** P2 | **Current:** Sentry, no trace propagation
 
 **Research Scope:**
+
 - Request tracing
 - Span propagation
 - Correlation IDs
 
 **Questions to Answer:**
+
 1. Can we trace a request across API→Service→Database?
 2. Are correlation IDs propagated in logs?
 3. What's the Sentry tracing integration status?
@@ -390,14 +450,17 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 ---
 
 ### AREA 20: Application Metrics & Alerting
+
 **Priority:** P2 | **Current:** Basic health checks
 
 **Research Scope:**
+
 - Health check endpoints
 - Business metrics
 - Infrastructure metrics
 
 **Questions to Answer:**
+
 1. What business metrics should we track (bookings/day, revenue)?
 2. Are there SLOs defined for critical endpoints?
 3. What alerting thresholds are appropriate?
@@ -412,10 +475,12 @@ grep -rn "console\." server/src/ client/src/ --include="*.ts" --include="*.tsx"
 When running this research prompt, structure your work as follows:
 
 ### Phase 1: Critical Path (P0-P1)
+
 Research areas: 3, 4, 2, 1, 5, 7, 15, 18
 Estimated scope: 8 areas requiring immediate attention
 
 ### Phase 2: Quality Improvements (P2)
+
 Research areas: 6, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20
 Estimated scope: 12 areas for quality enhancement
 
@@ -427,25 +492,30 @@ For each research area, provide:
 ## AREA [N]: [Title]
 
 ### Findings
+
 - [Specific file:line references]
 - [Code examples of issues found]
 - [Quantified impact]
 
 ### Root Cause Analysis
+
 - [Why this issue exists]
 - [What allowed it to persist]
 
 ### Remediation Plan
+
 1. [Step 1 with code example]
 2. [Step 2 with code example]
 3. [Verification method]
 
 ### Estimated Effort
+
 - Complexity: [Low/Medium/High]
 - Files affected: [count]
 - Test updates required: [Yes/No]
 
 ### Dependencies
+
 - [Other areas that must be addressed first]
 - [External dependencies]
 ```
@@ -499,8 +569,8 @@ docs/solutions/                     # Prevention strategies (208 files)
 
 ---
 
-*Generated: 2024-12-24*
-*Research Agents: 10 parallel fact-finders*
-*Source Files Analyzed: 490*
-*Documentation Files: 844*
-*Git Commits Analyzed: 488*
+_Generated: 2024-12-24_
+_Research Agents: 10 parallel fact-finders_
+_Source Files Analyzed: 490_
+_Documentation Files: 844_
+_Git Commits Analyzed: 488_

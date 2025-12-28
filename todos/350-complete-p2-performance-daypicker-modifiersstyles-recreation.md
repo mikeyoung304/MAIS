@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "350"
+issue_id: '350'
 tags: [code-review, performance, react, rendering]
 dependencies: []
 ---
@@ -30,6 +30,7 @@ modifiersStyles={{
 ## Proposed Solutions
 
 ### Option A: Extract to module-level constant (Recommended)
+
 - **Pros:** Zero runtime cost, simplest fix
 - **Cons:** None
 - **Effort:** Small
@@ -41,10 +42,11 @@ const DAY_PICKER_STYLES = {
 } as const;
 
 // In component
-modifiersStyles={DAY_PICKER_STYLES}
+modifiersStyles = { DAY_PICKER_STYLES };
 ```
 
 ### Option B: Use useMemo
+
 - **Pros:** Works if styles need to be dynamic
 - **Cons:** Adds complexity for static data
 - **Effort:** Small
@@ -68,8 +70,8 @@ Option A - Extract to module-level constant since styles are static.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | performance-oracle agent finding |
 
 ## Resources

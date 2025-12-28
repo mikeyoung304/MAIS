@@ -28,8 +28,8 @@ export function ContactPageContent({ tenant, basePath, domainParam }: ContactPag
                 Get in Touch.
               </h1>
               <p className="mt-6 text-lg text-text-muted">
-                Have a question or ready to book? We&apos;d love to hear from you.
-                Fill out the form and we&apos;ll get back to you as soon as possible.
+                Have a question or ready to book? We&apos;d love to hear from you. Fill out the form
+                and we&apos;ll get back to you as soon as possible.
               </p>
 
               {/* Business info (optional, could be extended with tenant contact info) */}
@@ -44,11 +44,7 @@ export function ContactPageContent({ tenant, basePath, domainParam }: ContactPag
 
             {/* Right: Form */}
             <div>
-              <ContactForm
-                tenantName={tenant.name}
-                basePath={basePath}
-                domainParam={domainParam}
-              />
+              <ContactForm tenantName={tenant.name} basePath={basePath} domainParam={domainParam} />
             </div>
           </div>
         </div>

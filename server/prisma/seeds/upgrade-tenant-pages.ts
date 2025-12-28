@@ -63,21 +63,21 @@ We're not just wedding planners—we're storytellers, problem solvers, and your 
         items: [
           {
             quote:
-              "We wanted something intimate without sacrificing beauty. La Petit Mariage gave us the most magical day—just 12 guests, gorgeous florals, and a ceremony that had everyone in tears. It was perfect.",
+              'We wanted something intimate without sacrificing beauty. La Petit Mariage gave us the most magical day—just 12 guests, gorgeous florals, and a ceremony that had everyone in tears. It was perfect.',
             author: 'Sarah & Michael',
             role: 'Elopement, October 2024',
             rating: 5,
           },
           {
             quote:
-              "The team handled every detail so we could actually enjoy our wedding. From the custom ceremony to the stunning photos, it exceeded every expectation. Worth every penny.",
+              'The team handled every detail so we could actually enjoy our wedding. From the custom ceremony to the stunning photos, it exceeded every expectation. Worth every penny.',
             author: 'Jessica & David',
             role: 'Micro Wedding, June 2024',
             rating: 5,
           },
           {
             quote:
-              "We considered eloping to avoid the stress of a big wedding. La Petit Mariage showed us we could have an intimate celebration without any of the chaos. Best decision we made.",
+              'We considered eloping to avoid the stress of a big wedding. La Petit Mariage showed us we could have an intimate celebration without any of the chaos. Best decision we made.',
             author: 'Emily & James',
             role: 'Full Wedding, September 2024',
             rating: 5,
@@ -150,7 +150,7 @@ We're not just wedding planners—we're storytellers, problem solvers, and your 
           {
             question: 'Can we add guests after booking?',
             answer:
-              "Guest counts are flexible up to your package limit. If you need to upgrade to accommodate more guests, we can often adjust your package. Contact us at least 2 weeks before your date to discuss changes.",
+              'Guest counts are flexible up to your package limit. If you need to upgrade to accommodate more guests, we can often adjust your package. Contact us at least 2 weeks before your date to discuss changes.',
           },
           {
             question: 'What happens if it rains?',
@@ -205,8 +205,7 @@ const LITTLE_BIT_FARM_CONFIG = {
         subheadline:
           'Equine-assisted wellness retreats for teams who want more than another conference room. Ground your people in nature with horses, yoga, breathwork, and PEMF recovery.',
         ctaText: 'Explore Retreats',
-        backgroundImageUrl:
-          'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=1920&q=80',
+        backgroundImageUrl: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=1920&q=80',
       },
       socialProofBar: {
         items: [
@@ -297,7 +296,7 @@ Whether you need a half-day reset or a full executive experience, we'll design a
           {
             question: 'Do participants need horse experience?',
             answer:
-              "Absolutely not! All our equine activities are ground-based—no riding involved. We teach you how to approach and interact with horses safely. The horses do the rest. First-timers often have the most profound experiences.",
+              'Absolutely not! All our equine activities are ground-based—no riding involved. We teach you how to approach and interact with horses safely. The horses do the rest. First-timers often have the most profound experiences.',
           },
           {
             question: "What's PEMF therapy and why is it included?",
@@ -305,22 +304,22 @@ Whether you need a half-day reset or a full executive experience, we'll design a
               'PEMF (Pulsed Electromagnetic Field) therapy is FDA-cleared technology used by elite athletes and NASA. It promotes cellular recovery, reduces inflammation, and enhances mental clarity. Teams consistently report feeling more energized after sessions.',
           },
           {
-            question: "How many people can you accommodate?",
+            question: 'How many people can you accommodate?',
             answer:
-              "Our retreats require a minimum of 4 participants and can accommodate up to 25 per session. For larger groups, we can run multiple concurrent sessions or multi-day programs. Contact us for custom quotes.",
+              'Our retreats require a minimum of 4 participants and can accommodate up to 25 per session. For larger groups, we can run multiple concurrent sessions or multi-day programs. Contact us for custom quotes.',
           },
           {
-            question: "What should we wear?",
+            question: 'What should we wear?',
             answer:
               "Comfortable clothing you can move in—think athleisure or business casual without the blazer. Closed-toe shoes are required for horse activities. We recommend layers as we'll be both indoors and outdoors.",
           },
           {
-            question: "Is there a bad time of year to visit?",
+            question: 'Is there a bad time of year to visit?',
             answer:
-              "Georgia has mild weather year-round. Summer retreats start early to beat the heat. Fall is our most popular season. Winter offers cozy indoor-outdoor experiences. We have covered spaces for inclement weather.",
+              'Georgia has mild weather year-round. Summer retreats start early to beat the heat. Fall is our most popular season. Winter offers cozy indoor-outdoor experiences. We have covered spaces for inclement weather.',
           },
           {
-            question: "Can you customize the retreat for our specific goals?",
+            question: 'Can you customize the retreat for our specific goals?',
             answer:
               "Absolutely. The Executive Reset package includes pre-retreat intake calls and post-retreat follow-up. We'll tailor activities, discussion topics, and facilitation to address your team's specific challenges and objectives.",
           },
@@ -328,7 +327,8 @@ Whether you need a half-day reset or a full executive experience, we'll design a
       },
       finalCta: {
         headline: 'Your Team Deserves This.',
-        subheadline: "Stop burning out your best people with surface-level perks. Give them an experience that actually recharges.",
+        subheadline:
+          'Stop burning out your best people with surface-level perks. Give them an experience that actually recharges.',
         ctaText: 'Book a Retreat',
       },
     },
@@ -409,10 +409,10 @@ From CRM setup to marketing automation, we've got you covered. Think of us as th
           {
             question: 'Do you work with any industry?',
             answer:
-              "We specialize in service-based businesses—photographers, consultants, coaches, agencies. If you sell your expertise, we can help.",
+              'We specialize in service-based businesses—photographers, consultants, coaches, agencies. If you sell your expertise, we can help.',
           },
           {
-            question: "What if I already have some tools in place?",
+            question: 'What if I already have some tools in place?',
             answer:
               "Great! We'll work with what you have. Our goal is to optimize, not overhaul. We'll only recommend changes that provide clear ROI.",
           },

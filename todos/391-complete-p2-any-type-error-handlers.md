@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "391"
+issue_id: '391'
 tags:
   - typescript
   - type-safety
@@ -28,6 +28,7 @@ Multiple files use `catch (err: any)` pattern which bypasses TypeScript type che
    - Unsafe service injection
 
 **Example of issue:**
+
 ```typescript
 // BAD - err might not have message property
 catch (err: any) {
@@ -44,6 +45,7 @@ catch (error) {
 ## Proposed Solutions
 
 ### Option 1: Use type guards (Recommended)
+
 - Replace `any` with `unknown`
 - Use `instanceof Error` check before accessing properties
 
@@ -53,6 +55,7 @@ catch (error) {
 **Risk:** Low
 
 ### Option 2: Create error utility function
+
 - Create `getErrorMessage(error: unknown): string` helper
 - Use throughout codebase
 
@@ -68,6 +71,7 @@ Option 2 - Create utility and use it everywhere
 ## Technical Details
 
 **Utility function:**
+
 ```typescript
 // lib/errors.ts
 export function getErrorMessage(error: unknown): string {
@@ -78,6 +82,7 @@ export function getErrorMessage(error: unknown): string {
 ```
 
 **Usage:**
+
 ```typescript
 import { getErrorMessage } from '@/lib/errors';
 
@@ -95,8 +100,8 @@ catch (error) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                        | Learnings                         |
+| ---------- | ----------------------------- | --------------------------------- |
 | 2025-12-25 | Created from multi-agent scan | Found during type safety analysis |
 
 ## Resources

@@ -73,11 +73,13 @@
 ## Task 5: About Page
 
 **Files:**
+
 - [x] `apps/web/src/app/t/[slug]/(site)/about/page.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/about/error.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/about/loading.tsx`
 
 **Checklist:**
+
 - [x] `generateMetadata` with title, description, OG tags
 - [x] Hero section with headline
 - [x] Content section with optional image
@@ -90,11 +92,13 @@
 ## Task 6: Services Page
 
 **Files:**
+
 - [x] `apps/web/src/app/t/[slug]/(site)/services/page.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/services/error.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/services/loading.tsx`
 
 **Checklist:**
+
 - [x] `generateMetadata` with title, description
 - [x] Group packages by segment (if segments exist)
 - [x] Package cards: image, title, price, description
@@ -109,12 +113,14 @@
 ## Task 7: FAQ Page
 
 **Files:**
+
 - [x] `apps/web/src/app/t/[slug]/(site)/faq/page.tsx` (server component + client accordion)
 - [x] `apps/web/src/app/t/[slug]/(site)/faq/FAQAccordion.tsx` (client component)
 - [x] `apps/web/src/app/t/[slug]/(site)/faq/error.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/faq/loading.tsx`
 
 **Checklist:**
+
 - [x] Server component for SSR metadata + client component for accordion
 - [x] `generateMetadata` with title, description
 - [x] Accordion with first item open
@@ -131,12 +137,14 @@
 ## Task 8: Contact Page
 
 **Files:**
+
 - [x] `apps/web/src/app/t/[slug]/(site)/contact/page.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/contact/ContactForm.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/contact/error.tsx`
 - [x] `apps/web/src/app/t/[slug]/(site)/contact/loading.tsx`
 
 **Checklist:**
+
 - [x] `generateMetadata` with title, description
 - [x] Form fields: name, email, phone (optional), message
 - [x] Client-side validation
@@ -153,6 +161,7 @@
 ## Task 9: Error Boundaries
 
 **Pattern per route:**
+
 ```typescript
 'use client';
 import { logger } from '@/lib/logger';
@@ -175,6 +184,7 @@ export default function Error({ error, reset }) {
 ## Task 10: Loading States
 
 **Pattern per route:**
+
 ```typescript
 export default function Loading() {
   return (/* Skeleton matching page structure with animate-pulse */);
@@ -192,6 +202,7 @@ export default function Loading() {
 ## Task 11: Custom Domain Support
 
 **Files to create in `_domain/`:**
+
 - [x] `_domain/layout.tsx` (mirrors `(site)/layout.tsx`)
 - [x] `_domain/page.tsx` (updated import path)
 - [x] `_domain/about/page.tsx`
@@ -200,6 +211,7 @@ export default function Loading() {
 - [x] `_domain/contact/page.tsx`
 
 **Verify:**
+
 - [x] Custom domain users see navigation
 - [x] All subpages work
 - [x] No visual difference from slug routes
@@ -211,6 +223,7 @@ export default function Loading() {
 **File:** `e2e/tests/tenant-multi-page.spec.ts`
 
 **Test Cases:**
+
 - [x] Desktop navigation between all pages
 - [x] Mobile menu open/close
 - [x] Mobile navigation
@@ -228,6 +241,7 @@ export default function Loading() {
 ## Quality Gates
 
 **Before PR:**
+
 - [x] All E2E tests pass: `NEXTJS_E2E=1 npx playwright test tenant-multi-page.spec.ts` (27 passed)
 - [x] TypeScript compiles: `npm run typecheck`
 - [ ] Lighthouse Performance: 90+ (pending production build)
@@ -241,15 +255,15 @@ export default function Loading() {
 
 ## Files Summary
 
-| New Files | Count |
-|-----------|-------|
-| Layout | 2 (`(site)` + `_domain`) |
-| Components | 3 (TenantNav, TenantFooter, index.ts) |
-| Page routes | 9 (4 pages x 2 + FAQ accordion) |
-| Error boundaries | 4 |
-| Loading states | 4 |
-| E2E tests | 1 |
-| **Total** | **23** |
+| New Files        | Count                                 |
+| ---------------- | ------------------------------------- |
+| Layout           | 2 (`(site)` + `_domain`)              |
+| Components       | 3 (TenantNav, TenantFooter, index.ts) |
+| Page routes      | 9 (4 pages x 2 + FAQ accordion)       |
+| Error boundaries | 4                                     |
+| Loading states   | 4                                     |
+| E2E tests        | 1                                     |
+| **Total**        | **23**                                |
 
 ---
 

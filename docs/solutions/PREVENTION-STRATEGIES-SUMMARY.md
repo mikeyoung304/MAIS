@@ -55,6 +55,7 @@ coverage/
 ```
 
 **Maintenance burden:**
+
 - Changes must be made in TWO places
 - One gets updated, other doesn't → drift
 - Unclear which is authoritative
@@ -77,6 +78,7 @@ thresholds: process.env.CI
 ```
 
 **Impact:**
+
 - PRs can reduce coverage with ZERO detection
 - Coverage regression accumulates invisibly
 - Gate only works locally (not in CI where merges happen)
@@ -97,10 +99,11 @@ thresholds: process.env.CI
 # .github/workflows/main-pipeline.yml
 - name: Run ESLint
   run: npm run lint
-  continue-on-error: true  # ❌ Hides errors!
+  continue-on-error: true # ❌ Hides errors!
 ```
 
 **Impact:**
+
 - New lint errors can be merged without detection
 - Error count was 612 → needs 305 more fixes
 - No visibility into whether adding NEW errors
@@ -147,18 +150,22 @@ The 4 strategies form an integrated quality system:
 ## Key Learnings
 
 ### Lesson 1: Mechanical Changes Need Thorough Testing
+
 **Pattern:** Sed/find-replace operations are dangerous
 **Solution:** Test all affected code paths, not just definitions
 
 ### Lesson 2: Configuration Should Have Single Source of Truth
+
 **Pattern:** Duplicate config patterns cause maintenance burden
 **Solution:** Choose one authoritative location, document it
 
 ### Lesson 3: Disabled Gates Hide Regressions
+
 **Pattern:** `continue-on-error: true` sounds temporary but becomes permanent
 **Solution:** Replace with intelligent tracking (baseline + delta)
 
 ### Lesson 4: Realistic Thresholds Work Better Than Disabled Gates
+
 **Pattern:** Thresholds that can't be met get disabled
 **Solution:** Set achievable per-suite thresholds instead
 
@@ -167,18 +174,21 @@ The 4 strategies form an integrated quality system:
 ## Implementation Path
 
 ### Immediate (This Sprint)
+
 1. **Enable ESLint `no-undef` rule** (prevents sed bugs)
 2. **Remove config duplication** (.eslintrc.cjs ignorePatterns)
 3. **Enable coverage thresholds in CI** (30% lines minimum)
 4. **Add lint error tracking** (305 baseline + delta check)
 
 ### Short-term (Next Sprint)
+
 1. Create validation scripts
 2. Add pre-commit hooks
 3. Update CI pipeline
 4. Establish baseline tracking
 
 ### Long-term (Ongoing)
+
 1. Reduce lint errors incrementally (612 → 305 → 0)
 2. Improve coverage (43% → 80% target)
 3. Review and adjust thresholds monthly
@@ -189,22 +199,26 @@ The 4 strategies form an integrated quality system:
 ## Resource Links
 
 ### Strategy Details
+
 - **Full Strategies:** `docs/solutions/CODE-QUALITY-PREVENTION-STRATEGIES.md`
 - **Quick Reference:** `docs/solutions/QUALITY-GATES-QUICK-START.md`
 - **Implementation Guide:** `docs/solutions/QUALITY-GATES-IMPLEMENTATION.md`
 
 ### Configuration Files
+
 - **ESLint Config:** `.eslintrc.cjs`
 - **ESLint Ignore:** `.eslintignore`
 - **CI Workflow:** `.github/workflows/main-pipeline.yml`
 - **Coverage Config:** `server/vitest.config.ts`
 
 ### Documentation
+
 - **Quality Metrics:** `docs/quality/QUALITY_METRICS.md`
 - **Coverage History:** `docs/quality/COVERAGE_BASELINE_HISTORY.md`
 - **Lint Error History:** `docs/quality/LINT_ERROR_BASELINE_HISTORY.md`
 
 ### Related Issues
+
 - Commit **21a9b3a:** Introduced issues + some fixes
 - Commit **136a948:** Code review findings
 - Issues #418-422 in todos/
@@ -254,13 +268,13 @@ A: Prevention first. Fix regressions in PRs. Pre-existing issues go on backlog.
 
 This prevention strategy spans multiple documents:
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **PREVENTION-STRATEGIES-SUMMARY.md** (this file) | Overview of 4 issues | Everyone |
-| **CODE-QUALITY-PREVENTION-STRATEGIES.md** | Detailed strategies + rationale | Tech leads, architects |
-| **QUALITY-GATES-QUICK-START.md** | How to work with gates | Developers |
-| **QUALITY-GATES-IMPLEMENTATION.md** | Step-by-step setup | DevOps, tech leads |
-| **QUALITY_METRICS.md** | Overall quality vision | Leadership |
+| Document                                         | Purpose                         | Audience               |
+| ------------------------------------------------ | ------------------------------- | ---------------------- |
+| **PREVENTION-STRATEGIES-SUMMARY.md** (this file) | Overview of 4 issues            | Everyone               |
+| **CODE-QUALITY-PREVENTION-STRATEGIES.md**        | Detailed strategies + rationale | Tech leads, architects |
+| **QUALITY-GATES-QUICK-START.md**                 | How to work with gates          | Developers             |
+| **QUALITY-GATES-IMPLEMENTATION.md**              | Step-by-step setup              | DevOps, tech leads     |
+| **QUALITY_METRICS.md**                           | Overall quality vision          | Leadership             |
 
 ---
 

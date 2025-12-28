@@ -33,6 +33,7 @@ This document provides prevention strategies and best practices for the multi-ag
 ### Problem
 
 When multiple agents run in parallel without proper coordination:
+
 - Agents may conflict by modifying the same files
 - Results are lost when agents complete before TaskOutput collection
 - Dependent tasks run in parallel, causing cascading failures
@@ -46,12 +47,12 @@ When multiple agents run in parallel without proper coordination:
 // CORRECT: Launch agents in background
 Task('Fix TODO-123: Add tenant validation', {
   subagent_type: 'general-purpose',
-  run_in_background: true,  // REQUIRED for parallel execution
+  run_in_background: true, // REQUIRED for parallel execution
 });
 
 Task('Fix TODO-124: Add input sanitization', {
   subagent_type: 'general-purpose',
-  run_in_background: true,  // Each agent runs independently
+  run_in_background: true, // Each agent runs independently
 });
 
 // WRONG: Missing run_in_background
@@ -143,7 +144,6 @@ Agent 1 Scope:
 Agent 2 Scope:
   - server/src/services/catalog.service.ts
   - server/test/services/catalog.test.ts
-
 # NEVER overlap scopes - creates merge conflicts
 ```
 
@@ -154,6 +154,7 @@ Agent 2 Scope:
 ### Problem
 
 Poor triage leads to:
+
 - Unclear items consuming agent time
 - Incorrect priority assignments
 - Missing tracking for deferred items
@@ -186,13 +187,13 @@ if (decision === 'A') {
 
 **When to Ask:**
 
-| Scenario | Action |
-|----------|--------|
-| Business impact unclear | Ask about customer value |
-| Technical approach debatable | Ask about preferred pattern |
+| Scenario                      | Action                          |
+| ----------------------------- | ------------------------------- |
+| Business impact unclear       | Ask about customer value        |
+| Technical approach debatable  | Ask about preferred pattern     |
 | Effort estimate varies widely | Ask about acceptable complexity |
-| Multiple solutions possible | Ask about constraints |
-| External dependency involved | Ask about timeline |
+| Multiple solutions possible   | Ask about constraints           |
+| External dependency involved  | Ask about timeline              |
 
 #### 2.2 Priority Classification (P1/P2/P3)
 
@@ -235,7 +236,7 @@ Is it a security vulnerability?
 ---
 status: pending | in_progress | complete | deferred | wontfix
 priority: p1 | p2 | p3
-issue_id: "XXX"
+issue_id: 'XXX'
 tags: [security, performance, multi-tenant, react, etc.]
 dependencies: []
 blocking: []
@@ -245,25 +246,30 @@ created_at: 2025-12-25
 # Issue Title
 
 ## Problem Statement
+
 Clear description of the issue and why it matters.
 
 ## Findings
+
 - File: `path/to/file.ts`
 - Line: 123
 - Evidence: Code snippet or behavior observed
 
 ## Proposed Solution
+
 Concrete implementation steps with code examples.
 
 ## Acceptance Criteria
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 - [ ] Tests pass
 - [ ] Typecheck passes
 
 ## Work Log
-| Date | Status | Notes |
-|------|--------|-------|
+
+| Date       | Status  | Notes          |
+| ---------- | ------- | -------------- |
 | 2025-12-25 | Created | Initial triage |
 ```
 
@@ -314,6 +320,7 @@ Before finalizing triage:
 ### Problem
 
 Without proper verification:
+
 - Fixes may introduce new issues
 - TypeScript errors go unnoticed
 - TODOs marked complete but work is incomplete
@@ -385,9 +392,12 @@ const newFilename = todoFile.replace('pending', 'complete');
 fs.renameSync(todoFile, newFilename);
 
 // Update work log
-appendToFile(newFilename, `
+appendToFile(
+  newFilename,
+  `
 | ${new Date().toISOString()} | complete | Fix verified, typecheck passed |
-`);
+`
+);
 ```
 
 #### 3.3 Summarize Changes for User
@@ -399,11 +409,11 @@ After all fixes complete, generate summary:
 
 ### Completed (3 TODOs)
 
-| ID | Priority | Description | Files Modified |
-|----|----------|-------------|----------------|
-| 348 | P1 | packageId naming confusion | booking.service.ts |
-| 349 | P2 | Generic error message | booking.service.ts |
-| 350 | P2 | DayPicker styles | DateSelectionStep.tsx |
+| ID  | Priority | Description                | Files Modified        |
+| --- | -------- | -------------------------- | --------------------- |
+| 348 | P1       | packageId naming confusion | booking.service.ts    |
+| 349 | P2       | Generic error message      | booking.service.ts    |
+| 350 | P2       | DayPicker styles           | DateSelectionStep.tsx |
 
 ### Verification Results
 
@@ -413,11 +423,12 @@ After all fixes complete, generate summary:
 - Build: SUCCESS
 
 ### Files Changed
-
 ```
+
 server/src/services/booking.service.ts (+12 -8)
 client/src/features/storefront/date-booking/DateSelectionStep.tsx (+15 -20)
 server/test/services/booking.service.test.ts (+5 -2)
+
 ```
 
 ### Next Steps
@@ -453,6 +464,7 @@ await mcp__playwright__browser_wait_for({
 ### Problem
 
 Inefficient agent usage leads to:
+
 - Long resolution times
 - Wasted compute resources
 - Unnecessary costs
@@ -490,13 +502,13 @@ Task('Performance Optimizations - TODOs 352-354', {
 
 **Grouping Guidelines:**
 
-| Group Together | Keep Separate |
-|----------------|---------------|
-| Same file modifications | Different features |
-| Related dependencies | Conflicting changes |
+| Group Together          | Keep Separate         |
+| ----------------------- | --------------------- |
+| Same file modifications | Different features    |
+| Related dependencies    | Conflicting changes   |
 | Same category (all P3s) | Different risk levels |
-| Same codebase area | Backend vs Frontend |
-| Similar skill required | Specialized knowledge |
+| Same codebase area      | Backend vs Frontend   |
+| Similar skill required  | Specialized knowledge |
 
 #### 4.2 Launch Maximum Parallelism (8+ Agents)
 
@@ -509,7 +521,7 @@ const waves = chunk(independentTodos, 10);
 
 for (const wave of waves) {
   // Launch entire wave in parallel
-  const agents = wave.map(todo =>
+  const agents = wave.map((todo) =>
     Task(`Fix ${todo.id}: ${todo.title}`, {
       run_in_background: true,
       subagent_type: 'general-purpose',
@@ -517,9 +529,7 @@ for (const wave of waves) {
   );
 
   // Wait for wave to complete before next wave
-  await Promise.all(agents.map(a =>
-    TaskOutput(a.id, { block: true, timeout: 300000 })
-  ));
+  await Promise.all(agents.map((a) => TaskOutput(a.id, { block: true, timeout: 300000 })));
 
   // Run verification between waves
   await runTypecheck();
@@ -528,41 +538,41 @@ for (const wave of waves) {
 
 **Parallelism Decision Table:**
 
-| Scenario | Recommended Parallelism |
-|----------|------------------------|
-| Independent P3 fixes | 10-12 agents |
-| Mixed P2/P3 fixes | 8-10 agents |
-| P1 critical fixes | 4-6 agents (more careful) |
-| Complex refactoring | 2-3 agents (high coordination) |
-| Single file focus | 1 agent (avoid conflicts) |
+| Scenario             | Recommended Parallelism        |
+| -------------------- | ------------------------------ |
+| Independent P3 fixes | 10-12 agents                   |
+| Mixed P2/P3 fixes    | 8-10 agents                    |
+| P1 critical fixes    | 4-6 agents (more careful)      |
+| Complex refactoring  | 2-3 agents (high coordination) |
+| Single file focus    | 1 agent (avoid conflicts)      |
 
 #### 4.3 Use Haiku Model for Simple Tasks
 
 ```typescript
 // Simple tasks: Use haiku (faster, cheaper)
 Task('Remove unused import from CustomerDetailsStep.tsx', {
-  subagent_type: 'haiku',  // Fast, low-cost model
+  subagent_type: 'haiku', // Fast, low-cost model
   run_in_background: true,
 });
 
 // Complex tasks: Use opus/sonnet (better reasoning)
 Task('Refactor BookingService to extract PaymentProcessor', {
-  subagent_type: 'opus',  // Full reasoning capability
+  subagent_type: 'opus', // Full reasoning capability
   run_in_background: true,
 });
 ```
 
 **Model Selection Guidelines:**
 
-| Task Type | Recommended Model | Reasoning |
-|-----------|------------------|-----------|
-| Remove unused imports | Haiku | Mechanical, no judgment |
-| Add missing types | Haiku | Pattern matching |
-| Fix typos/formatting | Haiku | Simple text replacement |
-| Security fixes | Sonnet/Opus | Requires understanding |
-| Architecture refactors | Opus | Complex reasoning |
-| API contract changes | Sonnet | Moderate complexity |
-| Multi-file refactoring | Opus | Coordination needed |
+| Task Type              | Recommended Model | Reasoning               |
+| ---------------------- | ----------------- | ----------------------- |
+| Remove unused imports  | Haiku             | Mechanical, no judgment |
+| Add missing types      | Haiku             | Pattern matching        |
+| Fix typos/formatting   | Haiku             | Simple text replacement |
+| Security fixes         | Sonnet/Opus       | Requires understanding  |
+| Architecture refactors | Opus              | Complex reasoning       |
+| API contract changes   | Sonnet            | Moderate complexity     |
+| Multi-file refactoring | Opus              | Coordination needed     |
 
 #### 4.4 Batch Operations for Efficiency
 
@@ -577,9 +587,7 @@ const filesToRead = [
   'client/src/features/storefront/date-booking/CustomerDetailsStep.tsx',
 ];
 
-const fileContents = await Promise.all(
-  filesToRead.map(f => Read({ file_path: f }))
-);
+const fileContents = await Promise.all(filesToRead.map((f) => Read({ file_path: f })));
 
 // Batch 2: Make all edits
 const edits = [
@@ -587,7 +595,7 @@ const edits = [
   { file: 'DateBookingWizard.tsx', old: 'const steps = [', new: 'const steps = useMemo(() => [' },
 ];
 
-await Promise.all(edits.map(e => Edit(e)));
+await Promise.all(edits.map((e) => Edit(e)));
 
 // Batch 3: Verify all changes
 await Bash({ command: 'npm run typecheck && npm test' });
@@ -622,7 +630,7 @@ git log -p -S 'tenantId' --since="1 week ago"
 // Long-running tasks: Increase timeout
 TaskOutput(agentId, {
   block: true,
-  timeout: 600000  // 10 minutes for complex refactors
+  timeout: 600000, // 10 minutes for complex refactors
 });
 
 // Very large tasks: Split into smaller subtasks
@@ -650,7 +658,7 @@ for (const subtask of subtasks) {
 ```typescript
 // WRONG: Asking agent to read entire codebase
 Task('Fix all tenant isolation issues', {
-  prompt: 'Read all files in server/src and fix tenant isolation...'
+  prompt: 'Read all files in server/src and fix tenant isolation...',
 });
 
 // CORRECT: Provide specific files and patterns
@@ -683,9 +691,9 @@ const groupedByFile = groupBy(todoFileMapping, 'file');
 
 // Run one agent per file group
 for (const [file, todos] of Object.entries(groupedByFile)) {
-  Task(`Fix todos in ${file}: ${todos.map(t => t.id).join(', ')}`, {
+  Task(`Fix todos in ${file}: ${todos.map((t) => t.id).join(', ')}`, {
     run_in_background: true,
-    prompt: `Fix these issues in ${file}:\n${todos.map(t => t.description).join('\n')}`,
+    prompt: `Fix these issues in ${file}:\n${todos.map((t) => t.description).join('\n')}`,
   });
 }
 ```
@@ -732,22 +740,22 @@ for (const [file, todos] of Object.entries(groupedByFile)) {
 
 ### Performance Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Parallel agent utilization | 8+ agents | Agents launched per wave |
-| Resolution time per TODO | < 5 min | End-to-end per TODO |
-| Stale TODO rate | < 5% | TODOs closed as "already done" |
-| Typecheck pass rate | 100% | Post-fix verification |
-| Merge conflict rate | 0% | Conflicts during parallel work |
+| Metric                     | Target    | Measurement                    |
+| -------------------------- | --------- | ------------------------------ |
+| Parallel agent utilization | 8+ agents | Agents launched per wave       |
+| Resolution time per TODO   | < 5 min   | End-to-end per TODO            |
+| Stale TODO rate            | < 5%      | TODOs closed as "already done" |
+| Typecheck pass rate        | 100%      | Post-fix verification          |
+| Merge conflict rate        | 0%        | Conflicts during parallel work |
 
 ### Quality Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| P1 resolution time | < 4 hours | Time from creation to complete |
-| Triage clarity | 100% | TODOs with clear priority/status |
-| Work log completeness | 100% | TODOs with documented decisions |
-| Test coverage maintained | No regression | Coverage before/after |
+| Metric                   | Target        | Measurement                      |
+| ------------------------ | ------------- | -------------------------------- |
+| P1 resolution time       | < 4 hours     | Time from creation to complete   |
+| Triage clarity           | 100%          | TODOs with clear priority/status |
+| Work log completeness    | 100%          | TODOs with documented decisions  |
+| Test coverage maintained | No regression | Coverage before/after            |
 
 ---
 

@@ -1,5 +1,8 @@
 import Image from 'next/image';
-import type { TestimonialsSection as TestimonialsSectionType, TenantPublicDto } from '@macon/contracts';
+import type {
+  TestimonialsSection as TestimonialsSectionType,
+  TenantPublicDto,
+} from '@macon/contracts';
 import { StarRating } from '@/components/ui/star-rating';
 
 interface TestimonialsSectionProps extends TestimonialsSectionType {
@@ -36,14 +39,9 @@ export function TestimonialsSection({
 
         <div className="mt-16 grid gap-8 md:grid-cols-2">
           {items.map((testimonial, i) => (
-            <div
-              key={i}
-              className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg"
-            >
+            <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
               <StarRating rating={testimonial.rating} />
-              <p className="mt-4 text-text-muted">
-                &ldquo;{testimonial.quote}&rdquo;
-              </p>
+              <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>
               <div className="mt-4 flex items-center gap-3">
                 {testimonial.authorPhotoUrl && (
                   <div className="relative h-10 w-10 flex-shrink-0">
@@ -57,13 +55,9 @@ export function TestimonialsSection({
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-text-primary">
-                    {testimonial.authorName}
-                  </p>
+                  <p className="font-semibold text-text-primary">{testimonial.authorName}</p>
                   {testimonial.authorRole && (
-                    <p className="text-sm text-text-muted">
-                      {testimonial.authorRole}
-                    </p>
+                    <p className="text-sm text-text-muted">{testimonial.authorRole}</p>
                   )}
                 </div>
               </div>

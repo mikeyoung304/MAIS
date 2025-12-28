@@ -22,7 +22,8 @@ export default function AssistantPage() {
           Business Growth Assistant
         </h1>
         <p className="mt-2 text-text-muted">
-          Your AI partner for growing your business. Ask anything about packages, pricing, bookings, or marketing.
+          Your AI partner for growing your business. Ask anything about packages, pricing, bookings,
+          or marketing.
         </p>
       </div>
 

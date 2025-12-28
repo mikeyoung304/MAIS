@@ -17,11 +17,7 @@ import { logger } from '../../lib/core/logger';
 /**
  * Onboarding state - used for health check and greeting logic
  */
-export type OnboardingState =
-  | 'needs_stripe'
-  | 'needs_packages'
-  | 'needs_bookings'
-  | 'ready';
+export type OnboardingState = 'needs_stripe' | 'needs_packages' | 'needs_bookings' | 'ready';
 
 /**
  * Agent session context
@@ -71,26 +67,25 @@ export async function buildSessionContext(
     const next30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [packageCount, totalBookings, upcomingBookings, revenueThisMonth] =
-      await Promise.all([
-        prisma.package.count({ where: { tenantId } }),
-        prisma.booking.count({ where: { tenantId } }),
-        prisma.booking.count({
-          where: {
-            tenantId,
-            date: { gte: now, lte: next30Days },
-            status: { notIn: ['CANCELED', 'REFUNDED'] },
-          },
-        }),
-        prisma.booking.aggregate({
-          where: {
-            tenantId,
-            createdAt: { gte: thisMonthStart },
-            status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
-          },
-          _sum: { totalPrice: true },
-        }),
-      ]);
+    const [packageCount, totalBookings, upcomingBookings, revenueThisMonth] = await Promise.all([
+      prisma.package.count({ where: { tenantId } }),
+      prisma.booking.count({ where: { tenantId } }),
+      prisma.booking.count({
+        where: {
+          tenantId,
+          date: { gte: now, lte: next30Days },
+          status: { notIn: ['CANCELED', 'REFUNDED'] },
+        },
+      }),
+      prisma.booking.aggregate({
+        where: {
+          tenantId,
+          createdAt: { gte: thisMonthStart },
+          status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
+        },
+        _sum: { totalPrice: true },
+      }),
+    ]);
 
     // Build context prompt
     const contextPrompt = buildContextPrompt({
@@ -255,10 +250,7 @@ export function detectOnboardingPath(context: AgentSessionContext): {
  * Build error-safe fallback context
  * Used when full context cannot be built
  */
-export function buildFallbackContext(
-  tenantId: string,
-  sessionId: string
-): AgentSessionContext {
+export function buildFallbackContext(tenantId: string, sessionId: string): AgentSessionContext {
   return {
     tenantId,
     sessionId,

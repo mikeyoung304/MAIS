@@ -1,5 +1,5 @@
 ---
-title: "Multi-Agent Parallel TODO Resolution with Playwright Verification"
+title: 'Multi-Agent Parallel TODO Resolution with Playwright Verification'
 date: 2025-12-25
 category: methodology
 tags:
@@ -19,19 +19,19 @@ components:
   - ts-rest contracts
   - ISR caching
 related_todos:
-  - "394"
-  - "395"
-  - "396"
-  - "397"
-  - "398"
-  - "399"
-  - "400"
-  - "401"
-  - "402"
-  - "403"
+  - '394'
+  - '395'
+  - '396'
+  - '397'
+  - '398'
+  - '399'
+  - '400'
+  - '401'
+  - '402'
+  - '403'
 commits:
-  - "7894417"
-  - "71fdb0a"
+  - '7894417'
+  - '71fdb0a'
 ---
 
 # Multi-Agent Parallel TODO Resolution with Playwright Verification
@@ -39,6 +39,7 @@ commits:
 ## Problem Summary
 
 Resolved 10 TODOs efficiently using multi-agent parallel processing, then discovered two additional issues through Playwright visual testing:
+
 1. **ISR Cache Stale Data** - Next.js showed old package data
 2. **API URL Mismatch** - Client used wrong endpoint URL
 
@@ -89,6 +90,7 @@ After committing, tested with Playwright MCP and discovered:
 **Cause:** Next.js ISR cached old data from before the mock adapter was updated
 
 **Solution:**
+
 ```bash
 rm -rf apps/web/.next/cache
 # Restart Next.js dev server
@@ -99,6 +101,7 @@ rm -rf apps/web/.next/cache
 **Symptom:** Clicking "Book Starter Package" showed "Package Not Found"
 
 **Investigation:**
+
 ```bash
 # API returns correct packages
 curl -s -H "X-Tenant-Key: pk_live_..." "http://localhost:3001/v1/packages" | jq '.[].slug'
@@ -116,13 +119,14 @@ curl -s -H "X-Tenant-Key: pk_live_..." "http://localhost:3001/v1/packages/slug/s
 const url = `${API_BASE_URL}/v1/packages/slug/${packageSlug}`;
 
 // Contract defines (packages/contracts/src/api.v1.ts:116)
-path: '/v1/packages/:slug'
+path: '/v1/packages/:slug';
 
 // CORRECT
 const url = `${API_BASE_URL}/v1/packages/${packageSlug}`;
 ```
 
 **Fix:**
+
 ```typescript
 // apps/web/src/lib/tenant.ts:313
 - const url = `${API_BASE_URL}/v1/packages/slug/${encodeURIComponent(packageSlug)}`;
@@ -171,6 +175,7 @@ Playwright testing confirmed all fixes:
    - [ ] Compare `packages/contracts/src/api.v1.ts` paths with client code
 
 2. **Automated Validation:**
+
    ```bash
    # Find potential mismatches
    grep -r "v1/packages/slug" apps/web/src/

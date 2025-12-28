@@ -48,6 +48,7 @@ Complete set of prevention strategies for code review findings P348-350.
 **Key Document:** [IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md](IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md#pattern-1-correct-naming-in-routes--api-calls)
 
 **Quick Fix:**
+
 ```typescript
 // WRONG ❌
 const { packageId } = useParams();
@@ -69,14 +70,15 @@ await api.getPackageBySlug({ params: { slug: packageSlug } });
 **Key Document:** [IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md](IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md#pattern-2-secure-error-handling)
 
 **Quick Fix:**
+
 ```typescript
 // WRONG ❌
 throw new Error(`Package ${packageId} not found`);
 throw new Error(`Unique constraint failed on 'slug'`);
 
 // CORRECT ✅
-throw new PackageNotAvailableError();  // Generic
-logger.warn('Package not found', { packageId, tenantId });  // Details logged
+throw new PackageNotAvailableError(); // Generic
+logger.warn('Package not found', { packageId, tenantId }); // Details logged
 ```
 
 ---
@@ -90,10 +92,11 @@ logger.warn('Package not found', { packageId, tenantId });  // Details logged
 **Key Document:** [IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md](IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md#pattern-3-react-performance---constants--memoization)
 
 **Quick Fix:**
+
 ```typescript
 // WRONG ❌
-const TIER_LEVELS = ['tier_1', 'tier_2', 'tier_3'];  // New array every render!
-const nav = { prev: tiers[0], next: tiers[1] };  // New object every render!
+const TIER_LEVELS = ['tier_1', 'tier_2', 'tier_3']; // New array every render!
+const nav = { prev: tiers[0], next: tiers[1] }; // New object every render!
 
 // CORRECT ✅
 // Module level:
@@ -112,6 +115,7 @@ const nav = useMemo(() => ({ prev: tiers[0], next: tiers[1] }), [tiers]);
 **Solution:** Run ESLint, remove unnecessary optimizations, use consistent patterns.
 
 **Quick Commands:**
+
 ```bash
 npm run lint -- --fix          # Remove unused imports
 npm test                        # Verify cleanup doesn't break anything
@@ -131,6 +135,7 @@ npm run typecheck              # Check for unused variables
 ### While Reviewing Code
 
 Use the **Quick Checklist** to:
+
 - Ask naming questions
 - Check error message safety
 - Review React performance
@@ -184,39 +189,39 @@ Use **[IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md](IMPLEMENTATION-PATTERNS-N
 
 ### Naming Conventions (P348)
 
-| Aspect | Rule |
-|--------|------|
-| Route parameters | Name must match API contract |
-| Variable names | Use context-specific names (databaseId, urlSlug) |
-| Function signatures | Parameter names clarify intent |
-| API calls | Verify parameter name matches before submitting PR |
+| Aspect              | Rule                                               |
+| ------------------- | -------------------------------------------------- |
+| Route parameters    | Name must match API contract                       |
+| Variable names      | Use context-specific names (databaseId, urlSlug)   |
+| Function signatures | Parameter names clarify intent                     |
+| API calls           | Verify parameter name matches before submitting PR |
 
 ### Error Message Security (P349)
 
-| Aspect | Rule |
-|--------|------|
-| Public message | Generic (no IDs, columns, tenant info) |
-| Details logging | Log sensitive info with context |
-| Error classes | Inherit from AppError, use domain-specific types |
-| Status codes | Use correct HTTP status (404, 403, 422, 500) |
+| Aspect          | Rule                                             |
+| --------------- | ------------------------------------------------ |
+| Public message  | Generic (no IDs, columns, tenant info)           |
+| Details logging | Log sensitive info with context                  |
+| Error classes   | Inherit from AppError, use domain-specific types |
+| Status codes    | Use correct HTTP status (404, 403, 422, 500)     |
 
 ### React Performance (P350)
 
-| Aspect | Rule |
-|--------|------|
-| Constants | Define at module level (not in render) |
-| Computed values | Wrap with useMemo if passed to memo'ed children |
-| Memo usage | Only use if component receives object props or used in lists |
-| useCallback | Only if callback passed to memo'ed child |
+| Aspect          | Rule                                                         |
+| --------------- | ------------------------------------------------------------ |
+| Constants       | Define at module level (not in render)                       |
+| Computed values | Wrap with useMemo if passed to memo'ed children              |
+| Memo usage      | Only use if component receives object props or used in lists |
+| useCallback     | Only if callback passed to memo'ed child                     |
 
 ### Code Cleanup (P3-352-356)
 
-| Aspect | Rule |
-|--------|------|
+| Aspect         | Rule                        |
+| -------------- | --------------------------- |
 | Unused imports | Run `npm run lint -- --fix` |
-| Dead code | Remove before commit |
-| Magic values | Move to constants |
-| Comments | Explain "why", not "what" |
+| Dead code      | Remove before commit        |
+| Magic values   | Move to constants           |
+| Comments       | Explain "why", not "what"   |
 
 ---
 
@@ -226,7 +231,9 @@ Use **[IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md](IMPLEMENTATION-PATTERNS-N
 
 ```typescript
 // Parameter name = API contract name
-interface Params { packageSlug: string; }
+interface Params {
+  packageSlug: string;
+}
 const { packageSlug } = useParams<Params>();
 await api.getPackageBySlug({ params: { slug: packageSlug } });
 ```
@@ -346,11 +353,11 @@ Future code reviews should reference these documents to prevent recurrence.
 
 ## Document Versions
 
-| Document | Version | Date | Status |
-|----------|---------|------|--------|
-| CODE-REVIEW-PREVENTION-QUICK-CHECKLIST.md | 1.0 | 2025-12-24 | Active |
-| CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md | 1.0 | 2025-12-24 | Active |
-| IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md | 1.0 | 2025-12-24 | Active |
-| CODE-REVIEW-PREVENTION-INDEX.md | 1.0 | 2025-12-24 | Active |
+| Document                                       | Version | Date       | Status |
+| ---------------------------------------------- | ------- | ---------- | ------ |
+| CODE-REVIEW-PREVENTION-QUICK-CHECKLIST.md      | 1.0     | 2025-12-24 | Active |
+| CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md  | 1.0     | 2025-12-24 | Active |
+| IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md | 1.0     | 2025-12-24 | Active |
+| CODE-REVIEW-PREVENTION-INDEX.md                | 1.0     | 2025-12-24 | Active |
 
 Last updated: 2025-12-24

@@ -24,12 +24,14 @@ Local `npm run typecheck` passed but Render/Vercel production build failed with 
 **Only prefix with `_` if the variable is TRULY unused in the function body.**
 
 Variables that ARE used (do NOT prefix with `_`):
+
 - Variables passed to logger calls: `logger.info({ error }, 'message')`
 - Variables used in assignments: `const result = error.message`
 - Variables used in conditionals: `if (error instanceof SomeError)`
 - Variables in template literals: `` `Error: ${error}` ``
 
 Variables that are truly unused (OK to prefix with `_`):
+
 - Destructured values you don't need: `const { used, _unused } = obj`
 - Callback parameters required by signature: `arr.map((_item, index) => index)`
 - Catch block errors when only logging generic message: `catch (_e) { return 'failed' }`
@@ -38,13 +40,13 @@ Variables that are truly unused (OK to prefix with `_`):
 
 ### Current State (After Fix)
 
-| File | noUnusedLocals | noUnusedParameters |
-|------|----------------|---------------------|
-| `tsconfig.base.json` | `true` | `true` |
-| `server/tsconfig.json` | **`false`** (known gap) | `true` |
-| `client/tsconfig.json` | `true` | `true` |
+| File                     | noUnusedLocals          | noUnusedParameters      |
+| ------------------------ | ----------------------- | ----------------------- |
+| `tsconfig.base.json`     | `true`                  | `true`                  |
+| `server/tsconfig.json`   | **`false`** (known gap) | `true`                  |
+| `client/tsconfig.json`   | `true`                  | `true`                  |
 | `apps/web/tsconfig.json` | `true` (explicitly set) | `true` (explicitly set) |
-| Next.js production build | `true` (default) | `true` (default) |
+| Next.js production build | `true` (default)        | `true` (default)        |
 
 **The Problem:** `server/tsconfig.json` still has `noUnusedLocals: false` which is looser than other workspaces. This was intentionally kept to avoid disrupting server development, but `apps/web` is now strictly aligned with production.
 
@@ -58,8 +60,8 @@ Variables that are truly unused (OK to prefix with `_`):
 // server/tsconfig.json
 {
   "compilerOptions": {
-    "noUnusedLocals": true,     // Change from false to true
-    "noUnusedParameters": true  // Already true, verify
+    "noUnusedLocals": true, // Change from false to true
+    "noUnusedParameters": true // Already true, verify
   }
 }
 ```
@@ -151,6 +153,7 @@ Add to PR template:
 
 ```markdown
 ## TypeScript Strictness
+
 - [ ] All declared variables are used (no unused locals)
 - [ ] All function parameters are used (or prefixed with `_` if truly unused)
 - [ ] Ran `npm run typecheck` locally before pushing
@@ -235,7 +238,7 @@ const { id, name, createdAt, updatedAt, deletedAt } = entity;
 // After (rest pattern captures unused)
 const { id, name, ..._ } = entity;
 // Or be explicit
-const { id, name } = entity;  // Just don't destructure what you don't need
+const { id, name } = entity; // Just don't destructure what you don't need
 ```
 
 ## Implementation Checklist

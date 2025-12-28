@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "406"
+issue_id: '406'
 tags:
   - code-review
   - performance
@@ -17,6 +17,7 @@ dependencies: []
 The HeroSection component uses inline CSS `backgroundImage` for hero images, completely bypassing Next.js Image optimization. This significantly impacts Largest Contentful Paint (LCP) for tenant storefronts.
 
 **Why This Matters:**
+
 - No automatic WebP/AVIF conversion (larger file sizes)
 - No responsive image sizing (wastes bandwidth)
 - No lazy loading optimization
@@ -28,6 +29,7 @@ The HeroSection component uses inline CSS `backgroundImage` for hero images, com
 **Location:** `apps/web/src/components/tenant/sections/HeroSection.tsx` (lines 28-37)
 
 **Evidence:**
+
 ```typescript
 style={
   hasBackground
@@ -41,6 +43,7 @@ style={
 ```
 
 **Impact:**
+
 - Hero images are typically the LCP element
 - Unoptimized hero images can add 500ms+ to page load
 - Tenant storefront performance directly affects conversions
@@ -68,19 +71,19 @@ Replace inline background with Next.js Image component + absolute positioned ove
       <div className="absolute inset-0 bg-black/40" />
     </>
   )}
-  <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-    {/* Content */}
-  </div>
+  <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">{/* Content */}</div>
 </section>
 ```
 
 **Pros:**
+
 - Full Next.js image optimization (WebP, responsive, lazy)
 - Gradient overlay via CSS instead of inline
 - `priority` prop ensures LCP optimization
 - Major performance improvement
 
 **Cons:**
+
 - Slightly more complex markup
 - May need layout adjustments
 
@@ -92,10 +95,12 @@ Replace inline background with Next.js Image component + absolute positioned ove
 Add blur placeholder for perceived performance.
 
 **Pros:**
+
 - Better perceived loading experience
 - All benefits of Solution 1
 
 **Cons:**
+
 - Requires generating blur placeholders
 - Additional complexity
 
@@ -109,6 +114,7 @@ Add blur placeholder for perceived performance.
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/components/tenant/sections/HeroSection.tsx`
 
 **Database Changes:** None
@@ -125,8 +131,8 @@ Add blur placeholder for perceived performance.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                  |
+| ---------- | ------------------------ | ------------------------------------------ |
 | 2025-12-25 | Created from code review | Performance analysis identified LCP impact |
 
 ## Resources

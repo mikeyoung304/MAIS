@@ -286,6 +286,7 @@ These are company domains. Use static pages instead.
 Before approving the PR:
 
 ### For Company Pages
+
 ```bash
 # Run tests
 npm run test:e2e -- company-pages.spec.ts
@@ -297,6 +298,7 @@ NEXT_PUBLIC_SKIP_DB=true npm run dev:web
 ```
 
 ### For Tenant Pages
+
 ```bash
 # Run tests
 npm run test:e2e -- tenant-pages.spec.ts
@@ -317,6 +319,7 @@ Visit /t/nonexistent-xyz # Should 404
 ### Issue 1: Missing Tenant Lookup
 
 **Red Flag:**
+
 ```typescript
 // ✗ WRONG: /t/[slug] page without tenant lookup
 export default function TenantPage({ params }: Props) {
@@ -325,6 +328,7 @@ export default function TenantPage({ params }: Props) {
 ```
 
 **Fix:**
+
 ```typescript
 // ✓ CORRECT: Fetch tenant first
 export default async function TenantPage({ params }: Props) {
@@ -338,6 +342,7 @@ export default async function TenantPage({ params }: Props) {
 ### Issue 2: Database Lookup in Company Page
 
 **Red Flag:**
+
 ```typescript
 // ✗ WRONG: Root page queries database
 export default async function HomePage() {
@@ -348,6 +353,7 @@ export default async function HomePage() {
 ```
 
 **Fix:**
+
 ```typescript
 // ✓ CORRECT: Hardcode company content
 const FEATURES = [
@@ -363,16 +369,19 @@ export default function HomePage() {
 ### Issue 3: Creating Company Tenant
 
 **Red Flag (in commit message or DB):**
+
 ```
 Created tenant with slug 'handled' for company homepage
 ```
 
 **Why it's wrong:**
+
 - Makes homepage depend on database
 - If tenant is deleted, homepage breaks
 - Violates separation of concerns
 
 **Solution:**
+
 - Delete the tenant
 - Use static `/page.tsx` instead
 - Document why company is NOT a tenant
@@ -423,4 +432,3 @@ Before marking PR as approved:
 - **Quick Check**: `docs/solutions/COMPANY-VS-TENANT-QUICK-CHECK.md`
 - **Architecture**: `ARCHITECTURE.md` (Dual Routing Pattern)
 - **App Structure**: `apps/web/README.md`
-

@@ -19,7 +19,7 @@ tags:
   - dry-principle
   - react-memoization
 commit: 661d464
-pr: "#18"
+pr: '#18'
 resolution_time: 50min
 findings_resolved: 15
 ---
@@ -48,6 +48,7 @@ The multi-page tenant sites feature duplicated code between slug-based routes (`
 Created three new utility files to eliminate duplication:
 
 **lib/format.ts** - Price formatting
+
 ```typescript
 export function formatPrice(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -60,6 +61,7 @@ export function formatPrice(cents: number): string {
 ```
 
 **lib/packages.ts** - Package tier ordering
+
 ```typescript
 export const TIER_ORDER: Record<string, number> = {
   BASIC: 0,
@@ -70,6 +72,7 @@ export const TIER_ORDER: Record<string, number> = {
 ```
 
 **components/tenant/navigation.ts** - Navigation configuration
+
 ```typescript
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '' },
@@ -187,7 +190,11 @@ Added `useMemo` for arrays and `useCallback` for functions:
 ```typescript
 // Memoize navItems array
 const navItems = useMemo<NavItemWithHref[]>(
-  () => NAV_ITEMS.map(item => ({ label: item.label, href: buildNavHref(basePath, item, domainParam) })),
+  () =>
+    NAV_ITEMS.map((item) => ({
+      label: item.label,
+      href: buildNavHref(basePath, item, domainParam),
+    })),
   [basePath, domainParam]
 );
 
@@ -195,10 +202,13 @@ const navItems = useMemo<NavItemWithHref[]>(
 /**
  * Determines if a navigation link is active based on current pathname.
  */
-const isActiveLink = useCallback((href: string) => {
-  const hrefPath = href.split('?')[0] || '/';
-  return pathname.startsWith(hrefPath);
-}, [pathname]);
+const isActiveLink = useCallback(
+  (href: string) => {
+    const hrefPath = href.split('?')[0] || '/';
+    return pathname.startsWith(hrefPath);
+  },
+  [pathname]
+);
 ```
 
 ### 9. CSS Grid Animation for FAQ Accordion
@@ -220,6 +230,7 @@ Replaced max-height hack with CSS Grid for smoother animations:
 ## Files Changed
 
 ### New Files (8)
+
 - `apps/web/src/lib/format.ts`
 - `apps/web/src/lib/packages.ts`
 - `apps/web/src/components/tenant/navigation.ts`
@@ -230,6 +241,7 @@ Replaced max-height hack with CSS Grid for smoother animations:
 - `apps/web/src/app/t/_domain/contact/error.tsx`
 
 ### Modified Files (13)
+
 - `apps/web/src/lib/tenant.ts` - cache(), validateDomain
 - `apps/web/src/components/tenant/TenantNav.tsx` - memoization, aria-current
 - `apps/web/src/components/tenant/TenantFooter.tsx` - shared nav config
@@ -247,37 +259,41 @@ Replaced max-height hack with CSS Grid for smoother animations:
 ## Prevention Strategies
 
 ### Code Duplication Checklist
+
 - [ ] Check if utility function exists in `lib/` before creating new one
 - [ ] If same code appears in 2+ files, extract to shared module
 - [ ] Use shared config for navigation, constants, formatters
 
 ### Performance Checklist
+
 - [ ] Wrap shared SSR data fetchers with `cache()`
 - [ ] Use `useMemo` for arrays/objects created in render
 - [ ] Use `useCallback` for functions passed to child components
 - [ ] Add AbortController to fetch operations in useEffect/handlers
 
 ### Accessibility Checklist
+
 - [ ] Add `aria-current="page"` to active navigation links
 - [ ] Use `text-red-700` (not red-500) for error messages
 - [ ] Every dynamic route has `error.tsx` boundary
 
 ### Validation Checklist
+
 - [ ] Validate URL parameters before database lookup
 - [ ] Use custom error classes for clear error handling
 - [ ] Return 404 for invalid parameters, not 500
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Resolution time | ~50 minutes |
+| Metric            | Value            |
+| ----------------- | ---------------- |
+| Resolution time   | ~50 minutes      |
 | Findings resolved | 15 (11 P2, 4 P3) |
-| Files created | 8 |
-| Files modified | 13 |
-| Lines added | 621 |
-| Lines removed | 157 |
-| TypeScript errors | 0 |
+| Files created     | 8                |
+| Files modified    | 13               |
+| Lines added       | 621              |
+| Lines removed     | 157              |
+| TypeScript errors | 0                |
 
 ## Related Documentation
 

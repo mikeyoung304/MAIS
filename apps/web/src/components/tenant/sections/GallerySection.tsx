@@ -35,10 +35,7 @@ export function GallerySection({
 
         <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {images.map((image, i) => (
-            <div
-              key={i}
-              className="group relative aspect-square overflow-hidden rounded-2xl"
-            >
+            <div key={i} className="group relative aspect-square overflow-hidden rounded-2xl">
               <Image
                 src={image.url}
                 alt={image.alt || `Work by ${tenant.name}`}

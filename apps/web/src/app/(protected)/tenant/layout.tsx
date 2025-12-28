@@ -11,11 +11,7 @@ import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
  * Includes sidebar navigation and requires TENANT_ADMIN role.
  * Shows impersonation banner when a PLATFORM_ADMIN is impersonating.
  */
-export default function TenantLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function TenantLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute allowedRoles={['TENANT_ADMIN']}>
       <ImpersonationBanner />

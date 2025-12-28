@@ -17,6 +17,7 @@ dependencies: []
 ## Problem
 
 The custom domain routes (`/t/_domain/*`) are nearly identical copies of the slug routes (`/t/[slug]/(site)/*`) with only the tenant resolution method differing. This creates:
+
 - 70-95% code duplication across 8 files
 - Content drift risk (already observable in some pages)
 - Double maintenance burden for any feature changes
@@ -25,6 +26,7 @@ The custom domain routes (`/t/_domain/*`) are nearly identical copies of the slu
 ## Location
 
 Files with high duplication:
+
 - `apps/web/src/app/t/_domain/layout.tsx` (mirrors `[slug]/(site)/layout.tsx`)
 - `apps/web/src/app/t/_domain/page.tsx` (mirrors `[slug]/(site)/page.tsx`)
 - `apps/web/src/app/t/_domain/about/page.tsx`
@@ -44,6 +46,7 @@ Files with high duplication:
 Extract shared page content into reusable components that accept tenant data as props. Only the data fetching differs between routes.
 
 ### Option A: Shared Page Components (Recommended)
+
 ```tsx
 // Create shared page components
 // apps/web/src/components/tenant/pages/AboutPageContent.tsx
@@ -67,6 +70,7 @@ export default async function AboutPage({ searchParams }) {
 ```
 
 ### Option B: Higher-Order Component for Tenant Resolution
+
 Create a HOC that handles tenant resolution and passes data to the page.
 
 ## Acceptance Criteria

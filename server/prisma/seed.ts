@@ -51,9 +51,18 @@ function getSeedMode(): SeedMode {
   const explicitMode = process.env.SEED_MODE as SeedMode | undefined;
   if (
     explicitMode &&
-    ['production', 'e2e', 'demo', 'dev', 'all', 'la-petit-mariage', 'little-bit-farm', 'plate', 'handled', 'upgrade-tenant-pages'].includes(
-      explicitMode
-    )
+    [
+      'production',
+      'e2e',
+      'demo',
+      'dev',
+      'all',
+      'la-petit-mariage',
+      'little-bit-farm',
+      'plate',
+      'handled',
+      'upgrade-tenant-pages',
+    ].includes(explicitMode)
   ) {
     return explicitMode;
   }

@@ -85,11 +85,17 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
 
     // Look for date picker or calendar element
     const calendar = page.locator('[role="grid"], .rdp, .calendar, [data-testid="calendar"]');
-    const hasCalendar = await calendar.first().isVisible().catch(() => false);
+    const hasCalendar = await calendar
+      .first()
+      .isVisible()
+      .catch(() => false);
 
     if (hasCalendar) {
       // Verify calendar is interactive
-      const dateButton = page.locator('button, [role="gridcell"]').filter({ hasText: /^\d+$/ }).first();
+      const dateButton = page
+        .locator('button, [role="gridcell"]')
+        .filter({ hasText: /^\d+$/ })
+        .first();
       await expect(dateButton).toBeVisible();
     } else {
       // May be a different step in the wizard
@@ -114,7 +120,9 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
         await submitButton.click();
 
         // Check for validation messages
-        const errorMessage = page.locator('[role="alert"], .error, text=/required|please|invalid/i');
+        const errorMessage = page.locator(
+          '[role="alert"], .error, text=/required|please|invalid/i'
+        );
         await expect(errorMessage.first()).toBeVisible({ timeout: 3000 });
       } else {
         // Button disabled - validation working
@@ -144,9 +152,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
     // In production, custom domains would be tested via actual domain setup
     // For now, we test the internal route directly
 
-    await page.goto(
-      `${NEXTJS_BASE_URL}/t/_domain?domain=${TEST_TENANT_SLUG}.example.com`
-    );
+    await page.goto(`${NEXTJS_BASE_URL}/t/_domain?domain=${TEST_TENANT_SLUG}.example.com`);
     await page.waitForLoadState('networkidle');
 
     // If domain is configured, should show tenant content

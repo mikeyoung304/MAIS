@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "389"
+issue_id: '389'
 tags:
   - architecture
   - code-review
@@ -30,6 +30,7 @@ Multiple admin route files directly use `prisma.tenant.*` queries instead of goi
    - Direct Prisma usage in webhook handlers
 
 **Example of violation:**
+
 ```typescript
 // BAD - Direct Prisma in route
 const tenants = await prisma.tenant.findMany({ ... });
@@ -39,6 +40,7 @@ const tenants = await tenantRepo.findAll();
 ```
 
 **Impact:**
+
 - Bypasses any logging/auditing in repository layer
 - Makes testing harder (can't mock repository)
 - Inconsistent with rest of codebase
@@ -46,6 +48,7 @@ const tenants = await tenantRepo.findAll();
 ## Proposed Solutions
 
 ### Option 1: Refactor to use TenantRepository (Recommended)
+
 - Inject `TenantRepository` via DI container
 - Replace all direct Prisma calls with repository methods
 - Add any missing repository methods
@@ -56,6 +59,7 @@ const tenants = await tenantRepo.findAll();
 **Risk:** Low
 
 ### Option 2: Create AdminTenantService
+
 - Create dedicated service for admin operations
 - Service uses repository internally
 
@@ -71,6 +75,7 @@ Option 1 - Refactor to use existing TenantRepository
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/routes/admin/tenants.routes.ts`
 - `server/src/routes/admin/stripe.routes.ts`
 - `server/src/routes/stripe-connect-webhooks.routes.ts`
@@ -86,8 +91,8 @@ Option 1 - Refactor to use existing TenantRepository
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                        | Learnings                                 |
+| ---------- | ----------------------------- | ----------------------------------------- |
 | 2025-12-25 | Created from multi-agent scan | Found during deprecated patterns analysis |
 
 ## Resources

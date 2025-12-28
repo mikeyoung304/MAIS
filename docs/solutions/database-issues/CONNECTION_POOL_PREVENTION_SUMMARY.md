@@ -10,10 +10,12 @@
 ## Documentation Deliverables
 
 ### 1. CONNECTION_POOL_INDEX.md
+
 **Purpose:** Navigation hub for all connection pool prevention documentation
 **Length:** ~3,500 words
 **Best For:** Finding the right document for your situation
 **Key Sections:**
+
 - Quick navigation (5-minute quick start)
 - 4-document map with use cases
 - Checklists by role (test writer, reviewer, DevOps)
@@ -25,10 +27,12 @@
 ---
 
 ### 2. CONNECTION_POOL_QUICK_CHECKLIST.md
+
 **Purpose:** 2-minute checklist to use before writing/reviewing tests
 **Length:** ~2,500 words
 **Best For:** Quick reference during development
 **Key Sections:**
+
 - Pre-development checklist
 - Test file creation checklist
 - Code review checklist
@@ -40,10 +44,12 @@
 ---
 
 ### 3. CONNECTION_POOL_EXHAUSTION_PREVENTION.md
+
 **Purpose:** Comprehensive explanation of the problem and 5 prevention strategies
 **Length:** ~6,000 words
 **Best For:** Deep understanding and troubleshooting
 **Key Sections:**
+
 - Why pool exhaustion happens (the math)
 - 5 prevention strategies (with implementation details)
 - Code review checklist
@@ -57,10 +63,12 @@
 ---
 
 ### 4. CONNECTION_POOL_DETECTION_PATTERNS.md
+
 **Purpose:** Automated and manual detection patterns (ESLint + Grep)
 **Length:** ~3,500 words
 **Best For:** Code review, CI/CD integration, preventing violations
 **Key Sections:**
+
 - ESLint rule (copy-paste ready)
 - Grep patterns for manual detection
 - GitHub Actions CI/CD integration
@@ -75,10 +83,12 @@
 ---
 
 ### 5. CONNECTION_POOL_CODE_EXAMPLES.md
+
 **Purpose:** Real working code examples and reference implementations
 **Length:** ~4,500 words
 **Best For:** Copy-paste implementation patterns
 **Key Sections:**
+
 - Example 1: ✅ CORRECT test file (fully working)
 - Example 2: ❌ BAD test file (anti-patterns)
 - Example 3: Fixed version (same test, corrected)
@@ -157,6 +167,7 @@ DATABASE_URL_TEST="postgresql://...?connection_limit=3&pool_timeout=5&connect_ti
 ```
 
 **Parameters:**
+
 - `connection_limit=3` - Maximum 3 connections per instance
 - `pool_timeout=5` - Fail fast if no connection available (5s)
 - `connect_timeout=5` - Don't wait forever to establish connection (5s)
@@ -201,6 +212,7 @@ afterEach(async () => {
 ```
 
 **Key Points:**
+
 - File-specific slugs (no conflicts)
 - Factory-generated unique IDs
 - All queries filter by tenantId
@@ -216,10 +228,13 @@ afterEach(async () => {
 {
   "files": ["**/*.test.ts"],
   "rules": {
-    "no-restricted-syntax": ["error", {
-      "selector": "NewExpression[callee.name='PrismaClient']",
-      "message": "Use getTestPrisma() instead"
-    }]
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "NewExpression[callee.name='PrismaClient']",
+        "message": "Use getTestPrisma() instead"
+      }
+    ]
   }
 }
 ```
@@ -265,14 +280,14 @@ grep -r "new PrismaClient()" server/src --include="*.test.ts"
 
 ### New Documentation Files
 
-| File | Size | Purpose |
-|------|------|---------|
-| CONNECTION_POOL_INDEX.md | 10KB | Navigation hub |
-| CONNECTION_POOL_QUICK_CHECKLIST.md | 6KB | Quick reference |
-| CONNECTION_POOL_EXHAUSTION_PREVENTION.md | 17KB | Full guide |
-| CONNECTION_POOL_DETECTION_PATTERNS.md | 12KB | Grep/ESLint patterns |
-| CONNECTION_POOL_CODE_EXAMPLES.md | 22KB | Working code examples |
-| CONNECTION_POOL_PREVENTION_SUMMARY.md | This file | Overview |
+| File                                     | Size      | Purpose               |
+| ---------------------------------------- | --------- | --------------------- |
+| CONNECTION_POOL_INDEX.md                 | 10KB      | Navigation hub        |
+| CONNECTION_POOL_QUICK_CHECKLIST.md       | 6KB       | Quick reference       |
+| CONNECTION_POOL_EXHAUSTION_PREVENTION.md | 17KB      | Full guide            |
+| CONNECTION_POOL_DETECTION_PATTERNS.md    | 12KB      | Grep/ESLint patterns  |
+| CONNECTION_POOL_CODE_EXAMPLES.md         | 22KB      | Working code examples |
+| CONNECTION_POOL_PREVENTION_SUMMARY.md    | This file | Overview              |
 
 **Total Documentation:** ~67KB (comprehensive reference)
 
@@ -420,16 +435,19 @@ A: Yes. Without cleanup, connections leak across tests. Even with singleton, mis
 ### Week 1: Foundations
 
 **Day 1 - 2 hours**
+
 - Read: `CONNECTION_POOL_INDEX.md` (understanding)
 - Read: `CONNECTION_POOL_QUICK_CHECKLIST.md` (practical)
 - Review: Example files in `CONNECTION_POOL_CODE_EXAMPLES.md`
 
 **Day 2 - 1 hour**
+
 - Write: Simple test following ✅ GOOD pattern
 - Run: `npm test` to verify
 - Compare: Your test vs bad example
 
 **Day 3 - 1 hour**
+
 - Review: Existing tests in codebase
 - Use: Grep commands from `CONNECTION_POOL_DETECTION_PATTERNS.md`
 - Identify: Patterns used in real code
@@ -437,11 +455,13 @@ A: Yes. Without cleanup, connections leak across tests. Even with singleton, mis
 ### Week 2: Mastery
 
 **Day 4 - 1 hour**
+
 - Review: 3 PRs with new tests
 - Check: All detection patterns
 - Comment: Using template from guide
 
 **Day 5 - 1 hour**
+
 - Debug: Failing test scenario
 - Use: Troubleshooting flowchart
 - Document: Findings

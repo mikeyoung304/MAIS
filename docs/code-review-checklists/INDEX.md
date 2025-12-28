@@ -18,6 +18,7 @@ Based on analysis of **15 code review findings** from PR #18 (tenant multi-page 
 ## Quick Navigation
 
 ### For Code Reviewers
+
 Start here if you're reviewing a PR right now:
 
 1. **[CODE-REVIEW-QUICK-REFERENCE.md](./CODE-REVIEW-QUICK-REFERENCE.md)** ← START HERE
@@ -32,6 +33,7 @@ Start here if you're reviewing a PR right now:
    - Pattern summaries
 
 ### For Deep Learning
+
 Study these to understand prevention strategies:
 
 3. **[CODE-REVIEW-PREVENTION-STRATEGIES.md](./CODE-REVIEW-PREVENTION-STRATEGIES.md)**
@@ -87,7 +89,7 @@ Organized by category and severity:
    - Fix: Ensure buildNavHref() handles domain params correctly
    - Issue: Users can't navigate between pages
 
-10. **Missing error boundaries** - No error.tsx in _domain routes
+10. **Missing error boundaries** - No error.tsx in \_domain routes
     - Add: error.tsx to all dynamic route segments
     - Issue: Unhandled errors crash page
 
@@ -121,18 +123,21 @@ Organized by category and severity:
 
 **Time available: 5 minutes**
 → Use [CODE-REVIEW-QUICK-REFERENCE.md](./CODE-REVIEW-QUICK-REFERENCE.md)
+
 - Focus on P1 and P2 items
 - Use red flags checklist
 - Copy-paste examples from templates section
 
 **Time available: 15 minutes**
 → Also read [MAIS-SPECIFIC-PATTERNS.md](./MAIS-SPECIFIC-PATTERNS.md)
+
 - See real examples from MAIS codebase
 - Understand why each pattern matters
 - Recognize patterns in new code
 
 **Time available: 1 hour**
 → Read all three documents
+
 - [CODE-REVIEW-QUICK-REFERENCE.md](./CODE-REVIEW-QUICK-REFERENCE.md) - Patterns
 - [MAIS-SPECIFIC-PATTERNS.md](./MAIS-SPECIFIC-PATTERNS.md) - Real examples
 - [CODE-REVIEW-PREVENTION-STRATEGIES.md](./CODE-REVIEW-PREVENTION-STRATEGIES.md) - Deep dive
@@ -140,11 +145,13 @@ Organized by category and severity:
 ### Scenario 2: You're writing a feature
 
 **Before committing:**
+
 1. Check [CODE-REVIEW-QUICK-REFERENCE.md](./CODE-REVIEW-QUICK-REFERENCE.md) sections 1-5
 2. Verify no red flags in your code
 3. Add copy-paste templates where needed
 
 **Before creating PR:**
+
 1. Run the [CODE-REVIEW-PREVENTION-STRATEGIES.md](./CODE-REVIEW-PREVENTION-STRATEGIES.md) section 6 checklist
 2. Check TypeScript/lint: `npm run typecheck && npm run lint`
 3. Test accessibility: Install axe DevTools and scan
@@ -152,6 +159,7 @@ Organized by category and severity:
 ### Scenario 3: You want to understand a pattern
 
 **Use [MAIS-SPECIFIC-PATTERNS.md](./MAIS-SPECIFIC-PATTERNS.md)**
+
 - Sections 1-7 show real examples with explanations
 - Each section has "Code Review Checklist" subtasks
 - See before/after comparisons
@@ -193,6 +201,7 @@ CODE-REVIEW-PREVENTION-STRATEGIES.md
 ## Key Files Referenced
 
 ### MAIS Codebase
+
 - `apps/web/src/lib/format.ts` - formatPrice utility
 - `apps/web/src/lib/tenant.ts` - Data fetching with cache()
 - `apps/web/src/lib/packages.ts` - Tier ordering utility
@@ -202,6 +211,7 @@ CODE-REVIEW-PREVENTION-STRATEGIES.md
 - `apps/web/src/app/t/[slug]/(site)/contact/ContactForm.tsx` - Form cleanup pattern
 
 ### Project Documentation
+
 - `CLAUDE.md` - Project guidelines and patterns
 - `apps/web/README.md` - Next.js architecture guide
 - `docs/design/BRAND_VOICE_GUIDE.md` - UI/UX standards
@@ -211,32 +221,42 @@ CODE-REVIEW-PREVENTION-STRATEGIES.md
 ## Frequently Asked Questions
 
 ### Q: Which document should I print?
+
 **A:** Print [CODE-REVIEW-QUICK-REFERENCE.md](./CODE-REVIEW-QUICK-REFERENCE.md) and post it at your desk.
 
 ### Q: How do I know if code is "ready for review"?
+
 **A:** It passes all 5 checks in [CODE-REVIEW-QUICK-REFERENCE.md](./CODE-REVIEW-QUICK-REFERENCE.md) section "5-Point Review Checklist"
 
 ### Q: I found a pattern not in these docs. What do I do?
+
 **A:** Document it! Add to [MAIS-SPECIFIC-PATTERNS.md](./MAIS-SPECIFIC-PATTERNS.md) with:
+
 1. Real example from codebase
 2. Before/after comparison
 3. Code review checklist
 4. Commit message: `docs: add [pattern-name] code review pattern`
 
 ### Q: Which issues are most important to catch?
+
 **A:** In order:
+
 1. P1 (Security) - Duplicate IDs, nested main elements, validation
 2. P2 (Performance/UX) - Code duplication, missing optimizations
 3. P3 (Polish) - JSDoc comments, animations
 
 ### Q: How long should code review take?
+
 **A:**
+
 - 5 min: Quick check with CODE-REVIEW-QUICK-REFERENCE.md
 - 15 min: Medium review with MAIS-SPECIFIC-PATTERNS.md
 - 30+ min: Thorough review reading all details
 
 ### Q: What if the PR has code we already identified?
+
 **A:** Reference the specific finding! Example:
+
 > "This has the same code duplication as Finding #3 (formatPrice). Extract to `lib/format.ts` and import in both places."
 
 ---
@@ -244,6 +264,7 @@ CODE-REVIEW-PREVENTION-STRATEGIES.md
 ## Integration with CI/CD
 
 ### Pre-commit (Local)
+
 ```bash
 # Run checklist before pushing
 npm run typecheck
@@ -257,6 +278,7 @@ npm run format:check
 ```
 
 ### PR Review (CI)
+
 ```bash
 # Reviewer uses:
 # 1. CODE-REVIEW-QUICK-REFERENCE.md (5 min scan)
@@ -265,7 +287,9 @@ npm run format:check
 ```
 
 ### Post-merge (Documentation)
+
 If new patterns found:
+
 ```bash
 # Add to MAIS-SPECIFIC-PATTERNS.md
 # Commit as: docs: add [pattern-type] to code review guide
@@ -277,6 +301,7 @@ If new patterns found:
 ## Metrics & Tracking
 
 ### Code Review Finding Categories
+
 - **Code Duplication:** 3 findings (formatPrice, navigation, tier order)
 - **Performance:** 4 findings (cache, useMemo, useCallback, AbortController)
 - **Accessibility:** 4 findings (duplicate IDs, nested mains, aria-current, contrast)
@@ -285,12 +310,15 @@ If new patterns found:
 - **Other:** 1 finding (broken navigation links)
 
 ### Origin of Findings
+
 **Source:** PR #18 (tenant multi-page sites)
 **Commits:**
+
 - b16379a - P1 accessibility fixes (2 items)
 - 661d464 - P2/P3 fixes (15 items)
 
 ### Severity Breakdown
+
 - **P1 (Critical):** 2 items
 - **P2 (Important):** 11 items
 - **P3 (Nice to have):** 2 items
@@ -299,9 +327,9 @@ If new patterns found:
 
 ## Version History
 
-| Date | Version | Changes | Link |
-|------|---------|---------|------|
-| 2025-12-25 | 1.0 | Initial release | [Commit 661d464](https://github.com/...661d464) |
+| Date       | Version | Changes         | Link                                            |
+| ---------- | ------- | --------------- | ----------------------------------------------- |
+| 2025-12-25 | 1.0     | Initial release | [Commit 661d464](https://github.com/...661d464) |
 
 ---
 

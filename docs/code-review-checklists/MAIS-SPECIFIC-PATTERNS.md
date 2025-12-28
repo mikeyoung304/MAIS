@@ -51,11 +51,7 @@ export const NAV_ITEMS: NavItem[] = [
  * // Domain-based: /services?domain=example.com
  * buildNavHref('', { label: 'Services', path: '/services' }, '?domain=example.com')
  */
-export function buildNavHref(
-  basePath: string,
-  item: NavItem,
-  domainParam?: string
-): string {
+export function buildNavHref(basePath: string, item: NavItem, domainParam?: string): string {
   // For home page with domain param, return root with param
   if (item.path === '' && domainParam) {
     return `/${domainParam}`;
@@ -79,6 +75,7 @@ export function buildNavHref(
 ```
 
 **Code Review Checklist:**
+
 - [ ] NAV_ITEMS is in single file (not duplicated)
 - [ ] buildNavHref handles both slug and domain routes
 - [ ] Documentation explains both patterns
@@ -106,31 +103,26 @@ Next.js `generateMetadata()` and page components often call the same data functi
  * @throws TenantNotFoundError if no tenant has this domain
  * @throws TenantApiError for other API failures
  */
-export const getTenantByDomain = cache(
-  async (domain: string): Promise<TenantPublicDto> => {
-    const url = `${API_BASE_URL}/v1/public/tenants/by-domain/${encodeURIComponent(domain)}`;
+export const getTenantByDomain = cache(async (domain: string): Promise<TenantPublicDto> => {
+  const url = `${API_BASE_URL}/v1/public/tenants/by-domain/${encodeURIComponent(domain)}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      next: { revalidate: 60 }, // ISR: revalidate every 60s
-    });
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    next: { revalidate: 60 }, // ISR: revalidate every 60s
+  });
 
-    if (response.status === 404) {
-      throw new TenantNotFoundError(domain);
-    }
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new TenantApiError(
-        `Failed to fetch tenant by domain: ${errorBody}`,
-        response.status
-      );
-    }
-
-    return response.json();
+  if (response.status === 404) {
+    throw new TenantNotFoundError(domain);
   }
-);
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new TenantApiError(`Failed to fetch tenant by domain: ${errorBody}`, response.status);
+  }
+
+  return response.json();
+});
 
 /**
  * Fetch all storefront data for a tenant in parallel
@@ -197,12 +189,14 @@ export default async function Layout({
 ```
 
 **Key Points:**
+
 - Both `generateMetadata` and component call same function
 - `cache()` wrapper prevents duplicate API calls in same request
 - Each new request starts with fresh cache
 - Works seamlessly with ISR (60s revalidation)
 
 **Code Review Checklist:**
+
 - [ ] SSR functions wrapped with `cache()`
 - [ ] No duplicate fetch calls in same request
 - [ ] `next: { revalidate: 60 }` set for ISR pages
@@ -288,6 +282,7 @@ apps/web/src/app/t/
 ```
 
 **Code Review Checklist:**
+
 - [ ] Every `[param]` route has `error.tsx`
 - [ ] Every nested segment with data fetching has `error.tsx`
 - [ ] Error boundary uses `logger.error()` for monitoring
@@ -320,47 +315,45 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
     };
   }, []);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      // ✓ Mark form as submitting
-      setStatus('submitting');
+    // ✓ Mark form as submitting
+    setStatus('submitting');
 
-      // ✓ Cancel any previous request
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = new AbortController();
+    // ✓ Cancel any previous request
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
 
-      try {
-        // ✓ Phase 1: Simulate success (Phase 2 will use real API)
-        await new Promise<void>((resolve, reject) => {
-          const timeoutId = setTimeout(resolve, 1000);
-          abortControllerRef.current!.signal.addEventListener('abort', () => {
-            clearTimeout(timeoutId);
-            reject(new DOMException('Aborted', 'AbortError'));
-          });
+    try {
+      // ✓ Phase 1: Simulate success (Phase 2 will use real API)
+      await new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(resolve, 1000);
+        abortControllerRef.current!.signal.addEventListener('abort', () => {
+          clearTimeout(timeoutId);
+          reject(new DOMException('Aborted', 'AbortError'));
         });
+      });
 
-        // ✓ Don't update state if aborted
-        if (abortControllerRef.current?.signal.aborted) return;
+      // ✓ Don't update state if aborted
+      if (abortControllerRef.current?.signal.aborted) return;
 
-        setStatus('success');
-      } catch (error) {
-        // ✓ Silently ignore aborted requests
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-        setStatus('error');
+      setStatus('success');
+    } catch (error) {
+      // ✓ Silently ignore aborted requests
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
       }
-    },
-    []
-  );
+      setStatus('error');
+    }
+  }, []);
 
   // Form JSX...
 }
 ```
 
 **Why this matters:**
+
 - User submits form
 - User navigates away before response
 - Component unmounts
@@ -368,6 +361,7 @@ export function ContactForm({ tenantName, basePath }: ContactFormProps) {
 - AbortController prevents this
 
 **Code Review Checklist:**
+
 - [ ] useEffect cleanup aborts pending requests
 - [ ] AbortController signal passed to fetch
 - [ ] State update guarded with `signal.aborted` check
@@ -442,6 +436,7 @@ const formattedPrice = formatPrice(packagePrice);
 ```
 
 **Code Review Checklist:**
+
 - [ ] No Intl.NumberFormat duplication across files
 - [ ] Utility function has clear JSDoc with examples
 - [ ] Function is pure (no side effects)
@@ -522,6 +517,7 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
 ```
 
 **Code Review Checklist:**
+
 - [ ] Array/object memoized with useMemo
 - [ ] Dependencies include all external variables
 - [ ] Callbacks memoized with useCallback
@@ -629,6 +625,7 @@ export default async function DomainLayout({
 ```
 
 **Code Review Checklist:**
+
 - [ ] Domain validated before database query
 - [ ] Domain regex validates format correctly
 - [ ] Length limits enforced (max 253 chars)
@@ -640,21 +637,22 @@ export default async function DomainLayout({
 
 ## Pattern Summary Table
 
-| Pattern | File Location | Key File |
-|---------|--------------|----------|
+| Pattern           | File Location      | Key File      |
+| ----------------- | ------------------ | ------------- |
 | Navigation Config | components/tenant/ | navigation.ts |
-| Data Fetching | lib/ | tenant.ts |
-| Formatting | lib/ | format.ts |
-| Utilities | lib/ | packages.ts |
-| Error Boundaries | app/[route]/ | error.tsx |
-| Validation | lib/ | tenant.ts |
-| Components | components/tenant/ | *.tsx |
+| Data Fetching     | lib/               | tenant.ts     |
+| Formatting        | lib/               | format.ts     |
+| Utilities         | lib/               | packages.ts   |
+| Error Boundaries  | app/[route]/       | error.tsx     |
+| Validation        | lib/               | tenant.ts     |
+| Components        | components/tenant/ | \*.tsx        |
 
 ---
 
 ## Testing MAIS Patterns
 
 ### Test file locations:
+
 ```
 server/test/services/          → Business logic
 apps/web/__tests__/             → Component tests
@@ -662,6 +660,7 @@ e2e/tests/                      → End-to-end tests
 ```
 
 ### Example test for formatting:
+
 ```typescript
 import { formatPrice } from '@/lib/format';
 

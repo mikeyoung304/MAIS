@@ -56,9 +56,9 @@ export function buildNavHref(basePath: string, item: NavItem): string {
 // Usage in TenantNav.tsx:
 import { NAV_ITEMS, buildNavHref } from './navigation';
 
-const navItems = NAV_ITEMS.map(item => ({
+const navItems = NAV_ITEMS.map((item) => ({
   label: item.label,
-  href: buildNavHref(basePath, item)
+  href: buildNavHref(basePath, item),
 }));
 ```
 

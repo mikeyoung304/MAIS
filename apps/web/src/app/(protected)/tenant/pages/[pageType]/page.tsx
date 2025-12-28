@@ -6,14 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  ArrowLeft,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  Eye,
-  Plus,
-} from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle, Eye, Plus } from 'lucide-react';
 import type { LandingPageConfig, Section, PageName } from '@macon/contracts';
 import { DEFAULT_PAGES_CONFIG, PAGE_NAMES } from '@macon/contracts';
 import { SectionEditorDialog } from '@/components/tenant/editors/SectionEditorDialog';
@@ -54,7 +47,9 @@ export default function PageEditorPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Dialog state
-  const [editingSection, setEditingSection] = useState<{ index: number; section: Section } | null>(null);
+  const [editingSection, setEditingSection] = useState<{ index: number; section: Section } | null>(
+    null
+  );
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Validate page type

@@ -25,6 +25,7 @@
 **Incremental Static Regeneration** allows you to update static content without rebuilding the entire site. It's the perfect middle ground between pure static (fast but stale) and fully dynamic (fresh but slow).
 
 **Key Benefits:**
+
 - Update static content without rebuild → deployment
 - Reduce server load with prerendered pages
 - Automatic `cache-control` headers
@@ -39,11 +40,7 @@ Simplest pattern for marketing sites. Cache expires after TTL, regenerates on ne
 // app/blog/[slug]/page.tsx
 export const revalidate = 3600; // Revalidate every hour
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await fetch(`/api/posts/${slug}`, {
     next: { revalidate: 3600 }, // or rely on export const
@@ -54,22 +51,23 @@ export default async function BlogPostPage({
 
 // For dynamic routes, pre-generate popular pages at build time
 export async function generateStaticParams() {
-  const popularPosts = await fetch('/api/posts/popular').then(r => r.json());
-  return popularPosts.map(post => ({ slug: post.slug }));
+  const popularPosts = await fetch('/api/posts/popular').then((r) => r.json());
+  return popularPosts.map((post) => ({ slug: post.slug }));
 }
 ```
 
 **Recommended TTL Values:**
 
-| Use Case | TTL | Example |
-|----------|-----|---------|
-| Real-time dashboards | Not recommended | Use dynamic rendering instead |
-| Frequently changing content | 60 seconds | Stock prices, live feeds |
-| Regular updates | 3600 seconds (1 hour) | Blog posts, product catalogs |
-| Rarely changing | 86400 seconds (1 day) | Marketing copy, documentation |
-| Static pages | 604800 seconds (1 week) | About, contact, legal pages |
+| Use Case                    | TTL                     | Example                       |
+| --------------------------- | ----------------------- | ----------------------------- |
+| Real-time dashboards        | Not recommended         | Use dynamic rendering instead |
+| Frequently changing content | 60 seconds              | Stock prices, live feeds      |
+| Regular updates             | 3600 seconds (1 hour)   | Blog posts, product catalogs  |
+| Rarely changing             | 86400 seconds (1 day)   | Marketing copy, documentation |
+| Static pages                | 604800 seconds (1 week) | About, contact, legal pages   |
 
 **For marketing sites, recommended pattern:**
+
 - Home/hero section: 60-300 seconds (frequent brand updates)
 - About/services: 3600 seconds (1 hour)
 - Blog/case studies: 3600 seconds (1 hour)
@@ -102,12 +100,13 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     revalidated: true,
     now: Date.now(),
-    path
+    path,
   });
 }
 ```
 
 **Usage (from webhook handler):**
+
 ```typescript
 // Called from tenant config update webhook
 const event = await webhookProvider.validateWebhook(req);
@@ -125,6 +124,7 @@ if (event.type === 'tenant.config.updated') {
 ```
 
 **When to use:**
+
 - CMS-driven content (webhook on save)
 - Frequent content updates
 - Need immediate cache invalidation
@@ -145,7 +145,7 @@ export default async function BlogListPage() {
 }
 
 // app/api/posts/route.ts (POST handler to create post)
-'use server'
+('use server');
 import { revalidateTag } from 'next/cache';
 
 export async function createPost(data: PostData) {
@@ -156,6 +156,7 @@ export async function createPost(data: PostData) {
 ```
 
 **When to use:**
+
 - Multiple pages share the same data
 - Want to avoid revalidating entire paths
 - Complex data dependencies
@@ -179,28 +180,32 @@ export async function createPost(data: PostData) {
    - Users still get content (better than 500 error)
 
 4. **Test locally with production build**
+
    ```bash
    npm run build  # Generate optimized bundle
    npm run start  # Run production server with ISR
    ```
 
 5. **Debug ISR in production**
+
    ```bash
    # Enable debug logging (set in production deploy)
    NEXT_PRIVATE_DEBUG_CACHE=1
    ```
 
 6. **Use exact paths for revalidation**
+
    ```tsx
    // CORRECT: Exact path
-   revalidatePath('/t/photographer-slug')
+   revalidatePath('/t/photographer-slug');
 
    // AVOID: Patterns (doesn't work with rewrites)
-   revalidatePath('/t/*') // ❌ Won't work
-   revalidatePath('/') // ⚠️ Revalidates entire site
+   revalidatePath('/t/*'); // ❌ Won't work
+   revalidatePath('/'); // ⚠️ Revalidates entire site
    ```
 
 7. **Combine TTL with on-demand**
+
    ```tsx
    export const revalidate = 3600; // Default 1 hour fallback
 
@@ -281,6 +286,7 @@ app/
 ```
 
 **⚠️ Important caveat:** Different root layouts trigger full page reloads on navigation
+
 - Navigating from `/blog` (marketing layout) to `/dashboard` (admin layout) reloads entire page
 - Not an issue for marketing sites (users don't navigate between sections constantly)
 
@@ -305,6 +311,7 @@ app/
 **Render hierarchy:** Root → Marketing → Blog → Page
 
 This means:
+
 - Root layout applied to all routes
 - Marketing layout wraps all `/marketing/*` routes
 - Blog layout wraps all `/marketing/blog/*` routes
@@ -319,6 +326,7 @@ This means:
 The most scalable pattern for marketing sites. Define a few reusable section types, then compose pages from them.
 
 **Benefits:**
+
 - Easy to add new pages (just compose sections)
 - Consistent styling and behavior
 - Easy to edit or add sections to existing pages
@@ -328,14 +336,7 @@ The most scalable pattern for marketing sites. Define a few reusable section typ
 
 ```typescript
 // packages/contracts/src/schemas/section.schema.ts
-export type SectionType =
-  | 'hero'
-  | 'text'
-  | 'gallery'
-  | 'testimonials'
-  | 'faq'
-  | 'contact'
-  | 'cta';
+export type SectionType = 'hero' | 'text' | 'gallery' | 'testimonials' | 'faq' | 'contact' | 'cta';
 
 // Each section is a discriminated union
 export type Section =
@@ -434,72 +435,30 @@ interface SectionRendererProps {
   basePath?: string;
 }
 
-export function SectionRenderer({
-  sections,
-  tenant,
-  basePath = '',
-}: SectionRendererProps) {
+export function SectionRenderer({ sections, tenant, basePath = '' }: SectionRendererProps) {
   return (
     <>
       {sections.map((section, index) => {
         switch (section.type) {
           case 'hero':
             return (
-              <HeroSection
-                key={`hero-${index}`}
-                {...section}
-                tenant={tenant}
-                basePath={basePath}
-              />
+              <HeroSection key={`hero-${index}`} {...section} tenant={tenant} basePath={basePath} />
             );
           case 'text':
-            return (
-              <TextSection
-                key={`text-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <TextSection key={`text-${index}`} {...section} tenant={tenant} />;
           case 'gallery':
-            return (
-              <GallerySection
-                key={`gallery-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <GallerySection key={`gallery-${index}`} {...section} tenant={tenant} />;
           case 'testimonials':
             return (
-              <TestimonialsSection
-                key={`testimonials-${index}`}
-                {...section}
-                tenant={tenant}
-              />
+              <TestimonialsSection key={`testimonials-${index}`} {...section} tenant={tenant} />
             );
           case 'faq':
-            return (
-              <FAQSection
-                key={`faq-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <FAQSection key={`faq-${index}`} {...section} tenant={tenant} />;
           case 'contact':
-            return (
-              <ContactSection
-                key={`contact-${index}`}
-                {...section}
-                tenant={tenant}
-              />
-            );
+            return <ContactSection key={`contact-${index}`} {...section} tenant={tenant} />;
           case 'cta':
             return (
-              <CTASection
-                key={`cta-${index}`}
-                {...section}
-                tenant={tenant}
-                basePath={basePath}
-              />
+              <CTASection key={`cta-${index}`} {...section} tenant={tenant} basePath={basePath} />
             );
           default:
             const _exhaustive: never = section;
@@ -512,6 +471,7 @@ export function SectionRenderer({
 ```
 
 **Why this pattern?**
+
 - Type-safe: TypeScript ensures all section types are handled
 - Exhaustiveness checking: Compiler error if new type added and not handled
 - Easy to extend: Add new section type → add case → done
@@ -567,9 +527,7 @@ export function HeroSection({
         </h1>
 
         {subheadline && (
-          <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            {subheadline}
-          </p>
+          <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">{subheadline}</p>
         )}
 
         <Link
@@ -585,6 +543,7 @@ export function HeroSection({
 ```
 
 **Section component best practices:**
+
 - Keep sections **focused and self-contained**
 - Accept all config via props (no data fetching in sections)
 - Use `'use client'` only if interactive (HeroSection doesn't need it unless tracking clicks)
@@ -599,6 +558,7 @@ export function HeroSection({
 ### The Config Pattern
 
 Instead of hardcoding page layouts, define them as configuration. Perfect for:
+
 - CMS-driven sites
 - SaaS platforms with customizable branding
 - Multi-tenant applications
@@ -758,11 +718,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
 
   return (
     <main>
-      <SectionRenderer
-        sections={sections}
-        tenant={tenant}
-        basePath={`/t/${slug}`}
-      />
+      <SectionRenderer sections={sections} tenant={tenant} basePath={`/t/${slug}`} />
     </main>
   );
 }
@@ -835,18 +791,20 @@ export default async function Page() {
 Persists fetch results across server requests until explicitly revalidated.
 
 **Time-based revalidation:**
+
 ```tsx
 // Cache for 1 hour
 const posts = await fetch('https://api.example.com/posts', {
-  next: { revalidate: 3600 }
+  next: { revalidate: 3600 },
 });
 ```
 
 **Tag-based revalidation:**
+
 ```tsx
 // Tag the fetch
 const posts = await fetch('https://api.example.com/posts', {
-  next: { tags: ['posts'] }
+  next: { tags: ['posts'] },
 });
 
 // Later, revalidate all 'posts' tagged fetches
@@ -854,10 +812,11 @@ revalidateTag('posts');
 ```
 
 **No caching:**
+
 ```tsx
 // Always fresh
 const data = await fetch('https://api.example.com/data', {
-  cache: 'no-store'
+  cache: 'no-store',
 });
 ```
 
@@ -866,16 +825,19 @@ const data = await fetch('https://api.example.com/data', {
 Caches entire HTML + React Server Component payload at build time or deploy time.
 
 **Statically rendered (build time):**
+
 - No dynamic data fetches
 - No cookies/headers/searchParams
 - `export const revalidate = 60` (ISR)
 
 **Dynamically rendered (skips cache):**
+
 - Uses cookies, headers, or searchParams
 - Calls `dynamic = 'force-dynamic'`
 - Contains `no-store` fetches
 
 **For marketing sites:**
+
 ```tsx
 // Static (cacheable)
 export default async function About() {
@@ -897,27 +859,26 @@ export default async function Dashboard() {
 In-memory browser cache of RSC payloads. Automatically managed by Next.js.
 
 **Duration:**
+
 - Static pages: 5 minutes
 - Dynamic pages: Session duration (not cached by default)
 
 **Invalidation:**
+
 ```tsx
 'use client';
 import { useRouter } from 'next/navigation';
 
 function RefreshButton() {
   const router = useRouter();
-  return (
-    <button onClick={() => router.refresh()}>
-      Refresh (clears Router Cache only)
-    </button>
-  );
+  return <button onClick={() => router.refresh()}>Refresh (clears Router Cache only)</button>;
 }
 ```
 
 **Note:** `router.refresh()` is client-side only. To invalidate server cache, use Server Actions:
+
 ```typescript
-'use server'
+'use server';
 import { revalidatePath } from 'next/cache';
 
 export async function revalidateAbout() {
@@ -937,8 +898,8 @@ const getTenantConfig = cache(async (slug: string) => {
   return fetch(`/api/tenants/${slug}/config`, {
     next: {
       revalidate: 3600, // 1 hour for data cache
-      tags: ['tenant-config']
-    }
+      tags: ['tenant-config'],
+    },
   });
 });
 
@@ -958,6 +919,7 @@ export async function revalidateOnConfigChange(slug: string) {
 ```
 
 **Caching flow:**
+
 1. First request → fetch, cache data, render, cache HTML
 2. Subsequent requests (< 1 hour) → serve cached HTML instantly
 3. Webhook arrives → `revalidateOnConfigChange()` clears cache
@@ -973,6 +935,7 @@ export async function revalidateOnConfigChange(slug: string) {
 Perfect for multi-tenant SaaS where each tenant gets a customizable storefront.
 
 **Route structure:**
+
 ```
 app/
 ├── (marketing)/
@@ -991,6 +954,7 @@ app/
 ```
 
 **Implementation:**
+
 ```tsx
 // app/(marketing)/t/[slug]/page.tsx
 import type { Metadata } from 'next';
@@ -1007,7 +971,7 @@ export async function generateMetadata({
 
   try {
     const { tenant } = await getTenantStorefrontData(slug);
-    const heroSection = normalizeToPages(tenant.branding?.landingPage)?. home.sections[0];
+    const heroSection = normalizeToPages(tenant.branding?.landingPage)?.home.sections[0];
 
     return {
       title: tenant.name,
@@ -1026,11 +990,7 @@ export async function generateStaticParams() {
 
 export const revalidate = 60; // ISR: 60 seconds
 
-export default async function TenantPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function TenantPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   try {
@@ -1040,11 +1000,7 @@ export default async function TenantPage({
 
     return (
       <main>
-        <SectionRenderer
-          sections={sections}
-          tenant={tenant}
-          basePath={`/t/${slug}`}
-        />
+        <SectionRenderer sections={sections} tenant={tenant} basePath={`/t/${slug}`} />
       </main>
     );
   } catch (error) {
@@ -1058,6 +1014,7 @@ export default async function TenantPage({
 For your own marketing site (not multi-tenant), define routes explicitly.
 
 **Route structure:**
+
 ```
 app/
 ├── (marketing)/
@@ -1082,16 +1039,13 @@ app/
 ```
 
 **Implementation:**
+
 ```tsx
 // app/(marketing)/layout.tsx
 import { MarketingNav } from '@/components/marketing/MarketingNav';
 import { MarketingFooter } from '@/components/marketing/MarketingFooter';
 
-export default function MarketingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <MarketingNav />
@@ -1130,7 +1084,7 @@ export default async function BlogPage() {
     <main className="max-w-4xl mx-auto py-20">
       <h1 className="text-5xl font-serif mb-12">Blog</h1>
       <div className="space-y-8">
-        {posts.map(post => (
+        {posts.map((post) => (
           <article key={post.id}>
             <Link href={`/blog/${post.slug}`}>
               <h2 className="text-3xl font-serif hover:text-sage transition-colors">
@@ -1176,16 +1130,12 @@ export async function generateMetadata({
 
 export async function generateStaticParams() {
   const posts = await getAllBlogPostSlugs();
-  return posts.map(slug => ({ slug }));
+  return posts.map((slug) => ({ slug }));
 }
 
 export const revalidate = 86400; // Daily for blog posts
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await getBlogPost(slug);
 
@@ -1197,9 +1147,7 @@ export default async function BlogPostPage({
     <article className="max-w-3xl mx-auto py-20">
       <header>
         <h1 className="text-5xl font-serif mb-4">{post.title}</h1>
-        <time className="text-neutral-600">
-          {new Date(post.publishedAt).toLocaleDateString()}
-        </time>
+        <time className="text-neutral-600">{new Date(post.publishedAt).toLocaleDateString()}</time>
       </header>
       <div className="prose prose-lg mt-12">{post.html}</div>
     </article>
@@ -1218,16 +1166,12 @@ export const dynamicParams = true; // Enable on-demand ISR
 export async function generateStaticParams() {
   // Generate top 10 most popular posts at build time
   const popular = await getPopularPosts(10);
-  return popular.map(post => ({ slug: post.slug }));
+  return popular.map((post) => ({ slug: post.slug }));
 }
 
 export const revalidate = 60; // ISR: 60 seconds
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await getPost(slug);
 
@@ -1238,6 +1182,7 @@ export default async function PostPage({
 ```
 
 **Flow:**
+
 1. Build time: Generate 10 most popular posts
 2. User visits unknown post → generate on demand (60 sec wait)
 3. Cache for 60 seconds
@@ -1252,6 +1197,7 @@ export default async function PostPage({
 Goal: Use same section-based architecture as tenant storefronts for your corporate website.
 
 **Route structure:**
+
 ```
 app/
 ├── (marketing)/
@@ -1297,7 +1243,8 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
       {
         type: 'hero',
         headline: 'Transform Your Business With MAIS',
-        subheadline: 'AI-powered consulting, seamless booking, and marketing automation for entrepreneurs',
+        subheadline:
+          'AI-powered consulting, seamless booking, and marketing automation for entrepreneurs',
         ctaText: 'Start Free Trial',
         backgroundImageUrl: '/images/hero-bg.jpg',
       },
@@ -1434,8 +1381,8 @@ const getCorporatePagesFromCMS = cache(async () => {
   const response = await fetch(`${process.env.CMS_URL}/pages/corporate`, {
     next: {
       revalidate: 3600,
-      tags: ['corporate-pages']
-    }
+      tags: ['corporate-pages'],
+    },
   });
 
   return response.json() as Promise<PagesConfig>;
@@ -1471,13 +1418,13 @@ export async function revalidateCorporatePages() {
 
 ### Performance Characteristics:
 
-| Page Type | Strategy | TTFB | Cache Hit |
-|-----------|----------|------|-----------|
-| Home | ISR 60s | <100ms | instant |
-| Blog list | ISR 3600s | <100ms | instant |
-| Blog post | ISR 3600s + generateStaticParams | <100ms | instant |
-| Dynamic tenant | ISR 60s + on-demand | <200ms | instant |
-| Real-time data | SSR (no cache) | ~1000ms | never |
+| Page Type      | Strategy                         | TTFB    | Cache Hit |
+| -------------- | -------------------------------- | ------- | --------- |
+| Home           | ISR 60s                          | <100ms  | instant   |
+| Blog list      | ISR 3600s                        | <100ms  | instant   |
+| Blog post      | ISR 3600s + generateStaticParams | <100ms  | instant   |
+| Dynamic tenant | ISR 60s + on-demand              | <200ms  | instant   |
+| Real-time data | SSR (no cache)                   | ~1000ms | never     |
 
 ### When to Use Each Pattern:
 
@@ -1495,4 +1442,3 @@ export async function revalidateCorporatePages() {
 - [Next.js Data Fetching](https://nextjs.org/docs/app/building-your-application/data-fetching)
 - [Next.js Route Groups](https://nextjs.org/docs/app/building-your-application/routing/route-groups)
 - [Next.js App Router Documentation](https://nextjs.org/docs/app/building-your-application/routing)
-

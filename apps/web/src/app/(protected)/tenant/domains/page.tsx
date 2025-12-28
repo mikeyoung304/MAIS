@@ -5,13 +5,7 @@ import { useAuth } from '@/lib/auth-client';
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -129,12 +123,9 @@ export default function DomainsPage() {
     setError(null);
 
     try {
-      const res = await fetch(
-        `/api/tenant-admin/domains/${domainId}/verify`,
-        {
-          method: 'POST',
-        }
-      );
+      const res = await fetch(`/api/tenant-admin/domains/${domainId}/verify`, {
+        method: 'POST',
+      });
 
       const result: VerificationResult = await res.json();
 
@@ -147,8 +138,7 @@ export default function DomainsPage() {
         await fetchDomains();
       } else {
         setError(
-          result.error ||
-            'Verification failed. Make sure the TXT record is properly configured.'
+          result.error || 'Verification failed. Make sure the TXT record is properly configured.'
         );
       }
     } catch (error) {
@@ -162,12 +152,9 @@ export default function DomainsPage() {
     if (!isAuthenticated) return;
 
     try {
-      const res = await fetch(
-        `/api/tenant-admin/domains/${domainId}/primary`,
-        {
-          method: 'POST',
-        }
-      );
+      const res = await fetch(`/api/tenant-admin/domains/${domainId}/primary`, {
+        method: 'POST',
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -183,21 +170,14 @@ export default function DomainsPage() {
   const handleDelete = async (domainId: string) => {
     if (!isAuthenticated) return;
 
-    if (
-      !confirm(
-        'Are you sure you want to remove this domain? This action cannot be undone.'
-      )
-    ) {
+    if (!confirm('Are you sure you want to remove this domain? This action cannot be undone.')) {
       return;
     }
 
     try {
-      const res = await fetch(
-        `/api/tenant-admin/domains/${domainId}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const res = await fetch(`/api/tenant-admin/domains/${domainId}`, {
+        method: 'DELETE',
+      });
 
       if (!res.ok) {
         throw new Error('Failed to remove domain');
@@ -228,12 +208,8 @@ export default function DomainsPage() {
     <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
       <div>
-        <h1 className="font-serif text-3xl font-bold text-text-primary">
-          Custom Domains
-        </h1>
-        <p className="mt-2 text-text-muted">
-          Connect your own domain to your storefront
-        </p>
+        <h1 className="font-serif text-3xl font-bold text-text-primary">Custom Domains</h1>
+        <p className="mt-2 text-text-muted">Connect your own domain to your storefront</p>
       </div>
 
       {/* Error Alert */}
@@ -321,10 +297,7 @@ export default function DomainsPage() {
           ) : (
             <div className="space-y-4">
               {domains.map((domain) => (
-                <div
-                  key={domain.id}
-                  className="rounded-lg border border-neutral-200 p-4"
-                >
+                <div key={domain.id} className="rounded-lg border border-neutral-200 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -367,9 +340,7 @@ export default function DomainsPage() {
                           <div className="space-y-2">
                             <div className="flex items-center justify-between rounded bg-white border border-neutral-200 p-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs text-text-muted">
-                                  Record Name
-                                </p>
+                                <p className="text-xs text-text-muted">Record Name</p>
                                 <p className="font-mono text-sm truncate">
                                   _handled-verify.{domain.domain}
                                 </p>
@@ -377,9 +348,7 @@ export default function DomainsPage() {
                             </div>
                             <div className="flex items-center justify-between rounded bg-white border border-neutral-200 p-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs text-text-muted">
-                                  Record Value
-                                </p>
+                                <p className="text-xs text-text-muted">Record Value</p>
                                 <p className="font-mono text-sm truncate">
                                   handled-verify={domain.verificationToken}
                                 </p>
@@ -454,30 +423,24 @@ export default function DomainsPage() {
         <CardContent className="prose prose-sm max-w-none">
           <ol className="space-y-3 text-text-muted">
             <li>
-              <strong className="text-text-primary">Add your domain</strong> -
-              Enter the domain you want to use (e.g., www.yoursite.com)
+              <strong className="text-text-primary">Add your domain</strong> - Enter the domain you
+              want to use (e.g., www.yoursite.com)
             </li>
             <li>
-              <strong className="text-text-primary">Add DNS TXT record</strong>{' '}
-              - Log into your domain registrar (GoDaddy, Namecheap, etc.) and
-              add the TXT record shown above
+              <strong className="text-text-primary">Add DNS TXT record</strong> - Log into your
+              domain registrar (GoDaddy, Namecheap, etc.) and add the TXT record shown above
             </li>
             <li>
-              <strong className="text-text-primary">
-                Wait for DNS propagation
-              </strong>{' '}
-              - DNS changes can take up to 48 hours, but usually complete within
-              a few minutes
+              <strong className="text-text-primary">Wait for DNS propagation</strong> - DNS changes
+              can take up to 48 hours, but usually complete within a few minutes
             </li>
             <li>
-              <strong className="text-text-primary">Verify your domain</strong>{' '}
-              - Click &quot;Verify&quot; to confirm your domain ownership
+              <strong className="text-text-primary">Verify your domain</strong> - Click
+              &quot;Verify&quot; to confirm your domain ownership
             </li>
             <li>
-              <strong className="text-text-primary">
-                Configure CNAME record
-              </strong>{' '}
-              - After verification, add a CNAME record pointing to our servers
+              <strong className="text-text-primary">Configure CNAME record</strong> - After
+              verification, add a CNAME record pointing to our servers
             </li>
           </ol>
         </CardContent>

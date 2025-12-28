@@ -192,7 +192,8 @@ export const getDashboardTool: AgentTool = {
  */
 export const getPackagesTool: AgentTool = {
   name: 'get_packages',
-  description: 'Get all packages or a single package by ID. Returns pricing, photos, and booking settings.',
+  description:
+    'Get all packages or a single package by ID. Returns pricing, photos, and booking settings.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -457,7 +458,10 @@ export const checkAvailabilityTool: AgentTool = {
       const conflict = existingBooking
         ? { type: 'booking', status: existingBooking.status }
         : blackout
-          ? { type: 'blackout', reason: blackout.reason ? sanitizeForContext(blackout.reason, 50) : null }
+          ? {
+              type: 'blackout',
+              reason: blackout.reason ? sanitizeForContext(blackout.reason, 50) : null,
+            }
           : null;
 
       return {
@@ -639,7 +643,8 @@ export const getStripeStatusTool: AgentTool = {
  */
 export const getAddonsTool: AgentTool = {
   name: 'get_addons',
-  description: 'Get all add-ons or a single add-on by ID. Add-ons are optional extras that can be added to packages.',
+  description:
+    'Get all add-ons or a single add-on by ID. Add-ons are optional extras that can be added to packages.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -765,7 +770,13 @@ export const getCustomersTool: AgentTool = {
       }
 
       // Search or list
-      const where: { tenantId: string; OR?: { email?: { contains: string; mode: 'insensitive' }; name?: { contains: string; mode: 'insensitive' } }[] } = {
+      const where: {
+        tenantId: string;
+        OR?: {
+          email?: { contains: string; mode: 'insensitive' };
+          name?: { contains: string; mode: 'insensitive' };
+        }[];
+      } = {
         tenantId,
       };
 
@@ -922,11 +933,12 @@ function formatPackage(pkg: any) {
     active: pkg.active,
     segmentId: pkg.segmentId,
     grouping: pkg.grouping,
-    addOns: pkg.addOns?.map((a: any) => ({
-      id: a.id,
-      name: sanitizeForContext(a.addOn?.name || '', 50),
-      price: a.addOn?.price,
-    })) || [],
+    addOns:
+      pkg.addOns?.map((a: any) => ({
+        id: a.id,
+        name: sanitizeForContext(a.addOn?.name || '', 50),
+        price: a.addOn?.price,
+      })) || [],
     createdAt: pkg.createdAt.toISOString(),
   };
 }

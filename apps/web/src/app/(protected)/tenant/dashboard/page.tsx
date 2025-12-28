@@ -59,18 +59,19 @@ export default function TenantDashboardPage() {
     setError(null);
 
     try {
-        // Fetch tenant info to get slug (if not already available from session)
-        if (!authSlug) {
-          const infoResponse = await fetch('/api/tenant-admin/info');
+      // Fetch tenant info to get slug (if not already available from session)
+      if (!authSlug) {
+        const infoResponse = await fetch('/api/tenant-admin/info');
 
-          if (infoResponse.ok) {
-            const info = await infoResponse.json();
-            setSlug(info.slug);
-          }
+        if (infoResponse.ok) {
+          const info = await infoResponse.json();
+          setSlug(info.slug);
         }
+      }
 
-        // Fetch all data in parallel (including trial status)
-        const [packagesResponse, bookingsResponse, blackoutsResponse, stripeResponse, trialResponse] = await Promise.all([
+      // Fetch all data in parallel (including trial status)
+      const [packagesResponse, bookingsResponse, blackoutsResponse, stripeResponse, trialResponse] =
+        await Promise.all([
           fetch('/api/tenant-admin/packages'),
           fetch('/api/tenant-admin/bookings'),
           fetch('/api/tenant-admin/blackouts'),
@@ -78,26 +79,29 @@ export default function TenantDashboardPage() {
           fetch('/api/tenant-admin/trial/status'),
         ]);
 
-        const packages = packagesResponse.ok ? await packagesResponse.json() : [];
-        const bookings = bookingsResponse.ok ? await bookingsResponse.json() : [];
-        const blackouts = blackoutsResponse.ok ? await blackoutsResponse.json() : [];
-        const stripeStatus = stripeResponse.ok ? await stripeResponse.json() : null;
-        const trial = trialResponse.ok ? await trialResponse.json() : null;
+      const packages = packagesResponse.ok ? await packagesResponse.json() : [];
+      const bookings = bookingsResponse.ok ? await bookingsResponse.json() : [];
+      const blackouts = blackoutsResponse.ok ? await blackoutsResponse.json() : [];
+      const stripeStatus = stripeResponse.ok ? await stripeResponse.json() : null;
+      const trial = trialResponse.ok ? await trialResponse.json() : null;
 
-        setStats({
-          packagesCount: Array.isArray(packages) ? packages.length : 0,
-          bookingsCount: Array.isArray(bookings) ? bookings.length : 0,
-          blackoutsCount: Array.isArray(blackouts) ? blackouts.length : 0,
-          hasStripeConnected: stripeStatus?.chargesEnabled || false,
-        });
+      setStats({
+        packagesCount: Array.isArray(packages) ? packages.length : 0,
+        bookingsCount: Array.isArray(bookings) ? bookings.length : 0,
+        blackoutsCount: Array.isArray(blackouts) ? blackouts.length : 0,
+        hasStripeConnected: stripeStatus?.chargesEnabled || false,
+      });
 
-        if (trial) {
-          setTrialStatus(trial);
-        }
-      } catch (err) {
-        logger.error('Dashboard data fetch failed', err instanceof Error ? err : { error: String(err) });
-        setError(getErrorMessage(err));
-        setStats(null);
+      if (trial) {
+        setTrialStatus(trial);
+      }
+    } catch (err) {
+      logger.error(
+        'Dashboard data fetch failed',
+        err instanceof Error ? err : { error: String(err) }
+      );
+      setError(getErrorMessage(err));
+      setStats(null);
     } finally {
       setIsLoading(false);
     }
@@ -171,10 +175,7 @@ export default function TenantDashboardPage() {
     <div className="space-y-8 animate-fade-in-up">
       {/* Trial Banner - Show at top if trialing or expired */}
       {trialStatus && (trialStatus.status === 'TRIALING' || trialStatus.status === 'EXPIRED') && (
-        <TrialBanner
-          status={trialStatus.status}
-          daysRemaining={trialStatus.daysRemaining ?? 0}
-        />
+        <TrialBanner status={trialStatus.status} daysRemaining={trialStatus.daysRemaining ?? 0} />
       )}
 
       {/* Header */}
@@ -182,9 +183,7 @@ export default function TenantDashboardPage() {
         <h1 className="font-serif text-3xl font-bold text-text-primary">
           Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}
         </h1>
-        <p className="mt-2 text-text-muted">
-          Here&apos;s an overview of your business.
-        </p>
+        <p className="mt-2 text-text-muted">Here&apos;s an overview of your business.</p>
       </div>
 
       {/* Start Trial Card - Show if has packages but no trial started */}
@@ -222,9 +221,7 @@ export default function TenantDashboardPage() {
           <Link key={card.title} href={card.href}>
             <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-text-muted">
-                  {card.title}
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-text-muted">{card.title}</CardTitle>
                 <div className={card.color}>{card.icon}</div>
               </CardHeader>
               <CardContent>
@@ -243,9 +240,7 @@ export default function TenantDashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="font-serif text-xl font-bold text-text-primary mb-4">
-          Quick Actions
-        </h2>
+        <h2 className="font-serif text-xl font-bold text-text-primary mb-4">Quick Actions</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => (
             <Link
@@ -254,15 +249,21 @@ export default function TenantDashboardPage() {
               target={'external' in action && action.external ? '_blank' : undefined}
               rel={'external' in action && action.external ? 'noopener noreferrer' : undefined}
             >
-              <Card className={`transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group ${
-                'highlight' in action && action.highlight ? 'border-2 border-sage/30 bg-sage/5' : ''
-              }`}>
+              <Card
+                className={`transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group ${
+                  'highlight' in action && action.highlight
+                    ? 'border-2 border-sage/30 bg-sage/5'
+                    : ''
+                }`}
+              >
                 <CardContent className="flex items-center gap-4 p-6">
-                  <div className={`rounded-xl p-3 transition-colors ${
-                    'highlight' in action && action.highlight
-                      ? 'bg-sage text-white group-hover:bg-sage-dark'
-                      : 'bg-sage/10 text-sage group-hover:bg-sage group-hover:text-white'
-                  }`}>
+                  <div
+                    className={`rounded-xl p-3 transition-colors ${
+                      'highlight' in action && action.highlight
+                        ? 'bg-sage text-white group-hover:bg-sage-dark'
+                        : 'bg-sage/10 text-sage group-hover:bg-sage group-hover:text-white'
+                    }`}
+                  >
                     {action.icon}
                   </div>
                   <div className="flex-1">
@@ -283,9 +284,7 @@ export default function TenantDashboardPage() {
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 className="font-semibold text-text-primary">
-                  Complete Your Setup
-                </h3>
+                <h3 className="font-semibold text-text-primary">Complete Your Setup</h3>
                 <p className="text-sm text-text-muted">
                   Connect Stripe to start accepting payments from customers.
                 </p>

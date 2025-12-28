@@ -25,10 +25,10 @@
 ```typescript
 // Schema change: heroImageUrl -> heroImage
 // ❌ Code still uses old name
-segment.heroImageUrl  // TypeScript error: Property 'heroImageUrl' does not exist
+segment.heroImageUrl; // TypeScript error: Property 'heroImageUrl' does not exist
 
 // ✅ Update to new name
-segment.heroImage
+segment.heroImage;
 ```
 
 **Find all references:**
@@ -50,18 +50,20 @@ npm run typecheck  # Shows all property mismatch errors
 ```typescript
 enum BookingStatus {
   PENDING = 'PENDING',
-  DEPOSIT_PAID = 'DEPOSIT_PAID',  // Underscore in enum
+  DEPOSIT_PAID = 'DEPOSIT_PAID', // Underscore in enum
   PAID = 'PAID',
 }
 
 // ❌ String comparison with wrong format
-if (booking.status === 'depositpaid') { }  // Missing underscore
+if (booking.status === 'depositpaid') {
+} // Missing underscore
 
 // ❌ Unsafe type assertion
 const statusKey = booking.status.toLowerCase() as keyof typeof bookingsByStatus;
 
 // ✅ Type-safe comparison
-if (booking.status === BookingStatus.DEPOSIT_PAID) { }
+if (booking.status === BookingStatus.DEPOSIT_PAID) {
+}
 
 // ✅ If you need normalized string, use type guard
 const normalizedStatus = booking.status.toLowerCase().replace('_', '');
@@ -79,12 +81,12 @@ if (normalizedStatus === 'depositpaid' && normalizedStatus in bookingsByStatus) 
 ```typescript
 // ❌ Parameter renamed to _tenantId but code still references tenantId
 async function findBookingsNeedingReminders(_tenantId: string) {
-  logger.debug({ tenantId, count: result.length });  // ❌ tenantId undefined
+  logger.debug({ tenantId, count: result.length }); // ❌ tenantId undefined
 }
 
 // ✅ Reference the parameter with its actual name
 async function findBookingsNeedingReminders(_tenantId: string) {
-  logger.debug({ tenantId: _tenantId, count: result.length });  // ✅
+  logger.debug({ tenantId: _tenantId, count: result.length }); // ✅
 }
 ```
 
@@ -116,17 +118,19 @@ if (normalizedStatus in bookingsByStatus) {
 
 // ✅ OK: With comment explaining why
 // Note: This is a stub object for testing purposes
-const mockService = { /* ... */ } as unknown as AvailabilityService;
+const mockService = {
+  /* ... */
+} as unknown as AvailabilityService;
 ```
 
 ### When Type Assertions Are NOT OK
 
 ```typescript
 // ❌ NO: Direct bypass of type system
-const statusKey = booking.status as keyof typeof bookingsByStatus;  // Unsafe!
+const statusKey = booking.status as keyof typeof bookingsByStatus; // Unsafe!
 
 // ❌ NO: Using `as any`
-const value = something as any;  // Defeats TypeScript
+const value = something as any; // Defeats TypeScript
 
 // ❌ NO: Without explanation
 const service = mockData as AvailabilityService;
@@ -184,7 +188,7 @@ if (!adminEmail || !adminEmail.includes('@')) {
 
 // After seed completes
 const verifyAdmin = await prisma.user.findUnique({
-  where: { email: adminEmail }
+  where: { email: adminEmail },
 });
 
 if (!verifyAdmin) {
@@ -326,13 +330,13 @@ SEED_MODE=all npm exec prisma db seed
 
 ## Files to Know
 
-| File | Purpose | Edit When |
-|------|---------|-----------|
-| `server/prisma/schema.prisma` | Database schema definition | Adding/modifying tables/fields |
-| `server/src/generated/prisma/index.d.ts` | Auto-generated Prisma types | After schema change (auto-generated) |
-| `server/prisma/seeds/platform.ts` | Platform admin seed | Changing admin setup process |
-| `.env.example` | Example environment variables | Adding new env vars to seeds |
-| `server/tsconfig.json` | TypeScript strict mode | Rarely - already configured |
+| File                                     | Purpose                       | Edit When                            |
+| ---------------------------------------- | ----------------------------- | ------------------------------------ |
+| `server/prisma/schema.prisma`            | Database schema definition    | Adding/modifying tables/fields       |
+| `server/src/generated/prisma/index.d.ts` | Auto-generated Prisma types   | After schema change (auto-generated) |
+| `server/prisma/seeds/platform.ts`        | Platform admin seed           | Changing admin setup process         |
+| `.env.example`                           | Example environment variables | Adding new env vars to seeds         |
+| `server/tsconfig.json`                   | TypeScript strict mode        | Rarely - already configured          |
 
 ---
 
@@ -379,11 +383,10 @@ Seed expects ADMIN_EMAIL but it's different?
 
 ## Prevention Summary
 
-| Issue | How to Prevent |
-|-------|---|
-| Property name mismatch | `npm run typecheck` after schema changes |
-| Type comparison errors | Use enums, not string literals |
-| Unused parameters | TypeScript catches with `noUnusedParameters: true` |
-| Seed config drift | Document env vars in seed file + validate in code |
-| Build failures | Run `npm run build` before commit |
-
+| Issue                  | How to Prevent                                     |
+| ---------------------- | -------------------------------------------------- |
+| Property name mismatch | `npm run typecheck` after schema changes           |
+| Type comparison errors | Use enums, not string literals                     |
+| Unused parameters      | TypeScript catches with `noUnusedParameters: true` |
+| Seed config drift      | Document env vars in seed file + validate in code  |
+| Build failures         | Run `npm run build` before commit                  |

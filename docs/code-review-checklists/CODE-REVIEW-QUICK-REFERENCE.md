@@ -115,6 +115,7 @@ Search params used?
 ## Copy-Paste Templates
 
 ### Memoized Navigation Items
+
 ```typescript
 const navItems = useMemo<NavItemWithHref[]>(
   () =>
@@ -127,23 +128,27 @@ const navItems = useMemo<NavItemWithHref[]>(
 ```
 
 ### Memoized Callback
-```typescript
-const handleClick = useCallback((value: string) => {
-  // Logic here
-}, [dependency1, dependency2]);
-```
 
-### SSR Data Deduplication
 ```typescript
-export const getTenantData = cache(
-  async (slug: string): Promise<TenantData> => {
-    const response = await fetch(`/api/tenants/${slug}`);
-    return response.json();
-  }
+const handleClick = useCallback(
+  (value: string) => {
+    // Logic here
+  },
+  [dependency1, dependency2]
 );
 ```
 
+### SSR Data Deduplication
+
+```typescript
+export const getTenantData = cache(async (slug: string): Promise<TenantData> => {
+  const response = await fetch(`/api/tenants/${slug}`);
+  return response.json();
+});
+```
+
 ### Form Cleanup on Unmount
+
 ```typescript
 const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -173,6 +178,7 @@ const handleSubmit = useCallback(async () => {
 ```
 
 ### Error Boundary
+
 ```typescript
 'use client';
 
@@ -196,6 +202,7 @@ export default function Error({ error, reset }: ErrorProps) {
 ```
 
 ### Domain Validation
+
 ```typescript
 const DOMAIN_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]*(\.[a-zA-Z0-9][a-zA-Z0-9-]*)*\.[a-zA-Z]{2,}$/;
 
@@ -223,6 +230,7 @@ export function validateDomain(domain: string | undefined): string {
 ```
 
 ### Active Link Detection with JSDoc
+
 ```typescript
 /**
  * Determines if a navigation link is active based on current pathname.
@@ -252,6 +260,7 @@ const isActiveLink = useCallback(
 ## Decision Trees (30-Second Diagrams)
 
 ### Extract or Keep?
+
 ```
 Is code duplicated in 2+ files?
 ├─ YES
@@ -263,6 +272,7 @@ Is code duplicated in 2+ files?
 ```
 
 ### Add useMemo?
+
 ```
 Is array/object created in render?
 ├─ YES
@@ -274,6 +284,7 @@ Is array/object created in render?
 ```
 
 ### Add useCallback?
+
 ```
 Is function created in render?
 ├─ YES
@@ -285,6 +296,7 @@ Is function created in render?
 ```
 
 ### Add error.tsx?
+
 ```
 Is this a dynamic route?
 ├─ YES (has [param])
@@ -298,30 +310,32 @@ Is this a dynamic route?
 
 ## Red Flags During Review
 
-| Red Flag | Action |
-|----------|--------|
-| Same function in 2 files | Ask: "Can we extract to lib/?" |
-| Array created in render | Check: "Is it memoized?" |
-| Function passed to child | Check: "Is it wrapped with useCallback?" |
-| No error.tsx in dynamic route | Flag: "Add error boundary" |
-| Form with fetch/promise | Check: "Does it use AbortController?" |
-| No aria-current on nav | Flag: "Add accessibility" |
-| Error text in red-500 | Check: "Contrast ratio OK?" |
-| Route param never validated | Flag: "Add validation" |
-| Long parameter in URL | Check: "Is it length-validated?" |
-| Multiple SSR calls possible | Check: "Is it wrapped with cache()?" |
+| Red Flag                      | Action                                   |
+| ----------------------------- | ---------------------------------------- |
+| Same function in 2 files      | Ask: "Can we extract to lib/?"           |
+| Array created in render       | Check: "Is it memoized?"                 |
+| Function passed to child      | Check: "Is it wrapped with useCallback?" |
+| No error.tsx in dynamic route | Flag: "Add error boundary"               |
+| Form with fetch/promise       | Check: "Does it use AbortController?"    |
+| No aria-current on nav        | Flag: "Add accessibility"                |
+| Error text in red-500         | Check: "Contrast ratio OK?"              |
+| Route param never validated   | Flag: "Add validation"                   |
+| Long parameter in URL         | Check: "Is it length-validated?"         |
+| Multiple SSR calls possible   | Check: "Is it wrapped with cache()?"     |
 
 ---
 
 ## Common Issues (Sorted by Severity)
 
 ### P1 - Security/Accessibility
+
 - [ ] Duplicate id attributes (WCAG violation)
 - [ ] Nested `<main>` elements (invalid HTML)
 - [ ] Unvalidated route parameters
 - [ ] Missing error boundaries on dynamic routes
 
 ### P2 - Performance/UX
+
 - [ ] Code duplication across files
 - [ ] Missing cache() in SSR functions
 - [ ] Array recreation without useMemo
@@ -329,6 +343,7 @@ Is this a dynamic route?
 - [ ] Missing aria-current on nav
 
 ### P3 - Polish/Maintainability
+
 - [ ] Missing JSDoc comments
 - [ ] Color contrast warning (just below AA)
 - [ ] Unused component props

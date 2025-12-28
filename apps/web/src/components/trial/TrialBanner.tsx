@@ -23,10 +23,7 @@ export function TrialBanner({ daysRemaining, status }: TrialBannerProps) {
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <span>Your trial has ended. Subscribe to continue using all features.</span>
-          <Link
-            href="/tenant/billing"
-            className="ml-4 font-medium underline hover:no-underline"
-          >
+          <Link href="/tenant/billing" className="ml-4 font-medium underline hover:no-underline">
             Subscribe now
           </Link>
         </AlertDescription>
@@ -40,9 +37,7 @@ export function TrialBanner({ daysRemaining, status }: TrialBannerProps) {
   return (
     <Alert
       className={`mb-6 ${
-        urgency
-          ? 'border-amber-500/50 bg-amber-50'
-          : 'border-sage/30 bg-sage/10'
+        urgency ? 'border-amber-500/50 bg-amber-50' : 'border-sage/30 bg-sage/10'
       }`}
     >
       <Clock className={`h-4 w-4 ${urgency ? 'text-amber-600' : 'text-sage'}`} />

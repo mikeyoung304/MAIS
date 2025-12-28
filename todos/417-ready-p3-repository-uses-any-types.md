@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "417"
+issue_id: '417'
 tags:
   - code-review
   - typescript
@@ -17,6 +17,7 @@ dependencies: []
 The tenant repository uses `any` for landing page config parameters and returns, losing type safety at the data layer.
 
 **Why This Matters:**
+
 - Invalid configs could be stored without validation
 - Type errors won't be caught at compile time
 - Violates TypeScript strict mode principles
@@ -26,6 +27,7 @@ The tenant repository uses `any` for landing page config parameters and returns,
 **Location:** `server/src/adapters/prisma/tenant.repository.ts`
 
 **Evidence:**
+
 ```typescript
 // Line 495
 async getLandingPageConfig(tenantId: string): Promise<any | null>
@@ -58,10 +60,12 @@ async updateLandingPageConfig(
 ```
 
 **Pros:**
+
 - Runtime validation
 - Type safety restored
 
 **Cons:**
+
 - Additional runtime overhead
 
 **Effort:** Small
@@ -72,9 +76,11 @@ async updateLandingPageConfig(
 Keep `any` at Prisma level but add types at interface.
 
 **Pros:**
+
 - Less runtime overhead
 
 **Cons:**
+
 - No runtime validation
 
 **Effort:** Small
@@ -83,6 +89,7 @@ Keep `any` at Prisma level but add types at interface.
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/adapters/prisma/tenant.repository.ts`
 
 ## Acceptance Criteria
@@ -93,6 +100,6 @@ Keep `any` at Prisma level but add types at interface.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                           |
+| ---------- | ------------------------ | ----------------------------------- |
 | 2025-12-25 | Created from code review | Type safety gap at repository layer |

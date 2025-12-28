@@ -139,12 +139,12 @@ Data updates frequently?
 
 ### Which ISR Setting
 
-| Page | Revalidate |
-|------|-----------|
-| Landing page | 3600s (1h) |
-| Package detail | 300s (5m) |
-| Availability | 60s |
-| Admin | 0 (disabled) |
+| Page           | Revalidate   |
+| -------------- | ------------ |
+| Landing page   | 3600s (1h)   |
+| Package detail | 300s (5m)    |
+| Availability   | 60s          |
+| Admin          | 0 (disabled) |
 
 ### API Mismatch Diagnosis
 
@@ -160,14 +160,14 @@ Getting 404 on API call?
 
 ## Common Mistakes
 
-| Mistake | Solution |
-|---------|----------|
-| Manual fetch instead of ts-rest | Use `await api.getPackageBySlug()` |
-| Missing X-Tenant-Key header | Add `headers: { 'X-Tenant-Key': apiKey }` |
-| Path `/v1/packages/slug/:slug` | Change to `/v1/packages/:slug}` |
-| Query param as path param | Use `?startDate=` not `/startDate/` |
-| ISR not revalidating | Wait 60+ seconds or use `revalidatePath()` |
-| Cache still stale after reload | Clear `.next` folder and restart dev server |
+| Mistake                         | Solution                                    |
+| ------------------------------- | ------------------------------------------- |
+| Manual fetch instead of ts-rest | Use `await api.getPackageBySlug()`          |
+| Missing X-Tenant-Key header     | Add `headers: { 'X-Tenant-Key': apiKey }`   |
+| Path `/v1/packages/slug/:slug`  | Change to `/v1/packages/:slug}`             |
+| Query param as path param       | Use `?startDate=` not `/startDate/`         |
+| ISR not revalidating            | Wait 60+ seconds or use `revalidatePath()`  |
+| Cache still stale after reload  | Clear `.next` folder and restart dev server |
 
 ---
 
@@ -198,4 +198,3 @@ NODE_DEBUG=nextjs npm run dev:web
 - **Contracts:** `packages/contracts/src/api.v1.ts`
 - **Tenant Lib:** `apps/web/src/lib/tenant.ts`
 - **API Client:** `apps/web/src/lib/api.ts`
-

@@ -49,25 +49,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!expectedSecret) {
     logger.error('NEXTJS_REVALIDATE_SECRET not configured');
-    return NextResponse.json(
-      { error: 'Revalidation not configured' },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: 'Revalidation not configured' }, { status: 503 });
   }
 
   if (!secret || secret !== expectedSecret) {
-    return NextResponse.json(
-      { error: 'Invalid revalidation secret' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Invalid revalidation secret' }, { status: 401 });
   }
 
   // Validate path
   if (!path) {
-    return NextResponse.json(
-      { error: 'Missing path parameter' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Missing path parameter' }, { status: 400 });
   }
 
   // Only allow revalidation of tenant paths

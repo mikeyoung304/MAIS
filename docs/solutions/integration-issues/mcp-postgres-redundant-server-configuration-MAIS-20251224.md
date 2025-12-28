@@ -8,9 +8,9 @@ status: resolved
 date_created: 2025-12-24
 date_resolved: 2025-12-24
 symptoms:
-  - "Claude Code startup warning: [postgres] mcpServers.postgres: Missing environment variables: DATABASE_URL"
-  - "/doctor shows MCP Config Diagnostics warning"
-  - "Settings marked as valid but warning persists"
+  - 'Claude Code startup warning: [postgres] mcpServers.postgres: Missing environment variables: DATABASE_URL'
+  - '/doctor shows MCP Config Diagnostics warning'
+  - 'Settings marked as valid but warning persists'
 root_cause: Unused MCP server configured with environment variable that MCP cannot resolve from .env files
 tags:
   - mcp
@@ -31,6 +31,7 @@ related_docs:
 ## Executive Summary
 
 Claude Code displayed a warning about missing `DATABASE_URL` for the postgres MCP server. Investigation revealed the postgres MCP server was:
+
 1. Never functional (no permissions granted in settings)
 2. Redundant with Prisma MCP (which handles all database operations)
 3. Causing warnings because MCP servers don't read `.env` files
@@ -54,6 +55,7 @@ Location: /Users/mikeyoung/CODING/MAIS/.mcp.json
 ### Initial Misdiagnosis
 
 First investigation focused on `~/.claude/settings.local.json` permission patterns:
+
 - Found spaces in patterns: `Bash(npm :*)` instead of `Bash(npm:*)`
 - Fixed permission patterns and deleted deprecated `config.json`
 - Warning persisted after restart
@@ -73,7 +75,7 @@ The `.mcp.json` file contained a postgres MCP server that was never used:
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres"],
       "env": {
-        "DATABASE_URL": "${DATABASE_URL}"  // Cannot resolve from .env
+        "DATABASE_URL": "${DATABASE_URL}" // Cannot resolve from .env
       }
     },
     "playwright": {
@@ -104,12 +106,12 @@ Claude Code v2.0.76 improved MCP diagnostics to warn about missing environment v
 
 Launched 4 parallel investigation agents to verify:
 
-| Agent | Finding |
-|-------|---------|
-| Git History | postgres MCP added Nov 24, 2025 during early setup |
-| Database Workflow | All DB operations use Prisma via Bash commands |
-| MCP Server Analysis | **Zero permissions** granted for postgres MCP |
-| DATABASE_URL Flow | Flows through Prisma, not MCP |
+| Agent               | Finding                                            |
+| ------------------- | -------------------------------------------------- |
+| Git History         | postgres MCP added Nov 24, 2025 during early setup |
+| Database Workflow   | All DB operations use Prisma via Bash commands     |
+| MCP Server Analysis | **Zero permissions** granted for postgres MCP      |
+| DATABASE_URL Flow   | Flows through Prisma, not MCP                      |
 
 **Conclusion:** The postgres MCP server was added speculatively but never configured for actual use.
 
@@ -211,14 +213,14 @@ Prisma MCP automatically reads from the project's `.env` file. No additional con
 
 ## Comparison: Prisma MCP vs Postgres MCP
 
-| Capability | Prisma MCP | Postgres MCP |
-|-----------|-----------|-------------|
-| Schema inspection | Yes | Yes |
-| Migration status | Yes | No |
-| Visual data browser | Yes (prisma-studio) | No |
-| Raw SQL execution | No | Yes (read-only) |
-| Reads .env automatically | Yes | No |
-| Multi-tenant aware | Yes (via ORM) | No |
+| Capability               | Prisma MCP          | Postgres MCP    |
+| ------------------------ | ------------------- | --------------- |
+| Schema inspection        | Yes                 | Yes             |
+| Migration status         | Yes                 | No              |
+| Visual data browser      | Yes (prisma-studio) | No              |
+| Raw SQL execution        | No                  | Yes (read-only) |
+| Reads .env automatically | Yes                 | No              |
+| Multi-tenant aware       | Yes (via ORM)       | No              |
 
 For MAIS, Prisma MCP is the correct choice because all database operations go through Prisma ORM with tenant isolation.
 

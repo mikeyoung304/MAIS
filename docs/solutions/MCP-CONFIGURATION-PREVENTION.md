@@ -126,13 +126,13 @@ Before creating a pull request to add an MCP server:
 
 This table shows the THREE ways MCP servers access environment variables:
 
-| MCP Server | Primary Source | Fallback | Notes |
-|-----------|---|---|---|
-| **Prisma** | Project auto-discovery | N/A | Reads `prisma/schema.prisma` automatically |
-| **Playwright** | Shell exports | Claude Code settings | User provides browser config |
-| **Postgres** | Shell exports | `.mcp.json` env config | DATABASE_URL must be in shell |
-| **File** | Project path | N/A | File system access, no env vars |
-| **GitHub** | Shell export | Claude Code secrets | GH_TOKEN from environment |
+| MCP Server     | Primary Source         | Fallback               | Notes                                      |
+| -------------- | ---------------------- | ---------------------- | ------------------------------------------ |
+| **Prisma**     | Project auto-discovery | N/A                    | Reads `prisma/schema.prisma` automatically |
+| **Playwright** | Shell exports          | Claude Code settings   | User provides browser config               |
+| **Postgres**   | Shell exports          | `.mcp.json` env config | DATABASE_URL must be in shell              |
+| **File**       | Project path           | N/A                    | File system access, no env vars            |
+| **GitHub**     | Shell export           | Claude Code secrets    | GH_TOKEN from environment                  |
 
 ### Critical Rule: .env Files Don't Work
 
@@ -162,6 +162,7 @@ export DATABASE_URL="..."  # In shell or .zshrc/.bashrc
 **What it does:** Provides Prisma schema introspection and migration support
 
 **Environment:** Reads project config automatically
+
 - No configuration needed
 - No environment variables required
 - Works on any project with `prisma/schema.prisma`
@@ -249,18 +250,18 @@ MCP servers require explicit permission grant in Claude Code settings. Without t
 
 ### Decision Log
 
-| Server | Added | Reason | Status |
-|--------|-------|--------|--------|
-| **prisma** | Phase 1 | Schema introspection, migration support | ✅ Active |
+| Server         | Added   | Reason                                     | Status    |
+| -------------- | ------- | ------------------------------------------ | --------- |
+| **prisma**     | Phase 1 | Schema introspection, migration support    | ✅ Active |
 | **playwright** | Phase 2 | E2E test automation (Playwright E2E tests) | ✅ Active |
 
 ### Environment Variable Configuration
 
-| Variable | Source | Used By | Notes |
-|----------|--------|---------|-------|
-| DATABASE_URL | Shell export | Postgres client (if added) | Not needed for Prisma MCP |
-| NODE_ENV | Shell export | Process detection | Optional |
-| PLAYWRIGHT_* | Optional | Playwright MCP | Browser-specific config |
+| Variable       | Source       | Used By                    | Notes                     |
+| -------------- | ------------ | -------------------------- | ------------------------- |
+| DATABASE_URL   | Shell export | Postgres client (if added) | Not needed for Prisma MCP |
+| NODE_ENV       | Shell export | Process detection          | Optional                  |
+| PLAYWRIGHT\_\* | Optional     | Playwright MCP             | Browser-specific config   |
 
 ---
 
@@ -384,7 +385,7 @@ Question: Should we add Postgres MCP?
 
 **In DEVELOPING.md:**
 
-```markdown
+````markdown
 ### Postgres MCP (Optional)
 
 For direct database queries via Claude Code:
@@ -393,11 +394,13 @@ For direct database queries via Claude Code:
    ```bash
    export DATABASE_URL="postgresql://..."
    ```
+````
 
 2. Grant permission in Claude Code → Settings → MCP Servers → postgres
 
 3. Test: Run `@postgres <query>` in Claude Code
-```
+
+````
 
 ### Step 4: Grant Permission Manually
 
@@ -434,11 +437,12 @@ and debug queries without leaving Claude Code.
 - [x] Environment variables documented
 - [x] Permission process documented
 - [x] DEVELOPING.md updated
-```
+````
 
 ### Step 6: Code Review
 
 Reviewer checks:
+
 - [ ] Use case is real need (not nice-to-have)
 - [ ] DEVELOPING.md clearly documents DATABASE_URL setup
 - [ ] No startup slowdown reported
@@ -452,6 +456,7 @@ Reviewer checks:
 Postgres MCP is now available! This allows direct database queries.
 
 Setup:
+
 1. Pull latest code
 2. Export DATABASE_URL: `export DATABASE_URL="..."`
 3. Grant permission in Claude Code → Settings → MCP Servers
@@ -468,6 +473,7 @@ See DEVELOPING.md for details.
 
 ```markdown
 Pre-Addition
+
 - [ ] Use case documented in PR description
 - [ ] No overlap with existing servers
 - [ ] All environment variables identified
@@ -475,24 +481,28 @@ Pre-Addition
 - [ ] Startup impact assessed
 
 Implementation
+
 - [ ] Added to .mcp.json with correct command/args
 - [ ] DEVELOPING.md updated with setup instructions
 - [ ] CLAUDE.md updated with new server info
 - [ ] Environment variable documentation clear
 
 Testing & Permissions
+
 - [ ] Tested MCP server locally before PR
 - [ ] Verified startup time (< 2s overhead)
 - [ ] Manually granted permissions in Claude Code
 - [ ] Confirmed permission grant removed warnings
 
 Documentation
+
 - [ ] PR has clear use case description
 - [ ] PR documents env var setup for teammates
 - [ ] PR links to any relevant docs updates
 - [ ] Team announcement ready (if merged)
 
 Code Review
+
 - [ ] Reviewer checked use case is real
 - [ ] Reviewer verified env setup is clear
 - [ ] Reviewer approved CLAUDE.md changes
@@ -526,16 +536,19 @@ git diff main...HEAD -- DEVELOPING.md CLAUDE.md
 ### Mistake 1: Adding MCP Server Without Permissions
 
 **What happens:**
+
 - Server in .mcp.json but startup shows warning
 - Developers confused why it's not working
 - Memory wasted on dead configuration
 
 **Prevention:**
+
 - Always grant permission AFTER adding to .mcp.json
 - Test with `claude --help` (no warnings)
 - Document permission grant process in PR
 
 **Fix:**
+
 ```bash
 # If you see warnings after adding to .mcp.json:
 1. Open Claude Code → Settings → MCP Servers
@@ -548,33 +561,39 @@ git diff main...HEAD -- DEVELOPING.md CLAUDE.md
 ### Mistake 2: Adding MCP Server That Overlaps Existing One
 
 **What happens:**
+
 - Two servers do same thing
 - Memory overhead for unused capability
 - Confusion about which to use
 
 **Prevention:**
+
 - Always search existing MCP servers first
 - Document why new server is needed (different capability)
 - Code reviewer should flag overlaps
 
 **Example:** Don't add Postgres MCP AND Prisma MCP for schema queries
+
 - Prisma MCP handles schema introspection
 - Add Postgres MCP only for direct SQL queries (different capability)
 
 ### Mistake 3: Required Environment Variables Not Exported
 
 **What happens:**
+
 - New developer clones repo
 - Gets error when trying to use MCP server
 - Unclear how to fix
 
 **Prevention:**
+
 - Document in DEVELOPING.md where env vars come from
 - Add setup instructions for each server
 - Create issue if env var setup is unclear
 
 **Example Documentation:**
-```markdown
+
+````markdown
 ### Setting Up Postgres MCP
 
 1. Get database URL from Supabase dashboard
@@ -582,9 +601,12 @@ git diff main...HEAD -- DEVELOPING.md CLAUDE.md
    ```bash
    export DATABASE_URL="postgresql://..."
    ```
+````
+
 3. Grant permission in Claude Code settings
 4. Test: `@postgres SELECT 1`
-```
+
+````
 
 ### Mistake 4: Adding MCP Server for "Nice-to-Have" Feature
 
@@ -615,7 +637,7 @@ done
 
 # Any startup warnings?
 claude --help 2>&1 | grep -i warning
-```
+````
 
 ### Monthly Review (First Friday)
 
@@ -627,6 +649,7 @@ claude --help 2>&1 | grep -i warning
 ### Decision to Remove MCP Server
 
 Consider removal if:
+
 - Not used by team in past month
 - Causes startup slowdown (> 1s overhead)
 - Causes memory issues
@@ -634,6 +657,7 @@ Consider removal if:
 - Environment setup is too complex
 
 **Process:**
+
 1. Create issue proposing removal
 2. Request feedback from team (48 hours)
 3. If no objections, create PR removing server
@@ -649,34 +673,43 @@ Use this template when adding a new MCP server:
 # MCP Server: [Name]
 
 ## Use Case
+
 [What problem does this solve? Why do developers need it?]
 
 ## Environment Setup
+
 [How do developers get environment variables?]
 
 ### For Local Development
+
 1. [Step 1]
 2. [Step 2]
 3. Test: [Command to verify it works]
 
 ### For CI/CD
+
 [If applicable, how is this configured for automated runs?]
 
 ## Permissions
+
 Grant permission in Claude Code → Settings → MCP Servers → [Server Name]
 
 ## Usage
+
 [How do developers use this? Examples?]
 
 ## Troubleshooting
+
 - **Error: "MCP not found"** → Grant permission in settings
 - **Error: "Env var not set"** → Export [VAR_NAME] in shell
 - **Slow startup** → This is normal on first run (caches dependencies)
 
 ## Alternatives
+
 [If developer doesn't want to use this, what are alternatives?]
 
 ## Decision Record
+
 - **Added:** [Date]
 - **Frequency of Use:** [Daily/Weekly/Monthly]
 - **Startup Impact:** [Time in ms]
@@ -691,20 +724,20 @@ Grant permission in Claude Code → Settings → MCP Servers → [Server Name]
 
 Add to main CLAUDE.md:
 
-```markdown
+````markdown
 ## MCP Servers Configuration
 
 MAIS uses MCP (Model Context Protocol) servers to extend Claude Code capabilities.
 
 ### Available Servers
 
-| Server | Use Case | Setup | Permissions |
-|--------|----------|-------|-------------|
-| prisma | Schema introspection, migrations | Automatic | Auto-granted |
-| playwright | E2E test automation | Automatic | Manual grant |
-| postgres* | Direct SQL queries | Export DATABASE_URL | Manual grant |
+| Server     | Use Case                         | Setup               | Permissions  |
+| ---------- | -------------------------------- | ------------------- | ------------ |
+| prisma     | Schema introspection, migrations | Automatic           | Auto-granted |
+| playwright | E2E test automation              | Automatic           | Manual grant |
+| postgres\* | Direct SQL queries               | Export DATABASE_URL | Manual grant |
 
-*Not currently enabled. See [MCP Configuration Prevention](./docs/solutions/MCP-CONFIGURATION-PREVENTION.md)
+\*Not currently enabled. See [MCP Configuration Prevention](./docs/solutions/MCP-CONFIGURATION-PREVENTION.md)
 
 ### Permission Grant Process
 
@@ -726,8 +759,10 @@ MCP servers **do not read .env files**. Environment variables must be:
    export DATABASE_URL="postgresql://..."
    claude  # Now sees DATABASE_URL
    ```
+````
 
 2. **In .mcp.json config:**
+
    ```json
    {
      "mcpServers": {
@@ -745,10 +780,12 @@ See each server's documentation for setup details.
 ### Adding New MCP Servers
 
 See [MCP Configuration Prevention Strategy](./docs/solutions/MCP-CONFIGURATION-PREVENTION.md) for:
+
 - Decision framework
 - Pre-addition checklist
 - Permission grant process
 - Code review guidelines
+
 ```
 
 ---
@@ -772,3 +809,4 @@ See [MCP Configuration Prevention Strategy](./docs/solutions/MCP-CONFIGURATION-P
 **Last Updated:** 2025-12-24
 **Maintainer:** Architecture Team
 **Next Review:** 2025-01-24
+```

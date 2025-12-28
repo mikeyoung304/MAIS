@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p2
-issue_id: "422"
+issue_id: '422'
 tags: [code-review, ci-cd, eslint, tech-debt]
 dependencies: []
-completed_at: "2025-12-26"
+completed_at: '2025-12-26'
 ---
 
 # Add Lint Regression Detection to CI
@@ -57,11 +57,13 @@ Current state: 305 lint problems (251 errors, 54 warnings) - down from 612.
 ```
 
 **Pros:**
+
 - Prevents regression while allowing existing errors
 - Clear baseline to track progress
 - Can be updated as errors are fixed
 
 **Cons:**
+
 - Requires maintaining baseline number
 
 **Effort:** 1 hour
@@ -75,10 +77,12 @@ Current state: 305 lint problems (251 errors, 54 warnings) - down from 612.
 **Approach:** Dedicate time to fix remaining 305 errors.
 
 **Pros:**
+
 - Clean slate
 - True quality gate
 
 **Cons:**
+
 - Large effort
 - May take multiple sprints
 
@@ -91,6 +95,7 @@ Current state: 305 lint problems (251 errors, 54 warnings) - down from 612.
 **APPROVED: Option 1 - Add delta check**
 
 Add lint regression detection to CI:
+
 1. Capture error count from lint output
 2. Compare against baseline (305)
 3. Fail if count increases
@@ -102,6 +107,7 @@ This prevents NEW errors while allowing existing tech debt to be fixed increment
 ## Technical Details
 
 **Affected files:**
+
 - `.github/workflows/main-pipeline.yml` - add delta check step
 
 ## Acceptance Criteria
@@ -117,6 +123,7 @@ This prevents NEW errors while allowing existing tech debt to be fixed increment
 **By:** Claude Code (DevOps Harmony Analyst)
 
 **Actions:**
+
 - Identified continue-on-error pattern during commit 21a9b3a review
 - Proposed delta check solution
 

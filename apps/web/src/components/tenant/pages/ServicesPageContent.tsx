@@ -40,9 +40,7 @@ function PackageCard({ pkg, tenant, bookHref }: PackageCardProps) {
       ) : (
         <div className="relative aspect-[16/9] bg-gradient-to-br from-sage/20 to-sage/5">
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-serif text-4xl text-sage/30">
-              {pkg.title.charAt(0)}
-            </span>
+            <span className="font-serif text-4xl text-sage/30">{pkg.title.charAt(0)}</span>
           </div>
         </div>
       )}
@@ -50,9 +48,7 @@ function PackageCard({ pkg, tenant, bookHref }: PackageCardProps) {
       {/* Package details */}
       <div className="flex flex-1 flex-col p-6">
         <h3 className="text-lg font-semibold text-text-primary">{tierLabel}</h3>
-        <p className="mt-2 text-3xl font-bold text-text-primary">
-          {formatPrice(pkg.priceCents)}
-        </p>
+        <p className="mt-2 text-3xl font-bold text-text-primary">{formatPrice(pkg.priceCents)}</p>
 
         {pkg.description && (
           <p className="mt-4 text-sm text-text-muted flex-1">{pkg.description}</p>
@@ -100,12 +96,15 @@ export function ServicesPageContent({ data, basePath, domainParam }: ServicesPag
 
   // Group packages by segment
   // Only use grouped view if segments exist AND packages have matching segmentIds
-  const groupedPackages = segments.length > 0
-    ? segments.map((segment) => ({
-        segment,
-        packages: activePackages.filter((p) => p.segmentId === segment.id),
-      })).filter((group) => group.packages.length > 0)
-    : [];
+  const groupedPackages =
+    segments.length > 0
+      ? segments
+          .map((segment) => ({
+            segment,
+            packages: activePackages.filter((p) => p.segmentId === segment.id),
+          }))
+          .filter((group) => group.packages.length > 0)
+      : [];
 
   // Fall back to flat list if no packages match any segment
   const packagesBySegment = groupedPackages.length > 0 ? groupedPackages : null;

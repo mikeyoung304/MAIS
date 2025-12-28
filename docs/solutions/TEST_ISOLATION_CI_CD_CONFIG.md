@@ -9,9 +9,11 @@ This guide provides CI/CD configuration patterns that prevent test isolation iss
 ## Pattern 1: Test Execution Order
 
 ### Problem
+
 Running all test types together causes connection conflicts. Different test types have different requirements.
 
 ### Solution
+
 Separate tests into distinct jobs with explicit dependencies:
 
 ```
@@ -127,6 +129,7 @@ jobs:
 ```
 
 **Why this matters:**
+
 - Each job runs independently (fresh environment)
 - No connection pool conflicts between jobs
 - Clear visibility into what failed and why
@@ -138,9 +141,11 @@ jobs:
 ## Pattern 2: Database Service Configuration
 
 ### Problem
+
 Tests start before database is ready, causing "connection refused" errors.
 
 ### Solution
+
 Use health checks to ensure database readiness:
 
 ```yaml
@@ -162,6 +167,7 @@ services:
 ```
 
 **Health check details:**
+
 - `--health-cmd pg_isready` - Checks if PostgreSQL accepts connections
 - `--health-interval 10s` - Check every 10 seconds
 - `--health-timeout 5s` - Allow 5 seconds for check to complete
@@ -174,9 +180,11 @@ GitHub Actions automatically waits for health checks to pass before running step
 ## Pattern 3: Database Migrations Before Tests
 
 ### Problem
+
 Tests fail with "table doesn't exist" if migrations haven't run.
 
 ### Solution
+
 Always apply migrations as separate step before tests:
 
 ```yaml
@@ -207,6 +215,7 @@ Always apply migrations as separate step before tests:
 ```
 
 **Why separate migrations:**
+
 - Clear visibility into migration success/failure
 - Tests only run after DB is fully initialized
 - Can debug migration issues independently
@@ -216,9 +225,11 @@ Always apply migrations as separate step before tests:
 ## Pattern 4: Connection Pool Configuration
 
 ### Problem
+
 Default connection limits cause exhaustion with parallel test workers.
 
 ### Solution
+
 Apply connection pool limits to all database URLs:
 
 ```yaml
@@ -231,10 +242,10 @@ DATABASE_URL: postgresql://user:pass@host:5432/db
 
 **Parameter guidance:**
 
-| Parameter | Value | Why |
-|-----------|-------|-----|
-| `connection_limit` | 10 | Low enough to prevent exhaustion with 10 test files |
-| `pool_timeout` | 20 | High enough for sequential cleanup |
+| Parameter          | Value | Why                                                 |
+| ------------------ | ----- | --------------------------------------------------- |
+| `connection_limit` | 10    | Low enough to prevent exhaustion with 10 test files |
+| `pool_timeout`     | 20    | High enough for sequential cleanup                  |
 
 **Environment-specific settings:**
 
@@ -258,9 +269,11 @@ DATABASE_URL_TEST: postgresql://localhost:5432/db?connection_limit=10&pool_timeo
 ## Pattern 5: Environment Variable Secrets
 
 ### Problem
+
 Hardcoding secrets in workflow files exposes them in git history.
 
 ### Solution
+
 Use GitHub Secrets for all sensitive values:
 
 ```yaml
@@ -274,6 +287,7 @@ Use GitHub Secrets for all sensitive values:
 ```
 
 **Setup steps:**
+
 1. Go to GitHub repo → Settings → Secrets and variables → Actions
 2. Click "New repository secret"
 3. Add each secret (get values from `.env`)
@@ -294,15 +308,17 @@ env:
 ## Pattern 6: Artifact Collection for Debugging
 
 ### Problem
+
 When tests fail, there's no information to debug the issue.
 
 ### Solution
+
 Collect test artifacts on failure:
 
 ```yaml
 # Collect coverage reports
 - name: Upload integration test coverage
-  if: always()  # Run even if tests fail
+  if: always() # Run even if tests fail
   uses: actions/upload-artifact@v4
   with:
     name: integration-test-coverage-${{ github.run_id }}
@@ -311,7 +327,7 @@ Collect test artifacts on failure:
 
 # Collect Playwright reports
 - name: Upload Playwright report on failure
-  if: failure()  # Only if tests fail
+  if: failure() # Only if tests fail
   uses: actions/upload-artifact@v4
   with:
     name: playwright-report-${{ github.run_id }}
@@ -329,6 +345,7 @@ Collect test artifacts on failure:
 ```
 
 **Artifact retrieval:**
+
 1. Go to GitHub workflow run
 2. Scroll to "Artifacts" section
 3. Download coverage, reports, or test results
@@ -339,9 +356,11 @@ Collect test artifacts on failure:
 ## Pattern 7: Conditional Job Execution
 
 ### Problem
+
 Running all jobs on all branches wastes CI resources (e.g., security scans on every branch).
 
 ### Solution
+
 Use conditionals for expensive jobs:
 
 ```yaml
@@ -349,7 +368,7 @@ Use conditionals for expensive jobs:
 security-audit:
   name: Security Audit
   runs-on: ubuntu-latest
-  if: github.event_name == 'pull_request'  # PR-only
+  if: github.event_name == 'pull_request' # PR-only
 
   steps:
     - name: Run npm audit
@@ -359,7 +378,7 @@ security-audit:
 migration-validation:
   name: Database Migration Validation
   runs-on: ubuntu-latest
-  if: github.event_name == 'pull_request'  # PR-only
+  if: github.event_name == 'pull_request' # PR-only
 
   steps:
     - name: Validate migrations
@@ -367,6 +386,7 @@ migration-validation:
 ```
 
 **Common conditions:**
+
 ```yaml
 if: github.event_name == 'pull_request'      # PR-only
 if: github.ref == 'refs/heads/main'          # Main branch only
@@ -382,9 +402,11 @@ if: success()                                 # Only if previous step succeeded
 ## Pattern 8: PR Comments for Visibility
 
 ### Problem
+
 Developers don't get feedback until they check the Actions tab.
 
 ### Solution
+
 Post comments on PR with test results:
 
 ```yaml
@@ -420,9 +442,11 @@ Post comments on PR with test results:
 ## Pattern 9: Timeout Configuration
 
 ### Problem
+
 Slow tests cause timeouts, stopping pipeline prematurely.
 
 ### Solution
+
 Set appropriate timeouts per job:
 
 ```yaml
@@ -430,30 +454,31 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10    # 10 min (typically 1-2 min)
+    timeout-minutes: 10 # 10 min (typically 1-2 min)
 
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15    # 15 min (typically 5-10 min)
+    timeout-minutes: 15 # 15 min (typically 5-10 min)
 
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20    # 20 min (typically 10-15 min)
+    timeout-minutes: 20 # 20 min (typically 10-15 min)
 
   pipeline-complete:
     name: Pipeline Complete
     runs-on: ubuntu-latest
-    timeout-minutes: 5     # Quick summary job
+    timeout-minutes: 5 # Quick summary job
 
 steps:
   - name: Long-running step
     run: npm run long-build
-    timeout-minutes: 5     # Step-level timeout
+    timeout-minutes: 5 # Step-level timeout
 ```
 
 **Timeout recommendations:**
+
 - Unit tests: 5-10 minutes (typically < 2 min)
 - Integration tests: 10-20 minutes (typically 5-10 min)
 - E2E tests: 15-30 minutes (typically 10-20 min)
@@ -464,9 +489,11 @@ steps:
 ## Pattern 10: Concurrency Control
 
 ### Problem
+
 Multiple runs of same workflow (e.g., multiple PRs) waste CI resources and cause noise.
 
 ### Solution
+
 Use concurrency to cancel in-progress runs:
 
 ```yaml
@@ -485,6 +512,7 @@ concurrency:
 ```
 
 **How it works:**
+
 1. Push commit to branch
 2. Workflow 1 starts (unit tests)
 3. Push another commit to same branch
@@ -498,6 +526,7 @@ concurrency:
 See actual implementation in `.github/workflows/main-pipeline.yml`:
 
 Key highlights:
+
 - 9 distinct jobs with clear dependencies
 - PostgreSQL service container with health checks
 - Connection limits on all database URLs: `connection_limit=10&pool_timeout=20`
@@ -542,12 +571,14 @@ Test in CI:
 ### Connection Pool Exhaustion in CI
 
 **Symptom:**
+
 ```
 Error: Too many database connections opened
 FATAL: remaining connection slots reserved for roles with the SUPERUSER attribute
 ```
 
 **Fix:**
+
 1. Check DATABASE_URL includes `?connection_limit=10&pool_timeout=20`
 2. Ensure integration tests don't run in parallel with unit tests
 3. Verify all test files use `setupCompleteIntegrationTest()`
@@ -555,11 +586,13 @@ FATAL: remaining connection slots reserved for roles with the SUPERUSER attribut
 ### Timeout in Integration Tests
 
 **Symptom:**
+
 ```
 Error: The operation timed out
 ```
 
 **Fix:**
+
 1. Increase `timeout-minutes` (current: 15, try: 20)
 2. Reduce number of parallel test workers
 3. Check for long-running database queries (add indexes?)
@@ -567,12 +600,14 @@ Error: The operation timed out
 ### Migration Failures
 
 **Symptom:**
+
 ```
 Error: Foreign key violation
 Error: Table doesn't exist
 ```
 
 **Fix:**
+
 1. Check migrations are in correct order
 2. Verify manual SQL migrations are applied
 3. Check for schema drift between code and database
@@ -580,12 +615,14 @@ Error: Table doesn't exist
 ### Flaky Tests
 
 **Symptom:**
+
 ```
 Test passes in local run, fails in CI
 Or fails intermittently in CI runs
 ```
 
 **Fix:**
+
 1. Check DATABASE_URL_TEST has connection limits
 2. Ensure cleanup is complete (afterEach calls ctx.cleanup())
 3. Use `.sequential()` for timing-sensitive tests
@@ -599,4 +636,3 @@ Or fails intermittently in CI runs
 - `.github/workflows/WORKFLOWS_README.md` - GitHub Actions documentation
 - `docs/deployment/CI_CD_QUICK_REFERENCE.md` - Quick reference guide
 - `TEST_ISOLATION_PREVENTION_STRATEGIES.md` - Detailed prevention strategies
-

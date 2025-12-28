@@ -7,12 +7,12 @@
 
 ## What's Done
 
-| Item | Status | Commit |
-|------|--------|--------|
-| Archive 58 redundant docs | Done | f7be6e5 |
-| ESLint no-console rule | Done | dbe0ab8 |
-| ErrorBoundary component | Done | dbe0ab8 |
-| Accessibility tests (axe-core) | Done | dbe0ab8 |
+| Item                           | Status | Commit  |
+| ------------------------------ | ------ | ------- |
+| Archive 58 redundant docs      | Done   | f7be6e5 |
+| ESLint no-console rule         | Done   | dbe0ab8 |
+| ErrorBoundary component        | Done   | dbe0ab8 |
+| Accessibility tests (axe-core) | Done   | dbe0ab8 |
 
 ---
 
@@ -25,29 +25,36 @@
 **Options:**
 
 ### Option A: Run Tests Serially (Quick Fix)
+
 ```bash
 # Add to package.json scripts
 "test:serial": "vitest --pool=forks --poolOptions.forks.singleFork"
 ```
+
 - Pros: Works immediately
 - Cons: Slower CI (~3x longer)
 
 ### Option B: Fix Test Isolation (Proper Fix)
+
 Each test file needs:
+
 ```typescript
 beforeEach(async () => {
   await prisma.$executeRaw`TRUNCATE TABLE "Booking" CASCADE`;
   // Reset relevant tables
 });
 ```
+
 - Pros: Tests can run in parallel
 - Cons: 2-4 hours of work
 
 ### Option C: Separate Test Database Per Worker
+
 ```typescript
 // vitest.config.ts
-globalSetup: './test/setup-parallel-dbs.ts'
+globalSetup: './test/setup-parallel-dbs.ts';
 ```
+
 - Pros: Full isolation
 - Cons: Complex setup, more resources
 
@@ -58,22 +65,28 @@ globalSetup: './test/setup-parallel-dbs.ts'
 ## Priority Actions
 
 ### P0: Unblock CI (Today - 30 min)
+
 1. Add serial test script to package.json
 2. Update CI workflow to use serial tests
 3. Verify all tests pass
 
 ### P1: Stripe Connect E2E (This Week - 4 hrs)
+
 Critical business flow with no test coverage:
+
 - `e2e/tests/stripe-connect.spec.ts`
 - Test onboarding redirect
 - Test dashboard status display
 
 ### P2: Photo Upload E2E (This Week - 2 hrs)
+
 - `e2e/tests/package-photos.spec.ts`
 - Test upload, ordering, deletion
 
 ### P3: Component Tests (Next Week)
+
 Add Vitest component tests for:
+
 - StripeConnectCard.tsx
 - PhotoUploader.tsx
 - BrandingEditor.tsx

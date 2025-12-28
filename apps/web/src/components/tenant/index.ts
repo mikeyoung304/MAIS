@@ -9,9 +9,4 @@ export { SectionRenderer } from './SectionRenderer';
 export * from './sections';
 
 // Page content components
-export {
-  AboutPageContent,
-  ContactPageContent,
-  FAQPageContent,
-  ServicesPageContent,
-} from './pages';
+export { AboutPageContent, ContactPageContent, FAQPageContent, ServicesPageContent } from './pages';

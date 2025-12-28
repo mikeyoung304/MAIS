@@ -12,14 +12,14 @@ The MAIS test suite is **mature and well-structured** with strong multi-tenant i
 
 **Overall Health:** GOOD with areas for improvement
 
-| Category | Status | Priority Issues |
-|----------|--------|-----------------|
-| Test Coverage | ADEQUATE | 6 untested services, 10+ untested routes |
-| Test Quality | GOOD | Minor flaky patterns, strong assertions |
-| Test Organization | EXCELLENT | Well-documented helpers, clear naming |
-| E2E Health | GOOD | Some brittle selectors, good edge cases |
-| Observability | ADEQUATE | Missing distributed tracing, sparse metrics |
-| Error Handling | EXCELLENT | Comprehensive error hierarchy, Sentry integration |
+| Category          | Status    | Priority Issues                                   |
+| ----------------- | --------- | ------------------------------------------------- |
+| Test Coverage     | ADEQUATE  | 6 untested services, 10+ untested routes          |
+| Test Quality      | GOOD      | Minor flaky patterns, strong assertions           |
+| Test Organization | EXCELLENT | Well-documented helpers, clear naming             |
+| E2E Health        | GOOD      | Some brittle selectors, good edge cases           |
+| Observability     | ADEQUATE  | Missing distributed tracing, sparse metrics       |
+| Error Handling    | EXCELLENT | Comprehensive error hierarchy, Sentry integration |
 
 ---
 
@@ -29,16 +29,17 @@ The MAIS test suite is **mature and well-structured** with strong multi-tenant i
 
 These services have business logic without dedicated unit tests:
 
-| Service | File | Risk Level |
-|---------|------|------------|
-| `ReminderService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/reminder.service.ts` | MEDIUM - Only referenced in scheduler.test.ts |
-| `PackageDraftService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/package-draft.service.ts` | HIGH - Visual editor functionality |
-| `TenantOnboardingService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/tenant-onboarding.service.ts` | MEDIUM - Only integration via auth-signup.test.ts |
-| `DomainVerificationService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/domain-verification.service.ts` | HIGH - DNS verification logic |
-| `LandingPageService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/landing-page.service.ts` | MEDIUM - Sanitization & draft logic |
-| `WebhookDeliveryService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/webhook-delivery.service.ts` | HIGH - HMAC signing, delivery logic |
+| Service                     | File                                                                              | Risk Level                                        |
+| --------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `ReminderService`           | `/Users/mikeyoung/CODING/MAIS/server/src/services/reminder.service.ts`            | MEDIUM - Only referenced in scheduler.test.ts     |
+| `PackageDraftService`       | `/Users/mikeyoung/CODING/MAIS/server/src/services/package-draft.service.ts`       | HIGH - Visual editor functionality                |
+| `TenantOnboardingService`   | `/Users/mikeyoung/CODING/MAIS/server/src/services/tenant-onboarding.service.ts`   | MEDIUM - Only integration via auth-signup.test.ts |
+| `DomainVerificationService` | `/Users/mikeyoung/CODING/MAIS/server/src/services/domain-verification.service.ts` | HIGH - DNS verification logic                     |
+| `LandingPageService`        | `/Users/mikeyoung/CODING/MAIS/server/src/services/landing-page.service.ts`        | MEDIUM - Sanitization & draft logic               |
+| `WebhookDeliveryService`    | `/Users/mikeyoung/CODING/MAIS/server/src/services/webhook-delivery.service.ts`    | HIGH - HMAC signing, delivery logic               |
 
 **Recommendation:** Create dedicated test files for:
+
 - `package-draft.service.spec.ts`
 - `domain-verification.service.spec.ts`
 - `webhook-delivery.service.spec.ts`
@@ -47,20 +48,21 @@ These services have business logic without dedicated unit tests:
 
 No HTTP-level tests found for these route files:
 
-| Route | File | Critical? |
-|-------|------|-----------|
-| Blackouts | `/Users/mikeyoung/CODING/MAIS/server/src/routes/blackouts.routes.ts` | LOW |
-| CSP Violations | `/Users/mikeyoung/CODING/MAIS/server/src/routes/csp-violations.routes.ts` | LOW |
-| Public Date Booking | `/Users/mikeyoung/CODING/MAIS/server/src/routes/public-date-booking.routes.ts` | HIGH |
-| Tenant Admin Deposits | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-deposits.routes.ts` | MEDIUM |
-| Tenant Admin Domains | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-domains.routes.ts` | HIGH |
-| Tenant Admin Reminders | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-reminders.routes.ts` | LOW |
-| Public Balance Payment | `/Users/mikeyoung/CODING/MAIS/server/src/routes/public-balance-payment.routes.ts` | HIGH |
-| Stripe Connect Webhooks | `/Users/mikeyoung/CODING/MAIS/server/src/routes/stripe-connect-webhooks.routes.ts` | MEDIUM |
-| Tenant Admin Calendar | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-calendar.routes.ts` | LOW |
-| Tenant Admin Webhooks | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-webhooks.routes.ts` | MEDIUM |
+| Route                   | File                                                                               | Critical? |
+| ----------------------- | ---------------------------------------------------------------------------------- | --------- |
+| Blackouts               | `/Users/mikeyoung/CODING/MAIS/server/src/routes/blackouts.routes.ts`               | LOW       |
+| CSP Violations          | `/Users/mikeyoung/CODING/MAIS/server/src/routes/csp-violations.routes.ts`          | LOW       |
+| Public Date Booking     | `/Users/mikeyoung/CODING/MAIS/server/src/routes/public-date-booking.routes.ts`     | HIGH      |
+| Tenant Admin Deposits   | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-deposits.routes.ts`   | MEDIUM    |
+| Tenant Admin Domains    | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-domains.routes.ts`    | HIGH      |
+| Tenant Admin Reminders  | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-reminders.routes.ts`  | LOW       |
+| Public Balance Payment  | `/Users/mikeyoung/CODING/MAIS/server/src/routes/public-balance-payment.routes.ts`  | HIGH      |
+| Stripe Connect Webhooks | `/Users/mikeyoung/CODING/MAIS/server/src/routes/stripe-connect-webhooks.routes.ts` | MEDIUM    |
+| Tenant Admin Calendar   | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-calendar.routes.ts`   | LOW       |
+| Tenant Admin Webhooks   | `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-webhooks.routes.ts`   | MEDIUM    |
 
 **Recommendation:** Prioritize HTTP tests for:
+
 1. `public-date-booking.routes.ts` - Customer-facing booking flow
 2. `tenant-admin-domains.routes.ts` - Domain verification API
 3. `public-balance-payment.routes.ts` - Payment processing
@@ -75,27 +77,27 @@ Found timing-sensitive patterns that could cause intermittent failures:
 
 #### setTimeout/delay Usage (9 files)
 
-| File | Line | Pattern | Risk |
-|------|------|---------|------|
+| File                                                                                   | Line    | Pattern                                                    | Risk                                   |
+| -------------------------------------------------------------------------------------- | ------- | ---------------------------------------------------------- | -------------------------------------- |
 | `/Users/mikeyoung/CODING/MAIS/server/test/integration/webhook-race-conditions.spec.ts` | 408-411 | `await new Promise((resolve) => setTimeout(resolve, 100))` | LOW - Used for Stripe retry simulation |
-| `/Users/mikeyoung/CODING/MAIS/server/test/services/health-check.service.test.ts` | 106-109 | `setTimeout(resolve, 10000)` inside mock | GOOD - Tests timeout behavior |
-| `/Users/mikeyoung/CODING/MAIS/server/test/services/health-check.service.test.ts` | 368 | `await new Promise((resolve) => setTimeout(resolve, 10))` | LOW - Ensures timestamp difference |
+| `/Users/mikeyoung/CODING/MAIS/server/test/services/health-check.service.test.ts`       | 106-109 | `setTimeout(resolve, 10000)` inside mock                   | GOOD - Tests timeout behavior          |
+| `/Users/mikeyoung/CODING/MAIS/server/test/services/health-check.service.test.ts`       | 368     | `await new Promise((resolve) => setTimeout(resolve, 10))`  | LOW - Ensures timestamp difference     |
 
 **Analysis:** The timing patterns are **well-implemented**. The codebase uses proper retry helpers:
 
 ```typescript
 // /Users/mikeyoung/CODING/MAIS/server/test/helpers/retry.ts
-withConcurrencyRetry()  // Retries on SERIALIZABLE conflicts
-withDatabaseRetry()     // Retries on transient DB errors
-withTimingRetry()       // Retries on timing-related failures
+withConcurrencyRetry(); // Retries on SERIALIZABLE conflicts
+withDatabaseRetry(); // Retries on transient DB errors
+withTimingRetry(); // Retries on timing-related failures
 ```
 
 ### 2.2 Weak Assertion Patterns (LOW PRIORITY)
 
 Found some assertions that don't verify specific values:
 
-| File | Line | Issue |
-|------|------|-------|
+| File                                  | Line     | Issue                                   |
+| ------------------------------------- | -------- | --------------------------------------- |
 | Templates in `server/test/templates/` | Multiple | `.expect(200);` without body validation |
 
 **Analysis:** Template files are examples, not active tests. Production tests have strong assertions.
@@ -126,6 +128,7 @@ The codebase demonstrates excellent testing practices:
 ### 3.1 Test Structure (EXCELLENT)
 
 **File Organization:**
+
 ```
 server/test/
   adapters/         # Repository tests (prisma, mock)
@@ -158,6 +161,7 @@ const ctx = setupCompleteIntegrationTest('my-test-file');
 ```
 
 **Key Features:**
+
 - `createMultiTenantSetup()` - Unique tenant IDs per test file (line 136-279)
 - `PackageFactory` - Generates unique slugs with timestamps (line 325-378)
 - `createCacheTestUtils()` - Validates tenant-scoped cache keys (line 304-319)
@@ -165,12 +169,12 @@ const ctx = setupCompleteIntegrationTest('my-test-file');
 
 ### 3.3 Missing Test Utilities
 
-| Utility | Status | Recommendation |
-|---------|--------|----------------|
-| Test data factories | GOOD | `PackageFactory`, `AddOnFactory` exist |
-| Database reset | GOOD | Uses `cleanupTenants()` pattern |
-| Mock services | GOOD | `FakeEventEmitter`, `FakePaymentProvider` |
-| API test client | MISSING | Consider adding ts-rest test client wrapper |
+| Utility             | Status  | Recommendation                              |
+| ------------------- | ------- | ------------------------------------------- |
+| Test data factories | GOOD    | `PackageFactory`, `AddOnFactory` exist      |
+| Database reset      | GOOD    | Uses `cleanupTenants()` pattern             |
+| Mock services       | GOOD    | `FakeEventEmitter`, `FakePaymentProvider`   |
+| API test client     | MISSING | Consider adding ts-rest test client wrapper |
 
 ---
 
@@ -180,33 +184,36 @@ const ctx = setupCompleteIntegrationTest('my-test-file');
 
 **Data-testid Usage:** 38 occurrences across 5 files
 
-| File | Usage | Quality |
-|------|-------|---------|
-| `storefront.spec.ts` | `[data-testid^="tier-card-"]` | GOOD - Prefix matching |
-| `early-access-waitlist.spec.ts` | `data-testid` selectors | GOOD |
-| `booking-mock.spec.ts` | Mix of testid and role | GOOD |
-| `accessibility.spec.ts` | Semantic selectors | EXCELLENT |
+| File                            | Usage                         | Quality                |
+| ------------------------------- | ----------------------------- | ---------------------- |
+| `storefront.spec.ts`            | `[data-testid^="tier-card-"]` | GOOD - Prefix matching |
+| `early-access-waitlist.spec.ts` | `data-testid` selectors       | GOOD                   |
+| `booking-mock.spec.ts`          | Mix of testid and role        | GOOD                   |
+| `accessibility.spec.ts`         | Semantic selectors            | EXCELLENT              |
 
 **Problematic Patterns Found:**
 
-| File | Line | Issue |
-|------|------|-------|
-| `/Users/mikeyoung/CODING/MAIS/e2e/tests/booking-flow.spec.ts` | 56-57 | `.rdp-day:not([data-hidden])` - CSS class dependency |
-| `/Users/mikeyoung/CODING/MAIS/e2e/tests/booking-flow.spec.ts` | 65 | `.rdp-day_selected` - CSS class dependency |
+| File                                                           | Line    | Issue                                                         |
+| -------------------------------------------------------------- | ------- | ------------------------------------------------------------- |
+| `/Users/mikeyoung/CODING/MAIS/e2e/tests/booking-flow.spec.ts`  | 56-57   | `.rdp-day:not([data-hidden])` - CSS class dependency          |
+| `/Users/mikeyoung/CODING/MAIS/e2e/tests/booking-flow.spec.ts`  | 65      | `.rdp-day_selected` - CSS class dependency                    |
 | `/Users/mikeyoung/CODING/MAIS/e2e/tests/tenant-signup.spec.ts` | 280-287 | `button[aria-label*="Show password"]` - Brittle aria selector |
 
 **Recommendation:** Add `data-testid` attributes to:
+
 - Date picker components
 - Password visibility toggle buttons
 
 ### 4.2 Error State Testing (GOOD)
 
 **Covered Error Scenarios:**
+
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/storefront.spec.ts:78-86` - Invalid tenant slug
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/storefront.spec.ts:146-161` - API failure error state
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/tenant-signup.spec.ts:206-261` - Duplicate email conflict
 
 **Missing Error Scenarios:**
+
 1. Network timeout handling
 2. Partial page load failures
 3. Session expiration during form submission
@@ -214,6 +221,7 @@ const ctx = setupCompleteIntegrationTest('my-test-file');
 ### 4.3 Edge Case Coverage (GOOD)
 
 **Covered Edge Cases:**
+
 - Mobile/tablet/desktop viewport testing (`storefront.spec.ts:274-323`)
 - Legacy URL redirects (`storefront.spec.ts:326-341`)
 - Broken image handling (`storefront.spec.ts:385-413`)
@@ -226,10 +234,12 @@ const ctx = setupCompleteIntegrationTest('my-test-file');
 ### 5.1 Logging Coverage (ADEQUATE)
 
 **Logger Usage:**
+
 - **556 logger calls** across 71 files
 - **40 console.log/warn/error** calls (mostly in generated Prisma code)
 
 **Structured Logging Pattern:**
+
 ```typescript
 // /Users/mikeyoung/CODING/MAIS/server/src/lib/core/logger.ts
 const logger = pino({
@@ -244,12 +254,12 @@ export function createRequestLogger(requestId: string): Logger {
 
 **Logging Gaps:**
 
-| Area | File | Issue |
-|------|------|-------|
-| Scheduling | `scheduling-availability.service.ts` | Uses `console.log` (line varies) |
-| Calendar | `google-calendar.service.ts` | Uses `console.warn` (2 occurrences) |
-| Catalog | `catalog.service.ts` | Uses `console.log` (2 occurrences) |
-| Availability | `availability.service.ts` | Uses `console.warn` (1 occurrence) |
+| Area         | File                                 | Issue                               |
+| ------------ | ------------------------------------ | ----------------------------------- |
+| Scheduling   | `scheduling-availability.service.ts` | Uses `console.log` (line varies)    |
+| Calendar     | `google-calendar.service.ts`         | Uses `console.warn` (2 occurrences) |
+| Catalog      | `catalog.service.ts`                 | Uses `console.log` (2 occurrences)  |
+| Availability | `availability.service.ts`            | Uses `console.warn` (1 occurrence)  |
 
 **Recommendation:** Replace remaining `console.*` calls with structured logger.
 
@@ -267,6 +277,7 @@ export function createRequestLogger(requestId: string): Logger {
 ```
 
 **Missing Metrics:**
+
 1. Request latency histograms (P50, P95, P99)
 2. Booking success/failure rates
 3. Webhook delivery success rates
@@ -275,6 +286,7 @@ export function createRequestLogger(requestId: string): Logger {
 6. Rate limiter trigger counts
 
 **Recommendation:** Add Prometheus-compatible metrics:
+
 ```typescript
 // Suggested additions
 - http_request_duration_seconds (histogram)
@@ -288,12 +300,14 @@ export function createRequestLogger(requestId: string): Logger {
 **Current State:** No distributed tracing found.
 
 **Sentry Integration:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/sentry.ts`
 - Captures exceptions with context
 - Scrubs sensitive data from breadcrumbs
 - 50% traces sample rate
 
 **Missing:**
+
 1. Request tracing (OpenTelemetry/Jaeger)
 2. Cross-service correlation IDs
 3. Database query tracing
@@ -366,11 +380,13 @@ Business Errors:
 ### 6.4 Graceful Degradation Patterns
 
 **Found:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/sentry.ts:31-35` - Sentry gracefully disabled without DSN
 - Health check service caches results to prevent repeated failures
 - File sink fallback for email when Postmark unavailable
 
 **Missing:**
+
 1. Circuit breaker pattern for external services
 2. Retry with exponential backoff for transient failures
 3. Fallback responses for degraded states
@@ -406,7 +422,7 @@ Business Errors:
    - File: `/Users/mikeyoung/CODING/MAIS/server/src/services/package-draft.service.ts`
 
 6. **Replace console.log calls with logger**
-   - 8 non-generated files using console.*
+   - 8 non-generated files using console.\*
    - Breaks structured logging
 
 7. **Add data-testid to date picker components**
@@ -472,10 +488,12 @@ npm run test:watch
 ## Appendix A: Files Reviewed
 
 **Test Files (65 files):**
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/**/*.{test,spec}.ts`
 - `/Users/mikeyoung/CODING/MAIS/e2e/tests/*.spec.ts`
 
 **Source Files:**
+
 - All services in `/Users/mikeyoung/CODING/MAIS/server/src/services/`
 - All routes in `/Users/mikeyoung/CODING/MAIS/server/src/routes/`
 - Error infrastructure in `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/`
@@ -483,6 +501,7 @@ npm run test:watch
 - Metrics in `/Users/mikeyoung/CODING/MAIS/server/src/routes/metrics.routes.ts`
 
 **Test Helpers:**
+
 - `/Users/mikeyoung/CODING/MAIS/server/test/helpers/integration-setup.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/test/helpers/retry.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/test/helpers/fakes.ts`

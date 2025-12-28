@@ -21,6 +21,7 @@ tags: [vercel, monorepo, nextjs, npm-workspaces, eslint, deployment, prevention]
 When deploying a Next.js app from an npm workspace monorepo to Vercel, setting the "Root Directory" to `apps/web` causes workspace dependency resolution to fail. Vercel installs dependencies from `apps/web/` but workspace packages (`@macon/contracts`, `@macon/shared`) are defined at the repo root.
 
 **The Core Issue:**
+
 ```
 Repo Root (package.json with workspaces)
 ├── apps/web/           ← Vercel starts here (WRONG!)
@@ -41,6 +42,7 @@ Repo Root (package.json with workspaces)
   - Use `vercel.json` to specify output location instead
 
 - [ ] **2. Create custom `vercel-build` script at repo root**
+
   ```json
   // package.json (root)
   {
@@ -51,6 +53,7 @@ Repo Root (package.json with workspaces)
   ```
 
 - [ ] **3. Configure `vercel.json` correctly**
+
   ```json
   {
     "$schema": "https://openapi.vercel.sh/vercel.json",
@@ -61,6 +64,7 @@ Repo Root (package.json with workspaces)
   ```
 
 - [ ] **4. Add `transpilePackages` to Next.js config**
+
   ```javascript
   // apps/web/next.config.js
   const nextConfig = {
@@ -81,18 +85,22 @@ Repo Root (package.json with workspaces)
 ### ESLint Configuration (Prevent Build Failures)
 
 - [ ] **6. Configure ESLint for Next.js unescaped entities**
+
   ```javascript
   // apps/web/.eslintrc.cjs
   module.exports = {
     rules: {
       // Allow unescaped apostrophes and quotes (Next.js handles safely)
-      'react/no-unescaped-entities': ['error', {
-        forbid: [
-          { char: '>', alternatives: ['&gt;'] },
-          { char: '<', alternatives: ['&lt;'] }
-        ]
-      }]
-    }
+      'react/no-unescaped-entities': [
+        'error',
+        {
+          forbid: [
+            { char: '>', alternatives: ['&gt;'] },
+            { char: '<', alternatives: ['&lt;'] },
+          ],
+        },
+      ],
+    },
   };
   ```
 
@@ -107,11 +115,13 @@ Repo Root (package.json with workspaces)
 ### Pre-Deploy Verification
 
 - [ ] **8. Run local verification script before push**
+
   ```bash
   npm run verify-build  # Custom script simulating Vercel
   ```
 
 - [ ] **9. Verify workspace packages build in correct order**
+
   ```bash
   # Dependencies MUST build before Next.js
   npm run build -w @macon/contracts
@@ -224,16 +234,17 @@ echo "  3. Verify production deployment"
 
 ### Common Escaping Errors
 
-| Character | Wrong | Correct Option 1 | Correct Option 2 |
-|-----------|-------|------------------|------------------|
-| `'` (apostrophe) | `don't` | `don&apos;t` | `{"don't"}` |
-| `"` (quote) | `"hello"` | `&quot;hello&quot;` | `{'"hello"'}` |
-| `<` (less than) | `<` | `&lt;` | `{'<'}` |
-| `>` (greater than) | `>` | `&gt;` | `{'>'}` |
+| Character          | Wrong     | Correct Option 1    | Correct Option 2 |
+| ------------------ | --------- | ------------------- | ---------------- |
+| `'` (apostrophe)   | `don't`   | `don&apos;t`        | `{"don't"}`      |
+| `"` (quote)        | `"hello"` | `&quot;hello&quot;` | `{'"hello"'}`    |
+| `<` (less than)    | `<`       | `&lt;`              | `{'<'}`          |
+| `>` (greater than) | `>`       | `&gt;`              | `{'>'}`          |
 
 ### Quick Fix Strategies
 
 **Option A: Escape with HTML entities**
+
 ```tsx
 // Before (error)
 <p>Don't miss out!</p>
@@ -243,6 +254,7 @@ echo "  3. Verify production deployment"
 ```
 
 **Option B: Use JSX expression**
+
 ```tsx
 // Before (error)
 <p>He said "hello"</p>
@@ -252,18 +264,22 @@ echo "  3. Verify production deployment"
 ```
 
 **Option C: Configure ESLint to allow apostrophes (recommended for Next.js)**
+
 ```javascript
 // .eslintrc.cjs
 module.exports = {
   rules: {
-    'react/no-unescaped-entities': ['error', {
-      forbid: [
-        { char: '>', alternatives: ['&gt;'] },
-        { char: '<', alternatives: ['&lt;'] }
-        // Note: ' and " are NOT in forbid list, so they're allowed
-      ]
-    }]
-  }
+    'react/no-unescaped-entities': [
+      'error',
+      {
+        forbid: [
+          { char: '>', alternatives: ['&gt;'] },
+          { char: '<', alternatives: ['&lt;'] },
+          // Note: ' and " are NOT in forbid list, so they're allowed
+        ],
+      },
+    ],
+  },
 };
 ```
 
@@ -272,10 +288,12 @@ module.exports = {
 Next.js and React properly escape text content during rendering. The `react/no-unescaped-entities` rule was designed for older JSX transforms that didn't handle escaping. Modern React (17+) with the new JSX transform handles this automatically.
 
 **Safe to allow:**
+
 - Apostrophes in text: `You're welcome` (no XSS risk)
 - Double quotes in text: `Say "hello"` (no XSS risk)
 
 **Always escape:**
+
 - `<` in text (could be misinterpreted as JSX tag start)
 - `>` in text (could be misinterpreted as JSX tag end)
 
@@ -284,12 +302,14 @@ Next.js and React properly escape text content during rendering. The `react/no-u
 ## Common Pitfalls to Avoid
 
 ### 1. Using Root Directory Setting with npm Workspaces
+
 ```
 WRONG: Vercel → Settings → Root Directory → apps/web
 RIGHT: Leave blank, use vercel.json outputDirectory
 ```
 
 ### 2. Forgetting transpilePackages
+
 ```javascript
 // WRONG - workspace packages won't be transpiled
 const nextConfig = {};
@@ -301,6 +321,7 @@ const nextConfig = {
 ```
 
 ### 3. Building Next.js Before Dependencies
+
 ```bash
 # WRONG - Next.js can't find @macon/* packages
 cd apps/web && npm run build
@@ -310,6 +331,7 @@ npm run build -w @macon/contracts && npm run build -w @macon/shared && cd apps/w
 ```
 
 ### 4. Missing --force Flag on TypeScript Builds
+
 ```json
 // WRONG - uses cached .tsbuildinfo, may skip compilation
 "build": "tsc -b"
@@ -319,6 +341,7 @@ npm run build -w @macon/contracts && npm run build -w @macon/shared && cd apps/w
 ```
 
 ### 5. Incorrect vercel.json Location
+
 ```
 apps/web/vercel.json  ← Only works if Root Directory is set (but don't use that!)
 ./vercel.json         ← Use this if Root Directory is blank
@@ -328,25 +351,25 @@ apps/web/vercel.json  ← Only works if Root Directory is set (but don't use tha
 
 ## Troubleshooting Quick Reference
 
-| Symptom | Likely Cause | Solution |
-|---------|--------------|----------|
-| `Module not found: @macon/contracts` | Root Directory set to apps/web | Remove Root Directory setting, use vercel.json |
-| `Cannot read properties of undefined` | Workspace package not built | Add workspace package to vercel-build script |
-| ESLint entity escaping errors | Strict react/no-unescaped-entities | Configure rule to allow ' and " |
-| Build works locally, fails on Vercel | Stale tsbuildinfo cache | Add --force to workspace package builds |
-| `Type error: ... is not assignable` | Workspace packages using old types | Rebuild workspace packages before Next.js |
+| Symptom                               | Likely Cause                       | Solution                                       |
+| ------------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| `Module not found: @macon/contracts`  | Root Directory set to apps/web     | Remove Root Directory setting, use vercel.json |
+| `Cannot read properties of undefined` | Workspace package not built        | Add workspace package to vercel-build script   |
+| ESLint entity escaping errors         | Strict react/no-unescaped-entities | Configure rule to allow ' and "                |
+| Build works locally, fails on Vercel  | Stale tsbuildinfo cache            | Add --force to workspace package builds        |
+| `Type error: ... is not assignable`   | Workspace packages using old types | Rebuild workspace packages before Next.js      |
 
 ---
 
 ## Key Files Reference
 
-| File | Purpose |
-|------|---------|
-| `package.json` (root) | `vercel-build` script, workspaces definition |
-| `vercel.json` (root or apps/web) | Vercel deployment configuration |
-| `apps/web/next.config.js` | `transpilePackages` for workspace packages |
-| `apps/web/.eslintrc.cjs` | ESLint configuration including entity rules |
-| `packages/*/package.json` | Build scripts with `--force` flag |
+| File                             | Purpose                                      |
+| -------------------------------- | -------------------------------------------- |
+| `package.json` (root)            | `vercel-build` script, workspaces definition |
+| `vercel.json` (root or apps/web) | Vercel deployment configuration              |
+| `apps/web/next.config.js`        | `transpilePackages` for workspace packages   |
+| `apps/web/.eslintrc.cjs`         | ESLint configuration including entity rules  |
+| `packages/*/package.json`        | Build scripts with `--force` flag            |
 
 ---
 

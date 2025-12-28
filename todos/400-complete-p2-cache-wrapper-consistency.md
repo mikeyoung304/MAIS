@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p2
-issue_id: "400"
+issue_id: '400'
 tags:
   - performance
   - nextjs
@@ -44,11 +44,13 @@ export const getTenantByDomain = cache(async (domain: string): Promise<TenantPub
 ### Issue 2: Duplicate Data Fetching in Layout + Page
 
 **Locations:**
+
 - `apps/web/src/app/t/[slug]/(site)/layout.tsx` - calls `getTenantStorefrontData()`
 - `apps/web/src/app/t/[slug]/(site)/page.tsx` - calls `getTenantStorefrontData()`
 - `generateMetadata` in each page - also calls `getTenantStorefrontData()`
 
 **Flow during SSR:**
+
 1. `generateMetadata()` calls `getTenantStorefrontData(slug)`
 2. `layout.tsx` calls `getTenantStorefrontData(slug)`
 3. `page.tsx` calls `getTenantStorefrontData(slug)`
@@ -58,6 +60,7 @@ While `cache()` deduplicates within a single request, Next.js may call these at 
 ## Proposed Solutions
 
 ### Option 1: Add cache() wrapper to getTenantBySlug (Quick fix)
+
 ```typescript
 export const getTenantBySlug = cache(async (slug: string): Promise<TenantPublicDto> => {
   // existing implementation
@@ -70,6 +73,7 @@ export const getTenantBySlug = cache(async (slug: string): Promise<TenantPublicD
 **Risk:** Very Low
 
 ### Option 2: Consolidate data fetching in layout (Recommended)
+
 - Fetch data once in layout
 - Pass to children via React Context or page params
 - Remove redundant fetches from pages
@@ -80,6 +84,7 @@ export const getTenantBySlug = cache(async (slug: string): Promise<TenantPublicD
 **Risk:** Low
 
 ### Option 3: Use Next.js 14 `unstable_cache` for cross-request caching
+
 - Cache tenant data across requests
 - Reduces API load significantly
 
@@ -95,9 +100,11 @@ Option 1 immediately, Option 2 as follow-up.
 ## Technical Details
 
 **File to modify (Option 1):**
+
 - `apps/web/src/lib/tenant.ts` - Wrap getTenantBySlug with cache()
 
 **Files affected (Option 2):**
+
 - `apps/web/src/app/t/[slug]/(site)/layout.tsx`
 - `apps/web/src/app/t/[slug]/(site)/page.tsx`
 - All sibling pages: about, contact, faq, services
@@ -111,10 +118,10 @@ Option 1 immediately, Option 2 as follow-up.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-25 | Created from performance review | cache() crucial for SSR deduplication |
-| 2025-12-25 | **Approved for work** - Status: ready | P2 - Trivial fix |
+| Date       | Action                                | Learnings                             |
+| ---------- | ------------------------------------- | ------------------------------------- |
+| 2025-12-25 | Created from performance review       | cache() crucial for SSR deduplication |
+| 2025-12-25 | **Approved for work** - Status: ready | P2 - Trivial fix                      |
 
 ## Resources
 

@@ -32,25 +32,25 @@ When you see `useParams`, `getBy...`, or API calls:
 
 ```typescript
 // CORRECT ✅
-useParams<{ packageSlug: string }>();  // Matches API parameter name
+useParams<{ packageSlug: string }>(); // Matches API parameter name
 api.getPackageBySlug({ params: { slug } });
 
 // WRONG ❌
-useParams<{ packageId: string }>();  // API expects 'slug'
-api.getPackageBySlug({ params: { packageId } });  // Type mismatch!
+useParams<{ packageId: string }>(); // API expects 'slug'
+api.getPackageBySlug({ params: { packageId } }); // Type mismatch!
 ```
 
 **Question 2: Is the intent clear from the variable name?**
 
 ```typescript
 // CLEAR ✅
-const databaseId = pkg.id;     // Integer primary key
-const urlSlug = pkg.slug;      // User-friendly URL
+const databaseId = pkg.id; // Integer primary key
+const urlSlug = pkg.slug; // User-friendly URL
 const bookingToken = pkg.tokenId;
 
 // CONFUSED ❌
-const packageId = pkg.id;      // Which kind of ID?
-const identifier = pkg.slug;   // Slug is NOT an identifier
+const packageId = pkg.id; // Which kind of ID?
+const identifier = pkg.slug; // Slug is NOT an identifier
 ```
 
 **Action Items:**
@@ -69,22 +69,22 @@ When you see `throw new Error()` or error messages:
 
 ```typescript
 // DANGEROUS ❌
-throw new Error(`Package ${packageId} not found`);  // Confirms ID exists
-throw new Error(`Tenant ${tenantId} not active`);   // Reveals structure
-throw new Error(`Unique constraint failed on 'slug'`);  // Shows schema
+throw new Error(`Package ${packageId} not found`); // Confirms ID exists
+throw new Error(`Tenant ${tenantId} not active`); // Reveals structure
+throw new Error(`Unique constraint failed on 'slug'`); // Shows schema
 
 // SAFE ✅
-throw new PackageNotAvailableError();  // Generic
-logger.warn('Package not found', { packageId, tenantId });  // Log details
+throw new PackageNotAvailableError(); // Generic
+logger.warn('Package not found', { packageId, tenantId }); // Log details
 ```
 
 **Safe vs Unsafe Information:**
 
-| SAFE (show to client) | UNSAFE (log only) |
-|---|---|
+| SAFE (show to client)                    | UNSAFE (log only)             |
+| ---------------------------------------- | ----------------------------- |
 | "The requested package is not available" | "Package ID abc123 not found" |
-| "You don't have permission" | "Tenant xyz not active" |
-| "Invalid email format" | "Unique constraint on slug" |
+| "You don't have permission"              | "Tenant xyz not active"       |
+| "Invalid email format"                   | "Unique constraint on slug"   |
 
 **Action Items:**
 
@@ -151,16 +151,16 @@ return <Child config={config} />;   // Child receives stable object
 
 ## Red Flags 🚩 (Stop & Investigate)
 
-| Found | Action |
-|-------|--------|
-| `packageId` in route params | Ask: Is this actually a slug? |
-| Error with database ID in message | Request fix |
-| Error reveals schema details | Request fix |
-| Object created in render | Add useMemo or move to module |
-| `memo` without prop stabilization | Ask parent to use useMemo |
-| `useCallback` without memo child | Remove useCallback |
-| Magic number/string duplicated 2+ places | Move to constant |
-| Component >100 lines | Break into smaller pieces |
+| Found                                    | Action                        |
+| ---------------------------------------- | ----------------------------- |
+| `packageId` in route params              | Ask: Is this actually a slug? |
+| Error with database ID in message        | Request fix                   |
+| Error reveals schema details             | Request fix                   |
+| Object created in render                 | Add useMemo or move to module |
+| `memo` without prop stabilization        | Ask parent to use useMemo     |
+| `useCallback` without memo child         | Remove useCallback            |
+| Magic number/string duplicated 2+ places | Move to constant              |
+| Component >100 lines                     | Break into smaller pieces     |
 
 ---
 

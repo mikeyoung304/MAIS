@@ -3,6 +3,7 @@
 **Problem:** The HANDLED marketing homepage was mistakenly configured as a tenant redirect (`/t/handled`) instead of a proper static marketing page, causing 404 errors because the "handled" tenant didn't exist in the database.
 
 **Root Cause:** Architectural confusion between two distinct routing concepts:
+
 1. **Tenant Storefronts**: Dynamic user-created websites for service professionals
 2. **Company Marketing Site**: Static HANDLED platform landing page
 
@@ -17,6 +18,7 @@ This document prevents future confusion through architectural clarity and testin
 #### Tenant Storefront (Use `/t/[slug]/` routing)
 
 **Characteristics:**
+
 - **Dynamic & User-Created**: Each tenant (photographer, therapist, coach) gets a unique storefront
 - **Data-Driven**: Content comes from database (packages, testimonials, gallery images)
 - **Tenant-Specific**: Navigation, branding, and content vary by tenant
@@ -24,12 +26,14 @@ This document prevents future confusion through architectural clarity and testin
 - **Example URLs**: `/t/jane-photography`, `/t/dr-smith-therapy`, `/t/wedding-planner-co`
 
 **Requires:**
+
 - Valid tenant in database with `slug` matching URL
 - `tenantId` in all database queries (multi-tenant isolation)
 - Tenant configuration (branding, pages, sections)
 - API keys for client-side data fetching
 
 **Pattern:**
+
 ```typescript
 // apps/web/src/app/t/[slug]/(site)/page.tsx
 async function TenantPage({ params }: { params: { slug: string } }) {
@@ -47,6 +51,7 @@ async function TenantPage({ params }: { params: { slug: string } }) {
 #### Company Marketing Site (Use Static Page or `(marketing)/` group)
 
 **Characteristics:**
+
 - **Static & Company-Owned**: Single landing page for the HANDLED platform itself
 - **No Multi-Tenant Data**: No database lookup needed
 - **Fixed Content**: Features, pricing tiers, brand messaging
@@ -54,12 +59,14 @@ async function TenantPage({ params }: { params: { slug: string } }) {
 - **Example URLs**: `/`, `/features`, `/pricing`
 
 **Does NOT require:**
+
 - Tenant lookup or database query
 - Multi-tenant data scoping
 - Tenant configuration
 - API keys or authentication
 
 **Pattern (Current):**
+
 ```typescript
 // apps/web/src/app/page.tsx - Root marketing page
 export default function HomePage() {
@@ -76,6 +83,7 @@ export default function HomePage() {
 ```
 
 **Alternative Pattern (If Marketing Grows):**
+
 ```typescript
 // apps/web/src/app/(marketing)/page.tsx - Grouped marketing routes
 // (marketing)/features/page.tsx
@@ -89,17 +97,17 @@ export default function HomePage() {
 
 ### Key Distinction Matrix
 
-| Aspect | Tenant Storefront | Company Marketing |
-|--------|-------------------|-------------------|
-| **URL Pattern** | `/t/[slug]`, `/t/_domain` | `/`, `/(marketing)/...` |
-| **Database Lookup** | REQUIRED (`getTenantBySlug`) | NOT NEEDED |
-| **Tenant Exists Check** | Must exist (else 404) | Not applicable |
-| **Content Source** | Tenant config in DB | Static files/code |
-| **Data Scoping** | All queries by `tenantId` | No multi-tenant logic |
-| **Admin Control** | Tenant dashboard | Developer-managed |
-| **Dynamic Sections** | Yes (hero, gallery, etc.) | Hardcoded components |
-| **Custom Styling** | Per-tenant branding | Fixed brand colors |
-| **Example** | `/t/jane-photography/about` | `/`, `/about` |
+| Aspect                  | Tenant Storefront            | Company Marketing       |
+| ----------------------- | ---------------------------- | ----------------------- |
+| **URL Pattern**         | `/t/[slug]`, `/t/_domain`    | `/`, `/(marketing)/...` |
+| **Database Lookup**     | REQUIRED (`getTenantBySlug`) | NOT NEEDED              |
+| **Tenant Exists Check** | Must exist (else 404)        | Not applicable          |
+| **Content Source**      | Tenant config in DB          | Static files/code       |
+| **Data Scoping**        | All queries by `tenantId`    | No multi-tenant logic   |
+| **Admin Control**       | Tenant dashboard             | Developer-managed       |
+| **Dynamic Sections**    | Yes (hero, gallery, etc.)    | Hardcoded components    |
+| **Custom Styling**      | Per-tenant branding          | Fixed brand colors      |
+| **Example**             | `/t/jane-photography/about`  | `/`, `/about`           |
 
 ---
 
@@ -375,6 +383,7 @@ export default function FeaturesPage() {
 ```
 
 **Pattern Checklist:**
+
 - ✓ Static URL (`/features`, not `/t/...`)
 - ✓ Hardcoded content (FEATURES array, not database)
 - ✓ No tenant lookup
@@ -437,6 +446,7 @@ export default async function ServicesPage({ params }: Props) {
 ```
 
 **Pattern Checklist:**
+
 - ✓ Uses `/t/[slug]/` routing
 - ✓ Calls `getTenantBySlug(params.slug)`
 - ✓ Handles 404 with `notFound()`
@@ -459,7 +469,7 @@ const KNOWN_DOMAINS = [
   'gethandled.ai',
   'www.gethandled.ai',
   'app.gethandled.ai',
-  'maconaisolutions.com',     // ← Add here
+  'maconaisolutions.com', // ← Add here
   'www.maconaisolutions.com', // ← Add here
   'vercel.app',
   'localhost',
@@ -479,6 +489,7 @@ const KNOWN_DOMAINS = [
 ### Mistake 1: Creating a "Company Tenant" in Database
 
 **What Happens:**
+
 ```typescript
 // Database has: { id: 1, slug: 'handled', name: 'HANDLED Platform' }
 // Root page tries: await getTenantBySlug('handled');
@@ -486,12 +497,14 @@ const KNOWN_DOMAINS = [
 ```
 
 **Why It's Wrong:**
+
 - Marketing content becomes tied to database
 - Tenant deletion breaks company homepage
 - Multi-tenant isolation rules applied to company content
 - Cache pollution (company content cached with tenant key)
 
 **Fix:**
+
 - Delete the tenant from database
 - Use static pages, never tenant routes for company content
 - Separate concerns: company = static, tenants = dynamic
@@ -499,6 +512,7 @@ const KNOWN_DOMAINS = [
 ### Mistake 2: Hardcoding `X-Tenant-Key` in Company Pages
 
 **What Happens:**
+
 ```typescript
 // Company page hardcodes a tenant key
 const response = await fetch('/v1/packages', {
@@ -509,11 +523,13 @@ const response = await fetch('/v1/packages', {
 ```
 
 **Why It's Wrong:**
+
 - Exposes API key in client-side code
 - If key rotates, page breaks
 - Could leak data if key compromised
 
 **Fix:**
+
 - Company pages don't need API keys
 - Use static content for marketing pages
 - Only fetch API data in tenant pages (with tenant-specific keys)
@@ -521,6 +537,7 @@ const response = await fetch('/v1/packages', {
 ### Mistake 3: Infinite Redirects with Tenant Routes
 
 **What Happens:**
+
 ```typescript
 // Root page redirects to /t/handled
 // Middleware or code tries to create a tenant named "handled"
@@ -528,11 +545,13 @@ const response = await fetch('/v1/packages', {
 ```
 
 **Why It's Wrong:**
+
 - Adds dependency on database for static content
 - Creates failure point (missing tenant = broken homepage)
 - Violates separation of concerns
 
 **Fix:**
+
 - Root page is static (no redirect needed)
 - Company content stands alone
 - Redirect only in special cases (with strong justification)
@@ -544,12 +563,14 @@ const response = await fetch('/v1/packages', {
 ### Adding to Root App (`/page.tsx`)
 
 **Use this:**
+
 - Hardcoded content
 - No `getTenantBySlug` call
 - Static features/pricing/CTAs
 - Example: `src/app/page.tsx`
 
 **Don't use this:**
+
 - Tenant lookups
 - Database queries (except logging/tracking)
 - Tenant-specific data
@@ -557,12 +578,14 @@ const response = await fetch('/v1/packages', {
 ### Adding to Tenant Storefront (`/t/[slug]/`)
 
 **Use this:**
+
 - `getTenantBySlug(params.slug)`
 - `notFound()` if tenant not found
 - Tenant-specific content
 - Example: `src/app/t/[slug]/(site)/page.tsx`
 
 **Don't use this:**
+
 - Hardcoded company messaging
 - Skipping tenant existence check
 - API calls without X-Tenant-Key
@@ -570,12 +593,14 @@ const response = await fetch('/v1/packages', {
 ### Adding to Custom Domains (`/t/_domain/`)
 
 **Use this:**
+
 - `getTenantByDomain(searchParams.domain)`
 - Same pattern as slug-based routes
 - Verify domain ownership
 - Example: `src/app/t/_domain/page.tsx`
 
 **Don't use this:**
+
 - Direct tenant slug references
 - Skipping domain validation
 
@@ -586,6 +611,7 @@ const response = await fetch('/v1/packages', {
 ### How to Verify This is Implemented
 
 **Check 1: Database State**
+
 ```bash
 # Verify no company tenant exists
 cd server
@@ -598,6 +624,7 @@ npm exec prisma studio
 ```
 
 **Check 2: Root Page Code**
+
 ```bash
 # Verify /page.tsx is static
 grep -n "getTenantBySlug\|getHandledTenant\|db.tenant" \
@@ -606,6 +633,7 @@ grep -n "getTenantBySlug\|getHandledTenant\|db.tenant" \
 ```
 
 **Check 3: Tenant Page Code**
+
 ```bash
 # Verify /t/[slug] has tenant lookup
 grep -n "getTenantBySlug" \
@@ -614,6 +642,7 @@ grep -n "getTenantBySlug" \
 ```
 
 **Check 4: Middleware Domains**
+
 ```bash
 # Verify company domains are in KNOWN_DOMAINS
 grep -A 10 "const KNOWN_DOMAINS" apps/web/src/middleware.ts
@@ -632,6 +661,7 @@ grep -A 10 "const KNOWN_DOMAINS" apps/web/src/middleware.ts
 Think of MAIS as having **two distinct routing systems**:
 
 ### System 1: Company Marketing (Static)
+
 - **Where:** Root app, static pages
 - **URLs:** `/`, `/features`, `/pricing`
 - **Content:** Hardcoded in components
@@ -639,6 +669,7 @@ Think of MAIS as having **two distinct routing systems**:
 - **Purpose:** Acquire customers for HANDLED
 
 ### System 2: Tenant Storefronts (Dynamic)
+
 - **Where:** `/t/[slug]/` and `/t/_domain/`
 - **URLs:** `/t/jane-photography`, custom domain
 - **Content:** From database (tenant config)
@@ -646,4 +677,3 @@ Think of MAIS as having **two distinct routing systems**:
 - **Purpose:** Each tenant's custom website
 
 **Never mix them. Never create a "company tenant."**
-

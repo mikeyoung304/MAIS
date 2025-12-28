@@ -19,10 +19,7 @@ interface DomainLayoutProps {
  * Same as (site)/layout.tsx but resolves tenant by domain instead of slug.
  * Uses empty basePath with domainParam for proper navigation link construction.
  */
-export default async function DomainLayout({
-  children,
-  searchParams,
-}: DomainLayoutProps) {
+export default async function DomainLayout({ children, searchParams }: DomainLayoutProps) {
   const { domain } = await searchParams;
 
   // Validate domain parameter

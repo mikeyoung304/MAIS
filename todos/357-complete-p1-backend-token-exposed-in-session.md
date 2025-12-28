@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "357"
+issue_id: '357'
 tags: [code-review, security, nextauth]
 dependencies: []
 ---
@@ -28,6 +28,7 @@ interface MAISSession extends Session {
 ```
 
 **Evidence:**
+
 - Token visible in browser devtools
 - Token stored in sessionStorage/localStorage
 - Client-side pages use `Authorization: Bearer ${backendToken}` in fetch calls
@@ -37,6 +38,7 @@ interface MAISSession extends Session {
 ## Proposed Solutions
 
 ### Option 1: HTTP-Only Cookies (Recommended)
+
 - **Description:** Store backend token in HTTP-only cookie set by Express API
 - **Pros:** Token not accessible to JavaScript, XSS-safe
 - **Cons:** Requires backend changes to set cookies on login
@@ -44,6 +46,7 @@ interface MAISSession extends Session {
 - **Risk:** Low - standard security practice
 
 ### Option 2: Server-Side Proxy
+
 - **Description:** Create Next.js API routes that proxy to Express with token stored server-side
 - **Pros:** Token never leaves server, works with current architecture
 - **Cons:** Adds latency, more code to maintain
@@ -57,6 +60,7 @@ interface MAISSession extends Session {
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/lib/auth.ts`
 - `apps/web/src/types/next-auth.d.ts`
 - All components using `backendToken` from session
@@ -72,8 +76,8 @@ interface MAISSession extends Session {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                       |
+| ---------- | -------------------------- | ------------------------------- |
 | 2025-12-25 | Created during code review | Security issue found in auth.ts |
 
 ## Resources

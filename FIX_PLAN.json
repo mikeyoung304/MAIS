@@ -80,10 +80,7 @@
           "priority": "P0",
           "title": "Fix broken documentation links",
           "description": "Remove or fix links to /docs/sprints/ and /docs/phases/",
-          "files": [
-            "README.md",
-            "docs/archive/*"
-          ],
+          "files": ["README.md", "docs/archive/*"],
           "effort": "S",
           "risk": "NONE"
         },
@@ -144,10 +141,7 @@
           "priority": "P2",
           "title": "Add BlackoutRepository interface method",
           "description": "Add getBlackoutsWithIds() to fix type casting in controller",
-          "files": [
-            "server/src/lib/ports.ts",
-            "server/src/adapters/prisma/blackout.repository.ts"
-          ],
+          "files": ["server/src/lib/ports.ts", "server/src/adapters/prisma/blackout.repository.ts"],
           "effort": "S",
           "risk": "LOW"
         },
@@ -199,11 +193,7 @@
           "priority": "P1",
           "title": "Update stale documentation",
           "description": "Update sprint references, test counts, status sections",
-          "files": [
-            "CLAUDE.md",
-            "README.md",
-            "docs/*.md"
-          ],
+          "files": ["CLAUDE.md", "README.md", "docs/*.md"],
           "effort": "M",
           "risk": "NONE"
         },
@@ -243,10 +233,7 @@
           "priority": "P1",
           "title": "Create TenantService",
           "description": "Extract tenant operations from routes into dedicated service",
-          "files": [
-            "server/src/services/tenant.service.ts (new)",
-            "server/src/di.ts"
-          ],
+          "files": ["server/src/services/tenant.service.ts (new)", "server/src/di.ts"],
           "effort": "M",
           "risk": "MEDIUM"
         },
@@ -277,10 +264,7 @@
           "priority": "P1",
           "title": "UploadService to DI pattern",
           "description": "Remove singleton, inject via DI container",
-          "files": [
-            "server/src/services/upload.service.ts",
-            "server/src/di.ts"
-          ],
+          "files": ["server/src/services/upload.service.ts", "server/src/di.ts"],
           "effort": "M",
           "risk": "MEDIUM"
         },
@@ -289,10 +273,7 @@
           "priority": "P1",
           "title": "Implement domain lookup endpoint",
           "description": "Complete TODO-285 for custom domain resolution",
-          "files": [
-            "server/src/routes/public-tenant.routes.ts",
-            "apps/web/src/lib/tenant.ts"
-          ],
+          "files": ["server/src/routes/public-tenant.routes.ts", "apps/web/src/lib/tenant.ts"],
           "effort": "M",
           "risk": "MEDIUM"
         },
@@ -313,10 +294,7 @@
           "priority": "P2",
           "title": "Extract email templates",
           "description": "Move inline HTML templates from auth.routes.ts to template files",
-          "files": [
-            "server/src/routes/auth.routes.ts",
-            "server/src/templates/emails/ (new)"
-          ],
+          "files": ["server/src/routes/auth.routes.ts", "server/src/templates/emails/ (new)"],
           "effort": "M",
           "risk": "LOW"
         },
@@ -335,10 +313,7 @@
           "priority": "P1",
           "title": "Add Next.js deployment workflow",
           "description": "Create deployment pipeline for apps/web",
-          "files": [
-            ".github/workflows/deploy-nextjs.yml (new)",
-            "apps/web/vercel.json (new)"
-          ],
+          "files": [".github/workflows/deploy-nextjs.yml (new)", "apps/web/vercel.json (new)"],
           "effort": "M",
           "risk": "LOW"
         }
@@ -374,10 +349,7 @@
           "priority": "P1",
           "title": "Fix ESLint errors",
           "description": "Address 900+ pre-existing lint errors and remove continue-on-error",
-          "files": [
-            "server/src/**/*.ts",
-            ".github/workflows/main-pipeline.yml"
-          ],
+          "files": ["server/src/**/*.ts", ".github/workflows/main-pipeline.yml"],
           "effort": "L",
           "risk": "MEDIUM"
         },
@@ -386,10 +358,7 @@
           "priority": "P2",
           "title": "Consolidate landing page transformation",
           "description": "Single source of truth for legacy->pages migration",
-          "files": [
-            "apps/web/src/lib/tenant.ts",
-            "server/src/services/landing-page.service.ts"
-          ],
+          "files": ["apps/web/src/lib/tenant.ts", "server/src/services/landing-page.service.ts"],
           "effort": "M",
           "risk": "MEDIUM"
         },

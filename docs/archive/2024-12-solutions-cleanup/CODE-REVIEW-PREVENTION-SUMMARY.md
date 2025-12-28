@@ -17,6 +17,7 @@ Generated prevention strategies based on code review findings P348-350.
 Four comprehensive prevention documents to prevent recurrence of code review findings:
 
 ### 1. Quick Checklist (2 min read)
+
 **[CODE-REVIEW-PREVENTION-QUICK-CHECKLIST.md](CODE-REVIEW-PREVENTION-QUICK-CHECKLIST.md)**
 
 Print and pin at your desk. Use during every code review.
@@ -27,6 +28,7 @@ Print and pin at your desk. Use during every code review.
 - 30-second approval criteria
 
 ### 2. Detailed Strategies (10-15 min read)
+
 **[CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md](CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md)**
 
 Full explanation of each issue with decision trees and prevention strategies.
@@ -37,6 +39,7 @@ Full explanation of each issue with decision trees and prevention strategies.
 - Red flags and terminal commands
 
 ### 3. Implementation Patterns (Reference)
+
 **[IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md](IMPLEMENTATION-PATTERNS-NAMING-ERRORS-REACT.md)**
 
 Complete working examples ready to use.
@@ -47,6 +50,7 @@ Complete working examples ready to use.
 - Before/after comparisons
 
 ### 4. Index & Navigation (This)
+
 **[CODE-REVIEW-PREVENTION-INDEX.md](CODE-REVIEW-PREVENTION-INDEX.md)**
 
 Complete reference and quick links.
@@ -101,8 +105,8 @@ Use generic messages for clients, log sensitive details separately:
 
 ```typescript
 // ✅ CORRECT
-throw new PackageNotAvailableError();  // Generic message
-logger.warn('Package not found', { packageId, tenantId });  // Details logged
+throw new PackageNotAvailableError(); // Generic message
+logger.warn('Package not found', { packageId, tenantId }); // Details logged
 ```
 
 **Prevention Strategy:** [See Section 2 in Prevention Strategies](CODE-REVIEW-PREVENTION-STRATEGIES-P348-350.md#2-error-message-security-prevention-p349-info-disclosure)
@@ -251,8 +255,8 @@ Approve code when **ALL** of these are true:
 try {
   await service.doSomething();
 } catch (error) {
-  logger.error('Error details', { sensitive: true });  // ← Log
-  return { status: 500, body: { error: 'Something went wrong' } };  // ← Generic
+  logger.error('Error details', { sensitive: true }); // ← Log
+  return { status: 500, body: { error: 'Something went wrong' } }; // ← Generic
 }
 ```
 
@@ -307,15 +311,15 @@ A: Every time the component renders, module-level constants are reused. In-rende
 
 Stop and investigate if you see:
 
-| Flag | Why It Matters | Reference |
-|------|---|---|
-| `packageId` used as route param | Doesn't match API contract | P348 |
-| Error includes database ID | Security vulnerability | P349 |
-| Error reveals schema/columns | Security vulnerability | P349 |
-| Object created in render | Breaks memo optimization | P350 |
-| Memo on primitive-only component | Waste of optimization | P350 |
-| Magic number/string in 2+ files | Maintenance issue | P3 |
-| Unused imports | Code quality | P3 |
+| Flag                             | Why It Matters             | Reference |
+| -------------------------------- | -------------------------- | --------- |
+| `packageId` used as route param  | Doesn't match API contract | P348      |
+| Error includes database ID       | Security vulnerability     | P349      |
+| Error reveals schema/columns     | Security vulnerability     | P349      |
+| Object created in render         | Breaks memo optimization   | P350      |
+| Memo on primitive-only component | Waste of optimization      | P350      |
+| Magic number/string in 2+ files  | Maintenance issue          | P3        |
+| Unused imports                   | Code quality               | P3        |
 
 ---
 
@@ -422,12 +426,12 @@ If you're unsure:
 
 ## Prevention Strategies Generated
 
-| Issue | Priority | Document | Status |
-|-------|----------|----------|--------|
-| P1-348: Naming confusion | P1 | PREVENTION-STRATEGIES-P348-350 | Complete |
-| P2-349: Error info disclosure | P2 | PREVENTION-STRATEGIES-P348-350 | Complete |
-| P2-350: React performance | P2 | PREVENTION-STRATEGIES-P348-350 | Complete |
-| P3-352-356: Code cleanup | P3 | PREVENTION-QUICK-CHECKLIST | Complete |
+| Issue                         | Priority | Document                       | Status   |
+| ----------------------------- | -------- | ------------------------------ | -------- |
+| P1-348: Naming confusion      | P1       | PREVENTION-STRATEGIES-P348-350 | Complete |
+| P2-349: Error info disclosure | P2       | PREVENTION-STRATEGIES-P348-350 | Complete |
+| P2-350: React performance     | P2       | PREVENTION-STRATEGIES-P348-350 | Complete |
+| P3-352-356: Code cleanup      | P3       | PREVENTION-QUICK-CHECKLIST     | Complete |
 
 **Total Documents Created:** 4
 

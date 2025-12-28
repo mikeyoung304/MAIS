@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p2
-issue_id: "402"
+issue_id: '402'
 tags:
   - security
   - cors
@@ -14,6 +14,7 @@ dependencies: []
 ## Problem Statement
 
 Two security concerns identified in the API layer:
+
 1. CORS allows all HTTPS origins in production
 2. No CSRF protection for state-changing operations
 
@@ -39,10 +40,12 @@ Two security concerns identified in the API layer:
 **Location:** Throughout Express API
 
 The API uses Bearer token authentication but lacks CSRF protection for state-changing operations. While Bearer tokens aren't automatically sent like cookies, the architecture could be vulnerable if:
+
 - JWT is stored in localStorage (XSS can steal it)
 - Session tokens are added via cookies in future
 
 **Current Mitigations:**
+
 - JWT-based auth (not cookie-based)
 - SameSite cookies for NextAuth session
 - Rate limiting on sensitive endpoints
@@ -52,6 +55,7 @@ The API uses Bearer token authentication but lacks CSRF protection for state-cha
 ### For CORS:
 
 #### Option 1: Tenant-based CORS allowlist (Recommended)
+
 - Each tenant registers their embedding domains
 - Dynamic CORS validation against tenant domain list
 
@@ -61,6 +65,7 @@ The API uses Bearer token authentication but lacks CSRF protection for state-cha
 **Risk:** Low
 
 #### Option 2: Pattern-based CORS
+
 - Allow specific domain patterns (e.g., `*.maconaisolutions.com`)
 - More restrictive than current
 
@@ -72,6 +77,7 @@ The API uses Bearer token authentication but lacks CSRF protection for state-cha
 ### For CSRF:
 
 #### Option 1: Document current strategy (Recommended for now)
+
 - Formally document that JWT Bearer tokens provide CSRF protection
 - Add CSRF tokens for most sensitive operations (password change, payment)
 
@@ -81,6 +87,7 @@ The API uses Bearer token authentication but lacks CSRF protection for state-cha
 **Risk:** Low
 
 #### Option 2: Full CSRF token implementation
+
 - Add CSRF middleware
 - Include tokens in all state-changing forms
 
@@ -96,6 +103,7 @@ Document CSRF strategy, implement tenant-based CORS when domain management featu
 ## Technical Details
 
 **Files to modify:**
+
 - `server/src/app.ts` - CORS configuration
 - Create `docs/security/CSRF_STRATEGY.md` - Document current approach
 
@@ -107,10 +115,10 @@ Document CSRF strategy, implement tenant-based CORS when domain management featu
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-25 | Created from security audit | Balance between security and widget embedding needs |
-| 2025-12-25 | **Approved for work** - Status: ready | P2 - Documentation task |
+| Date       | Action                                | Learnings                                           |
+| ---------- | ------------------------------------- | --------------------------------------------------- |
+| 2025-12-25 | Created from security audit           | Balance between security and widget embedding needs |
+| 2025-12-25 | **Approved for work** - Status: ready | P2 - Documentation task                             |
 
 ## Resources
 

@@ -74,11 +74,13 @@ Result: 1-3 concurrent connections, ~12 min runtime
 ### New Files
 
 **`server/test/helpers/global-prisma.ts`** (92 lines)
+
 - Singleton factory function
 - Connection limit: 3, timeout: 5s
 - Process cleanup on exit
 
 **`server/test/helpers/vitest-global-teardown.ts`** (15 lines)
+
 - Global teardown hook
 - Runs after all tests complete
 - Disconnects singleton
@@ -86,6 +88,7 @@ Result: 1-3 concurrent connections, ~12 min runtime
 ### Modified Files
 
 **`server/vitest.config.ts`**
+
 ```typescript
 test: {
   fileParallelism: false,        // One file at a time
@@ -96,6 +99,7 @@ test: {
 ```
 
 **All test files in `server/test/`**
+
 ```typescript
 // Before: const prisma = new PrismaClient();
 // After:  const prisma = getTestPrisma();
@@ -106,38 +110,43 @@ test: {
 
 ## Results
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|------------|
-| Duration | 20-30+ min (hanging) | ~12 min | 2.5-3x faster |
-| Tests | 1,178 | 1,178 | Same |
-| Connections | 22+ concurrent | 3 max | 7x reduction |
-| Memory | 1.1 GB | 50 MB | 95% reduction |
-| Pool errors | Frequent | 0 | 100% fixed |
+| Metric      | Before               | After   | Improvement   |
+| ----------- | -------------------- | ------- | ------------- |
+| Duration    | 20-30+ min (hanging) | ~12 min | 2.5-3x faster |
+| Tests       | 1,178                | 1,178   | Same          |
+| Connections | 22+ concurrent       | 3 max   | 7x reduction  |
+| Memory      | 1.1 GB               | 50 MB   | 95% reduction |
+| Pool errors | Frequent             | 0       | 100% fixed    |
 
 ---
 
 ## Implementation Checklist
 
 ### Phase 1: Create Helpers (20 min)
+
 - [ ] Create `test/helpers/global-prisma.ts`
 - [ ] Create `test/helpers/vitest-global-teardown.ts`
 
 ### Phase 2: Configure Vitest (15 min)
+
 - [ ] Update `vitest.config.ts` with globalTeardown
 - [ ] Add fileParallelism: false
 - [ ] Add singleThread: true
 - [ ] Add timeouts (30s test, 10s hooks)
 
 ### Phase 3: Update Tests (1 hour)
+
 - [ ] Find all: `grep -r "new PrismaClient" test/`
 - [ ] Update all test files with getTestPrisma()
 - [ ] Remove afterAll disconnect calls
 
 ### Phase 4: Configure Environment (10 min)
+
 - [ ] Update DATABASE_URL with connection_limit=3
 - [ ] Add pool_timeout=5, connect_timeout=5
 
 ### Phase 5: Verify (15 min)
+
 - [ ] npm test completes successfully
 - [ ] Check duration (should be < 15 min)
 - [ ] Verify no "MaxClientsInSessionMode" errors
@@ -178,6 +187,7 @@ time npm test
 ### Pool Errors ("MaxClientsInSessionMode")
 
 This means someone created a new PrismaClient:
+
 ```bash
 grep -r "new PrismaClient" server/test
 ```
@@ -185,11 +195,13 @@ grep -r "new PrismaClient" server/test
 ### Process Won't Exit
 
 Check global teardown is configured:
+
 ```bash
 npm test 2>&1 | grep "Global teardown"
 ```
 
 Should see:
+
 ```
 [vitest] Global teardown: disconnecting Prisma...
 [vitest] Global teardown complete
@@ -202,16 +214,19 @@ Should see:
 **Commit:** 166d902e18d6f83bc3d6a59742599f650a7182ce
 
 ### Created (2 files)
+
 - server/test/helpers/global-prisma.ts
 - server/test/helpers/vitest-global-teardown.ts
 
 ### Modified (3 files + 22 test files)
+
 - server/vitest.config.ts
 - server/test/helpers/integration-setup.ts
 - .env (DATABASE_URL parameters)
 - 22 test files (use getTestPrisma)
 
 ### Bonus Cleanup
+
 - 5 React hooks violations fixed
 - 68 unused variable errors fixed
 - ESLint configuration updated
@@ -225,6 +240,7 @@ Should see:
 **Start here:** TEST_POOL_QUICK_REFERENCE.md
 
 Read the:
+
 - 30-second problem explanation
 - Before/after code
 - Quick checklist
@@ -239,6 +255,7 @@ Keep at your desk for daily reference.
 **Start here:** TEST_CONNECTION_POOL_EXHAUSTION_SOLUTION.md
 
 Review the:
+
 - Root cause analysis
 - Solution architecture
 - Results and metrics
@@ -254,6 +271,7 @@ Share with team during technical discussions.
 **Start here:** TEST_POOL_IMPLEMENTATION_GUIDE.md
 
 Follow the:
+
 - 6-phase walkthrough
 - Copy-paste code blocks
 - Migration script
@@ -278,6 +296,7 @@ grep -r "afterAll.*disconnect" test/
 ```
 
 **Configuration should have:**
+
 - vitest.config.ts: fileParallelism: false
 - vitest.config.ts: singleThread: true
 - DATABASE_URL: connection_limit=3
@@ -304,8 +323,8 @@ One test file at a time, not parallel:
 
 ```typescript
 // vitest.config.ts
-fileParallelism: false  // Sequential, not parallel
-singleThread: true      // Single thread, not thread pool
+fileParallelism: false; // Sequential, not parallel
+singleThread: true; // Single thread, not thread pool
 ```
 
 ### Connection Limits
@@ -324,7 +343,7 @@ Cleanup happens once after all tests:
 
 ```typescript
 // vitest.config.ts
-globalTeardown: ['./test/helpers/vitest-global-teardown.ts']
+globalTeardown: ['./test/helpers/vitest-global-teardown.ts'];
 
 // This runs AFTER all tests complete
 // Disconnects the singleton PrismaClient
@@ -376,6 +395,7 @@ grep -r "afterAll.*disconnect" server/test && exit 1 || true
 ### Monitoring
 
 Monthly checks:
+
 - Test duration (should stay < 15 min)
 - Memory usage (should stay < 100 MB)
 - Pool error count (should be 0)
@@ -408,14 +428,14 @@ A: No. Replace `new PrismaClient()` with `getTestPrisma()` and remove disconnect
 
 ## Implementation Timeline
 
-| Phase | Time | What |
-|-------|------|------|
-| 1 | 20 min | Create singleton helpers |
-| 2 | 15 min | Update vitest config |
-| 3 | 1 hour | Update test files |
-| 4 | 10 min | Configure DATABASE_URL |
-| 5 | 15 min | Test and measure |
-| 6 | variable | Troubleshoot if needed |
+| Phase | Time     | What                     |
+| ----- | -------- | ------------------------ |
+| 1     | 20 min   | Create singleton helpers |
+| 2     | 15 min   | Update vitest config     |
+| 3     | 1 hour   | Update test files        |
+| 4     | 10 min   | Configure DATABASE_URL   |
+| 5     | 15 min   | Test and measure         |
+| 6     | variable | Troubleshoot if needed   |
 
 **Total: 2 hours for greenfield project**
 
@@ -423,14 +443,14 @@ A: No. Replace `new PrismaClient()` with `getTestPrisma()` and remove disconnect
 
 ## Summary
 
-| Item | Details |
-|------|---------|
-| Problem | Tests hanging due to connection pool exhaustion |
+| Item       | Details                                                        |
+| ---------- | -------------------------------------------------------------- |
+| Problem    | Tests hanging due to connection pool exhaustion                |
 | Root Cause | 22 test files × 1 new PrismaClient = 22 concurrent connections |
-| Solution | Global singleton with serial execution |
-| Result | 1,178 tests in ~12 minutes |
-| Status | Implemented & verified in production |
-| Commit | 166d902e18d6f83bc3d6a59742599f650a7182ce |
+| Solution   | Global singleton with serial execution                         |
+| Result     | 1,178 tests in ~12 minutes                                     |
+| Status     | Implemented & verified in production                           |
+| Commit     | 166d902e18d6f83bc3d6a59742599f650a7182ce                       |
 
 ---
 

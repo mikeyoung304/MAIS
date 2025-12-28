@@ -19,9 +19,7 @@ export default function ServicesError({
     <div id="main-content" className="flex min-h-[60vh] items-center justify-center">
       <div className="text-center space-y-4 p-8">
         <h1 className="text-2xl font-bold text-text-primary">Something went wrong</h1>
-        <p className="text-text-muted">
-          We couldn&apos;t load our services. Please try again.
-        </p>
+        <p className="text-text-muted">We couldn&apos;t load our services. Please try again.</p>
         <Button onClick={reset} variant="sage">
           Try again
         </Button>

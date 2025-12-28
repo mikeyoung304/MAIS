@@ -138,11 +138,7 @@ export class AuditService {
   /**
    * Get audit logs for a session
    */
-  async getSessionLogs(
-    tenantId: string,
-    sessionId: string,
-    limit = 50
-  ): Promise<AuditLogEntry[]> {
+  async getSessionLogs(tenantId: string, sessionId: string, limit = 50): Promise<AuditLogEntry[]> {
     const logs = await this.prisma.agentAuditLog.findMany({
       where: {
         tenantId,
@@ -237,10 +233,7 @@ export class AuditService {
     });
 
     if (result.count > 0) {
-      logger.info(
-        { count: result.count, retentionDays },
-        'Old audit logs cleaned up'
-      );
+      logger.info({ count: result.count, retentionDays }, 'Old audit logs cleaned up');
     }
 
     return result.count;

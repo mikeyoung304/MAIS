@@ -15,13 +15,13 @@ This plan consolidates all tenant admin features into Next.js App Router, elimin
 
 ### Current Broken Flows
 
-| Issue | Severity | Impact |
-|-------|----------|--------|
-| Dashboard "Edit Landing Page" button → 404 | P0 | Tenant admins cannot access page editor |
-| `/tenant/pages` not in sidebar navigation | P1 | Multi-page toggle UI is undiscoverable |
-| No visual section editor in Next.js | P1 | Must use legacy Vite client |
-| No draft/publish workflow | P2 | Changes go live immediately without preview |
-| No section reordering | P2 | Must delete and recreate to reorder |
+| Issue                                      | Severity | Impact                                      |
+| ------------------------------------------ | -------- | ------------------------------------------- |
+| Dashboard "Edit Landing Page" button → 404 | P0       | Tenant admins cannot access page editor     |
+| `/tenant/pages` not in sidebar navigation  | P1       | Multi-page toggle UI is undiscoverable      |
+| No visual section editor in Next.js        | P1       | Must use legacy Vite client                 |
+| No draft/publish workflow                  | P2       | Changes go live immediately without preview |
+| No section reordering                      | P2       | Must delete and recreate to reorder         |
 
 ### Architecture Misalignment
 
@@ -120,6 +120,7 @@ apps/web/src/
 **Goal:** Eliminate 404 error, make multi-page UI discoverable
 
 **Tasks:**
+
 - [ ] Change dashboard quick action from `/tenant/landing-page` → `/tenant/pages`
   - File: `apps/web/src/app/(protected)/tenant/dashboard/page.tsx:152`
 - [ ] Add "Pages" to AdminSidebar navigation
@@ -128,6 +129,7 @@ apps/web/src/
   - File: `apps/web/src/app/(protected)/tenant/landing-page/page.tsx` (new)
 
 **Acceptance Criteria:**
+
 - [ ] Dashboard "Edit Landing Page" button loads `/tenant/pages`
 - [ ] Sidebar shows "Pages" link with icon
 - [ ] Direct navigation to `/tenant/landing-page` redirects to `/tenant/pages`
@@ -139,6 +141,7 @@ apps/web/src/
 **Goal:** Polish the existing page toggle UI
 
 **Tasks:**
+
 - [ ] Add page preview links (eye icon → opens `/t/[slug]/[pageType]`)
 - [ ] Add "Edit Sections" button per page → `/tenant/pages/[pageType]`
 - [ ] Add section count badge per page
@@ -146,6 +149,7 @@ apps/web/src/
 - [ ] Add mobile-responsive layout adjustments
 
 **Acceptance Criteria:**
+
 - [ ] Each page row shows: name, description, section count, toggle, edit button
 - [ ] Clicking edit navigates to section editor (Phase 3)
 - [ ] Empty state shows helpful guidance
@@ -157,6 +161,7 @@ apps/web/src/
 **Goal:** Form-based section editing with inline preview
 
 **Tasks:**
+
 - [ ] Create `/tenant/pages/[pageType]/page.tsx` route
 - [ ] Build section list component with add/remove buttons
 - [ ] Create editor components for each section type:
@@ -171,6 +176,7 @@ apps/web/src/
 - [ ] Add save/cancel actions with confirmation
 
 **File Structure:**
+
 ```typescript
 // apps/web/src/app/(protected)/tenant/pages/[pageType]/page.tsx
 export default async function PageEditorPage({ params }: Props) {
@@ -187,6 +193,7 @@ export default async function PageEditorPage({ params }: Props) {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Can add/remove sections from any page
 - [ ] Each section type has working form
 - [ ] Validation errors shown inline
@@ -199,11 +206,13 @@ export default async function PageEditorPage({ params }: Props) {
 **Goal:** Easy access to preview changes on live storefront
 
 **Tasks:**
+
 - [ ] Add "Open Preview" button that opens `/t/[slug]/[pageType]` in new tab
 - [ ] Add visual indicator showing last saved timestamp
 - [ ] Ensure preview reflects saved state accurately
 
 **Acceptance Criteria:**
+
 - [ ] "Open Preview" button opens storefront in new tab
 - [ ] Preview shows saved content (not unsaved edits)
 - [ ] Clear UX that preview shows saved state
@@ -217,6 +226,7 @@ export default async function PageEditorPage({ params }: Props) {
 **Goal:** Intuitive section reordering
 
 **Tasks:**
+
 - [ ] Install `@hello-pangea/dnd` package
 - [ ] Wrap section list with DragDropContext
 - [ ] Add drag handle UI to each section card
@@ -224,6 +234,7 @@ export default async function PageEditorPage({ params }: Props) {
 - [ ] Persist order on drag end
 
 **Acceptance Criteria:**
+
 - [ ] Sections reorderable via drag handle
 - [ ] Works on mobile (touch)
 - [ ] Order persists on save
@@ -236,12 +247,14 @@ export default async function PageEditorPage({ params }: Props) {
 **Goal:** Industry-standard content management workflow with preview before publish
 
 **Rationale:** Every major CMS (WordPress, Contentful, Sanity, Strapi) implements draft/publish workflows. This is table-stakes for professional content management:
+
 - Prevents accidental publication of incomplete changes
 - Enables review workflows (future: team approvals)
 - Provides rollback capability
 - Builds user confidence in making changes
 
 **Tasks:**
+
 - [ ] Wire Next.js API routes to existing draft endpoints
 - [ ] Create `DraftStatusBanner` component showing draft vs published state
 - [ ] Add "Save Draft" (primary) and "Publish" (secondary) buttons
@@ -250,6 +263,7 @@ export default async function PageEditorPage({ params }: Props) {
 - [ ] Add "Revert to Published" action
 
 **Backend Endpoints (already implemented):**
+
 ```
 GET  /v1/tenant-admin/landing-page/draft   → Get draft + published
 PUT  /v1/tenant-admin/landing-page/draft   → Save draft (auto-save target)
@@ -258,6 +272,7 @@ DELETE /v1/tenant-admin/landing-page/draft → Discard draft
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All edits save as draft automatically (debounced auto-save)
 - [ ] Clear visual distinction between draft and published state
 - [ ] "Publish" button makes draft live with confirmation
@@ -265,6 +280,7 @@ DELETE /v1/tenant-admin/landing-page/draft → Discard draft
 - [ ] Storefront only shows published content (never draft)
 
 **Auto-Save Pattern (Industry Standard):**
+
 ```typescript
 // Debounced auto-save to draft - no manual "Save" button needed
 const debouncedSave = useDebouncedCallback(
@@ -283,12 +299,14 @@ const debouncedSave = useDebouncedCallback(
 **Goal:** Clean migration path from Vite client to Next.js admin
 
 **Rationale:** Industry best practice is to have explicit deprecation timelines. Dual systems create:
+
 - Developer confusion about which to modify
 - Maintenance burden (bug fixes in two places)
 - User confusion (different UX patterns)
 - Technical debt accumulation
 
 **Tasks:**
+
 - [ ] Add deprecation banner to Vite client: "This admin interface is deprecated. Please use [link to Next.js admin]"
 - [ ] Redirect Vite `/tenant/landing-page` to Next.js equivalent
 - [ ] Document migration guide for any remaining Vite-only features
@@ -296,6 +314,7 @@ const debouncedSave = useDebouncedCallback(
 - [ ] Update `ARCHITECTURE.md` to reflect consolidated admin
 
 **Acceptance Criteria:**
+
 - [ ] Users accessing Vite admin see clear deprecation notice
 - [ ] All admin routes have Next.js equivalents
 - [ ] Removal timeline documented (30 days after Phase 6 ships)
@@ -306,20 +325,21 @@ const debouncedSave = useDebouncedCallback(
 
 **Issue Identified:** Legacy Vite editor uses 9 section types, new system uses 7.
 
-| Legacy (Vite) | New (Next.js) | Migration |
-|---------------|---------------|-----------|
-| `hero` | `hero` | Direct mapping |
-| `about` | `text` | Rename, same structure |
-| `testimonials` | `testimonials` | Direct mapping |
-| `gallery` | `gallery` | Direct mapping |
-| `faq` | `faq` | Direct mapping |
-| `finalCta` | `cta` | Rename, same structure |
-| `contact` | `contact` | Direct mapping |
-| `socialProofBar` | (defer) | Low usage, add if requested |
+| Legacy (Vite)     | New (Next.js)    | Migration                    |
+| ----------------- | ---------------- | ---------------------------- |
+| `hero`            | `hero`           | Direct mapping               |
+| `about`           | `text`           | Rename, same structure       |
+| `testimonials`    | `testimonials`   | Direct mapping               |
+| `gallery`         | `gallery`        | Direct mapping               |
+| `faq`             | `faq`            | Direct mapping               |
+| `finalCta`        | `cta`            | Rename, same structure       |
+| `contact`         | `contact`        | Direct mapping               |
+| `socialProofBar`  | (defer)          | Low usage, add if requested  |
 | `segmentSelector` | (auto-generated) | Not editable, system-managed |
-| `accommodation` | `text` | Merge into text section |
+| `accommodation`   | `text`           | Merge into text section      |
 
 **Migration Strategy:**
+
 1. `normalizeToPages()` in `apps/web/src/lib/tenant.ts` handles translation
 2. New section editor supports 7 types
 3. Legacy types auto-map on read, save as new types on write
@@ -372,12 +392,12 @@ const debouncedSave = useDebouncedCallback(
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| 404 errors on landing-page | 0 | Error monitoring |
-| Page editor adoption | 80% of active tenants | Feature usage analytics |
-| Time to first edit | <30s | User session tracking |
-| Publish success rate | >99% | API success metrics |
+| Metric                     | Target                | Measurement             |
+| -------------------------- | --------------------- | ----------------------- |
+| 404 errors on landing-page | 0                     | Error monitoring        |
+| Page editor adoption       | 80% of active tenants | Feature usage analytics |
+| Time to first edit         | <30s                  | User session tracking   |
+| Publish success rate       | >99%                  | API success metrics     |
 
 ## Dependencies & Prerequisites
 
@@ -389,29 +409,30 @@ const debouncedSave = useDebouncedCallback(
 
 ## Risk Analysis & Mitigation
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Breaking existing storefronts | Medium | High | Feature flags, incremental rollout |
-| Data loss during edit | Medium | High | Auto-save + localStorage backup |
-| XSS vulnerabilities | Low | Critical | DOMPurify sanitization, CSP headers |
-| Tenant data leakage | Low | Critical | Mandatory tenantId filtering |
-| Mobile UX issues | High | Medium | Mobile-first design, early testing |
+| Risk                          | Likelihood | Impact   | Mitigation                          |
+| ----------------------------- | ---------- | -------- | ----------------------------------- |
+| Breaking existing storefronts | Medium     | High     | Feature flags, incremental rollout  |
+| Data loss during edit         | Medium     | High     | Auto-save + localStorage backup     |
+| XSS vulnerabilities           | Low        | Critical | DOMPurify sanitization, CSP headers |
+| Tenant data leakage           | Low        | Critical | Mandatory tenantId filtering        |
+| Mobile UX issues              | High       | Medium   | Mobile-first design, early testing  |
 
 ## Resource Requirements
 
 **Estimated Total Effort:** 48 hours
 
-| Phase | Hours | Priority | Dependency |
-|-------|-------|----------|------------|
-| Phase 1: Fix Navigation | 2 | P0 | None |
-| Phase 2: Page Management | 4 | P1 | Phase 1 |
-| Phase 3: Section Editor (7 types) | 16 | P1 | Phase 2 |
-| Phase 4: Preview Integration | 2 | P2 | Phase 3 |
-| Phase 5: Drag-and-Drop | 8 | P2 | Phase 3 |
-| Phase 6: Draft/Publish | 12 | P2 | Phase 3 |
-| Phase 7: Legacy Deprecation | 4 | P3 | Phase 6 |
+| Phase                             | Hours | Priority | Dependency |
+| --------------------------------- | ----- | -------- | ---------- |
+| Phase 1: Fix Navigation           | 2     | P0       | None       |
+| Phase 2: Page Management          | 4     | P1       | Phase 1    |
+| Phase 3: Section Editor (7 types) | 16    | P1       | Phase 2    |
+| Phase 4: Preview Integration      | 2     | P2       | Phase 3    |
+| Phase 5: Drag-and-Drop            | 8     | P2       | Phase 3    |
+| Phase 6: Draft/Publish            | 12    | P2       | Phase 3    |
+| Phase 7: Legacy Deprecation       | 4     | P3       | Phase 6    |
 
 **Recommended Execution:**
+
 - **Week 1:** Phases 1-2 (6 hours) - Ship immediately, fix P0
 - **Week 2-3:** Phase 3 (16 hours) - Core editor functionality
 - **Week 4:** Phases 4-5 (10 hours) - UX polish
@@ -436,6 +457,7 @@ const debouncedSave = useDebouncedCallback(
 ## References & Research
 
 ### Internal References
+
 - Legacy editor: `client/src/features/tenant-admin/landing-page-editor/`
 - Current page toggles: `apps/web/src/app/(protected)/tenant/pages/page.tsx`
 - Section schemas: `packages/contracts/src/landing-page.ts`
@@ -444,6 +466,7 @@ const debouncedSave = useDebouncedCallback(
 - Sidebar navigation: `apps/web/src/components/layouts/AdminSidebar.tsx:31`
 
 ### External References
+
 - [Next.js App Router Docs](https://nextjs.org/docs/app)
 - [hello-pangea/dnd](https://github.com/hello-pangea/dnd) (Trello-style DnD, a11y-first)
 - [React Hook Form](https://react-hook-form.com/) (form handling)
@@ -452,6 +475,7 @@ const debouncedSave = useDebouncedCallback(
 - [Sanity.io Content Workflow](https://www.sanity.io/docs/workflow) (industry reference)
 
 ### Related Work
+
 - ADR-014: Next.js App Router Migration
 - docs/design/BRAND_VOICE_GUIDE.md (UI/UX standards)
 - docs/solutions/nextjs-migration-lessons-learned (migration patterns)
@@ -464,22 +488,22 @@ This plan was reviewed by three perspectives and refined accordingly:
 
 ### Changes Made Based on Review
 
-| Feedback | Action Taken |
-|----------|--------------|
-| "Live preview is over-engineered" | Replaced with "Open Preview" button (Phase 4: 8h → 2h) |
-| "Section type mismatch (9 vs 7)" | Added Section Type Alignment Strategy section |
-| "Missing legacy deprecation timeline" | Added Phase 7: Legacy Deprecation |
-| "Draft/Publish needs industry rationale" | Added CMS comparison and auto-save pattern |
+| Feedback                                         | Action Taken                                                |
+| ------------------------------------------------ | ----------------------------------------------------------- |
+| "Live preview is over-engineered"                | Replaced with "Open Preview" button (Phase 4: 8h → 2h)      |
+| "Section type mismatch (9 vs 7)"                 | Added Section Type Alignment Strategy section               |
+| "Missing legacy deprecation timeline"            | Added Phase 7: Legacy Deprecation                           |
+| "Draft/Publish needs industry rationale"         | Added CMS comparison and auto-save pattern                  |
 | "Drag-and-drop should use best-in-class library" | Confirmed hello-pangea/dnd (Atlassian heritage, a11y-first) |
 
 ### Feedback Intentionally Not Applied
 
-| Feedback | Reason |
-|----------|--------|
-| "Start with 3 editors instead of 7" | Quality over speed - complete feature set preferred |
-| "Use up/down buttons instead of DnD" | DnD is industry standard, better UX, worth the investment |
-| "Skip draft/publish for MVP" | Industry best practice for CMS, backend already implemented |
-| "50h → 8h reduction" | Quality and scalability prioritized over minimal implementation |
+| Feedback                             | Reason                                                          |
+| ------------------------------------ | --------------------------------------------------------------- |
+| "Start with 3 editors instead of 7"  | Quality over speed - complete feature set preferred             |
+| "Use up/down buttons instead of DnD" | DnD is industry standard, better UX, worth the investment       |
+| "Skip draft/publish for MVP"         | Industry best practice for CMS, backend already implemented     |
+| "50h → 8h reduction"                 | Quality and scalability prioritized over minimal implementation |
 
 ### Quality Principles Applied
 

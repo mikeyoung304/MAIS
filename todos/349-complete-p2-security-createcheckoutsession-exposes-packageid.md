@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p2
-issue_id: "349"
+issue_id: '349'
 tags: [code-review, security, information-disclosure]
-dependencies: ["345"]
+dependencies: ['345']
 ---
 
 # Security: createCheckoutSession Still Exposes Package ID
@@ -28,6 +28,7 @@ throw new NotFoundError(`Package ${input.packageId} not found`);
 ## Proposed Solutions
 
 ### Option A: Apply P2-345 pattern (Recommended)
+
 - **Pros:** Consistent with other methods, follows security best practice
 - **Cons:** Less client-side debugging info
 - **Effort:** Small
@@ -56,8 +57,8 @@ Option A - Apply the same pattern used in P2-345 fix.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                 |
+| ---------- | ------------------------ | ----------------------------------------- |
 | 2024-12-24 | Created from code review | Inconsistency found during security audit |
 
 ## Resources

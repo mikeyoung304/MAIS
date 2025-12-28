@@ -1,6 +1,7 @@
 # Missing Error Boundary for Homepage
 
 ## Metadata
+
 - **ID:** 442
 - **Status:** pending
 - **Priority:** P3
@@ -20,6 +21,7 @@ The homepage route (`/`) has no `error.tsx` error boundary. If the page fails to
 ## Proposed Solutions
 
 ### Option A: Add Simple Error Boundary
+
 Create `apps/web/src/app/error.tsx` with brand-appropriate error message
 
 ```tsx
@@ -59,6 +61,7 @@ export default function Error({
 ## Technical Details
 
 **Files to Create:**
+
 - `apps/web/src/app/error.tsx`
 
 ## Acceptance Criteria
@@ -70,6 +73,6 @@ export default function Error({
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                        |
+| ---------- | ------- | -------------------------------------------- |
 | 2025-12-27 | Created | From brand review - Code Simplicity Reviewer |

@@ -1,6 +1,7 @@
 # Typography Undersized vs Brand Voice Guide
 
 ## Metadata
+
 - **ID:** 436
 - **Status:** pending
 - **Priority:** P2
@@ -13,13 +14,14 @@ The homepage headlines are consistently one size smaller than the Brand Voice Gu
 
 ## Findings
 
-| Element | Current | Brand Guide Spec |
-|---------|---------|------------------|
-| Hero h1 | `text-4xl sm:text-5xl md:text-6xl lg:text-7xl` | `text-5xl sm:text-6xl md:text-7xl lg:text-8xl` |
-| Section h2 | `text-3xl md:text-4xl` | `text-4xl sm:text-5xl md:text-6xl` |
-| Subheadlines | `text-lg` | `text-xl md:text-2xl` |
+| Element      | Current                                        | Brand Guide Spec                               |
+| ------------ | ---------------------------------------------- | ---------------------------------------------- |
+| Hero h1      | `text-4xl sm:text-5xl md:text-6xl lg:text-7xl` | `text-5xl sm:text-6xl md:text-7xl lg:text-8xl` |
+| Section h2   | `text-3xl md:text-4xl`                         | `text-4xl sm:text-5xl md:text-6xl`             |
+| Subheadlines | `text-lg`                                      | `text-xl md:text-2xl`                          |
 
 **Affected Lines in page.tsx:**
+
 - Line 189: Hero headline
 - Lines 254, 284, 351, 374: Section headlines
 - Lines 257, 287: Subheadlines
@@ -27,17 +29,18 @@ The homepage headlines are consistently one size smaller than the Brand Voice Gu
 ## Proposed Solutions
 
 ### Option A: Update to Match Brand Guide (Recommended)
+
 Update all typography to match specifications in `docs/design/BRAND_VOICE_GUIDE.md`
 
 ```tsx
 // Hero
-className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold..."
+className = 'font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold...';
 
 // Sections
-className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold..."
+className = 'font-serif text-4xl sm:text-5xl md:text-6xl font-bold...';
 
 // Subheadlines
-className="text-xl md:text-2xl text-text-muted font-light..."
+className = 'text-xl md:text-2xl text-text-muted font-light...';
 ```
 
 **Pros:** Matches documented standard, stronger visual impact
@@ -46,6 +49,7 @@ className="text-xl md:text-2xl text-text-muted font-light..."
 **Risk:** Low
 
 ### Option B: Update Brand Guide to Match Current
+
 If current sizes were intentional, update the guide to reflect reality.
 
 **Pros:** No code changes
@@ -54,14 +58,17 @@ If current sizes were intentional, update the guide to reflect reality.
 **Risk:** Low
 
 ## Recommended Action
+
 Option A — Update code to match guide
 
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/app/page.tsx` — lines 189, 254, 257, 284, 287, 351, 374
 
 **Changes:**
+
 ```diff
 // Line 189 - Hero
 - text-4xl sm:text-5xl md:text-6xl lg:text-7xl
@@ -86,8 +93,8 @@ Option A — Update code to match guide
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                 |
+| ---------- | ------- | ------------------------------------- |
 | 2025-12-27 | Created | From brand review - Design Specialist |
 
 ## Resources

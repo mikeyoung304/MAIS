@@ -33,10 +33,12 @@ When reviewing a PR that modifies `server/prisma/schema.prisma`:
 ### Code References Updated
 
 - [ ] **All property references updated** in:
+
   ```bash
   # Search for old property name
   rg "oldPropertyName" server/src/
   ```
+
   - [ ] Service files (`*.service.ts`)
   - [ ] Route files (`*.routes.ts`)
   - [ ] Repository implementations (`*.repository.ts`)
@@ -53,12 +55,14 @@ When reviewing a PR that modifies `server/prisma/schema.prisma`:
 ### Type Safety
 
 - [ ] **No new `as any` type assertions** (without justification)
+
   ```bash
   # Check diffs for new 'as any'
   git diff | grep "as any"
   ```
 
 - [ ] **Type assertions explained** if necessary
+
   ```typescript
   // ✅ Good: With explanation
   const mock = {...} as unknown as ServiceType;  // Stub for testing
@@ -68,6 +72,7 @@ When reviewing a PR that modifies `server/prisma/schema.prisma`:
   ```
 
 - [ ] **Type narrowing used** for comparisons
+
   ```typescript
   // ❌ Bad: Direct assertion
   const key = value as keyof typeof obj;
@@ -81,12 +86,14 @@ When reviewing a PR that modifies `server/prisma/schema.prisma`:
 ### TypeScript Checks Pass
 
 - [ ] **TypeScript compiles** without errors
+
   ```bash
   npm run typecheck
   # Should output: "✓ No errors"
   ```
 
 - [ ] **No unused parameters** added
+
   ```bash
   npm run lint
   # Should report no "unused parameter" errors
@@ -107,6 +114,7 @@ When reviewing a PR that modifies seed files:
 ### Environment Variables
 
 - [ ] **All required env vars documented** in seed file header
+
   ```typescript
   /**
    * Requires: ADMIN_EMAIL, ADMIN_DEFAULT_PASSWORD
@@ -114,6 +122,7 @@ When reviewing a PR that modifies seed files:
   ```
 
 - [ ] **Validation exists** for required variables
+
   ```typescript
   if (!adminEmail) {
     throw new Error('ADMIN_EMAIL is required');
@@ -121,6 +130,7 @@ When reviewing a PR that modifies seed files:
   ```
 
 - [ ] **Validation exists** for variable format
+
   ```typescript
   if (!adminEmail.includes('@')) {
     throw new Error(`Invalid ADMIN_EMAIL format: ${adminEmail}`);
@@ -136,16 +146,18 @@ When reviewing a PR that modifies seed files:
 ### Seed Logic
 
 - [ ] **Idempotency checks exist**
+
   ```typescript
   // ✅ Good: Check before creating
   const existing = await db.findUnique({ where: { email } });
-  if (existing) return;  // Skip if already exists
+  if (existing) return; // Skip if already exists
 
   // ❌ Bad: Always creates (will error on re-run)
   const user = await db.create({ data });
   ```
 
 - [ ] **Transaction wrapping** for multi-step operations
+
   ```typescript
   // ✅ Good: All-or-nothing
   await prisma.$transaction(async (tx) => {
@@ -159,6 +171,7 @@ When reviewing a PR that modifies seed files:
   ```
 
 - [ ] **Post-seed verification** (if critical data)
+
   ```typescript
   // ✅ Good: Verify expected state
   const admin = await db.findUnique({ where: { email: adminEmail } });
@@ -186,12 +199,14 @@ When reviewing a PR that modifies seed files:
 ### Logging
 
 - [ ] **Uses `logger` not `console.log`**
+
   ```bash
   # Should be no console.log in seed files
   rg "console\.log" server/prisma/seeds/
   ```
 
 - [ ] **Logs include context** (tenantId, operation, etc.)
+
   ```typescript
   // ✅ Good
   logger.info({ tenantId, count: users.length }, 'Created users');
@@ -207,12 +222,14 @@ When reviewing a PR that modifies seed files:
 ### Build and Test
 
 - [ ] **TypeScript builds** without errors
+
   ```bash
   npm run typecheck
   npm run build
   ```
 
 - [ ] **Existing tests still pass**
+
   ```bash
   npm test
   ```
@@ -225,6 +242,7 @@ When reviewing a PR that modifies seed files:
 ### Consistency
 
 - [ ] **Follows MAIS patterns** from CLAUDE.md
+
   ```bash
   # Spot check against these patterns:
   # - Tenant scoping (all queries filter by tenantId)
@@ -244,6 +262,7 @@ When reviewing a PR that modifies seed files:
 
 - [ ] **Complex logic has comments**
 - [ ] **Why, not what** (explain the intention)
+
   ```typescript
   // ❌ Bad: Explains what code does
   // Increment count
@@ -261,24 +280,28 @@ When reviewing a PR that modifies seed files:
 ### Must Request Changes
 
 - [ ] Property referenced that doesn't exist in schema
+
   ```typescript
   // ❌ Schema has 'heroImage', code uses 'heroImageUrl'
-  segment.heroImageUrl
+  segment.heroImageUrl;
   ```
 
 - [ ] Type assertion bypasses safety without explanation
+
   ```typescript
   // ❌ No justification
   const value = unknown as Type;
   ```
 
 - [ ] Unused parameters (TypeScript should catch, but verify)
+
   ```typescript
   // ❌ Parameter named but never used
-  function process(_id: string) { }  // Lint error
+  function process(_id: string) {} // Lint error
   ```
 
 - [ ] Seed file missing env var validation
+
   ```typescript
   // ❌ No check for ADMIN_EMAIL
   const email = process.env.ADMIN_EMAIL;
@@ -288,7 +311,7 @@ When reviewing a PR that modifies seed files:
 - [ ] Seed file missing documentation
   ```typescript
   // ❌ No comment about ADMIN_EMAIL requirement
-  export async function seedPlatform(db) { }
+  export async function seedPlatform(db) {}
   ```
 
 ### Request Changes If
@@ -330,21 +353,24 @@ When reviewing a PR that modifies seed files:
 
 ### Property Name Mismatch
 
-```markdown
+````markdown
 **Issue:** Property name mismatch
 
 The schema defines `heroImage` but the code references `heroImageUrl`.
 
 **Suggestion:**
+
 ```typescript
 - if (segment.heroImageUrl) {
 -   images.push({ url: segment.heroImageUrl });
 + if (segment.heroImage) {
 +   images.push({ url: segment.heroImage });
 ```
+````
 
 **Why:** Must match schema exactly (no inheritance or computed properties)
-```
+
+````
 
 ### Type Assertion Without Justification
 
@@ -364,10 +390,11 @@ if (normalizedStatus in statuses) {
   const status = normalizedStatus as keyof typeof statuses;
   // Now safe to use
 }
-```
+````
 
 **Why:** Type guards provide runtime safety and prevent runtime errors
-```
+
+````
 
 ### Missing Environment Variable Validation
 
@@ -394,10 +421,11 @@ if (!adminEmail) {
 if (!adminEmail.includes('@')) {
   throw new Error(`Invalid ADMIN_EMAIL format: "${adminEmail}". Must be valid email.`);
 }
-```
+````
 
 **Why:** Clear error messages help developers fix configuration faster
-```
+
+````
 
 ### Seed Not Documented
 
@@ -422,10 +450,11 @@ Add header comment:
  *   ADMIN_EMAIL: Platform admin email (e.g., support@mais.com)
  *   ADMIN_DEFAULT_PASSWORD: Initial password, min 12 chars
  */
-```
+````
 
 **Why:** Helps other developers understand seed purpose and requirements
-```
+
+````
 
 ---
 
@@ -455,7 +484,7 @@ rg "console\.log" server/prisma/seeds/
 
 # Check .env.example updated
 git diff .env.example
-```
+````
 
 ---
 
@@ -478,4 +507,3 @@ git diff .env.example
 5. **Follow up**
    - Verify fixes when author pushes changes
    - Approve when all items resolved
-

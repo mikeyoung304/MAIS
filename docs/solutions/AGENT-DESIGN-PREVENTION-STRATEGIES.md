@@ -28,12 +28,12 @@ This document captures lessons from designing the MAIS three-agent system (Onboa
 
 ### Key Lessons
 
-| Area | Lesson | Result |
-|------|--------|--------|
-| **Security** | System prompts alone aren't controls; use server-side enforcement | 0 data leakage paths |
-| **UX** | Not all operations need confirmation; use trust tiers | No confirmation fatigue |
-| **Simplicity** | Fewer tools > more capabilities; defer features aggressively | 18 tools (down from 43) |
-| **Architecture** | Tools are primitives, not workflows; features are prompts | Easier to test, debug, evolve |
+| Area             | Lesson                                                            | Result                        |
+| ---------------- | ----------------------------------------------------------------- | ----------------------------- |
+| **Security**     | System prompts alone aren't controls; use server-side enforcement | 0 data leakage paths          |
+| **UX**           | Not all operations need confirmation; use trust tiers             | No confirmation fatigue       |
+| **Simplicity**   | Fewer tools > more capabilities; defer features aggressively      | 18 tools (down from 43)       |
+| **Architecture** | Tools are primitives, not workflows; features are prompts         | Easier to test, debug, evolve |
 
 ---
 
@@ -46,6 +46,7 @@ This document captures lessons from designing the MAIS three-agent system (Onboa
 #### Prevention #1: No Tenant ID in System Prompts
 
 **Pitfall:**
+
 ```typescript
 // ❌ WRONG - Tenant ID exposed in prompt
 const prompt = `
@@ -55,15 +56,17 @@ You are helping tenant-${tenantId} manage their business.
 ```
 
 **Prevention:**
+
 ```typescript
 // ✅ CORRECT - ID comes from request context
 async function executeTool(context: AuthContext, tool: ToolCall) {
-  const tenantId = context.tenantId;  // From JWT/session, never user input
+  const tenantId = context.tenantId; // From JWT/session, never user input
   const result = await service.execute(tenantId, tool.input);
 }
 ```
 
 **Checklist:**
+
 - [ ] `tenantId` never appears in system prompt
 - [ ] `tenantId` ALWAYS comes from authenticated request context
 - [ ] All downstream queries filter by `WHERE tenantId = ?`
@@ -72,17 +75,19 @@ async function executeTool(context: AuthContext, tool: ToolCall) {
 #### Prevention #2: Tool-Level Validation
 
 **Pitfall:**
+
 ```typescript
 // ❌ WRONG - Trust user input for tenantId
-async function createPackage(input: { tenantId, name, price }) {
+async function createPackage(input: { tenantId; name; price }) {
   return prisma.package.create({ data: input });
 }
 ```
 
 **Prevention:**
+
 ```typescript
 // ✅ CORRECT - Validate tenantId matches session
-async function createPackage(context: AuthContext, input: { name, price }) {
+async function createPackage(context: AuthContext, input: { name; price }) {
   // 1. Never accept tenantId from input
   // 2. Use authenticated context
   const tenantId = context.tenantId;
@@ -95,12 +100,13 @@ async function createPackage(context: AuthContext, input: { name, price }) {
 
   // 4. Execute with tenant filter
   return prisma.package.create({
-    data: { ...input, tenantId }
+    data: { ...input, tenantId },
   });
 }
 ```
 
 **Checklist:**
+
 - [ ] Every tool validates `context.tenantId` matches operation
 - [ ] Tools NEVER accept `tenantId` as input parameter
 - [ ] Ownership verification before updates/deletes
@@ -109,12 +115,14 @@ async function createPackage(context: AuthContext, input: { name, price }) {
 #### Prevention #3: Audit Trail for All Mutations
 
 **Pitfall:**
+
 ```typescript
 // ❌ WRONG - No record of who made the change
 await packageService.update(packageId, { price: 500 });
 ```
 
 **Prevention:**
+
 ```typescript
 // ✅ CORRECT - Track all agent actions
 interface AuditEntry {
@@ -141,6 +149,7 @@ await auditService.log({
 ```
 
 **Checklist:**
+
 - [ ] All tool calls logged to audit table
 - [ ] Audit entries include: tenantId, agentId, tool name, input, output
 - [ ] Sensitive fields (passwords, keys) NEVER in logs
@@ -161,7 +170,7 @@ const INJECTION_PATTERNS = [
   /system:/i,
   /admin mode/i,
   /bypass/i,
-  /forget/i
+  /forget/i,
 ];
 
 function sanitizeForContext(text: string, maxLength: number = 100): string {
@@ -189,6 +198,7 @@ Description: ${sanitizeForContext(package.description)}
 ```
 
 **Checklist:**
+
 - [ ] All user-controlled fields sanitized before context injection
 - [ ] Injection patterns explicitly defined
 - [ ] Length limits enforced (100-200 chars typical)
@@ -200,6 +210,7 @@ Description: ${sanitizeForContext(package.description)}
 **Pitfall:** Accidentally injecting secrets or sensitive identifiers into system prompts
 
 **Never Inject These:**
+
 - `passwordHash`, `passwordResetToken`, `passwordResetExpires`
 - `apiKeyPublic`, `apiKeySecret`
 - `stripeAccountId`, `stripeWebhookSecret`
@@ -235,6 +246,7 @@ function buildContext(tenant: Tenant): ContextData {
 ```
 
 **Checklist:**
+
 - [ ] Explicit whitelist of safe fields
 - [ ] Secrets NEVER in context (use backend APIs instead)
 - [ ] No password-reset tokens or authentication credentials
@@ -253,11 +265,11 @@ function buildContext(tenant: Tenant): ContextData {
 
 #### Trust Tier System
 
-| Tier | When | Behavior | Examples |
-|------|------|----------|----------|
-| **T1: Automatic** | Safe, easily reversible, no data loss | Execute, report result | Blackouts, branding, file uploads |
-| **T2: Soft Confirm** | Important but reversible | "I'll update X. Say 'wait' if that's wrong" (proceeds after next message) | Package pricing, landing page edits |
-| **T3: Hard Confirm** | Irreversible or requires user commitment | Require explicit "yes"/"confirm"/"do it" | Cancellations, refunds, deletes with bookings |
+| Tier                 | When                                     | Behavior                                                                  | Examples                                      |
+| -------------------- | ---------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------- |
+| **T1: Automatic**    | Safe, easily reversible, no data loss    | Execute, report result                                                    | Blackouts, branding, file uploads             |
+| **T2: Soft Confirm** | Important but reversible                 | "I'll update X. Say 'wait' if that's wrong" (proceeds after next message) | Package pricing, landing page edits           |
+| **T3: Hard Confirm** | Irreversible or requires user commitment | Require explicit "yes"/"confirm"/"do it"                                  | Cancellations, refunds, deletes with bookings |
 
 **Prevention:**
 
@@ -275,7 +287,7 @@ async function executeToolCall(tool: ToolCall, context: AgentContext) {
     // Server creates proposal (soft confirm)
     const proposal = await proposalService.create({
       ...tool,
-      autoConfirmAfter: 1  // One user message
+      autoConfirmAfter: 1, // One user message
     });
     // Agent shows proposal, proceeds unless user says "wait"
     return { status: 'pending', proposalId: proposal.id };
@@ -285,7 +297,7 @@ async function executeToolCall(tool: ToolCall, context: AgentContext) {
     // Server creates proposal (hard confirm)
     const proposal = await proposalService.create({
       ...tool,
-      requiresExplicitConfirm: true
+      requiresExplicitConfirm: true,
     });
     // Agent must receive "yes"/"confirm" explicitly
     return { status: 'pending', proposalId: proposal.id };
@@ -294,6 +306,7 @@ async function executeToolCall(tool: ToolCall, context: AgentContext) {
 ```
 
 **Checklist:**
+
 - [ ] Each tool explicitly assigned a trust tier (T1/T2/T3)
 - [ ] T3 operations documented with why they're irreversible
 - [ ] Agent system prompt knows the tier for each tool
@@ -311,6 +324,7 @@ async function executeToolCall(tool: ToolCall, context: AgentContext) {
 ## Confirmation Words (T3 Only)
 
 **Explicit yes:**
+
 - "yes"
 - "do it"
 - "confirm"
@@ -319,6 +333,7 @@ async function executeToolCall(tool: ToolCall, context: AgentContext) {
 - "submit"
 
 **Explicit no:**
+
 - "no"
 - "wait"
 - "stop"
@@ -327,10 +342,12 @@ async function executeToolCall(tool: ToolCall, context: AgentContext) {
 - "actually"
 
 **Ambiguous (ask to clarify):**
+
 - "ok", "sure", "fine" → "Just to confirm, I'll [action]. Is that right?"
 ```
 
 **Checklist:**
+
 - [ ] Define explicit yes/no vocabulary for T3
 - [ ] Ambiguous responses → ask to clarify
 - [ ] System prompt knows which words trigger confirmation
@@ -374,6 +391,7 @@ return `Welcome back! You have ${count} packages. What would you like to work on
 ```
 
 **Checklist:**
+
 - [ ] Detect: (new user, returning user, incomplete setup)
 - [ ] Offer different paths for each
 - [ ] Skip already-completed steps
@@ -412,7 +430,7 @@ function formatErrorForUser(error: Error, context: string): string {
 const ERROR_MESSAGE_MAP = new Map([
   ['UNIQUE_CONSTRAINT', "There's already one with that name"],
   ['NOT_FOUND', "I couldn't find that"],
-  ['UNAUTHORIZED', 'You don\'t have permission'],
+  ['UNAUTHORIZED', "You don't have permission"],
   ['RATE_LIMIT', 'Too many requests - please wait a moment'],
 ]);
 
@@ -420,11 +438,12 @@ const SUGGESTION_MAP = new Map([
   ['UNIQUE_CONSTRAINT', 'Would you like me to update the existing one or use a different name?'],
   ['NOT_FOUND', 'Want me to help you find it?'],
   ['UNAUTHORIZED', 'Please contact support'],
-  ['RATE_LIMIT', 'I\'ll try again in a moment.'],
+  ['RATE_LIMIT', "I'll try again in a moment."],
 ]);
 ```
 
 **Checklist:**
+
 - [ ] All system errors mapped to user-friendly messages
 - [ ] Each error includes a suggested fix
 - [ ] No stack traces exposed
@@ -451,14 +470,14 @@ tools: [
   'update_package_price',
   'update_package_description',
   'update_package_features',
-  'delete_package'
-]
+  'delete_package',
+];
 
 // RIGHT ✅ - Combined CRUD tool
 tools: [
-  'upsert_package',  // Creates or updates (name, price, features, etc)
-  'delete_package'
-]
+  'upsert_package', // Creates or updates (name, price, features, etc)
+  'delete_package',
+];
 ```
 
 **Framework:**
@@ -467,32 +486,31 @@ tools: [
 function evaluateNewTool(featureName: string, existingTools: Tool[]): boolean {
   // Is this essential for MVP?
   const isEssential = featureName in ESSENTIAL_FEATURES;
-  if (!isEssential) return false;  // Defer to post-MVP
+  if (!isEssential) return false; // Defer to post-MVP
 
   // Can existing tools do this? (with prompt adjustment)
-  const canCombine = existingTools.some(t =>
-    t.capabilities.includes(featureCategory)
-  );
-  if (canCombine) return false;  // Extend existing tool
+  const canCombine = existingTools.some((t) => t.capabilities.includes(featureCategory));
+  if (canCombine) return false; // Extend existing tool
 
   // Is it deferred feature?
   const isDeferred = featureName in DEFERRED_FEATURES;
   if (isDeferred) return false;
 
-  return true;  // Add new tool
+  return true; // Add new tool
 }
 
 const ESSENTIAL_FEATURES = new Map([
   ['create_booking', true],
   ['update_pricing', true],
   ['cancel_booking', true],
-  ['custom_domains', false],   // <5% of users
-  ['analytics', false],          // Post-MVP
-  ['add_ons', false],            // Phase 2
+  ['custom_domains', false], // <5% of users
+  ['analytics', false], // Post-MVP
+  ['add_ons', false], // Phase 2
 ]);
 ```
 
 **Checklist:**
+
 - [ ] Fewer than 20 tools (recommend 10-18)
 - [ ] CRUD operations combined (upsert, not separate create/update)
 - [ ] Features as system prompt behavior, not tools
@@ -541,6 +559,7 @@ Result: Defer to Phase 2, document why
 ```
 
 **Checklist:**
+
 - [ ] Feature deferral decision tree applied
 - [ ] Deferred features documented in architecture
 - [ ] Rationale clear ("why not in MVP")
@@ -589,12 +608,14 @@ For current details, use your read tools.
 ```
 
 **Benefits:**
+
 - Simpler code
 - No context staleness issues
 - Lower token usage
 - Easier to test
 
 **Checklist:**
+
 - [ ] Context injected once at session creation
 - [ ] No refresh logic in message processing
 - [ ] All data queries go through tools
@@ -618,19 +639,19 @@ For current details, use your read tools.
 tool('design_packages', async (input) => {
   const interview = await getInterviewData(input.tenantId);
   const market = await searchMarket(interview.businessType);
-  const segments = categorizeSegments(interview, market);    // Logic!
-  const packages = createTiers(segments, interview.goal);     // Logic!
-  const pricing = calculatePricing(packages, market);         // Logic!
+  const segments = categorizeSegments(interview, market); // Logic!
+  const packages = createTiers(segments, interview.goal); // Logic!
+  const pricing = calculatePricing(packages, market); // Logic!
   return { segments, packages, pricing };
 });
 
 // RIGHT ✅ - Tools are primitives
 tools: [
-  'web_search',           // Search internet, return results
-  'create_segment',       // Create one segment
-  'create_package',       // Create one package
-  'set_package_copy'      // Set marketing copy
-]
+  'web_search', // Search internet, return results
+  'create_segment', // Create one segment
+  'create_package', // Create one package
+  'set_package_copy', // Set marketing copy
+];
 
 // System prompt orchestrates:
 // "Based on interview data:
@@ -643,6 +664,7 @@ tools: [
 **Why:** Tools should be testable without agents. Logic in prompts is evolved through iteration.
 
 **Checklist:**
+
 - [ ] Each tool does ONE thing (create, read, update, delete, search)
 - [ ] No business logic in tools (it's in system prompt)
 - [ ] Tools return raw data, not decisions
@@ -676,7 +698,7 @@ const actionParity = {
   updateBranding: 'update_branding',
 
   // UI: Cancel booking → Agent: cancel_booking
-  cancelBooking: 'cancel_booking'
+  cancelBooking: 'cancel_booking',
 };
 
 // Checklist:
@@ -686,6 +708,7 @@ const actionParity = {
 ```
 
 **Checklist:**
+
 - [ ] Audit all UI pages for actions
 - [ ] Each action mapped to agent tool
 - [ ] No UI-only operations
@@ -768,6 +791,7 @@ async function confirm_proposal(context, proposalId) {
 **Why:** Prevents prompt injection from bypassing approvals. Security lives in code, not prose.
 
 **Checklist:**
+
 - [ ] Write tools return proposals (not results)
 - [ ] Proposals stored in database with tenant scope
 - [ ] Proposals have expiration time
@@ -783,6 +807,7 @@ async function confirm_proposal(context, proposalId) {
 ### Pitfall: "Confirm Fatigue"
 
 **Signs:**
+
 - Users clicking "yes" without reading
 - Complaints about too many popups
 - Average confirmation time < 2 seconds
@@ -811,6 +836,7 @@ async function confirm_proposal(context, proposalId) {
 ### Pitfall: "Agent Bypasses Approval"
 
 **Signs:**
+
 - Audit logs show operations executed without confirmation
 - Users discovering unwanted changes
 - Security alert: operation executed that should require approval
@@ -840,6 +866,7 @@ async function confirm_proposal(context, proposalId) {
 ### Pitfall: "Tool Explosion"
 
 **Signs:**
+
 - More than 25 tools
 - Similar tools with slight variations
 - New tools added every sprint
@@ -850,6 +877,7 @@ async function confirm_proposal(context, proposalId) {
 **Recovery:**
 
 1. **Audit current tools:**
+
    ```
    Group by capability:
    - CRUD: create, read, update, delete → combine
@@ -858,6 +886,7 @@ async function confirm_proposal(context, proposalId) {
    ```
 
 2. **Combine similar tools:**
+
    ```
    Before:
    - update_package_name
@@ -869,6 +898,7 @@ async function confirm_proposal(context, proposalId) {
    ```
 
 3. **Move behavior to prompt:**
+
    ```
    Tool: create_package
    System Prompt: "When user says 'create an entry package for $500',
@@ -883,6 +913,7 @@ async function confirm_proposal(context, proposalId) {
 ### Pitfall: "Context Staleness"
 
 **Signs:**
+
 - Agent says "you have 3 packages" but user just created 4th
 - Stale booking data
 - Agent suggests unavailable time slots
@@ -893,12 +924,14 @@ async function confirm_proposal(context, proposalId) {
 
 1. **Remove refresh logic - use tools instead**
 2. **Agent system prompt:**
+
    ```
    "For current details, ALWAYS call the read tools.
     Don't rely on context - context is just background."
    ```
 
 3. **Implement lazy-loaded context:**
+
    ```typescript
    // No automatic refresh - tools provide fresh data
    async function executeMessage(sessionId, message) {
@@ -995,12 +1028,14 @@ When designing agent systems, run design through 6 specialist reviewers in paral
 **Focus:** Overall system design, integration points
 
 **Questions:**
+
 - Does this violate any architectural patterns?
 - How does this scale to 10x users?
 - Are dependencies clear?
 - Can components be tested in isolation?
 
 **Approval Criteria:**
+
 - System diagram is clear
 - Integration points documented
 - No circular dependencies
@@ -1011,12 +1046,14 @@ When designing agent systems, run design through 6 specialist reviewers in paral
 **Focus:** Data isolation, injection, approval mechanisms
 
 **Questions:**
+
 - Can user data leak between tenants?
 - Can system prompt be injected?
 - What happens if approval is bypassed?
 - Are secrets exposed anywhere?
 
 **Approval Criteria:**
+
 - Multi-tenant isolation enforced at tool level
 - No sensitive data in prompts
 - Server-side approval mechanism exists
@@ -1027,12 +1064,14 @@ When designing agent systems, run design through 6 specialist reviewers in paral
 **Focus:** User experience, confirmation flows, error handling
 
 **Questions:**
+
 - Is confirmation fatigue a risk?
 - Are error messages helpful?
 - Can new users understand the system?
 - Is onboarding frictionless?
 
 **Approval Criteria:**
+
 - Trust tiers defined
 - Error messages are helpful
 - Onboarding branching for different user types
@@ -1043,12 +1082,14 @@ When designing agent systems, run design through 6 specialist reviewers in paral
 **Focus:** Tool design, action parity, prompt-driven behavior
 
 **Questions:**
+
 - Are tools primitives or workflows?
 - Can agent do everything user can?
 - Is logic in tools or prompts?
 - Are tools testable?
 
 **Approval Criteria:**
+
 - Tools are primitives
 - Action parity verified
 - Business logic in prompts
@@ -1059,12 +1100,14 @@ When designing agent systems, run design through 6 specialist reviewers in paral
 **Focus:** Feasibility, timeline, dependencies
 
 **Questions:**
+
 - Can this be built in the planned timeframe?
 - What APIs need to be created?
 - Are there external dependencies?
 - What's the hardest part?
 
 **Approval Criteria:**
+
 - All APIs specified
 - Effort estimates realistic
 - External dependencies identified
@@ -1075,12 +1118,14 @@ When designing agent systems, run design through 6 specialist reviewers in paral
 **Focus:** Scope, complexity, deferral
 
 **Questions:**
+
 - Is this the minimum viable version?
 - What can be deferred?
 - Are there simpler alternatives?
 - Can we reduce tool count?
 
 **Approval Criteria:**
+
 - MVP feature set is tight
 - Non-essential features deferred
 - Tool count < 20
@@ -1094,15 +1139,19 @@ Each reviewer produces:
 ## [Reviewer Name] - [Status: ✅ Approved / 🔄 Requested Changes]
 
 ### Concerns
+
 - [List any concerns]
 
 ### Requested Changes
+
 - [Changes needed for approval]
 
 ### Strengths
+
 - [What was done well]
 
 ### Questions for Author
+
 - [Clarifying questions]
 ```
 
@@ -1153,7 +1202,7 @@ export const TenantId = {
   from: (value: string): TenantId => {
     if (!isTenantId(value)) throw new Error('Invalid TenantId');
     return value as TenantId;
-  }
+  },
 };
 
 // Usage - prevents ID swaps at compile time
@@ -1210,10 +1259,10 @@ interface Proposal {
 
 // State transitions
 const VALID_TRANSITIONS = {
-  'pending': ['approved', 'rejected', 'expired'],
-  'approved': [],  // Terminal
-  'rejected': [],  // Terminal
-  'expired': []    // Terminal
+  pending: ['approved', 'rejected', 'expired'],
+  approved: [], // Terminal
+  rejected: [], // Terminal
+  expired: [], // Terminal
 };
 
 async function transitionProposal(
@@ -1229,7 +1278,7 @@ async function transitionProposal(
   return await db.proposal.update(proposal.id, {
     status: newStatus,
     approvedAt: newStatus === 'approved' ? new Date() : undefined,
-    approvedByUserId: newStatus === 'approved' ? userId : undefined
+    approvedByUserId: newStatus === 'approved' ? userId : undefined,
   });
 }
 ```
@@ -1251,23 +1300,17 @@ export const agentLogger = {
       ...ctx,
       ...data,
       timestamp: new Date().toISOString(),
-      service: 'agent-system'
+      service: 'agent-system',
     });
   },
 
-  toolCall: (
-    ctx: AgentLogContext,
-    tool: string,
-    input: any,
-    result: any,
-    durationMs: number
-  ) => {
+  toolCall: (ctx: AgentLogContext, tool: string, input: any, result: any, durationMs: number) => {
     logger.info('Agent tool call', {
       ...ctx,
       toolName: tool,
       input: sanitize(input),
       resultSummary: summarize(result),
-      durationMs
+      durationMs,
     });
   },
 
@@ -1275,9 +1318,9 @@ export const agentLogger = {
     logger.warn(`SECURITY: ${msg}`, {
       ...ctx,
       ...details,
-      severity: 'SECURITY'
+      severity: 'SECURITY',
     });
-  }
+  },
 };
 
 // Middleware to inject correlation ID
@@ -1316,7 +1359,7 @@ export class TokenBudgetService {
       logger.warn('Token budget warning', {
         sessionId,
         percentUsed: Math.round(percentUsed * 100),
-        remaining: this.maxSessionTokens - newTotal
+        remaining: this.maxSessionTokens - newTotal,
       });
     }
 
@@ -1326,7 +1369,7 @@ export class TokenBudgetService {
       totalTokens: newTotal,
       percentUsed,
       warning: percentUsed >= 0.8,
-      nearLimit: percentUsed >= 0.95
+      nearLimit: percentUsed >= 0.95,
     };
   }
 
@@ -1415,48 +1458,60 @@ Use this template when proposing a new agent system:
 # [Agent Name] System Design
 
 ## Executive Summary
+
 [1-2 paragraphs on what this agent does and why]
 
 ## Problem Statement
+
 [Pain points it solves]
 
 ## Proposed Solution
+
 [How the agent works]
 
 ## Security Model
+
 - Tenant isolation: [how is it enforced?]
 - Sensitive fields: [what's never injected?]
 - Approval mechanism: [how are operations approved?]
 - Audit trail: [what's logged?]
 
 ## Tool List (≤20)
-| Tool | Trust Tier | Purpose |
-|------|-----------|---------|
-| [name] | T1/T2/T3 | [description] |
+
+| Tool   | Trust Tier | Purpose       |
+| ------ | ---------- | ------------- |
+| [name] | T1/T2/T3   | [description] |
 
 ## Trust Tiers
+
 [Define T1/T2/T3 for this agent]
 
 ## System Prompt Outline
+
 [Key sections and behavioral rules]
 
 ## Action Parity Verification
+
 [Checklist: agent can do everything UI can]
 
 ## Deferred Features
+
 [Features NOT in MVP with rationale]
 
 ## Risks & Mitigations
-| Risk | Mitigation |
-|------|-----------|
+
+| Risk   | Mitigation   |
+| ------ | ------------ |
 | [risk] | [mitigation] |
 
 ## Success Metrics
+
 - [Metric 1]
 - [Metric 2]
 - [Metric 3]
 
 ## Review Status
+
 - [ ] Architecture review
 - [ ] Security review
 - [ ] UX review
@@ -1485,4 +1540,4 @@ Use this template when proposing a new agent system:
 **Last Updated:** 2025-12-26
 **Next Review:** 2026-01-26 (post-launch learnings)
 
-*This document should be updated as new agents are built and new lessons learned.*
+_This document should be updated as new agents are built and new lessons learned._

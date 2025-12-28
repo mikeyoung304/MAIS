@@ -46,13 +46,7 @@ export default async function FAQPage({ searchParams }: FAQPageProps) {
     const faqItems = tenant.branding?.landingPage?.faq?.items || [];
     const domainParam = `?domain=${validatedDomain}`;
 
-    return (
-      <FAQPageContent
-        faqItems={faqItems}
-        basePath=""
-        domainParam={domainParam}
-      />
-    );
+    return <FAQPageContent faqItems={faqItems} basePath="" domainParam={domainParam} />;
   } catch (error) {
     if (error instanceof TenantNotFoundError) notFound();
     throw error;

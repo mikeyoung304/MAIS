@@ -40,7 +40,12 @@ const PAGE_CONFIGS: PageToggleConfig[] = [
   { key: 'about', label: 'About', description: 'Tell your story', icon: Users },
   { key: 'services', label: 'Services', description: 'Display your packages', icon: Package },
   { key: 'gallery', label: 'Gallery', description: 'Showcase your work', icon: ImageIcon },
-  { key: 'testimonials', label: 'Testimonials', description: 'Client reviews', icon: MessageSquare },
+  {
+    key: 'testimonials',
+    label: 'Testimonials',
+    description: 'Client reviews',
+    icon: MessageSquare,
+  },
   { key: 'faq', label: 'FAQ', description: 'Answer common questions', icon: HelpCircle },
   { key: 'contact', label: 'Contact', description: 'How clients reach you', icon: Mail },
 ];
@@ -177,9 +182,7 @@ export default function TenantPagesPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold text-text-primary">Manage Pages</h1>
-          <p className="mt-2 text-text-muted">
-            Control which pages appear on your website
-          </p>
+          <p className="mt-2 text-text-muted">Control which pages appear on your website</p>
           {slug && (
             <p className="mt-1 text-sm text-sage">
               Preview at:{' '}
@@ -194,12 +197,7 @@ export default function TenantPagesPage() {
             </p>
           )}
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          variant="sage"
-          className="gap-2"
-        >
+        <Button onClick={handleSave} disabled={saving} variant="sage" className="gap-2">
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : saveStatus === 'success' ? (
@@ -273,9 +271,7 @@ export default function TenantPagesPage() {
               <div
                 key={page.key}
                 className={`flex flex-col gap-3 rounded-lg border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
-                  enabled
-                    ? 'border-neutral-100 bg-white'
-                    : 'border-neutral-100 bg-neutral-50/50'
+                  enabled ? 'border-neutral-100 bg-white' : 'border-neutral-100 bg-neutral-50/50'
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -371,8 +367,8 @@ export default function TenantPagesPage() {
               <div>
                 <p className="font-medium text-amber-800">All optional pages are disabled</p>
                 <p className="mt-1 text-sm text-amber-700">
-                  Your website currently only shows the Home page. Enable additional pages to provide
-                  more information to your visitors.
+                  Your website currently only shows the Home page. Enable additional pages to
+                  provide more information to your visitors.
                 </p>
               </div>
             </div>

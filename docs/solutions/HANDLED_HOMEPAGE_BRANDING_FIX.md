@@ -44,6 +44,7 @@ This pattern made sense during development but needed a full marketing homepage 
 **Key Sections:**
 
 #### Navigation Bar
+
 - Fixed sticky header with HANDLED logo
 - Links to Features, Pricing, FAQ sections
 - Sign In and Get Started CTAs
@@ -57,6 +58,7 @@ This pattern made sense during development but needed a full marketing homepage 
 ```
 
 #### Hero Section
+
 Headline emphasizes transformation, not features:
 
 > **"The tech is moving fast. You don't have to."**
@@ -66,10 +68,12 @@ Subheadline explains value proposition:
 > "Done-for-you websites, booking, and AI — plus monthly updates on what's actually worth knowing. For service pros who'd rather stay ahead than burn out."
 
 Dual CTA buttons:
+
 - Primary: "Get Handled" → `/signup`
 - Secondary: "See How It Works" → `#features`
 
 #### Problem Section
+
 Establishes emotional connection before features:
 
 > "You didn't start your business to debug a website."
@@ -77,18 +81,20 @@ Establishes emotional connection before features:
 Lists service types (photographers, coaches, therapists, consultants, trainers, wedding planners) to increase relatability.
 
 #### Features Section
+
 6 benefit-driven features with icons:
 
-| Feature | Description |
-|---------|-------------|
-| **Website That Works** | "We build it. We maintain it. You never touch it." |
-| **Booking & Payments** | "Clients book and pay online. You get a notification." |
-| **AI That Actually Helps** | "A chatbot trained on your business. Works while you sleep." |
-| **Monthly Newsletter** | "What's worth knowing in AI and tech this month. Curated. No fluff." |
-| **Monthly Zoom Calls** | "Real talk with other pros about what's working. No pitch." |
-| **Humans Who Answer** | "Questions? We answer them. No chatbots, no tickets. Just help." |
+| Feature                    | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| **Website That Works**     | "We build it. We maintain it. You never touch it."                   |
+| **Booking & Payments**     | "Clients book and pay online. You get a notification."               |
+| **AI That Actually Helps** | "A chatbot trained on your business. Works while you sleep."         |
+| **Monthly Newsletter**     | "What's worth knowing in AI and tech this month. Curated. No fluff." |
+| **Monthly Zoom Calls**     | "Real talk with other pros about what's working. No pitch."          |
+| **Humans Who Answer**      | "Questions? We answer them. No chatbots, no tickets. Just help."     |
 
 #### Pricing Section
+
 3 tiered options reflecting business model:
 
 ```typescript
@@ -140,16 +146,17 @@ const tiers = [
 ```
 
 #### FAQ Section
+
 6 questions addressing common objections:
 
-| Question | Answer Theme |
-|----------|--------------|
-| "What kind of businesses is this for?" | Service professionals who sell time/expertise |
-| "Do I need to know anything about tech?" | No - that's the point of HANDLED |
-| "What if I already have a website?" | We can work with existing sites or migrate |
-| "What happens on the monthly Zoom calls?" | Peer learning, not sales pitches |
-| "Is the AI chatbot going to sound like a robot?" | Trained on your voice/style |
-| "Can I cancel anytime?" | Yes, no contracts or cancellation fees |
+| Question                                         | Answer Theme                                  |
+| ------------------------------------------------ | --------------------------------------------- |
+| "What kind of businesses is this for?"           | Service professionals who sell time/expertise |
+| "Do I need to know anything about tech?"         | No - that's the point of HANDLED              |
+| "What if I already have a website?"              | We can work with existing sites or migrate    |
+| "What happens on the monthly Zoom calls?"        | Peer learning, not sales pitches              |
+| "Is the AI chatbot going to sound like a robot?" | Trained on your voice/style                   |
+| "Can I cancel anytime?"                          | Yes, no contracts or cancellation fees        |
 
 Implemented using HTML `<details>` element (native accordion):
 
@@ -164,6 +171,7 @@ Implemented using HTML `<details>` element (native accordion):
 ```
 
 #### Final CTA Section
+
 Dark sage background with compelling headline:
 
 > "Ready to stop being your own IT department?"
@@ -171,22 +179,23 @@ Dark sage background with compelling headline:
 Subtext: "Join service pros who'd rather focus on being great at their job."
 
 #### Footer
+
 Links to Terms, Privacy, Contact pages with copyright.
 
 ### Part 2: Branding Fixes (8 Files)
 
 Changed "MAIS" → "HANDLED" in user-facing pages:
 
-| File | Location | Change |
-|------|----------|--------|
-| `/t/not-found.tsx` | Line 29 | "Get started with HANDLED" |
-| `/login/page.tsx` | Line 207 | Logo text → "HANDLED" |
-| `/signup/page.tsx` | Line 149, 351 | Card description + logo → "HANDLED" |
-| `/forgot-password/page.tsx` | **Line 128** | Logo text → "HANDLED" ← **Still shows MAIS** |
-| `AdminSidebar.tsx` | Line 177 | Sidebar logo → "HANDLED" |
-| `/tenant/billing/page.tsx` | *needs verification* | Page headers/titles |
-| `/tenant/settings/page.tsx` | *needs verification* | Page headers/titles |
-| `/tenant/assistant/page.tsx` | *needs verification* | Page headers/titles |
+| File                         | Location             | Change                                       |
+| ---------------------------- | -------------------- | -------------------------------------------- |
+| `/t/not-found.tsx`           | Line 29              | "Get started with HANDLED"                   |
+| `/login/page.tsx`            | Line 207             | Logo text → "HANDLED"                        |
+| `/signup/page.tsx`           | Line 149, 351        | Card description + logo → "HANDLED"          |
+| `/forgot-password/page.tsx`  | **Line 128**         | Logo text → "HANDLED" ← **Still shows MAIS** |
+| `AdminSidebar.tsx`           | Line 177             | Sidebar logo → "HANDLED"                     |
+| `/tenant/billing/page.tsx`   | _needs verification_ | Page headers/titles                          |
+| `/tenant/settings/page.tsx`  | _needs verification_ | Page headers/titles                          |
+| `/tenant/assistant/page.tsx` | _needs verification_ | Page headers/titles                          |
 
 **Note:** `forgot-password/page.tsx` line 128 still displays "MAIS" - this should be fixed:
 
@@ -207,20 +216,24 @@ Changed "MAIS" → "HANDLED" in user-facing pages:
 All components follow HANDLED brand design patterns:
 
 ### Typography
+
 - Serif headlines (`font-serif`)
 - Tight tracking on headings
 - Light subheadings
 
 ### Spacing
+
 - Section padding: `py-32 md:py-40` (generous whitespace)
 - Card padding: `p-8`
 
 ### Colors
+
 - Primary accent: Sage (`bg-sage`, `text-sage`)
 - Used sparingly (20% color, 80% neutral)
 - Hover states include elevation changes
 
 ### Components
+
 - Cards: `rounded-3xl shadow-lg border border-neutral-100`
 - Buttons: `rounded-full` with `hover:shadow-xl hover:-translate-y-1`
 - Transitions: `transition-all duration-300`
@@ -304,4 +317,3 @@ export const metadata: Metadata = {
 2. **Homepage isn't optional** - Public sites need dedicated marketing pages, not redirects
 3. **Test across all user journeys** - Check auth flow (login/signup/reset), 404 pages, admin UI
 4. **Brand consistency requires discipline** - Use component-level constants for brand names
-

@@ -32,8 +32,7 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
     const { tenant } = data;
 
     const metaDescription =
-      tenant.branding?.landingPage?.hero?.subheadline ||
-      `Book services with ${tenant.name}`;
+      tenant.branding?.landingPage?.hero?.subheadline || `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,

@@ -55,13 +55,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
     const tenant = await getTenantByDomain(validatedDomain);
     const domainParam = `?domain=${validatedDomain}`;
 
-    return (
-      <AboutPageContent
-        tenant={tenant}
-        basePath=""
-        domainParam={domainParam}
-      />
-    );
+    return <AboutPageContent tenant={tenant} basePath="" domainParam={domainParam} />;
   } catch (error) {
     if (error instanceof TenantNotFoundError) notFound();
     throw error;

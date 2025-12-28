@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "407"
+issue_id: '407'
 tags:
   - code-review
   - data-integrity
@@ -17,6 +17,7 @@ dependencies: []
 The `migrate-to-page-config.ts` script has multiple data integrity issues that could cause data loss or runtime validation failures during migration.
 
 **Why This Matters:**
+
 - Migration script is the path for existing tenants to new system
 - Data loss or validation failures will break tenant storefronts
 - Issues may not be caught until production migration
@@ -28,6 +29,7 @@ The `migrate-to-page-config.ts` script has multiple data integrity issues that c
 **Location:** `server/scripts/migrate-to-page-config.ts` (line 121)
 
 **Evidence:**
+
 ```typescript
 pages.home.sections = [heroSection];
 ```
@@ -39,6 +41,7 @@ This completely replaces home sections instead of merging with defaults. If `DEF
 **Location:** `server/scripts/migrate-to-page-config.ts` (line 140)
 
 **Evidence:**
+
 ```typescript
 content: legacy.about.content || '',  // Empty string fallback
 ```
@@ -50,6 +53,7 @@ But `TextSectionSchema` requires `content: z.string().min(1)`. Migration creates
 **Location:** `packages/contracts/src/landing-page.ts`
 
 **Evidence:**
+
 - Legacy schema (line 148): `z.number().int().min(1).max(5)` - integers only
 - New schema (line 280): `z.number().min(1).max(5).default(5)` - allows floats
 
@@ -79,11 +83,13 @@ rating: z.number().int().min(1).max(5).default(5),
 ```
 
 **Pros:**
+
 - Prevents data loss
 - Ensures valid configs
 - Consistent data model
 
 **Cons:**
+
 - Slightly more complex migration logic
 
 **Effort:** Small
@@ -94,10 +100,12 @@ rating: z.number().int().min(1).max(5).default(5),
 Run migrated config through `LandingPageConfigSchema.safeParse()` before storing.
 
 **Pros:**
+
 - Catches any validation issues
 - Fail-fast approach
 
 **Cons:**
+
 - Doesn't fix root causes
 
 **Effort:** Small
@@ -110,6 +118,7 @@ Run migrated config through `LandingPageConfigSchema.safeParse()` before storing
 ## Technical Details
 
 **Affected Files:**
+
 - `server/scripts/migrate-to-page-config.ts`
 - `packages/contracts/src/landing-page.ts` (rating schema)
 
@@ -126,8 +135,8 @@ Run migrated config through `LandingPageConfigSchema.safeParse()` before storing
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                              |
+| ---------- | ------------------------ | ------------------------------------------------------ |
 | 2025-12-25 | Created from code review | Multiple data integrity issues found in migration path |
 
 ## Resources

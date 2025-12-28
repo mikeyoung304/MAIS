@@ -12,13 +12,13 @@ MAIS demonstrates a **well-structured modular monolith** with strong multi-tenan
 
 **Overall Health:** GOOD with improvement opportunities
 
-| Category | Status | Priority Issues |
-|----------|--------|-----------------|
-| Module Boundaries | Good | Minor coupling concerns |
-| Layer Discipline | Needs Work | 12 routes import adapters directly |
-| Multi-Tenant Isolation | Excellent | All queries properly scoped |
-| API Contract Alignment | Good | Minor contract coverage gaps |
-| North Star Convergence | Moderate | YAGNI violations, complexity |
+| Category               | Status     | Priority Issues                    |
+| ---------------------- | ---------- | ---------------------------------- |
+| Module Boundaries      | Good       | Minor coupling concerns            |
+| Layer Discipline       | Needs Work | 12 routes import adapters directly |
+| Multi-Tenant Isolation | Excellent  | All queries properly scoped        |
+| API Contract Alignment | Good       | Minor contract coverage gaps       |
+| North Star Convergence | Moderate   | YAGNI violations, complexity       |
 
 ---
 
@@ -47,6 +47,7 @@ server/src/
 ### Findings
 
 **Strengths:**
+
 - Clear separation of concerns with dedicated directories
 - Repository pattern properly abstracts data access
 - DI container (`di.ts`) centralizes wiring
@@ -80,26 +81,28 @@ server/src/
 
 The following routes bypass the service layer by importing adapter implementations directly:
 
-| File | Line | Import |
-|------|------|--------|
-| `stripe-connect-webhooks.routes.ts` | 17 | `PrismaTenantRepository` |
-| `auth.routes.ts` | 12 | `PrismaTenantRepository` |
-| `index.ts` | 32 | `PrismaTenantRepository, PrismaBlackoutRepository` |
-| `public-tenant.routes.ts` | 19 | `PrismaTenantRepository` |
-| `admin/stripe.routes.ts` | 13 | `PrismaTenantRepository` |
-| `admin/tenants.routes.ts` | 15 | `PrismaTenantRepository` |
-| `tenant-admin-calendar.routes.ts` | 10-11 | `PrismaTenantRepository, TenantCalendarConfig` |
-| `tenant.routes.ts` | 7 | `PrismaTenantRepository` |
-| `tenant-admin-deposits.routes.ts` | 12 | `PrismaTenantRepository` |
-| `tenant-admin.routes.ts` | 23 | `PrismaTenantRepository` |
-| `dev.routes.ts` | 8 | `getMockState, resetMockState` |
+| File                                | Line  | Import                                             |
+| ----------------------------------- | ----- | -------------------------------------------------- |
+| `stripe-connect-webhooks.routes.ts` | 17    | `PrismaTenantRepository`                           |
+| `auth.routes.ts`                    | 12    | `PrismaTenantRepository`                           |
+| `index.ts`                          | 32    | `PrismaTenantRepository, PrismaBlackoutRepository` |
+| `public-tenant.routes.ts`           | 19    | `PrismaTenantRepository`                           |
+| `admin/stripe.routes.ts`            | 13    | `PrismaTenantRepository`                           |
+| `admin/tenants.routes.ts`           | 15    | `PrismaTenantRepository`                           |
+| `tenant-admin-calendar.routes.ts`   | 10-11 | `PrismaTenantRepository, TenantCalendarConfig`     |
+| `tenant.routes.ts`                  | 7     | `PrismaTenantRepository`                           |
+| `tenant-admin-deposits.routes.ts`   | 12    | `PrismaTenantRepository`                           |
+| `tenant-admin.routes.ts`            | 23    | `PrismaTenantRepository`                           |
+| `dev.routes.ts`                     | 8     | `getMockState, resetMockState`                     |
 
 **Impact:**
+
 - Breaks clean architecture principles
 - Makes testing harder (routes depend on concrete implementations)
 - Violates Compound Engineering pattern-recognition-specialist guidance
 
 **Recommendation:**
+
 1. Routes should only receive services via DI
 2. Create `TenantService` to encapsulate tenant operations
 3. Inject repositories into services, not routes
@@ -121,11 +124,13 @@ const fullBlackouts = await prismaClient.blackoutDate.findMany({
 ```
 
 **Issues:**
+
 - Unsafe type casting to access internal Prisma client
 - Bypasses repository abstraction
 - Leaks implementation details into route layer
 
 **Recommendation:**
+
 - Add `getBlackoutsWithIds(tenantId: string)` to `BlackoutRepository` interface
 - Implement in `PrismaBlackoutRepository`
 
@@ -174,12 +179,12 @@ Multi-tenant data isolation is properly implemented throughout the codebase.
 
 **Contracts Location:** `packages/contracts/src/`
 
-| Domain | Contract File | Route Implementation | Alignment |
-|--------|--------------|---------------------|-----------|
-| Landing Page | `tenant-admin/landing-page.contract.ts` | `tenant-admin-landing-page.routes.ts` | Aligned |
-| Packages/Catalog | `dto.ts` (schemas only) | `packages.routes.ts` | Partial |
-| Booking | `dto.ts` (schemas only) | `bookings.routes.ts` | Partial |
-| Auth | `dto.ts` (schemas only) | `auth.routes.ts` | Partial |
+| Domain           | Contract File                           | Route Implementation                  | Alignment |
+| ---------------- | --------------------------------------- | ------------------------------------- | --------- |
+| Landing Page     | `tenant-admin/landing-page.contract.ts` | `tenant-admin-landing-page.routes.ts` | Aligned   |
+| Packages/Catalog | `dto.ts` (schemas only)                 | `packages.routes.ts`                  | Partial   |
+| Booking          | `dto.ts` (schemas only)                 | `bookings.routes.ts`                  | Partial   |
+| Auth             | `dto.ts` (schemas only)                 | `auth.routes.ts`                      | Partial   |
 
 ### Findings
 
@@ -212,20 +217,20 @@ Comparing MAIS against the Compound Engineering conventions:
 
 ### Pattern Recognition Specialist Findings
 
-| Pattern | Status | Notes |
-|---------|--------|-------|
-| TODO/FIXME tracking | 50+ TODOs | See Technical Debt section |
-| Naming conventions | Consistent | kebab-case files, PascalCase classes |
-| Code duplication | Low | Good use of shared utilities |
-| Layer separation | Needs work | Routes importing adapters |
+| Pattern             | Status     | Notes                                |
+| ------------------- | ---------- | ------------------------------------ |
+| TODO/FIXME tracking | 50+ TODOs  | See Technical Debt section           |
+| Naming conventions  | Consistent | kebab-case files, PascalCase classes |
+| Code duplication    | Low        | Good use of shared utilities         |
+| Layer separation    | Needs work | Routes importing adapters            |
 
 ### Code Simplicity Reviewer Findings
 
-| Concern | File | Issue |
-|---------|------|-------|
-| Over-abstraction | `ports.ts` | Some interfaces have single implementation |
-| `any` type usage | 40+ files | 1373 occurrences (many in tests) |
-| Complex type casting | `tenant-admin.routes.ts:906` | Unsafe Prisma access |
+| Concern              | File                         | Issue                                      |
+| -------------------- | ---------------------------- | ------------------------------------------ |
+| Over-abstraction     | `ports.ts`                   | Some interfaces have single implementation |
+| `any` type usage     | 40+ files                    | 1373 occurrences (many in tests)           |
+| Complex type casting | `tenant-admin.routes.ts:906` | Unsafe Prisma access                       |
 
 ### YAGNI Violations
 
@@ -239,17 +244,20 @@ Comparing MAIS against the Compound Engineering conventions:
 ### Security Sentinel Findings
 
 **Positive:**
+
 - Rate limiting implemented on auth endpoints
 - Input validation via Zod schemas
 - XSS prevention in landing page service
 
 **Areas for review:**
+
 - `err: any` catch patterns (e.g., `domain-verification.service.ts:164`)
 - Console.log usage in some services (40 occurrences)
 
 ### Data Integrity Guardian Findings
 
 **Positive:**
+
 - Advisory locks for double-booking prevention
 - Webhook idempotency via database deduplication
 - Transaction boundaries for critical operations
@@ -260,17 +268,18 @@ Comparing MAIS against the Compound Engineering conventions:
 
 ### High-Priority TODOs
 
-| ID | File | Description |
-|----|------|-------------|
-| TODO-065 | `upload.service.ts:4` | Singleton breaks DI pattern |
+| ID       | File                                     | Description                   |
+| -------- | ---------------------------------------- | ----------------------------- |
+| TODO-065 | `upload.service.ts:4`                    | Singleton breaks DI pattern   |
 | TODO-059 | `scheduling-availability.service.ts:384` | Timezone library alternatives |
-| TODO-241 | `landing-page.service.ts:12` | Architecture consistency |
-| TODO-329 | `public-date-booking.routes.ts` | Idempotency via header |
-| TODO-278 | Multiple | Custom webhook subscriptions |
+| TODO-241 | `landing-page.service.ts:12`             | Architecture consistency      |
+| TODO-329 | `public-date-booking.routes.ts`          | Idempotency via header        |
+| TODO-278 | Multiple                                 | Custom webhook subscriptions  |
 
 ### `any` Type Usage
 
 **Non-test files with `any`:**
+
 - `health-check.service.ts:59,96,170` - Accessing private adapter properties
 - `domain-verification.service.ts:164` - Error catch
 - `adapters/prisma/tenant.repository.ts` - branding JSON handling
@@ -348,23 +357,27 @@ Comparing MAIS against the Compound Engineering conventions:
 ## 9. Recommended Architecture Roadmap
 
 ### Phase 1: Clean Architecture Compliance (1 week)
+
 - [ ] Create TenantService
 - [ ] Fix BlackoutRepository interface
 - [ ] Update DI container
 - [ ] Remove direct adapter imports from routes
 
 ### Phase 2: Type Safety Improvements (1 week)
+
 - [ ] Audit and fix `any` usage
 - [ ] Replace console.log with logger
 - [ ] Add health check adapter interfaces
 
 ### Phase 3: Contract Expansion (2 weeks)
+
 - [ ] Add booking contract
 - [ ] Add catalog contract
 - [ ] Add availability contract
 - [ ] Generate client types
 
 ### Phase 4: Documentation & Standards (Ongoing)
+
 - [ ] Document architecture decisions as ADRs
 - [ ] Create contribution guidelines
 - [ ] Establish code review checklist
@@ -375,23 +388,23 @@ Comparing MAIS against the Compound Engineering conventions:
 
 ### Key Architecture Files
 
-| File | Purpose |
-|------|---------|
-| `/Users/mikeyoung/CODING/MAIS/server/src/di.ts` | Dependency injection container |
-| `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts` | Repository interfaces |
-| `/Users/mikeyoung/CODING/MAIS/server/src/lib/entities.ts` | Domain models |
-| `/Users/mikeyoung/CODING/MAIS/server/src/middleware/tenant.ts` | Multi-tenant resolution |
-| `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/index.ts` | API contracts |
+| File                                                           | Purpose                        |
+| -------------------------------------------------------------- | ------------------------------ |
+| `/Users/mikeyoung/CODING/MAIS/server/src/di.ts`                | Dependency injection container |
+| `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts`         | Repository interfaces          |
+| `/Users/mikeyoung/CODING/MAIS/server/src/lib/entities.ts`      | Domain models                  |
+| `/Users/mikeyoung/CODING/MAIS/server/src/middleware/tenant.ts` | Multi-tenant resolution        |
+| `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/index.ts` | API contracts                  |
 
 ### Files Requiring Immediate Attention
 
-| File | Line | Issue |
-|------|------|-------|
-| `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin.routes.ts` | 906-915 | Prisma bypass |
-| `/Users/mikeyoung/CODING/MAIS/server/src/routes/auth.routes.ts` | 12 | Direct adapter import |
-| `/Users/mikeyoung/CODING/MAIS/server/src/routes/admin/tenants.routes.ts` | 15 | Direct adapter import |
-| `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts` | 4 | Singleton anti-pattern |
+| File                                                                     | Line    | Issue                  |
+| ------------------------------------------------------------------------ | ------- | ---------------------- |
+| `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin.routes.ts`  | 906-915 | Prisma bypass          |
+| `/Users/mikeyoung/CODING/MAIS/server/src/routes/auth.routes.ts`          | 12      | Direct adapter import  |
+| `/Users/mikeyoung/CODING/MAIS/server/src/routes/admin/tenants.routes.ts` | 15      | Direct adapter import  |
+| `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts`     | 4       | Singleton anti-pattern |
 
 ---
 
-*Report generated by Agent C1 following Compound Engineering review patterns*
+_Report generated by Agent C1 following Compound Engineering review patterns_

@@ -39,7 +39,8 @@ function LoginForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !sessionLoading) {
-      const redirectUrl = callbackUrl || (role === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/dashboard');
+      const redirectUrl =
+        callbackUrl || (role === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/dashboard');
       router.push(redirectUrl);
     }
   }, [isAuthenticated, sessionLoading, callbackUrl, role, router]);
@@ -81,16 +82,15 @@ function LoginForm() {
     <Card>
       <CardHeader>
         <CardTitle>Welcome back</CardTitle>
-        <CardDescription>
-          Enter your credentials to access your dashboard
-        </CardDescription>
+        <CardDescription>Enter your credentials to access your dashboard</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {isDemo && (
             <Alert className="bg-sage/10 border-sage/30">
               <AlertDescription className="text-sage-dark">
-                <strong>Demo Mode:</strong> Credentials pre-filled. Click &quot;Sign in&quot; to explore.
+                <strong>Demo Mode:</strong> Credentials pre-filled. Click &quot;Sign in&quot; to
+                explore.
               </AlertDescription>
             </Alert>
           )}
@@ -119,10 +119,7 @@ function LoginForm() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-sage hover:underline"
-              >
+              <Link href="/forgot-password" className="text-sm text-sage hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -138,12 +135,7 @@ function LoginForm() {
             />
           </div>
 
-          <Button
-            type="submit"
-            variant="sage"
-            className="w-full"
-            disabled={isLoading}
-          >
+          <Button type="submit" variant="sage" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

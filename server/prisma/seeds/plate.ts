@@ -291,10 +291,14 @@ export async function seedPlate(prisma: PrismaClient): Promise<void> {
       logger.info(`Segment created: ${weddingsSegment.name}`);
 
       // Wedding packages (3 tiers)
-      const ceremonyBite = await createOrUpdatePackageWithSegment(tx, tenant.id, weddingsSegment.id, {
-        slug: 'ceremony-bite',
-        name: 'The Ceremony Bite',
-        description: `An elegant cocktail reception for couples who want memorable bites without a formal sit-down.
+      const ceremonyBite = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        weddingsSegment.id,
+        {
+          slug: 'ceremony-bite',
+          name: 'The Ceremony Bite',
+          description: `An elegant cocktail reception for couples who want memorable bites without a formal sit-down.
 
 Includes:
 • Pre-event consultation with Chef Mike
@@ -306,18 +310,19 @@ Includes:
 
 Perfect for: Cocktail receptions, rehearsal dinners, or post-ceremony celebrations.
 Minimum 25 guests. Pricing is per person.`,
-        basePrice: 5500, // $55/person
-        grouping: 'tier_1',
-        groupingOrder: 1,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1530062845289-9109b2c9c868',
-            filename: 'ceremony-bite.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 5500, // $55/person
+          grouping: 'tier_1',
+          groupingOrder: 1,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1530062845289-9109b2c9c868',
+              filename: 'ceremony-bite.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
       const reception = await createOrUpdatePackageWithSegment(tx, tenant.id, weddingsSegment.id, {
         slug: 'reception',
@@ -347,10 +352,14 @@ Minimum 50 guests. Pricing is per person.`,
         ],
       });
 
-      const grandAffair = await createOrUpdatePackageWithSegment(tx, tenant.id, weddingsSegment.id, {
-        slug: 'grand-affair',
-        name: 'The Grand Affair',
-        description: `The ultimate culinary celebration for couples who want nothing but the best.
+      const grandAffair = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        weddingsSegment.id,
+        {
+          slug: 'grand-affair',
+          name: 'The Grand Affair',
+          description: `The ultimate culinary celebration for couples who want nothing but the best.
 
 Everything in The Reception, plus:
 • 5-course plated dinner with wine pairings
@@ -363,20 +372,23 @@ Everything in The Reception, plus:
 
 Perfect for: Luxury weddings, milestone celebrations.
 Minimum 75 guests. Pricing is per person.`,
-        basePrice: 19500, // $195/person
-        grouping: 'tier_3',
-        groupingOrder: 3,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
-            filename: 'grand-affair.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 19500, // $195/person
+          grouping: 'tier_3',
+          groupingOrder: 3,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
+              filename: 'grand-affair.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
-      logger.info(`Wedding packages created: ${[ceremonyBite, reception, grandAffair].map((p) => p.name).join(', ')}`);
+      logger.info(
+        `Wedding packages created: ${[ceremonyBite, reception, grandAffair].map((p) => p.name).join(', ')}`
+      );
 
       // =====================================================================
       // SEGMENT 2: SOCIAL EVENTS
@@ -483,7 +495,9 @@ Minimum 40 guests. Pricing is per person.`,
         ],
       });
 
-      logger.info(`Social packages created: ${[gathering, celebration, experience].map((p) => p.name).join(', ')}`);
+      logger.info(
+        `Social packages created: ${[gathering, celebration, experience].map((p) => p.name).join(', ')}`
+      );
 
       // =====================================================================
       // SEGMENT 3: CORPORATE EVENTS
@@ -495,7 +509,7 @@ Minimum 40 guests. Pricing is per person.`,
         heroSubtitle:
           'Full-service catering designed to complement your business agenda while impressing every guest.',
         description:
-          'Board meetings, client dinners, product launches, and corporate retreats. We understand that business dining is about more than food—it\'s about creating an environment for success.',
+          "Board meetings, client dinners, product launches, and corporate retreats. We understand that business dining is about more than food—it's about creating an environment for success.",
         metaTitle: 'Corporate Catering | Plate. Macon',
         metaDescription:
           'Corporate event catering in Macon. Business lunches, client dinners, product launches, and executive retreats. Professional service that reflects your brand.',
@@ -505,10 +519,14 @@ Minimum 40 guests. Pricing is per person.`,
       logger.info(`Segment created: ${corporateSegment.name}`);
 
       // Corporate event packages (3 tiers)
-      const businessLunch = await createOrUpdatePackageWithSegment(tx, tenant.id, corporateSegment.id, {
-        slug: 'business-lunch',
-        name: 'The Business Lunch',
-        description: `Efficient, professional catering that keeps your team focused and fed.
+      const businessLunch = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        corporateSegment.id,
+        {
+          slug: 'business-lunch',
+          name: 'The Business Lunch',
+          description: `Efficient, professional catering that keeps your team focused and fed.
 
 Includes:
 • Choice of boxed lunches OR buffet setup
@@ -520,23 +538,28 @@ Includes:
 
 Perfect for: Working lunches, team meetings, training sessions.
 Minimum 10 guests. Pricing is per person.`,
-        basePrice: 3500, // $35/person
-        grouping: 'tier_1',
-        groupingOrder: 1,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1567521464027-f127ff144326',
-            filename: 'business-lunch.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 3500, // $35/person
+          grouping: 'tier_1',
+          groupingOrder: 1,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1567521464027-f127ff144326',
+              filename: 'business-lunch.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
-      const executiveSpread = await createOrUpdatePackageWithSegment(tx, tenant.id, corporateSegment.id, {
-        slug: 'executive-spread',
-        name: 'The Executive Spread',
-        description: `Elevated corporate dining for meetings that matter.
+      const executiveSpread = await createOrUpdatePackageWithSegment(
+        tx,
+        tenant.id,
+        corporateSegment.id,
+        {
+          slug: 'executive-spread',
+          name: 'The Executive Spread',
+          description: `Elevated corporate dining for meetings that matter.
 
 Everything in The Business Lunch, plus:
 • Full buffet with 3 entree options
@@ -549,18 +572,19 @@ Everything in The Business Lunch, plus:
 
 Perfect for: Client meetings, board lunches, department celebrations.
 Minimum 20 guests. Pricing is per person.`,
-        basePrice: 7500, // $75/person
-        grouping: 'tier_2',
-        groupingOrder: 2,
-        photos: [
-          {
-            url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-            filename: 'executive-spread.jpg',
-            size: 0,
-            order: 0,
-          },
-        ],
-      });
+          basePrice: 7500, // $75/person
+          grouping: 'tier_2',
+          groupingOrder: 2,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
+              filename: 'executive-spread.jpg',
+              size: 0,
+              order: 0,
+            },
+          ],
+        }
+      );
 
       const boardroom = await createOrUpdatePackageWithSegment(tx, tenant.id, corporateSegment.id, {
         slug: 'boardroom',
@@ -592,7 +616,9 @@ Minimum 12 guests. Pricing is per person.`,
         ],
       });
 
-      logger.info(`Corporate packages created: ${[businessLunch, executiveSpread, boardroom].map((p) => p.name).join(', ')}`);
+      logger.info(
+        `Corporate packages created: ${[businessLunch, executiveSpread, boardroom].map((p) => p.name).join(', ')}`
+      );
 
       // =====================================================================
       // ADD-ONS: 15 Total (Global - available to all packages)
@@ -746,7 +772,9 @@ Minimum 12 guests. Pricing is per person.`,
         allPackageIds.map((packageId) => linkAddOnsToPackage(tx, packageId, allAddOnIds))
       );
 
-      logger.info(`Add-ons linked: ${allAddOnIds.length} add-ons × ${allPackageIds.length} packages = ${allAddOnIds.length * allPackageIds.length} links`);
+      logger.info(
+        `Add-ons linked: ${allAddOnIds.length} add-ons × ${allPackageIds.length} packages = ${allAddOnIds.length * allPackageIds.length} links`
+      );
 
       // =====================================================================
       // BLACKOUT DATES (holidays when catering is unavailable)

@@ -8,6 +8,7 @@
 ## Overview
 
 Minimal viable trial system following product-led growth:
+
 1. **Free signup** → Full access immediately (already works)
 2. **Create first package** → "Start your 14-day trial" button appears
 3. **Trial countdown** → Banner on dashboard
@@ -15,14 +16,14 @@ Minimal viable trial system following product-led growth:
 
 ## Key Decisions (Post-Review)
 
-| Original | Simplified |
-|----------|------------|
-| 6 subscription statuses | 4 statuses (NONE, TRIALING, ACTIVE, EXPIRED) |
-| 3 pricing tiers | 1 tier: $99/month |
-| 4-step onboarding checklist | "Has package?" check only |
-| TrialService class | Inline utility functions |
-| Stripe Subscriptions API | Stripe Checkout (simpler) |
-| 6 days | 1.5 days |
+| Original                    | Simplified                                   |
+| --------------------------- | -------------------------------------------- |
+| 6 subscription statuses     | 4 statuses (NONE, TRIALING, ACTIVE, EXPIRED) |
+| 3 pricing tiers             | 1 tier: $99/month                            |
+| 4-step onboarding checklist | "Has package?" check only                    |
+| TrialService class          | Inline utility functions                     |
+| Stripe Subscriptions API    | Stripe Checkout (simpler)                    |
+| 6 days                      | 1.5 days                                     |
 
 ---
 
@@ -49,6 +50,7 @@ enum SubscriptionStatus {
 ```
 
 **Why this is enough:**
+
 - `trialEndsAt` - When trial expires (null = no trial yet)
 - `subscriptionStatus` - Current state
 - `stripeCustomerId` - For Checkout sessions
@@ -60,9 +62,11 @@ enum SubscriptionStatus {
 ## API Endpoints
 
 ### 1. Start Trial
+
 ```
 POST /v1/tenant-admin/trial/start
 ```
+
 Called when user clicks "Start Trial" after creating first package.
 
 ```typescript
@@ -74,6 +78,7 @@ Called when user clicks "Start Trial" after creating first package.
 ```
 
 **Logic:**
+
 ```typescript
 // Idempotent - safe to call multiple times
 if (tenant.trialEndsAt) {
@@ -87,9 +92,11 @@ await prisma.tenant.update({
 ```
 
 ### 2. Get Trial Status
+
 ```
 GET /v1/tenant-admin/trial/status
 ```
+
 For dashboard to show trial banner.
 
 ```typescript
@@ -103,19 +110,22 @@ For dashboard to show trial banner.
 ```
 
 ### 3. Create Checkout Session
+
 ```
 POST /v1/tenant-admin/billing/checkout
 ```
+
 Creates Stripe Checkout session for $99/month.
 
 ```typescript
 // Response
 {
-  checkoutUrl: "https://checkout.stripe.com/..."
+  checkoutUrl: 'https://checkout.stripe.com/...';
 }
 ```
 
 **Webhook:** `checkout.session.completed`
+
 - Sets `subscriptionStatus = 'ACTIVE'`
 - Stores `stripeCustomerId`
 
@@ -124,6 +134,7 @@ Creates Stripe Checkout session for $99/month.
 ## Frontend Components
 
 ### 1. StartTrialCard
+
 Shows when: `hasPackages && status === 'NONE'`
 
 ```tsx
@@ -138,6 +149,7 @@ Shows when: `hasPackages && status === 'NONE'`
 ```
 
 ### 2. TrialBanner
+
 Shows when: `status === 'TRIALING'`
 
 ```tsx
@@ -152,6 +164,7 @@ Shows when: `status === 'TRIALING'`
 ```
 
 ### 3. ExpiredBanner
+
 Shows when: `status === 'EXPIRED'`
 
 ```tsx
@@ -162,6 +175,7 @@ Shows when: `status === 'EXPIRED'`
 ```
 
 ### 4. BillingPage
+
 Simple page with checkout button.
 
 ```tsx
@@ -184,6 +198,7 @@ Simple page with checkout button.
 ### Phase 1: Schema + Backend (4 hours)
 
 **Tasks:**
+
 - [ ] Add `trialEndsAt`, `subscriptionStatus`, `stripeCustomerId` to Tenant
 - [ ] Add `SubscriptionStatus` enum
 - [ ] Run migration
@@ -203,6 +218,7 @@ Simple page with checkout button.
 ### Phase 2: Frontend (4 hours)
 
 **Tasks:**
+
 - [ ] Create `StartTrialCard` component
 - [ ] Create `TrialBanner` component
 - [ ] Create `ExpiredBanner` component
@@ -221,6 +237,7 @@ Simple page with checkout button.
 ### Phase 3: Stripe Setup + Testing (2 hours)
 
 **Tasks:**
+
 - [ ] Create Stripe Product + Price ($99/month)
 - [ ] Test checkout flow end-to-end
 - [ ] Test webhook locally with Stripe CLI
@@ -231,6 +248,7 @@ Simple page with checkout button.
 ## Acceptance Criteria
 
 ### Must Have (MVP)
+
 - [ ] User can sign up free (already works)
 - [ ] After creating first package, "Start Trial" button appears
 - [ ] Clicking starts 14-day trial
@@ -240,6 +258,7 @@ Simple page with checkout button.
 - [ ] After trial expires (no payment), banner changes to "expired"
 
 ### Deferred (Not in MVP)
+
 - Multiple pricing tiers
 - Feature gating by tier
 - Stripe Subscriptions (auto-renewal)
@@ -251,12 +270,12 @@ Simple page with checkout button.
 
 ## Edge Cases Addressed
 
-| Edge Case | Solution |
-|-----------|----------|
-| Double-click "Start Trial" | Idempotent - check if `trialEndsAt` exists first |
-| Timezone issues | Store as UTC, display in local timezone |
-| Email aliases for multiple trials | Normalize emails (strip `+alias`) on signup |
-| Webhook failure | Nightly reconciliation job (Phase 2 future work) |
+| Edge Case                         | Solution                                         |
+| --------------------------------- | ------------------------------------------------ |
+| Double-click "Start Trial"        | Idempotent - check if `trialEndsAt` exists first |
+| Timezone issues                   | Store as UTC, display in local timezone          |
+| Email aliases for multiple trials | Normalize emails (strip `+alias`) on signup      |
+| Webhook failure                   | Nightly reconciliation job (Phase 2 future work) |
 
 ---
 
@@ -316,10 +335,10 @@ apps/web/
 
 ## Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| Time to implement | < 2 days |
-| Signup → Trial start | < 10 minutes |
+| Metric                  | Target                |
+| ----------------------- | --------------------- |
+| Time to implement       | < 2 days              |
+| Signup → Trial start    | < 10 minutes          |
 | Trial → Paid conversion | Track (no target yet) |
 
 ---

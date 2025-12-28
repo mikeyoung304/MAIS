@@ -45,13 +45,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
     const tenant = await getTenantByDomain(validatedDomain);
     const domainParam = `?domain=${validatedDomain}`;
 
-    return (
-      <ContactPageContent
-        tenant={tenant}
-        basePath=""
-        domainParam={domainParam}
-      />
-    );
+    return <ContactPageContent tenant={tenant} basePath="" domainParam={domainParam} />;
   } catch (error) {
     if (error instanceof TenantNotFoundError) notFound();
     throw error;

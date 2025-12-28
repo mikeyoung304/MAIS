@@ -23,24 +23,24 @@
 
 **NONE FOUND** - No AI-related packages in any `package.json`:
 
-| Package | server | apps/web | client | contracts | shared |
-|---------|--------|----------|--------|-----------|--------|
-| `openai` | - | - | - | - | - |
-| `@anthropic-ai/sdk` | - | - | - | - | - |
-| `langchain` | - | - | - | - | - |
-| `ai` (Vercel AI SDK) | - | - | - | - | - |
-| `cohere-ai` | - | - | - | - | - |
-| `replicate` | - | - | - | - | - |
+| Package              | server | apps/web | client | contracts | shared |
+| -------------------- | ------ | -------- | ------ | --------- | ------ |
+| `openai`             | -      | -        | -      | -         | -      |
+| `@anthropic-ai/sdk`  | -      | -        | -      | -         | -      |
+| `langchain`          | -      | -        | -      | -         | -      |
+| `ai` (Vercel AI SDK) | -      | -        | -      | -         | -      |
+| `cohere-ai`          | -      | -        | -      | -         | -      |
+| `replicate`          | -      | -        | -      | -         | -      |
 
 ### 1.2 AI-Related Code Patterns
 
 **Search Results:**
 
-| Pattern | Files Found | Notes |
-|---------|-------------|-------|
-| `openai\|anthropic\|claude\|gpt\|llm` | 547 | Documentation only (CLAUDE.md, plans, docs) |
-| `prompt\|system.*message` | 1 | Seed file only (`little-bit-horse-farm.ts`) |
-| `agent\|assistant\|chat\|model` | 29 | UI components (chat UX), not AI agents |
+| Pattern                               | Files Found | Notes                                       |
+| ------------------------------------- | ----------- | ------------------------------------------- |
+| `openai\|anthropic\|claude\|gpt\|llm` | 547         | Documentation only (CLAUDE.md, plans, docs) |
+| `prompt\|system.*message`             | 1           | Seed file only (`little-bit-horse-farm.ts`) |
+| `agent\|assistant\|chat\|model`       | 29          | UI components (chat UX), not AI agents      |
 
 **Conclusion:** All AI-related string matches are in documentation files, seed data, or UI component naming (e.g., "chat" for messaging UX, not AI chatbots).
 
@@ -51,12 +51,14 @@
 **Status:** DEFERRED (documented but not implemented)
 
 **Planned Features:**
+
 1. Developer-facing Claude Code CLI integration
 2. Customer-facing tenant chatbot for storefront configuration
 3. Semantic naming system for AI-driven editing
 4. Tool definitions for Claude (get_storefront_config, update_branding, bulk_update_packages)
 
 **Planned Dependencies:**
+
 - `@anthropic-ai/sdk` - Claude API client
 - `ai` (Vercel AI SDK) - React hooks for streaming chat
 
@@ -84,11 +86,13 @@ ${userMessage}
 ```
 
 **Issues in Deferred Spec:**
+
 - Prompt versioning not addressed
 - No prompt registry or centralized management
 - Missing prompt testing strategy
 
 **Recommendations for Future:**
+
 1. Create `server/src/prompts/` directory with versioned prompt files
 2. Add prompt templates to contracts package for type safety
 3. Include prompt unit tests in test suite
@@ -103,12 +107,12 @@ ${userMessage}
 
 When AI integration is added, monitor these areas:
 
-| Surface | Risk | Mitigation Strategy |
-|---------|------|---------------------|
-| Full tenant config in context | HIGH | Use `include` filters (already in deferred spec) |
-| Package descriptions | MEDIUM | Truncate to 500 chars for AI context |
-| Audit log history | MEDIUM | Limit to last 10 entries |
-| Conversation memory | HIGH | Implement sliding window (not in deferred spec) |
+| Surface                       | Risk   | Mitigation Strategy                              |
+| ----------------------------- | ------ | ------------------------------------------------ |
+| Full tenant config in context | HIGH   | Use `include` filters (already in deferred spec) |
+| Package descriptions          | MEDIUM | Truncate to 500 chars for AI context             |
+| Audit log history             | MEDIUM | Limit to last 10 entries                         |
+| Conversation memory           | HIGH   | Implement sliding window (not in deferred spec)  |
 
 ---
 
@@ -118,26 +122,26 @@ Since no AI integration exists, this section documents what infrastructure ALREA
 
 ### 4.1 Existing Infrastructure (Reusable for AI)
 
-| Infrastructure | Status | Location |
-|----------------|--------|----------|
-| Rate Limiting | EXISTS | `server/src/middleware/rateLimiter.ts` |
-| Input Sanitization | EXISTS | `server/src/lib/sanitization.ts` |
-| Request Logging | EXISTS | `server/src/middleware/request-logger.ts` |
-| Error Handling | EXISTS | `server/src/middleware/error-handler.ts` |
-| Audit Trail | EXISTS | `server/src/services/audit.service.ts` |
-| Redis/Cache | EXISTS | BullMQ, ioredis (for webhook queue) |
-| Zod Validation | EXISTS | `packages/contracts/` |
+| Infrastructure     | Status | Location                                  |
+| ------------------ | ------ | ----------------------------------------- |
+| Rate Limiting      | EXISTS | `server/src/middleware/rateLimiter.ts`    |
+| Input Sanitization | EXISTS | `server/src/lib/sanitization.ts`          |
+| Request Logging    | EXISTS | `server/src/middleware/request-logger.ts` |
+| Error Handling     | EXISTS | `server/src/middleware/error-handler.ts`  |
+| Audit Trail        | EXISTS | `server/src/services/audit.service.ts`    |
+| Redis/Cache        | EXISTS | BullMQ, ioredis (for webhook queue)       |
+| Zod Validation     | EXISTS | `packages/contracts/`                     |
 
 ### 4.2 Missing Infrastructure (Needed for AI)
 
-| Infrastructure | Priority | Recommendation |
-|----------------|----------|----------------|
-| AI Response Caching | HIGH | Add TTL-based cache for identical prompts |
-| Token Budget Tracking | HIGH | Implement per-tenant token counters |
-| AI-specific Rate Limiting | MEDIUM | Extend rateLimiter.ts for AI endpoints |
-| Retry with Exponential Backoff | MEDIUM | Use existing BullMQ patterns |
-| Cost Monitoring | HIGH | Add billing.service.ts for token costs |
-| Circuit Breaker | MEDIUM | Implement for AI provider outages |
+| Infrastructure                 | Priority | Recommendation                            |
+| ------------------------------ | -------- | ----------------------------------------- |
+| AI Response Caching            | HIGH     | Add TTL-based cache for identical prompts |
+| Token Budget Tracking          | HIGH     | Implement per-tenant token counters       |
+| AI-specific Rate Limiting      | MEDIUM   | Extend rateLimiter.ts for AI endpoints    |
+| Retry with Exponential Backoff | MEDIUM   | Use existing BullMQ patterns              |
+| Cost Monitoring                | HIGH     | Add billing.service.ts for token costs    |
+| Circuit Breaker                | MEDIUM   | Implement for AI provider outages         |
 
 ### 4.3 Infrastructure Gaps Analysis
 
@@ -157,22 +161,22 @@ Cost: N/A                     Need: Per-tenant token budgets
 
 ### 5.1 Current Observability Stack
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Sentry | EXISTS | `@sentry/node`, `@sentry/react` |
-| Pino Logger | EXISTS | Structured logging throughout |
+| Component      | Status | Notes                            |
+| -------------- | ------ | -------------------------------- |
+| Sentry         | EXISTS | `@sentry/node`, `@sentry/react`  |
+| Pino Logger    | EXISTS | Structured logging throughout    |
 | Request Logger | EXISTS | Logs HTTP method, path, duration |
-| Audit Service | EXISTS | Tracks config changes |
+| Audit Service  | EXISTS | Tracks config changes            |
 
 ### 5.2 AI-Specific Observability Gaps
 
-| Gap | Priority | Recommendation |
-|-----|----------|----------------|
-| AI interaction logging | HIGH | Log prompt hash, token count, model, latency |
-| PII redaction in logs | CRITICAL | Already handled by sanitization.ts |
-| Token usage telemetry | HIGH | Add OpenTelemetry counters |
-| Model version tracking | MEDIUM | Include in audit trail |
-| Response quality metrics | LOW | Track user confirmations vs rejections |
+| Gap                      | Priority | Recommendation                               |
+| ------------------------ | -------- | -------------------------------------------- |
+| AI interaction logging   | HIGH     | Log prompt hash, token count, model, latency |
+| PII redaction in logs    | CRITICAL | Already handled by sanitization.ts           |
+| Token usage telemetry    | HIGH     | Add OpenTelemetry counters                   |
+| Model version tracking   | MEDIUM   | Include in audit trail                       |
+| Response quality metrics | LOW      | Track user confirmations vs rejections       |
 
 ### 5.3 Recommended Logging Schema
 
@@ -181,8 +185,8 @@ Cost: N/A                     Need: Per-tenant token budgets
 interface AIInteractionLog {
   tenantId: string;
   sessionId: string;
-  promptHash: string;        // SHA-256 of prompt (not content)
-  model: string;             // 'claude-3-opus', etc.
+  promptHash: string; // SHA-256 of prompt (not content)
+  model: string; // 'claude-3-opus', etc.
   inputTokens: number;
   outputTokens: number;
   latencyMs: number;
@@ -201,18 +205,19 @@ interface AIInteractionLog {
 
 **Existing Defenses:**
 
-| Defense | Location | Coverage |
-|---------|----------|----------|
-| XSS Sanitization | `sanitization.ts` | HTML, plain text, URLs |
-| Zod Schema Validation | `contracts/` | All API inputs |
-| Input Escaping | `sanitizePlainText()` | Text fields |
-| SQL Injection Prevention | Prisma ORM | All queries |
+| Defense                  | Location              | Coverage               |
+| ------------------------ | --------------------- | ---------------------- |
+| XSS Sanitization         | `sanitization.ts`     | HTML, plain text, URLs |
+| Zod Schema Validation    | `contracts/`          | All API inputs         |
+| Input Escaping           | `sanitizePlainText()` | Text fields            |
+| SQL Injection Prevention | Prisma ORM            | All queries            |
 
 ### 6.2 Prompt Injection Readiness
 
 When AI is added, these patterns provide defense-in-depth:
 
 **Good Pattern (from deferred spec):**
+
 ```typescript
 // Tool use with strict schemas - protects against injection
 const AGENT_TOOLS: Tool[] = [
@@ -224,26 +229,27 @@ const AGENT_TOOLS: Tool[] = [
         primaryColor: { type: 'string', pattern: '^#[0-9A-Fa-f]{6}$' },
       },
     },
-    strict: true,  // Claude rejects invalid input
+    strict: true, // Claude rejects invalid input
   },
 ];
 ```
 
 **Missing Patterns:**
+
 1. No output validation after AI responses
 2. No allowlist for AI-generated content types
 3. No sandbox for AI-generated code execution
 
 ### 6.3 Prompt Injection Checklist (Future)
 
-| Checkpoint | Status | Notes |
-|------------|--------|-------|
-| Use tool/function calling, not freeform | PLANNED | In deferred spec |
-| Strict Zod schemas for tool inputs | EXISTS | Pattern available |
-| XML tags to separate system/user prompts | PLANNED | In deferred spec |
-| Validate AI outputs before persistence | MISSING | Add output schemas |
-| Sanitize AI outputs before rendering | EXISTS | XSS sanitization |
-| No eval/exec of AI-generated code | N/A | No code execution planned |
+| Checkpoint                               | Status  | Notes                     |
+| ---------------------------------------- | ------- | ------------------------- |
+| Use tool/function calling, not freeform  | PLANNED | In deferred spec          |
+| Strict Zod schemas for tool inputs       | EXISTS  | Pattern available         |
+| XML tags to separate system/user prompts | PLANNED | In deferred spec          |
+| Validate AI outputs before persistence   | MISSING | Add output schemas        |
+| Sanitize AI outputs before rendering     | EXISTS  | XSS sanitization          |
+| No eval/exec of AI-generated code        | N/A     | No code execution planned |
 
 ---
 
@@ -271,13 +277,15 @@ export const AICommandOutputSchema = z.object({
   success: z.boolean(),
   toolsExecuted: z.array(z.string()),
   preview: z.string().optional(),
-  changes: z.array(z.object({
-    entityType: z.enum(['Package', 'Segment', 'Branding']),
-    entityId: z.string(),
-    field: z.string(),
-    oldValue: z.unknown(),
-    newValue: z.unknown(),
-  })),
+  changes: z.array(
+    z.object({
+      entityType: z.enum(['Package', 'Segment', 'Branding']),
+      entityId: z.string(),
+      field: z.string(),
+      oldValue: z.unknown(),
+      newValue: z.unknown(),
+    })
+  ),
 });
 ```
 
@@ -291,9 +299,9 @@ interface AICacheStrategy {
 
   // TTL by response type
   ttlByType: {
-    read_only: '1 hour',       // get_storefront_config
-    write_preview: '5 minutes', // dryRun=true
-    write_execute: 'never',     // Mutations not cached
+    read_only: '1 hour'; // get_storefront_config
+    write_preview: '5 minutes'; // dryRun=true
+    write_execute: 'never'; // Mutations not cached
   };
 
   // Invalidation triggers
@@ -336,16 +344,16 @@ const span = tracer.startSpan('ai.claude.completion', {
 // server/src/services/ai-billing.service.ts (future)
 interface TokenBudget {
   tenantId: string;
-  monthlyLimit: number;       // e.g., 1_000_000 tokens
-  dailyLimit: number;         // e.g., 50_000 tokens
+  monthlyLimit: number; // e.g., 1_000_000 tokens
+  dailyLimit: number; // e.g., 50_000 tokens
   currentMonthUsage: number;
   currentDayUsage: number;
-  alertThreshold: 0.8;        // Alert at 80%
+  alertThreshold: 0.8; // Alert at 80%
 }
 
 // Pricing (Claude Opus 4.5 estimate)
 const TOKEN_PRICING = {
-  input: 0.015 / 1000,  // $0.015 per 1K input tokens
+  input: 0.015 / 1000, // $0.015 per 1K input tokens
   output: 0.075 / 1000, // $0.075 per 1K output tokens
 };
 ```
@@ -356,22 +364,22 @@ const TOKEN_PRICING = {
 
 ### 8.1 High-Value AI Opportunities
 
-| Opportunity | Value | Effort | Recommendation |
-|-------------|-------|--------|----------------|
-| Storefront config assistant | HIGH | HIGH | IMPLEMENT (per deferred spec) |
-| Bulk package price updates | HIGH | MEDIUM | IMPLEMENT |
-| Semantic search for packages | MEDIUM | MEDIUM | DEFER |
-| AI-generated package descriptions | MEDIUM | LOW | DEFER |
-| Smart booking time suggestions | LOW | HIGH | SKIP |
+| Opportunity                       | Value  | Effort | Recommendation                |
+| --------------------------------- | ------ | ------ | ----------------------------- |
+| Storefront config assistant       | HIGH   | HIGH   | IMPLEMENT (per deferred spec) |
+| Bulk package price updates        | HIGH   | MEDIUM | IMPLEMENT                     |
+| Semantic search for packages      | MEDIUM | MEDIUM | DEFER                         |
+| AI-generated package descriptions | MEDIUM | LOW    | DEFER                         |
+| Smart booking time suggestions    | LOW    | HIGH   | SKIP                          |
 
 ### 8.2 Over-Engineering Risks
 
-| Anti-Pattern | Risk | Why to Avoid |
-|--------------|------|--------------|
-| AI for simple CRUD | HIGH | Existing UI is faster |
-| AI-generated code execution | CRITICAL | Security nightmare |
-| Real-time AI suggestions | MEDIUM | Latency kills UX |
-| Multi-agent orchestration | HIGH | Complexity vs value |
+| Anti-Pattern                | Risk     | Why to Avoid          |
+| --------------------------- | -------- | --------------------- |
+| AI for simple CRUD          | HIGH     | Existing UI is faster |
+| AI-generated code execution | CRITICAL | Security nightmare    |
+| Real-time AI suggestions    | MEDIUM   | Latency kills UX      |
+| Multi-agent orchestration   | HIGH     | Complexity vs value   |
 
 ### 8.3 Implementation Priority
 
@@ -398,29 +406,29 @@ Phase 3 (Q3 2026): Write-enabled chatbot
 
 ### 9.1 Existing Security Infrastructure
 
-| File | Purpose |
-|------|---------|
-| `/Users/mikeyoung/CODING/MAIS/server/src/lib/sanitization.ts` | XSS prevention, input sanitization |
-| `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts` | Rate limiting middleware |
-| `/Users/mikeyoung/CODING/MAIS/server/src/middleware/request-logger.ts` | Request/response logging |
-| `/Users/mikeyoung/CODING/MAIS/server/src/services/audit.service.ts` | Config change audit trail |
-| `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts` | Repository interfaces |
+| File                                                                   | Purpose                            |
+| ---------------------------------------------------------------------- | ---------------------------------- |
+| `/Users/mikeyoung/CODING/MAIS/server/src/lib/sanitization.ts`          | XSS prevention, input sanitization |
+| `/Users/mikeyoung/CODING/MAIS/server/src/middleware/rateLimiter.ts`    | Rate limiting middleware           |
+| `/Users/mikeyoung/CODING/MAIS/server/src/middleware/request-logger.ts` | Request/response logging           |
+| `/Users/mikeyoung/CODING/MAIS/server/src/services/audit.service.ts`    | Config change audit trail          |
+| `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports.ts`                 | Repository interfaces              |
 
 ### 9.2 Deferred AI Documentation
 
-| File | Purpose |
-|------|---------|
+| File                                                                                                                | Purpose                           |
+| ------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | `/Users/mikeyoung/CODING/MAIS/docs/archive/2025-12/2025-12-03_feat-ai-powered-storefront-configuration-DEFERRED.md` | Full AI integration specification |
 
 ### 9.3 Package Dependencies (No AI)
 
-| File | AI Dependencies |
-|------|-----------------|
-| `/Users/mikeyoung/CODING/MAIS/package.json` | None |
-| `/Users/mikeyoung/CODING/MAIS/server/package.json` | None |
-| `/Users/mikeyoung/CODING/MAIS/apps/web/package.json` | None |
-| `/Users/mikeyoung/CODING/MAIS/client/package.json` | None |
-| `/Users/mikeyoung/CODING/MAIS/packages/contracts/package.json` | None |
+| File                                                           | AI Dependencies |
+| -------------------------------------------------------------- | --------------- |
+| `/Users/mikeyoung/CODING/MAIS/package.json`                    | None            |
+| `/Users/mikeyoung/CODING/MAIS/server/package.json`             | None            |
+| `/Users/mikeyoung/CODING/MAIS/apps/web/package.json`           | None            |
+| `/Users/mikeyoung/CODING/MAIS/client/package.json`             | None            |
+| `/Users/mikeyoung/CODING/MAIS/packages/contracts/package.json` | None            |
 
 ---
 
@@ -435,24 +443,24 @@ Phase 3 (Q3 2026): Write-enabled chatbot
 
 ### 10.2 Recommendations
 
-| Priority | Action | Owner |
-|----------|--------|-------|
-| P0 | When adding AI, implement token budget tracking | Backend |
-| P0 | Add output validation for AI responses | Backend |
-| P1 | Create AI-specific rate limiter (10/min/tenant) | Backend |
-| P1 | Add OpenTelemetry spans for AI calls | Platform |
-| P2 | Implement semantic caching for read-only AI queries | Backend |
-| P2 | Build cost monitoring dashboard | Frontend |
+| Priority | Action                                              | Owner    |
+| -------- | --------------------------------------------------- | -------- |
+| P0       | When adding AI, implement token budget tracking     | Backend  |
+| P0       | Add output validation for AI responses              | Backend  |
+| P1       | Create AI-specific rate limiter (10/min/tenant)     | Backend  |
+| P1       | Add OpenTelemetry spans for AI calls                | Platform |
+| P2       | Implement semantic caching for read-only AI queries | Backend  |
+| P2       | Build cost monitoring dashboard                     | Frontend |
 
 ### 10.3 Risk Summary
 
-| Category | Current Risk | Future Risk (with AI) | Mitigation |
-|----------|--------------|----------------------|------------|
-| Prompt Injection | N/A | MEDIUM | Tool use + Zod schemas |
-| Token Waste | N/A | HIGH | Caching + budgets |
-| Cost Overrun | N/A | HIGH | Per-tenant limits |
-| Data Leakage | LOW | MEDIUM | Tenant scoping in prompts |
-| Observability | LOW | MEDIUM | Add AI telemetry |
+| Category         | Current Risk | Future Risk (with AI) | Mitigation                |
+| ---------------- | ------------ | --------------------- | ------------------------- |
+| Prompt Injection | N/A          | MEDIUM                | Tool use + Zod schemas    |
+| Token Waste      | N/A          | HIGH                  | Caching + budgets         |
+| Cost Overrun     | N/A          | HIGH                  | Per-tenant limits         |
+| Data Leakage     | LOW          | MEDIUM                | Tenant scoping in prompts |
+| Observability    | LOW          | MEDIUM                | Add AI telemetry          |
 
 ---
 

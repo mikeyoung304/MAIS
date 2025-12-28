@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "344"
+issue_id: '344'
 tags: [code-review, security, information-disclosure]
 dependencies: []
 ---
@@ -31,6 +31,7 @@ export class PackageNotAvailableError extends PackageError {
 ## Proposed Solutions
 
 ### Option A: Generic error message (Recommended)
+
 - **Pros:** No information disclosure, simple change
 - **Cons:** Less debugging info in error response
 - **Effort:** Small
@@ -47,6 +48,7 @@ export class PackageNotAvailableError extends PackageError {
 ```
 
 ### Option B: Log-only package ID
+
 - **Pros:** Maintains debugging capability
 - **Cons:** Slightly more complex
 - **Effort:** Small
@@ -70,8 +72,8 @@ Option A - Change error message to be generic.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                       |
+| ---------- | ------------------------ | ------------------------------- |
 | 2024-12-24 | Created from code review | security-sentinel agent finding |
 
 ## Resources

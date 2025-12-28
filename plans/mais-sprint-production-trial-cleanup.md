@@ -102,6 +102,7 @@ psql $PRODUCTION_DATABASE_URL < backup-pre-mais-seed-XXXXXXXX.sql
 ### Current State
 
 The trial system is ~90% complete. All components exist:
+
 - Database schema ✅
 - Backend endpoints ✅
 - Stripe adapter ✅
@@ -142,12 +143,12 @@ cd apps/web && npm run dev &
 
 ### Key Files (reference only)
 
-| File | Purpose |
-|------|---------|
-| `server/src/routes/tenant-admin.routes.ts` | Trial endpoints |
-| `server/src/routes/tenant-admin-billing.routes.ts` | Billing endpoints |
-| `apps/web/src/components/trial/StartTrialCard.tsx` | Start trial UI |
-| `apps/web/src/components/trial/TrialBanner.tsx` | Trial countdown UI |
+| File                                               | Purpose            |
+| -------------------------------------------------- | ------------------ |
+| `server/src/routes/tenant-admin.routes.ts`         | Trial endpoints    |
+| `server/src/routes/tenant-admin-billing.routes.ts` | Billing endpoints  |
+| `apps/web/src/components/trial/StartTrialCard.tsx` | Start trial UI     |
+| `apps/web/src/components/trial/TrialBanner.tsx`    | Trial countdown UI |
 
 ---
 
@@ -168,17 +169,17 @@ stripe trigger checkout.session.completed
 
 ## Review Feedback Applied
 
-| Reviewer | Key Changes Applied |
-|----------|---------------------|
-| **DHH** | Reduced Task 2 from 4-6 hours to 1-2 hour smoke test |
-| **DHH** | Removed Risk Assessment table |
-| **DHH** | Removed duplicate Verification Commands section |
-| **Kieran** | Added database backup step before production seeding |
-| **Kieran** | Fixed chmod ordering (before git add) |
-| **Kieran** | Added post-deployment webhook verification |
+| Reviewer       | Key Changes Applied                                             |
+| -------------- | --------------------------------------------------------------- |
+| **DHH**        | Reduced Task 2 from 4-6 hours to 1-2 hour smoke test            |
+| **DHH**        | Removed Risk Assessment table                                   |
+| **DHH**        | Removed duplicate Verification Commands section                 |
+| **Kieran**     | Added database backup step before production seeding            |
+| **Kieran**     | Fixed chmod ordering (before git add)                           |
+| **Kieran**     | Added post-deployment webhook verification                      |
 | **Simplicity** | Removed Section 2.2 (API route mapping) - covered by smoke test |
-| **Simplicity** | Removed Section 2.4 (E2E tests) - YAGNI for MVP |
-| **Simplicity** | Combined git add into single command |
+| **Simplicity** | Removed Section 2.4 (E2E tests) - YAGNI for MVP                 |
+| **Simplicity** | Combined git add into single command                            |
 
 ---
 

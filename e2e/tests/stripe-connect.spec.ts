@@ -73,7 +73,9 @@ test.describe('Stripe Connect Flow', () => {
 
     // Verify dialog buttons
     await expect(authenticatedPage.getByRole('button', { name: 'Cancel' })).toBeVisible();
-    await expect(authenticatedPage.getByRole('button', { name: 'Continue to Stripe' })).toBeVisible();
+    await expect(
+      authenticatedPage.getByRole('button', { name: 'Continue to Stripe' })
+    ).toBeVisible();
   });
 
   test('onboarding dialog validates email format', async ({ authenticatedPage }) => {

@@ -16,9 +16,7 @@ import AxeBuilder from '@axe-core/playwright';
  */
 test.describe('Accessibility - WCAG 2.1 AA', () => {
   test.describe('Public Pages', () => {
-    test('Homepage should have no critical accessibility violations', async ({
-      page,
-    }) => {
+    test('Homepage should have no critical accessibility violations', async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
@@ -78,9 +76,7 @@ test.describe('Accessibility - WCAG 2.1 AA', () => {
   });
 
   test.describe('Auth Pages', () => {
-    test('Login page should have no critical accessibility violations', async ({
-      page,
-    }) => {
+    test('Login page should have no critical accessibility violations', async ({ page }) => {
       await page.goto('/login');
       await page.waitForLoadState('networkidle');
 
@@ -102,9 +98,7 @@ test.describe('Accessibility - WCAG 2.1 AA', () => {
       expect(criticalViolations).toHaveLength(0);
     });
 
-    test('Signup page should have no critical accessibility violations', async ({
-      page,
-    }) => {
+    test('Signup page should have no critical accessibility violations', async ({ page }) => {
       await page.goto('/signup');
       await page.waitForLoadState('networkidle');
 
@@ -143,9 +137,7 @@ test.describe('Accessibility - WCAG 2.1 AA', () => {
       });
 
       // Should have focused on an interactive element
-      expect(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']).toContain(
-        focusedElement
-      );
+      expect(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']).toContain(focusedElement);
     });
 
     test('Focus is visible on interactive elements', async ({ page }) => {
@@ -163,9 +155,7 @@ test.describe('Accessibility - WCAG 2.1 AA', () => {
         const styles = window.getComputedStyle(el);
         // Check for outline or box-shadow (common focus indicators)
         return (
-          styles.outline !== 'none' ||
-          styles.outlineWidth !== '0px' ||
-          styles.boxShadow !== 'none'
+          styles.outline !== 'none' || styles.outlineWidth !== '0px' || styles.boxShadow !== 'none'
         );
       });
 
@@ -188,10 +178,7 @@ test.describe('Accessibility - WCAG 2.1 AA', () => {
       );
 
       if (contrastViolations.length > 0) {
-        console.error(
-          'Color contrast violations:',
-          JSON.stringify(contrastViolations, null, 2)
-        );
+        console.error('Color contrast violations:', JSON.stringify(contrastViolations, null, 2));
       }
 
       // Allow some minor contrast issues but flag critical ones

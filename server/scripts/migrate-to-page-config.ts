@@ -230,7 +230,9 @@ async function main() {
   console.log('Migration: Legacy Section Config → Page-Based Config');
   console.log('='.repeat(60));
   console.log('');
-  console.log(`Mode: ${DRY_RUN ? 'DRY RUN (no changes will be made)' : 'APPLY (changes will be committed)'}`);
+  console.log(
+    `Mode: ${DRY_RUN ? 'DRY RUN (no changes will be made)' : 'APPLY (changes will be committed)'}`
+  );
   console.log('');
 
   // Fetch all tenants with landing page config
@@ -273,7 +275,12 @@ async function main() {
         console.log('  ✓ Migrated successfully');
       } else {
         console.log('  ✓ Would migrate (dry run)');
-        console.log(`    - Pages enabled: ${Object.entries(newConfig.pages || {}).filter(([, v]) => v.enabled).map(([k]) => k).join(', ')}`);
+        console.log(
+          `    - Pages enabled: ${Object.entries(newConfig.pages || {})
+            .filter(([, v]) => v.enabled)
+            .map(([k]) => k)
+            .join(', ')}`
+        );
       }
 
       migratedCount++;

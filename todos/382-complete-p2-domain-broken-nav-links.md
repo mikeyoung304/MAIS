@@ -16,7 +16,7 @@ dependencies: []
 
 ## Problem
 
-The custom domain pages use `basePath = \`?domain=${domain}\`` which creates broken navigation links like `?domain=example.com/services` instead of `/services?domain=example.com`. This breaks the custom domain user experience.
+The custom domain pages use `basePath = \`?domain=${domain}\``which creates broken navigation links like`?domain=example.com/services`instead of`/services?domain=example.com`. This breaks the custom domain user experience.
 
 ## Location
 

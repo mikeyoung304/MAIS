@@ -1,6 +1,7 @@
 # Add More Professions to ScrollingIdentity
 
 ## Metadata
+
 - **ID:** 440
 - **Status:** pending
 - **Priority:** P3
@@ -10,6 +11,7 @@
 ## Problem Statement
 
 The ScrollingIdentity component currently has 8 professions. Adding 2-3 more would:
+
 1. Broaden appeal to additional verticals
 2. Lengthen the animation loop for variety
 3. Show more range in target audience
@@ -17,9 +19,11 @@ The ScrollingIdentity component currently has 8 professions. Adding 2-3 more wou
 ## Findings
 
 Current professions (8):
+
 - photographer, therapist, coach, wedding planner, consultant, trainer, designer, doula
 
 Missing professions mentioned by marketing agencies:
+
 - esthetician, nutritionist, stylist, massage therapist, tutor, real estate agent, DJ, caterer
 
 ## Proposed Solutions
@@ -33,6 +37,7 @@ Missing professions mentioned by marketing agencies:
 ```
 
 These add:
+
 - Service industry breadth (wellness, appearance, lifestyle)
 - Strong, specific verbs
 - Underrepresented but sizable markets
@@ -40,9 +45,11 @@ These add:
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/components/home/ScrollingIdentity.tsx` — identities array
 
 **Change:**
+
 ```diff
 const identities = [
   { profession: 'photographer', verb: 'capture moments' },
@@ -67,6 +74,6 @@ const identities = [
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                              |
+| ---------- | ------- | -------------------------------------------------- |
 | 2025-12-27 | Created | From brand review - Pattern Recognition Specialist |

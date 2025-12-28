@@ -33,7 +33,7 @@ grep -r "export const revalidate" apps/web/src/app
 export const revalidate = 60;
 
 // To this (for development):
-export const revalidate = 0;  // Fetch fresh on every request
+export const revalidate = 0; // Fetch fresh on every request
 ```
 
 ### Step 3: Verify it works
@@ -207,7 +207,7 @@ async function getTenantStorefrontDataNoCache(slug: string): Promise<TenantStore
   const tenantUrl = `${API_BASE_URL}/v1/public/tenants/${encodeURIComponent(slug)}`;
   const tenantResponse = await fetch(tenantUrl, {
     method: 'GET',
-    next: { revalidate: 0 },  // Never cache
+    next: { revalidate: 0 }, // Never cache
   });
 
   const tenant = await tenantResponse.json();
@@ -216,12 +216,14 @@ async function getTenantStorefrontDataNoCache(slug: string): Promise<TenantStore
     fetch(`${API_BASE_URL}/v1/packages`, {
       headers: { 'X-Tenant-Key': tenant.apiKeyPublic },
       next: { revalidate: 0 },
-    }).then(r => r.json()),
+    }).then((r) => r.json()),
 
     fetch(`${API_BASE_URL}/v1/segments`, {
       headers: { 'X-Tenant-Key': tenant.apiKeyPublic },
       next: { revalidate: 0 },
-    }).then(r => r.json()).catch(() => []),
+    })
+      .then((r) => r.json())
+      .catch(() => []),
   ]);
 
   return { tenant, packages, segments };
@@ -302,21 +304,22 @@ test('ISR revalidates data after 60 seconds', async ({ page }) => {
   // 2. Request page again before 60s - should be cached
   await page.reload();
   const cachedContent = await page.textContent('[data-test="package-list"]');
-  expect(cachedContent).toBe(initialContent);  // Identical (from cache)
+  expect(cachedContent).toBe(initialContent); // Identical (from cache)
 
   // 3. Wait for ISR window to pass
-  await page.waitForTimeout(61 * 1000);  // Wait 61 seconds
+  await page.waitForTimeout(61 * 1000); // Wait 61 seconds
 
   // 4. Request again - should fetch fresh
   await page.reload();
 
   // Verify fetch was made (check Network tab)
   const request = await page.evaluate(() => {
-    return (performance as any).getEntriesByType('resource')
+    return (performance as any)
+      .getEntriesByType('resource')
       .find((r: any) => r.name.includes('/v1/public/tenants'));
   });
 
-  expect(request).toBeDefined();  // API was called
+  expect(request).toBeDefined(); // API was called
 });
 ```
 
@@ -331,9 +334,7 @@ test('invalidateTenantCache works immediately', async ({ page, context }) => {
   await page.goto('/t/test-tenant');
 
   // Capture initial data
-  const initialPrice = await page.locator('[data-test="package-price"]')
-    .first()
-    .textContent();
+  const initialPrice = await page.locator('[data-test="package-price"]').first().textContent();
 
   // 2. In admin, update package price
   await page.goto('/tenant/packages');
@@ -347,9 +348,7 @@ test('invalidateTenantCache works immediately', async ({ page, context }) => {
   await page.goto('/t/test-tenant');
 
   // 5. Should see new price immediately (not from cache)
-  const newPrice = await page.locator('[data-test="package-price"]')
-    .first()
-    .textContent();
+  const newPrice = await page.locator('[data-test="package-price"]').first().textContent();
 
   expect(newPrice).not.toBe(initialPrice);
   expect(newPrice).toBe('$500.00');
@@ -374,12 +373,12 @@ test('?fresh=1 bypasses ISR cache', async ({ page }) => {
   // Both should show same content (no update made), but fresh=1 should
   // fetch from API (verify in Network tab)
   const apiRequest = await page.evaluate(() => {
-    return (performance as any).getEntriesByType('resource')
-      .filter((r: any) => r.name.includes('/v1/'))
-      .length;
+    return (performance as any)
+      .getEntriesByType('resource')
+      .filter((r: any) => r.name.includes('/v1/')).length;
   });
 
-  expect(apiRequest).toBeGreaterThan(0);  // API was called
+  expect(apiRequest).toBeGreaterThan(0); // API was called
 });
 ```
 
@@ -447,13 +446,13 @@ After implementing cache strategies:
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| Changes not showing after 60s | Verify ISR window has passed (wait 61s) |
-| Cache cleared but still stale | Restart browser tab completely |
-| `revalidatePath()` not working | Check it's in a server action or route handler |
-| API returns new data but page shows old | Clear `.next` and restart dev server |
-| `?fresh=1` ignored | Verify `searchParams` is handled in page component |
+| Issue                                   | Solution                                           |
+| --------------------------------------- | -------------------------------------------------- |
+| Changes not showing after 60s           | Verify ISR window has passed (wait 61s)            |
+| Cache cleared but still stale           | Restart browser tab completely                     |
+| `revalidatePath()` not working          | Check it's in a server action or route handler     |
+| API returns new data but page shows old | Clear `.next` and restart dev server               |
+| `?fresh=1` ignored                      | Verify `searchParams` is handled in page component |
 
 ---
 
@@ -464,4 +463,3 @@ After implementing cache strategies:
 3. **Test**: Run E2E tests to verify functionality
 4. **Monitor**: Check debug logs during development
 5. **Share**: Document in team wiki/Slack
-

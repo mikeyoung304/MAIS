@@ -29,7 +29,7 @@
  * ```
  */
 
-import type { Tenant} from '../../src/generated/prisma';
+import type { Tenant } from '../../src/generated/prisma';
 import { PrismaClient, Package, AddOn } from '../../src/generated/prisma';
 import { InMemoryCacheAdapter } from '../../src/adapters/mock/cache.adapter';
 import type { CreatePackageInput, CreateAddOnInput, CacheServicePort } from '../../src/lib/ports';

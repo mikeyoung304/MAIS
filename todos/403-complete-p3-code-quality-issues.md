@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p3
-issue_id: "403"
+issue_id: '403'
 tags:
   - code-quality
   - cleanup
@@ -42,16 +42,17 @@ if (!tenantAuth) {
 
 ### 3. Active TODOs in Production Code
 
-| Location | TODO | Description |
-|----------|------|-------------|
-| `server/src/app.ts:63` | CSP | unsafe-inline needs nonce replacement |
-| `server/src/app.ts:157` | TODO-273 | Rate limiting before parsing for DoS |
-| `apps/web/src/lib/tenant.ts:144` | TODO | Domain lookup endpoint not implemented |
-| `server/src/routes/public-date-booking.routes.ts:112` | TODO-330 | Honeypot bot protection |
+| Location                                              | TODO     | Description                            |
+| ----------------------------------------------------- | -------- | -------------------------------------- |
+| `server/src/app.ts:63`                                | CSP      | unsafe-inline needs nonce replacement  |
+| `server/src/app.ts:157`                               | TODO-273 | Rate limiting before parsing for DoS   |
+| `apps/web/src/lib/tenant.ts:144`                      | TODO     | Domain lookup endpoint not implemented |
+| `server/src/routes/public-date-booking.routes.ts:112` | TODO-330 | Honeypot bot protection                |
 
 ### 4. Console.log Remnants
 
 **Location:** `client/src/lib/sentry.ts:88`
+
 ```typescript
 console.log('Sentry initialized for client');
 ```
@@ -63,6 +64,7 @@ Multiple catch blocks don't use the `getErrorMessage()` utility and access error
 ### 6. Duplicate main-content ID
 
 **Locations:**
+
 - `apps/web/src/app/layout.tsx` - `<main id="main-content">`
 - Tenant pages also use this ID on inner divs
 
@@ -75,6 +77,7 @@ All tenant pages return `images: []` for OpenGraph, impacting social sharing.
 ## Proposed Solutions
 
 ### Option 1: Address incrementally (Recommended)
+
 - Fix high-impact items first (auth guard, TODOs)
 - Address style issues in regular code reviews
 
@@ -86,6 +89,7 @@ All tenant pages return `images: []` for OpenGraph, impacting social sharing.
 ## Technical Details
 
 **Files affected:**
+
 - Multiple tenant-admin route files (auth guard)
 - `apps/web/src/app/t/[slug]/(site)/contact/ContactForm.tsx` (unused import)
 - Various files with TODOs
@@ -101,10 +105,10 @@ All tenant pages return `images: []` for OpenGraph, impacting social sharing.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-25 | Created from code quality review | Multiple small issues add up to tech debt |
-| 2025-12-25 | **Approved for work** - Status: ready | P3 - Incremental cleanup |
+| Date       | Action                                | Learnings                                 |
+| ---------- | ------------------------------------- | ----------------------------------------- |
+| 2025-12-25 | Created from code quality review      | Multiple small issues add up to tech debt |
+| 2025-12-25 | **Approved for work** - Status: ready | P3 - Incremental cleanup                  |
 
 ## Resources
 

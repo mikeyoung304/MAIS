@@ -5,6 +5,7 @@
 Tests that pass individually but fail when run together are a symptom of **database state pollution** and **connection pool exhaustion**. This document provides comprehensive prevention strategies for the MAIS multi-tenant application and can be adapted to other projects.
 
 **Current MAIS Status:**
+
 - All 771+ server tests pass when run individually
 - Vitest default parallel execution causes failures due to database connection pool exhaustion
 - CI/CD pipeline successfully mitigates with `connection_limit=10&pool_timeout=20` parameters
@@ -59,9 +60,11 @@ Watch for these warning signs:
 ## Strategy 1: Connection Pool Sizing
 
 ### Problem
+
 Prisma Client defaults to unlimited connection pool size. Each integration test creates a new PrismaClient, causing exponential connection growth.
 
 **Impact on MAIS:**
+
 ```
 Before connection limits:
   ✗ booking-repository: 5/11 passing (pool exhaustion)
@@ -132,7 +135,9 @@ Add monitoring to test output:
 afterAll(async () => {
   const stats = await prisma.$metrics?.();
   if (stats?.connections) {
-    console.log(`[${testFile}] Final connections: ${stats.connections.open}/${stats.connections.max}`);
+    console.log(
+      `[${testFile}] Final connections: ${stats.connections.open}/${stats.connections.max}`
+    );
   }
   await ctx.cleanup();
 });
@@ -140,12 +145,12 @@ afterAll(async () => {
 
 ### Recommended Values
 
-| Environment | connection_limit | pool_timeout | Rationale |
-|-------------|------------------|--------------|-----------|
-| **Local Dev** | 10 | 20s | Lower resource usage, slower cleanup |
-| **CI/CD** | 10 | 20s | Tight resource constraints, prevent exhaustion |
-| **Production** | 50-100 | 30s | Higher throughput, account for concurrent users |
-| **Staging** | 25 | 25s | Balance between dev and production |
+| Environment    | connection_limit | pool_timeout | Rationale                                       |
+| -------------- | ---------------- | ------------ | ----------------------------------------------- |
+| **Local Dev**  | 10               | 20s          | Lower resource usage, slower cleanup            |
+| **CI/CD**      | 10               | 20s          | Tight resource constraints, prevent exhaustion  |
+| **Production** | 50-100           | 30s          | Higher throughput, account for concurrent users |
+| **Staging**    | 25               | 25s          | Balance between dev and production              |
 
 **For MAIS specifically:** Use `connection_limit=10` and `pool_timeout=20` everywhere except production.
 
@@ -154,6 +159,7 @@ afterAll(async () => {
 ## Strategy 2: Serial vs Parallel Test Execution
 
 ### Problem
+
 Vitest defaults to parallel execution with multiple workers. For database-dependent tests, this amplifies connection pool exhaustion and state pollution.
 
 ### Prevention
@@ -178,12 +184,14 @@ describe.sequential('Booking Integration Tests', () => {
 ```
 
 **Why this works:**
+
 - Only one test runs at a time
 - Database connections stay stable (no exponential growth)
 - Shared state is isolated (no race conditions)
 - Slower (1-2s per test), but 100% reliable
 
 **When to use:**
+
 - [ ] Database integration tests
 - [ ] Tests with shared fixtures
 - [ ] Tests that validate state transitions
@@ -198,7 +206,7 @@ describe('My Integration Tests', () => {
   // Don't use .sequential() - tests run in parallel
 
   const ctx = setupCompleteIntegrationTest('my-test-file', {
-    cacheTTL: 60
+    cacheTTL: 60,
   });
 
   beforeEach(async () => {
@@ -213,18 +221,24 @@ describe('My Integration Tests', () => {
     await ctx.cleanup();
   });
 
-  it('test 1', async () => { /* ... */ });
-  it('test 2', async () => { /* ... */ });
+  it('test 1', async () => {
+    /* ... */
+  });
+  it('test 2', async () => {
+    /* ... */
+  });
 });
 ```
 
 **Why this works:**
+
 - Connection limits prevent exhaustion
 - Each test has isolated multi-tenant setup
 - File-specific tenant slugs prevent cross-test conflicts
 - Factories generate unique IDs (no duplicate key errors)
 
 **When to use:**
+
 - [ ] Most integration tests (multi-tenant MUST use this)
 - [ ] Tests that don't share state
 - [ ] Tests that cleanup properly in afterEach
@@ -242,12 +256,14 @@ vitest --pool=forks --poolOptions.forks.singleFork
 ```
 
 **Why this works:**
+
 - Zero parallel execution (guaranteed serial)
 - Single connection pool
 - No worker process communication overhead
 - But: ~3-5x slower execution
 
 **When to use:**
+
 - [ ] Debugging mysterious failures
 - [ ] Tests that absolutely require synchronous execution
 - [ ] Final validation before release
@@ -279,6 +295,7 @@ Do tests access database?
 ## Strategy 3: Test Setup/Teardown Patterns
 
 ### Problem
+
 Insufficient or inconsistent cleanup between tests leads to database state pollution, especially in parallel execution.
 
 ### Prevention
@@ -332,15 +349,35 @@ Always cleanup in this order to respect foreign key constraints:
 
 ```typescript
 // ✅ CORRECT: child entities before parents
-await prisma.bookingAddOn.deleteMany({ where: { /* ... */ } });
-await prisma.booking.deleteMany({ where: { /* ... */ } });
-await prisma.addOn.deleteMany({ where: { /* ... */ } });
-await prisma.package.deleteMany({ where: { /* ... */ } });
-await prisma.tenant.deleteMany({ where: { /* ... */ } });
+await prisma.bookingAddOn.deleteMany({
+  where: {
+    /* ... */
+  },
+});
+await prisma.booking.deleteMany({
+  where: {
+    /* ... */
+  },
+});
+await prisma.addOn.deleteMany({
+  where: {
+    /* ... */
+  },
+});
+await prisma.package.deleteMany({
+  where: {
+    /* ... */
+  },
+});
+await prisma.tenant.deleteMany({
+  where: {
+    /* ... */
+  },
+});
 
 // ❌ WRONG: parent before child (FK constraint error)
-await prisma.package.deleteMany();  // Error: referenced by BookingAddOn
-await prisma.booking.deleteMany();  // Never reaches here
+await prisma.package.deleteMany(); // Error: referenced by BookingAddOn
+await prisma.booking.deleteMany(); // Never reaches here
 ```
 
 The `setupCompleteIntegrationTest()` helper handles this automatically.
@@ -415,7 +452,9 @@ afterEach(async () => {
 ## Strategy 4: Database State Isolation
 
 ### Problem
+
 Tests pollute each other's data even with cleanup, especially when:
+
 - Cleanup is incomplete (missing related tables)
 - Tests use hardcoded IDs or slugs
 - Cache holds stale data from previous tests
@@ -469,12 +508,12 @@ it('should isolate data between tenants', async () => {
 ```typescript
 // MAIS schema cleanup order (respects foreign keys)
 const cleanupOrder = [
-  'bookingAddOn',      // Child: references booking, addOn
-  'booking',           // Parent of bookingAddOn
-  'addOn',             // Parent of bookingAddOn
-  'package',           // May be referenced by bookings
-  'photoSession',      // Photo data
-  'tenant',            // Parent of all
+  'bookingAddOn', // Child: references booking, addOn
+  'booking', // Parent of bookingAddOn
+  'addOn', // Parent of bookingAddOn
+  'package', // May be referenced by bookings
+  'photoSession', // Photo data
+  'tenant', // Parent of all
 ];
 
 // Implement cleanup that respects this order
@@ -547,6 +586,7 @@ it('should use tenant-scoped cache keys', () => {
 ## Strategy 5: CI/CD Configuration
 
 ### Problem
+
 Tests may pass locally but fail in CI due to different resource constraints, database configuration, or test ordering.
 
 ### Prevention
@@ -572,6 +612,7 @@ Tests may pass locally but fail in CI due to different resource constraints, dat
 ```
 
 **Key Points:**
+
 - Unit tests run in parallel (no database)
 - Integration tests run **after** DB migrations (database ready)
 - E2E tests run **after** API seed (fresh test data)
@@ -620,6 +661,7 @@ services:
 ```
 
 **Why health checks matter:**
+
 - Without them, tests start before DB is ready
 - Causes intermittent "connection refused" errors
 - Health checks ensure DB readiness before proceeding
@@ -647,6 +689,7 @@ services:
 ```
 
 **This enables debugging:**
+
 - Coverage reports show which tests failed
 - HTML reports show exact failure points
 - Retention: 7 days for investigation
@@ -869,12 +912,14 @@ afterEach(async () => {
 ```
 
 **Expected output:**
+
 ```
 [BEFORE] Pool: idle=1, active=0
 [AFTER] Pool: idle=1, active=0
 ```
 
 **Warning signs:**
+
 ```
 [BEFORE] Pool: idle=0, active=25  ← High active connections (exhaustion risk)
 [AFTER] Pool: idle=0, active=10   ← Not returning to idle (leak)
@@ -907,12 +952,14 @@ npm run test:integration -- --reporter=verbose
 ## References & Related Documentation
 
 ### MAIS Documentation
+
 - `.github/workflows/main-pipeline.yml` - CI/CD pipeline with pool configuration
 - `server/test/helpers/integration-setup.ts` - Helper with automatic connection management
 - `server/test/helpers/README.md` - Detailed integration test patterns
 - `server/test/README.md` - Test structure overview
 
 ### External Resources
+
 - [Prisma Connection Management](https://www.prisma.io/docs/orm/reference/connection-management)
 - [Vitest Configuration](https://vitest.dev/config/)
 - [PostgreSQL Connection Limits](https://www.postgresql.org/docs/current/runtime-config-connection.html)
@@ -924,16 +971,19 @@ npm run test:integration -- --reporter=verbose
 **When Tests Fail Together:**
 
 1. ✓ Add connection limits to DATABASE_URL_TEST
+
    ```
    ?connection_limit=10&pool_timeout=20
    ```
 
 2. ✓ Use setupCompleteIntegrationTest() helper
+
    ```typescript
    const ctx = setupCompleteIntegrationTest('my-test');
    ```
 
 3. ✓ Add proper cleanup in afterEach
+
    ```typescript
    afterEach(async () => {
      await ctx.cleanup();
@@ -941,6 +991,7 @@ npm run test:integration -- --reporter=verbose
    ```
 
 4. ✓ Use factories for unique test data
+
    ```typescript
    const pkg = ctx.factories.package.create();
    ```
@@ -952,4 +1003,3 @@ npm run test:integration -- --reporter=verbose
    ```
 
 **Expected Result:** All 771+ tests pass together, every time.
-

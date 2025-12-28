@@ -238,11 +238,10 @@ export default function TenantPaymentsPage() {
             <div className="mb-4 rounded-full bg-sage/10 p-4">
               <CreditCard className="h-8 w-8 text-sage" />
             </div>
-            <h3 className="mb-2 font-semibold text-text-primary">
-              Connect your Stripe account
-            </h3>
+            <h3 className="mb-2 font-semibold text-text-primary">Connect your Stripe account</h3>
             <p className="mb-6 max-w-sm text-sm text-text-muted">
-              Start accepting payments from customers. Stripe handles all the complex payment processing securely.
+              Start accepting payments from customers. Stripe handles all the complex payment
+              processing securely.
             </p>
             <Button
               variant="sage"
@@ -290,9 +289,7 @@ export default function TenantPaymentsPage() {
                   }}
                   className={dialogErrors.email ? 'border-red-500' : ''}
                 />
-                {dialogErrors.email && (
-                  <p className="text-sm text-red-600">{dialogErrors.email}</p>
-                )}
+                {dialogErrors.email && <p className="text-sm text-red-600">{dialogErrors.email}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stripe-business-name">Business Name</Label>
@@ -335,8 +332,10 @@ export default function TenantPaymentsPage() {
   }
 
   // Stripe account exists
-  const isFullyOnboarded = status.chargesEnabled && status.payoutsEnabled && status.detailsSubmitted;
-  const hasRequirements = status.requirements.currentlyDue.length > 0 || status.requirements.pastDue.length > 0;
+  const isFullyOnboarded =
+    status.chargesEnabled && status.payoutsEnabled && status.detailsSubmitted;
+  const hasRequirements =
+    status.requirements.currentlyDue.length > 0 || status.requirements.pastDue.length > 0;
 
   const StatusItem = ({ label, enabled }: { label: string; enabled: boolean }) => (
     <div className="flex items-center justify-between py-3 border-b border-neutral-100 last:border-0">

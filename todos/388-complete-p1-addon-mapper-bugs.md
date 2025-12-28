@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "388"
+issue_id: '388'
 tags:
   - code-review
   - schema-drift
@@ -36,12 +36,14 @@ private toDomainAddOn(addOn: { ... }): AddOn {
 ```
 
 **Impact:**
+
 - Services expecting AddOn descriptions get null even when data exists
 - Booking creation could fail with cryptic error if packageId is empty string
 
 ## Proposed Solutions
 
 ### Option 1: Fix mapper to use actual data (Recommended)
+
 - Map `description: addOn.description ?? null`
 - Throw error if `packages` relation is empty instead of silent fallback
 
@@ -51,6 +53,7 @@ private toDomainAddOn(addOn: { ... }): AddOn {
 **Risk:** Low
 
 ### Option 2: Add validation layer
+
 - Keep mapper simple, add validation in service layer
 - Log warning for missing packageId
 
@@ -66,9 +69,11 @@ Option 1 - Fix the mapper directly
 ## Technical Details
 
 **Affected files:**
+
 - `server/src/adapters/prisma/catalog.repository.ts`
 
 **Affected components:**
+
 - AddOn display in storefronts
 - Package details with add-ons
 - Booking flow add-on selection
@@ -82,10 +87,10 @@ Option 1 - Fix the mapper directly
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-25 | Created from multi-agent scan | Found during schema/entity drift analysis |
-| 2025-12-25 | Fixed both bugs | Added description param, throw on empty packages |
+| Date       | Action                        | Learnings                                        |
+| ---------- | ----------------------------- | ------------------------------------------------ |
+| 2025-12-25 | Created from multi-agent scan | Found during schema/entity drift analysis        |
+| 2025-12-25 | Fixed both bugs               | Added description param, throw on empty packages |
 
 ## Resources
 

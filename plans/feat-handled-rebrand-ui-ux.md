@@ -13,19 +13,20 @@ Transform the MAIS (Macon AI Solutions) platform to **HANDLED** - a done-for-you
 
 ### Key Brand Changes
 
-| Aspect | Old (MAIS) | New (HANDLED) |
-|--------|-----------|---------------|
-| Name | Macon AI Solutions | HANDLED |
-| Tagline | "Book more clients. Build your business." | "Your tech. Handled." |
-| Hero | "The booking platform for creative professionals" | "Finally. Your tech is handled." |
-| Voice | Feature-focused, transformation | Relief-focused, completion |
-| Tier Names | Starter/Growth/Pro | Handled Lite/Fully Handled/White Glove |
+| Aspect     | Old (MAIS)                                        | New (HANDLED)                          |
+| ---------- | ------------------------------------------------- | -------------------------------------- |
+| Name       | Macon AI Solutions                                | HANDLED                                |
+| Tagline    | "Book more clients. Build your business."         | "Your tech. Handled."                  |
+| Hero       | "The booking platform for creative professionals" | "Finally. Your tech is handled."       |
+| Voice      | Feature-focused, transformation                   | Relief-focused, completion             |
+| Tier Names | Starter/Growth/Pro                                | Handled Lite/Fully Handled/White Glove |
 
 ---
 
 ## Problem Statement
 
 The current MAIS branding has several issues:
+
 1. "Macon AI Solutions" sounds like a 2008 regional IT consultancy
 2. "Solutions" is a credibility killer with modern audiences
 3. Geographic tie (Macon) limits national ambitions
@@ -53,6 +54,7 @@ The current MAIS branding has several issues:
    - Remove "Macon Brand Colors" comment
 
 **Token renaming strategy:**
+
 ```css
 /* Current → New */
 --macon-navy → --handled-primary (keep navy, it's professional)
@@ -61,6 +63,7 @@ The current MAIS branding has several issues:
 ```
 
 **Deliverables:**
+
 - [ ] Update `design-tokens.css` header comments
 - [ ] Rename `--macon-*` → `--handled-*` in CSS variables
 - [ ] Update `tailwind.config.js` color names
@@ -75,11 +78,11 @@ The current MAIS branding has several issues:
 
 **Brand Voice Shift:**
 
-| Current (MAIS) | New (HANDLED) |
-|----------------|---------------|
-| "Book more clients." | "Your tech. Handled." |
-| Transformation promise | Relief/completion promise |
-| Photographer-specific | Service business universal |
+| Current (MAIS)          | New (HANDLED)                      |
+| ----------------------- | ---------------------------------- |
+| "Book more clients."    | "Your tech. Handled."              |
+| Transformation promise  | Relief/completion promise          |
+| Photographer-specific   | Service business universal         |
 | "You're a photographer" | "You do the work. We do the rest." |
 
 **Files to modify:**
@@ -91,18 +94,21 @@ The current MAIS branding has several issues:
    - New landing page examples (lines 395-434)
 
 **Key copy changes:**
+
 ```markdown
 ## Words to Use
-| Use | Instead of |
-|-----|------------|
-| handled | managed, automated |
-| tech | software, platform |
-| craft | work, job |
+
+| Use          | Instead of             |
+| ------------ | ---------------------- |
+| handled      | managed, automated     |
+| tech         | software, platform     |
+| craft        | work, job              |
 | service pros | creative professionals |
-| done-for-you | automated, self-serve |
-| relief | efficiency |
+| done-for-you | automated, self-serve  |
+| relief       | efficiency             |
 
 ## Words to Avoid
+
 - Revolutionary, game-changing
 - AI-powered (as headline)
 - Solutions, synergy
@@ -110,6 +116,7 @@ The current MAIS branding has several issues:
 ```
 
 **Deliverables:**
+
 - [ ] Rewrite `BRAND_VOICE_GUIDE.md` header and positioning
 - [ ] Update voice principles with "relief-focused" examples
 - [ ] New copy patterns for headlines/CTAs
@@ -144,6 +151,7 @@ The current MAIS branding has several issues:
    - Update comments about "Tenant Zero"
 
 **Landing page content structure (new):**
+
 ```typescript
 landingPageConfig: {
   hero: {
@@ -177,8 +185,9 @@ landingPageConfig: {
 ```
 
 **Deliverables:**
+
 - [ ] Rename `mais.ts` → `handled.ts`
-- [ ] Update all constants (MAIS_* → HANDLED_*)
+- [ ] Update all constants (MAIS*\* → HANDLED*\*)
 - [ ] Rewrite landing page content with new voice
 - [ ] Update tier names throughout
 - [ ] Update e2e.ts with new slug/keys
@@ -189,7 +198,7 @@ landingPageConfig: {
 
 ### Phase 4: Package & Import Path Updates
 
-**Goal:** Rename @macon/* packages to @handled/*
+**Goal:** Rename @macon/_ packages to @handled/_
 
 **This is a significant change requiring coordinated updates across:**
 
@@ -205,6 +214,7 @@ landingPageConfig: {
    - All files with `from '@macon/shared'`
 
 **Migration strategy:**
+
 ```bash
 # 1. Update package.json names
 # 2. Run find-and-replace across codebase
@@ -214,6 +224,7 @@ landingPageConfig: {
 ```
 
 **Deliverables:**
+
 - [ ] Update all 5 package.json files
 - [ ] Global find-replace: `@macon/` → `@handled/`
 - [ ] Update workspace references in root package.json
@@ -241,11 +252,12 @@ landingPageConfig: {
 3. `/CLAUDE.md`
    - Line 6: Update project overview
    - All references to "MAIS", "Macon AI Solutions"
-   - Update @macon/* package references
+   - Update @macon/\* package references
 
 4. `.env.example` files - Check for MAIS references
 
 **Deliverables:**
+
 - [ ] Update API documentation title and contact
 - [ ] Update CORS allowlist (after domain decision)
 - [ ] Update CLAUDE.md project overview
@@ -261,6 +273,7 @@ landingPageConfig: {
 **Testing strategy:**
 
 1. **Visual regression with Playwright:**
+
 ```typescript
 // tests/rebrand.visual.spec.ts
 test('homepage brand consistency', async ({ page }) => {
@@ -270,24 +283,28 @@ test('homepage brand consistency', async ({ page }) => {
 
 test('pricing section with new tier names', async ({ page }) => {
   await page.goto('/t/handled#pricing');
-  await expect(page.locator('[data-testid="pricing-section"]'))
-    .toHaveScreenshot('pricing-rebrand.png');
+  await expect(page.locator('[data-testid="pricing-section"]')).toHaveScreenshot(
+    'pricing-rebrand.png'
+  );
 });
 ```
 
 2. **Copy verification:**
+
 - No remaining "MAIS" on public pages
 - No remaining "Macon" on public pages
 - New tagline appears correctly
 - Tier names display correctly
 
 3. **Technical verification:**
+
 - `npm run typecheck` passes
 - `npm test` passes (771 tests)
 - `npm run test:e2e` passes (114 tests)
 - No console errors on page load
 
 **Deliverables:**
+
 - [ ] Create visual regression baseline screenshots
 - [ ] Add rebrand-specific E2E tests
 - [ ] Verify all tests pass after changes
@@ -299,6 +316,7 @@ test('pricing section with new tier names', async ({ page }) => {
 ## Acceptance Criteria
 
 ### Functional Requirements
+
 - [ ] All public-facing pages show "HANDLED" branding
 - [ ] No "MAIS" or "Macon" text visible to end users
 - [ ] New tagline "Your tech. Handled." appears in hero
@@ -306,6 +324,7 @@ test('pricing section with new tier names', async ({ page }) => {
 - [ ] Color tokens work correctly (no broken references)
 
 ### Non-Functional Requirements
+
 - [ ] TypeScript compilation passes (`npm run typecheck`)
 - [ ] All 771 server tests pass
 - [ ] All 114 E2E tests pass (after updating selectors)
@@ -313,6 +332,7 @@ test('pricing section with new tier names', async ({ page }) => {
 - [ ] No console errors on any page
 
 ### Quality Gates
+
 - [ ] Visual regression baseline captured
 - [ ] Manual QA completed on: home, pricing, about, contact pages
 - [ ] Documentation updated (CLAUDE.md, BRAND_VOICE_GUIDE.md)
@@ -335,27 +355,27 @@ test('pricing section with new tier names', async ({ page }) => {
 
 ## Risk Analysis
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Broken imports after package rename | Medium | High | Run typecheck after each batch of changes |
-| Missed string references | Medium | Medium | Global search for "mais", "macon", case-insensitive |
-| Visual regression unnoticed | Low | Medium | Capture baseline screenshots first |
-| E2E tests fail due to changed selectors | High | Low | Update test selectors as part of rebrand |
+| Risk                                    | Likelihood | Impact | Mitigation                                          |
+| --------------------------------------- | ---------- | ------ | --------------------------------------------------- |
+| Broken imports after package rename     | Medium     | High   | Run typecheck after each batch of changes           |
+| Missed string references                | Medium     | Medium | Global search for "mais", "macon", case-insensitive |
+| Visual regression unnoticed             | Low        | Medium | Capture baseline screenshots first                  |
+| E2E tests fail due to changed selectors | High       | Low    | Update test selectors as part of rebrand            |
 
 ---
 
 ## File Change Summary
 
-| Category | Files | Priority |
-|----------|-------|----------|
-| Design tokens | 2 | P1 |
-| Brand voice doc | 1 | P1 |
-| Seed data | 3 | P1 |
-| Package.json | 5 | P2 |
-| Import statements | 40+ | P2 |
-| Config/docs | 4 | P2 |
-| Homepage redirect | 1 | P1 |
-| **Total** | ~56+ files | |
+| Category          | Files      | Priority |
+| ----------------- | ---------- | -------- |
+| Design tokens     | 2          | P1       |
+| Brand voice doc   | 1          | P1       |
+| Seed data         | 3          | P1       |
+| Package.json      | 5          | P2       |
+| Import statements | 40+        | P2       |
+| Config/docs       | 4          | P2       |
+| Homepage redirect | 1          | P1       |
+| **Total**         | ~56+ files |          |
 
 ---
 
@@ -371,6 +391,7 @@ graph TD
 ```
 
 **Recommended execution:**
+
 1. Start with Phase 1-2 (design tokens + voice guide) - low risk, high visibility
 2. Phase 3 (seed data) - update Tenant Zero content
 3. Phase 4 (package renames) - highest risk, do in one batch
@@ -382,6 +403,7 @@ graph TD
 ## References
 
 ### Internal References
+
 - `docs/REBRAND-SUMMARY.md` - Brand decision document
 - `docs/design/BRAND_VOICE_GUIDE.md:1-446` - Current brand guide (to be rewritten)
 - `apps/web/src/styles/design-tokens.css:1-240` - CSS design tokens
@@ -389,11 +411,13 @@ graph TD
 - `server/prisma/seeds/mais.ts:1-150` - Tenant Zero seed data
 
 ### External References
+
 - [Tailwind CSS 4 @theme directive](https://tailwindcss.com/docs/theme)
 - [next-themes for theme switching](https://github.com/pacocoursey/next-themes)
 - [Visual regression with Playwright](https://playwright.dev/docs/test-snapshots)
 
 ### Related Work
+
 - Previous plan: `plans/feat-mais-tenant-zero-dogfooding.md`
 - Brand voice guide: `docs/design/BRAND_VOICE_GUIDE.md`
 
@@ -424,5 +448,5 @@ Before proceeding, we need decisions on:
 
 ---
 
-*Plan prepared December 27, 2025*
-*Ready for review and implementation*
+_Plan prepared December 27, 2025_
+_Ready for review and implementation_

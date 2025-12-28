@@ -22,6 +22,7 @@ related_docs:
 **Solution:** Global singleton PrismaClient with aggressive connection limits and proper teardown lifecycle management.
 
 **Results:**
+
 - Test duration: ~12 minutes (down from hanging indefinitely)
 - Tests passing: 1,178 tests executed
 - Connection efficiency: Single shared client across 22 test files
@@ -188,13 +189,13 @@ export function getConnectionCount(): number {
 
 **Key Design Decisions:**
 
-| Decision | Rationale |
-|----------|-----------|
-| `connection_limit=3` | Prevent exhaustion; 3 concurrent queries is sufficient for sequential tests |
-| `pool_timeout=5` | Fail fast instead of hanging; 5s is enough for test to acquire connection |
-| `connect_timeout=5` | Don't wait forever for initial connection; prevents zombie connections |
-| `pgbouncer=true` | Required for Supabase Session Pooler + Prisma compatibility |
-| Process cleanup handler | Ensures disconnection even if vitest teardown doesn't run |
+| Decision                | Rationale                                                                   |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `connection_limit=3`    | Prevent exhaustion; 3 concurrent queries is sufficient for sequential tests |
+| `pool_timeout=5`        | Fail fast instead of hanging; 5s is enough for test to acquire connection   |
+| `connect_timeout=5`     | Don't wait forever for initial connection; prevents zombie connections      |
+| `pgbouncer=true`        | Required for Supabase Session Pooler + Prisma compatibility                 |
+| Process cleanup handler | Ensures disconnection even if vitest teardown doesn't run                   |
 
 ### Step 2: Update Integration Setup Helper
 
@@ -272,13 +273,13 @@ export default defineConfig(({ mode }) => {
 
 **Configuration Explanation:**
 
-| Setting | Value | Purpose |
-|---------|-------|---------|
-| `singleThread: true` | Disable thread pool | Ensures tests run sequentially, not in parallel |
-| `fileParallelism: false` | Sequential files | One test file at a time; prevents 22 concurrent clients |
-| `testTimeout: 30000` | 30 seconds | Fail fast instead of hanging indefinitely |
-| `hookTimeout: 10000` | 10 seconds | beforeAll/afterAll don't wait forever |
-| `globalTeardown` | vitest-global-teardown.ts | Cleanup hook runs once after all tests complete |
+| Setting                  | Value                     | Purpose                                                 |
+| ------------------------ | ------------------------- | ------------------------------------------------------- |
+| `singleThread: true`     | Disable thread pool       | Ensures tests run sequentially, not in parallel         |
+| `fileParallelism: false` | Sequential files          | One test file at a time; prevents 22 concurrent clients |
+| `testTimeout: 30000`     | 30 seconds                | Fail fast instead of hanging indefinitely               |
+| `hookTimeout: 10000`     | 10 seconds                | beforeAll/afterAll don't wait forever                   |
+| `globalTeardown`         | vitest-global-teardown.ts | Cleanup hook runs once after all tests complete         |
 
 ### Step 4: Create Global Teardown Hook
 
@@ -365,12 +366,12 @@ postgresql://user:pass@host:5432/db?pgbouncer=true&connection_limit=3&pool_timeo
 
 ### Parameter Guide
 
-| Parameter | Value | Meaning |
-|-----------|-------|---------|
-| `pgbouncer=true` | Required | Enable pgbouncer protocol (Supabase requirement) |
-| `connection_limit=3` | 3 | Keep max 3 connections; aggressive to prevent exhaustion |
-| `pool_timeout=5` | 5 seconds | If no connection available after 5s, fail instead of hanging |
-| `connect_timeout=5` | 5 seconds | Don't wait forever for initial TCP connection |
+| Parameter            | Value     | Meaning                                                      |
+| -------------------- | --------- | ------------------------------------------------------------ |
+| `pgbouncer=true`     | Required  | Enable pgbouncer protocol (Supabase requirement)             |
+| `connection_limit=3` | 3         | Keep max 3 connections; aggressive to prevent exhaustion     |
+| `pool_timeout=5`     | 5 seconds | If no connection available after 5s, fail instead of hanging |
+| `connect_timeout=5`  | 5 seconds | Don't wait forever for initial TCP connection                |
 
 ### Why These Values?
 
@@ -517,9 +518,7 @@ describe('Connection Pool Stress', () => {
   it('should handle 1000 queries without exhaustion', async () => {
     const prisma = getTestPrisma();
 
-    const queries = Array.from({ length: 1000 }, () =>
-      prisma.tenant.count()
-    );
+    const queries = Array.from({ length: 1000 }, () => prisma.tenant.count());
 
     const results = await Promise.all(queries);
     expect(results.length).toBe(1000);
@@ -631,11 +630,11 @@ server/test/**/*.test.ts                          (22 files updated)
 
 ### Configuration Changes
 
-| File | Change | Impact |
-|------|--------|--------|
-| vitest.config.ts | Added globalTeardown, fileParallelism: false | Serial test execution |
-| integration-setup.ts | Now uses getTestPrisma() | All tests share one client |
-| .env/.env.test | Added connection limits to DATABASE_URL | Pool exhaustion prevention |
+| File                 | Change                                       | Impact                     |
+| -------------------- | -------------------------------------------- | -------------------------- |
+| vitest.config.ts     | Added globalTeardown, fileParallelism: false | Serial test execution      |
+| integration-setup.ts | Now uses getTestPrisma()                     | All tests share one client |
+| .env/.env.test       | Added connection limits to DATABASE_URL      | Pool exhaustion prevention |
 
 ---
 
@@ -661,7 +660,6 @@ server/test/**/*.test.ts                          (22 files updated)
    ```
 
 3. **Documentation:**
-
    - Update project CLAUDE.md with singleton pattern
    - Add linting rule to prevent `new PrismaClient()` in test files
    - Document in TESTING.md

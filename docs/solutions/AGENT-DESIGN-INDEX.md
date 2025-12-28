@@ -10,174 +10,183 @@
 ## Document Overview
 
 ### 1. **AGENT-DESIGN-SUMMARY.md** (463 lines)
-   **The Bridge Document** - Use this as entry point
 
-   - What this system is
-   - Documentation map
-   - Core concepts (trust tiers, proposals, action parity)
-   - The 4 prevention categories
-   - How to use this system for common scenarios
-   - When to escalate
-   - Key metrics
-   - Next steps
+**The Bridge Document** - Use this as entry point
 
-   **Best For:**
-   - Understanding the overall system
-   - Navigating to right document for your task
-   - Getting context before deep dives
-   - Training new team members
+- What this system is
+- Documentation map
+- Core concepts (trust tiers, proposals, action parity)
+- The 4 prevention categories
+- How to use this system for common scenarios
+- When to escalate
+- Key metrics
+- Next steps
 
-   **Time to Read:** 30 minutes
+**Best For:**
+
+- Understanding the overall system
+- Navigating to right document for your task
+- Getting context before deep dives
+- Training new team members
+
+**Time to Read:** 30 minutes
 
 ---
 
 ### 2. **AGENT-DESIGN-QUICK-CHECKLIST.md** (443 lines)
-   **The Action Document** - Print and pin this
 
-   - Pre-Design Phase (1 hour)
-   - Design Phase (1-2 days)
-   - Review Phase (3-5 days)
-   - Implementation Phase (2-4 weeks)
-   - Testing Phase (1-2 weeks)
-   - Launch Phase (1 week)
-   - Common pitfalls quick reference
-   - Success metrics
-   - Template: Design Kickoff
-   - Template: Design Feedback
+**The Action Document** - Print and pin this
 
-   **Best For:**
-   - Daily reference during design/review/implementation
-   - Keeping work on track
-   - Avoiding common mistakes
-   - Onboarding new designers
+- Pre-Design Phase (1 hour)
+- Design Phase (1-2 days)
+- Review Phase (3-5 days)
+- Implementation Phase (2-4 weeks)
+- Testing Phase (1-2 weeks)
+- Launch Phase (1 week)
+- Common pitfalls quick reference
+- Success metrics
+- Template: Design Kickoff
+- Template: Design Feedback
 
-   **Time to Read:** 20 minutes (reference, not linear)
+**Best For:**
 
-   **Print:** Yes - pin to desk or workspace
+- Daily reference during design/review/implementation
+- Keeping work on track
+- Avoiding common mistakes
+- Onboarding new designers
+
+**Time to Read:** 20 minutes (reference, not linear)
+
+**Print:** Yes - pin to desk or workspace
 
 ---
 
 ### 3. **AGENT-DESIGN-PREVENTION-STRATEGIES.md** (1,488 lines)
-   **The Complete Playbook** - Reference for deep understanding
 
-   **Sections:**
+**The Complete Playbook** - Reference for deep understanding
 
-   1. **Security Prevention (P0 Critical)**
-      - Tenant isolation enforcement
-      - Data injection prevention
-      - Sensitive field deny list
-      - Approval mechanisms
-      - Audit trail patterns
+**Sections:**
 
-   2. **UX Prevention**
-      - Confirmation fatigue solution (trust tiers)
-      - Onboarding branching
-      - Error handling for humans
-      - Confirmation vocabulary
+1.  **Security Prevention (P0 Critical)**
+    - Tenant isolation enforcement
+    - Data injection prevention
+    - Sensitive field deny list
+    - Approval mechanisms
+    - Audit trail patterns
 
-   3. **Simplicity Prevention**
-      - Tool proliferation prevention
-      - Feature deferral decision tree
-      - Single context injection
-      - Combined vs separate tools
+2.  **UX Prevention**
+    - Confirmation fatigue solution (trust tiers)
+    - Onboarding branching
+    - Error handling for humans
+    - Confirmation vocabulary
 
-   4. **Architecture Prevention**
-      - Tools as primitives vs workflows
-      - Action parity verification
-      - Server-side approval mechanism
-      - Type safety patterns
+3.  **Simplicity Prevention**
+    - Tool proliferation prevention
+    - Feature deferral decision tree
+    - Single context injection
+    - Combined vs separate tools
 
-   5. **Common Pitfalls & Recovery**
-      - Confirm fatigue (detection + recovery)
-      - Agent bypasses approval (detection + recovery)
-      - Tool explosion (detection + recovery)
-      - Context staleness (detection + recovery)
+4.  **Architecture Prevention**
+    - Tools as primitives vs workflows
+    - Action parity verification
+    - Server-side approval mechanism
+    - Type safety patterns
 
-   6. **Implementation Patterns**
-      - Branded types for ID safety
-      - Discriminated union errors
-      - Proposal state machines
-      - Structured logging with correlation
-      - Token budget service
+5.  **Common Pitfalls & Recovery**
+    - Confirm fatigue (detection + recovery)
+    - Agent bypasses approval (detection + recovery)
+    - Tool explosion (detection + recovery)
+    - Context staleness (detection + recovery)
 
-   7. **Multi-Agent Review Process**
-      - 6-reviewer structure
-      - Approval criteria
-      - Review output format
+6.  **Implementation Patterns**
+    - Branded types for ID safety
+    - Discriminated union errors
+    - Proposal state machines
+    - Structured logging with correlation
+    - Token budget service
 
-   8. **Appendices**
-      - Checklists for agent design
-      - Implementation templates
+7.  **Multi-Agent Review Process**
+    - 6-reviewer structure
+    - Approval criteria
+    - Review output format
 
-   **Best For:**
-   - Deep understanding of each prevention area
-   - Code examples and patterns
-   - Error recovery procedures
-   - Implementation guidance
-   - Comprehensive reference
+8.  **Appendices**
+    - Checklists for agent design
+    - Implementation templates
 
-   **Time to Read:** 2-3 hours (comprehensive), 45 minutes (specific section)
+**Best For:**
+
+- Deep understanding of each prevention area
+- Code examples and patterns
+- Error recovery procedures
+- Implementation guidance
+- Comprehensive reference
+
+**Time to Read:** 2-3 hours (comprehensive), 45 minutes (specific section)
 
 ---
 
 ### 4. **AGENT-TOOL-DESIGN-DECISION-TREE.md** (565 lines)
-   **The Decision Framework** - Use for "Should I build this?"
 
-   **Contents:**
+**The Decision Framework** - Use for "Should I build this?"
 
-   1. **Decision Tree Flowchart**
-      - Is this essential?
-      - Can existing tools do it?
-      - What's the trust tier?
-      - Is this buildable?
+**Contents:**
 
-   2. **Step-by-Step Walkthrough**
-      - Decision points for each step
-      - Examples of each decision
-      - Go/No-Go criteria
+1.  **Decision Tree Flowchart**
+    - Is this essential?
+    - Can existing tools do it?
+    - What's the trust tier?
+    - Is this buildable?
 
-   3. **Example Decisions**
-      - Custom domains (deferrable example)
-      - Update package price (build example)
-      - Reschedule booking (deferrable example)
-      - Social media content (phase 3 example)
+2.  **Step-by-Step Walkthrough**
+    - Decision points for each step
+    - Examples of each decision
+    - Go/No-Go criteria
 
-   4. **Tool Specification Template**
-      - Input/output schemas
-      - Security checks
-      - Error cases
-      - Test requirements
+3.  **Example Decisions**
+    - Custom domains (deferrable example)
+    - Update package price (build example)
+    - Reschedule booking (deferrable example)
+    - Social media content (phase 3 example)
 
-   5. **Escalation Guide**
-      - When to talk to security
-      - When to talk to architecture
-      - When to talk to product
-      - When to talk to implementation
+4.  **Tool Specification Template**
+    - Input/output schemas
+    - Security checks
+    - Error cases
+    - Test requirements
 
-   6. **Decision Log Template**
-      - Documenting decisions
-      - Tracking approvals
-      - Recording rationale
+5.  **Escalation Guide**
+    - When to talk to security
+    - When to talk to architecture
+    - When to talk to product
+    - When to talk to implementation
 
-   7. **Tips & Tricks**
-      - Tool combination patterns
-      - Making decisions visible
-      - Testing before building
-      - Keeping tools primitive
+6.  **Decision Log Template**
+    - Documenting decisions
+    - Tracking approvals
+    - Recording rationale
 
-   **Best For:**
-   - Evaluating specific tool proposals
-   - Deciding build vs defer
-   - Combining similar tools
-   - Documenting decisions
+7.  **Tips & Tricks**
+    - Tool combination patterns
+    - Making decisions visible
+    - Testing before building
+    - Keeping tools primitive
 
-   **Time to Use:** 10-15 minutes per tool decision
+**Best For:**
+
+- Evaluating specific tool proposals
+- Deciding build vs defer
+- Combining similar tools
+- Documenting decisions
+
+**Time to Use:** 10-15 minutes per tool decision
 
 ---
 
 ## Quick Navigation
 
 ### "I need to design a new agent system"
+
 1. Read: AGENT-DESIGN-SUMMARY.md (overview)
 2. Use: AGENT-DESIGN-QUICK-CHECKLIST.md (pre-design phase)
 3. Reference: AGENT-DESIGN-PREVENTION-STRATEGIES.md (full playbook)
@@ -185,21 +194,25 @@
 5. Implement using: Implementation patterns from playbook
 
 ### "I need to evaluate if we should build a specific tool"
+
 1. Use: AGENT-TOOL-DESIGN-DECISION-TREE.md (decision flow)
 2. If building: Write tool specification (from same document)
 3. If deferring: Document rationale in decision log
 
 ### "I'm reviewing agent design from another engineer"
+
 1. Use: AGENT-DESIGN-QUICK-CHECKLIST.md (review phase section)
 2. Check: AGENT-DESIGN-PREVENTION-STRATEGIES.md (your domain: security/UX/architecture/etc)
 3. Provide: Feedback using template from QUICK-CHECKLIST.md
 
 ### "I need to recover from an agent design problem"
+
 1. Identify: Which problem category (security/UX/simplicity/architecture)
 2. Go to: AGENT-DESIGN-PREVENTION-STRATEGIES.md → "Common Pitfalls & Recovery"
 3. Follow: Recovery steps for your specific pitfall
 
 ### "I need code examples and patterns"
+
 1. Go to: AGENT-DESIGN-PREVENTION-STRATEGIES.md → "Implementation Patterns"
 2. Examples include:
    - Branded types (prevent ID confusion)
@@ -209,6 +222,7 @@
    - Token budget service (resource management)
 
 ### "I need to understand MAIS agent philosophy"
+
 1. Start: AGENT-DESIGN-SUMMARY.md (core concepts section)
 2. Real example: plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md
 3. Detailed: AGENT-DESIGN-PREVENTION-STRATEGIES.md (any section)
@@ -218,6 +232,7 @@
 ## Key Concepts at a Glance
 
 ### Trust Tiers (Critical)
+
 ```
 T1 (Auto)      → Execute immediately, report result
                   Examples: blackouts, branding, file uploads
@@ -230,12 +245,14 @@ T3 (Hard)      → Require explicit "yes"/"confirm"/"do it"
 ```
 
 ### Server-Side Proposals (Critical)
+
 ```
 Tool call → Proposal created (pending) → Agent shows → User confirms → Executed
            (stored in DB, not just prompt)                            (audit logged)
 ```
 
 ### Tool Categories
+
 ```
 Read Tools      (9+)     - Get current data
 Write Tools     (T1/T2)  - Create/update, safe or reversible
@@ -243,12 +260,14 @@ Sensitive Tools (T3)     - Risky operations
 ```
 
 ### Action Parity
+
 ```
 Principle: Agent can do everything UI can do
 Verify: For every UI action → corresponding agent tool exists
 ```
 
 ### Prevention Baseline
+
 ```
 Security   → Tenant isolation at tool level, approval enforcement, audit logging
 UX         → Trust tiers to avoid fatigue, helpful errors, branching onboarding
@@ -260,13 +279,13 @@ Architecture → Tools orchestrated by prompts, verified action parity
 
 ## Document Statistics
 
-| Document | Lines | Size | Focus | Read Time |
-|----------|-------|------|-------|-----------|
-| Summary | 463 | 13KB | Navigation & concepts | 30 min |
-| Quick Checklist | 443 | 13KB | Day-to-day reference | 20 min |
-| Prevention Strategies | 1,488 | 39KB | Comprehensive playbook | 2-3 hours |
-| Decision Tree | 565 | 17KB | Tool evaluation | 10-15 min/tool |
-| **TOTAL** | **2,959** | **82KB** | Complete system | 3-4 hours |
+| Document              | Lines     | Size     | Focus                  | Read Time      |
+| --------------------- | --------- | -------- | ---------------------- | -------------- |
+| Summary               | 463       | 13KB     | Navigation & concepts  | 30 min         |
+| Quick Checklist       | 443       | 13KB     | Day-to-day reference   | 20 min         |
+| Prevention Strategies | 1,488     | 39KB     | Comprehensive playbook | 2-3 hours      |
+| Decision Tree         | 565       | 17KB     | Tool evaluation        | 10-15 min/tool |
+| **TOTAL**             | **2,959** | **82KB** | Complete system        | 3-4 hours      |
 
 ---
 
@@ -310,6 +329,7 @@ Architecture → Tools orchestrated by prompts, verified action parity
 ## Usage Timeline
 
 ### Week 1: Foundation
+
 - [ ] Read SUMMARY.md (30 min)
 - [ ] Skim QUICK-CHECKLIST.md (20 min)
 - [ ] Review DECISION-TREE.md (20 min)
@@ -317,12 +337,14 @@ Architecture → Tools orchestrated by prompts, verified action parity
 - **Total:** ~3 hours
 
 ### Ongoing: Design Process
+
 - [ ] Use QUICK-CHECKLIST.md weekly
 - [ ] Reference DECISION-TREE.md for tool decisions
 - [ ] Consult PREVENTION-STRATEGIES.md for specific topics
 - [ ] Apply patterns from "Implementation Patterns" section
 
 ### When Needed: Problem Solving
+
 - [ ] Hit a pitfall? → PREVENTION-STRATEGIES.md
 - [ ] Evaluate tool? → DECISION-TREE.md
 - [ ] Need code pattern? → PREVENTION-STRATEGIES.md
@@ -333,23 +355,27 @@ Architecture → Tools orchestrated by prompts, verified action parity
 ## Document Cross-References
 
 ### SUMMARY points to:
+
 - QUICK-CHECKLIST (daily reference)
 - PREVENTION-STRATEGIES (deep dives)
 - DECISION-TREE (tool decisions)
 - MAIS example (real implementation)
 
 ### QUICK-CHECKLIST points to:
+
 - PREVENTION-STRATEGIES (detailed checklists)
 - DECISION-TREE (tool deferral)
 - Common pitfalls recovery steps
 
 ### PREVENTION-STRATEGIES points to:
+
 - QUICK-CHECKLIST (condensed versions)
 - DECISION-TREE (feature deferral)
 - Code patterns (implementation)
 - MAIS example (real usage)
 
 ### DECISION-TREE points to:
+
 - PREVENTION-STRATEGIES (background on concepts)
 - QUICK-CHECKLIST (tool specification template)
 
@@ -404,9 +430,9 @@ After implementing an agent, track:
 
 ## Version Control
 
-| Version | Date | Creator | Changes |
-|---------|------|---------|---------|
-| 1.0 | 2025-12-26 | Claude Code | Initial release from MAIS Business Advisor System design |
+| Version | Date       | Creator     | Changes                                                  |
+| ------- | ---------- | ----------- | -------------------------------------------------------- |
+| 1.0     | 2025-12-26 | Claude Code | Initial release from MAIS Business Advisor System design |
 
 **Next review:** 2026-01-26 (post-launch learnings from advisor system)
 
@@ -448,7 +474,7 @@ All documents cross-reference each other. Use the one that matches your current 
 
 These documents represent the **complete prevention strategy** for AI agent design at MAIS, derived from the rigorous multi-agent review process (6 specialists) that designed the Business Advisor System.
 
-**Core philosophy:** *Prevent problems through clear thinking, not through trust. Enforce at architecture level, not prompt level.*
+**Core philosophy:** _Prevent problems through clear thinking, not through trust. Enforce at architecture level, not prompt level._
 
 Key insight from the design process: **Multi-agent review (Architecture, Security, UX, Agent-Native, Implementation, Simplicity) is essential.** It catches problems that no single reviewer would see.
 
@@ -466,5 +492,5 @@ Key insight from the design process: **Multi-agent review (Architecture, Securit
 
 ---
 
-*Last Updated: 2025-12-26*
-*Status: Foundation documentation for all future MAIS agent work*
+_Last Updated: 2025-12-26_
+_Status: Foundation documentation for all future MAIS agent work_

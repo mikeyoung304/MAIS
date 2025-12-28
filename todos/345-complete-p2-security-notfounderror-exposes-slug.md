@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p2
-issue_id: "345"
+issue_id: '345'
 tags: [code-review, security, information-disclosure]
-dependencies: ["344"]
+dependencies: ['344']
 ---
 
 # Security: NotFoundError Exposes Package Slug
@@ -33,6 +33,7 @@ if (!pkgWithAddOns) {
 ## Proposed Solutions
 
 ### Option A: Generic message (Recommended)
+
 - **Pros:** Consistent with P1-172 fix pattern
 - **Cons:** Less client-side debugging info
 - **Effort:** Small
@@ -62,8 +63,8 @@ Apply Option A following existing pattern from line 163.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                       |
+| ---------- | ------------------------ | ------------------------------- |
 | 2024-12-24 | Created from code review | security-sentinel agent finding |
 
 ## Resources

@@ -79,6 +79,7 @@ Command: vitest --pool=forks --poolOptions.forks.singleFork
 ### How It Works
 
 **BEFORE (Parallel):**
+
 ```
 Time:    0ms      100ms     200ms     300ms     400ms
 Worker1: [Test A1 connection needed...]
@@ -90,6 +91,7 @@ Pool:    [1/5] [2/5] [3/5] [4/5] [5/5-EXHAUSTED] ❌❌❌❌
 ```
 
 **AFTER (Serial):**
+
 ```
 Time:    0ms      500ms     1000ms    1500ms    2000ms
 Worker1: [Test A ✓] cleanup [Test B ✓] cleanup [Test C ✓]
@@ -102,24 +104,26 @@ Pool:    [1/5]      [0/5]    [1/5]     [0/5]    [1/5] ✓✓✓
 
 ### Before and After Comparison
 
-| Metric | Before | After | Improvement |
-| --- | --- | --- | --- |
-| **Test Files Passing** | 1067 | 1169 | +102 (9.6%) |
-| **Test Files Failing** | 38 | 13 | -25 (66% reduction) |
-| **Pool Exhaustion Errors** | 38 | 0 | 100% fixed |
-| **Pre-existing Issues** | N/A | 13 | Isolated |
-| **Execution Time** | ~45s | ~120s | -165% (expected) |
-| **Memory Usage** | ~400MB | ~50MB | 8x improvement |
+| Metric                     | Before | After | Improvement         |
+| -------------------------- | ------ | ----- | ------------------- |
+| **Test Files Passing**     | 1067   | 1169  | +102 (9.6%)         |
+| **Test Files Failing**     | 38     | 13    | -25 (66% reduction) |
+| **Pool Exhaustion Errors** | 38     | 0     | 100% fixed          |
+| **Pre-existing Issues**    | N/A    | 13    | Isolated            |
+| **Execution Time**         | ~45s   | ~120s | -165% (expected)    |
+| **Memory Usage**           | ~400MB | ~50MB | 8x improvement      |
 
 ### Failure Analysis
 
 **Before:** 38 failures (all from pool exhaustion)
+
 ```
 Connection timeout: Cannot acquire database connection ×38
 FATAL: remaining connection slots reserved ×38
 ```
 
 **After:** 13 failures (pre-existing, unrelated to isolation)
+
 ```
 Bulk operations timeout: 6-8 seconds > 5 second limit ×1
 Webhook race condition: [pre-existing issue] ×4
@@ -190,12 +194,12 @@ Which test command should I use?
 
 ### Why `--pool=forks` is Better Than `--pool=threads`
 
-| Aspect | threads | forks |
-| --- | --- | --- |
-| **Isolation** | Weak (shared heap) | Strong (separate process) |
-| **Database** | Risky (connection conflicts) | Safe (independent connections) |
-| **Memory** | Lower (shared V8) | Higher (separate V8 × N) |
-| **Best For** | CPU-bound, pure logic | I/O-bound, database tests |
+| Aspect        | threads                      | forks                          |
+| ------------- | ---------------------------- | ------------------------------ |
+| **Isolation** | Weak (shared heap)           | Strong (separate process)      |
+| **Database**  | Risky (connection conflicts) | Safe (independent connections) |
+| **Memory**    | Lower (shared V8)            | Higher (separate V8 × N)       |
+| **Best For**  | CPU-bound, pure logic        | I/O-bound, database tests      |
 
 ### Why `singleFork` Matters
 
@@ -292,12 +296,12 @@ ADAPTERS_PRESET="real"  # Uses PostgreSQL database
 
 ### Database Limits
 
-| Database | Max Connections | Recommended Serial | Notes |
-| --- | --- | --- | --- |
-| PostgreSQL (local) | Unlimited | N/A | No limits |
-| PostgreSQL (cloud) | Typically 5-100 | Serial ✓ | Prevents exhaustion |
-| Supabase Free | 5 | Serial required ✓ | Must use serial |
-| Supabase Pro | 100+ | Either mode ✓ | Parallel safe (if needed) |
+| Database           | Max Connections | Recommended Serial | Notes                     |
+| ------------------ | --------------- | ------------------ | ------------------------- |
+| PostgreSQL (local) | Unlimited       | N/A                | No limits                 |
+| PostgreSQL (cloud) | Typically 5-100 | Serial ✓           | Prevents exhaustion       |
+| Supabase Free      | 5               | Serial required ✓  | Must use serial           |
+| Supabase Pro       | 100+            | Either mode ✓      | Parallel safe (if needed) |
 
 ---
 
@@ -305,19 +309,19 @@ ADAPTERS_PRESET="real"  # Uses PostgreSQL database
 
 ### Modified Files
 
-| File | Change | Lines |
-| --- | --- | --- |
-| `server/package.json` | Added `test:serial` script | +1 |
+| File                  | Change                     | Lines |
+| --------------------- | -------------------------- | ----- |
+| `server/package.json` | Added `test:serial` script | +1    |
 
 ### Related Documentation
 
-| File | Purpose |
-| --- | --- |
-| `/docs/solutions/test-failures/TEST_ISOLATION_SERIAL_EXECUTION.md` | Full technical explanation |
-| `/docs/solutions/TEST_ISOLATION_QUICK_REFERENCE.md` | Quick reference (print and post) |
-| `/DEVELOPING.md` | Development workflow |
-| `server/vitest.config.ts` | Vitest configuration |
-| `.env.test.example` | Test environment setup |
+| File                                                               | Purpose                          |
+| ------------------------------------------------------------------ | -------------------------------- |
+| `/docs/solutions/test-failures/TEST_ISOLATION_SERIAL_EXECUTION.md` | Full technical explanation       |
+| `/docs/solutions/TEST_ISOLATION_QUICK_REFERENCE.md`                | Quick reference (print and post) |
+| `/DEVELOPING.md`                                                   | Development workflow             |
+| `server/vitest.config.ts`                                          | Vitest configuration             |
+| `.env.test.example`                                                | Test environment setup           |
 
 ---
 
@@ -355,6 +359,7 @@ npm run test:serial --workspace=server
 ### Q: Can I use parallel again later?
 
 **A:** Only if:
+
 1. Database pool is increased (20+ connections)
 2. Test isolation is perfect (no shared state)
 3. You accept occasional failures

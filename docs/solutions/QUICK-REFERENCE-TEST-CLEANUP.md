@@ -36,11 +36,11 @@ export default async function globalSetup(): Promise<void> {
 
   // Delete in correct order (foreign key dependencies first)
   await prisma.bookingAddOn.deleteMany({
-    where: { booking: { tenantId: { in: testTenants.map(t => t.id) } } },
+    where: { booking: { tenantId: { in: testTenants.map((t) => t.id) } } },
   });
 
   await prisma.tenant.deleteMany({
-    where: { id: { in: testTenants.map(t => t.id) } },
+    where: { id: { in: testTenants.map((t) => t.id) } },
   });
 
   await disconnectTestPrisma();
@@ -114,11 +114,11 @@ await tx.tenant.deleteMany({ ... });       // Then parent
 
 ## Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| Cleanup not running | Check `DATABASE_URL` is set (skips in mock mode) |
-| Deleting real data | Verify allowlist includes all production slugs |
-| Foreign key errors | Delete child tables before parent |
-| Connection pool errors | Reuse singleton Prisma via `getTestPrisma()` |
+| Issue                  | Solution                                         |
+| ---------------------- | ------------------------------------------------ |
+| Cleanup not running    | Check `DATABASE_URL` is set (skips in mock mode) |
+| Deleting real data     | Verify allowlist includes all production slugs   |
+| Foreign key errors     | Delete child tables before parent                |
+| Connection pool errors | Reuse singleton Prisma via `getTestPrisma()`     |
 
 **Reference:** See full solution at `docs/solutions/test-failures/TEST-SUITE-HANG-ORPHANED-TENANTS-20251227.md`

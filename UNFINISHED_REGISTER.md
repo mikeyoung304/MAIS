@@ -23,12 +23,12 @@ This document catalogs all incomplete work, TODO items, stub implementations, ha
 
 ## Priority Summary
 
-| Priority | Count | Description |
-|----------|-------|-------------|
-| P0 | 0 | No blocking issues or security concerns found |
-| P1 | 8 | Should fix before next release |
-| P2 | 35+ | Technical debt to address |
-| P3 | 15+ | Nice to have cleanup |
+| Priority | Count | Description                                   |
+| -------- | ----- | --------------------------------------------- |
+| P0       | 0     | No blocking issues or security concerns found |
+| P1       | 8     | Should fix before next release                |
+| P2       | 35+   | Technical debt to address                     |
+| P3       | 15+   | Nice to have cleanup                          |
 
 ---
 
@@ -107,7 +107,7 @@ This document catalogs all incomplete work, TODO items, stub implementations, ha
 ### 8. Customer ID Generation Placeholder
 
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/booking.service.ts:968`
-**Comment:** `customerId: \`customer_${Date.now()}\`, // TODO: Integrate with Customer management`
+**Comment:** `customerId: \`customer\_${Date.now()}\`, // TODO: Integrate with Customer management`
 **Context:** Using timestamp-based IDs instead of proper customer management
 **Age:** Unknown
 **Impact:** No customer deduplication, lost relationship data
@@ -119,77 +119,77 @@ This document catalogs all incomplete work, TODO items, stub implementations, ha
 
 ### Rate Limiter TODOs (4 items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `server/src/middleware/rateLimiter.ts` | 201 | TODO-057 | Rate limiter for public scheduling endpoints |
-| `server/src/middleware/rateLimiter.ts` | 225 | TODO-193 | Rate limiter for add-on read operations |
-| `server/src/middleware/rateLimiter.ts` | 245 | TODO-193 | Rate limiter for add-on write operations |
-| `server/src/middleware/rateLimiter.ts` | 265 | TODO-273 | Rate limiter for Stripe webhook endpoint |
+| File                                   | Line | TODO ID  | Description                                  |
+| -------------------------------------- | ---- | -------- | -------------------------------------------- |
+| `server/src/middleware/rateLimiter.ts` | 201  | TODO-057 | Rate limiter for public scheduling endpoints |
+| `server/src/middleware/rateLimiter.ts` | 225  | TODO-193 | Rate limiter for add-on read operations      |
+| `server/src/middleware/rateLimiter.ts` | 245  | TODO-193 | Rate limiter for add-on write operations     |
+| `server/src/middleware/rateLimiter.ts` | 265  | TODO-273 | Rate limiter for Stripe webhook endpoint     |
 
 **Recommended Action:** FINISH - All rate limiters should be properly configured
 
 ### Idempotency Key Implementation (5 items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `server/src/routes/public-date-booking.routes.ts` | 12 | TODO-329 | Request-level idempotency via X-Idempotency-Key |
-| `server/src/routes/public-date-booking.routes.ts` | 50 | TODO-329 | CacheService for idempotency handling |
-| `server/src/routes/public-date-booking.routes.ts` | 91 | TODO-329 | Check for idempotency key header |
-| `server/src/routes/public-date-booking.routes.ts` | 140 | TODO-329 | Cache result if idempotency key provided |
-| `server/src/routes/index.ts` | 614 | TODO-329 | Pass cacheAdapter for idempotency |
+| File                                              | Line | TODO ID  | Description                                     |
+| ------------------------------------------------- | ---- | -------- | ----------------------------------------------- |
+| `server/src/routes/public-date-booking.routes.ts` | 12   | TODO-329 | Request-level idempotency via X-Idempotency-Key |
+| `server/src/routes/public-date-booking.routes.ts` | 50   | TODO-329 | CacheService for idempotency handling           |
+| `server/src/routes/public-date-booking.routes.ts` | 91   | TODO-329 | Check for idempotency key header                |
+| `server/src/routes/public-date-booking.routes.ts` | 140  | TODO-329 | Cache result if idempotency key provided        |
+| `server/src/routes/index.ts`                      | 614  | TODO-329 | Pass cacheAdapter for idempotency               |
 
 **Recommended Action:** FINISH - Idempotency is critical for booking reliability
 
 ### Webhook Delivery Service (3 items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `server/src/di.ts` | 94 | TODO-278 | Outbound webhook delivery |
-| `server/src/di.ts` | 101 | TODO-278 | Webhook subscription management |
-| `server/src/routes/index.ts` | 633 | TODO-278 | Register tenant admin webhook routes |
+| File                         | Line | TODO ID  | Description                          |
+| ---------------------------- | ---- | -------- | ------------------------------------ |
+| `server/src/di.ts`           | 94   | TODO-278 | Outbound webhook delivery            |
+| `server/src/di.ts`           | 101  | TODO-278 | Webhook subscription management      |
+| `server/src/routes/index.ts` | 633  | TODO-278 | Register tenant admin webhook routes |
 
 **Recommended Action:** FINISH - Customer webhook notifications
 
 ### Landing Page System TODOs (6 items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `server/src/services/landing-page.service.ts` | 12 | TODO-241 | Architecture note |
-| `server/src/services/landing-page.service.ts` | 33 | TODO-244 | API response design |
-| `server/src/routes/tenant-admin-landing-page.routes.ts` | 232 | TODO-249 | Rate limiting for saves |
-| `server/src/routes/tenant-admin-landing-page.routes.ts` | 284 | TODO-249 | Rate limiting for requests |
-| `server/src/routes/tenant-admin-landing-page.routes.ts` | 359 | TODO-235 | Image upload endpoint |
-| `packages/contracts/src/tenant-admin/landing-page.contract.ts` | 230 | TODO-235 | Image upload endpoint contract |
+| File                                                           | Line | TODO ID  | Description                    |
+| -------------------------------------------------------------- | ---- | -------- | ------------------------------ |
+| `server/src/services/landing-page.service.ts`                  | 12   | TODO-241 | Architecture note              |
+| `server/src/services/landing-page.service.ts`                  | 33   | TODO-244 | API response design            |
+| `server/src/routes/tenant-admin-landing-page.routes.ts`        | 232  | TODO-249 | Rate limiting for saves        |
+| `server/src/routes/tenant-admin-landing-page.routes.ts`        | 284  | TODO-249 | Rate limiting for requests     |
+| `server/src/routes/tenant-admin-landing-page.routes.ts`        | 359  | TODO-235 | Image upload endpoint          |
+| `packages/contracts/src/tenant-admin/landing-page.contract.ts` | 230  | TODO-235 | Image upload endpoint contract |
 
 **Recommended Action:** DOCUMENT or FINISH - Review if these are notes vs action items
 
 ### Reminder System TODOs (3 items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `server/src/adapters/mock/index.ts` | 623 | TODO-154 | Calculate new reminder due date |
-| `server/src/adapters/mock/index.ts` | 635 | TODO-154 | Reset reminderSentAt |
+| File                                               | Line    | TODO ID  | Description                          |
+| -------------------------------------------------- | ------- | -------- | ------------------------------------ |
+| `server/src/adapters/mock/index.ts`                | 623     | TODO-154 | Calculate new reminder due date      |
+| `server/src/adapters/mock/index.ts`                | 635     | TODO-154 | Reset reminderSentAt                 |
 | `server/src/adapters/prisma/booking.repository.ts` | 868-928 | TODO-154 | Reminder recalculation on reschedule |
 
 **Recommended Action:** FINISH - Reminder dates should update on booking reschedule
 
 ### Tenant Admin Routes Helper Functions (3 items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `server/src/routes/tenant-admin.routes.ts` | 1060 | TODO-195 | DTO mapper function for code deduplication |
-| `server/src/routes/tenant-admin.routes.ts` | 1073 | TODO-194 | Helper to extract tenantId from auth request |
-| `server/src/routes/tenant-admin.routes.ts` | 1206,1234 | TODO-196 | Explicit NotFoundError handling |
+| File                                       | Line      | TODO ID  | Description                                  |
+| ------------------------------------------ | --------- | -------- | -------------------------------------------- |
+| `server/src/routes/tenant-admin.routes.ts` | 1060      | TODO-195 | DTO mapper function for code deduplication   |
+| `server/src/routes/tenant-admin.routes.ts` | 1073      | TODO-194 | Helper to extract tenantId from auth request |
+| `server/src/routes/tenant-admin.routes.ts` | 1206,1234 | TODO-196 | Explicit NotFoundError handling              |
 
 **Recommended Action:** FINISH - Code quality improvements
 
 ### Landing Page Editor Hooks TODOs (10+ items)
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `client/src/.../useLandingPageEditor.ts` | 63-483 | TODO-253 | localStorage draft recovery |
-| `client/src/.../useLandingPageEditor.ts` | 228-280 | TODO-250 | Performance monitoring |
-| `client/src/.../useLandingPageEditor.ts` | 516 | TODO-254 | Flush on tab blur/close |
+| File                                     | Line    | TODO ID  | Description                 |
+| ---------------------------------------- | ------- | -------- | --------------------------- |
+| `client/src/.../useLandingPageEditor.ts` | 63-483  | TODO-253 | localStorage draft recovery |
+| `client/src/.../useLandingPageEditor.ts` | 228-280 | TODO-250 | Performance monitoring      |
+| `client/src/.../useLandingPageEditor.ts` | 516     | TODO-254 | Flush on tab blur/close     |
 
 **Recommended Action:** DOCUMENT - These appear to be well-implemented features
 
@@ -218,6 +218,7 @@ This document catalogs all incomplete work, TODO items, stub implementations, ha
 ### Test Template TODOs (20+ items)
 
 Files in `/Users/mikeyoung/CODING/MAIS/server/test/templates/`:
+
 - `service.test.template.ts` - 20+ TODO comments
 - `controller.test.template.ts` - 15+ TODO comments
 - `repository.test.template.ts` - 10+ TODO comments
@@ -227,19 +228,19 @@ Files in `/Users/mikeyoung/CODING/MAIS/server/test/templates/`:
 
 ### Section Component Layout Shift Prevention
 
-| File | TODO ID | Description |
-|------|---------|-------------|
-| `client/src/.../EditableHeroSection.tsx:9` | TODO-255 | Layout shift prevention |
-| `client/src/.../HeroSection.tsx:31-34` | TODO-255,256 | Layout shift & editable mode |
+| File                                       | TODO ID      | Description                  |
+| ------------------------------------------ | ------------ | ---------------------------- |
+| `client/src/.../EditableHeroSection.tsx:9` | TODO-255     | Layout shift prevention      |
+| `client/src/.../HeroSection.tsx:31-34`     | TODO-255,256 | Layout shift & editable mode |
 
 **Recommended Action:** DOCUMENT - Appears to be design decisions, not action items
 
 ### Accessibility Comments
 
-| File | Line | TODO ID | Description |
-|------|------|---------|-------------|
-| `client/src/.../HeroSection.tsx` | 69,109 | TODO-212 | Background image accessibility |
-| `client/src/.../TestimonialsSection.tsx` | 128 | TODO-218 | Cite element accessibility |
+| File                                     | Line   | TODO ID  | Description                    |
+| ---------------------------------------- | ------ | -------- | ------------------------------ |
+| `client/src/.../HeroSection.tsx`         | 69,109 | TODO-212 | Background image accessibility |
+| `client/src/.../TestimonialsSection.tsx` | 128    | TODO-218 | Cite element accessibility     |
 
 **Recommended Action:** DOCUMENT - Accessibility implementation notes
 
@@ -255,16 +256,16 @@ Files in `/Users/mikeyoung/CODING/MAIS/server/test/templates/`:
 
 The following backup files should be reviewed and removed if no longer needed:
 
-| File | Type |
-|------|------|
-| `/Users/mikeyoung/CODING/MAIS/server/.env.backup` | Environment backup |
-| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.backup` | Component backup |
-| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.bak` | Component backup |
-| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Success.tsx.old` | Component backup |
-| `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/tenants/TenantForm.tsx.backup` | Component backup |
-| `/Users/mikeyoung/CODING/MAIS/server/test/integration/catalog.repository.integration.spec.ts.backup` | Test backup |
-| `/Users/mikeyoung/CODING/MAIS/server/scripts/test-api.sh.bak` | Script backup |
-| `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/index.ts.bak` | Adapter backup |
+| File                                                                                                 | Type               |
+| ---------------------------------------------------------------------------------------------------- | ------------------ |
+| `/Users/mikeyoung/CODING/MAIS/server/.env.backup`                                                    | Environment backup |
+| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.backup`                                      | Component backup   |
+| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.bak`                                         | Component backup   |
+| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Success.tsx.old`                                      | Component backup   |
+| `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/tenants/TenantForm.tsx.backup`               | Component backup   |
+| `/Users/mikeyoung/CODING/MAIS/server/test/integration/catalog.repository.integration.spec.ts.backup` | Test backup        |
+| `/Users/mikeyoung/CODING/MAIS/server/scripts/test-api.sh.bak`                                        | Script backup      |
+| `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/index.ts.bak`                                 | Adapter backup     |
 
 **Recommended Action:** REMOVE - Clean up backup files after verifying current versions work
 
@@ -276,12 +277,12 @@ The following backup files should be reviewed and removed if no longer needed:
 
 **File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/upload.service.ts`
 
-| Line | Deprecated Item | Migration Target |
-|------|-----------------|------------------|
-| 17 | `@deprecated Use container.storageProvider` | DI container |
-| 33 | `createUploadConfig()` | di.ts configuration |
-| 73 | `UploadService class` | `container.storageProvider` |
-| 139 | `uploadService singleton` | DI import |
+| Line | Deprecated Item                             | Migration Target            |
+| ---- | ------------------------------------------- | --------------------------- |
+| 17   | `@deprecated Use container.storageProvider` | DI container                |
+| 33   | `createUploadConfig()`                      | di.ts configuration         |
+| 73   | `UploadService class`                       | `container.storageProvider` |
+| 139  | `uploadService singleton`                   | DI import                   |
 
 **Migration Status:** Partially complete - backward compatibility wrapper remains
 
@@ -324,6 +325,7 @@ The following backup files should be reviewed and removed if no longer needed:
 The codebase maintains backward compatibility between legacy section-based configuration and new page-based configuration.
 
 **Files involved:**
+
 - `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/landing-page.ts`
 - `/Users/mikeyoung/CODING/MAIS/apps/web/src/lib/tenant.ts`
 - `/Users/mikeyoung/CODING/MAIS/server/scripts/migrate-to-page-config.ts`
@@ -331,6 +333,7 @@ The codebase maintains backward compatibility between legacy section-based confi
 **Status:** Migration script exists but legacy format still supported
 
 **Recommended Action:**
+
 1. Run migration script for existing tenants
 2. Remove legacy support after migration verified
 3. Clean up `normalizeToPages()` function

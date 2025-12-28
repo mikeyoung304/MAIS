@@ -236,7 +236,9 @@ test.describe('Contact Form', () => {
 
   test('shows required field validation', async ({ page }) => {
     // Wait for submit button to be visible (confirms form is loaded)
-    await expect(page.getByRole('button', { name: /send message/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: /send message/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Submit empty form
     await page.getByRole('button', { name: /send message/i }).click();
@@ -278,7 +280,10 @@ test.describe('Contact Form', () => {
     await page.fill('#name', 'Test User');
     await page.fill('#email', 'test@example.com');
     await page.fill('#phone', '555-123-4567');
-    await page.fill('#message', 'This is a test message for the contact form. It should be long enough.');
+    await page.fill(
+      '#message',
+      'This is a test message for the contact form. It should be long enough.'
+    );
 
     // Submit form
     await page.getByRole('button', { name: /send message/i }).click();

@@ -42,13 +42,13 @@ error TS6133: 'serviceId' is declared but its value is never read.
 
 ### Files Affected (20 files, 49 instances)
 
-| File | Count | Examples |
-|------|-------|----------|
-| `server/src/adapters/mock/index.ts` | 14+ | `_tenantId`, `_packageIds`, `_serviceId` |
-| `server/src/routes/tenant-admin.routes.ts` | 11 | `_req` in route handlers |
-| `server/src/routes/tenant-admin-landing-page.routes.ts` | 5 | `_req` in route handlers |
-| `server/src/middleware/rateLimiter.ts` | 8 | `_req` in rate limiter handlers |
-| Various other routes | ~11 | `_req` parameters |
+| File                                                    | Count | Examples                                 |
+| ------------------------------------------------------- | ----- | ---------------------------------------- |
+| `server/src/adapters/mock/index.ts`                     | 14+   | `_tenantId`, `_packageIds`, `_serviceId` |
+| `server/src/routes/tenant-admin.routes.ts`              | 11    | `_req` in route handlers                 |
+| `server/src/routes/tenant-admin-landing-page.routes.ts` | 5     | `_req` in route handlers                 |
+| `server/src/middleware/rateLimiter.ts`                  | 8     | `_req` in rate limiter handlers          |
+| Various other routes                                    | ~11   | `_req` parameters                        |
 
 ---
 
@@ -57,10 +57,12 @@ error TS6133: 'serviceId' is declared but its value is never read.
 ### Step 1: Identify Truly Unused Parameters
 
 A parameter is "unused" ONLY if:
+
 1. It never appears after the function signature
 2. It's required for interface/type compliance but not needed in implementation
 
 **Correct Pattern - Truly Unused:**
+
 ```typescript
 // tenantId required by interface, but mock doesn't use it
 async getAllPackages(_tenantId: string): Promise<Package[]> {
@@ -69,6 +71,7 @@ async getAllPackages(_tenantId: string): Promise<Package[]> {
 ```
 
 **Incorrect Pattern - Actually Used:**
+
 ```typescript
 // WRONG: serviceId IS used in logger.debug!
 async findTimeslotBookings(
@@ -124,12 +127,12 @@ npm run typecheck
 
 These were reverted in commit `27a9298`:
 
-| Variable | Function | Why It Was Used |
-|----------|----------|-----------------|
-| `serviceId` | `findTimeslotBookings` | Used in `logger.debug({ serviceId: serviceId || 'all' })` |
-| `serviceId` | `findTimeslotBookingsInRange` | Used in `logger.debug({ serviceId: serviceId || 'all' })` |
-| `tenantId` | `findAppointments` | Used in `logger.debug({ tenantId, filters })` |
-| `balanceAmountCents` | `completeBalancePayment` | Used in assignment expression |
+| Variable             | Function                      | Why It Was Used                               |
+| -------------------- | ----------------------------- | --------------------------------------------- | --- | --------- |
+| `serviceId`          | `findTimeslotBookings`        | Used in `logger.debug({ serviceId: serviceId  |     | 'all' })` |
+| `serviceId`          | `findTimeslotBookingsInRange` | Used in `logger.debug({ serviceId: serviceId  |     | 'all' })` |
+| `tenantId`           | `findAppointments`            | Used in `logger.debug({ tenantId, filters })` |
+| `balanceAmountCents` | `completeBalancePayment`      | Used in assignment expression                 |
 
 ### What Made These Easy to Miss
 
@@ -249,14 +252,14 @@ async completeBalancePayment(
 
 ```typescript
 // Easy to miss - tenantId is used via shorthand
-logger.debug({ tenantId, count });  // tenantId IS used here
+logger.debug({ tenantId, count }); // tenantId IS used here
 ```
 
 ### Pattern 2: Conditional Use of Optional Parameter
 
 ```typescript
 // serviceId is used even with fallback
-logger.debug({ serviceId: serviceId || 'all' });  // serviceId IS used
+logger.debug({ serviceId: serviceId || 'all' }); // serviceId IS used
 ```
 
 ### Pattern 3: Parameter Passed to Another Function
@@ -293,7 +296,7 @@ Before prefixing any parameter with underscore:
 
 ## Git History
 
-| Commit | Description |
-|--------|-------------|
-| `f6ad73c` | Initial fix: prefixed 49 unused variables with underscore |
+| Commit    | Description                                                                   |
+| --------- | ----------------------------------------------------------------------------- |
+| `f6ad73c` | Initial fix: prefixed 49 unused variables with underscore                     |
 | `27a9298` | Revert: 4 variables were incorrectly prefixed (actually used in logger calls) |

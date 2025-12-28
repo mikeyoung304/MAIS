@@ -1,9 +1,9 @@
 ---
 status: complete
 priority: p3
-issue_id: "367"
+issue_id: '367'
 tags: [code-review, seo, nextjs]
-dependencies: ["359"]
+dependencies: ['359']
 ---
 
 # Sitemap Empty - No Dynamic Tenant Pages
@@ -24,7 +24,7 @@ try {
   // TODO: We'd need a public endpoint that lists active tenant slugs
   // For now, this is a placeholder - in production, you'd have
   // GET /v1/public/tenants/slugs that returns active tenant slugs
-  tenantPages = [];  // ❌ EMPTY
+  tenantPages = []; // ❌ EMPTY
 } catch (error) {
   tenantPages = [];
 }
@@ -35,6 +35,7 @@ try {
 ## Proposed Solutions
 
 ### Option 1: Implement Backend Endpoint + Sitemap
+
 - **Description:** Create `GET /v1/public/tenants/slugs` and update sitemap.ts
 - **Pros:** Full SEO coverage
 - **Cons:** Requires backend work
@@ -42,18 +43,20 @@ try {
 - **Risk:** Low
 
 **Backend endpoint:**
+
 ```typescript
 // GET /v1/public/tenants/slugs
 router.get('/slugs', async (req, res) => {
   const slugs = await prisma.tenant.findMany({
     where: { isActive: true },
-    select: { slug: true, updatedAt: true }
+    select: { slug: true, updatedAt: true },
   });
   res.json(slugs);
 });
 ```
 
 **Frontend sitemap fix:**
+
 ```typescript
 const response = await fetch(`${API_URL}/v1/public/tenants/slugs`);
 const slugs = await response.json();
@@ -78,8 +81,8 @@ tenantPages = slugs.map(({ slug, updatedAt }) => ({
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings       |
+| ---------- | -------------------------- | --------------- |
 | 2025-12-25 | Created during code review | SEO issue found |
 
 ## Resources

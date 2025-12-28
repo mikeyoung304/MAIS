@@ -21,6 +21,7 @@ The `formatPrice` utility function is duplicated across multiple files instead o
 ## Location
 
 Duplicated in:
+
 - `apps/web/src/app/t/[slug]/(site)/services/page.tsx`
 - `apps/web/src/app/t/[slug]/(site)/TenantLandingPage.tsx`
 - `apps/web/src/app/t/_domain/services/page.tsx`

@@ -78,15 +78,13 @@ const PAGE_PATHS: Record<PageName, string> = {
 export function getNavigationItems(config?: LandingPageConfig | null): NavItem[] {
   // If new pages config exists, use it
   if (config?.pages) {
-    return PAGE_ORDER
-      .filter((page) => {
-        const pageConfig = config.pages![page];
-        return pageConfig?.enabled !== false;
-      })
-      .map((page) => ({
-        label: PAGE_LABELS[page],
-        path: PAGE_PATHS[page],
-      }));
+    return PAGE_ORDER.filter((page) => {
+      const pageConfig = config.pages![page];
+      return pageConfig?.enabled !== false;
+    }).map((page) => ({
+      label: PAGE_LABELS[page],
+      path: PAGE_PATHS[page],
+    }));
   }
 
   // Fall back to legacy static navigation
@@ -132,11 +130,7 @@ export const NAV_ITEMS: NavItem[] = [
  * buildNavHref('', { label: 'Services', path: '/services' }, '?domain=example.com')
  * // Returns: '/services?domain=example.com'
  */
-export function buildNavHref(
-  basePath: string,
-  item: NavItem,
-  domainParam?: string
-): string {
+export function buildNavHref(basePath: string, item: NavItem, domainParam?: string): string {
   // For home page with domain param, return root with param
   if (item.path === '' && domainParam) {
     return `/${domainParam}`;

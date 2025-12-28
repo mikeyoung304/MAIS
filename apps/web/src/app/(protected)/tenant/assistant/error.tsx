@@ -21,9 +21,7 @@ export default function AssistantError({
       <div className="rounded-full bg-red-100 p-4 mb-4">
         <AlertTriangle className="h-8 w-8 text-red-600" />
       </div>
-      <h2 className="font-serif text-2xl font-bold text-text-primary mb-2">
-        Something went wrong
-      </h2>
+      <h2 className="font-serif text-2xl font-bold text-text-primary mb-2">Something went wrong</h2>
       <p className="text-text-muted mb-6 max-w-md">
         We couldn&apos;t load the assistant. This might be a temporary issue.
       </p>

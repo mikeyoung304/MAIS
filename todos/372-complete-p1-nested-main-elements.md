@@ -36,24 +36,22 @@ The codebase has nested `<main>` elements - one in the root layout and another p
 Ensure only ONE `<main>` element exists in the document hierarchy. The root layout should provide the single `<main>` element, and all child layouts/pages should use `<div>` or `<section>` instead.
 
 Option 1: Remove `<main>` from child layouts:
+
 ```tsx
 // In tenant layout.tsx - use div or section instead
 <div className="min-h-screen">
   <TenantNav tenant={tenant} />
-  <div id="main-content">
-    {children}
-  </div>
+  <div id="main-content">{children}</div>
   <TenantFooter tenant={tenant} />
 </div>
 ```
 
 Option 2: Remove `<main>` from root layout and add to tenant layout only:
+
 ```tsx
 // Root layout uses div
 // Tenant layout provides the single <main>
-<main id="main-content">
-  {children}
-</main>
+<main id="main-content">{children}</main>
 ```
 
 ## Acceptance Criteria

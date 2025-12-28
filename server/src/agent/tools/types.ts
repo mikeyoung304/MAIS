@@ -61,11 +61,14 @@ export interface AgentTool {
   description: string;
   inputSchema: {
     type: 'object';
-    properties: Record<string, {
-      type: string;
-      description: string;
-      enum?: string[];
-    }>;
+    properties: Record<
+      string,
+      {
+        type: string;
+        description: string;
+        enum?: string[];
+      }
+    >;
     required?: string[];
   };
   execute: (context: ToolContext, params: Record<string, unknown>) => Promise<AgentToolResult>;
@@ -107,10 +110,10 @@ export const INJECTION_PATTERNS = [
   // Original patterns - direct instruction override attempts (refined for specificity)
   /ignore\s+(all\s+)?(your\s+)?instructions/i,
   /you are now\s+(a|an|my|the)/i,
-  /system:\s*\[/i,           // System prompt syntax
+  /system:\s*\[/i, // System prompt syntax
   /admin mode\s*(on|enabled|activate)/i,
   /forget\s+(all\s+)?(your\s+)?previous/i,
-  /new\s+instructions:/i,    // More specific to avoid false positives
+  /new\s+instructions:/i, // More specific to avoid false positives
   /disregard\s+(all|previous|above)/i, // More specific than just "disregard"
 
   // Additional system prompt override attempts
@@ -119,11 +122,11 @@ export const INJECTION_PATTERNS = [
   /act\s+as\s+(if|though)\s+you\s+(are|were)/i,
   /pretend\s+(you\s+are|to\s+be)\s+(a|an)/i,
   /roleplay\s+as\s+(a|an)/i,
-  /\[system\]/i,             // Bracketed system markers
+  /\[system\]/i, // Bracketed system markers
   /\[assistant\]/i,
   /\[user\]/i,
-  /<<\s*SYS\s*>>/i,          // Llama-style system markers
-  /<\|system\|>/i,           // Chat template markers
+  /<<\s*SYS\s*>>/i, // Llama-style system markers
+  /<\|system\|>/i, // Chat template markers
 
   // Nested injection attempts (closing/reopening context)
   /```\s*(system|assistant|user)/i,
@@ -133,7 +136,7 @@ export const INJECTION_PATTERNS = [
 
   // Common jailbreak phrases (specific to avoid false positives)
   /jailbreak/i,
-  /\bdan\s+mode\b/i,         // "Do Anything Now" jailbreak
+  /\bdan\s+mode\b/i, // "Do Anything Now" jailbreak
   /developer\s+mode\s*(on|enabled)/i,
   /unrestricted\s+mode/i,
   /no\s+(filter|restrictions|limits)\s+mode/i,

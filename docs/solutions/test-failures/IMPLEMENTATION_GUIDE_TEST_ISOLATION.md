@@ -17,6 +17,7 @@ npm run 2>&1 | grep test:serial
 ```
 
 **Expected output:**
+
 ```
   test:serial
 ```
@@ -54,6 +55,7 @@ npm run test:serial -- --watch
 ```
 
 **Expected output after ~120 seconds:**
+
 ```
 ✓ Test Files  46 passed (46)
 ✓ Tests  1169 passed | 13 failed | 778 skipped
@@ -112,6 +114,7 @@ exit 0
 ```
 
 Make it executable:
+
 ```bash
 chmod +x .git/hooks/pre-commit
 ```
@@ -185,6 +188,7 @@ The serial execution is configured in the npm script:
 ```
 
 **Flags explained:**
+
 - `--pool=forks`: Use process-based worker pool (true isolation)
 - `--poolOptions.forks.singleFork`: Limit to 1 worker (sequential execution)
 
@@ -303,19 +307,19 @@ describe('booking service', () => {
 
 ### Execution Time
 
-| Mode | Time | Stability |
-| --- | --- | --- |
-| Parallel (8 workers) | 45 seconds | 97% (38 failures) |
-| Serial (1 worker) | 120 seconds | 99% (13 pre-existing) |
+| Mode                 | Time        | Stability             |
+| -------------------- | ----------- | --------------------- |
+| Parallel (8 workers) | 45 seconds  | 97% (38 failures)     |
+| Serial (1 worker)    | 120 seconds | 99% (13 pre-existing) |
 
 **Recommendation:** Accept 75 seconds slower execution for 25 fewer failures.
 
 ### Memory Usage
 
-| Mode | Memory | Notes |
-| --- | --- | --- |
-| Parallel | 400MB | 8 Prisma instances × 50MB |
-| Serial | 50MB | 1 Prisma instance × 50MB |
+| Mode     | Memory | Notes                     |
+| -------- | ------ | ------------------------- |
+| Parallel | 400MB  | 8 Prisma instances × 50MB |
+| Serial   | 50MB   | 1 Prisma instance × 50MB  |
 
 **Benefit:** 8x less memory consumption with serial execution.
 
@@ -326,6 +330,7 @@ describe('booking service', () => {
 ### Problem: "Cannot acquire database connection"
 
 **Symptoms:**
+
 ```
 Error: Cannot get a connection, all pooled connections are in use
 Error: FATAL: remaining connection slots reserved for non-replication superuser
@@ -334,11 +339,13 @@ Error: FATAL: remaining connection slots reserved for non-replication superuser
 **Solutions:**
 
 1. **Use serial execution:**
+
    ```bash
    npm run test:serial --workspace=server
    ```
 
 2. **Verify database is running:**
+
    ```bash
    psql $DATABASE_URL -c "SELECT 1;"
    ```
@@ -352,11 +359,13 @@ Error: FATAL: remaining connection slots reserved for non-replication superuser
 ### Problem: "Test timed out in 5000ms"
 
 **Symptoms:**
+
 ```
 Error: Test timed out in 5000ms
 ```
 
 **Causes:**
+
 - Test is slow (> 5 seconds)
 - Database query inefficiency
 - Missing database index
@@ -364,6 +373,7 @@ Error: Test timed out in 5000ms
 **Solutions:**
 
 1. **Increase timeout for slow tests:**
+
    ```typescript
    it('slow test', async () => {
      // test code that takes 6-8 seconds
@@ -371,6 +381,7 @@ Error: Test timed out in 5000ms
    ```
 
 2. **Optimize database query:**
+
    ```bash
    # View slow queries
    psql $DATABASE_URL -c "EXPLAIN ANALYZE SELECT ...;"
@@ -384,6 +395,7 @@ Error: Test timed out in 5000ms
 ### Problem: "Tests still fail in serial mode"
 
 **Symptoms:**
+
 ```
 FAIL test/integration/booking.spec.ts
 FAIL test/http/password-reset.spec.ts
@@ -392,17 +404,20 @@ FAIL test/http/password-reset.spec.ts
 **Solutions:**
 
 1. **Check test database exists:**
+
    ```bash
    createdb mais_test
    npm exec prisma migrate deploy --force
    ```
 
 2. **Run test in isolation:**
+
    ```bash
    npm run test:serial --workspace=server -- test/integration/booking.spec.ts --reporter=verbose
    ```
 
 3. **Check Prisma Client is synchronized:**
+
    ```bash
    npm exec prisma generate
    ```
@@ -434,11 +449,11 @@ Use this checklist to ensure serial execution is properly integrated:
 
 ## Documentation Links
 
-| Document | Purpose |
-| --- | --- |
-| [TEST_ISOLATION_SERIAL_EXECUTION.md](./TEST_ISOLATION_SERIAL_EXECUTION.md) | Full technical explanation |
-| [SOLUTION_SUMMARY_TEST_ISOLATION.md](./SOLUTION_SUMMARY_TEST_ISOLATION.md) | Executive summary |
-| [../TEST_ISOLATION_QUICK_REFERENCE.md](../TEST_ISOLATION_QUICK_REFERENCE.md) | Quick reference (print!) |
+| Document                                                                                           | Purpose                      |
+| -------------------------------------------------------------------------------------------------- | ---------------------------- |
+| [TEST_ISOLATION_SERIAL_EXECUTION.md](./TEST_ISOLATION_SERIAL_EXECUTION.md)                         | Full technical explanation   |
+| [SOLUTION_SUMMARY_TEST_ISOLATION.md](./SOLUTION_SUMMARY_TEST_ISOLATION.md)                         | Executive summary            |
+| [../TEST_ISOLATION_QUICK_REFERENCE.md](../TEST_ISOLATION_QUICK_REFERENCE.md)                       | Quick reference (print!)     |
 | [test-isolation-di-container-race-conditions.md](./test-isolation-di-container-race-conditions.md) | Related: DI Container issues |
 
 ---

@@ -675,13 +675,13 @@ import { logger } from '@/lib/logger';
 
 **Quick Reference Table:**
 
-| Pattern | Issue | Fix |
-|---------|-------|-----|
-| Missing useCallback | Callback recreated on every render | Wrap in useCallback() |
-| No error boundary | Unhandled errors crash page | Add error.tsx |
-| Console.log | Debug code in production | Use logger utility |
-| window.confirm | Blocks UI thread | Use AlertDialog |
-| Missing ISR revalidate | Stale data in production | Add revalidate: 60 |
+| Pattern                | Issue                              | Fix                   |
+| ---------------------- | ---------------------------------- | --------------------- |
+| Missing useCallback    | Callback recreated on every render | Wrap in useCallback() |
+| No error boundary      | Unhandled errors crash page        | Add error.tsx         |
+| Console.log            | Debug code in production           | Use logger utility    |
+| window.confirm         | Blocks UI thread                   | Use AlertDialog       |
+| Missing ISR revalidate | Stale data in production           | Add revalidate: 60    |
 
 #### [Batch P2/P3 Resolution for Tenant Multi-Page Sites](./code-review-patterns/batch-p2-p3-resolution-tenant-multipage-MAIS-20251225.md)
 
@@ -693,7 +693,7 @@ import { logger } from '@/lib/logger';
 **Covers:**
 
 - Batch resolution workflow for multi-page tenant sites
-- Consistency patterns across /t/[slug]/* pages
+- Consistency patterns across /t/[slug]/\* pages
 - Parallel agent assignment by page/component
 - Verification checklist for batch fixes
 - Common multi-page patterns and fixes
@@ -1136,12 +1136,12 @@ async function ensureLoggedIn(page) {
 
 **Common Errors & Fixes:**
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `Module not found: @macon/contracts` | Root Directory set | Clear Root Directory, use vercel.json |
-| `ENOENT: dist/index.js` | Missing --force flag | Add `--force` to tsc build |
-| ESLint unescaped entity | Strict rule | Configure react/no-unescaped-entities |
-| Type errors in build | Stale types | Rebuild workspace packages first |
+| Error                                | Cause                | Fix                                   |
+| ------------------------------------ | -------------------- | ------------------------------------- |
+| `Module not found: @macon/contracts` | Root Directory set   | Clear Root Directory, use vercel.json |
+| `ENOENT: dist/index.js`              | Missing --force flag | Add `--force` to tsc build            |
+| ESLint unescaped entity              | Strict rule          | Configure react/no-unescaped-entities |
+| Type errors in build                 | Stale types          | Rebuild workspace packages first      |
 
 **Verification:**
 
@@ -1193,18 +1193,16 @@ cd apps/web && npm run build
 ```typescript
 // Group related fixes into single agents
 Task('P3 Performance Fixes - TODOs 352-354', {
-  run_in_background: true
+  run_in_background: true,
 });
 
 // Launch 8+ agents for independent tasks
-const agents = independentTodos.map(t =>
-  Task(`Fix ${t.id}`, { run_in_background: true })
-);
+const agents = independentTodos.map((t) => Task(`Fix ${t.id}`, { run_in_background: true }));
 
 // Use haiku for simple tasks
 Task('Remove unused import', {
   subagent_type: 'haiku',
-  run_in_background: true
+  run_in_background: true,
 });
 ```
 
@@ -1816,11 +1814,13 @@ Are you creating a todo based on a plan?
 
 **Last Updated:** 2025-12-27
 **Recent Additions (2025-12-27):**
+
 - TypeScript Unused Variable Underscore Prefix (TS6133) - when to use `_` prefix for unused params (Render deployment fix)
 - TypeScript Build Errors Resolution - property name mismatches, type assertions, stub service patterns (Render deployment fix)
 - MAIS Tenant Zero seed email correction
 
 **Previous Additions (2025-12-25):**
+
 - Multi-agent parallel code review workflow (6 review agents + 8 fix agents with interactive triage)
 - Next.js migration lessons learned (10 key lessons + prevention checklist)
 - Parallel TODO resolution with Playwright verification (ISR cache clearing after data changes)

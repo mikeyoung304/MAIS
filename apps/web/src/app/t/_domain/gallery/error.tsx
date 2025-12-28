@@ -12,9 +12,7 @@ export default function GalleryError({
 }) {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-6 py-16">
-      <h1 className="font-serif text-3xl font-bold text-text-primary">
-        Something went wrong
-      </h1>
+      <h1 className="font-serif text-3xl font-bold text-text-primary">Something went wrong</h1>
       <p className="mt-4 text-text-muted">
         {error.message || 'Unable to load gallery. Please try again.'}
       </p>

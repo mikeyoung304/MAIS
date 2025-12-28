@@ -311,7 +311,13 @@ export function createV1Router(
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
 
-      platformUpdateTenant: async ({ params: _params, body: _body }: { params: { id: string }; body: unknown }) => {
+      platformUpdateTenant: async ({
+        params: _params,
+        body: _body,
+      }: {
+        params: { id: string };
+        body: unknown;
+      }) => {
         // Note: Actual implementation in Express routes
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },

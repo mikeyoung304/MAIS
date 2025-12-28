@@ -1,0 +1,8 @@
+# .git-blame-ignore-revs
+# This file contains commit SHAs that should be ignored by git blame
+# Configure git to use this file: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Mass formatting with prettier (Dec 2025)
+# Run: npm run format on entire codebase to enforce consistent code style
+# This commit touches 400+ files but only changes whitespace/formatting
+be2b0d1

@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "369"
+issue_id: '369'
 tags: [code-review, security, rate-limiting]
 dependencies: []
 ---
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 ```
 
 **Attack Vector:**
+
 ```bash
 # Attacker could spam revalidation
 for i in {1..1000}; do
@@ -43,6 +44,7 @@ done
 ## Proposed Solutions
 
 ### Option 1: Add Rate Limiting Middleware
+
 - **Description:** Limit to 10 requests per minute per secret
 - **Pros:** Prevents abuse
 - **Cons:** Need to track request counts
@@ -50,6 +52,7 @@ done
 - **Risk:** Low
 
 ### Option 2: Use Vercel Edge Config
+
 - **Description:** Leverage Vercel's built-in rate limiting
 - **Pros:** Managed solution
 - **Cons:** Vercel-specific
@@ -68,6 +71,6 @@ done
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings          |
+| ---------- | -------------------------- | ------------------ |
 | 2025-12-25 | Created during code review | Security gap found |

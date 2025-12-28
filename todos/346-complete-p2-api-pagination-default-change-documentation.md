@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "346"
+issue_id: '346'
 tags: [code-review, api, breaking-change, documentation]
 dependencies: []
 ---
@@ -27,12 +27,14 @@ limit: z.coerce.number().int().min(1).max(500).default(50),
 ## Proposed Solutions
 
 ### Option A: Document in release notes (Recommended)
+
 - **Pros:** Informs consumers, simple
 - **Cons:** May still surprise consumers
 - **Effort:** Small
 - **Risk:** Low
 
 ### Option B: Deprecation warning header
+
 - **Pros:** Proactive notification
 - **Cons:** More complex
 - **Effort:** Medium
@@ -56,8 +58,8 @@ Option A - Add to CHANGELOG and API documentation.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | performance-oracle agent finding |
 
 ## Resources

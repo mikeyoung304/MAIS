@@ -62,9 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-              Something went wrong
-            </h2>
+            <h2 className="text-xl font-semibold text-neutral-900 mb-2">Something went wrong</h2>
             <p className="text-neutral-600 mb-6">
               We've been notified and are working to fix the issue.
             </p>

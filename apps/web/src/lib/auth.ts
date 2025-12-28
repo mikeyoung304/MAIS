@@ -226,8 +226,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const { pathname } = request.nextUrl;
 
       // Protected routes
-      const isProtectedRoute =
-        pathname.startsWith('/tenant') || pathname.startsWith('/admin');
+      const isProtectedRoute = pathname.startsWith('/tenant') || pathname.startsWith('/admin');
 
       if (isProtectedRoute) {
         return isLoggedIn;
@@ -263,9 +262,7 @@ export async function getBackendToken(): Promise<string | null> {
 
   // Create a minimal request object for getToken
   const req = {
-    cookies: Object.fromEntries(
-      cookieStore.getAll().map((c) => [c.name, c.value])
-    ),
+    cookies: Object.fromEntries(cookieStore.getAll().map((c) => [c.name, c.value])),
     headers: headerStore,
   };
 

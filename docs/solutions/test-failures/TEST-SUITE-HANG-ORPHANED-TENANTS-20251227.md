@@ -48,6 +48,7 @@ commits:
 The test suite was hanging indefinitely (11+ minutes without completion) during CI/local runs. Tests would never finish, forcing developers to manually kill the process.
 
 **Symptoms:**
+
 - Test runs timeout or hang without any specific error
 - Tests appear to start but never progress
 - Manual interruption (`Ctrl+C`) doesn't allow proper cleanup
@@ -392,13 +393,13 @@ $ psql $DATABASE_URL -c "SELECT slug FROM \"Tenant\" WHERE slug IN ('mais', 'lit
 
 ## Metrics and Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Orphaned test tenants | 117+ | 0 |
-| Scheduler cycle time | ~29s | ~2s |
-| Test suite hangup | Yes (11+ min) | No |
-| Test completion time | N/A (hung) | ~12 minutes |
-| Test pass rate | 771/771 | 771/771 |
+| Metric                | Before        | After       |
+| --------------------- | ------------- | ----------- |
+| Orphaned test tenants | 117+          | 0           |
+| Scheduler cycle time  | ~29s          | ~2s         |
+| Test suite hangup     | Yes (11+ min) | No          |
+| Test completion time  | N/A (hung)    | ~12 minutes |
+| Test pass rate        | 771/771       | 771/771     |
 
 **Key improvement:** From non-functional (hanging) to working (12-minute completion).
 

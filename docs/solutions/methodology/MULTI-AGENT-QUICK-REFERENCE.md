@@ -28,7 +28,7 @@ Task('Fix TODO-124', { run_in_background: true });
 // Always collect results with TaskOutput
 const result = await TaskOutput(agentId, {
   block: true,
-  timeout: 300000
+  timeout: 300000,
 });
 ```
 
@@ -36,7 +36,7 @@ const result = await TaskOutput(agentId, {
 
 ```typescript
 // Never launch dependent tasks in parallel
-Task('Create interface');  // Must finish first
+Task('Create interface'); // Must finish first
 Task('Implement interface'); // Depends on above - CONFLICT!
 
 // Never forget to collect results
@@ -48,11 +48,11 @@ Task('Fix TODO-123', { run_in_background: true });
 
 ## Priority Classification
 
-| Priority | Definition | SLA | Examples |
-|----------|------------|-----|----------|
-| **P1** | Blocks launch, security vuln | < 4 hrs | Auth bypass, data leak |
-| **P2** | User impact, performance | < 1 week | N+1 queries, UX gaps |
-| **P3** | Code quality, optimization | Next quarter | Unused imports, memo |
+| Priority | Definition                   | SLA          | Examples               |
+| -------- | ---------------------------- | ------------ | ---------------------- |
+| **P1**   | Blocks launch, security vuln | < 4 hrs      | Auth bypass, data leak |
+| **P2**   | User impact, performance     | < 1 week     | N+1 queries, UX gaps   |
+| **P3**   | Code quality, optimization   | Next quarter | Unused imports, memo   |
 
 **Decision Tree:**
 
@@ -91,6 +91,7 @@ npm run build        # Must succeed
 ```
 
 Then update TODO files:
+
 - Change `status: pending` to `status: complete`
 - Add `resolved_at:` timestamp
 - Rename file from `pending` to `complete`
@@ -99,12 +100,12 @@ Then update TODO files:
 
 ## Performance Tips
 
-| Tip | Why |
-|-----|-----|
-| Launch 8-10 agents in parallel | Maximum throughput |
-| Group related fixes per agent | Reduce context switching |
-| Use `haiku` for simple tasks | Faster, cheaper |
-| Use `opus` for complex tasks | Better reasoning |
+| Tip                             | Why                         |
+| ------------------------------- | --------------------------- |
+| Launch 8-10 agents in parallel  | Maximum throughput          |
+| Group related fixes per agent   | Reduce context switching    |
+| Use `haiku` for simple tasks    | Faster, cheaper             |
+| Use `opus` for complex tasks    | Better reasoning            |
 | Set 10min timeout for refactors | Avoid premature termination |
 
 **Model Selection:**
@@ -135,13 +136,13 @@ npm run typecheck && npm test
 
 ## Red Flags
 
-| Symptom | Problem | Fix |
-|---------|---------|-----|
-| Agents modifying same file | File conflict | Run sequentially |
-| TODO for existing code | Stale TODO | Verify before create |
-| Agent timeout | Task too complex | Split into subtasks |
-| Typecheck fails after | Breaking changes | Review agent output |
-| Results never collected | Missing TaskOutput | Always await TaskOutput |
+| Symptom                    | Problem            | Fix                     |
+| -------------------------- | ------------------ | ----------------------- |
+| Agents modifying same file | File conflict      | Run sequentially        |
+| TODO for existing code     | Stale TODO         | Verify before create    |
+| Agent timeout              | Task too complex   | Split into subtasks     |
+| Typecheck fails after      | Breaking changes   | Review agent output     |
+| Results never collected    | Missing TaskOutput | Always await TaskOutput |
 
 ---
 
@@ -153,7 +154,7 @@ npm run typecheck && npm test
 ---
 status: pending
 priority: p1
-issue_id: "XXX"
+issue_id: 'XXX'
 tags: [security]
 dependencies: []
 ---
@@ -161,12 +162,15 @@ dependencies: []
 # Title
 
 ## Problem
+
 What and why
 
 ## Solution
+
 How to fix
 
 ## Acceptance Criteria
+
 - [ ] Criterion 1
 - [ ] Tests pass
 ```
@@ -175,14 +179,10 @@ How to fix
 
 ```typescript
 // Independent tasks - parallel
-const agents = todos.map(t =>
-  Task(`Fix ${t.id}`, { run_in_background: true })
-);
+const agents = todos.map((t) => Task(`Fix ${t.id}`, { run_in_background: true }));
 
 // Collect all results
-const results = await Promise.all(
-  agents.map(a => TaskOutput(a.id, { block: true }))
-);
+const results = await Promise.all(agents.map((a) => TaskOutput(a.id, { block: true })));
 
 // Verify
 await Bash({ command: 'npm run typecheck' });

@@ -13,9 +13,7 @@ export default function TenantPagesError({
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
       <AlertCircle className="h-12 w-12 text-red-500" />
-      <h2 className="mt-4 text-xl font-semibold text-text-primary">
-        Unable to Load Page Settings
-      </h2>
+      <h2 className="mt-4 text-xl font-semibold text-text-primary">Unable to Load Page Settings</h2>
       <p className="mt-2 text-text-muted">{error.message}</p>
       <Button onClick={reset} variant="sage" className="mt-6">
         Try Again

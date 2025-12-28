@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "362"
+issue_id: '362'
 tags: [code-review, typescript, type-safety]
 dependencies: []
 ---
@@ -23,11 +23,12 @@ const placeholderContract = {
   getHealth: {
     method: 'GET' as const,
     path: '/health',
-    responses: { 200: null as unknown },  // ❌ null as unknown
+    responses: { 200: null as unknown }, // ❌ null as unknown
   },
 };
 
-return initClient(placeholderContract as never, {  // ❌ 'as never' bypasses types
+return initClient(placeholderContract as never, {
+  // ❌ 'as never' bypasses types
   // ...
 });
 ```
@@ -37,6 +38,7 @@ return initClient(placeholderContract as never, {  // ❌ 'as never' bypasses ty
 ## Proposed Solutions
 
 ### Option 1: Import Actual Contracts (Required)
+
 - **Description:** Import and use contracts from `@macon/contracts`
 - **Pros:** Full type safety, catches API mismatches at compile time
 - **Cons:** May need to ensure contracts are exported correctly
@@ -44,6 +46,7 @@ return initClient(placeholderContract as never, {  // ❌ 'as never' bypasses ty
 - **Risk:** Low
 
 **Fix:**
+
 ```typescript
 import { contract } from '@macon/contracts';
 
@@ -60,10 +63,12 @@ export async function createServerApiClient() {
 ## Technical Details
 
 **Files to Modify:**
+
 - `apps/web/src/lib/api.ts` - Replace placeholder with real contracts
 - May need to verify `@macon/contracts` exports
 
 **Verification:**
+
 ```bash
 npm run typecheck --workspace=@macon/web-next
 # Should catch any API call type mismatches
@@ -78,8 +83,8 @@ npm run typecheck --workspace=@macon/web-next
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                          |
+| ---------- | -------------------------- | ---------------------------------- |
 | 2025-12-25 | Created during code review | Type safety bypassed in API client |
 
 ## Resources

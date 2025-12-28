@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p1
-issue_id: "394"
+issue_id: '394'
 tags:
   - security
   - tenant-isolation
@@ -20,6 +20,7 @@ Multiple repository update and delete methods are missing `tenantId` in their WH
 **Found by:** Security Sentinel + Tenant Isolation Guardian agents
 
 ### 1. Booking Repository - `update()` Method (CRITICAL)
+
 **Location:** `server/src/adapters/prisma/booking.repository.ts:847-866`
 
 ```typescript
@@ -38,6 +39,7 @@ if (updated.tenantId !== tenantId) {
 **Risk:** Attacker could modify bookings from other tenants by guessing booking IDs.
 
 ### 2. Catalog Repository - `updateAddOn()` Method
+
 **Location:** `server/src/adapters/prisma/catalog.repository.ts:351-372`
 
 ```typescript
@@ -48,27 +50,35 @@ const addOn = await this.prisma.addOn.update({
 ```
 
 ### 3. Catalog Repository - `deleteAddOn()` Method
+
 **Location:** `server/src/adapters/prisma/catalog.repository.ts:388-390`
 
 ### 4. Segment Repository - `update()` and `delete()` Methods
+
 **Location:** `server/src/adapters/prisma/segment.repository.ts:161-163, 185-187`
 
 ### 5. Booking Repository - `reschedule()` Nested Update
+
 **Location:** `server/src/adapters/prisma/booking.repository.ts:929-930`
 
 ## Proposed Solutions
 
 ### Option 1: Add tenantId to WHERE clauses (Recommended)
+
 - Add `tenantId` to all mutation WHERE clauses
 - Use compound WHERE: `where: { id, tenantId }`
 - Removes TOCTOU race condition vulnerability
 
 ```typescript
 // BEFORE
-where: { id: bookingId }
+where: {
+  id: bookingId;
+}
 
 // AFTER
-where: { id: bookingId, tenantId }
+where: {
+  id: (bookingId, tenantId);
+}
 ```
 
 **Pros:** Defense-in-depth, eliminates race conditions
@@ -77,6 +87,7 @@ where: { id: bookingId, tenantId }
 **Risk:** Low
 
 ### Option 2: Add database-level RLS
+
 - Enable PostgreSQL Row-Level Security
 - Add policies to enforce tenant isolation at DB layer
 
@@ -92,6 +103,7 @@ Option 1 - Add tenantId to all mutation WHERE clauses immediately.
 ## Technical Details
 
 **Files to modify:**
+
 - `server/src/adapters/prisma/booking.repository.ts` - Lines 847, 929
 - `server/src/adapters/prisma/catalog.repository.ts` - Lines 351, 388
 - `server/src/adapters/prisma/segment.repository.ts` - Lines 161, 185
@@ -106,10 +118,10 @@ Option 1 - Add tenantId to all mutation WHERE clauses immediately.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2025-12-25 | Created from multi-agent security review | Critical TOCTOU vulnerability pattern |
-| 2025-12-25 | **Approved for work** - Status: ready | P1 security issue - prioritize immediately |
+| Date       | Action                                   | Learnings                                  |
+| ---------- | ---------------------------------------- | ------------------------------------------ |
+| 2025-12-25 | Created from multi-agent security review | Critical TOCTOU vulnerability pattern      |
+| 2025-12-25 | **Approved for work** - Status: ready    | P1 security issue - prioritize immediately |
 
 ## Resources
 

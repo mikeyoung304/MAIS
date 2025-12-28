@@ -298,7 +298,7 @@ export function AgentChat({
         ...prev,
         {
           role: 'assistant',
-          content: 'No problem, I won\'t make that change. What else can I help with?',
+          content: "No problem, I won't make that change. What else can I help with?",
           timestamp: new Date(),
         },
       ]);
@@ -329,9 +329,18 @@ export function AgentChat({
         </div>
         {/* Typing indicator dots */}
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-sage/60 animate-pulse" style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 rounded-full bg-sage/60 animate-pulse" style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 rounded-full bg-sage/60 animate-pulse" style={{ animationDelay: '300ms' }} />
+          <div
+            className="w-2 h-2 rounded-full bg-sage/60 animate-pulse"
+            style={{ animationDelay: '0ms' }}
+          />
+          <div
+            className="w-2 h-2 rounded-full bg-sage/60 animate-pulse"
+            style={{ animationDelay: '150ms' }}
+          />
+          <div
+            className="w-2 h-2 rounded-full bg-sage/60 animate-pulse"
+            style={{ animationDelay: '300ms' }}
+          />
         </div>
         <p className="text-text-muted mt-4 text-sm">Loading your assistant...</p>
       </div>
@@ -366,11 +375,7 @@ export function AgentChat({
         </div>
         <div>
           <h3 className="font-serif font-semibold text-text-primary">AI Assistant</h3>
-          {context && (
-            <p className="text-sm text-text-muted">
-              {context.businessName}
-            </p>
-          )}
+          {context && <p className="text-sm text-text-muted">{context.businessName}</p>}
         </div>
       </div>
 
@@ -393,9 +398,18 @@ export function AgentChat({
             </div>
             <div className="bg-white border border-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-sage/50 animate-pulse" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 rounded-full bg-sage/50 animate-pulse" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 rounded-full bg-sage/50 animate-pulse" style={{ animationDelay: '300ms' }} />
+                <div
+                  className="w-2 h-2 rounded-full bg-sage/50 animate-pulse"
+                  style={{ animationDelay: '0ms' }}
+                />
+                <div
+                  className="w-2 h-2 rounded-full bg-sage/50 animate-pulse"
+                  style={{ animationDelay: '150ms' }}
+                />
+                <div
+                  className="w-2 h-2 rounded-full bg-sage/50 animate-pulse"
+                  style={{ animationDelay: '300ms' }}
+                />
               </div>
             </div>
           </div>
@@ -415,8 +429,8 @@ export function AgentChat({
       {pendingProposals.length > 0 && (
         <div className="px-6 py-3 bg-amber-50/80 border-t border-amber-100">
           <p className="text-sm text-amber-800">
-            {pendingProposals.length} action{pendingProposals.length > 1 ? 's' : ''} awaiting
-            your confirmation
+            {pendingProposals.length} action{pendingProposals.length > 1 ? 's' : ''} awaiting your
+            confirmation
           </p>
         </div>
       )}
@@ -580,21 +594,11 @@ function ProposalCard({
 
       {/* Confirmation buttons - follow HANDLED button patterns */}
       <div className="flex gap-2">
-        <Button
-          onClick={onConfirm}
-          variant="sage"
-          size="sm"
-          className="rounded-full px-4"
-        >
+        <Button onClick={onConfirm} variant="sage" size="sm" className="rounded-full px-4">
           <CheckCircle className="w-4 h-4 mr-1.5" />
           Confirm
         </Button>
-        <Button
-          onClick={onReject}
-          variant="outline"
-          size="sm"
-          className="rounded-full px-4"
-        >
+        <Button onClick={onReject} variant="outline" size="sm" className="rounded-full px-4">
           Cancel
         </Button>
       </div>

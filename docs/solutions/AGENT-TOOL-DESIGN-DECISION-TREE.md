@@ -185,14 +185,14 @@ Trust Tier T3 (Hard Confirm - must say "yes")
 
 **Decision Matrix:**
 
-| Operation | Reversible? | Irreversible | Silent Fail Risk | Trust Tier |
-|-----------|-------------|--------------|-----------------|-----------|
-| Set blackout dates | Yes | - | Low | T1 |
-| Update package price | Yes | - | Medium | T2 |
-| Cancel booking | No | Financial | High | T3 |
-| Update branding | Yes | - | Low | T1 |
-| Delete package | No* | Only if no bookings | Medium | T2/T3 |
-| Refund customer | No | Financial | Critical | T3 |
+| Operation            | Reversible? | Irreversible        | Silent Fail Risk | Trust Tier |
+| -------------------- | ----------- | ------------------- | ---------------- | ---------- |
+| Set blackout dates   | Yes         | -                   | Low              | T1         |
+| Update package price | Yes         | -                   | Medium           | T2         |
+| Cancel booking       | No          | Financial           | High             | T3         |
+| Update branding      | Yes         | -                   | Low              | T1         |
+| Delete package       | No\*        | Only if no bookings | Medium           | T2/T3      |
+| Refund customer      | No          | Financial           | Critical         | T3         |
 
 **Go/No-Go:** Assign trust tier. If T3, ensure proposal mechanism is implemented.
 
@@ -356,15 +356,17 @@ DOCS: plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md - "Custom Advisor Tools"
 
 Once you've decided to build a tool, use this template:
 
-```markdown
+````markdown
 # Tool: [name]
 
 ## Basic Info
+
 - **Trust Tier:** T1/T2/T3
 - **Purpose:** [1 sentence what it does]
 - **Reverse:** What's the undo/cancel operation?
 
 ## Input Schema
+
 ```typescript
 interface [ToolName]Input {
   // Required fields
@@ -375,8 +377,10 @@ interface [ToolName]Input {
   optionalField?: string[];
 }
 ```
+````
 
 ## Output Schema
+
 ```typescript
 interface [ToolName]Output {
   // On success
@@ -394,29 +398,34 @@ interface [ToolName]Output {
 ```
 
 ## Security Checks
+
 - [ ] Validates `context.tenantId`
 - [ ] Owns resource before update/delete
 - [ ] No sensitive data in output
 - [ ] Audit logged
 
 ## Error Cases
-| Error | User Message | Suggestion |
-|-------|-------------|-----------|
-| DUPLICATE_NAME | "Already exists" | "Use different name or update existing" |
-| NOT_FOUND | "Couldn't find that" | "Check if it still exists" |
+
+| Error          | User Message         | Suggestion                              |
+| -------------- | -------------------- | --------------------------------------- |
+| DUPLICATE_NAME | "Already exists"     | "Use different name or update existing" |
+| NOT_FOUND      | "Couldn't find that" | "Check if it still exists"              |
 
 ## API Endpoint(s)
+
 - POST /v1/[resource] (create)
 - PUT /v1/[resource]/:id (update)
 - GET /v1/[resource] (read)
 
 ## Tests Required
+
 - [ ] Unit: happy path
 - [ ] Unit: error cases
 - [ ] Integration: with other tools
 - [ ] E2E: full user flow
 - [ ] Security: cross-tenant attempt blocked
-```
+
+````
 
 ---
 
@@ -487,13 +496,14 @@ Use this to document decisions for future reference:
 - [ ] Security reviewed
 - [ ] Architecture approved
 - [ ] Implementation feasible
-```
+````
 
 ---
 
 ## Tips & Tricks
 
 ### Avoid Tool Creep
+
 ```
 Instead of: create_package, update_package_name, update_package_price
 Use: upsert_package with partial updates
@@ -505,6 +515,7 @@ Saves: 2 tools
 ```
 
 ### Make Decisions Visible
+
 ```
 Document every tool with:
 - Why it's T1/T2/T3
@@ -514,6 +525,7 @@ Document every tool with:
 ```
 
 ### Test Before Building
+
 ```
 Before starting implementation:
 1. Write test cases
@@ -524,6 +536,7 @@ Before starting implementation:
 ```
 
 ### Keep Tools Primitive
+
 ```
 ❌ Tool that tries to be smart:
   "based on interview, create optimal packages"

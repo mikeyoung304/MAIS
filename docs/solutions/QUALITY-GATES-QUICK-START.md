@@ -9,10 +9,12 @@
 **Problem:** Multiple files with same patterns (e.g., `.eslintrc.cjs` AND `.eslintignore`)
 
 **Solution:** One file = Truth
+
 - ESLint: Use **`.eslintignore`** only (delete ignorePatterns from .eslintrc.cjs)
 - Pattern: Copy `.gitignore` style (separate file, not embedded config)
 
 **What to do:**
+
 ```bash
 # Check for duplication
 ./scripts/validate-config-duplication.sh
@@ -31,11 +33,13 @@ grep -l "ignorePatterns" *.js    # Find duplicates
 **Problem:** `sed tenantId _tenantId` changed parameter name but code still used old name
 
 **Solution:** Always verify ALL usages updated
+
 - Enable ESLint `no-undef: error`
 - Enable TypeScript `noUnusedLocals`
 - Test affected code after replacement
 
 **What to do:**
+
 ```bash
 # After running sed/find-replace
 npm run typecheck        # Catches type mismatches
@@ -55,12 +59,14 @@ git commit  # Hook runs npm lint -- --rule "no-undef:error"
 **Problem:** New lint errors merged without detection (continue-on-error: true)
 
 **Solution:** Track baseline, fail if exceeded
+
 ```bash
 # Current baseline: 305 errors (as of 2025-12-26)
 npm run lint 2>&1 | grep -c " error "  # Should output ≤ 305
 ```
 
 **What to do:**
+
 ```bash
 # Local development
 npm run lint              # Check error count
@@ -85,6 +91,7 @@ npm run lint 2>&1 | grep -o "[0-9]* error"  # Get new count
 **Problem:** Coverage disabled in CI, allowing regression
 
 **Solution:** Always-on coverage thresholds (per-suite targets)
+
 ```typescript
 // server/vitest.config.ts
 thresholds: {
@@ -96,6 +103,7 @@ thresholds: {
 ```
 
 **What to do:**
+
 ```bash
 # Run tests locally
 npm run test:unit -- --coverage
@@ -165,6 +173,7 @@ git push
 ## When CI Fails
 
 ### Lint Regression Failed
+
 ```bash
 # You added new lint errors
 npm run lint 2>&1               # See which ones
@@ -175,6 +184,7 @@ git push
 ```
 
 ### Coverage Threshold Failed
+
 ```bash
 # Your code doesn't have enough test coverage
 npm run test:unit -- --coverage  # See which lines uncovered
@@ -184,6 +194,7 @@ npm test -- path/to/your.test.ts
 ```
 
 ### Config Duplication Failed
+
 ```bash
 # You have same pattern in multiple config files
 ./scripts/validate-config-duplication.sh  # See which ones
@@ -192,6 +203,7 @@ git add -A && git commit -m "fix: remove duplicate config pattern"
 ```
 
 ### Undefined Variable Failed
+
 ```bash
 # You have undefined variables (from sed/find-replace)
 npm run lint -- --rule "no-undef:error"  # See which ones
@@ -206,6 +218,7 @@ git add -A && git commit -m "fix: resolve undefined variable references"
 When metrics improve, update baselines:
 
 ### Lint Errors Baseline
+
 ```bash
 npm run lint 2>&1 | grep -o "[0-9]* error"  # e.g., "305 error"
 
@@ -218,6 +231,7 @@ git commit -m "chore: update lint baseline to 250 errors"
 ```
 
 ### Coverage Baseline
+
 ```bash
 npm run test:unit -- --coverage | grep "Lines\|Branches"
 # e.g., "Lines: 35.5%" (was 30%)
@@ -234,6 +248,7 @@ git commit -m "chore: update coverage baseline to 35% lines"
 ## CI Status Checks
 
 PR checks in order:
+
 1. ✅ Documentation Standards
 2. ✅ Multi-Tenant Patterns
 3. ✅ Lint & Format (no regression)

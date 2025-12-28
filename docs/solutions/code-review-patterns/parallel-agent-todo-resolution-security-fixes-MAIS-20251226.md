@@ -28,8 +28,8 @@ related_issues:
   - 445
   - 450
 github_commits:
-  - 0d3cba5: "feat(agent): add action parity tools for MAIS agent"
-  - 90413e3: "chore: remove resolved agent security and data integrity TODOs"
+  - 0d3cba5: 'feat(agent): add action parity tools for MAIS agent'
+  - 90413e3: 'chore: remove resolved agent security and data integrity TODOs'
 ---
 
 # Parallel Resolution of 10 Agent Security and Data Integrity TODOs
@@ -39,6 +39,7 @@ github_commits:
 After implementing action parity tools for the MAIS agent system (commit `0d3cba5`), code review agents identified 10 security and data integrity issues across the new agent tools. These issues ranged from P1 critical (race conditions, trust tier gaps) to P3 enhancements (unicode normalization).
 
 **Why it matters:**
+
 - Race conditions in booking creation could cause double-bookings
 - Incorrect trust tiers could allow destructive operations without proper confirmation
 - Prompt injection gaps could enable malicious context manipulation
@@ -57,28 +58,28 @@ Used the `/resolve_todo_parallel` workflow to verify and close all 10 issues in 
 
 ### P1 Critical (5 Issues)
 
-| Issue | Problem | Solution | Location |
-|-------|---------|----------|----------|
-| #433 | `create_booking` race condition | Advisory lock in transaction | `executors/index.ts:479` |
-| #434 | `update_booking` missing availability check | Lock + availability check | `executors/index.ts:724` |
-| #435 | `update_booking` status trust tier too low | CANCELED escalates to T3 | `write-tools.ts` |
-| #436 | `update_deposit_settings` trust tier too low | Changed from T2 to T3 | `write-tools.ts` |
-| #437 | `delete_addon` missing booking check | Check bookings, dynamic T2/T3 | `write-tools.ts` |
+| Issue | Problem                                      | Solution                      | Location                 |
+| ----- | -------------------------------------------- | ----------------------------- | ------------------------ |
+| #433  | `create_booking` race condition              | Advisory lock in transaction  | `executors/index.ts:479` |
+| #434  | `update_booking` missing availability check  | Lock + availability check     | `executors/index.ts:724` |
+| #435  | `update_booking` status trust tier too low   | CANCELED escalates to T3      | `write-tools.ts`         |
+| #436  | `update_deposit_settings` trust tier too low | Changed from T2 to T3         | `write-tools.ts`         |
+| #437  | `delete_addon` missing booking check         | Check bookings, dynamic T2/T3 | `write-tools.ts`         |
 
 ### P2 Important (4 Issues)
 
-| Issue | Problem | Solution | Location |
-|-------|---------|----------|----------|
-| #440 | Customer field mapping inconsistency | Verified consistency | `read-tools.ts` |
-| #442 | Generic error messages | Added specific error codes | `write-tools.ts` |
-| #444 | Prompt injection patterns incomplete | Extended to 50+ regexes | `types.ts:106-154` |
-| #445 | `upsert_package` price tier too low | Escalate if >20% or >$100 | `write-tools.ts:70` |
+| Issue | Problem                              | Solution                   | Location            |
+| ----- | ------------------------------------ | -------------------------- | ------------------- |
+| #440  | Customer field mapping inconsistency | Verified consistency       | `read-tools.ts`     |
+| #442  | Generic error messages               | Added specific error codes | `write-tools.ts`    |
+| #444  | Prompt injection patterns incomplete | Extended to 50+ regexes    | `types.ts:106-154`  |
+| #445  | `upsert_package` price tier too low  | Escalate if >20% or >$100  | `write-tools.ts:70` |
 
 ### P3 Enhancement (1 Issue)
 
-| Issue | Problem | Solution | Location |
-|-------|---------|----------|----------|
-| #450 | Missing unicode normalization | Added NFKC to sanitizeForContext | `types.ts:177` |
+| Issue | Problem                       | Solution                         | Location       |
+| ----- | ----------------------------- | -------------------------------- | -------------- |
+| #450  | Missing unicode normalization | Added NFKC to sanitizeForContext | `types.ts:177` |
 
 ## Key Code Patterns
 
@@ -106,9 +107,9 @@ await prisma.$transaction(async (tx) => {
 
 ```typescript
 // server/src/agent/tools/write-tools.ts
-const isCancellation = status?.toUpperCase() === 'CANCELED' ||
-                       status?.toUpperCase() === 'CANCELLED';
-const trustTier = (hasDateChange || isCancellation) ? 'T3' : 'T2';
+const isCancellation =
+  status?.toUpperCase() === 'CANCELED' || status?.toUpperCase() === 'CANCELLED';
+const trustTier = hasDateChange || isCancellation ? 'T3' : 'T2';
 ```
 
 ### Price Change Significance Check
@@ -147,10 +148,10 @@ export function sanitizeForContext(text: string, maxLength = 100): string {
 
 ### 2. Trust Tier Assignment
 
-| Tier | Operations | Examples |
-|------|-----------|----------|
-| T1 (Auto) | Reads, toggles, low-impact | Visibility settings, file uploads |
-| T2 (Soft) | Updates, creates without financial impact | Package updates, landing pages |
+| Tier      | Operations                                                     | Examples                                                      |
+| --------- | -------------------------------------------------------------- | ------------------------------------------------------------- |
+| T1 (Auto) | Reads, toggles, low-impact                                     | Visibility settings, file uploads                             |
+| T2 (Soft) | Updates, creates without financial impact                      | Package updates, landing pages                                |
 | T3 (Hard) | Cancellations, refunds, deletions with data, financial changes | Cancel booking, delete addon with bookings, >20% price change |
 
 **Dynamic escalation rule:** Check operation parameters to determine tier at runtime.
@@ -172,14 +173,14 @@ export function sanitizeForContext(text: string, maxLength = 100): string {
 
 ## Workflow Metrics
 
-| Metric | Value |
-|--------|-------|
-| TODOs analyzed | 10 |
-| Dependencies found | 0 (all independent) |
-| Parallel agents spawned | 10 |
-| Issues already fixed | 10 (100%) |
-| Lines deleted (TODO files) | 903 |
-| Time to verify all | ~5 minutes |
+| Metric                     | Value               |
+| -------------------------- | ------------------- |
+| TODOs analyzed             | 10                  |
+| Dependencies found         | 0 (all independent) |
+| Parallel agents spawned    | 10                  |
+| Issues already fixed       | 10 (100%)           |
+| Lines deleted (TODO files) | 903                 |
+| Time to verify all         | ~5 minutes          |
 
 ## Related Documentation
 
@@ -205,6 +206,7 @@ export function sanitizeForContext(text: string, maxLength = 100): string {
 **By:** Claude Code Agent
 
 **Actions:**
+
 1. Analyzed 10 TODO files in `/todos/*.md` directory
 2. Created dependency graph (mermaid) showing all independent
 3. Spawned 10 background agents via Task tool
@@ -214,6 +216,7 @@ export function sanitizeForContext(text: string, maxLength = 100): string {
 7. Pushed to remote
 
 **Learnings:**
+
 - Verification-first approach prevented redundant implementation work
 - All 10 issues were already fixed during original action parity implementation
 - Parallel agent spawning reduced verification time from ~30min to ~5min

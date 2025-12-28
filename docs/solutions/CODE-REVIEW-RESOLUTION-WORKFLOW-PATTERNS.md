@@ -43,13 +43,13 @@ The code review resolution workflow is a multi-phase system designed to:
 
 **Key Metrics:**
 
-| Metric | Value | Benefit |
-| --- | --- | --- |
-| Agents deployed in parallel | 6-8 | Deep expertise across dimensions |
-| Findings per review | 20-25 | Comprehensive coverage |
-| Time to audit codebase | 2-4 hours | Fast vs. manual review (days) |
-| P1/P2 ratio | 40%/50% | Balanced between critical and important |
-| Verification rate | 50-60% | Many todos are already implemented |
+| Metric                      | Value     | Benefit                                 |
+| --------------------------- | --------- | --------------------------------------- |
+| Agents deployed in parallel | 6-8       | Deep expertise across dimensions        |
+| Findings per review         | 20-25     | Comprehensive coverage                  |
+| Time to audit codebase      | 2-4 hours | Fast vs. manual review (days)           |
+| P1/P2 ratio                 | 40%/50%   | Balanced between critical and important |
+| Verification rate           | 50-60%    | Many todos are already implemented      |
 
 ---
 
@@ -61,16 +61,16 @@ Eight specialized agents are launched concurrently to analyze different dimensio
 
 #### Agent Types & Responsibilities
 
-| Agent | Focus | Key Findings | Pattern |
-| --- | --- | --- | --- |
-| **Security Sentinel** | Multi-tenant isolation, auth, input validation | Email case-sensitivity, impersonation token expiry, XSS prevention | Search for tenant scoping, check auth flows |
-| **Performance Oracle** | N+1 queries, caching, indexes, bundle size | Segment landing page double-queries, cache invalidation scope | Profile queries, check indexes |
-| **Architecture Strategist** | Layered architecture, DI, error handling | Multiple PrismaClient instances, legacy cache coexistence | Review DI container, check singleton patterns |
-| **Code Philosopher** | Dead code, duplication, complexity | Console.log violations, any types, duplicate mapping | Search for violations, check for duplication |
-| **Feature Completeness** | Incomplete features, missing UI states | Password reset UI missing, Stripe Connect UX | Check contracts vs. implementation |
-| **Dependency Detective** | Unused deps, bloat, security | 250MB+ bloat (puppeteer, prom-client) | Analyze package.json, check imports |
-| **Data Integrity Guardian** | Constraints, transactions, migrations | Customer email normalization, webhook race condition | Review schema, check transaction usage |
-| **DevOps Harmony** | Config, logging, health checks, CI/CD | Disabled DB verification, low Sentry sample rates | Check env setup, review logging |
+| Agent                       | Focus                                          | Key Findings                                                       | Pattern                                       |
+| --------------------------- | ---------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------- |
+| **Security Sentinel**       | Multi-tenant isolation, auth, input validation | Email case-sensitivity, impersonation token expiry, XSS prevention | Search for tenant scoping, check auth flows   |
+| **Performance Oracle**      | N+1 queries, caching, indexes, bundle size     | Segment landing page double-queries, cache invalidation scope      | Profile queries, check indexes                |
+| **Architecture Strategist** | Layered architecture, DI, error handling       | Multiple PrismaClient instances, legacy cache coexistence          | Review DI container, check singleton patterns |
+| **Code Philosopher**        | Dead code, duplication, complexity             | Console.log violations, any types, duplicate mapping               | Search for violations, check for duplication  |
+| **Feature Completeness**    | Incomplete features, missing UI states         | Password reset UI missing, Stripe Connect UX                       | Check contracts vs. implementation            |
+| **Dependency Detective**    | Unused deps, bloat, security                   | 250MB+ bloat (puppeteer, prom-client)                              | Analyze package.json, check imports           |
+| **Data Integrity Guardian** | Constraints, transactions, migrations          | Customer email normalization, webhook race condition               | Review schema, check transaction usage        |
+| **DevOps Harmony**          | Config, logging, health checks, CI/CD          | Disabled DB verification, low Sentry sample rates                  | Check env setup, review logging               |
 
 ### Phase 2: Parallel Analysis Execution
 
@@ -107,6 +107,7 @@ Findings are written to `todos/` directory using standard naming:
 **Convention:** `{id}-pending-{priority}-{description}.md`
 
 **Example:**
+
 ```
 todos/022-pending-p1-customer-email-not-normalized.md
 todos/026-pending-p1-segment-n1-query-pattern.md
@@ -119,11 +120,11 @@ todos/031-pending-p2-console-log-violations.md
 
 ### Priority Definitions
 
-| Priority | Definition | SLA | Examples |
-| --- | --- | --- | --- |
-| **P1 Critical** | Security vulnerabilities, data corruption risks, broken core functionality | Fix before next release | Email normalization (data corruption), webhook race condition (cross-tenant booking loss), password reset UI (users locked out) |
-| **P2 Important** | Performance issues, architectural violations, UX gaps, technical debt | Fix in current sprint | N+1 queries (2x DB load), cache invalidation scope (memory leak), missing ARIA labels (accessibility) |
-| **P3 Nice-to-Have** | Code quality improvements, minor optimizations, refactoring | Fix when resources available | Console.log cleanup (code quality), unused dependencies (bloat), metrics endpoint (observability) |
+| Priority            | Definition                                                                 | SLA                          | Examples                                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **P1 Critical**     | Security vulnerabilities, data corruption risks, broken core functionality | Fix before next release      | Email normalization (data corruption), webhook race condition (cross-tenant booking loss), password reset UI (users locked out) |
+| **P2 Important**    | Performance issues, architectural violations, UX gaps, technical debt      | Fix in current sprint        | N+1 queries (2x DB load), cache invalidation scope (memory leak), missing ARIA labels (accessibility)                           |
+| **P3 Nice-to-Have** | Code quality improvements, minor optimizations, refactoring                | Fix when resources available | Console.log cleanup (code quality), unused dependencies (bloat), metrics endpoint (observability)                               |
 
 ### Triage Decision Matrix
 
@@ -178,13 +179,13 @@ Triage order:
 ---
 status: pending | complete | deferred | blocked
 priority: p1 | p2 | p3
-issue_id: "XXX"
+issue_id: 'XXX'
 tags: [security, performance, architecture, etc.]
-dependencies: []  # List of todo IDs that must complete first
+dependencies: [] # List of todo IDs that must complete first
 date_created: 2025-12-XX
-date_solved: 2025-12-XX  # Only if complete
-effort_estimate: "hours"  # For pending/deferred
-deferred_reason: "text"  # Why it's deferred
+date_solved: 2025-12-XX # Only if complete
+effort_estimate: 'hours' # For pending/deferred
+deferred_reason: 'text' # Why it's deferred
 ---
 ```
 
@@ -194,21 +195,27 @@ deferred_reason: "text"  # Why it's deferred
 # Issue Title
 
 ## Problem Statement
+
 Clear description of the issue and why it matters
 
 ## Findings
+
 Detailed analysis with file paths, line numbers, code snippets
 
 ## Root Cause
+
 Why this issue exists
 
 ## Proposed Solutions
+
 Concrete implementation steps with code examples
 
 ## Acceptance Criteria
+
 - [ ] Testable criteria for completion
 
 ## References
+
 - Links to related issues, PRs, documentation
 ```
 
@@ -322,13 +329,13 @@ If already implemented:
 
 **Session Metrics (Real Example):**
 
-| Metric | Value | Lesson |
-| --- | --- | --- |
-| TODOs Reviewed | 6 | Screen all first |
-| Already Complete | 3 (50%) | Many are stale |
-| Actually Implemented | 3 | Real work needed |
-| Time Invested | 45 min | Efficient vs. sequential |
-| Agents Used | 6 parallel | N-way parallelism |
+| Metric               | Value      | Lesson                   |
+| -------------------- | ---------- | ------------------------ |
+| TODOs Reviewed       | 6          | Screen all first         |
+| Already Complete     | 3 (50%)    | Many are stale           |
+| Actually Implemented | 3          | Real work needed         |
+| Time Invested        | 45 min     | Efficient vs. sequential |
+| Agents Used          | 6 parallel | N-way parallelism        |
 
 ### Phase 5: Update Todo Status
 
@@ -340,21 +347,19 @@ Change frontmatter status from `pending` to appropriate state:
 status: pending
 priority: p2
 ---
-
 # After (verified - already implemented)
 ---
 status: complete
 priority: p2
 date_solved: 2025-12-23
-verification: "Confirmed at server/src/routes/file.ts:168"
+verification: 'Confirmed at server/src/routes/file.ts:168'
 ---
-
 # After (deferred - scheduled for later)
 ---
 status: deferred
 priority: p2
-effort_estimate: "4-6 hours"
-deferred_reason: "Requires new component + backend + tests"
+effort_estimate: '4-6 hours'
+deferred_reason: 'Requires new component + backend + tests'
 estimated_sprint: 2025-12-12
 ---
 ```
@@ -430,11 +435,11 @@ Is the code already implemented?
 
 ### Implementation Type Selection
 
-| Evaluation | Type | Time | When to Use |
-| --- | --- | --- | --- |
-| Code exists and works | **Verify** | 5-15 min | Routes exist at routes.ts:168 |
-| Small missing feature | **Quick Win** | 20-45 min | Add ErrorAlert component |
-| Large or complex | **Defer** | 1-2 hours planning | Edit Image component (4+ hours) |
+| Evaluation            | Type          | Time               | When to Use                     |
+| --------------------- | ------------- | ------------------ | ------------------------------- |
+| Code exists and works | **Verify**    | 5-15 min           | Routes exist at routes.ts:168   |
+| Small missing feature | **Quick Win** | 20-45 min          | Add ErrorAlert component        |
+| Large or complex      | **Defer**     | 1-2 hours planning | Edit Image component (4+ hours) |
 
 ### Quick Win vs. Defer Threshold
 
@@ -886,15 +891,15 @@ fi
 
 ### Typical Resolution Session
 
-| Activity | Time | Notes |
-| --- | --- | --- |
-| Review & categorize todos | 15 min | Parallel agents help |
-| Parallel verification agents | 30 min | Reduces work by 50% |
-| Implement quick wins | 45 min | 6-8 todos at 5-10 min each |
-| Testing + manual QA | 15 min | `npm test`, smoke test |
-| Batch commit + cleanup | 5 min | Single commit message |
-| Update todo files | 10 min | Mark complete/deferred |
-| **Total** | **120 min (2 hours)** | For 8-10 todos |
+| Activity                     | Time                  | Notes                      |
+| ---------------------------- | --------------------- | -------------------------- |
+| Review & categorize todos    | 15 min                | Parallel agents help       |
+| Parallel verification agents | 30 min                | Reduces work by 50%        |
+| Implement quick wins         | 45 min                | 6-8 todos at 5-10 min each |
+| Testing + manual QA          | 15 min                | `npm test`, smoke test     |
+| Batch commit + cleanup       | 5 min                 | Single commit message      |
+| Update todo files            | 10 min                | Mark complete/deferred     |
+| **Total**                    | **120 min (2 hours)** | For 8-10 todos             |
 
 ### Scaling to Larger Batches
 
@@ -960,10 +965,10 @@ The code review resolution workflow provides:
 
 ## Document History
 
-| Date | Author | Changes |
-| --- | --- | --- |
+| Date       | Author      | Changes                                                     |
+| ---------- | ----------- | ----------------------------------------------------------- |
 | 2025-12-24 | Claude Code | Created complete pattern guide from 3 methodology documents |
-| 2025-12-05 | Claude Code | Original methodology documents created |
+| 2025-12-05 | Claude Code | Original methodology documents created                      |
 
 ---
 

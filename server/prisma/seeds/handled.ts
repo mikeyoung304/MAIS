@@ -98,37 +98,44 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
                   {
                     type: 'features',
                     headline: 'We handle the tech. We keep you current. You stay focused.',
-                    subheadline: 'A membership that combines done-for-you tech with done-with-you education.',
+                    subheadline:
+                      'A membership that combines done-for-you tech with done-with-you education.',
                     features: [
                       {
                         icon: 'Globe',
                         title: 'Website That Works',
-                        description: 'We build it. We maintain it. You never touch it. Just show up and look professional.',
+                        description:
+                          'We build it. We maintain it. You never touch it. Just show up and look professional.',
                       },
                       {
                         icon: 'Calendar',
                         title: 'Booking & Payments',
-                        description: 'Clients book and pay online. You get a notification. No back-and-forth emails.',
+                        description:
+                          'Clients book and pay online. You get a notification. No back-and-forth emails.',
                       },
                       {
                         icon: 'Sparkles',
                         title: 'AI That Actually Helps',
-                        description: 'A chatbot trained on your business. Answers questions, handles scheduling, works while you sleep.',
+                        description:
+                          'A chatbot trained on your business. Answers questions, handles scheduling, works while you sleep.',
                       },
                       {
                         icon: 'Mail',
                         title: 'Monthly Newsletter',
-                        description: "What's worth knowing in AI and tech this month. Curated. No fluff. Actually useful.",
+                        description:
+                          "What's worth knowing in AI and tech this month. Curated. No fluff. Actually useful.",
                       },
                       {
                         icon: 'Users',
                         title: 'Monthly Zoom Calls',
-                        description: "Real talk with other pros about what's working. No pitch. Just 'here's what we're seeing.'",
+                        description:
+                          "Real talk with other pros about what's working. No pitch. Just 'here's what we're seeing.'",
                       },
                       {
                         icon: 'Phone',
                         title: 'Humans Who Answer',
-                        description: 'Questions? We answer them. No chatbots, no tickets. Just help from people who give a shit.',
+                        description:
+                          'Questions? We answer them. No chatbots, no tickets. Just help from people who give a shit.',
                       },
                     ],
                     columns: 3,
@@ -143,7 +150,12 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
                         price: '$49',
                         priceSubtext: '/month',
                         description: 'The essentials',
-                        features: ['Professional website', 'Online booking', 'Payment processing', 'Email notifications'],
+                        features: [
+                          'Professional website',
+                          'Online booking',
+                          'Payment processing',
+                          'Email notifications',
+                        ],
                         ctaText: 'Get Started',
                         ctaHref: '/signup?tier=handled',
                       },
@@ -191,7 +203,8 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
                       },
                       {
                         question: 'Do I need to know anything about tech?',
-                        answer: "Nope. That's the point. We handle the tech so you don't have to become a tech person.",
+                        answer:
+                          "Nope. That's the point. We handle the tech so you don't have to become a tech person.",
                       },
                       {
                         question: 'What if I already have a website?',
@@ -206,18 +219,20 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
                       {
                         question: 'Is the AI chatbot going to sound like a robot?',
                         answer:
-                          "No. We train it on your voice, your services, your style. It sounds like a helpful version of you — not a generic bot.",
+                          'No. We train it on your voice, your services, your style. It sounds like a helpful version of you — not a generic bot.',
                       },
                       {
                         question: 'Can I cancel anytime?',
-                        answer: 'Yes. No contracts, no cancellation fees, no guilt trips. We earn your business every month.',
+                        answer:
+                          'Yes. No contracts, no cancellation fees, no guilt trips. We earn your business every month.',
                       },
                     ],
                   },
                   {
                     type: 'cta',
                     headline: 'Ready to stop being your own IT department?',
-                    subheadline: "Join service pros who'd rather focus on being great at their job.",
+                    subheadline:
+                      "Join service pros who'd rather focus on being great at their job.",
                     ctaText: 'Get Handled',
                   },
                 ],
@@ -264,7 +279,8 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
                       },
                       {
                         question: 'Can I cancel anytime?',
-                        answer: 'Yes. No contracts, no cancellation fees, no guilt trips. We earn your business every month.',
+                        answer:
+                          'Yes. No contracts, no cancellation fees, no guilt trips. We earn your business every month.',
                       },
                       {
                         question: 'What happens on the monthly Zoom calls?',
@@ -272,9 +288,9 @@ export async function seedHandled(prisma: PrismaClient): Promise<void> {
                           "We share what's new in AI and tech that's actually worth knowing. Members share what's working for them. No sales pitch. Just useful conversation.",
                       },
                       {
-                        question: "How is Handled different from Squarespace or Wix?",
+                        question: 'How is Handled different from Squarespace or Wix?',
                         answer:
-                          "Those are tools you use. Handled is a team that uses tools for you. We handle setup, maintenance, and optimization—you just focus on your business.",
+                          'Those are tools you use. Handled is a team that uses tools for you. We handle setup, maintenance, and optimization—you just focus on your business.',
                       },
                       {
                         question: 'What industries do you work with?',

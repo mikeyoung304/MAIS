@@ -31,7 +31,7 @@ import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
 import { WebhooksController } from './routes/webhooks.routes';
-import type { WebhookQueue} from './jobs/webhook-queue';
+import type { WebhookQueue } from './jobs/webhook-queue';
 import { createWebhookQueue } from './jobs/webhook-queue';
 import { AdminController } from './routes/admin.routes';
 import { BlackoutsController } from './routes/blackouts.routes';
@@ -653,7 +653,13 @@ export function buildContainer(config: Config): Container {
     packages: new PackagesController(catalogService),
     availability: new AvailabilityController(availabilityService),
     bookings: new BookingsController(bookingService),
-    webhooks: new WebhooksController(paymentProvider, bookingService, webhookRepo, webhookQueue, tenantRepo),
+    webhooks: new WebhooksController(
+      paymentProvider,
+      bookingService,
+      webhookRepo,
+      webhookQueue,
+      tenantRepo
+    ),
     admin: new AdminController(identityService, bookingService),
     blackouts: new BlackoutsController(blackoutRepo),
     adminPackages: new AdminPackagesController(catalogService),

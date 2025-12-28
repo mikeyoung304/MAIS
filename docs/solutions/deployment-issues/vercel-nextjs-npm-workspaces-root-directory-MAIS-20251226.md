@@ -1,32 +1,35 @@
 # Vercel Deployment Failure: Next.js in npm Workspaces Monorepo
 
 ---
+
 title: "Vercel Deployment Failure: Next.js App in npm Workspaces Monorepo - Root Directory Configuration"
 category: deployment-issues
 severity: P1
 symptoms:
-  - "Cannot find module 'tailwindcss'" during Vercel build
-  - Build fails with missing PostCSS/Tailwind dependencies
-  - ESLint errors block production build (unused variables, unescaped entities)
-  - Build succeeds locally but fails on Vercel
-  - Internal workspace packages (@macon/contracts, @macon/shared) fail to resolve
-components:
-  - apps/web (Next.js 14 App Router)
-  - packages/contracts
-  - packages/shared
-  - vercel.json
-  - package.json (root + workspace)
-tags:
-  - vercel
-  - nextjs
-  - npm-workspaces
-  - monorepo
-  - tailwindcss
-  - eslint
-  - deployment
-  - root-directory-configuration
-date_documented: 2025-12-26
-time_to_resolve: "1-2 hours"
+
+- "Cannot find module 'tailwindcss'" during Vercel build
+- Build fails with missing PostCSS/Tailwind dependencies
+- ESLint errors block production build (unused variables, unescaped entities)
+- Build succeeds locally but fails on Vercel
+- Internal workspace packages (@macon/contracts, @macon/shared) fail to resolve
+  components:
+- apps/web (Next.js 14 App Router)
+- packages/contracts
+- packages/shared
+- vercel.json
+- package.json (root + workspace)
+  tags:
+- vercel
+- nextjs
+- npm-workspaces
+- monorepo
+- tailwindcss
+- eslint
+- deployment
+- root-directory-configuration
+  date_documented: 2025-12-26
+  time_to_resolve: "1-2 hours"
+
 ---
 
 ## Problem Summary
@@ -95,6 +98,7 @@ Create or update `vercel.json` at the **repository root** (not in apps/web):
 ```
 
 This ensures:
+
 - Workspace dependencies build first (contracts, shared)
 - Next.js build runs last with all deps available
 - npm workspaces hoisting remains intact
@@ -104,9 +108,10 @@ This ensures:
 After fixing the module resolution, ESLint errors may be revealed. Common fixes:
 
 #### Unused Variables
+
 ```typescript
 // Before (error)
-const router = useRouter();  // Never used
+const router = useRouter(); // Never used
 
 // After (fix option 1: remove)
 // Remove the line entirely
@@ -116,6 +121,7 @@ const _router = useRouter();
 ```
 
 #### Unescaped Entities in JSX
+
 ```tsx
 // Before (error)
 <p>The package you're looking for doesn't exist.</p>
@@ -129,11 +135,12 @@ const _router = useRouter();
 ```
 
 #### Case Block Declarations
+
 ```typescript
 // Before (error)
 switch (e.key) {
   case 'ArrowDown':
-    const nextIndex = (index + 1) % items.length;  // Lexical declaration
+    const nextIndex = (index + 1) % items.length; // Lexical declaration
     break;
 }
 
@@ -169,12 +176,12 @@ switch (e.key) {
 
 ## Quick Reference: ESLint Entity Escaping
 
-| Character | Wrong | Correct |
-|-----------|-------|---------|
-| `'` (apostrophe) | `don't` | `don&apos;t` or `{"don't"}` |
-| `"` (quote) | `"hello"` | `&quot;hello&quot;` or `{'"hello"'}` |
-| `<` (less than) | `<` | `&lt;` |
-| `>` (greater than) | `>` | `&gt;` |
+| Character          | Wrong     | Correct                              |
+| ------------------ | --------- | ------------------------------------ |
+| `'` (apostrophe)   | `don't`   | `don&apos;t` or `{"don't"}`          |
+| `"` (quote)        | `"hello"` | `&quot;hello&quot;` or `{'"hello"'}` |
+| `<` (less than)    | `<`       | `&lt;`                               |
+| `>` (greater than) | `>`       | `&gt;`                               |
 
 ## Verification
 

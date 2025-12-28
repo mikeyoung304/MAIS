@@ -19,6 +19,7 @@ Before writing integration tests:
 As you write tests:
 
 **Imports:**
+
 ```typescript
 // ✅ DO use these
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
@@ -30,6 +31,7 @@ import { PrismaClient } from '../../src/generated/prisma';
 ```
 
 **Setup:**
+
 ```typescript
 describe('My Service', () => {
   // ✅ Required
@@ -50,6 +52,7 @@ describe('My Service', () => {
 ```
 
 **Data Creation:**
+
 ```typescript
 // ✅ Use factories (generate unique IDs)
 const factory = new PackageFactory();
@@ -60,6 +63,7 @@ const pkg = { slug: 'test-package', title: 'Test' };
 ```
 
 **Queries:**
+
 ```typescript
 // ✅ Filter by tenantId
 const packages = await prisma.package.findMany({
@@ -79,17 +83,20 @@ const packages = await prisma.package.findMany({
 When reviewing PR with tests:
 
 **Connection Pool:**
+
 - [ ] No `new PrismaClient()` in test files
 - [ ] Uses `getTestPrisma()` or `setupIntegrationTest()`
 - [ ] Vitest config has `singleThread: true` + `fileParallelism: false`
 
 **Test Isolation:**
+
 - [ ] `afterEach()` has `await cleanup()`
 - [ ] Multi-tenant setup uses file-specific slug
 - [ ] Factory generates unique IDs (not hardcoded slugs)
 - [ ] All DB queries filter by `tenantId`
 
 **Configuration:**
+
 - [ ] DATABASE_URL has `connection_limit=3`
 - [ ] DATABASE_URL has `pool_timeout=5`
 - [ ] No hardcoded database URLs in tests
@@ -118,14 +125,14 @@ find server/src -name "*.test.ts" -o -name "*.spec.ts" | wc -l
 
 ## Common Mistakes
 
-| Mistake | Problem | Fix |
-|---------|---------|-----|
-| `new PrismaClient()` | Exhausts pool | Use `getTestPrisma()` |
-| No `afterEach` cleanup | Leaks connections | Add `await cleanup()` |
-| Generic slug `'test'` | Conflicts when parallel | Use `'booking-service'` |
-| Hardcoded IDs | Duplicate key errors | Use factories |
-| Missing `tenantId` filter | Test data pollution | Add `where: { tenantId }` |
-| `connection_limit=10` | Still exhausts | Lower to `connection_limit=3` |
+| Mistake                   | Problem                 | Fix                           |
+| ------------------------- | ----------------------- | ----------------------------- |
+| `new PrismaClient()`      | Exhausts pool           | Use `getTestPrisma()`         |
+| No `afterEach` cleanup    | Leaks connections       | Add `await cleanup()`         |
+| Generic slug `'test'`     | Conflicts when parallel | Use `'booking-service'`       |
+| Hardcoded IDs             | Duplicate key errors    | Use factories                 |
+| Missing `tenantId` filter | Test data pollution     | Add `where: { tenantId }`     |
+| `connection_limit=10`     | Still exhausts          | Lower to `connection_limit=3` |
 
 ---
 
@@ -218,13 +225,13 @@ After implementing prevention:
 
 ## File References
 
-| File | Purpose |
-|------|---------|
-| `/server/test/helpers/global-prisma.ts` | Singleton PrismaClient |
-| `/server/test/helpers/integration-setup.ts` | Test setup helpers |
-| `/server/vitest.config.ts` | Vitest configuration |
-| `/server/test/helpers/vitest-global-teardown.ts` | Global teardown |
-| `/docs/solutions/database-issues/CONNECTION_POOL_EXHAUSTION_PREVENTION.md` | Full guide |
+| File                                                                       | Purpose                |
+| -------------------------------------------------------------------------- | ---------------------- |
+| `/server/test/helpers/global-prisma.ts`                                    | Singleton PrismaClient |
+| `/server/test/helpers/integration-setup.ts`                                | Test setup helpers     |
+| `/server/vitest.config.ts`                                                 | Vitest configuration   |
+| `/server/test/helpers/vitest-global-teardown.ts`                           | Global teardown        |
+| `/docs/solutions/database-issues/CONNECTION_POOL_EXHAUSTION_PREVENTION.md` | Full guide             |
 
 ---
 

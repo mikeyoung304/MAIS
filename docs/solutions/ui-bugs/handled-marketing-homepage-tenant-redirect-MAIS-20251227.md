@@ -5,9 +5,9 @@ component: Next.js Marketing Homepage
 severity: high
 symptoms:
   - "www.gethandled.ai displayed 404 'Business not found' error"
-  - "Root path (/) redirected to /t/handled (tenant slug routing)"
-  - "Homepage treated HANDLED as a tenant instead of marketing site"
-  - "8+ MAIS → HANDLED branding references missed in Next.js app"
+  - 'Root path (/) redirected to /t/handled (tenant slug routing)'
+  - 'Homepage treated HANDLED as a tenant instead of marketing site'
+  - '8+ MAIS → HANDLED branding references missed in Next.js app'
 root_cause: |
   The root page.tsx used permanentRedirect('/t/handled'), treating the company
   website as a tenant storefront. Since no "handled" tenant existed in the
@@ -19,8 +19,8 @@ solution_summary: |
 verified: true
 date_solved: 2025-12-27
 related_commits:
-  - 9465d08  # fix: complete HANDLED rebrand in Next.js app
-  - 1d1c2aa  # feat: add HANDLED marketing homepage
+  - 9465d08 # fix: complete HANDLED rebrand in Next.js app
+  - 1d1c2aa # feat: add HANDLED marketing homepage
 tags:
   - next-js
   - routing
@@ -37,6 +37,7 @@ tags:
 After the MAIS → HANDLED rebrand, www.gethandled.ai showed a 404 "Business not found" error with the message "Get started with MAIS" (also missed in the rebrand).
 
 **Screenshot observation:**
+
 - 404 page displayed
 - "Business not found" error
 - "Get started with MAIS" link (wrong branding)
@@ -50,11 +51,12 @@ The homepage was configured as a tenant redirect instead of a proper marketing p
 import { permanentRedirect } from 'next/navigation';
 
 export default function HomePage() {
-  permanentRedirect('/t/handled');  // Treats company as tenant!
+  permanentRedirect('/t/handled'); // Treats company as tenant!
 }
 ```
 
 **Why this failed:**
+
 1. `/t/handled` routes to tenant storefront system
 2. No tenant with slug "handled" exists in production database
 3. Tenant lookup fails → 404 "Business not found"
@@ -104,6 +106,7 @@ export default function HomePage() {
 ```
 
 **Homepage sections:**
+
 1. **Hero** - "The tech is moving fast. You don't have to."
 2. **Problem Statement** - "You didn't start your business to debug a website."
 3. **Features** (6) - Website, Booking, AI, Newsletter, Zoom Calls, Human Support
@@ -116,26 +119,26 @@ export default function HomePage() {
 
 Fixed 8 user-facing MAIS → HANDLED references:
 
-| File | Change |
-|------|--------|
-| `/t/not-found.tsx` | "Get started with MAIS" → "Get started with HANDLED" |
-| `/login/page.tsx` | Logo text MAIS → HANDLED |
-| `/signup/page.tsx` | Logo + description MAIS → HANDLED |
-| `/forgot-password/page.tsx` | Logo text MAIS → HANDLED |
-| `AdminSidebar.tsx` | Sidebar logo MAIS → HANDLED |
-| `/tenant/billing/page.tsx` | "MAIS Professional" → "HANDLED Professional" |
-| `/tenant/settings/page.tsx` | "MAIS API" → "HANDLED API" |
-| `/tenant/assistant/page.tsx` | Comment reference |
+| File                         | Change                                               |
+| ---------------------------- | ---------------------------------------------------- |
+| `/t/not-found.tsx`           | "Get started with MAIS" → "Get started with HANDLED" |
+| `/login/page.tsx`            | Logo text MAIS → HANDLED                             |
+| `/signup/page.tsx`           | Logo + description MAIS → HANDLED                    |
+| `/forgot-password/page.tsx`  | Logo text MAIS → HANDLED                             |
+| `AdminSidebar.tsx`           | Sidebar logo MAIS → HANDLED                          |
+| `/tenant/billing/page.tsx`   | "MAIS Professional" → "HANDLED Professional"         |
+| `/tenant/settings/page.tsx`  | "MAIS API" → "HANDLED API"                           |
+| `/tenant/assistant/page.tsx` | Comment reference                                    |
 
 ## Key Distinction: Company vs Tenant
 
-| Aspect | Company Marketing | Tenant Storefronts |
-|--------|-------------------|-------------------|
-| **URLs** | `/`, `/features`, `/pricing` | `/t/[slug]`, custom domains |
-| **Database** | NO lookup required | REQUIRED - must exist |
-| **Content** | Hardcoded/static | Config-driven from DB |
-| **Location** | `src/app/page.tsx` | `src/app/t/[slug]/` |
-| **404 handling** | N/A | Required if tenant missing |
+| Aspect           | Company Marketing            | Tenant Storefronts          |
+| ---------------- | ---------------------------- | --------------------------- |
+| **URLs**         | `/`, `/features`, `/pricing` | `/t/[slug]`, custom domains |
+| **Database**     | NO lookup required           | REQUIRED - must exist       |
+| **Content**      | Hardcoded/static             | Config-driven from DB       |
+| **Location**     | `src/app/page.tsx`           | `src/app/t/[slug]/`         |
+| **404 handling** | N/A                          | Required if tenant missing  |
 
 **Rule:** Never create a database tenant with slug `'handled'`, `'company'`, or similar. The company website is NOT a tenant.
 
@@ -162,6 +165,7 @@ The homepage follows HANDLED brand guidelines:
 ### 1. Route Architecture Decision Tree
 
 Before creating any page, ask:
+
 1. **Is this HANDLED company content?** → Static page at root (`/`)
 2. **Is this tenant/user content?** → Tenant route (`/t/[slug]`)
 

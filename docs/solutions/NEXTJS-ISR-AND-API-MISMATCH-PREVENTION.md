@@ -54,10 +54,12 @@ When updating tenant storefront content (packages, branding), Next.js ISR someti
 
 ```typescript
 // Line 84 in /t/[slug]/(site)/page.tsx
-export const revalidate = 60;  // Revalidate every 60 seconds
+export const revalidate = 60; // Revalidate every 60 seconds
 
 // Line 114 in apps/web/src/lib/tenant.ts
-next: { revalidate: 60 }  // Fetch with 60s ISR
+next: {
+  revalidate: 60;
+} // Fetch with 60s ISR
 ```
 
 ISR has multiple cache layers that interact in non-obvious ways:
@@ -97,7 +99,9 @@ cd apps/web && npm run dev
 ```typescript
 // apps/web/src/lib/tenant.ts
 // Line 114-115 - shows ISR revalidation
-next: { revalidate: 60 }  // ← This is applied per-request, not globally
+next: {
+  revalidate: 60;
+} // ← This is applied per-request, not globally
 
 // This means:
 // Request 1 at t=0s  → Fetches from API
@@ -115,7 +119,7 @@ next: { revalidate: 60 }  // ← This is applied per-request, not globally
 
 Create a simple test checklist to verify if data is stale:
 
-```markdown
+````markdown
 ## ISR Stale Data Detection Checklist
 
 1. **Browser DevTools - Network Tab**
@@ -141,15 +145,18 @@ Create a simple test checklist to verify if data is stale:
      // ... fetch code ...
    });
    ```
-   - [ ] Check console.log output - is function called each request?
-   - [ ] If not called, React's cache() is reusing stale result
-   - [ ] Expected: Function called every 60+ seconds in dev mode
+````
+
+- [ ] Check console.log output - is function called each request?
+- [ ] If not called, React's cache() is reusing stale result
+- [ ] Expected: Function called every 60+ seconds in dev mode
 
 5. **Fetch Cache Control**
    - [ ] Verify `next: { revalidate: 60 }` is set on fetch
    - [ ] For dynamic data, use `cache: 'no-store'` instead of ISR
    - [ ] Check if force-refresh needed via query param
-```
+
+````
 
 ---
 
@@ -172,7 +179,7 @@ export const revalidate = 0;  // Revalidate on every request (disables ISR)
 
 // Or use environment variable:
 export const revalidate = process.env.NODE_ENV === 'development' ? 0 : 60;
-```
+````
 
 **When to use:** During feature development or debugging ISR issues. **Never commit with `revalidate: 0` in production routes.**
 
@@ -273,7 +280,7 @@ After feature works with `revalidate: 0`:
 
 ```typescript
 // Enable ISR for real-world testing
-export const revalidate = 60;  // Revalidate every 60 seconds
+export const revalidate = 60; // Revalidate every 60 seconds
 
 // Test cycle:
 // 1. Update mock data
@@ -325,7 +332,7 @@ test('ISR revalidation timing', async ({ page }) => {
   console.log('Cache headers:', networkRequest.headers());
 
   // Wait for ISR window to pass
-  await page.waitForTimeout(61 * 1000);  // Wait 61 seconds
+  await page.waitForTimeout(61 * 1000); // Wait 61 seconds
 
   // Reload and verify new data is fetched
   await page.reload();
@@ -363,12 +370,12 @@ test('ISR revalidation timing', async ({ page }) => {
 
 **Recommended ISR Settings by Page Type:**
 
-| Page | Revalidate | Reason |
-|------|-----------|--------|
-| `/t/[slug]` (landing) | 3600s (1h) | Branding changes rarely, tenant usually updates once daily |
-| `/t/[slug]/book/[pkg]` | 300s (5m) | Package details change more often (pricing, descriptions) |
-| `/t/[slug]/availability` | 60s | Availability data changes frequently (bookings) |
-| `/admin/...` | 0 (disabled) | Admin pages need always-fresh data |
+| Page                     | Revalidate   | Reason                                                     |
+| ------------------------ | ------------ | ---------------------------------------------------------- |
+| `/t/[slug]` (landing)    | 3600s (1h)   | Branding changes rarely, tenant usually updates once daily |
+| `/t/[slug]/book/[pkg]`   | 300s (5m)    | Package details change more often (pricing, descriptions)  |
+| `/t/[slug]/availability` | 60s          | Availability data changes frequently (bookings)            |
+| `/admin/...`             | 0 (disabled) | Admin pages need always-fresh data                         |
 
 ---
 
@@ -423,11 +430,11 @@ const response = await api.getPackageBySlug({ params: { slug } });
 
 ```typescript
 // Contract expects path parameter:
-path: '/v1/availability/unavailable'
+path: '/v1/availability/unavailable';
 query: z.object({
   startDate: z.string(),
   endDate: z.string(),
-})
+});
 
 // ❌ WRONG - Treating as path parameter
 const url = `/v1/availability/unavailable/${startDate}/${endDate}`;
@@ -458,7 +465,7 @@ Add these checks during code review:
 
 Before submitting PR, developer should verify:
 
-```markdown
+````markdown
 ## API URL Mismatch Self-Check
 
 ### For each API call:
@@ -500,7 +507,9 @@ const response = await fetch(url, {
   },
 });
 ```
-```
+````
+
+````
 
 #### Code Review Checklist
 
@@ -531,20 +540,23 @@ Reviewer should verify:
 
 ### Example Review Comments
 
-```
+````
+
 // ❌ Issue: Path mismatch
-const url = `/v1/packages/${slug}`;  // Contract expects '/v1/packages/:slug'
+const url = `/v1/packages/${slug}`; // Contract expects '/v1/packages/:slug'
 // ↑ This is actually correct! Reviewer should verify in contract file.
 
 // ❌ Issue: Missing X-Tenant-Key
 const response = await fetch(url, {
-  headers: { 'Content-Type': 'application/json' }
-  // ↑ Missing X-Tenant-Key for public endpoints
+headers: { 'Content-Type': 'application/json' }
+// ↑ Missing X-Tenant-Key for public endpoints
 
 // ❌ Issue: Query param as path param
 const url = `/v1/availability/${startDate}/${endDate}`;
 // ↑ Contract expects query parameters, not path parameters
+
 ```
+
 ```
 
 ---
@@ -751,7 +763,7 @@ test.describe('Storefront API Calls', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify expected API calls were made
-    const packageCalls = requests.filter(url => url.includes('/v1/packages'));
+    const packageCalls = requests.filter((url) => url.includes('/v1/packages'));
     expect(packageCalls.length).toBeGreaterThan(0);
 
     // Verify no 404s occurred
@@ -776,14 +788,13 @@ test.describe('Storefront API Calls', () => {
     await expect(heading).toBeVisible({ timeout: 10000 });
 
     // Verify network response was successful (not 404)
-    const responses = await page.context().request.head(
-      'http://localhost:3001/v1/packages/wedding-package',
-      {
+    const responses = await page
+      .context()
+      .request.head('http://localhost:3001/v1/packages/wedding-package', {
         headers: { 'X-Tenant-Key': 'pk_live_test_test' },
-      }
-    );
+      });
 
-    expect(responses.status).toBeLessThan(400);  // Not 404, not 500
+    expect(responses.status).toBeLessThan(400); // Not 404, not 500
   });
 });
 ```
@@ -802,7 +813,7 @@ export const Contracts = c.router({
   // NEW ENDPOINT - Define BEFORE implementing
   getTenantPackageBySlug: {
     method: 'GET',
-    path: '/v1/packages/:slug',  // ← Explicit path
+    path: '/v1/packages/:slug', // ← Explicit path
     pathParams: z.object({
       slug: z.string(),
     }),
@@ -826,11 +837,11 @@ export async function getTenantPackageBySlug(
   const url = `${API_BASE_URL}/v1/packages/${encodeURIComponent(packageSlug)}`;
 
   const response = await fetch(url, {
-    method: 'GET',  // ✓ Matches contract method
+    method: 'GET', // ✓ Matches contract method
     headers: {
-      'X-Tenant-Key': apiKeyPublic,  // ✓ Required header
+      'X-Tenant-Key': apiKeyPublic, // ✓ Required header
     },
-    next: { revalidate: 60 },  // ✓ ISR setting
+    next: { revalidate: 60 }, // ✓ ISR setting
   });
 
   // ... rest of implementation
@@ -876,12 +887,12 @@ Use this when adding new endpoints to prevent mismatches:
   - [ ] Define response schemas with all status codes
   - [ ] Add JSDoc comments with endpoint description
 
-- [ ] **2. Express Implementation** (server/src/routes/*.ts)
+- [ ] **2. Express Implementation** (server/src/routes/\*.ts)
   - [ ] Implement route handler with exact path from contract
   - [ ] Return response schema exactly as defined
   - [ ] Handle all error cases defined in contract
 
-- [ ] **3. Client Usage** (apps/web/src/lib/*.ts)
+- [ ] **3. Client Usage** (apps/web/src/lib/\*.ts)
   - [ ] IF using ts-rest client: `await api.endpointName(params)`
   - [ ] IF using manual fetch: verify path matches contract exactly
   - [ ] Include all required headers (X-Tenant-Key, Authorization, etc.)
@@ -936,15 +947,18 @@ For each API call in the diff:
 
 Example of thorough review comment:
 ```
+
 // Good comment:
 // This endpoint returns status codes 200, 404, and 500 per contract.
 // Handling 404 as null (package not found), others as errors.
 
 // Bad pattern that should be flagged:
 fetch(url) // ← No error handling, assumes 200 always
-  .then(r => r.json())
-  .then(data => setData(data));
+.then(r => r.json())
+.then(data => setData(data));
+
 ```
+
 ```
 
 ---
@@ -999,7 +1013,7 @@ describe('API Contract Consistency', () => {
   it('all Express routes have contract definitions', () => {
     const missingContracts = [];
 
-    expressRoutes.forEach(path => {
+    expressRoutes.forEach((path) => {
       if (!contractPaths.has(path)) {
         missingContracts.push(path);
       }
@@ -1034,11 +1048,11 @@ test.describe('ISR Cache Validation', () => {
     await page.waitForLoadState('networkidle');
 
     // Find API request to /v1/packages
-    const packageRequest = requests.find(url => url.includes('/v1/packages'));
+    const packageRequest = requests.find((url) => url.includes('/v1/packages'));
     expect(packageRequest).toBeDefined();
 
     // Wait for ISR window to pass
-    await new Promise(resolve => setTimeout(resolve, 61 * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 61 * 1000));
 
     // Reload page (should fetch fresh data)
     await page.reload();
@@ -1077,4 +1091,3 @@ test.describe('ISR Cache Validation', () => {
 - Verify: Every API call should have a corresponding contract entry
 - Test: E2E tests should verify client-server contract consistency
 - Review: Code review must check path matches contract exactly
-

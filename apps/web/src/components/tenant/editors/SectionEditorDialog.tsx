@@ -33,10 +33,7 @@ interface SectionEditorDialogProps {
 /**
  * Textarea component for longer text input
  */
-function Textarea({
-  className = '',
-  ...props
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+function Textarea({ className = '', ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       className={`flex min-h-[100px] w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-500 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
@@ -112,7 +109,9 @@ function HeroEditor({
           id="backgroundImageUrl"
           type="url"
           value={section.backgroundImageUrl || ''}
-          onChange={(e) => onChange({ ...section, backgroundImageUrl: e.target.value || undefined })}
+          onChange={(e) =>
+            onChange({ ...section, backgroundImageUrl: e.target.value || undefined })
+          }
           placeholder="https://example.com/image.jpg"
           className="mt-1.5"
         />
@@ -240,7 +239,9 @@ function GalleryEditor({
         </div>
         <div className="mt-2 space-y-3">
           {images.length === 0 ? (
-            <p className="text-sm text-text-muted">No images yet. Click &quot;Add Image&quot; to add one.</p>
+            <p className="text-sm text-text-muted">
+              No images yet. Click &quot;Add Image&quot; to add one.
+            </p>
           ) : (
             images.map((img, index) => (
               <div key={index} className="flex gap-2">
@@ -286,10 +287,7 @@ function TestimonialsEditor({
   const addItem = () => {
     onChange({
       ...section,
-      items: [
-        ...items,
-        { quote: '', authorName: '', authorRole: '', rating: 5 },
-      ],
+      items: [...items, { quote: '', authorName: '', authorRole: '', rating: 5 }],
     });
   };
 
@@ -328,7 +326,9 @@ function TestimonialsEditor({
         </div>
         <div className="mt-2 space-y-4">
           {items.length === 0 ? (
-            <p className="text-sm text-text-muted">No testimonials yet. Click &quot;Add Testimonial&quot; to add one.</p>
+            <p className="text-sm text-text-muted">
+              No testimonials yet. Click &quot;Add Testimonial&quot; to add one.
+            </p>
           ) : (
             items.map((item, index) => (
               <div key={index} className="rounded-lg border border-neutral-200 p-4 space-y-3">
@@ -436,7 +436,9 @@ function FAQEditor({
         </div>
         <div className="mt-2 space-y-4">
           {items.length === 0 ? (
-            <p className="text-sm text-text-muted">No questions yet. Click &quot;Add Question&quot; to add one.</p>
+            <p className="text-sm text-text-muted">
+              No questions yet. Click &quot;Add Question&quot; to add one.
+            </p>
           ) : (
             items.map((item, index) => (
               <div key={index} className="rounded-lg border border-neutral-200 p-4 space-y-3">
@@ -619,58 +621,27 @@ export function SectionEditorDialog({
   const renderEditor = () => {
     switch (editedSection.type) {
       case 'hero':
-        return (
-          <HeroEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <HeroEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'text':
-        return (
-          <TextEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <TextEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'gallery':
-        return (
-          <GalleryEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <GalleryEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'testimonials':
-        return (
-          <TestimonialsEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <TestimonialsEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'faq':
-        return (
-          <FAQEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <FAQEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'contact':
-        return (
-          <ContactEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <ContactEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'cta':
-        return (
-          <CTAEditor
-            section={editedSection}
-            onChange={(s) => setEditedSection(s)}
-          />
-        );
+        return <CTAEditor section={editedSection} onChange={(s) => setEditedSection(s)} />;
       case 'features':
-        return <p className="text-text-muted italic">Features editor coming soon. Edit via seed data.</p>;
+        return (
+          <p className="text-text-muted italic">Features editor coming soon. Edit via seed data.</p>
+        );
       case 'pricing':
-        return <p className="text-text-muted italic">Pricing editor coming soon. Edit via seed data.</p>;
+        return (
+          <p className="text-text-muted italic">Pricing editor coming soon. Edit via seed data.</p>
+        );
       default:
         return <p>Unknown section type</p>;
     }

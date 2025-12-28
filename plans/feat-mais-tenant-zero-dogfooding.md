@@ -7,11 +7,13 @@
 ## The Problem
 
 ### What We're Selling
+
 ```
 "We build optimal, research-backed, AI-powered storefronts for small businesses"
 ```
 
 ### What MAIS.com Actually Is
+
 - A hardcoded 479-line React component (`apps/web/src/app/page.tsx`)
 - No `/about`, `/services`, `/faq`, `/contact` pages (footer links to 404s)
 - Not using the `SectionRenderer`, `normalizeToPages()`, or any config
@@ -31,6 +33,7 @@
 ### Architecture Decision
 
 **MAIS will be a real tenant** in the database with:
+
 - `slug: 'mais'`
 - `landingPageConfig` stored in Prisma just like any client
 - Routes served from the same `apps/web/src/app/t/[slug]/(site)/*` architecture
@@ -38,42 +41,45 @@
 
 ### Why Full Dogfooding (Not Partial)
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **Tenant Zero (chosen)** | Proves product works, single codebase, catches bugs in our own usage | Need to extend section types |
-| Enhanced internal | Could add MAIS-only features | Two codebases to maintain, doesn't prove client product |
-| Keep separate | Fast to ship | Undermines sales pitch, separate maintenance burden |
+| Approach                 | Pros                                                                 | Cons                                                    |
+| ------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Tenant Zero (chosen)** | Proves product works, single codebase, catches bugs in our own usage | Need to extend section types                            |
+| Enhanced internal        | Could add MAIS-only features                                         | Two codebases to maintain, doesn't prove client product |
+| Keep separate            | Fast to ship                                                         | Undermines sales pitch, separate maintenance burden     |
 
 ---
 
 ## Gap Analysis: What's Missing for MAIS
 
 ### Current Section Types (7)
-| Type | Available | MAIS Needs |
-|------|-----------|------------|
-| `hero` | ✅ | ✅ (already used) |
-| `text` | ✅ | ✅ |
-| `gallery` | ✅ | ✅ (for portfolio/case studies) |
-| `testimonials` | ✅ | ✅ |
-| `faq` | ✅ | ✅ |
-| `contact` | ✅ | ✅ |
-| `cta` | ✅ | ✅ |
+
+| Type           | Available | MAIS Needs                      |
+| -------------- | --------- | ------------------------------- |
+| `hero`         | ✅        | ✅ (already used)               |
+| `text`         | ✅        | ✅                              |
+| `gallery`      | ✅        | ✅ (for portfolio/case studies) |
+| `testimonials` | ✅        | ✅                              |
+| `faq`          | ✅        | ✅                              |
+| `contact`      | ✅        | ✅                              |
+| `cta`          | ✅        | ✅                              |
 
 ### New Section Types Needed (2)
-| Type | Purpose | Reusable for Tenants? |
-|------|---------|----------------------|
-| `pricing` | Tier cards with features, "Popular" badge, CTA buttons | ✅ Yes - restaurants, photographers, coaches all need this |
-| `features` | Icon + title + description grid (like current "What you get" section) | ✅ Yes - universal |
+
+| Type       | Purpose                                                               | Reusable for Tenants?                                      |
+| ---------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `pricing`  | Tier cards with features, "Popular" badge, CTA buttons                | ✅ Yes - restaurants, photographers, coaches all need this |
+| `features` | Icon + title + description grid (like current "What you get" section) | ✅ Yes - universal                                         |
 
 ### Additional Pages Needed
-| Page | Route | Status | Notes |
-|------|-------|--------|-------|
-| `/about` | `t/[slug]/(site)/about/page.tsx` | ✅ Exists | Need MAIS config |
-| `/services` | `t/[slug]/(site)/services/page.tsx` | ✅ Exists | Need MAIS config |
-| `/faq` | `t/[slug]/(site)/faq/page.tsx` | ✅ Exists | Need MAIS config |
-| `/contact` | `t/[slug]/(site)/contact/page.tsx` | ✅ Exists | Need MAIS config |
-| `/pricing` | 🆕 NEW | ❌ Missing | New page type |
-| `/blog` | 🆕 NEW (future) | ❌ Missing | Out of scope for MVP |
+
+| Page        | Route                               | Status     | Notes                |
+| ----------- | ----------------------------------- | ---------- | -------------------- |
+| `/about`    | `t/[slug]/(site)/about/page.tsx`    | ✅ Exists  | Need MAIS config     |
+| `/services` | `t/[slug]/(site)/services/page.tsx` | ✅ Exists  | Need MAIS config     |
+| `/faq`      | `t/[slug]/(site)/faq/page.tsx`      | ✅ Exists  | Need MAIS config     |
+| `/contact`  | `t/[slug]/(site)/contact/page.tsx`  | ✅ Exists  | Need MAIS config     |
+| `/pricing`  | 🆕 NEW                              | ❌ Missing | New page type        |
+| `/blog`     | 🆕 NEW (future)                     | ❌ Missing | Out of scope for MVP |
 
 ---
 
@@ -82,18 +88,19 @@
 ### Phase 1: New Section Types (Reusable)
 
 #### 1.1 `PricingSection.tsx`
+
 ```tsx
 // apps/web/src/components/tenant/sections/PricingSection.tsx
 interface PricingTier {
   name: string;
-  price: string | number;        // "$40" or 4000 (cents)
-  priceSubtext?: string;         // "/month"
+  price: string | number; // "$40" or 4000 (cents)
+  priceSubtext?: string; // "/month"
   description?: string;
   features: string[];
   ctaText?: string;
   ctaHref?: string;
   isPopular?: boolean;
-  variant?: 'standard' | 'enterprise';  // enterprise = "Contact us"
+  variant?: 'standard' | 'enterprise'; // enterprise = "Contact us"
 }
 
 interface PricingSectionProps {
@@ -106,16 +113,18 @@ interface PricingSectionProps {
 ```
 
 **Design Pattern** (from BRAND_VOICE_GUIDE.md):
+
 - Cards: `rounded-3xl shadow-lg border border-neutral-100`
 - Popular tier: `shadow-2xl border-2 border-sage relative lg:-mt-4 lg:mb-4`
 - "Most Popular" badge: `bg-sage text-white text-sm font-medium px-4 py-1 rounded-full`
 - Hover: `transition-all duration-300 hover:shadow-xl hover:-translate-y-1`
 
 #### 1.2 `FeaturesSection.tsx`
+
 ```tsx
 // apps/web/src/components/tenant/sections/FeaturesSection.tsx
 interface Feature {
-  icon: string;           // Lucide icon name: 'Globe', 'Calendar', 'CreditCard'
+  icon: string; // Lucide icon name: 'Globe', 'Calendar', 'CreditCard'
   title: string;
   description: string;
 }
@@ -125,7 +134,7 @@ interface FeaturesSectionProps {
   headline: string;
   subheadline?: string;
   features: Feature[];
-  columns?: 2 | 3 | 4;    // Grid columns
+  columns?: 2 | 3 | 4; // Grid columns
   backgroundColor?: 'white' | 'neutral';
 }
 ```
@@ -137,9 +146,15 @@ interface FeaturesSectionProps {
 
 // Add to SectionType union
 export type SectionType =
-  | 'hero' | 'text' | 'gallery' | 'testimonials'
-  | 'faq' | 'contact' | 'cta'
-  | 'pricing' | 'features';  // NEW
+  | 'hero'
+  | 'text'
+  | 'gallery'
+  | 'testimonials'
+  | 'faq'
+  | 'contact'
+  | 'cta'
+  | 'pricing'
+  | 'features'; // NEW
 
 // Add pricing section schema
 export const PricingTierSchema = z.object({
@@ -202,7 +217,7 @@ export const maisTenant = {
   name: 'Macon AI Solutions',
   email: 'hello@maconaisolutions.com',
   branding: {
-    primaryColor: '#7B9E87',      // sage
+    primaryColor: '#7B9E87', // sage
     font: 'serif',
     logo: '/images/mais-logo.svg',
   },
@@ -214,27 +229,55 @@ export const maisTenant = {
           {
             type: 'hero',
             headline: "You didn't start this to become a tech expert.",
-            subheadline: "We handle the tech, the marketing, and the AI—so you can focus on what you actually started this for.",
+            subheadline:
+              'We handle the tech, the marketing, and the AI—so you can focus on what you actually started this for.',
             ctaText: 'Join the Club',
             ctaHref: '/signup',
           },
           {
             type: 'text',
             headline: "Running a business shouldn't require a computer science degree.",
-            content: "Website builders. Payment processors. Email marketing. Social media schedulers. CRM systems. AI tools. The tech stack keeps growing.\n\nYou didn't sign up to manage subscriptions. You signed up to build something meaningful.",
+            content:
+              "Website builders. Payment processors. Email marketing. Social media schedulers. CRM systems. AI tools. The tech stack keeps growing.\n\nYou didn't sign up to manage subscriptions. You signed up to build something meaningful.",
             backgroundColor: 'neutral',
           },
           {
             type: 'features',
             headline: 'Your growth team. On demand.',
-            subheadline: 'MAIS is a marketing firm, tech consultancy, and AI strategy partner—wrapped into one membership.',
+            subheadline:
+              'MAIS is a marketing firm, tech consultancy, and AI strategy partner—wrapped into one membership.',
             features: [
-              { icon: 'Globe', title: 'Professional Storefront', description: 'A beautiful booking site that makes you look as professional as you are.' },
-              { icon: 'Calendar', title: 'Booking & Scheduling', description: "Clients pick a time, book, and pay. No back-and-forth." },
-              { icon: 'CreditCard', title: 'Automatic Payments', description: 'Deposits, invoices, and payment processing—handled.' },
-              { icon: 'Sparkles', title: 'AI Growth Assistant', description: 'Get personalized advice on growing your business, powered by AI.' },
-              { icon: 'Users', title: 'Monthly AI Masterclass', description: 'Group Zoom calls where we share the latest AI tools and strategies.' },
-              { icon: 'Phone', title: 'Real Human Support', description: 'Questions? We answer them. No chatbots, no tickets—just help.' },
+              {
+                icon: 'Globe',
+                title: 'Professional Storefront',
+                description:
+                  'A beautiful booking site that makes you look as professional as you are.',
+              },
+              {
+                icon: 'Calendar',
+                title: 'Booking & Scheduling',
+                description: 'Clients pick a time, book, and pay. No back-and-forth.',
+              },
+              {
+                icon: 'CreditCard',
+                title: 'Automatic Payments',
+                description: 'Deposits, invoices, and payment processing—handled.',
+              },
+              {
+                icon: 'Sparkles',
+                title: 'AI Growth Assistant',
+                description: 'Get personalized advice on growing your business, powered by AI.',
+              },
+              {
+                icon: 'Users',
+                title: 'Monthly AI Masterclass',
+                description: 'Group Zoom calls where we share the latest AI tools and strategies.',
+              },
+              {
+                icon: 'Phone',
+                title: 'Real Human Support',
+                description: 'Questions? We answer them. No chatbots, no tickets—just help.',
+              },
             ],
             columns: 3,
           },
@@ -248,7 +291,12 @@ export const maisTenant = {
                 price: '$40',
                 priceSubtext: '/month',
                 description: 'The essentials to get going',
-                features: ['Professional storefront', 'Online booking & scheduling', 'Payment processing', 'Email notifications'],
+                features: [
+                  'Professional storefront',
+                  'Online booking & scheduling',
+                  'Payment processing',
+                  'Email notifications',
+                ],
                 ctaText: 'Get Started',
                 ctaHref: '/signup?tier=starter',
               },
@@ -257,7 +305,13 @@ export const maisTenant = {
                 price: '$99',
                 priceSubtext: '/month',
                 description: 'Everything + AI community',
-                features: ['Everything in Starter', 'AI Growth Assistant', 'Monthly AI Masterclass (Zoom)', 'Custom branding', 'Priority support'],
+                features: [
+                  'Everything in Starter',
+                  'AI Growth Assistant',
+                  'Monthly AI Masterclass (Zoom)',
+                  'Custom branding',
+                  'Priority support',
+                ],
                 ctaText: 'Join the Club',
                 ctaHref: '/signup?tier=growth',
                 isPopular: true,
@@ -266,7 +320,13 @@ export const maisTenant = {
                 name: 'Private Consulting',
                 price: 'Custom',
                 description: 'Hands-on AI strategy for your business',
-                features: ['Everything in Growth Club', '1-on-1 AI consulting sessions', 'Custom AI tool development', 'Marketing strategy sessions', 'Dedicated account manager'],
+                features: [
+                  'Everything in Growth Club',
+                  '1-on-1 AI consulting sessions',
+                  'Custom AI tool development',
+                  'Marketing strategy sessions',
+                  'Dedicated account manager',
+                ],
                 ctaText: 'Book a Call',
                 ctaHref: '/contact',
                 variant: 'enterprise',
@@ -294,7 +354,8 @@ export const maisTenant = {
           {
             type: 'text',
             headline: 'Our Story',
-            content: "After years of watching talented business owners drown in tech tools and marketing complexity, we decided to build what we wished existed: a partner, not another platform...",
+            content:
+              'After years of watching talented business owners drown in tech tools and marketing complexity, we decided to build what we wished existed: a partner, not another platform...',
           },
         ],
       },
@@ -313,9 +374,21 @@ export const maisTenant = {
             type: 'faq',
             headline: 'Frequently Asked Questions',
             items: [
-              { question: 'What if I already have a website?', answer: 'No problem! We can integrate with your existing site or help you migrate. Most members find our storefront converts better, but we work with what you have.' },
-              { question: 'Can I cancel anytime?', answer: 'Yes. No contracts, no cancellation fees. We earn your business every month.' },
-              { question: 'What happens in the AI Masterclass?', answer: "Monthly 60-minute Zoom sessions where we demo the latest AI tools, share prompts, and answer questions. Recordings available if you can't attend live." },
+              {
+                question: 'What if I already have a website?',
+                answer:
+                  'No problem! We can integrate with your existing site or help you migrate. Most members find our storefront converts better, but we work with what you have.',
+              },
+              {
+                question: 'Can I cancel anytime?',
+                answer:
+                  'Yes. No contracts, no cancellation fees. We earn your business every month.',
+              },
+              {
+                question: 'What happens in the AI Masterclass?',
+                answer:
+                  "Monthly 60-minute Zoom sessions where we demo the latest AI tools, share prompts, and answer questions. Recordings available if you can't attend live.",
+              },
             ],
           },
         ],
@@ -359,22 +432,23 @@ export default function HomePage() {
 
 ## File Changes Summary
 
-| File | Action | Description |
-|------|--------|-------------|
-| `apps/web/src/components/tenant/sections/PricingSection.tsx` | CREATE | New pricing tier cards component |
-| `apps/web/src/components/tenant/sections/FeaturesSection.tsx` | CREATE | New features grid component |
-| `apps/web/src/components/tenant/sections/index.ts` | EDIT | Export new sections |
-| `apps/web/src/components/tenant/SectionRenderer.tsx` | EDIT | Add pricing + features cases |
-| `packages/contracts/src/schemas/landing-page.schema.ts` | EDIT | Add PricingSection, FeaturesSection schemas |
-| `server/prisma/seed/mais-tenant.ts` | CREATE | MAIS tenant seed data |
-| `server/prisma/seed.ts` | EDIT | Include MAIS tenant in seed |
-| `apps/web/src/app/page.tsx` | REPLACE | Redirect to /t/mais (479 lines → 6 lines) |
+| File                                                          | Action  | Description                                 |
+| ------------------------------------------------------------- | ------- | ------------------------------------------- |
+| `apps/web/src/components/tenant/sections/PricingSection.tsx`  | CREATE  | New pricing tier cards component            |
+| `apps/web/src/components/tenant/sections/FeaturesSection.tsx` | CREATE  | New features grid component                 |
+| `apps/web/src/components/tenant/sections/index.ts`            | EDIT    | Export new sections                         |
+| `apps/web/src/components/tenant/SectionRenderer.tsx`          | EDIT    | Add pricing + features cases                |
+| `packages/contracts/src/schemas/landing-page.schema.ts`       | EDIT    | Add PricingSection, FeaturesSection schemas |
+| `server/prisma/seed/mais-tenant.ts`                           | CREATE  | MAIS tenant seed data                       |
+| `server/prisma/seed.ts`                                       | EDIT    | Include MAIS tenant in seed                 |
+| `apps/web/src/app/page.tsx`                                   | REPLACE | Redirect to /t/mais (479 lines → 6 lines)   |
 
 ---
 
 ## Acceptance Criteria
 
 ### Functional
+
 - [ ] `/` redirects to `/t/mais` or serves MAIS via custom domain routing
 - [ ] MAIS homepage renders using `SectionRenderer` with config from database
 - [ ] `/about`, `/services`, `/faq`, `/contact` pages all work
@@ -384,12 +458,14 @@ export default function HomePage() {
 - [ ] Mobile responsive (matches current homepage mobile experience)
 
 ### Quality
+
 - [ ] No visual regression from current MAIS homepage
 - [ ] Lighthouse score ≥90 (current baseline)
 - [ ] All existing E2E tests pass
 - [ ] New E2E tests for MAIS tenant pages (3-5 tests)
 
 ### Dogfooding Proof
+
 - [ ] MAIS tenant uses ONLY the config-driven system (no hardcoded sections)
 - [ ] Any feature MAIS needs gets added to the reusable section library
 - [ ] Pricing and Features sections are documented as available for all tenants
@@ -410,13 +486,17 @@ By building these for MAIS, all tenants immediately gain:
 ## Research Findings: Best Practice Validation
 
 ### Pricing Page Placement
+
 Research from the agent exploration confirms:
+
 - **SaaS best practice**: Pricing on homepage for simple 3-tier products ✅ (we have this)
 - **Alternative**: `/pricing` page with more detail for complex products
 - **Recommendation**: Keep pricing on home (current approach) with anchor link `#pricing`
 
 ### Dogfooding Importance
+
 From the best practices research:
+
 - **Webflow**: Entire site built with Webflow, explicitly stated "Made in Webflow"
 - **Squarespace**: Uses Squarespace for their marketing site
 - **Trust signal**: 73% of SMBs evaluate vendor's own site when choosing tools
@@ -425,12 +505,12 @@ From the best practices research:
 
 ## Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Visual regression | Medium | High | Pixel-perfect comparison testing |
-| SEO impact from redirect | Low | Medium | Use proper 308 permanent redirect, update sitemap |
-| Config complexity | Low | Medium | MAIS config is well-defined in seed file |
-| Section type bloat | Low | Low | Limit to proven, reusable patterns only |
+| Risk                     | Likelihood | Impact | Mitigation                                        |
+| ------------------------ | ---------- | ------ | ------------------------------------------------- |
+| Visual regression        | Medium     | High   | Pixel-perfect comparison testing                  |
+| SEO impact from redirect | Low        | Medium | Use proper 308 permanent redirect, update sitemap |
+| Config complexity        | Low        | Medium | MAIS config is well-defined in seed file          |
+| Section type bloat       | Low        | Low    | Limit to proven, reusable patterns only           |
 
 ---
 
@@ -476,16 +556,18 @@ erDiagram
 ## References
 
 ### Internal
+
 - `apps/web/src/components/tenant/SectionRenderer.tsx` - Current section dispatcher
 - `apps/web/src/app/page.tsx` - Current hardcoded MAIS homepage (to replace)
 - `docs/design/BRAND_VOICE_GUIDE.md` - Design patterns and voice
 - `packages/contracts/src/schemas/landing-page.schema.ts` - Current schema
 
 ### External
+
 - [Next.js ISR Documentation](https://nextjs.org/docs/app/building-your-application/data-fetching/incremental-static-regeneration)
 - [Webflow Made in Webflow](https://webflow.com/made-in-webflow) - Example of dogfooding
 
 ---
 
-*Plan created: 2025-12-26*
-*Estimated complexity: Medium (2-3 days implementation)*
+_Plan created: 2025-12-26_
+_Estimated complexity: Medium (2-3 days implementation)_

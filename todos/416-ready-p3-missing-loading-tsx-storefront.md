@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "416"
+issue_id: '416'
 tags:
   - code-review
   - next-js
@@ -17,6 +17,7 @@ dependencies: []
 Storefront page routes lack `loading.tsx` files for Suspense boundaries, resulting in no loading state during navigation.
 
 **Why This Matters:**
+
 - User sees blank screen during route transitions
 - Perceived performance is worse
 - Inconsistent with admin routes which may have loading states
@@ -26,6 +27,7 @@ Storefront page routes lack `loading.tsx` files for Suspense boundaries, resulti
 **Location:** `apps/web/src/app/t/[slug]/(site)/`
 
 **Evidence:**
+
 - `about/`, `services/`, `faq/`, `contact/` have error.tsx but no loading.tsx
 - New `gallery/` and `testimonials/` routes also missing loading.tsx
 
@@ -52,10 +54,12 @@ export default function Loading() {
 ```
 
 **Pros:**
+
 - Better perceived performance
 - Consistent UX
 
 **Cons:**
+
 - Additional files to maintain
 
 **Effort:** Small
@@ -66,9 +70,11 @@ export default function Loading() {
 Single loading state for all child routes.
 
 **Pros:**
+
 - Less duplication
 
 **Cons:**
+
 - Generic loading, less contextual
 
 **Effort:** Small
@@ -77,6 +83,7 @@ Single loading state for all child routes.
 ## Technical Details
 
 **Affected Files:**
+
 - NEW: Multiple `loading.tsx` files in storefront routes
 
 ## Acceptance Criteria
@@ -87,6 +94,6 @@ Single loading state for all child routes.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                   |
+| ---------- | ------------------------ | --------------------------- |
 | 2025-12-25 | Created from code review | Missing Suspense boundaries |

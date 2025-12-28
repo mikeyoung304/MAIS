@@ -8,7 +8,10 @@ import {
   validateDomain,
   isPageEnabled,
 } from '@/lib/tenant';
-import type { LandingPageConfig, TestimonialsSection as TestimonialsSectionType } from '@macon/contracts';
+import type {
+  LandingPageConfig,
+  TestimonialsSection as TestimonialsSectionType,
+} from '@macon/contracts';
 
 interface TestimonialsPageProps {
   searchParams: Promise<{ domain?: string }>;

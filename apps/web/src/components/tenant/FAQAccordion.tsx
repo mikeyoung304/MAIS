@@ -84,9 +84,7 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
           {/* FAQ Accordion */}
           {faqItems.length === 0 ? (
             <div className="mt-16 text-center py-16 rounded-3xl border border-neutral-100 bg-white">
-              <p className="text-lg text-text-muted">
-                No FAQs available yet. Have a question?
-              </p>
+              <p className="text-lg text-text-muted">No FAQs available yet. Have a question?</p>
               <Button asChild variant="sage" className="mt-6">
                 <Link href={contactHref}>Contact Us</Link>
               </Button>
@@ -115,9 +113,7 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
                       aria-expanded={isOpen}
                       aria-controls={panelId}
                     >
-                      <span className="font-semibold text-text-primary pr-4">
-                        {item.question}
-                      </span>
+                      <span className="font-semibold text-text-primary pr-4">{item.question}</span>
                       <ChevronDown
                         className={`h-5 w-5 flex-shrink-0 text-text-muted transition-transform duration-300 motion-reduce:transition-none ${
                           isOpen ? 'rotate-180' : ''

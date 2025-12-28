@@ -8,11 +8,11 @@ This directory contains documentation for multi-tenant routing in MAIS. The plat
 
 ### Active Documentation
 
-| Document | Purpose | Status |
-|----------|---------|--------|
-| [VERCEL_MULTI_TENANT_DEPLOYMENT.md](VERCEL_MULTI_TENANT_DEPLOYMENT.md) | Deployment guide for Vercel with custom domains | **Active** - Updated for Next.js |
-| [ARCHITECTURE_DIAGRAM.md](ARCHITECTURE_DIAGRAM.md) | Visual diagrams of routing flow | **Active** - Concepts still apply |
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Quick lookup for common patterns | **Partially Active** - Vercel patterns still valid |
+| Document                                                               | Purpose                                         | Status                                             |
+| ---------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| [VERCEL_MULTI_TENANT_DEPLOYMENT.md](VERCEL_MULTI_TENANT_DEPLOYMENT.md) | Deployment guide for Vercel with custom domains | **Active** - Updated for Next.js                   |
+| [ARCHITECTURE_DIAGRAM.md](ARCHITECTURE_DIAGRAM.md)                     | Visual diagrams of routing flow                 | **Active** - Concepts still apply                  |
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md)                               | Quick lookup for common patterns                | **Partially Active** - Vercel patterns still valid |
 
 ### Primary Next.js Documentation
 
@@ -48,13 +48,13 @@ Request → Next.js Middleware → Route Handler → Component
 
 ### Key Route Patterns
 
-| Route | Purpose | Rendering |
-|-------|---------|-----------|
-| `/t/[slug]` | Tenant landing page | ISR (60s) |
-| `/t/[slug]/book/[packageSlug]` | Booking flow | ISR (60s) |
-| `/t/_domain/*` | Custom domain routes | ISR (60s) |
-| `/(protected)/tenant/*` | Tenant admin | CSR (authenticated) |
-| `/api/revalidate` | ISR cache invalidation | Edge |
+| Route                          | Purpose                | Rendering           |
+| ------------------------------ | ---------------------- | ------------------- |
+| `/t/[slug]`                    | Tenant landing page    | ISR (60s)           |
+| `/t/[slug]/book/[packageSlug]` | Booking flow           | ISR (60s)           |
+| `/t/_domain/*`                 | Custom domain routes   | ISR (60s)           |
+| `/(protected)/tenant/*`        | Tenant admin           | CSR (authenticated) |
+| `/api/revalidate`              | ISR cache invalidation | Edge                |
 
 ### File Structure
 
@@ -113,9 +113,7 @@ export const revalidate = 60; // Revalidate every 60 seconds
 ```typescript
 // middleware.ts
 if (!isKnownMAISDomain(host)) {
-  return NextResponse.rewrite(
-    new URL(`/t/_domain${pathname}?domain=${host}`, request.url)
-  );
+  return NextResponse.rewrite(new URL(`/t/_domain${pathname}?domain=${host}`, request.url));
 }
 ```
 

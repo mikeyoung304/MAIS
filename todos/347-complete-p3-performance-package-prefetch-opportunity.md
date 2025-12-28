@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "347"
+issue_id: '347'
 tags: [code-review, performance, optimization]
 dependencies: []
 ---
@@ -31,6 +31,7 @@ const { data: packageData, isLoading } = useQuery({
 ## Proposed Solutions
 
 ### Option A: Pass via route state (Recommended)
+
 - **Pros:** Eliminates redundant fetch, fast navigation
 - **Cons:** Requires fallback if navigated directly
 - **Effort:** Small
@@ -47,6 +48,7 @@ const prefetchedPackage = location.state?.package;
 ```
 
 ### Option B: React Query prefetch
+
 - **Pros:** Works with any navigation pattern
 - **Cons:** Still makes request (from cache)
 - **Effort:** Medium
@@ -70,8 +72,8 @@ Option A for immediate improvement with Option B as enhancement.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | performance-oracle agent finding |
 
 ## Resources

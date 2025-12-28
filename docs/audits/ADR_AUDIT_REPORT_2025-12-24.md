@@ -25,26 +25,26 @@ The MAIS documentation has **moderate structural inconsistencies** that create c
 
 ### docs/adrs/ Directory (13 files)
 
-| ADR | Title | Status | Date | Notes |
-|-----|-------|--------|------|-------|
-| 001 | Adopt Diátaxis Framework | Accepted | 2025-11 | Documentation ADR |
-| 002 | Documentation Naming Standards | Accepted | 2025-11 | Documentation ADR |
-| 003 | Sprint Documentation Lifecycle | Accepted | 2025-11 | Documentation ADR |
-| 004 | Time-Based Archive Strategy | Accepted | 2025-11 | Documentation ADR |
-| 005 | Documentation Security Review | Accepted | 2025-11 | **Implementation incomplete** |
-| 006 | Modular Monolith Architecture | Accepted | 2025-10 | Architecture ADR |
-| 007 | Mock-First Development | Accepted | 2025-10 | Architecture ADR |
-| 008 | Pessimistic Locking | **Superseded** | 2025-10 | **Wrong supersession ref** |
-| 009 | Database Webhook DLQ | Accepted | 2025-10 | Architecture ADR |
-| 010 | Git History Rewrite | Accepted (Pending) | 2025-10 | **Implementation status unclear** |
-| 011 | PaymentProvider Interface | Accepted | 2025-10 | Architecture ADR |
-| 012 | Full Test Coverage Webhook | Accepted | 2025-10 | Architecture ADR |
-| 013 | PostgreSQL Advisory Locks | Accepted | 2025-01 | Supersedes ADR-008 |
+| ADR | Title                          | Status             | Date    | Notes                             |
+| --- | ------------------------------ | ------------------ | ------- | --------------------------------- |
+| 001 | Adopt Diátaxis Framework       | Accepted           | 2025-11 | Documentation ADR                 |
+| 002 | Documentation Naming Standards | Accepted           | 2025-11 | Documentation ADR                 |
+| 003 | Sprint Documentation Lifecycle | Accepted           | 2025-11 | Documentation ADR                 |
+| 004 | Time-Based Archive Strategy    | Accepted           | 2025-11 | Documentation ADR                 |
+| 005 | Documentation Security Review  | Accepted           | 2025-11 | **Implementation incomplete**     |
+| 006 | Modular Monolith Architecture  | Accepted           | 2025-10 | Architecture ADR                  |
+| 007 | Mock-First Development         | Accepted           | 2025-10 | Architecture ADR                  |
+| 008 | Pessimistic Locking            | **Superseded**     | 2025-10 | **Wrong supersession ref**        |
+| 009 | Database Webhook DLQ           | Accepted           | 2025-10 | Architecture ADR                  |
+| 010 | Git History Rewrite            | Accepted (Pending) | 2025-10 | **Implementation status unclear** |
+| 011 | PaymentProvider Interface      | Accepted           | 2025-10 | Architecture ADR                  |
+| 012 | Full Test Coverage Webhook     | Accepted           | 2025-10 | Architecture ADR                  |
+| 013 | PostgreSQL Advisory Locks      | Accepted           | 2025-01 | Supersedes ADR-008                |
 
 ### Misplaced ADR
 
-| ADR | Current Location | Should Be |
-|-----|-----------------|-----------|
+| ADR | Current Location                                            | Should Be                                              |
+| --- | ----------------------------------------------------------- | ------------------------------------------------------ |
 | 014 | docs/solutions/ADR-014-addon-entity-optional-description.md | docs/adrs/ADR-014-addon-entity-optional-description.md |
 
 ---
@@ -54,6 +54,7 @@ The MAIS documentation has **moderate structural inconsistencies** that create c
 ### Problem
 
 ADR-008 header says:
+
 ```
 **Superseded By:** ADR-012 (PostgreSQL Advisory Locks)
 ```
@@ -61,6 +62,7 @@ ADR-008 header says:
 But ADR-012 is "Full Test Coverage for Webhook Handler" - nothing about locking.
 
 ADR-013 is "PostgreSQL Advisory Locks" and correctly says:
+
 ```
 **Supersedes:** ADR-008
 ```
@@ -85,9 +87,11 @@ In `docs/adrs/ADR-008-pessimistic-locking-booking-race-conditions.md` line 8:
 ### Problem
 
 ADR-014 is located at:
+
 - `docs/solutions/ADR-014-addon-entity-optional-description.md`
 
 Should be in:
+
 - `docs/adrs/ADR-014-addon-entity-optional-description.md`
 
 ### Impact
@@ -180,6 +184,7 @@ See **DECISIONS.md ADR-001** for rationale.
 **Status:** Accepted (2025-11-12)
 
 **Uncompleted Implementation Items:**
+
 - [ ] gitleaks installed and configured
 - [ ] Pre-commit hook tested and working
 - [ ] GitHub Actions workflow created
@@ -223,22 +228,22 @@ This is technically a violation of ADR-002, but kebab-case for ADR filenames is 
 
 ### CLAUDE.md vs ADRs
 
-| Topic | CLAUDE.md Says | ADR Says | Consistent? |
-|-------|---------------|----------|-------------|
+| Topic                     | CLAUDE.md Says                         | ADR Says                                       | Consistent?      |
+| ------------------------- | -------------------------------------- | ---------------------------------------------- | ---------------- |
 | Double-booking prevention | 3-layer defense with SELECT FOR UPDATE | ADR-008 superseded by ADR-013 (advisory locks) | **INCONSISTENT** |
-| Webhook idempotency | Database-based deduplication | ADR-009 (same) | ✅ Consistent |
-| Architecture | Modular monolith | ADR-006 (same) | ✅ Consistent |
-| Mock-first development | ADAPTERS_PRESET env | ADR-007 (same) | ✅ Consistent |
-| Documentation archive | docs/archive/YYYY-MM/ | ADR-004 (same) | ✅ Consistent |
+| Webhook idempotency       | Database-based deduplication           | ADR-009 (same)                                 | ✅ Consistent    |
+| Architecture              | Modular monolith                       | ADR-006 (same)                                 | ✅ Consistent    |
+| Mock-first development    | ADAPTERS_PRESET env                    | ADR-007 (same)                                 | ✅ Consistent    |
+| Documentation archive     | docs/archive/YYYY-MM/                  | ADR-004 (same)                                 | ✅ Consistent    |
 
 ### ARCHITECTURE.md vs ADRs
 
-| Topic | ARCHITECTURE.md Says | ADR Says | Consistent? |
-|-------|---------------------|----------|-------------|
+| Topic             | ARCHITECTURE.md Says        | ADR Says                       | Consistent?      |
+| ----------------- | --------------------------- | ------------------------------ | ---------------- |
 | Locking mechanism | SELECT FOR UPDATE (Layer 2) | ADR-013: pg_advisory_xact_lock | **INCONSISTENT** |
-| Webhook DLQ | WebhookEvent table | ADR-009 (same) | ✅ Consistent |
-| Architecture | Modular monolith | ADR-006 (same) | ✅ Consistent |
-| Test coverage | 752/752 passing | ADR-012 requires 100% webhook | ✅ Consistent |
+| Webhook DLQ       | WebhookEvent table          | ADR-009 (same)                 | ✅ Consistent    |
+| Architecture      | Modular monolith            | ADR-006 (same)                 | ✅ Consistent    |
+| Test coverage     | 752/752 passing             | ADR-012 requires 100% webhook  | ✅ Consistent    |
 
 ---
 
@@ -283,14 +288,14 @@ This is technically a violation of ADR-002, but kebab-case for ADR filenames is 
 
 ## Summary Statistics
 
-| Metric | Count |
-|--------|-------|
-| Total ADRs | 14 |
-| Accepted | 11 |
-| Superseded | 1 (ADR-008) |
-| Pending Implementation | 2 (ADR-005, ADR-010) |
-| Misplaced | 1 (ADR-014) |
-| Wrong cross-references | 4 |
+| Metric                    | Count                                            |
+| ------------------------- | ------------------------------------------------ |
+| Total ADRs                | 14                                               |
+| Accepted                  | 11                                               |
+| Superseded                | 1 (ADR-008)                                      |
+| Pending Implementation    | 2 (ADR-005, ADR-010)                             |
+| Misplaced                 | 1 (ADR-014)                                      |
+| Wrong cross-references    | 4                                                |
 | Documents needing updates | 4 (ARCHITECTURE.md, CLAUDE.md, ADR-006, ADR-007) |
 
 **Total Issues Found:** 6

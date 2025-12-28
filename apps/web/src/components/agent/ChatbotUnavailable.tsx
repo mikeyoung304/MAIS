@@ -12,22 +12,20 @@ const errorMessages: Record<string, { title: string; description: string }> = {
   missing_api_key: {
     title: 'Brain not plugged in yet',
     description:
-      "The AI assistant is being set up. In the meantime, you can manage everything from your dashboard.",
+      'The AI assistant is being set up. In the meantime, you can manage everything from your dashboard.',
   },
   context_unavailable: {
     title: 'Having trouble loading your details',
     description:
-      "Something went sideways trying to load your business info. Try refreshing, or the humans can help.",
+      'Something went sideways trying to load your business info. Try refreshing, or the humans can help.',
   },
   not_authenticated: {
     title: "We haven't met yet",
-    description:
-      "I need you to log in so I can load your business info. Try signing in again.",
+    description: 'I need you to log in so I can load your business info. Try signing in again.',
   },
   rate_limited: {
     title: 'Whoa, slow down',
-    description:
-      "I can only think so fast. Give me a sec and try again.",
+    description: 'I can only think so fast. Give me a sec and try again.',
   },
   generic: {
     title: 'Something went sideways',

@@ -4,14 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Calendar,
-  Plus,
-  Loader2,
-  AlertCircle,
-  CalendarDays,
-  CalendarX,
-} from 'lucide-react';
+import { Calendar, Plus, Loader2, AlertCircle, CalendarDays, CalendarX } from 'lucide-react';
 
 interface Booking {
   id: string;

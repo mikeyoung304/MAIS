@@ -82,8 +82,7 @@ function seedData(): void {
     tenantId: DEFAULT_TENANT,
     slug: 'enterprise',
     title: 'Enterprise Package',
-    description:
-      'Comprehensive solutions for established businesses. Your complete back office.',
+    description: 'Comprehensive solutions for established businesses. Your complete back office.',
     priceCents: 100000, // $1,000
     photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop',
     photos: [],
@@ -488,7 +487,10 @@ export class MockBookingRepository implements BookingRepository {
     return bookings.get(id) || null;
   }
 
-  async findAll(_tenantId: string, options?: { limit?: number; offset?: number }): Promise<Booking[]> {
+  async findAll(
+    _tenantId: string,
+    options?: { limit?: number; offset?: number }
+  ): Promise<Booking[]> {
     // Mock mode: Ignore tenantId
     const all = Array.from(bookings.values());
     const offset = options?.offset ?? 0;
@@ -723,7 +725,10 @@ export class MockBookingRepository implements BookingRepository {
       }
     }
 
-    logger.debug({ tenantId: _tenantId, count: result.length }, 'findBookingsNeedingReminders called');
+    logger.debug(
+      { tenantId: _tenantId, count: result.length },
+      'findBookingsNeedingReminders called'
+    );
     return result;
   }
 

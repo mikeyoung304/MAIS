@@ -1,6 +1,7 @@
 # Tier Naming Creates Confusion
 
 ## Metadata
+
 - **ID:** 434
 - **Status:** pending
 - **Priority:** P2
@@ -30,6 +31,7 @@ This naming may hurt conversion by making customers question the base tier's val
 ## Proposed Solutions
 
 ### Option A: Professional Services Naming
+
 - **Essentials** ($49) — "Get running"
 - **Professional** ($149) — "Stay ahead"
 - **Concierge** (Custom) — "White glove"
@@ -40,6 +42,7 @@ This naming may hurt conversion by making customers question the base tier's val
 **Risk:** Low
 
 ### Option B: Action-Oriented Naming
+
 - **Get Running** ($49)
 - **Stay Ahead** ($149) — Most Popular
 - **White Glove** (Custom)
@@ -50,6 +53,7 @@ This naming may hurt conversion by making customers question the base tier's val
 **Risk:** Low
 
 ### Option C: Keep Wordplay, Fix Descriptions
+
 - **Handled** ($49) — "Everything you need to launch"
 - **Fully Handled** ($149) — "Launch + grow with AI & community"
 - **Completely Handled** (Custom) — "Your dedicated team"
@@ -60,11 +64,13 @@ This naming may hurt conversion by making customers question the base tier's val
 **Risk:** Medium — may not fully solve issue
 
 ## Recommended Action
+
 _To be filled during triage_
 
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/app/page.tsx` — tiers array (lines 67-112)
 - Any pricing page components
 - Marketing materials referencing tier names
@@ -78,8 +84,8 @@ _To be filled during triage_
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                   |
+| ---------- | ------- | --------------------------------------- |
 | 2025-12-27 | Created | From brand review multi-agent synthesis |
 
 ## Resources

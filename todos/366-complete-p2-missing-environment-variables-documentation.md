@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "366"
+issue_id: '366'
 tags: [code-review, devops, documentation]
 dependencies: []
 ---
@@ -18,24 +18,25 @@ Critical environment variables for production are not documented in `.env.exampl
 
 **Missing from `apps/web/.env.example`:**
 
-| Variable | Required For | Status |
-|----------|-------------|--------|
-| `NEXTAUTH_SECRET` | Session encryption | Only in .env.local.example |
-| `NEXTJS_REVALIDATE_SECRET` | ISR endpoint security | Not documented anywhere |
-| `INTERNAL_API_SECRET` | Service-to-service auth | Not in web app config |
+| Variable                   | Required For            | Status                     |
+| -------------------------- | ----------------------- | -------------------------- |
+| `NEXTAUTH_SECRET`          | Session encryption      | Only in .env.local.example |
+| `NEXTJS_REVALIDATE_SECRET` | ISR endpoint security   | Not documented anywhere    |
+| `INTERNAL_API_SECRET`      | Service-to-service auth | Not in web app config      |
 
 **Missing from `server/.env.example`:**
 
-| Variable | Required For | Status |
-|----------|-------------|--------|
-| `NEXTJS_REVALIDATE_SECRET` | Calling ISR endpoint | Not documented |
-| `NEXTJS_APP_URL` | Where to call revalidate | Not documented |
+| Variable                   | Required For             | Status         |
+| -------------------------- | ------------------------ | -------------- |
+| `NEXTJS_REVALIDATE_SECRET` | Calling ISR endpoint     | Not documented |
+| `NEXTJS_APP_URL`           | Where to call revalidate | Not documented |
 
 **Impact:** P2 - Silent failures in production, undocumented configuration
 
 ## Proposed Solutions
 
 ### Option 1: Update All .env.example Files (Required)
+
 - **Description:** Add all required variables with comments
 - **Pros:** Clear documentation, deployment checklist
 - **Cons:** Minor effort
@@ -49,6 +50,7 @@ Critical environment variables for production are not documented in `.env.exampl
 ## Technical Details
 
 **Add to `apps/web/.env.example`:**
+
 ```bash
 # NextAuth.js v5 Configuration (REQUIRED)
 NEXTAUTH_SECRET=           # Generate: openssl rand -base64 32
@@ -62,6 +64,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
 **Add to `server/.env.example`:**
+
 ```bash
 # Next.js ISR Revalidation
 NEXTJS_APP_URL=http://localhost:3000
@@ -80,8 +83,8 @@ INTERNAL_API_SECRET=       # Generate: openssl rand -hex 32
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings          |
+| ---------- | -------------------------- | ------------------ |
 | 2025-12-25 | Created during code review | DevOps issue found |
 
 ## Resources

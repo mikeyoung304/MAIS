@@ -257,10 +257,15 @@ export type TextSection = z.infer<typeof TextSectionSchema>;
 export const GallerySectionSchema = z.object({
   type: z.literal('gallery'),
   headline: z.string().max(60).default('Our Work'),
-  images: z.array(z.object({
-    url: SafeImageUrlSchema,
-    alt: z.string().max(200),
-  })).max(50).default([]),
+  images: z
+    .array(
+      z.object({
+        url: SafeImageUrlSchema,
+        alt: z.string().max(200),
+      })
+    )
+    .max(50)
+    .default([]),
   instagramHandle: z.string().max(30).optional(),
 });
 
@@ -272,13 +277,18 @@ export type GallerySection = z.infer<typeof GallerySectionSchema>;
 export const TestimonialsSectionSchema = z.object({
   type: z.literal('testimonials'),
   headline: z.string().max(60).default('What Clients Say'),
-  items: z.array(z.object({
-    quote: z.string().min(10).max(300),
-    authorName: z.string().min(1).max(100),
-    authorRole: z.string().max(50).optional(),
-    authorPhotoUrl: SafeImageUrlOptionalSchema,
-    rating: z.number().int().min(1).max(5).default(5),
-  })).max(12).default([]),
+  items: z
+    .array(
+      z.object({
+        quote: z.string().min(10).max(300),
+        authorName: z.string().min(1).max(100),
+        authorRole: z.string().max(50).optional(),
+        authorPhotoUrl: SafeImageUrlOptionalSchema,
+        rating: z.number().int().min(1).max(5).default(5),
+      })
+    )
+    .max(12)
+    .default([]),
 });
 
 export type TestimonialsSection = z.infer<typeof TestimonialsSectionSchema>;
@@ -289,10 +299,15 @@ export type TestimonialsSection = z.infer<typeof TestimonialsSectionSchema>;
 export const FAQSectionSchema = z.object({
   type: z.literal('faq'),
   headline: z.string().max(60).default('FAQ'),
-  items: z.array(z.object({
-    question: z.string().min(1).max(200),
-    answer: z.string().min(1).max(1000),
-  })).max(20).default([]),
+  items: z
+    .array(
+      z.object({
+        question: z.string().min(1).max(200),
+        answer: z.string().min(1).max(1000),
+      })
+    )
+    .max(20)
+    .default([]),
 });
 
 export type FAQSection = z.infer<typeof FAQSectionSchema>;
@@ -333,10 +348,17 @@ export const PricingTierSchema = z.object({
   description: z.string().max(200).optional(),
   features: z.array(z.string().max(100)).max(10),
   ctaText: z.string().max(30).optional(),
-  ctaHref: z.union([
-    SafeUrlSchema, // Absolute URLs must be http/https
-    z.string().regex(/^\/[a-zA-Z0-9\-_.~/?#[\]@!$&'()*+,;=%]*$/, 'Relative URLs must start with / and contain valid path characters'),
-  ]).optional(),
+  ctaHref: z
+    .union([
+      SafeUrlSchema, // Absolute URLs must be http/https
+      z
+        .string()
+        .regex(
+          /^\/[a-zA-Z0-9\-_.~/?#[\]@!$&'()*+,;=%]*$/,
+          'Relative URLs must start with / and contain valid path characters'
+        ),
+    ])
+    .optional(),
   isPopular: z.boolean().optional(),
   variant: z.enum(['standard', 'enterprise']).optional(),
 });
@@ -432,8 +454,16 @@ export type PagesConfig = z.infer<typeof PagesConfigSchema>;
 /**
  * Page names for iteration and type safety
  */
-export const PAGE_NAMES = ['home', 'about', 'services', 'faq', 'contact', 'gallery', 'testimonials'] as const;
-export type PageName = typeof PAGE_NAMES[number];
+export const PAGE_NAMES = [
+  'home',
+  'about',
+  'services',
+  'faq',
+  'contact',
+  'gallery',
+  'testimonials',
+] as const;
+export type PageName = (typeof PAGE_NAMES)[number];
 
 // ============================================================================
 // Section Visibility Toggles (Legacy - for backward compatibility)
@@ -564,7 +594,8 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         type: 'text',
         headline: 'About Us',
-        content: 'We are passionate professionals dedicated to delivering exceptional service. Our team brings years of experience and a commitment to quality that shows in every project we undertake.',
+        content:
+          'We are passionate professionals dedicated to delivering exceptional service. Our team brings years of experience and a commitment to quality that shows in every project we undertake.',
         imagePosition: 'left',
       },
     ],
@@ -580,9 +611,21 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
         type: 'faq',
         headline: 'Frequently Asked Questions',
         items: [
-          { question: 'How do I book?', answer: 'Browse our services and complete the booking form. You will receive a confirmation email with all the details.' },
-          { question: 'What is your cancellation policy?', answer: 'Cancel up to 48 hours before your appointment for a full refund. Cancellations within 48 hours may be subject to a fee.' },
-          { question: 'Do you offer custom packages?', answer: 'Yes! Contact us to discuss your specific needs and we will create a customized package just for you.' },
+          {
+            question: 'How do I book?',
+            answer:
+              'Browse our services and complete the booking form. You will receive a confirmation email with all the details.',
+          },
+          {
+            question: 'What is your cancellation policy?',
+            answer:
+              'Cancel up to 48 hours before your appointment for a full refund. Cancellations within 48 hours may be subject to a fee.',
+          },
+          {
+            question: 'Do you offer custom packages?',
+            answer:
+              'Yes! Contact us to discuss your specific needs and we will create a customized package just for you.',
+          },
         ],
       },
     ],
@@ -613,7 +656,11 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
         type: 'testimonials',
         headline: 'What Clients Say',
         items: [
-          { quote: 'Wonderful experience from start to finish!', authorName: 'Happy Client', rating: 5 },
+          {
+            quote: 'Wonderful experience from start to finish!',
+            authorName: 'Happy Client',
+            rating: 5,
+          },
         ],
       },
     ],

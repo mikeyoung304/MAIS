@@ -20,11 +20,5 @@ interface FAQPageContentProps {
  * Wraps the FAQAccordion component for consistent page structure.
  */
 export function FAQPageContent({ faqItems, basePath, domainParam }: FAQPageContentProps) {
-  return (
-    <FAQAccordion
-      faqItems={faqItems}
-      basePath={basePath}
-      domainParam={domainParam}
-    />
-  );
+  return <FAQAccordion faqItems={faqItems} basePath={basePath} domainParam={domainParam} />;
 }

@@ -67,7 +67,7 @@ await prisma.$transaction(async (tx) => {
 ```typescript
 const addon = await prisma.addOn.findFirst({
   where: { id, tenantId },
-  include: { _count: { select: { bookingRefs: true } } }
+  include: { _count: { select: { bookingRefs: true } } },
 });
 
 const hasBookings = addon._count.bookingRefs > 0;
@@ -208,15 +208,15 @@ return { status: 400, body: { error: 'Something went wrong' } };
 
 ## File Locations
 
-| Strategy | File | Lines |
-|----------|------|-------|
-| Advisory Locks | `server/src/adapters/prisma/booking.repository.ts` | 14-160 |
-| Trust Tiers | `server/src/agent/tools/types.ts` | 77-95 |
-| Injection Patterns | `server/src/agent/tools/types.ts` | 106-154 |
-| Sanitization | `server/src/agent/tools/types.ts` | 175-182 |
-| Booking Check | `server/src/agent/tools/write-tools.ts` | 294-352 |
-| Error Codes | `server/src/lib/errors.ts` | (all domain errors) |
-| Dynamic Tier | `server/src/agent/tools/write-tools.ts` | 1140-1178 |
+| Strategy           | File                                               | Lines               |
+| ------------------ | -------------------------------------------------- | ------------------- |
+| Advisory Locks     | `server/src/adapters/prisma/booking.repository.ts` | 14-160              |
+| Trust Tiers        | `server/src/agent/tools/types.ts`                  | 77-95               |
+| Injection Patterns | `server/src/agent/tools/types.ts`                  | 106-154             |
+| Sanitization       | `server/src/agent/tools/types.ts`                  | 175-182             |
+| Booking Check      | `server/src/agent/tools/write-tools.ts`            | 294-352             |
+| Error Codes        | `server/src/lib/errors.ts`                         | (all domain errors) |
+| Dynamic Tier       | `server/src/agent/tools/write-tools.ts`            | 1140-1178           |
 
 ---
 

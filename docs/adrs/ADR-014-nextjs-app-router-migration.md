@@ -10,12 +10,14 @@
 ## Context
 
 MAIS is a multi-tenant business growth platform. Each tenant (photographer, coach, consultant) needs a public-facing website/storefront for:
+
 - SEO discoverability (Google indexing)
 - Custom domain support (janephotography.com → MAIS tenant)
 - Booking flow with Stripe integration
 - Admin dashboard for managing packages, branding, scheduling
 
 The existing Vite SPA client (`/client`) was client-side rendered, which:
+
 - Provided no SEO value (empty HTML for crawlers)
 - Required complex custom domain routing hacks
 - Made SSR/ISR impossible without major refactoring
@@ -28,14 +30,14 @@ The existing Vite SPA client (`/client`) was client-side rendered, which:
 
 ### Key Architectural Choices
 
-| Decision | Choice | Alternatives Considered |
-|----------|--------|------------------------|
-| Meta-framework | Next.js 14 App Router | Remix, Astro, SvelteKit |
-| Rendering Strategy | ISR with 60s revalidation | SSR, SSG, CSR |
-| Authentication | NextAuth.js v5 (Auth.js) | Custom JWT, Clerk, Auth0 |
-| API Integration | Keep Express backend, call via ts-rest | Migrate to Next.js API routes |
-| Deployment | Vercel (Pro for custom domains) | Self-hosted, Cloudflare |
-| Styling | Tailwind CSS (existing tokens) | CSS Modules, styled-components |
+| Decision           | Choice                                 | Alternatives Considered        |
+| ------------------ | -------------------------------------- | ------------------------------ |
+| Meta-framework     | Next.js 14 App Router                  | Remix, Astro, SvelteKit        |
+| Rendering Strategy | ISR with 60s revalidation              | SSR, SSG, CSR                  |
+| Authentication     | NextAuth.js v5 (Auth.js)               | Custom JWT, Clerk, Auth0       |
+| API Integration    | Keep Express backend, call via ts-rest | Migrate to Next.js API routes  |
+| Deployment         | Vercel (Pro for custom domains)        | Self-hosted, Cloudflare        |
+| Styling            | Tailwind CSS (existing tokens)         | CSS Modules, styled-components |
 
 ### Why Next.js App Router
 
@@ -130,7 +132,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: data.tenantId,
           email: data.email,
           role: data.role,
-          backendToken: data.token,  // Server-side only
+          backendToken: data.token, // Server-side only
         };
       },
     }),
@@ -177,17 +179,18 @@ The tenant storefront uses a modular section-based architecture for dynamic page
 
 **7 Section Components** (`apps/web/src/components/tenant/sections/`):
 
-| Component | Purpose |
-|-----------|---------|
-| `HeroSection` | Primary hero with headline, subheadline, and CTA |
-| `TextSection` | Rich text content blocks |
-| `GallerySection` | Image gallery with optional Instagram link |
-| `TestimonialsSection` | Customer reviews with ratings |
-| `FAQSection` | Collapsible FAQ items |
-| `ContactSection` | Contact form and business info |
-| `CTASection` | Call-to-action blocks with buttons |
+| Component             | Purpose                                          |
+| --------------------- | ------------------------------------------------ |
+| `HeroSection`         | Primary hero with headline, subheadline, and CTA |
+| `TextSection`         | Rich text content blocks                         |
+| `GallerySection`      | Image gallery with optional Instagram link       |
+| `TestimonialsSection` | Customer reviews with ratings                    |
+| `FAQSection`          | Collapsible FAQ items                            |
+| `ContactSection`      | Contact form and business info                   |
+| `CTASection`          | Call-to-action blocks with buttons               |
 
 **SectionRenderer** (`apps/web/src/components/tenant/SectionRenderer.tsx`):
+
 - Renders an array of sections based on discriminated union types
 - Uses exhaustive switch checking for type safety
 - Passes tenant context and basePath to each section
@@ -211,10 +214,10 @@ switch (section.type) {
 
 The tenant storefront supports two access patterns via middleware routing:
 
-| Pattern | Route Structure | Use Case |
-|---------|----------------|----------|
-| **Slug Routes** | `/t/[slug]/*` | Standard access via MAIS domain |
-| **Domain Routes** | `/t/_domain/*` | Custom domain access |
+| Pattern           | Route Structure | Use Case                        |
+| ----------------- | --------------- | ------------------------------- |
+| **Slug Routes**   | `/t/[slug]/*`   | Standard access via MAIS domain |
+| **Domain Routes** | `/t/_domain/*`  | Custom domain access            |
 
 **Middleware Behavior** (`apps/web/src/middleware.ts`):
 
@@ -229,11 +232,13 @@ if (!isKnownDomain) {
 ```
 
 **Route Parity**: Both route structures mirror each other exactly:
+
 - `[slug]/(site)/` and `_domain/` contain identical page sets
 - Same components used via shared imports
 - ISR configuration (60s) applied consistently
 
 **Supported Routes** (complete as of implementation):
+
 - Home (`/`)
 - About (`/about`)
 - Services (`/services`)
@@ -273,14 +278,14 @@ if (!isKnownDomain) {
 
 ## Migration Phases
 
-| Phase | Scope | Duration | Status |
-|-------|-------|----------|--------|
-| 1 | Next.js Foundation | Week 1-2 | ✅ Complete |
-| 2 | Tenant Landing Page | Week 3 | ✅ Complete |
-| 3 | Component Extraction | Week 4 | ✅ Complete |
-| 4 | Admin Migration | Week 5 | ✅ Complete |
-| 5 | Booking Flow | Week 6 | ✅ Complete |
-| 6 | Custom Domains + Polish | Week 7-8 | ✅ Complete |
+| Phase | Scope                   | Duration | Status      |
+| ----- | ----------------------- | -------- | ----------- |
+| 1     | Next.js Foundation      | Week 1-2 | ✅ Complete |
+| 2     | Tenant Landing Page     | Week 3   | ✅ Complete |
+| 3     | Component Extraction    | Week 4   | ✅ Complete |
+| 4     | Admin Migration         | Week 5   | ✅ Complete |
+| 5     | Booking Flow            | Week 6   | ✅ Complete |
+| 6     | Custom Domains + Polish | Week 7-8 | ✅ Complete |
 
 ---
 

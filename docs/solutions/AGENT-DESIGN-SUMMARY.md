@@ -25,12 +25,14 @@ The system captures **4 key lessons**:
 ### For Quick Decisions (5-10 minutes)
 
 **Start here:**
+
 - **[Agent Design Quick Checklist](./AGENT-DESIGN-QUICK-CHECKLIST.md)** - Print & pin
 - **[Agent Tool Design Decision Tree](./AGENT-TOOL-DESIGN-DECISION-TREE.md)** - "Should I build this tool?"
 
 ### For Deep Dives (1-2 hours)
 
 **Comprehensive guide:**
+
 - **[Agent Design Prevention Strategies](./AGENT-DESIGN-PREVENTION-STRATEGIES.md)** - Full playbook
   - Security prevention (tenant isolation, injection, approval)
   - UX prevention (confirmation fatigue, onboarding, error handling)
@@ -42,6 +44,7 @@ The system captures **4 key lessons**:
 ### For Reference
 
 **Real examples:**
+
 - **[MAIS Business Advisor System Plan](../../plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md)** - Full 3-agent system design with all sections
 - **[System Prompt Draft](../../plans/AGENT-SYSTEM-PROMPT-DRAFT.md)** - Example agent persona & rules
 - **[Capability Map](../../plans/AGENT-CAPABILITY-MAP.md)** - Tool design + trust tiers + action parity
@@ -49,6 +52,7 @@ The system captures **4 key lessons**:
 ### For Learning
 
 **Pattern examples in code:**
+
 - Branded types: `docs/solutions/AGENT-DESIGN-PREVENTION-STRATEGIES.md` → "Implementation Patterns"
 - State machines: Same document → "Pattern: Proposal State Machine"
 - Error types: Same document → "Discriminated Union Errors"
@@ -62,11 +66,11 @@ The system captures **4 key lessons**:
 
 Every tool has one:
 
-| Tier | Behavior | Confirmation | Examples |
-|------|----------|--------------|----------|
-| **T1** | Execute immediately | None | Blackouts, branding, file uploads |
-| **T2** | "I'll update X. Say 'wait'" | Soft (proceeds after next message) | Package pricing, landing page edits |
-| **T3** | "Confirm? (yes/no)" | Hard (explicit confirmation required) | Cancellations, refunds, deletes |
+| Tier   | Behavior                    | Confirmation                          | Examples                            |
+| ------ | --------------------------- | ------------------------------------- | ----------------------------------- |
+| **T1** | Execute immediately         | None                                  | Blackouts, branding, file uploads   |
+| **T2** | "I'll update X. Say 'wait'" | Soft (proceeds after next message)    | Package pricing, landing page edits |
+| **T3** | "Confirm? (yes/no)"         | Hard (explicit confirmation required) | Cancellations, refunds, deletes     |
 
 ### Tool Categories
 
@@ -125,12 +129,14 @@ T1 operations auto-confirm. T2 auto-confirm after next message. T3 require expli
 ### 1. Security Prevention
 
 **What Can Go Wrong:**
+
 - Multi-tenant data leakage
 - System prompt injection
 - Approval bypass
 - Sensitive data exposure
 
 **How to Prevent:**
+
 - [Security Prevention Checklist](./AGENT-DESIGN-PREVENTION-STRATEGIES.md#security-prevention-checklist)
 - Tenant isolation at tool level
 - User data sanitization
@@ -138,18 +144,21 @@ T1 operations auto-confirm. T2 auto-confirm after next message. T3 require expli
 - Audit trail for all mutations
 
 **Key Files:**
+
 - `AGENT-DESIGN-PREVENTION-STRATEGIES.md` → "Security Prevention Checklist"
 - `AGENT-DESIGN-QUICK-CHECKLIST.md` → "Security Pitfalls"
 
 ### 2. UX Prevention
 
 **What Can Go Wrong:**
+
 - Confirmation on every operation → fatigue
 - One-size-fits-all onboarding → friction
 - Unclear error messages → confusion
 - No undo for operations → user distrust
 
 **How to Prevent:**
+
 - [UX Prevention Checklist](./AGENT-DESIGN-PREVENTION-STRATEGIES.md#ux-prevention-checklist)
 - Trust tiers (T1/T2/T3) to vary confirmation
 - Onboarding branching (new vs returning)
@@ -157,18 +166,21 @@ T1 operations auto-confirm. T2 auto-confirm after next message. T3 require expli
 - Reversible operations by default
 
 **Key Files:**
+
 - `AGENT-DESIGN-PREVENTION-STRATEGIES.md` → "UX Prevention Checklist"
 - `AGENT-DESIGN-QUICK-CHECKLIST.md` → "UX Pitfalls"
 
 ### 3. Simplicity Prevention
 
 **What Can Go Wrong:**
+
 - Tool explosion (20+ tools)
 - Complex refresh logic (stale context)
 - Business logic in tools (hard to test)
 - Trying to build everything in MVP (scope creep)
 
 **How to Prevent:**
+
 - [Simplicity Prevention Checklist](./AGENT-DESIGN-PREVENTION-STRATEGIES.md#simplicity-prevention-checklist)
 - Keep tool count < 20
 - Single static context injection
@@ -176,18 +188,21 @@ T1 operations auto-confirm. T2 auto-confirm after next message. T3 require expli
 - Aggressive feature deferral
 
 **Key Files:**
+
 - `AGENT-DESIGN-PREVENTION-STRATEGIES.md` → "Simplicity Prevention Checklist"
 - `AGENT-TOOL-DESIGN-DECISION-TREE.md` → "Deferral decision tree"
 
 ### 4. Architecture Prevention
 
 **What Can Go Wrong:**
+
 - Tools that encode workflows (can't test)
 - No action parity (agent limited vs UI)
 - Complex tool dependencies
 - Stale context causing wrong decisions
 
 **How to Prevent:**
+
 - [Architecture Prevention Checklist](./AGENT-DESIGN-PREVENTION-STRATEGIES.md#architecture-prevention-checklist)
 - Tools are primitives (simple, dumb operations)
 - Verify action parity (agent can do everything UI can)
@@ -195,6 +210,7 @@ T1 operations auto-confirm. T2 auto-confirm after next message. T3 require expli
 - Static context + tools for refresh
 
 **Key Files:**
+
 - `AGENT-DESIGN-PREVENTION-STRATEGIES.md` → "Architecture Prevention Checklist"
 - `AGENT-TOOL-DESIGN-DECISION-TREE.md` → "Action parity verification"
 
@@ -354,6 +370,7 @@ The 3-agent system (Onboarding Interviewer, Builder Pipeline, Custom Advisor) de
 **See:** `plans/MAIS-BUSINESS-ADVISOR-SYSTEM.md`
 
 Key sections:
+
 - **Security Model:** Tenant isolation, audit trails
 - **Trust Tiers:** How different operations handle approvals
 - **Tool Design:** 18 tools (down from 43 after simplification)
@@ -362,6 +379,7 @@ Key sections:
 - **Implementation Patterns:** Real code examples
 
 **Lessons from this design:**
+
 - 58% tool reduction through combining similar operations
 - 68% system prompt reduction through focus
 - 100% tenant isolation enforcement
@@ -372,6 +390,7 @@ Key sections:
 ## When to Get Help
 
 ### Escalate to Security Lead If:
+
 - Multi-tenant isolation concerns
 - Sensitive data handling
 - Approval/authorization changes
@@ -379,6 +398,7 @@ Key sections:
 - External API integration
 
 ### Escalate to Architecture Lead If:
+
 - Tool design questions
 - System design concerns
 - Complexity assessment
@@ -386,12 +406,14 @@ Key sections:
 - Database schema changes
 
 ### Escalate to Product Lead If:
+
 - Feature deferral decisions
 - User research/validation
 - Roadmap prioritization
 - MVP scope questions
 
 ### Escalate to Implementation Lead If:
+
 - Feasibility assessment
 - Technical design review
 - Timeline estimation
@@ -403,24 +425,24 @@ Key sections:
 
 After launching an agent:
 
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| Security incidents | 0 | Audit log review |
-| Confirmation fatigue | <2 per session avg | Count T3 confirmations |
-| Error rate | <5% | Tool call success rate |
-| Avg response time | <3s | Monitor latency |
-| Time to key action | <10 min (new user) | Track from first message |
-| Completion rate | >70% | Users creating artifacts |
-| Audit trail coverage | 100% | All mutations logged |
-| Test coverage | 80%+ | Unit/integration/E2E tests |
+| Metric               | Target             | How to Measure             |
+| -------------------- | ------------------ | -------------------------- |
+| Security incidents   | 0                  | Audit log review           |
+| Confirmation fatigue | <2 per session avg | Count T3 confirmations     |
+| Error rate           | <5%                | Tool call success rate     |
+| Avg response time    | <3s                | Monitor latency            |
+| Time to key action   | <10 min (new user) | Track from first message   |
+| Completion rate      | >70%               | Users creating artifacts   |
+| Audit trail coverage | 100%               | All mutations logged       |
+| Test coverage        | 80%+               | Unit/integration/E2E tests |
 
 ---
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-12-26 | Initial release - foundation from MAIS Business Advisor System design |
+| Version | Date       | Changes                                                               |
+| ------- | ---------- | --------------------------------------------------------------------- |
+| 1.0     | 2025-12-26 | Initial release - foundation from MAIS Business Advisor System design |
 
 ---
 

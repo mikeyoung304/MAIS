@@ -2,11 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, AlertCircle } from 'lucide-react';
-import {
-  getTenantByDomain,
-  getTenantPackageBySlug,
-  TenantNotFoundError,
-} from '@/lib/tenant';
+import { getTenantByDomain, getTenantPackageBySlug, TenantNotFoundError } from '@/lib/tenant';
 import { DateBookingWizard } from '@/components/booking/DateBookingWizard';
 
 interface BookingPageProps {
@@ -70,10 +66,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function DomainBookingPage({
-  params,
-  searchParams,
-}: BookingPageProps) {
+export default async function DomainBookingPage({ params, searchParams }: BookingPageProps) {
   const { packageSlug } = await params;
   const { domain } = await searchParams;
 
@@ -100,17 +93,11 @@ export default async function DomainBookingPage({
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
-              Package Not Found
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Package Not Found</h1>
             <p className="text-neutral-600 mb-6">
-              The package you&apos;re looking for doesn&apos;t exist or has been
-              removed.
+              The package you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
-            <Link
-              href="/"
-              className="inline-flex items-center text-macon-orange hover:underline"
-            >
+            <Link href="/" className="inline-flex items-center text-macon-orange hover:underline">
               <ChevronLeft className="w-4 h-4 mr-1" />
               Back to {tenant.name}
             </Link>
@@ -127,16 +114,11 @@ export default async function DomainBookingPage({
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
-              Package Unavailable
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Package Unavailable</h1>
             <p className="text-neutral-600 mb-6">
               This package is currently not available for booking.
             </p>
-            <Link
-              href="/"
-              className="inline-flex items-center text-macon-orange hover:underline"
-            >
+            <Link href="/" className="inline-flex items-center text-macon-orange hover:underline">
               <ChevronLeft className="w-4 h-4 mr-1" />
               View Available Packages
             </Link>
@@ -153,12 +135,9 @@ export default async function DomainBookingPage({
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
-              Different Booking Type
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Different Booking Type</h1>
             <p className="text-neutral-600 mb-6">
-              This package requires appointment scheduling. Please use the
-              appointment booking flow.
+              This package requires appointment scheduling. Please use the appointment booking flow.
             </p>
             <Link
               href="/book"

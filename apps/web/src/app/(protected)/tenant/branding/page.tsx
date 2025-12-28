@@ -127,9 +127,7 @@ export default function TenantBrandingPage() {
       {/* Header */}
       <div>
         <h1 className="font-serif text-3xl font-bold text-text-primary">Branding</h1>
-        <p className="mt-2 text-text-muted">
-          Customize colors and fonts for your booking widget
-        </p>
+        <p className="mt-2 text-text-muted">Customize colors and fonts for your booking widget</p>
       </div>
 
       {/* Success Message */}
@@ -332,20 +330,14 @@ export default function TenantBrandingPage() {
               </div>
 
               {/* Preview Content */}
-              <div
-                className="rounded-lg p-4"
-                style={{ backgroundColor: form.secondaryColor }}
-              >
+              <div className="rounded-lg p-4" style={{ backgroundColor: form.secondaryColor }}>
                 <h3
                   className="mb-2 text-lg font-semibold"
                   style={{ color: form.primaryColor, fontFamily: form.fontFamily }}
                 >
                   Sample Package
                 </h3>
-                <p
-                  className="mb-4 text-sm"
-                  style={{ fontFamily: form.fontFamily }}
-                >
+                <p className="mb-4 text-sm" style={{ fontFamily: form.fontFamily }}>
                   This is how your content will appear with your brand settings.
                 </p>
                 <div

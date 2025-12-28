@@ -153,6 +153,7 @@ grep "if (!adminEmail)" server/prisma/seeds/platform.ts
 **Who:** Tech lead + 1-2 senior developers
 
 **What:**
+
 1. Read TYPESCRIPT-BUILD-AND-SEED-DRIFT-PREVENTION.md (Part 1: Problem Analysis)
 2. Discuss impact on team and deployment process
 3. Decide on implementation priority (see matrix below)
@@ -161,6 +162,7 @@ grep "if (!adminEmail)" server/prisma/seeds/platform.ts
 **Deliverable:** Implementation plan + owner assignments
 
 **Time allocation:**
+
 - Read problem analysis: 15 min
 - Discussion: 15-20 min
 - Planning: 10 min
@@ -172,12 +174,14 @@ grep "if (!adminEmail)" server/prisma/seeds/platform.ts
 **Who:** Entire development team
 
 **What:**
+
 1. Tech lead presents problem overview (10 min)
 2. Demo: Show how errors blocked deployment (10 min)
 3. Workshop: Practice fixes on sample code (20 min)
 4. Q&A: Answer team questions (20 min)
 
 **Materials:**
+
 - TYPESCRIPT-BUILD-QUICK-REFERENCE.md (share screen)
 - Sample code with errors
 - Live demo of TypeScript errors
@@ -191,12 +195,14 @@ grep "if (!adminEmail)" server/prisma/seeds/platform.ts
 **Who:** DevOps engineer + tech lead
 
 **What:**
+
 1. Set up pre-commit hooks (.husky/pre-commit)
 2. Update GitHub Actions workflow (schema consistency check)
 3. Test CI/CD pipeline with schema change
 4. Add Code Review Checklist to PR template
 
 **Commands:**
+
 ```bash
 # 1. Create/update pre-commit hook
 cat > .husky/pre-commit << 'EOF'
@@ -229,12 +235,14 @@ echo "Use TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md for review" >> .github/pull_
 **Who:** QA + developers
 
 **What:**
+
 1. Create test PR with intentional schema property mismatch
 2. Verify pre-commit hook catches it
 3. Verify CI/CD pipeline catches it
 4. Verify code review catches it
 
 **Test scenarios:**
+
 ```bash
 # Scenario 1: Schema property mismatch
 # 1. Edit schema: rename 'heroImage' to 'heroImageUrl'
@@ -261,12 +269,14 @@ echo "Use TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md for review" >> .github/pull_
 **Who:** Tech lead + documentation owner
 
 **What:**
+
 1. Link prevention documents in CLAUDE.md
 2. Add to developer onboarding checklist
 3. Share completion update with team
 4. Monitor for compliance in future PRs
 
 **Updates:**
+
 ```markdown
 # In CLAUDE.md - Prevention Strategies section
 
@@ -275,18 +285,22 @@ echo "Use TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md for review" >> .github/pull_
 To prevent TypeScript build errors and seed configuration drift:
 
 **Quick Reference (5-10 minutes):**
+
 - Read: docs/solutions/TYPESCRIPT-BUILD-QUICK-REFERENCE.md
 - Use during coding and code review
 
 **Code Review (10-15 minutes):**
+
 - Use: docs/solutions/TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md
 - Required for PRs with schema or seed changes
 
 **Full Details (30-40 minutes):**
+
 - Read: docs/solutions/TYPESCRIPT-BUILD-AND-SEED-DRIFT-PREVENTION.md
 - For understanding prevention mechanisms and implementation
 
 **Verification:**
+
 - Run: ./scripts/verify-typescript-prevention.sh
 - Confirms all prevention strategies in place
 ```
@@ -297,17 +311,17 @@ To prevent TypeScript build errors and seed configuration drift:
 
 ## Implementation Priority Matrix
 
-| Item | Effort | Impact | Timeline | Owner |
-|------|--------|--------|----------|-------|
-| Share Quick Reference | Low | High | Day 1 | Tech Lead |
-| Add Code Review Checklist | Low | High | Day 1 | Tech Lead |
-| Pre-commit hook | Low | High | Day 3 | DevOps |
-| Seed validation (platform.ts) | Done | High | - | - |
-| CI/CD schema check | Medium | High | Day 3 | DevOps |
-| Seed unit tests | Medium | Medium | Day 4 | Developer |
-| Runtime property validation | Low | Low | Day 5 | Developer |
-| Team training | Low | High | Day 2 | Tech Lead |
-| CLAUDE.md updates | Low | Medium | Day 5 | Tech Lead |
+| Item                          | Effort | Impact | Timeline | Owner     |
+| ----------------------------- | ------ | ------ | -------- | --------- |
+| Share Quick Reference         | Low    | High   | Day 1    | Tech Lead |
+| Add Code Review Checklist     | Low    | High   | Day 1    | Tech Lead |
+| Pre-commit hook               | Low    | High   | Day 3    | DevOps    |
+| Seed validation (platform.ts) | Done   | High   | -        | -         |
+| CI/CD schema check            | Medium | High   | Day 3    | DevOps    |
+| Seed unit tests               | Medium | Medium | Day 4    | Developer |
+| Runtime property validation   | Low    | Low    | Day 5    | Developer |
+| Team training                 | Low    | High   | Day 2    | Tech Lead |
+| CLAUDE.md updates             | Low    | Medium | Day 5    | Tech Lead |
 
 ---
 
@@ -316,12 +330,14 @@ To prevent TypeScript build errors and seed configuration drift:
 ### Developers
 
 **Must do:**
+
 - [ ] Read TYPESCRIPT-BUILD-QUICK-REFERENCE.md
 - [ ] Follow schema change workflow
 - [ ] Run pre-commit checks before committing
 - [ ] Follow code review checklist items
 
 **Should do:**
+
 - [ ] Read full prevention strategy for understanding
 - [ ] Suggest improvements to prevention mechanisms
 - [ ] Create unit tests for new patterns
@@ -329,11 +345,13 @@ To prevent TypeScript build errors and seed configuration drift:
 ### Code Reviewers
 
 **Must do:**
+
 - [ ] Use TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md for schema/seed PRs
 - [ ] Request changes for red flag items
 - [ ] Verify CI/CD checks pass
 
 **Should do:**
+
 - [ ] Copy example review comments from checklist
 - [ ] Train other reviewers on patterns
 - [ ] Report recurring issues
@@ -341,11 +359,13 @@ To prevent TypeScript build errors and seed configuration drift:
 ### Tech Lead
 
 **Must do:**
+
 - [ ] Set up prevention mechanisms (Days 1-3)
 - [ ] Train team (Day 2)
 - [ ] Enforce prevention policies in code review
 
 **Should do:**
+
 - [ ] Monitor metrics (errors detected, prevented deployments)
 - [ ] Update documents with new patterns
 - [ ] Conduct monthly reviews of prevention effectiveness
@@ -353,11 +373,13 @@ To prevent TypeScript build errors and seed configuration drift:
 ### DevOps
 
 **Must do:**
+
 - [ ] Implement pre-commit hooks
 - [ ] Implement CI/CD schema checks
 - [ ] Verify tools integration
 
 **Should do:**
+
 - [ ] Monitor CI/CD metrics
 - [ ] Optimize hook/CI performance
 - [ ] Document troubleshooting steps
@@ -391,6 +413,7 @@ To prevent TypeScript build errors and seed configuration drift:
 ### Q: Do I need to do all this right now?
 
 **A:** No. Minimum viable implementation:
+
 1. Share Quick Reference with team (10 minutes)
 2. Add Code Review Checklist to PR template (5 minutes)
 3. Run verification script (5 minutes)
@@ -408,6 +431,7 @@ Full implementation takes 2-3 days but can be phased.
 ### Q: How long do developers need to maintain these prevention strategies?
 
 **A:** Ongoing, but decreases over time:
+
 - Week 1: 15-20 minutes per commit (learning curve)
 - Week 2-3: 5-10 minutes per commit
 - Month 2+: 2-3 minutes per commit (automatic)
@@ -490,6 +514,7 @@ You'll know implementation is successful when:
 ### Reporting Issues
 
 If you find:
+
 - A missing pattern → Add to Quick Reference
 - A tool not working → Update pre-commit hook or CI/CD
 - A new error type → Document and add to prevention guides
@@ -498,6 +523,7 @@ If you find:
 ### Continuous Improvement
 
 Every month:
+
 - [ ] Review metrics (see Metrics to Track section)
 - [ ] Update guides with new patterns
 - [ ] Evaluate prevention mechanism effectiveness
@@ -507,16 +533,16 @@ Every month:
 
 ## Files & Locations Summary
 
-| Type | File | Purpose |
-|------|------|---------|
-| Strategy | TYPESCRIPT-BUILD-AND-SEED-DRIFT-PREVENTION.md | Full details |
-| Reference | TYPESCRIPT-BUILD-QUICK-REFERENCE.md | Quick lookup |
-| Review | TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md | PR reviews |
-| Index | TYPESCRIPT-AND-SEED-PREVENTION-INDEX.md | Navigation |
-| Script | scripts/verify-typescript-prevention.sh | Verification |
-| Config | .husky/pre-commit | Pre-commit hook |
-| CI/CD | .github/workflows/validate.yml | GitHub Actions |
-| Docs | CLAUDE.md | Project guidelines |
+| Type      | File                                          | Purpose            |
+| --------- | --------------------------------------------- | ------------------ |
+| Strategy  | TYPESCRIPT-BUILD-AND-SEED-DRIFT-PREVENTION.md | Full details       |
+| Reference | TYPESCRIPT-BUILD-QUICK-REFERENCE.md           | Quick lookup       |
+| Review    | TYPESCRIPT-BUILD-CODE-REVIEW-CHECKLIST.md     | PR reviews         |
+| Index     | TYPESCRIPT-AND-SEED-PREVENTION-INDEX.md       | Navigation         |
+| Script    | scripts/verify-typescript-prevention.sh       | Verification       |
+| Config    | .husky/pre-commit                             | Pre-commit hook    |
+| CI/CD     | .github/workflows/validate.yml                | GitHub Actions     |
+| Docs      | CLAUDE.md                                     | Project guidelines |
 
 ---
 
@@ -536,4 +562,3 @@ These prevention strategies directly address the TypeScript build errors and see
 The key principle: **Catch errors as early as possible** (in development → pre-commit → CI/CD → code review).
 
 For questions or implementation support, reference the specific prevention documents listed above.
-

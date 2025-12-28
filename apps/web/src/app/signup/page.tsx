@@ -9,15 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  AlertCircle,
-  Loader2,
-  Building2,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { AlertCircle, Loader2, Building2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -145,9 +137,7 @@ function SignupForm() {
     <Card>
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
-        <CardDescription>
-          Start growing your business with HANDLED
-        </CardDescription>
+        <CardDescription>Start growing your business with HANDLED</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -208,9 +198,7 @@ function SignupForm() {
                 disabled={isLoading}
               />
             </div>
-            {fieldErrors.email && (
-              <p className="text-sm text-red-500">{fieldErrors.email}</p>
-            )}
+            {fieldErrors.email && <p className="text-sm text-red-500">{fieldErrors.email}</p>}
           </div>
 
           {/* Password */}
@@ -244,9 +232,7 @@ function SignupForm() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {fieldErrors.password && (
-              <p className="text-sm text-red-500">{fieldErrors.password}</p>
-            )}
+            {fieldErrors.password && <p className="text-sm text-red-500">{fieldErrors.password}</p>}
           </div>
 
           {/* Confirm Password */}
@@ -285,12 +271,7 @@ function SignupForm() {
             )}
           </div>
 
-          <Button
-            type="submit"
-            variant="sage"
-            className="w-full"
-            disabled={isLoading}
-          >
+          <Button type="submit" variant="sage" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

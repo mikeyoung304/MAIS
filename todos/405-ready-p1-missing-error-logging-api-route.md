@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "405"
+issue_id: '405'
 tags:
   - code-review
   - security
@@ -17,6 +17,7 @@ dependencies: []
 The Next.js API route at `/api/tenant/landing-page` catches errors but silently returns 500 without logging. This violates the codebase convention of using `logger` for all error handling.
 
 **Why This Matters:**
+
 - Errors are invisible in production monitoring
 - No audit trail for debugging
 - Inconsistent with CLAUDE.md: "Use `logger`, never `console.log`"
@@ -26,6 +27,7 @@ The Next.js API route at `/api/tenant/landing-page` catches errors but silently 
 **Location:** `apps/web/src/app/api/tenant/landing-page/route.ts`
 
 **Evidence (lines 46-51 and 92-97):**
+
 ```typescript
 } catch (error) {
   return NextResponse.json(
@@ -36,6 +38,7 @@ The Next.js API route at `/api/tenant/landing-page` catches errors but silently 
 ```
 
 **Expected pattern** (from `apps/web/src/app/t/[slug]/(site)/error.tsx`):
+
 ```typescript
 import { logger } from '@/lib/logger';
 logger.error('Storefront error boundary caught error', error);
@@ -62,11 +65,13 @@ import { logger } from '@/lib/logger';
 ```
 
 **Pros:**
+
 - Consistent with codebase patterns
 - Enables production monitoring
 - Minimal change
 
 **Cons:**
+
 - None
 
 **Effort:** Small
@@ -79,6 +84,7 @@ import { logger } from '@/lib/logger';
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/app/api/tenant/landing-page/route.ts`
 
 **Database Changes:** None
@@ -92,8 +98,8 @@ import { logger } from '@/lib/logger';
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                    |
+| ---------- | ------------------------ | -------------------------------------------- |
 | 2025-12-25 | Created from code review | Silent error handling found in new API route |
 
 ## Resources

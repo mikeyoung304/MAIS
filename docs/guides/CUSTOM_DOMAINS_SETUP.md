@@ -58,6 +58,7 @@ After DNS propagation (usually 5-30 minutes, max 48 hours), the tenant clicks "V
 Once verified, tenants add a CNAME or A record to point their domain to MAIS:
 
 **For CNAME (recommended for subdomains like `www.`):**
+
 ```
 Record Name:  www
 Record Type:  CNAME
@@ -65,6 +66,7 @@ Record Value: cname.maconaisolutions.com
 ```
 
 **For A record (for root/apex domains):**
+
 ```
 Record Name:  @
 Record Type:  A
@@ -81,6 +83,7 @@ Record Value: <Vercel IP address>
    - Vercel handles SSL certificates automatically
 
 2. **Via Vercel API (for automation):**
+
    ```bash
    curl -X POST "https://api.vercel.com/v10/projects/{projectId}/domains" \
      -H "Authorization: Bearer $VERCEL_TOKEN" \
@@ -111,6 +114,7 @@ VERCEL_PROJECT_ID=<your-project-id>
 ```
 GET /v1/public/tenants/by-domain/:domain
 ```
+
 Returns tenant public info if domain is verified and active.
 
 ### Tenant Admin Endpoints (Authenticated)
@@ -134,9 +138,7 @@ const isCustomDomain = !isInternalHost(hostname);
 
 if (isCustomDomain) {
   // Rewrite to internal route with domain in query
-  return NextResponse.rewrite(
-    new URL(`/t/_domain${pathname}?domain=${hostname}`, request.url)
-  );
+  return NextResponse.rewrite(new URL(`/t/_domain${pathname}?domain=${hostname}`, request.url));
 }
 ```
 

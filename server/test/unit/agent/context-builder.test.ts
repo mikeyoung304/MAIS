@@ -11,7 +11,9 @@ import {
 
 describe('Agent Context Builder', () => {
   describe('detectOnboardingState', () => {
-    const createContext = (overrides: Partial<AgentSessionContext['quickStats']> = {}): AgentSessionContext => ({
+    const createContext = (
+      overrides: Partial<AgentSessionContext['quickStats']> = {}
+    ): AgentSessionContext => ({
       tenantId: 'test-tenant-123',
       sessionId: 'test-session-456',
       businessName: 'Test Business',
@@ -59,7 +61,9 @@ describe('Agent Context Builder', () => {
   });
 
   describe('getHandledGreeting', () => {
-    const createContext = (overrides: Partial<AgentSessionContext['quickStats']> = {}): AgentSessionContext => ({
+    const createContext = (
+      overrides: Partial<AgentSessionContext['quickStats']> = {}
+    ): AgentSessionContext => ({
       tenantId: 'test-tenant-123',
       sessionId: 'test-session-456',
       businessName: 'Test Business',

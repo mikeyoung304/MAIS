@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "353"
+issue_id: '353'
 tags: [code-review, performance, react, memoization]
 dependencies: []
 ---
@@ -22,7 +22,8 @@ The `steps` array is recreated on every render, creating 4 new Step objects on e
 // Comment claims useMemo not needed, but this runs on EVERY state change
 const steps = STEP_LABELS.map((label, index) => ({
   label,
-  status: index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming',
+  status:
+    index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming',
 }));
 ```
 
@@ -31,16 +32,22 @@ const steps = STEP_LABELS.map((label, index) => ({
 ## Proposed Solutions
 
 ### Option A: Use useMemo with currentStepIndex dependency (Recommended)
+
 - **Pros:** Only recalculates when step changes
 - **Cons:** Adds memoization overhead
 - **Effort:** Small
 - **Risk:** Low
 
 ```typescript
-const steps = useMemo(() => STEP_LABELS.map((label, index) => ({
-  label,
-  status: index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming',
-})), [currentStepIndex]);
+const steps = useMemo(
+  () =>
+    STEP_LABELS.map((label, index) => ({
+      label,
+      status:
+        index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming',
+    })),
+  [currentStepIndex]
+);
 ```
 
 ## Recommended Action
@@ -61,8 +68,8 @@ Option A - Wrap in useMemo.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                        |
+| ---------- | ------------------------ | -------------------------------- |
 | 2024-12-24 | Created from code review | performance-oracle agent finding |
 
 ## Resources

@@ -143,10 +143,7 @@ describe('BookingService Integration Tests', () => {
       // Arrange: Create bookings for both tenants
       const factory = new BookingFactory();
 
-      const dates = [
-        new Date(Date.now() + 1 * 86400000),
-        new Date(Date.now() + 2 * 86400000),
-      ];
+      const dates = [new Date(Date.now() + 1 * 86400000), new Date(Date.now() + 2 * 86400000)];
 
       for (const date of dates) {
         // Create for A
@@ -214,12 +211,14 @@ describe('CatalogService Integration', () => {
 ```
 
 **Problems:**
+
 1. ❌ `new PrismaClient()` creates 10+ connections per test file
 2. ❌ No cleanup/disconnect - leaks connections
 3. ❌ Hardcoded slug `'test-package'` - duplicate key errors
 4. ❌ Not using setupCompleteIntegrationTest() - no isolation
 
 **Results when run with other tests:**
+
 - After 5-10 test files: Connection pool exhausted
 - After 20 test files: `FATAL: remaining connection slots reserved`
 - Tests hang indefinitely
@@ -605,7 +604,11 @@ describe('PackageService with Factories', () => {
     );
 
     // Link add-ons to package
-    const withAddOns = await service.attachAddOns(tenantId, pkg.id, addOns.map((a) => a.id));
+    const withAddOns = await service.attachAddOns(
+      tenantId,
+      pkg.id,
+      addOns.map((a) => a.id)
+    );
 
     expect(withAddOns.addOns).toHaveLength(2);
   });

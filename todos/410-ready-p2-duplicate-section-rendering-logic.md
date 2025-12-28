@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "410"
+issue_id: '410'
 tags:
   - code-review
   - code-quality
@@ -17,6 +17,7 @@ dependencies: []
 `TenantLandingPage.tsx` contains ~200 lines of inline section implementations that duplicate the new section components in `sections/*.tsx`. This creates maintenance burden and potential for drift.
 
 **Why This Matters:**
+
 - Double the code to maintain
 - Changes to one location may not be reflected in the other
 - Inconsistent behavior between section components and inline sections
@@ -27,6 +28,7 @@ dependencies: []
 **Location:** `apps/web/src/components/tenant/TenantLandingPage.tsx`
 
 **Evidence:**
+
 - Lines 83-121: Inline Hero section (duplicates `HeroSection.tsx`)
 - Lines 218-249: Inline About section (duplicates `TextSection.tsx`)
 - Lines 251-290: Inline Testimonials section (duplicates `TestimonialsSection.tsx`)
@@ -63,11 +65,13 @@ export function TenantLandingPage({ tenant, packages, segments }: Props) {
 ```
 
 **Pros:**
+
 - Eliminates ~200 lines of duplication
 - Single source of truth for section rendering
 - Easier maintenance
 
 **Cons:**
+
 - Refactor required
 - May need to extract packages logic
 
@@ -79,10 +83,12 @@ export function TenantLandingPage({ tenant, packages, segments }: Props) {
 Mark inline sections as deprecated in JSDoc.
 
 **Pros:**
+
 - No immediate code changes
 - Documents intent
 
 **Cons:**
+
 - Duplication persists
 - Technical debt accumulates
 
@@ -92,6 +98,7 @@ Mark inline sections as deprecated in JSDoc.
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/components/tenant/TenantLandingPage.tsx`
 
 ## Acceptance Criteria
@@ -104,6 +111,6 @@ Mark inline sections as deprecated in JSDoc.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                          |
+| ---------- | ------------------------ | -------------------------------------------------- |
 | 2025-12-25 | Created from code review | Major duplication between new and legacy rendering |

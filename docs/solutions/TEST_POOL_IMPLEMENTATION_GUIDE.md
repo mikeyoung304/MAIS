@@ -17,6 +17,7 @@ estimated_effort: 2 hours
 This guide walks through implementing the singleton PrismaClient pattern for test suites facing connection pool exhaustion with Supabase or other pooled databases.
 
 **Prerequisites:**
+
 - Vitest (or Jest) test runner
 - Prisma ORM
 - Supabase or similar pooled database
@@ -139,12 +140,12 @@ export default defineConfig({
 
 **Why these settings:**
 
-| Setting | Why |
-|---------|-----|
-| `singleThread: true` | Prevents 22 parallel threads × 1 client each = 22 connections |
+| Setting                  | Why                                                                      |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `singleThread: true`     | Prevents 22 parallel threads × 1 client each = 22 connections            |
 | `fileParallelism: false` | One file at a time, old file's connections release before new one starts |
-| `testTimeout: 30000` | If test hangs on pool, fail after 30s instead of hanging forever |
-| `globalTeardown` | Cleanup hook ensures disconnection |
+| `testTimeout: 30000`     | If test hangs on pool, fail after 30s instead of hanging forever         |
+| `globalTeardown`         | Cleanup hook ensures disconnection                                       |
 
 ---
 
@@ -337,12 +338,10 @@ describe('Connection Pool Stress', () => {
   it('should handle 100 concurrent queries', async () => {
     const prisma = getTestPrisma();
 
-    const queries = Array.from({ length: 100 }, () =>
-      prisma.tenant.count().catch(() => null)
-    );
+    const queries = Array.from({ length: 100 }, () => prisma.tenant.count().catch(() => null));
 
     const results = await Promise.all(queries);
-    expect(results.every(r => r !== null)).toBe(true);
+    expect(results.every((r) => r !== null)).toBe(true);
   });
 });
 ```
@@ -455,13 +454,13 @@ Before declaring success:
 
 After implementation:
 
-| Metric | Before | After | Target |
-|--------|--------|-------|--------|
-| Test time | 20-30+ min (hanging) | ~12 min | < 15 min |
-| Pool connections | 22+ concurrent | 3 max | 1-3 |
-| Memory usage | 1.1GB | 50MB | < 100MB |
-| Pool errors | Frequent | 0 | 0 |
-| Test pass rate | 0% (hangs) | 99%+ | 100% |
+| Metric           | Before               | After   | Target   |
+| ---------------- | -------------------- | ------- | -------- |
+| Test time        | 20-30+ min (hanging) | ~12 min | < 15 min |
+| Pool connections | 22+ concurrent       | 3 max   | 1-3      |
+| Memory usage     | 1.1GB                | 50MB    | < 100MB  |
+| Pool errors      | Frequent             | 0       | 0        |
+| Test pass rate   | 0% (hangs)           | 99%+    | 100%     |
 
 ---
 
@@ -523,14 +522,14 @@ npm test
 
 ## Summary
 
-| Phase | Time | Actions | Files |
-|-------|------|---------|-------|
-| 1 | 20m | Create singleton helpers | 2 new files |
-| 2 | 15m | Configure vitest | 1 modified file |
-| 3 | 1h | Update all test files | 20+ modified files |
-| 4 | 10m | Add connection limits | .env file |
-| 5 | 15m | Test and measure | None |
-| 6 | as-needed | Troubleshoot | Various |
+| Phase | Time      | Actions                  | Files              |
+| ----- | --------- | ------------------------ | ------------------ |
+| 1     | 20m       | Create singleton helpers | 2 new files        |
+| 2     | 15m       | Configure vitest         | 1 modified file    |
+| 3     | 1h        | Update all test files    | 20+ modified files |
+| 4     | 10m       | Add connection limits    | .env file          |
+| 5     | 15m       | Test and measure         | None               |
+| 6     | as-needed | Troubleshoot             | Various            |
 
 **Total: 2 hours for full implementation**
 

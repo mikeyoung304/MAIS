@@ -21,7 +21,7 @@ Complete working examples for implementing the prevention strategies correctly.
 
 export const getPackageBySlug = {
   method: 'GET',
-  path: '/packages/:slug',  // ← Parameter is 'slug'
+  path: '/packages/:slug', // ← Parameter is 'slug'
   responses: {
     200: PackageSchema,
     404: ErrorSchema,
@@ -30,7 +30,7 @@ export const getPackageBySlug = {
 
 export const getPackageById = {
   method: 'GET',
-  path: '/packages/:id',  // ← Different endpoint, different parameter
+  path: '/packages/:id', // ← Different endpoint, different parameter
   responses: {
     200: PackageSchema,
     404: ErrorSchema,
@@ -44,7 +44,7 @@ export const getPackageById = {
 // client/src/pages/DateBookingPage.tsx
 
 interface DateBookingPageParams {
-  packageSlug: string;  // ← Explicit that this is a slug, not ID
+  packageSlug: string; // ← Explicit that this is a slug, not ID
 }
 
 export function DateBookingPage() {
@@ -62,7 +62,7 @@ export function DateBookingPage() {
       }
       // ✅ CORRECT: Parameter name matches API contract
       const response = await api.getPackageBySlug({
-        params: { slug: packageSlug },  // ← 'slug' matches contract
+        params: { slug: packageSlug }, // ← 'slug' matches contract
       });
       if (response.status !== 200 || !response.body) {
         throw new Error('Package not found');
@@ -89,10 +89,7 @@ export function DateBookingPage() {
  * @param packageSlug - User-friendly URL slug (not database ID)
  * @param bookingType - Type of booking (DATE or TIMESLOT)
  */
-export function buildBookingLink(
-  packageSlug: string,
-  bookingType: 'DATE' | 'TIMESLOT'
-): string {
+export function buildBookingLink(packageSlug: string, bookingType: 'DATE' | 'TIMESLOT'): string {
   // ✅ CLEAR: Parameter name makes it obvious this is a slug
   if (bookingType === 'DATE') {
     return `../book/date/${packageSlug}`;
@@ -105,7 +102,7 @@ export function buildBookingLink(
  */
 export async function getPackageBySlug(slug: string): Promise<PackageDto> {
   const response = await api.getPackageBySlug({
-    params: { slug },  // ✅ Parameter name matches API
+    params: { slug }, // ✅ Parameter name matches API
   });
   if (response.status !== 200) {
     throw new Error('Package not found');
@@ -125,18 +122,18 @@ export async function getPackageById(id: string): Promise<PackageDto> {
 ```typescript
 // ❌ WRONG - Parameter name doesn't match API
 interface DateBookingPageParams {
-  packageId: string;  // API expects 'slug'
+  packageId: string; // API expects 'slug'
 }
 
 const { packageId } = useParams<DateBookingPageParams>();
 const pkg = await api.getPackageBySlug({
-  params: { packageId },  // ← Type error! API expects 'slug'
+  params: { packageId }, // ← Type error! API expects 'slug'
 });
 
 // ❌ WRONG - Ambiguous naming
-const identifier = pkg.id;  // Is this a slug or database ID?
-const pkgId = pkg.slug;     // This is confusing - slug is NOT an ID
-const param = useParams();  // What is 'param'? No context
+const identifier = pkg.id; // Is this a slug or database ID?
+const pkgId = pkg.slug; // This is confusing - slug is NOT an ID
+const param = useParams(); // What is 'param'? No context
 ```
 
 ---
@@ -159,7 +156,7 @@ const param = useParams();  // What is 'param'? No context
 export class PackageNotAvailableError extends PackageError {
   constructor() {
     super(
-      'The requested package is not available for booking',  // Generic
+      'The requested package is not available for booking', // Generic
       'PACKAGE_NOT_AVAILABLE'
     );
     this.name = 'PackageNotAvailableError';
@@ -175,7 +172,7 @@ export class PackageNotAvailableError extends PackageError {
 export class BookingConflictError extends AppError {
   constructor(date: string, message?: string) {
     super(
-      message ?? 'Date is already booked',  // Generic default
+      message ?? 'Date is already booked', // Generic default
       'BOOKING_CONFLICT',
       409,
       true
@@ -206,10 +203,7 @@ export class InvalidBookingTypeError extends PackageError {
 // server/src/services/catalog.service.ts
 
 export class CatalogService {
-  async getPackageBySlug(
-    tenantId: string,
-    slug: string
-  ): Promise<PackageDto> {
+  async getPackageBySlug(tenantId: string, slug: string): Promise<PackageDto> {
     const pkg = await this.catalogRepo.getBySlug(tenantId, slug);
 
     if (!pkg) {
@@ -228,7 +222,7 @@ export class CatalogService {
       // ✅ CORRECT: Same generic error for both missing and inactive
       this.logger.warn('Package not available', {
         tenantId,
-        packageId: pkg.id,  // ← Safe to log
+        packageId: pkg.id, // ← Safe to log
         slug,
         reason: 'not_active',
       });
@@ -239,11 +233,7 @@ export class CatalogService {
     return this.mapToDto(pkg);
   }
 
-  async createBooking(
-    tenantId: string,
-    packageSlug: string,
-    date: string
-  ): Promise<BookingDto> {
+  async createBooking(tenantId: string, packageSlug: string, date: string): Promise<BookingDto> {
     const pkg = await this.catalogRepo.getBySlug(tenantId, packageSlug);
     if (!pkg) {
       throw new PackageNotAvailableError();
@@ -278,53 +268,46 @@ export class CatalogService {
 ```typescript
 // server/src/routes/public-date-booking.routes.ts
 
-tsRestExpress(
-  contract.bookPackageBySlug,
-  async ({ req, body }) => {
-    try {
-      const tenantId = req.tenantId;
-      const { packageSlug, date } = body;
+tsRestExpress(contract.bookPackageBySlug, async ({ req, body }) => {
+  try {
+    const tenantId = req.tenantId;
+    const { packageSlug, date } = body;
 
-      // ✅ CORRECT: Use service which handles errors properly
-      const booking = await bookingService.createBooking(
-        tenantId,
-        packageSlug,
-        date
-      );
+    // ✅ CORRECT: Use service which handles errors properly
+    const booking = await bookingService.createBooking(tenantId, packageSlug, date);
 
+    return {
+      status: 201,
+      body: { success: true, booking },
+    };
+  } catch (error) {
+    // ✅ CORRECT: Map domain errors to HTTP responses
+    if (error instanceof PackageNotAvailableError) {
       return {
-        status: 201,
-        body: { success: true, booking },
-      };
-    } catch (error) {
-      // ✅ CORRECT: Map domain errors to HTTP responses
-      if (error instanceof PackageNotAvailableError) {
-        return {
-          status: 404,
-          body: { error: error.message },  // Generic message
-        };
-      }
-
-      if (error instanceof BookingConflictError) {
-        return {
-          status: 409,
-          body: { error: error.message },  // Generic message
-        };
-      }
-
-      // ✅ CORRECT: Unexpected errors get generic response
-      this.logger.error('Unexpected error in booking route', {
-        originalError: error,
-        tenantId: req.tenantId,
-      });
-
-      return {
-        status: 500,
-        body: { error: 'Something went wrong' },
+        status: 404,
+        body: { error: error.message }, // Generic message
       };
     }
+
+    if (error instanceof BookingConflictError) {
+      return {
+        status: 409,
+        body: { error: error.message }, // Generic message
+      };
+    }
+
+    // ✅ CORRECT: Unexpected errors get generic response
+    this.logger.error('Unexpected error in booking route', {
+      originalError: error,
+      tenantId: req.tenantId,
+    });
+
+    return {
+      status: 500,
+      body: { error: 'Something went wrong' },
+    };
   }
-);
+});
 ```
 
 ### Bad Examples to Avoid
@@ -577,7 +560,7 @@ export function Parent() {
 ```typescript
 // Always: Parameter name = API contract name
 interface Params {
-  packageSlug: string;  // API expects 'slug'
+  packageSlug: string; // API expects 'slug'
 }
 const { packageSlug } = useParams<Params>();
 await api.getPackageBySlug({ params: { slug: packageSlug } });
@@ -591,8 +574,8 @@ try {
   const result = await service.getPackage(id);
 } catch (error) {
   if (error instanceof PackageNotAvailableError) {
-    logger.warn('Package not available', { id, tenantId });  // ← Details logged
-    return { status: 404, body: { error: error.message } };  // ← Generic to client
+    logger.warn('Package not available', { id, tenantId }); // ← Details logged
+    return { status: 404, body: { error: error.message } }; // ← Generic to client
   }
 }
 ```

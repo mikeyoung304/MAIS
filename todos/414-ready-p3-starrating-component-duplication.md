@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "414"
+issue_id: '414'
 tags:
   - code-review
   - code-quality
@@ -17,6 +17,7 @@ dependencies: []
 The `StarRating` helper component is defined identically in two files, violating DRY principle.
 
 **Why This Matters:**
+
 - Changes must be made in two places
 - Easy to create inconsistencies
 - Indicates broader duplication pattern
@@ -24,10 +25,12 @@ The `StarRating` helper component is defined identically in two files, violating
 ## Findings
 
 **Locations:**
+
 - `apps/web/src/components/tenant/TenantLandingPage.tsx` (lines 19-29)
 - `apps/web/src/components/tenant/sections/TestimonialsSection.tsx` (lines 11-21)
 
 **Evidence (identical in both):**
+
 ```typescript
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -58,10 +61,12 @@ export function StarRating({ rating }: { rating: number }) {
 ```
 
 **Pros:**
+
 - Single source of truth
 - Reusable across codebase
 
 **Cons:**
+
 - Minor refactor
 
 **Effort:** Small
@@ -70,6 +75,7 @@ export function StarRating({ rating }: { rating: number }) {
 ## Technical Details
 
 **Affected Files:**
+
 - NEW: `apps/web/src/components/ui/StarRating.tsx`
 - `apps/web/src/components/tenant/TenantLandingPage.tsx`
 - `apps/web/src/components/tenant/sections/TestimonialsSection.tsx`
@@ -83,6 +89,6 @@ export function StarRating({ rating }: { rating: number }) {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                   |
+| ---------- | ------------------------ | --------------------------- |
 | 2025-12-25 | Created from code review | Component duplication found |

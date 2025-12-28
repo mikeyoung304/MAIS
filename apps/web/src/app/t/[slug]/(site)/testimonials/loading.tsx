@@ -10,16 +10,10 @@ export default function TestimonialsLoading() {
         </div>
         <div className="mt-16 grid gap-8 md:grid-cols-2">
           {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg"
-            >
+            <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
               <div className="flex gap-1">
                 {[...Array(5)].map((_, j) => (
-                  <div
-                    key={j}
-                    className="h-5 w-5 animate-pulse rounded bg-neutral-200"
-                  />
+                  <div key={j} className="h-5 w-5 animate-pulse rounded bg-neutral-200" />
                 ))}
               </div>
               <div className="mt-4 space-y-2">

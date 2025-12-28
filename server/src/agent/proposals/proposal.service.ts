@@ -264,10 +264,7 @@ export class ProposalService {
       },
     });
 
-    logger.info(
-      { tenantId, sessionId, count: proposalIds.length },
-      'T2 proposals soft-confirmed'
-    );
+    logger.info({ tenantId, sessionId, count: proposalIds.length }, 'T2 proposals soft-confirmed');
 
     return proposalIds;
   }
@@ -275,10 +272,7 @@ export class ProposalService {
   /**
    * Mark proposal as executed
    */
-  async markExecuted(
-    proposalId: string,
-    result: Record<string, unknown>
-  ): Promise<void> {
+  async markExecuted(proposalId: string, result: Record<string, unknown>): Promise<void> {
     await this.prisma.agentProposal.update({
       where: { id: proposalId },
       data: {

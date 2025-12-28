@@ -22,7 +22,14 @@ export const metadata: Metadata = {
   },
   description:
     'Done-for-you tech plus done-with-you education for service professionals. We handle the tech so you can focus on what you do best.',
-  keywords: ['service professionals', 'AI', 'booking platform', 'photographers', 'coaches', 'therapists'],
+  keywords: [
+    'service professionals',
+    'AI',
+    'booking platform',
+    'photographers',
+    'coaches',
+    'therapists',
+  ],
   authors: [{ name: 'HANDLED' }],
   openGraph: {
     type: 'website',

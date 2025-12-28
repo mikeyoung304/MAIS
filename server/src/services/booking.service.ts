@@ -33,9 +33,16 @@ import { logger } from '../lib/core/logger';
 // Import decomposed services
 import { BookingQueryService, type GetAppointmentsFilters } from './booking-query.service';
 import { BookingLifecycleService } from './booking-lifecycle.service';
-import { WeddingBookingOrchestrator, type CreateDateBookingInput } from './wedding-booking.orchestrator';
+import {
+  WeddingBookingOrchestrator,
+  type CreateDateBookingInput,
+} from './wedding-booking.orchestrator';
 import { WeddingDepositService } from './wedding-deposit.service';
-import { AppointmentBookingService, type CreateAppointmentInput, type AppointmentPaymentCompletedInput } from './appointment-booking.service';
+import {
+  AppointmentBookingService,
+  type CreateAppointmentInput,
+  type AppointmentPaymentCompletedInput,
+} from './appointment-booking.service';
 import { RefundProcessingService } from './refund-processing.service';
 import { CheckoutSessionFactory } from './checkout-session.factory';
 
@@ -206,7 +213,11 @@ export class BookingService {
     bookingId: string,
     balanceAmountCents: number
   ): Promise<Booking> {
-    return this.weddingDepositService.completeBalancePayment(tenantId, bookingId, balanceAmountCents);
+    return this.weddingDepositService.completeBalancePayment(
+      tenantId,
+      bookingId,
+      balanceAmountCents
+    );
   }
 
   // ============================================================================

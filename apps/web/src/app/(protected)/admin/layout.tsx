@@ -8,11 +8,7 @@ import { AdminSidebar } from '@/components/layouts/AdminSidebar';
  * Protected layout for all /admin/* routes.
  * Requires PLATFORM_ADMIN role and blocks access while impersonating.
  */
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
   // Only PLATFORM_ADMIN can access admin routes

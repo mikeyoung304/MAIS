@@ -331,16 +331,17 @@ export default function TenantHomePage({ sections }) {
 
 This project uses the `compound-engineering` plugin. Before starting implementation, check these triggers and load the matching skill:
 
-| When You're... | Load This Skill | Why |
-|----------------|-----------------|-----|
-| Building UI/components/pages | `frontend-design` | Distinctive design, avoid AI slop |
-| Adding AI/agent features | `agent-native-architecture` | Action parity, prompt-native patterns |
-| Creating skills/workflows | `create-agent-skills` | Proper skill structure |
-| Fixed a non-trivial bug | Run `/workflows:compound` | Capture solution for future agents |
+| When You're...               | Load This Skill             | Why                                   |
+| ---------------------------- | --------------------------- | ------------------------------------- |
+| Building UI/components/pages | `frontend-design`           | Distinctive design, avoid AI slop     |
+| Adding AI/agent features     | `agent-native-architecture` | Action parity, prompt-native patterns |
+| Creating skills/workflows    | `create-agent-skills`       | Proper skill structure                |
+| Fixed a non-trivial bug      | Run `/workflows:compound`   | Capture solution for future agents    |
 
 ### How to Load Skills
 
 Invoke the skill by name. The skill's SKILL.md loads automatically and provides:
+
 - Essential principles (always applied)
 - Router menu for specific guidance
 - References that load on-demand
@@ -350,11 +351,13 @@ Invoke the skill by name. The skill's SKILL.md loads automatically and provides:
 ### Skill + Project Docs Work Together
 
 **For UI work (`apps/web/`, `client/`, any component):**
+
 1. FIRST: Load `frontend-design` skill (universal design excellence)
 2. THEN: Read `docs/design/BRAND_VOICE_GUIDE.md` (HANDLED brand identity)
 3. Apply both: distinctive design + sage green/serif/transformation voice
 
 **For AI agent features:**
+
 1. Load `agent-native-architecture` skill
 2. Core principle: "Whatever the user can do, the agent can do"
 3. Use primitive tools, not workflow tools
@@ -363,12 +366,12 @@ Invoke the skill by name. The skill's SKILL.md loads automatically and provides:
 
 Use these commands for structured development:
 
-| Command | When to Use |
-|---------|-------------|
-| `/workflows:plan` | Complex features needing research + design |
-| `/workflows:review` | Multi-agent code review (8 reviewers in parallel) |
-| `/workflows:work` | Execute plans systematically with verification |
-| `/workflows:compound` | Document solved problems to `docs/solutions/` |
+| Command               | When to Use                                       |
+| --------------------- | ------------------------------------------------- |
+| `/workflows:plan`     | Complex features needing research + design        |
+| `/workflows:review`   | Multi-agent code review (8 reviewers in parallel) |
+| `/workflows:work`     | Execute plans systematically with verification    |
+| `/workflows:compound` | Document solved problems to `docs/solutions/`     |
 
 **Workflow pattern:** `/workflows:plan` → get approval → `/workflows:work` → `/workflows:compound`
 
@@ -564,6 +567,7 @@ export class BookingService {
 ## UI/UX Standards (Apple-Quality)
 
 **IMPORTANT:** Before any UI work:
+
 1. Load `frontend-design` skill (distinctive design, avoid AI slop)
 2. Read `docs/design/BRAND_VOICE_GUIDE.md` (MAIS brand identity)
 

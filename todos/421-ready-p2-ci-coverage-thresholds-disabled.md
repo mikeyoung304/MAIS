@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p2
-issue_id: "421"
+issue_id: '421'
 tags: [code-review, ci-cd, testing, coverage]
 dependencies: []
-completed_at: "2025-12-26"
+completed_at: '2025-12-26'
 ---
 
 # Enable Coverage Thresholds in CI
@@ -44,10 +44,12 @@ The rationale is that unit/integration tests run separately and neither alone me
 ```
 
 **Pros:**
+
 - Accurate enforcement of total coverage
 - Catches regressions
 
 **Cons:**
+
 - Adds CI time
 - Requires coverage artifact merging
 
@@ -62,10 +64,12 @@ The rationale is that unit/integration tests run separately and neither alone me
 **Approach:** Set lower thresholds that each suite can independently meet.
 
 **Pros:**
+
 - Simpler to implement
 - Each test run is self-contained
 
 **Cons:**
+
 - May not catch overall coverage regression
 - Thresholds may be too low to be meaningful
 
@@ -78,6 +82,7 @@ The rationale is that unit/integration tests run separately and neither alone me
 **APPROVED: Option 2 - Per-suite thresholds (simpler)**
 
 Rather than complex coverage merging, set realistic thresholds each suite can meet independently:
+
 1. Update `vitest.config.ts` to use lower thresholds in CI that unit tests alone can pass
 2. Consider: lines 30%, branches 60%, functions 35%
 3. This prevents regression while acknowledging split test runs
@@ -89,6 +94,7 @@ Rather than complex coverage merging, set realistic thresholds each suite can me
 ## Technical Details
 
 **Affected files:**
+
 - `.github/workflows/main-pipeline.yml` - add coverage merge step
 - `server/vitest.config.ts` - potentially adjust threshold logic
 
@@ -105,6 +111,7 @@ Rather than complex coverage merging, set realistic thresholds each suite can me
 **By:** Claude Code (Performance Oracle, DevOps Harmony agents)
 
 **Actions:**
+
 - Identified disabled thresholds during commit 21a9b3a review
 - Documented rationale and risk
 

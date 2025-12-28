@@ -9,12 +9,12 @@
 
 ## One-Page Summary
 
-| # | Finding | Type | P | File(s) | Fix | Status |
-|---|---------|------|---|---------|-----|--------|
-| **418** | Mock adapter undefined `tenantId` | Bug | P1 | `server/src/adapters/mock/index.ts:366` | Change `tenantId` → `_tenantId` | ✅ Fixed |
-| **419** | ESLint ignorePatterns duplication | Config | P2 | `.eslintrc.cjs` | Remove array, use `.eslintignore` only | ✅ Fixed |
-| **421** | CI coverage thresholds disabled | CI/CD | P2 | `server/vitest.config.ts:56-61` | Enable per-suite thresholds (30/60/35/30) | ✅ Fixed |
-| **422** | Lint error regression undetected | CI/CD | P2 | `.github/workflows/main-pipeline.yml:94-98` | Add delta check (baseline 305 errors) | ✅ Fixed |
+| #       | Finding                           | Type   | P   | File(s)                                     | Fix                                       | Status   |
+| ------- | --------------------------------- | ------ | --- | ------------------------------------------- | ----------------------------------------- | -------- |
+| **418** | Mock adapter undefined `tenantId` | Bug    | P1  | `server/src/adapters/mock/index.ts:366`     | Change `tenantId` → `_tenantId`           | ✅ Fixed |
+| **419** | ESLint ignorePatterns duplication | Config | P2  | `.eslintrc.cjs`                             | Remove array, use `.eslintignore` only    | ✅ Fixed |
+| **421** | CI coverage thresholds disabled   | CI/CD  | P2  | `server/vitest.config.ts:56-61`             | Enable per-suite thresholds (30/60/35/30) | ✅ Fixed |
+| **422** | Lint error regression undetected  | CI/CD  | P2  | `.github/workflows/main-pipeline.yml:94-98` | Add delta check (baseline 305 errors)     | ✅ Fixed |
 
 ---
 
@@ -43,6 +43,7 @@
 ### 419: ESLint Configuration Duplication (P2)
 
 **Problem:** Ignore patterns defined in TWO places:
+
 - `.eslintrc.cjs` (lines 23-35): 9 patterns in `ignorePatterns` array
 - `.eslintignore`: Same patterns + more
 
@@ -92,6 +93,7 @@ thresholds: {
 ```
 
 **Impact:**
+
 - Prevents coverage regression
 - Tests can pass independently
 - Clear baseline + target documented
@@ -108,7 +110,7 @@ thresholds: {
 # BEFORE - lint always "passes"
 - name: Run ESLint
   run: npm run lint
-  continue-on-error: true  # Errors ignored!
+  continue-on-error: true # Errors ignored!
 ```
 
 **Root Cause:** 305 pre-existing errors made strict enforcement impossible; no progressive approach.
@@ -132,6 +134,7 @@ thresholds: {
 ```
 
 **Impact:**
+
 - Blocks NEW errors (regression detection)
 - Allows existing debt to be fixed incrementally
 - Baseline easily updated as errors decrease
@@ -144,11 +147,13 @@ thresholds: {
 ## Patterns Discovered
 
 ### 1. Mechanical Refactoring Risks
+
 **Issue:** Large automated find-replace operations miss semantic errors TypeScript can't catch.
 
 **Example:** `tenantId` → `_tenantId` replacement missed internal variable usage.
 
 **Prevention:**
+
 ```bash
 npm run typecheck     # Catch type errors
 npm test              # Catch runtime errors
@@ -156,11 +161,13 @@ git diff -w           # Visual inspection
 ```
 
 ### 2. Configuration Duplication
+
 **Issue:** Same setting defined multiple places → maintenance burden + drift risk.
 
 **Example:** Ignore patterns in both `.eslintrc.cjs` and `.eslintignore`.
 
 **Prevention:**
+
 ```
 ✅ Single source of truth for each config aspect
 ✅ Use standard conventions (.eslintignore for ESLint)
@@ -168,11 +175,13 @@ git diff -w           # Visual inspection
 ```
 
 ### 3. Disabled Quality Gates
+
 **Issue:** `continue-on-error: true`, disabled thresholds hide regressions.
 
 **Example:** Coverage and lint checks both had enforcement disabled.
 
 **Prevention:**
+
 ```
 WRONG:     continue-on-error: true
 BETTER:    Delta check (no new errors)
@@ -180,11 +189,13 @@ BEST:      Strict enforcement (all errors block)
 ```
 
 ### 4. Unrealistic Thresholds
+
 **Issue:** Thresholds set higher than achievable → enforcement disabled to avoid noise.
 
 **Example:** 80% coverage threshold vs 43% baseline → disabled in CI.
 
 **Prevention:**
+
 ```
 1. MEASURE current reality
 2. SET baseline slightly below current
@@ -213,6 +224,7 @@ BEST:      Strict enforcement (all errors block)
 ## Key Metrics
 
 **Code Review Quality:**
+
 - Findings identified: 4
 - Severity breakdown: 1 P1, 3 P2
 - Issues fixable in <1hr: 3/4
@@ -220,11 +232,13 @@ BEST:      Strict enforcement (all errors block)
 - False positives: 0/4
 
 **Effort Distribution:**
+
 - Analysis: 85 minutes (45%)
 - Implementation: 70 minutes (37%)
 - Verification: 35 minutes (18%)
 
 **Risk Profile:**
+
 - Risk level: Low (4/4 low-risk fixes)
 - Rollback complexity: None
 - Breaking changes: None
@@ -235,14 +249,17 @@ BEST:      Strict enforcement (all errors block)
 ## Related Documentation
 
 **Deep Dives:**
+
 - `/docs/solutions/code-review-patterns/QUALITY_REMEDIATION_FINDINGS_ANALYSIS-MAIS-20251226.md` - Full analysis with all details
 - `/docs/solutions/code-review-patterns/CORA_SCHEMA_SKELETON.yaml` - Documentation template
 
 **Prevention Patterns:**
+
 - `/docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md` - Similar: disabled safety gates
 - `/docs/solutions/PREVENTION-STRATEGIES-INDEX.md` - General prevention patterns
 
 **Configuration Guides:**
+
 - `/docs/quality/QUALITY_METRICS.md` - Coverage baselines and targets
 - `/docs/solutions/best-practices/any-types-quick-reference-MAIS-20251204.md` - Quick decision trees
 
@@ -253,24 +270,28 @@ BEST:      Strict enforcement (all errors block)
 Use this checklist when reviewing commits:
 
 **Mechanical Refactoring:**
+
 - [ ] Run full test suite after find-replace operations
 - [ ] Check for internal variable usage changes
 - [ ] Visual inspection of high-risk files
 - [ ] TypeScript compilation successful
 
 **Configuration Changes:**
+
 - [ ] Search for duplicate settings (ignorePatterns, exclude lists, etc.)
 - [ ] Use standard tool conventions when available
 - [ ] Single source of truth verified
 - [ ] Documented if duplication is intentional
 
 **CI/CD Changes:**
+
 - [ ] Never disable quality gates entirely
 - [ ] Use delta checks for staged enforcement
 - [ ] Thresholds grounded in measured reality
 - [ ] Clear progression path documented
 
 **Test Configuration:**
+
 - [ ] Thresholds match current baseline + 5%
 - [ ] Target documented and realistic
 - [ ] Per-suite vs combined approach documented
@@ -298,4 +319,3 @@ Next Steps:
 ---
 
 **Questions?** See full analysis at `/docs/solutions/code-review-patterns/QUALITY_REMEDIATION_FINDINGS_ANALYSIS-MAIS-20251226.md`
-

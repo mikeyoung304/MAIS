@@ -109,11 +109,11 @@ session: {
 
 **Session Duration Guidelines:**
 
-| User Type | Max Age | Rationale |
-|-----------|---------|-----------|
-| Platform Admin | 4 hours | High privilege, smaller attack window |
-| Tenant Admin | 24 hours | Standard admin access |
-| Public Sessions | 7 days | Read-only, low risk |
+| User Type       | Max Age  | Rationale                             |
+| --------------- | -------- | ------------------------------------- |
+| Platform Admin  | 4 hours  | High privilege, smaller attack window |
+| Tenant Admin    | 24 hours | Standard admin access                 |
+| Public Sessions | 7 days   | Read-only, low risk                   |
 
 ## Security Patterns
 
@@ -223,7 +223,7 @@ export async function GET() {
   // Make authenticated request to Express backend
   const response = await fetch(`${API_URL}/v1/tenant-admin/profile`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
@@ -266,7 +266,7 @@ export function ClientComponent() {
 }
 
 // ✅ CORRECT - Use Server Action or API route
-'use client';
+('use client');
 
 async function fetchData() {
   const response = await fetch('/api/my-data'); // API route handles auth

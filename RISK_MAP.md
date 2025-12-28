@@ -14,78 +14,78 @@ These files and directories contain security-critical, payment-related, or data-
 
 ### 1.1 Authentication & Security
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/middleware/auth.ts` | Platform admin JWT verification, role validation, impersonation token handling. Bugs enable privilege escalation. |
-| `/server/src/middleware/tenant-auth.ts` | Tenant JWT verification, token type validation, cross-tenant token rejection. Critical for tenant isolation. |
-| `/server/src/middleware/tenant.ts` | API key validation, tenant resolution, inactive tenant blocking. Single point of failure for multi-tenancy. |
-| `/server/src/services/identity.service.ts` | Password hashing (bcryptjs), JWT signing/verification, HS256 algorithm enforcement. Cryptographic operations. |
-| `/server/src/services/tenant-auth.service.ts` | Tenant-specific authentication, token generation with tenant context. |
-| `/server/src/lib/encryption.service.ts` | AES-256-GCM encryption for tenant secrets, Stripe key encryption. Master key handling. |
-| `/server/src/lib/api-key.service.ts` | API key format validation, key generation patterns. |
-| `/apps/web/src/lib/auth.ts` | NextAuth.js v5 configuration, credentials provider, session callbacks, backend token handling. |
-| `/apps/web/src/middleware.ts` | Custom domain resolution, protected route enforcement, admin role verification. |
+| File                                          | Risk Reason                                                                                                       |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `/server/src/middleware/auth.ts`              | Platform admin JWT verification, role validation, impersonation token handling. Bugs enable privilege escalation. |
+| `/server/src/middleware/tenant-auth.ts`       | Tenant JWT verification, token type validation, cross-tenant token rejection. Critical for tenant isolation.      |
+| `/server/src/middleware/tenant.ts`            | API key validation, tenant resolution, inactive tenant blocking. Single point of failure for multi-tenancy.       |
+| `/server/src/services/identity.service.ts`    | Password hashing (bcryptjs), JWT signing/verification, HS256 algorithm enforcement. Cryptographic operations.     |
+| `/server/src/services/tenant-auth.service.ts` | Tenant-specific authentication, token generation with tenant context.                                             |
+| `/server/src/lib/encryption.service.ts`       | AES-256-GCM encryption for tenant secrets, Stripe key encryption. Master key handling.                            |
+| `/server/src/lib/api-key.service.ts`          | API key format validation, key generation patterns.                                                               |
+| `/apps/web/src/lib/auth.ts`                   | NextAuth.js v5 configuration, credentials provider, session callbacks, backend token handling.                    |
+| `/apps/web/src/middleware.ts`                 | Custom domain resolution, protected route enforcement, admin role verification.                                   |
 
 **Why HIGH-RISK:** Authentication/authorization bugs can lead to complete system compromise, data breaches, or privilege escalation. These files handle JWT tokens, password hashing, and role-based access control.
 
 ### 1.2 Payment Processing (Stripe)
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/routes/webhooks.routes.ts` | Stripe webhook controller with signature verification, idempotency checks, async processing. |
-| `/server/src/adapters/stripe.adapter.ts` | Stripe API integration: checkout sessions, Connect payments, refunds. Direct financial operations. |
-| `/server/src/services/commission.service.ts` | Platform commission calculation, fee validation (0.5%-50% Stripe limits), revenue distribution. |
-| `/server/src/services/stripe-connect.service.ts` | Stripe Connect onboarding, connected account management. |
-| `/server/src/services/booking.service.ts` (payment sections) | Checkout session creation, deposit/balance handling, refund processing. |
-| `/server/src/jobs/webhook-processor.ts` | Background webhook processing, payment completion handlers. |
-| `/server/src/services/idempotency.service.ts` | Prevents duplicate charges via idempotency key tracking. |
+| File                                                         | Risk Reason                                                                                        |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `/server/src/routes/webhooks.routes.ts`                      | Stripe webhook controller with signature verification, idempotency checks, async processing.       |
+| `/server/src/adapters/stripe.adapter.ts`                     | Stripe API integration: checkout sessions, Connect payments, refunds. Direct financial operations. |
+| `/server/src/services/commission.service.ts`                 | Platform commission calculation, fee validation (0.5%-50% Stripe limits), revenue distribution.    |
+| `/server/src/services/stripe-connect.service.ts`             | Stripe Connect onboarding, connected account management.                                           |
+| `/server/src/services/booking.service.ts` (payment sections) | Checkout session creation, deposit/balance handling, refund processing.                            |
+| `/server/src/jobs/webhook-processor.ts`                      | Background webhook processing, payment completion handlers.                                        |
+| `/server/src/services/idempotency.service.ts`                | Prevents duplicate charges via idempotency key tracking.                                           |
 
 **Why HIGH-RISK:** Payment bugs can result in financial loss, duplicate charges, failed refunds, or commission miscalculations. Stripe integration requires precise handling.
 
 ### 1.3 Multi-Tenant Data Isolation
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/lib/ports.ts` | Repository interfaces requiring `tenantId` as first parameter. Contract definitions for data isolation. |
-| `/server/src/adapters/prisma/*.repository.ts` | All Prisma repository implementations with tenant-scoped queries. |
-| `/server/prisma/schema.prisma` | Database schema with tenant isolation constraints, unique indexes, RLS preparation. |
-| `/server/src/di.ts` | Dependency injection wiring. Incorrect wiring can break tenant isolation. |
-| `/server/src/services/booking.service.ts` | Booking creation with tenantId validation, cross-tenant access prevention. |
-| `/server/src/services/catalog.service.ts` | Catalog queries scoped by tenant. |
+| File                                          | Risk Reason                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/server/src/lib/ports.ts`                    | Repository interfaces requiring `tenantId` as first parameter. Contract definitions for data isolation. |
+| `/server/src/adapters/prisma/*.repository.ts` | All Prisma repository implementations with tenant-scoped queries.                                       |
+| `/server/prisma/schema.prisma`                | Database schema with tenant isolation constraints, unique indexes, RLS preparation.                     |
+| `/server/src/di.ts`                           | Dependency injection wiring. Incorrect wiring can break tenant isolation.                               |
+| `/server/src/services/booking.service.ts`     | Booking creation with tenantId validation, cross-tenant access prevention.                              |
+| `/server/src/services/catalog.service.ts`     | Catalog queries scoped by tenant.                                                                       |
 
 **Why HIGH-RISK:** Multi-tenant isolation is the core security boundary. Any query without `tenantId` filtering could leak data between tenants.
 
 ### 1.4 Database Migrations
 
-| File/Directory | Risk Reason |
-|----------------|-------------|
-| `/server/prisma/schema.prisma` | Schema changes affect all tenants. Breaking changes can corrupt data. |
-| `/server/prisma/migrations/*.sql` | Raw SQL migrations for enums, indexes, RLS. Irreversible in production. |
-| `/server/prisma/migrations/migration_lock.toml` | Migration state tracking. Corruption causes deployment failures. |
+| File/Directory                                  | Risk Reason                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------- |
+| `/server/prisma/schema.prisma`                  | Schema changes affect all tenants. Breaking changes can corrupt data.   |
+| `/server/prisma/migrations/*.sql`               | Raw SQL migrations for enums, indexes, RLS. Irreversible in production. |
+| `/server/prisma/migrations/migration_lock.toml` | Migration state tracking. Corruption causes deployment failures.        |
 
 **Why HIGH-RISK:** Database migrations are irreversible in production. Schema drift, data loss, or constraint violations can bring down the entire platform.
 
 ### 1.5 Deployment & CI/CD Configuration
 
-| File | Risk Reason |
-|------|-------------|
-| `/.github/workflows/deploy-production.yml` | Production deployment pipeline. Errors cause outages. |
-| `/.github/workflows/deploy-staging.yml` | Staging deployment. Less critical but still affects testing. |
-| `/.github/workflows/main-pipeline.yml` | Main CI pipeline with test, build, deploy stages. |
-| `/.github/SECRETS_TEMPLATE.md` | Documents required secrets. Incorrect secrets break deployments. |
-| `/apps/web/next.config.js` | Next.js configuration including security headers, rewrites. |
-| `/server/src/lib/core/config.ts` | Server configuration loading, environment variable handling. |
+| File                                       | Risk Reason                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| `/.github/workflows/deploy-production.yml` | Production deployment pipeline. Errors cause outages.            |
+| `/.github/workflows/deploy-staging.yml`    | Staging deployment. Less critical but still affects testing.     |
+| `/.github/workflows/main-pipeline.yml`     | Main CI pipeline with test, build, deploy stages.                |
+| `/.github/SECRETS_TEMPLATE.md`             | Documents required secrets. Incorrect secrets break deployments. |
+| `/apps/web/next.config.js`                 | Next.js configuration including security headers, rewrites.      |
+| `/server/src/lib/core/config.ts`           | Server configuration loading, environment variable handling.     |
 
 **Why HIGH-RISK:** CI/CD configuration errors can deploy broken code to production or expose secrets.
 
 ### 1.6 Environment & Secrets
 
-| File | Risk Reason |
-|------|-------------|
-| `/.env` | Root environment variables (should be gitignored). |
-| `/server/.env` | Server secrets including DATABASE_URL, JWT_SECRET, Stripe keys. |
-| `/apps/web/.env.local` | Next.js secrets including AUTH_SECRET, API tokens. |
-| `*.env.example` files | Document required variables but should not contain real values. |
+| File                   | Risk Reason                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `/.env`                | Root environment variables (should be gitignored).              |
+| `/server/.env`         | Server secrets including DATABASE_URL, JWT_SECRET, Stripe keys. |
+| `/apps/web/.env.local` | Next.js secrets including AUTH_SECRET, API tokens.              |
+| `*.env.example` files  | Document required variables but should not contain real values. |
 
 **Why HIGH-RISK:** Secrets exposure leads to complete system compromise.
 
@@ -97,54 +97,54 @@ These files contain business logic or complex state management. Changes should b
 
 ### 2.1 Service Layer Business Logic
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/services/availability.service.ts` | Availability checking logic. Bugs cause double-bookings. |
-| `/server/src/services/scheduling-availability.service.ts` | Time slot availability for appointments. |
-| `/server/src/services/google-calendar.service.ts` | Google Calendar sync. Failures silently lose data. |
-| `/server/src/services/tenant-onboarding.service.ts` | New tenant setup. Incomplete setup breaks tenant experience. |
-| `/server/src/services/audit.service.ts` | Audit logging. Missing logs hide security incidents. |
-| `/server/src/services/landing-page.service.ts` | Landing page configuration. |
-| `/server/src/services/segment.service.ts` | Business segment management. |
-| `/server/src/services/reminder.service.ts` | Booking reminder scheduling. |
-| `/server/src/services/webhook-delivery.service.ts` | Outbound webhook delivery. |
+| File                                                      | Risk Reason                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------ |
+| `/server/src/services/availability.service.ts`            | Availability checking logic. Bugs cause double-bookings.     |
+| `/server/src/services/scheduling-availability.service.ts` | Time slot availability for appointments.                     |
+| `/server/src/services/google-calendar.service.ts`         | Google Calendar sync. Failures silently lose data.           |
+| `/server/src/services/tenant-onboarding.service.ts`       | New tenant setup. Incomplete setup breaks tenant experience. |
+| `/server/src/services/audit.service.ts`                   | Audit logging. Missing logs hide security incidents.         |
+| `/server/src/services/landing-page.service.ts`            | Landing page configuration.                                  |
+| `/server/src/services/segment.service.ts`                 | Business segment management.                                 |
+| `/server/src/services/reminder.service.ts`                | Booking reminder scheduling.                                 |
+| `/server/src/services/webhook-delivery.service.ts`        | Outbound webhook delivery.                                   |
 
 ### 2.2 API Route Handlers
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/routes/bookings.routes.ts` | Booking CRUD with validation. |
-| `/server/src/routes/packages.routes.ts` | Package catalog endpoints. |
-| `/server/src/routes/tenant-admin.routes.ts` | Tenant admin operations. |
-| `/server/src/routes/tenant-admin-*.routes.ts` | All tenant admin sub-routes. |
-| `/server/src/routes/auth.routes.ts` | Login, signup, password reset endpoints. |
-| `/server/src/routes/admin.routes.ts` | Platform admin endpoints. |
-| `/apps/web/src/app/api/**/*.ts` | Next.js API routes. |
+| File                                          | Risk Reason                              |
+| --------------------------------------------- | ---------------------------------------- |
+| `/server/src/routes/bookings.routes.ts`       | Booking CRUD with validation.            |
+| `/server/src/routes/packages.routes.ts`       | Package catalog endpoints.               |
+| `/server/src/routes/tenant-admin.routes.ts`   | Tenant admin operations.                 |
+| `/server/src/routes/tenant-admin-*.routes.ts` | All tenant admin sub-routes.             |
+| `/server/src/routes/auth.routes.ts`           | Login, signup, password reset endpoints. |
+| `/server/src/routes/admin.routes.ts`          | Platform admin endpoints.                |
+| `/apps/web/src/app/api/**/*.ts`               | Next.js API routes.                      |
 
 ### 2.3 External Adapters
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/adapters/postmark.adapter.ts` | Email sending. Failures lose customer communications. |
-| `/server/src/adapters/gcal.adapter.ts` | Google Calendar base adapter. |
-| `/server/src/adapters/google-calendar-sync.adapter.ts` | Two-way calendar sync. |
-| `/server/src/adapters/upload.adapter.ts` | File upload handling. |
+| File                                                   | Risk Reason                                           |
+| ------------------------------------------------------ | ----------------------------------------------------- |
+| `/server/src/adapters/postmark.adapter.ts`             | Email sending. Failures lose customer communications. |
+| `/server/src/adapters/gcal.adapter.ts`                 | Google Calendar base adapter.                         |
+| `/server/src/adapters/google-calendar-sync.adapter.ts` | Two-way calendar sync.                                |
+| `/server/src/adapters/upload.adapter.ts`               | File upload handling.                                 |
 
 ### 2.4 Complex React Components
 
-| File | Risk Reason |
-|------|-------------|
-| `/apps/web/src/components/booking/*.tsx` | Booking wizard components. |
+| File                                                  | Risk Reason                                  |
+| ----------------------------------------------------- | -------------------------------------------- |
+| `/apps/web/src/components/booking/*.tsx`              | Booking wizard components.                   |
 | `/apps/web/src/components/tenant/SectionRenderer.tsx` | Dynamic section rendering for landing pages. |
-| `/client/src/features/**/*.tsx` | Feature module components in legacy admin. |
+| `/client/src/features/**/*.tsx`                       | Feature module components in legacy admin.   |
 
 ### 2.5 Event System
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/lib/core/events.ts` | Event emitter, event types. Incorrect events break notifications. |
-| `/server/src/jobs/webhook-queue.ts` | Background job queue. |
-| `/server/src/scheduler.ts` | Job scheduler for reminders, cleanup. |
+| File                                | Risk Reason                                                       |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `/server/src/lib/core/events.ts`    | Event emitter, event types. Incorrect events break notifications. |
+| `/server/src/jobs/webhook-queue.ts` | Background job queue.                                             |
+| `/server/src/scheduler.ts`          | Job scheduler for reminders, cleanup.                             |
 
 ---
 
@@ -154,133 +154,133 @@ These files contain utilities, types, documentation, or simple presentational co
 
 ### 3.1 Pure Utility Functions
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/lib/date-utils.ts` | Date formatting utilities. |
-| `/server/src/lib/sanitization.ts` | Input sanitization helpers. |
-| `/server/src/lib/cache-helpers.ts` | Cache key generation helpers. |
-| `/server/src/lib/validation.ts` | Validation helpers. |
-| `/packages/shared/src/money.ts` | Money formatting utilities. |
-| `/packages/shared/src/date.ts` | Shared date utilities. |
-| `/packages/shared/src/result.ts` | Result type utilities. |
-| `/packages/shared/src/error-guards.ts` | Type guard utilities. |
-| `/apps/web/src/lib/utils.ts` | General utilities. |
-| `/apps/web/src/lib/format.ts` | Formatting helpers. |
+| File                                   | Risk Reason                   |
+| -------------------------------------- | ----------------------------- |
+| `/server/src/lib/date-utils.ts`        | Date formatting utilities.    |
+| `/server/src/lib/sanitization.ts`      | Input sanitization helpers.   |
+| `/server/src/lib/cache-helpers.ts`     | Cache key generation helpers. |
+| `/server/src/lib/validation.ts`        | Validation helpers.           |
+| `/packages/shared/src/money.ts`        | Money formatting utilities.   |
+| `/packages/shared/src/date.ts`         | Shared date utilities.        |
+| `/packages/shared/src/result.ts`       | Result type utilities.        |
+| `/packages/shared/src/error-guards.ts` | Type guard utilities.         |
+| `/apps/web/src/lib/utils.ts`           | General utilities.            |
+| `/apps/web/src/lib/format.ts`          | Formatting helpers.           |
 
 ### 3.2 Type Definitions
 
-| File | Risk Reason |
-|------|-------------|
-| `/server/src/lib/entities.ts` | Domain entity types. |
-| `/server/src/types/*.d.ts` | TypeScript declaration files. |
-| `/apps/web/src/types/*.d.ts` | Next.js type declarations. |
+| File                           | Risk Reason                           |
+| ------------------------------ | ------------------------------------- |
+| `/server/src/lib/entities.ts`  | Domain entity types.                  |
+| `/server/src/types/*.d.ts`     | TypeScript declaration files.         |
+| `/apps/web/src/types/*.d.ts`   | Next.js type declarations.            |
 | `/packages/contracts/src/*.ts` | API contract schemas (Zod + ts-rest). |
 
 ### 3.3 Documentation
 
-| Directory/File | Risk Reason |
-|----------------|-------------|
-| `/docs/**/*.md` | All documentation files. |
-| `/*.md` | Root-level markdown files. |
-| `/CLAUDE.md` | AI assistant instructions. |
+| Directory/File     | Risk Reason                 |
+| ------------------ | --------------------------- |
+| `/docs/**/*.md`    | All documentation files.    |
+| `/*.md`            | Root-level markdown files.  |
+| `/CLAUDE.md`       | AI assistant instructions.  |
 | `/ARCHITECTURE.md` | Architecture documentation. |
-| `/DEVELOPING.md` | Development guide. |
-| `/TESTING.md` | Testing guide. |
-| `/DECISIONS.md` | ADR index. |
+| `/DEVELOPING.md`   | Development guide.          |
+| `/TESTING.md`      | Testing guide.              |
+| `/DECISIONS.md`    | ADR index.                  |
 
 ### 3.4 Static Assets
 
-| Directory | Risk Reason |
-|-----------|-------------|
-| `/public/**/*` | Static assets (images, fonts). |
-| `/client/public/**/*` | Legacy client static assets. |
-| `/apps/web/public/**/*` | Next.js static assets. |
+| Directory               | Risk Reason                    |
+| ----------------------- | ------------------------------ |
+| `/public/**/*`          | Static assets (images, fonts). |
+| `/client/public/**/*`   | Legacy client static assets.   |
+| `/apps/web/public/**/*` | Next.js static assets.         |
 
 ### 3.5 Simple Presentational Components
 
-| File | Risk Reason |
-|------|-------------|
-| `/apps/web/src/components/ui/*.tsx` | UI primitives (Button, Card, etc.). |
-| `/apps/web/src/components/tenant/sections/*.tsx` | Static section components. |
-| `/client/src/ui/*.tsx` | Legacy UI components. |
+| File                                             | Risk Reason                         |
+| ------------------------------------------------ | ----------------------------------- |
+| `/apps/web/src/components/ui/*.tsx`              | UI primitives (Button, Card, etc.). |
+| `/apps/web/src/components/tenant/sections/*.tsx` | Static section components.          |
+| `/client/src/ui/*.tsx`                           | Legacy UI components.               |
 
 ### 3.6 Test Files
 
-| Directory | Risk Reason |
-|-----------|-------------|
-| `/server/test/**/*.test.ts` | Server unit/integration tests. |
-| `/e2e/**/*.spec.ts` | End-to-end test files. |
-| `*.test.ts` / `*.spec.ts` | All test files anywhere in repo. |
+| Directory                   | Risk Reason                      |
+| --------------------------- | -------------------------------- |
+| `/server/test/**/*.test.ts` | Server unit/integration tests.   |
+| `/e2e/**/*.spec.ts`         | End-to-end test files.           |
+| `*.test.ts` / `*.spec.ts`   | All test files anywhere in repo. |
 
 ### 3.7 Configuration (Non-Deploy)
 
-| File | Risk Reason |
-|------|-------------|
-| `/tsconfig.json` | TypeScript configuration. |
-| `/package.json` | Package dependencies (review for version bumps). |
-| `/.prettierrc` | Code formatting. |
-| `/.eslintrc*` | Linting rules. |
-| `/vitest.config.ts` | Test runner configuration. |
-| `/playwright.config.ts` | E2E test configuration. |
-| `/tailwind.config.js` | Tailwind CSS configuration. |
+| File                    | Risk Reason                                      |
+| ----------------------- | ------------------------------------------------ |
+| `/tsconfig.json`        | TypeScript configuration.                        |
+| `/package.json`         | Package dependencies (review for version bumps). |
+| `/.prettierrc`          | Code formatting.                                 |
+| `/.eslintrc*`           | Linting rules.                                   |
+| `/vitest.config.ts`     | Test runner configuration.                       |
+| `/playwright.config.ts` | E2E test configuration.                          |
+| `/tailwind.config.js`   | Tailwind CSS configuration.                      |
 
 ---
 
 ## 4. File/Directory Risk Classification Table
 
-| Path | Risk Level | Reason | Unattended Eligible |
-|------|------------|--------|---------------------|
-| `/server/src/middleware/auth.ts` | HIGH | JWT verification, role validation | false |
-| `/server/src/middleware/tenant-auth.ts` | HIGH | Tenant token validation | false |
-| `/server/src/middleware/tenant.ts` | HIGH | API key validation, tenant resolution | false |
-| `/server/src/services/identity.service.ts` | HIGH | Password hashing, JWT signing | false |
-| `/server/src/lib/encryption.service.ts` | HIGH | AES-256-GCM encryption | false |
-| `/apps/web/src/lib/auth.ts` | HIGH | NextAuth.js configuration | false |
-| `/apps/web/src/middleware.ts` | HIGH | Domain resolution, route protection | false |
-| `/server/src/routes/webhooks.routes.ts` | HIGH | Stripe webhook handling | false |
-| `/server/src/adapters/stripe.adapter.ts` | HIGH | Stripe API integration | false |
-| `/server/src/services/commission.service.ts` | HIGH | Platform commission logic | false |
-| `/server/src/services/booking.service.ts` | HIGH | Payment handling, bookings | false |
-| `/server/src/jobs/webhook-processor.ts` | HIGH | Payment webhook processing | false |
-| `/server/src/services/idempotency.service.ts` | HIGH | Duplicate charge prevention | false |
-| `/server/src/lib/ports.ts` | HIGH | Repository interfaces (tenantId) | false |
-| `/server/src/adapters/prisma/*.ts` | HIGH | Tenant-scoped database queries | false |
-| `/server/prisma/schema.prisma` | HIGH | Database schema | false |
-| `/server/prisma/migrations/*.sql` | HIGH | Database migrations | false |
-| `/server/src/di.ts` | HIGH | Dependency injection wiring | false |
-| `/.github/workflows/deploy-*.yml` | HIGH | Deployment pipelines | false |
-| `/.github/workflows/main-pipeline.yml` | HIGH | Main CI pipeline | false |
-| `/.env*` (any env file) | HIGH | Secrets and configuration | false |
-| `/server/src/lib/core/config.ts` | HIGH | Environment configuration | false |
-| `/apps/web/next.config.js` | HIGH | Next.js security configuration | false |
-| `/server/src/services/availability.service.ts` | MEDIUM | Booking availability logic | true (with tests) |
-| `/server/src/services/scheduling-availability.service.ts` | MEDIUM | Time slot logic | true (with tests) |
-| `/server/src/services/google-calendar.service.ts` | MEDIUM | Calendar sync | true (with tests) |
-| `/server/src/services/tenant-onboarding.service.ts` | MEDIUM | Tenant setup | true (with tests) |
-| `/server/src/services/audit.service.ts` | MEDIUM | Audit logging | true (with tests) |
-| `/server/src/routes/*.routes.ts` | MEDIUM | API endpoints | true (with tests) |
-| `/server/src/adapters/postmark.adapter.ts` | MEDIUM | Email sending | true (with tests) |
-| `/server/src/adapters/gcal*.adapter.ts` | MEDIUM | Calendar adapters | true (with tests) |
-| `/apps/web/src/components/booking/*.tsx` | MEDIUM | Complex components | true (with tests) |
-| `/server/src/lib/core/events.ts` | MEDIUM | Event system | true (with tests) |
-| `/server/src/scheduler.ts` | MEDIUM | Job scheduler | true (with tests) |
-| `/server/src/lib/date-utils.ts` | LOW | Utility functions | true |
-| `/server/src/lib/sanitization.ts` | LOW | Input sanitization | true |
-| `/packages/shared/src/*.ts` | LOW | Shared utilities | true |
-| `/server/src/lib/entities.ts` | LOW | Type definitions | true |
-| `/packages/contracts/src/*.ts` | LOW | API contracts (schemas) | true |
-| `/docs/**/*.md` | LOW | Documentation | true |
-| `/*.md` | LOW | Root documentation | true |
-| `/apps/web/src/components/ui/*.tsx` | LOW | UI primitives | true |
-| `/apps/web/src/components/tenant/sections/*.tsx` | LOW | Static sections | true |
-| `/**/*.test.ts` | LOW | Test files | true |
-| `/**/*.spec.ts` | LOW | Test files | true |
-| `/public/**/*` | LOW | Static assets | true |
-| `/tsconfig.json` | LOW | TypeScript config | true |
-| `/.prettierrc` | LOW | Formatting config | true |
-| `/vitest.config.ts` | LOW | Test config | true |
-| `/playwright.config.ts` | LOW | E2E config | true |
-| `/tailwind.config.js` | LOW | CSS config | true |
+| Path                                                      | Risk Level | Reason                                | Unattended Eligible |
+| --------------------------------------------------------- | ---------- | ------------------------------------- | ------------------- |
+| `/server/src/middleware/auth.ts`                          | HIGH       | JWT verification, role validation     | false               |
+| `/server/src/middleware/tenant-auth.ts`                   | HIGH       | Tenant token validation               | false               |
+| `/server/src/middleware/tenant.ts`                        | HIGH       | API key validation, tenant resolution | false               |
+| `/server/src/services/identity.service.ts`                | HIGH       | Password hashing, JWT signing         | false               |
+| `/server/src/lib/encryption.service.ts`                   | HIGH       | AES-256-GCM encryption                | false               |
+| `/apps/web/src/lib/auth.ts`                               | HIGH       | NextAuth.js configuration             | false               |
+| `/apps/web/src/middleware.ts`                             | HIGH       | Domain resolution, route protection   | false               |
+| `/server/src/routes/webhooks.routes.ts`                   | HIGH       | Stripe webhook handling               | false               |
+| `/server/src/adapters/stripe.adapter.ts`                  | HIGH       | Stripe API integration                | false               |
+| `/server/src/services/commission.service.ts`              | HIGH       | Platform commission logic             | false               |
+| `/server/src/services/booking.service.ts`                 | HIGH       | Payment handling, bookings            | false               |
+| `/server/src/jobs/webhook-processor.ts`                   | HIGH       | Payment webhook processing            | false               |
+| `/server/src/services/idempotency.service.ts`             | HIGH       | Duplicate charge prevention           | false               |
+| `/server/src/lib/ports.ts`                                | HIGH       | Repository interfaces (tenantId)      | false               |
+| `/server/src/adapters/prisma/*.ts`                        | HIGH       | Tenant-scoped database queries        | false               |
+| `/server/prisma/schema.prisma`                            | HIGH       | Database schema                       | false               |
+| `/server/prisma/migrations/*.sql`                         | HIGH       | Database migrations                   | false               |
+| `/server/src/di.ts`                                       | HIGH       | Dependency injection wiring           | false               |
+| `/.github/workflows/deploy-*.yml`                         | HIGH       | Deployment pipelines                  | false               |
+| `/.github/workflows/main-pipeline.yml`                    | HIGH       | Main CI pipeline                      | false               |
+| `/.env*` (any env file)                                   | HIGH       | Secrets and configuration             | false               |
+| `/server/src/lib/core/config.ts`                          | HIGH       | Environment configuration             | false               |
+| `/apps/web/next.config.js`                                | HIGH       | Next.js security configuration        | false               |
+| `/server/src/services/availability.service.ts`            | MEDIUM     | Booking availability logic            | true (with tests)   |
+| `/server/src/services/scheduling-availability.service.ts` | MEDIUM     | Time slot logic                       | true (with tests)   |
+| `/server/src/services/google-calendar.service.ts`         | MEDIUM     | Calendar sync                         | true (with tests)   |
+| `/server/src/services/tenant-onboarding.service.ts`       | MEDIUM     | Tenant setup                          | true (with tests)   |
+| `/server/src/services/audit.service.ts`                   | MEDIUM     | Audit logging                         | true (with tests)   |
+| `/server/src/routes/*.routes.ts`                          | MEDIUM     | API endpoints                         | true (with tests)   |
+| `/server/src/adapters/postmark.adapter.ts`                | MEDIUM     | Email sending                         | true (with tests)   |
+| `/server/src/adapters/gcal*.adapter.ts`                   | MEDIUM     | Calendar adapters                     | true (with tests)   |
+| `/apps/web/src/components/booking/*.tsx`                  | MEDIUM     | Complex components                    | true (with tests)   |
+| `/server/src/lib/core/events.ts`                          | MEDIUM     | Event system                          | true (with tests)   |
+| `/server/src/scheduler.ts`                                | MEDIUM     | Job scheduler                         | true (with tests)   |
+| `/server/src/lib/date-utils.ts`                           | LOW        | Utility functions                     | true                |
+| `/server/src/lib/sanitization.ts`                         | LOW        | Input sanitization                    | true                |
+| `/packages/shared/src/*.ts`                               | LOW        | Shared utilities                      | true                |
+| `/server/src/lib/entities.ts`                             | LOW        | Type definitions                      | true                |
+| `/packages/contracts/src/*.ts`                            | LOW        | API contracts (schemas)               | true                |
+| `/docs/**/*.md`                                           | LOW        | Documentation                         | true                |
+| `/*.md`                                                   | LOW        | Root documentation                    | true                |
+| `/apps/web/src/components/ui/*.tsx`                       | LOW        | UI primitives                         | true                |
+| `/apps/web/src/components/tenant/sections/*.tsx`          | LOW        | Static sections                       | true                |
+| `/**/*.test.ts`                                           | LOW        | Test files                            | true                |
+| `/**/*.spec.ts`                                           | LOW        | Test files                            | true                |
+| `/public/**/*`                                            | LOW        | Static assets                         | true                |
+| `/tsconfig.json`                                          | LOW        | TypeScript config                     | true                |
+| `/.prettierrc`                                            | LOW        | Formatting config                     | true                |
+| `/vitest.config.ts`                                       | LOW        | Test config                           | true                |
+| `/playwright.config.ts`                                   | LOW        | E2E config                            | true                |
+| `/tailwind.config.js`                                     | LOW        | CSS config                            | true                |
 
 ---
 
@@ -289,6 +289,7 @@ These files contain utilities, types, documentation, or simple presentational co
 ### When in Doubt, Classify as Higher Risk
 
 If uncertain about a file's risk level:
+
 1. Check if it handles authentication, authorization, or secrets
 2. Check if it touches payment processing or financial data
 3. Check if it accesses the database (especially writes)
@@ -329,9 +330,9 @@ grep -r "prisma\." --include="*.ts" | grep -v "tenantId"
 ## Appendix: File Count Summary
 
 | Risk Level | File Count (Approx) | % of Codebase |
-|------------|---------------------|---------------|
-| HIGH | ~50 files | ~15% |
-| MEDIUM | ~100 files | ~30% |
-| LOW | ~200+ files | ~55% |
+| ---------- | ------------------- | ------------- |
+| HIGH       | ~50 files           | ~15%          |
+| MEDIUM     | ~100 files          | ~30%          |
+| LOW        | ~200+ files         | ~55%          |
 
 This risk map should be reviewed quarterly or when major architectural changes occur.

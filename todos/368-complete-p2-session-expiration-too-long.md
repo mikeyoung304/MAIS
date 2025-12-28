@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "368"
+issue_id: '368'
 tags: [code-review, security, nextauth]
 dependencies: []
 ---
@@ -26,6 +26,7 @@ session: {
 ```
 
 **Security Best Practices:**
+
 - Tenant admins: 1-4 hours
 - Platform admins: 30 minutes
 - Public pages: Can be longer
@@ -35,6 +36,7 @@ session: {
 ## Proposed Solutions
 
 ### Option 1: Reduce Session Duration (Recommended)
+
 - **Description:** Set maxAge to 4 hours for tenant admins
 - **Pros:** Smaller attack window
 - **Cons:** Users need to re-login more often
@@ -42,6 +44,7 @@ session: {
 - **Risk:** Low
 
 ### Option 2: Role-Based Session Duration
+
 - **Description:** Different session lengths for different roles
 - **Pros:** Optimal security per role
 - **Cons:** More complex implementation
@@ -60,8 +63,8 @@ session: {
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings        |
+| ---------- | -------------------------- | ---------------- |
 | 2025-12-25 | Created during code review | Security concern |
 
 ## Resources

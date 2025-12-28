@@ -27,9 +27,11 @@ This document provides prevention strategies for the 15 code review findings dis
 ## 1. Code Duplication Prevention
 
 ### Problem Statement
+
 Three separate instances of `formatPrice`, navigation configuration, and package tier ordering were duplicated across multiple components.
 
 **Files affected:**
+
 - `TenantLandingPage.tsx` - formatPrice inline
 - `services/page.tsx` - formatPrice inline
 - `TenantNav.tsx` + `TenantFooter.tsx` - separate navItems arrays
@@ -130,9 +132,7 @@ export const TIER_ORDER: Record<string, number> = {
 };
 
 // With helper function:
-export function sortPackagesByTier<T extends { tier: string }>(
-  packages: T[]
-): T[] {
+export function sortPackagesByTier<T extends { tier: string }>(packages: T[]): T[] {
   return [...packages].sort((a, b) => {
     const orderA = TIER_ORDER[a.tier] ?? 99;
     const orderB = TIER_ORDER[b.tier] ?? 99;
@@ -172,7 +172,9 @@ When extracting shared utilities, include:
 ## 2. Performance Optimization Checklist
 
 ### Problem Statement
+
 Missing React and Next.js performance optimizations:
+
 - No `useMemo` for arrays created in renders
 - No `useCallback` for event handlers
 - Missing `cache()` wrapper for SSR data functions
@@ -185,6 +187,7 @@ Missing React and Next.js performance optimizations:
 #### useMemo Pattern
 
 **When to use:**
+
 - Arrays/objects created in render that are passed to children
 - Expensive computations in renders
 - Dependency arrays have 2+ items
@@ -219,6 +222,7 @@ export function TenantNav({ tenant, basePath, domainParam }: Props) {
 ```
 
 **Dependency array rules:**
+
 - Include all external variables used in the memoized function
 - If a dependency changes often, useMemo may hurt performance
 - Don't include the component's props unless needed
@@ -226,6 +230,7 @@ export function TenantNav({ tenant, basePath, domainParam }: Props) {
 #### useCallback Pattern
 
 **When to use:**
+
 - Event handlers passed to child components
 - Functions used in useEffect dependencies
 - Click/change handlers in lists or forms
@@ -277,6 +282,7 @@ const isActiveLink = useCallback(
 #### Next.js cache() Pattern
 
 **When to use:**
+
 - SSR functions called by both `generateMetadata()` and page components
 - Shared data fetching across routes
 - Database queries in Server Components
@@ -299,12 +305,10 @@ export async function generateMetadata() {
 }
 
 // ✅ FIX: Wrap with React cache()
-export const getTenantByDomain = cache(
-  async (domain: string): Promise<TenantPublicDto> => {
-    const response = await fetch(`/api/tenants/by-domain/${domain}`);
-    return response.json();
-  }
-);
+export const getTenantByDomain = cache(async (domain: string): Promise<TenantPublicDto> => {
+  const response = await fetch(`/api/tenants/by-domain/${domain}`);
+  return response.json();
+});
 
 // Usage: Same function in layout and generateMetadata
 // Request deduplication automatically happens
@@ -312,6 +316,7 @@ const tenant = await getTenantByDomain(domain); // Called once per request
 ```
 
 **Key rules:**
+
 - `cache()` only works in Server Components and routes
 - Caching is per-request, not global
 - Use with data fetching functions, not side effects
@@ -323,6 +328,7 @@ const tenant = await getTenantByDomain(domain); // Called once per request
 #### AbortController Pattern
 
 **When to use:**
+
 - Fetch requests in components
 - Promises that may outlive component unmount
 - Form submissions that take time
@@ -417,7 +423,9 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 ## 3. Accessibility Checklist
 
 ### Problem Statement
+
 Three WCAG violations found:
+
 - Duplicate `id="main-content"` in page components
 - Nested `<main>` elements (invalid HTML)
 - Low contrast error text (red-500 → red-700)
@@ -556,6 +564,7 @@ WCAG AA requires minimum 4.5:1 contrast ratio for normal text.
 ```
 
 Tailwind color accessibility:
+
 - For dark text on light background: Use `-700` or `-800`
 - For light text on dark background: Use `-100` or `-200`
 - Test all combinations in your design system
@@ -587,6 +596,7 @@ Tailwind color accessibility:
 ```
 
 Key attributes:
+
 - `aria-describedby` links input to error message
 - `aria-invalid="true"` tells screen readers field has error
 - `aria-required="true"` indicates required field
@@ -597,6 +607,7 @@ Key attributes:
 ## 4. Error Handling Checklist
 
 ### Problem Statement
+
 Missing error boundaries in dynamic routes prevent proper error display and recovery.
 
 ---
@@ -741,6 +752,7 @@ export default function Error({ error, reset }: ErrorProps) {
 ## 5. Validation Checklist
 
 ### Problem Statement
+
 Missing parameter validation before database queries creates opportunities for malformed requests and unclear error messages.
 
 ---
@@ -890,12 +902,14 @@ Use this checklist when reviewing PRs for Next.js components:
 ### Before Merging
 
 #### Code Duplication
+
 - [ ] No inline formatting functions (extract to `lib/`)
 - [ ] No duplicated navigation/menu configuration
 - [ ] No magic constants repeated across files
 - [ ] Constants have single source of truth
 
 #### Performance
+
 - [ ] Arrays/objects in render are wrapped with `useMemo`
 - [ ] Event handlers use `useCallback` when passed to children
 - [ ] SSR functions wrapped with `cache()` to prevent duplicate calls
@@ -903,6 +917,7 @@ Use this checklist when reviewing PRs for Next.js components:
 - [ ] No unnecessary re-renders of child components
 
 #### Accessibility
+
 - [ ] No duplicate `id` attributes in page
 - [ ] Only one `<main id="main-content">` per page (in root layout)
 - [ ] Active navigation links have `aria-current="page"`
@@ -910,6 +925,7 @@ Use this checklist when reviewing PRs for Next.js components:
 - [ ] Form fields have `aria-describedby`, `aria-invalid`, `aria-required`
 
 #### Error Handling
+
 - [ ] Dynamic routes have `error.tsx` error boundary
 - [ ] All nested routes with async data have error boundaries
 - [ ] Error boundary logs to monitoring service
@@ -917,6 +933,7 @@ Use this checklist when reviewing PRs for Next.js components:
 - [ ] No unhandled promise rejections
 
 #### Input Validation
+
 - [ ] Route parameters validated before use
 - [ ] Domain parameters validated with regex
 - [ ] Search parameters validated for type and length
@@ -924,12 +941,14 @@ Use this checklist when reviewing PRs for Next.js components:
 - [ ] Error messages are user-friendly (not technical)
 
 #### TypeScript
+
 - [ ] No `any` types (except ts-rest library limitation)
 - [ ] All functions have return types
 - [ ] Error types are properly caught (`instanceof`)
 - [ ] No type assertions without reason
 
 #### Documentation
+
 - [ ] Complex functions have JSDoc comments
 - [ ] Extracted utilities explain when to use them
 - [ ] Non-obvious logic is commented
@@ -1007,11 +1026,13 @@ const navItems = useMemo(
 ## References
 
 ### Related Documentation
+
 - [BRAND_VOICE_GUIDE.md](../../design/BRAND_VOICE_GUIDE.md) - UI/UX patterns
 - [apps/web/README.md](../../../apps/web/README.md) - Next.js patterns
 - [PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md) - Daily development checklist
 
 ### External Resources
+
 - [WCAG 2.1 Level AA](https://www.w3.org/WAI/WCAG21/quickref/) - Accessibility standards
 - [React Hooks Performance](https://react.dev/reference/react/useMemo) - useMemo/useCallback docs
 - [Next.js error.tsx](https://nextjs.org/docs/app/building-your-application/routing/error-handling) - Error boundaries

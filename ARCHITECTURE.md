@@ -121,6 +121,7 @@ Embedded widgets fetch configuration at runtime:
 - **API:** ts-rest client calling Express backend
 
 Key directories:
+
 - `app/t/[slug]/` - Tenant landing pages
 - `app/(protected)/` - Admin routes (auth-required)
 - `lib/auth.ts` - NextAuth configuration
@@ -576,12 +577,40 @@ Each section has a `type` field that determines its shape:
 ```typescript
 // Section types (discriminated by 'type' field)
 type Section =
-  | { type: 'hero'; headline: string; subheadline?: string; ctaText: string; backgroundImageUrl?: string }
-  | { type: 'text'; headline?: string; content: string; imageUrl?: string; imagePosition: 'left' | 'right' }
-  | { type: 'gallery'; headline: string; images: { url: string; alt: string }[]; instagramHandle?: string }
-  | { type: 'testimonials'; headline: string; items: { quote: string; authorName: string; rating: number }[] }
+  | {
+      type: 'hero';
+      headline: string;
+      subheadline?: string;
+      ctaText: string;
+      backgroundImageUrl?: string;
+    }
+  | {
+      type: 'text';
+      headline?: string;
+      content: string;
+      imageUrl?: string;
+      imagePosition: 'left' | 'right';
+    }
+  | {
+      type: 'gallery';
+      headline: string;
+      images: { url: string; alt: string }[];
+      instagramHandle?: string;
+    }
+  | {
+      type: 'testimonials';
+      headline: string;
+      items: { quote: string; authorName: string; rating: number }[];
+    }
   | { type: 'faq'; headline: string; items: { question: string; answer: string }[] }
-  | { type: 'contact'; headline: string; email?: string; phone?: string; address?: string; hours?: string }
+  | {
+      type: 'contact';
+      headline: string;
+      email?: string;
+      phone?: string;
+      address?: string;
+      hours?: string;
+    }
   | { type: 'cta'; headline: string; subheadline?: string; ctaText: string };
 ```
 

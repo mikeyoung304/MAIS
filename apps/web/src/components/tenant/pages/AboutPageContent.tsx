@@ -58,9 +58,7 @@ export function AboutPageContent({ tenant, basePath, domainParam }: AboutPageCon
             ) : (
               <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-sage/20 to-sage/5">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-serif text-6xl text-sage/30">
-                    {tenant.name.charAt(0)}
-                  </span>
+                  <span className="font-serif text-6xl text-sage/30">{tenant.name.charAt(0)}</span>
                 </div>
               </div>
             )}

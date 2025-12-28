@@ -13,16 +13,16 @@ This plan addresses the comprehensive audit findings for the MAIS platform, tran
 
 ### Key Metrics Baseline
 
-| Metric | Current | Phase 1 | Phase 2 | Enterprise Target |
-|--------|---------|---------|---------|-------------------|
-| Server Tests | 771 passing | 850+ | 900+ | **1000+** |
-| React Component Tests | 5 passing | 25+ | 40+ | **50+** |
-| E2E Tests | 22/114 passing | 80/114 | 100/114 | **114/114** |
-| ESLint Errors | 195 | 50 | 0 | **0** |
-| Coverage Threshold (Lines) | 30% | 50% | 65% | **80%** |
-| BookingService Lines | 1,394 | <400/service | <250/service | **<200/service** |
-| CI Build Time | 4m 30s | 1m 20s | <1m | **<30s (cache)** |
-| P95 Latency | ~50ms | <200ms | <150ms | **<100ms** |
+| Metric                     | Current        | Phase 1      | Phase 2      | Enterprise Target |
+| -------------------------- | -------------- | ------------ | ------------ | ----------------- |
+| Server Tests               | 771 passing    | 850+         | 900+         | **1000+**         |
+| React Component Tests      | 5 passing      | 25+          | 40+          | **50+**           |
+| E2E Tests                  | 22/114 passing | 80/114       | 100/114      | **114/114**       |
+| ESLint Errors              | 195            | 50           | 0            | **0**             |
+| Coverage Threshold (Lines) | 30%            | 50%          | 65%          | **80%**           |
+| BookingService Lines       | 1,394          | <400/service | <250/service | **<200/service**  |
+| CI Build Time              | 4m 30s         | 1m 20s       | <1m          | **<30s (cache)**  |
+| P95 Latency                | ~50ms          | <200ms       | <150ms       | **<100ms**        |
 
 ---
 
@@ -40,13 +40,13 @@ The MAIS platform audit revealed critical deviations from 2025 best practices:
 
 ### Risk Assessment
 
-| Risk | Likelihood | Impact | Enterprise Mitigation |
-|------|------------|--------|----------------------|
-| Frontend bugs reach production undetected | HIGH | HIGH | Component tests + visual regression |
-| BookingService becomes unmaintainable | HIGH | HIGH | Decompose into 5+ focused services |
-| Cross-tenant data leakage | LOW | CRITICAL | Explicit tenant isolation tests |
-| Performance degradation undetected | MEDIUM | HIGH | SLOs + performance budgets in CI |
-| Type assertions mask bugs | MEDIUM | MEDIUM | noUncheckedIndexedAccess + strict mode |
+| Risk                                      | Likelihood | Impact   | Enterprise Mitigation                  |
+| ----------------------------------------- | ---------- | -------- | -------------------------------------- |
+| Frontend bugs reach production undetected | HIGH       | HIGH     | Component tests + visual regression    |
+| BookingService becomes unmaintainable     | HIGH       | HIGH     | Decompose into 5+ focused services     |
+| Cross-tenant data leakage                 | LOW        | CRITICAL | Explicit tenant isolation tests        |
+| Performance degradation undetected        | MEDIUM     | HIGH     | SLOs + performance budgets in CI       |
+| Type assertions mask bugs                 | MEDIUM     | MEDIUM   | noUncheckedIndexedAccess + strict mode |
 
 ---
 
@@ -96,6 +96,7 @@ gantt
 **Enterprise Solution**: Extract into **5+ focused services** using the Orchestrator pattern.
 
 **Current Structure Analysis**:
+
 ```
 BookingService (1,394 lines, 10 dependencies)
 ├── Wedding Package Bookings (DATE)
@@ -120,6 +121,7 @@ BookingService (1,394 lines, 10 dependencies)
 ```
 
 **Enterprise Proposed Structure** (<200 lines per service):
+
 ```
 services/
 ├── checkout-session.factory.ts (new - ~80 lines)
@@ -147,6 +149,7 @@ services/
 ```
 
 **Orchestrator Pattern Example**:
+
 ```typescript
 // wedding-booking.orchestrator.ts
 export class WeddingBookingOrchestrator {
@@ -176,6 +179,7 @@ export class WeddingBookingOrchestrator {
 ```
 
 **Files to Create/Modify**:
+
 - `server/src/services/checkout-session.factory.ts` (new)
 - `server/src/services/payment-intent.factory.ts` (new)
 - `server/src/services/wedding-booking.orchestrator.ts` (new)
@@ -189,6 +193,7 @@ export class WeddingBookingOrchestrator {
 - `server/src/routes/bookings.routes.ts` (modify - use new services)
 
 **Migration Strategy (Zero-Downtime)**:
+
 1. Extract `CheckoutSessionFactory` first (no breaking changes)
 2. Create new services alongside existing BookingService
 3. Add feature flag for gradual rollout
@@ -199,6 +204,7 @@ export class WeddingBookingOrchestrator {
 8. Remove facade after 2 sprints of stable operation
 
 **Acceptance Criteria**:
+
 - [ ] Each service <200 lines (enforced via ESLint rule)
 - [ ] Services use Orchestrator pattern for multi-step workflows
 - [ ] Circuit breakers for Stripe calls (isolated failures)
@@ -218,6 +224,7 @@ export class WeddingBookingOrchestrator {
 **Solution**: Add Vitest + React Testing Library tests for critical UI components.
 
 **Files to Create/Modify**:
+
 - `apps/web/vitest.config.mts` (new)
 - `apps/web/vitest-setup.ts` (new)
 - `apps/web/src/components/tenant/__tests__/HeroSection.test.tsx` (new)
@@ -226,10 +233,11 @@ export class WeddingBookingOrchestrator {
 - `client/src/features/storefront/__tests__/BookingForm.test.tsx` (new)
 
 **Configuration Example** (`apps/web/vitest.config.mts`):
+
 ```typescript
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
@@ -248,10 +256,11 @@ export default defineConfig({
       },
     },
   },
-})
+});
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Vitest configured for `apps/web/` with jsdom environment
 - [ ] Setup file includes `@testing-library/jest-dom/vitest` matchers
 - [ ] 10+ critical component tests passing
@@ -267,9 +276,11 @@ export default defineConfig({
 **Enterprise Solution**: Add dedicated integration tests for tenant isolation.
 
 **Files to Create**:
+
 - `server/test/integration/tenant-isolation.test.ts` (new)
 
 **Test Implementation**:
+
 ```typescript
 // server/test/integration/tenant-isolation.test.ts
 describe('Tenant Isolation (Critical Security)', () => {
@@ -286,7 +297,7 @@ describe('Tenant Isolation (Critical Security)', () => {
 
     // Assert: ZERO cross-tenant leakage
     expect(tenant1Bookings).toHaveLength(5);
-    expect(tenant1Bookings.every(b => b.tenantId === tenant1.id)).toBe(true);
+    expect(tenant1Bookings.every((b) => b.tenantId === tenant1.id)).toBe(true);
   });
 
   it('CatalogService.getPackages() never returns cross-tenant data', async () => {
@@ -299,7 +310,7 @@ describe('Tenant Isolation (Critical Security)', () => {
     const packages = await catalogService.getPackages(tenant1.id);
 
     expect(packages).toHaveLength(3);
-    expect(packages.every(p => p.tenantId === tenant1.id)).toBe(true);
+    expect(packages.every((p) => p.tenantId === tenant1.id)).toBe(true);
   });
 
   it('Cache keys include tenantId to prevent cross-tenant pollution', async () => {
@@ -309,6 +320,7 @@ describe('Tenant Isolation (Critical Security)', () => {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Tenant isolation tests for all major services (Booking, Catalog, Scheduling)
 - [ ] Cache key isolation verified
 - [ ] API endpoint isolation verified
@@ -323,10 +335,12 @@ describe('Tenant Isolation (Critical Security)', () => {
 **Solution**: Incrementally raise thresholds with enterprise targets.
 
 **Files to Modify**:
+
 - `server/vitest.config.ts` (lines 65-70)
 - `client/vitest.config.ts` (add thresholds)
 
 **Phase 1 Server Config** (50%):
+
 ```typescript
 thresholds: {
   lines: 50,
@@ -337,6 +351,7 @@ thresholds: {
 ```
 
 **Enterprise Target Config** (80%):
+
 ```typescript
 thresholds: {
   lines: 80,
@@ -347,6 +362,7 @@ thresholds: {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Server coverage thresholds raised to 50%
 - [ ] Client coverage thresholds added at 40%
 - [ ] CI pipeline enforces thresholds
@@ -361,9 +377,11 @@ thresholds: {
 **Solution**: Implement Turborepo NOW (not evaluation - immediate value).
 
 **Files to Create**:
+
 - `turbo.json` (new)
 
 **Configuration**:
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
@@ -402,6 +420,7 @@ thresholds: {
 ```
 
 **Expected Results**:
+
 ```bash
 # BEFORE (npm workspaces)
 npm run build --workspaces    # 4m 30s (cold)
@@ -414,6 +433,7 @@ turbo run build --remote      # 5s (warm, remote cache)
 ```
 
 **Acceptance Criteria**:
+
 - [ ] `turbo.json` configured with dependency graph
 - [ ] Remote caching enabled (Vercel Remote Cache)
 - [ ] CI build time reduced by 70% (cache hits)
@@ -430,11 +450,13 @@ turbo run build --remote      # 5s (warm, remote cache)
 **Enterprise Solution**: Add OpenTelemetry with auto-instrumentation.
 
 **Files to Create/Modify**:
+
 - `server/src/lib/observability/tracing.ts` (new)
 - `server/src/app.ts` (modify - init tracing)
 - `server/src/services/*.ts` (modify - add custom spans)
 
 **Implementation**:
+
 ```typescript
 // server/src/lib/observability/tracing.ts
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -466,6 +488,7 @@ export const initTracing = () => {
 ```
 
 **Custom Spans for Services**:
+
 ```typescript
 // In service methods
 import { trace, SpanStatusCode } from '@opentelemetry/api';
@@ -493,6 +516,7 @@ async createWeddingBooking(input: CreateBookingInput): Promise<Booking> {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] OpenTelemetry SDK integrated with Express, Prisma, HTTP auto-instrumentation
 - [ ] All service methods create named spans with tenant context
 - [ ] Distributed traces viewable in Honeycomb/Jaeger
@@ -507,12 +531,14 @@ async createWeddingBooking(input: CreateBookingInput): Promise<Booking> {
 **Solution**: Systematically resolve errors by type, then remove baseline.
 
 **Strategy**:
+
 1. Fix `no-unused-vars` first (quick wins via --fix)
 2. Replace `console.log` with logger utility
 3. Address `no-explicit-any` in batches (document ts-rest limitations)
 4. Remove baseline from CI once at 0
 
 **Acceptance Criteria**:
+
 - [ ] All 195 ESLint errors resolved
 - [ ] Baseline removed from CI pipeline
 - [ ] `@typescript-eslint/no-explicit-any: error` enforced
@@ -527,6 +553,7 @@ async createWeddingBooking(input: CreateBookingInput): Promise<Booking> {
 **Solution**: Configure Renovate with enterprise security focus.
 
 **Configuration** (`renovate.json`):
+
 ```json
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
@@ -557,6 +584,7 @@ async createWeddingBooking(input: CreateBookingInput): Promise<Booking> {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Renovate installed and configured
 - [ ] Vulnerability alerts enabled
 - [ ] Major updates require approval
@@ -571,6 +599,7 @@ async createWeddingBooking(input: CreateBookingInput): Promise<Booking> {
 **Solution**: Integrate axe-core with Playwright E2E tests.
 
 **Acceptance Criteria**:
+
 - [ ] axe-core integrated with Playwright
 - [ ] WCAG 2.1 AA compliance filtering
 - [ ] HTML reports generated for violations
@@ -586,6 +615,7 @@ async createWeddingBooking(input: CreateBookingInput): Promise<Booking> {
 **Solution**: Add SLO definitions and performance tests in CI.
 
 **SLO Configuration** (`.slo.yml`):
+
 ```yaml
 services:
   booking-service:
@@ -601,6 +631,7 @@ services:
 ```
 
 **Performance Test**:
+
 ```typescript
 // e2e/tests/performance/booking-flow.spec.ts
 test('Booking flow meets performance SLA', async ({ page }) => {
@@ -617,6 +648,7 @@ test('Booking flow meets performance SLA', async ({ page }) => {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] SLOs documented in `.slo.yml`
 - [ ] Performance regression tests in CI
 - [ ] CI fails if p95 > target
@@ -631,6 +663,7 @@ test('Booking flow meets performance SLA', async ({ page }) => {
 **Solution**: Add Snyk + npm audit to CI.
 
 **Configuration** (`.github/workflows/security-scan.yml`):
+
 ```yaml
 name: Security Scan
 on:
@@ -655,6 +688,7 @@ jobs:
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Snyk integration configured
 - [ ] Weekly security scans scheduled
 - [ ] High-severity vulnerabilities block PR merge
@@ -679,6 +713,7 @@ Enable TypeScript's safer array/object access with gradual migration.
 **Solution**: Add immutable event store with chain-of-custody hashing.
 
 **Implementation**:
+
 ```typescript
 // server/src/lib/audit/event-store.ts
 export interface DomainEvent {
@@ -705,6 +740,7 @@ export class EventStore {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All state-changing operations append immutable events
 - [ ] Chain-of-custody hash prevents tampering
 - [ ] Event replay supports audit queries
@@ -717,12 +753,10 @@ export class EventStore {
 **Solution**: Add Stryker mutation testing.
 
 **Configuration** (`stryker.config.json`):
+
 ```json
 {
-  "mutate": [
-    "src/services/**/*.ts",
-    "src/adapters/prisma/**/*.ts"
-  ],
+  "mutate": ["src/services/**/*.ts", "src/adapters/prisma/**/*.ts"],
   "testRunner": "vitest",
   "thresholds": {
     "high": 80,
@@ -733,6 +767,7 @@ export class EventStore {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Stryker configured for critical services
 - [ ] Mutation score > 70% for booking services
 - [ ] CI reports mutation score trends
@@ -792,10 +827,12 @@ graph TD
 ## Quality Gates (Enterprise)
 
 ### Pre-commit Hooks
+
 - ESLint + Prettier
 - TypeScript type check
 
 ### CI Pipeline Gates
+
 - [ ] Unit tests pass (coverage > 80%)
 - [ ] Integration tests pass
 - [ ] E2E tests pass
@@ -806,6 +843,7 @@ graph TD
 - [ ] Bundle size within budget
 
 ### Pre-deploy Gates
+
 - [ ] All tests green
 - [ ] No high-severity vulnerabilities
 - [ ] SLO compliance verified
@@ -816,24 +854,24 @@ graph TD
 
 ### Technical Metrics
 
-| Metric | Current | Phase 1 | Phase 2 | Enterprise |
-|--------|---------|---------|---------|------------|
-| Code Coverage | 43% | 50% | 65% | **80%** |
-| Service Size | 1,394 lines | <400 lines | <250 lines | **<200 lines** |
-| Build Time (CI) | 4m 30s | 1m 20s | <1m | **<30s** |
-| P95 Latency | ~50ms | <200ms | <150ms | **<100ms** |
-| Test Count | 771 | 850+ | 900+ | **1000+** |
-| Mutation Score | N/A | 60% | 70% | **80%** |
-| ESLint Errors | 195 | 50 | 0 | **0** |
+| Metric          | Current     | Phase 1    | Phase 2    | Enterprise     |
+| --------------- | ----------- | ---------- | ---------- | -------------- |
+| Code Coverage   | 43%         | 50%        | 65%        | **80%**        |
+| Service Size    | 1,394 lines | <400 lines | <250 lines | **<200 lines** |
+| Build Time (CI) | 4m 30s      | 1m 20s     | <1m        | **<30s**       |
+| P95 Latency     | ~50ms       | <200ms     | <150ms     | **<100ms**     |
+| Test Count      | 771         | 850+       | 900+       | **1000+**      |
+| Mutation Score  | N/A         | 60%        | 70%        | **80%**        |
+| ESLint Errors   | 195         | 50         | 0          | **0**          |
 
 ### Business Metrics
 
-| Metric | Target |
-|--------|--------|
-| Deploy Frequency | 2x/week → Daily |
+| Metric                     | Target               |
+| -------------------------- | -------------------- |
+| Deploy Frequency           | 2x/week → Daily      |
 | MTTR (Mean Time to Repair) | 2 hours → 15 minutes |
-| Customer-Reported Bugs | -50% reduction |
-| Developer Onboarding | 2 weeks → 3 days |
+| Customer-Reported Bugs     | -50% reduction       |
+| Developer Onboarding       | 2 weeks → 3 days     |
 
 ---
 
@@ -842,6 +880,7 @@ graph TD
 ### Risk 1: BookingService Refactor Breaks Production
 
 **Mitigation**:
+
 - Strangler Fig Pattern: Run old + new services in parallel
 - Shadow Traffic: Compare outputs before full cutover
 - Feature Flags: Gradual rollout per tenant
@@ -850,12 +889,14 @@ graph TD
 ### Risk 2: Coverage Thresholds Block Urgent Hotfixes
 
 **Mitigation**:
+
 - Hotfix label bypasses thresholds (requires approval)
 - Auto-create tech debt issue for post-hotfix tests
 
 ### Risk 3: Observability Overhead Degrades Performance
 
 **Mitigation**:
+
 - 1% sampling in production (100% in staging)
 - Tail-based sampling: Keep all error traces
 - Async export: Non-blocking trace collection
@@ -865,38 +906,43 @@ graph TD
 ## Tooling Stack (Enterprise)
 
 ### Observability
-| Tool | Purpose | Cost |
-|------|---------|------|
-| Honeycomb | Distributed tracing, APM | $200/mo |
-| Sentry | Error tracking | $26/mo |
-| Prometheus + Grafana | Metrics, SLO dashboards | Self-hosted |
+
+| Tool                 | Purpose                  | Cost        |
+| -------------------- | ------------------------ | ----------- |
+| Honeycomb            | Distributed tracing, APM | $200/mo     |
+| Sentry               | Error tracking           | $26/mo      |
+| Prometheus + Grafana | Metrics, SLO dashboards  | Self-hosted |
 
 ### Testing
-| Tool | Purpose |
-|------|---------|
-| Vitest | Unit/integration tests |
-| Playwright | E2E tests |
-| Stryker | Mutation testing |
-| k6 | Load testing |
+
+| Tool       | Purpose                |
+| ---------- | ---------------------- |
+| Vitest     | Unit/integration tests |
+| Playwright | E2E tests              |
+| Stryker    | Mutation testing       |
+| k6         | Load testing           |
 
 ### CI/CD
-| Tool | Purpose |
-|------|---------|
-| Turborepo | Build caching |
-| Renovate | Dependency updates |
-| Snyk | Security scanning |
-| Commitlint | Semantic commits |
+
+| Tool       | Purpose            |
+| ---------- | ------------------ |
+| Turborepo  | Build caching      |
+| Renovate   | Dependency updates |
+| Snyk       | Security scanning  |
+| Commitlint | Semantic commits   |
 
 ---
 
 ## References
 
 ### Internal References
+
 - `server/src/services/booking.service.ts:1-1394` - BookingService analysis
 - `server/vitest.config.ts:65-70` - Current coverage thresholds
 - `client/src/features/storefront/landing/__tests__/FaqSection.test.tsx` - Existing React test pattern
 
 ### External References
+
 - [OpenTelemetry Node.js SDK](https://opentelemetry.io/docs/instrumentation/js/getting-started/nodejs/)
 - [Turborepo Documentation](https://turbo.build/repo/docs)
 - [Stryker Mutation Testing](https://stryker-mutator.io/docs/)
@@ -909,6 +955,7 @@ graph TD
 **Review Panel**: 3 specialist reviewers (DHH Rails Philosophy, Enterprise Architect, Code Simplicity Advocate)
 
 **Consensus**: All reviewers agree on enterprise quality mandate. Key adjustments:
+
 - BookingService decomposition elevated to P0 (unanimous)
 - Coverage target raised to 80% (unanimous)
 - Timeline extended to 6-8 weeks (unanimous)
@@ -918,4 +965,4 @@ graph TD
 
 ---
 
-*Generated with [Claude Code](https://claude.com/claude-code)*
+_Generated with [Claude Code](https://claude.com/claude-code)_

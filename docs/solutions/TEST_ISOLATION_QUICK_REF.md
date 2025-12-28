@@ -1,13 +1,16 @@
 # Test Isolation Quick Reference
 
 ## The Problem
+
 Tests pass individually but fail when run together. Symptoms:
+
 - "Too many database connections"
 - "Could not serialize access"
 - "Duplicate key" errors
 - Flaky/intermittent failures
 
 ## The Root Cause
+
 ```
 Multiple test files × Multiple Vitest workers × 100 connections per Prisma Client
 = Thousands of connections against database max of 100-300
@@ -18,11 +21,13 @@ Multiple test files × Multiple Vitest workers × 100 connections per Prisma Cli
 ### Step 1: Set Connection Limits (CRITICAL)
 
 Add to `.env.test`:
+
 ```bash
 DATABASE_URL_TEST="postgresql://user:pass@localhost:5432/db?connection_limit=10&pool_timeout=20"
 ```
 
 CI/CD: Add to `.github/workflows/main-pipeline.yml`:
+
 ```yaml
 env:
   DATABASE_URL: postgresql://...?connection_limit=10&pool_timeout=20
@@ -120,17 +125,19 @@ Use `.sequential()` only when tests access shared state:
 ```typescript
 describe.sequential('Cache Tests', () => {
   // Tests run one-at-a-time (slower but safer)
-  it('test 1', () => { });
-  it('test 2', () => { });
+  it('test 1', () => {});
+  it('test 2', () => {});
 });
 ```
 
 **Use Serial For:**
+
 - Cache validation
 - Config/global state tests
 - Tests with timing dependencies
 
 **Don't Use Serial For:**
+
 - Most database tests (use pool limits instead)
 - Multi-tenant tests (they're isolated by tenant)
 
@@ -139,26 +146,35 @@ describe.sequential('Cache Tests', () => {
 ## Troubleshooting
 
 ### Error: "Too many database connections"
+
 **Fix:** Add `connection_limit=10` to DATABASE_URL_TEST
 
 ### Error: "Duplicate key value violates unique constraint"
+
 **Fix:** Use factories (`ctx.factories.package.create()`) instead of hardcoded slugs
 
 ### Error: "Could not serialize access due to concurrent update"
+
 **Fix:** Either:
+
 1. Use advisory locks in transaction, OR
 2. Use `.sequential()` for that test
 
 ### Error: "Foreign key constraint violation"
+
 **Fix:** Cleanup must respect dependency order:
+
 ```typescript
 // Correct order (child before parent)
 bookingAddOn → booking → addOn → package → tenant
 ```
+
 The helper handles this automatically.
 
 ### Tests pass locally but fail in CI
+
 **Fix:** Ensure CI has same connection limits as local:
+
 ```yaml
 DATABASE_URL_TEST: postgresql://...?connection_limit=10&pool_timeout=20
 ```
@@ -201,7 +217,9 @@ describe('My Feature Tests', () => {
 
   it('should do something', async () => {
     // Use factories for unique data
-    const data = ctx.factories.package.create({ /* overrides */ });
+    const data = ctx.factories.package.create({
+      /* overrides */
+    });
 
     // Your test logic here
 
@@ -244,12 +262,12 @@ CI/CD Setup:
 
 ## Key Parameters
 
-| Parameter | Value | Purpose |
-|-----------|-------|---------|
-| `connection_limit` | 10 | Max connections per Prisma Client (prevents exhaustion) |
-| `pool_timeout` | 20 | Seconds to wait for available connection |
-| `fileSlug` | Unique per test file | Prevents cross-test tenant conflicts |
-| Cleanup order | Child before parent | Respects foreign key constraints |
+| Parameter          | Value                | Purpose                                                 |
+| ------------------ | -------------------- | ------------------------------------------------------- |
+| `connection_limit` | 10                   | Max connections per Prisma Client (prevents exhaustion) |
+| `pool_timeout`     | 20                   | Seconds to wait for available connection                |
+| `fileSlug`         | Unique per test file | Prevents cross-test tenant conflicts                    |
+| Cleanup order      | Child before parent  | Respects foreign key constraints                        |
 
 ---
 
@@ -273,4 +291,3 @@ If after following this guide you still have test failures:
 4. Ask team lead about test-specific issues
 
 See `TEST_ISOLATION_PREVENTION_STRATEGIES.md` for detailed troubleshooting.
-

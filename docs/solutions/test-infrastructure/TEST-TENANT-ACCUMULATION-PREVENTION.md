@@ -51,6 +51,7 @@ describe('My Feature Integration Tests', () => {
 ```
 
 **Key Points:**
+
 - Use `setupCompleteIntegrationTest()` for all integration tests
 - The `fileSlug` parameter becomes part of tenant naming (e.g., `my-feature-tenant-a`)
 - Always call `cleanupTenants()` in both `beforeEach` and `afterEach`
@@ -229,6 +230,7 @@ npm run test:integration -- test/integration/health-check.service.test.ts
 ```
 
 Expected tenant count should be:
+
 - Production: 10-50 tenants
 - Development: 3-5 tenants (mais, little-bit-farm, demo)
 - During test run: 3-5 + temporary test tenants
@@ -303,7 +305,7 @@ const TEST_TENANT_PATTERNS = [
 const TEST_TENANT_PATTERNS = [
   'hash-test-business-%',
   'test-business-%',
-  'my-new-feature-%',  // Add new pattern here
+  'my-new-feature-%', // Add new pattern here
   // ...
 ];
 

@@ -112,13 +112,13 @@ Optional but recommended:
 
 **Discovery:** Both existing servers pass all criteria:
 
-| Criteria | Prisma | Playwright |
-|----------|--------|-----------|
-| Clear use case | ✅ Schema introspection | ✅ E2E test automation |
-| No overlap | ✅ Unique | ✅ Unique |
-| Env vars providable | ✅ Auto-discovered | ✅ Auto-discovered |
-| Startup impact | ✅ ~200ms | ✅ None (lazy) |
-| Team uses it | ✅ Daily | ✅ Daily |
+| Criteria            | Prisma                  | Playwright             |
+| ------------------- | ----------------------- | ---------------------- |
+| Clear use case      | ✅ Schema introspection | ✅ E2E test automation |
+| No overlap          | ✅ Unique               | ✅ Unique              |
+| Env vars providable | ✅ Auto-discovered      | ✅ Auto-discovered     |
+| Startup impact      | ✅ ~200ms               | ✅ None (lazy)         |
+| Team uses it        | ✅ Daily                | ✅ Daily               |
 
 **Decision:** Keep both servers as standard configuration
 
@@ -127,6 +127,7 @@ Optional but recommended:
 **Hypothesis:** "Let's add Postgres MCP for direct SQL queries"
 
 **Analysis against criteria:**
+
 - Use case: ✅ Direct SQL queries (clear)
 - Overlap: ⚠️ Prisma MCP covers schema (different capability)
 - Env vars: ✅ DATABASE_URL required
@@ -146,6 +147,7 @@ Optional but recommended:
 **Purpose:** Filter out speculative, overlapping, or blocked MCP servers before implementation
 
 **Flow:**
+
 ```
 New MCP desire
 ├─ Overlap check → [if yes] REJECT, use existing
@@ -163,6 +165,7 @@ New MCP desire
 **Purpose:** Clear documentation of how MCP servers get environment variables
 
 **Patterns:**
+
 - Shell export pattern (for local dev)
 - .mcp.json config pattern (for secrets)
 - Claude Code settings pattern (for auto-discovery)
@@ -177,6 +180,7 @@ New MCP desire
 **Purpose:** Ensure every MCP server in .mcp.json has permissions granted
 
 **Checklist:**
+
 - MCP server added to .mcp.json
 - Permission granted in Claude Code UI
 - No startup warnings
@@ -192,6 +196,7 @@ New MCP desire
 **Purpose:** Catch problems before merge
 
 **Review checks:**
+
 - Use case justified?
 - No overlap?
 - Env vars documented?
@@ -209,6 +214,7 @@ New MCP desire
 **Designed for:** Printing, desk reference, code review
 
 **Quick wins:**
+
 - 30-second decision maker
 - Copy-paste checklists
 - Troubleshooting table
@@ -223,6 +229,7 @@ New MCP desire
 **Status:** ✅ APPROVED (Keep)
 
 **Rationale:**
+
 - Essential for database schema work
 - Enables schema introspection without leaving Claude Code
 - Auto-discovered (no env vars needed)
@@ -230,6 +237,7 @@ New MCP desire
 - Used multiple times daily
 
 **Configuration:**
+
 ```json
 {
   "command": "npx",
@@ -248,6 +256,7 @@ New MCP desire
 **Status:** ✅ APPROVED (Keep)
 
 **Rationale:**
+
 - Enables E2E test automation via Claude Code
 - Supports Playwright browser control
 - Lazy-loaded (zero startup impact)
@@ -255,6 +264,7 @@ New MCP desire
 - Unique capability (no alternative)
 
 **Configuration:**
+
 ```json
 {
   "command": "npx",
@@ -273,12 +283,14 @@ New MCP desire
 ### For Individual Developers
 
 **When adding a new MCP server:**
+
 1. Read MCP-CONFIGURATION-QUICK-REFERENCE.md (5 min)
 2. Use decision tree (1 min)
 3. Complete checklist (5 min)
 4. Create PR with documentation
 
 **When reviewing .mcp.json PR:**
+
 1. Use Code Review Checklist (5 min)
 2. Ask clarifying questions
 3. Verify no startup warnings
@@ -287,12 +299,14 @@ New MCP desire
 ### For Tech Leads
 
 **When making MCP decisions:**
+
 1. Reference MCP-CONFIGURATION-PREVENTION.md Part 1 (decision tree)
 2. Evaluate against criteria
 3. Document in CLAUDE.md
 4. Communicate to team
 
 **When onboarding new developers:**
+
 1. Point to MCP-CONFIGURATION-QUICK-REFERENCE.md
 2. Walk through permission grant process
 3. Test `claude --help` (verify no warnings)
@@ -301,6 +315,7 @@ New MCP desire
 ### For Code Reviewers
 
 **When reviewing .mcp.json changes:**
+
 ```bash
 # Quick automated checks
 git diff main -- .mcp.json  # What changed?
@@ -330,13 +345,15 @@ MAIS uses MCP (Model Context Protocol) servers to extend Claude Code.
 
 ### Available Servers
 
-| Server | Use Case | Status | Setup |
-|--------|----------|--------|-------|
-| prisma | Schema introspection, migrations | ✅ Active | Auto |
-| playwright | E2E test automation | ✅ Active | Grant permission |
+| Server     | Use Case                         | Status    | Setup            |
+| ---------- | -------------------------------- | --------- | ---------------- |
+| prisma     | Schema introspection, migrations | ✅ Active | Auto             |
+| playwright | E2E test automation              | ✅ Active | Grant permission |
 
 ### Permission Grant
+
 After pulling .mcp.json updates:
+
 1. Claude Code → Settings → MCP Servers
 2. For each server, click "Grant Permission"
 3. Restart Claude Code
@@ -350,23 +367,29 @@ See [MCP Configuration Prevention](./docs/solutions/MCP-CONFIGURATION-PREVENTION
 **Title:** MCP Server Configuration
 
 **Body:**
+
 ```markdown
 ## Proposal: Add [Server Name] MCP Server
 
 ### Use Case
+
 [What problem does this solve? How often used?]
 
 ### Environment Variables
+
 - Required: [list vars]
 - Source: [shell/config/settings]
 
 ### Startup Impact
+
 [Estimated overhead in ms]
 
 ### Team Impact
+
 [What workflows improve? Who benefits?]
 
 ### Checklist
+
 - [ ] No overlap with existing servers
 - [ ] Environment setup documented
 - [ ] Tested locally without warnings
@@ -458,15 +481,18 @@ claude --help 2>&1 | grep -i "mcp\|warning"
 ## Related Documentation
 
 **Prevention Strategies:**
+
 - docs/solutions/PREVENTION-STRATEGIES-INDEX.md (master index)
 - docs/solutions/COMPREHENSIVE-PREVENTION-STRATEGIES.md (overall framework)
 
 **Configuration Guides:**
+
 - CLAUDE.md (project-wide configuration)
 - DEVELOPING.md (development setup)
 - .env.example (environment variables template)
 
 **External Resources:**
+
 - [Anthropic MCP Documentation](https://modelcontextprotocol.io/)
 - [Prisma MCP Server](https://github.com/prisma/mcp-server-prisma)
 - [Playwright MCP Server](https://github.com/microsoft/playwright-mcp)
@@ -478,6 +504,7 @@ claude --help 2>&1 | grep -i "mcp\|warning"
 ### Q: Should we add Postgres MCP?
 
 **A:** Not yet. Criteria analysis:
+
 - Use case not clear (what queries do you need?)
 - Overlap with Prisma MCP for schema work
 - Environment setup is clear (DATABASE_URL)
@@ -500,6 +527,7 @@ claude --help 2>&1 | grep -i "mcp\|warning"
 ### Q: What if an MCP server isn't working?
 
 **A:** See Troubleshooting section in quick reference. 90% of issues are:
+
 1. Permissions not granted (restart Claude Code)
 2. Env var not exported (export it in shell)
 3. MCP server not installed (run suggested command)

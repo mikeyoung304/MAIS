@@ -12,6 +12,7 @@
 This plan addresses 67 issues identified in the overnight enterprise audit across 4 implementation waves. The audit found strong security fundamentals (9/10) with opportunities for improvement in architecture (6/10), documentation (6/10), and performance (7/10).
 
 **Key Metrics:**
+
 - 5 P0 Critical issues (2 already fixed in Wave 1)
 - 10 P1 High priority issues
 - 15 P2 Medium priority issues
@@ -35,15 +36,15 @@ The MAIS codebase has accumulated technical debt during rapid feature developmen
 
 ### Status: 60% Complete
 
-| Task | Status | Details |
-|------|--------|---------|
-| W1-03: Fix unbounded findAll query | STAGED | Added `take: 100` default limit |
-| W1-04: Fix N+1 catalog query | STAGED | Using `getPackageBySlugWithAddOns()` |
-| W1-02: Delete backup files | STAGED | 7/8 files deleted |
-| W1-07: Delete deprecated e2e.yml | STAGED | Removed |
-| **W1-01: Update Next.js to 14.2.32+** | NOT STARTED | Critical CVE |
-| **W1-05: Fix broken doc links** | NOT STARTED | 5+ broken references |
-| **W1-06: Fix pnpm/npm inconsistency** | NOT STARTED | README.md line 283 |
+| Task                                  | Status      | Details                              |
+| ------------------------------------- | ----------- | ------------------------------------ |
+| W1-03: Fix unbounded findAll query    | STAGED      | Added `take: 100` default limit      |
+| W1-04: Fix N+1 catalog query          | STAGED      | Using `getPackageBySlugWithAddOns()` |
+| W1-02: Delete backup files            | STAGED      | 7/8 files deleted                    |
+| W1-07: Delete deprecated e2e.yml      | STAGED      | Removed                              |
+| **W1-01: Update Next.js to 14.2.32+** | NOT STARTED | Critical CVE                         |
+| **W1-05: Fix broken doc links**       | NOT STARTED | 5+ broken references                 |
+| **W1-06: Fix pnpm/npm inconsistency** | NOT STARTED | README.md line 283                   |
 
 ### Remaining Wave 1 Tasks
 
@@ -60,6 +61,7 @@ cd apps/web && npm install next@14.2.32
 ```
 
 **Verification:**
+
 - [ ] Run `npm run build --workspace=apps/web`
 - [ ] Run E2E tests against Next.js app
 - [ ] Verify middleware auth flows
@@ -69,15 +71,16 @@ cd apps/web && npm install next@14.2.32
 **Priority:** P0 - Developer Experience
 **Files to Update:**
 
-| File | Line | Current | Fix |
-|------|------|---------|-----|
-| README.md | 10 | `./docs/sprints/SPRINT_10_FINAL_SUMMARY.md` | `./docs/archive/2025-12/sprints/SPRINT_10_FINAL_SUMMARY.md` |
-| README.md | 115 | `./docs/sprints/...` | Same as above |
-| README.md | 231 | `./docs/sprints/...` | Same as above |
-| README.md | 677 | `./docs/phases/PHASE_5_IMPLEMENTATION_SPEC.md` | `./docs/archive/2025-12/phases/...` |
-| README.md | 693 | `./docs/phases/PHASE_1_COMPLETION_REPORT.md` | `./docs/archive/2025-12/phases/...` |
+| File      | Line | Current                                        | Fix                                                         |
+| --------- | ---- | ---------------------------------------------- | ----------------------------------------------------------- |
+| README.md | 10   | `./docs/sprints/SPRINT_10_FINAL_SUMMARY.md`    | `./docs/archive/2025-12/sprints/SPRINT_10_FINAL_SUMMARY.md` |
+| README.md | 115  | `./docs/sprints/...`                           | Same as above                                               |
+| README.md | 231  | `./docs/sprints/...`                           | Same as above                                               |
+| README.md | 677  | `./docs/phases/PHASE_5_IMPLEMENTATION_SPEC.md` | `./docs/archive/2025-12/phases/...`                         |
+| README.md | 693  | `./docs/phases/PHASE_1_COMPLETION_REPORT.md`   | `./docs/archive/2025-12/phases/...`                         |
 
 **Also update:**
+
 - ARCHITECTURE.md
 - DEVELOPING.md
 - docs/INDEX.md
@@ -126,6 +129,7 @@ export type RefundStatus = 'NONE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'PA
 ```
 
 **Verification:**
+
 - [ ] Remove all `booking as any` casts in public-booking-management.routes.ts
 - [ ] TypeScript compiles without errors
 - [ ] Unit tests pass
@@ -145,12 +149,13 @@ export interface TenantSecrets {
 // Enhanced
 export interface TenantSecrets {
   stripe?: EncryptedData;
-  calendar?: EncryptedData;  // Google Calendar config
+  calendar?: EncryptedData; // Google Calendar config
   [key: string]: EncryptedData | undefined;
 }
 ```
 
 **Affected Files:**
+
 - `server/src/routes/tenant-admin-calendar.routes.ts:49,140,183,220`
 
 ### W2-03: Add React.memo to Section Components
@@ -159,6 +164,7 @@ export interface TenantSecrets {
 **Files:** `apps/web/src/components/tenant/sections/`
 
 Components to wrap:
+
 1. `HeroSection.tsx`
 2. `TextSection.tsx`
 3. `GallerySection.tsx`
@@ -168,6 +174,7 @@ Components to wrap:
 7. `TestimonialsSection.tsx`
 
 **Pattern:**
+
 ```tsx
 // Before
 export function HeroSection({ headline, ... }: HeroSectionProps) { ... }
@@ -208,24 +215,24 @@ return { date, available: true };
 **Priority:** P1 - Documentation Accuracy
 **Files to Update:**
 
-| File | Issue | Fix |
-|------|-------|-----|
-| CLAUDE.md | Test count says 752 | Update to 771 |
-| CLAUDE.md | "MVP Sprint Day 4" section | Archive or remove |
-| README.md | Sprint 10 dates say Nov 2025 | Update to Dec 2025 |
-| docs/INDEX.md | Sprint 6 as current | Update to current state |
+| File          | Issue                        | Fix                     |
+| ------------- | ---------------------------- | ----------------------- |
+| CLAUDE.md     | Test count says 752          | Update to 771           |
+| CLAUDE.md     | "MVP Sprint Day 4" section   | Archive or remove       |
+| README.md     | Sprint 10 dates say Nov 2025 | Update to Dec 2025      |
+| docs/INDEX.md | Sprint 6 as current          | Update to current state |
 
 ### W2-06: Configure Missing Rate Limiters
 
 **Priority:** P2 - Security
 **File:** `server/src/middleware/rateLimiter.ts`
 
-| Line | TODO ID | Endpoint |
-|------|---------|----------|
-| 201 | TODO-057 | Public scheduling endpoints |
-| 225 | TODO-193 | Add-on read operations |
-| 245 | TODO-193 | Add-on write operations |
-| 265 | TODO-273 | Stripe webhook endpoint |
+| Line | TODO ID  | Endpoint                    |
+| ---- | -------- | --------------------------- |
+| 201  | TODO-057 | Public scheduling endpoints |
+| 225  | TODO-193 | Add-on read operations      |
+| 245  | TODO-193 | Add-on write operations     |
+| 265  | TODO-273 | Stripe webhook endpoint     |
 
 ### Wave 2 Acceptance Criteria
 
@@ -252,6 +259,7 @@ return { date, available: true };
 **Current State:** 19 files import directly from PrismaTenantRepository.
 
 **Interface:**
+
 ```typescript
 export interface TenantService {
   findById(id: string): Promise<Tenant | null>;
@@ -274,6 +282,7 @@ export interface TenantService {
 **Depends On:** W3-01
 
 **Files to Refactor (12 route files):**
+
 1. `server/src/routes/auth.routes.ts`
 2. `server/src/routes/tenant.routes.ts`
 3. `server/src/routes/tenant-admin.routes.ts`
@@ -293,6 +302,7 @@ export interface TenantService {
 **File:** `server/src/services/upload.service.ts`
 
 **Current:** Singleton pattern (line 144)
+
 ```typescript
 export const uploadService = new UploadService();
 ```
@@ -300,6 +310,7 @@ export const uploadService = new UploadService();
 **Target:** DI injection via container
 
 **Steps:**
+
 1. Update `tenant-admin.routes.ts` to accept injected `storageProvider`
 2. Remove singleton export
 3. Update all consumers to use DI
@@ -314,6 +325,7 @@ export const uploadService = new UploadService();
 **File:** `server/src/routes/public-tenant.routes.ts:72-123`
 
 **Tasks:**
+
 - [ ] Test domain lookup end-to-end
 - [ ] Update TODO comment in `apps/web/src/lib/tenant.ts:285`
 - [ ] Verify custom domain routing in `apps/web/src/middleware.ts`
@@ -324,6 +336,7 @@ export const uploadService = new UploadService();
 **New File:** `.github/workflows/deploy-nextjs.yml`
 
 **Requirements:**
+
 1. Build step: `npm run build --workspace=apps/web`
 2. Upload artifact: `apps/web/.next/`
 3. Deploy to Vercel (preferred for Next.js)
@@ -336,12 +349,14 @@ export const uploadService = new UploadService();
 
 **Priority:** P2 - Reliability
 **Files:**
+
 - `server/src/routes/public-date-booking.routes.ts`
 - `server/src/routes/index.ts`
 
 **TODO ID:** TODO-329 (5 occurrences)
 
 **Implementation:**
+
 1. Accept `X-Idempotency-Key` header
 2. Check cache for existing result
 3. Process request if no cached result
@@ -368,6 +383,7 @@ export const uploadService = new UploadService();
 **File:** `server/src/services/booking.service.ts` (1395 lines)
 
 **Proposed Split:**
+
 1. `CheckoutService` - Payment session creation, Stripe integration
 2. `AppointmentService` - Scheduling, availability, calendar sync
 3. `RefundService` - Cancellation, refund processing
@@ -421,16 +437,16 @@ export const uploadService = new UploadService();
 
 ## Success Metrics
 
-| Wave | Metric | Target |
-|------|--------|--------|
-| 1 | Next.js version | >= 14.2.32 |
-| 1 | Broken doc links | 0 |
-| 2 | `any` type casts in booking routes | 0 |
-| 2 | Section components with React.memo | 7/7 |
-| 3 | Routes using TenantService | 12/12 |
-| 3 | UploadService singleton removed | Yes |
-| 4 | BookingService line count | < 500 per file |
-| 4 | ESLint errors | 0 |
+| Wave | Metric                             | Target         |
+| ---- | ---------------------------------- | -------------- |
+| 1    | Next.js version                    | >= 14.2.32     |
+| 1    | Broken doc links                   | 0              |
+| 2    | `any` type casts in booking routes | 0              |
+| 2    | Section components with React.memo | 7/7            |
+| 3    | Routes using TenantService         | 12/12          |
+| 3    | UploadService singleton removed    | Yes            |
+| 4    | BookingService line count          | < 500 per file |
+| 4    | ESLint errors                      | 0              |
 
 ---
 
@@ -451,28 +467,31 @@ graph TD
 
 ## Risk Analysis & Mitigation
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Next.js upgrade breaks features | Medium | High | Run full E2E suite, staged rollout |
-| TenantService extraction introduces bugs | Medium | Medium | Comprehensive unit tests before refactor |
-| BookingService split loses functionality | Low | High | Extract one service at a time, maintain tests |
-| Rate limiter changes affect legitimate users | Low | Medium | Start with generous limits, monitor |
+| Risk                                         | Likelihood | Impact | Mitigation                                    |
+| -------------------------------------------- | ---------- | ------ | --------------------------------------------- |
+| Next.js upgrade breaks features              | Medium     | High   | Run full E2E suite, staged rollout            |
+| TenantService extraction introduces bugs     | Medium     | Medium | Comprehensive unit tests before refactor      |
+| BookingService split loses functionality     | Low        | High   | Extract one service at a time, maintain tests |
+| Rate limiter changes affect legitimate users | Low        | Medium | Start with generous limits, monitor           |
 
 ---
 
 ## References & Research
 
 ### Internal References
+
 - `AUDIT_REPORT.md` - Executive summary with health score
 - `FIX_PLAN.json` - Structured implementation plan
 - `VERIFICATION_LOG.md` - Applied fixes documentation
 - `RISK_MAP.md` - File risk classification
 
 ### External References
+
 - [Next.js 14.2.32 Release Notes](https://nextjs.org/docs) - Security patch details
 - [ts-rest Documentation](https://ts-rest.com/) - Contract-first API design
 
 ### Related Work
+
 - Wave 1 fixes partially applied (commit pending)
 - N+1 query and unbounded findAll already addressed
 
@@ -496,5 +515,5 @@ graph TD
 
 ---
 
-*Plan generated from enterprise audit findings*
-*Report: AUDIT_REPORT.md | Commit: a514162*
+_Plan generated from enterprise audit findings_
+_Report: AUDIT_REPORT.md | Commit: a514162_

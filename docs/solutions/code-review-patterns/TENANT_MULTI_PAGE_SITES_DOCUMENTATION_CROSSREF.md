@@ -30,9 +30,11 @@ This document provides a complete index of related documentation for the **tenan
 ## 1. Core Architecture & Decisions
 
 ### ADR-014: Next.js App Router Migration for Tenant Storefronts
+
 **File:** `/docs/adrs/ADR-014-nextjs-app-router-migration.md`
 
 **Relevance:** Foundation for tenant multi-page sites
+
 - Explains why Next.js App Router chosen over alternatives
 - ISR (60s revalidation) strategy for dynamic tenant pages
 - Custom domain routing via middleware
@@ -40,6 +42,7 @@ This document provides a complete index of related documentation for the **tenan
 - Vercel deployment architecture
 
 **Key Sections to Review:**
+
 - Directory structure (lines 61-80)
 - Tenant resolution flow (lines 82-100)
 - Why App Router chosen (lines 40-46)
@@ -50,9 +53,11 @@ This document provides a complete index of related documentation for the **tenan
 ## 2. Next.js Migration Lessons (Post-Migration Fixes)
 
 ### Lessons Learned: Next.js Migration
+
 **File:** `/docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md`
 
 **Relevance:** Prevents similar issues in tenant multi-page sites
+
 - Security: Never expose backend tokens to client (Lesson 1)
 - Build gates: Always run typecheck + build before review (Lesson 2)
 - Error boundaries: Required for all dynamic routes (Lesson 4)
@@ -61,6 +66,7 @@ This document provides a complete index of related documentation for the **tenan
 - Frontend-backend contract-first development (Lesson 5)
 
 **Critical Issues Fixed:**
+
 1. Backend tokens in NextAuth session (XSS vulnerability)
 2. Missing error.tsx on dynamic routes (blank screens)
 3. Duplicate data fetching (100ms+ latency)
@@ -74,9 +80,11 @@ This document provides a complete index of related documentation for the **tenan
 ## 3. React Performance & Memoization
 
 ### React Hooks Performance & WCAG Code Review Patterns
+
 **File:** `/docs/solutions/code-review-patterns/react-hooks-performance-wcag-review.md`
 
 **Relevance:** Accessibility and performance patterns for navigation/menu components
+
 - useCallback patterns for event handlers (Issue #119)
 - useEffect dependency completeness (Issue #120)
 - Event handler stability with React.memo (Issue #121)
@@ -85,6 +93,7 @@ This document provides a complete index of related documentation for the **tenan
 - Event propagation in nested elements
 
 **Solutions from PR #12 Review:**
+
 ```typescript
 // useCallback for event handlers
 const handleEdit = useCallback(
@@ -105,9 +114,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ---
 
 ### React Memoization Quick Reference
+
 **File:** `/docs/solutions/react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md`
 
 **Relevance:** Quick decision tree for component optimization
+
 - 30-second decision tree (lines 16-36)
 - Pattern 1: Callback props → useCallback()
 - Pattern 2: List items (10+) → React.memo()
@@ -122,9 +133,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 4. Accessibility Guidelines
 
 ### PR #12 Prevention Strategies - React Hooks & Accessibility Issues
+
 **File:** `/docs/solutions/PR-12-REACT-HOOKS-ACCESSIBILITY-PREVENTION.md`
 
 **Relevance:** Prevention strategies for accessibility violations
+
 - WCAG 2.4.7: Keyboard focus indicators
 - WCAG 1.3.1: Visual state indicators (not just color)
 - WCAG 2.5.5: Touch targets >= 44x44px
@@ -133,6 +146,7 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 - Code review checklist for accessibility
 
 **ESLint Rules to Enable:**
+
 ```json
 {
   "rules": {
@@ -148,9 +162,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 5. Multi-Tenant Implementation
 
 ### Multi-Tenant Implementation Guide
+
 **File:** `/docs/multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md`
 
 **Relevance:** Data isolation and tenant scoping patterns
+
 - Tenant context resolution (middleware flow)
 - Query scoping by tenantId (CRITICAL)
 - Cache key isolation (`tenant:${tenantId}:resource:${id}`)
@@ -164,9 +180,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 6. Next.js App Architecture
 
 ### Next.js Web App README
+
 **File:** `/apps/web/README.md`
 
 **Relevance:** Reference for Next.js patterns in MAIS
+
 - App Router directory structure (lines 22-54)
 - SSR-aware API client (lines 75-96)
 - Tenant landing pages at /t/[slug]
@@ -175,6 +193,7 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 - Error boundary expectations
 
 **Key Architecture Decisions:**
+
 - Server Components by default
 - Client Components for interactivity (use client)
 - Dynamic routes require error.tsx
@@ -186,9 +205,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 7. Related Code Review Patterns
 
 ### Multi-Agent Code Review Workflow
+
 **File:** `/docs/solutions/code-review-patterns/multi-agent-code-review-workflow-systematic-triage-MAIS-20251224.md`
 
 **Relevance:** Code review methodology used for tenant multi-page sites
+
 - Systematic triage process for P1/P2/P3 issues
 - Multi-agent parallel review patterns
 - Issue prioritization and severity levels
@@ -196,9 +217,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ---
 
 ### Storefront Component Refactoring Review
+
 **File:** `/docs/solutions/code-review-patterns/storefront-component-refactoring-review.md`
 
 **Relevance:** Component patterns for multi-tenant storefronts
+
 - Component consolidation strategies
 - Shared vs tenant-specific components
 - CSS duplication prevention
@@ -209,9 +232,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 8. Navigation & Event Handling
 
 ### Impersonation Sidebar Navigation Bug
+
 **File:** `/docs/solutions/ui-bugs/impersonation-sidebar-navigation-bug.md`
 
 **Relevance:** Navigation state and aria-current patterns
+
 - Active link indication with aria-current
 - Navigation state synchronization
 - Link component patterns
@@ -221,9 +246,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 9. Performance Optimization
 
 ### React Memo & Unstable Callbacks in Visual Editor
+
 **File:** `/docs/solutions/performance-issues/react-memo-unstable-callbacks-visual-editor-MAIS-20251204.md`
 
 **Relevance:** Performance patterns with event handlers
+
 - Stable callback patterns
 - React.memo effectiveness
 - Profiling techniques
@@ -233,9 +260,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ## 10. E2E Testing Patterns
 
 ### E2E Testing Advanced Patterns
+
 **File:** `/docs/solutions/E2E-TESTING-ADVANCED-PATTERNS.md`
 
 **Relevance:** Testing multi-page navigation flows
+
 - Playwright patterns for Next.js
 - SSR-specific test scenarios
 - Multi-page flow testing
@@ -243,9 +272,11 @@ className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sage"
 ---
 
 ### Visual Editor E2E Testing
+
 **File:** `/docs/solutions/visual-editor-e2e-quick-reference.md`
 
 **Relevance:** E2E testing quick reference
+
 - Playwright setup and patterns
 - Common selectors and interactions
 - Multi-step flow testing
@@ -260,6 +291,7 @@ Use this checklist when adding to or modifying tenant multi-page sites:
 ### Before Committing
 
 #### React Performance
+
 - [ ] useCallback wrapped all callbacks passed to children
 - [ ] useEffect dependencies complete (npm run lint)
 - [ ] React.memo on list items (10+ items)
@@ -267,6 +299,7 @@ Use this checklist when adding to or modifying tenant multi-page sites:
 - [ ] displayName added to memoized components
 
 #### Accessibility (WCAG AA)
+
 - [ ] focus:outline-none focus-visible:ring-2 focus-visible:ring-sage on all interactive elements
 - [ ] aria-current="page" on active navigation links
 - [ ] Chevron/icon rotates to show collapsed/expanded state
@@ -275,6 +308,7 @@ Use this checklist when adding to or modifying tenant multi-page sites:
 - [ ] ESLint jsx-a11y rules passing
 
 #### Next.js Patterns
+
 - [ ] Dynamic routes have error.tsx
 - [ ] Data fetching wrapped in cache()
 - [ ] Server Components used for data fetching
@@ -283,6 +317,7 @@ Use this checklist when adding to or modifying tenant multi-page sites:
 - [ ] ISR revalidation configured (60s for tenant pages)
 
 #### Security
+
 - [ ] No backend tokens exposed to client
 - [ ] All queries scoped by tenantId
 - [ ] Cache keys include tenantId
@@ -290,12 +325,14 @@ Use this checklist when adding to or modifying tenant multi-page sites:
 - [ ] No console.log (use logger instead)
 
 #### Multi-Tenant
+
 - [ ] Tenant resolved correctly in middleware
 - [ ] Data isolation verified (test cross-tenant access)
 - [ ] Permission checks on mutations
 - [ ] Cache invalidation on tenant data changes
 
 #### E2E Tests
+
 - [ ] Multi-page navigation flows tested
 - [ ] Active link state verified (aria-current)
 - [ ] Keyboard navigation tested (Tab, Enter)
@@ -306,16 +343,16 @@ Use this checklist when adding to or modifying tenant multi-page sites:
 
 ## Quick Reference: When to Reference Each Document
 
-| Scenario | Document |
-|----------|----------|
+| Scenario                         | Document                                                                            |
+| -------------------------------- | ----------------------------------------------------------------------------------- |
 | Adding new multi-page navigation | React Hooks Performance & WCAG (aria-current pattern), Impersonation Navigation Bug |
-| Optimizing component rendering | React Memoization Quick Reference, React Memo Unstable Callbacks |
-| Accessibility review | PR #12 Prevention Strategies, React Hooks Performance & WCAG |
-| Next.js pattern question | ADR-014, Next.js Lessons Learned, Web App README |
-| E2E test for navigation | E2E Testing Advanced Patterns, Visual Editor E2E Quick Ref |
-| Tenant data isolation issue | Multi-Tenant Implementation Guide |
-| Performance regression | Lessons Learned (Lesson 9: React cache()) |
-| Error handling | Next.js Lessons Learned (Lesson 4: Error boundaries) |
+| Optimizing component rendering   | React Memoization Quick Reference, React Memo Unstable Callbacks                    |
+| Accessibility review             | PR #12 Prevention Strategies, React Hooks Performance & WCAG                        |
+| Next.js pattern question         | ADR-014, Next.js Lessons Learned, Web App README                                    |
+| E2E test for navigation          | E2E Testing Advanced Patterns, Visual Editor E2E Quick Ref                          |
+| Tenant data isolation issue      | Multi-Tenant Implementation Guide                                                   |
+| Performance regression           | Lessons Learned (Lesson 9: React cache())                                           |
+| Error handling                   | Next.js Lessons Learned (Lesson 4: Error boundaries)                                |
 
 ---
 

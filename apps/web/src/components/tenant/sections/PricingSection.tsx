@@ -28,7 +28,11 @@ export function PricingSection({
   const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
 
   return (
-    <section id="pricing" className={`${bgClass} py-32 md:py-40 px-6`} aria-labelledby="pricing-heading">
+    <section
+      id="pricing"
+      className={`${bgClass} py-32 md:py-40 px-6`}
+      aria-labelledby="pricing-heading"
+    >
       <div className="max-w-3xl mx-auto text-center mb-16">
         <h2
           id="pricing-heading"
@@ -47,9 +51,7 @@ export function PricingSection({
         {tiers.map((tier) => {
           const isPopular = tier.isPopular === true;
           const isEnterprise = tier.variant === 'enterprise';
-          const displayPrice = typeof tier.price === 'number'
-            ? `$${tier.price / 100}`
-            : tier.price;
+          const displayPrice = typeof tier.price === 'number' ? `$${tier.price / 100}` : tier.price;
 
           return (
             <div
@@ -75,9 +77,7 @@ export function PricingSection({
 
               <div className="mt-6 flex items-baseline gap-1">
                 <span className="text-4xl font-bold text-text-primary">{displayPrice}</span>
-                {tier.priceSubtext && (
-                  <span className="text-text-muted">{tier.priceSubtext}</span>
-                )}
+                {tier.priceSubtext && <span className="text-text-muted">{tier.priceSubtext}</span>}
               </div>
 
               <ul className="mt-8 space-y-4">
@@ -89,11 +89,7 @@ export function PricingSection({
                 ))}
               </ul>
 
-              <Button
-                variant={isPopular ? 'sage' : 'outline'}
-                className="w-full mt-8"
-                asChild
-              >
+              <Button variant={isPopular ? 'sage' : 'outline'} className="w-full mt-8" asChild>
                 <Link href={tier.ctaHref || '/signup'}>
                   {tier.ctaText || (isEnterprise ? 'Contact Us' : 'Get Started')}
                 </Link>

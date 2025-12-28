@@ -20,15 +20,31 @@
 // Tool exports
 export { readTools } from './tools/read-tools';
 export { writeTools } from './tools/write-tools';
-export type { AgentTool, AgentToolResult, ToolContext, ReadToolResult, WriteToolProposal, ToolError } from './tools/types';
-export { sanitizeForContext, INJECTION_PATTERNS, DENY_LIST_FIELDS, TRUST_TIERS } from './tools/types';
+export type {
+  AgentTool,
+  AgentToolResult,
+  ToolContext,
+  ReadToolResult,
+  WriteToolProposal,
+  ToolError,
+} from './tools/types';
+export {
+  sanitizeForContext,
+  INJECTION_PATTERNS,
+  DENY_LIST_FIELDS,
+  TRUST_TIERS,
+} from './tools/types';
 
 // Proposal service
 export { ProposalService } from './proposals/proposal.service';
 export type { CreateProposalInput, ProposalResult } from './proposals/proposal.service';
 
 // Context builder
-export { buildSessionContext, detectOnboardingPath, buildFallbackContext } from './context/context-builder';
+export {
+  buildSessionContext,
+  detectOnboardingPath,
+  buildFallbackContext,
+} from './context/context-builder';
 export type { AgentSessionContext } from './context/context-builder';
 
 // Audit service

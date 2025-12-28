@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p2
-issue_id: "397"
+issue_id: '397'
 tags:
   - architecture
   - performance
@@ -20,6 +20,7 @@ The `t/[slug]/(site)/` routes have proper `loading.tsx` files for Suspense bound
 **Found by:** Architecture Strategist + Performance Oracle agents
 
 **Present in [slug] routes:**
+
 - `t/[slug]/(site)/loading.tsx` ✓
 - `t/[slug]/(site)/about/loading.tsx` ✓
 - `t/[slug]/(site)/contact/loading.tsx` ✓
@@ -27,7 +28,8 @@ The `t/[slug]/(site)/` routes have proper `loading.tsx` files for Suspense bound
 - `t/[slug]/(site)/services/loading.tsx` ✓
 - `t/[slug]/book/[packageSlug]/loading.tsx` ✓
 
-**Missing in _domain routes:**
+**Missing in \_domain routes:**
+
 - `t/_domain/loading.tsx` ✗
 - `t/_domain/about/loading.tsx` ✗
 - `t/_domain/contact/loading.tsx` ✗
@@ -40,8 +42,9 @@ The `t/[slug]/(site)/` routes have proper `loading.tsx` files for Suspense bound
 
 ## Proposed Solutions
 
-### Option 1: Copy loading.tsx files to _domain routes (Quick fix)
-- Duplicate existing loading components to _domain routes
+### Option 1: Copy loading.tsx files to \_domain routes (Quick fix)
+
+- Duplicate existing loading components to \_domain routes
 - Maintains consistency
 
 **Pros:** Quick, consistent UX
@@ -50,6 +53,7 @@ The `t/[slug]/(site)/` routes have proper `loading.tsx` files for Suspense bound
 **Risk:** Low
 
 ### Option 2: Extract shared loading components (Recommended)
+
 - Create `@/components/tenant/LoadingSkeleton.tsx`
 - Import in both route segments
 
@@ -65,6 +69,7 @@ Option 2 - Extract shared loading components.
 ## Technical Details
 
 **Files to create:**
+
 - `apps/web/src/app/t/_domain/loading.tsx`
 - `apps/web/src/app/t/_domain/about/loading.tsx`
 - `apps/web/src/app/t/_domain/contact/loading.tsx`
@@ -77,17 +82,17 @@ Option 2 - Extract shared loading components.
 
 ## Acceptance Criteria
 
-- [ ] All _domain routes have loading.tsx files
+- [ ] All \_domain routes have loading.tsx files
 - [ ] Loading states match [slug] routes visually
 - [ ] Custom domain users see loading skeleton during data fetch
 - [ ] TypeScript compiles without errors
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                                       | Learnings                                   |
+| ---------- | -------------------------------------------- | ------------------------------------------- |
 | 2025-12-25 | Created from multi-agent architecture review | Parallel route segments need matching files |
-| 2025-12-25 | **Approved for work** - Status: ready | P2 - UX improvement |
+| 2025-12-25 | **Approved for work** - Status: ready        | P2 - UX improvement                         |
 
 ## Resources
 

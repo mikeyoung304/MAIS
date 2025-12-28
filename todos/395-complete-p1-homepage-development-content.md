@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p1
-issue_id: "395"
+issue_id: '395'
 tags:
   - ui
   - production
@@ -42,6 +42,7 @@ The main landing page at `apps/web/src/app/page.tsx` displays a "Next.js Migrati
 ## Proposed Solutions
 
 ### Option 1: Build production landing page (Recommended)
+
 - Create full marketing landing page following BRAND_VOICE_GUIDE.md
 - Include: Hero, Features, How It Works, Pricing, Testimonials, CTA sections
 - Remove development status section
@@ -52,6 +53,7 @@ The main landing page at `apps/web/src/app/page.tsx` displays a "Next.js Migrati
 **Risk:** Low
 
 ### Option 2: Redirect to Vite client landing page
+
 - Redirect root to existing client/ landing page until Next.js version ready
 
 **Pros:** Quick fix
@@ -60,6 +62,7 @@ The main landing page at `apps/web/src/app/page.tsx` displays a "Next.js Migrati
 **Risk:** Low
 
 ### Option 3: Simple placeholder page
+
 - Replace dev status with simple "Coming Soon" or minimal branding page
 
 **Pros:** Quick, professional placeholder
@@ -74,9 +77,11 @@ Option 1 for production launch, Option 3 as immediate stopgap.
 ## Technical Details
 
 **Files to modify:**
+
 - `apps/web/src/app/page.tsx` - Replace entire content
 
 **Design reference:**
+
 - `docs/design/BRAND_VOICE_GUIDE.md` - Voice, colors, typography
 - `client/src/pages/LandingPage.tsx` - Existing Vite landing page
 
@@ -90,10 +95,10 @@ Option 1 for production launch, Option 3 as immediate stopgap.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                                    | Learnings                         |
+| ---------- | ----------------------------------------- | --------------------------------- |
 | 2025-12-25 | Created from Playwright visual inspection | Dev content exposed in production |
-| 2025-12-25 | **Approved for work** - Status: ready | P1 - Production blocker |
+| 2025-12-25 | **Approved for work** - Status: ready     | P1 - Production blocker           |
 
 ## Resources
 

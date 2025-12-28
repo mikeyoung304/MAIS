@@ -6,22 +6,22 @@ Last updated: 2025-12-26
 
 ### Server (Backend)
 
-| Metric | Baseline | Target | Status |
-|--------|----------|--------|--------|
-| Lines | 43.27% | 80% | Below target |
-| Branches | 81.11% | 75% | Exceeds target |
-| Functions | 46.7% | 80% | Below target |
-| Statements | 43.27% | 80% | Below target |
+| Metric     | Baseline | Target | Status         |
+| ---------- | -------- | ------ | -------------- |
+| Lines      | 43.27%   | 80%    | Below target   |
+| Branches   | 81.11%   | 75%    | Exceeds target |
+| Functions  | 46.7%    | 80%    | Below target   |
+| Statements | 43.27%   | 80%    | Below target   |
 
 **Thresholds configured in:** `server/vitest.config.ts`
 
 ### Test Counts
 
-| Category | Passing | Failing | Total |
-|----------|---------|---------|-------|
-| Unit tests | 978 | 1 | 979 |
-| Integration tests | 169 | 34 | 205 |
-| **Total** | 1147 | 35 | 1184 |
+| Category          | Passing | Failing | Total |
+| ----------------- | ------- | ------- | ----- |
+| Unit tests        | 978     | 1       | 979   |
+| Integration tests | 169     | 34      | 205   |
+| **Total**         | 1147    | 35      | 1184  |
 
 **Note:** Integration test failures are due to Supabase session pooler connection limits (MaxClientsInSessionMode), not code issues.
 

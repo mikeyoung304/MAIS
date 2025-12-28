@@ -9,15 +9,15 @@ Date: 2025-12-26
 
 This register documents orphaned code, dead paths, and unused assets discovered during an exhaustive scan of the MAIS codebase.
 
-| Category | Count | Deletion Eligible |
-|----------|-------|-------------------|
-| Backup Files | 8 | 8 |
-| Unused Components | 3 | 2 |
-| Duplicate Components | 2 | 1 |
-| Example Files | 1 | 1 |
-| Temporary Files | 100+ | 100+ |
-| Root-Level Documentation | 1 | 1 |
-| Unused Exports | 2 | 0 |
+| Category                 | Count | Deletion Eligible |
+| ------------------------ | ----- | ----------------- |
+| Backup Files             | 8     | 8                 |
+| Unused Components        | 3     | 2                 |
+| Duplicate Components     | 2     | 1                 |
+| Example Files            | 1     | 1                 |
+| Temporary Files          | 100+  | 100+              |
+| Root-Level Documentation | 1     | 1                 |
+| Unused Exports           | 2     | 0                 |
 
 ---
 
@@ -25,16 +25,16 @@ This register documents orphaned code, dead paths, and unused assets discovered 
 
 These are backup files from previous development/migration phases. All are safe to delete.
 
-| File Path | Type | Confidence | Deletion Eligible | Reason |
-|-----------|------|------------|-------------------|--------|
-| `/Users/mikeyoung/CODING/MAIS/server/scripts/test-api.sh.bak` | backup | HIGH | true | Backup of test script, no longer needed |
-| `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/index.ts.bak` | backup | HIGH | true | Backup of mock adapter, superseded |
-| `/Users/mikeyoung/CODING/MAIS/server/.env.backup` | backup | HIGH | true | Environment backup, should not be committed |
-| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.bak` | backup | HIGH | true | Backup of home page, superseded |
-| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Success.tsx.old` | backup | HIGH | true | Old success page, superseded |
-| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.backup` | backup | HIGH | true | Another backup of home page |
-| `/Users/mikeyoung/CODING/MAIS/server/test/integration/catalog.repository.integration.spec.ts.backup` | backup | HIGH | true | Test backup, superseded |
-| `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/tenants/TenantForm.tsx.backup` | backup | HIGH | true | Tenant form backup, superseded |
+| File Path                                                                                            | Type   | Confidence | Deletion Eligible | Reason                                      |
+| ---------------------------------------------------------------------------------------------------- | ------ | ---------- | ----------------- | ------------------------------------------- |
+| `/Users/mikeyoung/CODING/MAIS/server/scripts/test-api.sh.bak`                                        | backup | HIGH       | true              | Backup of test script, no longer needed     |
+| `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/index.ts.bak`                                 | backup | HIGH       | true              | Backup of mock adapter, superseded          |
+| `/Users/mikeyoung/CODING/MAIS/server/.env.backup`                                                    | backup | HIGH       | true              | Environment backup, should not be committed |
+| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.bak`                                         | backup | HIGH       | true              | Backup of home page, superseded             |
+| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Success.tsx.old`                                      | backup | HIGH       | true              | Old success page, superseded                |
+| `/Users/mikeyoung/CODING/MAIS/client/src/pages/Home.tsx.backup`                                      | backup | HIGH       | true              | Another backup of home page                 |
+| `/Users/mikeyoung/CODING/MAIS/server/test/integration/catalog.repository.integration.spec.ts.backup` | backup | HIGH       | true              | Test backup, superseded                     |
+| `/Users/mikeyoung/CODING/MAIS/client/src/features/admin/tenants/TenantForm.tsx.backup`               | backup | HIGH       | true              | Tenant form backup, superseded              |
 
 ---
 
@@ -42,33 +42,33 @@ These are backup files from previous development/migration phases. All are safe 
 
 ### 2.1 ColorPicker.tsx - UNUSED
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/client/src/components/ColorPicker.tsx` |
-| Type | component |
-| Confidence | HIGH |
-| Deletion Eligible | true |
-| Reason | Only references found are in the file itself and archived documentation. BrandingForm uses `ColorInput` from `./ColorInput` instead, not this component. |
+| Attribute         | Value                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/client/src/components/ColorPicker.tsx`                                                                                     |
+| Type              | component                                                                                                                                                |
+| Confidence        | HIGH                                                                                                                                                     |
+| Deletion Eligible | true                                                                                                                                                     |
+| Reason            | Only references found are in the file itself and archived documentation. BrandingForm uses `ColorInput` from `./ColorInput` instead, not this component. |
 
 ### 2.2 MaconLogo.tsx - UNUSED
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/client/src/components/brand/MaconLogo.tsx` |
-| Type | component |
-| Confidence | HIGH |
-| Deletion Eligible | true |
-| Reason | No imports found anywhere in the codebase. The codebase uses `Logo` from `./Logo.tsx` instead. |
+| Attribute         | Value                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/client/src/components/brand/MaconLogo.tsx`                       |
+| Type              | component                                                                                      |
+| Confidence        | HIGH                                                                                           |
+| Deletion Eligible | true                                                                                           |
+| Reason            | No imports found anywhere in the codebase. The codebase uses `Logo` from `./Logo.tsx` instead. |
 
 ### 2.3 PackagePhotoUploader.example.tsx - EXAMPLE FILE
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/client/src/components/PackagePhotoUploader.example.tsx` |
-| Type | example |
-| Confidence | HIGH |
-| Deletion Eligible | true |
-| Reason | Example file for development documentation. Only referenced in markdown docs, never imported. Should be moved to docs or deleted. |
+| Attribute         | Value                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/client/src/components/PackagePhotoUploader.example.tsx`                                             |
+| Type              | example                                                                                                                           |
+| Confidence        | HIGH                                                                                                                              |
+| Deletion Eligible | true                                                                                                                              |
+| Reason            | Example file for development documentation. Only referenced in markdown docs, never imported. Should be moved to docs or deleted. |
 
 ---
 
@@ -76,25 +76,25 @@ These are backup files from previous development/migration phases. All are safe 
 
 ### 3.1 ErrorBoundary Components (Two Implementations)
 
-| Attribute | Value |
-|-----------|-------|
-| File 1 | `/Users/mikeyoung/CODING/MAIS/client/src/components/ErrorBoundary.tsx` |
-| File 2 | `/Users/mikeyoung/CODING/MAIS/client/src/components/errors/ErrorBoundary.tsx` |
-| Type | duplicate |
-| Confidence | MEDIUM |
-| Deletion Eligible | true (File 1) |
-| Reason | Two ErrorBoundary implementations exist. `main.tsx` imports from `components/ErrorBoundary.tsx` (File 1), while 11 feature pages import from `components/errors/`. File 1 appears to be a simpler standalone implementation. Recommend consolidating to `components/errors/ErrorBoundary.tsx`. |
+| Attribute         | Value                                                                                                                                                                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File 1            | `/Users/mikeyoung/CODING/MAIS/client/src/components/ErrorBoundary.tsx`                                                                                                                                                                                                                         |
+| File 2            | `/Users/mikeyoung/CODING/MAIS/client/src/components/errors/ErrorBoundary.tsx`                                                                                                                                                                                                                  |
+| Type              | duplicate                                                                                                                                                                                                                                                                                      |
+| Confidence        | MEDIUM                                                                                                                                                                                                                                                                                         |
+| Deletion Eligible | true (File 1)                                                                                                                                                                                                                                                                                  |
+| Reason            | Two ErrorBoundary implementations exist. `main.tsx` imports from `components/ErrorBoundary.tsx` (File 1), while 11 feature pages import from `components/errors/`. File 1 appears to be a simpler standalone implementation. Recommend consolidating to `components/errors/ErrorBoundary.tsx`. |
 
 ### 3.2 ErrorAlert Components (Two Implementations)
 
-| Attribute | Value |
-|-----------|-------|
-| File 1 | `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/error-alert.tsx` |
-| File 2 | `/Users/mikeyoung/CODING/MAIS/client/src/components/shared/ErrorAlert.tsx` |
-| Type | duplicate |
-| Confidence | MEDIUM |
-| Deletion Eligible | false (requires refactoring) |
-| Reason | Two ErrorAlert implementations with different styling (File 1: dark theme, File 2: light theme). Both are used in different contexts. `shared/ErrorAlert.tsx` is used more broadly (8+ files). Consider consolidating with prop-based theming. |
+| Attribute         | Value                                                                                                                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File 1            | `/Users/mikeyoung/CODING/MAIS/client/src/components/ui/error-alert.tsx`                                                                                                                                                                        |
+| File 2            | `/Users/mikeyoung/CODING/MAIS/client/src/components/shared/ErrorAlert.tsx`                                                                                                                                                                     |
+| Type              | duplicate                                                                                                                                                                                                                                      |
+| Confidence        | MEDIUM                                                                                                                                                                                                                                         |
+| Deletion Eligible | false (requires refactoring)                                                                                                                                                                                                                   |
+| Reason            | Two ErrorAlert implementations with different styling (File 1: dark theme, File 2: light theme). Both are used in different contexts. `shared/ErrorAlert.tsx` is used more broadly (8+ files). Consider consolidating with prop-based theming. |
 
 ---
 
@@ -102,24 +102,24 @@ These are backup files from previous development/migration phases. All are safe 
 
 ### 4.1 Result Type - UNUSED
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/packages/shared/src/result.ts` |
-| Export | `Result<T, E>` type |
-| Type | export |
-| Confidence | HIGH |
-| Deletion Eligible | false |
-| Reason | Exported from shared package but never imported anywhere. However, it's part of the shared utilities package API - keep for future use but document as available. |
+| Attribute         | Value                                                                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/packages/shared/src/result.ts`                                                                                                      |
+| Export            | `Result<T, E>` type                                                                                                                                               |
+| Type              | export                                                                                                                                                            |
+| Confidence        | HIGH                                                                                                                                                              |
+| Deletion Eligible | false                                                                                                                                                             |
+| Reason            | Exported from shared package but never imported anywhere. However, it's part of the shared utilities package API - keep for future use but document as available. |
 
 ### 4.2 error-guards.ts - PARTIALLY USED
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/packages/shared/src/error-guards.ts` |
-| Type | export |
-| Confidence | LOW |
-| Deletion Eligible | false |
-| Reason | This file is not re-exported from `index.ts` (only `money`, `date`, `result` are exported). The guards are defined but not accessible via `@macon/shared`. Either add to index.ts or evaluate if needed. |
+| Attribute         | Value                                                                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/packages/shared/src/error-guards.ts`                                                                                                                                       |
+| Type              | export                                                                                                                                                                                                   |
+| Confidence        | LOW                                                                                                                                                                                                      |
+| Deletion Eligible | false                                                                                                                                                                                                    |
+| Reason            | This file is not re-exported from `index.ts` (only `money`, `date`, `result` are exported). The guards are defined but not accessible via `@macon/shared`. Either add to index.ts or evaluate if needed. |
 
 ---
 
@@ -127,14 +127,14 @@ These are backup files from previous development/migration phases. All are safe 
 
 ### 5.1 Email Sink Files
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/server/tmp/emails/*.eml` |
-| Count | 100+ files |
-| Type | temp |
-| Confidence | HIGH |
-| Deletion Eligible | true |
-| Reason | Test email files generated by mock mail provider. These accumulate during development/testing. Add to `.gitignore` if not already, and can be safely deleted periodically. |
+| Attribute         | Value                                                                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/server/tmp/emails/*.eml`                                                                                                                     |
+| Count             | 100+ files                                                                                                                                                                 |
+| Type              | temp                                                                                                                                                                       |
+| Confidence        | HIGH                                                                                                                                                                       |
+| Deletion Eligible | true                                                                                                                                                                       |
+| Reason            | Test email files generated by mock mail provider. These accumulate during development/testing. Add to `.gitignore` if not already, and can be safely deleted periodically. |
 
 ---
 
@@ -142,19 +142,20 @@ These are backup files from previous development/migration phases. All are safe 
 
 ### 6.1 SECURITY_REVIEW_useVisualEditor.md
 
-| Attribute | Value |
-|-----------|-------|
-| Path | `/Users/mikeyoung/CODING/MAIS/SECURITY_REVIEW_useVisualEditor.md` |
-| Type | documentation |
-| Confidence | MEDIUM |
-| Deletion Eligible | true |
-| Reason | Security review document at project root. Should be moved to `docs/security/` or `docs/archive/` for organization. The review is complete and findings addressed. |
+| Attribute         | Value                                                                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path              | `/Users/mikeyoung/CODING/MAIS/SECURITY_REVIEW_useVisualEditor.md`                                                                                                 |
+| Type              | documentation                                                                                                                                                     |
+| Confidence        | MEDIUM                                                                                                                                                            |
+| Deletion Eligible | true                                                                                                                                                              |
+| Reason            | Security review document at project root. Should be moved to `docs/security/` or `docs/archive/` for organization. The review is complete and findings addressed. |
 
 ---
 
 ## 7. Dead Routes / Unreachable Endpoints
 
 **NONE FOUND** - All route files in `server/src/routes/` are properly mounted via:
+
 - `app.ts` (health, metrics, CSP, dev routes, webhooks)
 - `routes/index.ts` (all API v1 routes)
 
@@ -172,12 +173,12 @@ All routes are appropriately mounted and accessible.
 
 The following TODO files exist in the docs folder but are appropriately archived:
 
-| Path | Status |
-|------|--------|
-| `/Users/mikeyoung/CODING/MAIS/docs/archive/2025-11/analysis/TODO_TESTS_*.md` | Archived - historical |
-| `/Users/mikeyoung/CODING/MAIS/docs/archive/2024-12-solutions-cleanup/TODO-*.md` | Archived - historical |
-| `/Users/mikeyoung/CODING/MAIS/docs/solutions/TODO-RESOLUTION-*.md` | Active - workflow documentation |
-| `/Users/mikeyoung/CODING/MAIS/docs/solutions/TODO-STALENESS-PREVENTION.md` | Active - prevention strategy |
+| Path                                                                            | Status                          |
+| ------------------------------------------------------------------------------- | ------------------------------- |
+| `/Users/mikeyoung/CODING/MAIS/docs/archive/2025-11/analysis/TODO_TESTS_*.md`    | Archived - historical           |
+| `/Users/mikeyoung/CODING/MAIS/docs/archive/2024-12-solutions-cleanup/TODO-*.md` | Archived - historical           |
+| `/Users/mikeyoung/CODING/MAIS/docs/solutions/TODO-RESOLUTION-*.md`              | Active - workflow documentation |
+| `/Users/mikeyoung/CODING/MAIS/docs/solutions/TODO-STALENESS-PREVENTION.md`      | Active - prevention strategy    |
 
 These are appropriately organized and not orphaned.
 
@@ -186,6 +187,7 @@ These are appropriately organized and not orphaned.
 ## 10. Clean-Up Recommendations
 
 ### Priority 1 - Safe to Delete Immediately
+
 1. All 8 backup files (`.bak`, `.backup`, `.old`)
 2. `ColorPicker.tsx` - completely unused
 3. `MaconLogo.tsx` - completely unused
@@ -193,10 +195,12 @@ These are appropriately organized and not orphaned.
 5. Email temp files in `server/tmp/emails/`
 
 ### Priority 2 - Consolidate Duplicates
+
 1. Consolidate ErrorBoundary to `components/errors/ErrorBoundary.tsx`
 2. Consolidate ErrorAlert to single component with theme prop
 
 ### Priority 3 - Documentation Organization
+
 1. Move `SECURITY_REVIEW_useVisualEditor.md` to `docs/security/`
 2. Add `error-guards.ts` to shared package exports if needed
 

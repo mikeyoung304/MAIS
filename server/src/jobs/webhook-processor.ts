@@ -463,12 +463,13 @@ export class WebhookProcessor {
         { eventId: event.id, tenantId },
         'TenantRepository not available - cannot process subscription checkout'
       );
-      throw new WebhookProcessingError('TenantRepository not configured for subscription processing');
+      throw new WebhookProcessingError(
+        'TenantRepository not configured for subscription processing'
+      );
     }
 
-    const customerId = typeof session.customer === 'string'
-      ? session.customer
-      : session.customer?.id;
+    const customerId =
+      typeof session.customer === 'string' ? session.customer : session.customer?.id;
 
     logger.info(
       {
@@ -487,9 +488,6 @@ export class WebhookProcessor {
       stripeCustomerId: customerId || undefined,
     });
 
-    logger.info(
-      { tenantId, eventId: event.id },
-      'Tenant subscription activated successfully'
-    );
+    logger.info({ tenantId, eventId: event.id }, 'Tenant subscription activated successfully');
   }
 }

@@ -25,6 +25,7 @@ Initial implementation exposed `backendToken` in the NextAuth session, making it
 XSS vulnerability → full account compromise. A single malicious script could steal the backend JWT.
 
 **Pattern to Follow:**
+
 ```typescript
 // ❌ WRONG - Token exposed to client
 async session({ session, token }) {
@@ -62,6 +63,7 @@ The Badge component was imported but never created, causing TypeScript compilati
 A build blocker that reached the review stage indicates missing CI/CD gates.
 
 **Pattern to Follow:**
+
 ```bash
 # Pre-commit hook (or CI pipeline)
 npm run typecheck      # Must pass
@@ -80,12 +82,14 @@ The migration created NextAuth.js alongside the existing `AuthContext`, resultin
 
 **Why It Matters:**
 Dual auth systems create:
+
 - Token desync bugs
 - Maintenance burden
 - Security audit complexity
 - Developer confusion
 
 **Pattern to Follow:**
+
 ```typescript
 // ✅ Single source of truth
 // apps/web/src/lib/auth.ts - NextAuth only
@@ -108,6 +112,7 @@ Dynamic routes (`/t/[slug]`, `/t/[slug]/book/[packageSlug]`) lacked `error.tsx` 
 Users see white screen of death instead of recoverable error state.
 
 **Pattern to Follow:**
+
 ```
 app/
 ├── error.tsx              # Root error boundary
@@ -130,6 +135,7 @@ app/
 ### 5. Frontend Features Need Backend Contracts
 
 **What Happened:**
+
 - Sitemap generator called `/v1/public/tenants` but endpoint didn't exist
 - Custom domains expected `/v1/public/tenants/by-domain/:domain` but it wasn't implemented
 
@@ -137,6 +143,7 @@ app/
 Frontend code that calls non-existent endpoints fails silently or crashes.
 
 **Pattern to Follow:**
+
 ```typescript
 // 1. Define contract FIRST
 // packages/contracts/src/tenant.ts
@@ -167,18 +174,28 @@ const slugs = await fetch('/v1/public/tenants');
 6+ `console.log` and `console.error` calls were scattered across auth.ts, sitemap.ts, and route handlers.
 
 **Why It Matters:**
+
 - Violates CLAUDE.md logging standards
 - No structured logging for observability
 - Security info potentially leaked to browser console
 
 **Pattern to Follow:**
+
 ```typescript
 // apps/web/src/lib/logger.ts
 export const logger = {
-  debug: (msg: string, data?: LogData) => { if (isDev) console.debug(format(msg, data)); },
-  info: (msg: string, data?: LogData) => { console.info(format(msg, data)); },
-  warn: (msg: string, data?: LogData) => { console.warn(format(msg, data)); },
-  error: (msg: string, error?: Error | LogData) => { console.error(format(msg, error)); },
+  debug: (msg: string, data?: LogData) => {
+    if (isDev) console.debug(format(msg, data));
+  },
+  info: (msg: string, data?: LogData) => {
+    console.info(format(msg, data));
+  },
+  warn: (msg: string, data?: LogData) => {
+    console.warn(format(msg, data));
+  },
+  error: (msg: string, error?: Error | LogData) => {
+    console.error(format(msg, error));
+  },
 };
 
 // Usage
@@ -186,7 +203,7 @@ import { logger } from '@/lib/logger';
 logger.error('Auth failed', { email, reason: 'invalid_credentials' });
 ```
 
-**Lesson:** Create a logger utility on day 1 of any new app. Replace console.* immediately.
+**Lesson:** Create a logger utility on day 1 of any new app. Replace console.\* immediately.
 
 ---
 
@@ -199,6 +216,7 @@ Initial session `maxAge` was set to 7 days for admin accounts.
 Longer sessions = larger attack window if token is compromised.
 
 **Pattern to Follow:**
+
 ```typescript
 // Risk-based session duration
 session: {
@@ -210,6 +228,7 @@ session: {
 ```
 
 **OWASP Recommendation:**
+
 - High-privilege accounts: 15-30 minutes
 - Standard admin accounts: 1-4 hours
 - Regular users: 24 hours
@@ -228,6 +247,7 @@ session: {
 DoS vector: attacker spams revalidation → Vercel bills spike, cache becomes useless.
 
 **Pattern to Follow:**
+
 ```typescript
 // apps/web/src/app/api/revalidate/route.ts
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -260,6 +280,7 @@ function isRateLimited(key: string): boolean {
 ~100ms added latency × thousands of requests = significant performance impact.
 
 **Pattern to Follow:**
+
 ```typescript
 import { cache } from 'react';
 
@@ -289,6 +310,7 @@ API client used `as never` cast to bypass TypeScript, making all API calls untyp
 No compile-time validation = runtime errors when API changes.
 
 **Pattern to Follow:**
+
 ```typescript
 // ❌ WRONG - Bypass type safety
 import { initClient } from '@ts-rest/core';
@@ -308,16 +330,19 @@ const client = initClient(Contracts, { baseUrl });
 The analysis revealed these documentation gaps that should be addressed:
 
 ### Priority 1 (Should Create)
+
 1. **ADR for Next.js Migration** - Why App Router, why NextAuth, architectural decisions
 2. **NextAuth Multi-Tenant Setup Guide** - JWT handling, session scoping, impersonation
 3. **Server/Client Data Fetching Guide** - ts-rest in Server Components, caching strategies
 
 ### Priority 2 (Would Help)
+
 4. **Vite to Next.js Migration Playbook** - Component patterns, routing, state management
 5. **Tenant Landing Page Implementation** - ISR config, SEO metadata, dynamic routing
 6. **Next.js E2E Testing Guide** - Playwright patterns for SSR, middleware testing
 
 ### Priority 3 (Nice to Have)
+
 7. **Custom Domain Architecture** - Middleware flow, Vercel configuration
 8. **Performance Optimization Guide** - Image optimization, code splitting, bundle analysis
 
@@ -325,20 +350,20 @@ The analysis revealed these documentation gaps that should be addressed:
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total Phases | 6 |
-| Planned Duration | 6-8 weeks |
-| Actual Duration | ~2-3 weeks |
-| Code Review Findings | 14 |
-| P1 (Critical) | 8 |
-| P2 (Important) | 5 |
-| P3 (Nice to Have) | 1 |
-| Already Complete | 2 (domain endpoint, TOCTOU race condition) |
-| Files Changed | 106 |
-| Lines Added | ~16,000 |
-| E2E Tests Added | 114 |
-| E2E Tests Passing | 22 (after fixes) |
+| Metric               | Value                                      |
+| -------------------- | ------------------------------------------ |
+| Total Phases         | 6                                          |
+| Planned Duration     | 6-8 weeks                                  |
+| Actual Duration      | ~2-3 weeks                                 |
+| Code Review Findings | 14                                         |
+| P1 (Critical)        | 8                                          |
+| P2 (Important)       | 5                                          |
+| P3 (Nice to Have)    | 1                                          |
+| Already Complete     | 2 (domain endpoint, TOCTOU race condition) |
+| Files Changed        | 106                                        |
+| Lines Added          | ~16,000                                    |
+| E2E Tests Added      | 114                                        |
+| E2E Tests Passing    | 22 (after fixes)                           |
 
 ---
 
@@ -350,36 +375,42 @@ Use this checklist before merging any framework migration:
 ## Pre-Merge Migration Checklist
 
 ### Build & Type Safety
+
 - [ ] `npm run typecheck` passes
 - [ ] `npm run build` succeeds
 - [ ] All imports resolve (no missing components)
 - [ ] No `as never` or `as any` on contracts
 
 ### Authentication
+
 - [ ] Tokens not exposed to client JavaScript
 - [ ] Session duration appropriate for risk level
 - [ ] Single auth system (no dual/hybrid)
 - [ ] Protected routes have middleware guards
 
 ### Error Handling
+
 - [ ] Error boundaries on all dynamic routes
 - [ ] Global error boundary exists
 - [ ] API errors handled gracefully
 - [ ] 404 pages configured
 
 ### Performance
+
 - [ ] Data fetching deduplicated (React cache)
 - [ ] ISR/revalidation configured appropriately
 - [ ] Images use Next.js <Image> component
 - [ ] Rate limiting on expensive endpoints
 
 ### Code Quality
-- [ ] Logger utility used (no console.*)
+
+- [ ] Logger utility used (no console.\*)
 - [ ] Environment variables documented
 - [ ] Real contracts imported (not placeholders)
 - [ ] Frontend features have backend endpoints
 
 ### Documentation
+
 - [ ] ADR created for major decisions
 - [ ] Environment setup documented
 - [ ] Key patterns documented

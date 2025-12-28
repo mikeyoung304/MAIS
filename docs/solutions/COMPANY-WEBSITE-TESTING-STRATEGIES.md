@@ -9,6 +9,7 @@ Prevent the "company is not a tenant" error from ever reaching production by cat
 **Goal:** Verify that company pages work independently of database state, and tenant pages require valid tenants.
 
 **Key Principle:**
+
 - Company pages: Database is optional (should work without it)
 - Tenant pages: Database is required (must handle missing tenants)
 
@@ -67,6 +68,7 @@ describe('Company Pages - No Database Lookups', () => {
 ```
 
 **Run:**
+
 ```bash
 npm test -- company-pages.test.ts
 ```
@@ -94,9 +96,7 @@ describe('Tenant Pages - Database Lookups Required', () => {
     const { default: TenantPage } = await import('@/app/t/[slug]/(site)/page');
 
     // This should throw notFound()
-    await expect(
-      TenantPage({ params: { slug: 'test' } })
-    ).rejects.toThrow();
+    await expect(TenantPage({ params: { slug: 'test' } })).rejects.toThrow();
 
     expect(getTenantBySlug).toHaveBeenCalledWith('test');
   });
@@ -108,9 +108,7 @@ describe('Tenant Pages - Database Lookups Required', () => {
     const { default: TenantPage } = await import('@/app/t/[slug]/(site)/page');
 
     // Should trigger 404
-    await expect(
-      TenantPage({ params: { slug: 'nonexistent' } })
-    ).rejects.toThrow('notFound');
+    await expect(TenantPage({ params: { slug: 'nonexistent' } })).rejects.toThrow('notFound');
   });
 
   it('/t/[slug] page should render when tenant exists', async () => {
@@ -148,6 +146,7 @@ describe('Tenant Pages - Database Lookups Required', () => {
 ```
 
 **Run:**
+
 ```bash
 npm test -- tenant-pages.test.ts
 ```
@@ -174,10 +173,7 @@ describe('Routing Isolation', () => {
 
   it('tenant pages should import tenant utilities', async () => {
     const fs = require('fs');
-    const tenantPageCode = fs.readFileSync(
-      'src/app/t/[slug]/(site)/page.tsx',
-      'utf-8'
-    );
+    const tenantPageCode = fs.readFileSync('src/app/t/[slug]/(site)/page.tsx', 'utf-8');
 
     // Should import tenant utilities
     expect(tenantPageCode).toContain('getTenantBySlug');
@@ -187,15 +183,10 @@ describe('Routing Isolation', () => {
   it('no cross-imports between company and tenant page structures', () => {
     // Company pages shouldn't import tenant page components
     const companyPageCode = fs.readFileSync('src/app/page.tsx', 'utf-8');
-    expect(companyPageCode).not.toMatch(
-      /from ['"]\.\.\/t\/\[slug\]\/\(site\)/
-    );
+    expect(companyPageCode).not.toMatch(/from ['"]\.\.\/t\/\[slug\]\/\(site\)/);
 
     // Tenant pages can't hardcode company messaging
-    const tenantPageCode = fs.readFileSync(
-      'src/app/t/[slug]/(site)/page.tsx',
-      'utf-8'
-    );
+    const tenantPageCode = fs.readFileSync('src/app/t/[slug]/(site)/page.tsx', 'utf-8');
     expect(tenantPageCode).not.toContain('HANDLED - Stay Ahead');
   });
 });
@@ -299,9 +290,7 @@ describe('Tenant Pages Integration - Database Required', () => {
       },
     });
 
-    const response = await fetch(
-      `http://localhost:3000/t/${tenant.slug}`
-    );
+    const response = await fetch(`http://localhost:3000/t/${tenant.slug}`);
     expect(response.status).toBe(200);
 
     const html = await response.text();
@@ -388,17 +377,13 @@ test.describe('Company Pages', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test('root page works without any tenants in database', async ({
-    page,
-  }) => {
+  test('root page works without any tenants in database', async ({ page }) => {
     // This test assumes database is empty or has no "handled" tenant
     await page.goto('/');
 
     // Page should still render
     expect(page.status).toBe(200);
-    await expect(
-      page.locator('text=Stay Ahead Without the Overwhelm')
-    ).toBeVisible();
+    await expect(page.locator('text=Stay Ahead Without the Overwhelm')).toBeVisible();
   });
 });
 ```
@@ -417,9 +402,7 @@ test.describe('Tenant Pages', () => {
 
     // Should show 404 page
     expect(page.status).toBe(404);
-    await expect(
-      page.locator('text=/404|Not Found/i')
-    ).toBeVisible();
+    await expect(page.locator('text=/404|Not Found/i')).toBeVisible();
   });
 
   test('valid tenant shows tenant page', async ({ page }) => {
@@ -484,9 +467,7 @@ test.describe('Tenant Pages', () => {
     }
   });
 
-  test('cannot find "handled" as a tenant (company is not a tenant)', async ({
-    page,
-  }) => {
+  test('cannot find "handled" as a tenant (company is not a tenant)', async ({ page }) => {
     // This is the critical test - proves company wasn't accidentally created as tenant
     await page.goto('/t/handled');
 
@@ -496,9 +477,7 @@ test.describe('Tenant Pages', () => {
     // Root page should still work
     await page.goto('/');
     expect(page.status).toBe(200);
-    await expect(
-      page.locator('text=Stay Ahead Without the Overwhelm')
-    ).toBeVisible();
+    await expect(page.locator('text=Stay Ahead Without the Overwhelm')).toBeVisible();
   });
 });
 ```
@@ -516,11 +495,13 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function createTestTenant(overrides: {
-  slug?: string;
-  name?: string;
-  customDomain?: string;
-} = {}) {
+export async function createTestTenant(
+  overrides: {
+    slug?: string;
+    name?: string;
+    customDomain?: string;
+  } = {}
+) {
   return prisma.tenant.create({
     data: {
       slug: overrides.slug || `test-${Date.now()}`,
@@ -537,10 +518,7 @@ export async function cleanupTestTenant(tenantId: string) {
   });
 }
 
-export async function createAndCleanup(
-  fn: (tenant: any) => Promise<void>,
-  overrides?: any
-) {
+export async function createAndCleanup(fn: (tenant: any) => Promise<void>, overrides?: any) {
   const tenant = await createTestTenant(overrides);
   try {
     await fn(tenant);
@@ -595,4 +573,3 @@ By implementing these tests, you verify:
 5. **Routing doesn't redirect to database lookups** ✓
 
 This prevents the "company is not a tenant" error from ever reaching production.
-

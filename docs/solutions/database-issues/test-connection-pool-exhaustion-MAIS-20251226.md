@@ -46,13 +46,13 @@ Result: Pool exhaustion → indefinite hangs
 ```typescript
 // ❌ BAD: Each test file did this
 // test/http/packages.test.ts
-const prisma = new PrismaClient();  // Connection #1
+const prisma = new PrismaClient(); // Connection #1
 
 // test/http/auth-signup.test.ts
-const prisma = new PrismaClient();  // Connection #2
+const prisma = new PrismaClient(); // Connection #2
 
 // test/integration/booking.spec.ts
-const prisma = new PrismaClient();  // Connection #3
+const prisma = new PrismaClient(); // Connection #3
 // ... repeat for 22 files
 ```
 
@@ -114,8 +114,8 @@ export default defineConfig({
       threads: { singleThread: true },
     },
     fileParallelism: false,
-    testTimeout: 30000,  // 30s - fail fast
-    hookTimeout: 10000,  // 10s for beforeAll/afterAll
+    testTimeout: 30000, // 30s - fail fast
+    hookTimeout: 10000, // 10s for beforeAll/afterAll
   },
 });
 ```
@@ -143,22 +143,24 @@ afterAll(async () => {
 ## Files Modified
 
 ### Created
+
 - `server/test/helpers/global-prisma.ts` (92 lines)
 - `server/test/helpers/vitest-global-teardown.ts` (15 lines)
 
 ### Modified
+
 - `server/vitest.config.ts` - Added global teardown + timeouts
 - `server/test/helpers/integration-setup.ts` - Use singleton
 - 10 test files updated to use `getTestPrisma()`
 
 ## Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Duration | ∞ (hung) | **~12 min** |
-| Tests Passed | 0 | **1,178** |
-| Connection Usage | 22+ | **3 max** |
-| Pool Utilization | 100%+ | **5%** |
+| Metric           | Before   | After       |
+| ---------------- | -------- | ----------- |
+| Duration         | ∞ (hung) | **~12 min** |
+| Tests Passed     | 0        | **1,178**   |
+| Connection Usage | 22+      | **3 max**   |
+| Pool Utilization | 100%+    | **5%**      |
 
 ## Prevention Checklist
 

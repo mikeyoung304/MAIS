@@ -19,6 +19,7 @@ mkdir -p "(marketing)/legal"
 ```
 
 This creates routes:
+
 - `/` → home
 - `/about` → about
 - `/platform` → features
@@ -57,7 +58,8 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
       {
         type: 'hero',
         headline: 'Transform Your Business With MAIS',
-        subheadline: 'AI-powered consulting, seamless booking, and marketing automation for entrepreneurs',
+        subheadline:
+          'AI-powered consulting, seamless booking, and marketing automation for entrepreneurs',
         ctaText: 'Start Free Trial',
         backgroundImageUrl: '/images/corporate/hero.jpg',
       } as any, // Cast because Section is discriminated union
@@ -101,14 +103,16 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
           {
             name: 'Sarah Chen',
             role: 'Photographer',
-            content: 'MAIS tripled my bookings in 3 months. The booking system is intuitive and my clients love it.',
+            content:
+              'MAIS tripled my bookings in 3 months. The booking system is intuitive and my clients love it.',
             rating: 5,
             imageUrl: '/images/corporate/sarah.jpg',
           },
           {
             name: 'Marcus Johnson',
             role: 'Consultant',
-            content: 'Finally, a platform that understood my business. The revenue share model means we win together.',
+            content:
+              'Finally, a platform that understood my business. The revenue share model means we win together.',
             rating: 5,
             imageUrl: '/images/corporate/marcus.jpg',
           },
@@ -169,7 +173,7 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
       {
         type: 'hero',
         headline: 'Get in Touch',
-        subheadline: 'Have questions? We\'d love to hear from you.',
+        subheadline: "Have questions? We'd love to hear from you.",
       } as any,
       {
         type: 'contact',
@@ -322,7 +326,8 @@ const BLOG_POSTS: BlogPost[] = [
     id: '1',
     slug: 'why-automation-matters',
     title: 'Why Marketing Automation Matters for Small Businesses',
-    excerpt: 'Learn how automation can save you 10+ hours per week while improving customer engagement.',
+    excerpt:
+      'Learn how automation can save you 10+ hours per week while improving customer engagement.',
     content: `<p>Marketing automation is no longer a luxury—it's a necessity for growing businesses...</p>`,
     imageUrl: '/images/blog/automation.jpg',
     publishedAt: new Date('2025-12-20'),
@@ -333,7 +338,7 @@ const BLOG_POSTS: BlogPost[] = [
     id: '2',
     slug: 'booking-system-checklist',
     title: 'The Ultimate Booking System Checklist',
-    excerpt: 'What features should your booking system have? Here\'s our comprehensive guide.',
+    excerpt: "What features should your booking system have? Here's our comprehensive guide.",
     content: `<p>A good booking system does more than just take reservations...</p>`,
     imageUrl: '/images/blog/booking.jpg',
     publishedAt: new Date('2025-12-15'),
@@ -353,8 +358,8 @@ export const getAllBlogPosts = cache(async (): Promise<BlogPost[]> => {
   // });
   // return response.json();
 
-  return BLOG_POSTS.sort((a, b) =>
-    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  return BLOG_POSTS.sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 });
 
@@ -363,7 +368,7 @@ export const getAllBlogPosts = cache(async (): Promise<BlogPost[]> => {
  */
 export const getBlogPost = cache(async (slug: string): Promise<BlogPost | null> => {
   const posts = await getAllBlogPosts();
-  return posts.find(p => p.slug === slug) || null;
+  return posts.find((p) => p.slug === slug) || null;
 });
 
 /**
@@ -372,7 +377,7 @@ export const getBlogPost = cache(async (slug: string): Promise<BlogPost | null> 
  */
 export async function getAllBlogPostSlugs(): Promise<string[]> {
   const posts = await getAllBlogPosts();
-  return posts.map(p => p.slug);
+  return posts.map((p) => p.slug);
 }
 
 /**
@@ -609,6 +614,7 @@ export default async function AboutPage() {
 ```
 
 Follow the same pattern for:
+
 - `/platform/page.tsx` (services)
 - `/pricing/page.tsx` (pricing)
 - `/contact/page.tsx` (contact)
@@ -632,6 +638,7 @@ import { SectionRenderer } from '@/components/tenant/SectionRenderer';
 ```
 
 **Benefits:**
+
 - Consistency across all pages
 - Easy to test changes on corporate site first
 - Reuse section components
@@ -670,10 +677,7 @@ export async function POST(request: NextRequest) {
     } else if (path) {
       revalidatePath(path, 'layout');
     } else {
-      return NextResponse.json(
-        { error: 'Missing path or tag' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing path or tag' }, { status: 400 });
     }
 
     return NextResponse.json({
@@ -683,10 +687,7 @@ export async function POST(request: NextRequest) {
       tag,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Revalidation failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Revalidation failed' }, { status: 500 });
   }
 }
 ```
@@ -733,10 +734,8 @@ function getPageConfig(variant: 'a' | 'b'): PagesConfig {
       ...CORPORATE_PAGES_CONFIG,
       home: {
         ...CORPORATE_PAGES_CONFIG.home,
-        sections: CORPORATE_PAGES_CONFIG.home.sections.map(s =>
-          s.type === 'hero'
-            ? { ...s, ctaText: 'Start Your Free Trial' }
-            : s
+        sections: CORPORATE_PAGES_CONFIG.home.sections.map((s) =>
+          s.type === 'hero' ? { ...s, ctaText: 'Start Your Free Trial' } : s
         ),
       },
     };
@@ -766,18 +765,14 @@ Add `/blog/tags/[tag]/page.tsx`:
 ```typescript
 export async function generateStaticParams() {
   const posts = await getAllBlogPosts();
-  const tags = new Set(posts.flatMap(p => p.tags));
-  return Array.from(tags).map(tag => ({ tag }));
+  const tags = new Set(posts.flatMap((p) => p.tags));
+  return Array.from(tags).map((tag) => ({ tag }));
 }
 
-export default async function TagPage({
-  params,
-}: {
-  params: Promise<{ tag: string }>;
-}) {
+export default async function TagPage({ params }: { params: Promise<{ tag: string }> }) {
   const { tag } = await params;
   const posts = await getAllBlogPosts();
-  const filtered = posts.filter(p => p.tags.includes(tag));
+  const filtered = posts.filter((p) => p.tags.includes(tag));
 
   // Render filtered posts
 }
@@ -789,12 +784,12 @@ export default async function TagPage({
 
 After implementation, you should see:
 
-| Page | TTFB | TTI | Lighthouse |
-|------|------|-----|-----------|
-| Home | <100ms | <1s | 95+ |
-| Blog list | <150ms | <1s | 90+ |
-| Blog post | <150ms | <1s | 90+ |
-| About | <100ms | <1s | 95+ |
+| Page      | TTFB   | TTI | Lighthouse |
+| --------- | ------ | --- | ---------- |
+| Home      | <100ms | <1s | 95+        |
+| Blog list | <150ms | <1s | 90+        |
+| Blog post | <150ms | <1s | 90+        |
+| About     | <100ms | <1s | 95+        |
 
 ---
 
@@ -805,4 +800,3 @@ After implementation, you should see:
 3. **Deploy to Vercel** for free
 4. **Set up CMS** (optional) - Sanity or Contentful
 5. **Add analytics** - Vercel Analytics or Plausible
-

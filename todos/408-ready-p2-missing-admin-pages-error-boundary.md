@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p2
-issue_id: "408"
+issue_id: '408'
 tags:
   - code-review
   - next-js
@@ -17,6 +17,7 @@ dependencies: []
 The tenant admin pages route at `/tenant/pages` does not have a dedicated error boundary. While the parent `/tenant/error.tsx` may exist, page-specific error handling provides better UX for API failures.
 
 **Why This Matters:**
+
 - Admin page makes API calls that can fail
 - Generic error boundary may not provide context-specific recovery options
 - Better debugging with page-specific error context
@@ -26,6 +27,7 @@ The tenant admin pages route at `/tenant/pages` does not have a dedicated error 
 **Location:** `apps/web/src/app/(protected)/tenant/pages/`
 
 **Evidence:**
+
 - Directory contains: `page.tsx` only
 - Missing: `error.tsx`, `loading.tsx`
 
@@ -58,11 +60,13 @@ export default function TenantPagesError({
 ```
 
 **Pros:**
+
 - Specific error messaging
 - Retry capability
 - Consistent with other routes
 
 **Cons:**
+
 - Minor code addition
 
 **Effort:** Small
@@ -71,6 +75,7 @@ export default function TenantPagesError({
 ## Technical Details
 
 **Affected Files:**
+
 - NEW: `apps/web/src/app/(protected)/tenant/pages/error.tsx`
 - NEW: `apps/web/src/app/(protected)/tenant/pages/loading.tsx`
 
@@ -83,6 +88,6 @@ export default function TenantPagesError({
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                             |
+| ---------- | ------------------------ | ------------------------------------- |
 | 2025-12-25 | Created from code review | Missing error boundary in admin route |

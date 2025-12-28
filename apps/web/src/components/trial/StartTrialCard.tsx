@@ -56,19 +56,13 @@ export function StartTrialCard({ onTrialStarted }: StartTrialCardProps) {
           Ready to go live?
         </CardTitle>
         <CardDescription>
-          You&apos;ve set up your first package. Start your 14-day free trial to unlock all features.
+          You&apos;ve set up your first package. Start your 14-day free trial to unlock all
+          features.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
-        <Button
-          variant="sage"
-          className="w-full"
-          onClick={handleStartTrial}
-          disabled={isLoading}
-        >
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <Button variant="sage" className="w-full" onClick={handleStartTrial} disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

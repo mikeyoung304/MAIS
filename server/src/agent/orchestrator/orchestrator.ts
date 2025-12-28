@@ -12,13 +12,23 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { MessageParam, ContentBlock, ToolUseBlock, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
+import type {
+  MessageParam,
+  ContentBlock,
+  ToolUseBlock,
+  ToolResultBlockParam,
+} from '@anthropic-ai/sdk/resources/messages';
 import type { PrismaClient } from '../../generated/prisma';
 import { readTools } from '../tools/read-tools';
 import { writeTools } from '../tools/write-tools';
 import { getAllTools } from '../index';
 import type { ToolContext, AgentToolResult } from '../tools/types';
-import { buildSessionContext, detectOnboardingPath, buildFallbackContext, getHandledGreeting } from '../context/context-builder';
+import {
+  buildSessionContext,
+  detectOnboardingPath,
+  buildFallbackContext,
+  getHandledGreeting,
+} from '../context/context-builder';
 import type { AgentSessionContext } from '../context/context-builder';
 import { ProposalService } from '../proposals/proposal.service';
 import { AuditService } from '../audit/audit.service';
@@ -331,10 +341,7 @@ export class AgentOrchestrator {
     const historyMessages = this.buildHistoryMessages(session.messages);
 
     // Add user message
-    const messages: MessageParam[] = [
-      ...historyMessages,
-      { role: 'user', content: userMessage },
-    ];
+    const messages: MessageParam[] = [...historyMessages, { role: 'user', content: userMessage }];
 
     // Build tools for API
     const tools = this.buildToolsForAPI();
@@ -380,11 +387,9 @@ export class AgentOrchestrator {
       })),
     };
 
-    const updatedMessages = [
-      ...session.messages,
-      newUserMessage,
-      newAssistantMessage,
-    ].slice(-this.config.maxHistoryMessages);
+    const updatedMessages = [...session.messages, newUserMessage, newAssistantMessage].slice(
+      -this.config.maxHistoryMessages
+    );
 
     await this.prisma.agentSession.update({
       where: { id: sessionId },
@@ -501,7 +506,8 @@ export class AgentOrchestrator {
         'Tool recursion depth limit reached - preventing further tool calls'
       );
       return {
-        finalMessage: "I've reached my limit for tool operations in a single request. Let me summarize what I've done so far. If you need more actions, please send another message.",
+        finalMessage:
+          "I've reached my limit for tool operations in a single request. Let me summarize what I've done so far. If you need more actions, please send another message.",
       };
     }
 
@@ -643,10 +649,7 @@ export class AgentOrchestrator {
       model: this.config.model,
       max_tokens: this.config.maxTokens,
       temperature: this.config.temperature,
-      system: SYSTEM_PROMPT_TEMPLATE.replace(
-        '{BUSINESS_CONTEXT}',
-        cachedContext.contextPrompt
-      ),
+      system: SYSTEM_PROMPT_TEMPLATE.replace('{BUSINESS_CONTEXT}', cachedContext.contextPrompt),
       messages: continuedMessages,
       tools: this.buildToolsForAPI(),
     });

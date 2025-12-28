@@ -25,11 +25,7 @@ export default function Error({
         <p className="text-text-muted mb-8">
           We&apos;re on it. Try refreshing, or come back in a minute.
         </p>
-        <Button
-          onClick={reset}
-          variant="sage"
-          className="rounded-full px-8 py-3"
-        >
+        <Button onClick={reset} variant="sage" className="rounded-full px-8 py-3">
           Try Again
         </Button>
       </div>

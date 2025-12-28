@@ -5,6 +5,7 @@
 The CI integration tests are failing because the `subscriptionStatus` column doesn't exist in the CI test database. The field was added to `schema.prisma` but the corresponding migration was never created.
 
 **Error:**
+
 ```
 The column `subscriptionStatus` does not exist in the current database.
 ```
@@ -15,13 +16,14 @@ The column `subscriptionStatus` does not exist in the current database.
 
 The Prisma schema has three subscription-related fields on the Tenant model that have no corresponding database migration:
 
-| Field | Type | Default | Line in schema.prisma |
-|-------|------|---------|----------------------|
-| `trialEndsAt` | DateTime? | null | 70 |
-| `subscriptionStatus` | SubscriptionStatus | NONE | 71 |
-| `stripeCustomerId` | String? | null | 72 |
+| Field                | Type               | Default | Line in schema.prisma |
+| -------------------- | ------------------ | ------- | --------------------- |
+| `trialEndsAt`        | DateTime?          | null    | 70                    |
+| `subscriptionStatus` | SubscriptionStatus | NONE    | 71                    |
+| `stripeCustomerId`   | String?            | null    | 72                    |
 
 The `SubscriptionStatus` enum is also defined but not in the database:
+
 ```prisma
 enum SubscriptionStatus {
   NONE      // Signed up, no trial started
@@ -76,17 +78,17 @@ npm exec prisma generate
 
 ### Files to Create
 
-| File | Purpose |
-|------|---------|
+| File                                                      | Purpose              |
+| --------------------------------------------------------- | -------------------- |
 | `server/prisma/migrations/15_add_subscription_fields.sql` | Add enum and columns |
 
 ### Files to Verify (No Changes Needed)
 
-| File | Reason |
-|------|--------|
-| `server/prisma/schema.prisma` | Already has the fields (lines 70-72) |
+| File                                       | Reason                                         |
+| ------------------------------------------ | ---------------------------------------------- |
+| `server/prisma/schema.prisma`              | Already has the fields (lines 70-72)           |
 | `server/test/helpers/integration-setup.ts` | Uses `@default(NONE)` so no code change needed |
-| `.github/workflows/main-pipeline.yml` | Already applies manual SQL migrations |
+| `.github/workflows/main-pipeline.yml`      | Already applies manual SQL migrations          |
 
 ### CI Migration Flow (Already Configured)
 
@@ -111,11 +113,11 @@ Once we add `15_add_subscription_fields.sql`, CI will automatically apply it.
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Migration fails in production | Low | Medium | Idempotent SQL with IF NOT EXISTS |
-| Data loss | None | N/A | Only adding columns, no destructive changes |
-| Type mismatch | Low | Low | Using exact types from schema.prisma |
+| Risk                          | Likelihood | Impact | Mitigation                                  |
+| ----------------------------- | ---------- | ------ | ------------------------------------------- |
+| Migration fails in production | Low        | Medium | Idempotent SQL with IF NOT EXISTS           |
+| Data loss                     | None       | N/A    | Only adding columns, no destructive changes |
+| Type mismatch                 | Low        | Low    | Using exact types from schema.prisma        |
 
 ## References
 

@@ -30,9 +30,7 @@ const domainIdSchema = z.object({
  * @param domainService - Domain verification service instance
  * @returns Express router with domain management endpoints
  */
-export function createTenantAdminDomainsRouter(
-  domainService: DomainVerificationService
-): Router {
+export function createTenantAdminDomainsRouter(domainService: DomainVerificationService): Router {
   const router = Router();
 
   /**
@@ -94,15 +92,11 @@ export function createTenantAdminDomainsRouter(
           recordType: 'TXT',
           recordName: `_handled-verify.${domain}`,
           recordValue: `handled-verify=${domainInfo.verificationToken}`,
-          description:
-            'Add this TXT record to your DNS configuration, then click "Verify Domain".',
+          description: 'Add this TXT record to your DNS configuration, then click "Verify Domain".',
         },
       };
 
-      logger.info(
-        { tenantId, domain },
-        'Domain added for verification'
-      );
+      logger.info({ tenantId, domain }, 'Domain added for verification');
 
       res.status(201).json(response);
     } catch (error: any) {
@@ -234,10 +228,7 @@ export function createTenantAdminDomainsRouter(
 
       const domain = await domainService.setPrimaryDomain(tenantId, id);
 
-      logger.info(
-        { tenantId, domainId: id, domain: domain.domain },
-        'Domain set as primary'
-      );
+      logger.info({ tenantId, domainId: id, domain: domain.domain }, 'Domain set as primary');
 
       res.json(domain);
     } catch (error: any) {

@@ -27,15 +27,15 @@ app/                          URL path
 
 ### Special Files
 
-| File | Purpose |
-|------|---------|
-| `page.tsx` | Route component |
-| `layout.tsx` | Shared layout wrapper |
-| `error.tsx` | Error boundary |
-| `loading.tsx` | Suspense fallback |
-| `not-found.tsx` | 404 page |
-| `route.ts` | API route handler |
-| `middleware.ts` | Edge middleware |
+| File            | Purpose               |
+| --------------- | --------------------- |
+| `page.tsx`      | Route component       |
+| `layout.tsx`    | Shared layout wrapper |
+| `error.tsx`     | Error boundary        |
+| `loading.tsx`   | Suspense fallback     |
+| `not-found.tsx` | 404 page              |
+| `route.ts`      | API route handler     |
+| `middleware.ts` | Edge middleware       |
 
 ### Route Groups (Parentheses)
 
@@ -150,14 +150,10 @@ export default async function Page() {
 ```typescript
 export async function generateStaticParams() {
   const posts = await getAllPosts();
-  return posts.map(post => ({ slug: post.slug }));
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   // ...
 }
 ```
@@ -345,7 +341,7 @@ export default async function Page() {
 import { cache } from 'react';
 
 const getPost = cache(async (slug: string) => {
-  return fetch(`/api/posts/${slug}`).then(r => r.json());
+  return fetch(`/api/posts/${slug}`).then((r) => r.json());
 });
 
 export default async function Page() {
@@ -360,8 +356,8 @@ export default async function Page() {
 // Good: Fetch in parallel
 export default async function Page() {
   const [posts, comments] = await Promise.all([
-    fetch('/api/posts').then(r => r.json()),
-    fetch('/api/comments').then(r => r.json()),
+    fetch('/api/posts').then((r) => r.json()),
+    fetch('/api/comments').then((r) => r.json()),
   ]);
 }
 
@@ -404,6 +400,7 @@ export default async function Page() {
 ```
 
 **Capabilities:**
+
 - Access databases, APIs, secrets
 - Direct backend calls
 - No JavaScript sent to browser
@@ -424,6 +421,7 @@ export default function Counter() {
 ```
 
 **Capabilities:**
+
 - Use hooks (useState, useEffect, etc.)
 - Event listeners and interactivity
 - Browser APIs (localStorage, window, etc.)
@@ -483,10 +481,7 @@ export async function POST(request: Request) {
 
 ```typescript
 // app/api/posts/[id]/route.ts
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const post = await db.post.findUnique({ where: { id } });
 
@@ -631,7 +626,7 @@ export default function Component() {
 
   useEffect(() => {
     fetch('/api/data')
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setData);
   }, []);
 }
@@ -668,11 +663,7 @@ export default async function Page({ params }) {
 }
 
 // ✅ Await params
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params; // ✅ Works
 }
 ```
@@ -709,4 +700,3 @@ export const revalidate = 60; // At least 60 seconds
 - [Data Fetching Guide](https://nextjs.org/docs/app/building-your-application/data-fetching)
 - [Caching Guide](https://nextjs.org/docs/app/building-your-application/caching)
 - [ISR Documentation](https://nextjs.org/docs/app/building-your-application/rendering/incremental-static-regeneration)
-

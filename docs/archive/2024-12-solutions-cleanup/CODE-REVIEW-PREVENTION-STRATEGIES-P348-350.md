@@ -25,12 +25,12 @@ The codebase has confusion between `packageId` (database identifier) and `slug` 
 
 ```typescript
 // ❌ CONFUSING - Are these the same thing?
-const { packageId } = useParams();  // Actually expects 'slug'
+const { packageId } = useParams(); // Actually expects 'slug'
 const pkg = await api.getPackageBySlug({ params: { id: packageId } });
 
 // ❌ INCONSISTENT - Different names, same data
-getPackageBySlug(tenantId, packageId)  // Backend expects slug
-getPackageById(tenantId, slug)         // Frontend passes slug
+getPackageBySlug(tenantId, packageId); // Backend expects slug
+getPackageById(tenantId, slug); // Frontend passes slug
 ```
 
 ### Root Cause
@@ -46,17 +46,17 @@ getPackageById(tenantId, slug)         // Frontend passes slug
 ```typescript
 // ✅ CORRECT
 interface RouteParams {
-  packageSlug: string;  // URL parameter - always 'slug'
+  packageSlug: string; // URL parameter - always 'slug'
 }
 
 interface PackageQuery {
-  slug: string;  // Lookup by slug
-  id: string;    // Never use packageId in queries
+  slug: string; // Lookup by slug
+  id: string; // Never use packageId in queries
 }
 
 // ❌ WRONG
 interface RouteParams {
-  packageId: string;  // This is actually a slug!
+  packageId: string; // This is actually a slug!
 }
 ```
 
@@ -64,13 +64,13 @@ interface RouteParams {
 
 ```typescript
 // ✅ CLEAR intent
-const databaseId = pkg.id;           // Integer primary key
-const urlSlug = pkg.slug;            // User-friendly URL
-const bookingToken = pkg.tokenId;    // Special token identifier
+const databaseId = pkg.id; // Integer primary key
+const urlSlug = pkg.slug; // User-friendly URL
+const bookingToken = pkg.tokenId; // Special token identifier
 
 // ❌ AMBIGUOUS
-const packageId = pkg.id;            // Which kind of ID?
-const identifier = pkg.slug;         // Slug is NOT an identifier
+const packageId = pkg.id; // Which kind of ID?
+const identifier = pkg.slug; // Slug is NOT an identifier
 ```
 
 **RULE 3: Route params must match what API expects**
@@ -84,7 +84,7 @@ const pkg = await api.getPackageBySlug({ params: { slug } });
 // ❌ WRONG - Parameter name doesn't match contract
 // Contract expects 'slug', but we're passing 'id'
 const { id } = useParams<{ id: string }>();
-const pkg = await api.getPackageBySlug({ params: { id } });  // Runtime error!
+const pkg = await api.getPackageBySlug({ params: { id } }); // Runtime error!
 ```
 
 ### Prevention Strategy 1.2: Code Review Checklist
@@ -124,12 +124,12 @@ grep -rn "getPackageBySlug.*packageId\|getPackageById.*slug" client/src
 ```typescript
 // BEFORE - Confusing
 function getTierBookingLink(pkgId: string) {
-  return `../book/date/${pkgId}`;  // Is this a slug?
+  return `../book/date/${pkgId}`; // Is this a slug?
 }
 
 // AFTER - Clear
 function getTierBookingLink(packageSlug: string) {
-  return `../book/date/${packageSlug}`;  // Obviously a slug
+  return `../book/date/${packageSlug}`; // Obviously a slug
 }
 ```
 
@@ -143,7 +143,7 @@ Error messages leak sensitive information that helps attackers enumerate resourc
 
 ```typescript
 // ❌ DANGEROUS - Leaks whether package exists
-throw new Error(`Package ${packageId} not found`);  // Confirms ID format, helps enumeration
+throw new Error(`Package ${packageId} not found`); // Confirms ID format, helps enumeration
 
 // ❌ DANGEROUS - Reveals internal database column names
 throw new Error(`Database column 'slug' cannot be null`);
@@ -174,7 +174,7 @@ try {
       source: 'catalog.service',
     });
     // Public message (safe for client)
-    throw new PackageNotAvailableError();  // Generic, no details
+    throw new PackageNotAvailableError(); // Generic, no details
   }
 } catch (error) {
   if (error instanceof PackageNotAvailableError) {
@@ -190,31 +190,30 @@ try {
 
 ```typescript
 // ❌ DON'T DO THESE
-throw new Error(`Package ${packageId} not found`);           // ← Shows ID value
-throw new Error(`Tenant ${tenantId} is not active`);        // ← Shows tenant structure
-throw new Error(`Database unique constraint failed on slug`);  // ← Shows schema
-throw new Error(`SELECT failed: invalid column 'x'`);        // ← Shows SQL structure
+throw new Error(`Package ${packageId} not found`); // ← Shows ID value
+throw new Error(`Tenant ${tenantId} is not active`); // ← Shows tenant structure
+throw new Error(`Database unique constraint failed on slug`); // ← Shows schema
+throw new Error(`SELECT failed: invalid column 'x'`); // ← Shows SQL structure
 
 // ✅ DO THIS INSTEAD
-throw new PackageNotAvailableError();  // Generic
-throw new TenantNotActiveError();      // Business error, no details
-logger.error('Schema validation failed', { column: 'slug', reason });  // Log details
+throw new PackageNotAvailableError(); // Generic
+throw new TenantNotActiveError(); // Business error, no details
+logger.error('Schema validation failed', { column: 'slug', reason }); // Log details
 ```
 
 **RULE 3: Safe vs unsafe information**
 
 ```typescript
 // SAFE - Can show to client
-- "The requested package is not available"
-- "You don't have permission to perform this action"
-- "Your password must be at least 8 characters"
-- "Invalid email format"
-
-// UNSAFE - Log only, never send to client
-- "Package ID: abc123 not found in database"
-- "Tenant ID xyz not active"
-- "Unique constraint violation on column 'slug'"
-- "SELECT * FROM packages WHERE id = $1 failed"
+-'The requested package is not available' -
+  "You don't have permission to perform this action" -
+  'Your password must be at least 8 characters' -
+  'Invalid email format' -
+  // UNSAFE - Log only, never send to client
+  'Package ID: abc123 not found in database' -
+  'Tenant ID xyz not active' -
+  "Unique constraint violation on column 'slug'" -
+  'SELECT * FROM packages WHERE id = $1 failed';
 ```
 
 ### Prevention Strategy 2.2: Code Review Checklist for Errors
@@ -256,7 +255,7 @@ See `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/business.ts` for the imp
 export class PackageNotAvailableError extends PackageError {
   constructor() {
     super(
-      'The requested package is not available for booking',  // Generic
+      'The requested package is not available for booking', // Generic
       'PACKAGE_NOT_AVAILABLE'
     );
     this.name = 'PackageNotAvailableError';
@@ -271,7 +270,7 @@ export class PackageNotAvailableError extends PackageError {
 export class BookingConflictError extends AppError {
   constructor(date: string, message?: string) {
     super(
-      message ?? `Date is already booked`,  // Generic, no details
+      message ?? `Date is already booked`, // Generic, no details
       'BOOKING_CONFLICT',
       409,
       true
@@ -283,7 +282,7 @@ export class BookingConflictError extends AppError {
 export class BookingConflictError extends AppError {
   constructor(date: string, tenantId: string) {
     super(
-      `Date ${date} is already booked for tenant ${tenantId}`,  // ❌ Leaks info
+      `Date ${date} is already booked for tenant ${tenantId}`, // ❌ Leaks info
       'BOOKING_CONFLICT'
     );
   }
@@ -579,16 +578,16 @@ Use this when reviewing code that touches naming, errors, or React performance:
 
 ### Red Flags - Stop and Investigate
 
-| Finding | Action | Example |
-|---------|--------|---------|
-| `packageId` used as route param | Ask: Is this actually a slug? | `useParams<{ packageId }>` |
-| Error includes database ID in message | Request changes | `"Package ${packageId} not found"` |
-| Error reveals schema/tenant structure | Request changes | `"Unique constraint failed on slug"` |
-| Object created in render without memo | Add useMemo or move to module | `const config = { size: 'large' }` |
-| Memo wrapper receives object prop from parent | Ask parent to stabilize with useMemo | `<Card config={{ size }}/>` |
-| Component has 15+ props | Too many responsibilities | Break into smaller components |
-| Constants duplicated in 2+ files | Move to utils.ts | `TIER_LEVELS` definition |
-| `useCallback` without memo'ed child | Remove useCallback | Optimization not needed |
+| Finding                                       | Action                               | Example                              |
+| --------------------------------------------- | ------------------------------------ | ------------------------------------ |
+| `packageId` used as route param               | Ask: Is this actually a slug?        | `useParams<{ packageId }>`           |
+| Error includes database ID in message         | Request changes                      | `"Package ${packageId} not found"`   |
+| Error reveals schema/tenant structure         | Request changes                      | `"Unique constraint failed on slug"` |
+| Object created in render without memo         | Add useMemo or move to module        | `const config = { size: 'large' }`   |
+| Memo wrapper receives object prop from parent | Ask parent to stabilize with useMemo | `<Card config={{ size }}/>`          |
+| Component has 15+ props                       | Too many responsibilities            | Break into smaller components        |
+| Constants duplicated in 2+ files              | Move to utils.ts                     | `TIER_LEVELS` definition             |
+| `useCallback` without memo'ed child           | Remove useCallback                   | Optimization not needed              |
 
 ### Terminal Commands
 

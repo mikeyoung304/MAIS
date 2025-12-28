@@ -29,6 +29,7 @@ Copy this section into PR review comments when you spot API/ISR changes:
 ### Checklist Item 1: Verify Contract Exists
 
 **What to check:**
+
 - Does the API call in the diff have a corresponding entry in contracts?
 
 **How to review:**
@@ -76,6 +77,7 @@ Looks good! I verified this matches the contract:
 ### Checklist Item 2: Verify HTTP Method
 
 **What to check:**
+
 - Does the code use the correct HTTP method (GET vs POST vs PUT vs DELETE)?
 
 **How to review:**
@@ -103,7 +105,7 @@ const response = await fetch(url, {
 ```typescript
 // ✗ Wrong: Using POST for a GET endpoint
 await fetch(`${API_BASE_URL}/v1/packages/${slug}`, {
-  method: 'POST',  // ← Should be GET
+  method: 'POST', // ← Should be GET
   body: JSON.stringify({}),
 });
 
@@ -115,7 +117,7 @@ await fetch(`${API_BASE_URL}/v1/packages/${slug}`, {
 
 **Example review comment:**
 
-```
+````
 ⚠️ Method mismatch!
 
 Contract defines this as a GET endpoint:
@@ -124,15 +126,17 @@ getPackageBySlug: {
   method: 'GET',  // ← Here
   path: '/v1/packages/:slug',
 }
-```
+````
 
 But code is using POST. Should be:
+
 ```typescript
 const response = await fetch(url, {
-  method: 'GET',  // Change from POST
+  method: 'GET', // Change from POST
 });
 ```
-```
+
+````
 
 ---
 
@@ -158,7 +162,7 @@ const url = `${API_BASE_URL}/v1/bookings/create/checkout`;  // ← Extra "create
 
 // ✗ Wrong parameter format
 const url = `${API_BASE_URL}/v1/bookings/${id}/checkout`;  // ← Shouldn't have {id}
-```
+````
 
 **Path parameter examples:**
 
@@ -185,7 +189,7 @@ const url = `${API_BASE_URL}/v1/public/tenants/by-slug/${slug}`;
 
 **Example review comment:**
 
-```
+````
 ⚠️ Path mismatch!
 
 Contract: `/v1/packages/:slug`
@@ -194,8 +198,9 @@ Code: `/v1/packages/slug/${slug}`  ← Extra "slug/" shouldn't be here
 Should be:
 ```typescript
 const url = `${API_BASE_URL}/v1/packages/${encodeURIComponent(slug)}`;
-```
-```
+````
+
+````
 
 ---
 
@@ -230,7 +235,7 @@ const response = await fetch(url, {
     'Authorization': `Bearer ${token}`,  // ✓ Included
   },
 });
-```
+````
 
 **Contract patterns to watch:**
 
@@ -256,7 +261,7 @@ platformGetTenants: {
 
 **Example review comment:**
 
-```
+````
 ⚠️ Missing required header!
 
 This is a public endpoint requiring `X-Tenant-Key`:
@@ -267,8 +272,9 @@ const response = await fetch(`${API_BASE_URL}/v1/packages`, {
     'X-Tenant-Key': tenantApiKey,  // ← Add this
   },
 });
-```
-```
+````
+
+````
 
 ---
 
@@ -311,11 +317,11 @@ if (!response.ok) {
 // ✗ Code only handles happy path
 const data = await response.json();  // Assumes 200
 return { checkoutUrl: data.checkoutUrl };  // Crashes if 404
-```
+````
 
 **Example review comment:**
 
-```
+````
 ⚠️ Missing error handling!
 
 Contract defines these response codes:
@@ -328,9 +334,10 @@ But code only handles success case:
 ```typescript
 const data = await response.json();
 return data.checkoutUrl;  // Crashes on error responses
-```
+````
 
 Should handle errors:
+
 ```typescript
 if (!response.ok) {
   if (response.status === 404) {
@@ -344,7 +351,8 @@ if (!response.ok) {
 
 return { checkoutUrl: data.checkoutUrl };
 ```
-```
+
+````
 
 ---
 
@@ -369,7 +377,7 @@ export const revalidate = 60;
 
 // Always fresh (admin, dynamic content) - never cache
 export const revalidate = 0;
-```
+````
 
 **Decision tree to reference:**
 
@@ -404,20 +412,21 @@ Is this page in /admin or /tenant-admin?
 ### Checklist Item 7: Verify Cache Tags (If Used)
 
 **What to check:**
+
 - If using `next: { tags }`, are tags set up correctly for selective revalidation?
 
 **How to review:**
 
 ```typescript
 // Using tags for selective revalidation
-export const revalidate = 3600;  // Revalidate every hour
+export const revalidate = 3600; // Revalidate every hour
 // But also allow manual invalidation via tags
 
 export const getTenantData = cache(async (slug: string) => {
   const response = await fetch(`${API_BASE_URL}/v1/public/tenants/${slug}`, {
     next: {
       revalidate: 3600,
-      tags: [`tenant-${slug}`],  // ← Tag for selective revalidation
+      tags: [`tenant-${slug}`], // ← Tag for selective revalidation
     },
   });
 });
@@ -426,28 +435,30 @@ export const getTenantData = cache(async (slug: string) => {
 import { revalidateTag } from 'next/cache';
 export async function updateTenantBranding(slug: string) {
   // ... update code ...
-  revalidateTag(`tenant-${slug}`);  // Invalidate just this tenant's cache
+  revalidateTag(`tenant-${slug}`); // Invalidate just this tenant's cache
 }
 ```
 
 **Example review comment:**
 
-```
+````
 Nice! Using cache tags for selective revalidation:
 
 ```typescript
 next: {
   tags: [`tenant-${slug}`],
 }
-```
+````
 
 This allows invalidating just this tenant's cache without clearing everything.
 
 Also verify in the update handler:
+
 ```typescript
-revalidateTag(`tenant-${slug}`);  // Matches the tag above
+revalidateTag(`tenant-${slug}`); // Matches the tag above
 ```
-```
+
+````
 
 ---
 
@@ -470,7 +481,7 @@ export async function getTenantBySlug(slug: string) {
   const response = await fetch(`${API_BASE_URL}/v1/public/tenants/${slug}`);
   return response.json();
 }
-```
+````
 
 **Why it matters:**
 
@@ -494,7 +505,7 @@ export const getTenantBySlug = cache(async (slug: string) => {
 
 **Example review comment:**
 
-```
+````
 ✓ Good use of React cache():
 
 ```typescript
@@ -502,11 +513,12 @@ export const getTenantBySlug = cache(async (slug: string) => {
   // Prevents duplicate fetches when called from both
   // generateMetadata() and page component
 });
-```
+````
 
 This ensures even if multiple parts of the page request the same data,
 it's only fetched once per request.
-```
+
+````
 
 ---
 
@@ -542,7 +554,7 @@ Use this when reviewing a PR that touches both API calls and ISR:
 - [ ] JSDoc comments explain ISR strategy
 - [ ] If custom logic, comment explaining why
 - [ ] PR description explains ISR approach
-```
+````
 
 ---
 
@@ -563,12 +575,12 @@ const url = `${API_BASE_URL}/v1/packages/${encodeURIComponent(slug)}`;
 
 **Example review comment:**
 
-```
+````
 ⚠️ URL encoding needed!
 
 ```typescript
 const url = `${API_BASE_URL}/v1/packages/${slug}`;
-```
+````
 
 Should use `encodeURIComponent()` for safety:
 
@@ -577,7 +589,8 @@ const url = `${API_BASE_URL}/v1/packages/${encodeURIComponent(slug)}`;
 ```
 
 This handles special characters (spaces, parentheses, etc.) properly.
-```
+
+````
 
 ---
 
@@ -595,11 +608,11 @@ export const revalidate = 21600;
 // ✓ Balanced - refreshes every 5 minutes
 export const revalidate = 300;
 // Good for: Pages that update occasionally
-```
+````
 
 **Example review comment:**
 
-```
+````
 ⚠️ ISR timing might not be optimal
 
 Current: `revalidate = 60` (1 minute)
@@ -616,10 +629,11 @@ import { revalidatePath } from 'next/cache';
 
 // When package is updated:
 await revalidatePath('/t/[slug]', 'layout');
-```
+````
 
 This gives fresh data on demand without refreshing every minute.
-```
+
+````
 
 ---
 
@@ -643,21 +657,23 @@ interface PackageResponse {
 
 const response = await fetch(url);
 const data = await response.json() as PackageResponse;
-```
+````
 
 **Example review comment:**
 
-```
+````
 ⚠️ Type safety missing!
 
 ```typescript
 const data = await response.json();
-```
+````
 
 No type checking - response structure unknown.
 
 Consider:
+
 1. Using ts-rest client (recommended):
+
    ```typescript
    const { body } = await api.getPackageBySlug(...);
    // ✓ body is type-safe
@@ -665,8 +681,9 @@ Consider:
 
 2. Or add type annotation:
    ```typescript
-   const data = await response.json() as PackageResponse;
+   const data = (await response.json()) as PackageResponse;
    ```
+
 ```
 
 ---
@@ -690,3 +707,4 @@ Consider:
 3. Reference specific sections during code review
 4. Update as new patterns emerge
 
+```

@@ -105,12 +105,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         available: apiKeyConfigured && contextAvailable,
         reason,
         onboardingState,
-        capabilities: [
-          'chat',
-          'create_packages',
-          'manage_bookings',
-          'stripe_onboarding',
-        ],
+        capabilities: ['chat', 'create_packages', 'manage_bookings', 'stripe_onboarding'],
       });
     } catch (error) {
       logger.error({ error }, 'Health check error');
@@ -252,31 +247,34 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
    * GET /v1/agent/session/:sessionId/history
    * Get chat history for a session
    */
-  router.get('/session/:sessionId/history', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.get(
+    '/session/:sessionId/history',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+
+        const { sessionId } = req.params;
+        const session = await orchestrator.getSession(tenantId, sessionId);
+
+        if (!session) {
+          res.status(404).json({ error: 'Session not found' });
+          return;
+        }
+
+        res.json({
+          sessionId: session.sessionId,
+          messages: session.messages,
+          messageCount: session.messages.length,
+        });
+      } catch (error) {
+        next(error);
       }
-
-      const { sessionId } = req.params;
-      const session = await orchestrator.getSession(tenantId, sessionId);
-
-      if (!session) {
-        res.status(404).json({ error: 'Session not found' });
-        return;
-      }
-
-      res.json({
-        sessionId: session.sessionId,
-        messages: session.messages,
-        messageCount: session.messages.length,
-      });
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Proposal Endpoints
@@ -370,7 +368,10 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
       try {
         const result = await prisma.$transaction(async (tx) => {
           // Execute the proposal (executor may perform DB operations)
-          const executorResult = await executor(tenantId, proposal.payload as Record<string, unknown>);
+          const executorResult = await executor(
+            tenantId,
+            proposal.payload as Record<string, unknown>
+          );
 
           // Update proposal as executed (atomic with executor)
           await tx.agentProposal.update({

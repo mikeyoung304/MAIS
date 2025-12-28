@@ -6,7 +6,7 @@ tags: [code-review, error-handling, next.js]
 dependencies: []
 ---
 
-# P2: Missing error.tsx in _domain Routes
+# P2: Missing error.tsx in \_domain Routes
 
 **Priority:** P2 (Important)
 **Category:** Error Handling
@@ -21,6 +21,7 @@ The custom domain routes (`/t/_domain/*`) are missing `error.tsx` error boundari
 ## Location
 
 Missing files:
+
 - `apps/web/src/app/t/_domain/error.tsx`
 - `apps/web/src/app/t/_domain/about/error.tsx`
 - `apps/web/src/app/t/_domain/services/error.tsx`
@@ -39,6 +40,7 @@ Missing files:
 Copy the error boundary pattern from slug routes to domain routes. If implementing todo-373 (shared components), error boundaries could also be shared.
 
 Quick fix (copy existing error boundaries):
+
 ```bash
 cp apps/web/src/app/t/[slug]/(site)/error.tsx apps/web/src/app/t/_domain/error.tsx
 cp apps/web/src/app/t/[slug]/(site)/about/error.tsx apps/web/src/app/t/_domain/about/error.tsx

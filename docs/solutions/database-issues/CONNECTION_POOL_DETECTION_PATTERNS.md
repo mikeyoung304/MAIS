@@ -30,6 +30,7 @@ Add to your `.eslintrc.json` to catch violations at lint time:
 ```
 
 **What it catches:**
+
 ```typescript
 ❌ const prisma = new PrismaClient(); // ESLint error!
 
@@ -60,6 +61,7 @@ grep -r "new PrismaClient()" server/src --include="*.test.ts" --include="*.spec.
 ```
 
 **Expected output:**
+
 ```
 server/src/services/catalog.service.integration.test.ts:13:const prisma = new PrismaClient();
 ```
@@ -377,7 +379,7 @@ In your CI pipeline AFTER tests pass, verify prevention:
 
 ```yaml
 - name: Verify test connection pool safety
-  if: success()  # Run only if tests passed
+  if: success() # Run only if tests passed
   run: |
     echo "Verifying connection pool prevention measures..."
 

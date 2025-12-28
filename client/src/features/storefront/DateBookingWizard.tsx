@@ -170,9 +170,7 @@ const DetailsStep = React.memo(
     <Card className="border-neutral-200 shadow-elevation-1">
       <CardHeader>
         <CardTitle className="text-2xl font-heading">Your Information</CardTitle>
-        <p className="text-neutral-500 text-base mt-1">
-          We'll use this to send your confirmation
-        </p>
+        <p className="text-neutral-500 text-base mt-1">We'll use this to send your confirmation</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -327,10 +325,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
 
   // P3-354 FIX: Memoize localStorage read to avoid repeated access on every render
-  const tenantKey = useMemo(
-    () => localStorage.getItem('impersonationTenantKey') || 'default',
-    []
-  );
+  const tenantKey = useMemo(() => localStorage.getItem('impersonationTenantKey') || 'default', []);
 
   const { data: unavailableDatesData, isLoading: isLoadingDates } = useQuery({
     queryKey: ['unavailable-dates', tenantKey, today.toISOString().split('T')[0]],
@@ -518,11 +513,7 @@ export function DateBookingWizard({ package: pkg, onBookingStart }: DateBookingW
           return null;
         }
         return (
-          <ReviewStep
-            pkg={pkg}
-            selectedDate={selectedDate}
-            customerDetails={customerDetails}
-          />
+          <ReviewStep pkg={pkg} selectedDate={selectedDate} customerDetails={customerDetails} />
         );
 
       default:

@@ -27,7 +27,11 @@ interface Props {
  * - Notifies parent of booking completion
  * - No router dependency
  */
-export function WidgetPackagePage({ packageSlug, onBack, onBookingComplete: _onBookingComplete }: Props) {
+export function WidgetPackagePage({
+  packageSlug,
+  onBack,
+  onBookingComplete: _onBookingComplete,
+}: Props) {
   const { data: pkg, isLoading, error } = usePackage(packageSlug);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);

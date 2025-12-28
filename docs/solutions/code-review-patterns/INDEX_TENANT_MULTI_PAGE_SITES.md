@@ -44,15 +44,19 @@ status: complete
 ## For Code Reviews
 
 ### Multi-Agent Review Process
+
 → [Multi-Agent Code Review Workflow](./multi-agent-code-review-workflow-systematic-triage-MAIS-20251224.md)
 
 ### Performance Checklist
+
 → [React Memoization Quick Reference](../react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (Code Review Checklist, line 101)
 
 ### Accessibility Checklist
+
 → [React Hooks Performance & WCAG Review](./react-hooks-performance-wcag-review.md) (Prevention Checklist, line 176)
 
 ### Next.js Pre-Merge Checklist
+
 → [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md) (Prevention Checklist, line 349)
 
 ---
@@ -76,16 +80,19 @@ status: complete
 ## By Component Type
 
 ### Navigation Components
+
 - Active link state: [Pattern 1 in CROSSREF](./TENANT_MULTI_PAGE_SITES_DOCUMENTATION_CROSSREF.md)
 - Event handlers: [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Issue #121)
 - Focus indicators: [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Issue #122)
 - Nested buttons: [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Issue #124)
 
 ### List Components
+
 - Memoization: [React Memoization Quick Reference](../react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (Pattern 2)
 - Performance: [React Memo Unstable Callbacks](../performance-issues/react-memo-unstable-callbacks-visual-editor-MAIS-20251204.md)
 
 ### Page Components
+
 - Error handling: [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md) (Lesson 4)
 - Data fetching: [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md) (Lesson 9)
 - Loading states: [Web App README](../../../apps/web/README.md)
@@ -95,6 +102,7 @@ status: complete
 ## By Problem Type
 
 ### Performance Issues
+
 1. "Component re-renders on every parent update"
    → [React Memoization Quick Reference](../react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md)
 
@@ -105,6 +113,7 @@ status: complete
    → [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Issue #121)
 
 ### Accessibility Issues
+
 1. "Can't tab to navigation links"
    → [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Issue #122)
 
@@ -115,6 +124,7 @@ status: complete
    → [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Issue #123)
 
 ### Multi-Page Issues
+
 1. "Navigation doesn't show active page"
    → [CROSSREF Pattern 1](./TENANT_MULTI_PAGE_SITES_DOCUMENTATION_CROSSREF.md), [Impersonation Navigation Bug](../ui-bugs/impersonation-sidebar-navigation-bug.md)
 
@@ -125,6 +135,7 @@ status: complete
    → [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md) (Lesson 9)
 
 ### Security Issues
+
 1. "Backend token exposed in browser console"
    → [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md) (Lesson 1)
 
@@ -136,21 +147,25 @@ status: complete
 ## By Role
 
 ### Frontend Developer
+
 **Start Here:** [React Memoization Quick Reference](../react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md)
 **Then Read:** [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md)
 **Reference:** [Web App README](../../../apps/web/README.md)
 
 ### Code Reviewer
+
 **Start Here:** [TENANT_MULTI_PAGE_SITES_DOCUMENTATION_CROSSREF.md](./TENANT_MULTI_PAGE_SITES_DOCUMENTATION_CROSSREF.md) (Implementation Checklist)
 **Then Read:** All prevention checklists linked in checklist
 **Use:** [Multi-Agent Code Review Workflow](./multi-agent-code-review-workflow-systematic-triage-MAIS-20251224.md)
 
 ### QA / E2E Tester
+
 **Start Here:** [E2E Testing Advanced Patterns](../E2E-TESTING-ADVANCED-PATTERNS.md)
 **Then Read:** [Visual Editor E2E Quick Reference](../visual-editor-e2e-quick-reference.md)
 **Reference:** [ADR-014](../../adrs/ADR-014-nextjs-app-router-migration.md) (Architecture context)
 
 ### Architect / Tech Lead
+
 **Start Here:** [ADR-014: Next.js App Router Migration](../../adrs/ADR-014-nextjs-app-router-migration.md)
 **Then Read:** [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md)
 **Reference:** [Multi-Tenant Implementation Guide](../../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
@@ -201,6 +216,7 @@ E2E Testing
 ## Quick Copy-Paste Patterns
 
 ### Navigation with Active State
+
 ```typescript
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -225,6 +241,7 @@ export function NavLink({ href, children }) {
 ```
 
 ### Memoized List Component
+
 ```typescript
 const ListItem = React.memo(
   function ListItem({ item, onSelect }) {
@@ -242,6 +259,7 @@ ListItem.displayName = 'ListItem';
 ```
 
 ### Data Fetching with cache()
+
 ```typescript
 import { cache } from 'react';
 
@@ -259,6 +277,7 @@ export async function Layout() {
 ```
 
 ### Dynamic Route Error Boundary
+
 ```typescript
 // app/t/[slug]/error.tsx
 'use client';
@@ -279,15 +298,19 @@ export default function Error({ error, reset }) {
 ## Prevention Checklists
 
 ### Before Committing Code
+
 → [TENANT_MULTI_PAGE_SITES_DOCUMENTATION_CROSSREF.md](./TENANT_MULTI_PAGE_SITES_DOCUMENTATION_CROSSREF.md) (Implementation Checklist)
 
 ### React Performance Review
+
 → [React Memoization Quick Reference](../react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (Code Review Checklist, line 101)
 
 ### Accessibility Review
+
 → [React Hooks Performance & WCAG](./react-hooks-performance-wcag-review.md) (Prevention Checklist, line 176)
 
 ### Next.js Migration Review
+
 → [Next.js Lessons Learned](./nextjs-migration-lessons-learned-MAIS-20251225.md) (Prevention Checklist, line 349)
 
 ---
@@ -303,11 +326,11 @@ export default function Error({ error, reset }) {
 
 ## Recent Commits to Reference
 
-| Commit | Change | Related Docs |
-|--------|--------|--------------|
-| f68e9f5 | Multi-page navigation added | ADR-014, Web App README |
-| b16379a | P1 accessibility fixes | React Hooks Performance & WCAG, CROSSREF |
-| 661d464 | P2/P3 code review fixes | React Memoization, E2E patterns |
+| Commit  | Change                      | Related Docs                             |
+| ------- | --------------------------- | ---------------------------------------- |
+| f68e9f5 | Multi-page navigation added | ADR-014, Web App README                  |
+| b16379a | P1 accessibility fixes      | React Hooks Performance & WCAG, CROSSREF |
+| 661d464 | P2/P3 code review fixes     | React Memoization, E2E patterns          |
 
 ---
 

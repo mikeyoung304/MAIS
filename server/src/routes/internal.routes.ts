@@ -17,10 +17,7 @@ import { logger } from '../lib/core/logger';
 // Validation schema for revalidation request
 const revalidateSchema = z.object({
   tenantSlug: z.string().min(1, 'tenantSlug is required'),
-  paths: z
-    .array(z.string())
-    .optional()
-    .default([]),
+  paths: z.array(z.string()).optional().default([]),
 });
 
 /**

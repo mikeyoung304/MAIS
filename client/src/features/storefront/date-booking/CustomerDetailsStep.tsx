@@ -20,9 +20,7 @@ export default function CustomerDetailsStep({
     <Card className="border-neutral-200 shadow-elevation-1">
       <CardHeader>
         <CardTitle className="text-2xl font-heading">Your Information</CardTitle>
-        <p className="text-neutral-500 text-base mt-1">
-          We'll use this to send your confirmation
-        </p>
+        <p className="text-neutral-500 text-base mt-1">We'll use this to send your confirmation</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">

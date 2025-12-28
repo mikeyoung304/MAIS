@@ -1,7 +1,7 @@
 ---
 status: ready
 priority: p2
-issue_id: "429"
+issue_id: '429'
 tags: [performance, checkout, optimization]
 dependencies: []
 ---
@@ -9,6 +9,7 @@ dependencies: []
 # Checkout Flow Has Serial Database Calls
 
 ## Problem Statement
+
 The `CheckoutSessionFactory.createCheckoutSession()` method makes 4-5 sequential database calls that could be parallelized, adding unnecessary latency to the checkout flow.
 
 ## Severity: P2 - MEDIUM
@@ -16,10 +17,12 @@ The `CheckoutSessionFactory.createCheckoutSession()` method makes 4-5 sequential
 Adds ~50-100ms latency to checkout. Not critical but affects user experience.
 
 ## Findings
+
 - Location: `server/src/services/checkout-session.factory.ts:60-125`
 - Sequential calls: tenant fetch, idempotency check, idempotency store, Stripe call, idempotency update
 
 ## Current Flow (Sequential)
+
 ```typescript
 // Line 65 - DB call 1
 const tenant = await this.tenantRepo.findById(tenantId);
@@ -44,6 +47,7 @@ await this.idempotencyService.updateResponse(idempotencyKey, {...});
 ```
 
 ## Proposed Solution
+
 Parallelize independent operations:
 
 ```typescript
@@ -68,18 +72,22 @@ async createCheckoutSession(params: CreateCheckoutSessionInput): Promise<Checkou
 ```
 
 ## Technical Details
+
 - **Affected Files**: `server/src/services/checkout-session.factory.ts`
 - **Estimated Latency Improvement**: 50-100ms (one DB roundtrip saved)
 - **Risk**: Low - operations are independent
 
 ## Acceptance Criteria
+
 - [ ] Tenant fetch and idempotency check run in parallel
 - [ ] No change to functional behavior
 - [ ] Checkout flow latency reduced by ~50ms (measure before/after)
 
 ## Review Sources
+
 - Performance Oracle: P2 - Serial database calls
 
 ## Notes
+
 Source: Parallel code review session on 2025-12-26
 Also noted: 100ms hardcoded sleep for race conditions could use exponential backoff starting at 50ms

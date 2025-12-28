@@ -13,6 +13,7 @@ Claude Code displayed warning about missing `DATABASE_URL` environment variable 
 ```
 
 The warning persisted after:
+
 - Checking `.claude/settings.json` and `settings.local.json` configurations
 - Verifying environment variable exports
 - Restarting Claude Code multiple times
@@ -48,11 +49,13 @@ The warning persisted after:
 ### Historical Context
 
 The postgres MCP was added during initial MAIS setup (November 24, 2025) before:
+
 - Clear use cases emerged for postgres MCP
 - Prisma MCP became the primary database tool
 - Multi-tenant architecture required tenant-scoped database access
 
 Timeline:
+
 - **aab8a2e** (init workspaces): postgres MCP added with hardcoded connection string
 - **cb1b65f to 9f7585b**: Feature development using Prisma exclusively
 - **80ac7c1** (Dec 24, 2025): postgres MCP removed as redundant
@@ -116,6 +119,7 @@ claude doctor --mcp
 ```
 
 Expected output:
+
 ```
 MCP Config: ✅ Valid
   - prisma: available
@@ -163,11 +167,13 @@ Routes → Services → Repositories (Prisma) → Database
 ```
 
 **All database operations go through Prisma:**
+
 - Query execution: `prisma.{model}.findMany()`
 - Migrations: `prisma migrate dev`
 - Database introspection: `prisma studio`
 
 **Postgres MCP would only be useful for:**
+
 - Direct SQL queries (not needed - Prisma handles it)
 - Raw SQL inspection (rarely needed - Prisma provides schema)
 - Ad-hoc database administration (development rarely needs this)
@@ -179,7 +185,7 @@ MAIS requires all queries to be scoped by `tenantId`:
 ```typescript
 // ✅ Correct pattern (Prisma)
 const packages = await prisma.package.findMany({
-  where: { tenantId, active: true }
+  where: { tenantId, active: true },
 });
 
 // ❌ Dangerous pattern (raw postgres MCP)
@@ -187,6 +193,7 @@ const packages = await db.query('SELECT * FROM packages');
 ```
 
 Using raw SQL via postgres MCP bypasses:
+
 - Prisma's type safety
 - Multi-tenant scoping enforcement
 - Repository pattern validation
@@ -205,6 +212,7 @@ This makes postgres MCP a **security risk** in MAIS.
 ### Q: Can I query the database directly now?
 
 **A:** Yes, but go through Prisma:
+
 ```typescript
 // Via Prisma MCP studio
 npm exec prisma studio
@@ -219,6 +227,7 @@ npx ts-node -e "/* raw ts code */"
 ### Q: What if I need raw SQL for debugging?
 
 **A:** Use Prisma's raw query capabilities:
+
 ```typescript
 const result = await prisma.$queryRaw`SELECT * FROM "Package" WHERE "tenantId" = ${tenantId}`;
 ```
@@ -228,6 +237,7 @@ This maintains type safety and tenant scoping.
 ### Q: Will this affect Claude Code's AI capabilities?
 
 **A:** No. In fact, it improves them by:
+
 - Removing configuration warnings
 - Reducing MCP startup time
 - Focusing MCP tools on essential tasks (Prisma schema, Playwright E2E)
@@ -235,11 +245,13 @@ This maintains type safety and tenant scoping.
 ### Q: Can I add postgres MCP back later?
 
 **A:** Not recommended due to:
+
 - Multi-tenant security concerns
 - Redundancy with Prisma
 - Risk of raw SQL bypassing tenant scoping
 
 Instead, use Prisma's features:
+
 - `prisma studio` for visual database browser
 - `prisma.$queryRaw` for complex queries
 - Proper repository methods for application code
@@ -270,15 +282,15 @@ Instead, use Prisma's features:
 
 ## Summary
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| MCP Servers | 3 (prisma, postgres, playwright) | 2 (prisma, playwright) |
-| Environment Warnings | ✅ Yes (DATABASE_URL missing) | ✅ No |
-| Database Functionality | ✅ Preserved (via Prisma) | ✅ Preserved (via Prisma) |
-| Type Safety | ✅ Yes (Prisma) | ✅ Yes (Prisma only) |
-| Multi-tenant Scoping | ✅ Enforced (repositories) | ✅ Enforced (repositories) |
-| Development Workflow | ✅ Unchanged | ✅ Unchanged |
-| Test Suite | ✅ 771+ tests | ✅ 771+ tests |
+| Aspect                 | Before                           | After                      |
+| ---------------------- | -------------------------------- | -------------------------- |
+| MCP Servers            | 3 (prisma, postgres, playwright) | 2 (prisma, playwright)     |
+| Environment Warnings   | ✅ Yes (DATABASE_URL missing)    | ✅ No                      |
+| Database Functionality | ✅ Preserved (via Prisma)        | ✅ Preserved (via Prisma)  |
+| Type Safety            | ✅ Yes (Prisma)                  | ✅ Yes (Prisma only)       |
+| Multi-tenant Scoping   | ✅ Enforced (repositories)       | ✅ Enforced (repositories) |
+| Development Workflow   | ✅ Unchanged                     | ✅ Unchanged               |
+| Test Suite             | ✅ 771+ tests                    | ✅ 771+ tests              |
 
 **Result:** Cleaner configuration, same functionality, zero code changes.
 

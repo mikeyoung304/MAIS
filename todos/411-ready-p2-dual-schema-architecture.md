@@ -1,14 +1,14 @@
 ---
 status: complete
 priority: p2
-issue_id: "411"
+issue_id: '411'
 tags:
   - code-review
   - architecture
   - technical-debt
   - locked-template-system
 dependencies:
-  - "407"
+  - '407'
 ---
 
 # Dual Schema Architecture Adds Complexity
@@ -18,6 +18,7 @@ dependencies:
 The landing page contracts maintain TWO parallel schema systems (legacy + new page-based), adding ~150 lines of duplicated schema definitions and requiring format conversion in multiple places.
 
 **Why This Matters:**
+
 - Schema definitions duplicated (e.g., hero section defined twice)
 - Frontend must handle both formats with conversion logic
 - Increased testing surface
@@ -30,6 +31,7 @@ The landing page contracts maintain TWO parallel schema systems (legacy + new pa
 **Evidence:**
 
 **Legacy System (Lines 99-222):**
+
 - HeroSectionConfigSchema
 - SocialProofBarConfigSchema
 - AboutSectionConfigSchema
@@ -40,6 +42,7 @@ The landing page contracts maintain TWO parallel schema systems (legacy + new pa
 - FinalCtaSectionConfigSchema
 
 **New Page-Based System (Lines 231-370):**
+
 - HeroSectionSchema
 - TextSectionSchema
 - GallerySectionSchema
@@ -49,6 +52,7 @@ The landing page contracts maintain TWO parallel schema systems (legacy + new pa
 - CTASectionSchema
 
 **Format conversion** appears in:
+
 - `apps/web/src/app/t/[slug]/(site)/gallery/page.tsx` (lines 70-83)
 - `apps/web/src/app/t/[slug]/(site)/testimonials/page.tsx` (lines 70-85)
 - Similar pattern in about, faq pages
@@ -60,16 +64,19 @@ The landing page contracts maintain TWO parallel schema systems (legacy + new pa
 ### Solution 1: Complete Migration, Remove Legacy (Long-term)
 
 After migration script runs on all tenants:
+
 1. Remove legacy schema definitions
 2. Remove format conversion code
 3. Update all consumers to use new format only
 
 **Pros:**
+
 - ~150 lines removed from contracts
 - ~50 lines removed from page components
 - Simpler mental model
 
 **Cons:**
+
 - Requires migration complete first
 - Breaking change for any external consumers
 
@@ -90,11 +97,13 @@ export function normalizeConfig(config: LandingPageConfig): NormalizedConfig {
 ```
 
 **Pros:**
+
 - Reduces duplication across pages
 - Single conversion logic
 - Non-breaking
 
 **Cons:**
+
 - Dual schemas still exist
 
 **Effort:** Small
@@ -107,6 +116,7 @@ Start with Solution 2 (centralize conversion), plan Solution 1 for after migrati
 ## Technical Details
 
 **Affected Files:**
+
 - `packages/contracts/src/landing-page.ts`
 - `apps/web/src/lib/tenant.ts`
 - Multiple page components
@@ -114,19 +124,21 @@ Start with Solution 2 (centralize conversion), plan Solution 1 for after migrati
 ## Acceptance Criteria
 
 **Short-term:**
+
 - [ ] `normalizeConfig()` helper created
 - [ ] Page components use helper instead of inline conversion
 - [ ] TypeScript passes
 
 **Long-term (after migration):**
+
 - [ ] Legacy schemas removed
 - [ ] Format conversion code removed
 - [ ] All tests passing
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                               |
+| ---------- | ------------------------ | --------------------------------------- |
 | 2025-12-25 | Created from code review | Dual schema adds significant complexity |
 
 ## Resources

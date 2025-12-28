@@ -1,6 +1,7 @@
 # Website Template Research Input
 
 ## Source
+
 Deep research conversation providing a complete execution plan for implementing "Hosted Website Template + Segment → 3-Tier Storefront → Booking Journey"
 
 ---
@@ -8,9 +9,11 @@ Deep research conversation providing a complete execution plan for implementing 
 ## Original Research Prompts (8 Total)
 
 ### Prompt 0 — Repo Comprehension + Guardrails
+
 **Purpose:** Align agent to repo's real rules before coding.
 
 Key constraints to follow:
+
 - Contracts-first ts-rest + Zod (no ad-hoc types)
 - Multi-tenant isolation rules (tenantId scoping, tenant resolution patterns)
 - Layered architecture (routes → services → adapters)
@@ -26,6 +29,7 @@ Key constraints to follow:
 **Proposed Decision:** Store a `siteConfig` JSON blob on Tenant for v1 (validated with Zod; can be migrated into ConfigVersion later per roadmap).
 
 **Proposed Schema:**
+
 ```typescript
 siteConfig: {
   schemaVersion: 1,
@@ -50,6 +54,7 @@ siteConfig: {
 ### Prompt 2 — Tenant-Admin API for siteConfig
 
 **Endpoints:**
+
 - `GET /v1/tenant-admin/site-config` - Returns TenantSiteConfig
 - `PUT /v1/tenant-admin/site-config` - Full replace (no patch for v1)
 
@@ -62,6 +67,7 @@ siteConfig: {
 **Problem:** Hosted sites can't rely on X-Tenant-Key because it's a public website.
 
 **Proposed Solution:**
+
 - URL shape: `/site/:tenantSlug` (recommended for v1)
 - New endpoint: `GET /v1/public/site/:slug`
 - Returns: `{ tenant: { name, slug, branding }, siteConfig, packages/segments data }`
@@ -74,10 +80,12 @@ siteConfig: {
 **Core Feature:** Config-driven modules with variants.
 
 **Components:**
+
 - `HostedSiteRenderer` - Takes tenant branding, siteConfig, package/segment/tier data
 - Module registry pattern with type enum and variants
 
 **MVP Module Set:**
+
 1. Hero (headline/subhead/primary CTA)
 2. TrustBar (logos/review count)
 3. SegmentPicker (choose customer segment)
@@ -94,6 +102,7 @@ siteConfig: {
 **Key Insight:** MAIS already has packages and segment-based discovery. Don't invent a parallel pricing database.
 
 **Existing Fields (CONFIRMED):**
+
 - `Package.segmentId` - Which segment this belongs to (nullable)
 - `Package.grouping` - Tier/group label like "Budget", "Premium"
 - `Package.groupingOrder` - Order within grouping
@@ -107,6 +116,7 @@ siteConfig: {
 **Not a full page builder.** MVP editor that edits key fields and module order.
 
 **Editable Fields:**
+
 - Hero headline/subhead
 - Segments list & labels (and which segment is default)
 - Tier labels + short descriptions
@@ -122,6 +132,7 @@ siteConfig: {
 **Privacy-first approach.** No invasive vendors.
 
 **Events:**
+
 - site_view
 - segment_selected
 - tier_viewed
@@ -135,6 +146,7 @@ siteConfig: {
 ### Prompt 8 — CRO Test Hooks + Future ConfigVersion
 
 **Future-proofing without delaying launch:**
+
 - schemaVersion handling in siteConfig
 - Server-side "default config generator"
 - Preview config endpoint: `GET /v1/tenant-admin/site-config/default`
@@ -155,28 +167,28 @@ siteConfig: {
 
 ### Already Exists (No Changes Needed)
 
-| Feature | Location | Status |
-|---------|----------|--------|
-| `Package.segmentId` | Prisma schema | ✅ Exists |
-| `Package.grouping` | Prisma schema | ✅ Exists (tier label) |
-| `Package.groupingOrder` | Prisma schema | ✅ Exists |
-| `Tenant.landingPageConfig` | Prisma schema | ✅ Exists (JSON) |
-| `Tenant.tierDisplayNames` | Prisma schema | ✅ Exists (JSON) |
-| `Tenant.branding` | Prisma schema | ✅ Exists (JSON) |
-| `GET /v1/public/tenants/:slug` | Routes | ✅ Exists (public lookup) |
-| Landing page sections | Client features | ✅ Exists (HeroSection, FaqSection, etc.) |
-| Segment service | Server | ✅ Exists |
-| Catalog service | Server | ✅ Exists |
+| Feature                        | Location        | Status                                    |
+| ------------------------------ | --------------- | ----------------------------------------- |
+| `Package.segmentId`            | Prisma schema   | ✅ Exists                                 |
+| `Package.grouping`             | Prisma schema   | ✅ Exists (tier label)                    |
+| `Package.groupingOrder`        | Prisma schema   | ✅ Exists                                 |
+| `Tenant.landingPageConfig`     | Prisma schema   | ✅ Exists (JSON)                          |
+| `Tenant.tierDisplayNames`      | Prisma schema   | ✅ Exists (JSON)                          |
+| `Tenant.branding`              | Prisma schema   | ✅ Exists (JSON)                          |
+| `GET /v1/public/tenants/:slug` | Routes          | ✅ Exists (public lookup)                 |
+| Landing page sections          | Client features | ✅ Exists (HeroSection, FaqSection, etc.) |
+| Segment service                | Server          | ✅ Exists                                 |
+| Catalog service                | Server          | ✅ Exists                                 |
 
 ### Needs Enhancement
 
-| Feature | Current State | Enhancement Needed |
-|---------|---------------|-------------------|
-| `landingPageConfig` | Basic structure | Expand for modular sections |
-| Public site access | Only via X-Tenant-Key | Add `/site/:slug` route with full page data |
-| Module renderer | Hardcoded sections | Config-driven with variants |
-| Tenant admin editor | Basic branding | Full siteConfig editor |
-| Analytics | None | Add event tracking layer |
+| Feature             | Current State         | Enhancement Needed                          |
+| ------------------- | --------------------- | ------------------------------------------- |
+| `landingPageConfig` | Basic structure       | Expand for modular sections                 |
+| Public site access  | Only via X-Tenant-Key | Add `/site/:slug` route with full page data |
+| Module renderer     | Hardcoded sections    | Config-driven with variants                 |
+| Tenant admin editor | Basic branding        | Full siteConfig editor                      |
+| Analytics           | None                  | Add event tracking layer                    |
 
 ---
 

@@ -10,10 +10,7 @@ export default function GalleryLoading() {
         </div>
         <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square animate-pulse rounded-2xl bg-neutral-200"
-            />
+            <div key={i} className="aspect-square animate-pulse rounded-2xl bg-neutral-200" />
           ))}
         </div>
       </div>

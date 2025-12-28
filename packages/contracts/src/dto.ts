@@ -40,10 +40,7 @@ const CustomerNameSchema = z
   .trim()
   .min(2, 'Name must be at least 2 characters')
   .max(100, 'Name must be less than 100 characters')
-  .regex(
-    /^[\p{L}\p{M}\p{Zs}'\-.]+$/u,
-    'Name contains invalid characters'
-  );
+  .regex(/^[\p{L}\p{M}\p{Zs}'\-.]+$/u, 'Name contains invalid characters');
 
 // ============================================================================
 // Error Response Schemas
@@ -243,7 +240,9 @@ export const CreateDateBookingDtoSchema = z.object({
         const date = new Date(val + 'T00:00:00Z');
         const now = new Date();
         // Use UTC for comparison to match the UTC date parsing above
-        const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const todayUTC = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+        );
         return date >= todayUTC;
       },
       { message: 'Date must be in the future' }

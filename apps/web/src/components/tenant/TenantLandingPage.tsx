@@ -47,7 +47,11 @@ interface TenantLandingPageProps {
  *
  * Note: Footer is now in the shared layout (layout.tsx)
  */
-export function TenantLandingPage({ data, basePath = '', domainParam = '' }: TenantLandingPageProps) {
+export function TenantLandingPage({
+  data,
+  basePath = '',
+  domainParam = '',
+}: TenantLandingPageProps) {
   const { tenant, packages, segments } = data;
   const landingConfig = tenant.branding?.landingPage;
   const sections = landingConfig?.sections;
@@ -112,9 +116,7 @@ export function TenantLandingPage({ data, basePath = '', domainParam = '' }: Ten
           )}
           <div className="mt-10">
             <Button asChild variant="sage" size="xl">
-              <a href="#packages">
-                {heroConfig.ctaText}
-              </a>
+              <a href="#packages">{heroConfig.ctaText}</a>
             </Button>
           </div>
         </div>
@@ -173,8 +175,9 @@ export function TenantLandingPage({ data, basePath = '', domainParam = '' }: Ten
               {sortedPackages.map((pkg, index) => {
                 const isPopular = sortedPackages.length > 2 && index === midIndex;
                 const tierLabel =
-                  tenant.tierDisplayNames?.[pkg.tier.toLowerCase() as keyof typeof tenant.tierDisplayNames] ||
-                  pkg.title;
+                  tenant.tierDisplayNames?.[
+                    pkg.tier.toLowerCase() as keyof typeof tenant.tierDisplayNames
+                  ] || pkg.title;
 
                 return (
                   <div
@@ -203,9 +206,7 @@ export function TenantLandingPage({ data, basePath = '', domainParam = '' }: Ten
                       variant={isPopular ? 'sage' : 'outline'}
                       className="mt-8 w-full"
                     >
-                      <Link href={getBookLink(pkg.slug)}>
-                        Book {tierLabel}
-                      </Link>
+                      <Link href={getBookLink(pkg.slug)}>Book {tierLabel}</Link>
                     </Button>
                   </div>
                 );
@@ -260,7 +261,10 @@ export function TenantLandingPage({ data, basePath = '', domainParam = '' }: Ten
 
             <div className="mt-16 grid gap-8 md:grid-cols-2">
               {landingConfig.testimonials.items.map((testimonial, i) => (
-                <div key={i} className="rounded-3xl bg-white p-8 shadow-lg border border-neutral-100">
+                <div
+                  key={i}
+                  className="rounded-3xl bg-white p-8 shadow-lg border border-neutral-100"
+                >
                   <StarRating rating={testimonial.rating} />
                   <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>
                   <div className="mt-4 flex items-center gap-3">
@@ -370,9 +374,7 @@ export function TenantLandingPage({ data, basePath = '', domainParam = '' }: Ten
                 size="xl"
                 className="border-white bg-white text-sage hover:bg-white/90"
               >
-                <a href="#packages">
-                  {landingConfig?.finalCta?.ctaText || 'Get Started Today'}
-                </a>
+                <a href="#packages">{landingConfig?.finalCta?.ctaText || 'Get Started Today'}</a>
               </Button>
             </div>
           </div>

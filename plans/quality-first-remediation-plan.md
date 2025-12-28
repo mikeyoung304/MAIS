@@ -9,6 +9,7 @@
 ## Executive Summary
 
 This plan prioritizes **codebase quality over feature velocity**. Based on:
+
 - Three independent code reviewers (DHH philosophy, Pragmatic engineering, Code simplicity)
 - Industry standards research ([Baeldung](https://www.baeldung.com/cs/repository-vs-service), [Ardalis](https://ardalis.com/should-controllers-reference-repositories-services/), [Ron Jeffries](https://ronjeffries.com/articles/019-01ff/iter-yagni-skimp/), [CodeAnt](https://www.codeant.ai/blogs/code-quality-metrics-to-track))
 - User requirement: "Near perfect codebase ready to scale. Time is irrelevant, only quality matters."
@@ -19,14 +20,14 @@ This plan prioritizes **codebase quality over feature velocity**. Based on:
 
 ## Current Quality Baselines
 
-| Metric | Current | Target | Industry Standard |
-|--------|---------|--------|-------------------|
-| Test Pass Rate | 95% (59 failed / 1184) | 100% | 100% for CI gates |
-| Test Coverage | Unknown | 80%+ | 80%+ ([BrowserStack](https://www.browserstack.com/guide/software-code-quality-metrics)) |
-| TypeScript Errors | 8 errors | 0 | 0 for strict mode |
-| ESLint | Broken config | 0 errors | 0 for CI gates |
-| Next.js Version | 14.2.22 (CVE) | 14.2.32+ | Latest patch |
-| Cyclomatic Complexity | Unknown | Measured | Lower = better |
+| Metric                | Current                | Target   | Industry Standard                                                                       |
+| --------------------- | ---------------------- | -------- | --------------------------------------------------------------------------------------- |
+| Test Pass Rate        | 95% (59 failed / 1184) | 100%     | 100% for CI gates                                                                       |
+| Test Coverage         | Unknown                | 80%+     | 80%+ ([BrowserStack](https://www.browserstack.com/guide/software-code-quality-metrics)) |
+| TypeScript Errors     | 8 errors               | 0        | 0 for strict mode                                                                       |
+| ESLint                | Broken config          | 0 errors | 0 for CI gates                                                                          |
+| Next.js Version       | 14.2.22 (CVE)          | 14.2.32+ | Latest patch                                                                            |
+| Cyclomatic Complexity | Unknown                | Measured | Lower = better                                                                          |
 
 ---
 
@@ -34,16 +35,16 @@ This plan prioritizes **codebase quality over feature velocity**. Based on:
 
 Based on reviewer consensus and industry standards on [pass-through services](https://www.baeldung.com/cs/repository-vs-service) and [YAGNI](https://www.geeksforgeeks.org/software-engineering/what-is-yagni-principle-you-arent-gonna-need-it/):
 
-| Removed Item | Reason | Industry Reference |
-|--------------|--------|-------------------|
-| **TenantService extraction** | Pass-through service anti-pattern. Repository IS the abstraction. | "Pass-through services add unnecessary complexity without providing any real benefits." - [Baeldung](https://www.baeldung.com/cs/repository-vs-service) |
+| Removed Item                          | Reason                                                                                           | Industry Reference                                                                                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TenantService extraction**          | Pass-through service anti-pattern. Repository IS the abstraction.                                | "Pass-through services add unnecessary complexity without providing any real benefits." - [Baeldung](https://www.baeldung.com/cs/repository-vs-service)                      |
 | **BookingWithCancellation interface** | Types already exist on Booking interface. Fix is removing `as any` casts, not adding interfaces. | YAGNI - "Unnecessary code accumulates technical debt" - [GeeksforGeeks](https://www.geeksforgeeks.org/software-engineering/what-is-yagni-principle-you-arent-gonna-need-it/) |
-| **React.memo on sections** | Premature optimization. SSR renders once. Measure before optimizing. | "Focus on actual problems, not theoretical" - [CodeAnt](https://www.codeant.ai/blogs/code-quality-metrics-to-track) |
-| **UploadService DI migration** | Singleton works fine. No testability issues demonstrated. | "If it ain't broke, don't fix it" - Pragmatic engineering |
-| **Request-level idempotency** | Already have DB advisory locks + webhook idempotency. Redundant layer. | YAGNI |
-| **BookingService split** | 1395 lines is reasonable for core domain. Cohesion > arbitrary size limits. | "Be careful when adding additional layers" - [Ardalis](https://ardalis.com/should-controllers-reference-repositories-services/) |
-| **JWT refresh tokens** | 7-day expiry is reasonable for this use case. No demonstrated security issue. | YAGNI |
-| **Database RLS** | Application layer has 309 tenantId filtering instances. Defense in depth is good but not urgent. | Defer to future security review |
+| **React.memo on sections**            | Premature optimization. SSR renders once. Measure before optimizing.                             | "Focus on actual problems, not theoretical" - [CodeAnt](https://www.codeant.ai/blogs/code-quality-metrics-to-track)                                                          |
+| **UploadService DI migration**        | Singleton works fine. No testability issues demonstrated.                                        | "If it ain't broke, don't fix it" - Pragmatic engineering                                                                                                                    |
+| **Request-level idempotency**         | Already have DB advisory locks + webhook idempotency. Redundant layer.                           | YAGNI                                                                                                                                                                        |
+| **BookingService split**              | 1395 lines is reasonable for core domain. Cohesion > arbitrary size limits.                      | "Be careful when adding additional layers" - [Ardalis](https://ardalis.com/should-controllers-reference-repositories-services/)                                              |
+| **JWT refresh tokens**                | 7-day expiry is reasonable for this use case. No demonstrated security issue.                    | YAGNI                                                                                                                                                                        |
+| **Database RLS**                      | Application layer has 309 tenantId filtering instances. Defense in depth is good but not urgent. | Defer to future security review                                                                                                                                              |
 
 ---
 
@@ -68,11 +69,13 @@ src/app/(protected)/tenant/dashboard/page.tsx(108,53): error TS2345: Argument of
 ```
 
 **Root Cause Analysis Required:**
+
 - `backendToken` property missing from auth context type
 - `useRouter` import missing or wrong import
 - `unknown` type needs proper error handling
 
 **Acceptance Criteria:**
+
 - [ ] `npm run typecheck` passes with 0 errors
 - [ ] All TypeScript strict mode checks pass
 
@@ -82,16 +85,19 @@ src/app/(protected)/tenant/dashboard/page.tsx(108,53): error TS2345: Argument of
 **Target:** Working ESLint with 0 errors
 
 **Error:**
+
 ```
 Invalid Options: useEslintrc, extensions, resolvePluginsRelativeTo, rulePaths, ignorePath
 ```
 
 **Fix Required:**
+
 - Migrate from `.eslintrc` to `eslint.config.js` (flat config)
 - Remove deprecated options
 - Or pin ESLint to 8.x compatible version
 
 **Acceptance Criteria:**
+
 - [ ] `npm run lint` passes with 0 errors
 - [ ] ESLint configuration is valid
 
@@ -101,17 +107,20 @@ Invalid Options: useEslintrc, extensions, resolvePluginsRelativeTo, rulePaths, i
 **Target:** 0 failed / 100% pass rate
 
 **Observed Failure Pattern:**
+
 ```
 PrismaClientKnownRequestError:
   Invalid `this.prisma.webhookEvent.findFirst()` invocation
 ```
 
 **Root Cause Analysis Required:**
+
 - Database connection pool exhaustion in integration tests
 - Possible missing test isolation/cleanup
 - Prisma client configuration issues
 
 **Acceptance Criteria:**
+
 - [ ] `npm test --workspace=server -- --run` passes with 0 failures
 - [ ] All 1184 tests pass
 - [ ] Skipped tests reviewed (59 skipped - are they valid skips?)
@@ -121,6 +130,7 @@ PrismaClientKnownRequestError:
 **Current:** N+1 query fix and unbounded findAll fix are staged but not committed.
 
 **Files to commit:**
+
 - `server/src/services/catalog.service.ts` - N+1 fix
 - `server/src/adapters/prisma/booking.repository.ts` - Pagination
 - `server/src/adapters/mock/index.ts` - Mock pagination
@@ -129,6 +139,7 @@ PrismaClientKnownRequestError:
 - Deleted `.github/workflows/e2e.yml`
 
 **Acceptance Criteria:**
+
 - [ ] All staged changes committed
 - [ ] Commit message documents the fixes
 - [ ] Tests still pass after commit
@@ -145,11 +156,13 @@ PrismaClientKnownRequestError:
 **Target:** 14.2.32+
 
 **Command:**
+
 ```bash
 cd apps/web && npm install next@14.2.32
 ```
 
 **Acceptance Criteria:**
+
 - [ ] `package.json` shows next@14.2.32 or higher
 - [ ] `npm run build --workspace=apps/web` succeeds
 - [ ] Middleware auth flows verified working
@@ -158,16 +171,19 @@ cd apps/web && npm install next@14.2.32
 ### 1.2 Fix Broken Documentation Links
 
 **Files with broken links:**
+
 - `README.md` - 5 references to `/docs/sprints/` and `/docs/phases/`
 - `ARCHITECTURE.md`
 - `docs/INDEX.md`
 - `docs/README.md`
 
 **Fix:** Update paths to archived locations:
+
 - `/docs/sprints/` → `/docs/archive/2025-12/sprints/`
 - `/docs/phases/` → `/docs/archive/2025-12/phases/`
 
 **Acceptance Criteria:**
+
 - [ ] No broken internal documentation links
 - [ ] `grep -r "docs/sprints/" . --include="*.md"` returns only archive references
 
@@ -178,20 +194,22 @@ cd apps/web && npm install next@14.2.32
 **Fix:** `- **Monorepo**: npm workspaces`
 
 **Acceptance Criteria:**
+
 - [ ] README.md accurately describes npm workspaces
 
 ### 1.4 Update Stale Documentation
 
 **Updates Required:**
 
-| File | Issue | Fix |
-|------|-------|-----|
-| CLAUDE.md | Test count "752" | Update to actual count |
-| CLAUDE.md | "MVP Sprint Day 4" section | Archive or update |
-| README.md | Sprint dates say Nov 2025 | Update to Dec 2025 |
-| docs/INDEX.md | Sprint 6 as current | Update to current state |
+| File          | Issue                      | Fix                     |
+| ------------- | -------------------------- | ----------------------- |
+| CLAUDE.md     | Test count "752"           | Update to actual count  |
+| CLAUDE.md     | "MVP Sprint Day 4" section | Archive or update       |
+| README.md     | Sprint dates say Nov 2025  | Update to Dec 2025      |
+| docs/INDEX.md | Sprint 6 as current        | Update to current state |
 
 **Acceptance Criteria:**
+
 - [ ] All test counts match actual
 - [ ] All sprint/date references are current
 - [ ] Documentation accurately reflects codebase state
@@ -202,12 +220,14 @@ cd apps/web && npm install next@14.2.32
 **Lines:** 75-79, 109, 141
 
 **Current (incorrect):**
+
 ```typescript
 cancelledBy: (booking as any).cancelledBy,
 cancellationReason: (booking as any).cancellationReason,
 ```
 
 **Fix (correct):**
+
 ```typescript
 cancelledBy: booking.cancelledBy,
 cancellationReason: booking.cancellationReason,
@@ -216,6 +236,7 @@ cancellationReason: booking.cancellationReason,
 **Rationale:** The `Booking` interface in `entities.ts:80-87` already includes these fields. The `as any` casts are unnecessary and hide type safety.
 
 **Acceptance Criteria:**
+
 - [ ] No `as any` casts for booking cancellation fields
 - [ ] TypeScript compiles without errors
 - [ ] Existing tests pass
@@ -231,6 +252,7 @@ cancellationReason: booking.cancellationReason,
 **Industry Standard:** 80%+ coverage ([BrowserStack](https://www.browserstack.com/guide/software-code-quality-metrics))
 
 **Actions:**
+
 1. Run coverage report: `npm test --workspace=server -- --coverage`
 2. Document current coverage by module
 3. Identify critical paths with low coverage
@@ -238,16 +260,17 @@ cancellationReason: booking.cancellationReason,
 
 **Coverage Targets:**
 
-| Module | Target | Rationale |
-|--------|--------|-----------|
-| `services/booking.service.ts` | 90%+ | Core revenue path |
-| `services/availability.service.ts` | 90%+ | Booking accuracy |
-| `middleware/auth.ts` | 95%+ | Security critical |
-| `middleware/tenant.ts` | 95%+ | Multi-tenant isolation |
-| `adapters/stripe.adapter.ts` | 85%+ | Payment processing |
-| Overall | 80%+ | Industry standard |
+| Module                             | Target | Rationale              |
+| ---------------------------------- | ------ | ---------------------- |
+| `services/booking.service.ts`      | 90%+   | Core revenue path      |
+| `services/availability.service.ts` | 90%+   | Booking accuracy       |
+| `middleware/auth.ts`               | 95%+   | Security critical      |
+| `middleware/tenant.ts`             | 95%+   | Multi-tenant isolation |
+| `adapters/stripe.adapter.ts`       | 85%+   | Payment processing     |
+| Overall                            | 80%+   | Industry standard      |
 
 **Acceptance Criteria:**
+
 - [ ] Coverage report generated and documented
 - [ ] Coverage targets established per module
 - [ ] Baseline documented for tracking
@@ -257,16 +280,19 @@ cancellationReason: booking.cancellationReason,
 **Industry Standard:** Lower cyclomatic complexity = easier to test, maintain, scale
 
 **Tools:**
+
 - `npx madge --circular server/src` - Detect circular dependencies
 - `npx ts-complexity server/src` - Measure function complexity
 
 **Actions:**
+
 1. Run complexity analysis
 2. Identify high-complexity functions (>10 cyclomatic complexity)
 3. Document complexity hotspots
 4. Set complexity limits for new code
 
 **Acceptance Criteria:**
+
 - [ ] Complexity baseline documented
 - [ ] High-complexity functions identified
 - [ ] Refactoring candidates prioritized
@@ -274,12 +300,14 @@ cancellationReason: booking.cancellationReason,
 ### 2.3 Fix ESLint and Establish Style Baseline
 
 **Actions:**
+
 1. Fix ESLint configuration (migrate to flat config or pin version)
 2. Run `npm run lint -- --fix` to auto-fix simple issues
 3. Address remaining errors systematically
 4. Document any intentional rule disables
 
 **Acceptance Criteria:**
+
 - [ ] ESLint runs without configuration errors
 - [ ] All lint errors fixed (0 remaining)
 - [ ] ESLint rules documented in CLAUDE.md
@@ -289,11 +317,13 @@ cancellationReason: booking.cancellationReason,
 **Current:** 59 skipped tests
 
 **Actions:**
+
 1. List all skipped tests with reasons
 2. For each: fix, remove, or document why skip is intentional
 3. Remove stale `.skip()` markers
 
 **Acceptance Criteria:**
+
 - [ ] All skipped tests reviewed
 - [ ] Intentional skips documented with issue links
 - [ ] Stale skips removed
@@ -307,6 +337,7 @@ cancellationReason: booking.cancellationReason,
 ### 3.1 Add Coverage Gate
 
 **Implementation:**
+
 ```yaml
 # .github/workflows/main-pipeline.yml
 - name: Run tests with coverage
@@ -322,12 +353,14 @@ cancellationReason: booking.cancellationReason,
 ```
 
 **Acceptance Criteria:**
+
 - [ ] CI fails if coverage drops below 80%
 - [ ] Coverage badge in README
 
 ### 3.2 Add Lint Gate
 
 **Implementation:**
+
 ```yaml
 - name: Lint
   run: npm run lint
@@ -335,24 +368,28 @@ cancellationReason: booking.cancellationReason,
 ```
 
 **Acceptance Criteria:**
+
 - [ ] CI fails on any lint errors
 - [ ] No `continue-on-error` for lint step
 
 ### 3.3 Add TypeScript Gate
 
 **Implementation:**
+
 ```yaml
 - name: Type check
   run: npm run typecheck
 ```
 
 **Acceptance Criteria:**
+
 - [ ] CI fails on any TypeScript errors
 - [ ] Strict mode enforced
 
 ### 3.4 Add Complexity Gate (Optional)
 
 **Implementation:**
+
 ```yaml
 - name: Check complexity
   run: |
@@ -360,6 +397,7 @@ cancellationReason: booking.cancellationReason,
 ```
 
 **Acceptance Criteria:**
+
 - [ ] New functions with complexity >15 fail CI
 - [ ] Documented exception process for complex functions
 
@@ -375,6 +413,7 @@ cancellationReason: booking.cancellationReason,
 **Impact:** 50-70% latency reduction for available date checks
 
 **Current (sequential):**
+
 ```typescript
 const isBlackout = await this.blackoutRepo.isBlackoutDate(tenantId, date);
 if (isBlackout) return { date, available: false, reason: 'blackout' };
@@ -386,6 +425,7 @@ const isCalendarAvailable = await this.calendarProvider.isDateAvailable(date);
 ```
 
 **Optimized (hybrid - per pragmatic reviewer):**
+
 ```typescript
 // Check blackout first (fast local DB, most common block)
 const isBlackout = await this.blackoutRepo.isBlackoutDate(tenantId, date);
@@ -403,6 +443,7 @@ return { date, available: true };
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Existing tests pass
 - [ ] Latency measured before/after (document improvement)
 - [ ] No increase in external API calls
@@ -412,11 +453,13 @@ return { date, available: true };
 **File:** `server/src/middleware/rateLimiter.ts`
 
 **TODO Items:**
+
 - TODO-057: Public scheduling endpoints
 - TODO-193: Add-on read/write operations
 - TODO-273: Stripe webhook endpoint
 
 **Acceptance Criteria:**
+
 - [ ] All rate limiters configured
 - [ ] Rate limit tests added
 - [ ] TODO comments removed
@@ -426,12 +469,14 @@ return { date, available: true };
 **New File:** `.github/workflows/deploy-nextjs.yml`
 
 **Requirements:**
+
 - Build: `npm run build --workspace=apps/web`
 - Deploy to Vercel (or preferred host)
 - Environment variables configured
 - Preview deployments for PRs
 
 **Acceptance Criteria:**
+
 - [ ] apps/web deploys automatically on merge to main
 - [ ] Preview URLs for pull requests
 - [ ] Environment variables documented
@@ -457,14 +502,17 @@ return { date, available: true };
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Commits blocked if lint fails
 - [ ] Auto-formatting on commit
 
 ### 5.2 PR Quality Checklist
 
 **Add to PR template:**
+
 ```markdown
 ## Quality Checklist
+
 - [ ] Tests pass locally (`npm test`)
 - [ ] TypeScript compiles (`npm run typecheck`)
 - [ ] Lint passes (`npm run lint`)
@@ -476,6 +524,7 @@ return { date, available: true };
 ### 5.3 Monthly Quality Review
 
 **Metrics to Track:**
+
 - Test coverage trend
 - Cyclomatic complexity trend
 - Defect density
@@ -485,24 +534,26 @@ return { date, available: true };
 
 ## Success Metrics
 
-| Metric | Phase 0 | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-|--------|---------|---------|---------|---------|---------|
-| Test Pass Rate | 95% → 100% | 100% | 100% | 100% | 100% |
-| TypeScript Errors | 8 → 0 | 0 | 0 | 0 | 0 |
-| ESLint Errors | Broken → 0 | 0 | 0 | 0 | 0 |
-| Coverage | Unknown | Baseline | 80%+ | Gated | Maintained |
-| Next.js CVE | Vulnerable | Fixed | Fixed | Fixed | Fixed |
-| Complexity | Unknown | Baseline | Measured | Gated | Maintained |
+| Metric            | Phase 0    | Phase 1  | Phase 2  | Phase 3 | Phase 4    |
+| ----------------- | ---------- | -------- | -------- | ------- | ---------- |
+| Test Pass Rate    | 95% → 100% | 100%     | 100%     | 100%    | 100%       |
+| TypeScript Errors | 8 → 0      | 0        | 0        | 0       | 0          |
+| ESLint Errors     | Broken → 0 | 0        | 0        | 0       | 0          |
+| Coverage          | Unknown    | Baseline | 80%+     | Gated   | Maintained |
+| Next.js CVE       | Vulnerable | Fixed    | Fixed    | Fixed   | Fixed      |
+| Complexity        | Unknown    | Baseline | Measured | Gated   | Maintained |
 
 ---
 
 ## Appendix: Industry Standards References
 
 ### On Service Layers
+
 > "One common misconception is the idea of a 'pass-through' service, where the service layer does nothing but pass queries to the repository. This approach adds unnecessary complexity without providing any real benefits."
 > — [Baeldung: Repository vs Service](https://www.baeldung.com/cs/repository-vs-service)
 
 ### On YAGNI
+
 > "Always implement things when you actually need them, never when you just foresee that you need them."
 > — Ron Jeffries, XP Co-founder ([source](https://ronjeffries.com/articles/019-01ff/iter-yagni-skimp/))
 
@@ -510,10 +561,12 @@ return { date, available: true };
 > — [GeeksforGeeks: YAGNI Principle](https://www.geeksforgeeks.org/software-engineering/what-is-yagni-principle-you-arent-gonna-need-it/)
 
 ### On Code Quality Metrics
+
 > "Aim for near-complete test coverage (think 80% and above)... The lower the cyclomatic complexity, the easier your code is to test, maintain, and scale."
 > — [CodeAnt: Top 15 Code Quality Metrics](https://www.codeant.ai/blogs/code-quality-metrics-to-track)
 
 ### On Complexity Limits
+
 > "Functions with a high cyclomatic complexity are more difficult to test and more likely to have defects."
 > — [BrowserStack: Code Quality Metrics](https://www.browserstack.com/guide/software-code-quality-metrics)
 
@@ -521,12 +574,12 @@ return { date, available: true };
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-12-26 | Original 4-wave plan |
-| 2.0 | 2025-12-26 | Revised after multi-agent review. Removed TenantService, BookingWithCancellation interface, React.memo, UploadService DI, idempotency, BookingService split. Added quality infrastructure phases. |
+| Version | Date       | Changes                                                                                                                                                                                           |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2025-12-26 | Original 4-wave plan                                                                                                                                                                              |
+| 2.0     | 2025-12-26 | Revised after multi-agent review. Removed TenantService, BookingWithCancellation interface, React.memo, UploadService DI, idempotency, BookingService split. Added quality infrastructure phases. |
 
 ---
 
-*This plan prioritizes simplicity and measurable quality over architectural purity.*
-*Industry standards and reviewer consensus: Less code, better tested, properly measured.*
+_This plan prioritizes simplicity and measurable quality over architectural purity._
+_Industry standards and reviewer consensus: Less code, better tested, properly measured._

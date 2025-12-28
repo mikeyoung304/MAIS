@@ -108,12 +108,8 @@ export function FeaturesSection({
               <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
                 <IconComponent className="h-6 w-6 text-sage" />
               </div>
-              <h3 className="font-semibold text-lg text-text-primary mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-text-muted">
-                {feature.description}
-              </p>
+              <h3 className="font-semibold text-lg text-text-primary mb-2">{feature.title}</h3>
+              <p className="text-text-muted">{feature.description}</p>
             </div>
           );
         })}

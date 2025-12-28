@@ -28,6 +28,7 @@ const price = formatPrice(9999); // "$100"
 ```
 
 **Files to extract:**
+
 - Currency formatting → `lib/format.ts`
 - Package sorting → `lib/packages.ts`
 - Navigation config → `components/tenant/navigation.ts`
@@ -131,6 +132,7 @@ export default function Error({
 ```
 
 **Structure:**
+
 ```
 app/
 ├── t/[slug]/
@@ -170,6 +172,7 @@ const isActive = pathname.startsWith(href);
 ```
 
 **Rendered HTML:**
+
 ```html
 <!-- Active link -->
 <a href="/services" aria-current="page" class="text-sage">Services</a>
@@ -195,6 +198,7 @@ const isActive = pathname.startsWith(href);
 ```
 
 **Contrast values:**
+
 - `text-red-500`: 3.92:1 → FAILS WCAG AA
 - `text-red-700`: 5.5:1 → PASSES WCAG AA ✓
 
@@ -260,6 +264,7 @@ const navItems = useMemo<NavItemWithHref[]>(
 ```
 
 **When to memoize:**
+
 - Array/object passed to child components
 - Created from other state (basePath, props)
 - Used in dependency arrays

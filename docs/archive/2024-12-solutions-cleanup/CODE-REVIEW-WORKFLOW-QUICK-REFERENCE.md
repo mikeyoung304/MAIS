@@ -58,11 +58,11 @@ Finding identified
 
 ## Priority Quick Reference
 
-| Priority | Definition | SLA | Action |
-| --- | --- | --- | --- |
-| **P1** | Security, data corruption, broken features | Fix before release | Resolve immediately |
-| **P2** | Performance issues, UX gaps, architecture violations | Fix this sprint | Resolve when P1 done |
-| **P3** | Code quality, minor improvements | Backlog | Defer to future sprint |
+| Priority | Definition                                           | SLA                | Action                 |
+| -------- | ---------------------------------------------------- | ------------------ | ---------------------- |
+| **P1**   | Security, data corruption, broken features           | Fix before release | Resolve immediately    |
+| **P2**   | Performance issues, UX gaps, architecture violations | Fix this sprint    | Resolve when P1 done   |
+| **P3**   | Code quality, minor improvements                     | Backlog            | Defer to future sprint |
 
 ---
 
@@ -279,30 +279,30 @@ Code Review Checklist:
 
 ## Time Budget
 
-| Activity | Time |
-| --- | --- |
-| Review & categorize todos | 15 min |
-| Parallel verification agents | 30 min |
-| Implement 6 quick wins | 45 min |
-| Testing & QA | 15 min |
-| Batch commit | 5 min |
-| Update todo files | 10 min |
-| **Total (8-10 todos)** | **120 min** |
+| Activity                     | Time        |
+| ---------------------------- | ----------- |
+| Review & categorize todos    | 15 min      |
+| Parallel verification agents | 30 min      |
+| Implement 6 quick wins       | 45 min      |
+| Testing & QA                 | 15 min      |
+| Batch commit                 | 5 min       |
+| Update todo files            | 10 min      |
+| **Total (8-10 todos)**       | **120 min** |
 
 ---
 
 ## Agent Types Quick Reference
 
-| Agent | Finds | Pattern |
-| --- | --- | --- |
-| Security Sentinel | Auth, tenant isolation, XSS | Check auth flows, tenant scoping |
-| Performance Oracle | N+1 queries, caching | Profile queries, check indexes |
-| Architecture Strategist | DI, layering, error handling | Review DI container, singletons |
-| Code Philosopher | Dead code, duplication, complexity | Search violations, check duplication |
-| Feature Completeness | Incomplete features, missing UI | Check contracts vs. implementation |
-| Dependency Detective | Unused deps, bloat | Analyze package.json, check imports |
-| Data Integrity Guardian | Constraints, transactions | Review schema, check transactions |
-| DevOps Harmony | Config, logging, health checks | Check env setup, logging |
+| Agent                   | Finds                              | Pattern                              |
+| ----------------------- | ---------------------------------- | ------------------------------------ |
+| Security Sentinel       | Auth, tenant isolation, XSS        | Check auth flows, tenant scoping     |
+| Performance Oracle      | N+1 queries, caching               | Profile queries, check indexes       |
+| Architecture Strategist | DI, layering, error handling       | Review DI container, singletons      |
+| Code Philosopher        | Dead code, duplication, complexity | Search violations, check duplication |
+| Feature Completeness    | Incomplete features, missing UI    | Check contracts vs. implementation   |
+| Dependency Detective    | Unused deps, bloat                 | Analyze package.json, check imports  |
+| Data Integrity Guardian | Constraints, transactions          | Review schema, check transactions    |
+| DevOps Harmony          | Config, logging, health checks     | Check env setup, logging             |
 
 ---
 
@@ -328,14 +328,14 @@ Wave 2 (Sequential, 20 min)
 
 ## Common Patterns
 
-| Pattern | Time | Use Case |
-| --- | --- | --- |
-| Verify (already implemented) | 10-20 min | Code exists, just need confirmation |
-| Shared Component (duplication) | 20 min | Extract 2+ copies into shared/ |
-| React.memo (performance) | 10 min | Pure component in 10+ item list |
-| Transaction (data safety) | 15 min | Read-then-write operations |
-| Quick Win (small feature) | 20-45 min | Feature < 1 hour, self-contained |
-| Deferral (large feature) | 1-2 hours | Feature > 4 hours, plan for next sprint |
+| Pattern                        | Time      | Use Case                                |
+| ------------------------------ | --------- | --------------------------------------- |
+| Verify (already implemented)   | 10-20 min | Code exists, just need confirmation     |
+| Shared Component (duplication) | 20 min    | Extract 2+ copies into shared/          |
+| React.memo (performance)       | 10 min    | Pure component in 10+ item list         |
+| Transaction (data safety)      | 15 min    | Read-then-write operations              |
+| Quick Win (small feature)      | 20-45 min | Feature < 1 hour, self-contained        |
+| Deferral (large feature)       | 1-2 hours | Feature > 4 hours, plan for next sprint |
 
 ---
 
@@ -382,32 +382,35 @@ TODO identified
 
 ## File Locations
 
-| What | Where |
-| --- | --- |
-| Todos | `todos/NNN-status-title.md` |
-| Shared components | `client/src/components/shared/` |
-| Routes | `server/src/routes/` |
-| Services | `server/src/services/` |
-| Tests | `server/test/` or `client/src/__tests__/` |
-| Adapters | `server/src/adapters/` |
+| What              | Where                                     |
+| ----------------- | ----------------------------------------- |
+| Todos             | `todos/NNN-status-title.md`               |
+| Shared components | `client/src/components/shared/`           |
+| Routes            | `server/src/routes/`                      |
+| Services          | `server/src/services/`                    |
+| Tests             | `server/test/` or `client/src/__tests__/` |
+| Adapters          | `server/src/adapters/`                    |
 
 ---
 
 ## When to Use Each Pattern
 
 **Use VERIFY when:**
+
 - Code clearly exists
 - Tests pass
 - Feature is complete
 - Just need documentation
 
 **Use QUICK WIN when:**
+
 - Feature < 1 hour
 - No schema changes needed
 - Single file/component
 - No dependencies
 
 **Use DEFER when:**
+
 - Feature > 4 hours
 - Requires new endpoints/schema
 - Multiple files across layers
@@ -417,14 +420,14 @@ TODO identified
 
 ## Common Errors & Fixes
 
-| Error | Fix |
-| --- | --- |
+| Error                             | Fix                                            |
+| --------------------------------- | ---------------------------------------------- |
 | "Anonymous component in DevTools" | Use named function: `memo(function Name() {})` |
-| "Memo not working" | Check parent memoizes callbacks |
-| "Transaction lock timeout" | Reduce transaction scope, add timeout param |
-| "Type mismatch in tx" | Use `tx.model` not `this.prisma.model` |
-| "Component re-renders constantly" | Add React.memo or useCallback in parent |
-| "Duplicate error messages" | Extract to ErrorAlert shared component |
+| "Memo not working"                | Check parent memoizes callbacks                |
+| "Transaction lock timeout"        | Reduce transaction scope, add timeout param    |
+| "Type mismatch in tx"             | Use `tx.model` not `this.prisma.model`         |
+| "Component re-renders constantly" | Add React.memo or useCallback in parent        |
+| "Duplicate error messages"        | Extract to ErrorAlert shared component         |
 
 ---
 

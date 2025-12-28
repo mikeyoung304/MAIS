@@ -21,6 +21,7 @@ The `tierOrder` object used for sorting packages by tier/segment is duplicated a
 ## Location
 
 Duplicated in:
+
 - `apps/web/src/app/t/[slug]/(site)/services/page.tsx`
 - `apps/web/src/app/t/[slug]/(site)/TenantLandingPage.tsx`
 - `apps/web/src/app/t/_domain/services/page.tsx`
@@ -44,12 +45,10 @@ export const TIER_ORDER: Record<string, number> = {
   enterprise: 4,
 };
 
-export function sortPackagesByTier<T extends { segment?: string | null }>(
-  packages: T[]
-): T[] {
+export function sortPackagesByTier<T extends { segment?: string | null }>(packages: T[]): T[] {
   return [...packages].sort((a, b) => {
-    const orderA = a.segment ? TIER_ORDER[a.segment.toLowerCase()] ?? 99 : 99;
-    const orderB = b.segment ? TIER_ORDER[b.segment.toLowerCase()] ?? 99 : 99;
+    const orderA = a.segment ? (TIER_ORDER[a.segment.toLowerCase()] ?? 99) : 99;
+    const orderB = b.segment ? (TIER_ORDER[b.segment.toLowerCase()] ?? 99) : 99;
     return orderA - orderB;
   });
 }

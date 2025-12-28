@@ -7,6 +7,7 @@
 **Solution:** Use global singleton PrismaClient pattern with aggressive connection limits.
 
 **Impact:**
+
 - Before: Tests hang after ~5-10 parallel test files
 - After: 100+ test files run reliably in CI/CD
 
@@ -35,11 +36,11 @@ Result: CONNECTION POOL EXHAUSTED ❌
 
 ### Supabase Pooling Modes
 
-| Mode | Connections | Isolation | When to Use |
-|------|-------------|-----------|------------|
-| **Session** | ~60 | High (slower) | Default, safest |
-| **Transaction** | ~100 | Medium | Dedicated pool |
-| **Statement** | ~1000+ | Low | High throughput |
+| Mode            | Connections | Isolation     | When to Use     |
+| --------------- | ----------- | ------------- | --------------- |
+| **Session**     | ~60         | High (slower) | Default, safest |
+| **Transaction** | ~100        | Medium        | Dedicated pool  |
+| **Statement**   | ~1000+      | Low           | High throughput |
 
 MAIS uses Session mode by default (safe but limited).
 
@@ -188,21 +189,21 @@ DATABASE_URL="postgresql://user:pass@host/db?pgbouncer=true&connection_limit=3&p
 
 ### Parameters Explained
 
-| Parameter | Value | Purpose |
-|-----------|-------|---------|
-| `pgbouncer` | `true` | Use PgBouncer pooler mode (Supabase default) |
-| `connection_limit` | `3` | Max connections per instance (CRITICAL) |
-| `pool_timeout` | `5` | Seconds to wait for connection before failing |
-| `connect_timeout` | `5` | Seconds to connect to database |
+| Parameter          | Value  | Purpose                                       |
+| ------------------ | ------ | --------------------------------------------- |
+| `pgbouncer`        | `true` | Use PgBouncer pooler mode (Supabase default)  |
+| `connection_limit` | `3`    | Max connections per instance (CRITICAL)       |
+| `pool_timeout`     | `5`    | Seconds to wait for connection before failing |
+| `connect_timeout`  | `5`    | Seconds to connect to database                |
 
 ### Recommended Values by Environment
 
-| Env | connection_limit | pool_timeout | Why |
-|-----|-----------------|--------------|-----|
-| Local dev | 5 | 10 | Low resource usage |
-| CI/CD (unit tests) | 3 | 5 | Minimal DB access |
-| CI/CD (integration) | 5 | 10 | More DB operations |
-| Production | 50-100 | 30 | High concurrency |
+| Env                 | connection_limit | pool_timeout | Why                |
+| ------------------- | ---------------- | ------------ | ------------------ |
+| Local dev           | 5                | 10           | Low resource usage |
+| CI/CD (unit tests)  | 3                | 5            | Minimal DB access  |
+| CI/CD (integration) | 5                | 10           | More DB operations |
+| Production          | 50-100           | 30           | High concurrency   |
 
 ### How to Set
 
@@ -367,24 +368,28 @@ When reviewing a PR with new integration tests:
 
 If you find a violation:
 
-```markdown
+````markdown
 ❌ Connection Pool Issue
 
 This test file creates its own PrismaClient:
+
 ```typescript
 const prisma = new PrismaClient();
 ```
+````
 
 This exhausts Supabase's connection pool when running with other tests.
 
 ✅ Fix: Use the global singleton helper:
+
 ```typescript
 import { getTestPrisma } from '../helpers/global-prisma';
 const prisma = getTestPrisma();
 ```
 
 See: docs/solutions/database-issues/CONNECTION_POOL_EXHAUSTION_PREVENTION.md
-```
+
+````
 
 ---
 
@@ -399,7 +404,7 @@ See: docs/solutions/database-issues/CONNECTION_POOL_EXHAUSTION_PREVENTION.md
 psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
 
 # If result > 50, pool is exhausted
-```
+````
 
 **Fix:**
 
@@ -533,6 +538,7 @@ describe('CatalogService Integration', () => {
 ```
 
 **Errors when running with other tests:**
+
 - Connection pool exhausted after 5 test files
 - Duplicate key error on slug
 - Timeouts at 30 seconds
@@ -558,19 +564,18 @@ describe('CatalogService Integration', () => {
 
   it('creates package', async () => {
     const factory = new PackageFactory();
-    const input = factory.create({ // ✅ Unique slug generated
+    const input = factory.create({
+      // ✅ Unique slug generated
       title: 'Test',
     });
 
-    const result = await catalogService.createPackage(
-      ctx.tenants.tenantA.id,
-      input
-    );
+    const result = await catalogService.createPackage(ctx.tenants.tenantA.id, input);
   });
 });
 ```
 
 **Results:**
+
 - All 100+ test files run without hanging
 - No duplicate key errors
 - Connection pool stays below 10 connections

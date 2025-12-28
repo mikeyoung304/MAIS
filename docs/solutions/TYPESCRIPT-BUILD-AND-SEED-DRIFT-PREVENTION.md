@@ -34,12 +34,14 @@ Both issues share a root cause: **disconnected sources of truth** (schema change
 
 ```typescript
 // BEFORE: Property name mismatch
-if (segment.heroImageUrl) {  // ❌ Property doesn't exist
+if (segment.heroImageUrl) {
+  // ❌ Property doesn't exist
   images.push({ url: segment.heroImageUrl });
 }
 
 // AFTER: Property name matches schema
-if (segment.heroImage) {  // ✅ Correct property name
+if (segment.heroImage) {
+  // ✅ Correct property name
   images.push({ url: segment.heroImage });
 }
 ```
@@ -49,17 +51,21 @@ if (segment.heroImage) {  // ✅ Correct property name
 ```typescript
 // BEFORE: Type comparison mismatch
 const statusKey = booking.status.toLowerCase().replace('_', '') as keyof typeof bookingsByStatus;
-if (statusKey === 'depositpaid') {  // ❌ Type assertion bypass
+if (statusKey === 'depositpaid') {
+  // ❌ Type assertion bypass
   bookingsByStatus.depositPaid++;
-} else if (bookingsByStatus[statusKey] !== undefined) {  // ❌ Runtime error if statusKey invalid
+} else if (bookingsByStatus[statusKey] !== undefined) {
+  // ❌ Runtime error if statusKey invalid
   bookingsByStatus[statusKey]++;
 }
 
 // AFTER: Proper type-safe comparison
 const normalizedStatus = booking.status.toLowerCase().replace('_', '');
-if (normalizedStatus === 'depositpaid') {  // ✅ Safe string comparison
+if (normalizedStatus === 'depositpaid') {
+  // ✅ Safe string comparison
   bookingsByStatus.depositPaid++;
-} else if (normalizedStatus in bookingsByStatus) {  // ✅ Type guard before cast
+} else if (normalizedStatus in bookingsByStatus) {
+  // ✅ Type guard before cast
   const statusKey = normalizedStatus as keyof typeof bookingsByStatus;
   bookingsByStatus[statusKey]++;
 }
@@ -132,6 +138,7 @@ File: `/Users/mikeyoung/CODING/MAIS/server/tsconfig.json`
 ```
 
 **How it helps:**
+
 - `noUnusedParameters: true` catches `_tenantId` used when renamed
 - `strictNullChecks: true` requires explicit null checking
 - `noImplicitAny: true` prevents type assertion bypasses
@@ -156,6 +163,7 @@ npm run typecheck  # Root command runs across all workspaces
 ```
 
 **Output shows:**
+
 - Property mismatches
 - Type assertion issues
 - Unused parameters
@@ -172,10 +180,10 @@ npm run typecheck  # Root command runs across all workspaces
 - [ ] Prisma migration created (`prisma migrate dev --name description`)
 - [ ] Prisma Client regenerated (`prisma generate`)
 - [ ] All property references updated:
-  - [ ] Service methods (*.service.ts)
-  - [ ] Route handlers (*.routes.ts)
-  - [ ] Repository implementations (*.repository.ts)
-  - [ ] Type contracts (packages/contracts/*)
+  - [ ] Service methods (\*.service.ts)
+  - [ ] Route handlers (\*.routes.ts)
+  - [ ] Repository implementations (\*.repository.ts)
+  - [ ] Type contracts (packages/contracts/\*)
 - [ ] Type assertions checked:
   - [ ] No new `as any` or `as Type` without justification
   - [ ] Type narrowing used instead of assertions
@@ -210,13 +218,10 @@ export class SegmentService {
 
     // Development-only validation
     if (process.env.NODE_ENV !== 'production') {
-      segments.forEach(segment => {
+      segments.forEach((segment) => {
         // Validate expected properties exist
         if (!('heroImage' in segment)) {
-          logger.warn(
-            { segment },
-            'Segment missing heroImage property - schema mismatch detected'
-          );
+          logger.warn({ segment }, 'Segment missing heroImage property - schema mismatch detected');
         }
       });
     }
@@ -232,14 +237,16 @@ export class SegmentService {
 
 ```typescript
 // ❌ WRONG: String literal comparison
-if (booking.status === 'depositpaid') { }
+if (booking.status === 'depositpaid') {
+}
 
 // ✅ CORRECT: Type-safe enum comparison
-if (booking.status === BookingStatus.DEPOSIT_PAID) { }
+if (booking.status === BookingStatus.DEPOSIT_PAID) {
+}
 
 // ✅ ALSO CORRECT: Normalized string with type guard
 const normalizedStatus = booking.status.toLowerCase().replace('_', '');
-if (normalizedStatus === 'depositpaid' && (normalizedStatus in expectedStatuses)) {
+if (normalizedStatus === 'depositpaid' && normalizedStatus in expectedStatuses) {
   // Now safe to use as type
 }
 ```
@@ -311,15 +318,10 @@ async function seedPlatform(prisma: PrismaClient): Promise<void> {
   });
 
   if (!verifyAdmin || verifyAdmin.role !== 'PLATFORM_ADMIN') {
-    throw new Error(
-      `Seed verification failed: Admin user not created correctly at ${adminEmail}`
-    );
+    throw new Error(`Seed verification failed: Admin user not created correctly at ${adminEmail}`);
   }
 
-  logger.info(
-    { email: adminEmail, role: verifyAdmin.role },
-    'Seed verification successful'
-  );
+  logger.info({ email: adminEmail, role: verifyAdmin.role }, 'Seed verification successful');
 }
 ```
 
@@ -366,15 +368,21 @@ function getSeedMode(): SeedMode {
 
   // Validate mode is in allowed list
   const validModes: readonly SeedMode[] = [
-    'production', 'e2e', 'demo', 'dev', 'all',
-    'la-petit-mariage', 'little-bit-farm', 'plate', 'mais',
-    'upgrade-tenant-pages'
+    'production',
+    'e2e',
+    'demo',
+    'dev',
+    'all',
+    'la-petit-mariage',
+    'little-bit-farm',
+    'plate',
+    'mais',
+    'upgrade-tenant-pages',
   ];
 
   if (explicitMode && !validModes.includes(explicitMode)) {
     throw new Error(
-      `Invalid SEED_MODE: "${explicitMode}"\n` +
-      `Valid modes: ${validModes.join(', ')}`
+      `Invalid SEED_MODE: "${explicitMode}"\n` + `Valid modes: ${validModes.join(', ')}`
     );
   }
 
@@ -404,10 +412,7 @@ function getSeedMode(): SeedMode {
       "npm exec prisma generate",
       "git add server/src/generated/prisma"
     ],
-    "server/**/*.ts": [
-      "npm run lint --workspace=server",
-      "npm run typecheck --workspace=server"
-    ],
+    "server/**/*.ts": ["npm run lint --workspace=server", "npm run typecheck --workspace=server"],
     "server/prisma/seeds/**/*.ts": [
       "npm run lint --workspace=server",
       "npm run typecheck --workspace=server"
@@ -585,9 +590,7 @@ describe('Platform Seed', () => {
       process.env.ADMIN_EMAIL = 'admin@test.com';
       process.env.ADMIN_DEFAULT_PASSWORD = 'short';
 
-      await expect(seedPlatform(prisma)).rejects.toThrow(
-        'must be at least 12 characters'
-      );
+      await expect(seedPlatform(prisma)).rejects.toThrow('must be at least 12 characters');
     });
 
     it('normalizes email to lowercase', async () => {
@@ -597,7 +600,7 @@ describe('Platform Seed', () => {
       await seedPlatform(prisma);
 
       const user = await prisma.user.findUnique({
-        where: { email: 'admin@test.com' }  // ✅ Lowercase
+        where: { email: 'admin@test.com' }, // ✅ Lowercase
       });
 
       expect(user?.email).toBe('admin@test.com');
@@ -613,7 +616,7 @@ describe('Platform Seed', () => {
       await seedPlatform(prisma);
 
       const user = await prisma.user.findUnique({
-        where: { email: 'admin@test.com' }
+        where: { email: 'admin@test.com' },
       });
 
       expect(user).toBeDefined();
@@ -631,10 +634,7 @@ describe('Platform Seed', () => {
 ```typescript
 describe('SegmentService', () => {
   it('accesses heroImage property correctly', async () => {
-    const segment = await segmentService.getSegmentBySlug(
-      tenantId,
-      'wellness-retreat'
-    );
+    const segment = await segmentService.getSegmentBySlug(tenantId, 'wellness-retreat');
 
     // ✅ Property name matches schema
     if (segment.heroImage) {
@@ -713,9 +713,10 @@ When reviewing PRs, watch for:
 // BEFORE (Commit 1c9972f parent)
 const segments = await segmentService.getSegments(tenantId);
 for (const segment of segments) {
-  if (segment.heroImageUrl) {  // ❌ Property doesn't exist
+  if (segment.heroImageUrl) {
+    // ❌ Property doesn't exist
     images.push({
-      url: segment.heroImageUrl,  // ❌ References non-existent property
+      url: segment.heroImageUrl, // ❌ References non-existent property
     });
   }
 }
@@ -723,9 +724,10 @@ for (const segment of segments) {
 // AFTER (Commit 1c9972f)
 const segments = await segmentService.getSegments(tenantId);
 for (const segment of segments) {
-  if (segment.heroImage) {  // ✅ Correct property name
+  if (segment.heroImage) {
+    // ✅ Correct property name
     images.push({
-      url: segment.heroImage,  // ✅ Matches schema
+      url: segment.heroImage, // ✅ Matches schema
     });
   }
 }
@@ -749,7 +751,8 @@ model Segment {
 const statusKey = booking.status.toLowerCase().replace('_', '') as keyof typeof bookingsByStatus;
 if (statusKey === 'depositpaid') {
   bookingsByStatus.depositPaid++;
-} else if (bookingsByStatus[statusKey] !== undefined) {  // ❌ Might be undefined
+} else if (bookingsByStatus[statusKey] !== undefined) {
+  // ❌ Might be undefined
   bookingsByStatus[statusKey]++;
 }
 
@@ -757,7 +760,8 @@ if (statusKey === 'depositpaid') {
 const normalizedStatus = booking.status.toLowerCase().replace('_', '');
 if (normalizedStatus === 'depositpaid') {
   bookingsByStatus.depositPaid++;
-} else if (normalizedStatus in bookingsByStatus) {  // ✅ Type guard before casting
+} else if (normalizedStatus in bookingsByStatus) {
+  // ✅ Type guard before casting
   const statusKey = normalizedStatus as keyof typeof bookingsByStatus;
   bookingsByStatus[statusKey]++;
 }
@@ -785,15 +789,15 @@ async findBookingsNeedingReminders(_tenantId: string): Promise<Booking[]> {
 
 ## Implementation Priority
 
-| Priority | Action | Effort | Impact |
-|----------|--------|--------|--------|
-| P0 | Enable TypeScript strict mode (already done) | 0 | High |
-| P0 | Add pre-commit hook for `prisma generate` | Low | High |
-| P0 | Add seed environment variable validation | Low | High |
-| P1 | Add CI/CD schema consistency check | Medium | High |
-| P1 | Add seed configuration unit tests | Medium | Medium |
-| P2 | Add runtime property validation | Low | Low |
-| P2 | Create code review checklist | Low | Medium |
+| Priority | Action                                       | Effort | Impact |
+| -------- | -------------------------------------------- | ------ | ------ |
+| P0       | Enable TypeScript strict mode (already done) | 0      | High   |
+| P0       | Add pre-commit hook for `prisma generate`    | Low    | High   |
+| P0       | Add seed environment variable validation     | Low    | High   |
+| P1       | Add CI/CD schema consistency check           | Medium | High   |
+| P1       | Add seed configuration unit tests            | Medium | Medium |
+| P2       | Add runtime property validation              | Low    | Low    |
+| P2       | Create code review checklist                 | Low    | Medium |
 
 ---
 
@@ -824,4 +828,3 @@ npm run build
 ```
 
 **Expected output:** All commands succeed with no errors.
-

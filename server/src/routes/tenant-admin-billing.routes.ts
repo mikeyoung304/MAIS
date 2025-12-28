@@ -10,7 +10,8 @@ import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repositor
 import { logger } from '../lib/core/logger';
 
 // Environment config for Stripe price ID
-const STRIPE_SUBSCRIPTION_PRICE_ID = process.env.STRIPE_SUBSCRIPTION_PRICE_ID || 'price_placeholder';
+const STRIPE_SUBSCRIPTION_PRICE_ID =
+  process.env.STRIPE_SUBSCRIPTION_PRICE_ID || 'price_placeholder';
 const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 /**
@@ -65,7 +66,10 @@ export function createTenantAdminBillingRoutes(
         cancelUrl: `${APP_BASE_URL}/tenant/billing?canceled=true`,
       });
 
-      logger.info({ tenantId, sessionId: session.sessionId }, 'Subscription checkout session created');
+      logger.info(
+        { tenantId, sessionId: session.sessionId },
+        'Subscription checkout session created'
+      );
 
       res.json({
         checkoutUrl: session.url,
@@ -105,7 +109,10 @@ export function createTenantAdminBillingRoutes(
       if (effectiveStatus === 'TRIALING' && tenant.trialEndsAt) {
         const now = new Date();
         const trialEnd = new Date(tenant.trialEndsAt);
-        daysRemaining = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        daysRemaining = Math.max(
+          0,
+          Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        );
 
         // Auto-expire if trial has ended
         if (daysRemaining === 0) {

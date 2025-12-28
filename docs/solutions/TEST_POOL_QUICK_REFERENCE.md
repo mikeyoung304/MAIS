@@ -106,11 +106,11 @@ grep -r "new PrismaClient" server/test
 
 ### Step 2: Fix
 
-| Symptom | Fix |
-|---------|-----|
+| Symptom                           | Fix                                         |
+| --------------------------------- | ------------------------------------------- |
 | `grep` finds `new PrismaClient()` | Replace with `getTestPrisma()` in that file |
-| Pool error message | Check DATABASE_URL has `connection_limit=3` |
-| Process won't exit | Global teardown missing in vitest.config.ts |
+| Pool error message                | Check DATABASE_URL has `connection_limit=3` |
+| Process won't exit                | Global teardown missing in vitest.config.ts |
 
 ### Step 3: Verify
 
@@ -136,23 +136,23 @@ postgresql://...@...?pgbouncer=true&connection_limit=3&pool_timeout=5&connect_ti
 
 **What each does:**
 
-| Param | Value | Meaning |
-|-------|-------|---------|
-| `connection_limit` | 3 | Max 3 queries at once |
-| `pool_timeout` | 5s | Give up if no connection in 5s |
-| `connect_timeout` | 5s | Don't wait forever to connect |
+| Param              | Value | Meaning                        |
+| ------------------ | ----- | ------------------------------ |
+| `connection_limit` | 3     | Max 3 queries at once          |
+| `pool_timeout`     | 5s    | Give up if no connection in 5s |
+| `connect_timeout`  | 5s    | Don't wait forever to connect  |
 
 ---
 
 ## Files to Know
 
-| File | Purpose | Edit When? |
-|------|---------|-----------|
-| `test/helpers/global-prisma.ts` | Singleton factory | Never (unless tuning connection_limit) |
-| `test/helpers/integration-setup.ts` | Test setup utilities | Adding new helper functions |
-| `vitest.config.ts` | Serial execution config | Never (unless disabling serial mode) |
-| `test/**/*.test.ts` | Actual tests | Always use `getTestPrisma()` |
-| `.env` | DATABASE_URL string | For `connection_limit=3` param |
+| File                                | Purpose                 | Edit When?                             |
+| ----------------------------------- | ----------------------- | -------------------------------------- |
+| `test/helpers/global-prisma.ts`     | Singleton factory       | Never (unless tuning connection_limit) |
+| `test/helpers/integration-setup.ts` | Test setup utilities    | Adding new helper functions            |
+| `vitest.config.ts`                  | Serial execution config | Never (unless disabling serial mode)   |
+| `test/**/*.test.ts`                 | Actual tests            | Always use `getTestPrisma()`           |
+| `.env`                              | DATABASE_URL string     | For `connection_limit=3` param         |
 
 ---
 
@@ -168,6 +168,7 @@ Healthy test run:
 ```
 
 If you see:
+
 - Duration > 20 min: Check for hanging tests
 - Memory > 200MB: Check for new PrismaClient() creations
 - "MaxClientsInSessionMode" error: Someone created new PrismaClient()
@@ -206,10 +207,10 @@ echo $DATABASE_URL
 
 ## Historical Context
 
-| Date | Issue | Fix |
-|------|-------|-----|
+| Date       | Issue                      | Fix                       |
+| ---------- | -------------------------- | ------------------------- |
 | 2025-12-23 | Tests hanging indefinitely | Created singleton pattern |
-| 2025-12-26 | 0 lint errors achieved | Cleaned up all violations |
+| 2025-12-26 | 0 lint errors achieved     | Cleaned up all violations |
 
 **Commit:** `166d902e18d6f83bc3d6a59742599f650a7182ce`
 

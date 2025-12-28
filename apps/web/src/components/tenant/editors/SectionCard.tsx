@@ -33,7 +33,11 @@ const SECTION_TYPE_META: Record<
   hero: { icon: Star, label: 'Hero', color: 'bg-purple-100 text-purple-700' },
   text: { icon: Type, label: 'Text', color: 'bg-blue-100 text-blue-700' },
   gallery: { icon: Image, label: 'Gallery', color: 'bg-pink-100 text-pink-700' },
-  testimonials: { icon: MessageSquare, label: 'Testimonials', color: 'bg-amber-100 text-amber-700' },
+  testimonials: {
+    icon: MessageSquare,
+    label: 'Testimonials',
+    color: 'bg-amber-100 text-amber-700',
+  },
   faq: { icon: HelpCircle, label: 'FAQ', color: 'bg-green-100 text-green-700' },
   contact: { icon: Mail, label: 'Contact', color: 'bg-cyan-100 text-cyan-700' },
   cta: { icon: Zap, label: 'Call to Action', color: 'bg-orange-100 text-orange-700' },

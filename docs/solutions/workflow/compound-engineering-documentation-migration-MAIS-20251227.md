@@ -35,6 +35,7 @@ The MAIS codebase had accumulated a custom "lessons" documentation system that:
 4. **Duplicated existing content** - All 4 lessons covered topics already in `docs/solutions/` and CLAUDE.md
 
 Additionally, CLAUDE.md had:
+
 - **Stale sprint goals** - November 2025 section still present (54 days old)
 - **Broken links** - 2 documentation references pointing to moved/renamed files
 
@@ -60,6 +61,7 @@ Additionally, CLAUDE.md had:
 ```
 
 **Problems:**
+
 - No YAML frontmatter (not searchable by compound-docs)
 - Custom ID format not compatible with compound-engineering
 - `/workflows:codify` doesn't exist - correct command is `/workflows:compound`
@@ -89,6 +91,7 @@ Created `docs/solutions/patterns/mais-critical-patterns.md` as "Required Reading
 **Purpose:** Consolidate the 10 most critical patterns that ALL agents must apply before generating code.
 
 **Contents:**
+
 1. Multi-tenant query isolation
 2. Tenant-scoped cache keys
 3. Repository interface signatures
@@ -103,13 +106,16 @@ Created `docs/solutions/patterns/mais-critical-patterns.md` as "Required Reading
 ### Step 3: Clean Up CLAUDE.md
 
 **Removed:**
+
 - Entire "Current Sprint Goals" section (lines 706-748) - 54 days stale
 
 **Fixed:**
+
 - Updated `vercel-nextjs-npm-workspaces-root-directory.md` → added `-MAIS-20251226` suffix
 - Removed archived `CODE-REVIEW-ANY-TYPE-CHECKLIST.md` reference
 
 **Added:**
+
 - Link to new `mais-critical-patterns.md` at top of Prevention Strategies
 
 ### Step 4: Configure Context7 MCP
@@ -145,11 +151,11 @@ Watch for these symptoms:
 
 ### Maintenance Schedule
 
-| Frequency | Task |
-|-----------|------|
-| Weekly | Check for broken links in CLAUDE.md |
-| Monthly | Archive completed sprint goals |
-| Quarterly | Full documentation audit |
+| Frequency | Task                                |
+| --------- | ----------------------------------- |
+| Weekly    | Check for broken links in CLAUDE.md |
+| Monthly   | Archive completed sprint goals      |
+| Quarterly | Full documentation audit            |
 
 ---
 
@@ -157,14 +163,14 @@ Watch for these symptoms:
 
 ### Compound-Engineering Native Components
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `docs/solutions/` | Compound docs | Problem solutions with YAML frontmatter |
-| `todos/` | File-based todos | Work tracking across sessions |
-| `/workflows:compound` | Command | Document solved problems |
-| `/workflows:plan` | Command | Plan before implementation |
-| `/workflows:work` | Command | Execute plans systematically |
-| `/workflows:review` | Command | Multi-agent code review |
+| Component             | Location         | Purpose                                 |
+| --------------------- | ---------------- | --------------------------------------- |
+| `docs/solutions/`     | Compound docs    | Problem solutions with YAML frontmatter |
+| `todos/`              | File-based todos | Work tracking across sessions           |
+| `/workflows:compound` | Command          | Document solved problems                |
+| `/workflows:plan`     | Command          | Plan before implementation              |
+| `/workflows:work`     | Command          | Execute plans systematically            |
+| `/workflows:review`   | Command          | Multi-agent code review                 |
 
 ### What NOT to Create
 
@@ -175,8 +181,8 @@ Watch for these symptoms:
 
 ### Correct Command Reference
 
-| Old (Wrong) | New (Correct) |
-|-------------|---------------|
+| Old (Wrong)         | New (Correct)         |
+| ------------------- | --------------------- |
 | `/workflows:codify` | `/workflows:compound` |
 
 ---
@@ -195,6 +201,7 @@ Watch for these symptoms:
 **Commit:** `e1c6593` - `chore(docs): migrate to compound-engineering documentation system`
 
 **Changes:**
+
 - 5 files deleted (.claude/lessons/)
 - 1 file created (docs/solutions/patterns/mais-critical-patterns.md)
 - 1 file modified (CLAUDE.md)

@@ -122,11 +122,11 @@ cp .env.local.example .env.local
 
 Required variables:
 
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Express API URL (default: http://localhost:3001) |
-| `NEXTAUTH_URL` | NextAuth.js base URL |
-| `NEXTAUTH_SECRET` | NextAuth.js secret (generate with `openssl rand -hex 32`) |
+| Variable              | Description                                               |
+| --------------------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Express API URL (default: http://localhost:3001)          |
+| `NEXTAUTH_URL`        | NextAuth.js base URL                                      |
+| `NEXTAUTH_SECRET`     | NextAuth.js secret (generate with `openssl rand -hex 32`) |
 
 ## Key Features
 
@@ -159,33 +159,34 @@ Dynamic tenant pages with SSR and ISR (60-second revalidation):
 
 **Slug-based routes** (`/t/[slug]`):
 
-| Route | Description |
-|-------|-------------|
-| `/t/[slug]` | Homepage with hero, packages |
-| `/t/[slug]/about` | About page |
-| `/t/[slug]/services` | Services/packages page |
-| `/t/[slug]/gallery` | Photo gallery |
-| `/t/[slug]/testimonials` | Client testimonials |
-| `/t/[slug]/faq` | Frequently asked questions |
-| `/t/[slug]/contact` | Contact form |
-| `/t/[slug]/book/[packageSlug]` | Booking wizard |
-| `/t/[slug]/book/success` | Booking confirmation |
+| Route                          | Description                  |
+| ------------------------------ | ---------------------------- |
+| `/t/[slug]`                    | Homepage with hero, packages |
+| `/t/[slug]/about`              | About page                   |
+| `/t/[slug]/services`           | Services/packages page       |
+| `/t/[slug]/gallery`            | Photo gallery                |
+| `/t/[slug]/testimonials`       | Client testimonials          |
+| `/t/[slug]/faq`                | Frequently asked questions   |
+| `/t/[slug]/contact`            | Contact form                 |
+| `/t/[slug]/book/[packageSlug]` | Booking wizard               |
+| `/t/[slug]/book/success`       | Booking confirmation         |
 
 **Custom domain routes** (`/t/_domain`):
 
-| Route | Description |
-|-------|-------------|
-| `/` | Homepage (via middleware rewrite) |
-| `/about` | About page |
-| `/services` | Services/packages page |
-| `/gallery` | Photo gallery |
-| `/testimonials` | Client testimonials |
-| `/faq` | Frequently asked questions |
-| `/contact` | Contact form |
-| `/book/[packageSlug]` | Booking wizard |
-| `/book/success` | Booking confirmation |
+| Route                 | Description                       |
+| --------------------- | --------------------------------- |
+| `/`                   | Homepage (via middleware rewrite) |
+| `/about`              | About page                        |
+| `/services`           | Services/packages page            |
+| `/gallery`            | Photo gallery                     |
+| `/testimonials`       | Client testimonials               |
+| `/faq`                | Frequently asked questions        |
+| `/contact`            | Contact form                      |
+| `/book/[packageSlug]` | Booking wizard                    |
+| `/book/success`       | Booking confirmation              |
 
 Features:
+
 - SEO metadata generation per page
 - Error boundaries on all dynamic routes
 - Loading states with skeleton UI
@@ -213,24 +214,20 @@ The `SectionRenderer` component dynamically renders an array of sections based o
 import { SectionRenderer } from '@/components/tenant/SectionRenderer';
 
 // In a page component
-<SectionRenderer
-  sections={config.pages.home.sections}
-  tenant={tenant}
-  basePath="/t/my-studio"
-/>
+<SectionRenderer sections={config.pages.home.sections} tenant={tenant} basePath="/t/my-studio" />;
 ```
 
 **Available Section Types:**
 
-| Type | Component | Description |
-|------|-----------|-------------|
-| `hero` | `HeroSection` | Hero banner with headline, CTA, background image |
-| `text` | `TextSection` | Rich text content with optional image |
-| `gallery` | `GallerySection` | Photo grid with lightbox, optional Instagram link |
-| `testimonials` | `TestimonialsSection` | Client testimonials with star ratings |
-| `faq` | `FAQSection` | Accordion-style FAQ items |
-| `contact` | `ContactSection` | Contact form with validation |
-| `cta` | `CTASection` | Call-to-action banner |
+| Type           | Component             | Description                                       |
+| -------------- | --------------------- | ------------------------------------------------- |
+| `hero`         | `HeroSection`         | Hero banner with headline, CTA, background image  |
+| `text`         | `TextSection`         | Rich text content with optional image             |
+| `gallery`      | `GallerySection`      | Photo grid with lightbox, optional Instagram link |
+| `testimonials` | `TestimonialsSection` | Client testimonials with star ratings             |
+| `faq`          | `FAQSection`          | Accordion-style FAQ items                         |
+| `contact`      | `ContactSection`      | Contact form with validation                      |
+| `cta`          | `CTASection`          | Call-to-action banner                             |
 
 **normalizeToPages() Helper:**
 
@@ -250,17 +247,17 @@ const galleryData = pages.gallery.sections[0];
 
 **Tenant Library (`lib/tenant.ts`) Exports:**
 
-| Export | Description |
-|--------|-------------|
-| `getTenantBySlug(slug)` | Fetch tenant by slug (cached, ISR 60s) |
-| `getTenantByDomain(domain)` | Fetch tenant by custom domain |
-| `getTenantStorefrontData(slug)` | Fetch tenant + packages + segments in parallel |
-| `isPageEnabled(config, pageName)` | Check if a page is enabled in config |
-| `normalizeToPages(config)` | Convert legacy config to pages format |
-| `validateDomain(domain)` | Validate and sanitize domain parameter |
-| `getTenantPackages(apiKey)` | Fetch tenant packages |
-| `getTenantSegments(apiKey)` | Fetch tenant segments |
-| `getTenantPackageBySlug(apiKey, slug)` | Fetch single package by slug |
+| Export                                 | Description                                    |
+| -------------------------------------- | ---------------------------------------------- |
+| `getTenantBySlug(slug)`                | Fetch tenant by slug (cached, ISR 60s)         |
+| `getTenantByDomain(domain)`            | Fetch tenant by custom domain                  |
+| `getTenantStorefrontData(slug)`        | Fetch tenant + packages + segments in parallel |
+| `isPageEnabled(config, pageName)`      | Check if a page is enabled in config           |
+| `normalizeToPages(config)`             | Convert legacy config to pages format          |
+| `validateDomain(domain)`               | Validate and sanitize domain parameter         |
+| `getTenantPackages(apiKey)`            | Fetch tenant packages                          |
+| `getTenantSegments(apiKey)`            | Fetch tenant segments                          |
+| `getTenantPackageBySlug(apiKey, slug)` | Fetch single package by slug                   |
 
 ## Development
 
@@ -298,13 +295,13 @@ npm run build
 
 This app is the Next.js replacement for the Vite client (`client/`). Key differences:
 
-| Aspect | Vite Client | Next.js App |
-|--------|-------------|-------------|
-| Rendering | CSR only | SSR + CSR |
-| Auth storage | localStorage | HTTP-only cookies |
-| API client | Global singleton | Factory per request |
-| Routing | React Router | App Router |
-| SEO | Limited | Full SSR metadata |
+| Aspect       | Vite Client      | Next.js App         |
+| ------------ | ---------------- | ------------------- |
+| Rendering    | CSR only         | SSR + CSR           |
+| Auth storage | localStorage     | HTTP-only cookies   |
+| API client   | Global singleton | Factory per request |
+| Routing      | React Router     | App Router          |
+| SEO          | Limited          | Full SSR metadata   |
 
 ## Dependencies
 

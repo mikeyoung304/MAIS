@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p3
-issue_id: "415"
+issue_id: '415'
 tags:
   - code-review
   - code-quality
@@ -17,6 +17,7 @@ dependencies: []
 Section components hardcode default values instead of importing from contracts, creating potential inconsistency between schema defaults and component defaults.
 
 **Why This Matters:**
+
 - Single source of truth principle violated
 - Defaults could diverge between schema and components
 - Harder to change defaults globally
@@ -26,6 +27,7 @@ Section components hardcode default values instead of importing from contracts, 
 **Location:** Multiple section components
 
 **Evidence:**
+
 - `HeroSection`: `ctaText = 'View Packages'`
 - `GallerySection`: `headline = 'Our Work'`
 - `TestimonialsSection`: `headline = 'What Clients Say'`
@@ -34,6 +36,7 @@ Section components hardcode default values instead of importing from contracts, 
 - `CTASection`: `ctaText = 'Get Started'`
 
 **Schema defaults exist** in `packages/contracts/src/landing-page.ts` (e.g., line 254):
+
 ```typescript
 headline: z.string().max(60).default('Our Work'),
 ```
@@ -47,10 +50,12 @@ headline: z.string().max(60).default('Our Work'),
 The component defaults serve as fallbacks when props aren't provided. Schema defaults apply during parsing.
 
 **Pros:**
+
 - No change needed
 - Defensive programming
 
 **Cons:**
+
 - Could diverge
 
 **Effort:** None
@@ -61,9 +66,11 @@ The component defaults serve as fallbacks when props aren't provided. Schema def
 Trust Zod schema to provide defaults during parse.
 
 **Pros:**
+
 - Single source of truth
 
 **Cons:**
+
 - Components less defensive
 - May need changes if data path skips schema
 
@@ -73,6 +80,7 @@ Trust Zod schema to provide defaults during parse.
 ## Technical Details
 
 **Affected Files:**
+
 - All section components in `apps/web/src/components/tenant/sections/`
 
 ## Acceptance Criteria
@@ -87,6 +95,6 @@ Trust Zod schema to provide defaults during parse.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                         |
+| ---------- | ------------------------ | --------------------------------- |
 | 2025-12-25 | Created from code review | Default value inconsistency noted |

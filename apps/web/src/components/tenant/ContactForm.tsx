@@ -104,74 +104,79 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
     return !Object.values(newErrors).some(Boolean);
   }, [formData, validateField]);
 
-  const handleChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Validate on change if field has been touched
-    if (touched.has(name as keyof FormData)) {
+      // Validate on change if field has been touched
+      if (touched.has(name as keyof FormData)) {
+        const error = validateField(name as keyof FormData, value);
+        setErrors((prev) => ({ ...prev, [name]: error }));
+      }
+    },
+    [touched, validateField]
+  );
+
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setTouched((prev) => new Set(prev).add(name as keyof FormData));
       const error = validateField(name as keyof FormData, value);
       setErrors((prev) => ({ ...prev, [name]: error }));
-    }
-  }, [touched, validateField]);
+    },
+    [validateField]
+  );
 
-  const handleBlur = useCallback((
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setTouched((prev) => new Set(prev).add(name as keyof FormData));
-    const error = validateField(name as keyof FormData, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  }, [validateField]);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+      // Mark all fields as touched
+      setTouched(new Set(['name', 'email', 'phone', 'message']));
 
-    // Mark all fields as touched
-    setTouched(new Set(['name', 'email', 'phone', 'message']));
-
-    if (!validateForm()) {
-      return;
-    }
-
-    // Cancel any in-flight request
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
-
-    setStatus('submitting');
-
-    try {
-      // Phase 1: Simulate success after 1s delay with abort support
-      // Phase 2: Replace with actual API call using abortControllerRef.current.signal
-      // await fetch(`${API_BASE_URL}/v1/inquiries`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json', 'X-Tenant-Key': apiKey },
-      //   body: JSON.stringify(formData),
-      //   signal: abortControllerRef.current.signal,
-      // });
-
-      await new Promise<void>((resolve, reject) => {
-        const timeoutId = setTimeout(resolve, 1000);
-        abortControllerRef.current!.signal.addEventListener('abort', () => {
-          clearTimeout(timeoutId);
-          reject(new DOMException('Aborted', 'AbortError'));
-        });
-      });
-
-      // Don't update state if aborted
-      if (abortControllerRef.current?.signal.aborted) return;
-
-      setStatus('success');
-    } catch (error) {
-      // Silently ignore aborted requests
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (!validateForm()) {
         return;
       }
-      setStatus('error');
-    }
-  }, [validateForm]);
+
+      // Cancel any in-flight request
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+
+      setStatus('submitting');
+
+      try {
+        // Phase 1: Simulate success after 1s delay with abort support
+        // Phase 2: Replace with actual API call using abortControllerRef.current.signal
+        // await fetch(`${API_BASE_URL}/v1/inquiries`, {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json', 'X-Tenant-Key': apiKey },
+        //   body: JSON.stringify(formData),
+        //   signal: abortControllerRef.current.signal,
+        // });
+
+        await new Promise<void>((resolve, reject) => {
+          const timeoutId = setTimeout(resolve, 1000);
+          abortControllerRef.current!.signal.addEventListener('abort', () => {
+            clearTimeout(timeoutId);
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+
+        // Don't update state if aborted
+        if (abortControllerRef.current?.signal.aborted) return;
+
+        setStatus('success');
+      } catch (error) {
+        // Silently ignore aborted requests
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        setStatus('error');
+      }
+    },
+    [validateForm]
+  );
 
   const handleReset = useCallback(() => {
     setFormData({ name: '', email: '', phone: '', message: '' });
@@ -241,14 +246,15 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
       noValidate
       aria-busy={status === 'submitting'}
     >
-      <h2 className="text-xl font-bold text-text-primary mb-6">
-        Send us a message
-      </h2>
+      <h2 className="text-xl font-bold text-text-primary mb-6">Send us a message</h2>
 
       {/* Name field */}
       <div className="mb-6">
         <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-2">
-          Name <span className="text-red-500" aria-hidden="true">*</span>
+          Name{' '}
+          <span className="text-red-500" aria-hidden="true">
+            *
+          </span>
         </label>
         <input
           type="text"
@@ -279,7 +285,10 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
       {/* Email field */}
       <div className="mb-6">
         <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
-          Email <span className="text-red-500" aria-hidden="true">*</span>
+          Email{' '}
+          <span className="text-red-500" aria-hidden="true">
+            *
+          </span>
         </label>
         <input
           type="email"
@@ -327,7 +336,10 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
       {/* Message field */}
       <div className="mb-6">
         <label htmlFor="message" className="block text-sm font-medium text-text-primary mb-2">
-          Message <span className="text-red-500" aria-hidden="true">*</span>
+          Message{' '}
+          <span className="text-red-500" aria-hidden="true">
+            *
+          </span>
         </label>
         <textarea
           id="message"

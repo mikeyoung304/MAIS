@@ -80,9 +80,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
-              Package Not Found
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Package Not Found</h1>
             <p className="text-neutral-600 mb-6">
               The package you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
@@ -106,9 +104,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
-              Package Unavailable
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Package Unavailable</h1>
             <p className="text-neutral-600 mb-6">
               This package is currently not available for booking.
             </p>
@@ -133,9 +129,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
-              Different Booking Type
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Different Booking Type</h1>
             <p className="text-neutral-600 mb-6">
               This package requires appointment scheduling. Please use the appointment booking flow.
             </p>
@@ -168,11 +162,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
 
       {/* Booking Wizard */}
       <div className="container mx-auto px-4 py-8">
-        <DateBookingWizard
-          package={pkg}
-          tenantApiKey={tenant.apiKeyPublic}
-          tenantSlug={slug}
-        />
+        <DateBookingWizard package={pkg} tenantApiKey={tenant.apiKeyPublic} tenantSlug={slug} />
       </div>
     </div>
   );

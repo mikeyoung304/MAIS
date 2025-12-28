@@ -45,10 +45,7 @@ export function ContactSection({
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Email</p>
-                    <a
-                      href={`mailto:${email}`}
-                      className="text-sage hover:underline"
-                    >
+                    <a href={`mailto:${email}`} className="text-sage hover:underline">
                       {email}
                     </a>
                   </div>
@@ -62,10 +59,7 @@ export function ContactSection({
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Phone</p>
-                    <a
-                      href={`tel:${phone}`}
-                      className="text-sage hover:underline"
-                    >
+                    <a href={`tel:${phone}`} className="text-sage hover:underline">
                       {phone}
                     </a>
                   </div>
@@ -99,9 +93,7 @@ export function ContactSection({
           </div>
         ) : (
           <div className="mt-16 rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg text-center">
-            <p className="text-text-muted">
-              Contact information coming soon. Check back later!
-            </p>
+            <p className="text-text-muted">Contact information coming soon. Check back later!</p>
           </div>
         )}
       </div>

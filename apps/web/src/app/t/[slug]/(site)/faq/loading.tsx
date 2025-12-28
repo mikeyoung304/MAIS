@@ -15,10 +15,7 @@ export default function FAQLoading() {
           {/* FAQ Items Skeleton */}
           <div className="mt-16 space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-neutral-100 bg-white p-6"
-              >
+              <div key={i} className="rounded-2xl border border-neutral-100 bg-white p-6">
                 <div className="flex items-center justify-between">
                   <div className="h-5 w-3/4 rounded bg-neutral-200" />
                   <div className="h-5 w-5 rounded bg-neutral-100" />

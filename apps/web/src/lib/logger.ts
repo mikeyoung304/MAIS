@@ -28,9 +28,7 @@ export const logger = {
     console.warn(formatMessage('warn', message, data));
   },
   error: (message: string, error?: Error | LogData) => {
-    const data = error instanceof Error
-      ? { message: error.message, stack: error.stack }
-      : error;
+    const data = error instanceof Error ? { message: error.message, stack: error.stack } : error;
     console.error(formatMessage('error', message, data));
   },
 };

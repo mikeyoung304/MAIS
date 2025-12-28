@@ -159,6 +159,7 @@ Update components like `ScrollingIdentity.tsx` with new brand voice and personal
 #### 3.1 Create brand positioning doc
 
 Create `docs/design/{BRAND}_BRAND_POSITIONING.md` with:
+
 - Brand identity (name, domain, tagline)
 - Target audience
 - Voice principles with examples
@@ -168,6 +169,7 @@ Create `docs/design/{BRAND}_BRAND_POSITIONING.md` with:
 #### 3.2 Rewrite brand voice guide
 
 Update `docs/design/BRAND_VOICE_GUIDE.md` with:
+
 - Voice principles with do/don't examples
 - Copy patterns (headlines, subheadlines, CTAs)
 - Word usage table
@@ -292,17 +294,17 @@ After completing all phases:
 
 ## Files Modified Summary
 
-| Category | Files |
-|----------|-------|
-| Seed Files | `seeds/{brand}.ts` (new), `e2e.ts`, `seed.ts` |
-| App Pages | `apps/web/src/app/page.tsx`, `layout.tsx` |
-| Components | `TenantFooter.tsx`, `ScrollingIdentity.tsx` |
-| Middleware | `apps/web/src/middleware.ts` |
-| API Routes | `health.routes.ts`, `metrics.routes.ts` |
-| Services | `domain-verification.service.ts` |
-| Tests | `e2e-seed.test.ts`, `*.spec.ts` (4 files) |
-| Config | `playwright.config.ts`, `client/.env.example` |
-| Docs | `BRAND_VOICE_GUIDE.md`, `{BRAND}_BRAND_POSITIONING.md`, `CLAUDE.md` |
+| Category   | Files                                                               |
+| ---------- | ------------------------------------------------------------------- |
+| Seed Files | `seeds/{brand}.ts` (new), `e2e.ts`, `seed.ts`                       |
+| App Pages  | `apps/web/src/app/page.tsx`, `layout.tsx`                           |
+| Components | `TenantFooter.tsx`, `ScrollingIdentity.tsx`                         |
+| Middleware | `apps/web/src/middleware.ts`                                        |
+| API Routes | `health.routes.ts`, `metrics.routes.ts`                             |
+| Services   | `domain-verification.service.ts`                                    |
+| Tests      | `e2e-seed.test.ts`, `*.spec.ts` (4 files)                           |
+| Config     | `playwright.config.ts`, `client/.env.example`                       |
+| Docs       | `BRAND_VOICE_GUIDE.md`, `{BRAND}_BRAND_POSITIONING.md`, `CLAUDE.md` |
 
 ---
 
@@ -386,22 +388,22 @@ export const BRAND = {
 
 ## Related Documentation
 
-| Document | Location | Relevance |
-|----------|----------|-----------|
-| REBRAND-SUMMARY.md | `/docs/` | Strategic decision and checklist |
-| HANDLED_BRAND_POSITIONING.md | `/docs/design/` | Brand identity guide |
-| BRAND_VOICE_GUIDE.md | `/docs/design/` | Copy and design patterns |
-| TYPESCRIPT-SEED-PREVENTION-* | `/docs/solutions/` | Seed update patterns |
+| Document                      | Location           | Relevance                        |
+| ----------------------------- | ------------------ | -------------------------------- |
+| REBRAND-SUMMARY.md            | `/docs/`           | Strategic decision and checklist |
+| HANDLED_BRAND_POSITIONING.md  | `/docs/design/`    | Brand identity guide             |
+| BRAND_VOICE_GUIDE.md          | `/docs/design/`    | Copy and design patterns         |
+| TYPESCRIPT-SEED-PREVENTION-\* | `/docs/solutions/` | Seed update patterns             |
 
 ---
 
 ## Key Lessons
 
-| Issue | Impact | Prevention |
-|-------|--------|------------|
-| Test fixtures with old slugs | E2E tests blocked | Centralize test constants |
-| Hardcoded API key patterns | Auth failures | Use `BRAND.testApiKeyPrefix` |
-| Old brand in error messages | User confusion | Search all string literals |
-| Documentation drift | Developer confusion | Include docs in inventory |
+| Issue                        | Impact              | Prevention                   |
+| ---------------------------- | ------------------- | ---------------------------- |
+| Test fixtures with old slugs | E2E tests blocked   | Centralize test constants    |
+| Hardcoded API key patterns   | Auth failures       | Use `BRAND.testApiKeyPrefix` |
+| Old brand in error messages  | User confusion      | Search all string literals   |
+| Documentation drift          | Developer confusion | Include docs in inventory    |
 
 **The 80/20 rule:** 80% of rebrand issues come from test fixtures and configuration files. Prioritize these first (P1) before documentation (P2).

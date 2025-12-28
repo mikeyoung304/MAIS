@@ -9,11 +9,11 @@ components:
   - connection-pooling
   - test-execution
 symptoms:
-  - "38 test failures with parallel execution vs 13 with serial"
-  - "Database connection pool exhaustion errors in integration tests"
-  - "FATAL: remaining connection slots are reserved for non-replication superuser connections"
-  - "State pollution between test suites causing cascading failures"
-  - "Timeout errors: Cannot acquire database connection"
+  - '38 test failures with parallel execution vs 13 with serial'
+  - 'Database connection pool exhaustion errors in integration tests'
+  - 'FATAL: remaining connection slots are reserved for non-replication superuser connections'
+  - 'State pollution between test suites causing cascading failures'
+  - 'Timeout errors: Cannot acquire database connection'
 root_cause: |
   Vitest's default parallel worker pool (--pool=threads or --pool=forks with multiple workers)
   causes multiple test suites to run simultaneously, each creating database connections. With
@@ -55,11 +55,11 @@ Results: 38 failed, 1067 passed (38 failures from pool exhaustion)
 
 ### Impact Analysis
 
-| Execution Mode    | Passed | Failed | Cause of Failures                      |
-| ----------------- | ------ | ------ | -------------------------------------- |
-| Parallel (8 workers) | 1067   | 38     | Connection pool exhaustion             |
-| Serial (1 fork)   | 1169   | 13     | Pre-existing integration issues only   |
-| Improvement       | +102   | -25    | 66% reduction in test failures         |
+| Execution Mode       | Passed | Failed | Cause of Failures                    |
+| -------------------- | ------ | ------ | ------------------------------------ |
+| Parallel (8 workers) | 1067   | 38     | Connection pool exhaustion           |
+| Serial (1 fork)      | 1169   | 13     | Pre-existing integration issues only |
+| Improvement          | +102   | -25    | 66% reduction in test failures       |
 
 ## Root Cause Analysis
 
@@ -131,6 +131,7 @@ SERIAL (1 fork) - PASSES ✓
 ```
 
 **Key Changes:**
+
 - `test:serial`: Forces single-fork execution (sequential test files)
 - Default `test`: Still uses parallel execution for CI
 - Can be overridden per environment
@@ -147,19 +148,21 @@ vitest --pool=forks                      // Use fork pool (child processes, not 
 
 **Pool Type Selection:**
 
-| Pool Type | Use Case               | Isolation | Speed   |
-| --------- | ---------------------- | --------- | ------- |
-| `threads` | Default; CPU-bound     | Weak      | Fast    |
-| `forks`   | I/O-bound (database)   | Strong    | Slower  |
-| `single`  | Debugging; CI troubleshooting | Perfect | Slowest |
+| Pool Type | Use Case                      | Isolation | Speed   |
+| --------- | ----------------------------- | --------- | ------- |
+| `threads` | Default; CPU-bound            | Weak      | Fast    |
+| `forks`   | I/O-bound (database)          | Strong    | Slower  |
+| `single`  | Debugging; CI troubleshooting | Perfect   | Slowest |
 
 **Why `forks` for databases:**
+
 - Each fork is a complete process (true isolation)
 - No shared memory between workers
 - Clean connection lifecycle per fork
 - Better for integration tests with state
 
 **Why `singleFork` matters:**
+
 - `--pool=forks` with default workers = 8 parallel forks = 8 concurrent connections
 - `--pool=forks --poolOptions.forks.singleFork` = 1 fork = sequential execution
 - Forces test files to run one after another with complete cleanup between each
@@ -167,6 +170,7 @@ vitest --pool=forks                      // Use fork pool (child processes, not 
 ### Step 3: Execution Pattern Comparison
 
 **Before (Parallel):**
+
 ```bash
 npm test
 # Vitest config: default (8 workers)
@@ -175,6 +179,7 @@ npm test
 ```
 
 **After (Serial):**
+
 ```bash
 npm run test:serial
 # Vitest config: --pool=forks --poolOptions.forks.singleFork
@@ -228,6 +233,7 @@ Test Files  46 passed (46)
 ✓ **Local development** with full test suite
 
 **Recommended commands:**
+
 ```bash
 # Run all tests serially (safest)
 npm run test:serial
@@ -247,6 +253,7 @@ npm run test:serial -- --watch
 ✓ **Large test suites** (1000+ pure unit tests)
 
 **Limitations:**
+
 - NOT recommended for database tests
 - Requires external dependency mocking
 - Higher failure rate if any test touches database
@@ -323,6 +330,7 @@ If using Supabase, the test database must support at least 5-10 concurrent conne
 ### The Two-Part Solution
 
 **Part 1: `--pool=forks`**
+
 - Switches from thread-based workers to process-based workers
 - Each worker is a complete Node.js process with its own:
   - V8 heap
@@ -332,6 +340,7 @@ If using Supabase, the test database must support at least 5-10 concurrent conne
 - **Benefit:** Complete isolation, no shared state between workers
 
 **Part 2: `--poolOptions.forks.singleFork`**
+
 - Limits worker count to 1
 - Tests run sequentially: File1 → File2 → File3 → ...
 - Each file completes with full cleanup before next file starts
@@ -393,16 +402,19 @@ Reality:   Either approach acceptable for CI (not time-critical)
 ### Issue 1: Tests Still Timeout in Serial Mode
 
 **Symptoms:**
+
 ```
 Test timeout in 5000ms
 ```
 
 **Causes:**
+
 - Individual test is slow (> 5s), not pool exhaustion
 - Database query inefficiency
 - Missing database indexes
 
 **Solution:**
+
 ```bash
 # Increase timeout for slow tests
 it('should handle bulk operations', async () => {
@@ -413,16 +425,19 @@ it('should handle bulk operations', async () => {
 ### Issue 2: Serial Execution Still Fails
 
 **Symptoms:**
+
 ```
 Connection timeout: Cannot acquire database connection
 ```
 
 **Causes:**
+
 - Database not running
 - Wrong DATABASE_URL
 - Test database doesn't exist
 
 **Solution:**
+
 ```bash
 # Verify database connection
 psql $DATABASE_URL -c "SELECT 1;"
@@ -453,6 +468,7 @@ npm run test:serial -- test/integration/
 **Rule:** Any test that touches a database must use serial execution.
 
 **Decision Tree:**
+
 ```
 Does test access database?
 ├─ YES  → Use npm run test:serial
@@ -462,6 +478,7 @@ Does test access database?
 ### 2. Connection Pool Monitoring
 
 Add to pre-commit hooks:
+
 ```bash
 #!/bin/bash
 # Ensure test database exists
@@ -474,6 +491,7 @@ psql $DATABASE_URL -c "SELECT 1;" || {
 ### 3. CI/CD Configuration
 
 **GitHub Actions:**
+
 ```yaml
 jobs:
   test:
@@ -481,10 +499,11 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
       - run: npm install
-      - run: npm run test:serial  # Always use serial in CI
+      - run: npm run test:serial # Always use serial in CI
 ```
 
 **Render/Vercel:**
+
 ```json
 {
   "buildCommand": "npm run build",
@@ -505,14 +524,14 @@ When reviewing test files, ensure:
 
 ## Related Files and Documentation
 
-| File                                    | Purpose                          |
-| --------------------------------------- | -------------------------------- |
-| server/package.json                     | Script definition                |
-| server/vitest.config.ts                 | Vitest configuration             |
-| server/test/helpers/integration-setup.ts | Test setup patterns              |
-| .env.test.example                       | Test environment variables       |
-| DEVELOPING.md                           | Development workflow             |
-| DECISIONS.md                            | Architectural decision records   |
+| File                                     | Purpose                        |
+| ---------------------------------------- | ------------------------------ |
+| server/package.json                      | Script definition              |
+| server/vitest.config.ts                  | Vitest configuration           |
+| server/test/helpers/integration-setup.ts | Test setup patterns            |
+| .env.test.example                        | Test environment variables     |
+| DEVELOPING.md                            | Development workflow           |
+| DECISIONS.md                             | Architectural decision records |
 
 ## Key Takeaways
 

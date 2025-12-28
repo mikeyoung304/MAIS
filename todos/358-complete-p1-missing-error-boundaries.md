@@ -1,7 +1,7 @@
 ---
 status: complete
 priority: p1
-issue_id: "358"
+issue_id: '358'
 tags: [code-review, architecture, nextjs]
 dependencies: []
 ---
@@ -19,12 +19,14 @@ No `error.tsx` files exist in the Next.js app directory. Pages with SSR failures
 **Location:** `apps/web/src/app/**` (all dynamic routes)
 
 **Evidence:**
+
 ```bash
 # No error.tsx files found
 grep -r "error.tsx" apps/web/src/app/  # Returns nothing
 ```
 
 **Missing in:**
+
 - `/t/[slug]/error.tsx` - Tenant pages
 - `/t/[slug]/book/[packageSlug]/error.tsx` - Booking pages
 - `/(protected)/tenant/error.tsx` - Admin pages
@@ -34,6 +36,7 @@ grep -r "error.tsx" apps/web/src/app/  # Returns nothing
 ## Proposed Solutions
 
 ### Option 1: Add Error Boundaries to All Dynamic Routes (Recommended)
+
 - **Description:** Create error.tsx for each dynamic route
 - **Pros:** Graceful error handling, retry capability
 - **Cons:** Multiple files to create
@@ -41,6 +44,7 @@ grep -r "error.tsx" apps/web/src/app/  # Returns nothing
 - **Risk:** Low
 
 ### Option 2: Root-Level Error Boundary Only
+
 - **Description:** Add single error.tsx at app level
 - **Pros:** Quick implementation
 - **Cons:** Less granular error handling
@@ -54,12 +58,14 @@ grep -r "error.tsx" apps/web/src/app/  # Returns nothing
 ## Technical Details
 
 **Files to Create:**
+
 - `apps/web/src/app/t/[slug]/error.tsx`
 - `apps/web/src/app/t/[slug]/book/[packageSlug]/error.tsx`
 - `apps/web/src/app/(protected)/tenant/error.tsx`
 - `apps/web/src/app/error.tsx` (fallback)
 
 **Template:**
+
 ```typescript
 'use client';
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
@@ -83,8 +89,8 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                     | Learnings                             |
+| ---------- | -------------------------- | ------------------------------------- |
 | 2025-12-25 | Created during code review | Missing error handling in Next.js app |
 
 ## Resources

@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Calendar, Mail, Users, Package as PackageIcon, Home } from 'lucide-react';
-import { getTenantBySlug, getBookingById, getTenantPackageBySlug, TenantNotFoundError } from '@/lib/tenant';
+import {
+  getTenantBySlug,
+  getBookingById,
+  getTenantPackageBySlug,
+  TenantNotFoundError,
+} from '@/lib/tenant';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -79,9 +84,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
                 <CheckCircle className="w-8 h-8 text-green-400" />
               </div>
             </div>
-            <CardTitle className="text-4xl md:text-5xl text-white">
-              Booking Confirmed!
-            </CardTitle>
+            <CardTitle className="text-4xl md:text-5xl text-white">Booking Confirmed!</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-8">
@@ -95,7 +98,8 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
                     Thank you for your booking with {tenant.name}.
                     {booking?.email && (
                       <>
-                        {' '}We&apos;ll send you a confirmation email shortly at{' '}
+                        {' '}
+                        We&apos;ll send you a confirmation email shortly at{' '}
                         <span className="font-medium text-white">{booking.email}</span>.
                       </>
                     )}
@@ -200,10 +204,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
         <div className="mt-8 text-center text-neutral-600 text-sm">
           <p>
             Questions about your booking?{' '}
-            <Link
-              href={`/t/${slug}/contact`}
-              className="text-macon-orange hover:underline"
-            >
+            <Link href={`/t/${slug}/contact`} className="text-macon-orange hover:underline">
               Contact us
             </Link>
           </p>

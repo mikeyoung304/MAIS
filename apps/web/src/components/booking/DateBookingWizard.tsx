@@ -19,9 +19,23 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InputEnhanced } from '@/components/ui/input-enhanced';
 import { Stepper, type Step } from '@/components/ui/stepper';
-import { User, Mail, Phone, ArrowLeft, Calendar, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  ArrowLeft,
+  Calendar,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { getUnavailableDates, checkDateAvailability, createDateBooking, type PackageData } from '@/lib/tenant';
+import {
+  getUnavailableDates,
+  checkDateAvailability,
+  createDateBooking,
+  type PackageData,
+} from '@/lib/tenant';
 import 'react-day-picker/style.css';
 
 // Zod schema for customer form validation
@@ -107,7 +121,9 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
         <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="font-medium text-green-900">Great choice!</p>
-          <p className="text-sm text-green-700">Click &quot;Continue&quot; to select your event date.</p>
+          <p className="text-sm text-green-700">
+            Click &quot;Continue&quot; to select your event date.
+          </p>
         </div>
       </div>
     </CardContent>
@@ -272,7 +288,9 @@ const ReviewStep = React.memo(({ pkg, selectedDate, customerDetails }: ReviewSte
           <p className="text-neutral-600">{customerDetails.email}</p>
           {customerDetails.phone && <p className="text-neutral-600">{customerDetails.phone}</p>}
           {customerDetails.notes && (
-            <p className="text-neutral-600 mt-2 text-sm italic">&quot;{customerDetails.notes}&quot;</p>
+            <p className="text-neutral-600 mt-2 text-sm italic">
+              &quot;{customerDetails.notes}&quot;
+            </p>
           )}
         </div>
 
@@ -300,7 +318,7 @@ export function DateBookingWizard({
   package: pkg,
   tenantApiKey,
   tenantSlug: _tenantSlug,
-  onBookingStart
+  onBookingStart,
 }: DateBookingWizardProps) {
   // State management
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -376,30 +394,33 @@ export function DateBookingWizard({
   const canProceedFromStep0 = true;
 
   // Step 2: Date Selection
-  const handleDateSelect = useCallback(async (date: Date | undefined) => {
-    if (!date) {
-      setSelectedDate(null);
-      return;
-    }
+  const handleDateSelect = useCallback(
+    async (date: Date | undefined) => {
+      if (!date) {
+        setSelectedDate(null);
+        return;
+      }
 
-    const dateStr = date.toISOString().split('T')[0];
+      const dateStr = date.toISOString().split('T')[0];
 
-    try {
-      // Double-check availability with API
-      const isAvailable = await checkDateAvailability(tenantApiKey, dateStr);
-      if (isAvailable) {
-        setSelectedDate(date);
-        setSubmitError(null);
-      } else {
-        setSubmitError('This date is no longer available. Please select another date.');
+      try {
+        // Double-check availability with API
+        const isAvailable = await checkDateAvailability(tenantApiKey, dateStr);
+        if (isAvailable) {
+          setSelectedDate(date);
+          setSubmitError(null);
+        } else {
+          setSubmitError('This date is no longer available. Please select another date.');
+          setSelectedDate(null);
+        }
+      } catch {
+        // Network error - show user-friendly message
+        setSubmitError('Unable to check date availability. Please try again.');
         setSelectedDate(null);
       }
-    } catch {
-      // Network error - show user-friendly message
-      setSubmitError('Unable to check date availability. Please try again.');
-      setSelectedDate(null);
-    }
-  }, [tenantApiKey]);
+    },
+    [tenantApiKey]
+  );
 
   const canProceedFromStep1 = selectedDate !== null;
 
@@ -467,7 +488,9 @@ export function DateBookingWizard({
       window.location.href = result.checkoutUrl;
     } catch (error) {
       setSubmitError(
-        error instanceof Error ? error.message : 'Unable to create checkout session. Please try again.'
+        error instanceof Error
+          ? error.message
+          : 'Unable to create checkout session. Please try again.'
       );
       setIsSubmitting(false);
     }
@@ -503,11 +526,7 @@ export function DateBookingWizard({
           return null;
         }
         return (
-          <ReviewStep
-            pkg={pkg}
-            selectedDate={selectedDate}
-            customerDetails={customerDetails}
-          />
+          <ReviewStep pkg={pkg} selectedDate={selectedDate} customerDetails={customerDetails} />
         );
 
       default:

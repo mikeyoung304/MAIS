@@ -7,7 +7,10 @@ import {
   isPageEnabled,
   normalizeToPages,
 } from '@/lib/tenant';
-import type { LandingPageConfig, TestimonialsSection as TestimonialsSectionType } from '@macon/contracts';
+import type {
+  LandingPageConfig,
+  TestimonialsSection as TestimonialsSectionType,
+} from '@macon/contracts';
 
 interface TestimonialsPageProps {
   params: Promise<{ slug: string }>;

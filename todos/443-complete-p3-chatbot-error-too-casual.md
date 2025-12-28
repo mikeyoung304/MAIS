@@ -1,6 +1,7 @@
 # ChatbotUnavailable "Who dis?" Error Too Casual
 
 ## Metadata
+
 - **ID:** 443
 - **Status:** pending
 - **Priority:** P3
@@ -16,6 +17,7 @@ In `ChatbotUnavailable.tsx`, the `not_authenticated` error displays "Who dis?" w
 Location: `apps/web/src/components/agent/ChatbotUnavailable.tsx`
 
 Current error messages:
+
 - `missing_api_key`: "Brain not plugged in yet" — Good, cheeky
 - `context_unavailable`: "Something went sideways" — Good, honest
 - `rate_limited`: "Whoa, slow down" — Good, self-aware
@@ -24,20 +26,25 @@ Current error messages:
 ## Proposed Solutions
 
 ### Option A: "I don't recognize you"
+
 More professional while still conversational
 
 ### Option B: "We haven't met yet"
+
 Warm but clear
 
 ### Option C: "Please log in first"
+
 Direct, no personality
 
 ## Recommended Action
+
 Option A or B — maintain personality without being flippant
 
 ## Technical Details
 
 **Affected Files:**
+
 - `apps/web/src/components/agent/ChatbotUnavailable.tsx`
 
 ## Acceptance Criteria
@@ -48,6 +55,6 @@ Option A or B — maintain personality without being flippant
 
 ## Work Log
 
-| Date | Action | Notes |
-|------|--------|-------|
+| Date       | Action  | Notes                                     |
+| ---------- | ------- | ----------------------------------------- |
 | 2025-12-27 | Created | From brand review - Agent-Native Reviewer |
