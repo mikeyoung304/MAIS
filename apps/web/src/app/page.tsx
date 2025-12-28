@@ -310,18 +310,18 @@ export default function HomePage() {
                 Websites. Booking. Payments. AI. Plus a monthly filter for what&apos;s actually
                 worth knowing. For people with better things to do.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   asChild
                   variant="sage"
-                  className="rounded-full px-8 py-5 text-base shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="rounded-full px-8 py-6 sm:py-5 text-lg sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Link href="/signup">Get Handled</Link>
                 </Button>
                 <Button
                   asChild
                   variant="outline"
-                  className="rounded-full px-8 py-5 text-base hover:bg-neutral-50 transition-all duration-300"
+                  className="rounded-full px-8 py-6 sm:py-5 text-lg sm:text-base font-medium hover:bg-neutral-50 transition-all duration-300"
                 >
                   <Link href="#features">See What&apos;s Included</Link>
                 </Button>
@@ -378,7 +378,7 @@ export default function HomePage() {
                   One membership. The rest? Handled.
                 </p>
               </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
                 {features.map((feature) => (
                   <div
                     key={feature.title}
@@ -393,8 +393,8 @@ export default function HomePage() {
                         The Shortcut
                       </span>
                     )}
-                    <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
-                      <feature.icon className="w-6 h-6 text-sage" />
+                    <div className="w-14 h-14 sm:w-12 sm:h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
+                      <feature.icon className="w-8 h-8 sm:w-6 sm:h-6 text-sage" />
                     </div>
                     <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
                       {feature.title}
