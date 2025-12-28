@@ -237,6 +237,89 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     };
   });
 
+  // add_blackout_date - Block one or more dates
+  registerProposalExecutor('add_blackout_date', async (tenantId, payload) => {
+    const { dates, newDates, reason, isRange, startDate, endDate } = payload as {
+      dates: string[];
+      newDates: string[];
+      reason: string | null;
+      isRange: boolean;
+      startDate: string;
+      endDate: string;
+    };
+
+    // Only create blackouts for dates that don't already exist
+    if (newDates.length === 0) {
+      return {
+        action: 'all_already_blocked',
+        totalDays: dates.length,
+        alreadyBlocked: dates.length,
+        message: 'All requested dates are already blocked.',
+      };
+    }
+
+    // Create all new blackout dates
+    const createdBlackouts = await prisma.blackoutDate.createMany({
+      data: newDates.map((dateStr) => ({
+        tenantId,
+        date: new Date(dateStr),
+        reason: reason || null,
+      })),
+      skipDuplicates: true, // Extra safety for race conditions
+    });
+
+    logger.info(
+      { tenantId, startDate, endDate, count: createdBlackouts.count },
+      'Blackout dates created via agent'
+    );
+
+    return {
+      action: 'created',
+      datesBlocked: newDates,
+      count: createdBlackouts.count,
+      isRange,
+      startDate,
+      endDate,
+      reason: reason || null,
+      ...(dates.length !== newDates.length
+        ? { alreadyBlockedCount: dates.length - newDates.length }
+        : {}),
+    };
+  });
+
+  // remove_blackout_date - Unblock a single date by ID
+  registerProposalExecutor('remove_blackout_date', async (tenantId, payload) => {
+    const { blackoutId, date } = payload as {
+      blackoutId: string;
+      date: string;
+    };
+
+    // Verify ownership - CRITICAL: prevent cross-tenant access
+    const blackout = await prisma.blackoutDate.findFirst({
+      where: { id: blackoutId, tenantId },
+    });
+
+    if (!blackout) {
+      throw new Error(
+        `Blackout "${blackoutId}" not found or you do not have permission to delete it. Verify the blackout ID belongs to your business.`
+      );
+    }
+
+    // Delete the blackout
+    await prisma.blackoutDate.delete({
+      where: { id: blackoutId },
+    });
+
+    logger.info({ tenantId, blackoutId, date }, 'Blackout removed via agent');
+
+    return {
+      action: 'removed',
+      blackoutId,
+      date,
+      message: `Date ${date} is now available for bookings.`,
+    };
+  });
+
   // update_branding - Update brand settings
   registerProposalExecutor('update_branding', async (tenantId, payload) => {
     const { primaryColor, secondaryColor, accentColor, backgroundColor, logoUrl } = payload as {
@@ -740,17 +823,24 @@ export function registerAllExecutors(prisma: PrismaClient): void {
   });
 
   // update_booking - Update booking details (reschedule, notes, status)
+  // Preserves payment status and customer info during reschedules
   registerProposalExecutor('update_booking', async (tenantId, payload) => {
-    const { bookingId, newDate, notes, status } = payload as {
+    const { bookingId, newDate, newTime, notes, status, notifyCustomer } = payload as {
       bookingId: string;
       newDate?: string;
+      newTime?: string;
       notes?: string;
       status?: string;
+      notifyCustomer?: boolean;
     };
 
-    // Verify ownership
+    // Verify ownership - CRITICAL: tenant isolation
     const booking = await prisma.booking.findFirst({
       where: { id: bookingId, tenantId },
+      include: {
+        customer: { select: { name: true, email: true } },
+        package: { select: { name: true } },
+      },
     });
 
     if (!booking) {
@@ -759,15 +849,20 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       );
     }
 
-    // If newDate is set, wrap in transaction with advisory lock and availability check
-    if (newDate) {
+    const hasScheduleChange = newDate || newTime;
+
+    // If date or time change, wrap in transaction with advisory lock
+    if (hasScheduleChange) {
       return await prisma.$transaction(async (tx) => {
         // Acquire advisory lock for the new date to prevent race conditions
-        const lockId = hashTenantDate(tenantId, newDate);
+        const lockDate = newDate || booking.date.toISOString().split('T')[0];
+        const lockId = hashTenantDate(tenantId, lockDate);
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
+        // Build new date object
+        const newDateObj = newDate ? new Date(newDate) : booking.date;
+
         // Check if the new date is already booked (exclude current booking from conflict check)
-        const newDateObj = new Date(newDate);
         const conflictingBooking = await tx.booking.findFirst({
           where: {
             tenantId,
@@ -779,18 +874,39 @@ export function registerAllExecutors(prisma: PrismaClient): void {
 
         if (conflictingBooking) {
           throw new Error(
-            `Date ${newDate} is already booked. Use check_availability to find an open date, then try again.`
+            `Date ${newDate || lockDate} is already booked. Use check_availability to find an open date, then try again.`
           );
         }
 
-        // Build updates
-        const updates: Prisma.BookingUpdateInput = {
-          date: newDateObj,
+        // Check for blackout date
+        const blackout = await tx.blackoutDate.findFirst({
+          where: { tenantId, date: newDateObj },
+        });
+
+        if (blackout) {
+          throw new Error(
+            `Date ${newDate || lockDate} is blocked${blackout.reason ? ` (${blackout.reason})` : ''}. Choose another date.`
+          );
+        }
+
+        // Build updates - preserve payment info (depositPaidAmount, balancePaidAmount, stripePaymentIntentId, etc.)
+        const updates: Prisma.BookingUpdateInput = {};
+
+        if (newDate) {
+          updates.date = newDateObj;
           // Update reminder due date (7 days before event)
-          reminderDueDate: new Date(newDateObj.getTime() - 7 * 24 * 60 * 60 * 1000),
+          updates.reminderDueDate = new Date(newDateObj.getTime() - 7 * 24 * 60 * 60 * 1000);
           // Clear reminder sent flag since date changed
-          reminderSentAt: null,
-        };
+          updates.reminderSentAt = null;
+        }
+
+        if (newTime) {
+          // Parse time and create startTime
+          const [hours, minutes] = newTime.split(':').map(Number);
+          const startTimeObj = new Date(newDateObj);
+          startTimeObj.setHours(hours, minutes, 0, 0);
+          updates.startTime = startTimeObj;
+        }
 
         if (notes !== undefined) {
           updates.notes = notes;
@@ -805,22 +921,38 @@ export function registerAllExecutors(prisma: PrismaClient): void {
           data: updates,
         });
 
+        const changesList = Object.keys(updates);
         logger.info(
-          { tenantId, bookingId, changes: Object.keys(updates) },
-          'Booking updated via agent'
+          { tenantId, bookingId, changes: changesList, notifyCustomer },
+          'Booking rescheduled via agent'
         );
 
+        // Note: Customer notification would be handled by a separate notification service
+        // based on the notifyCustomer flag - for now we log it
+        if (notifyCustomer !== false && booking.customer?.email) {
+          logger.info(
+            { tenantId, bookingId, customerEmail: booking.customer.email },
+            'Customer notification pending for booking reschedule'
+          );
+        }
+
         return {
-          action: 'updated',
+          action: 'rescheduled',
           bookingId: updated.id,
-          changes: Object.keys(updates),
-          newDate,
+          customerName: booking.customer?.name || 'Unknown',
+          packageName: booking.package?.name || 'Unknown',
+          changes: changesList,
+          previousDate: booking.date.toISOString().split('T')[0],
+          newDate: newDate || undefined,
+          newTime: newTime || undefined,
           newStatus: status || undefined,
+          notifyCustomer: notifyCustomer !== false,
+          preservedPaymentInfo: true,
         };
       });
     }
 
-    // No date change - simple update without transaction
+    // No schedule change - simple update without transaction
     const updates: Prisma.BookingUpdateInput = {};
 
     if (notes !== undefined) {
@@ -836,17 +968,19 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       data: updates,
     });
 
-    logger.info(
-      { tenantId, bookingId, changes: Object.keys(updates) },
-      'Booking updated via agent'
-    );
+    const changesList = Object.keys(updates);
+    logger.info({ tenantId, bookingId, changes: changesList }, 'Booking updated via agent');
 
     return {
       action: 'updated',
       bookingId: updated.id,
-      changes: Object.keys(updates),
+      customerName: booking.customer?.name || 'Unknown',
+      packageName: booking.package?.name || 'Unknown',
+      changes: changesList,
       newDate: undefined,
+      newTime: undefined,
       newStatus: status || undefined,
+      preservedPaymentInfo: true,
     };
   });
 

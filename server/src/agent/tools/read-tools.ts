@@ -725,13 +725,15 @@ function formatAddOn(addOn: any) {
 }
 
 /**
- * get_customers - Customer list with booking counts
+ * get_customers - Customer list with booking counts and revenue
  *
- * Returns: customers with search and booking count
+ * Returns: customers with booking count and total spent
+ * Supports: date range filtering, search, single customer lookup
  */
 export const getCustomersTool: AgentTool = {
   name: 'get_customers',
-  description: 'Get customers with booking counts. Supports search by email/name.',
+  description:
+    'Get customers who have booked with booking counts and total spent. Supports search by email/name and date range filtering.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -742,6 +744,14 @@ export const getCustomersTool: AgentTool = {
       search: {
         type: 'string',
         description: 'Search by email or name',
+      },
+      startDate: {
+        type: 'string',
+        description: 'Filter customers with bookings from this date (YYYY-MM-DD)',
+      },
+      endDate: {
+        type: 'string',
+        description: 'Filter customers with bookings until this date (YYYY-MM-DD)',
       },
       limit: {
         type: 'number',
@@ -754,53 +764,147 @@ export const getCustomersTool: AgentTool = {
     const { tenantId, prisma } = context;
     const customerId = params.customerId as string | undefined;
     const search = params.search as string | undefined;
+    const startDate = params.startDate as string | undefined;
+    const endDate = params.endDate as string | undefined;
     const limit = Math.min((params.limit as number) || 20, 50);
 
     try {
-      // Single customer lookup
+      // Single customer lookup with aggregated stats
       if (customerId) {
         const customer = await prisma.customer.findFirst({
           where: { id: customerId, tenantId },
-          include: { _count: { select: { bookings: true } } },
         });
         if (!customer) {
           return { success: false, error: 'Customer not found' };
         }
-        return { success: true, data: formatCustomer(customer) };
+
+        // Get booking stats for this customer
+        const stats = await prisma.booking.aggregate({
+          where: {
+            tenantId,
+            customerId: customer.id,
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+          },
+          _count: { _all: true },
+          _sum: { totalPrice: true },
+        });
+
+        return {
+          success: true,
+          data: formatCustomerWithStats(customer, stats._count._all, stats._sum.totalPrice ?? 0),
+        };
       }
 
-      // Search or list
-      const where: {
+      // Build date filter for bookings (if provided)
+      const bookingDateFilter: { date?: { gte?: Date; lte?: Date } } = {};
+      if (startDate || endDate) {
+        bookingDateFilter.date = {};
+        if (startDate) bookingDateFilter.date.gte = new Date(startDate);
+        if (endDate) bookingDateFilter.date.lte = new Date(endDate);
+      }
+
+      // Build customer search filter
+      const customerSearchFilter: {
         tenantId: string;
         OR?: {
           email?: { contains: string; mode: 'insensitive' };
           name?: { contains: string; mode: 'insensitive' };
         }[];
-      } = {
-        tenantId,
-      };
+      } = { tenantId };
 
       if (search) {
-        where.OR = [
+        customerSearchFilter.OR = [
           { email: { contains: search, mode: 'insensitive' } },
           { name: { contains: search, mode: 'insensitive' } },
         ];
       }
 
+      // If date range is provided, we need to find customers with bookings in that range
+      if (startDate || endDate) {
+        // Aggregate bookings within date range, grouped by customer
+        const bookingAggregates = await prisma.booking.groupBy({
+          by: ['customerId'],
+          where: {
+            tenantId,
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+            ...bookingDateFilter,
+          },
+          _count: { _all: true },
+          _sum: { totalPrice: true },
+          orderBy: { _sum: { totalPrice: 'desc' } },
+          take: limit,
+        });
+
+        if (bookingAggregates.length === 0) {
+          return { success: true, data: [] };
+        }
+
+        // Get customer details for those who have bookings in the date range
+        const customerIds = bookingAggregates.map((b) => b.customerId);
+        const customers = await prisma.customer.findMany({
+          where: {
+            id: { in: customerIds },
+            tenantId,
+            ...(search ? customerSearchFilter : {}),
+          },
+        });
+
+        // Build lookup map
+        const customerMap = new Map(customers.map((c) => [c.id, c]));
+
+        // Combine customer data with aggregates
+        const results = bookingAggregates
+          .map((agg) => {
+            const customer = customerMap.get(agg.customerId);
+            if (!customer) return null;
+            return formatCustomerWithStats(customer, agg._count._all, agg._sum.totalPrice ?? 0);
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+
+        return { success: true, data: results };
+      }
+
+      // No date range - get customers with their all-time stats
       const customers = await prisma.customer.findMany({
-        where: where as any,
-        include: { _count: { select: { bookings: true } } },
+        where: customerSearchFilter as any,
         orderBy: { createdAt: 'desc' },
         take: limit,
       });
 
-      return { success: true, data: customers.map(formatCustomer) };
+      // Get booking stats for all customers in one query
+      const customerIds = customers.map((c) => c.id);
+      const bookingStats = await prisma.booking.groupBy({
+        by: ['customerId'],
+        where: {
+          tenantId,
+          customerId: { in: customerIds },
+          status: { notIn: ['CANCELED', 'REFUNDED'] },
+        },
+        _count: { _all: true },
+        _sum: { totalPrice: true },
+      });
+
+      // Build stats lookup map
+      const statsMap = new Map(
+        bookingStats.map((s) => [
+          s.customerId,
+          { count: s._count._all, total: s._sum.totalPrice ?? 0 },
+        ])
+      );
+
+      // Combine customer data with stats
+      const results = customers.map((customer) => {
+        const stats = statsMap.get(customer.id) || { count: 0, total: 0 };
+        return formatCustomerWithStats(customer, stats.count, stats.total);
+      });
+
+      return { success: true, data: results };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_customers tool');
       return {
         success: false,
-        error: `Failed to fetch customers: ${errorMessage}. If searching, try a simpler search term.`,
+        error: `Failed to fetch customers: ${errorMessage}. If searching, try a simpler search term. Ensure dates are in YYYY-MM-DD format.`,
         code: 'GET_CUSTOMERS_ERROR',
       };
     }
@@ -808,25 +912,30 @@ export const getCustomersTool: AgentTool = {
 };
 
 /**
- * Helper to format customer for agent context
+ * Helper to format customer with stats for agent context
  */
-type CustomerWithCount = {
+type CustomerBase = {
   id: string;
   email: string | null;
   phone: string | null;
   name: string;
   createdAt: Date;
-  _count: { bookings: number };
 };
 
-function formatCustomer(c: CustomerWithCount) {
+function formatCustomerWithStats(
+  customer: CustomerBase,
+  bookingCount: number,
+  totalSpentCents: number
+) {
   return {
-    id: c.id,
-    email: c.email,
-    phone: c.phone,
-    name: sanitizeForContext(c.name, 100),
-    bookingCount: c._count.bookings,
-    createdAt: c.createdAt.toISOString(),
+    id: customer.id,
+    email: customer.email,
+    phone: customer.phone,
+    name: sanitizeForContext(customer.name, 100),
+    bookingCount,
+    totalSpentCents,
+    totalSpentFormatted: `$${(totalSpentCents / 100).toFixed(2)}`,
+    createdAt: customer.createdAt.toISOString(),
   };
 }
 
@@ -1029,8 +1138,6 @@ export const getBookingLinkTool: AgentTool = {
         where: { id: tenantId },
         select: {
           slug: true,
-          customDomain: true,
-          domainVerified: true,
         },
       });
 
@@ -1040,14 +1147,7 @@ export const getBookingLinkTool: AgentTool = {
 
       // Determine the base URL
       const baseAppUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gethandled.ai';
-      let storefrontUrl: string;
-
-      // Use custom domain if verified, otherwise use slug-based URL
-      if (tenant.customDomain && tenant.domainVerified) {
-        storefrontUrl = `https://${tenant.customDomain}`;
-      } else {
-        storefrontUrl = `${baseAppUrl}/t/${tenant.slug}`;
-      }
+      const storefrontUrl = `${baseAppUrl}/t/${tenant.slug}`;
 
       const result: {
         storefrontUrl: string;
@@ -1091,6 +1191,166 @@ export const getBookingLinkTool: AgentTool = {
   },
 };
 
+/**
+ * refresh_context - Refresh session context for long sessions
+ *
+ * Returns: stripeConnected, packageCount, upcomingBookings, revenueThisMonth
+ * Use this when a session has been active for a while and data may be stale.
+ */
+export const refreshContextTool: AgentTool = {
+  name: 'refresh_context',
+  description:
+    'Refresh business context data that may have become stale during a long session. Returns current Stripe status, package count, upcoming bookings, and revenue this month.',
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  async execute(context: ToolContext): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+
+    try {
+      // Fetch tenant Stripe status
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          name: true,
+          slug: true,
+          stripeOnboarded: true,
+        },
+      });
+
+      if (!tenant) {
+        return { success: false, error: 'Tenant not found' };
+      }
+
+      // Calculate date ranges
+      const now = new Date();
+      const next30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Fetch current stats in parallel
+      const [packageCount, upcomingBookings, revenueThisMonth] = await Promise.all([
+        prisma.package.count({ where: { tenantId } }),
+        prisma.booking.count({
+          where: {
+            tenantId,
+            date: { gte: now, lte: next30Days },
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+          },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            tenantId,
+            createdAt: { gte: thisMonthStart },
+            status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
+          },
+          _sum: { totalPrice: true },
+        }),
+      ]);
+
+      const revenueThisMonthCents = revenueThisMonth._sum?.totalPrice ?? 0;
+
+      return {
+        success: true,
+        data: {
+          refreshedAt: now.toISOString(),
+          businessName: sanitizeForContext(tenant.name, 100),
+          businessSlug: tenant.slug,
+          stripeConnected: tenant.stripeOnboarded,
+          packageCount,
+          upcomingBookings,
+          revenueThisMonth: revenueThisMonthCents,
+          revenueThisMonthFormatted: `$${(revenueThisMonthCents / 100).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
+        },
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ error, tenantId }, 'Error in refresh_context tool');
+      return {
+        success: false,
+        error: `Failed to refresh context: ${errorMessage}. Try again in a few moments.`,
+        code: 'REFRESH_CONTEXT_ERROR',
+      };
+    }
+  },
+};
+
+/**
+ * get_blackout_dates - Blocked dates (user-friendly alias)
+ *
+ * Returns: array of blackout dates with IDs and reasons
+ * This is a more user-friendly tool that matches natural language like
+ * "show me my blocked dates" or "what are my blackout dates"
+ */
+export const getBlackoutDatesTool: AgentTool = {
+  name: 'get_blackout_dates',
+  description:
+    'Get all blackout (blocked) dates. Returns list of dates when you are unavailable for bookings, with IDs and reasons.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      fromDate: {
+        type: 'string',
+        description: 'Filter blackouts from this date (YYYY-MM-DD)',
+      },
+      toDate: {
+        type: 'string',
+        description: 'Filter blackouts until this date (YYYY-MM-DD)',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const fromDate = params.fromDate as string | undefined;
+    const toDate = params.toDate as string | undefined;
+
+    try {
+      const blackouts = await prisma.blackoutDate.findMany({
+        where: {
+          tenantId,
+          ...(fromDate || toDate
+            ? {
+                date: {
+                  ...(fromDate ? { gte: new Date(fromDate) } : {}),
+                  ...(toDate ? { lte: new Date(toDate) } : {}),
+                },
+              }
+            : {}),
+        },
+        orderBy: { date: 'asc' },
+      });
+
+      // Format blackout dates with all relevant info
+      const formattedBlackouts = blackouts.map((b) => ({
+        id: b.id,
+        date: b.date.toISOString().split('T')[0],
+        reason: b.reason ? sanitizeForContext(b.reason, 100) : null,
+      }));
+
+      return {
+        success: true,
+        data: {
+          blackoutDates: formattedBlackouts,
+          count: formattedBlackouts.length,
+        },
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ error, tenantId }, 'Error in get_blackout_dates tool');
+      return {
+        success: false,
+        error: `Failed to fetch blackout dates: ${errorMessage}. Check that any date filters are in YYYY-MM-DD format.`,
+        code: 'GET_BLACKOUT_DATES_ERROR',
+      };
+    }
+  },
+};
+
 export const readTools: AgentTool[] = [
   getTenantTool,
   getDashboardTool,
@@ -1100,10 +1360,12 @@ export const readTools: AgentTool[] = [
   getBookingTool,
   checkAvailabilityTool,
   getBlackoutsTool,
+  getBlackoutDatesTool,
   getLandingPageTool,
   getStripeStatusTool,
   getCustomersTool,
   getSegmentsTool,
   getTrialStatusTool,
   getBookingLinkTool,
+  refreshContextTool,
 ];

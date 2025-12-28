@@ -471,6 +471,206 @@ export const manageBlackoutTool: AgentTool = {
 };
 
 /**
+ * add_blackout_date - Block date(s) for bookings
+ *
+ * Trust Tier: T1 (auto-confirm) - Low risk, adding restrictions
+ * Supports single dates or date ranges (multi-day blocks)
+ */
+export const addBlackoutDateTool: AgentTool = {
+  name: 'add_blackout_date',
+  description:
+    'Block a date or date range for bookings (e.g., vacation, holiday). Supports single day or multi-day ranges.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      startDate: {
+        type: 'string',
+        description: 'Start date to block (YYYY-MM-DD format)',
+      },
+      endDate: {
+        type: 'string',
+        description: 'End date for range (YYYY-MM-DD format, optional - omit for single day block)',
+      },
+      reason: {
+        type: 'string',
+        description: 'Reason for blocking (e.g., "Vacation", "Holiday", "Personal day")',
+      },
+    },
+    required: ['startDate'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const startDateStr = params.startDate as string;
+    const endDateStr = params.endDate as string | undefined;
+    const reason = params.reason as string | undefined;
+
+    try {
+      // Validate start date
+      const startDate = new Date(startDateStr);
+      if (isNaN(startDate.getTime())) {
+        return {
+          success: false,
+          error: 'Invalid start date format. Use YYYY-MM-DD format.',
+        };
+      }
+
+      // Validate end date if provided
+      let endDate = startDate;
+      if (endDateStr) {
+        endDate = new Date(endDateStr);
+        if (isNaN(endDate.getTime())) {
+          return {
+            success: false,
+            error: 'Invalid end date format. Use YYYY-MM-DD format.',
+          };
+        }
+        if (endDate < startDate) {
+          return {
+            success: false,
+            error: 'End date cannot be before start date.',
+          };
+        }
+      }
+
+      // Calculate number of days in range
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const dayCount = Math.floor((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
+
+      // Limit to 31 days to prevent accidental massive blocks
+      if (dayCount > 31) {
+        return {
+          success: false,
+          error: 'Cannot block more than 31 days at once. Please use smaller ranges.',
+        };
+      }
+
+      // Build array of dates to block
+      const datesToBlock: string[] = [];
+      for (let i = 0; i < dayCount; i++) {
+        const date = new Date(startDate.getTime() + i * msPerDay);
+        datesToBlock.push(date.toISOString().split('T')[0]);
+      }
+
+      // Check for existing blackouts in range
+      const existingBlackouts = await prisma.blackoutDate.findMany({
+        where: {
+          tenantId,
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        select: { date: true },
+      });
+
+      const existingDates = new Set(
+        existingBlackouts.map((b) => b.date.toISOString().split('T')[0])
+      );
+      const newDates = datesToBlock.filter((d) => !existingDates.has(d));
+
+      // Build operation description
+      const isRange = dayCount > 1;
+      const operation = isRange
+        ? `Block ${dayCount} days (${startDateStr} to ${endDateStr})${reason ? `: ${sanitizeForContext(reason, 30)}` : ''}`
+        : `Block ${startDateStr}${reason ? `: ${sanitizeForContext(reason, 30)}` : ''}`;
+
+      const payload = {
+        dates: datesToBlock,
+        newDates,
+        reason: reason || null,
+        isRange,
+        startDate: startDateStr,
+        endDate: endDateStr || startDateStr,
+      };
+
+      const preview: Record<string, unknown> = {
+        action: 'add_blackout',
+        startDate: startDateStr,
+        ...(isRange ? { endDate: endDateStr } : {}),
+        daysBlocked: dayCount,
+        newDaysToBlock: newDates.length,
+        ...(existingDates.size > 0 ? { alreadyBlocked: existingDates.size } : {}),
+        ...(reason ? { reason: sanitizeForContext(reason, 50) } : {}),
+      };
+
+      return createProposal(context, 'add_blackout_date', operation, 'T1', payload, preview);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ error, tenantId }, 'Error in add_blackout_date tool');
+      return {
+        success: false,
+        error: `Failed to create blackout proposal: ${errorMessage}. Ensure dates are in YYYY-MM-DD format.`,
+        code: 'ADD_BLACKOUT_DATE_ERROR',
+      };
+    }
+  },
+};
+
+/**
+ * remove_blackout_date - Unblock a date for bookings
+ *
+ * Trust Tier: T2 (soft confirm) - Opens up availability, higher risk than blocking
+ */
+export const removeBlackoutDateTool: AgentTool = {
+  name: 'remove_blackout_date',
+  description:
+    'Remove a blackout (unblock a date) so bookings can be made again. Use get_blackout_dates to find blackout IDs.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      blackoutId: {
+        type: 'string',
+        description: 'Blackout ID to remove (use get_blackout_dates to find IDs)',
+      },
+    },
+    required: ['blackoutId'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const blackoutId = params.blackoutId as string;
+
+    try {
+      // Find the blackout and verify ownership
+      const blackout = await prisma.blackoutDate.findFirst({
+        where: { id: blackoutId, tenantId },
+      });
+
+      if (!blackout) {
+        return {
+          success: false,
+          error: `Blackout with ID "${blackoutId}" not found. Use get_blackout_dates to see your blocked dates.`,
+        };
+      }
+
+      const dateStr = blackout.date.toISOString().split('T')[0];
+      const operation = `Unblock ${dateStr}${blackout.reason ? ` (was: ${sanitizeForContext(blackout.reason, 30)})` : ''}`;
+
+      const payload = {
+        blackoutId,
+        date: dateStr,
+      };
+
+      const preview: Record<string, unknown> = {
+        action: 'remove_blackout',
+        date: dateStr,
+        ...(blackout.reason ? { previousReason: sanitizeForContext(blackout.reason, 50) } : {}),
+        note: 'This date will become available for bookings again.',
+      };
+
+      return createProposal(context, 'remove_blackout_date', operation, 'T2', payload, preview);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ error, tenantId, blackoutId }, 'Error in remove_blackout_date tool');
+      return {
+        success: false,
+        error: `Failed to create unblock proposal: ${errorMessage}. Verify the blackout ID is correct.`,
+        code: 'REMOVE_BLACKOUT_DATE_ERROR',
+      };
+    }
+  },
+};
+
+/**
  * update_branding - Update brand settings
  *
  * Trust Tier: T1 (no confirm)
@@ -1087,36 +1287,44 @@ export const deleteSegmentTool: AgentTool = {
 };
 
 /**
- * update_booking - Update booking details
+ * update_booking - Update booking details (reschedule, notes, status)
  *
- * Trust Tier:
- * - T3 for date changes (affects customer)
- * - T3 for CANCELED status (high-impact operation)
- * - T2 for notes or other status changes
+ * Trust Tier: T2 (soft confirm)
+ * - Validates booking belongs to tenant (tenant isolation)
+ * - Checks new date/time isn't blacked out or already booked
+ * - Preserves payment status and customer info
  */
 export const updateBookingTool: AgentTool = {
   name: 'update_booking',
   description:
-    'Update booking: reschedule, add notes, or change status. Date changes require confirmation.',
+    'Reschedule a booking to a new date/time, add notes, or update status. Preserves payment info and customer details.',
   inputSchema: {
     type: 'object',
     properties: {
       bookingId: {
         type: 'string',
-        description: 'Booking ID (required)',
+        description: 'Booking ID to update (required)',
       },
       newDate: {
         type: 'string',
-        description: 'New date YYYY-MM-DD (requires confirmation)',
+        description: 'New date in YYYY-MM-DD format',
+      },
+      newTime: {
+        type: 'string',
+        description: 'New time in HH:MM format (24-hour, for timeslot bookings)',
       },
       notes: {
         type: 'string',
-        description: 'Internal notes',
+        description: 'Internal notes to add or update',
       },
       status: {
         type: 'string',
         description: 'Status update',
         enum: ['CONFIRMED', 'FULFILLED'],
+      },
+      notifyCustomer: {
+        type: 'boolean',
+        description: 'Whether to notify the customer of changes (default: true)',
       },
     },
     required: ['bookingId'],
@@ -1125,40 +1333,56 @@ export const updateBookingTool: AgentTool = {
     const { tenantId, prisma } = context;
     const bookingId = params.bookingId as string;
     const newDate = params.newDate as string | undefined;
+    const newTime = params.newTime as string | undefined;
     const notes = params.notes as string | undefined;
     const status = params.status as string | undefined;
+    const notifyCustomer = (params.notifyCustomer as boolean) ?? true; // Default to true
 
     try {
-      // Verify ownership
+      // Verify ownership - CRITICAL: tenant isolation check
       const booking = await prisma.booking.findFirst({
         where: { id: bookingId, tenantId },
         include: {
-          package: { select: { name: true } },
-          customer: { select: { name: true } },
+          package: { select: { name: true, bookingType: true } },
+          customer: { select: { name: true, email: true } },
         },
       });
 
       if (!booking) {
-        return { success: false, error: 'Booking not found' };
+        return { success: false, error: 'Booking not found or does not belong to your business' };
       }
 
-      // Determine trust tier
-      // - newDate changes → T3 (affects customer)
-      // - CANCELED status → T3 (high-impact operation requiring explicit confirmation)
-      // - notes only → T2
-      // - status progression (non-cancel) → T2
-      const hasDateChange = !!newDate;
-      const isCancellation =
-        status?.toUpperCase() === 'CANCELED' || status?.toUpperCase() === 'CANCELLED';
-      const trustTier = hasDateChange || isCancellation ? 'T3' : 'T2';
+      // Cannot update cancelled/refunded bookings
+      if (booking.status === 'CANCELED' || booking.status === 'REFUNDED') {
+        return {
+          success: false,
+          error: `Cannot update a ${booking.status.toLowerCase()} booking. Create a new booking instead.`,
+        };
+      }
 
-      // If date change, check availability
+      // Validate time format if provided
+      if (newTime && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime)) {
+        return {
+          success: false,
+          error: 'Invalid time format. Use HH:MM in 24-hour format (e.g., "14:30").',
+        };
+      }
+
+      // If date change, check availability and blackouts
       if (newDate) {
         const dateObj = new Date(newDate);
         if (isNaN(dateObj.getTime())) {
-          return { success: false, error: 'Invalid date format' };
+          return { success: false, error: 'Invalid date format. Use YYYY-MM-DD.' };
         }
 
+        // Check if new date is in the past
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dateObj < today) {
+          return { success: false, error: 'Cannot reschedule to a date in the past.' };
+        }
+
+        // Check for conflicting booking on new date
         const conflict = await prisma.booking.findFirst({
           where: {
             tenantId,
@@ -1169,10 +1393,13 @@ export const updateBookingTool: AgentTool = {
         });
 
         if (conflict) {
-          return { success: false, error: `Date ${newDate} is already booked` };
+          return {
+            success: false,
+            error: `Date ${newDate} is already booked. Use check_availability to find an open date.`,
+          };
         }
 
-        // Check for blackout
+        // Check for blackout date
         const blackout = await prisma.blackoutDate.findFirst({
           where: { tenantId, date: dateObj },
         });
@@ -1180,16 +1407,32 @@ export const updateBookingTool: AgentTool = {
         if (blackout) {
           return {
             success: false,
-            error: `Date ${newDate} is blocked${blackout.reason ? `: ${blackout.reason}` : ''}`,
+            error: `Date ${newDate} is blocked${blackout.reason ? ` (${blackout.reason})` : ''}. Choose another date.`,
           };
         }
       }
 
-      const payload = { bookingId, newDate, notes, status };
+      // Build payload for executor - preserves payment status and customer info
+      const payload: Record<string, unknown> = {
+        bookingId,
+        newDate,
+        newTime,
+        notes,
+        status,
+        notifyCustomer,
+      };
+
+      // Build changes summary for preview
       const changes: Record<string, string> = {};
 
       if (newDate) {
         changes.date = `${booking.date.toISOString().split('T')[0]} → ${newDate}`;
+      }
+      if (newTime) {
+        const currentTime = booking.startTime
+          ? `${String(booking.startTime.getHours()).padStart(2, '0')}:${String(booking.startTime.getMinutes()).padStart(2, '0')}`
+          : 'not set';
+        changes.time = `${currentTime} → ${newTime}`;
       }
       if (notes !== undefined) {
         changes.notes = 'updated';
@@ -1198,28 +1441,31 @@ export const updateBookingTool: AgentTool = {
         changes.status = `${booking.status} → ${status}`;
       }
 
-      const operation = `Update booking for ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`;
-      const preview = {
-        action: 'update_booking',
+      // Determine operation description
+      const hasScheduleChange = newDate || newTime;
+      const operation = hasScheduleChange
+        ? `Reschedule booking for ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`
+        : `Update booking for ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`;
+
+      const preview: Record<string, unknown> = {
+        action: hasScheduleChange ? 'reschedule' : 'update',
         booking: `${sanitizeForContext(booking.package?.name || 'Unknown', 30)} - ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`,
         currentDate: booking.date.toISOString().split('T')[0],
         changes,
+        customerNotification: notifyCustomer
+          ? 'Customer will be notified of changes'
+          : 'Customer will NOT be notified',
+        preservedInfo: 'Payment status and customer details are preserved',
       };
 
-      return createProposal(
-        context,
-        'update_booking',
-        operation,
-        trustTier as 'T2' | 'T3',
-        payload,
-        preview
-      );
+      // T2 for all updates - payment status and customer info are preserved
+      return createProposal(context, 'update_booking', operation, 'T2', payload, preview);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId, bookingId }, 'Error in update_booking tool');
       return {
         success: false,
-        error: `Failed to create update proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and any new date is in YYYY-MM-DD format.`,
+        error: `Failed to create update proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and dates/times are properly formatted.`,
         code: 'UPDATE_BOOKING_ERROR',
       };
     }
@@ -1484,6 +1730,8 @@ export const writeTools: AgentTool[] = [
   deleteAddOnTool,
   deletePackageTool,
   manageBlackoutTool,
+  addBlackoutDateTool,
+  removeBlackoutDateTool,
   updateBrandingTool,
   updateLandingPageTool,
   requestFileUploadTool,
