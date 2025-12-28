@@ -44,19 +44,21 @@ export function ScrollingIdentity() {
     return () => clearInterval(interval);
   }, []);
 
-  const current = identities[currentIndex];
-
   return (
-    <span className="inline-block min-w-[280px] sm:min-w-[400px] md:min-w-[500px]">
-      <span
-        className={`inline-block transition-opacity duration-200 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <span className="text-sage">{current.profession}</span>
-        <span className="text-text-primary">, so </span>
-        <span className="text-sage">{current.verb}</span>
-      </span>
+    <span className="inline-grid">
+      {identities.map((identity, index) => (
+        <span
+          key={identity.profession}
+          className={`col-start-1 row-start-1 transition-opacity duration-200 ${
+            index === currentIndex && isVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+          aria-hidden={index !== currentIndex}
+        >
+          <span className="text-sage">{identity.profession}</span>
+          <span className="text-text-primary">, so </span>
+          <span className="text-sage">{identity.verb}</span>
+        </span>
+      ))}
     </span>
   );
 }
