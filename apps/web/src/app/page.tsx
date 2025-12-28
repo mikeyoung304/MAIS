@@ -1,6 +1,16 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { Globe, Calendar, Sparkles, Mail, Users, Phone, Check, ChevronDown } from 'lucide-react';
+import {
+  Globe,
+  Calendar,
+  Mail,
+  Users,
+  Phone,
+  Check,
+  ChevronDown,
+  CreditCard,
+  Bot,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
 
@@ -15,43 +25,42 @@ export const metadata: Metadata = {
   },
 };
 
-const features = [
+// Done-for-you tech - commodity infrastructure (set it and forget it)
+const techFeatures = [
   {
     icon: Globe,
-    title: 'Website That Works',
-    description:
-      'We build it. We maintain it. You never touch it. Just show up and look professional.',
+    title: 'Website',
+    description: 'Built and maintained. You never touch it.',
   },
   {
     icon: Calendar,
-    title: 'Booking & Payments',
-    description: 'Clients book and pay online. You get a notification. No back-and-forth emails.',
+    title: 'Booking',
+    description: 'Clients schedule online. You get notified.',
   },
   {
-    icon: Sparkles,
-    title: 'AI That Actually Helps',
-    description:
-      'A chatbot trained on your business. Answers questions, handles scheduling, works while you sleep.',
+    icon: CreditCard,
+    title: 'Payments',
+    description: 'Invoices sent. Money collected. Done.',
   },
+  {
+    icon: Bot,
+    title: 'AI Chatbot',
+    description: 'Answers questions. Books sessions. 24/7.',
+  },
+];
+
+// Done-with-you education - the competitive moat (ongoing value)
+const educationFeatures = [
   {
     icon: Mail,
     title: 'Monthly Newsletter',
-    description:
-      "What's worth knowing in AI and tech this month. Curated. No fluff. Actually useful.",
-    highlight: true, // Education component - competitive moat
+    description: "What's actually worth knowing in AI this month. Curated. No fluff. No homework.",
   },
   {
     icon: Users,
     title: 'Monthly Zoom Calls',
     description:
       "Real talk with other pros about what's working. No pitch. Just 'here's what we're seeing.'",
-    highlight: true, // Education component - competitive moat
-  },
-  {
-    icon: Phone,
-    title: 'Humans Who Answer',
-    description:
-      'Questions? We answer them. No chatbots, no tickets. Just help from people who give a shit.',
   },
 ];
 
@@ -360,46 +369,99 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Features Section */}
+          {/* Tech Stack Section - Done-for-you infrastructure */}
           <section
             id="features"
-            aria-labelledby="features-heading"
-            className="py-32 md:py-40 px-6 scroll-mt-20"
+            aria-labelledby="tech-heading"
+            className="py-24 md:py-32 px-6 scroll-mt-20"
           >
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
                 <h2
-                  id="features-heading"
-                  className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary"
+                  id="tech-heading"
+                  className="font-serif text-3xl md:text-4xl font-bold text-text-primary"
                 >
-                  What you get.
+                  Set it. Forget it.
                 </h2>
-                <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
-                  One membership. The rest? Handled.
+                <p className="mt-3 text-lg text-text-muted font-light">
+                  We build and run your tech stack. You never touch it.
                 </p>
               </div>
-              <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-                {features.map((feature) => (
+              {/* 4-column grid on desktop, 2x2 on tablet, stack on mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {techFeatures.map((feature) => (
                   <div
                     key={feature.title}
-                    className={`rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${
-                      feature.highlight
-                        ? 'bg-sage/5 border-2 border-sage/30 ring-1 ring-sage/10'
-                        : 'bg-surface-alt border border-neutral-700'
-                    }`}
+                    className="bg-surface-alt rounded-2xl p-6 border border-neutral-700 hover:border-neutral-600 transition-colors duration-200"
                   >
-                    {feature.highlight && (
-                      <span className="inline-block bg-sage/15 text-sage text-xs font-medium px-2.5 py-1 rounded-full mb-4">
-                        The Shortcut
-                      </span>
-                    )}
-                    <div className="w-14 h-14 sm:w-12 sm:h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
-                      <feature.icon className="w-8 h-8 sm:w-6 sm:h-6 text-sage" />
+                    <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center mb-4">
+                      <feature.icon className="w-5 h-5 text-sage" />
                     </div>
-                    <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
+                    <h3 className="font-medium text-text-primary text-base mb-1">
                       {feature.title}
                     </h3>
-                    <p className="text-text-muted leading-relaxed">{feature.description}</p>
+                    <p className="text-text-muted text-sm leading-relaxed">{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Trust Element - Humans Who Answer */}
+          <div className="py-8 px-6 bg-surface-alt border-y border-neutral-800">
+            <div className="max-w-3xl mx-auto flex items-center justify-center gap-4">
+              <Phone className="w-5 h-5 text-sage flex-shrink-0" />
+              <p className="text-text-muted text-center">
+                <span className="text-text-primary font-medium">Questions?</span> Humans who answer.
+                No bots. No tickets. Just help from people who give a shit.
+              </p>
+            </div>
+          </div>
+
+          {/* The Shortcut Section - Done-with-you education (competitive moat) */}
+          <section
+            aria-labelledby="shortcut-heading"
+            className="py-24 md:py-32 px-6 bg-sage/5 border-y border-sage/20"
+          >
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="inline-block bg-sage/15 text-sage text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
+                  The Shortcut
+                </span>
+                <h2
+                  id="shortcut-heading"
+                  className="font-serif text-4xl md:text-5xl font-bold text-text-primary"
+                >
+                  Stay ahead. Skip the homework.
+                </h2>
+                <p className="mt-4 text-xl text-text-muted font-light max-w-2xl mx-auto">
+                  AI moves fast. We watch it so you don&apos;t have to. Monthly updates on
+                  what&apos;s actually worth knowing.
+                </p>
+              </div>
+              {/* 2-column layout with featured cards */}
+              <div className="grid md:grid-cols-2 gap-8">
+                {educationFeatures.map((feature) => (
+                  <div
+                    key={feature.title}
+                    className="bg-surface-alt rounded-3xl p-10 border border-sage/30 shadow-xl relative overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                  >
+                    {/* Subtle sage glow effect */}
+                    <div
+                      className="absolute -top-20 -right-20 w-40 h-40 bg-sage/10 rounded-full blur-3xl pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-2xl bg-sage/15 flex items-center justify-center mb-6">
+                        <feature.icon className="w-7 h-7 text-sage" />
+                      </div>
+                      <h3 className="font-serif text-2xl font-semibold text-text-primary mb-3">
+                        {feature.title}
+                      </h3>
+                      <p className="text-text-muted leading-relaxed text-lg">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
