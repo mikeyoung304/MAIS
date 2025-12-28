@@ -20,9 +20,9 @@ const errorMessages: Record<string, { title: string; description: string }> = {
       "Something went sideways trying to load your business info. Try refreshing, or the humans can help.",
   },
   not_authenticated: {
-    title: 'Who dis?',
+    title: "We haven't met yet",
     description:
-      "I can't figure out who you are. Try logging in again.",
+      "I need you to log in so I can load your business info. Try signing in again.",
   },
   rate_limited: {
     title: 'Whoa, slow down',

@@ -13,9 +13,10 @@ module.exports = {
         'surface-alt': '#F5F1EE',
 
         // Primary: Sage - growth, trust, professionalism
-        'sage': '#4A7C6F',
-        'sage-hover': '#3D6B5F',
-        'sage-light': '#8FAA9E',
+        // Matches Brand Voice Guide: #7B9E87 (calmer, more muted sage)
+        'sage': '#7B9E87',
+        'sage-hover': '#6B8E77',
+        'sage-light': '#A3BBA9',
 
         // Text colors
         'text-primary': '#1A1815',

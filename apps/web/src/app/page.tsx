@@ -49,12 +49,14 @@ const features = [
     title: 'Monthly Newsletter',
     description:
       "What's worth knowing in AI and tech this month. Curated. No fluff. Actually useful.",
+    highlight: true, // Education component - competitive moat
   },
   {
     icon: Users,
     title: 'Monthly Zoom Calls',
     description:
       "Real talk with other pros about what's working. No pitch. Just 'here's what we're seeing.'",
+    highlight: true, // Education component - competitive moat
   },
   {
     icon: Phone,
@@ -69,7 +71,7 @@ const tiers = [
     name: 'Handled',
     price: '$49',
     priceSubtext: '/month',
-    description: 'The essentials',
+    description: 'Tech sorted. You show up.',
     features: [
       'Professional website',
       'Online booking',
@@ -83,7 +85,7 @@ const tiers = [
     name: 'Fully Handled',
     price: '$149',
     priceSubtext: '/month',
-    description: 'The full membership',
+    description: 'Tech + AI + education.',
     features: [
       'Everything in Handled',
       'AI chatbot for your business',
@@ -99,7 +101,7 @@ const tiers = [
     name: 'Completely Handled',
     price: 'Custom',
     priceSubtext: '',
-    description: 'White glove',
+    description: 'We run your tech team.',
     features: [
       'Everything in Fully Handled',
       '1-on-1 strategy sessions',
@@ -145,8 +147,83 @@ const faqs = [
 ];
 
 export default function HomePage() {
+  // JSON-LD structured data for SEO and agent accessibility
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'HANDLED',
+    url: 'https://gethandled.ai',
+    description: 'Done-for-you websites, booking, payments, and AI for service professionals. Plus monthly education on what\'s worth knowing in tech.',
+    sameAs: [],
+  };
+
+  const softwareApplicationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'HANDLED',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    description: 'Membership platform for service professionals with done-for-you tech and done-with-you education.',
+    offers: [
+      {
+        '@type': 'Offer',
+        name: 'Handled',
+        description: 'Professional website, online booking, payment processing, email notifications',
+        price: '49',
+        priceCurrency: 'USD',
+        priceValidUntil: '2025-12-31',
+        availability: 'https://schema.org/InStock',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Fully Handled',
+        description: 'Everything in Handled plus AI chatbot, monthly newsletter, monthly Zoom calls, priority support',
+        price: '149',
+        priceCurrency: 'USD',
+        priceValidUntil: '2025-12-31',
+        availability: 'https://schema.org/InStock',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Completely Handled',
+        description: 'White glove service with 1-on-1 strategy sessions, custom integrations, dedicated account manager',
+        priceSpecification: {
+          '@type': 'PriceSpecification',
+          priceCurrency: 'USD',
+        },
+        availability: 'https://schema.org/InStock',
+      },
+    ],
+  };
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
-    <div className="min-h-screen bg-surface">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <div className="min-h-screen bg-surface">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-100">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -173,6 +250,7 @@ export default function HomePage() {
         </div>
       </nav>
 
+      <main>
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center">
         {/* Ambient decorations */}
@@ -186,7 +264,7 @@ export default function HomePage() {
         />
 
         <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
+          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.1] tracking-tight">
             You&apos;re a <ScrollingIdentity />
           </h1>
           <p className="mt-6 font-serif text-2xl sm:text-3xl md:text-4xl font-semibold text-sage">
@@ -225,7 +303,7 @@ export default function HomePage() {
       {/* Problem Section */}
       <section className="py-32 md:py-40 px-6 bg-white">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary leading-tight">
+          <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
             You didn&apos;t start your business to debug a website.
           </h2>
           <div className="mt-8 space-y-6 text-lg text-text-muted leading-relaxed">
@@ -251,10 +329,10 @@ export default function HomePage() {
       <section id="features" aria-labelledby="features-heading" className="py-32 md:py-40 px-6 scroll-mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 id="features-heading" className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
+            <h2 id="features-heading" className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary">
               What you get. What you skip.
             </h2>
-            <p className="mt-4 text-lg text-text-muted font-light">
+            <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
               One membership. Website, booking, payments, AI assistant. We set it up. You show up for clients.
             </p>
           </div>
@@ -262,8 +340,17 @@ export default function HomePage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className={`rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${
+                  feature.highlight
+                    ? 'bg-sage/5 border-2 border-sage/30 ring-1 ring-sage/10'
+                    : 'bg-white border border-neutral-100'
+                }`}
               >
+                {feature.highlight && (
+                  <span className="inline-block bg-sage/15 text-sage text-xs font-medium px-2.5 py-1 rounded-full mb-4">
+                    The Shortcut
+                  </span>
+                )}
                 <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
                   <feature.icon className="w-6 h-6 text-sage" />
                 </div>
@@ -281,10 +368,10 @@ export default function HomePage() {
       <section id="pricing" aria-labelledby="pricing-heading" className="py-32 md:py-40 px-6 bg-neutral-50 scroll-mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 id="pricing-heading" className="font-serif text-3xl md:text-4xl font-bold text-text-primary">
+            <h2 id="pricing-heading" className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary">
               Pick a plan. Skip the tech anxiety.
             </h2>
-            <p className="mt-4 text-lg text-text-muted font-light">
+            <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
               No contracts. No hidden fees. Cancel anytime.
             </p>
             {/* Trust badges */}
@@ -348,7 +435,7 @@ export default function HomePage() {
       {/* FAQ Section */}
       <section id="faq" aria-labelledby="faq-heading" className="py-32 md:py-40 px-6 scroll-mt-20">
         <div className="max-w-3xl mx-auto">
-          <h2 id="faq-heading" className="font-serif text-3xl md:text-4xl font-bold text-text-primary text-center mb-12">
+          <h2 id="faq-heading" className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary text-center mb-12">
             Questions? Answers.
           </h2>
           <div className="space-y-4">
@@ -371,7 +458,7 @@ export default function HomePage() {
       {/* Final CTA Section */}
       <section className="py-32 md:py-48 px-6 bg-sage text-white">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight">
+          <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
             Your clients hired you for your expertise.
           </h2>
           <p className="mt-4 text-lg text-white/80">
@@ -385,6 +472,7 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="py-12 px-6 bg-text-primary text-white/60">
@@ -405,5 +493,6 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

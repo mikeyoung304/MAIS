@@ -16,10 +16,13 @@ const identities = [
   { profession: 'therapist', verb: 'hold space' },
   { profession: 'coach', verb: 'unlock potential' },
   { profession: 'wedding planner', verb: 'orchestrate magic' },
-  { profession: 'consultant', verb: 'solve problems' },
+  { profession: 'consultant', verb: 'cut through noise' },
   { profession: 'trainer', verb: 'transform lives' },
   { profession: 'designer', verb: 'create beauty' },
   { profession: 'doula', verb: 'guide journeys' },
+  { profession: 'esthetician', verb: 'reveal radiance' },
+  { profession: 'nutritionist', verb: 'fuel performance' },
+  { profession: 'stylist', verb: 'craft confidence' },
 ];
 
 export function ScrollingIdentity() {
@@ -33,7 +36,7 @@ export function ScrollingIdentity() {
         setCurrentIndex((prev) => (prev + 1) % identities.length);
         setIsAnimating(false);
       }, 150);
-    }, 2500); // ~20 second full loop (8 items × 2.5s)
+    }, 2500); // ~27 second full loop (11 items × 2.5s)
 
     return () => clearInterval(interval);
   }, []);
