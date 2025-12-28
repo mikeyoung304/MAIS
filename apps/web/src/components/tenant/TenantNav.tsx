@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Menu, X } from 'lucide-react';
 import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
 import { getNavigationItems, buildNavHref } from './navigation';
@@ -147,7 +148,7 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
   return (
     <>
       {/* Skip link is provided by root layout.tsx */}
-      <header className="sticky top-0 z-50 border-b border-neutral-100 bg-white/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-50 border-b border-neutral-100 dark:border-neutral-800 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-lg">
         <nav aria-label="Main navigation" className="mx-auto max-w-6xl px-6">
           <div className="flex h-16 items-center justify-between">
             {/* Logo and tenant name */}
@@ -185,6 +186,7 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
                   {item.label}
                 </Link>
               ))}
+              <ThemeToggle />
               <Button asChild variant="sage" size="sm">
                 <a href={`${basePath}#packages`}>Book Now</a>
               </Button>
@@ -195,7 +197,7 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
               ref={menuButtonRef}
               type="button"
               onClick={toggleMenu}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-neutral-100 md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 md:hidden"
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
@@ -213,7 +215,7 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
         <div
           ref={menuRef}
           id="mobile-menu"
-          className={`fixed inset-x-0 top-[65px] bottom-0 z-40 bg-white transition-transform duration-300 md:hidden ${
+          className={`fixed inset-x-0 top-[65px] bottom-0 z-40 bg-white dark:bg-neutral-900 transition-transform duration-300 md:hidden ${
             isOpen ? 'translate-x-0' : 'translate-x-full'
           } motion-reduce:transition-none`}
           aria-hidden={!isOpen}
@@ -229,7 +231,7 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
                   className={`rounded-lg px-4 py-3 text-lg font-medium transition-colors ${
                     isActiveLink(item.href)
                       ? 'bg-sage/10 text-sage'
-                      : 'text-text-primary hover:bg-neutral-50'
+                      : 'text-text-primary hover:bg-neutral-50 dark:hover:bg-neutral-800'
                   }`}
                   tabIndex={isOpen ? 0 : -1}
                 >

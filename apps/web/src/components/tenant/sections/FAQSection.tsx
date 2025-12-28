@@ -33,7 +33,10 @@ export function FAQSection({
 
         <div className="mt-16 space-y-6">
           {items.map((faq, i) => (
-            <div key={i} className="rounded-2xl border border-neutral-100 bg-white p-6">
+            <div
+              key={i}
+              className="rounded-2xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6"
+            >
               <h3 className="font-semibold text-text-primary">{faq.question}</h3>
               <p className="mt-2 text-text-muted">{faq.answer}</p>
             </div>

@@ -239,6 +239,61 @@
   --z-tooltip: 1070;
 }
 
+/* ====================================
+   DARK MODE
+   ==================================== */
+
+.dark {
+  /* Surfaces - slightly warm dark, not pure black */
+  --surface-primary: #0f0f0f;
+  --surface-secondary: #1a1a1a;
+  --surface-tertiary: #262626;
+  --surface-elevated: #2a2a2a;
+  --surface-overlay: rgba(0, 0, 0, 0.8);
+  --surface-overlay-light: rgba(38, 38, 38, 0.95);
+
+  /* Text - slightly off-white for reduced eye strain */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-quaternary: #52525b;
+  --text-inverse: #0f0f0f;
+  --text-link: #93c5fd;
+  --text-link-hover: #bfdbfe;
+
+  /* Brand colors - lighter for dark backgrounds */
+  --macon-navy: #4A7FD4;
+  --macon-orange: #FB923C;
+  --macon-teal: #2DD4BF;
+
+  /* Interactive states - adjusted for dark mode */
+  --interactive-primary-default: #4A7FD4;
+  --interactive-primary-hover: #60A5FA;
+  --interactive-primary-active: #3B82F6;
+  --interactive-primary-disabled: #374151;
+
+  --interactive-secondary-default: #FB923C;
+  --interactive-secondary-hover: #FDBA74;
+  --interactive-secondary-active: #F97316;
+  --interactive-secondary-disabled: #374151;
+
+  --interactive-neutral-default: #262626;
+  --interactive-neutral-hover: #374151;
+  --interactive-neutral-active: #404040;
+  --interactive-neutral-disabled: #1f1f1f;
+
+  /* Borders */
+  --border-color-default: #2a2a2a;
+  --border-color-strong: #404040;
+  --border-color-subtle: #1f1f1f;
+
+  /* Shadows - lighter for dark mode elevation */
+  --elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --elevation-4: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *,

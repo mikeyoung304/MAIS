@@ -36,7 +36,7 @@ export function ContactSection({
         </div>
 
         {hasContactInfo ? (
-          <div className="mt-16 rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
+          <div className="mt-16 rounded-3xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 shadow-lg">
             <div className="grid gap-6 md:grid-cols-2">
               {email && (
                 <div className="flex items-start gap-4">
@@ -92,7 +92,7 @@ export function ContactSection({
             </div>
           </div>
         ) : (
-          <div className="mt-16 rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg text-center">
+          <div className="mt-16 rounded-3xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 shadow-lg text-center">
             <p className="text-text-muted">Contact information coming soon. Check back later!</p>
           </div>
         )}

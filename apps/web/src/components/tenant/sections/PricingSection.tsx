@@ -25,7 +25,10 @@ export function PricingSection({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: PricingSectionProps) {
-  const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
+  const bgClass =
+    backgroundColor === 'neutral'
+      ? 'bg-neutral-50 dark:bg-neutral-900'
+      : 'bg-white dark:bg-neutral-950';
 
   return (
     <section
@@ -56,10 +59,10 @@ export function PricingSection({
           return (
             <div
               key={tier.name}
-              className={`bg-white rounded-3xl p-8 transition-all duration-300 ${
+              className={`bg-white dark:bg-neutral-900 rounded-3xl p-8 transition-all duration-300 ${
                 isPopular
                   ? 'shadow-2xl border-2 border-sage relative lg:-mt-4 lg:mb-4'
-                  : 'shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1'
+                  : 'shadow-lg border border-neutral-100 dark:border-neutral-800 hover:shadow-xl hover:-translate-y-1'
               }`}
             >
               {isPopular && (

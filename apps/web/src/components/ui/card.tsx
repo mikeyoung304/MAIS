@@ -11,11 +11,11 @@ const cardVariants = cva(
     variants: {
       colorScheme: {
         default: [
-          'bg-white text-neutral-900',
+          'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100',
           'shadow-elevation-2 hover:shadow-elevation-3',
-          'border border-neutral-100/30',
+          'border border-neutral-100/30 dark:border-neutral-700/30',
           'backdrop-blur-xs',
-          'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/80 before:to-transparent before:pointer-events-none',
+          'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/80 dark:before:from-neutral-800/80 before:to-transparent before:pointer-events-none',
           'hover:-translate-y-0.5',
         ],
         navy: [
@@ -104,7 +104,10 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex items-center p-6 pt-4 border-t border-neutral-100/50', className)}
+      className={cn(
+        'flex items-center p-6 pt-4 border-t border-neutral-100/50 dark:border-neutral-700/50',
+        className
+      )}
       {...props}
     />
   )

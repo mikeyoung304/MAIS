@@ -73,7 +73,10 @@ export function FeaturesSection({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: FeaturesSectionProps) {
-  const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
+  const bgClass =
+    backgroundColor === 'neutral'
+      ? 'bg-neutral-50 dark:bg-neutral-900'
+      : 'bg-white dark:bg-neutral-950';
   const gridCols = {
     2: 'md:grid-cols-2',
     3: 'md:grid-cols-2 lg:grid-cols-3',
@@ -103,7 +106,7 @@ export function FeaturesSection({
           return (
             <div
               key={feature.title}
-              className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              className="bg-white dark:bg-neutral-900 rounded-3xl p-8 shadow-lg border border-neutral-100 dark:border-neutral-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
             >
               <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
                 <IconComponent className="h-6 w-6 text-sage" />

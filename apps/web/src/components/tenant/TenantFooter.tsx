@@ -36,7 +36,10 @@ export function TenantFooter({ tenant, basePath: basePathProp, domainParam }: Te
   }));
 
   return (
-    <footer role="contentinfo" className="border-t border-neutral-100 bg-white py-12">
+    <footer
+      role="contentinfo"
+      className="border-t border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-12"
+    >
       <div className="mx-auto max-w-6xl px-6">
         {/* Top section: Logo and navigation */}
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
@@ -74,7 +77,7 @@ export function TenantFooter({ tenant, basePath: basePathProp, domainParam }: Te
         </div>
 
         {/* Bottom section: Copyright and attribution */}
-        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-neutral-100 pt-8 md:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-neutral-100 dark:border-neutral-800 pt-8 md:flex-row">
           <p className="text-sm text-text-muted">
             &copy; {currentYear} {tenant.name}. All rights reserved.
           </p>

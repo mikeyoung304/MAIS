@@ -39,7 +39,10 @@ export function TestimonialsSection({
 
         <div className="mt-16 grid gap-8 md:grid-cols-2">
           {items.map((testimonial, i) => (
-            <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
+            <div
+              key={i}
+              className="rounded-3xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8 shadow-lg"
+            >
               <StarRating rating={testimonial.rating} />
               <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>
               <div className="mt-4 flex items-center gap-3">
