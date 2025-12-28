@@ -372,11 +372,10 @@ export default function HomePage() {
                   id="features-heading"
                   className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary"
                 >
-                  What you get. What you skip.
+                  What you get.
                 </h2>
                 <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
-                  One membership. Website, booking, payments, AI assistant. We set it up. You show
-                  up for clients.
+                  One membership. The rest? Handled.
                 </p>
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
