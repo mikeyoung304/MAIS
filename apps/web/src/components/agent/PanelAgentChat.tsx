@@ -78,6 +78,7 @@ export function PanelAgentChat({
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasHealthCheckFailed, setHasHealthCheckFailed] = useState(false);
+  const [healthCheckMessage, setHealthCheckMessage] = useState<string | null>(null);
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -97,6 +98,7 @@ export function PanelAgentChat({
     setIsInitializing(true);
     setError(null);
     setHasHealthCheckFailed(false);
+    setHealthCheckMessage(null);
 
     try {
       // Health check first
@@ -110,6 +112,7 @@ export function PanelAgentChat({
         const health = await healthResponse.json();
         if (!health.available) {
           setHasHealthCheckFailed(true);
+          setHealthCheckMessage(health.message || null);
           setIsInitializing(false);
           return;
         }
@@ -284,7 +287,9 @@ export function PanelAgentChat({
           <Bot className="w-5 h-5 text-text-muted" />
         </div>
         <p className="text-sm font-medium text-text-primary mb-1">Assistant Unavailable</p>
-        <p className="text-xs text-text-muted mb-3">Complete setup to unlock your AI assistant.</p>
+        <p className="text-xs text-text-muted mb-3">
+          {healthCheckMessage || 'Unable to connect to your assistant.'}
+        </p>
         <Button
           variant="outline"
           size="sm"

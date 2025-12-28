@@ -1378,6 +1378,106 @@ export const startTrialTool: AgentTool = {
   },
 };
 
+/**
+ * initiate_stripe_onboarding - Start Stripe Connect onboarding
+ *
+ * Trust Tier: T2 (soft confirm) - user will be redirected to Stripe
+ */
+export const initiateStripeOnboardingTool: AgentTool = {
+  name: 'initiate_stripe_onboarding',
+  description:
+    'Start Stripe Connect payment setup. If already connected, returns that status. Otherwise creates a connected account and returns the onboarding URL.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      email: {
+        type: 'string',
+        description: 'Business owner email (optional, uses tenant email if not provided)',
+      },
+      businessName: {
+        type: 'string',
+        description: 'Business name (optional, uses tenant name if not provided)',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const email = params.email as string | undefined;
+    const businessName = params.businessName as string | undefined;
+
+    try {
+      // Check current Stripe status
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          stripeOnboarded: true,
+          stripeAccountId: true,
+          email: true,
+          name: true,
+          slug: true,
+        },
+      });
+
+      if (!tenant) {
+        return { success: false, error: 'Tenant not found' };
+      }
+
+      // If already connected, return early
+      if (tenant.stripeOnboarded) {
+        return {
+          success: true,
+          data: {
+            alreadyConnected: true,
+            message: 'Stripe is already connected. You can accept payments.',
+          },
+        };
+      }
+
+      // Resolve email and business name from context if not provided
+      const resolvedEmail = email || tenant.email;
+      const resolvedBusinessName = businessName || tenant.name;
+
+      if (!resolvedEmail) {
+        return {
+          success: false,
+          error: 'Email is required. Please provide an email or add one to your tenant profile.',
+        };
+      }
+
+      const operation = `Set up Stripe payments for ${sanitizeForContext(resolvedBusinessName || 'your business', 50)}`;
+      const payload = {
+        email: resolvedEmail,
+        businessName: resolvedBusinessName,
+        hasExistingAccount: !!tenant.stripeAccountId,
+      };
+      const preview = {
+        action: tenant.stripeAccountId ? 'resume_onboarding' : 'start_onboarding',
+        email: sanitizeForContext(resolvedEmail, 50),
+        businessName: sanitizeForContext(resolvedBusinessName || 'Your Business', 50),
+        note: 'You will be redirected to Stripe to complete payment setup.',
+      };
+
+      return createProposal(
+        context,
+        'initiate_stripe_onboarding',
+        operation,
+        'T2',
+        payload,
+        preview
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ error, tenantId }, 'Error in initiate_stripe_onboarding tool');
+      return {
+        success: false,
+        error: `Failed to initiate Stripe onboarding: ${errorMessage}. Try again or contact support if the issue persists.`,
+        code: 'STRIPE_ONBOARDING_ERROR',
+      };
+    }
+  },
+};
+
 export const writeTools: AgentTool[] = [
   upsertPackageTool,
   upsertAddOnTool,
@@ -1395,4 +1495,5 @@ export const writeTools: AgentTool[] = [
   deleteSegmentTool,
   updateDepositSettingsTool,
   startTrialTool,
+  initiateStripeOnboardingTool,
 ];

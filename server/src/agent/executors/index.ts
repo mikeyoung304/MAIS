@@ -919,5 +919,73 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     };
   });
 
+  // initiate_stripe_onboarding - Set up Stripe Connect payments
+  registerProposalExecutor('initiate_stripe_onboarding', async (tenantId, payload) => {
+    const { email, businessName, hasExistingAccount } = payload as {
+      email: string;
+      businessName: string | null;
+      hasExistingAccount: boolean;
+    };
+
+    // Import StripeConnectService dynamically to avoid circular deps
+    const { StripeConnectService } = await import('../../services/stripe-connect.service');
+    const stripeConnectService = new StripeConnectService(prisma);
+
+    // Check if STRIPE_SECRET_KEY is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error(
+        'Payment processing is not configured for this environment. Contact support for assistance.'
+      );
+    }
+
+    let accountId: string;
+
+    if (hasExistingAccount) {
+      // Resume onboarding for existing account
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { stripeAccountId: true, slug: true },
+      });
+
+      if (!tenant?.stripeAccountId) {
+        throw new Error(
+          'Stripe account not found. This is unexpected - please try again or contact support.'
+        );
+      }
+
+      accountId = tenant.stripeAccountId;
+      logger.info({ tenantId, accountId }, 'Resuming Stripe onboarding via agent');
+    } else {
+      // Create new connected account
+      accountId = await stripeConnectService.createConnectedAccount(
+        tenantId,
+        email,
+        businessName || 'My Business',
+        'US'
+      );
+      logger.info({ tenantId, accountId }, 'Created Stripe Connect account via agent');
+    }
+
+    // Generate onboarding link
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const refreshUrl = `${baseUrl}/tenant/dashboard?stripe=retry`;
+    const returnUrl = `${baseUrl}/tenant/dashboard?stripe=complete`;
+
+    const onboardingUrl = await stripeConnectService.createOnboardingLink(
+      tenantId,
+      refreshUrl,
+      returnUrl
+    );
+
+    logger.info({ tenantId, accountId }, 'Stripe onboarding link created via agent');
+
+    return {
+      action: hasExistingAccount ? 'resumed_onboarding' : 'started_onboarding',
+      onboardingUrl,
+      accountId,
+      note: 'Open this link to complete your Stripe payment setup.',
+    };
+  });
+
   logger.info('Agent proposal executors registered');
 }

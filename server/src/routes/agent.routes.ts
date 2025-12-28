@@ -91,19 +91,24 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         }
       }
 
-      // Determine availability reason
+      // Determine availability reason and user-friendly message
       let reason: string | null = null;
+      let message: string | null = null;
       if (!apiKeyConfigured) {
         reason = 'missing_api_key';
+        message = 'Our team is setting up your AI assistant. Check back shortly!';
       } else if (!tenantId) {
         reason = 'not_authenticated';
+        message = 'Please sign in to access your assistant.';
       } else if (!contextAvailable) {
         reason = 'context_unavailable';
+        message = 'Having trouble loading your data. Try again?';
       }
 
       res.json({
         available: apiKeyConfigured && contextAvailable,
         reason,
+        message,
         onboardingState,
         capabilities: ['chat', 'create_packages', 'manage_bookings', 'stripe_onboarding'],
       });

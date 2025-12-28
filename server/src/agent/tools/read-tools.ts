@@ -1001,6 +1001,96 @@ export const getTrialStatusTool: AgentTool = {
   },
 };
 
+/**
+ * get_booking_link - Get storefront booking URLs
+ *
+ * Returns: storefront URL and optional package-specific booking URL
+ */
+export const getBookingLinkTool: AgentTool = {
+  name: 'get_booking_link',
+  description:
+    'Get the storefront URL where customers can book. Optionally get a direct link to a specific package.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      packageSlug: {
+        type: 'string',
+        description: 'Optional package slug to get a direct booking link for a specific package',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const packageSlug = params.packageSlug as string | undefined;
+
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          slug: true,
+          customDomain: true,
+          domainVerified: true,
+        },
+      });
+
+      if (!tenant) {
+        return { success: false, error: 'Tenant not found' };
+      }
+
+      // Determine the base URL
+      const baseAppUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gethandled.ai';
+      let storefrontUrl: string;
+
+      // Use custom domain if verified, otherwise use slug-based URL
+      if (tenant.customDomain && tenant.domainVerified) {
+        storefrontUrl = `https://${tenant.customDomain}`;
+      } else {
+        storefrontUrl = `${baseAppUrl}/t/${tenant.slug}`;
+      }
+
+      const result: {
+        storefrontUrl: string;
+        packageUrl?: string;
+        packageSlug?: string;
+      } = {
+        storefrontUrl,
+      };
+
+      // If package slug provided, verify it exists and add package URL
+      if (packageSlug) {
+        const pkg = await prisma.package.findFirst({
+          where: { tenantId, slug: packageSlug, active: true },
+          select: { slug: true, name: true },
+        });
+
+        if (!pkg) {
+          return {
+            success: false,
+            error: `Package with slug "${packageSlug}" not found or inactive. Use get_packages to see available packages.`,
+          };
+        }
+
+        result.packageUrl = `${storefrontUrl}/book/${pkg.slug}`;
+        result.packageSlug = pkg.slug;
+      }
+
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ error, tenantId }, 'Error in get_booking_link tool');
+      return {
+        success: false,
+        error: `Failed to get booking link: ${errorMessage}. Try again or verify the package slug if provided.`,
+        code: 'GET_BOOKING_LINK_ERROR',
+      };
+    }
+  },
+};
+
 export const readTools: AgentTool[] = [
   getTenantTool,
   getDashboardTool,
@@ -1015,4 +1105,5 @@ export const readTools: AgentTool[] = [
   getCustomersTool,
   getSegmentsTool,
   getTrialStatusTool,
+  getBookingLinkTool,
 ];
