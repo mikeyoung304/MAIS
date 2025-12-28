@@ -471,11 +471,8 @@ export default function HomePage() {
             <div className="max-w-7xl mx-auto">
               <div className="text-center max-w-3xl mx-auto mb-16">
                 <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary">
-                  Real talk from real pros.*
+                  Real talk from real pros.
                 </h2>
-                <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
-                  *Names changed to protect the technologically overwhelmed.
-                </p>
               </div>
               <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 {testimonials.map((testimonial) => (
