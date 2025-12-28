@@ -1790,6 +1790,80 @@ Are you creating a todo based on a plan?
 
 ---
 
+### 4. Agent Design Prevention Guides
+
+#### [Agent-Native Coaching Prevention Strategies](./agent-design/AGENT-NATIVE-COACHING-PREVENTION-STRATEGIES-MAIS-20251228.md)
+
+**Purpose:** Prevent common issues when building pricing coaches, advisory agents, and context-aware AI features
+**Audience:** Engineers building coaching/advisory agent features
+**Length:** ~3,500 words
+**Date Created:** 2025-12-28
+**Key Patterns:** Context sanitization, token budget optimization, agent-native design principles
+
+**Covers 4 Prevention Strategies:**
+
+1. **Context Injection Sanitization** - Prevent prompt injection from user-controlled data (package names, descriptions)
+2. **Token Budget Awareness** - Consolidate redundant prompt sections, stay under 2000 tokens
+3. **Deprecated Code Cleanup Policy** - 2-week removal window, proper @deprecated annotations
+4. **Agent-Native Patterns Checklist** - Guide vs. micromanage, trust intelligence, tools as primitives
+
+**Quick Rules:**
+
+```typescript
+// ✅ Sanitize user-controlled data before context injection
+import { sanitizeForContext } from './sanitize';
+
+const context = `
+Your packages:
+${packages.map((p) => `- ${sanitizeForContext(p.name, 100)}: $${p.basePrice}`).join('\n')}
+`;
+
+// ✅ Sort packages by price ascending for coaching (starter → premium)
+const sorted = packages.sort((a, b) => a.basePrice - b.basePrice);
+
+// ✅ Agent-native: Framework as judgment criteria, not rules
+// BAD: "Entry tier MUST be under $500"
+// GOOD: "Apply Good/Better/Best framework as appropriate"
+
+// ✅ Token budget: Each concept ONCE only
+// BAD: Marketing tips section + Onboarding section + Strategy section (all mention G/B/B)
+// GOOD: Single mention in most relevant location
+```
+
+**Issues Prevented:**
+
+- Prompt injection via package names (e.g., "Ignore previous instructions...")
+- Token budget bloat from redundant prompt sections
+- Deprecated functions lingering in codebase
+- Rule-based micromanagement instead of agent-native design
+- Hardcoded price thresholds making agent inflexible
+
+**Test Cases Included:**
+
+- Injection pattern detection tests (50+ patterns)
+- Package ordering verification tests
+- Token budget compliance tests
+- Deprecated code detection tests
+
+**Quick Reference:** [AGENT-NATIVE-COACHING-QUICK-CHECKLIST-MAIS-20251228.md](./agent-design/AGENT-NATIVE-COACHING-QUICK-CHECKLIST-MAIS-20251228.md) (print and pin!)
+
+**When to Read:**
+
+- Building pricing coaches or advisory agents
+- Injecting user data into context prompts
+- Optimizing system prompt token usage
+- Reviewing agent feature implementations
+- Adding coaching/onboarding behavior
+
+**Related Documents:**
+
+- [Agent Design Prevention Strategies](./AGENT-DESIGN-PREVENTION-STRATEGIES.md) - Full agent design guide
+- [Agent Design Quick Checklist](./AGENT-DESIGN-QUICK-CHECKLIST.md) - Complete agent design checklist
+- [Agent Tool Addition Prevention](./AGENT-TOOL-ADDITION-PREVENTION.md) - Adding tools to agents
+- [Agent Design Index](./agent-design/INDEX.md) - All agent design documentation
+
+---
+
 ## ✅ Next Steps
 
 **For engineers:**

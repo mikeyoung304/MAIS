@@ -67,25 +67,33 @@ export async function buildSessionContext(
     const next30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [packageCount, totalBookings, upcomingBookings, revenueThisMonth] = await Promise.all([
-      prisma.package.count({ where: { tenantId } }),
-      prisma.booking.count({ where: { tenantId } }),
-      prisma.booking.count({
-        where: {
-          tenantId,
-          date: { gte: now, lte: next30Days },
-          status: { notIn: ['CANCELED', 'REFUNDED'] },
-        },
-      }),
-      prisma.booking.aggregate({
-        where: {
-          tenantId,
-          createdAt: { gte: thisMonthStart },
-          status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
-        },
-        _sum: { totalPrice: true },
-      }),
-    ]);
+    const [packageCount, totalBookings, upcomingBookings, revenueThisMonth, activePackages] =
+      await Promise.all([
+        prisma.package.count({ where: { tenantId } }),
+        prisma.booking.count({ where: { tenantId } }),
+        prisma.booking.count({
+          where: {
+            tenantId,
+            date: { gte: now, lte: next30Days },
+            status: { notIn: ['CANCELED', 'REFUNDED'] },
+          },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            tenantId,
+            createdAt: { gte: thisMonthStart },
+            status: { in: ['PAID', 'CONFIRMED', 'FULFILLED'] },
+          },
+          _sum: { totalPrice: true },
+        }),
+        // Active packages for context (max 10, sorted by price for Good/Better/Best display)
+        prisma.package.findMany({
+          where: { tenantId, active: true },
+          select: { name: true, slug: true, basePrice: true },
+          take: 10,
+          orderBy: { basePrice: 'asc' },
+        }),
+      ]);
 
     // Build context prompt
     const contextPrompt = buildContextPrompt({
@@ -96,6 +104,7 @@ export async function buildSessionContext(
       upcomingBookings,
       totalBookings,
       revenueThisMonth: revenueThisMonth._sum?.totalPrice ?? 0,
+      packages: activePackages,
     });
 
     return {
@@ -129,6 +138,7 @@ function buildContextPrompt(data: {
   upcomingBookings: number;
   totalBookings: number;
   revenueThisMonth: number;
+  packages: Array<{ name: string; slug: string; basePrice: number }>;
 }): string {
   const {
     businessName,
@@ -138,6 +148,7 @@ function buildContextPrompt(data: {
     upcomingBookings,
     totalBookings,
     revenueThisMonth,
+    packages,
   } = data;
 
   // Format revenue
@@ -146,18 +157,42 @@ function buildContextPrompt(data: {
     maximumFractionDigits: 2,
   })}`;
 
+  // Build packages section (only if they have packages)
+  let packagesSection = '';
+  if (packages.length > 0) {
+    const packageLines = packages
+      .map((p) => {
+        const price = `$${(p.basePrice / 100).toFixed(0)}`;
+        // Sanitize package name for prompt injection defense
+        return `  - ${sanitizeForContext(p.name, 100)}: ${price}`;
+      })
+      .join('\n');
+    packagesSection = `\n**Your Packages:**\n${packageLines}\n`;
+  }
+
+  // Build onboarding hint
+  let onboardingHint = '';
+  if (!stripeConnected) {
+    onboardingHint = '\n**Next Step:** Help them connect Stripe first.';
+  } else if (packageCount === 0) {
+    onboardingHint = '\n**Next Step:** Help them create their first package.';
+  } else if (totalBookings === 0) {
+    onboardingHint = '\n**Next Step:** Help them share their booking link.';
+  }
+
   return `## Your Business Context
 
 You are helping **${businessName}** (${businessSlug}).
 
 **Setup:**
-- Stripe: ${stripeConnected ? 'Ready for payments' : 'Not yet connected - guide them to set up'}
+- Stripe: ${stripeConnected ? 'Ready for payments' : 'Not connected'}
 - Packages: ${packageCount} configured
-- Upcoming bookings: ${upcomingBookings} in next 30 days
+- Upcoming: ${upcomingBookings} booking${upcomingBookings !== 1 ? 's' : ''} in next 30 days
 
 **Quick Stats:**
 - Total bookings: ${totalBookings}
-- This month revenue: ${revenueFormatted}
+- This month: ${revenueFormatted}
+${packagesSection}${onboardingHint}
 
 For current details, use your read tools.`;
 }
@@ -214,36 +249,6 @@ export function getHandledGreeting(context: AgentSessionContext): string {
 
   // Active user, no upcoming
   return `What should we knock out today?`;
-}
-
-/**
- * Detect user type and suggest onboarding path
- * @deprecated Use getHandledGreeting() for HANDLED voice
- */
-export function detectOnboardingPath(context: AgentSessionContext): {
-  userType: 'new' | 'returning' | 'needs_stripe';
-  suggestedMessage: string;
-} {
-  const { quickStats } = context;
-
-  if (!quickStats.stripeConnected) {
-    return {
-      userType: 'needs_stripe',
-      suggestedMessage: getHandledGreeting(context),
-    };
-  }
-
-  if (quickStats.packageCount === 0 && quickStats.totalBookings === 0) {
-    return {
-      userType: 'new',
-      suggestedMessage: getHandledGreeting(context),
-    };
-  }
-
-  return {
-    userType: 'returning',
-    suggestedMessage: getHandledGreeting(context),
-  };
 }
 
 /**

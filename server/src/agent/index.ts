@@ -42,8 +42,9 @@ export type { CreateProposalInput, ProposalResult } from './proposals/proposal.s
 // Context builder
 export {
   buildSessionContext,
-  detectOnboardingPath,
   buildFallbackContext,
+  getHandledGreeting,
+  detectOnboardingState,
 } from './context/context-builder';
 export type { AgentSessionContext } from './context/context-builder';
 

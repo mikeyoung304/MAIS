@@ -13,6 +13,7 @@ Complete documentation for building production AI agents with capability maps, s
 1. **New to agent design?** Start with [AGENT_DESIGN_QUICK_REFERENCE.md](./AGENT_DESIGN_QUICK_REFERENCE.md) - cheat sheet with templates
 2. **Building an agent system?** Read [AGENT_DESIGN_SYSTEM_PATTERNS.md](./AGENT_DESIGN_SYSTEM_PATTERNS.md) - complete guide with code examples
 3. **Reviewing a design?** Use [AGENT_DESIGN_REVIEW_METHODOLOGY.md](./AGENT_DESIGN_REVIEW_METHODOLOGY.md) - 6-reviewer validation process
+4. **Building coaching features?** Read [AGENT-NATIVE-COACHING-PREVENTION-STRATEGIES-MAIS-20251228.md](./AGENT-NATIVE-COACHING-PREVENTION-STRATEGIES-MAIS-20251228.md) - sanitization, token budgets, agent-native patterns
 
 ## Documents Overview
 
@@ -109,6 +110,37 @@ Methodology for validating design with 6 parallel specialists:
 - Understanding why the design is this way
 - Running a review for a different system
 - Learning the review methodology
+
+---
+
+### 4. AGENT-NATIVE-COACHING-PREVENTION-STRATEGIES-MAIS-20251228.md
+
+**Prevention Strategies for Coaching Features** (3,500+ words)
+
+Lessons from building pricing coaching in the Growth Assistant:
+
+- **Context Injection Sanitization:** Prevent prompt injection from user-controlled data
+- **Token Budget Awareness:** Consolidate redundant prompt sections
+- **Deprecated Code Policy:** 2-week removal window for deprecated functions
+- **Agent-Native Patterns:** Guide vs. micromanage, trust intelligence
+
+**When to read:**
+
+- Building pricing coaches or advisory agents
+- Injecting user data into context prompts
+- Optimizing system prompt token usage
+- Reviewing agent feature implementations
+
+**Key sections:**
+
+- Prevention Strategy #1: Context Injection Sanitization
+- Prevention Strategy #2: Token Budget Awareness
+- Prevention Strategy #3: Deprecated Code Cleanup Policy
+- Prevention Strategy #4: Agent-Native Patterns Checklist
+- Test Cases for sanitization, ordering, token budget
+- Quick Checklist (print & pin)
+
+**Companion Document:** [AGENT-NATIVE-COACHING-QUICK-CHECKLIST-MAIS-20251228.md](./AGENT-NATIVE-COACHING-QUICK-CHECKLIST-MAIS-20251228.md)
 
 ---
 
