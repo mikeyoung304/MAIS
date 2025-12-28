@@ -4,8 +4,44 @@ import { auth, signIn, getBackendToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+/**
+ * API response types for impersonation endpoints
+ */
+interface ImpersonateResponse {
+  token: string;
+  email: string;
+  role: 'PLATFORM_ADMIN' | 'TENANT_ADMIN';
+  tenantId: string;
+  slug: string;
+  impersonation: {
+    tenantId: string;
+    tenantSlug: string;
+    tenantEmail: string;
+    startedAt: string;
+  };
+}
+
+interface StopImpersonationResponse {
+  token: string;
+  email: string;
+  role: 'PLATFORM_ADMIN';
+}
+
+/**
+ * Safely parse JSON response, handling non-JSON error responses
+ */
+async function safeParseJSON<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(text || `Request failed with status ${response.status}`);
+  }
+}
 
 /**
  * Impersonate a tenant
@@ -39,14 +75,17 @@ export async function impersonateTenant(tenantId: string) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await safeParseJSON<{ message?: string }>(response);
     throw new Error(error.message || 'Impersonation failed');
   }
 
-  const data = await response.json();
+  const data = await safeParseJSON<ImpersonateResponse>(response);
+
+  // Store original token for rollback in case signIn fails
+  const cookieStore = await cookies();
+  const originalToken = cookieStore.get('mais_backend_token')?.value;
 
   // Update backend token cookie with impersonation token
-  const cookieStore = await cookies();
   cookieStore.set('mais_backend_token', data.token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -55,16 +94,33 @@ export async function impersonateTenant(tenantId: string) {
     path: '/',
   });
 
-  // Re-authenticate to update NextAuth session with impersonation data
-  await signIn('credentials', {
-    token: data.token,
-    email: data.email,
-    role: data.role,
-    tenantId: data.tenantId,
-    slug: data.slug,
-    impersonation: JSON.stringify(data.impersonation),
-    redirect: false,
-  });
+  try {
+    // Re-authenticate to update NextAuth session with impersonation data
+    await signIn('credentials', {
+      token: data.token,
+      email: data.email,
+      role: data.role,
+      tenantId: data.tenantId,
+      slug: data.slug,
+      impersonation: JSON.stringify(data.impersonation),
+      redirect: false,
+    });
+  } catch (error) {
+    // Rollback cookie if signIn fails to prevent session desync
+    logger.error('Failed to sync session after impersonation', { error });
+    if (originalToken) {
+      cookieStore.set('mais_backend_token', originalToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60,
+        path: '/',
+      });
+    } else {
+      cookieStore.delete('mais_backend_token');
+    }
+    throw new Error('Failed to start impersonation session');
+  }
 
   revalidatePath('/');
   redirect('/tenant/dashboard');
@@ -96,13 +152,17 @@ export async function stopImpersonation() {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to stop impersonation');
+    const error = await safeParseJSON<{ message?: string }>(response);
+    throw new Error(error.message || 'Failed to stop impersonation');
   }
 
-  const data = await response.json();
+  const data = await safeParseJSON<StopImpersonationResponse>(response);
+
+  // Store impersonation token for rollback in case signIn fails
+  const cookieStore = await cookies();
+  const impersonationToken = cookieStore.get('mais_backend_token')?.value;
 
   // Restore admin token
-  const cookieStore = await cookies();
   cookieStore.set('mais_backend_token', data.token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -111,13 +171,28 @@ export async function stopImpersonation() {
     path: '/',
   });
 
-  // Re-authenticate as admin (no impersonation)
-  await signIn('credentials', {
-    token: data.token,
-    email: data.email,
-    role: data.role,
-    redirect: false,
-  });
+  try {
+    // Re-authenticate as admin (no impersonation)
+    await signIn('credentials', {
+      token: data.token,
+      email: data.email,
+      role: data.role,
+      redirect: false,
+    });
+  } catch (error) {
+    // Rollback cookie if signIn fails to prevent session desync
+    logger.error('Failed to sync session after stopping impersonation', { error });
+    if (impersonationToken) {
+      cookieStore.set('mais_backend_token', impersonationToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 4 * 60 * 60,
+        path: '/',
+      });
+    }
+    throw new Error('Failed to restore admin session');
+  }
 
   revalidatePath('/');
   redirect('/admin/tenants');

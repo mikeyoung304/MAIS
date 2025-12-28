@@ -24,7 +24,11 @@ export function ImpersonationBanner() {
   const { tenantSlug, tenantEmail } = impersonation;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-orange-500/10 border-b border-orange-500/20">
+    <div
+      role="alert"
+      aria-live="polite"
+      className="fixed top-0 left-0 right-0 z-50 bg-orange-500/10 border-b border-orange-500/20"
+    >
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-orange-700">
           <AlertTriangle className="h-4 w-4" />

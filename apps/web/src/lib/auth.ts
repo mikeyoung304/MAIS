@@ -102,7 +102,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             slug: credentials.slug as string | undefined,
             backendToken: credentials.token as string,
             impersonation: credentials.impersonation
-              ? JSON.parse(credentials.impersonation as string)
+              ? (() => {
+                  try {
+                    return JSON.parse(credentials.impersonation as string);
+                  } catch {
+                    logger.warn('Failed to parse impersonation data', {
+                      raw: credentials.impersonation,
+                    });
+                    return undefined;
+                  }
+                })()
               : undefined,
           };
         }
