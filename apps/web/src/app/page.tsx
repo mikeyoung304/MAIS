@@ -10,6 +10,14 @@ import {
   ChevronDown,
   CreditCard,
   Bot,
+  Clock,
+  MessageSquare,
+  FileText,
+  Sparkles,
+  Camera,
+  Heart,
+  Palette,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
@@ -342,29 +350,105 @@ export default function HomePage() {
           </section>
 
           {/* Problem Section */}
-          <section className="py-32 md:py-40 px-6 bg-surface-alt">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
-                You didn&apos;t start this to answer emails at midnight.
-              </h2>
-              <div className="mt-8 space-y-6 text-xl text-text-muted leading-relaxed">
-                <p>
-                  Clients message at 11pm. Booking requests pile up. You spend more time on admin
-                  than on the work you love.
+          <section className="py-32 md:py-40 px-6 bg-surface-alt relative overflow-hidden">
+            {/* Ambient decorations */}
+            <div
+              className="absolute top-20 left-[10%] w-64 h-64 bg-sage/5 rounded-full blur-3xl pointer-events-none"
+              aria-hidden="true"
+            />
+            <div
+              className="absolute bottom-20 right-[10%] w-48 h-48 bg-sage/4 rounded-full blur-3xl pointer-events-none"
+              aria-hidden="true"
+            />
+
+            <div className="relative max-w-5xl mx-auto">
+              {/* Headline - static punch, no scroll (hero owns that) */}
+              <div className="text-center mb-16">
+                <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
+                  You didn&apos;t start this to become a{' '}
+                  <span className="text-sage">tech expert.</span>
+                </h2>
+                <p className="mt-6 text-xl text-text-muted font-light max-w-2xl mx-auto">
+                  But here you are. Answering emails at midnight. Chasing invoices. Playing tech
+                  support for your own website.
                 </p>
-                <p>
-                  Meanwhile, AI is changing everything — and you don&apos;t have time to figure out
-                  which tools actually matter.
-                </p>
-                <p className="text-2xl font-medium text-text-primary">What if AI worked for you?</p>
               </div>
-              <Button
-                asChild
-                variant="sage"
-                className="mt-10 rounded-full px-12 py-6 text-xl shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <Link href="#pricing">See how it works</Link>
-              </Button>
+
+              {/* Visual contrast grid */}
+              <div className="grid md:grid-cols-2 gap-8 mb-16">
+                {/* What you're doing */}
+                <div className="bg-neutral-800/50 rounded-3xl p-8 border border-neutral-700">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-neutral-400" />
+                    </div>
+                    <span className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
+                      Your time now
+                    </span>
+                  </div>
+                  <ul className="space-y-4">
+                    {[
+                      { icon: MessageSquare, text: 'Responding to DMs at 11pm' },
+                      { icon: FileText, text: 'Chasing unpaid invoices' },
+                      { icon: Calendar, text: 'Back-and-forth on scheduling' },
+                      { icon: Mail, text: 'Explaining pricing for the 100th time' },
+                    ].map((item) => (
+                      <li key={item.text} className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5 text-neutral-500 flex-shrink-0" />
+                        <span className="text-text-muted">{item.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* What you should be doing */}
+                <div className="bg-sage/10 rounded-3xl p-8 border border-sage/30 relative overflow-hidden">
+                  <div
+                    className="absolute -top-10 -right-10 w-32 h-32 bg-sage/10 rounded-full blur-2xl pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-full bg-sage/20 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-sage" />
+                      </div>
+                      <span className="text-sm font-medium text-sage uppercase tracking-wide">
+                        What you love
+                      </span>
+                    </div>
+                    <ul className="space-y-4">
+                      {[
+                        { icon: Camera, text: 'Capturing that perfect moment' },
+                        { icon: Heart, text: 'Changing lives in your sessions' },
+                        { icon: Palette, text: "Creating work you're proud of" },
+                        { icon: Users, text: 'Being present with your clients' },
+                      ].map((item) => (
+                        <li key={item.text} className="flex items-center gap-3">
+                          <item.icon className="w-5 h-5 text-sage flex-shrink-0" />
+                          <span className="text-text-primary">{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transition statement + CTA */}
+              <div className="text-center">
+                <p className="text-2xl md:text-3xl font-serif font-medium text-text-primary mb-8">
+                  What if you could get back to the work that matters?
+                </p>
+                <Button
+                  asChild
+                  variant="sage"
+                  className="rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+                >
+                  <Link href="#features" className="flex items-center gap-2">
+                    See how it works
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </section>
 
