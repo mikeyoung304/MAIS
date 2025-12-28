@@ -15,7 +15,9 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Use Next.js API proxy to handle authentication
+// The proxy at /api/agent/* adds the backend token from the session
+const API_PROXY = '/api/agent';
 
 /**
  * Message in the chat history
@@ -101,10 +103,8 @@ export function PanelAgentChat({
     setHealthCheckMessage(null);
 
     try {
-      // Health check first
-      const healthResponse = await fetch(`${API_URL}/v1/agent/health`, {
-        credentials: 'include',
-      });
+      // Health check first (via Next.js proxy for auth)
+      const healthResponse = await fetch(`${API_PROXY}/health`);
 
       if (!healthResponse.ok) {
         console.warn('Health check failed, attempting session init...');
@@ -118,10 +118,8 @@ export function PanelAgentChat({
         }
       }
 
-      // Initialize session
-      const sessionResponse = await fetch(`${API_URL}/v1/agent/session`, {
-        credentials: 'include',
-      });
+      // Initialize session (via Next.js proxy for auth)
+      const sessionResponse = await fetch(`${API_PROXY}/session`);
 
       if (!sessionResponse.ok) {
         throw new Error('Failed to initialize chat session');
@@ -174,10 +172,9 @@ export function PanelAgentChat({
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch(`${API_URL}/v1/agent/chat`, {
+      const response = await fetch(`${API_PROXY}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ message, sessionId }),
       });
 
@@ -206,9 +203,8 @@ export function PanelAgentChat({
   // Handle proposal confirmation
   const confirmProposal = async (proposalId: string) => {
     try {
-      const response = await fetch(`${API_URL}/v1/agent/proposals/${proposalId}/confirm`, {
+      const response = await fetch(`${API_PROXY}/proposals/${proposalId}/confirm`, {
         method: 'POST',
-        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -233,9 +229,8 @@ export function PanelAgentChat({
   // Handle proposal rejection
   const rejectProposal = async (proposalId: string) => {
     try {
-      const response = await fetch(`${API_URL}/v1/agent/proposals/${proposalId}/reject`, {
+      const response = await fetch(`${API_PROXY}/proposals/${proposalId}/reject`, {
         method: 'POST',
-        credentials: 'include',
       });
 
       if (!response.ok) {
