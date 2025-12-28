@@ -1,0 +1,77 @@
+# Next.js App Router Dual Route Deduplication - Problem Analysis Skeleton
+
+---
+
+## Problem Symptoms
+
+- 12 pairs of nearly identical tenant page files (about, contact, faq, gallery, services, testimonials × 2 route groups)
+- 80-90% code duplication across slug-based (`/t/[slug]/about/page.tsx`) and domain-based (`/t/_domain/about/page.tsx`) routes
+- ~850 total lines of duplicated logic for tenant resolution, metadata generation, and error handling
+- Changes to metadata patterns or error handling required updates in 14 separate locations
+- Error.tsx files had identical error UI logic repeated 12 times
+
+## Root Cause
+
+Next.js App Router architecture constraint:
+- Route matching is determined by **file structure**, not runtime resolution
+- Cannot have a single `page.tsx` that handles both dynamic segments (`[slug]`) and query parameters (`searchParams`)
+- Each routing approach requires its own file with its own signature: `params: Promise<{ slug }>` vs `searchParams: Promise<{ domain? }>`
+- Solution requires dual route files with extracted shared utilities, not unified routes
+
+## Key Insight
+
+**Extract the common logic (tenant resolution, metadata generation, error handling) into reusable utilities.** Leave only the route-specific parameter extraction in the page files.
+
+The breakthrough was recognizing this as a **routing abstraction problem**, not a code deduplication problem:
+
+1. **Define an abstraction** - A union type that represents "how to identify a tenant"
+   ```typescript
+   type TenantIdentifier =
+     | { type: 'slug'; slug: string }
+     | { type: 'domain'; domain: string };
+   ```
+
+2. **Extract resolution into utilities** - Single functions that work with either identifier type
+   ```typescript
+   async function resolveTenant(identifier: TenantIdentifier): Promise<TenantResolutionResult<ResolvedTenantContext>>
+   async function generateTenantPageMetadata(identifier: TenantIdentifier, pageName: PageName): Promise<Metadata>
+   ```
+
+3. **Use abstraction in routes** - Routes extract their specific params, then delegate to shared utilities
+   ```typescript
+   // [slug] route
+   const { slug } = await params;
+   const context = await checkPageAccessible({ type: 'slug', slug }, 'about');
+
+   // _domain route
+   const { domain } = await searchParams;
+   const context = await checkPageAccessible({ type: 'domain', domain }, 'about');
+   ```
+
+This transforms the problem from "12 separate implementations" to "2 thin route files calling unified utilities."
+
+## Impact
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Page file sizes | 50-80 LOC | 13-26 LOC | -70% |
+| Total tenant page code | ~850 LOC | ~350 LOC | -60% |
+| Metadata generation | Duplicated in all 14 files | Single `PAGE_METADATA_CONFIGS` registry | 1 source of truth |
+| Error boundaries | 10 LOC × 12 files | 1 shared component | -40% |
+| Maintainability | 14 locations to update | 1 utility file + 2 route pairs | Significantly improved |
+
+## Pattern Applicability
+
+**Use this pattern when:**
+- Same business logic, different parameter sources (params vs searchParams vs query vs route groups)
+- Same UI, multiple routing strategies
+- Config-driven features with multiple access patterns
+
+**Pattern name:** Routing Abstraction with Union Types
+**Prerequisite:** TypeScript discriminated unions and result wrapper pattern
+**Complexity:** Medium - requires thoughtful abstraction design
+**Payoff:** High - scales linearly with number of pages instead of quadratically
+
+---
+
+**Full documentation:** See `NEXT_APP_ROUTER_DUAL_ROUTE_DEDUPLICATION.md`

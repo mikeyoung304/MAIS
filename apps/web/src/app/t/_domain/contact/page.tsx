@@ -2,54 +2,52 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ContactPageContent } from '@/components/tenant';
 import {
-  getTenantByDomain,
-  TenantNotFoundError,
-  InvalidDomainError,
-  validateDomain,
-} from '@/lib/tenant';
+  generateTenantPageMetadata,
+  checkPageAccessible,
+  type TenantIdentifier,
+} from '@/lib/tenant-page-utils';
 
 interface ContactPageProps {
   searchParams: Promise<{ domain?: string }>;
 }
 
+/**
+ * Contact Page (Domain-based) - Contact information and form
+ *
+ * Displays contact information and a contact form.
+ * Returns 404 if page is disabled in tenant configuration.
+ */
+
 export async function generateMetadata({ searchParams }: ContactPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
-
-  try {
-    const validatedDomain = validateDomain(domain);
-    const tenant = await getTenantByDomain(validatedDomain);
-    return {
-      title: `Contact | ${tenant.name}`,
-      description: `Get in touch with ${tenant.name}.`,
-    };
-  } catch {
+  if (!domain) {
     return { title: 'Contact | Business Not Found', robots: { index: false, follow: false } };
   }
+
+  const identifier: TenantIdentifier = { type: 'domain', domain };
+  return generateTenantPageMetadata(identifier, 'contact');
 }
 
 export default async function ContactPage({ searchParams }: ContactPageProps) {
   const { domain } = await searchParams;
-
-  // Validate domain parameter
-  let validatedDomain: string;
-  try {
-    validatedDomain = validateDomain(domain);
-  } catch (error) {
-    if (error instanceof InvalidDomainError) {
-      notFound();
-    }
-    throw error;
+  if (!domain) {
+    notFound();
   }
 
-  try {
-    const tenant = await getTenantByDomain(validatedDomain);
-    const domainParam = `?domain=${validatedDomain}`;
+  const identifier: TenantIdentifier = { type: 'domain', domain };
+  const context = await checkPageAccessible(identifier, 'contact');
 
-    return <ContactPageContent tenant={tenant} basePath="" domainParam={domainParam} />;
-  } catch (error) {
-    if (error instanceof TenantNotFoundError) notFound();
-    throw error;
+  if (!context) {
+    notFound();
   }
+
+  return (
+    <ContactPageContent
+      tenant={context.tenant}
+      basePath={context.basePath}
+      domainParam={context.domainParam}
+    />
+  );
 }
 
 export const revalidate = 60;

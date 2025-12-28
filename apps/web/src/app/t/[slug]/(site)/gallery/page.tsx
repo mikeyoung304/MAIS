@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { GallerySection } from '@/components/tenant';
 import {
-  getTenantStorefrontData,
-  TenantNotFoundError,
-  isPageEnabled,
+  generateTenantPageMetadata,
+  checkPageAccessible,
   normalizeToPages,
-} from '@/lib/tenant';
-import type { LandingPageConfig, GallerySection as GallerySectionType } from '@macon/contracts';
+  type TenantIdentifier,
+} from '@/lib/tenant-page-utils';
+import type { GallerySection as GallerySectionType } from '@macon/contracts';
 
 interface GalleryPageProps {
   params: Promise<{ slug: string }>;
@@ -22,83 +22,43 @@ interface GalleryPageProps {
 
 export async function generateMetadata({ params }: GalleryPageProps): Promise<Metadata> {
   const { slug } = await params;
-
-  try {
-    const { tenant } = await getTenantStorefrontData(slug);
-    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
-
-    // If page is disabled, return noindex metadata
-    if (!isPageEnabled(config, 'gallery')) {
-      return {
-        title: 'Page Not Found',
-        robots: { index: false, follow: false },
-      };
-    }
-
-    return {
-      title: `Gallery | ${tenant.name}`,
-      description: `View our portfolio and work at ${tenant.name}. See examples of what we can do for you.`,
-      openGraph: {
-        title: `Gallery | ${tenant.name}`,
-        description: `View our portfolio and work at ${tenant.name}. See examples of what we can do for you.`,
-        images: [],
-      },
-      robots: {
-        index: true,
-        follow: true,
-      },
-    };
-  } catch {
-    return {
-      title: 'Gallery | Business Not Found',
-      description: 'The requested business could not be found.',
-      robots: { index: false, follow: false },
-    };
-  }
+  const identifier: TenantIdentifier = { type: 'slug', slug };
+  return generateTenantPageMetadata(identifier, 'gallery');
 }
 
 export default async function GalleryPage({ params }: GalleryPageProps) {
   const { slug } = await params;
+  const identifier: TenantIdentifier = { type: 'slug', slug };
+  const context = await checkPageAccessible(identifier, 'gallery');
 
-  try {
-    const { tenant } = await getTenantStorefrontData(slug);
-    const config = tenant.branding?.landingPage as LandingPageConfig | undefined;
-
-    // Check if gallery page is enabled
-    if (!isPageEnabled(config, 'gallery')) {
-      notFound();
-    }
-
-    // Get gallery section using centralized format conversion
-    const pages = normalizeToPages(config);
-    const gallerySection = pages.gallery.sections[0];
-    const galleryData =
-      gallerySection?.type === 'gallery' ? (gallerySection as GallerySectionType) : null;
-
-    return (
-      <div id="main-content">
-        {galleryData ? (
-          <GallerySection {...galleryData} tenant={tenant} />
-        ) : (
-          <section className="py-32 md:py-40">
-            <div className="mx-auto max-w-6xl px-6 text-center">
-              <h1 className="font-serif text-4xl font-bold text-text-primary sm:text-5xl">
-                Our Gallery
-              </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
-                Gallery coming soon. Check back later for examples of our work!
-              </p>
-            </div>
-          </section>
-        )}
-      </div>
-    );
-  } catch (error) {
-    if (error instanceof TenantNotFoundError) {
-      notFound();
-    }
-    throw error;
+  if (!context) {
+    notFound();
   }
+
+  // Get gallery section using centralized format conversion
+  const pages = normalizeToPages(context.config);
+  const gallerySection = pages.gallery.sections[0];
+  const galleryData =
+    gallerySection?.type === 'gallery' ? (gallerySection as GallerySectionType) : null;
+
+  return (
+    <div id="main-content">
+      {galleryData ? (
+        <GallerySection {...galleryData} tenant={context.tenant} />
+      ) : (
+        <section className="py-32 md:py-40">
+          <div className="mx-auto max-w-6xl px-6 text-center">
+            <h1 className="font-serif text-4xl font-bold text-text-primary sm:text-5xl">
+              Our Gallery
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
+              Gallery coming soon. Check back later for examples of our work!
+            </p>
+          </div>
+        </section>
+      )}
+    </div>
+  );
 }
 
 // ISR: Revalidate every 60 seconds

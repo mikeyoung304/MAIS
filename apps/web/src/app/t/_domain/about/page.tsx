@@ -2,64 +2,53 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AboutPageContent } from '@/components/tenant';
 import {
-  getTenantByDomain,
-  TenantNotFoundError,
-  InvalidDomainError,
-  validateDomain,
-} from '@/lib/tenant';
+  generateTenantPageMetadata,
+  checkPageAccessible,
+  type TenantIdentifier,
+} from '@/lib/tenant-page-utils';
 
 interface AboutPageProps {
   searchParams: Promise<{ domain?: string }>;
 }
 
+/**
+ * About Page (Domain-based) - Tenant story and mission
+ *
+ * Displays the tenant's about content with optional image.
+ * Falls back to default content when not configured.
+ * Returns 404 if page is disabled in tenant configuration.
+ */
+
 export async function generateMetadata({ searchParams }: AboutPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
-
-  try {
-    const validatedDomain = validateDomain(domain);
-    const tenant = await getTenantByDomain(validatedDomain);
-    const aboutContent = tenant.branding?.landingPage?.about?.content || '';
-    const description = aboutContent.slice(0, 160) || `Learn more about ${tenant.name}`;
-
-    return {
-      title: `About | ${tenant.name}`,
-      description,
-      openGraph: {
-        title: `About | ${tenant.name}`,
-        description,
-        images: tenant.branding?.landingPage?.about?.imageUrl
-          ? [{ url: tenant.branding.landingPage.about.imageUrl }]
-          : [],
-      },
-    };
-  } catch {
+  if (!domain) {
     return { title: 'About | Business Not Found', robots: { index: false, follow: false } };
   }
+
+  const identifier: TenantIdentifier = { type: 'domain', domain };
+  return generateTenantPageMetadata(identifier, 'about');
 }
 
 export default async function AboutPage({ searchParams }: AboutPageProps) {
   const { domain } = await searchParams;
-
-  // Validate domain parameter
-  let validatedDomain: string;
-  try {
-    validatedDomain = validateDomain(domain);
-  } catch (error) {
-    if (error instanceof InvalidDomainError) {
-      notFound();
-    }
-    throw error;
+  if (!domain) {
+    notFound();
   }
 
-  try {
-    const tenant = await getTenantByDomain(validatedDomain);
-    const domainParam = `?domain=${validatedDomain}`;
+  const identifier: TenantIdentifier = { type: 'domain', domain };
+  const context = await checkPageAccessible(identifier, 'about');
 
-    return <AboutPageContent tenant={tenant} basePath="" domainParam={domainParam} />;
-  } catch (error) {
-    if (error instanceof TenantNotFoundError) notFound();
-    throw error;
+  if (!context) {
+    notFound();
   }
+
+  return (
+    <AboutPageContent
+      tenant={context.tenant}
+      basePath={context.basePath}
+      domainParam={context.domainParam}
+    />
+  );
 }
 
 export const revalidate = 60;
