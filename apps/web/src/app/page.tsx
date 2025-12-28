@@ -1,14 +1,12 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
 import {
-  Globe,
   Calendar,
   Mail,
   Users,
   Phone,
   Check,
   ChevronDown,
-  CreditCard,
   Bot,
   Clock,
   MessageSquare,
@@ -33,25 +31,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 };
-
-// Done-for-you tech - the foundation that enables AI
-const techFeatures = [
-  {
-    icon: Globe,
-    title: 'Website',
-    description: 'Built and maintained. You never touch it.',
-  },
-  {
-    icon: Calendar,
-    title: 'Booking',
-    description: 'Clients schedule online. You get notified.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Payments',
-    description: 'Invoices sent. Money collected. Done.',
-  },
-];
 
 // Done-with-you education - the competitive moat (ongoing value)
 const educationFeatures = [
@@ -319,24 +298,13 @@ export default function HomePage() {
               <p className="mt-5 font-serif text-xl sm:text-2xl md:text-3xl font-semibold text-sage">
                 The rest is handled.
               </p>
-              <p className="mt-6 text-base md:text-lg text-text-muted font-light max-w-xl mx-auto leading-relaxed">
-                An AI assistant that books your clients, answers their questions, and runs your
-                business — while you do what you actually started this for.
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="mt-10">
                 <Button
                   asChild
                   variant="sage"
-                  className="rounded-full px-8 py-6 sm:py-5 text-lg sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Link href="/signup">Get Handled</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="rounded-full px-8 py-6 sm:py-5 text-lg sm:text-base font-medium hover:bg-neutral-50 transition-all duration-300"
-                >
-                  <Link href="#features">See What&apos;s Included</Link>
                 </Button>
               </div>
             </div>
@@ -362,16 +330,12 @@ export default function HomePage() {
             />
 
             <div className="relative max-w-5xl mx-auto">
-              {/* Headline - static punch, no scroll (hero owns that) */}
-              <div className="text-center mb-16">
+              {/* Headline - static punch, straight to contrast */}
+              <div className="text-center mb-12">
                 <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
                   You didn&apos;t start this to become a{' '}
                   <span className="text-sage">tech expert.</span>
                 </h2>
-                <p className="mt-6 text-xl text-text-muted font-light max-w-2xl mx-auto">
-                  But here you are. Answering emails at midnight. Chasing invoices. Playing tech
-                  support for your own website.
-                </p>
               </div>
 
               {/* Visual contrast grid */}
@@ -452,46 +416,11 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Tech Stack Section - The foundation */}
+          {/* AI Assistant Section - The core product (includes foundation) */}
           <section
             id="features"
-            aria-labelledby="tech-heading"
-            className="py-20 md:py-24 px-6 scroll-mt-20"
-          >
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-10">
-                <h2
-                  id="tech-heading"
-                  className="font-serif text-2xl md:text-3xl font-bold text-text-primary"
-                >
-                  The foundation. Handled.
-                </h2>
-                <p className="mt-2 text-base text-text-muted font-light">
-                  Website. Booking. Payments. Built and maintained for you.
-                </p>
-              </div>
-              {/* 3-column grid on desktop */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
-                {techFeatures.map((feature) => (
-                  <div
-                    key={feature.title}
-                    className="bg-surface-alt rounded-2xl p-5 border border-neutral-700 hover:border-neutral-600 transition-colors duration-200 text-center"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center mb-3 mx-auto">
-                      <feature.icon className="w-5 h-5 text-sage" />
-                    </div>
-                    <h3 className="font-medium text-text-primary text-sm mb-1">{feature.title}</h3>
-                    <p className="text-text-muted text-xs leading-relaxed">{feature.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* AI Assistant Section - The core product */}
-          <section
             aria-labelledby="ai-heading"
-            className="py-24 md:py-32 px-6 bg-gradient-to-b from-surface to-surface-alt"
+            className="py-24 md:py-32 px-6 bg-gradient-to-b from-surface to-surface-alt scroll-mt-20"
           >
             <div className="max-w-4xl mx-auto">
               <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -524,6 +453,10 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
+                  <p className="mt-8 text-sm text-text-muted">
+                    Plus the foundation: website, booking, and payments — built and maintained for
+                    you.
+                  </p>
                 </div>
                 {/* Right: Visual */}
                 <div className="relative">
