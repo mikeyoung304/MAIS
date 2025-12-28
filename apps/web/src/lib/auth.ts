@@ -83,14 +83,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
-        // Used for direct token login (after signup)
+        // Used for direct token login (after signup or impersonation)
         token: { label: 'Token', type: 'text' },
         role: { label: 'Role', type: 'text' },
         tenantId: { label: 'TenantId', type: 'text' },
         slug: { label: 'Slug', type: 'text' },
+        // Used for impersonation - JSON stringified impersonation data
+        impersonation: { label: 'Impersonation', type: 'text' },
       },
       async authorize(credentials): Promise<MAISUser | null> {
-        // If token is provided directly (used after signup), create session directly
+        // If token is provided directly (used after signup or impersonation), create session directly
         if (credentials?.token) {
           return {
             id: (credentials.tenantId as string) || 'user',
@@ -99,6 +101,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             tenantId: credentials.tenantId as string | undefined,
             slug: credentials.slug as string | undefined,
             backendToken: credentials.token as string,
+            impersonation: credentials.impersonation
+              ? (() => {
+                  try {
+                    return JSON.parse(credentials.impersonation as string);
+                  } catch {
+                    logger.warn('Failed to parse impersonation data', {
+                      raw: credentials.impersonation,
+                    });
+                    return undefined;
+                  }
+                })()
+              : undefined,
           };
         }
 
