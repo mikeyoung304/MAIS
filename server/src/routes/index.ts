@@ -61,10 +61,8 @@ import { DomainVerificationService } from '../services/domain-verification.servi
 import { createInternalRoutes } from './internal.routes';
 import { createAgentRoutes } from './agent.routes';
 import { registerAllExecutors } from '../agent/executors';
-import {
-  createPublicCustomerChatRoutes,
-  registerCustomerProposalExecutor,
-} from './public-customer-chat.routes';
+import { createPublicCustomerChatRoutes } from './public-customer-chat.routes';
+import { registerCustomerProposalExecutor } from '../agent/customer/executor-registry';
 import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
 import { startCleanupScheduler } from '../jobs/cleanup';
 import {

@@ -237,7 +237,7 @@ export class BookingService {
     amountPaidCents: number
   ): Promise<Booking> {
     // Fetch the booking with package details for the event payload
-    const booking = await this.bookingRepo.getById(tenantId, bookingId);
+    const booking = await this.bookingRepo.findById(tenantId, bookingId);
     if (!booking) {
       throw new Error(`Booking ${bookingId} not found for tenant ${tenantId}`);
     }
@@ -245,20 +245,33 @@ export class BookingService {
     // Update booking to CONFIRMED with payment timestamp
     const confirmedBooking = await this.bookingRepo.update(tenantId, bookingId, {
       status: 'CONFIRMED',
-      paidAt: new Date(), // P1 fix: Set payment timestamp for reporting queries
+      balancePaidAt: new Date(), // P1 fix: Set payment timestamp for reporting queries
     });
 
+    // Fetch package title for the event payload
+    const pkg = await this.catalogRepo.getPackageById(tenantId, booking.packageId);
+    const packageTitle = pkg?.title || 'Package';
+
+    // Fetch add-on titles if any
+    const addOnTitles: string[] = [];
+    if (booking.addOnIds && booking.addOnIds.length > 0) {
+      const addOns = await this.catalogRepo.getAddOnsByPackageId(tenantId, booking.packageId);
+      for (const addOn of addOns) {
+        if (booking.addOnIds.includes(addOn.id)) {
+          addOnTitles.push(addOn.title);
+        }
+      }
+    }
+
     // Emit PAID event for downstream processing (sends confirmation email via DI event handler)
-    await this.eventEmitter.publish('booking:paid', {
-      tenantId,
+    await this._eventEmitter.emit(BookingEvents.PAID, {
       bookingId,
       email: booking.email,
-      eventDate: booking.eventDate
-        ? new Date(booking.eventDate).toISOString().split('T')[0]
-        : '',
-      packageTitle: booking.packageTitle || 'Package',
+      coupleName: booking.coupleName,
+      eventDate: booking.eventDate,
+      packageTitle,
       totalCents: amountPaidCents,
-      addOnTitles: booking.addOnTitles || [],
+      addOnTitles,
     });
 
     return confirmedBooking;

@@ -8,7 +8,7 @@
  * - get_business_info: Hours, policies, FAQ
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient, Prisma } from '../../generated/prisma';
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from '../tools/types';
 import { ProposalService } from '../proposals/proposal.service';
 import { logger } from '../../lib/core/logger';
@@ -67,7 +67,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
 
       try {
         // Build where clause
-        const where: Parameters<typeof prisma.package.findMany>[0]['where'] = {
+        const where: Prisma.PackageWhereInput = {
           tenantId,
           active: true,
         };
