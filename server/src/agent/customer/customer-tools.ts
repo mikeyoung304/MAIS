@@ -173,28 +173,28 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           ? new Date(endDateParam)
           : new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-        // Get booked dates
-        const bookedDates = await prisma.booking.findMany({
-          where: {
-            tenantId,
-            date: { gte: startDate, lte: endDate },
-            status: { notIn: ['CANCELED', 'REFUNDED'] },
-          },
-          select: { date: true },
-        });
+        // Get booked dates and blackout dates in parallel for better performance
+        const [bookedDates, blackoutDates] = await Promise.all([
+          prisma.booking.findMany({
+            where: {
+              tenantId,
+              date: { gte: startDate, lte: endDate },
+              status: { notIn: ['CANCELED', 'REFUNDED'] },
+            },
+            select: { date: true },
+          }),
+          prisma.blackoutDate.findMany({
+            where: {
+              tenantId,
+              date: { gte: startDate, lte: endDate },
+            },
+            select: { date: true },
+          }),
+        ]);
 
         const bookedDateStrings = new Set(
           bookedDates.map((b) => b.date.toISOString().split('T')[0])
         );
-
-        // Get blackout dates
-        const blackoutDates = await prisma.blackoutDate.findMany({
-          where: {
-            tenantId,
-            date: { gte: startDate, lte: endDate },
-          },
-          select: { date: true },
-        });
 
         const blackoutDateStrings = new Set(
           blackoutDates.map((b) => b.date.toISOString().split('T')[0])

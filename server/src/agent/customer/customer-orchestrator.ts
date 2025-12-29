@@ -134,8 +134,28 @@ export class CustomerOrchestrator {
     private readonly prisma: PrismaClient,
     config: Partial<CustomerOrchestratorConfig> = {}
   ) {
+    // Validate API key at startup - fail fast with clear error
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+
+    if (!apiKey) {
+      throw new Error(
+        'ANTHROPIC_API_KEY is required for customer chat. ' +
+          'Set it in your environment or disable customer chat.'
+      );
+    }
+
+    // Warn if API key format is unexpected (but don't fail - format may change)
+    if (!apiKey.startsWith('sk-ant-')) {
+      logger.warn(
+        { keyPrefix: apiKey.substring(0, 10) },
+        'ANTHROPIC_API_KEY has unexpected format (expected sk-ant-...)'
+      );
+    }
+
     this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+      apiKey,
+      timeout: 30 * 1000, // 30 second timeout
+      maxRetries: 2,
     });
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.proposalService = new ProposalService(prisma);
@@ -204,6 +224,7 @@ export class CustomerOrchestrator {
 
   /**
    * Get existing session by ID
+   * Uses single query with include to fetch session + tenant data
    */
   async getSession(tenantId: string, sessionId: string): Promise<CustomerSessionState | null> {
     const session = await this.prisma.agentSession.findFirst({
@@ -212,18 +233,14 @@ export class CustomerOrchestrator {
         tenantId, // CRITICAL: Tenant isolation
         sessionType: 'CUSTOMER',
       },
+      include: {
+        tenant: {
+          select: { name: true },
+        },
+      },
     });
 
     if (!session) {
-      return null;
-    }
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { name: true },
-    });
-
-    if (!tenant) {
       return null;
     }
 
@@ -232,7 +249,7 @@ export class CustomerOrchestrator {
       tenantId,
       customerId: session.customerId,
       messages: (session.messages as unknown as ChatMessage[]) || [],
-      businessName: tenant.name,
+      businessName: session.tenant.name,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
     };

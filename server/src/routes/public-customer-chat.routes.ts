@@ -27,26 +27,6 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
   const router = Router();
   const orchestrator = new CustomerOrchestrator(prisma);
 
-  /**
-   * Helper to extract tenantId from request
-   * Uses req.tenantId set by tenant middleware
-   */
-  const getTenantId = (req: Request): string | null => {
-    return req.tenantId ?? null;
-  };
-
-  /**
-   * Helper to check if chat is enabled for a tenant
-   * Returns true if enabled, false otherwise
-   */
-  const isChatEnabled = async (tenantId: string): Promise<boolean> => {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { chatEnabled: true },
-    });
-    return tenant?.chatEnabled ?? false;
-  };
-
   // ============================================================================
   // Health Check
   // ============================================================================
@@ -57,7 +37,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    */
   router.get('/health', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantId = getTenantId(req);
+      const tenantId = req.tenantId ?? null;
 
       if (!tenantId) {
         res.json({
@@ -124,7 +104,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    */
   router.get('/greeting', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantId = getTenantId(req);
+      const tenantId = req.tenantId ?? null;
 
       if (!tenantId) {
         res.status(400).json({ error: 'Missing tenant context' });
@@ -150,7 +130,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    */
   router.post('/session', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantId = getTenantId(req);
+      const tenantId = req.tenantId ?? null;
 
       if (!tenantId) {
         res.status(400).json({ error: 'Missing tenant context' });
@@ -158,7 +138,11 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       }
 
       // Check if chat is enabled
-      if (!(await isChatEnabled(tenantId))) {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { chatEnabled: true },
+      });
+      if (!tenant?.chatEnabled) {
         res.status(403).json({ error: 'Chat is not enabled for this business' });
         return;
       }
@@ -188,7 +172,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    */
   router.post('/message', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantId = getTenantId(req);
+      const tenantId = req.tenantId ?? null;
 
       if (!tenantId) {
         res.status(400).json({ error: 'Missing tenant context' });
@@ -208,7 +192,11 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       }
 
       // Check if chat is enabled
-      if (!(await isChatEnabled(tenantId))) {
+      const tenantCheck = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { chatEnabled: true },
+      });
+      if (!tenantCheck?.chatEnabled) {
         res.status(403).json({ error: 'Chat is not enabled for this business' });
         return;
       }
@@ -263,7 +251,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    */
   router.post('/confirm/:proposalId', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantId = getTenantId(req);
+      const tenantId = req.tenantId ?? null;
 
       if (!tenantId) {
         res.status(400).json({ error: 'Missing tenant context' });

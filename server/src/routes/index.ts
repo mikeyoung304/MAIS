@@ -66,6 +66,7 @@ import {
   registerCustomerProposalExecutor,
 } from './public-customer-chat.routes';
 import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
+import { startCleanupScheduler } from '../jobs/cleanup';
 import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
@@ -688,11 +689,27 @@ export function createV1Router(
     // NO authentication required - uses tenant context from X-Tenant-Key header
     // Rate limited to 20 messages per minute per IP to protect Claude API costs
     const customerChatRoutes = createPublicCustomerChatRoutes(prismaClient);
-    app.use('/v1/public/chat', tenantMiddleware, requireTenant, customerChatLimiter, customerChatRoutes);
+    app.use(
+      '/v1/public/chat',
+      tenantMiddleware,
+      requireTenant,
+      customerChatLimiter,
+      customerChatRoutes
+    );
     logger.info('✅ Public customer chat routes mounted at /v1/public/chat (rate limited)');
 
     // Register customer booking executor with mail provider and Stripe for booking notifications and payment
     registerCustomerBookingExecutor(prismaClient, mailProvider, stripeAdapter);
+
+    // Start cleanup scheduler for customer sessions (runs every 24h)
+    const stopCleanup = startCleanupScheduler(prismaClient);
+    logger.info('✅ Customer session cleanup scheduler started (runs every 24h)');
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      stopCleanup();
+      logger.info('Cleanup scheduler stopped');
+    });
   }
 
   // Register internal routes (for service-to-service communication)
