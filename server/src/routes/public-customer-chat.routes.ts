@@ -272,19 +272,21 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
 
       const { proposalId } = req.params;
 
-      // Get sessionId from request body for ownership verification
+      // SECURITY: sessionId is REQUIRED for ownership verification
+      // Prevents proposal enumeration attacks (P1 fix from code review)
       const { sessionId } = req.body as { sessionId?: string };
 
-      // Build where clause with tenant isolation and optional session ownership
-      const whereClause: { id: string; tenantId: string; sessionId?: string } = {
+      if (!sessionId) {
+        res.status(400).json({ error: 'Session ID is required to confirm booking' });
+        return;
+      }
+
+      // Build where clause with tenant isolation AND session ownership
+      const whereClause: { id: string; tenantId: string; sessionId: string } = {
         id: proposalId,
         tenantId, // CRITICAL: Tenant isolation
+        sessionId, // CRITICAL: Session ownership (P1 fix)
       };
-
-      // If sessionId is provided, add session ownership verification
-      if (sessionId) {
-        whereClause.sessionId = sessionId;
-      }
 
       // Fetch proposal with tenant + session isolation
       const proposal = await prisma.agentProposal.findFirst({
