@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
 import { TenantNav } from '@/components/tenant/TenantNav';
 import { TenantFooter } from '@/components/tenant/TenantFooter';
+import { TenantChatWidget } from '@/components/chat/TenantChatWidget';
 
 interface TenantSiteLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,15 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
         <TenantNav tenant={tenant} />
         <div className="flex-1">{children}</div>
         <TenantFooter tenant={tenant} />
+
+        {/* Customer Chat Widget - floating chatbot for booking assistance */}
+        <TenantChatWidget
+          tenantSlug={tenant.slug}
+          tenantApiKey={tenant.apiKeyPublic}
+          businessName={tenant.name}
+          primaryColor={tenant.primaryColor}
+          chatEnabled={tenant.chatEnabled}
+        />
       </div>
     );
   } catch (error) {

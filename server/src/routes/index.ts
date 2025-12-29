@@ -62,6 +62,11 @@ import { createInternalRoutes } from './internal.routes';
 import { createAgentRoutes } from './agent.routes';
 import { registerAllExecutors } from '../agent/executors';
 import {
+  createPublicCustomerChatRoutes,
+  registerCustomerProposalExecutor,
+} from './public-customer-chat.routes';
+import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
+import {
   createPublicBookingManagementRouter,
   PublicBookingManagementController,
 } from './public-booking-management.routes';
@@ -76,6 +81,7 @@ import {
   publicBookingActionsLimiter,
   publicBalancePaymentLimiter,
   agentChatLimiter,
+  customerChatLimiter,
 } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
@@ -677,6 +683,16 @@ export function createV1Router(
 
     // Register agent proposal executors
     registerAllExecutors(prismaClient);
+
+    // Register public customer chat routes (for customer-facing chatbot)
+    // NO authentication required - uses tenant context from X-Tenant-Key header
+    // Rate limited to 20 messages per minute per IP to protect Claude API costs
+    const customerChatRoutes = createPublicCustomerChatRoutes(prismaClient);
+    app.use('/v1/public/chat', tenantMiddleware, requireTenant, customerChatLimiter, customerChatRoutes);
+    logger.info('✅ Public customer chat routes mounted at /v1/public/chat (rate limited)');
+
+    // Register customer booking executor
+    registerCustomerBookingExecutor(prismaClient);
   }
 
   // Register internal routes (for service-to-service communication)

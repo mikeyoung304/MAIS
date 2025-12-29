@@ -98,6 +98,9 @@ model Tenant {
   // Default display names (Essential/Popular/Premium) are used if not specified
   tierDisplayNames Json? @default("{}")
 
+  // Customer Chatbot Settings
+  chatEnabled Boolean @default(true) // Whether customer-facing chatbot is enabled for this tenant
+
   // Relations
   users            User[] // Tenant admin users
   customers        Customer[] // Tenant-scoped customers
@@ -153,6 +156,8 @@ model Customer {
   updatedAt DateTime  @updatedAt
   tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bookings  Booking[]
+  agentSessions  AgentSession[]  // Customer chat sessions
+  agentProposals AgentProposal[] // Proposals created by customer chat
 
   @@unique([tenantId, email]) // Composite unique: email unique per tenant, not globally
   @@index([tenantId])
@@ -737,6 +742,7 @@ model AgentProposal {
   id              String             @id @default(cuid())
   tenantId        String             // Tenant isolation - CRITICAL
   sessionId       String             // Agent session identifier
+  customerId      String?            // CRITICAL: For customer proposals - enables ownership verification
   toolName        String             // Tool that created the proposal (e.g., "upsert_package")
   operation       String             // Human-readable operation description
   trustTier       AgentTrustTier     // T1, T2, or T3
@@ -753,11 +759,13 @@ model AgentProposal {
   updatedAt       DateTime           @updatedAt
 
   tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer        Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, sessionId])
   @@index([tenantId, status])
   @@index([expiresAt]) // For cleanup of expired proposals
   @@index([tenantId])
+  @@index([customerId]) // Query proposals by customer
 }
 
 enum AgentTrustTier {
@@ -810,15 +818,26 @@ enum AgentApprovalStatus {
 
 /// AgentSession - Conversation session for AI agent chat
 /// Stores message history and session state for continuity
+/// Supports both admin (tenant owner) and customer-facing sessions
 model AgentSession {
-  id        String   @id @default(cuid())
-  tenantId  String   // Tenant isolation - CRITICAL
-  messages  Json     @default("[]") // Array of ChatMessage objects
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String      @id @default(cuid())
+  tenantId    String      // Tenant isolation - CRITICAL
+  customerId  String?     // NULL for admin sessions, set for customer sessions
+  sessionType SessionType @default(ADMIN) // ADMIN or CUSTOMER
+  messages    Json        @default("[]") // Array of ChatMessage objects
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer    Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, updatedAt]) // Find recent sessions for tenant
   @@index([tenantId])
+  @@index([customerId, updatedAt]) // Query customer sessions
+}
+
+/// Session type for agent conversations
+enum SessionType {
+  ADMIN    // Tenant owner/admin using the business growth agent
+  CUSTOMER // Customer using the public booking chatbot
 }

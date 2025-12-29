@@ -989,6 +989,13 @@ export const TenantPublicDtoSchema = z.object({
   slug: z.string(),
   name: z.string(),
   apiKeyPublic: z.string(), // Needed to set X-Tenant-Key for subsequent API calls
+  // Direct theme colors (used for CSS custom properties and widget styling)
+  primaryColor: HexColorSchema.optional(),
+  secondaryColor: HexColorSchema.optional(),
+  accentColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.optional(),
+  // Customer chatbot toggle
+  chatEnabled: z.boolean().optional().default(true),
   branding: z
     .object({
       primaryColor: HexColorSchema.optional(),

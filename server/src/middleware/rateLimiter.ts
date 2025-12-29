@@ -289,6 +289,32 @@ export const agentChatLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for public customer chat endpoints
+ * 20 messages per minute per IP - balances UX with API cost protection
+ *
+ * More restrictive than admin agent (30/5min) because:
+ * - Public endpoint (potential for abuse from anonymous users)
+ * - Per-IP to prevent single user from exhausting tenant's quota
+ * - Lower limit acceptable for customer booking (simpler conversations)
+ */
+export const customerChatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 20, // 20 messages per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use IP for rate limiting (public endpoint - no tenant auth)
+  keyGenerator: (req) => normalizeIp(req.ip),
+  validate: false, // Disable validation - we handle IPv6 with normalizeIp()
+  handler: (_req: Request, res: Response) => {
+    logger.warn({ ip: normalizeIp(_req.ip) }, 'Customer chat rate limit exceeded');
+    res.status(429).json({
+      error: 'too_many_requests',
+      message: 'Too many messages. Please wait a moment before sending more.',
+    });
+  },
+});
+
+/**
  * Rate limiter for Stripe webhook endpoint
  * 100 requests per minute - prevents DoS attacks on webhook processing
  *
