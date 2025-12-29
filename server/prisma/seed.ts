@@ -16,9 +16,9 @@
  * Environment Variables:
  *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm' | 'plate' | 'handled'
  *   NODE_ENV: Used as fallback if SEED_MODE not set
- *   ADMIN_EMAIL: Required for production/dev seeds
- *   ADMIN_DEFAULT_PASSWORD: Required for production/dev seeds (min 12 chars)
- *   ADMIN_NAME: Optional, defaults to 'Platform Admin'
+ *   PLATFORM_ADMIN_EMAIL: Required for production/dev seeds (also accepts legacy ADMIN_EMAIL)
+ *   PLATFORM_ADMIN_PASSWORD: Required for production/dev seeds, min 12 chars (also accepts legacy ADMIN_DEFAULT_PASSWORD)
+ *   PLATFORM_ADMIN_NAME: Optional, defaults to 'Platform Admin' (also accepts legacy ADMIN_NAME)
  */
 
 import { PrismaClient } from '../src/generated/prisma';

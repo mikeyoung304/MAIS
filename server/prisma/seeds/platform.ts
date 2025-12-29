@@ -2,7 +2,8 @@
  * Platform seed - Creates platform admin user only
  *
  * Use for: Production, staging
- * Requires: ADMIN_EMAIL and ADMIN_DEFAULT_PASSWORD environment variables
+ * Requires: PLATFORM_ADMIN_EMAIL and PLATFORM_ADMIN_PASSWORD environment variables
+ *           (also accepts legacy ADMIN_EMAIL and ADMIN_DEFAULT_PASSWORD for backwards compatibility)
  */
 
 import type { PrismaClient } from '../../src/generated/prisma';
@@ -13,26 +14,27 @@ import { logger } from '../../src/lib/core/logger';
 const BCRYPT_ROUNDS = 12;
 
 export async function seedPlatform(prisma: PrismaClient): Promise<void> {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD;
-  const adminName = process.env.ADMIN_NAME || 'Platform Admin';
+  // Support both new PLATFORM_ADMIN_* and legacy ADMIN_* variable names
+  const adminEmail = process.env.PLATFORM_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD || process.env.ADMIN_DEFAULT_PASSWORD;
+  const adminName = process.env.PLATFORM_ADMIN_NAME || process.env.ADMIN_NAME || 'Platform Admin';
 
   if (!adminEmail) {
     throw new Error(
-      'ADMIN_EMAIL environment variable is required for platform seed.\n' +
+      'PLATFORM_ADMIN_EMAIL environment variable is required for platform seed.\n' +
         'Set it to the platform admin email address.'
     );
   }
 
   if (!adminPassword) {
     throw new Error(
-      'ADMIN_DEFAULT_PASSWORD environment variable is required for platform seed.\n' +
+      'PLATFORM_ADMIN_PASSWORD environment variable is required for platform seed.\n' +
         'Generate a secure password: openssl rand -base64 32'
     );
   }
 
   if (adminPassword.length < 12) {
-    throw new Error('ADMIN_DEFAULT_PASSWORD must be at least 12 characters');
+    throw new Error('PLATFORM_ADMIN_PASSWORD must be at least 12 characters');
   }
 
   // Check if admin user already exists (outside transaction for read-only check)

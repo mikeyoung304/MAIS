@@ -12,10 +12,12 @@ export class PlatformAdminController {
 
   /**
    * Get all tenants with their stats
+   * @param includeTestTenants - Whether to include test tenants (default: false)
    */
-  async getAllTenants(): Promise<TenantDto[]> {
+  async getAllTenants(includeTestTenants = false): Promise<TenantDto[]> {
     try {
       const tenants = await this.prisma.tenant.findMany({
+        where: includeTestTenants ? undefined : { isTestTenant: false },
         orderBy: { createdAt: 'desc' },
         include: {
           _count: {
@@ -49,38 +51,50 @@ export class PlatformAdminController {
 
   /**
    * Get platform-wide statistics
-   * Aggregates data across all tenants
+   * Aggregates data across all real tenants (excludes test tenants)
+   * @param includeTestTenants - Whether to include test tenant data (default: false)
    */
-  async getStats(): Promise<PlatformStats> {
+  async getStats(includeTestTenants = false): Promise<PlatformStats> {
     try {
+      // Base filter for excluding test tenants from related data
+      const tenantFilter = includeTestTenants ? {} : { isTestTenant: false };
+      const relatedTenantFilter = includeTestTenants ? {} : { tenant: { isTestTenant: false } };
+
       // Aggregate tenant counts
-      const totalTenants = await this.prisma.tenant.count();
+      const totalTenants = await this.prisma.tenant.count({
+        where: tenantFilter,
+      });
       const activeTenants = await this.prisma.tenant.count({
-        where: { isActive: true },
+        where: { ...tenantFilter, isActive: true },
       });
 
-      // Aggregate segment counts
-      const totalSegments = await this.prisma.segment.count();
+      // Aggregate segment counts (from real tenants only)
+      const totalSegments = await this.prisma.segment.count({
+        where: relatedTenantFilter,
+      });
       const activeSegments = await this.prisma.segment.count({
-        where: { active: true },
+        where: { ...relatedTenantFilter, active: true },
       });
 
-      // Aggregate booking metrics
-      const totalBookings = await this.prisma.booking.count();
+      // Aggregate booking metrics (from real tenants only)
+      const totalBookings = await this.prisma.booking.count({
+        where: relatedTenantFilter,
+      });
       const confirmedBookings = await this.prisma.booking.count({
-        where: { status: 'CONFIRMED' },
+        where: { ...relatedTenantFilter, status: 'CONFIRMED' },
       });
       const pendingBookings = await this.prisma.booking.count({
-        where: { status: 'PENDING' },
+        where: { ...relatedTenantFilter, status: 'PENDING' },
       });
 
-      // Aggregate revenue metrics
+      // Aggregate revenue metrics (from real tenants only)
       const revenueStats = await this.prisma.booking.aggregate({
         _sum: {
           totalPrice: true,
           commissionAmount: true,
         },
         where: {
+          ...relatedTenantFilter,
           status: 'CONFIRMED',
         },
       });
@@ -89,7 +103,7 @@ export class PlatformAdminController {
       const platformCommission = revenueStats._sum.commissionAmount || 0;
       const tenantRevenue = totalRevenue - platformCommission;
 
-      // Optional: Current month stats
+      // Optional: Current month stats (from real tenants only)
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
       const monthStats = await this.prisma.booking.aggregate({
@@ -98,6 +112,7 @@ export class PlatformAdminController {
           totalPrice: true,
         },
         where: {
+          ...relatedTenantFilter,
           status: 'CONFIRMED',
           confirmedAt: {
             gte: startOfMonth,

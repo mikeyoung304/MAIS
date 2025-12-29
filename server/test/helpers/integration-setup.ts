@@ -138,12 +138,13 @@ export function createMultiTenantSetup(
   const createTenantA = async (): Promise<Tenant> => {
     const tenant = await prisma.tenant.upsert({
       where: { slug: tenantASlug },
-      update: {},
+      update: { isTestTenant: true },
       create: {
         slug: tenantASlug,
         name: `Test Tenant A (${fileSlug})`,
         apiKeyPublic: `pk_test_${fileSlug}_a`,
         apiKeySecret: `sk_test_${fileSlug}_a_hash`,
+        isTestTenant: true,
       },
     });
     tenantA_id = tenant.id;
@@ -154,12 +155,13 @@ export function createMultiTenantSetup(
   const createTenantB = async (): Promise<Tenant> => {
     const tenant = await prisma.tenant.upsert({
       where: { slug: tenantBSlug },
-      update: {},
+      update: { isTestTenant: true },
       create: {
         slug: tenantBSlug,
         name: `Test Tenant B (${fileSlug})`,
         apiKeyPublic: `pk_test_${fileSlug}_b`,
         apiKeySecret: `sk_test_${fileSlug}_b_hash`,
+        isTestTenant: true,
       },
     });
     tenantB_id = tenant.id;

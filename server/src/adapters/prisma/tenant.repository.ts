@@ -173,10 +173,12 @@ export class PrismaTenantRepository {
   /**
    * List all tenants with stats for admin dashboard
    *
+   * @param includeTestTenants - Whether to include test tenants (default: false)
    * @returns Array of tenants with booking/package/addon counts
    */
-  async listWithStats(): Promise<TenantWithStats[]> {
+  async listWithStats(includeTestTenants = false): Promise<TenantWithStats[]> {
     const tenants = await this.prisma.tenant.findMany({
+      where: includeTestTenants ? undefined : { isTestTenant: false },
       select: {
         id: true,
         slug: true,
@@ -187,6 +189,7 @@ export class PrismaTenantRepository {
         stripeOnboarded: true,
         stripeAccountId: true,
         isActive: true,
+        isTestTenant: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -210,6 +213,7 @@ export class PrismaTenantRepository {
       stripeOnboarded: t.stripeOnboarded,
       stripeAccountId: t.stripeAccountId,
       isActive: t.isActive,
+      isTestTenant: t.isTestTenant,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
       stats: {
@@ -981,6 +985,7 @@ export interface TenantWithStats {
   stripeOnboarded: boolean;
   stripeAccountId: string | null;
   isActive: boolean;
+  isTestTenant: boolean;
   createdAt: Date;
   updatedAt: Date;
   stats: {

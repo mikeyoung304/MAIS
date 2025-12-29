@@ -101,6 +101,9 @@ model Tenant {
   // Customer Chatbot Settings
   chatEnabled Boolean @default(true) // Whether customer-facing chatbot is enabled for this tenant
 
+  // Test Data Identification
+  isTestTenant Boolean @default(false) @map("is_test_tenant") // Flag for filtering test data from admin dashboard
+
   // Relations
   users            User[] // Tenant admin users
   customers        Customer[] // Tenant-scoped customers
@@ -124,6 +127,7 @@ model Tenant {
   @@index([slug])
   @@index([apiKeyPublic])
   @@index([isActive])
+  @@index([isTestTenant]) // Filter test tenants from admin dashboard
 }
 
 // Custom Domain Model - Allows tenants to use their own domain (e.g., janephotography.com)
