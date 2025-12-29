@@ -1,24 +1,26 @@
 /**
  * TenantLandingPage - Main landing page component
  *
- * TODO: Refactor to use SectionRenderer for section display.
- * Currently has inline section rendering that duplicates sections/*.tsx components.
- * See TODO #410 for details.
+ * Uses SectionRenderer for flexible section display.
+ * Packages (tier cards) are handled separately as they require special
+ * rendering logic (sorting, "Most Popular" badge, booking links).
  *
- * The refactor would:
- * 1. Use normalizeToPages() from '@/lib/tenant' to convert legacy config
- * 2. Use SectionRenderer to render home page sections
- * 3. Remove duplicate rendering logic for hero, about, testimonials, gallery, faq
- * 4. Keep packages/tier cards as specialized component (not a generic section)
+ * Layout:
+ * 1. Pre-packages sections (hero, social proof, text, etc.)
+ * 2. Segment picker (if multiple segments)
+ * 3. Packages/tier cards
+ * 4. Post-packages sections (about, gallery, testimonials, faq)
+ * 5. Final CTA
  */
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { StarRating } from '@/components/ui/star-rating';
 import type { TenantStorefrontData } from '@/lib/tenant';
+import { normalizeToPages } from '@/lib/tenant';
 import { formatPrice } from '@/lib/format';
 import { TIER_ORDER } from '@/lib/packages';
+import { SectionRenderer } from './SectionRenderer';
+import type { Section, HeroSection, CTASection, LandingPageConfig } from '@macon/contracts';
 
 interface TenantLandingPageProps {
   data: TenantStorefrontData;
@@ -29,21 +31,136 @@ interface TenantLandingPageProps {
 }
 
 /**
+ * Build sections for the home page from landing config.
+ *
+ * This handles both:
+ * - New page-based config (pages.home.sections)
+ * - Legacy config (hero, about, testimonials, gallery, faq)
+ *
+ * Returns sections split into pre-packages and post-packages groups
+ * so packages can be rendered in between with special handling.
+ */
+function buildHomeSections(
+  landingConfig: LandingPageConfig | undefined,
+  tenantName: string
+): { preSections: Section[]; postSections: Section[]; finalCta: CTASection | null } {
+  // Default hero if nothing configured
+  const defaultHero: HeroSection = {
+    type: 'hero',
+    headline: `Welcome to ${tenantName}`,
+    subheadline: 'Book your session today.',
+    ctaText: 'View Packages',
+  };
+
+  // If we have new page-based config, use it directly
+  if (landingConfig?.pages?.home?.sections) {
+    const homeSections = landingConfig.pages.home.sections;
+
+    // Find hero (usually first) and CTA (usually last)
+    const heroSection = homeSections.find((s): s is HeroSection => s.type === 'hero');
+    const ctaSection = homeSections.find((s): s is CTASection => s.type === 'cta');
+
+    // Pre-sections = hero only (packages come next)
+    const preSections: Section[] = heroSection ? [heroSection] : [defaultHero];
+
+    // Post-sections = everything except hero and cta
+    const postSections = homeSections.filter((s) => s.type !== 'hero' && s.type !== 'cta');
+
+    return { preSections, postSections, finalCta: ctaSection || null };
+  }
+
+  // Legacy config handling
+  const pages = normalizeToPages(landingConfig);
+  const preSections: Section[] = [];
+  const postSections: Section[] = [];
+
+  // Hero from legacy config or normalized
+  if (landingConfig?.hero) {
+    preSections.push({
+      type: 'hero',
+      headline: landingConfig.hero.headline,
+      subheadline: landingConfig.hero.subheadline,
+      ctaText: landingConfig.hero.ctaText,
+      backgroundImageUrl: landingConfig.hero.backgroundImageUrl,
+    });
+  } else if (pages.home.sections.length > 0) {
+    const heroSection = pages.home.sections.find((s): s is HeroSection => s.type === 'hero');
+    if (heroSection) preSections.push(heroSection);
+    else preSections.push(defaultHero);
+  } else {
+    preSections.push(defaultHero);
+  }
+
+  // Post-packages sections from legacy config
+  const legacySections = landingConfig?.sections;
+
+  // About section
+  if (legacySections?.about && landingConfig?.about?.content) {
+    postSections.push({
+      type: 'text',
+      headline: landingConfig.about.headline,
+      content: landingConfig.about.content,
+      imageUrl: landingConfig.about.imageUrl,
+      imagePosition: landingConfig.about.imagePosition || 'left',
+    });
+  }
+
+  // Testimonials section
+  if (legacySections?.testimonials && landingConfig?.testimonials?.items?.length) {
+    postSections.push({
+      type: 'testimonials',
+      headline: landingConfig.testimonials.headline,
+      items: landingConfig.testimonials.items.map((item) => ({
+        quote: item.quote,
+        authorName: item.author,
+        authorRole: item.role,
+        authorPhotoUrl: item.imageUrl,
+        rating: item.rating || 5,
+      })),
+    });
+  }
+
+  // Gallery section
+  if (legacySections?.gallery && landingConfig?.gallery?.images?.length) {
+    postSections.push({
+      type: 'gallery',
+      headline: landingConfig.gallery.headline,
+      images: landingConfig.gallery.images.map((img) => ({
+        url: img.url,
+        alt: img.alt || '',
+      })),
+      instagramHandle: landingConfig.gallery.instagramHandle,
+    });
+  }
+
+  // FAQ section
+  if (legacySections?.faq && landingConfig?.faq?.items?.length) {
+    postSections.push({
+      type: 'faq',
+      headline: landingConfig.faq.headline,
+      items: landingConfig.faq.items,
+    });
+  }
+
+  // Final CTA
+  let finalCta: CTASection | null = null;
+  if ((legacySections?.finalCta && landingConfig?.finalCta) || !legacySections) {
+    finalCta = {
+      type: 'cta',
+      headline: landingConfig?.finalCta?.headline || 'Ready to book?',
+      subheadline: landingConfig?.finalCta?.subheadline,
+      ctaText: landingConfig?.finalCta?.ctaText || 'Get Started Today',
+    };
+  }
+
+  return { preSections, postSections, finalCta };
+}
+
+/**
  * Tenant Landing Page - Shared Component
  *
  * Used by both [slug] and _domain routes.
  * The basePath and domainParam props control link construction.
- *
- * Sections (shown based on landing page config):
- * 1. Hero Section
- * 2. Social Proof Bar (optional)
- * 3. Segment Picker (if multiple segments)
- * 4. Tier Cards (packages)
- * 5. About Section (optional)
- * 6. Testimonials (optional)
- * 7. Gallery (optional)
- * 8. FAQ Section (optional)
- * 9. Final CTA
  *
  * Note: Footer is now in the shared layout (layout.tsx)
  */
@@ -54,14 +171,9 @@ export function TenantLandingPage({
 }: TenantLandingPageProps) {
   const { tenant, packages, segments } = data;
   const landingConfig = tenant.branding?.landingPage;
-  const sections = landingConfig?.sections;
 
-  // Default hero content if not configured
-  const heroConfig = landingConfig?.hero || {
-    headline: `Welcome to ${tenant.name}`,
-    subheadline: 'Book your session today.',
-    ctaText: 'View Packages',
-  };
+  // Build sections for rendering
+  const { preSections, postSections, finalCta } = buildHomeSections(landingConfig, tenant.name);
 
   // Sort packages by tier for display
   // Check isActive (new) or active (legacy) for filtering
@@ -84,46 +196,11 @@ export function TenantLandingPage({
 
   return (
     <div id="main-content">
-      {/* ===== HERO SECTION ===== */}
-      <section
-        className="relative py-32 md:py-40"
-        style={
-          heroConfig.backgroundImageUrl
-            ? {
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${heroConfig.backgroundImageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : undefined
-        }
-      >
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h1
-            className={`font-serif text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl ${
-              heroConfig.backgroundImageUrl ? 'text-white' : 'text-text-primary'
-            }`}
-          >
-            {heroConfig.headline}
-          </h1>
-          {heroConfig.subheadline && (
-            <p
-              className={`mx-auto mt-6 max-w-2xl text-lg md:text-xl ${
-                heroConfig.backgroundImageUrl ? 'text-white/90' : 'text-text-muted'
-              }`}
-            >
-              {heroConfig.subheadline}
-            </p>
-          )}
-          <div className="mt-10">
-            <Button asChild variant="sage" size="xl">
-              <a href="#packages">{heroConfig.ctaText}</a>
-            </Button>
-          </div>
-        </div>
-      </section>
+      {/* ===== PRE-PACKAGES SECTIONS (Hero, etc.) ===== */}
+      <SectionRenderer sections={preSections} tenant={tenant} basePath={basePath} />
 
       {/* ===== SOCIAL PROOF BAR ===== */}
-      {sections?.socialProofBar && landingConfig?.socialProofBar && (
+      {landingConfig?.sections?.socialProofBar && landingConfig?.socialProofBar && (
         <section className="border-y border-neutral-100 bg-surface-alt py-8">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-8 px-6 md:gap-16">
             {landingConfig.socialProofBar.items.map((item, i) => (
@@ -151,6 +228,7 @@ export function TenantLandingPage({
       )}
 
       {/* ===== TIER CARDS (PACKAGES) ===== */}
+      {/* Special rendering - not a generic section due to booking links & tier logic */}
       {sortedPackages.length > 0 && (
         <section id="packages" className="py-32 md:py-40">
           <div className="mx-auto max-w-6xl px-6">
@@ -216,156 +294,18 @@ export function TenantLandingPage({
         </section>
       )}
 
-      {/* ===== ABOUT SECTION ===== */}
-      {sections?.about && landingConfig?.about && (
-        <section className="bg-surface-alt py-32 md:py-40">
-          <div className="mx-auto max-w-6xl px-6">
-            <div
-              className={`grid gap-12 md:grid-cols-2 md:items-center ${
-                landingConfig.about.imagePosition === 'left' ? '' : 'md:[&>*:first-child]:order-2'
-              }`}
-            >
-              {landingConfig.about.imageUrl && (
-                <div className="relative aspect-[4/3] overflow-hidden rounded-3xl">
-                  <Image
-                    src={landingConfig.about.imageUrl}
-                    alt={`About ${tenant.name}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                </div>
-              )}
-              <div>
-                <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
-                  {landingConfig.about.headline}
-                </h2>
-                <div className="mt-6 prose prose-neutral">
-                  <p className="text-text-muted">{landingConfig.about.content}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== TESTIMONIALS ===== */}
-      {sections?.testimonials && landingConfig?.testimonials && (
-        <section className="py-32 md:py-40">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="text-center">
-              <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
-                {landingConfig.testimonials.headline}
-              </h2>
-            </div>
-
-            <div className="mt-16 grid gap-8 md:grid-cols-2">
-              {landingConfig.testimonials.items.map((testimonial, i) => (
-                <div
-                  key={i}
-                  className="rounded-3xl bg-white p-8 shadow-lg border border-neutral-100"
-                >
-                  <StarRating rating={testimonial.rating} />
-                  <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>
-                  <div className="mt-4 flex items-center gap-3">
-                    {testimonial.imageUrl && (
-                      <div className="relative h-10 w-10 flex-shrink-0">
-                        <Image
-                          src={testimonial.imageUrl}
-                          alt={`${testimonial.author} testimonial photo`}
-                          fill
-                          className="rounded-full object-cover"
-                          sizes="40px"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-text-primary">{testimonial.author}</p>
-                      {testimonial.role && (
-                        <p className="text-sm text-text-muted">{testimonial.role}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== GALLERY ===== */}
-      {sections?.gallery && landingConfig?.gallery && (
-        <section className="bg-surface-alt py-32 md:py-40">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="text-center">
-              <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
-                {landingConfig.gallery.headline}
-              </h2>
-            </div>
-
-            <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {landingConfig.gallery.images.map((image, i) => (
-                <div key={i} className="relative aspect-square overflow-hidden rounded-2xl group">
-                  <Image
-                    src={image.url}
-                    alt={image.alt || `Gallery image ${i + 1}`}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {landingConfig.gallery.instagramHandle && (
-              <div className="mt-8 text-center">
-                <a
-                  href={`https://instagram.com/${landingConfig.gallery.instagramHandle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sage hover:underline"
-                >
-                  Follow @{landingConfig.gallery.instagramHandle} on Instagram
-                </a>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ===== FAQ SECTION ===== */}
-      {sections?.faq && landingConfig?.faq && (
-        <section className="py-32 md:py-40">
-          <div className="mx-auto max-w-3xl px-6">
-            <div className="text-center">
-              <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
-                {landingConfig.faq.headline}
-              </h2>
-            </div>
-
-            <div className="mt-16 space-y-6">
-              {landingConfig.faq.items.map((faq, i) => (
-                <div key={i} className="rounded-2xl border border-neutral-100 bg-white p-6">
-                  <h3 className="font-semibold text-text-primary">{faq.question}</h3>
-                  <p className="mt-2 text-text-muted">{faq.answer}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ===== POST-PACKAGES SECTIONS (About, Testimonials, Gallery, FAQ) ===== */}
+      <SectionRenderer sections={postSections} tenant={tenant} basePath={basePath} />
 
       {/* ===== FINAL CTA ===== */}
-      {(sections?.finalCta && landingConfig?.finalCta) || !sections ? (
+      {finalCta && (
         <section className="bg-sage py-32 md:py-40">
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-serif text-3xl font-bold text-white sm:text-4xl">
-              {landingConfig?.finalCta?.headline || 'Ready to book?'}
+              {finalCta.headline}
             </h2>
-            {landingConfig?.finalCta?.subheadline && (
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">
-                {landingConfig.finalCta.subheadline}
-              </p>
+            {finalCta.subheadline && (
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">{finalCta.subheadline}</p>
             )}
             <div className="mt-10">
               <Button
@@ -374,12 +314,12 @@ export function TenantLandingPage({
                 size="xl"
                 className="border-white bg-white text-sage hover:bg-white/90"
               >
-                <a href="#packages">{landingConfig?.finalCta?.ctaText || 'Get Started Today'}</a>
+                <a href="#packages">{finalCta.ctaText}</a>
               </Button>
             </div>
           </div>
         </section>
-      ) : null}
+      )}
     </div>
   );
 }

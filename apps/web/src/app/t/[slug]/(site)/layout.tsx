@@ -3,6 +3,7 @@ import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
 import { TenantNav } from '@/components/tenant/TenantNav';
 import { TenantFooter } from '@/components/tenant/TenantFooter';
 import { TenantChatWidget } from '@/components/chat/TenantChatWidget';
+import { StickyMobileCTA } from '@/components/tenant/StickyMobileCTA';
 
 interface TenantSiteLayoutProps {
   children: React.ReactNode;
@@ -37,6 +38,13 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
           businessName={tenant.name}
           primaryColor={tenant.primaryColor}
           chatEnabled={tenant.chatEnabled}
+        />
+
+        {/* Sticky Mobile CTA - appears on scroll for easy booking access */}
+        <StickyMobileCTA
+          ctaText={tenant.branding?.landingPage?.hero?.ctaText || 'View Packages'}
+          href="#packages"
+          observeElementId="main-content"
         />
       </div>
     );

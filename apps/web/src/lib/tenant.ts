@@ -69,7 +69,8 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
   }
 
   // Start with defaults (deep clone to avoid mutation)
-  const pages = JSON.parse(JSON.stringify(DEFAULT_PAGES_CONFIG)) as PagesConfig;
+  // Using structuredClone for better performance than JSON.parse/stringify
+  const pages = structuredClone(DEFAULT_PAGES_CONFIG);
 
   if (!config) return pages;
 

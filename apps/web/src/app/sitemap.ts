@@ -9,12 +9,15 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
  *
  * Generates a sitemap including:
  * - Static marketing pages
- * - All active tenant storefronts
+ * - All active tenant storefronts (home page only, other pages in per-tenant sitemap)
  *
  * For SEO optimization, we:
  * - Only include verified, active tenants
  * - Include last modified dates where available
  * - Set appropriate change frequencies
+ *
+ * Note: Each tenant also has a per-tenant sitemap at /t/[slug]/sitemap.xml
+ * that includes all their enabled subpages.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
@@ -64,15 +67,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticPages, ...tenantPages];
 }
-
-/**
- * Future enhancement: Per-tenant sitemap
- *
- * For high-volume sites, generate per-tenant sitemaps:
- * - /sitemap/[tenantSlug].xml
- *
- * This would require:
- * 1. A sitemap index at /sitemap.xml
- * 2. Individual tenant sitemaps at /sitemap/[slug].xml
- * 3. API endpoint to list all tenant slugs
- */
