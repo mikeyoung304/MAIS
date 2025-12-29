@@ -42,15 +42,6 @@ function formatDate(dateStr: string): string {
 }
 
 /**
- * Add days to a date string
- */
-function addDays(dateStr: string, days: number): string {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
-}
-
-/**
  * Customer-facing tools - read-heavy, minimal writes
  */
 export const CUSTOMER_TOOLS: AgentTool[] = [
@@ -274,10 +265,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
       },
       required: ['packageId', 'date', 'customerName', 'customerEmail'],
     },
-    async execute(
-      context: ToolContext,
-      params: Record<string, unknown>
-    ): Promise<AgentToolResult> {
+    async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
       const customerContext = context as CustomerToolContext;
       const { tenantId, prisma, sessionId } = customerContext;
       const { packageId, date, customerName, customerEmail, notes } = params as {
@@ -323,7 +311,10 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         });
 
         if (existingBooking) {
-          return { success: false, error: 'This date is no longer available. Please choose another date.' };
+          return {
+            success: false,
+            error: 'This date is no longer available. Please choose another date.',
+          };
         }
 
         // Check for blackout
@@ -332,7 +323,10 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         });
 
         if (blackout) {
-          return { success: false, error: 'This date is not available for booking. Please choose another date.' };
+          return {
+            success: false,
+            error: 'This date is not available for booking. Please choose another date.',
+          };
         }
 
         // Create or find customer
@@ -452,8 +446,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
 
         // Add cancellation policy
         if (!topic || topic === 'all' || topic === 'cancellation') {
-          info.cancellationPolicy =
-            'Please contact us directly for cancellation requests.';
+          info.cancellationPolicy = 'Please contact us directly for cancellation requests.';
         }
 
         // Add deposit info

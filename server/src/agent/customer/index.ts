@@ -14,3 +14,5 @@ export { CUSTOMER_TOOLS } from './customer-tools';
 export type { CustomerToolContext } from './customer-tools';
 export { CUSTOMER_SYSTEM_PROMPT, buildCustomerSystemPrompt } from './customer-prompt';
 export { registerCustomerBookingExecutor } from './customer-booking-executor';
+export { registerCustomerProposalExecutor, getCustomerProposalExecutor } from './executor-registry';
+export type { CustomerProposalExecutor } from './executor-registry';

@@ -33,7 +33,6 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
 
         {/* Customer Chat Widget - floating chatbot for booking assistance */}
         <TenantChatWidget
-          tenantSlug={tenant.slug}
           tenantApiKey={tenant.apiKeyPublic}
           businessName={tenant.name}
           primaryColor={tenant.primaryColor}

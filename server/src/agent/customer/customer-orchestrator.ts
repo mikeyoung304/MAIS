@@ -55,7 +55,6 @@ export interface CustomerSessionContext {
   sessionId: string;
   customerId: string | null;
   businessName: string;
-  businessSlug: string;
 }
 
 /**
@@ -80,7 +79,6 @@ export interface CustomerSessionState {
   customerId: string | null;
   messages: ChatMessage[];
   businessName: string;
-  businessSlug: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -146,7 +144,7 @@ export class CustomerOrchestrator {
     // Get tenant info
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { name: true, slug: true },
+      select: { name: true },
     });
 
     if (!tenant) {
@@ -160,7 +158,6 @@ export class CustomerOrchestrator {
         customerId: existingSession.customerId,
         messages: (existingSession.messages as unknown as ChatMessage[]) || [],
         businessName: tenant.name,
-        businessSlug: tenant.slug,
         createdAt: existingSession.createdAt,
         updatedAt: existingSession.updatedAt,
       };
@@ -183,7 +180,6 @@ export class CustomerOrchestrator {
       customerId: null,
       messages: [],
       businessName: tenant.name,
-      businessSlug: tenant.slug,
       createdAt: newSession.createdAt,
       updatedAt: newSession.updatedAt,
     };
@@ -207,7 +203,7 @@ export class CustomerOrchestrator {
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { name: true, slug: true },
+      select: { name: true },
     });
 
     if (!tenant) {
@@ -220,7 +216,6 @@ export class CustomerOrchestrator {
       customerId: session.customerId,
       messages: (session.messages as unknown as ChatMessage[]) || [],
       businessName: tenant.name,
-      businessSlug: tenant.slug,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
     };
@@ -242,8 +237,9 @@ export class CustomerOrchestrator {
       session = await this.getOrCreateSession(tenantId);
     }
 
-    // Build context for system prompt
+    // Build context for system prompt (cached for this request)
     const businessContext = await this.buildBusinessContext(tenantId);
+    const businessName = session.businessName;
 
     // Build system prompt
     const systemPrompt = buildCustomerSystemPrompt(session.businessName, businessContext);
@@ -274,12 +270,15 @@ export class CustomerOrchestrator {
     }
 
     // Process response - handle tool calls if any
+    // Pass cached businessContext and businessName to avoid redundant DB queries
     const { finalMessage, toolResults, proposal } = await this.processResponse(
       response,
       tenantId,
       sessionId,
       session.customerId,
-      messages
+      messages,
+      0, // depth
+      { businessContext, businessName }
     );
 
     // Update session with new messages
@@ -346,7 +345,7 @@ export class CustomerOrchestrator {
     });
 
     if (!tenant) {
-      return "Hi! I can help you book an appointment. What are you looking for?";
+      return 'Hi! I can help you book an appointment. What are you looking for?';
     }
 
     return `Hi! I can help you book an appointment with ${tenant.name}. What are you looking for?`;
@@ -373,7 +372,10 @@ export class CustomerOrchestrator {
     }
 
     const packageList = tenant.packages
-      .map((p) => `- ${p.name}: $${(p.basePrice / 100).toFixed(2)}${p.description ? ` - ${p.description.slice(0, 100)}` : ''}`)
+      .map(
+        (p) =>
+          `- ${p.name}: $${(p.basePrice / 100).toFixed(2)}${p.description ? ` - ${p.description.slice(0, 100)}` : ''}`
+      )
       .join('\n');
 
     return `
@@ -417,7 +419,8 @@ ${tenant.email || 'Contact information not available.'}
     sessionId: string,
     customerId: string | null,
     messages: MessageParam[],
-    depth: number = 0
+    depth: number = 0,
+    cachedContext?: { businessContext: string; businessName: string }
   ): Promise<{
     finalMessage: string;
     toolResults?: {
@@ -437,7 +440,8 @@ ${tenant.email || 'Contact information not available.'}
     if (depth >= MAX_RECURSION_DEPTH) {
       logger.warn({ tenantId, sessionId, depth }, 'Customer chat recursion depth limit reached');
       return {
-        finalMessage: "I've done what I can with this request. Is there anything else I can help you with?",
+        finalMessage:
+          "I've done what I can with this request. Is there anything else I can help you with?",
       };
     }
 
@@ -462,13 +466,15 @@ ${tenant.email || 'Contact information not available.'}
       input?: Record<string, unknown>;
       result: AgentToolResult;
     }[] = [];
-    let proposal: {
-      proposalId: string;
-      operation: string;
-      preview: Record<string, unknown>;
-      trustTier: string;
-      requiresApproval: boolean;
-    } | undefined;
+    let proposal:
+      | {
+          proposalId: string;
+          operation: string;
+          preview: Record<string, unknown>;
+          trustTier: string;
+          requiresApproval: boolean;
+        }
+      | undefined;
     const toolResultBlocks: ToolResultBlockParam[] = [];
 
     const toolContext: CustomerToolContext = {
@@ -555,14 +561,11 @@ ${tenant.email || 'Contact information not available.'}
       { role: 'user', content: toolResultBlocks },
     ];
 
-    // Get tenant for system prompt
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { name: true },
-    });
-
-    const businessContext = await this.buildBusinessContext(tenantId);
-    const systemPrompt = buildCustomerSystemPrompt(tenant?.name || 'Business', businessContext);
+    // Use cached context if available, otherwise fetch (shouldn't happen in normal flow)
+    const businessContext =
+      cachedContext?.businessContext ?? (await this.buildBusinessContext(tenantId));
+    const businessName = cachedContext?.businessName ?? 'Business';
+    const systemPrompt = buildCustomerSystemPrompt(businessName, businessContext);
 
     // Get final response from Claude
     const finalResponse = await this.anthropic.messages.create({
@@ -582,7 +585,8 @@ ${tenant.email || 'Contact information not available.'}
         sessionId,
         customerId,
         continuedMessages,
-        depth + 1
+        depth + 1,
+        cachedContext // Pass cached context to avoid redundant DB queries
       );
       return {
         finalMessage: recursiveResult.finalMessage,

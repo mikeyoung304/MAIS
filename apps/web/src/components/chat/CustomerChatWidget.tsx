@@ -8,7 +8,6 @@ import {
   Send,
   Loader2,
   CheckCircle,
-  XCircle,
   MessageCircle,
   X,
   User,
@@ -22,6 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
  * Chat message in history
  */
 interface ChatMessage {
+  id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
@@ -49,8 +49,6 @@ interface BookingProposal {
  * Props for CustomerChatWidget
  */
 interface CustomerChatWidgetProps {
-  /** Tenant slug for API calls */
-  tenantSlug: string;
   /** Tenant public API key */
   tenantApiKey: string;
   /** Business name for display */
@@ -71,7 +69,6 @@ interface CustomerChatWidgetProps {
  * - Auto-detects tenant from API key
  */
 export function CustomerChatWidget({
-  tenantSlug,
   tenantApiKey,
   businessName,
   primaryColor = '#8B9E86', // Default HANDLED sage
@@ -82,7 +79,6 @@ export function CustomerChatWidget({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [greeting, setGreeting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [pendingProposal, setPendingProposal] = useState<BookingProposal | null>(null);
@@ -121,10 +117,7 @@ export function CustomerChatWidget({
 
     try {
       // Check if chat is available
-      const healthResponse = await fetch(
-        `${API_URL}/v1/public/chat/health`,
-        fetchOptions('GET')
-      );
+      const healthResponse = await fetch(`${API_URL}/v1/public/chat/health`, fetchOptions('GET'));
 
       if (!healthResponse.ok) {
         throw new Error('Chat is temporarily unavailable');
@@ -149,11 +142,11 @@ export function CustomerChatWidget({
 
       const data = await sessionResponse.json();
       setSessionId(data.sessionId);
-      setGreeting(data.greeting);
 
       // Add greeting as first message
       setMessages([
         {
+          id: crypto.randomUUID(),
           role: 'assistant',
           content: data.greeting,
           timestamp: new Date(),
@@ -185,6 +178,7 @@ export function CustomerChatWidget({
 
     // Add user message immediately
     const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
       role: 'user',
       content: message,
       timestamp: new Date(),
@@ -206,6 +200,7 @@ export function CustomerChatWidget({
 
       // Add assistant response
       const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: data.message,
         timestamp: new Date(),
@@ -249,6 +244,7 @@ export function CustomerChatWidget({
       setMessages((prev) => [
         ...prev,
         {
+          id: crypto.randomUUID(),
           role: 'assistant',
           content: result.result?.message || 'Your booking has been confirmed!',
           timestamp: new Date(),
@@ -341,12 +337,8 @@ export function CustomerChatWidget({
           </div>
         ) : (
           <>
-            {messages.map((message, index) => (
-              <MessageBubble
-                key={index}
-                message={message}
-                primaryColor={primaryColor}
-              />
+            {messages.map((message) => (
+              <MessageBubble key={message.id} message={message} primaryColor={primaryColor} />
             ))}
 
             {/* Typing indicator */}
@@ -366,11 +358,19 @@ export function CustomerChatWidget({
                     />
                     <div
                       className="w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: primaryColor, opacity: 0.5, animationDelay: '150ms' }}
+                      style={{
+                        backgroundColor: primaryColor,
+                        opacity: 0.5,
+                        animationDelay: '150ms',
+                      }}
                     />
                     <div
                       className="w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: primaryColor, opacity: 0.5, animationDelay: '300ms' }}
+                      style={{
+                        backgroundColor: primaryColor,
+                        opacity: 0.5,
+                        animationDelay: '300ms',
+                      }}
                     />
                   </div>
                 </div>
@@ -477,22 +477,14 @@ export function CustomerChatWidget({
 /**
  * Individual message bubble
  */
-function MessageBubble({
-  message,
-  primaryColor,
-}: {
-  message: ChatMessage;
-  primaryColor: string;
-}) {
+function MessageBubble({ message, primaryColor }: { message: ChatMessage; primaryColor: string }) {
   const isUser = message.role === 'user';
 
   return (
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
       {/* Avatar */}
       <div
-        className={cn(
-          'shrink-0 w-8 h-8 rounded-full flex items-center justify-center'
-        )}
+        className={cn('shrink-0 w-8 h-8 rounded-full flex items-center justify-center')}
         style={{
           backgroundColor: isUser ? '#e5e7eb' : `${primaryColor}15`,
         }}

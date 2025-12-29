@@ -10,7 +10,6 @@
 import { CustomerChatWidget } from './CustomerChatWidget';
 
 interface TenantChatWidgetProps {
-  tenantSlug: string;
   tenantApiKey: string;
   businessName: string;
   primaryColor?: string;
@@ -18,7 +17,6 @@ interface TenantChatWidgetProps {
 }
 
 export function TenantChatWidget({
-  tenantSlug,
   tenantApiKey,
   businessName,
   primaryColor,
@@ -31,7 +29,6 @@ export function TenantChatWidget({
 
   return (
     <CustomerChatWidget
-      tenantSlug={tenantSlug}
       tenantApiKey={tenantApiKey}
       businessName={businessName}
       primaryColor={primaryColor}

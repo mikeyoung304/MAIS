@@ -18,30 +18,7 @@ import type { PrismaClient } from '../generated/prisma';
 import { Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 import { CustomerOrchestrator } from '../agent/customer';
-
-/**
- * Executor for customer booking proposals
- */
-export type CustomerProposalExecutor = (
-  tenantId: string,
-  customerId: string,
-  payload: Record<string, unknown>
-) => Promise<Record<string, unknown>>;
-
-/**
- * Registry for customer proposal executors
- */
-const customerProposalExecutors = new Map<string, CustomerProposalExecutor>();
-
-/**
- * Register a customer proposal executor
- */
-export function registerCustomerProposalExecutor(
-  operation: string,
-  executor: CustomerProposalExecutor
-): void {
-  customerProposalExecutors.set(operation, executor);
-}
+import { getCustomerProposalExecutor } from '../agent/customer/executor-registry';
 
 /**
  * Create public customer chat routes
@@ -55,7 +32,19 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    * Uses req.tenantId set by tenant middleware
    */
   const getTenantId = (req: Request): string | null => {
-    return (req as any).tenantId ?? null;
+    return req.tenantId ?? null;
+  };
+
+  /**
+   * Helper to check if chat is enabled for a tenant
+   * Returns true if enabled, false otherwise
+   */
+  const isChatEnabled = async (tenantId: string): Promise<boolean> => {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { chatEnabled: true },
+    });
+    return tenant?.chatEnabled ?? false;
   };
 
   // ============================================================================
@@ -169,12 +158,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       }
 
       // Check if chat is enabled
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { chatEnabled: true },
-      });
-
-      if (!tenant?.chatEnabled) {
+      if (!(await isChatEnabled(tenantId))) {
         res.status(403).json({ error: 'Chat is not enabled for this business' });
         return;
       }
@@ -224,19 +208,21 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       }
 
       // Check if chat is enabled
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { chatEnabled: true },
-      });
-
-      if (!tenant?.chatEnabled) {
+      if (!(await isChatEnabled(tenantId))) {
         res.status(403).json({ error: 'Chat is not enabled for this business' });
         return;
       }
 
-      // Get or create session
+      // Get or create session, validating ownership if sessionId provided
       let actualSessionId = sessionId;
-      if (!actualSessionId) {
+      if (actualSessionId) {
+        // Validate that sessionId belongs to this tenant
+        const session = await orchestrator.getSession(tenantId, actualSessionId);
+        if (!session) {
+          res.status(400).json({ error: 'Invalid or expired session' });
+          return;
+        }
+      } else {
         const session = await orchestrator.getOrCreateSession(tenantId);
         actualSessionId = session.sessionId;
       }
@@ -286,12 +272,23 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
 
       const { proposalId } = req.params;
 
-      // Fetch proposal with tenant + customer isolation
+      // Get sessionId from request body for ownership verification
+      const { sessionId } = req.body as { sessionId?: string };
+
+      // Build where clause with tenant isolation and optional session ownership
+      const whereClause: { id: string; tenantId: string; sessionId?: string } = {
+        id: proposalId,
+        tenantId, // CRITICAL: Tenant isolation
+      };
+
+      // If sessionId is provided, add session ownership verification
+      if (sessionId) {
+        whereClause.sessionId = sessionId;
+      }
+
+      // Fetch proposal with tenant + session isolation
       const proposal = await prisma.agentProposal.findFirst({
-        where: {
-          id: proposalId,
-          tenantId, // CRITICAL: Tenant isolation
-        },
+        where: whereClause,
       });
 
       if (!proposal) {
@@ -321,7 +318,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       }
 
       // Get executor for this operation
-      const executor = customerProposalExecutors.get(proposal.operation);
+      const executor = getCustomerProposalExecutor(proposal.operation);
 
       if (!executor) {
         logger.warn(
