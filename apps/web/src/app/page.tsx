@@ -265,6 +265,9 @@ export default function HomePage() {
               <p className="mt-5 font-serif text-xl sm:text-2xl md:text-3xl font-semibold text-sage">
                 The rest is handled.
               </p>
+              <p className="mt-4 text-lg text-text-muted">
+                Websites. Booking. Payments. AI. Done for you.
+              </p>
               <div className="mt-10">
                 <Button
                   asChild
