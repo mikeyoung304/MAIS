@@ -222,15 +222,16 @@ export function CustomerChatWidget({
 
   // Confirm booking proposal
   const confirmProposal = async () => {
-    if (!pendingProposal) return;
+    if (!pendingProposal || !sessionId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
+      // SECURITY: Include sessionId for ownership verification (P2 fix from code review)
       const response = await fetch(
         `${API_URL}/v1/public/chat/confirm/${pendingProposal.proposalId}`,
-        fetchOptions('POST')
+        fetchOptions('POST', { sessionId })
       );
 
       if (!response.ok) {
