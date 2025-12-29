@@ -48,6 +48,23 @@ const DEFAULT_CONFIG: CustomerOrchestratorConfig = {
 const MAX_RECURSION_DEPTH = 3;
 
 /**
+ * Patterns that indicate potential prompt injection attempts
+ * These are common techniques used to manipulate LLM behavior
+ */
+const PROMPT_INJECTION_PATTERNS = [
+  /ignore\s+(?:previous|your|all)\s+instruction/i,
+  /disregard\s+(?:previous|your|all)\s+instruction/i,
+  /you\s+are\s+now/i,
+  /system\s*prompt/i,
+  /\[system\]/i,
+  /\[INST\]/i,
+  /<<SYS>>/i,
+  /pretend\s+you\s+are/i,
+  /act\s+as\s+(?:if\s+you\s+are|a)/i,
+  /reveal\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
+];
+
+/**
  * Customer context for session
  */
 export interface CustomerSessionContext {
@@ -222,6 +239,14 @@ export class CustomerOrchestrator {
   }
 
   /**
+   * Check for potential prompt injection patterns
+   * Returns true if injection attempt detected
+   */
+  private detectPromptInjection(message: string): boolean {
+    return PROMPT_INJECTION_PATTERNS.some((pattern) => pattern.test(message));
+  }
+
+  /**
    * Send a message and get response
    */
   async chat(
@@ -230,6 +255,19 @@ export class CustomerOrchestrator {
     userMessage: string
   ): Promise<CustomerChatResponse> {
     const startTime = Date.now();
+
+    // SECURITY: Check for prompt injection attempts (P2 fix from code review)
+    if (this.detectPromptInjection(userMessage)) {
+      logger.warn(
+        { tenantId, sessionId, messagePreview: userMessage.slice(0, 100) },
+        'Potential prompt injection attempt detected'
+      );
+      // Return generic response instead of passing to LLM
+      return {
+        message: "I'm here to help you with booking questions. How can I assist you today?",
+        sessionId,
+      };
+    }
 
     // Get or validate session
     let session = await this.getSession(tenantId, sessionId);
