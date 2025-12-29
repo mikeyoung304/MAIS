@@ -327,6 +327,26 @@ export default function TenantHomePage({ sections }) {
 }
 ```
 
+### Customer Chatbot (AI Agent System)
+
+AI-powered booking assistant for tenant storefronts. Visitors browse services, check availability, and book through natural conversation.
+
+**Architecture:** Widget (React) → `/v1/public/chat/message` → Orchestrator → Tools → Proposal Service
+
+**Key Files:**
+
+- `server/src/agent/customer/customer-tools.ts` - Tools: `get_services`, `check_availability`, `book_service` (T3), `get_business_info`
+- `server/src/agent/customer/customer-orchestrator.ts` - Session management, tool dispatch
+- `server/src/agent/customer/customer-booking-executor.ts` - Executes confirmed proposals
+- `server/src/routes/public-customer-chat.routes.ts` - Public API (tenant via `X-Tenant-Key` header)
+- `apps/web/src/components/chat/CustomerChatWidget.tsx` - React widget
+
+**Key Patterns:**
+
+- Bookings use T3 trust tier (proposal → customer confirmation → execution)
+- Sessions: tenant-scoped, `sessionType: 'CUSTOMER'`, 60-minute TTL
+- All tools respect tenant data isolation
+
 ## Domain Expertise (Auto-Load Skills)
 
 This project uses the `compound-engineering` plugin. Before starting implementation, check these triggers and load the matching skill:
