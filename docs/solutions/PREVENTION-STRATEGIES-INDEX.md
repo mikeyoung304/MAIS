@@ -2039,6 +2039,65 @@ const [booking, blackout] = await Promise.all([
 
 ---
 
+#### [Customer Chatbot Phase 0 Prevention Strategies](./CUSTOMER_CHATBOT_PREVENTION_STRATEGIES.md)
+
+**Purpose:** Prevent 5 critical security and data integrity issues in customer-facing chatbot
+**Audience:** Engineers building or maintaining customer chatbot features
+**Length:** ~6,000 words
+**Date Created:** 2025-12-29
+**Key Patterns:** Input sanitization, payment timestamp tracking, ownership verification, database indexing, prompt injection detection
+
+**Covers 5 Issues:**
+
+**P1 Issues:**
+
+1. **HTML Injection in Emails** - Always sanitize customer input before HTML interpolation
+2. **Proposal Enumeration** - Verify ownership at route AND executor levels (multi-layer defense)
+
+**P2 Issues:** 3. **Missing Payment Timestamps** - Set `paidAt` on payment confirmation (data integrity) 4. **Missing Database Indexes** - Composite indexes for multi-column WHERE clauses (performance) 5. **Prompt Injection** - Pattern-based detection + hardened system prompt (behavioral security)
+
+**Status:** ✅ IMPLEMENTED (commit e2d6545, except Issue #2 pending webhook update)
+
+**Quick Rules:**
+
+```typescript
+// ✅ Issue #1: Sanitize before HTML
+import { sanitizePlainText } from '../../lib/sanitization';
+const safeCustomerName = sanitizePlainText(customerName);
+const html = `<p>Hi ${safeCustomerName},</p>`;
+
+// ✅ Issue #2: Payment timestamp (PENDING in webhook-processor.ts)
+await prisma.booking.update({
+  where: { id: bookingId },
+  data: { status: 'CONFIRMED', paidAt: new Date() },
+});
+
+// ✅ Issue #3: Verify sessionId in WHERE + executor
+const proposal = await prisma.agentProposal.findFirst({
+  where: { id: proposalId, tenantId, sessionId }, // Layer 1
+});
+// Layer 2 re-verify in executor
+
+// ✅ Issue #4: Composite indexes in schema
+@@index([tenantId, sessionType, updatedAt])
+
+// ✅ Issue #5: Block injection patterns
+if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
+  return { error: 'Cannot process that request' };
+}
+```
+
+**Quick Reference:** [Customer Chatbot Quick Reference](./CUSTOMER_CHATBOT_QUICK_REFERENCE.md) (1-page checklist - print and pin!)
+
+**When to Read:**
+
+- Building customer-facing features
+- Implementing booking confirmations
+- Adding new customer chatbot tools
+- Reviewing customer chatbot PRs
+
+---
+
 ## ✅ Next Steps
 
 **For engineers:**
@@ -2061,8 +2120,13 @@ const [booking, blackout] = await Promise.all([
 
 ---
 
-**Last Updated:** 2025-12-28
-**Recent Additions (2025-12-28):**
+**Last Updated:** 2025-12-29
+**Recent Additions (2025-12-29):**
+
+- Customer Chatbot Phase 0 Prevention Strategies - 5 critical issues covering HTML injection, payment timestamps, proposal enumeration, indexes, and prompt injection
+- Customer Chatbot Quick Reference - 1-page printable checklist for all 5 prevention strategies
+
+**Previous Additions (2025-12-28):**
 
 - Agent Tool Architecture Prevention Strategies - 7 critical issues (451-457) covering unbounded queries, duplicate tools, type safety, timing, DRY, indexes, parallelization
 - Agent Tool Quick Checklist - Print-friendly checklist for all 7 prevention strategies
