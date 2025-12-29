@@ -17,7 +17,7 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/resources/messages';
-import type { PrismaClient } from '../../generated/prisma';
+import { Prisma, type PrismaClient } from '../../generated/prisma';
 import type { ToolContext, AgentToolResult } from '../tools/types';
 import { CUSTOMER_TOOLS, type CustomerToolContext } from './customer-tools';
 import { buildCustomerSystemPrompt } from './customer-prompt';
@@ -342,7 +342,7 @@ export class CustomerOrchestrator {
     await this.prisma.agentSession.update({
       where: { id: sessionId },
       data: {
-        messages: updatedMessages as any,
+        messages: updatedMessages as unknown as Prisma.InputJsonValue,
         updatedAt: new Date(),
       },
     });

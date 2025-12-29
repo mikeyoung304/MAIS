@@ -12,6 +12,7 @@ import { validateEnv } from './config/env.schema';
 import { closeSupabaseConnections } from './config/database';
 import { initializeScheduler } from './scheduler';
 import { initializeWebhookQueue } from './jobs/webhook-queue';
+import { startCleanupScheduler } from './jobs/cleanup';
 import type { PrismaClient } from './generated/prisma';
 
 /**
@@ -83,6 +84,10 @@ async function main(): Promise<void> {
       const cronSchedule = process.env.REMINDER_CRON_SCHEDULE || '0 9 * * *';
       initializeScheduler(container, cronSchedule);
       logger.info('⏰ Scheduled tasks initialized');
+
+      // Start cleanup scheduler for expired customer chat sessions/proposals
+      startCleanupScheduler(container.prisma);
+      logger.info('🧹 Cleanup scheduler started');
     }
 
     // Initialize webhook queue for async processing (only in real mode)

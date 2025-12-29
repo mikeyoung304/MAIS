@@ -477,8 +477,15 @@ export function CustomerChatWidget({
 
 /**
  * Individual message bubble
+ * Memoized to prevent unnecessary re-renders when other messages change
  */
-function MessageBubble({ message, primaryColor }: { message: ChatMessage; primaryColor: string }) {
+const MessageBubble = React.memo(function MessageBubble({
+  message,
+  primaryColor,
+}: {
+  message: ChatMessage;
+  primaryColor: string;
+}) {
   const isUser = message.role === 'user';
 
   return (
@@ -516,6 +523,6 @@ function MessageBubble({ message, primaryColor }: { message: ChatMessage; primar
       </div>
     </div>
   );
-}
+});
 
 export default CustomerChatWidget;
