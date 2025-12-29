@@ -611,12 +611,11 @@ export default function HomePage() {
                 <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
                   {/* Photo */}
                   <div className="flex-shrink-0">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-sage/20 border-2 border-sage/30 overflow-hidden">
-                      {/* TODO: Replace with actual photo */}
-                      <div className="w-full h-full flex items-center justify-center text-sage text-4xl font-serif">
-                        M
-                      </div>
-                    </div>
+                    <img
+                      src="/mike-young.jpg"
+                      alt="Mike Young, Founder"
+                      className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover border-2 border-sage/30"
+                    />
                   </div>
                   {/* Story */}
                   <div>

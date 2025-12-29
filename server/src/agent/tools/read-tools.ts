@@ -335,7 +335,7 @@ export const getBookingsTool: AgentTool = {
           packageName: sanitizeForContext(b.package?.name || 'Unknown', 50),
           customerName: sanitizeForContext(b.customer?.name || 'Unknown', 50),
           customerEmail: b.customer?.email ?? null,
-          date: b.date.toISOString().split('T')[0],
+          date: formatDateISO(b.date),
           totalPrice: b.totalPrice,
           status: b.status,
           notes: b.notes ? sanitizeForContext(b.notes, 500) : null,
@@ -396,12 +396,12 @@ export const getBookingTool: AgentTool = {
           customerName: sanitizeForContext(booking.customer?.name || 'Unknown', 50),
           customerEmail: booking.customer?.email ?? null,
           customerPhone: booking.customer?.phone ?? null,
-          date: booking.date.toISOString().split('T')[0],
+          date: formatDateISO(booking.date),
           totalPrice: booking.totalPrice,
           status: booking.status,
           notes: booking.notes ? sanitizeForContext(booking.notes, 500) : null,
           depositPaidAmount: booking.depositPaidAmount,
-          balanceDueDate: booking.balanceDueDate?.toISOString().split('T')[0],
+          balanceDueDate: booking.balanceDueDate ? formatDateISO(booking.balanceDueDate) : null,
           balancePaidAmount: booking.balancePaidAmount,
           cancelledBy: booking.cancelledBy,
           cancellationReason: booking.cancellationReason
@@ -946,7 +946,7 @@ function formatCustomerWithStats(
     name: sanitizeForContext(customer.name, 100),
     bookingCount,
     totalSpentCents,
-    totalSpentFormatted: `$${(totalSpentCents / 100).toFixed(2)}`,
+    totalSpentFormatted: formatPrice(totalSpentCents),
     createdAt: customer.createdAt.toISOString(),
   };
 }

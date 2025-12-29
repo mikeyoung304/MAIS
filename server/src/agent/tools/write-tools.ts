@@ -17,7 +17,7 @@
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from './types';
 import { sanitizeForContext } from './types';
 import { ProposalService } from '../proposals/proposal.service';
-import { logger } from '../../lib/core/logger';
+import { handleToolError, formatPrice, formatDateISO } from './utils';
 
 /**
  * Create a proposal for a write operation
@@ -163,7 +163,7 @@ export const upsertPackageTool: AgentTool = {
           const relativeChange =
             oldPriceCents > 0 ? ((absoluteChange / oldPriceCents) * 100).toFixed(1) : 'N/A';
           const direction = newPriceCents > oldPriceCents ? 'increase' : 'decrease';
-          priceChangeWarning = `Significant price ${direction}: $${(absoluteChange / 100).toFixed(2)} (${relativeChange}%)`;
+          priceChangeWarning = `Significant price ${direction}: ${formatPrice(absoluteChange)} (${relativeChange}%)`;
         }
       }
 
@@ -183,20 +183,19 @@ export const upsertPackageTool: AgentTool = {
       const preview: Record<string, unknown> = {
         action: isUpdate ? 'update' : 'create',
         packageName: params.title,
-        price: `$${(newPriceCents / 100).toFixed(2)}`,
-        ...(isUpdate ? { previousPrice: `$${(existing!.basePrice / 100).toFixed(2)}` } : {}),
+        price: formatPrice(newPriceCents),
+        ...(isUpdate ? { previousPrice: formatPrice(existing!.basePrice) } : {}),
         ...(priceChangeWarning ? { warning: priceChangeWarning } : {}),
       };
 
       return createProposal(context, 'upsert_package', operation, trustTier, payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in upsert_package tool');
-      return {
-        success: false,
-        error: `Failed to create package proposal: ${errorMessage}. Verify the package details (title required, price must be in cents) and try again.`,
-        code: 'UPSERT_PACKAGE_ERROR',
-      };
+      return handleToolError(
+        error,
+        'upsert_package',
+        tenantId,
+        'Failed to create package proposal. Verify the package details (title required, price must be in cents) and try again'
+      );
     }
   },
 };
@@ -274,19 +273,18 @@ export const upsertAddOnTool: AgentTool = {
       const preview: Record<string, unknown> = {
         action: isUpdate ? 'update' : 'create',
         addOnName: params.name,
-        price: `$${((params.priceCents as number) / 100).toFixed(2)}`,
-        ...(isUpdate ? { previousPrice: `$${(existing!.price / 100).toFixed(2)}` } : {}),
+        price: formatPrice(params.priceCents as number),
+        ...(isUpdate ? { previousPrice: formatPrice(existing!.price) } : {}),
       };
 
       return createProposal(context, 'upsert_addon', operation, 'T2', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in upsert_addon tool');
-      return {
-        success: false,
-        error: `Failed to create add-on proposal: ${errorMessage}. Verify the add-on details (name required, price must be in cents) and try again.`,
-        code: 'UPSERT_ADDON_ERROR',
-      };
+      return handleToolError(
+        error,
+        'upsert_addon',
+        tenantId,
+        'Failed to create add-on proposal. Verify the add-on details (name required, price must be in cents) and try again'
+      );
     }
   },
 };
@@ -333,20 +331,19 @@ export const deleteAddOnTool: AgentTool = {
       const payload = { addOnId };
       const preview: Record<string, unknown> = {
         addOnName: sanitizeForContext(addOn.name, 50),
-        price: `$${(addOn.price / 100).toFixed(2)}`,
+        price: formatPrice(addOn.price),
         bookingCount: addOn._count.bookingRefs,
         ...(hasBookings ? { warning: 'This add-on has existing bookings that reference it' } : {}),
       };
 
       return createProposal(context, 'delete_addon', operation, trustTier, payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, addOnId }, 'Error in delete_addon tool');
-      return {
-        success: false,
-        error: `Failed to create delete proposal for add-on "${addOnId}": ${errorMessage}. Verify the add-on ID is correct.`,
-        code: 'DELETE_ADDON_ERROR',
-      };
+      return handleToolError(
+        error,
+        'delete_addon',
+        tenantId,
+        `Failed to create delete proposal for add-on "${addOnId}". Verify the add-on ID is correct`
+      );
     }
   },
 };
@@ -400,13 +397,12 @@ export const deletePackageTool: AgentTool = {
 
       return createProposal(context, 'delete_package', operation, trustTier, payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, packageId }, 'Error in delete_package tool');
-      return {
-        success: false,
-        error: `Failed to create delete proposal for package "${packageId}": ${errorMessage}. Verify the package ID is correct.`,
-        code: 'DELETE_PACKAGE_ERROR',
-      };
+      return handleToolError(
+        error,
+        'delete_package',
+        tenantId,
+        `Failed to create delete proposal for package "${packageId}". Verify the package ID is correct`
+      );
     }
   },
 };
@@ -459,13 +455,12 @@ export const manageBlackoutTool: AgentTool = {
 
       return createProposal(context, 'manage_blackout', operation, 'T1', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in manage_blackout tool');
-      return {
-        success: false,
-        error: `Failed to create blackout proposal for date "${dateStr}": ${errorMessage}. Ensure the date is in YYYY-MM-DD format.`,
-        code: 'MANAGE_BLACKOUT_ERROR',
-      };
+      return handleToolError(
+        error,
+        'manage_blackout',
+        tenantId,
+        `Failed to create blackout proposal for date "${dateStr}". Ensure the date is in YYYY-MM-DD format`
+      );
     }
   },
 };
@@ -548,7 +543,7 @@ export const addBlackoutDateTool: AgentTool = {
       const datesToBlock: string[] = [];
       for (let i = 0; i < dayCount; i++) {
         const date = new Date(startDate.getTime() + i * msPerDay);
-        datesToBlock.push(date.toISOString().split('T')[0]);
+        datesToBlock.push(formatDateISO(date));
       }
 
       // Check for existing blackouts in range
@@ -563,9 +558,7 @@ export const addBlackoutDateTool: AgentTool = {
         select: { date: true },
       });
 
-      const existingDates = new Set(
-        existingBlackouts.map((b) => b.date.toISOString().split('T')[0])
-      );
+      const existingDates = new Set(existingBlackouts.map((b) => formatDateISO(b.date)));
       const newDates = datesToBlock.filter((d) => !existingDates.has(d));
 
       // Build operation description
@@ -595,13 +588,12 @@ export const addBlackoutDateTool: AgentTool = {
 
       return createProposal(context, 'add_blackout_date', operation, 'T1', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in add_blackout_date tool');
-      return {
-        success: false,
-        error: `Failed to create blackout proposal: ${errorMessage}. Ensure dates are in YYYY-MM-DD format.`,
-        code: 'ADD_BLACKOUT_DATE_ERROR',
-      };
+      return handleToolError(
+        error,
+        'add_blackout_date',
+        tenantId,
+        'Failed to create blackout proposal. Ensure dates are in YYYY-MM-DD format'
+      );
     }
   },
 };
@@ -642,7 +634,7 @@ export const removeBlackoutDateTool: AgentTool = {
         };
       }
 
-      const dateStr = blackout.date.toISOString().split('T')[0];
+      const dateStr = formatDateISO(blackout.date);
       const operation = `Unblock ${dateStr}${blackout.reason ? ` (was: ${sanitizeForContext(blackout.reason, 30)})` : ''}`;
 
       const payload = {
@@ -659,13 +651,12 @@ export const removeBlackoutDateTool: AgentTool = {
 
       return createProposal(context, 'remove_blackout_date', operation, 'T2', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, blackoutId }, 'Error in remove_blackout_date tool');
-      return {
-        success: false,
-        error: `Failed to create unblock proposal: ${errorMessage}. Verify the blackout ID is correct.`,
-        code: 'REMOVE_BLACKOUT_DATE_ERROR',
-      };
+      return handleToolError(
+        error,
+        'remove_blackout_date',
+        tenantId,
+        'Failed to create unblock proposal. Verify the blackout ID is correct'
+      );
     }
   },
 };
@@ -721,13 +712,12 @@ export const updateBrandingTool: AgentTool = {
 
       return createProposal(context, 'update_branding', operation, 'T1', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in update_branding tool');
-      return {
-        success: false,
-        error: `Failed to create branding proposal: ${errorMessage}. Ensure colors are valid hex codes (e.g., "#1a365d").`,
-        code: 'UPDATE_BRANDING_ERROR',
-      };
+      return handleToolError(
+        error,
+        'update_branding',
+        tenantId,
+        'Failed to create branding proposal. Ensure colors are valid hex codes (e.g., "#1a365d")'
+      );
     }
   },
 };
@@ -781,13 +771,12 @@ export const updateLandingPageTool: AgentTool = {
 
       return createProposal(context, 'update_landing_page', operation, 'T2', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in update_landing_page tool');
-      return {
-        success: false,
-        error: `Failed to create landing page proposal: ${errorMessage}. Verify the section data is properly formatted.`,
-        code: 'UPDATE_LANDING_PAGE_ERROR',
-      };
+      return handleToolError(
+        error,
+        'update_landing_page',
+        tenantId,
+        'Failed to create landing page proposal. Verify the section data is properly formatted'
+      );
     }
   },
 };
@@ -886,26 +875,26 @@ export const cancelBookingTool: AgentTool = {
 
       // Customer name from Customer relation, date from Booking.date, price from Booking.totalPrice
       const customerName = booking.customer?.name || 'Unknown Customer';
-      const operation = `Cancel booking for ${sanitizeForContext(customerName, 30)} on ${booking.date.toISOString().split('T')[0]}`;
+      const eventDate = formatDateISO(booking.date);
+      const operation = `Cancel booking for ${sanitizeForContext(customerName, 30)} on ${eventDate}`;
       const payload = { bookingId, reason: reason || 'Cancelled by tenant' };
       const preview = {
         customerName: sanitizeForContext(customerName, 30),
-        eventDate: booking.date.toISOString().split('T')[0],
+        eventDate,
         packageName: sanitizeForContext(booking.package?.name || 'Unknown', 50),
         totalPrice: booking.totalPrice,
-        refundAmount: `$${(booking.totalPrice / 100).toFixed(2)}`,
+        refundAmount: formatPrice(booking.totalPrice),
         warning: 'Customer will be notified and refund will be processed',
       };
 
       return createProposal(context, 'cancel_booking', operation, 'T3', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, bookingId }, 'Error in cancel_booking tool');
-      return {
-        success: false,
-        error: `Failed to create cancellation proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and belongs to your business.`,
-        code: 'CANCEL_BOOKING_ERROR',
-      };
+      return handleToolError(
+        error,
+        'cancel_booking',
+        tenantId,
+        `Failed to create cancellation proposal for booking "${bookingId}". Verify the booking ID is correct and belongs to your business`
+      );
     }
   },
 };
@@ -1021,19 +1010,18 @@ export const createBookingTool: AgentTool = {
         customerEmail: sanitizeForContext(customerEmail, 50),
         eventDate: dateStr,
         packageName: sanitizeForContext(pkg.name, 50),
-        price: `$${(totalPrice / 100).toFixed(2)}`,
+        price: formatPrice(totalPrice),
         note: 'This creates a confirmed booking. No payment will be processed - handle payment separately.',
       };
 
       return createProposal(context, 'create_booking', operation, 'T3', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, packageId }, 'Error in create_booking tool');
-      return {
-        success: false,
-        error: `Failed to create booking proposal: ${errorMessage}. Verify the package ID is correct, date is in YYYY-MM-DD format, and customer email is valid.`,
-        code: 'CREATE_BOOKING_ERROR',
-      };
+      return handleToolError(
+        error,
+        'create_booking',
+        tenantId,
+        'Failed to create booking proposal. Verify the package ID is correct, date is in YYYY-MM-DD format, and customer email is valid'
+      );
     }
   },
 };
@@ -1103,7 +1091,7 @@ export const processRefundTool: AgentTool = {
 
       const operation = isFullRefund
         ? `Process full refund for ${sanitizeForContext(customerName, 30)}`
-        : `Process partial refund ($${(refundAmount / 100).toFixed(2)}) for ${sanitizeForContext(customerName, 30)}`;
+        : `Process partial refund (${formatPrice(refundAmount)}) for ${sanitizeForContext(customerName, 30)}`;
 
       const payload = {
         bookingId,
@@ -1114,24 +1102,23 @@ export const processRefundTool: AgentTool = {
 
       const preview = {
         customerName: sanitizeForContext(customerName, 30),
-        eventDate: booking.date.toISOString().split('T')[0],
+        eventDate: formatDateISO(booking.date),
         packageName: sanitizeForContext(booking.package?.name || 'Unknown', 50),
-        totalPaid: `$${(paidAmount / 100).toFixed(2)}`,
-        previouslyRefunded: alreadyRefunded > 0 ? `$${(alreadyRefunded / 100).toFixed(2)}` : null,
-        refundAmount: `$${(refundAmount / 100).toFixed(2)}`,
+        totalPaid: formatPrice(paidAmount),
+        previouslyRefunded: alreadyRefunded > 0 ? formatPrice(alreadyRefunded) : null,
+        refundAmount: formatPrice(refundAmount),
         refundType: isFullRefund ? 'Full refund' : 'Partial refund',
         warning: 'Refund will be processed via Stripe. This cannot be undone.',
       };
 
       return createProposal(context, 'process_refund', operation, 'T3', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, bookingId }, 'Error in process_refund tool');
-      return {
-        success: false,
-        error: `Failed to create refund proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and has paid amounts to refund.`,
-        code: 'PROCESS_REFUND_ERROR',
-      };
+      return handleToolError(
+        error,
+        'process_refund',
+        tenantId,
+        `Failed to create refund proposal for booking "${bookingId}". Verify the booking ID is correct and has paid amounts to refund`
+      );
     }
   },
 };
@@ -1218,13 +1205,12 @@ export const upsertSegmentTool: AgentTool = {
 
       return createProposal(context, 'upsert_segment', operation, 'T2', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in upsert_segment tool');
-      return {
-        success: false,
-        error: `Failed to create segment proposal: ${errorMessage}. Verify required fields (slug, name, heroTitle) are provided.`,
-        code: 'UPSERT_SEGMENT_ERROR',
-      };
+      return handleToolError(
+        error,
+        'upsert_segment',
+        tenantId,
+        'Failed to create segment proposal. Verify required fields (slug, name, heroTitle) are provided'
+      );
     }
   },
 };
@@ -1275,13 +1261,12 @@ export const deleteSegmentTool: AgentTool = {
 
       return createProposal(context, 'delete_segment', operation, trustTier, payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, segmentId }, 'Error in delete_segment tool');
-      return {
-        success: false,
-        error: `Failed to create delete proposal for segment "${segmentId}": ${errorMessage}. Verify the segment ID is correct.`,
-        code: 'DELETE_SEGMENT_ERROR',
-      };
+      return handleToolError(
+        error,
+        'delete_segment',
+        tenantId,
+        `Failed to create delete proposal for segment "${segmentId}". Verify the segment ID is correct`
+      );
     }
   },
 };
@@ -1426,7 +1411,7 @@ export const updateBookingTool: AgentTool = {
       const changes: Record<string, string> = {};
 
       if (newDate) {
-        changes.date = `${booking.date.toISOString().split('T')[0]} → ${newDate}`;
+        changes.date = `${formatDateISO(booking.date)} → ${newDate}`;
       }
       if (newTime) {
         const currentTime = booking.startTime
@@ -1450,7 +1435,7 @@ export const updateBookingTool: AgentTool = {
       const preview: Record<string, unknown> = {
         action: hasScheduleChange ? 'reschedule' : 'update',
         booking: `${sanitizeForContext(booking.package?.name || 'Unknown', 30)} - ${sanitizeForContext(booking.customer?.name || 'Unknown', 30)}`,
-        currentDate: booking.date.toISOString().split('T')[0],
+        currentDate: formatDateISO(booking.date),
         changes,
         customerNotification: notifyCustomer
           ? 'Customer will be notified of changes'
@@ -1461,13 +1446,12 @@ export const updateBookingTool: AgentTool = {
       // T2 for all updates - payment status and customer info are preserved
       return createProposal(context, 'update_booking', operation, 'T2', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, bookingId }, 'Error in update_booking tool');
-      return {
-        success: false,
-        error: `Failed to create update proposal for booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and dates/times are properly formatted.`,
-        code: 'UPDATE_BOOKING_ERROR',
-      };
+      return handleToolError(
+        error,
+        'update_booking',
+        tenantId,
+        `Failed to create update proposal for booking "${bookingId}". Verify the booking ID is correct and dates/times are properly formatted`
+      );
     }
   },
 };
@@ -1555,13 +1539,12 @@ export const updateDepositSettingsTool: AgentTool = {
 
       return createProposal(context, 'update_deposit_settings', operation, 'T3', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in update_deposit_settings tool');
-      return {
-        success: false,
-        error: `Failed to create deposit settings proposal: ${errorMessage}. Ensure deposit percent is 0-100 and balance due days is non-negative.`,
-        code: 'UPDATE_DEPOSIT_SETTINGS_ERROR',
-      };
+      return handleToolError(
+        error,
+        'update_deposit_settings',
+        tenantId,
+        'Failed to create deposit settings proposal. Ensure deposit percent is 0-100 and balance due days is non-negative'
+      );
     }
   },
 };
@@ -1607,19 +1590,18 @@ export const startTrialTool: AgentTool = {
       const payload = { trialEndsAt: trialEndsAt.toISOString() };
       const preview = {
         action: 'start_trial',
-        trialEndsAt: trialEndsAt.toISOString().split('T')[0],
+        trialEndsAt: formatDateISO(trialEndsAt),
         daysUntilExpiry: 14,
       };
 
       return createProposal(context, 'start_trial', operation, 'T2', payload, preview);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in start_trial tool');
-      return {
-        success: false,
-        error: `Failed to create trial proposal: ${errorMessage}. Trial can only be started if subscription status is NONE.`,
-        code: 'START_TRIAL_ERROR',
-      };
+      return handleToolError(
+        error,
+        'start_trial',
+        tenantId,
+        'Failed to create trial proposal. Trial can only be started if subscription status is NONE'
+      );
     }
   },
 };
@@ -1713,13 +1695,12 @@ export const initiateStripeOnboardingTool: AgentTool = {
         preview
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in initiate_stripe_onboarding tool');
-      return {
-        success: false,
-        error: `Failed to initiate Stripe onboarding: ${errorMessage}. Try again or contact support if the issue persists.`,
-        code: 'STRIPE_ONBOARDING_ERROR',
-      };
+      return handleToolError(
+        error,
+        'initiate_stripe_onboarding',
+        tenantId,
+        'Failed to initiate Stripe onboarding. Try again or contact support if the issue persists'
+      );
     }
   },
 };
