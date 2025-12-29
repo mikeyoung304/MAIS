@@ -124,37 +124,6 @@ const faqs = [
   },
 ];
 
-// Mock testimonials - replace with real ones when available
-const testimonials = [
-  {
-    quote:
-      "Back in '82, I could throw a football over them mountains. Now HANDLED throws my invoices over the internet. Same energy.",
-    name: 'Rico Dynamite',
-    title: 'Former Football Star, Current Life Coach',
-    // Placeholder: older guy with mustache, aviator glasses
-    image:
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=Rico&accessories=prescription02&facialHair=beardMajestic&top=shortFlat',
-  },
-  {
-    quote:
-      "I don't always understand technology. But when I do, it's because someone else is handling it. Stay booked, my friends.",
-    name: 'Fernando Interessante',
-    title: "World's Most Interesting Therapist",
-    // Placeholder: distinguished gentleman
-    image:
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=Fernando&facialHair=beardLight&top=shortCurly&accessories=round',
-  },
-  {
-    quote:
-      'I tried to set up my own website once. I woke up three days later in a Best Buy parking lot. Never again. HANDLED saved my life.',
-    name: 'Brenda Chaos',
-    title: 'Feng Shui Consultant & Alpaca Whisperer',
-    // Placeholder: quirky woman
-    image:
-      'https://api.dicebear.com/7.x/avataaars/svg?seed=Brenda&top=longHairCurvy&accessories=sunglasses&clotheColor=pink',
-  },
-];
-
 export default function HomePage() {
   // JSON-LD structured data for SEO and agent accessibility
   const organizationSchema = {
@@ -635,36 +604,47 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Testimonials Section */}
+          {/* Founder Story Section */}
           <section className="py-32 md:py-40 px-6 bg-surface">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center max-w-3xl mx-auto mb-16">
-                <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary">
-                  Real talk from real pros.
-                </h2>
-              </div>
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {testimonials.map((testimonial) => (
-                  <div
-                    key={testimonial.name}
-                    className="bg-surface-alt rounded-3xl p-8 shadow-lg border border-neutral-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <div className="flex items-center gap-4 mb-6">
-                      <img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        className="w-14 h-14 rounded-full bg-sage/10"
-                      />
-                      <div>
-                        <p className="font-semibold text-text-primary">{testimonial.name}</p>
-                        <p className="text-sm text-text-muted">{testimonial.title}</p>
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-surface-alt rounded-3xl p-10 md:p-14 border border-neutral-700 shadow-xl">
+                <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+                  {/* Photo */}
+                  <div className="flex-shrink-0">
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-sage/20 border-2 border-sage/30 overflow-hidden">
+                      {/* TODO: Replace with actual photo */}
+                      <div className="w-full h-full flex items-center justify-center text-sage text-4xl font-serif">
+                        M
                       </div>
                     </div>
-                    <blockquote className="text-text-muted leading-relaxed italic">
-                      &ldquo;{testimonial.quote}&rdquo;
-                    </blockquote>
                   </div>
-                ))}
+                  {/* Story */}
+                  <div>
+                    <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-6">
+                      I built this because I needed it.
+                    </h2>
+                    <div className="space-y-4 text-text-muted leading-relaxed">
+                      <p>
+                        I&apos;m a private chef, photographer, drone pilot, restaurant consultant —
+                        basically, I can&apos;t sit still. ADHD brain. I love the work. I hate the
+                        admin.
+                      </p>
+                      <p>
+                        When AI tools started getting good, I went deep. Built systems for my own
+                        business. Then realized: every photographer, coach, and consultant I know is
+                        drowning in the same stuff.
+                      </p>
+                      <p className="text-text-primary font-medium">
+                        HANDLED is what I wish existed when I started. Professional presence. Smart
+                        tools. None of the homework.
+                      </p>
+                    </div>
+                    <div className="mt-8 pt-6 border-t border-neutral-700">
+                      <p className="font-semibold text-text-primary">Mike Young</p>
+                      <p className="text-sm text-sage">Founder</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
