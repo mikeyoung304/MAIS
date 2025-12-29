@@ -35,9 +35,13 @@ describe('Platform Seed', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // Clear both legacy and new variable names
     delete process.env.ADMIN_EMAIL;
     delete process.env.ADMIN_DEFAULT_PASSWORD;
     delete process.env.ADMIN_NAME;
+    delete process.env.PLATFORM_ADMIN_EMAIL;
+    delete process.env.PLATFORM_ADMIN_PASSWORD;
+    delete process.env.PLATFORM_ADMIN_NAME;
     vi.clearAllMocks();
   });
 
@@ -46,41 +50,41 @@ describe('Platform Seed', () => {
   });
 
   describe('Environment Variable Validation', () => {
-    it('should throw error when ADMIN_EMAIL is missing', async () => {
-      process.env.ADMIN_DEFAULT_PASSWORD = 'securepassword123';
-      // ADMIN_EMAIL not set
+    it('should throw error when PLATFORM_ADMIN_EMAIL is missing', async () => {
+      process.env.PLATFORM_ADMIN_PASSWORD = 'securepassword123';
+      // PLATFORM_ADMIN_EMAIL not set
 
       const mockPrisma = createMockPrisma();
 
       await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        'ADMIN_EMAIL environment variable is required'
+        'PLATFORM_ADMIN_EMAIL environment variable is required'
       );
 
       expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
       expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
 
-    it('should throw error when ADMIN_DEFAULT_PASSWORD is missing', async () => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      // ADMIN_DEFAULT_PASSWORD not set
+    it('should throw error when PLATFORM_ADMIN_PASSWORD is missing', async () => {
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      // PLATFORM_ADMIN_PASSWORD not set
 
       const mockPrisma = createMockPrisma();
 
       await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        'ADMIN_DEFAULT_PASSWORD environment variable is required'
+        'PLATFORM_ADMIN_PASSWORD environment variable is required'
       );
     });
 
-    it('should include helpful message in ADMIN_EMAIL error', async () => {
-      process.env.ADMIN_DEFAULT_PASSWORD = 'securepassword123';
+    it('should include helpful message in PLATFORM_ADMIN_EMAIL error', async () => {
+      process.env.PLATFORM_ADMIN_PASSWORD = 'securepassword123';
 
       const mockPrisma = createMockPrisma();
 
       await expect(seedPlatform(mockPrisma)).rejects.toThrow(/platform admin email/i);
     });
 
-    it('should include secure generation tip in ADMIN_DEFAULT_PASSWORD error', async () => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
+    it('should include secure generation tip in PLATFORM_ADMIN_PASSWORD error', async () => {
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
 
       const mockPrisma = createMockPrisma();
 
@@ -90,19 +94,19 @@ describe('Platform Seed', () => {
 
   describe('Password Length Validation', () => {
     it('should reject password shorter than 12 characters', async () => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = 'short'; // Only 5 chars
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = 'short'; // Only 5 chars
 
       const mockPrisma = createMockPrisma();
 
       await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        'ADMIN_DEFAULT_PASSWORD must be at least 12 characters'
+        'PLATFORM_ADMIN_PASSWORD must be at least 12 characters'
       );
     });
 
     it('should reject password with exactly 11 characters', async () => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = '12345678901'; // 11 chars
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = '12345678901'; // 11 chars
 
       const mockPrisma = createMockPrisma();
 
@@ -110,8 +114,8 @@ describe('Platform Seed', () => {
     });
 
     it('should accept password with exactly 12 characters', async () => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = '123456789012'; // 12 chars
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = '123456789012'; // 12 chars
 
       const mockPrisma = createMockPrisma();
 
@@ -119,8 +123,8 @@ describe('Platform Seed', () => {
     });
 
     it('should accept password longer than 12 characters', async () => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = 'verylongsecurepassword123!@#';
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = 'verylongsecurepassword123!@#';
 
       const mockPrisma = createMockPrisma();
 
@@ -130,8 +134,8 @@ describe('Platform Seed', () => {
 
   describe('New Admin User Creation', () => {
     beforeEach(() => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = 'securepassword123';
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = 'securepassword123';
     });
 
     it('should create new user when admin does not exist', async () => {
@@ -179,8 +183,8 @@ describe('Platform Seed', () => {
       expect(createCall.data.name).toBe('Platform Admin');
     });
 
-    it('should use custom ADMIN_NAME when provided', async () => {
-      process.env.ADMIN_NAME = 'John Doe';
+    it('should use custom PLATFORM_ADMIN_NAME when provided', async () => {
+      process.env.PLATFORM_ADMIN_NAME = 'John Doe';
       const mockPrisma = createMockPrisma({ userExists: false });
 
       await seedPlatform(mockPrisma);
@@ -192,8 +196,8 @@ describe('Platform Seed', () => {
 
   describe('Idempotency - Existing Admin Handling', () => {
     beforeEach(() => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = 'securepassword123';
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = 'securepassword123';
     });
 
     it('should update existing user role and name', async () => {
@@ -235,8 +239,8 @@ describe('Platform Seed', () => {
 
   describe('Logging', () => {
     beforeEach(() => {
-      process.env.ADMIN_EMAIL = 'admin@example.com';
-      process.env.ADMIN_DEFAULT_PASSWORD = 'securepassword123';
+      process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
+      process.env.PLATFORM_ADMIN_PASSWORD = 'securepassword123';
     });
 
     it('should log when new admin is created', async () => {
