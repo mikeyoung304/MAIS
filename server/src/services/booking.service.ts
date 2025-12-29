@@ -220,6 +220,50 @@ export class BookingService {
     );
   }
 
+  /**
+   * Confirms a chatbot-created booking after payment completion
+   *
+   * Updates the booking from PENDING to CONFIRMED and sets the paidAt timestamp.
+   * Emits BookingEvents.PAID for downstream processing (confirmation emails, etc.)
+   *
+   * @param tenantId - Tenant ID (multi-tenant isolation)
+   * @param bookingId - Booking ID to confirm
+   * @param amountPaidCents - Amount paid in cents
+   * @returns Updated booking
+   */
+  async confirmChatbotBooking(
+    tenantId: string,
+    bookingId: string,
+    amountPaidCents: number
+  ): Promise<Booking> {
+    // Fetch the booking with package details for the event payload
+    const booking = await this.bookingRepo.getById(tenantId, bookingId);
+    if (!booking) {
+      throw new Error(`Booking ${bookingId} not found for tenant ${tenantId}`);
+    }
+
+    // Update booking to CONFIRMED with payment timestamp
+    const confirmedBooking = await this.bookingRepo.update(tenantId, bookingId, {
+      status: 'CONFIRMED',
+      paidAt: new Date(), // P1 fix: Set payment timestamp for reporting queries
+    });
+
+    // Emit PAID event for downstream processing (sends confirmation email via DI event handler)
+    await this.eventEmitter.publish('booking:paid', {
+      tenantId,
+      bookingId,
+      email: booking.email,
+      eventDate: booking.eventDate
+        ? new Date(booking.eventDate).toISOString().split('T')[0]
+        : '',
+      packageTitle: booking.packageTitle || 'Package',
+      totalCents: amountPaidCents,
+      addOnTitles: booking.addOnTitles || [],
+    });
+
+    return confirmedBooking;
+  }
+
   // ============================================================================
   // Query Operations (Delegated to BookingQueryService)
   // ============================================================================

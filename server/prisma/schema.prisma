@@ -324,6 +324,9 @@ model Booking {
   packageId  String
   venueId    String?
 
+  // Customer-facing confirmation code for booking lookups (e.g., "BK-ABC123")
+  confirmationCode String? @unique
+
   // Scheduling fields - supports both date-only (legacy) and time-slot bookings
   date       DateTime      @db.Date
   startTime  DateTime?     // UTC - for time-slot bookings
@@ -341,6 +344,9 @@ model Booking {
   status     BookingStatus @default(PENDING)
   totalPrice Int
   notes      String?
+
+  // Payment tracking - when full payment was completed
+  paidAt     DateTime?
 
   // Platform Commission (multi-tenant)
   commissionAmount  Int     @default(0) // In cents (platform fee)
@@ -764,6 +770,7 @@ model AgentProposal {
   @@index([tenantId, sessionId])
   @@index([tenantId, status])
   @@index([expiresAt]) // For cleanup of expired proposals
+  @@index([status, expiresAt]) // P1 fix: Cleanup job queries (status + expiresAt)
   @@index([tenantId])
   @@index([customerId]) // Query proposals by customer
 }
@@ -834,6 +841,7 @@ model AgentSession {
   @@index([tenantId, updatedAt]) // Find recent sessions for tenant
   @@index([tenantId])
   @@index([customerId, updatedAt]) // Query customer sessions
+  @@index([sessionType, updatedAt]) // P1 fix: Cleanup job queries (sessionType + updatedAt)
 }
 
 /// Session type for agent conversations

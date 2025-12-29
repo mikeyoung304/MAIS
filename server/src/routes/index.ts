@@ -691,8 +691,8 @@ export function createV1Router(
     app.use('/v1/public/chat', tenantMiddleware, requireTenant, customerChatLimiter, customerChatRoutes);
     logger.info('✅ Public customer chat routes mounted at /v1/public/chat (rate limited)');
 
-    // Register customer booking executor
-    registerCustomerBookingExecutor(prismaClient);
+    // Register customer booking executor with mail provider and Stripe for booking notifications and payment
+    registerCustomerBookingExecutor(prismaClient, mailProvider, stripeAdapter);
   }
 
   // Register internal routes (for service-to-service communication)

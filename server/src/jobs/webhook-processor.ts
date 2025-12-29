@@ -63,6 +63,9 @@ const MetadataSchema = z.object({
   isBalancePayment: z.string().optional(),
   bookingId: z.string().optional(),
   balanceAmountCents: z.string().optional(),
+  // Chatbot booking fields
+  source: z.string().optional(), // 'customer_chatbot' for chatbot-created bookings
+  confirmationCode: z.string().optional(), // Confirmation code for chatbot bookings
 });
 
 /**
@@ -230,10 +233,20 @@ export class WebhookProcessor {
       isBalancePayment,
       bookingId,
       balanceAmountCents,
+      source,
     } = metadataResult.data;
 
+    // Check if this is a chatbot booking payment (booking already exists, needs confirmation)
+    if (source === 'customer_chatbot' && bookingId) {
+      await this.processChatbotBookingPayment(
+        event,
+        session,
+        validatedTenantId,
+        bookingId
+      );
+    }
     // Check if this is a balance payment
-    if (isBalancePayment === 'true' && bookingId) {
+    else if (isBalancePayment === 'true' && bookingId) {
       await this.processBalancePayment(
         event,
         session,
@@ -289,6 +302,41 @@ export class WebhookProcessor {
     logger.info(
       { eventId: event.id, sessionId: session.id, tenantId, bookingId },
       'Balance payment processed successfully'
+    );
+  }
+
+  /**
+   * Process chatbot booking payment completion
+   *
+   * Chatbot bookings are created FIRST in PENDING status, then customer
+   * is redirected to Stripe checkout. When payment completes, this method
+   * updates the booking to CONFIRMED and sets paidAt timestamp.
+   */
+  private async processChatbotBookingPayment(
+    event: Stripe.Event,
+    session: z.infer<typeof StripeSessionSchema>,
+    tenantId: string,
+    bookingId: string
+  ): Promise<void> {
+    const amountPaid = session.amount_total ?? 0;
+
+    logger.info(
+      {
+        eventId: event.id,
+        sessionId: session.id,
+        tenantId,
+        bookingId,
+        amountPaid,
+      },
+      'Processing chatbot booking payment completion'
+    );
+
+    // Update booking status to CONFIRMED and set payment timestamp
+    await this.bookingService.confirmChatbotBooking(tenantId, bookingId, amountPaid);
+
+    logger.info(
+      { eventId: event.id, sessionId: session.id, tenantId, bookingId },
+      'Chatbot booking payment processed successfully'
     );
   }
 
