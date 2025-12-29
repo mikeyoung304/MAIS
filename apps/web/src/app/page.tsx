@@ -606,44 +606,35 @@ export default function HomePage() {
 
           {/* Founder Story Section */}
           <section className="py-32 md:py-40 px-6 bg-surface">
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-surface-alt rounded-3xl p-10 md:p-14 border border-neutral-700 shadow-xl">
-                <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-                  {/* Photo */}
-                  <div className="flex-shrink-0">
-                    <img
-                      src="/mike-young.jpg"
-                      alt="Mike Young, Founder"
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover border-2 border-sage/30"
-                    />
-                  </div>
-                  {/* Story */}
-                  <div>
-                    <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-6">
-                      I built this because I needed it.
-                    </h2>
-                    <div className="space-y-4 text-text-muted leading-relaxed">
-                      <p>
-                        I&apos;m a private chef, photographer, drone pilot, restaurant consultant —
-                        basically, I can&apos;t sit still. ADHD brain. I love the work. I hate the
-                        admin.
-                      </p>
-                      <p>
-                        When AI tools started getting good, I went deep. Built systems for my own
-                        business. Then realized: every photographer, coach, and consultant I know is
-                        drowning in the same stuff.
-                      </p>
-                      <p className="text-text-primary font-medium">
-                        HANDLED is what I wish existed when I started. Professional presence. Smart
-                        tools. None of the homework.
-                      </p>
-                    </div>
-                    <div className="mt-8 pt-6 border-t border-neutral-700">
-                      <p className="font-semibold text-text-primary">Mike Young</p>
-                      <p className="text-sm text-sage">Founder</p>
-                    </div>
-                  </div>
-                </div>
+            <div className="max-w-2xl mx-auto text-center">
+              {/* Photo */}
+              <img
+                src="/mike-young.jpg"
+                alt="Mike Young, Founder"
+                className="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover mx-auto mb-10 shadow-2xl ring-4 ring-sage/20"
+              />
+              {/* Story */}
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-8 leading-tight">
+                I built this because I needed it.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed">
+                <p>
+                  I&apos;m a private chef, photographer, drone pilot, restaurant consultant —
+                  basically, I can&apos;t sit still. ADHD brain. I love the work. I hate the admin.
+                </p>
+                <p>
+                  When AI tools started getting good, I went deep. Built systems for my own
+                  business. Then realized: every photographer, coach, and consultant I know is
+                  drowning in the same stuff.
+                </p>
+                <p className="text-text-primary font-medium">
+                  HANDLED is what I wish existed when I started. Professional presence. Smart tools.
+                  None of the homework.
+                </p>
+              </div>
+              <div className="mt-10">
+                <p className="font-semibold text-text-primary text-lg">Mike Young</p>
+                <p className="text-sage">Founder</p>
               </div>
             </div>
           </section>
