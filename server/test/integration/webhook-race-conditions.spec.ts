@@ -343,17 +343,16 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
       });
       expect(bookings).toHaveLength(1);
 
-      // Verify all webhooks were recorded
+      // Verify all webhooks were recorded (query by specific eventIds, not time window)
       const webhookEvents = await ctx.prisma.webhookEvent.findMany({
         where: {
           tenantId: testTenantId,
-          eventType: 'checkout.session.completed',
-          createdAt: {
-            gte: new Date(Date.now() - 10000), // Last 10 seconds
+          eventId: {
+            in: Array.from({ length: 5 }, (_, i) => `evt_sequential_${i}`),
           },
         },
       });
-      expect(webhookEvents.length).toBeGreaterThanOrEqual(5);
+      expect(webhookEvents).toHaveLength(5);
     });
   });
 
