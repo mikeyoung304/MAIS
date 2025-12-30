@@ -123,14 +123,52 @@ const faqsV2 = [
   },
 ];
 
-// Pricing plan features for V2
-const pricingFeatures = [
-  'Conversion-optimized storefront',
-  'Guided offerings and tiered pricing',
-  'Built-in assistant for questions and booking',
-  'Scheduling and availability management',
-  'Post-booking shared client space',
-  'Updates and improvements',
+// 3-Tier Pricing
+const tiers = [
+  {
+    name: 'Handled',
+    price: '$49',
+    priceSubtext: '/month',
+    description: 'Tech sorted. Do what you do.',
+    features: [
+      'Professional storefront',
+      'Online booking',
+      'Payment processing',
+      'Email notifications',
+    ],
+    ctaText: 'Get Started',
+    ctaHref: '/signup?tier=handled',
+  },
+  {
+    name: 'Fully Handled',
+    price: '$149',
+    priceSubtext: '/month',
+    description: 'Tech + AI growth club + chatbot.',
+    features: [
+      'Everything in Handled',
+      'AI chatbot for your business',
+      'Monthly newsletter',
+      'Monthly Zoom calls',
+      'Priority support',
+    ],
+    ctaText: 'Join Now',
+    ctaHref: '/signup?tier=fully-handled',
+    isPopular: true,
+  },
+  {
+    name: 'Completely Handled',
+    price: 'Custom',
+    priceSubtext: '',
+    description: 'Personalized consulting.',
+    features: [
+      'Everything in Fully Handled',
+      '1-on-1 strategy sessions',
+      'Custom integrations',
+      'Dedicated account manager',
+    ],
+    ctaText: 'Book a Call',
+    ctaHref: '/contact',
+  },
 ];
 
 export default function HomePage() {
@@ -617,55 +655,64 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 11: PRICING V2 (REPLACES ORIGINAL)
+              SECTION 11: PRICING (3-TIER)
               ============================================ */}
           <section id="pricing" className="py-24 md:py-32 px-6 scroll-mt-20">
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-12">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center max-w-3xl mx-auto mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
                   Simple pricing. No guesswork.
                 </h2>
-                <p className="text-text-muted leading-relaxed">
-                  Everything you need to run a calm, professional service business — without
-                  stitching tools together.
+                <p className="text-xl text-text-muted">
+                  No contracts. No surprises. Cancel anytime.
                 </p>
               </div>
 
-              {/* Single Plan Card */}
-              <div className="bg-surface-alt rounded-2xl p-8 md:p-10 border border-sage/30 max-w-md mx-auto">
-                <h3 className="font-serif text-2xl font-bold text-text-primary mb-2">HANDLED</h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-bold text-text-primary">$49</span>
-                  <span className="text-text-muted">/ month</span>
-                </div>
-                <p className="text-sage text-sm mb-6">Try it free for 30 days. Cancel anytime.</p>
-
-                <div className="border-t border-neutral-800 pt-6 mb-6">
-                  <p className="text-sm text-text-muted uppercase tracking-wide mb-4">Includes:</p>
-                  <ul className="space-y-3">
-                    {pricingFeatures.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                        <span className="text-text-primary">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <Button
-                  asChild
-                  variant="sage"
-                  className="w-full rounded-full py-5 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Link href="/signup">Start your storefront</Link>
-                </Button>
+              {/* 3-Tier Grid */}
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {tiers.map((tier) => (
+                  <div
+                    key={tier.name}
+                    className={`bg-surface-alt rounded-2xl p-8 border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                      tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-800'
+                    }`}
+                  >
+                    {tier.isPopular && (
+                      <span className="inline-block bg-sage text-white text-sm font-medium px-3 py-1 rounded-full mb-4">
+                        Most Popular
+                      </span>
+                    )}
+                    <h3 className="font-serif text-2xl font-bold text-text-primary">{tier.name}</h3>
+                    <p className="mt-1 text-text-muted text-sm">{tier.description}</p>
+                    <div className="mt-6">
+                      <span className="text-4xl font-bold text-text-primary">{tier.price}</span>
+                      {tier.priceSubtext && (
+                        <span className="text-text-muted">{tier.priceSubtext}</span>
+                      )}
+                    </div>
+                    <ul className="mt-6 space-y-3">
+                      {tier.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                          <span className="text-text-primary text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      asChild
+                      variant={tier.isPopular ? 'sage' : 'outline'}
+                      className="w-full mt-8 rounded-full py-5"
+                    >
+                      <Link href={tier.ctaHref}>{tier.ctaText}</Link>
+                    </Button>
+                  </div>
+                ))}
               </div>
 
               {/* Fine print */}
-              <div className="text-center mt-8 space-y-1">
-                <p className="text-text-muted text-sm">No contracts.</p>
-                <p className="text-text-muted text-sm">Pause when things slow down.</p>
-              </div>
+              <p className="text-center text-text-muted text-sm mt-10">
+                Try it free for 30 days. Pause when things slow down.
+              </p>
             </div>
           </section>
 
