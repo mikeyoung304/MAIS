@@ -24,6 +24,8 @@ export interface ToolContext {
 export interface ReadToolResult<T = unknown> {
   success: true;
   data: T;
+  /** Optional metadata for pagination, counts, etc. */
+  meta?: Record<string, unknown>;
 }
 
 /**

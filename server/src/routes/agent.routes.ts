@@ -25,6 +25,8 @@ export {
   registerProposalExecutor,
   getProposalExecutor,
 } from '../agent/proposals/executor-registry';
+// Also import for local use in this file
+import { getProposalExecutor } from '../agent/proposals/executor-registry';
 import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
 
 /**

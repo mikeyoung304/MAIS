@@ -12,10 +12,7 @@ export {
   ResourceNotFoundError,
   DateUnavailableError,
   InvalidStateError,
-  UnknownToolError,
   ConfigurationError,
-  ApiError,
-  ValidationError,
   toUserFriendlyError,
   ErrorMessages,
 } from './agent-error';

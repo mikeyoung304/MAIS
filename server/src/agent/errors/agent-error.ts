@@ -175,20 +175,6 @@ export class InvalidStateError extends AgentError {
 }
 
 /**
- * Error for unknown tools
- */
-export class UnknownToolError extends AgentError {
-  constructor(toolName: string) {
-    super(
-      AgentErrorCode.TOOL_UNKNOWN,
-      "I don't recognize that action. Please try a different request.",
-      { toolName }
-    );
-    this.name = 'UnknownToolError';
-  }
-}
-
-/**
  * Error for configuration issues
  */
 export class ConfigurationError extends AgentError {
@@ -199,31 +185,6 @@ export class ConfigurationError extends AgentError {
 
     super(AgentErrorCode.CONFIGURATION_ERROR, message, { feature, ...details });
     this.name = 'ConfigurationError';
-  }
-}
-
-/**
- * Error for API failures
- */
-export class ApiError extends AgentError {
-  constructor(action: string, cause?: Error) {
-    super(
-      AgentErrorCode.API_ERROR,
-      `Unable to ${action}. Please try again in a moment.`,
-      undefined,
-      cause
-    );
-    this.name = 'ApiError';
-  }
-}
-
-/**
- * Error for validation failures
- */
-export class ValidationError extends AgentError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(AgentErrorCode.INVALID_FORMAT, message, details);
-    this.name = 'ValidationError';
   }
 }
 

@@ -32,6 +32,11 @@ export interface Package {
   active?: boolean; // Package active status (maps to DB 'active' field)
   // Booking configuration
   bookingType?: BookingType; // DATE for weddings, TIMESLOT for appointments
+  // Additional Prisma model fields (for backward compatibility)
+  name?: string; // Alias for title
+  basePrice?: number; // Alias for priceCents
+  depositAmount?: number | null; // Deposit amount in cents
+  sortOrder?: number; // Display sort order
 }
 
 export interface AddOn {

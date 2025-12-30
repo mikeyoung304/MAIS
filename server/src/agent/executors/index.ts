@@ -48,35 +48,6 @@ function hashTenantDate(tenantId: string, date: string): number {
 }
 
 /**
- * Verify tenant ownership of an entity before mutation.
- * CRITICAL: Prevents cross-tenant access.
- *
- * @param prisma - Prisma client instance
- * @param model - Model name to query
- * @param id - Entity ID
- * @param tenantId - Tenant ID to verify ownership against
- * @returns The entity if found and owned by tenant
- * @throws Error if entity not found or not owned by tenant
- */
-async function verifyOwnership<T>(
-  prisma: PrismaClient,
-  model: 'package' | 'addOn' | 'booking' | 'segment' | 'customer',
-  id: string,
-  tenantId: string
-): Promise<T> {
-  const entity = await (prisma[model] as any).findFirst({
-    where: { id, tenantId },
-  });
-  if (!entity) {
-    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
-    throw new Error(
-      `${modelName} "${id}" not found or you do not have permission to access it. Verify the ${model} ID belongs to your business.`
-    );
-  }
-  return entity as T;
-}
-
-/**
  * Register all proposal executors
  * Call this during server initialization
  */
