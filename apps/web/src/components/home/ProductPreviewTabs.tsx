@@ -1,7 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Monitor, CalendarCheck, FolderOpen, Check } from 'lucide-react';
+import {
+  Monitor,
+  CalendarCheck,
+  FolderOpen,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  CreditCard,
+  ClipboardList,
+  MessageSquare,
+  Calendar,
+  Clock,
+  Package,
+} from 'lucide-react';
 import { DemoStorefrontShowcase } from './DemoStorefrontShowcase';
 
 /**
@@ -12,8 +26,8 @@ import { DemoStorefrontShowcase } from './DemoStorefrontShowcase';
  * 2. Booking flow - Date picker wizard (based on DateBookingWizard)
  * 3. After booking - Client portal with shared documents
  *
- * The storefront tab features a college tutor demo tenant with
- * psychology-optimized pricing (anchoring, decoy effect, social proof).
+ * Design: Dark theme matching DemoStorefrontShowcase with sage accents,
+ * realistic content for the Alex Chen tutor persona.
  */
 
 const tabs = [
@@ -34,7 +48,7 @@ const tabs = [
   },
 ];
 
-/** Mockup: Booking flow with date picker */
+/** Mockup: Booking flow with date picker - Dark theme */
 function BookingMockup() {
   const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const dates = [
@@ -45,161 +59,241 @@ function BookingMockup() {
   ];
 
   return (
-    <div className="h-full bg-white overflow-hidden p-4">
+    <div className="h-full bg-surface overflow-hidden flex flex-col">
+      {/* Header with selected package */}
+      <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.12)_0%,transparent_70%)] px-4 py-3 border-b border-neutral-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
+              <span className="text-sage font-semibold text-[10px]">AC</span>
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted">Booking with</p>
+              <p className="text-xs font-medium text-text-primary">Alex Chen</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-sage font-medium">Grade Boost</p>
+            <p className="text-xs font-bold text-text-primary">$320</p>
+          </div>
+        </div>
+      </div>
+
       {/* Progress steps */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded-full bg-sage text-white text-[8px] flex items-center justify-center">
-            <Check className="w-2.5 h-2.5" />
+      <div className="px-4 py-3 border-b border-neutral-800">
+        <div className="flex items-center justify-center gap-1">
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-sage text-white text-[9px] flex items-center justify-center">
+              <Check className="w-3 h-3" />
+            </div>
+            <span className="text-[9px] text-sage font-medium">Package</span>
           </div>
-          <span className="text-[8px] text-neutral-600">Package</span>
-        </div>
-        <div className="w-4 h-px bg-sage" />
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded-full bg-sage text-white text-[8px] flex items-center justify-center">
-            2
+          <div className="w-6 h-px bg-sage" />
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-sage text-white text-[9px] flex items-center justify-center font-medium">
+              2
+            </div>
+            <span className="text-[9px] text-text-primary font-medium">Date & Time</span>
           </div>
-          <span className="text-[8px] text-neutral-800 font-medium">Date</span>
-        </div>
-        <div className="w-4 h-px bg-neutral-300" />
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded-full bg-neutral-200 text-neutral-500 text-[8px] flex items-center justify-center">
-            3
+          <div className="w-6 h-px bg-neutral-700" />
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-500 text-[9px] flex items-center justify-center">
+              3
+            </div>
+            <span className="text-[9px] text-text-muted">Details</span>
           </div>
-          <span className="text-[8px] text-neutral-400">Details</span>
-        </div>
-        <div className="w-4 h-px bg-neutral-300" />
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 rounded-full bg-neutral-200 text-neutral-500 text-[8px] flex items-center justify-center">
-            4
+          <div className="w-6 h-px bg-neutral-700" />
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-500 text-[9px] flex items-center justify-center">
+              4
+            </div>
+            <span className="text-[9px] text-text-muted">Pay</span>
           </div>
-          <span className="text-[8px] text-neutral-400">Pay</span>
         </div>
       </div>
 
-      {/* Calendar */}
-      <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-[10px] font-medium text-neutral-800">January 2025</div>
-          <div className="flex gap-1">
-            <div className="w-4 h-4 rounded bg-neutral-200" />
-            <div className="w-4 h-4 rounded bg-neutral-200" />
+      {/* Calendar section */}
+      <div className="flex-1 px-4 py-3 bg-surface-alt">
+        <div className="bg-surface rounded-xl p-3 border border-neutral-800">
+          {/* Month header */}
+          <div className="flex items-center justify-between mb-3">
+            <button className="w-6 h-6 rounded-lg bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center transition-colors">
+              <ChevronLeft className="w-3.5 h-3.5 text-text-muted" />
+            </button>
+            <span className="text-sm font-serif font-semibold text-text-primary">January 2025</span>
+            <button className="w-6 h-6 rounded-lg bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center transition-colors">
+              <ChevronRight className="w-3.5 h-3.5 text-text-muted" />
+            </button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {days.map((day, i) => (
+              <div key={i} className="text-[9px] text-text-muted text-center font-medium py-1">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Date grid */}
+          <div className="space-y-1">
+            {dates.map((week, wi) => (
+              <div key={wi} className="grid grid-cols-7 gap-1">
+                {week.map((date, di) => (
+                  <div
+                    key={di}
+                    className={`w-6 h-6 rounded-lg text-[10px] flex items-center justify-center transition-all ${
+                      date === null
+                        ? ''
+                        : date === 15
+                          ? 'bg-sage text-white font-semibold shadow-md shadow-sage/30'
+                          : date < 10
+                            ? 'text-neutral-600 cursor-not-allowed'
+                            : 'bg-neutral-800 text-text-primary hover:bg-sage/20 hover:text-sage cursor-pointer border border-neutral-700 hover:border-sage/50'
+                    }`}
+                  >
+                    {date}
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {days.map((day, i) => (
-            <div key={i} className="text-[8px] text-neutral-400 text-center">
-              {day}
+        {/* Time slots */}
+        <div className="mt-3">
+          <p className="text-[10px] text-text-muted mb-2 text-center">Available times for Jan 15</p>
+          <div className="flex gap-2 justify-center flex-wrap">
+            <div className="px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-[10px] text-text-muted hover:border-sage/50 hover:text-sage cursor-pointer transition-all">
+              9:00 AM
             </div>
-          ))}
-        </div>
-
-        {/* Date grid */}
-        <div className="space-y-1">
-          {dates.map((week, wi) => (
-            <div key={wi} className="grid grid-cols-7 gap-1">
-              {week.map((date, di) => (
-                <div
-                  key={di}
-                  className={`w-5 h-5 rounded text-[8px] flex items-center justify-center ${
-                    date === null
-                      ? ''
-                      : date === 15
-                        ? 'bg-sage text-white font-medium'
-                        : date < 10
-                          ? 'bg-neutral-100 text-neutral-300'
-                          : 'bg-white text-neutral-600 border border-neutral-200 hover:border-sage cursor-pointer'
-                  }`}
-                >
-                  {date}
-                </div>
-              ))}
+            <div className="px-3 py-1.5 bg-sage/15 border border-sage rounded-lg text-[10px] text-sage font-medium shadow-sm">
+              11:00 AM
             </div>
-          ))}
+            <div className="px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-[10px] text-text-muted hover:border-sage/50 hover:text-sage cursor-pointer transition-all">
+              2:00 PM
+            </div>
+            <div className="px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-[10px] text-text-muted hover:border-sage/50 hover:text-sage cursor-pointer transition-all">
+              4:00 PM
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Time slots hint */}
-      <div className="mt-3 flex gap-1.5 justify-center">
-        <div className="px-2 py-1 bg-neutral-100 rounded text-[8px] text-neutral-400">9:00 AM</div>
-        <div className="px-2 py-1 bg-sage/10 border border-sage rounded text-[8px] text-sage font-medium">
-          11:00 AM
-        </div>
-        <div className="px-2 py-1 bg-neutral-100 rounded text-[8px] text-neutral-400">2:00 PM</div>
+      {/* Footer CTA */}
+      <div className="px-4 py-2.5 bg-surface border-t border-neutral-800">
+        <button className="w-full py-2 bg-sage hover:bg-sage-hover text-white text-[11px] font-semibold rounded-full transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2 focus:ring-offset-surface">
+          Continue to Details
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );
 }
 
-/** Mockup: After booking - client portal */
+/** Mockup: After booking - client portal - Dark theme */
 function AfterBookingMockup() {
   return (
-    <div className="h-full bg-white overflow-hidden p-4">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-neutral-200">
-        <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center">
-          <div className="w-4 h-4 rounded-full bg-sage/40" />
-        </div>
-        <div>
-          <div className="h-2.5 w-24 bg-neutral-800 rounded mb-1" />
-          <div className="h-2 w-16 bg-neutral-300 rounded" />
-        </div>
-        <div className="ml-auto px-2 py-1 bg-sage/10 rounded text-[8px] text-sage font-medium">
-          Confirmed
+    <div className="h-full bg-surface overflow-hidden flex flex-col">
+      {/* Header with confirmation */}
+      <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-4 py-3 border-b border-neutral-800">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
+            <span className="text-sage font-semibold text-sm">AC</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-serif text-sm font-semibold text-text-primary">
+              Session with Alex Chen
+            </h3>
+            <p className="text-[10px] text-text-muted">Grade Boost • 4 sessions</p>
+          </div>
+          <div className="px-2.5 py-1 bg-sage/15 border border-sage/30 rounded-full">
+            <span className="text-[10px] text-sage font-semibold">Confirmed</span>
+          </div>
         </div>
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="bg-neutral-50 rounded-lg p-2 text-center">
-          <div className="text-[8px] text-neutral-400 mb-0.5">Date</div>
-          <div className="h-2 w-10 bg-neutral-800 rounded mx-auto" />
-        </div>
-        <div className="bg-neutral-50 rounded-lg p-2 text-center">
-          <div className="text-[8px] text-neutral-400 mb-0.5">Time</div>
-          <div className="h-2 w-12 bg-neutral-800 rounded mx-auto" />
-        </div>
-        <div className="bg-neutral-50 rounded-lg p-2 text-center">
-          <div className="text-[8px] text-neutral-400 mb-0.5">Package</div>
-          <div className="h-2 w-14 bg-neutral-800 rounded mx-auto" />
+      <div className="px-4 py-3 border-b border-neutral-800 bg-surface-alt">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-surface rounded-xl p-2.5 border border-neutral-800 text-center">
+            <Calendar className="w-3.5 h-3.5 text-sage mx-auto mb-1" />
+            <p className="text-[9px] text-text-muted mb-0.5">First Session</p>
+            <p className="text-[11px] font-semibold text-text-primary">Jan 15, 2025</p>
+          </div>
+          <div className="bg-surface rounded-xl p-2.5 border border-neutral-800 text-center">
+            <Clock className="w-3.5 h-3.5 text-sage mx-auto mb-1" />
+            <p className="text-[9px] text-text-muted mb-0.5">Time</p>
+            <p className="text-[11px] font-semibold text-text-primary">11:00 AM</p>
+          </div>
+          <div className="bg-surface rounded-xl p-2.5 border border-neutral-800 text-center">
+            <Package className="w-3.5 h-3.5 text-sage mx-auto mb-1" />
+            <p className="text-[9px] text-text-muted mb-0.5">Sessions Left</p>
+            <p className="text-[11px] font-semibold text-text-primary">4 of 4</p>
+          </div>
         </div>
       </div>
 
-      {/* Shared documents */}
-      <div className="text-[9px] font-medium text-neutral-700 mb-2">Shared Files</div>
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
-          <div className="w-6 h-7 bg-sage/20 rounded flex items-center justify-center">
-            <div className="text-[6px] text-sage font-bold">PDF</div>
+      {/* Shared files section */}
+      <div className="flex-1 px-4 py-3 bg-surface-alt overflow-auto">
+        <h4 className="text-[11px] font-semibold text-text-primary mb-2 flex items-center gap-1.5">
+          <FolderOpen className="w-3.5 h-3.5 text-sage" />
+          Shared Files
+        </h4>
+        <div className="space-y-2">
+          {/* Study Plan */}
+          <div className="flex items-center gap-2.5 p-2.5 bg-surface rounded-xl border border-neutral-800 hover:border-sage/30 transition-colors cursor-pointer">
+            <div className="w-8 h-9 bg-sage/15 rounded-lg flex items-center justify-center border border-sage/20">
+              <FileText className="w-4 h-4 text-sage" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium text-text-primary truncate">
+                Personalized Study Plan
+              </p>
+              <p className="text-[9px] text-text-muted">PDF • Shared by Alex</p>
+            </div>
+            <span className="text-[9px] text-sage font-medium">View</span>
           </div>
-          <div className="flex-1">
-            <div className="h-2 w-20 bg-neutral-700 rounded mb-0.5" />
-            <div className="h-1.5 w-12 bg-neutral-300 rounded" />
+
+          {/* Receipt */}
+          <div className="flex items-center gap-2.5 p-2.5 bg-surface rounded-xl border border-neutral-800 hover:border-sage/30 transition-colors cursor-pointer">
+            <div className="w-8 h-9 bg-emerald-500/15 rounded-lg flex items-center justify-center border border-emerald-500/20">
+              <CreditCard className="w-4 h-4 text-emerald-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium text-text-primary truncate">Payment Receipt</p>
+              <p className="text-[9px] text-text-muted">$320.00 • Jan 10, 2025</p>
+            </div>
+            <span className="px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/20 rounded text-[8px] text-emerald-500 font-semibold">
+              Paid
+            </span>
           </div>
-          <div className="text-[7px] text-sage">View</div>
+
+          {/* Intake form */}
+          <div className="flex items-center gap-2.5 p-2.5 bg-surface rounded-xl border border-sage/30 hover:border-sage/50 transition-colors cursor-pointer">
+            <div className="w-8 h-9 bg-amber-500/15 rounded-lg flex items-center justify-center border border-amber-500/20">
+              <ClipboardList className="w-4 h-4 text-amber-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium text-text-primary truncate">
+                Learning Goals Questionnaire
+              </p>
+              <p className="text-[9px] text-amber-500">Action needed • 5 min</p>
+            </div>
+            <span className="text-[9px] text-sage font-medium">Fill out →</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
-          <div className="w-6 h-7 bg-amber-100 rounded flex items-center justify-center">
-            <div className="text-[6px] text-amber-600 font-bold">$</div>
-          </div>
-          <div className="flex-1">
-            <div className="h-2 w-16 bg-neutral-700 rounded mb-0.5" />
-            <div className="h-1.5 w-10 bg-neutral-300 rounded" />
-          </div>
-          <div className="px-1.5 py-0.5 bg-green-100 rounded text-[6px] text-green-700">Paid</div>
+      </div>
+
+      {/* Footer with chat option */}
+      <div className="px-4 py-2.5 bg-surface border-t border-neutral-800 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-text-muted">
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span className="text-[10px]">Questions? Chat with Alex</span>
         </div>
-        <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
-          <div className="w-6 h-7 bg-blue-100 rounded flex items-center justify-center">
-            <div className="text-[6px] text-blue-600 font-bold">?</div>
-          </div>
-          <div className="flex-1">
-            <div className="h-2 w-24 bg-neutral-700 rounded mb-0.5" />
-            <div className="h-1.5 w-14 bg-neutral-300 rounded" />
-          </div>
-          <div className="text-[7px] text-sage">Fill out</div>
-        </div>
+        <button className="px-3 py-1.5 bg-sage/15 border border-sage/30 text-sage text-[10px] font-medium rounded-full hover:bg-sage/25 transition-colors focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2 focus:ring-offset-surface">
+          Send Message
+        </button>
       </div>
     </div>
   );
