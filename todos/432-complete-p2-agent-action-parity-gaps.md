@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: '432'
 tags: [agent, feature, action-parity]
