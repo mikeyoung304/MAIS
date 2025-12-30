@@ -125,7 +125,7 @@ const faqsV2 = [
 ];
 
 // 3-Tier Pricing - Psychology Optimized
-// Implements: Anchoring, Decoy Effect, Social Proof, Outcome-Focused Naming
+// Implements: Anchoring, Decoy Effect, Social Proof, ROI Framing
 // Research: https://digitalagencynetwork.com/ai-agency-pricing/
 const tiers = [
   {
@@ -133,7 +133,7 @@ const tiers = [
     name: 'The Foundation',
     price: '$49',
     priceSubtext: '/month',
-    description: 'Your business, finally online the right way.',
+    description: 'Professional presence. Zero tech headaches.',
     annualSavings: 'Save $118/year',
     features: [
       'Professional storefront',
@@ -151,13 +151,14 @@ const tiers = [
     name: 'The System',
     price: '$149',
     priceSubtext: '/month',
-    description: 'An AI assistant that books clients while you work.',
+    description: 'One extra booking per month and it pays for itself.',
     annualSavings: 'Save $358/year',
     features: [
       'Everything in Foundation',
-      'AI chatbot trained on your business',
+      'AI chatbot that books clients 24/7',
+      'Auto email responder for inquiries',
+      'Smart reminders that reduce no-shows',
       'Priority support',
-      'Advanced booking analytics',
     ],
     ctaText: 'Start Growing',
     ctaHref: '/signup?tier=fully-handled',
@@ -168,7 +169,7 @@ const tiers = [
     name: 'The Partnership',
     price: "Let's talk",
     priceSubtext: '',
-    description: 'White-glove AI implementation for your business.',
+    description: 'We build it. You book clients.',
     annualSavings: null,
     features: [
       'Everything in The System',
