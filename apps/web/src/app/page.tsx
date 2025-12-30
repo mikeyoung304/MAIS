@@ -138,6 +138,7 @@ const tiers = [
     features: [
       'Done-for-you website',
       'Conversion-optimized design',
+      'Match your brand colors & fonts',
       'Online booking & payments',
       'Monthly growth newsletter',
       'Live monthly Zoom calls',
@@ -751,7 +752,9 @@ export default function HomePage() {
                       asChild
                       variant={tier.isPopular ? 'sage' : 'outline'}
                       className={`w-full mt-8 rounded-full py-5 ${
-                        tier.isPopular ? 'shadow-lg hover:shadow-xl' : ''
+                        tier.isPopular
+                          ? 'shadow-lg hover:shadow-xl'
+                          : 'border-sage/50 text-sage hover:bg-sage/10 hover:border-sage'
                       }`}
                     >
                       <Link href={tier.ctaHref} className="flex items-center justify-center gap-2">
