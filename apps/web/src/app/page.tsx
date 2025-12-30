@@ -136,9 +136,9 @@ const tiers = [
     description: 'Professional presence. Zero tech headaches.',
     annualSavings: 'Save $118/year',
     features: [
-      'Professional storefront',
+      'Done-for-you website',
+      'Conversion-optimized design',
       'Online booking & payments',
-      'Email notifications',
       'Monthly growth newsletter',
       'Live monthly Zoom calls',
     ],
