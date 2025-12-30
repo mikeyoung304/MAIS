@@ -467,9 +467,8 @@ export async function upgradeTenantPages(): Promise<void> {
     logger.info({ slug }, `Updated tenant: ${name}`);
   }
 
-  // Check for demo tenant with 'little-bit-farm' slug (from demo.ts seed)
-  // This is different from 'little-bit-farm' used by little-bit-horse-farm.ts
-  // Note: They share the same slug, so we've already updated it above
+  // Note: Demo tenant now uses 'demo-business' slug (changed from 'little-bit-farm')
+  // to avoid conflict with little-bit-horse-farm.ts which uses 'little-bit-farm'
 
   logger.info('='.repeat(60));
   logger.info('TENANT PAGES UPGRADE COMPLETE');

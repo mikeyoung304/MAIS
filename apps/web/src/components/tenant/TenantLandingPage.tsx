@@ -195,7 +195,7 @@ export function TenantLandingPage({
   };
 
   return (
-    <div id="main-content">
+    <>
       {/* ===== PRE-PACKAGES SECTIONS (Hero, etc.) ===== */}
       <SectionRenderer sections={preSections} tenant={tenant} basePath={basePath} />
 
@@ -320,6 +320,6 @@ export function TenantLandingPage({
           </div>
         </section>
       )}
-    </div>
+    </>
   );
 }

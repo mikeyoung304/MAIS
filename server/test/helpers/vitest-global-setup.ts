@@ -55,7 +55,7 @@ async function cleanupOrphanedTestTenants(): Promise<number> {
         // Never delete real tenants - extra safety check
         slug: {
           not: {
-            in: ['mais', 'little-bit-farm', 'demo'],
+            in: ['mais', 'little-bit-farm', 'demo-business', 'demo'],
           },
         },
       },

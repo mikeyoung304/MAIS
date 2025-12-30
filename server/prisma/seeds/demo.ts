@@ -20,9 +20,11 @@ import {
 } from './utils';
 
 // Fixed slug for demo tenant
-const DEMO_SLUG = 'little-bit-farm';
+// Note: Changed from 'little-bit-farm' to avoid conflict with little-bit-horse-farm.ts seed
+// which also uses that slug for a different business (corporate wellness retreats)
+const DEMO_SLUG = 'demo-business';
 // Demo credentials (publicly known - for demo purposes only)
-const DEMO_EMAIL = 'demo@littlebitfarm.com';
+const DEMO_EMAIL = 'demo@handled-demo.com';
 const DEMO_PASSWORD = 'demo123!';
 
 export async function seedDemo(prisma: PrismaClient): Promise<void> {
@@ -62,7 +64,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
       // Create or update tenant using shared utility
       const tenant = await createOrUpdateTenant(tx, {
         slug: DEMO_SLUG,
-        name: 'Little Bit Farm',
+        name: 'Demo Business Services',
         email: DEMO_EMAIL,
         passwordHash, // Enable dashboard login with demo credentials
         commissionPercent: 5.0,

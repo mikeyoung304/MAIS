@@ -52,7 +52,7 @@ export default async function TestimonialsPage({ searchParams }: TestimonialsPag
       : null;
 
   return (
-    <div id="main-content">
+    <>
       {testimonialsData && testimonialsData.items.length > 0 ? (
         <TestimonialsSection {...testimonialsData} tenant={context.tenant} />
       ) : (
@@ -67,7 +67,7 @@ export default async function TestimonialsPage({ searchParams }: TestimonialsPag
           </div>
         </section>
       )}
-    </div>
+    </>
   );
 }
 

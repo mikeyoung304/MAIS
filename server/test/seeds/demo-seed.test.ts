@@ -52,7 +52,7 @@ describe('Demo Seed', () => {
       await seedDemo(mockPrisma);
 
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
-        where: { slug: 'little-bit-farm' },
+        where: { slug: 'demo-business' },
       });
       expect(mockPrisma.tenant.upsert).toHaveBeenCalled();
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
@@ -62,9 +62,9 @@ describe('Demo Seed', () => {
     it('should update existing tenant without changing keys (via upsert)', async () => {
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -72,7 +72,7 @@ describe('Demo Seed', () => {
       await seedDemo(mockPrisma);
 
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
-        where: { slug: 'little-bit-farm' },
+        where: { slug: 'demo-business' },
       });
       expect(mockPrisma.tenant.upsert).toHaveBeenCalled();
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
@@ -93,9 +93,9 @@ describe('Demo Seed', () => {
     it('should preserve active status on update (via upsert)', async () => {
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -112,7 +112,7 @@ describe('Demo Seed', () => {
       await seedDemo(mockPrisma);
 
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      expect(upsertCall.create.email).toBe('demo@littlebitfarm.com');
+      expect(upsertCall.create.email).toBe('demo@handled-demo.com');
     });
 
     it('should set password hash for demo login', async () => {
@@ -133,16 +133,16 @@ describe('Demo Seed', () => {
       await seedDemo(mockPrisma);
 
       const upsertCall = mockPrisma.tenant.upsert.mock.calls[0][0];
-      // Public key format: pk_live_little-bit-farm_{16 hex chars}
-      expect(upsertCall.create.apiKeyPublic).toMatch(/^pk_live_little-bit-farm_[0-9a-f]{16}$/);
+      // Public key format: pk_live_demo-business_{16 hex chars}
+      expect(upsertCall.create.apiKeyPublic).toMatch(/^pk_live_demo-business_[0-9a-f]{16}$/);
     });
 
     it('should NOT regenerate keys on subsequent seeds (idempotency)', async () => {
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -166,17 +166,17 @@ describe('Demo Seed', () => {
 
       expect(apiKeyService.hashSecretKey).toHaveBeenCalled();
       const hashCall = (apiKeyService.hashSecretKey as ReturnType<typeof vi.fn>).mock.calls[0][0];
-      // Secret key format: sk_live_little-bit-farm_{32 hex chars}
-      expect(hashCall).toMatch(/^sk_live_little-bit-farm_[0-9a-f]{32}$/);
+      // Secret key format: sk_live_demo-business_{32 hex chars}
+      expect(hashCall).toMatch(/^sk_live_demo-business_[0-9a-f]{32}$/);
     });
 
     it('should NOT hash secret key on update (keys preserved)', async () => {
       vi.clearAllMocks(); // Clear any previous calls
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -327,9 +327,9 @@ describe('Demo Seed', () => {
       // Second run: updates tenant (keys preserved)
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrismaUpdate = createMockPrisma(existingTenant);
@@ -356,9 +356,9 @@ describe('Demo Seed', () => {
       const { logger } = await import('../../src/lib/core/logger');
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -392,9 +392,9 @@ describe('Demo Seed', () => {
       const { logger } = await import('../../src/lib/core/logger');
       const existingTenant = {
         id: 'tenant-demo-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        slug: 'demo-business',
+        name: 'Demo Business Services',
+        apiKeyPublic: 'pk_live_demo-business_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -421,9 +421,9 @@ function createMockPrisma(
 ): PrismaClient {
   const mockTenant = existingTenant || {
     id: 'tenant-demo-123',
-    slug: 'little-bit-farm',
-    name: 'Little Bit Farm',
-    apiKeyPublic: 'pk_live_little-bit-farm_0000000000000000',
+    slug: 'demo-business',
+    name: 'Demo Business Services',
+    apiKeyPublic: 'pk_live_demo-business_0000000000000000',
     apiKeySecret: 'hashed-secret-key',
   };
 

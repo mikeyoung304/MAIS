@@ -34,7 +34,7 @@ export function AboutPageContent({ tenant, basePath, domainParam }: AboutPageCon
   const contactHref = domainParam ? `/contact${domainParam}` : `${basePath}/contact`;
 
   return (
-    <div id="main-content">
+    <>
       {/* Hero Section */}
       <section className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
@@ -109,6 +109,6 @@ export function AboutPageContent({ tenant, basePath, domainParam }: AboutPageCon
           </div>
         </div>
       </section>
-    </div>
+    </>
   );
 }

@@ -17,7 +17,7 @@ interface ContactPageContentProps {
  */
 export function ContactPageContent({ tenant, basePath, domainParam }: ContactPageContentProps) {
   return (
-    <div id="main-content">
+    <>
       {/* Hero Section */}
       <section className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
@@ -49,6 +49,6 @@ export function ContactPageContent({ tenant, basePath, domainParam }: ContactPag
           </div>
         </div>
       </section>
-    </div>
+    </>
   );
 }

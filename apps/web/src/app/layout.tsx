@@ -54,7 +54,7 @@ export default function RootLayout({
           Skip to main content
         </a>
         <Providers>
-          <main>{children}</main>
+          <main id="main-content">{children}</main>
         </Providers>
       </body>
     </html>

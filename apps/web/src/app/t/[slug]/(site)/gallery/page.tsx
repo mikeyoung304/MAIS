@@ -42,7 +42,7 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
     gallerySection?.type === 'gallery' ? (gallerySection as GallerySectionType) : null;
 
   return (
-    <div id="main-content">
+    <>
       {galleryData ? (
         <GallerySection {...galleryData} tenant={context.tenant} />
       ) : (
@@ -57,7 +57,7 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
           </div>
         </section>
       )}
-    </div>
+    </>
   );
 }
 

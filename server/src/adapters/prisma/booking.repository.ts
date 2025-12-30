@@ -928,7 +928,7 @@ export class PrismaBookingRepository implements BookingRepository {
 
           // Update booking date and reminder fields
           const updated = await tx.booking.update({
-            where: { id: bookingId },
+            where: { id: bookingId, tenantId },
             data: {
               date: new Date(newDate),
               // TODO-154 FIX: Update reminder due date and reset sent flag
