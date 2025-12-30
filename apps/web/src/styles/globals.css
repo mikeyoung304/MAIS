@@ -99,3 +99,13 @@
   white-space: nowrap;
   border-width: 0;
 }
+
+/* Chrome autofill override for dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #18181B inset !important;
+  -webkit-text-fill-color: #FAFAFA !important;
+  caret-color: #FAFAFA;
+  transition: background-color 5000s ease-in-out 0s;
+}

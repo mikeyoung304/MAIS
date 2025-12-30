@@ -1,37 +1,106 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, loginWithToken } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2, Building2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import {
+  AlertCircle,
+  Loader2,
+  Building2,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Check,
+  ArrowRight,
+} from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// =============================================================================
+// Type-Safe Tier Content System
+// =============================================================================
+
+const SIGNUP_TIERS = ['handled', 'fully-handled'] as const;
+type SignupTier = (typeof SIGNUP_TIERS)[number];
+
+function isValidTier(tier: string | null): tier is SignupTier {
+  return tier !== null && tier !== '' && (SIGNUP_TIERS as readonly string[]).includes(tier);
+}
+
+interface TierContent {
+  title: string;
+  subtitle: string;
+  cta: string;
+  loadingCta: string;
+}
+
+const TIER_CONTENT: Record<SignupTier | 'default', TierContent> = {
+  handled: {
+    title: "Let's build your storefront.",
+    subtitle: 'Done-for-you website + booking. 14 days free, no credit card.',
+    cta: 'Start my storefront',
+    loadingCta: 'Setting up your storefront...',
+  },
+  'fully-handled': {
+    title: "Let's get you more clients.",
+    subtitle: 'AI chatbot + auto-responder. One booking pays for itself.',
+    cta: 'Start growing',
+    loadingCta: 'Preparing your growth system...',
+  },
+  default: {
+    title: 'Bring your passion.',
+    subtitle: 'The rest is handled. 14 days free, no credit card.',
+    cta: 'Get Handled',
+    loadingCta: 'Setting up your storefront...',
+  },
+};
+
+function getTierContent(tier: string | null): TierContent {
+  if (isValidTier(tier)) {
+    return TIER_CONTENT[tier];
+  }
+  return TIER_CONTENT.default;
+}
+
+// =============================================================================
+// Signup Form Component
+// =============================================================================
 
 /**
  * Signup Form Component
  *
- * Handles tenant registration with validation and error handling.
+ * Handles tenant registration with tier-aware copy, validation, and error handling.
  * Uses NextAuth.js for session management after signup.
  */
 function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, role, isLoading: sessionLoading } = useAuth();
+
+  // Get tier from URL params for tier-aware content
+  const rawTier = searchParams.get('tier');
+  const content = getTierContent(rawTier);
 
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // TODO: Phase 0 - Add analytics tracking
+  // useEffect(() => {
+  //   trackEvent('signup_page_view', { tier: rawTier || 'none' });
+  // }, [rawTier]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -73,13 +142,6 @@ function SignupForm() {
       errors.password = 'Password must be at least 8 characters';
     }
 
-    // Confirm password validation
-    if (!confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -87,6 +149,9 @@ function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // TODO: Phase 0 - Track submit attempt
+    // trackEvent('signup_submit_attempt', { tier: rawTier || 'none' });
 
     if (!validateForm()) {
       return;
@@ -111,6 +176,9 @@ function SignupForm() {
 
       const data = await response.json();
 
+      // TODO: Phase 0 - Track success
+      // trackEvent('signup_success', { tier: rawTier || 'none', tenantId: data.tenantId });
+
       // Create NextAuth session with the token from signup
       await loginWithToken({
         token: data.token,
@@ -133,222 +201,299 @@ function SignupForm() {
     }
   };
 
+  // Dark theme input styles
+  const inputBaseStyles =
+    'bg-surface border-neutral-700 text-text-primary placeholder:text-text-muted/60 focus:border-sage focus:ring-2 focus:ring-sage/20 focus:outline-none hover:border-neutral-600 transition-colors duration-200';
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create your account</CardTitle>
-        <CardDescription>Start growing your business with HANDLED</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    <div className="w-full max-w-md mx-auto">
+      {/* Logo */}
+      <div className="mb-8 text-center">
+        <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
+          HANDLED
+        </Link>
+      </div>
 
-          {/* Business Name */}
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Business Name</Label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-              <Input
-                id="businessName"
-                type="text"
-                placeholder="Your Business Name"
-                value={businessName}
-                onChange={(e) => {
-                  setBusinessName(e.target.value);
-                  if (fieldErrors.businessName) {
-                    setFieldErrors((prev) => ({ ...prev, businessName: '' }));
-                  }
-                }}
-                className={`pl-10 ${fieldErrors.businessName ? 'border-red-500' : ''}`}
-                required
-                autoComplete="organization"
-                disabled={isLoading}
-                maxLength={100}
-              />
-            </div>
-            {fieldErrors.businessName && (
-              <p className="text-sm text-red-500">{fieldErrors.businessName}</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (fieldErrors.email) {
-                    setFieldErrors((prev) => ({ ...prev, email: '' }));
-                  }
-                }}
-                className={`pl-10 ${fieldErrors.email ? 'border-red-500' : ''}`}
-                required
-                autoComplete="email"
-                disabled={isLoading}
-              />
-            </div>
-            {fieldErrors.email && <p className="text-sm text-red-500">{fieldErrors.email}</p>}
-          </div>
-
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (fieldErrors.password) {
-                    setFieldErrors((prev) => ({ ...prev, password: '' }));
-                  }
-                }}
-                className={`pl-10 pr-10 ${fieldErrors.password ? 'border-red-500' : ''}`}
-                required
-                autoComplete="new-password"
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {fieldErrors.password && <p className="text-sm text-red-500">{fieldErrors.password}</p>}
-          </div>
-
-          {/* Confirm Password */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (fieldErrors.confirmPassword) {
-                    setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
-                  }
-                }}
-                className={`pl-10 pr-10 ${fieldErrors.confirmPassword ? 'border-red-500' : ''}`}
-                required
-                autoComplete="new-password"
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
-              >
-                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {fieldErrors.confirmPassword && (
-              <p className="text-sm text-red-500">{fieldErrors.confirmPassword}</p>
-            )}
-          </div>
-
-          <Button type="submit" variant="sage" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              'Create Account'
-            )}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-text-muted">
-          Already have an account?{' '}
-          <Link href="/login" className="text-sage hover:underline">
-            Sign in
-          </Link>
+      {/* Trial Badge - with border for pop */}
+      <div className="flex justify-center mb-6">
+        <div className="inline-flex items-center gap-2 bg-sage/15 text-sage text-sm font-medium px-4 py-2 rounded-full border border-sage/30">
+          <Sparkles className="w-4 h-4" aria-hidden="true" />
+          14 days free — no credit card
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Tier Title - PRIMARY hierarchy, OUTSIDE card */}
+      <h1
+        id="signup-heading"
+        className="font-serif text-3xl sm:text-4xl font-bold text-text-primary text-center mb-3 leading-[1.15]"
+      >
+        {content.title}
+      </h1>
+
+      {/* Tier Subtitle - SECONDARY hierarchy */}
+      <p className="text-text-muted text-center mb-8 leading-relaxed">{content.subtitle}</p>
+
+      {/* Card - Form only, reduced header */}
+      <Card className="bg-surface-alt border border-neutral-800 rounded-3xl">
+        <CardContent className="pt-6">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            aria-labelledby="signup-heading"
+            aria-busy={isLoading}
+          >
+            {/* Screen reader loading announcement */}
+            {isLoading && (
+              <span className="sr-only" aria-live="polite">
+                Creating your account, please wait.
+              </span>
+            )}
+
+            {error && (
+              <Alert variant="destructive" role="alert" aria-live="polite">
+                <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Business Name */}
+            <div className="space-y-2">
+              <Label htmlFor="businessName" className="text-text-primary">
+                Business Name
+              </Label>
+              <div className="relative">
+                <Building2
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="businessName"
+                  type="text"
+                  placeholder="Your Business Name"
+                  value={businessName}
+                  onChange={(e) => {
+                    setBusinessName(e.target.value);
+                    if (fieldErrors.businessName) {
+                      setFieldErrors((prev) => ({ ...prev, businessName: '' }));
+                    }
+                  }}
+                  className={`pl-10 ${inputBaseStyles} ${fieldErrors.businessName ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20' : ''}`}
+                  required
+                  autoComplete="organization"
+                  disabled={isLoading}
+                  maxLength={100}
+                />
+              </div>
+              {fieldErrors.businessName && (
+                <p className="text-sm text-danger-500" role="alert">
+                  {fieldErrors.businessName}
+                </p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-text-primary">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (fieldErrors.email) {
+                      setFieldErrors((prev) => ({ ...prev, email: '' }));
+                    }
+                  }}
+                  className={`pl-10 ${inputBaseStyles} ${fieldErrors.email ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20' : ''}`}
+                  required
+                  autoComplete="email"
+                  disabled={isLoading}
+                />
+              </div>
+              {fieldErrors.email && (
+                <p className="text-sm text-danger-500" role="alert">
+                  {fieldErrors.email}
+                </p>
+              )}
+            </div>
+
+            {/* Password with inline validation hint */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-text-primary">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors((prev) => ({ ...prev, password: '' }));
+                    }
+                  }}
+                  className={`pl-10 pr-12 ${inputBaseStyles} ${fieldErrors.password ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20' : ''}`}
+                  required
+                  autoComplete="new-password"
+                  disabled={isLoading}
+                  aria-describedby="password-hint"
+                />
+                {/* Password toggle with 44px touch target */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+              {/* Inline validation hint */}
+              {!fieldErrors.password && (
+                <p id="password-hint" className="text-xs text-text-muted flex items-center gap-1">
+                  {password.length >= 8 ? (
+                    <>
+                      <Check className="w-3 h-3 text-sage" aria-hidden="true" />
+                      <span className="text-sage">8+ characters</span>
+                    </>
+                  ) : (
+                    <span>Min 8 characters</span>
+                  )}
+                </p>
+              )}
+              {fieldErrors.password && (
+                <p className="text-sm text-danger-500" role="alert">
+                  {fieldErrors.password}
+                </p>
+              )}
+            </div>
+
+            {/* CTA Button with ArrowRight */}
+            <Button
+              type="submit"
+              variant="sage"
+              className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:shadow-sage/20 transition-all duration-300"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  {content.loadingCta}
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  {content.cta}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              )}
+            </Button>
+
+            {/* What's next copy */}
+            <p className="text-sm text-text-muted text-center mt-4">
+              You&apos;ll set up your storefront next. Takes about 5 minutes.
+            </p>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-text-muted">
+            Already have an account?{' '}
+            <Link href="/login" className="text-sage hover:underline">
+              Sign in
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      <p className="mt-8 text-center text-xs text-text-muted">
+        By signing up, you agree to our{' '}
+        <Link href="/terms" className="underline hover:no-underline">
+          Terms of Service
+        </Link>{' '}
+        and{' '}
+        <Link href="/privacy" className="underline hover:no-underline">
+          Privacy Policy
+        </Link>
+      </p>
+    </div>
   );
 }
 
+// =============================================================================
+// Loading Skeleton
+// =============================================================================
+
 /**
- * Loading fallback for signup form
+ * Loading fallback for signup form - dark mode compatible
  */
 function SignupFormSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <div className="h-6 w-40 animate-pulse rounded bg-neutral-200" />
-        <div className="mt-2 h-4 w-56 animate-pulse rounded bg-neutral-200" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="space-y-2">
-            <div className="h-4 w-20 animate-pulse rounded bg-neutral-200" />
-            <div className="h-11 animate-pulse rounded bg-neutral-200" />
-          </div>
-        ))}
-        <div className="h-11 animate-pulse rounded bg-neutral-200" />
-      </CardContent>
-    </Card>
+    <div className="w-full max-w-md mx-auto">
+      {/* Logo skeleton */}
+      <div className="mb-8 text-center">
+        <div className="h-9 w-32 mx-auto animate-pulse rounded bg-neutral-700" />
+      </div>
+
+      {/* Badge skeleton */}
+      <div className="flex justify-center mb-6">
+        <div className="h-9 w-52 animate-pulse rounded-full bg-neutral-700" />
+      </div>
+
+      {/* Title + subtitle skeleton */}
+      <div className="text-center mb-8">
+        <div className="h-10 w-64 mx-auto animate-pulse rounded bg-neutral-700 mb-3" />
+        <div className="h-5 w-80 mx-auto animate-pulse rounded bg-neutral-700" />
+      </div>
+
+      {/* Card skeleton */}
+      <div className="bg-surface-alt border border-neutral-800 rounded-3xl p-6">
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 w-24 animate-pulse rounded bg-neutral-700" />
+              <div className="h-12 animate-pulse rounded-lg bg-neutral-700" />
+            </div>
+          ))}
+          <div className="h-12 animate-pulse rounded-full bg-sage/30 mt-6" />
+        </div>
+      </div>
+    </div>
   );
 }
+
+// =============================================================================
+// Page Component
+// =============================================================================
 
 /**
  * Signup Page
  *
  * Allows new businesses to sign up for the HANDLED platform.
+ * Supports tier-aware content via ?tier=handled or ?tier=fully-handled URL params.
  */
 export default function SignupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            HANDLED
-          </Link>
-          <p className="mt-2 text-text-muted">Create your business account</p>
-        </div>
-
-        <Suspense fallback={<SignupFormSkeleton />}>
-          <SignupForm />
-        </Suspense>
-
-        <p className="mt-8 text-center text-xs text-text-muted">
-          By signing up, you agree to our{' '}
-          <Link href="/terms" className="underline hover:no-underline">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline hover:no-underline">
-            Privacy Policy
-          </Link>
-        </p>
-      </div>
+      <Suspense fallback={<SignupFormSkeleton />}>
+        <SignupForm />
+      </Suspense>
     </div>
   );
 }
