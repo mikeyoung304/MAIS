@@ -1,138 +1,130 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
 import {
-  Calendar,
-  Mail,
-  Users,
-  Phone,
+  ArrowRight,
   Check,
   ChevronDown,
-  Bot,
-  Clock,
+  Globe,
   MessageSquare,
-  FileText,
+  Users,
+  Layers,
+  HeartHandshake,
   Sparkles,
-  Heart,
-  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
 
 export const metadata: Metadata = {
-  title: 'HANDLED - AI That Runs Your Business',
+  title: 'HANDLED - Bring Your Passion. The Rest Is Handled.',
   description:
-    'An AI assistant that books clients, answers questions, and handles scheduling — while you do the work you love. Plus the tech foundation to make it all work.',
+    'HANDLED gives service businesses a professional online presence, a conversion-optimized storefront, and a built-in assistant that answers questions and books clients for you — without the chaos.',
   openGraph: {
-    title: 'HANDLED - AI That Runs Your Business',
+    title: 'HANDLED - Bring Your Passion. The Rest Is Handled.',
     description:
-      'Your AI assistant handles client inquiries, booking, and scheduling 24/7. For service professionals with better things to do.',
+      'A professional storefront and booking system for service professionals. Clear pricing, smart assistance, and everything in one place.',
     type: 'website',
   },
 };
 
-// Done-with-you education - the competitive moat (ongoing value)
-const educationFeatures = [
+const features = [
   {
-    icon: Mail,
-    title: 'Monthly Newsletter',
-    description: "What's actually worth knowing in AI this month. Curated. No fluff. No homework.",
+    icon: Globe,
+    title: 'A professional storefront that converts',
+    description:
+      'Your site is structured around proven best practices: clear positioning, tiered offerings, strong calls to action, and layouts that guide people toward booking.',
+    bullets: ['No guessing.', 'No endless customization.', 'Just what works.'],
   },
   {
-    icon: Users,
-    title: 'Monthly Zoom Calls',
+    icon: Layers,
+    title: 'Clear pricing — without awkward conversations',
     description:
-      "Real talk with other pros about what's working. No pitch. Just 'here's what we're seeing.'",
+      'Present your services in a way clients understand, with tiered options that naturally guide them to the right choice.',
+    bullets: ['Less explaining.', 'Fewer price objections.', 'Better-fit clients.'],
+  },
+  {
+    icon: MessageSquare,
+    title: 'A built-in assistant that handles the front desk',
+    description:
+      "Clients can ask questions, explore your offerings, and book without waiting on you. It's there when you're busy, offline, or simply done responding to another message — while still feeling personal and human.",
+    bullets: [],
   },
 ];
 
-const tiers = [
+const steps = [
   {
-    name: 'Handled',
-    price: '$49',
-    priceSubtext: '/month',
-    description: 'Tech sorted. Do what you do.',
-    features: [
-      'Professional website',
-      'Online booking',
-      'Payment processing',
-      'Email notifications',
-    ],
-    ctaText: 'Get Started',
-    ctaHref: '/signup?tier=handled',
+    number: '1',
+    title: 'Set up your storefront',
+    description:
+      "Add what you offer, how you work, and when you're available. HANDLED guides you with best practices — you stay in control.",
   },
   {
-    name: 'Fully Handled',
-    price: '$149',
-    priceSubtext: '/month',
-    description: 'Tech + AI growth club + chatbot.',
-    features: [
-      'Everything in Handled',
-      'AI chatbot for your business',
-      'Monthly newsletter',
-      'Monthly Zoom calls',
-      'Priority support',
-    ],
-    ctaText: 'Join Now',
-    ctaHref: '/signup?tier=fully-handled',
-    isPopular: true,
+    number: '2',
+    title: 'Clients explore and book',
+    description:
+      'Visitors land on a focused site that explains your services clearly and makes booking easy — without friction or confusion.',
   },
   {
-    name: 'Completely Handled',
-    price: 'Custom',
-    priceSubtext: '',
-    description: 'Personalized consulting.',
-    features: [
-      'Everything in Fully Handled',
-      '1-on-1 strategy sessions',
-      'Custom integrations',
-      'Dedicated account manager',
-    ],
-    ctaText: 'Book a Call',
-    ctaHref: '/contact',
+    number: '3',
+    title: 'You stay in the loop',
+    description:
+      'Every booking comes to you for confirmation (or auto-approval, if you choose). No surprises. No double bookings.',
   },
+  {
+    number: '4',
+    title: 'Everything lives in one place',
+    description:
+      'After booking, clients get a shared space for questions, changes, and add-ons — without endless email threads.',
+  },
+];
+
+const postBookingItems = [
+  'Review what they booked',
+  'Ask follow-up questions',
+  'Request changes or add-ons',
+  'Share notes, ideas, or preferences',
+];
+
+const communityItems = [
+  "A monthly live call to talk about what's working",
+  'Practical insights on pricing, positioning, and booking',
+  'Curated updates on useful AI developments — without the noise',
 ];
 
 const faqs = [
   {
-    question: 'What kind of businesses is this for?',
+    question: 'What kind of businesses is HANDLED for?',
     answer:
-      "Photographers, coaches, therapists, consultants, trainers, wedding planners — anyone who sells their time and expertise. If you're great at what you do but tired of managing tech, we're for you.",
+      'Service professionals who sell their time, skill, or experience — photographers, coaches, consultants, therapists, trainers, wedding planners, and similar businesses. If you book clients and deliver expertise, HANDLED is built for you.',
   },
   {
-    question: 'Do I need to know anything about tech?',
-    answer: "Nope. That's the point. We handle the tech so you don't have to become a tech person.",
+    question: 'Do I need technical skills to use it?',
+    answer:
+      "No. HANDLED is opinionated by design — we've already made the decisions that matter. You add your content and services, and the system handles the rest.",
   },
   {
-    question: 'What if I already have a website?',
+    question: 'How is the assistant different from a chatbot?',
     answer:
-      "We can work with it or help you migrate. Most members find our sites convert better, but we'll figure out what makes sense for you.",
+      'Most chatbots feel robotic and unhelpful. Our assistant is trained on your specific services, pricing, and availability. It can actually answer questions, guide clients, and complete bookings — not just deflect to a contact form.',
   },
   {
-    question: 'What happens on the monthly Zoom calls?',
+    question: 'Can I pause my subscription?',
     answer:
-      "We share what's new in AI and tech that's actually worth knowing. Members share what's working for them. No sales pitch. Just useful conversation with people in the same boat.",
+      'Yes. HANDLED is month-to-month with no contracts. Use it for a busy season, pause when things slow down, and come back when you need it.',
   },
   {
-    question: 'Is the AI chatbot going to sound like a robot?',
+    question: 'What happens to my data if I cancel?',
     answer:
-      'No. We train it on your voice, your services, your style. It sounds like a helpful version of you — not a generic bot.',
-  },
-  {
-    question: 'Can I cancel anytime?',
-    answer:
-      'Yes. No contracts, no cancellation fees, no guilt trips. We earn your business every month.',
+      'Your data stays yours. You can export everything, and we keep your account available if you ever want to return.',
   },
 ];
 
 export default function HomePage() {
-  // JSON-LD structured data for SEO and agent accessibility
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'HANDLED',
     url: 'https://gethandled.ai',
     description:
-      "Done-for-you websites, booking, payments, and AI for service professionals. Plus monthly education on what's worth knowing in tech.",
+      'A professional storefront and booking system for service businesses. Clear pricing, smart assistance, and everything in one place.',
     sameAs: [],
   };
 
@@ -143,40 +135,12 @@ export default function HomePage() {
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description:
-      'Membership platform for service professionals with done-for-you tech and done-with-you education.',
-    offers: [
-      {
-        '@type': 'Offer',
-        name: 'Handled',
-        description:
-          'Professional website, online booking, payment processing, email notifications',
-        price: '49',
-        priceCurrency: 'USD',
-        priceValidUntil: '2025-12-31',
-        availability: 'https://schema.org/InStock',
-      },
-      {
-        '@type': 'Offer',
-        name: 'Fully Handled',
-        description:
-          'Everything in Handled plus AI chatbot, monthly newsletter, monthly Zoom calls, priority support',
-        price: '149',
-        priceCurrency: 'USD',
-        priceValidUntil: '2025-12-31',
-        availability: 'https://schema.org/InStock',
-      },
-      {
-        '@type': 'Offer',
-        name: 'Completely Handled',
-        description:
-          'White glove service with 1-on-1 strategy sessions, custom integrations, dedicated account manager',
-        priceSpecification: {
-          '@type': 'PriceSpecification',
-          priceCurrency: 'USD',
-        },
-        availability: 'https://schema.org/InStock',
-      },
-    ],
+      'Professional online presence, conversion-optimized storefront, and built-in assistant for service businesses.',
+    offers: {
+      '@type': 'Offer',
+      description: 'Month-to-month subscription with 30-day free trial',
+      availability: 'https://schema.org/InStock',
+    },
   };
 
   const faqSchema = {
@@ -208,505 +172,477 @@ export default function HomePage() {
       />
       <div className="min-h-screen bg-surface">
         {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-md border-b border-neutral-800">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-b border-neutral-800">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-serif text-2xl font-bold text-text-primary">
               HANDLED
             </Link>
             <div className="hidden md:flex items-center gap-8">
               <Link
-                href="#features"
-                className="text-text-muted hover:text-text-primary transition-colors"
+                href="#how-it-works"
+                className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
-                What&apos;s Included
+                How It Works
+              </Link>
+              <Link
+                href="#features"
+                className="text-text-muted hover:text-text-primary transition-colors text-sm"
+              >
+                Features
               </Link>
               <Link
                 href="#pricing"
-                className="text-text-muted hover:text-text-primary transition-colors"
+                className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
                 Pricing
               </Link>
               <Link
                 href="#faq"
-                className="text-text-muted hover:text-text-primary transition-colors"
+                className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
                 FAQ
               </Link>
               <Link
                 href="/login"
-                className="text-text-muted hover:text-text-primary transition-colors"
+                className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
                 Sign In
               </Link>
-              <Button asChild variant="sage" className="rounded-full px-6">
-                <Link href="/signup">Get Handled</Link>
+              <Button asChild variant="sage" className="rounded-full px-6 py-2">
+                <Link href="/signup">Start your storefront</Link>
               </Button>
             </div>
           </div>
         </nav>
 
         <main>
-          {/* Hero Section */}
-          <section className="relative pt-32 pb-24 md:pt-44 md:pb-36 px-6 overflow-hidden min-h-[70vh] flex flex-col justify-center">
-            {/* Ambient decorations */}
-            <div
-              className="absolute top-1/4 right-[15%] w-72 h-72 bg-sage/6 rounded-full blur-3xl pointer-events-none"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-1/4 left-[10%] w-48 h-48 bg-sage/4 rounded-full blur-3xl pointer-events-none"
-              aria-hidden="true"
-            />
-
-            <div className="relative max-w-3xl mx-auto text-center">
-              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.15] tracking-tight">
-                You&apos;re a <ScrollingIdentity />
+          {/* ============================================
+              SECTION 1: HERO
+              ============================================ */}
+          <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 px-6">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
+                Bring your passion.
+                <br />
+                <span className="text-sage">The rest is handled.</span>
               </h1>
-              <p className="mt-5 font-serif text-xl sm:text-2xl md:text-3xl font-semibold text-sage">
-                The rest is handled.
+              <p className="mt-8 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
+                HANDLED gives service businesses a professional online presence, a
+                conversion-optimized storefront, and a built-in assistant that answers questions and
+                books clients for you — without the chaos.
               </p>
-              <p className="mt-4 text-lg text-text-muted">
-                Websites. Booking. Payments. AI. Done for you.
-              </p>
-              <div className="mt-10">
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   asChild
                   variant="sage"
-                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Link href="/signup">Get Handled</Link>
+                  <Link href="/signup">Start your storefront</Link>
                 </Button>
-              </div>
-            </div>
-
-            {/* Scroll indicator */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce">
-              <div className="w-5 h-8 rounded-full border-2 border-neutral-300 flex items-start justify-center p-1.5">
-                <div className="w-1 h-2 bg-neutral-400 rounded-full" />
-              </div>
-            </div>
-          </section>
-
-          {/* Problem Section */}
-          <section className="py-32 md:py-40 px-6 bg-surface-alt relative overflow-hidden">
-            {/* Ambient decorations */}
-            <div
-              className="absolute top-20 left-[10%] w-64 h-64 bg-sage/5 rounded-full blur-3xl pointer-events-none"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-20 right-[10%] w-48 h-48 bg-sage/4 rounded-full blur-3xl pointer-events-none"
-              aria-hidden="true"
-            />
-
-            <div className="relative max-w-5xl mx-auto">
-              {/* Headline - time is the emotional hook */}
-              <div className="text-center mb-12">
-                <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight">
-                  10 hours a week. <span className="text-sage">Gone.</span>
-                </h2>
-              </div>
-
-              {/* Visual contrast grid */}
-              <div className="grid md:grid-cols-2 gap-8 mb-16">
-                {/* What you're doing */}
-                <div className="bg-neutral-800/50 rounded-3xl p-8 border border-neutral-700">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-neutral-400" />
-                    </div>
-                    <span className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
-                      Where it goes
-                    </span>
-                  </div>
-                  <ul className="space-y-4">
-                    {[
-                      { icon: MessageSquare, text: 'Responding to DMs at 11pm' },
-                      { icon: FileText, text: 'Chasing unpaid invoices' },
-                      { icon: Calendar, text: 'Back-and-forth on scheduling' },
-                      { icon: Mail, text: 'Explaining pricing' },
-                    ].map((item) => (
-                      <li key={item.text} className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5 text-neutral-500 flex-shrink-0" />
-                        <span className="text-text-muted">{item.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* What you get back */}
-                <div className="bg-sage/10 rounded-3xl p-8 border border-sage/30 relative overflow-hidden">
-                  <div
-                    className="absolute -top-10 -right-10 w-32 h-32 bg-sage/10 rounded-full blur-2xl pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  <div className="relative">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-full bg-sage/20 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-sage" />
-                      </div>
-                      <span className="text-sm font-medium text-sage uppercase tracking-wide">
-                        What you get back
-                      </span>
-                    </div>
-                    <ul className="space-y-4">
-                      {[
-                        { icon: Calendar, text: 'Weekends without the laptop' },
-                        { icon: Users, text: 'Dinner with your family, not your inbox' },
-                        { icon: Sparkles, text: 'Energy for the work you actually love' },
-                        { icon: Heart, text: "Rest that doesn't feel like falling behind" },
-                      ].map((item) => (
-                        <li key={item.text} className="flex items-center gap-3">
-                          <item.icon className="w-5 h-5 text-sage flex-shrink-0" />
-                          <span className="text-text-primary">{item.text}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transition statement + CTA */}
-              <div className="text-center">
-                <p className="text-2xl md:text-3xl font-serif font-medium text-text-primary mb-8">
-                  Get your time back.
-                </p>
                 <Button
                   asChild
-                  variant="sage"
-                  className="rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+                  variant="ghost"
+                  className="text-text-muted hover:text-text-primary rounded-full px-8 py-6 text-lg group"
                 >
-                  <Link href="#features" className="flex items-center gap-2">
+                  <Link href="#how-it-works" className="flex items-center gap-2">
                     See how it works
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
               </div>
             </div>
           </section>
 
-          {/* AI Assistant Section - The core product (includes foundation) */}
-          <section
-            id="features"
-            aria-labelledby="ai-heading"
-            className="py-24 md:py-32 px-6 bg-gradient-to-b from-surface to-surface-alt scroll-mt-20"
-          >
-            <div className="max-w-4xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                {/* Left: Copy */}
-                <div>
-                  <span className="inline-block bg-sage/15 text-sage text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
-                    Your AI Assistant
-                  </span>
-                  <h2
-                    id="ai-heading"
-                    className="font-serif text-4xl md:text-5xl font-bold text-text-primary leading-tight"
-                  >
-                    An AI that works for you. 24/7.
-                  </h2>
-                  <p className="mt-6 text-lg text-text-muted leading-relaxed">
-                    Your clients interact with an AI trained on your business. It answers questions,
-                    handles scheduling, and books sessions — while you sleep, travel, or do the work
-                    you love.
-                  </p>
-                  <ul className="mt-8 space-y-3">
-                    {[
-                      'Lives on your storefront, ready to help',
-                      'Knows your services, pricing, and availability',
-                      'Books appointments and collects payments',
-                      'Learns and improves over time',
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                        <span className="text-text-primary">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-8 text-sm text-text-muted">
-                    Plus the foundation: website, booking, and payments — built and maintained for
-                    you.
-                  </p>
-                </div>
-                {/* Right: Visual */}
-                <div className="relative">
-                  <div className="bg-surface-alt rounded-3xl p-8 border border-sage/30 shadow-2xl relative overflow-hidden">
-                    {/* Glow effect */}
-                    <div
-                      className="absolute -top-20 -right-20 w-40 h-40 bg-sage/15 rounded-full blur-3xl pointer-events-none"
-                      aria-hidden="true"
-                    />
-                    <div
-                      className="absolute -bottom-20 -left-20 w-40 h-40 bg-sage/10 rounded-full blur-3xl pointer-events-none"
-                      aria-hidden="true"
-                    />
-                    <div className="relative space-y-4">
-                      {/* Chat bubble - client */}
-                      <div className="flex justify-end">
-                        <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                          <p className="text-sm text-text-primary">
-                            Do you have availability this Saturday for a portrait session?
-                          </p>
-                        </div>
-                      </div>
-                      {/* Chat bubble - AI */}
-                      <div className="flex justify-start">
-                        <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
-                          <p className="text-sm text-text-primary">
-                            Yes! I have openings at 10am and 2pm. The 2-hour portrait session is
-                            $350. Would you like me to book one of those times?
-                          </p>
-                        </div>
-                      </div>
-                      {/* Chat bubble - client */}
-                      <div className="flex justify-end">
-                        <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                          <p className="text-sm text-text-primary">2pm works. Book it!</p>
-                        </div>
-                      </div>
-                      {/* Chat bubble - AI */}
-                      <div className="flex justify-start">
-                        <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
-                          <p className="text-sm text-text-primary">
-                            Done! I&apos;ve sent you a confirmation email with all the details. See
-                            you Saturday at 2pm!
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    {/* AI indicator */}
-                    <div className="mt-6 pt-4 border-t border-neutral-700 flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-sage" />
-                      <span className="text-xs text-text-muted">
-                        AI Assistant · Trained on your business
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Trust Element - Humans Who Answer */}
-          <div className="py-8 px-6 bg-surface-alt border-y border-neutral-800">
-            <div className="max-w-3xl mx-auto flex items-center justify-center gap-4">
-              <Phone className="w-5 h-5 text-sage flex-shrink-0" />
-              <p className="text-text-muted text-center">
-                <span className="text-text-primary font-medium">Questions?</span> Humans who answer.
-                No bots. No tickets. Just help from people who give a shit.
+          {/* ============================================
+              SECTION 2: TRUST / POSITIONING BAR
+              ============================================ */}
+          <section className="py-16 px-6 bg-surface-alt border-y border-neutral-800">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="text-sm font-medium text-sage uppercase tracking-wide mb-4">
+                Built for people who sell their time, skill, and experience.
+              </p>
+              <p className="text-text-muted leading-relaxed">
+                For service professionals who want their business to feel calmer, clearer, and more
+                put together — without duct-taping tools together or living in their inbox.
               </p>
             </div>
-          </div>
-
-          {/* The Shortcut Section - Done-with-you education (competitive moat) */}
-          <section
-            aria-labelledby="shortcut-heading"
-            className="py-24 md:py-32 px-6 bg-sage/5 border-y border-sage/20"
-          >
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <span className="inline-block bg-sage/15 text-sage text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
-                  The Shortcut
-                </span>
-                <h2
-                  id="shortcut-heading"
-                  className="font-serif text-4xl md:text-5xl font-bold text-text-primary"
-                >
-                  Stay ahead. Skip the homework.
-                </h2>
-                <p className="mt-4 text-xl text-text-muted font-light max-w-2xl mx-auto">
-                  AI moves fast. We watch it so you don&apos;t have to. Monthly updates on
-                  what&apos;s actually worth knowing.
-                </p>
-              </div>
-              {/* 2-column layout with featured cards */}
-              <div className="grid md:grid-cols-2 gap-8">
-                {educationFeatures.map((feature) => (
-                  <div
-                    key={feature.title}
-                    className="bg-surface-alt rounded-3xl p-10 border border-sage/30 shadow-xl relative overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-                  >
-                    {/* Subtle sage glow effect */}
-                    <div
-                      className="absolute -top-20 -right-20 w-40 h-40 bg-sage/10 rounded-full blur-3xl pointer-events-none"
-                      aria-hidden="true"
-                    />
-                    <div className="relative">
-                      <div className="w-14 h-14 rounded-2xl bg-sage/15 flex items-center justify-center mb-6">
-                        <feature.icon className="w-7 h-7 text-sage" />
-                      </div>
-                      <h3 className="font-serif text-2xl font-semibold text-text-primary mb-3">
-                        {feature.title}
-                      </h3>
-                      <p className="text-text-muted leading-relaxed text-lg">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </section>
 
-          {/* Pricing Section */}
-          <section
-            id="pricing"
-            aria-labelledby="pricing-heading"
-            className="py-32 md:py-40 px-6 bg-surface scroll-mt-20"
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center max-w-3xl mx-auto mb-16">
-                <h2
-                  id="pricing-heading"
-                  className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary"
-                >
-                  Pick a plan.
-                </h2>
-                <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
-                  No contracts. No surprises. Cancel anytime.
-                </p>
-              </div>
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {tiers.map((tier) => (
-                  <div
-                    key={tier.name}
-                    className={`bg-surface-alt rounded-3xl p-8 shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-                      tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-700'
-                    }`}
-                  >
-                    {tier.isPopular && (
-                      <span className="inline-block bg-sage text-white text-sm font-medium px-3 py-1 rounded-full mb-4">
-                        Most Popular
-                      </span>
-                    )}
-                    <h3 className="font-serif text-2xl font-bold text-text-primary">{tier.name}</h3>
-                    <p className="mt-1 text-text-muted">{tier.description}</p>
-                    <div className="mt-6">
-                      <span className="text-4xl font-bold text-text-primary">{tier.price}</span>
-                      {tier.priceSubtext && (
-                        <span className="text-text-muted">{tier.priceSubtext}</span>
-                      )}
-                    </div>
-                    <ul className="mt-6 space-y-3">
-                      {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                          <span className="text-text-primary">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      asChild
-                      variant={tier.isPopular ? 'sage' : 'outline'}
-                      className="w-full mt-8 rounded-full py-5"
-                    >
-                      <Link href={tier.ctaHref}>{tier.ctaText}</Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Founder Story Section */}
-          <section className="py-32 md:py-40 px-6 bg-surface">
-            <div className="max-w-2xl mx-auto text-center">
-              {/* Photo */}
-              <img
-                src="/mike-young.jpg"
-                alt="Mike Young, Founder"
-                className="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover mx-auto mb-10 shadow-2xl ring-4 ring-sage/20"
-              />
-              {/* Story */}
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-8 leading-tight">
-                I built this because I needed it.
+          {/* ============================================
+              SECTION 3: PROBLEM / EMPATHY
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-12">
+                Running a service business shouldn&apos;t feel this scattered.
               </h2>
               <div className="space-y-6 text-lg text-text-muted leading-relaxed">
                 <p>
-                  I&apos;m a private chef, photographer, drone pilot, restaurant consultant —
-                  basically, I can&apos;t sit still. ADHD brain. I love the work. I hate the admin.
+                  Most service professionals don&apos;t struggle with their craft.
+                  <br />
+                  They struggle with everything around it.
                 </p>
+                <ul className="space-y-2 text-text-muted">
+                  <li>Pricing questions.</li>
+                  <li>Endless emails and DMs.</li>
+                  <li>Back-and-forth scheduling.</li>
+                  <li>Explaining the same thing over and over.</li>
+                  <li>A website that looks fine — but doesn&apos;t actually convert.</li>
+                </ul>
                 <p>
-                  When AI tools started getting good, I went deep. Built systems for my own
-                  business. Then realized: every photographer, coach, and consultant I know is
-                  drowning in the same stuff.
+                  You shouldn&apos;t have to become a marketer, salesperson, or tech expert just to
+                  book clients consistently.
                 </p>
                 <p className="text-text-primary font-medium">
-                  HANDLED is what I wish existed when I started. Professional presence. Smart tools.
-                  None of the homework.
+                  HANDLED exists because this part of the job is broken — and it&apos;s been ignored
+                  for too long.
                 </p>
-              </div>
-              <div className="mt-10">
-                <p className="font-semibold text-text-primary text-lg">Mike Young</p>
-                <p className="text-sage">Founder</p>
               </div>
             </div>
           </section>
 
-          {/* FAQ Section */}
-          <section
-            id="faq"
-            aria-labelledby="faq-heading"
-            className="py-32 md:py-40 px-6 scroll-mt-20"
-          >
+          {/* ============================================
+              SECTION 4: SOLUTION OVERVIEW
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto">
-              <h2
-                id="faq-heading"
-                className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary text-center mb-12"
-              >
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-12">
+                We built the system most service businesses wish they had.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed">
+                <p>
+                  HANDLED isn&apos;t a blank website builder.
+                  <br />
+                  And it&apos;s not another pile of disconnected tools.
+                </p>
+                <p>
+                  It&apos;s an opinionated system designed around what actually works for service
+                  businesses — grounded in real conversion research, proven pricing psychology, and
+                  firsthand experience.
+                </p>
+                <p className="text-text-primary font-medium">
+                  You bring what you do best.
+                  <br />
+                  We give you a storefront and booking flow that&apos;s already figured out.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 5: CORE FEATURES
+              ============================================ */}
+          <section id="features" className="py-24 md:py-32 px-6 scroll-mt-20">
+            <div className="max-w-5xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-8">
+                {features.map((feature) => (
+                  <div
+                    key={feature.title}
+                    className="bg-surface-alt rounded-2xl p-8 border border-neutral-800 hover:border-neutral-700 transition-colors"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center mb-6">
+                      <feature.icon className="w-6 h-6 text-sage" />
+                    </div>
+                    <h3 className="font-serif text-xl font-semibold text-text-primary mb-4">
+                      {feature.title}
+                    </h3>
+                    <p className="text-text-muted leading-relaxed mb-4">{feature.description}</p>
+                    {feature.bullets.length > 0 && (
+                      <ul className="space-y-1">
+                        {feature.bullets.map((bullet) => (
+                          <li key={bullet} className="text-text-muted text-sm">
+                            {bullet}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 6: HOW IT WORKS
+              ============================================ */}
+          <section id="how-it-works" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-16">
+                How HANDLED fits into your business
+              </h2>
+              <div className="grid md:grid-cols-2 gap-8">
+                {steps.map((step) => (
+                  <div key={step.number} className="flex gap-6">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-sage/10 border border-sage/30 flex items-center justify-center">
+                        <span className="text-sage font-semibold">{step.number}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
+                        {step.title}
+                      </h3>
+                      <p className="text-text-muted leading-relaxed">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 7: AI (QUIET, HUMAN-FIRST)
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center justify-center mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-sage/10 flex items-center justify-center">
+                  <Sparkles className="w-7 h-7 text-sage" />
+                </div>
+              </div>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-8">
+                Thoughtful automation — not cold software.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center">
+                <p>
+                  HANDLED uses intelligent assistance only where it helps: answering common
+                  questions, guiding clients, and keeping things organized.
+                </p>
+                <p>
+                  It doesn&apos;t replace you.
+                  <br />
+                  It supports you.
+                </p>
+                <p>
+                  For clients who prefer self-service, it&apos;s there.
+                  <br />
+                  For clients who want a human touch, it knows when to step aside.
+                </p>
+                <p className="text-text-primary font-medium">
+                  You don&apos;t need to &quot;learn AI&quot; to use HANDLED.
+                  <br />
+                  It works quietly in the background.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 8: FLEXIBILITY
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6 bg-surface-alt">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-8">
+                One system. Many kinds of service businesses.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center">
+                <p>
+                  HANDLED is built for people who sell expertise, time, or experience — whether
+                  that&apos;s one-on-one work, group sessions, or events.
+                </p>
+                <p>
+                  Some businesses charge flat rates.
+                  <br />
+                  Some price by group size.
+                  <br />
+                  Some need add-ons, follow-ups, or custom details.
+                </p>
+                <p className="text-text-primary font-medium">
+                  HANDLED adapts to how you work — without becoming complicated.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 9: POST-BOOKING EXPERIENCE
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center justify-center mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-sage/10 flex items-center justify-center">
+                  <HeartHandshake className="w-7 h-7 text-sage" />
+                </div>
+              </div>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-8">
+                The relationship doesn&apos;t end at checkout.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center mb-10">
+                <p>After booking, clients aren&apos;t left wondering what happens next.</p>
+                <p>They get a shared page where they can:</p>
+              </div>
+              <div className="bg-surface-alt rounded-2xl p-8 border border-neutral-800 max-w-md mx-auto">
+                <ul className="space-y-4">
+                  {postBookingItems.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                      <span className="text-text-primary">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-center text-text-muted mt-10 text-lg">
+                Everything stays organized, visible, and easy to manage — for both sides.
+              </p>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 10: COMMUNITY
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6 bg-surface-alt">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center justify-center mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-sage/10 flex items-center justify-center">
+                  <Users className="w-7 h-7 text-sage" />
+                </div>
+              </div>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-8">
+                You&apos;re not just getting a tool. You&apos;re joining a system.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center mb-10">
+                <p>
+                  HANDLED is built by people who&apos;ve run service businesses — and who care
+                  deeply about where this work is heading.
+                </p>
+                <p>Members get access to:</p>
+              </div>
+              <div className="bg-surface rounded-2xl p-8 border border-neutral-800 max-w-lg mx-auto">
+                <ul className="space-y-4">
+                  {communityItems.map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                      <span className="text-text-primary">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-center text-text-muted mt-10 text-lg">
+                You don&apos;t have to engage to use HANDLED.
+                <br />
+                But it&apos;s there if you want to go deeper.
+              </p>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 11: PRICING / TRIAL
+              ============================================ */}
+          <section id="pricing" className="py-24 md:py-32 px-6 scroll-mt-20">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
+                Use it when you need it. Pause when you don&apos;t.
+              </h2>
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed mb-12">
+                <p>HANDLED is month-to-month.</p>
+                <p>
+                  Spin up a storefront for a busy season.
+                  <br />
+                  Use it for a launch.
+                  <br />
+                  Pause when things slow down.
+                </p>
+                <p>
+                  No contracts.
+                  <br />
+                  No long-term commitment.
+                  <br />
+                  Just a system that shows up when you need it.
+                </p>
+              </div>
+              <div className="flex flex-col items-center gap-4">
+                <Button
+                  asChild
+                  variant="sage"
+                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Link href="/signup">Start your storefront</Link>
+                </Button>
+                <p className="text-text-muted text-sm">Try it free for 30 days.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 12: FAQ
+              ============================================ */}
+          <section id="faq" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary text-center mb-12">
                 Questions? Answers.
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {faqs.map((faq, index) => (
                   <details
                     key={index}
-                    className="group bg-surface-alt rounded-3xl border border-neutral-700 overflow-hidden"
+                    className="group bg-surface rounded-xl border border-neutral-800 overflow-hidden"
                   >
-                    <summary className="flex items-center justify-between cursor-pointer p-6 list-none">
+                    <summary className="flex items-center justify-between cursor-pointer p-5 list-none">
                       <span className="font-medium text-text-primary pr-4">{faq.question}</span>
                       <ChevronDown className="w-5 h-5 text-text-muted flex-shrink-0 transition-transform duration-200 group-open:rotate-180" />
                     </summary>
-                    <div className="px-6 pb-6 text-text-muted leading-relaxed">{faq.answer}</div>
+                    <div className="px-5 pb-5 text-text-muted leading-relaxed">{faq.answer}</div>
                   </details>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* Final CTA Section */}
-          <section className="py-32 md:py-48 px-6 bg-gradient-to-br from-neutral-800 to-neutral-900 border-t border-sage/20">
+          {/* ============================================
+              SECTION 13: FINAL CTA
+              ============================================ */}
+          <section className="py-32 md:py-40 px-6 border-t border-neutral-800">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-text-primary">
-                Do what you love.
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight mb-8">
+                Bring your passion.
+                <br />
+                <span className="text-sage">The rest is handled.</span>
               </h2>
-              <p className="mt-4 text-xl text-sage">The rest?</p>
+              <p className="text-lg text-text-muted leading-relaxed mb-10 max-w-xl mx-auto">
+                If your work matters to you, the way it&apos;s presented should too. HANDLED helps
+                your business feel clearer, calmer, and more professional — without asking you to
+                become someone you&apos;re not.
+              </p>
               <Button
                 asChild
                 variant="sage"
-                className="mt-8 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <Link href="#pricing">Get Handled</Link>
+                <Link href="/signup">Get started</Link>
               </Button>
             </div>
           </section>
         </main>
 
-        {/* Footer */}
-        <footer className="py-12 px-6 bg-text-primary text-white/60">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="font-serif text-xl font-bold text-white">HANDLED</div>
-            <div className="flex items-center gap-6 text-sm">
-              <Link href="/terms" className="hover:text-white transition-colors">
-                Terms
-              </Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">
-                Privacy
-              </Link>
-              <Link href="/contact" className="hover:text-white transition-colors">
-                Contact
-              </Link>
+        {/* ============================================
+            FOOTER
+            ============================================ */}
+        <footer className="py-12 px-6 bg-neutral-900 border-t border-neutral-800">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="font-serif text-xl font-bold text-text-primary">HANDLED</div>
+              <div className="flex items-center gap-6 text-sm text-text-muted">
+                <Link href="/terms" className="hover:text-text-primary transition-colors">
+                  Terms
+                </Link>
+                <Link href="/privacy" className="hover:text-text-primary transition-colors">
+                  Privacy
+                </Link>
+                <Link href="/contact" className="hover:text-text-primary transition-colors">
+                  Contact
+                </Link>
+              </div>
             </div>
-            <div className="text-sm">
-              © {new Date().getFullYear()} HANDLED. All rights reserved.
+            <div className="mt-8 pt-8 border-t border-neutral-800 text-center">
+              <p className="text-text-muted text-sm leading-relaxed">
+                HANDLED — how service businesses should work in an AI-native world.
+              </p>
+              <p className="text-text-muted text-sm mt-2">
+                Built for service professionals. Powered quietly.
+              </p>
+              <p className="text-text-muted/60 text-xs mt-4">
+                © {new Date().getFullYear()} HANDLED. All rights reserved.
+              </p>
             </div>
           </div>
         </footer>
