@@ -413,6 +413,176 @@ transition-all duration-200
 
 ---
 
+## Product Experience Patterns
+
+These patterns guide how we design the product mockups shown on our marketing site—the demo storefront, booking flow, and post-booking experience.
+
+### Demo Storefront Design
+
+**Philosophy:** Show a realistic, aspirational example that makes prospects think "I want that for my business."
+
+**The Alex Chen Pattern:**
+Our demo uses a college STEM tutor persona. This works because:
+
+- **Relatable:** Anyone can understand tutoring
+- **Professional but accessible:** Not too corporate, not too casual
+- **Clear value props:** Grades, sessions, outcomes are easy to grasp
+
+```tsx
+// Demo tenant structure
+const demoTenant = {
+  name: 'Alex Chen',
+  tagline: 'STEM Tutoring',
+  subject: 'Math & Physics',
+  initials: 'AC', // Professional initials avatar, not emoji
+};
+```
+
+**Social Proof Bar:** Always include realistic stats (4.9 rating, 200+ students, 5 yrs experience) to build credibility.
+
+### Psychology-Optimized Pricing Display
+
+**Three-Tier Structure (Research-Backed):**
+
+- 41.4% of successful startups use exactly three tiers
+- Three-tier approach yields 25-40% higher average purchase values
+- 70% of buyers choose the middle option when properly positioned
+
+**Tier Design Principles:**
+
+| Position             | Role                              | Styling                                                |
+| -------------------- | --------------------------------- | ------------------------------------------------------ |
+| **Tier 1 (Basic)**   | Entry point, sets low anchor      | Standard card, no emphasis                             |
+| **Tier 2 (Middle)**  | Target option, decoy effect       | Elevated, "Most Popular" badge, sage border, scale-105 |
+| **Tier 3 (Premium)** | High anchor, sets reference point | Premium features, but visually secondary to middle     |
+
+**Naming Convention:** Use outcome-focused names, not feature-focused:
+
+```
+❌ "Basic", "Standard", "Premium"
+✅ "Quick Help", "Grade Boost", "Semester Success"
+```
+
+**Price Display Pattern:**
+
+```tsx
+// Show per-unit value on bulk tiers
+<div className="flex items-baseline gap-0.5">
+  <span className="font-bold text-lg">{tier.priceDisplay}</span>
+  <span className="text-[10px] text-text-muted">{tier.priceSubtext}</span>
+</div>;
+{
+  tier.perSession && (
+    <div className="flex items-center gap-1 mt-0.5">
+      <span className="text-[9px] text-text-muted">{tier.perSession}</span>
+      <span className="text-[8px] font-semibold text-sage bg-sage/15 px-1 py-0.5 rounded">
+        {tier.savings}
+      </span>
+    </div>
+  );
+}
+```
+
+### Booking Flow Design
+
+**Philosophy:** Keep it simple, focused, and reassuring. The booking flow should feel like a conversation, not a form.
+
+**Key Elements:**
+
+1. **Progress indicator** - Simple step dots, not overwhelming stepper
+2. **Session summary** - Always visible, confirms what they're booking
+3. **Clear pricing** - No surprises, show total upfront
+4. **Trust signals** - "Cancel anytime", "Secure payments"
+
+```tsx
+// Booking mockup structure
+<div className="h-full bg-surface flex flex-col">
+  {/* Header with provider info + step indicator */}
+  {/* Main content: form fields or calendar */}
+  {/* Footer: summary + CTA */}
+</div>
+```
+
+### Post-Booking Experience (Session Workspace)
+
+**Philosophy:** The post-booking page is NOT a receipt—it's where the client relationship lives.
+
+**The Three Jobs of Post-Booking:**
+
+| Job            | Purpose                 | Implementation                                                       |
+| -------------- | ----------------------- | -------------------------------------------------------------------- |
+| **Reassure**   | "What's coming up"      | Confirmed badge, session details card, clear next steps              |
+| **Coordinate** | "Things to do"          | Action checklist with visual progress (upload docs, confirm details) |
+| **Converse**   | "I can talk to someone" | Always-visible chat panel, NOT buried in footer                      |
+
+**Layout Pattern: Two-Column Workspace**
+
+```tsx
+<div className="flex-1 flex overflow-hidden">
+  {/* Left column (55%): What's happening + Things to do */}
+  <div className="flex-1 px-3 py-2.5 bg-surface-alt border-r border-neutral-800">
+    {/* "What's Coming Up" card */}
+    {/* "Things to Do" checklist */}
+  </div>
+
+  {/* Right column (45%): Your Assistant - ELEVATED, not buried */}
+  <div className="w-[45%] flex flex-col bg-surface">
+    {/* Assistant header with "Online" indicator */}
+    {/* Chat preview with welcome message */}
+    {/* Quick action suggestions */}
+    {/* Always-visible input field */}
+  </div>
+</div>
+```
+
+**Key Design Decisions:**
+
+- **"Your Session Space"** framing (not "Booking Confirmation")
+- **Assistant takes 45% width** - signals it's a primary interface, not an afterthought
+- **"Online" indicator** - shows the chatbot is ready and available
+- **Proactive welcome message** - "Hi! I'm here to help with your Grade Boost session"
+- **Quick suggestions** - "What should I bring?", "Reschedule", "Ask a question"
+
+**Anti-Patterns to Avoid:**
+
+```
+❌ Receipt-style layout ("Thank you for your booking!")
+❌ Assistant buried in footer or behind a chat icon
+❌ Static information dump with no next actions
+❌ Dashboard-y feel with too many cards and metrics
+```
+
+### Mockup Dark Theme Consistency
+
+All product mockups use our graphite dark theme for consistency:
+
+```tsx
+// Backgrounds
+bg - surface; // #18181B - main background
+bg - surface - alt; // #27272A - cards, alternating sections
+
+// Borders
+border - neutral - 800; // Standard dividers
+border - sage / 30; // Emphasis borders (popular tier)
+
+// Text
+text - text - primary; // #FAFAFA - headings, primary content
+text - text - muted; // #A1A1AA - secondary content, descriptions
+
+// Accents (use sparingly)
+text - sage; // #45B37F - icons, badges, links
+bg - sage / 15; // Badge backgrounds
+bg - sage / 20; // Icon backgrounds with border-sage/30
+```
+
+**Radial Gradient Pattern:** Use for subtle hero emphasis
+
+```tsx
+bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.12)_0%,transparent_70%)]
+```
+
+---
+
 ## Review Checklist
 
 Before shipping any new page or component:
@@ -442,6 +612,17 @@ Before shipping any new page or component:
 - [ ] Form inputs have aria-label
 - [ ] Focus states are visible (ring-4)
 - [ ] Color contrast meets WCAG AA
+
+### Product Mockups
+
+- [ ] Uses graphite dark theme (`bg-surface`, `bg-surface-alt`)
+- [ ] Alex Chen persona consistency (initials "AC", STEM Tutoring tagline)
+- [ ] Pricing tiers use outcome-focused names (not Basic/Standard/Premium)
+- [ ] Middle tier is visually elevated (scale-105, sage border, "Popular" badge)
+- [ ] Post-booking shows "Session Space" framing (not receipt/confirmation)
+- [ ] Assistant panel is prominent (45% width), not buried
+- [ ] Three jobs present: Reassure, Coordinate, Converse
+- [ ] Social proof stats included (rating, students helped, experience)
 
 ---
 
@@ -501,5 +682,6 @@ _Why it works: Specific pain point (payment processor config is viscerally annoy
 
 ---
 
-_Last updated: December 2025_
+_Last updated: December 30, 2025_
 _Brand: HANDLED (gethandled.ai)_
+_Added: Product Experience Patterns (demo storefront, psychology-optimized pricing, session workspace)_
