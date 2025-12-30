@@ -5,40 +5,38 @@ import {
   ChevronDown,
   Bot,
   ArrowRight,
+  Clock,
+  MessageSquare,
   CreditCard,
-  Calendar,
-  MessageCircle,
   ShieldCheck,
+  Calendar,
   X,
-  Users,
-  Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: 'HANDLED - Booking Storefronts Your Customers Trust',
+  title: 'HANDLED - Bookings, Payments & AI Concierge for Service Businesses',
   description:
-    'A storefront your customers actually trust. Pricing visible. Booking simple. Changes handled. Built for service professionals who value professionalism over hacks.',
+    'Turn your website into a calm, conversion-optimized storefront that answers questions, captures leads, and takes deposits — even while you sleep. For anyone who sells time, expertise, or experiences.',
   openGraph: {
-    title: 'HANDLED - Booking Storefronts Your Customers Trust',
+    title: 'HANDLED - Bookings, Payments & AI Concierge for Service Businesses',
     description:
-      'Your clients book. You get paid. Changes are handled. Built for photographers, coaches, therapists, and consultants.',
+      'Turn your website into a calm, conversion-optimized storefront that answers questions, captures leads, and takes deposits — even while you sleep.',
     type: 'website',
   },
 };
 
-// Pricing tiers with clearer naming and positioning
+// Pricing tiers - LOCKED COPY
 const tiers = [
   {
     name: 'Essentials',
     price: '$49',
     priceSubtext: '/month',
-    tagline: 'Stop chasing payments.',
-    description: 'For service pros who want a professional booking experience.',
+    description: 'For service pros ready to stop chasing payments.',
     features: [
       'Professional storefront',
-      'Online booking',
-      'Secure payment processing',
+      'Request-to-book flow',
+      'Secure deposit collection',
       'Email notifications',
       'Mobile-optimized pages',
     ],
@@ -49,16 +47,15 @@ const tiers = [
     name: 'Professional',
     price: '$149',
     priceSubtext: '/month',
-    tagline: 'Stop answering the same questions.',
-    description: 'For service pros who want AI to handle the back-and-forth.',
+    description: 'For service pros who want AI handling the back-and-forth.',
     features: [
       'Everything in Essentials',
-      'AI chatbot trained on your business',
-      'Monthly newsletter + calls',
+      'AI concierge trained on your business',
+      'FAQ automation',
+      'Lead capture + follow-up',
       'Priority support',
-      'Analytics dashboard',
     ],
-    ctaText: 'Join Now',
+    ctaText: 'Get Started',
     ctaHref: '/signup?tier=professional',
     isPopular: true,
   },
@@ -66,8 +63,7 @@ const tiers = [
     name: 'Concierge',
     price: 'Custom',
     priceSubtext: '',
-    tagline: 'We do everything.',
-    description: 'For service pros who want white-glove setup and support.',
+    description: 'For service pros who want white-glove setup and ongoing support.',
     features: [
       'Everything in Professional',
       'White-glove setup',
@@ -80,54 +76,12 @@ const tiers = [
   },
 ];
 
-// How it works steps
-const howItWorksSteps = [
-  {
-    number: '01',
-    title: 'They find your storefront',
-    description: 'A clean, professional page that looks like yours. Not a generic template.',
-    icon: Users,
-  },
-  {
-    number: '02',
-    title: 'They see pricing upfront',
-    description: "No forms. No 'request a quote.' Just transparent pricing they can trust.",
-    icon: CreditCard,
-  },
-  {
-    number: '03',
-    title: 'They book and pay',
-    description: 'Deposit or full payment. You choose. Done in 60 seconds.',
-    icon: Calendar,
-  },
-  {
-    number: '04',
-    title: 'Changes? Handled.',
-    description: 'Reschedules, questions, follow-ups—the AI handles the back-and-forth.',
-    icon: MessageCircle,
-  },
-];
-
-// AI capabilities
-const aiDoes = [
-  'Answers FAQs about your services and availability',
-  'Suggests open time slots that work for both parties',
-  'Collects deposits and books appointments',
-  'Follows up on incomplete bookings',
-];
-
-const aiDoesNot = [
-  "Promise things you can't deliver",
-  'Negotiate prices without your approval',
-  'Handle sensitive complaints (humans do that)',
-  "Make decisions you didn't authorize",
-];
-
+// FAQ data - LOCKED COPY with new question added
 const faqs = [
   {
     question: 'What kind of businesses is this for?',
     answer:
-      "Photographers, coaches, therapists, consultants, trainers, wedding planners — anyone who sells their time and expertise. If you're great at what you do but tired of the back-and-forth, we're for you.",
+      "Anyone who sells time, expertise, or experiences — photographers, coaches, therapists, consultants, trainers, wedding planners. If you're great at what you do but tired of the back-and-forth, we're for you.",
   },
   {
     question: 'Do I need to know anything about tech?',
@@ -154,6 +108,11 @@ const faqs = [
     answer:
       'Yes. No contracts, no cancellation fees, no guilt trips. We earn your business every month.',
   },
+  {
+    question: 'Can I use this seasonally or short-term?',
+    answer:
+      "Yes. HANDLED is month-to-month. Turn your storefront on when you need it and pause when you don't.",
+  },
 ];
 
 export default function HomePage() {
@@ -164,7 +123,7 @@ export default function HomePage() {
     name: 'HANDLED',
     url: 'https://gethandled.ai',
     description:
-      'Booking storefronts your customers trust. Visible pricing, simple booking, AI-assisted client communication for service professionals.',
+      'Bookings, payments, and an AI concierge — built for service businesses. Turn your website into a calm, conversion-optimized storefront.',
     sameAs: [],
   };
 
@@ -175,33 +134,30 @@ export default function HomePage() {
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description:
-      'A storefront your customers actually trust. Pricing visible. Booking simple. Changes handled.',
+      'Turn your website into a calm, conversion-optimized storefront that answers questions, captures leads, and takes deposits — even while you sleep.',
     offers: [
       {
         '@type': 'Offer',
         name: 'Essentials',
-        description:
-          'Professional storefront, online booking, payment processing, email notifications',
+        description: 'Professional storefront, request-to-book flow, secure deposit collection',
         price: '49',
         priceCurrency: 'USD',
-        priceValidUntil: '2025-12-31',
+        priceValidUntil: '2026-12-31',
         availability: 'https://schema.org/InStock',
       },
       {
         '@type': 'Offer',
         name: 'Professional',
-        description:
-          'Everything in Essentials plus AI chatbot, monthly newsletter, monthly Zoom calls, priority support',
+        description: 'Everything in Essentials plus AI concierge, FAQ automation, lead capture',
         price: '149',
         priceCurrency: 'USD',
-        priceValidUntil: '2025-12-31',
+        priceValidUntil: '2026-12-31',
         availability: 'https://schema.org/InStock',
       },
       {
         '@type': 'Offer',
         name: 'Concierge',
-        description:
-          'White glove service with 1-on-1 strategy sessions, custom integrations, dedicated account manager',
+        description: 'White glove service with 1-on-1 strategy sessions, custom integrations',
         priceSpecification: {
           '@type': 'PriceSpecification',
           priceCurrency: 'USD',
@@ -270,8 +226,13 @@ export default function HomePage() {
               >
                 Sign In
               </Link>
-              <Button asChild variant="sage" className="rounded-full px-6">
-                <Link href="/signup">Start Your Storefront</Link>
+              <Button
+                asChild
+                variant="sage"
+                className="rounded-full px-6"
+                data-analytics-cta="nav-get-started"
+              >
+                <Link href="/signup">Get Started</Link>
               </Button>
             </div>
             {/* Mobile menu button */}
@@ -292,9 +253,12 @@ export default function HomePage() {
         <main>
           {/* ═══════════════════════════════════════════════════════════════════════
               SECTION 1: HERO
-              Outcome-driven headline, clear value prop, dual CTAs
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
-          <section className="relative pt-32 pb-24 md:pt-44 md:pb-36 px-6 overflow-hidden min-h-[85vh] flex flex-col justify-center">
+          <section
+            id="hero-section"
+            className="relative pt-32 pb-24 md:pt-44 md:pb-36 px-6 overflow-hidden min-h-[85vh] flex flex-col justify-center"
+          >
             {/* Ambient decorations */}
             <div
               className="absolute top-1/4 right-[15%] w-72 h-72 bg-sage/6 rounded-full blur-3xl pointer-events-none"
@@ -306,34 +270,32 @@ export default function HomePage() {
             />
 
             <div className="relative max-w-4xl mx-auto text-center">
-              {/* Main headline - outcome focused */}
+              {/* H1 - LOCKED COPY */}
               <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
-                Your clients book.
-                <br />
-                <span className="text-sage">You get paid.</span>
-                <br />
-                Changes are handled.
+                Bookings, payments, and an AI concierge — built for service businesses.
               </h1>
 
-              {/* Subheadline - clear value prop */}
-              <p className="mt-8 text-xl md:text-2xl text-text-muted font-light max-w-2xl mx-auto leading-relaxed">
-                A storefront your customers actually trust. Pricing visible. Booking simple. No more
-                back-and-forth.
+              {/* Subheadline - LOCKED COPY */}
+              <p className="mt-8 text-xl md:text-2xl text-text-muted font-light max-w-3xl mx-auto leading-relaxed">
+                Turn your website into a calm, conversion-optimized storefront that answers
+                questions, captures leads, and takes deposits — even while you sleep.
               </p>
 
-              {/* Dual CTAs */}
+              {/* Dual CTAs - LOCKED COPY */}
               <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   asChild
                   variant="sage"
                   className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                  data-analytics-cta="hero-get-started"
                 >
-                  <Link href="/signup">Start Your Storefront</Link>
+                  <Link href="/signup">Get Started</Link>
                 </Button>
                 <Button
                   asChild
                   variant="outline"
                   className="rounded-full px-10 py-6 text-lg font-medium group"
+                  data-analytics-cta="hero-see-how-it-works"
                 >
                   <Link href="#how-it-works" className="flex items-center gap-2">
                     See how it works
@@ -341,6 +303,21 @@ export default function HomePage() {
                   </Link>
                 </Button>
               </div>
+
+              {/* Microcopy - LOCKED COPY */}
+              <p className="mt-6 text-sm text-text-muted">
+                No tech skills. No Franken-stack. Set up in a day.
+              </p>
+
+              {/* Audience line - LOCKED COPY */}
+              <p className="mt-4 text-base text-text-muted font-medium">
+                For anyone who sells time, expertise, or experiences.
+              </p>
+
+              {/* Trust cue - LOCKED COPY */}
+              <p className="mt-6 text-sm text-sage">
+                Month-to-month. No commitment. Request-to-book with approval.
+              </p>
             </div>
 
             {/* Scroll indicator */}
@@ -352,52 +329,62 @@ export default function HomePage() {
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════════════
-              SECTION 2: TRUST & PROOF
-              Social proof immediately after hero - establishes credibility
+              SECTION 2: PROOF BAR
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
-          <section className="py-12 px-6 bg-surface-alt border-y border-neutral-800">
+          <section
+            id="proof-bar"
+            className="py-16 md:py-20 px-6 bg-surface-alt border-y border-neutral-800"
+          >
             <div className="max-w-5xl mx-auto">
-              {/* Early-stage proof (before metrics) */}
-              <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-sage/15 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5 text-sage" />
+              {/* Heading - LOCKED COPY */}
+              <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary text-center mb-12 leading-tight">
+                Built to reduce the &quot;am I making a mistake?&quot; feeling.
+              </h2>
+
+              {/* Proof points - LOCKED COPY */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-12">
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mx-auto mb-3">
+                    <Clock className="w-6 h-6 text-sage" />
                   </div>
-                  <span className="text-text-muted">
-                    Built by a photographer tired of the tech treadmill
-                  </span>
+                  <p className="text-text-primary font-medium">Save ~10 hours/week on admin</p>
                 </div>
-                <div className="hidden md:block w-px h-8 bg-neutral-700" />
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-sage/15 flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-sage" />
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mx-auto mb-3">
+                    <MessageSquare className="w-6 h-6 text-sage" />
                   </div>
-                  <span className="text-text-muted">Questions? Humans who actually answer</span>
+                  <p className="text-text-primary font-medium">Fewer back-and-forth DMs</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mx-auto mb-3">
+                    <CreditCard className="w-6 h-6 text-sage" />
+                  </div>
+                  <p className="text-text-primary font-medium">Deposit-first booking flow</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mx-auto mb-3">
+                    <Bot className="w-6 h-6 text-sage" />
+                  </div>
+                  <p className="text-text-primary font-medium">AI answers FAQs instantly</p>
                 </div>
               </div>
 
-              {/* Placeholder for future metrics - uncomment when available
-              <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 mt-8">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-text-primary">500+</p>
-                  <p className="text-sm text-text-muted">Bookings processed</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-text-primary">$100K+</p>
-                  <p className="text-sm text-text-muted">Payments handled</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-text-primary">50+</p>
-                  <p className="text-sm text-text-muted">Service pros</p>
-                </div>
+              {/* Testimonial placeholder - LOCKED COPY */}
+              <div className="max-w-xl mx-auto">
+                <blockquote className="text-center">
+                  <p className="text-xl md:text-2xl text-text-muted font-light italic">
+                    &quot;It finally feels calm to send people to my site.&quot;
+                  </p>
+                  <footer className="mt-4 text-text-muted">— Customer (placeholder)</footer>
+                </blockquote>
               </div>
-              */}
             </div>
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════════════
               SECTION 3: HOW IT WORKS
-              4 clear steps that reduce purchase anxiety
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
           <section
             id="how-it-works"
@@ -405,65 +392,81 @@ export default function HomePage() {
             className="py-32 md:py-40 px-6 bg-surface scroll-mt-20"
           >
             <div className="max-w-5xl mx-auto">
-              {/* Section header */}
+              {/* Section header - LOCKED COPY */}
               <div className="text-center mb-16">
                 <h2
                   id="how-it-works-heading"
                   className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight"
                 >
-                  Here&apos;s how your clients experience it.
+                  How it works
                 </h2>
-                <p className="mt-4 text-xl text-text-muted font-light max-w-2xl mx-auto">
-                  Simple for them. Effortless for you.
-                </p>
               </div>
 
-              {/* Steps grid */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {howItWorksSteps.map((step) => (
-                  <div
-                    key={step.number}
-                    className="bg-surface-alt rounded-3xl p-8 border border-neutral-700 hover:border-sage/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <span className="text-sage font-mono text-sm font-bold">{step.number}</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-xl bg-sage/15 flex items-center justify-center">
-                            <step.icon className="w-5 h-5 text-sage" />
-                          </div>
-                          <h3 className="font-serif text-xl font-semibold text-text-primary">
-                            {step.title}
-                          </h3>
-                        </div>
-                        <p className="text-text-muted leading-relaxed">{step.description}</p>
-                      </div>
+              {/* Steps - LOCKED COPY */}
+              <div className="grid md:grid-cols-3 gap-8">
+                {/* Step 1 */}
+                <div className="bg-surface-alt rounded-3xl p-8 border border-neutral-700 hover:border-sage/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-sage font-mono text-sm font-bold">01</span>
+                    <div className="w-10 h-10 rounded-xl bg-sage/15 flex items-center justify-center">
+                      <ShieldCheck className="w-5 h-5 text-sage" />
                     </div>
                   </div>
-                ))}
+                  <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
+                    Your storefront explains everything
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Visitors see clear packages, answers, and next steps — without chasing you in
+                    DMs.
+                  </p>
+                </div>
+
+                {/* Step 2 */}
+                <div className="bg-surface-alt rounded-3xl p-8 border border-neutral-700 hover:border-sage/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-sage font-mono text-sm font-bold">02</span>
+                    <div className="w-10 h-10 rounded-xl bg-sage/15 flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-sage" />
+                    </div>
+                  </div>
+                  <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
+                    Clients request a booking and pay a deposit
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Pricing stays transparent. Deposits hold intent. You stay in control.
+                  </p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="bg-surface-alt rounded-3xl p-8 border border-neutral-700 hover:border-sage/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-sage font-mono text-sm font-bold">03</span>
+                    <div className="w-10 h-10 rounded-xl bg-sage/15 flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-sage" />
+                    </div>
+                  </div>
+                  <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
+                    You approve — and everything stays handled
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Approve automatically or manually. If details change later, the system creates a
+                    clean amendment and collects the difference.
+                  </p>
+                </div>
               </div>
 
-              {/* Transition CTA */}
+              {/* Trust line - LOCKED COPY */}
               <div className="text-center mt-12">
-                <Button
-                  asChild
-                  variant="sage"
-                  className="rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
-                >
-                  <Link href="#why-handled" className="flex items-center gap-2">
-                    See why pros are switching
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
+                <p className="text-xl text-text-muted font-light">
+                  No surprise invoices. No awkward follow-ups.
+                </p>
               </div>
             </div>
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════════════
-              SECTION 4: VALUE STACK (Why HANDLED vs Alternatives)
-              Clear differentiation without being aggressive
+              SECTION 4: WHY HANDLED
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
           <section
             id="why-handled"
@@ -471,184 +474,157 @@ export default function HomePage() {
             className="py-32 md:py-40 px-6 bg-surface-alt scroll-mt-20"
           >
             <div className="max-w-5xl mx-auto">
-              {/* Section header */}
+              {/* Section header - LOCKED COPY */}
               <div className="text-center mb-16">
                 <h2
                   id="why-handled-heading"
                   className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight"
                 >
-                  Why service pros are switching.
+                  Why HANDLED instead of duct-taping tools together?
                 </h2>
-                <p className="mt-4 text-xl text-text-muted font-light max-w-2xl mx-auto">
-                  We&apos;re not another booking tool. We&apos;re the experience your customers wish
-                  you had.
-                </p>
-              </div>
-
-              {/* Comparison table - mobile-friendly card version */}
-              <div className="space-y-6">
-                {/* Comparison header - desktop only */}
-                <div className="hidden md:grid md:grid-cols-4 gap-4 px-6 py-3">
-                  <div className="text-text-muted text-sm font-medium">What matters</div>
-                  <div className="text-text-muted text-sm font-medium text-center">DIY Website</div>
-                  <div className="text-text-muted text-sm font-medium text-center">
-                    Calendly + Stripe
-                  </div>
-                  <div className="text-sage text-sm font-medium text-center">HANDLED</div>
-                </div>
-
-                {/* Comparison rows */}
-                {[
-                  {
-                    feature: 'Pricing visible to customers',
-                    diy: 'Hidden behind forms',
-                    calendly: 'Separate link',
-                    handled: 'Built into the page',
-                  },
-                  {
-                    feature: 'Customer trusts the experience',
-                    diy: 'Generic template',
-                    calendly: 'Feels fragmented',
-                    handled: 'Premium, branded',
-                  },
-                  {
-                    feature: 'Handle reschedules & questions',
-                    diy: 'Manual email chains',
-                    calendly: 'Manual updates',
-                    handled: 'AI handles it',
-                  },
-                  {
-                    feature: 'Booking + payments together',
-                    diy: 'Separate systems',
-                    calendly: 'Stripe integration',
-                    handled: 'All-in-one',
-                  },
-                ].map((row, index) => (
-                  <div
-                    key={index}
-                    className="bg-surface rounded-2xl border border-neutral-700 overflow-hidden"
-                  >
-                    {/* Mobile view */}
-                    <div className="md:hidden p-6 space-y-4">
-                      <h3 className="font-medium text-text-primary">{row.feature}</h3>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div className="text-center">
-                          <p className="text-text-muted text-xs mb-1">DIY</p>
-                          <p className="text-neutral-400">{row.diy}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-text-muted text-xs mb-1">Cal+Stripe</p>
-                          <p className="text-neutral-400">{row.calendly}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sage text-xs mb-1">HANDLED</p>
-                          <p className="text-sage font-medium">{row.handled}</p>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Desktop view */}
-                    <div className="hidden md:grid md:grid-cols-4 gap-4 p-6 items-center">
-                      <div className="font-medium text-text-primary">{row.feature}</div>
-                      <div className="text-neutral-400 text-center">{row.diy}</div>
-                      <div className="text-neutral-400 text-center">{row.calendly}</div>
-                      <div className="text-sage text-center font-medium flex items-center justify-center gap-2">
-                        <Check className="w-4 h-4" />
-                        {row.handled}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ═══════════════════════════════════════════════════════════════════════
-              SECTION 5: AI DIFFERENTIATION
-              Human-first AI positioning - explains guardrails and control
-          ═══════════════════════════════════════════════════════════════════════ */}
-          <section
-            id="ai-assistant"
-            aria-labelledby="ai-heading"
-            className="py-32 md:py-40 px-6 bg-surface scroll-mt-20"
-          >
-            <div className="max-w-5xl mx-auto">
-              {/* Section header */}
-              <div className="text-center mb-16">
-                <span className="inline-block bg-sage/15 text-sage text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
-                  Your AI Assistant
-                </span>
-                <h2
-                  id="ai-heading"
-                  className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight"
-                >
-                  An AI that knows when to help—
-                  <br />
-                  <span className="text-sage">and when to ask.</span>
-                </h2>
-                <p className="mt-6 text-xl text-text-muted font-light max-w-2xl mx-auto">
-                  Your customers get answers instantly. You stay in control of what matters.
-                </p>
               </div>
 
               {/* Two-column comparison */}
               <div className="grid md:grid-cols-2 gap-8">
-                {/* What AI does */}
+                {/* DIY Stack - LOCKED COPY */}
+                <div className="bg-neutral-800/50 rounded-3xl p-8 border border-neutral-700">
+                  <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide mb-6">
+                    The DIY Stack
+                  </h3>
+                  <ul className="space-y-4">
+                    <li className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-text-muted">A website builder</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-text-muted">A scheduler</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-text-muted">A payment link</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-text-muted">
+                        A chatbot that doesn&apos;t know your business
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-text-muted">
+                        Manual follow-ups when anything changes
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* HANDLED - LOCKED COPY */}
                 <div className="bg-sage/10 rounded-3xl p-8 border border-sage/30 relative overflow-hidden">
                   <div
                     className="absolute -top-20 -right-20 w-40 h-40 bg-sage/15 rounded-full blur-3xl pointer-events-none"
                     aria-hidden="true"
                   />
                   <div className="relative">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-full bg-sage/20 flex items-center justify-center">
-                        <Bot className="w-5 h-5 text-sage" />
-                      </div>
-                      <span className="text-sm font-medium text-sage uppercase tracking-wide">
-                        What the AI does
-                      </span>
-                    </div>
+                    <h3 className="text-sm font-medium text-sage uppercase tracking-wide mb-6">
+                      HANDLED
+                    </h3>
                     <ul className="space-y-4">
-                      {aiDoes.map((item) => (
-                        <li key={item} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                          <span className="text-text-primary">{item}</span>
-                        </li>
-                      ))}
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">
+                          One storefront built for service buyers
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">Request-to-book + deposits</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">
+                          AI concierge trained on your offer + FAQs
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">Add-ons now or later</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">
+                          Changes become amendments — not chaos
+                        </span>
+                      </li>
                     </ul>
                   </div>
                 </div>
-
-                {/* What AI doesn't do */}
-                <div className="bg-neutral-800/50 rounded-3xl p-8 border border-neutral-700">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center">
-                      <ShieldCheck className="w-5 h-5 text-neutral-400" />
-                    </div>
-                    <span className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
-                      What it doesn&apos;t do
-                    </span>
-                  </div>
-                  <ul className="space-y-4">
-                    {aiDoesNot.map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-text-muted">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
 
-              {/* Closing statement */}
+              {/* Closing line - LOCKED COPY */}
               <div className="text-center mt-12">
-                <p className="text-xl text-text-muted font-light max-w-2xl mx-auto">
-                  It&apos;s like having a helpful assistant who knows exactly where the boundaries
-                  are.
+                <p className="text-xl text-text-primary font-medium">
+                  Service commerce isn&apos;t a cart. It&apos;s a trust workflow.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ═══════════════════════════════════════════════════════════════════════
+              SECTION 5: AI CONCIERGE
+              LOCKED COPY - Do not modify
+          ═══════════════════════════════════════════════════════════════════════ */}
+          <section
+            id="ai-concierge"
+            aria-labelledby="ai-heading"
+            className="py-32 md:py-40 px-6 bg-surface scroll-mt-20"
+          >
+            <div className="max-w-5xl mx-auto">
+              {/* Section header - LOCKED COPY */}
+              <div className="text-center mb-16">
+                <span className="inline-block bg-sage/15 text-sage text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
+                  AI Concierge
+                </span>
+                <h2
+                  id="ai-heading"
+                  className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight"
+                >
+                  Meet your AI concierge
+                </h2>
+                <p className="mt-6 text-xl text-text-muted font-light max-w-2xl mx-auto">
+                  It handles the common questions — so you don&apos;t have to.
                 </p>
               </div>
 
-              {/* Chat demo mockup */}
-              <div className="mt-12 max-w-lg mx-auto">
+              {/* Capabilities - LOCKED COPY */}
+              <div className="max-w-2xl mx-auto mb-12">
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                    <span className="text-text-primary">Answers FAQs in your voice</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                    <span className="text-text-primary">Collects details when needed</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                    <span className="text-text-primary">
+                      Guides clients to a deposit-backed request
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Guardrail - LOCKED COPY */}
+              <div className="text-center mb-12">
+                <p className="text-lg text-text-muted font-medium bg-neutral-800/50 rounded-full px-6 py-3 inline-block">
+                  AI helps with the conversation. You stay in control.
+                </p>
+              </div>
+
+              {/* Chat demo mockup - LOCKED TRANSCRIPT */}
+              <div className="max-w-lg mx-auto">
                 <div className="bg-surface-alt rounded-3xl p-6 border border-sage/30 shadow-2xl relative overflow-hidden">
                   <div
                     className="absolute -top-20 -right-20 w-40 h-40 bg-sage/15 rounded-full blur-3xl pointer-events-none"
@@ -659,7 +635,7 @@ export default function HomePage() {
                     <div className="flex justify-end">
                       <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%]">
                         <p className="text-sm text-text-primary">
-                          Do you have Saturday availability?
+                          Hi! Do you have any Saturday availability next month?
                         </p>
                       </div>
                     </div>
@@ -667,22 +643,41 @@ export default function HomePage() {
                     <div className="flex justify-start">
                       <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%]">
                         <p className="text-sm text-text-primary">
-                          Yes! I have 10am and 2pm open. The 2-hour session is $350. Want me to book
-                          one?
+                          Hi! Yes — I have openings on the 8th and 22nd. Are you looking for a full
+                          session or a mini session?
                         </p>
                       </div>
                     </div>
                     {/* Chat bubble - client */}
                     <div className="flex justify-end">
                       <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%]">
-                        <p className="text-sm text-text-primary">2pm works!</p>
+                        <p className="text-sm text-text-primary">
+                          Full session! What&apos;s included?
+                        </p>
                       </div>
                     </div>
                     {/* Chat bubble - AI */}
                     <div className="flex justify-start">
                       <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%]">
                         <p className="text-sm text-text-primary">
-                          Done! Confirmation sent. See you Saturday at 2pm.
+                          The full session is 2 hours, 40+ edited images, and an online gallery.
+                          It&apos;s $450 with a $150 deposit to book. Want me to hold the 8th for
+                          you?
+                        </p>
+                      </div>
+                    </div>
+                    {/* Chat bubble - client */}
+                    <div className="flex justify-end">
+                      <div className="bg-neutral-700 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%]">
+                        <p className="text-sm text-text-primary">Yes please!</p>
+                      </div>
+                    </div>
+                    {/* Chat bubble - AI */}
+                    <div className="flex justify-start">
+                      <div className="bg-sage/20 border border-sage/30 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%]">
+                        <p className="text-sm text-text-primary">
+                          Done! I&apos;ve sent a booking link to your email. Once the deposit is in,
+                          you&apos;re confirmed for Saturday the 8th at 10am.
                         </p>
                       </div>
                     </div>
@@ -691,7 +686,7 @@ export default function HomePage() {
                   <div className="mt-4 pt-3 border-t border-neutral-700 flex items-center gap-2">
                     <Bot className="w-4 h-4 text-sage" />
                     <span className="text-xs text-text-muted">
-                      AI Assistant · Trained on your business
+                      AI Concierge · Trained on your business
                     </span>
                   </div>
                 </div>
@@ -701,7 +696,7 @@ export default function HomePage() {
 
           {/* ═══════════════════════════════════════════════════════════════════════
               SECTION 6: PRICING
-              Clear tiers with better naming and positioning
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
           <section
             id="pricing"
@@ -709,17 +704,20 @@ export default function HomePage() {
             className="py-32 md:py-40 px-6 bg-surface-alt scroll-mt-20"
           >
             <div className="max-w-6xl mx-auto">
+              {/* Section header - LOCKED COPY */}
               <div className="text-center max-w-3xl mx-auto mb-16">
                 <h2
                   id="pricing-heading"
                   className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary"
                 >
-                  Choose what works.
+                  Simple plans. No long-term commitment.
                 </h2>
                 <p className="mt-4 text-xl md:text-2xl text-text-muted font-light">
-                  No contracts. Cancel anytime. Pricing that makes sense.
+                  Turn your storefront on when you need it. Pause it when you don&apos;t.
                 </p>
               </div>
+
+              {/* Pricing cards */}
               <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 {tiers.map((tier) => (
                   <div
@@ -734,8 +732,7 @@ export default function HomePage() {
                       </span>
                     )}
                     <h3 className="font-serif text-2xl font-bold text-text-primary">{tier.name}</h3>
-                    <p className="mt-1 text-sage text-sm font-medium">{tier.tagline}</p>
-                    <div className="mt-6">
+                    <div className="mt-4">
                       <span className="text-4xl font-bold text-text-primary">{tier.price}</span>
                       {tier.priceSubtext && (
                         <span className="text-text-muted">{tier.priceSubtext}</span>
@@ -754,20 +751,73 @@ export default function HomePage() {
                       asChild
                       variant={tier.isPopular ? 'sage' : 'outline'}
                       className="w-full mt-8 rounded-full py-5"
+                      data-analytics-cta={`pricing-${tier.name.toLowerCase()}`}
                     >
                       <Link href={tier.ctaHref}>{tier.ctaText}</Link>
                     </Button>
                   </div>
                 ))}
               </div>
+
+              {/* Footnote - LOCKED COPY */}
+              <div className="text-center mt-12">
+                <p className="text-text-muted">Month-to-month. Upgrade or pause anytime.</p>
+              </div>
             </div>
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════════════
-              SECTION 7: FOUNDER STORY
-              Humanizes the product - unchanged from original (works well)
+              SECTION 7: OPTIONAL LEARNING
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
-          <section className="py-32 md:py-40 px-6 bg-surface">
+          <section
+            id="optional-learning"
+            className="py-20 md:py-24 px-6 bg-surface border-y border-neutral-800"
+          >
+            <div className="max-w-3xl mx-auto text-center">
+              {/* Heading - LOCKED COPY */}
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-text-primary mb-4">
+                Want to go deeper?
+              </h2>
+
+              {/* Copy - LOCKED COPY */}
+              <p className="text-text-muted mb-8 max-w-xl mx-auto">
+                Some customers like to learn what&apos;s working across the platform. Others never
+                think about AI at all. Both are fine.
+              </p>
+
+              {/* Bullets - LOCKED COPY */}
+              <ul className="space-y-3 text-left max-w-md mx-auto mb-8">
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                  <span className="text-text-primary">Optional monthly AI roundtable</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                  <span className="text-text-primary">
+                    Monthly newsletter highlighting what&apos;s working
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                  <span className="text-text-primary">
+                    Zero impact on your storefront if you ignore it
+                  </span>
+                </li>
+              </ul>
+
+              {/* Note - LOCKED COPY */}
+              <p className="text-sm text-text-muted italic">
+                This is optional. Not required to use HANDLED.
+              </p>
+            </div>
+          </section>
+
+          {/* ═══════════════════════════════════════════════════════════════════════
+              SECTION 8: FOUNDER / PHILOSOPHY
+              Previously locked copy - preserved unchanged
+          ═══════════════════════════════════════════════════════════════════════ */}
+          <section id="founder" className="py-32 md:py-40 px-6 bg-surface">
             <div className="max-w-2xl mx-auto text-center">
               {/* Photo */}
               <img
@@ -802,8 +852,8 @@ export default function HomePage() {
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════════════
-              SECTION 8: FAQ
-              Unchanged structure - works well with accordion
+              SECTION 9: FAQ
+              LOCKED COPY - Do not modify (includes new seasonal question)
           ═══════════════════════════════════════════════════════════════════════ */}
           <section
             id="faq"
@@ -835,31 +885,49 @@ export default function HomePage() {
           </section>
 
           {/* ═══════════════════════════════════════════════════════════════════════
-              SECTION 9: FINAL CTA
-              Calm, confident close - no urgency tricks
+              SECTION 10: FINAL CTA
+              LOCKED COPY - Do not modify
           ═══════════════════════════════════════════════════════════════════════ */}
           <section className="py-32 md:py-48 px-6 bg-gradient-to-br from-neutral-800 to-neutral-900 border-t border-sage/20">
             <div className="max-w-3xl mx-auto text-center">
+              {/* Heading - LOCKED COPY */}
               <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-text-primary">
-                Do what you love.
+                Ready to simplify how you sell your service?
               </h2>
-              <p className="mt-4 text-2xl text-sage font-serif">The rest is handled.</p>
-              <Button
-                asChild
-                variant="sage"
-                className="mt-10 rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <Link href="/signup">Start Your Storefront</Link>
-              </Button>
-              <p className="mt-6 text-text-muted">
-                No contracts. No tech to learn. Just book your first client.
+
+              {/* Subheading - LOCKED COPY */}
+              <p className="mt-4 text-xl text-text-muted font-light">
+                No commitment. No pressure. Just a better way to book.
               </p>
+
+              {/* CTAs - LOCKED COPY */}
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button
+                  asChild
+                  variant="sage"
+                  className="rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  data-analytics-cta="final-get-started"
+                >
+                  <Link href="/signup">Get Started</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-full px-10 py-6 text-lg group"
+                  data-analytics-cta="final-see-how-it-works"
+                >
+                  <Link href="#how-it-works" className="flex items-center gap-2">
+                    See how it works
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </section>
         </main>
 
         {/* ═══════════════════════════════════════════════════════════════════════
-            FOOTER
+            SECTION 11: FOOTER
         ═══════════════════════════════════════════════════════════════════════ */}
         <footer className="py-12 px-6 bg-text-primary text-white/60">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
@@ -882,12 +950,16 @@ export default function HomePage() {
         </footer>
 
         {/* ═══════════════════════════════════════════════════════════════════════
-            MOBILE STICKY CTA
-            Fixed bottom bar on mobile for constant conversion opportunity
+            SECTION 12: STICKY MOBILE CTA (mobile only)
         ═══════════════════════════════════════════════════════════════════════ */}
         <div className="fixed bottom-0 left-0 right-0 md:hidden bg-surface/95 backdrop-blur-md border-t border-neutral-800 p-4 z-40">
-          <Button asChild variant="sage" className="w-full rounded-full py-4 text-base font-medium">
-            <Link href="/signup">Start Your Storefront</Link>
+          <Button
+            asChild
+            variant="sage"
+            className="w-full rounded-full py-4 text-base font-medium"
+            data-analytics-cta="sticky-mobile-get-started"
+          >
+            <Link href="/signup">Get Started</Link>
           </Button>
         </div>
       </div>
