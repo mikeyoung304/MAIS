@@ -8,8 +8,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  FileText,
-  CreditCard,
   ClipboardList,
   MessageSquare,
   Calendar,
@@ -191,109 +189,167 @@ function BookingMockup() {
   );
 }
 
-/** Mockup: After booking - client portal - Dark theme */
+/** Mockup: After booking - Your Session Workspace - Dark theme
+ *
+ * Reframed from "booking confirmation" to "relationship workspace"
+ * Three jobs: Reassure (what's coming), Coordinate (things to do), Converse (assistant)
+ */
 function AfterBookingMockup() {
   return (
     <div className="h-full bg-surface overflow-hidden flex flex-col">
-      {/* Header with confirmation */}
-      <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-4 py-3 border-b border-neutral-800">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
-            <span className="text-sage font-semibold text-sm">AC</span>
-          </div>
-          <div className="flex-1">
-            <h3 className="font-serif text-sm font-semibold text-text-primary">
-              Session with Alex Chen
-            </h3>
-            <p className="text-[10px] text-text-muted">Grade Boost • 4 sessions</p>
-          </div>
-          <div className="px-2.5 py-1 bg-sage/15 border border-sage/30 rounded-full">
-            <span className="text-[10px] text-sage font-semibold">Confirmed</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick stats */}
-      <div className="px-4 py-3 border-b border-neutral-800 bg-surface-alt">
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-surface rounded-xl p-2.5 border border-neutral-800 text-center">
-            <Calendar className="w-3.5 h-3.5 text-sage mx-auto mb-1" />
-            <p className="text-[9px] text-text-muted mb-0.5">First Session</p>
-            <p className="text-[11px] font-semibold text-text-primary">Jan 15, 2025</p>
-          </div>
-          <div className="bg-surface rounded-xl p-2.5 border border-neutral-800 text-center">
-            <Clock className="w-3.5 h-3.5 text-sage mx-auto mb-1" />
-            <p className="text-[9px] text-text-muted mb-0.5">Time</p>
-            <p className="text-[11px] font-semibold text-text-primary">11:00 AM</p>
-          </div>
-          <div className="bg-surface rounded-xl p-2.5 border border-neutral-800 text-center">
-            <Package className="w-3.5 h-3.5 text-sage mx-auto mb-1" />
-            <p className="text-[9px] text-text-muted mb-0.5">Sessions Left</p>
-            <p className="text-[11px] font-semibold text-text-primary">4 of 4</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Shared files section */}
-      <div className="flex-1 px-4 py-3 bg-surface-alt overflow-auto">
-        <h4 className="text-[11px] font-semibold text-text-primary mb-2 flex items-center gap-1.5">
-          <FolderOpen className="w-3.5 h-3.5 text-sage" />
-          Shared Files
-        </h4>
-        <div className="space-y-2">
-          {/* Study Plan */}
-          <div className="flex items-center gap-2.5 p-2.5 bg-surface rounded-xl border border-neutral-800 hover:border-sage/30 transition-colors cursor-pointer">
-            <div className="w-8 h-9 bg-sage/15 rounded-lg flex items-center justify-center border border-sage/20">
-              <FileText className="w-4 h-4 text-sage" />
+      {/* Header - Workspace framing, not just confirmation */}
+      <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-4 py-2.5 border-b border-neutral-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
+              <span className="text-sage font-semibold text-xs">AC</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium text-text-primary truncate">
-                Personalized Study Plan
-              </p>
-              <p className="text-[9px] text-text-muted">PDF • Shared by Alex</p>
+            <div>
+              <h3 className="font-serif text-xs font-semibold text-text-primary">
+                Your Session Space
+              </h3>
+              <p className="text-[9px] text-text-muted">Grade Boost with Alex Chen</p>
             </div>
-            <span className="text-[9px] text-sage font-medium">View</span>
           </div>
-
-          {/* Receipt */}
-          <div className="flex items-center gap-2.5 p-2.5 bg-surface rounded-xl border border-neutral-800 hover:border-sage/30 transition-colors cursor-pointer">
-            <div className="w-8 h-9 bg-emerald-500/15 rounded-lg flex items-center justify-center border border-emerald-500/20">
-              <CreditCard className="w-4 h-4 text-emerald-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium text-text-primary truncate">Payment Receipt</p>
-              <p className="text-[9px] text-text-muted">$320.00 • Jan 10, 2025</p>
-            </div>
-            <span className="px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/20 rounded text-[8px] text-emerald-500 font-semibold">
-              Paid
+          <div className="px-2 py-1 bg-sage/15 border border-sage/30 rounded-full">
+            <span className="text-[9px] text-sage font-semibold flex items-center gap-1">
+              <Check className="w-2.5 h-2.5" />
+              Confirmed
             </span>
           </div>
-
-          {/* Intake form */}
-          <div className="flex items-center gap-2.5 p-2.5 bg-surface rounded-xl border border-sage/30 hover:border-sage/50 transition-colors cursor-pointer">
-            <div className="w-8 h-9 bg-amber-500/15 rounded-lg flex items-center justify-center border border-amber-500/20">
-              <ClipboardList className="w-4 h-4 text-amber-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium text-text-primary truncate">
-                Learning Goals Questionnaire
-              </p>
-              <p className="text-[9px] text-amber-500">Action needed • 5 min</p>
-            </div>
-            <span className="text-[9px] text-sage font-medium">Fill out →</span>
-          </div>
         </div>
       </div>
 
-      {/* Footer with chat option */}
-      <div className="px-4 py-2.5 bg-surface border-t border-neutral-800 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-text-muted">
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span className="text-[10px]">Questions? Chat with Alex</span>
+      {/* Main content - Two column layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left column: What's happening + Things to do */}
+        <div className="flex-1 px-3 py-2.5 bg-surface-alt overflow-auto border-r border-neutral-800">
+          {/* What's Coming Up - Reassure */}
+          <div className="mb-3">
+            <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1.5 flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-sage" />
+              What&apos;s Coming Up
+            </h4>
+            <div className="bg-surface rounded-xl p-2.5 border border-neutral-800">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[11px] font-semibold text-text-primary">First Session</p>
+                <span className="text-[9px] text-sage font-medium">In 5 days</span>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] text-text-muted">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Jan 15
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  11:00 AM
+                </span>
+                <span className="flex items-center gap-1">
+                  <Package className="w-3 h-3" />1 of 4
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Things to Do - Coordinate */}
+          <div>
+            <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1.5 flex items-center gap-1">
+              <ClipboardList className="w-3 h-3 text-amber-500" />
+              Things to Do
+            </h4>
+            <div className="space-y-1.5">
+              {/* Action item - needs attention */}
+              <div className="flex items-center gap-2 p-2 bg-surface rounded-lg border border-amber-500/30 hover:border-amber-500/50 transition-colors cursor-pointer">
+                <div className="w-6 h-6 bg-amber-500/15 rounded-md flex items-center justify-center flex-shrink-0">
+                  <ClipboardList className="w-3 h-3 text-amber-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-medium text-text-primary truncate">
+                    Learning Goals Questionnaire
+                  </p>
+                  <p className="text-[8px] text-amber-500">5 min • Helps Alex prepare</p>
+                </div>
+                <ChevronRight className="w-3 h-3 text-amber-500" />
+              </div>
+
+              {/* Completed item */}
+              <div className="flex items-center gap-2 p-2 bg-surface rounded-lg border border-neutral-800 opacity-60">
+                <div className="w-6 h-6 bg-emerald-500/15 rounded-md flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3 h-3 text-emerald-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-medium text-text-primary truncate line-through">
+                    Payment completed
+                  </p>
+                  <p className="text-[8px] text-text-muted">$320 • Jan 10</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <button className="px-3 py-1.5 bg-sage/15 border border-sage/30 text-sage text-[10px] font-medium rounded-full hover:bg-sage/25 transition-colors focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2 focus:ring-offset-surface">
-          Send Message
-        </button>
+
+        {/* Right column: Your Assistant - Converse (elevated, not buried) */}
+        <div className="w-[45%] flex flex-col bg-surface">
+          {/* Assistant header - friendly, always-there presence */}
+          <div className="px-3 py-2 border-b border-neutral-800 bg-sage/5">
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <div className="w-7 h-7 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
+                  <MessageSquare className="w-3.5 h-3.5 text-sage" />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-text-primary">Your Assistant</p>
+                <p className="text-[8px] text-sage">Always here to help</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Chat preview - shows the assistant is engaged */}
+          <div className="flex-1 px-2.5 py-2 overflow-auto space-y-2">
+            {/* Assistant message */}
+            <div className="flex gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-sage text-[8px] font-semibold">AC</span>
+              </div>
+              <div className="bg-sage/10 rounded-xl rounded-tl-sm px-2.5 py-1.5 max-w-[90%]">
+                <p className="text-[9px] text-text-primary leading-relaxed">
+                  Hi! I&apos;m here whenever you need me. Questions about your session? Need to
+                  reschedule? Want to add something? Just ask.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick suggestions */}
+            <div className="pl-6 space-y-1">
+              <p className="text-[8px] text-text-muted">Quick questions:</p>
+              <div className="flex flex-wrap gap-1">
+                <span className="px-2 py-0.5 bg-neutral-800 border border-neutral-700 rounded-full text-[8px] text-text-muted hover:border-sage/50 hover:text-sage cursor-pointer transition-colors">
+                  What should I bring?
+                </span>
+                <span className="px-2 py-0.5 bg-neutral-800 border border-neutral-700 rounded-full text-[8px] text-text-muted hover:border-sage/50 hover:text-sage cursor-pointer transition-colors">
+                  Can I reschedule?
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Chat input - always visible, inviting */}
+          <div className="px-2.5 py-2 border-t border-neutral-800">
+            <div className="flex items-center gap-1.5 bg-neutral-800 rounded-full px-3 py-1.5 border border-neutral-700 focus-within:border-sage/50 transition-colors">
+              <input
+                type="text"
+                placeholder="Ask anything..."
+                className="flex-1 bg-transparent text-[10px] text-text-primary placeholder-text-muted focus:outline-none"
+                readOnly
+              />
+              <button className="w-5 h-5 bg-sage rounded-full flex items-center justify-center hover:bg-sage-hover transition-colors flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-1 focus:ring-offset-surface">
+                <ChevronRight className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
