@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Monitor, CalendarCheck, FolderOpen, Check, Star } from 'lucide-react';
+import { Monitor, CalendarCheck, FolderOpen, Check } from 'lucide-react';
+import { DemoStorefrontShowcase } from './DemoStorefrontShowcase';
 
 /**
  * ProductPreviewTabs - 3-tab product preview for the landing page proof block
  *
  * Shows visual mockups of:
- * 1. Storefront - Hero + tier cards (based on TenantLandingPage)
+ * 1. Storefront - Realistic demo with conversion-optimized 3-tier pricing
  * 2. Booking flow - Date picker wizard (based on DateBookingWizard)
  * 3. After booking - Client portal with shared documents
+ *
+ * The storefront tab features a college tutor demo tenant with
+ * psychology-optimized pricing (anchoring, decoy effect, social proof).
  */
 
 const tabs = [
@@ -29,97 +33,6 @@ const tabs = [
     icon: FolderOpen,
   },
 ];
-
-/** Mockup: Professional storefront with hero + tier cards */
-function StorefrontMockup() {
-  return (
-    <div className="h-full bg-white overflow-hidden">
-      {/* Mini hero */}
-      <div className="bg-gradient-to-br from-sage/20 to-sage/5 px-4 py-6 text-center">
-        <div className="w-8 h-8 rounded-full bg-sage/30 mx-auto mb-2" />
-        <div className="h-3 w-32 bg-neutral-800/80 rounded mx-auto mb-1.5" />
-        <div className="h-2 w-48 bg-neutral-400/50 rounded mx-auto" />
-      </div>
-
-      {/* Tier cards */}
-      <div className="px-4 py-4">
-        <div className="grid grid-cols-3 gap-2">
-          {/* Basic tier */}
-          <div className="bg-neutral-50 rounded-lg p-2 border border-neutral-200">
-            <div className="h-2 w-12 bg-neutral-300 rounded mb-1.5" />
-            <div className="h-3 w-8 bg-neutral-800 rounded mb-2" />
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-10 bg-neutral-200 rounded" />
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-8 bg-neutral-200 rounded" />
-              </div>
-            </div>
-            <div className="h-4 w-full bg-neutral-200 rounded mt-2" />
-          </div>
-
-          {/* Popular tier - highlighted */}
-          <div className="bg-white rounded-lg p-2 border-2 border-sage shadow-sm relative">
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 bg-sage text-white text-[6px] px-1.5 py-0.5 rounded-full">
-              Popular
-            </div>
-            <div className="h-2 w-14 bg-neutral-300 rounded mb-1.5" />
-            <div className="h-3 w-10 bg-neutral-800 rounded mb-2" />
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-10 bg-neutral-200 rounded" />
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-12 bg-neutral-200 rounded" />
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-8 bg-neutral-200 rounded" />
-              </div>
-            </div>
-            <div className="h-4 w-full bg-sage rounded mt-2" />
-          </div>
-
-          {/* Premium tier */}
-          <div className="bg-neutral-50 rounded-lg p-2 border border-neutral-200">
-            <div className="h-2 w-16 bg-neutral-300 rounded mb-1.5" />
-            <div className="h-3 w-12 bg-neutral-800 rounded mb-2" />
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-10 bg-neutral-200 rounded" />
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-14 bg-neutral-200 rounded" />
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-2 h-2 text-sage" />
-                <div className="h-1.5 w-8 bg-neutral-200 rounded" />
-              </div>
-            </div>
-            <div className="h-4 w-full bg-neutral-200 rounded mt-2" />
-          </div>
-        </div>
-      </div>
-
-      {/* Testimonial hint */}
-      <div className="px-4 pb-3">
-        <div className="flex items-center justify-center gap-0.5 mb-1">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className="w-2 h-2 fill-amber-400 text-amber-400" />
-          ))}
-        </div>
-        <div className="h-1.5 w-40 bg-neutral-200 rounded mx-auto" />
-      </div>
-    </div>
-  );
-}
 
 /** Mockup: Booking flow with date picker */
 function BookingMockup() {
@@ -328,14 +241,14 @@ export function ProductPreviewTabs() {
           </div>
           <div className="flex-1 mx-4">
             <div className="bg-neutral-800 rounded-md px-3 py-1 text-xs text-text-muted max-w-xs mx-auto text-center">
-              yourname.gethandled.ai
+              {activeTab === 'storefront' ? 'alexchen.gethandled.ai' : 'yourname.gethandled.ai'}
             </div>
           </div>
         </div>
 
         {/* Preview content - mockups */}
         <div className="aspect-[16/10]">
-          {activeTab === 'storefront' && <StorefrontMockup />}
+          {activeTab === 'storefront' && <DemoStorefrontShowcase compact />}
           {activeTab === 'booking' && <BookingMockup />}
           {activeTab === 'after-booking' && <AfterBookingMockup />}
         </div>
@@ -343,7 +256,8 @@ export function ProductPreviewTabs() {
 
       {/* Description below preview */}
       <p className="text-center text-text-muted text-sm mt-4">
-        {activeTab === 'storefront' && 'Your professional storefront with clear offerings'}
+        {activeTab === 'storefront' &&
+          'Conversion-optimized pricing with psychology-backed tier design'}
         {activeTab === 'booking' && 'Guided booking that converts visitors to clients'}
         {activeTab === 'after-booking' && 'Shared space for client details and follow-ups'}
       </p>

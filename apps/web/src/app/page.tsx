@@ -124,13 +124,16 @@ const faqsV2 = [
   },
 ];
 
-// 3-Tier Pricing
+// 3-Tier Pricing - Psychology Optimized
+// Implements: Anchoring, Decoy Effect, Social Proof, Outcome-Focused Naming
 const tiers = [
   {
-    name: 'Handled',
+    id: 'foundation',
+    name: 'The Foundation',
     price: '$49',
     priceSubtext: '/month',
-    description: 'Tech sorted. Do what you do.',
+    description: 'Everything you need to look professional.',
+    annualSavings: 'Save $118/year',
     features: [
       'Professional storefront',
       'Online booking',
@@ -139,36 +142,42 @@ const tiers = [
     ],
     ctaText: 'Get Started',
     ctaHref: '/signup?tier=handled',
+    isPopular: false,
   },
   {
-    name: 'Fully Handled',
+    id: 'system',
+    name: 'The System',
     price: '$149',
     priceSubtext: '/month',
-    description: 'Tech + AI growth club + chatbot.',
+    description: 'Tech + growth support that works for you.',
+    annualSavings: 'Save $358/year',
     features: [
-      'Everything in Handled',
+      'Everything in Foundation',
       'AI chatbot for your business',
-      'Monthly newsletter',
-      'Monthly Zoom calls',
+      'Monthly growth newsletter',
+      'Live monthly Zoom calls',
       'Priority support',
     ],
-    ctaText: 'Join Now',
+    ctaText: 'Start Growing',
     ctaHref: '/signup?tier=fully-handled',
     isPopular: true,
   },
   {
-    name: 'Completely Handled',
-    price: 'Custom',
-    priceSubtext: '',
-    description: 'Personalized consulting.',
+    id: 'partnership',
+    name: 'The Partnership',
+    price: '$349',
+    priceSubtext: '/month',
+    description: 'Hands-on guidance for businesses ready to scale.',
+    annualSavings: 'Save $838/year',
     features: [
-      'Everything in Fully Handled',
+      'Everything in System',
       '1-on-1 strategy sessions',
       'Custom integrations',
       'Dedicated account manager',
     ],
     ctaText: 'Book a Call',
     ctaHref: '/contact',
+    isPopular: false,
   },
 ];
 
@@ -658,7 +667,8 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 11: PRICING (3-TIER)
+              SECTION 11: PRICING (3-TIER) - PSYCHOLOGY OPTIMIZED
+              Implements: Anchoring, Decoy Effect, Elevated Popular Tier
               ============================================ */}
           <section id="pricing" className="py-24 md:py-32 px-6 scroll-mt-20">
             <div className="max-w-6xl mx-auto">
@@ -671,28 +681,59 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 3-Tier Grid */}
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {/* 3-Tier Grid - pt-6 accommodates elevated badge */}
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start pt-6">
                 {tiers.map((tier) => (
                   <div
-                    key={tier.name}
-                    className={`bg-surface-alt rounded-2xl p-8 border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-                      tier.isPopular ? 'border-sage ring-2 ring-sage' : 'border-neutral-800'
+                    key={tier.id}
+                    className={`relative bg-surface-alt rounded-2xl p-8 border transition-all duration-300 ${
+                      tier.isPopular
+                        ? 'border-2 border-sage shadow-xl shadow-sage/20 md:-mt-4 md:scale-[1.02] z-10 ring-1 ring-sage/20'
+                        : 'border-neutral-800 hover:shadow-xl hover:-translate-y-1 hover:border-sage/50'
                     }`}
                   >
+                    {/* Elevated "Most Popular" badge */}
                     {tier.isPopular && (
-                      <span className="inline-block bg-sage text-white text-sm font-medium px-3 py-1 rounded-full mb-4">
-                        Most Popular
-                      </span>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                        <span
+                          className="inline-flex items-center gap-1.5 bg-sage text-white text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg"
+                          role="status"
+                          aria-label="Most popular choice"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Most Popular
+                        </span>
+                      </div>
                     )}
-                    <h3 className="font-serif text-2xl font-bold text-text-primary">{tier.name}</h3>
+
+                    <h3
+                      className={`font-serif text-2xl font-bold text-text-primary ${tier.isPopular ? 'mt-2' : ''}`}
+                    >
+                      {tier.name}
+                    </h3>
                     <p className="mt-1 text-text-muted text-sm">{tier.description}</p>
+
+                    {/* Price with savings badge */}
                     <div className="mt-6">
-                      <span className="text-4xl font-bold text-text-primary">{tier.price}</span>
-                      {tier.priceSubtext && (
-                        <span className="text-text-muted">{tier.priceSubtext}</span>
+                      <div className="flex items-baseline gap-1">
+                        <span
+                          className={`font-bold text-text-primary ${tier.isPopular ? 'text-5xl' : 'text-4xl'}`}
+                        >
+                          {tier.price}
+                        </span>
+                        {tier.priceSubtext && (
+                          <span className="text-text-muted">{tier.priceSubtext}</span>
+                        )}
+                      </div>
+                      {tier.annualSavings && (
+                        <div className="mt-2">
+                          <span className="text-xs font-semibold text-sage bg-sage/15 px-2 py-1 rounded">
+                            {tier.annualSavings}
+                          </span>
+                        </div>
                       )}
                     </div>
+
                     <ul className="mt-6 space-y-3">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
@@ -701,12 +742,19 @@ export default function HomePage() {
                         </li>
                       ))}
                     </ul>
+
+                    {/* CTA with arrow for popular tier */}
                     <Button
                       asChild
                       variant={tier.isPopular ? 'sage' : 'outline'}
-                      className="w-full mt-8 rounded-full py-5"
+                      className={`w-full mt-8 rounded-full py-5 ${
+                        tier.isPopular ? 'shadow-lg hover:shadow-xl' : ''
+                      }`}
                     >
-                      <Link href={tier.ctaHref}>{tier.ctaText}</Link>
+                      <Link href={tier.ctaHref} className="flex items-center justify-center gap-2">
+                        {tier.ctaText}
+                        {tier.isPopular && <ArrowRight className="w-4 h-4" />}
+                      </Link>
                     </Button>
                   </div>
                 ))}
