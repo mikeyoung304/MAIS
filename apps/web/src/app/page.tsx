@@ -178,6 +178,7 @@ const tiers = [
       'Voice agents',
       '1-on-1 strategy sessions',
       'We build it for you',
+      'Dedicated account manager',
     ],
     ctaText: 'Book a Call',
     ctaHref: '/contact',
@@ -206,7 +207,7 @@ export default function HomePage() {
       'Professional online presence, conversion-optimized storefront, and built-in assistant for service businesses.',
     offers: {
       '@type': 'Offer',
-      description: 'Month-to-month subscription with 30-day free trial',
+      description: 'Month-to-month subscription with 14-day free trial',
       availability: 'https://schema.org/InStock',
     },
   };
@@ -530,7 +531,7 @@ export default function HomePage() {
                 >
                   <Link href="/signup">Start your storefront</Link>
                 </Button>
-                <p className="text-text-muted text-sm">Try it free for 30 days.</p>
+                <p className="text-text-muted text-sm">Try it free for 14 days.</p>
               </div>
             </div>
           </section>
@@ -768,7 +769,7 @@ export default function HomePage() {
 
               {/* Fine print */}
               <p className="text-center text-text-muted text-sm mt-10">
-                Try it free for 30 days. Pause when things slow down.
+                Try it free for 14 days. No credit card required.
               </p>
             </div>
           </section>
