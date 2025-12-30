@@ -1,9 +1,11 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '450'
 tags: [architecture, agent, code-review, layered-architecture]
 dependencies: []
+completed_at: '2025-12-29'
+resolution: plan-created
 ---
 
 # Agent Tools Bypass Service Layer (Architecture Violation)
@@ -71,7 +73,17 @@ export interface ToolContext {
 
 ## Recommended Action
 
-[To be filled during triage]
+**SELECTED: Option 1 - Inject Services into ToolContext**
+
+Implementation plan created: `/plans/refactor-agent-tools-to-use-service-layer.md`
+
+The plan includes:
+
+- 4-phase implementation approach (Foundation, Read Tools, Write Tools + Executors, Cleanup)
+- 4 new services to create (BlackoutService, DashboardService, TenantService, CustomerService)
+- Detailed mapping of each tool to its target service
+- Acceptance criteria and risk mitigation strategies
+- Estimated 8-12 hours of work across 4 weeks
 
 ## Technical Details
 

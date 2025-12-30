@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '469'
 tags: [code-review, test-data-isolation, observability]
@@ -50,11 +50,12 @@ async getStats(includeTestTenants = false): Promise<PlatformStats> {
 
 ## Acceptance Criteria
 
-- [ ] Debug log emitted when filtering test tenants
-- [ ] Log includes method name for traceability
+- [x] Debug log emitted when filtering test tenants
+- [x] Log includes method name for traceability
 
 ## Work Log
 
-| Date       | Action          | Outcome/Learning        |
-| ---------- | --------------- | ----------------------- |
-| 2025-12-29 | Security review | Suggested audit logging |
+| Date       | Action          | Outcome/Learning                                               |
+| ---------- | --------------- | -------------------------------------------------------------- |
+| 2025-12-29 | Security review | Suggested audit logging                                        |
+| 2025-12-29 | Implementation  | Added debug logging to both getAllTenants and getStats methods |

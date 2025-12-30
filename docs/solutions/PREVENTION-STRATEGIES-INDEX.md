@@ -2039,6 +2039,54 @@ const [booking, blackout] = await Promise.all([
 
 ---
 
+#### [Chatbot Proposal Execution Prevention Strategies](./agent-design/CHATBOT-PROPOSAL-EXECUTION-PREVENTION-STRATEGIES-MAIS-20251229.md)
+
+**Purpose:** Prevent 4 critical issues in proposal execution: circular dependencies, missing T2 execution, proposal passthrough, field mapping
+**Audience:** Engineers building or maintaining agent proposal/executor systems
+**Length:** ~4,000 words
+**Date Created:** 2025-12-29
+**Key Patterns:** Executor registry extraction, state machine completeness, DTO mapping consistency
+
+**Covers 4 Issues:**
+
+1. **Circular Dependencies (P1)** - Extract executor registry to dedicated module, use `npx madge --circular` detection
+2. **T2 Soft-Confirm Without Execution (P1)** - Add executor invocation loop after status update to CONFIRMED
+3. **Proposal Not Passed to Frontend (P2)** - Ensure proposal object included in API response for T3 tools
+4. **Field Name Mapping Mismatch (P2)** - Use canonical names from contracts, accept both old/new in executor
+
+**Quick Rules:**
+
+```typescript
+// ✅ Registry in dedicated module (not routes)
+// server/src/agent/proposals/executor-registry.ts
+export function registerProposalExecutor(toolName: string, executor: ProposalExecutor): void { ... }
+export function getProposalExecutor(toolName: string): ProposalExecutor | undefined { ... }
+
+// ✅ Execute after soft-confirm
+if (softConfirmedIds.length > 0) {
+  for (const proposalId of softConfirmedIds) {
+    const executor = getProposalExecutor(proposal.toolName);
+    const result = await executor(tenantId, payload);
+    await proposalService.markExecuted(proposalId, result);
+  }
+}
+
+// ✅ Accept both field names in executor
+const packageName = name || title;
+const packagePrice = basePrice ?? priceCents;
+```
+
+**Quick Reference:** [CHATBOT-PROPOSAL-QUICK-REFERENCE-MAIS-20251229.md](./agent-design/CHATBOT-PROPOSAL-QUICK-REFERENCE-MAIS-20251229.md) (print and pin!)
+
+**When to Read:**
+
+- Adding new proposal executors
+- Debugging proposal confirmation issues
+- Adding new trust tiers
+- Reviewing agent architecture PRs
+
+---
+
 #### [Customer Chatbot Phase 0 Prevention Strategies](./CUSTOMER_CHATBOT_PREVENTION_STRATEGIES.md)
 
 **Purpose:** Prevent 5 critical security and data integrity issues in customer-facing chatbot
@@ -2123,6 +2171,10 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 **Last Updated:** 2025-12-29
 **Recent Additions (2025-12-29):**
 
+- **[Chatbot Proposal Execution Flow](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)** - T2 execution fix, field normalization, P1 tenant validation security
+- **[Circular Dependency Executor Registry Pattern](patterns/circular-dependency-executor-registry-MAIS-20251229.md)** - Registry module pattern for breaking circular imports between orchestrator and routes
+- Chatbot Proposal Execution Prevention Strategies - 4 critical issues: circular dependencies, T2 execution missing, proposal passthrough, field mapping
+- Chatbot Proposal Quick Reference - 1-page checklist for proposal lifecycle verification
 - Customer Chatbot Phase 0 Prevention Strategies - 5 critical issues covering HTML injection, payment timestamps, proposal enumeration, indexes, and prompt injection
 - Customer Chatbot Quick Reference - 1-page printable checklist for all 5 prevention strategies
 

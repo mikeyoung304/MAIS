@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '467'
 tags: [code-review, test-data-isolation, architecture]
@@ -62,7 +62,7 @@ Audit all callers of `list()` and migrate to `listWithStats()`.
 
 ## Recommended Action
 
-<!-- Filled during triage -->
+Solution 1 was implemented.
 
 ## Technical Details
 
@@ -75,15 +75,16 @@ Audit all callers of `list()` and migrate to `listWithStats()`.
 
 ## Acceptance Criteria
 
-- [ ] list() accepts includeTestTenants parameter
-- [ ] Default behavior excludes test tenants
-- [ ] All callers audited and updated if needed
+- [x] list() accepts includeTestTenants parameter
+- [x] Default behavior excludes test tenants
+- [x] All callers audited and updated if needed
 
 ## Work Log
 
-| Date       | Action              | Outcome/Learning                                |
-| ---------- | ------------------- | ----------------------------------------------- |
-| 2025-12-29 | Architecture review | list() method inconsistent with listWithStats() |
+| Date       | Action              | Outcome/Learning                                                                                                                                                                         |
+| ---------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-29 | Architecture review | list() method inconsistent with listWithStats()                                                                                                                                          |
+| 2025-12-29 | Implementation      | Added options object with includeTestTenants parameter, default excludes test tenants. Audit found no callers (admin routes use listWithStats instead). TypeScript compilation verified. |
 
 ## Resources
 

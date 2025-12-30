@@ -12,6 +12,7 @@ import type { PrismaClient, Prisma } from '../../generated/prisma';
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from '../tools/types';
 import { ProposalService } from '../proposals/proposal.service';
 import { logger } from '../../lib/core/logger';
+import { ErrorMessages } from '../errors';
 
 /**
  * Extended context for customer tools
@@ -113,7 +114,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         };
       } catch (error) {
         logger.error({ error, tenantId }, 'Failed to get services');
-        return { success: false, error: 'Failed to load services' };
+        return { success: false, error: ErrorMessages.LOAD_SERVICES };
       }
     },
   },
@@ -162,7 +163,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         });
 
         if (!pkg) {
-          return { success: false, error: 'Service not found' };
+          return { success: false, error: ErrorMessages.SERVICE_NOT_FOUND };
         }
 
         // Calculate date range
@@ -227,7 +228,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         };
       } catch (error) {
         logger.error({ error, tenantId, packageId }, 'Failed to check availability');
-        return { success: false, error: 'Failed to check availability' };
+        return { success: false, error: ErrorMessages.CHECK_AVAILABILITY };
       }
     },
   },
@@ -289,7 +290,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         });
 
         if (!pkg) {
-          return { success: false, error: 'Service not found or unavailable' };
+          return { success: false, error: ErrorMessages.SERVICE_UNAVAILABLE };
         }
 
         // Check availability
@@ -298,7 +299,10 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         today.setHours(0, 0, 0, 0);
 
         if (bookingDate < today) {
-          return { success: false, error: 'Cannot book dates in the past' };
+          return {
+            success: false,
+            error: 'Unable to book a past date. Please choose an upcoming date.',
+          };
         }
 
         // Check for existing booking on this date
@@ -427,7 +431,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         });
 
         if (!tenant) {
-          return { success: false, error: 'Business information not found' };
+          return { success: false, error: ErrorMessages.BUSINESS_INFO };
         }
 
         // Parse landing page config for FAQ and other info
@@ -473,7 +477,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         };
       } catch (error) {
         logger.error({ error, tenantId }, 'Failed to get business info');
-        return { success: false, error: 'Failed to load business information' };
+        return { success: false, error: ErrorMessages.BUSINESS_INFO };
       }
     },
   },

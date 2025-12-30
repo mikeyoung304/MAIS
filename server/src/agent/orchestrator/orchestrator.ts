@@ -30,6 +30,9 @@ import type { AgentSessionContext } from '../context/context-builder';
 import { ProposalService } from '../proposals/proposal.service';
 import { AuditService } from '../audit/audit.service';
 import { logger } from '../../lib/core/logger';
+import { getProposalExecutor } from '../proposals/executor-registry';
+import { validateExecutorPayload } from '../proposals/executor-schemas';
+import { ErrorMessages } from '../errors';
 
 /**
  * System prompt template
@@ -247,6 +250,40 @@ const DEFAULT_CONFIG: OrchestratorConfig = {
 const MAX_RECURSION_DEPTH = 5;
 
 /**
+ * Default timeout for proposal executors in milliseconds.
+ * Prevents slow executors (e.g., Stripe API calls) from blocking Claude response.
+ * If an executor exceeds this timeout, the proposal is marked as failed and execution continues.
+ */
+const EXECUTOR_TIMEOUT_MS = 5000;
+
+/**
+ * Execute a promise with a timeout.
+ * Returns the result if successful, throws TimeoutError if timeout exceeded.
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operationName: string
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Executor timeout: ${operationName} exceeded ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId!);
+    throw error;
+  }
+}
+
+/**
  * Chat message for conversation history
  */
 export interface ChatMessage {
@@ -407,18 +444,134 @@ export class AgentOrchestrator {
       userMessage
     );
 
+    // Track failed proposals to inform Claude so it can apologize and offer alternatives
+    const failedProposals: Array<{ id: string; toolName: string; reason: string }> = [];
+
     if (softConfirmedIds.length > 0) {
       logger.info(
-        { tenantId, sessionId, count: softConfirmedIds.length },
+        { tenantId, sessionId, count: softConfirmedIds.length, proposalIds: softConfirmedIds },
         'T2 proposals soft-confirmed by user message'
       );
+
+      // Execute each soft-confirmed proposal
+      for (const proposalId of softConfirmedIds) {
+        try {
+          // Fetch the full proposal to get toolName and payload
+          // CRITICAL: Filter by tenantId to prevent cross-tenant execution
+          const proposal = await this.prisma.agentProposal.findFirst({
+            where: {
+              id: proposalId,
+              tenantId, // Multi-tenant isolation
+            },
+          });
+
+          if (!proposal) {
+            logger.warn(
+              { proposalId, tenantId },
+              'Proposal not found or tenant mismatch - possible security issue'
+            );
+            failedProposals.push({
+              id: proposalId,
+              toolName: 'unknown',
+              reason: 'Proposal not found or access denied',
+            });
+            continue;
+          }
+
+          const executor = getProposalExecutor(proposal.toolName);
+          if (!executor) {
+            logger.error(
+              { proposalId, toolName: proposal.toolName },
+              'No executor registered for tool'
+            );
+            await this.proposalService.markFailed(
+              proposalId,
+              `No executor for ${proposal.toolName}`
+            );
+            failedProposals.push({
+              id: proposalId,
+              toolName: proposal.toolName,
+              reason: `No executor registered for ${proposal.toolName}`,
+            });
+            continue;
+          }
+
+          // Validate and execute the proposal with timeout to prevent blocking Claude response
+          const rawPayload = (proposal.payload as Record<string, unknown>) || {};
+
+          // Validate payload schema before execution (prevents malformed/malicious payloads)
+          let payload: Record<string, unknown>;
+          try {
+            payload = validateExecutorPayload(proposal.toolName, rawPayload);
+          } catch (validationError) {
+            const errorMessage =
+              validationError instanceof Error ? validationError.message : String(validationError);
+            logger.error(
+              { proposalId, toolName: proposal.toolName, error: errorMessage },
+              'Proposal payload validation failed'
+            );
+            await this.proposalService.markFailed(proposalId, errorMessage);
+            failedProposals.push({
+              id: proposalId,
+              toolName: proposal.toolName,
+              reason: errorMessage,
+            });
+            continue;
+          }
+
+          logger.info(
+            { proposalId, toolName: proposal.toolName, tenantId, timeoutMs: EXECUTOR_TIMEOUT_MS },
+            'Executing T2 soft-confirmed proposal with timeout'
+          );
+
+          const result = await withTimeout(
+            executor(tenantId, payload),
+            EXECUTOR_TIMEOUT_MS,
+            proposal.toolName
+          );
+          await this.proposalService.markExecuted(proposalId, result);
+
+          logger.info(
+            { proposalId, toolName: proposal.toolName, result },
+            'T2 proposal executed successfully'
+          );
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error(
+            { proposalId, error: errorMessage },
+            'Failed to execute T2 soft-confirmed proposal'
+          );
+          await this.proposalService.markFailed(proposalId, errorMessage);
+
+          // Fetch toolName for better error context (proposal was fetched successfully above)
+          const proposal = await this.prisma.agentProposal.findFirst({
+            where: { id: proposalId, tenantId },
+            select: { toolName: true },
+          });
+          failedProposals.push({
+            id: proposalId,
+            toolName: proposal?.toolName || 'unknown',
+            reason: errorMessage,
+          });
+        }
+      }
     }
 
     // Build messages for Claude API
-    const systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace(
+    let systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace(
       '{BUSINESS_CONTEXT}',
       session.context.contextPrompt
     );
+
+    // If there were failed proposals, add context so Claude can apologize and offer alternatives
+    if (failedProposals.length > 0) {
+      const failureContext = failedProposals.map((f) => `- ${f.toolName}: ${f.reason}`).join('\n');
+      systemPrompt += `\n\n---\n\n## Recent Action Failures\n\nSome actions I tried to execute failed:\n${failureContext}\n\nPlease acknowledge these failures to the user, apologize briefly, and offer alternatives or ask how to proceed.`;
+      logger.info(
+        { tenantId, sessionId, failedCount: failedProposals.length },
+        'Added failure context to system prompt for user feedback'
+      );
+    }
 
     // Convert session history to API format with sliding window
     const historyMessages = this.buildHistoryMessages(session.messages);
@@ -639,7 +792,10 @@ export class AgentOrchestrator {
         toolResultBlocks.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: JSON.stringify({ success: false, error: 'Unknown tool' }),
+          content: JSON.stringify({
+            success: false,
+            error: "I don't recognize that action. Please try a different request.",
+          }),
         });
         continue;
       }

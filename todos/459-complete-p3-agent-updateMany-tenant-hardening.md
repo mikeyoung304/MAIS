@@ -1,9 +1,10 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '459'
 tags: [code-review, security, agent, multi-tenant]
 dependencies: []
+completed_at: '2025-12-29'
 ---
 
 # Agent Proposal updateMany Could Include Explicit tenantId
@@ -68,8 +69,8 @@ await this.prisma.agentProposal.updateMany({
 
 ## Acceptance Criteria
 
-- [ ] `updateMany` includes tenantId in where clause
-- [ ] Same pattern applied to any other updateMany/deleteMany in the file
+- [x] `updateMany` includes tenantId in where clause
+- [x] Same pattern applied to any other updateMany/deleteMany in the file (verified: one other updateMany at lines 234-242 already has tenantId; cleanupExpired() is intentionally cross-tenant)
 
 ## Resources
 

@@ -19,6 +19,7 @@ import { Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 import { CustomerOrchestrator } from '../agent/customer';
 import { getCustomerProposalExecutor } from '../agent/customer/executor-registry';
+import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
 
 /**
  * Create public customer chat routes
@@ -321,6 +322,22 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
 
       const startTime = Date.now();
 
+      // Validate payload schema before execution (prevents malformed/malicious payloads)
+      const rawPayload = (proposal.payload as Record<string, unknown>) || {};
+      let validatedPayload: Record<string, unknown>;
+      try {
+        validatedPayload = validateExecutorPayload(proposal.operation, rawPayload);
+      } catch (validationError) {
+        const errorMessage =
+          validationError instanceof Error ? validationError.message : String(validationError);
+        logger.error(
+          { tenantId, proposalId, operation: proposal.operation, error: errorMessage },
+          'Customer proposal payload validation failed'
+        );
+        res.status(400).json({ error: 'Invalid booking data. Please try again.' });
+        return;
+      }
+
       try {
         // Execute within transaction
         const result = await prisma.$transaction(async (tx) => {
@@ -330,11 +347,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
             throw new Error('Customer ID not found on proposal');
           }
 
-          const executorResult = await executor(
-            tenantId,
-            customerId,
-            proposal.payload as Record<string, unknown>
-          );
+          const executorResult = await executor(tenantId, customerId, validatedPayload);
 
           // Update proposal as executed
           await tx.agentProposal.update({

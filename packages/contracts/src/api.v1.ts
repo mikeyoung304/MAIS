@@ -665,6 +665,11 @@ export const Contracts = c.router({
   platformGetAllTenants: {
     method: 'GET',
     path: '/v1/admin/tenants',
+    query: z
+      .object({
+        includeTest: z.enum(['true', 'false']).optional().default('false'),
+      })
+      .optional(),
     responses: {
       200: z.array(TenantDtoSchema),
       401: UnauthorizedErrorSchema,
@@ -746,6 +751,11 @@ export const Contracts = c.router({
   platformGetStats: {
     method: 'GET',
     path: '/v1/admin/stats',
+    query: z
+      .object({
+        includeTest: z.enum(['true', 'false']).optional().default('false'),
+      })
+      .optional(),
     responses: {
       200: PlatformStatsSchema,
       401: UnauthorizedErrorSchema,

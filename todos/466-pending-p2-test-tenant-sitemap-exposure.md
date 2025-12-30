@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '466'
 tags: [code-review, test-data-isolation, security]
@@ -63,15 +63,16 @@ async listActive(): Promise<{ slug: string; updatedAt: Date }[]> {
 
 ## Acceptance Criteria
 
-- [ ] listActive() filters out test tenants
-- [ ] Sitemap only contains real tenant slugs
-- [ ] robots.txt not affected
+- [x] listActive() filters out test tenants
+- [x] Sitemap only contains real tenant slugs
+- [x] robots.txt not affected
 
 ## Work Log
 
-| Date       | Action              | Outcome/Learning                  |
-| ---------- | ------------------- | --------------------------------- |
-| 2025-12-29 | Architecture review | Sitemap exposes test tenant slugs |
+| Date       | Action              | Outcome/Learning                                            |
+| ---------- | ------------------- | ----------------------------------------------------------- |
+| 2025-12-29 | Architecture review | Sitemap exposes test tenant slugs                           |
+| 2025-12-29 | Fixed               | Added `isTestTenant: false` filter to `listActive()` method |
 
 ## Resources
 

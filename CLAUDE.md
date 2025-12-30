@@ -273,6 +273,61 @@ const key = 'catalog:packages';
 
 **Note:** HTTP-level cache middleware was removed (security vulnerability). Only use `CacheService` for application-level caching.
 
+### Segments and Tiers (Service Organization)
+
+Tenants organize their services using **Segments** (categories) and **Tiers** (pricing levels within each category).
+
+**Default Setup (1×3):** When a new tenant is created, the system automatically provisions:
+
+| Default       | Name             | Slug               | Purpose                         |
+| ------------- | ---------------- | ------------------ | ------------------------------- |
+| **1 Segment** | General          | `general`          | Groups related service packages |
+| **Tier 1**    | Basic Package    | `basic-package`    | Entry-level offering            |
+| **Tier 2**    | Standard Package | `standard-package` | Most popular option             |
+| **Tier 3**    | Premium Package  | `premium-package`  | Full experience                 |
+
+**Data Model:**
+
+- **Segments** = `Segment` model (1-10 per tenant) — e.g., "Family Photos", "Weddings", "Engagements"
+- **Tiers** = `Package` model with `groupingOrder` field (1-10 per segment) — ordering determines display position
+- All packages have `basePrice: 0` initially — tenants set their own pricing
+
+**Example Structure for a Photographer:**
+
+```
+Tenant: Bella Weddings
+├── Segment: "Family Photos" (segmentId: abc123)
+│   ├── Package: "Mini Session" (groupingOrder: 1) ← Tier 1
+│   ├── Package: "Standard Session" (groupingOrder: 2) ← Tier 2
+│   └── Package: "Premium Session" (groupingOrder: 3) ← Tier 3
+│
+├── Segment: "Engagement Photos" (segmentId: def456)
+│   ├── Package: "Essential" (groupingOrder: 1)
+│   ├── Package: "Classic" (groupingOrder: 2)
+│   └── Package: "Deluxe" (groupingOrder: 3)
+│
+└── Segment: "Wedding Photos" (segmentId: ghi789)
+    ├── Package: "Coverage Only" (groupingOrder: 1)
+    ├── Package: "Full Day" (groupingOrder: 2)
+    └── Package: "Complete Experience" (groupingOrder: 3)
+```
+
+**Key Files:**
+
+- `server/src/services/tenant-onboarding.service.ts` - Creates default segment + 3 packages
+- `server/prisma/schema.prisma` - `Segment` and `Package` models
+- `server/src/routes/tenant-admin-segments.routes.ts` - CRUD for segments
+
+**Tier Display Names:** Tenants can customize tier labels via `Tenant.tierDisplayNames` JSON field:
+
+```json
+{
+  "tier_1": "The Grounding Reset",
+  "tier_2": "The Team Recharge",
+  "tier_3": "The Executive Reset"
+}
+```
+
 ### Page-Based Landing Page Configuration
 
 Tenant landing pages use a config-driven page and section system for flexible content management.
@@ -338,6 +393,7 @@ AI-powered booking assistant for tenant storefronts. Visitors browse services, c
 - `server/src/agent/customer/customer-tools.ts` - Tools: `get_services`, `check_availability`, `book_service` (T3), `get_business_info`
 - `server/src/agent/customer/customer-orchestrator.ts` - Session management, tool dispatch
 - `server/src/agent/customer/customer-booking-executor.ts` - Executes confirmed proposals
+- `server/src/agent/proposals/executor-registry.ts` - Centralized executor registry (avoids circular deps)
 - `server/src/routes/public-customer-chat.routes.ts` - Public API (tenant via `X-Tenant-Key` header)
 - `apps/web/src/components/chat/CustomerChatWidget.tsx` - React widget
 
@@ -346,6 +402,15 @@ AI-powered booking assistant for tenant storefronts. Visitors browse services, c
 - Bookings use T3 trust tier (proposal → customer confirmation → execution)
 - Sessions: tenant-scoped, `sessionType: 'CUSTOMER'`, 60-minute TTL
 - All tools respect tenant data isolation
+
+**Proposal State Machine:**
+
+```
+Tool creates proposal → PENDING → (T2: soft-confirm / T3: user-confirm) → CONFIRMED → Executor → EXECUTED
+                                                                                     ↘ on error → FAILED
+```
+
+**Critical:** Every state transition to CONFIRMED must trigger executor invocation. Missing this bridge causes proposals to confirm but never execute.
 
 ## Domain Expertise (Auto-Load Skills)
 
@@ -512,6 +577,7 @@ Optional (graceful fallbacks in real mode):
 - **docs/solutions/PREVENTION-QUICK-REFERENCE.md** - Quick reference cheat sheet (print and pin!)
 - **docs/design/BRAND_VOICE_GUIDE.md** - Brand voice, copy patterns, and UI/UX design system (MUST READ for any UI work)
 - **docs/adrs/ADR-014-nextjs-app-router-migration.md** - Next.js migration architecture decisions
+- **docs/adrs/ADR-016-field-naming-conventions.md** - Database vs API field naming (title/name, priceCents/basePrice)
 - **apps/web/README.md** - Next.js app setup, environment variables, architecture
 
 ## Documentation Conventions
@@ -643,6 +709,10 @@ export class BookingService {
 13. **Duplicate data fetching:** Wrap shared SSR functions with React `cache()`
 14. **Vercel Root Directory setting:** Never set Root Directory for npm workspaces monorepos - it breaks dependency hoisting
 15. **Wrong underscore prefix for unused vars:** Only prefix with `_` if variable is TRULY unused - variables passed to logger, used in assignments, or conditionals are NOT unused
+16. **Circular dependencies in agent modules:** Use `npx madge --circular server/src/` before adding imports. Shared state (registries, maps) goes in dedicated modules, not routes
+17. **T2 proposal confirms but never executes:** State transitions MUST have side effects. After CONFIRMED, always call the registered executor
+18. **Proposal not in API response:** When tools return `requiresApproval: true`, verify proposal object propagates to final response
+19. **Field name mismatches in DTOs:** Use canonical names from contracts package. Executor should accept both old and new field names for backward compatibility
 
 ## Prevention Strategies (Read These!)
 
@@ -657,10 +727,14 @@ The following links prevent common mistakes from recurring:
 - **[nextjs-migration-lessons-learned](docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)** - 10 lessons from the Next.js migration
 - **[vercel-nextjs-npm-workspaces](docs/solutions/deployment-issues/vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md)** - Vercel deployment fix for npm workspaces monorepos
 - **[typescript-unused-variables-build-failure](docs/solutions/build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)** - Unused variable build errors and underscore prefix decision tree
+- **[chatbot-proposal-execution-flow](docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)** - T2 execution, field normalization, tenant validation security
+- **[circular-dependency-executor-registry](docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md)** - Registry module pattern for breaking circular imports
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
 **Key insight from Unused Variables Fix:** Only prefix with `_` if the variable is TRULY unused. Variables passed to logger calls, used in assignments, or referenced in conditionals are NOT unused - they are used.
+
+**Key insight from Proposal Execution Fix:** Circular dependencies between routes and orchestrators caused executor registry to fail. Solution: Extract shared state (executor registry) to dedicated module (`agent/proposals/executor-registry.ts`). Routes and orchestrators both import from this central module.
 
 ## Quick Start Checklist
 
@@ -679,6 +753,13 @@ When starting work on this codebase:
 - Use `cache()` wrapper for shared data fetching
 - Add `error.tsx` to all dynamic route folders
 - Never expose backend tokens in session callbacks
+
+**For agent/chatbot work specifically:**
+
+- Check for circular deps: `npx madge --circular server/src/`
+- Verify executor registered for tool in `registerAllExecutors()`
+- Test full proposal lifecycle (create → confirm → execute)
+- Ensure proposal object propagates to API response for T3 tools
 
 ## Project Structure
 

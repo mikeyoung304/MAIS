@@ -1,9 +1,10 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '458'
 tags: [code-review, dry, agent, architecture]
 dependencies: []
+completed_at: 2025-12-29
 ---
 
 # Agent Tools: DRY Helpers Created But Not Fully Adopted
@@ -67,11 +68,23 @@ Complete the adoption in write-tools.ts to match read-tools.ts patterns.
 
 ## Acceptance Criteria
 
-- [ ] `write-tools.ts` imports from `utils.ts`
-- [ ] All `$${(price / 100).toFixed(2)}` replaced with `formatPrice()`
-- [ ] All `.toISOString().split('T')[0]` replaced with `formatDateISO()`
-- [ ] All catch blocks use `handleToolError()`
-- [ ] TypeScript compiles without errors
+- [x] `write-tools.ts` imports from `utils.ts`
+- [x] All `$${(price / 100).toFixed(2)}` replaced with `formatPrice()`
+- [x] All `.toISOString().split('T')[0]` replaced with `formatDateISO()`
+- [x] All catch blocks use `handleToolError()`
+- [x] TypeScript compiles without errors
+
+## Resolution Notes (2025-12-29)
+
+Upon investigation, the DRY adoption was already complete in `write-tools.ts`:
+
+1. **Import exists** (line 20): `import { handleToolError, formatPrice, formatDateISO } from './utils'`
+2. **formatPrice()** used in 10+ locations for price formatting
+3. **formatDateISO()** used in 8+ locations for date formatting
+4. **handleToolError()** used in all 18 catch blocks across all tools
+
+Verified by grep search - no inline `$${...toFixed(2)}` or `.toISOString().split('T')[0]` patterns remain.
+TypeScript compilation successful with no errors.
 
 ## Resources
 

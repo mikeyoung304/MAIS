@@ -268,6 +268,7 @@ export class ProposalService {
     await this.prisma.agentProposal.updateMany({
       where: {
         id: { in: proposalIds },
+        tenantId, // Defense-in-depth: ensure tenant isolation even though IDs came from tenant-filtered query
       },
       data: {
         status: 'CONFIRMED',

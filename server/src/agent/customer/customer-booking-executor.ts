@@ -17,6 +17,7 @@ import type { PaymentProvider, CheckoutSession } from '../../lib/ports';
 import { registerCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';
 import { sanitizePlainText } from '../../lib/sanitization';
+import { ResourceNotFoundError, DateUnavailableError } from '../errors';
 
 /**
  * Email provider interface for sending booking notifications
@@ -114,7 +115,11 @@ export function registerCustomerBookingExecutor(
         });
 
         if (!pkg) {
-          throw new Error('Service is no longer available. Please choose a different service.');
+          throw new ResourceNotFoundError(
+            'service',
+            packageId,
+            'Please choose a different service.'
+          );
         }
 
         // Check if date is still available (prevents race condition)
@@ -127,9 +132,7 @@ export function registerCustomerBookingExecutor(
         });
 
         if (existingBooking) {
-          throw new Error(
-            'Sorry, this date is no longer available. Please choose a different date.'
-          );
+          throw new DateUnavailableError(date, 'booked', 'Please choose a different date.');
         }
 
         // Check for blackout date
@@ -138,7 +141,7 @@ export function registerCustomerBookingExecutor(
         });
 
         if (blackout) {
-          throw new Error('Sorry, this date is not available. Please choose a different date.');
+          throw new DateUnavailableError(date, 'blocked', 'Please choose a different date.');
         }
 
         // Verify customer still exists and belongs to this tenant
@@ -147,7 +150,7 @@ export function registerCustomerBookingExecutor(
         });
 
         if (!customer) {
-          throw new Error('Customer not found. Please try booking again.');
+          throw new ResourceNotFoundError('customer', customerId, 'Please try booking again.');
         }
 
         // Generate unique confirmation code

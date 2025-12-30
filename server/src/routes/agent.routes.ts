@@ -18,25 +18,14 @@ import { AgentOrchestrator } from '../agent/orchestrator';
 import { buildSessionContext, detectOnboardingState } from '../agent/context/context-builder';
 import type { OnboardingState } from '../agent/context/context-builder';
 
-/**
- * Proposal executor registry
- * Maps tool names to their execution functions
- * This will be populated by the MCP server layer
- */
-export type ProposalExecutor = (
-  tenantId: string,
-  payload: Record<string, unknown>
-) => Promise<Record<string, unknown>>;
-
-const proposalExecutors = new Map<string, ProposalExecutor>();
-
-/**
- * Register a proposal executor for a tool
- * Called by MCP server during initialization
- */
-export function registerProposalExecutor(toolName: string, executor: ProposalExecutor): void {
-  proposalExecutors.set(toolName, executor);
-}
+// Re-export executor registry from centralized module
+// (Avoids circular dependency with orchestrator.ts)
+export {
+  type ProposalExecutor,
+  registerProposalExecutor,
+  getProposalExecutor,
+} from '../agent/proposals/executor-registry';
+import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
 
 /**
  * Create agent routes
@@ -340,7 +329,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
       }
 
       // Get executor for this tool
-      const executor = proposalExecutors.get(proposal.toolName);
+      const executor = getProposalExecutor(proposal.toolName);
       if (!executor) {
         // No executor registered yet - this is OK during development
         // Mark as confirmed but log warning
@@ -370,13 +359,26 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
       // This ensures executor + status update are atomic
       const startTime = Date.now();
 
+      // Validate payload schema before execution (prevents malformed/malicious payloads)
+      const rawPayload = (proposal.payload as Record<string, unknown>) || {};
+      let validatedPayload: Record<string, unknown>;
+      try {
+        validatedPayload = validateExecutorPayload(proposal.toolName, rawPayload);
+      } catch (validationError) {
+        const errorMessage =
+          validationError instanceof Error ? validationError.message : String(validationError);
+        logger.error(
+          { tenantId, proposalId, toolName: proposal.toolName, error: errorMessage },
+          'Proposal payload validation failed'
+        );
+        res.status(400).json({ error: `Invalid proposal data: ${errorMessage}` });
+        return;
+      }
+
       try {
         const result = await prisma.$transaction(async (tx) => {
           // Execute the proposal (executor may perform DB operations)
-          const executorResult = await executor(
-            tenantId,
-            proposal.payload as Record<string, unknown>
-          );
+          const executorResult = await executor(tenantId, validatedPayload);
 
           // Update proposal as executed (atomic with executor)
           await tx.agentProposal.update({

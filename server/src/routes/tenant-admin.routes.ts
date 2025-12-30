@@ -306,15 +306,24 @@ export function createTenantAdminRoutes(
       const packagesDto = packages.map((pkg) => ({
         id: pkg.id,
         slug: pkg.slug,
+        // Map to frontend-expected field names
+        name: pkg.title || pkg.name,
+        basePrice: pkg.priceCents ?? pkg.basePrice,
+        // Also include original names for backward compatibility
         title: pkg.title,
-        description: pkg.description,
         priceCents: pkg.priceCents,
+        description: pkg.description,
         photoUrl: pkg.photoUrl,
         photos: pkg.photos,
         // Tier/segment organization fields
         segmentId: pkg.segmentId,
         grouping: pkg.grouping,
         groupingOrder: pkg.groupingOrder,
+        // Active status and currency for frontend
+        isActive: pkg.active ?? true,
+        currency: 'USD',
+        depositAmount: pkg.depositAmount ?? null,
+        sortOrder: pkg.sortOrder ?? 0,
       }));
 
       res.json(packagesDto);

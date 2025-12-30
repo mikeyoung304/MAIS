@@ -244,6 +244,7 @@ export const getPackagesTool: AgentTool = {
         };
       }
 
+      const limit = 50;
       const packages = await prisma.package.findMany({
         where: {
           tenantId,
@@ -251,12 +252,17 @@ export const getPackagesTool: AgentTool = {
         },
         include: { addOns: { include: { addOn: true } } },
         orderBy: { createdAt: 'desc' },
-        take: 50, // Limit to prevent token bloat
+        take: limit,
       });
 
       return {
         success: true,
         data: packages.map(formatPackage),
+        meta: {
+          returned: packages.length,
+          limit,
+          hasMore: packages.length === limit,
+        },
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -306,7 +312,8 @@ export const getBookingsTool: AgentTool = {
     const status = params.status as string | undefined;
     const fromDate = params.fromDate as string | undefined;
     const toDate = params.toDate as string | undefined;
-    const limit = (params.limit as number) || 20;
+    const requestedLimit = (params.limit as number) || 20;
+    const effectiveLimit = Math.min(requestedLimit, 50);
 
     try {
       // Validate status if provided
@@ -325,7 +332,7 @@ export const getBookingsTool: AgentTool = {
         },
         include: { package: true, customer: true },
         orderBy: { date: 'asc' },
-        take: Math.min(limit, 50),
+        take: effectiveLimit,
       });
 
       return {
@@ -341,6 +348,11 @@ export const getBookingsTool: AgentTool = {
           notes: b.notes ? sanitizeForContext(b.notes, 500) : null,
           createdAt: b.createdAt.toISOString(),
         })),
+        meta: {
+          returned: bookings.length,
+          limit: effectiveLimit,
+          hasMore: bookings.length === effectiveLimit,
+        },
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -528,13 +540,14 @@ export const getBlackoutsTool: AgentTool = {
     const toDate = params.toDate as string | undefined;
 
     try {
+      const limit = 100;
       const blackouts = await prisma.blackoutDate.findMany({
         where: {
           tenantId,
           ...buildDateRangeFilter(fromDate, toDate),
         },
         orderBy: { date: 'asc' },
-        take: 100, // Limit to prevent token bloat
+        take: limit,
       });
 
       return {
@@ -544,6 +557,11 @@ export const getBlackoutsTool: AgentTool = {
           date: formatDateISO(b.date),
           reason: b.reason ? sanitizeForContext(b.reason, 100) : null,
         })),
+        meta: {
+          returned: blackouts.length,
+          limit,
+          hasMore: blackouts.length === limit,
+        },
       };
     } catch (error) {
       return handleToolError(
@@ -690,6 +708,7 @@ export const getAddonsTool: AgentTool = {
         };
       }
 
+      const limit = 50;
       const addOns = await prisma.addOn.findMany({
         where: {
           tenantId,
@@ -697,12 +716,17 @@ export const getAddonsTool: AgentTool = {
         },
         include: { segment: { select: { id: true, name: true } } },
         orderBy: { createdAt: 'desc' },
-        take: 50, // Limit to prevent token bloat
+        take: limit,
       });
 
       return {
         success: true,
         data: addOns.map(formatAddOn),
+        meta: {
+          returned: addOns.length,
+          limit,
+          hasMore: addOns.length === limit,
+        },
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -848,7 +872,15 @@ export const getCustomersTool: AgentTool = {
         });
 
         if (bookingAggregates.length === 0) {
-          return { success: true, data: [] };
+          return {
+            success: true,
+            data: [],
+            meta: {
+              returned: 0,
+              limit,
+              hasMore: false,
+            },
+          };
         }
 
         // Get customer details for those who have bookings in the date range
@@ -873,7 +905,15 @@ export const getCustomersTool: AgentTool = {
           })
           .filter((r): r is NonNullable<typeof r> => r !== null);
 
-        return { success: true, data: results };
+        return {
+          success: true,
+          data: results,
+          meta: {
+            returned: results.length,
+            limit,
+            hasMore: bookingAggregates.length === limit,
+          },
+        };
       }
 
       // No date range - get customers with their all-time stats
@@ -910,7 +950,15 @@ export const getCustomersTool: AgentTool = {
         return formatCustomerWithStats(customer, stats.count, stats.total);
       });
 
-      return { success: true, data: results };
+      return {
+        success: true,
+        data: results,
+        meta: {
+          returned: results.length,
+          limit,
+          hasMore: customers.length === limit,
+        },
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_customers tool');
@@ -990,14 +1038,23 @@ export const getSegmentsTool: AgentTool = {
         return { success: true, data: formatSegment(segment) };
       }
 
+      const limit = 25;
       const segments = await prisma.segment.findMany({
         where: { tenantId, ...(includeInactive ? {} : { active: true }) },
         include: { _count: { select: { packages: true } } },
         orderBy: { sortOrder: 'asc' },
-        take: 25, // Limit to prevent token bloat
+        take: limit,
       });
 
-      return { success: true, data: segments.map(formatSegment) };
+      return {
+        success: true,
+        data: segments.map(formatSegment),
+        meta: {
+          returned: segments.length,
+          limit,
+          hasMore: segments.length === limit,
+        },
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ error, tenantId }, 'Error in get_segments tool');
@@ -1333,13 +1390,14 @@ export const getBlackoutDatesTool: AgentTool = {
     const toDate = params.toDate as string | undefined;
 
     try {
+      const limit = 100;
       const blackouts = await prisma.blackoutDate.findMany({
         where: {
           tenantId,
           ...buildDateRangeFilter(fromDate, toDate),
         },
         orderBy: { date: 'asc' },
-        take: 100, // Limit to prevent token bloat
+        take: limit,
       });
 
       // Format blackout dates with all relevant info
@@ -1354,6 +1412,11 @@ export const getBlackoutDatesTool: AgentTool = {
         data: {
           blackoutDates: formattedBlackouts,
           count: formattedBlackouts.length,
+        },
+        meta: {
+          returned: formattedBlackouts.length,
+          limit,
+          hasMore: blackouts.length === limit,
         },
       };
     } catch (error) {

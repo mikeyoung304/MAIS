@@ -3,7 +3,7 @@
  * Provides data layer for multi-tenant operations
  */
 
-import type { PrismaClient, Tenant } from '../../generated/prisma';
+import type { PrismaClient, Tenant, Prisma } from '../../generated/prisma';
 import {
   TenantPublicDtoSchema,
   SafeImageUrlSchema,
@@ -160,12 +160,25 @@ export class PrismaTenantRepository {
   /**
    * List all tenants with optional filtering
    *
-   * @param onlyActive - Filter to only active tenants
+   * By default, excludes test tenants to prevent data leakage in production.
+   * Use includeTestTenants: true only for admin/debugging purposes.
+   *
+   * @param options - Filtering options
+   * @param options.onlyActive - Filter to only active tenants (default: false)
+   * @param options.includeTestTenants - Include test tenants in results (default: false)
    * @returns Array of tenants
    */
-  async list(onlyActive = false): Promise<Tenant[]> {
+  async list(
+    options: { onlyActive?: boolean; includeTestTenants?: boolean } = {}
+  ): Promise<Tenant[]> {
+    const { onlyActive = false, includeTestTenants = false } = options;
+
+    const where: Prisma.TenantWhereInput = {};
+    if (onlyActive) where.isActive = true;
+    if (!includeTestTenants) where.isTestTenant = false;
+
     return await this.prisma.tenant.findMany({
-      where: onlyActive ? { isActive: true } : undefined,
+      where: Object.keys(where).length ? where : undefined,
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -294,7 +307,10 @@ export class PrismaTenantRepository {
    */
   async listActive(): Promise<{ slug: string; updatedAt: Date }[]> {
     return await this.prisma.tenant.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        isTestTenant: false,
+      },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
     });

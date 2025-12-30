@@ -24,6 +24,7 @@ import { buildCustomerSystemPrompt } from './customer-prompt';
 import { ProposalService } from '../proposals/proposal.service';
 import { AuditService } from '../audit/audit.service';
 import { logger } from '../../lib/core/logger';
+import { ErrorMessages } from '../errors';
 
 /**
  * Configuration for customer orchestrator
@@ -336,6 +337,19 @@ export class CustomerOrchestrator {
       { businessContext, businessName }
     );
 
+    logger.debug(
+      {
+        tenantId,
+        sessionId,
+        hasProposal: !!proposal,
+        proposalId: proposal?.proposalId,
+        requiresApproval: proposal?.requiresApproval,
+        toolResultsCount: toolResults?.length,
+        toolNames: toolResults?.map((r) => r.toolName),
+      },
+      'Customer chat processResponse result'
+    );
+
     // Update session with new messages
     const newUserMessage: ChatMessage = {
       role: 'user',
@@ -549,7 +563,10 @@ ${tenant.email || 'Contact information not available.'}
         toolResultBlocks.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: JSON.stringify({ success: false, error: 'Unknown tool' }),
+          content: JSON.stringify({
+            success: false,
+            error: "I don't recognize that action. Please try a different request.",
+          }),
         });
         continue;
       }
@@ -572,6 +589,15 @@ ${tenant.email || 'Contact information not available.'}
             trustTier: result.trustTier,
             requiresApproval: result.requiresApproval,
           };
+          logger.debug(
+            {
+              toolName: toolUse.name,
+              proposalId: result.proposalId,
+              trustTier: result.trustTier,
+              requiresApproval: result.requiresApproval,
+            },
+            'Proposal captured from tool result'
+          );
         }
 
         toolResultBlocks.push({

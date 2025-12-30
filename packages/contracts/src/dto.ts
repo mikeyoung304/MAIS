@@ -581,6 +581,7 @@ export const TenantDtoSchema = z.object({
   stripeAccountId: z.string().nullable(),
   stripeOnboarded: z.boolean(),
   isActive: z.boolean(),
+  isTestTenant: z.boolean(),
   createdAt: z.string(), // ISO date string
   updatedAt: z.string(), // ISO date string
   // Stats

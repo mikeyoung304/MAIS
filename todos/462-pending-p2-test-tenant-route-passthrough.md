@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '462'
 tags: [code-review, test-data-isolation, architecture, enhancement]
@@ -88,7 +88,7 @@ If admins never need to see test tenants, remove the parameter entirely:
 
 ## Recommended Action
 
-<!-- Filled during triage -->
+Implemented Solution 1 - Added query parameter support.
 
 ## Technical Details
 
@@ -102,17 +102,30 @@ If admins never need to see test tenants, remove the parameter entirely:
 
 ## Acceptance Criteria
 
-- [ ] Contract defines `includeTest` query parameter
-- [ ] Route handlers extract and pass parameter to controllers
-- [ ] TypeScript types are correct end-to-end
-- [ ] Default behavior (no param) excludes test tenants
-- [ ] Setting `?includeTest=true` shows test tenants
+- [x] Contract defines `includeTest` query parameter
+- [x] Route handlers extract and pass parameter to controllers
+- [x] TypeScript types are correct end-to-end
+- [x] Default behavior (no param) excludes test tenants
+- [x] Setting `?includeTest=true` shows test tenants
 
 ## Work Log
 
-| Date       | Action                       | Outcome/Learning                               |
-| ---------- | ---------------------------- | ---------------------------------------------- |
-| 2025-12-29 | Code review identified issue | Dead code - parameter never reaches controller |
+| Date       | Action                       | Outcome/Learning                                  |
+| ---------- | ---------------------------- | ------------------------------------------------- |
+| 2025-12-29 | Code review identified issue | Dead code - parameter never reaches controller    |
+| 2025-12-29 | Implemented Solution 1       | Added query param to contracts and route handlers |
+
+## Resolution Summary
+
+Added `includeTest` query parameter support across all three affected locations:
+
+1. **packages/contracts/src/api.v1.ts**: Added `query: z.object({ includeTest: z.enum(['true', 'false']).optional().default('false') }).optional()` to both `platformGetAllTenants` and `platformGetStats` endpoints.
+
+2. **server/src/routes/index.ts**: Updated `platformGetAllTenants` and `platformGetStats` handlers to extract the query parameter and pass it to controllers.
+
+3. **server/src/routes/admin/tenants.routes.ts**: Updated the GET `/` handler to extract `includeTest` from query and pass it to `tenantRepo.listWithStats()`.
+
+TypeScript typecheck passes. The feature is now complete - platform admins can toggle test tenant visibility via `?includeTest=true`.
 
 ## Resources
 

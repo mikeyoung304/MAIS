@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '470'
 tags: [code-review, test-data-isolation, documentation]
@@ -61,11 +61,12 @@ Add `@returns` tags to all updated methods.
 
 ## Acceptance Criteria
 
-- [ ] All methods have @returns tags
-- [ ] Parameter descriptions are complete
+- [x] All methods have @returns tags
+- [x] Parameter descriptions are complete
 
 ## Work Log
 
-| Date       | Action              | Outcome/Learning |
-| ---------- | ------------------- | ---------------- |
-| 2025-12-29 | Code quality review | JSDoc incomplete |
+| Date       | Action              | Outcome/Learning                                                                                                                                            |
+| ---------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-12-29 | Code quality review | JSDoc incomplete                                                                                                                                            |
+| 2025-12-29 | JSDoc improvements  | Added complete @param, @returns, @throws tags to getAllTenants and getStats in platform-admin.controller.ts. Repository methods already had complete JSDoc. |

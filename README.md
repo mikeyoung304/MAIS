@@ -509,6 +509,45 @@ npm run create-tenant -- \
 # Save these keys - the secret key is shown only once!
 ```
 
+### Default Segments and Tiers
+
+When a new tenant is created, the system automatically sets up a **1×3 structure**:
+
+| Default       | Name             | Slug               | Purpose                         |
+| ------------- | ---------------- | ------------------ | ------------------------------- |
+| **1 Segment** | General          | `general`          | Groups related service packages |
+| **Tier 1**    | Basic Package    | `basic-package`    | Entry-level offering            |
+| **Tier 2**    | Standard Package | `standard-package` | Most popular option             |
+| **Tier 3**    | Premium Package  | `premium-package`  | Full experience                 |
+
+**How it works:**
+
+- **Segments** = Categories of services (e.g., "Family Photos", "Weddings", "Engagements")
+- **Tiers** = Pricing levels within each segment (Basic → Standard → Premium)
+- Tenants can create **1-10 segments** and **1-10 tiers per segment**
+- Each tier is a `Package` with `groupingOrder` (1, 2, 3...) for display ordering
+- All packages start with `basePrice: 0` — tenants set their own pricing
+
+**Example for a photographer:**
+
+```
+Tenant: Bella Weddings
+├── Segment: "Family Photos"
+│   ├── Mini Session (Tier 1) - $150
+│   ├── Standard Session (Tier 2) - $350
+│   └── Premium Session (Tier 3) - $600
+│
+├── Segment: "Engagement Photos"
+│   ├── Essential (Tier 1) - $250
+│   ├── Classic (Tier 2) - $450
+│   └── Deluxe (Tier 3) - $750
+│
+└── Segment: "Wedding Photos"
+    ├── Coverage Only (Tier 1) - $2,000
+    ├── Full Day (Tier 2) - $4,000
+    └── Complete Experience (Tier 3) - $6,500
+```
+
 ### Verify Installation
 
 ```bash

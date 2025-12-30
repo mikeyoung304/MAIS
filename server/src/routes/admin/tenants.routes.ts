@@ -28,10 +28,13 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
   /**
    * GET /api/v1/admin/tenants
    * List all tenants with stats
+   * Query params:
+   * - includeTest: 'true' | 'false' (optional, default: 'false')
    */
-  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenants = await tenantRepo.listWithStats();
+      const includeTestTenants = req.query.includeTest === 'true';
+      const tenants = await tenantRepo.listWithStats(includeTestTenants);
 
       res.json({
         tenants: tenants.map((t) => ({

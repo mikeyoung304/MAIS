@@ -12,10 +12,21 @@ export class PlatformAdminController {
 
   /**
    * Get all tenants with their stats
-   * @param includeTestTenants - Whether to include test tenants (default: false)
+   *
+   * Retrieves all tenants with package and booking counts for the platform admin dashboard.
+   * By default excludes test tenants to show only production data.
+   *
+   * @param includeTestTenants - Whether to include test tenants in the results (default: false)
+   * @returns Promise resolving to array of TenantDto objects ordered by creation date descending,
+   *          each containing tenant metadata and aggregated stats (packageCount, bookingCount)
+   * @throws Error if database query fails
    */
   async getAllTenants(includeTestTenants = false): Promise<TenantDto[]> {
     try {
+      if (!includeTestTenants) {
+        logger.debug({ method: 'getAllTenants' }, 'Excluding test tenants from tenant list');
+      }
+
       const tenants = await this.prisma.tenant.findMany({
         where: includeTestTenants ? undefined : { isTestTenant: false },
         orderBy: { createdAt: 'desc' },
@@ -38,6 +49,7 @@ export class PlatformAdminController {
         stripeAccountId: tenant.stripeAccountId,
         stripeOnboarded: tenant.stripeOnboarded,
         isActive: tenant.isActive,
+        isTestTenant: tenant.isTestTenant,
         createdAt: tenant.createdAt.toISOString(),
         updatedAt: tenant.updatedAt.toISOString(),
         packageCount: tenant._count.packages,
@@ -51,14 +63,47 @@ export class PlatformAdminController {
 
   /**
    * Get platform-wide statistics
-   * Aggregates data across all real tenants (excludes test tenants)
-   * @param includeTestTenants - Whether to include test tenant data (default: false)
+   *
+   * Aggregates data across all tenants for the platform admin dashboard.
+   * By default excludes test tenants to provide accurate production metrics.
+   *
+   * Metrics include:
+   * - Tenant counts (total, active)
+   * - Segment counts (total, active)
+   * - Booking metrics (total, confirmed, pending)
+   * - Revenue metrics (total, platform commission, tenant revenue)
+   * - Current month metrics (bookings, revenue)
+   *
+   * Performance optimization: Pre-fetches real tenant IDs once, then uses IN clause
+   * for all related queries. This uses existing tenantId indexes instead of JOINing
+   * to the Tenant table on every COUNT/aggregate query.
+   *
+   * @param includeTestTenants - Whether to include test tenant data in aggregations (default: false)
+   * @returns Promise resolving to PlatformStats object containing all aggregated metrics
+   * @throws Error if any database aggregation query fails
    */
   async getStats(includeTestTenants = false): Promise<PlatformStats> {
     try {
-      // Base filter for excluding test tenants from related data
+      if (!includeTestTenants) {
+        logger.debug({ method: 'getStats' }, 'Excluding test tenants from platform stats');
+      }
+
+      // Base filter for tenant table queries
       const tenantFilter = includeTestTenants ? {} : { isTestTenant: false };
-      const relatedTenantFilter = includeTestTenants ? {} : { tenant: { isTestTenant: false } };
+
+      // Pre-fetch real tenant IDs once (uses isTestTenant index on Tenant table)
+      // Then use IN clause for related queries (uses existing tenantId indexes)
+      const realTenantIds = includeTestTenants
+        ? undefined // undefined means no filter - include all
+        : await this.prisma.tenant
+            .findMany({
+              where: { isTestTenant: false },
+              select: { id: true },
+            })
+            .then((tenants) => tenants.map((t) => t.id));
+
+      // Build related filter using IN clause (uses tenantId indexes, avoids JOINs)
+      const relatedTenantFilter = realTenantIds ? { tenantId: { in: realTenantIds } } : {};
 
       // Aggregate tenant counts
       const totalTenants = await this.prisma.tenant.count({

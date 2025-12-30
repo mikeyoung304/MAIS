@@ -298,9 +298,10 @@ export function createV1Router(
         }
       },
 
-      platformGetAllTenants: async () => {
+      platformGetAllTenants: async ({ query }: { query?: { includeTest?: 'true' | 'false' } }) => {
         // Auth middleware applied via app.use('/v1/admin/tenants', authMiddleware)
-        const data = await controllers.platformAdmin.getAllTenants();
+        const includeTestTenants = query?.includeTest === 'true';
+        const data = await controllers.platformAdmin.getAllTenants(includeTestTenants);
         return { status: 200 as const, body: data };
       },
 
@@ -332,9 +333,10 @@ export function createV1Router(
         throw new Error('Use Express route /api/v1/admin/tenants/:id directly');
       },
 
-      platformGetStats: async () => {
+      platformGetStats: async ({ query }: { query?: { includeTest?: 'true' | 'false' } }) => {
         // Auth middleware applied via app.use('/v1/admin/stats', authMiddleware)
-        const data = await controllers.platformAdmin.getStats();
+        const includeTestTenants = query?.includeTest === 'true';
+        const data = await controllers.platformAdmin.getStats(includeTestTenants);
         return { status: 200 as const, body: data };
       },
 
