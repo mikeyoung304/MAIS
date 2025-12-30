@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ProductPreviewTabs } from '@/components/home/ProductPreviewTabs';
 
 export const metadata: Metadata = {
   title: 'HANDLED - Bring Your Passion. The Rest Is Handled.',
@@ -89,32 +90,47 @@ const communityItems = [
   'Curated updates on useful AI developments — without the noise',
 ];
 
-const faqs = [
+// V2 FAQ - replaces original FAQ
+const faqsV2 = [
   {
-    question: 'What kind of businesses is HANDLED for?',
+    question: 'Will this feel like my business — or a template?',
     answer:
-      'Service professionals who sell their time, skill, or experience — photographers, coaches, consultants, therapists, trainers, wedding planners, and similar businesses. If you book clients and deliver expertise, HANDLED is built for you.',
+      'HANDLED gives you a strong structure, not a generic vibe. Your services, voice, and way of working come through — without starting from scratch.',
   },
   {
-    question: 'Do I need technical skills to use it?',
+    question: 'What happens when a client asks something unusual?',
     answer:
-      "No. HANDLED is opinionated by design — we've already made the decisions that matter. You add your content and services, and the system handles the rest.",
+      'The assistant handles common questions and knows when to hand things back to you. You stay in control of final decisions.',
   },
   {
-    question: 'How is the assistant different from a chatbot?',
+    question: 'Does this replace my emails and DMs?',
     answer:
-      'Most chatbots feel robotic and unhelpful. Our assistant is trained on your specific services, pricing, and availability. It can actually answer questions, guide clients, and complete bookings — not just deflect to a contact form.',
+      "It reduces them by keeping booking, questions, and follow-ups in one place. Clients get a shared space so details don't scatter across threads.",
   },
   {
-    question: 'Can I pause my subscription?',
+    question: 'Can I use my own domain?',
     answer:
-      'Yes. HANDLED is month-to-month with no contracts. Use it for a busy season, pause when things slow down, and come back when you need it.',
+      'If domain connection is available on your plan, yes. If not, you can still launch on a HANDLED link and connect your domain later.',
   },
   {
-    question: 'What happens to my data if I cancel?',
+    question: 'Is this complicated to set up?',
     answer:
-      'Your data stays yours. You can export everything, and we keep your account available if you ever want to return.',
+      "No. You enter what you offer, how you work, and when you're available. HANDLED handles the structure.",
   },
+  {
+    question: 'What if I stop using it?',
+    answer: "You can cancel anytime. If you pause, you can restart when you're ready.",
+  },
+];
+
+// Pricing plan features for V2
+const pricingFeatures = [
+  'Conversion-optimized storefront',
+  'Guided offerings and tiered pricing',
+  'Built-in assistant for questions and booking',
+  'Scheduling and availability management',
+  'Post-booking shared client space',
+  'Updates and improvements',
 ];
 
 export default function HomePage() {
@@ -146,7 +162,7 @@ export default function HomePage() {
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqs.map((faq) => ({
+    mainEntity: faqsV2.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
       acceptedAnswer: {
@@ -254,9 +270,58 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
+              SECTION 1.5: ABOVE-THE-FOLD PROOF BLOCK (V2 NEW)
+              ============================================ */}
+          <section className="py-16 md:py-24 px-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-10">
+                <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary mb-4">
+                  See how HANDLED works in practice.
+                </h2>
+                <p className="text-text-muted leading-relaxed max-w-2xl mx-auto">
+                  A storefront with clear offerings and guided booking — plus a shared space that
+                  keeps client details organized after they book.
+                </p>
+                <p className="text-text-muted mt-4">
+                  Browse it the way a client would.
+                  <br />
+                  Then decide if it feels like your business.
+                </p>
+              </div>
+
+              {/* 3-Tab Product Preview */}
+              <ProductPreviewTabs />
+
+              <p className="text-center text-text-muted/70 text-sm mt-6">
+                A HANDLED storefront and booking flow.
+              </p>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 1.6: "WHAT YOU GET" MICRO-BLOCK (V2 NEW)
+              ============================================ */}
+          <section className="py-12 px-6 bg-surface-alt border-y border-neutral-800">
+            <div className="max-w-3xl mx-auto">
+              <h3 className="font-serif text-xl sm:text-2xl font-semibold text-text-primary text-center mb-6">
+                What this replaces.
+              </h3>
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-text-muted text-center">
+                <span>Pricing explanations.</span>
+                <span>Back-and-forth scheduling.</span>
+                <span>Repeating yourself in DMs.</span>
+                <span>Scattered follow-ups after someone pays.</span>
+              </div>
+              <p className="text-text-primary font-medium text-center mt-6">
+                HANDLED brings it into one flow.
+              </p>
+            </div>
+          </section>
+
+          {/* ============================================
               SECTION 2: TRUST / POSITIONING BAR
               ============================================ */}
-          <section className="py-16 px-6 bg-surface-alt border-y border-neutral-800">
+          <section className="py-16 px-6">
             <div className="max-w-3xl mx-auto text-center">
               <p className="text-sm font-medium text-sage uppercase tracking-wide mb-4">
                 Built for people who sell their time, skill, and experience.
@@ -271,7 +336,7 @@ export default function HomePage() {
           {/* ============================================
               SECTION 3: PROBLEM / EMPATHY
               ============================================ */}
-          <section className="py-24 md:py-32 px-6">
+          <section className="py-24 md:py-32 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-12">
                 Running a service business shouldn&apos;t feel this scattered.
@@ -304,7 +369,7 @@ export default function HomePage() {
           {/* ============================================
               SECTION 4: SOLUTION OVERVIEW
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
+          <section className="py-24 md:py-32 px-6">
             <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-12">
                 We built the system most service businesses wish they had.
@@ -332,13 +397,13 @@ export default function HomePage() {
           {/* ============================================
               SECTION 5: CORE FEATURES
               ============================================ */}
-          <section id="features" className="py-24 md:py-32 px-6 scroll-mt-20">
+          <section id="features" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
             <div className="max-w-5xl mx-auto">
               <div className="grid md:grid-cols-3 gap-8">
                 {features.map((feature) => (
                   <div
                     key={feature.title}
-                    className="bg-surface-alt rounded-2xl p-8 border border-neutral-800 hover:border-neutral-700 transition-colors"
+                    className="bg-surface rounded-2xl p-8 border border-neutral-800 hover:border-neutral-700 transition-colors"
                   >
                     <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center mb-6">
                       <feature.icon className="w-6 h-6 text-sage" />
@@ -365,7 +430,7 @@ export default function HomePage() {
           {/* ============================================
               SECTION 6: HOW IT WORKS
               ============================================ */}
-          <section id="how-it-works" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
+          <section id="how-it-works" className="py-24 md:py-32 px-6 scroll-mt-20">
             <div className="max-w-4xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-16">
                 How HANDLED fits into your business
@@ -386,6 +451,32 @@ export default function HomePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 6.5: MID-PAGE INTENT CTA (V2 NEW)
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6 bg-surface-alt border-y border-neutral-800">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary mb-6">
+                If this feels like how your business should work, you&apos;re ready.
+              </h2>
+              <p className="text-text-muted leading-relaxed mb-8">
+                You don&apos;t need to optimize, configure, or experiment.
+                <br />
+                HANDLED gives you a proven structure — you make it yours.
+              </p>
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  asChild
+                  variant="sage"
+                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Link href="/signup">Start your storefront</Link>
+                </Button>
+                <p className="text-text-muted text-sm">Try it free for 30 days.</p>
               </div>
             </div>
           </section>
@@ -526,53 +617,68 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 11: PRICING / TRIAL
+              SECTION 11: PRICING V2 (REPLACES ORIGINAL)
               ============================================ */}
           <section id="pricing" className="py-24 md:py-32 px-6 scroll-mt-20">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
-                Use it when you need it. Pause when you don&apos;t.
-              </h2>
-              <div className="space-y-6 text-lg text-text-muted leading-relaxed mb-12">
-                <p>HANDLED is month-to-month.</p>
-                <p>
-                  Spin up a storefront for a busy season.
-                  <br />
-                  Use it for a launch.
-                  <br />
-                  Pause when things slow down.
-                </p>
-                <p>
-                  No contracts.
-                  <br />
-                  No long-term commitment.
-                  <br />
-                  Just a system that shows up when you need it.
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
+                  Simple pricing. No guesswork.
+                </h2>
+                <p className="text-text-muted leading-relaxed">
+                  Everything you need to run a calm, professional service business — without
+                  stitching tools together.
                 </p>
               </div>
-              <div className="flex flex-col items-center gap-4">
+
+              {/* Single Plan Card */}
+              <div className="bg-surface-alt rounded-2xl p-8 md:p-10 border border-sage/30 max-w-md mx-auto">
+                <h3 className="font-serif text-2xl font-bold text-text-primary mb-2">HANDLED</h3>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-4xl font-bold text-text-primary">$49</span>
+                  <span className="text-text-muted">/ month</span>
+                </div>
+                <p className="text-sage text-sm mb-6">Try it free for 30 days. Cancel anytime.</p>
+
+                <div className="border-t border-neutral-800 pt-6 mb-6">
+                  <p className="text-sm text-text-muted uppercase tracking-wide mb-4">Includes:</p>
+                  <ul className="space-y-3">
+                    {pricingFeatures.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                        <span className="text-text-primary">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
                 <Button
                   asChild
                   variant="sage"
-                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full rounded-full py-5 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Link href="/signup">Start your storefront</Link>
                 </Button>
-                <p className="text-text-muted text-sm">Try it free for 30 days.</p>
+              </div>
+
+              {/* Fine print */}
+              <div className="text-center mt-8 space-y-1">
+                <p className="text-text-muted text-sm">No contracts.</p>
+                <p className="text-text-muted text-sm">Pause when things slow down.</p>
               </div>
             </div>
           </section>
 
           {/* ============================================
-              SECTION 12: FAQ
+              SECTION 12: FAQ V2 (REPLACES ORIGINAL)
               ============================================ */}
           <section id="faq" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
             <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary text-center mb-12">
-                Questions? Answers.
+                Common questions
               </h2>
               <div className="space-y-3">
-                {faqs.map((faq, index) => (
+                {faqsV2.map((faq, index) => (
                   <details
                     key={index}
                     className="group bg-surface rounded-xl border border-neutral-800 overflow-hidden"
@@ -615,7 +721,7 @@ export default function HomePage() {
         </main>
 
         {/* ============================================
-            FOOTER
+            FOOTER (with V2 Micro-Credibility Line)
             ============================================ */}
         <footer className="py-12 px-6 bg-neutral-900 border-t border-neutral-800">
           <div className="max-w-6xl mx-auto">
@@ -634,6 +740,10 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mt-8 pt-8 border-t border-neutral-800 text-center">
+              {/* V2 Micro-Credibility Line */}
+              <p className="text-sage text-sm font-medium mb-4">
+                Built by people who&apos;ve run service businesses — not just software.
+              </p>
               <p className="text-text-muted text-sm leading-relaxed">
                 HANDLED — how service businesses should work in an AI-native world.
               </p>
