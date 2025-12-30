@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductPreviewTabs } from '@/components/home/ProductPreviewTabs';
+import { MobileNav } from '@/components/home/MobileNav';
 
 export const metadata: Metadata = {
   title: 'HANDLED - Bring Your Passion. The Rest Is Handled.',
@@ -266,6 +267,8 @@ export default function HomePage() {
                 <Link href="/signup">Start your storefront</Link>
               </Button>
             </div>
+            {/* Mobile hamburger menu */}
+            <MobileNav />
           </div>
         </nav>
 

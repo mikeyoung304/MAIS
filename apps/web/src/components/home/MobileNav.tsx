@@ -1,0 +1,96 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+/**
+ * MobileNav - Hamburger menu for mobile navigation
+ *
+ * Slides in from the right with overlay backdrop.
+ * Closes on link click or backdrop tap.
+ */
+
+const navLinks = [
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '#features', label: 'Features' },
+  { href: '#pricing', label: 'Pricing' },
+  { href: '#faq', label: 'FAQ' },
+  { href: '/login', label: 'Sign In' },
+];
+
+export function MobileNav() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const closeMenu = () => setIsOpen(false);
+
+  return (
+    <>
+      {/* Hamburger button - visible only on mobile */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="md:hidden p-2 -mr-2 text-text-muted hover:text-text-primary transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
+      {/* Overlay backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 md:hidden"
+          onClick={closeMenu}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Slide-in menu */}
+      <div
+        className={`fixed top-0 right-0 h-full w-72 bg-surface border-l border-neutral-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Close button */}
+        <div className="flex justify-end p-4">
+          <button
+            onClick={closeMenu}
+            className="p-2 text-text-muted hover:text-text-primary transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Nav links */}
+        <nav className="px-6 py-4">
+          <ul className="space-y-1">
+            {navLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={closeMenu}
+                  className="block py-3 text-text-muted hover:text-text-primary transition-colors text-lg"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* CTA button */}
+          <div className="mt-8 pt-6 border-t border-neutral-800">
+            <Button
+              asChild
+              variant="sage"
+              className="w-full rounded-full py-3 text-base"
+              onClick={closeMenu}
+            >
+              <Link href="/signup">Start your storefront</Link>
+            </Button>
+          </div>
+        </nav>
+      </div>
+    </>
+  );
+}
