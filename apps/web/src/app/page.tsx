@@ -126,19 +126,21 @@ const faqsV2 = [
 
 // 3-Tier Pricing - Psychology Optimized
 // Implements: Anchoring, Decoy Effect, Social Proof, Outcome-Focused Naming
+// Research: https://digitalagencynetwork.com/ai-agency-pricing/
 const tiers = [
   {
     id: 'foundation',
     name: 'The Foundation',
     price: '$49',
     priceSubtext: '/month',
-    description: 'Everything you need to look professional.',
+    description: 'Your business, finally online the right way.',
     annualSavings: 'Save $118/year',
     features: [
       'Professional storefront',
-      'Online booking',
-      'Payment processing',
+      'Online booking & payments',
       'Email notifications',
+      'Monthly growth newsletter',
+      'Live monthly Zoom calls',
     ],
     ctaText: 'Get Started',
     ctaHref: '/signup?tier=handled',
@@ -149,14 +151,13 @@ const tiers = [
     name: 'The System',
     price: '$149',
     priceSubtext: '/month',
-    description: 'Tech + growth support that works for you.',
+    description: 'An AI assistant that books clients while you work.',
     annualSavings: 'Save $358/year',
     features: [
       'Everything in Foundation',
-      'AI chatbot for your business',
-      'Monthly growth newsletter',
-      'Live monthly Zoom calls',
+      'AI chatbot trained on your business',
       'Priority support',
+      'Advanced booking analytics',
     ],
     ctaText: 'Start Growing',
     ctaHref: '/signup?tier=fully-handled',
@@ -165,15 +166,16 @@ const tiers = [
   {
     id: 'partnership',
     name: 'The Partnership',
-    price: '$349',
-    priceSubtext: '/month',
-    description: 'Hands-on guidance for businesses ready to scale.',
-    annualSavings: 'Save $838/year',
+    price: "Let's talk",
+    priceSubtext: '',
+    description: 'White-glove AI implementation for your business.',
+    annualSavings: null,
     features: [
-      'Everything in System',
+      'Everything in The System',
+      'Custom automations',
+      'Voice agents',
       '1-on-1 strategy sessions',
-      'Custom integrations',
-      'Dedicated account manager',
+      'We build it for you',
     ],
     ctaText: 'Book a Call',
     ctaHref: '/contact',
