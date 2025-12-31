@@ -14,6 +14,7 @@ import type { PrismaClient } from '../../generated/prisma';
 import { Prisma, BookingStatus } from '../../generated/prisma';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
+import { hashTenantDate } from '../../lib/advisory-locks';
 import {
   MissingFieldError,
   ResourceNotFoundError,
@@ -28,23 +29,6 @@ import {
  */
 function isValidBookingStatus(status: string): status is BookingStatus {
   return Object.values(BookingStatus).includes(status as BookingStatus);
-}
-
-/**
- * Generate deterministic lock ID from tenantId + date for PostgreSQL advisory locks
- * Uses FNV-1a hash algorithm to convert string to 32-bit integer
- */
-function hashTenantDate(tenantId: string, date: string): number {
-  const str = `${tenantId}:${date}`;
-  let hash = 2166136261; // FNV offset basis
-
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 16777619); // FNV prime
-  }
-
-  // Convert to 32-bit signed integer (PostgreSQL bigint range)
-  return hash | 0;
 }
 
 /**

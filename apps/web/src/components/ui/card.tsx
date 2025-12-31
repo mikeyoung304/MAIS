@@ -14,8 +14,12 @@ const cardVariants = cva(
           'bg-white text-neutral-900',
           'shadow-elevation-2 hover:shadow-elevation-3',
           'border border-neutral-100/30',
-          'backdrop-blur-xs',
-          'before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/80 before:to-transparent before:pointer-events-none',
+          'hover:-translate-y-0.5',
+        ],
+        dark: [
+          'bg-surface-alt text-text-primary',
+          'shadow-elevation-2 hover:shadow-elevation-3',
+          'border border-neutral-700',
           'hover:-translate-y-0.5',
         ],
         navy: [

@@ -13,6 +13,7 @@
 import type { PrismaClient } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 import { getProposalExecutor } from '../agent/proposals/executor-registry';
+import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
 
 /**
  * Clean up expired customer chat sessions
@@ -82,11 +83,14 @@ export async function recoverOrphanedProposals(
 
   // Find CONFIRMED proposals that are older than 5 minutes
   // These are likely stuck due to server crash or timeout
+  // Limit to 100 per batch to avoid memory exhaustion after crashes
   const orphaned = await prisma.agentProposal.findMany({
     where: {
       status: 'CONFIRMED',
       updatedAt: { lt: orphanCutoff },
     },
+    take: 100, // Process in batches to avoid memory exhaustion
+    orderBy: { updatedAt: 'asc' }, // Oldest first for fairness
   });
 
   if (orphaned.length === 0) {
@@ -126,14 +130,38 @@ export async function recoverOrphanedProposals(
         continue;
       }
 
+      // Validate payload before execution to prevent runtime errors
+      const payloadObj = (payload as Record<string, unknown>) || {};
+      let validatedPayload: Record<string, unknown>;
+      try {
+        validatedPayload = validateExecutorPayload(toolName, payloadObj);
+      } catch (validationError) {
+        const validationMessage =
+          validationError instanceof Error ? validationError.message : String(validationError);
+        logger.error(
+          { proposalId, toolName, error: validationMessage },
+          'Orphaned proposal recovery failed: payload validation error'
+        );
+
+        await prisma.agentProposal.update({
+          where: { id: proposalId },
+          data: {
+            status: 'FAILED',
+            error: `Orphaned - payload validation failed: ${validationMessage}`,
+          },
+        });
+
+        failed++;
+        continue;
+      }
+
       // Attempt to execute the proposal
       logger.info(
         { proposalId, toolName, tenantId },
         'Recovering orphaned proposal - attempting execution'
       );
 
-      const payloadObj = (payload as Record<string, unknown>) || {};
-      const result = await executor(tenantId, payloadObj);
+      const result = await executor(tenantId, validatedPayload);
 
       // Mark as executed
       await prisma.agentProposal.update({

@@ -37,12 +37,12 @@ export function TrialBanner({ daysRemaining, status }: TrialBannerProps) {
   return (
     <Alert
       className={`mb-6 ${
-        urgency ? 'border-amber-500/50 bg-amber-50' : 'border-sage/30 bg-sage/10'
+        urgency ? 'border-amber-800 bg-amber-950/50' : 'border-sage/30 bg-sage/10'
       }`}
     >
-      <Clock className={`h-4 w-4 ${urgency ? 'text-amber-600' : 'text-sage'}`} />
+      <Clock className={`h-4 w-4 ${urgency ? 'text-amber-400' : 'text-sage'}`} />
       <AlertDescription className="flex items-center justify-between">
-        <span className={urgency ? 'text-amber-800' : 'text-sage-dark'}>
+        <span className={urgency ? 'text-amber-300' : 'text-sage'}>
           {daysRemaining === 1
             ? '1 day left in your trial'
             : `${daysRemaining} days left in your trial`}
@@ -51,7 +51,7 @@ export function TrialBanner({ daysRemaining, status }: TrialBannerProps) {
         <Link
           href="/tenant/billing"
           className={`ml-4 font-medium underline hover:no-underline ${
-            urgency ? 'text-amber-800' : 'text-sage'
+            urgency ? 'text-amber-300' : 'text-sage'
           }`}
         >
           Upgrade now

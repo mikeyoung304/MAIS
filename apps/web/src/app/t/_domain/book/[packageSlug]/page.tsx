@@ -97,7 +97,7 @@ export default async function DomainBookingPage({ params, searchParams }: Bookin
             <p className="text-neutral-600 mb-6">
               The package you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
-            <Link href="/" className="inline-flex items-center text-macon-orange hover:underline">
+            <Link href="/" className="inline-flex items-center text-sage hover:underline">
               <ChevronLeft className="w-4 h-4 mr-1" />
               Back to {tenant.name}
             </Link>
@@ -118,7 +118,7 @@ export default async function DomainBookingPage({ params, searchParams }: Bookin
             <p className="text-neutral-600 mb-6">
               This package is currently not available for booking.
             </p>
-            <Link href="/" className="inline-flex items-center text-macon-orange hover:underline">
+            <Link href="/" className="inline-flex items-center text-sage hover:underline">
               <ChevronLeft className="w-4 h-4 mr-1" />
               View Available Packages
             </Link>
@@ -141,7 +141,7 @@ export default async function DomainBookingPage({ params, searchParams }: Bookin
             </p>
             <Link
               href="/book"
-              className="inline-flex items-center px-6 py-3 bg-macon-orange text-white rounded-lg hover:bg-macon-orange/90 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-sage text-white rounded-lg hover:bg-sage-hover transition-colors"
             >
               Go to Appointment Booking
             </Link>
@@ -157,7 +157,7 @@ export default async function DomainBookingPage({ params, searchParams }: Bookin
         <div className="container mx-auto px-4">
           <Link
             href="/"
-            className="inline-flex items-center text-neutral-600 hover:text-macon-orange transition-colors"
+            className="inline-flex items-center text-neutral-600 hover:text-sage transition-colors"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             <span>Back to {tenant.name}</span>

@@ -323,7 +323,7 @@ export function BookingPageSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50">
       <div className="text-center">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-macon-orange" />
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-sage" />
         <p className="mt-4 text-lg text-neutral-600">Loading booking...</p>
       </div>
     </div>
@@ -338,7 +338,7 @@ export function BookingSuccessPageSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50">
       <div className="text-center">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-macon-orange" />
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-sage" />
         <p className="mt-4 text-lg text-neutral-600">Loading confirmation...</p>
       </div>
     </div>

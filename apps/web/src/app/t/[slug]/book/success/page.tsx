@@ -204,7 +204,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
         <div className="mt-8 text-center text-neutral-600 text-sm">
           <p>
             Questions about your booking?{' '}
-            <Link href={`/t/${slug}/contact`} className="text-macon-orange hover:underline">
+            <Link href={`/t/${slug}/contact`} className="text-sage hover:underline">
               Contact us
             </Link>
           </p>

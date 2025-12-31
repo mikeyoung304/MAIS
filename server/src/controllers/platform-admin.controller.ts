@@ -105,65 +105,81 @@ export class PlatformAdminController {
       // Build related filter using IN clause (uses tenantId indexes, avoids JOINs)
       const relatedTenantFilter = realTenantIds ? { tenantId: { in: realTenantIds } } : {};
 
-      // Aggregate tenant counts
-      const totalTenants = await this.prisma.tenant.count({
-        where: tenantFilter,
-      });
-      const activeTenants = await this.prisma.tenant.count({
-        where: { ...tenantFilter, isActive: true },
-      });
+      // Current month start for time-based metrics
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-      // Aggregate segment counts (from real tenants only)
-      const totalSegments = await this.prisma.segment.count({
-        where: relatedTenantFilter,
-      });
-      const activeSegments = await this.prisma.segment.count({
-        where: { ...relatedTenantFilter, active: true },
-      });
+      // Execute all independent queries in parallel for optimal performance
+      // This reduces latency from 10 sequential round-trips to 1 parallel batch
+      const [
+        totalTenants,
+        activeTenants,
+        totalSegments,
+        activeSegments,
+        totalBookings,
+        confirmedBookings,
+        pendingBookings,
+        revenueStats,
+        monthStats,
+      ] = await Promise.all([
+        // Tenant counts
+        this.prisma.tenant.count({
+          where: tenantFilter,
+        }),
+        this.prisma.tenant.count({
+          where: { ...tenantFilter, isActive: true },
+        }),
 
-      // Aggregate booking metrics (from real tenants only)
-      const totalBookings = await this.prisma.booking.count({
-        where: relatedTenantFilter,
-      });
-      const confirmedBookings = await this.prisma.booking.count({
-        where: { ...relatedTenantFilter, status: 'CONFIRMED' },
-      });
-      const pendingBookings = await this.prisma.booking.count({
-        where: { ...relatedTenantFilter, status: 'PENDING' },
-      });
+        // Segment counts (from real tenants only)
+        this.prisma.segment.count({
+          where: relatedTenantFilter,
+        }),
+        this.prisma.segment.count({
+          where: { ...relatedTenantFilter, active: true },
+        }),
 
-      // Aggregate revenue metrics (from real tenants only)
-      const revenueStats = await this.prisma.booking.aggregate({
-        _sum: {
-          totalPrice: true,
-          commissionAmount: true,
-        },
-        where: {
-          ...relatedTenantFilter,
-          status: 'CONFIRMED',
-        },
-      });
+        // Booking metrics (from real tenants only)
+        this.prisma.booking.count({
+          where: relatedTenantFilter,
+        }),
+        this.prisma.booking.count({
+          where: { ...relatedTenantFilter, status: 'CONFIRMED' },
+        }),
+        this.prisma.booking.count({
+          where: { ...relatedTenantFilter, status: 'PENDING' },
+        }),
 
+        // Revenue metrics (from real tenants only)
+        this.prisma.booking.aggregate({
+          _sum: {
+            totalPrice: true,
+            commissionAmount: true,
+          },
+          where: {
+            ...relatedTenantFilter,
+            status: 'CONFIRMED',
+          },
+        }),
+
+        // Current month stats (from real tenants only)
+        this.prisma.booking.aggregate({
+          _count: true,
+          _sum: {
+            totalPrice: true,
+          },
+          where: {
+            ...relatedTenantFilter,
+            status: 'CONFIRMED',
+            confirmedAt: {
+              gte: startOfMonth,
+            },
+          },
+        }),
+      ]);
+
+      // Calculate derived revenue metrics
       const totalRevenue = revenueStats._sum.totalPrice || 0;
       const platformCommission = revenueStats._sum.commissionAmount || 0;
       const tenantRevenue = totalRevenue - platformCommission;
-
-      // Optional: Current month stats (from real tenants only)
-      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-      const monthStats = await this.prisma.booking.aggregate({
-        _count: true,
-        _sum: {
-          totalPrice: true,
-        },
-        where: {
-          ...relatedTenantFilter,
-          status: 'CONFIRMED',
-          confirmedAt: {
-            gte: startOfMonth,
-          },
-        },
-      });
 
       return {
         // Tenant metrics

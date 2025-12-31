@@ -112,9 +112,9 @@ export default function BillingPage() {
 
       {/* Success message */}
       {success === 'true' && (
-        <Alert className="border-green-500/50 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+        <Alert className="border-green-800 bg-green-950/50">
+          <CheckCircle className="h-4 w-4 text-green-400" />
+          <AlertDescription className="text-green-400">
             Payment successful! Your subscription is now active.
           </AlertDescription>
         </Alert>
@@ -122,8 +122,8 @@ export default function BillingPage() {
 
       {/* Canceled message */}
       {canceled === 'true' && (
-        <Alert className="border-amber-500/50 bg-amber-50">
-          <AlertDescription className="text-amber-800">
+        <Alert className="border-amber-800 bg-amber-950/50">
+          <AlertDescription className="text-amber-400">
             Checkout was canceled. No charges were made.
           </AlertDescription>
         </Alert>
@@ -131,10 +131,10 @@ export default function BillingPage() {
 
       {/* Active Subscription Card */}
       {isActive && (
-        <Card className="border-2 border-green-500/30 bg-green-50">
+        <Card colorScheme="dark" className="border-2 border-green-700 bg-green-950/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-green-400" />
               Active Subscription
             </CardTitle>
             <CardDescription>You&apos;re subscribed to HANDLED Professional</CardDescription>
@@ -153,7 +153,7 @@ export default function BillingPage() {
 
       {/* Subscribe Card (show if not active) */}
       {!isActive && (
-        <Card>
+        <Card colorScheme="dark">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-sage" />
@@ -203,9 +203,9 @@ export default function BillingPage() {
 
       {/* Trial Status */}
       {billingStatus?.subscriptionStatus === 'TRIALING' && billingStatus.daysRemaining !== null && (
-        <Card className="border-sage/30 bg-sage/5">
+        <Card colorScheme="dark" className="border-sage/30 bg-sage/10">
           <CardContent className="p-6">
-            <p className="text-sage-dark">
+            <p className="text-sage">
               <strong>{billingStatus.daysRemaining} days</strong> remaining in your free trial.
               Subscribe now to keep all your features.
             </p>

@@ -321,7 +321,10 @@ export const deleteAddOnTool: AgentTool = {
       });
 
       if (!addOn) {
-        return { success: false, error: 'Add-on not found' };
+        return {
+          success: false,
+          error: 'Unable to access add-on. Please check the ID and try again.',
+        };
       }
 
       const hasBookings = addOn._count.bookingRefs > 0;
@@ -379,7 +382,10 @@ export const deletePackageTool: AgentTool = {
       });
 
       if (!pkg) {
-        return { success: false, error: 'Package not found' };
+        return {
+          success: false,
+          error: 'Unable to access package. Please check the ID and try again.',
+        };
       }
 
       const hasBookings = pkg._count.bookings > 0;
@@ -630,7 +636,7 @@ export const removeBlackoutDateTool: AgentTool = {
       if (!blackout) {
         return {
           success: false,
-          error: `Blackout with ID "${blackoutId}" not found. Use get_blackout_dates to see your blocked dates.`,
+          error: 'Unable to access blackout date. Please check the ID and try again.',
         };
       }
 
@@ -866,11 +872,14 @@ export const cancelBookingTool: AgentTool = {
       });
 
       if (!booking) {
-        return { success: false, error: 'Booking not found' };
+        return {
+          success: false,
+          error: 'Unable to access booking. Please check the ID and try again.',
+        };
       }
 
       if (booking.status === 'CANCELED' || booking.status === 'REFUNDED') {
-        return { success: false, error: 'Booking is already cancelled or refunded' };
+        return { success: false, error: 'This booking is already cancelled or refunded.' };
       }
 
       // Customer name from Customer relation, date from Booking.date, price from Booking.totalPrice
@@ -960,7 +969,10 @@ export const createBookingTool: AgentTool = {
       });
 
       if (!pkg) {
-        return { success: false, error: 'Package not found or inactive' };
+        return {
+          success: false,
+          error: 'Unable to access package. Please check the ID and try again.',
+        };
       }
 
       // Check availability (prevent double-booking)
@@ -1067,12 +1079,15 @@ export const processRefundTool: AgentTool = {
       });
 
       if (!booking) {
-        return { success: false, error: 'Booking not found' };
+        return {
+          success: false,
+          error: 'Unable to access booking. Please check the ID and try again.',
+        };
       }
 
       // Check if already fully refunded
       if (booking.refundStatus === 'COMPLETED') {
-        return { success: false, error: 'Booking has already been fully refunded' };
+        return { success: false, error: 'This booking has already been fully refunded.' };
       }
 
       // Calculate refund amount
@@ -1245,7 +1260,10 @@ export const deleteSegmentTool: AgentTool = {
       });
 
       if (!segment) {
-        return { success: false, error: 'Segment not found' };
+        return {
+          success: false,
+          error: 'Unable to access segment. Please check the ID and try again.',
+        };
       }
 
       const hasPackages = segment._count.packages > 0;
@@ -1334,7 +1352,10 @@ export const updateBookingTool: AgentTool = {
       });
 
       if (!booking) {
-        return { success: false, error: 'Booking not found or does not belong to your business' };
+        return {
+          success: false,
+          error: 'Unable to access booking. Please check the ID and try again.',
+        };
       }
 
       // Cannot update cancelled/refunded bookings
@@ -1506,7 +1527,7 @@ export const updateDepositSettingsTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       const changes: string[] = [];
@@ -1573,7 +1594,7 @@ export const startTrialTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       // Only allow starting trial if status is NONE
@@ -1648,7 +1669,7 @@ export const initiateStripeOnboardingTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       // If already connected, return early

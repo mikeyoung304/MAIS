@@ -225,15 +225,15 @@ export default function TenantPaymentsPage() {
         </div>
 
         {error && (
-          <Card className="border-red-200 bg-red-50">
+          <Card colorScheme="dark" className="border-red-800 bg-red-950/50">
             <CardContent className="flex items-center gap-3 p-6">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-              <p className="text-red-600">{error}</p>
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <p className="text-red-400">{error}</p>
             </CardContent>
           </Card>
         )}
 
-        <Card className="border-2 border-dashed border-sage/20">
+        <Card colorScheme="dark" className="border-2 border-dashed border-sage/20">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="mb-4 rounded-full bg-sage/10 p-4">
               <CreditCard className="h-8 w-8 text-sage" />
@@ -338,17 +338,17 @@ export default function TenantPaymentsPage() {
     status.requirements.currentlyDue.length > 0 || status.requirements.pastDue.length > 0;
 
   const StatusItem = ({ label, enabled }: { label: string; enabled: boolean }) => (
-    <div className="flex items-center justify-between py-3 border-b border-neutral-100 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-neutral-700 last:border-0">
       <span className="text-text-muted">{label}</span>
       <div
         className={`flex h-8 w-8 items-center justify-center rounded-full ${
-          enabled ? 'bg-sage/10' : 'bg-yellow-100'
+          enabled ? 'bg-sage/10' : 'bg-amber-950/50'
         }`}
       >
         {enabled ? (
           <Check className="h-4 w-4 text-sage" />
         ) : (
-          <X className="h-4 w-4 text-yellow-600" />
+          <X className="h-4 w-4 text-amber-400" />
         )}
       </div>
     </div>
@@ -372,20 +372,20 @@ export default function TenantPaymentsPage() {
       </div>
 
       {error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card colorScheme="dark" className="border-red-800 bg-red-950/50">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <p className="text-red-600">{error}</p>
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <p className="text-red-400">{error}</p>
           </CardContent>
         </Card>
       )}
 
-      <Card>
+      <Card colorScheme="dark">
         <CardContent className="p-6">
           {/* Account ID */}
-          <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+          <div className="flex items-center justify-between pb-4 border-b border-neutral-700">
             <span className="text-sm text-text-muted">Account ID</span>
-            <code className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 font-mono text-xs text-text-primary">
+            <code className="rounded-lg border border-neutral-700 bg-surface px-3 py-1.5 font-mono text-xs text-text-primary">
               {status.accountId}
             </code>
           </div>
@@ -401,21 +401,21 @@ export default function TenantPaymentsPage() {
 
       {/* Requirements Warning */}
       {hasRequirements && (
-        <Card className="border-yellow-200 bg-yellow-50">
+        <Card colorScheme="dark" className="border-amber-800 bg-amber-950/50">
           <CardContent className="p-6">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-yellow-100">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-900/50">
+                <AlertCircle className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h4 className="font-medium text-yellow-900">Action Required</h4>
+                <h4 className="font-medium text-amber-300">Action Required</h4>
                 {status.requirements.pastDue.length > 0 && (
-                  <p className="mt-1 text-sm text-yellow-700">
+                  <p className="mt-1 text-sm text-amber-400">
                     <strong>Past Due:</strong> {status.requirements.pastDue.join(', ')}
                   </p>
                 )}
                 {status.requirements.currentlyDue.length > 0 && (
-                  <p className="mt-1 text-sm text-yellow-700">
+                  <p className="mt-1 text-sm text-amber-400">
                     <strong>Currently Due:</strong> {status.requirements.currentlyDue.join(', ')}
                   </p>
                 )}

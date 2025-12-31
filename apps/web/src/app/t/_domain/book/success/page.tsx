@@ -202,7 +202,7 @@ export default async function DomainSuccessPage({ searchParams }: SuccessPagePro
         <div className="mt-8 text-center text-neutral-600 text-sm">
           <p>
             Questions about your booking?{' '}
-            <Link href="/contact" className="text-macon-orange hover:underline">
+            <Link href="/contact" className="text-sage hover:underline">
               Contact us
             </Link>
           </p>

@@ -73,7 +73,7 @@ export function GrowthAssistantPanel({ className }: GrowthAssistantPanelProps) {
         className={cn(
           'fixed right-0 top-0 h-screen z-40',
           'w-[400px] max-w-[90vw]',
-          'flex flex-col bg-white border-l border-neutral-200 shadow-lg',
+          'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
           'transition-transform duration-300 ease-in-out',
           isOpen ? 'translate-x-0' : 'translate-x-full',
           className
@@ -82,7 +82,7 @@ export function GrowthAssistantPanel({ className }: GrowthAssistantPanelProps) {
         aria-label="Growth Assistant"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 bg-white shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-sage/10 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-sage" />
@@ -98,7 +98,7 @@ export function GrowthAssistantPanel({ className }: GrowthAssistantPanelProps) {
             variant="ghost"
             size="icon"
             onClick={() => setIsOpen(false)}
-            className="h-8 w-8 rounded-lg hover:bg-neutral-100"
+            className="h-8 w-8 rounded-lg hover:bg-neutral-700"
             aria-label="Collapse panel"
           >
             <ChevronRight className="w-4 h-4" />

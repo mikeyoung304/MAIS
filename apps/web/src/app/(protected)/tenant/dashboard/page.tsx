@@ -124,21 +124,21 @@ export default function TenantDashboardPage() {
       value: stats?.bookingsCount ?? 0,
       icon: <Calendar className="h-5 w-5" />,
       href: '/tenant/scheduling',
-      color: 'text-macon-teal',
+      color: 'text-sky-400',
     },
     {
       title: 'Blackout Dates',
       value: stats?.blackoutsCount ?? 0,
       icon: <Users className="h-5 w-5" />,
       href: '/tenant/scheduling',
-      color: 'text-macon-orange',
+      color: 'text-amber-400',
     },
     {
       title: 'Payments',
       value: stats?.hasStripeConnected ? 'Connected' : 'Setup',
       icon: <DollarSign className="h-5 w-5" />,
       href: '/tenant/payments',
-      color: stats?.hasStripeConnected ? 'text-green-600' : 'text-macon-orange',
+      color: stats?.hasStripeConnected ? 'text-sage' : 'text-amber-400',
     },
   ];
 
@@ -193,13 +193,13 @@ export default function TenantDashboardPage() {
 
       {/* Error State */}
       {error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-800 bg-red-950/50">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+              <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-red-800">Failed to load dashboard</p>
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="font-medium text-red-300">Failed to load dashboard</p>
+                <p className="text-sm text-red-400">{error}</p>
               </div>
               <Button
                 variant="outline"
@@ -219,7 +219,10 @@ export default function TenantDashboardPage() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => (
           <Link key={card.title} href={card.href}>
-            <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
+            <Card
+              colorScheme="dark"
+              className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-text-muted">{card.title}</CardTitle>
                 <div className={card.color}>{card.icon}</div>
@@ -227,7 +230,7 @@ export default function TenantDashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold text-text-primary">
                   {isLoading ? (
-                    <div className="h-8 w-16 animate-pulse rounded bg-neutral-200" />
+                    <div className="h-8 w-16 animate-pulse rounded bg-neutral-700" />
                   ) : (
                     card.value
                   )}
@@ -250,9 +253,10 @@ export default function TenantDashboardPage() {
               rel={'external' in action && action.external ? 'noopener noreferrer' : undefined}
             >
               <Card
+                colorScheme="dark"
                 className={`transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group ${
                   'highlight' in action && action.highlight
-                    ? 'border-2 border-sage/30 bg-sage/5'
+                    ? 'border-2 border-sage/30 bg-sage/10'
                     : ''
                 }`}
               >
@@ -260,7 +264,7 @@ export default function TenantDashboardPage() {
                   <div
                     className={`rounded-xl p-3 transition-colors ${
                       'highlight' in action && action.highlight
-                        ? 'bg-sage text-white group-hover:bg-sage-dark'
+                        ? 'bg-sage text-white group-hover:bg-sage-hover'
                         : 'bg-sage/10 text-sage group-hover:bg-sage group-hover:text-white'
                     }`}
                   >
@@ -280,7 +284,7 @@ export default function TenantDashboardPage() {
 
       {/* Getting Started (shown if Stripe not connected) */}
       {stats && !stats.hasStripeConnected && (
-        <Card className="border-2 border-macon-orange/20 bg-macon-orange/5">
+        <Card colorScheme="dark" className="border-2 border-amber-700/30 bg-amber-950/30">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>

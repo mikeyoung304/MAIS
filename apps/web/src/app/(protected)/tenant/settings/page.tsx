@@ -39,7 +39,7 @@ export default function TenantSettingsPage() {
       </div>
 
       {/* Account Information */}
-      <Card>
+      <Card colorScheme="dark">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-sage" />
@@ -51,18 +51,26 @@ export default function TenantSettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={user?.email || ''} disabled className="bg-neutral-50" />
+              <Input
+                value={user?.email || ''}
+                disabled
+                className="bg-surface border-neutral-700 text-text-primary"
+              />
             </div>
             <div className="space-y-2">
               <Label>Tenant ID</Label>
-              <Input value={tenantId || ''} disabled className="bg-neutral-50 font-mono text-sm" />
+              <Input
+                value={tenantId || ''}
+                disabled
+                className="bg-surface border-neutral-700 text-text-primary font-mono text-sm"
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* API Keys */}
-      <Card>
+      <Card colorScheme="dark">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5 text-sage" />
@@ -74,7 +82,11 @@ export default function TenantSettingsPage() {
           <div className="space-y-2">
             <Label>Public API Key</Label>
             <div className="flex gap-2">
-              <Input value={apiKeyPublic} disabled className="bg-neutral-50 font-mono text-sm" />
+              <Input
+                value={apiKeyPublic}
+                disabled
+                className="bg-surface border-neutral-700 text-text-primary font-mono text-sm"
+              />
               <Button
                 variant="outline"
                 size="icon"
@@ -93,12 +105,12 @@ export default function TenantSettingsPage() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="rounded-lg border border-amber-800 bg-amber-950/50 p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-400" />
               <div>
-                <p className="font-medium text-yellow-800">Secret Key</p>
-                <p className="mt-1 text-sm text-yellow-700">
+                <p className="font-medium text-amber-300">Secret Key</p>
+                <p className="mt-1 text-sm text-amber-400">
                   Your secret key is hidden for security. Contact support if you need to regenerate
                   it.
                 </p>
@@ -109,7 +121,7 @@ export default function TenantSettingsPage() {
       </Card>
 
       {/* Business Settings */}
-      <Card>
+      <Card colorScheme="dark">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-sage" />
@@ -126,16 +138,16 @@ export default function TenantSettingsPage() {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-200">
+      <Card colorScheme="dark" className="border-red-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
+          <CardTitle className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="h-5 w-5" />
             Danger Zone
           </CardTitle>
           <CardDescription>Irreversible actions</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 p-4">
+          <div className="flex items-center justify-between rounded-lg border border-red-800 bg-red-950/50 p-4">
             <div>
               <p className="font-medium text-text-primary">Sign Out</p>
               <p className="text-sm text-text-muted">Sign out of your account on this device</p>
@@ -143,20 +155,20 @@ export default function TenantSettingsPage() {
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="border-red-700 text-red-400 hover:bg-red-950/50 hover:text-red-300"
             >
               Sign Out
             </Button>
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 p-4">
+          <div className="flex items-center justify-between rounded-lg border border-red-800 bg-red-950/50 p-4">
             <div>
               <p className="font-medium text-text-primary">Delete Account</p>
               <p className="text-sm text-text-muted">
                 Permanently delete your account and all data
               </p>
             </div>
-            <Button variant="outline" disabled className="border-red-200 text-red-600 opacity-50">
+            <Button variant="outline" disabled className="border-red-700 text-red-400 opacity-50">
               Delete Account
             </Button>
           </div>

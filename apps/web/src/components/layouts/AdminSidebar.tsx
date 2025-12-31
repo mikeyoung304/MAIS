@@ -145,7 +145,7 @@ export function AdminSidebar() {
     <>
       {/* Mobile menu button */}
       <button
-        className="fixed left-4 top-4 z-50 rounded-xl bg-white p-2 shadow-lg lg:hidden"
+        className="fixed left-4 top-4 z-50 rounded-xl bg-surface-alt p-2 shadow-lg lg:hidden"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
       >
@@ -162,14 +162,14 @@ export function AdminSidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-screen bg-white border-r border-neutral-100 transition-all duration-300
+        className={`fixed left-0 top-0 z-40 h-screen bg-surface-alt border-r border-neutral-700 transition-all duration-300
           ${isCollapsed ? 'w-20' : 'w-72'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-neutral-100 p-4">
+          <div className="flex items-center justify-between border-b border-neutral-700 p-4">
             {!isCollapsed && (
               <Link href="/" className="font-serif text-xl font-bold text-text-primary">
                 HANDLED
@@ -188,10 +188,10 @@ export function AdminSidebar() {
 
           {/* Impersonation banner */}
           {isImpersonating() && impersonation && (
-            <div className="border-b border-macon-orange/20 bg-macon-orange/10 p-3">
+            <div className="border-b border-amber-700/30 bg-amber-950/30 p-3">
               {!isCollapsed && (
                 <>
-                  <p className="text-xs font-medium text-macon-orange">Impersonating</p>
+                  <p className="text-xs font-medium text-amber-400">Impersonating</p>
                   <p className="truncate text-sm font-semibold text-text-primary">
                     {impersonation.tenantEmail}
                   </p>
@@ -208,7 +208,7 @@ export function AdminSidebar() {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-neutral-100 p-4">
+          <div className="border-t border-neutral-700 p-4">
             {!isCollapsed && (
               <div className="mb-3">
                 <p className="truncate text-sm font-medium text-text-primary">{user?.email}</p>

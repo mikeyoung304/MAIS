@@ -48,7 +48,7 @@ function LoginForm() {
   // Show loading while checking session
   if (sessionLoading) {
     return (
-      <Card>
+      <Card colorScheme="dark">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-sage" />
         </CardContent>
@@ -79,7 +79,7 @@ function LoginForm() {
   };
 
   return (
-    <Card>
+    <Card colorScheme="dark">
       <CardHeader>
         <CardTitle>Welcome back</CardTitle>
         <CardDescription>Enter your credentials to access your dashboard</CardDescription>
@@ -88,7 +88,7 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isDemo && (
             <Alert className="bg-sage/10 border-sage/30">
-              <AlertDescription className="text-sage-dark">
+              <AlertDescription className="text-sage">
                 <strong>Demo Mode:</strong> Credentials pre-filled. Click &quot;Sign in&quot; to
                 explore.
               </AlertDescription>
@@ -163,21 +163,21 @@ function LoginForm() {
  */
 function LoginFormSkeleton() {
   return (
-    <Card>
+    <Card colorScheme="dark">
       <CardHeader>
-        <div className="h-6 w-32 animate-pulse rounded bg-neutral-200" />
-        <div className="mt-2 h-4 w-48 animate-pulse rounded bg-neutral-200" />
+        <div className="h-6 w-32 animate-pulse rounded bg-neutral-700" />
+        <div className="mt-2 h-4 w-48 animate-pulse rounded bg-neutral-700" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <div className="h-4 w-12 animate-pulse rounded bg-neutral-200" />
-          <div className="h-11 animate-pulse rounded bg-neutral-200" />
+          <div className="h-4 w-12 animate-pulse rounded bg-neutral-700" />
+          <div className="h-11 animate-pulse rounded bg-neutral-700" />
         </div>
         <div className="space-y-2">
-          <div className="h-4 w-16 animate-pulse rounded bg-neutral-200" />
-          <div className="h-11 animate-pulse rounded bg-neutral-200" />
+          <div className="h-4 w-16 animate-pulse rounded bg-neutral-700" />
+          <div className="h-11 animate-pulse rounded bg-neutral-700" />
         </div>
-        <div className="h-11 animate-pulse rounded bg-neutral-200" />
+        <div className="h-11 animate-pulse rounded bg-neutral-700" />
       </CardContent>
     </Card>
   );

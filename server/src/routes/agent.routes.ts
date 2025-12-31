@@ -357,10 +357,6 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Execute the proposal within a transaction for data integrity
-      // This ensures executor + status update are atomic
-      const startTime = Date.now();
-
       // Validate payload schema before execution (prevents malformed/malicious payloads)
       const rawPayload = (proposal.payload as Record<string, unknown>) || {};
       let validatedPayload: Record<string, unknown>;
@@ -377,39 +373,41 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         return;
       }
 
+      // Execute the proposal OUTSIDE of a wrapping transaction.
+      // Executors manage their own transactions (with advisory locks for booking operations).
+      // Wrapping them in an outer transaction causes nested transaction issues in PostgreSQL.
+      // See: docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md
+      const startTime = Date.now();
+
       try {
-        const result = await prisma.$transaction(async (tx) => {
-          // Execute the proposal (executor may perform DB operations)
-          const executorResult = await executor(tenantId, validatedPayload);
+        // Step 1: Execute the proposal (executor handles its own transaction if needed)
+        const executorResult = await executor(tenantId, validatedPayload);
 
-          // Update proposal as executed (atomic with executor)
-          await tx.agentProposal.update({
-            where: { id: proposalId },
-            data: {
-              status: 'EXECUTED',
-              confirmedAt: new Date(),
-              executedAt: new Date(),
-              result: executorResult as Prisma.JsonObject,
-            },
-          });
+        // Step 2: Update proposal status after successful execution
+        await prisma.agentProposal.update({
+          where: { id: proposalId },
+          data: {
+            status: 'EXECUTED',
+            confirmedAt: new Date(),
+            executedAt: new Date(),
+            result: executorResult as Prisma.JsonObject,
+          },
+        });
 
-          // Log audit (atomic with execution)
-          await tx.agentAuditLog.create({
-            data: {
-              tenantId,
-              sessionId: proposal.sessionId,
-              toolName: proposal.toolName,
-              proposalId,
-              inputSummary: `Confirm proposal: ${proposal.operation}`.slice(0, 500),
-              outputSummary: JSON.stringify(executorResult).slice(0, 500),
-              trustTier: proposal.trustTier,
-              approvalStatus: 'EXPLICIT',
-              durationMs: Date.now() - startTime,
-              success: true,
-            },
-          });
-
-          return executorResult;
+        // Step 3: Log audit entry
+        await prisma.agentAuditLog.create({
+          data: {
+            tenantId,
+            sessionId: proposal.sessionId,
+            toolName: proposal.toolName,
+            proposalId,
+            inputSummary: `Confirm proposal: ${proposal.operation}`.slice(0, 500),
+            outputSummary: JSON.stringify(executorResult).slice(0, 500),
+            trustTier: proposal.trustTier,
+            approvalStatus: 'EXPLICIT',
+            durationMs: Date.now() - startTime,
+            success: true,
+          },
         });
 
         logger.info(
@@ -420,12 +418,12 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         res.json({
           id: proposalId,
           status: 'EXECUTED',
-          result,
+          result: executorResult,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-        // Update proposal as failed (outside transaction since main tx failed)
+        // Update proposal as failed
         await prisma.agentProposal.update({
           where: { id: proposalId },
           data: {

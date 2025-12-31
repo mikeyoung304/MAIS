@@ -104,6 +104,10 @@ export class MissingFieldError extends AgentError {
 
 /**
  * Error for resource not found (with tenant isolation context)
+ *
+ * SECURITY: Uses generic error message to prevent resource enumeration attacks.
+ * The message intentionally does not confirm whether the resource exists or
+ * if access was denied - both cases return the same generic message.
  */
 export class ResourceNotFoundError extends AgentError {
   constructor(
@@ -112,9 +116,11 @@ export class ResourceNotFoundError extends AgentError {
     suggestion?: string,
     details?: Record<string, unknown>
   ) {
+    // Generic message that doesn't reveal whether resource exists
+    // This prevents attackers from enumerating valid IDs
     const message = suggestion
-      ? `Unable to find ${resourceType}: it may not exist or you may not have access. ${suggestion}`
-      : `Unable to find ${resourceType}: it may not exist or you may not have access.`;
+      ? `Unable to access ${resourceType}. Please check the ID and try again. ${suggestion}`
+      : `Unable to access ${resourceType}. Please check the ID and try again.`;
 
     super(AgentErrorCode.NOT_FOUND, message, { resourceType, resourceId, ...details });
     this.name = 'ResourceNotFoundError';
@@ -210,11 +216,15 @@ export function toUserFriendlyError(error: unknown, action: string): AgentError 
 /**
  * Standard user-friendly error messages for common scenarios
  * These can be used directly in error responses
+ *
+ * SECURITY: Messages are intentionally generic to prevent resource enumeration.
+ * Never reveal whether a specific ID exists - use the same message for
+ * "not found" and "access denied" scenarios.
  */
 export const ErrorMessages = {
   // Services
   LOAD_SERVICES: 'Unable to load services. Please try again.',
-  SERVICE_NOT_FOUND: 'Unable to find this service. It may no longer be available.',
+  SERVICE_NOT_FOUND: 'Unable to access this service. Please check the ID and try again.',
   SERVICE_UNAVAILABLE: 'This service is currently unavailable.',
 
   // Availability
@@ -223,7 +233,7 @@ export const ErrorMessages = {
 
   // Booking
   CREATE_BOOKING: 'Unable to complete your booking. Please try again.',
-  BOOKING_NOT_FOUND: 'Unable to find this booking. Please verify the booking details.',
+  BOOKING_NOT_FOUND: 'Unable to access this booking. Please check the ID and try again.',
 
   // Business info
   BUSINESS_INFO: 'Unable to load business information. Please try again.',

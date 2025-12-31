@@ -278,7 +278,7 @@ export function PanelAgentChat({
           className
         )}
       >
-        <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mb-3">
+        <div className="w-10 h-10 rounded-xl bg-neutral-700 flex items-center justify-center mb-3">
           <Bot className="w-5 h-5 text-text-muted" />
         </div>
         <p className="text-sm font-medium text-text-primary mb-1">Assistant Unavailable</p>
@@ -316,7 +316,7 @@ export function PanelAgentChat({
             <div className="w-6 h-6 rounded-lg bg-sage/10 flex items-center justify-center shrink-0">
               <Bot className="w-3.5 h-3.5 text-sage" />
             </div>
-            <div className="bg-neutral-50 rounded-xl rounded-bl-sm px-3 py-2">
+            <div className="bg-surface rounded-xl rounded-bl-sm px-3 py-2">
               <div className="flex items-center gap-1">
                 <div
                   className="w-1.5 h-1.5 rounded-full bg-sage/50 animate-pulse"
@@ -337,7 +337,7 @@ export function PanelAgentChat({
 
         {/* Error message */}
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-950/50 border border-red-800 text-red-400">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span className="text-xs">{error}</span>
           </div>
@@ -347,7 +347,7 @@ export function PanelAgentChat({
       </div>
 
       {/* Input area */}
-      <div className="px-4 py-3 border-t border-neutral-100 bg-white">
+      <div className="px-4 py-3 border-t border-neutral-700 bg-surface-alt">
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
@@ -357,11 +357,11 @@ export function PanelAgentChat({
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             className={cn(
-              'flex-1 resize-none rounded-xl border border-neutral-200 px-3 py-2 text-sm',
-              'focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/10',
-              'placeholder:text-neutral-400 text-text-primary bg-white',
+              'flex-1 resize-none rounded-xl border border-neutral-700 px-3 py-2 text-sm',
+              'focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20',
+              'placeholder:text-text-muted/60 text-text-primary bg-surface',
               'min-h-[40px] max-h-[80px]',
-              'transition-all duration-200 hover:border-neutral-300'
+              'transition-all duration-200 hover:border-neutral-600'
             )}
             rows={1}
             disabled={isLoading || !sessionId}
@@ -405,7 +405,7 @@ function CompactMessage({
       <div
         className={cn(
           'shrink-0 w-6 h-6 rounded-lg flex items-center justify-center',
-          isUser ? 'bg-neutral-200' : 'bg-sage/10'
+          isUser ? 'bg-neutral-700' : 'bg-sage/10'
         )}
       >
         {isUser ? (
@@ -422,7 +422,7 @@ function CompactMessage({
             'rounded-xl px-3 py-2 text-sm',
             isUser
               ? 'bg-sage text-white rounded-br-sm'
-              : 'bg-neutral-50 text-text-primary rounded-bl-sm'
+              : 'bg-surface text-text-primary rounded-bl-sm'
           )}
         >
           <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
@@ -437,8 +437,8 @@ function CompactMessage({
                 className={cn(
                   'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border',
                   result.success
-                    ? 'bg-green-50 text-green-700 border-green-100'
-                    : 'bg-red-50 text-red-700 border-red-100'
+                    ? 'bg-green-950/50 text-green-400 border-green-800'
+                    : 'bg-red-950/50 text-red-400 border-red-800'
                 )}
               >
                 {result.success ? (
@@ -482,10 +482,10 @@ function CompactProposalCard({
   onReject: () => void;
 }) {
   return (
-    <div className="mt-2 p-3 rounded-xl bg-amber-50/80 border border-amber-200/60">
-      <p className="text-xs font-medium text-amber-900 mb-1.5">{proposal.operation}</p>
+    <div className="mt-2 p-3 rounded-xl bg-amber-950/50 border border-amber-800">
+      <p className="text-xs font-medium text-amber-300 mb-1.5">{proposal.operation}</p>
 
-      <div className="text-[10px] text-amber-800/90 mb-2 space-y-0.5">
+      <div className="text-[10px] text-amber-400 mb-2 space-y-0.5">
         {Object.entries(proposal.preview)
           .slice(0, 2)
           .map(([key, value]) => (

@@ -259,9 +259,15 @@ export class CustomerOrchestrator {
   /**
    * Check for potential prompt injection patterns
    * Returns true if injection attempt detected
+   *
+   * Uses NFKC normalization to catch Unicode lookalike characters
+   * (e.g., 'ⅰgnore' → 'ignore') and zero-width characters
+   * (e.g., 'ignore\u200Bprevious' → 'ignoreprevious')
    */
   private detectPromptInjection(message: string): boolean {
-    return PROMPT_INJECTION_PATTERNS.some((pattern) => pattern.test(message));
+    // Normalize unicode to catch lookalike characters and zero-width chars
+    const normalized = message.normalize('NFKC');
+    return PROMPT_INJECTION_PATTERNS.some((pattern) => pattern.test(normalized));
   }
 
   /**

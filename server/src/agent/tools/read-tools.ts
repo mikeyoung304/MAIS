@@ -68,7 +68,7 @@ export const getTenantTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       return {
@@ -235,7 +235,10 @@ export const getPackagesTool: AgentTool = {
         });
 
         if (!pkg) {
-          return { success: false, error: 'Package not found' };
+          return {
+            success: false,
+            error: 'Unable to access package. Please check the ID and try again.',
+          };
         }
 
         return {
@@ -395,7 +398,10 @@ export const getBookingTool: AgentTool = {
       });
 
       if (!booking) {
-        return { success: false, error: 'Booking not found' };
+        return {
+          success: false,
+          error: 'Unable to access booking. Please check the ID and try again.',
+        };
       }
 
       return {
@@ -597,7 +603,7 @@ export const getLandingPageTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       return {
@@ -639,7 +645,7 @@ export const getStripeStatusTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       return {
@@ -699,7 +705,10 @@ export const getAddonsTool: AgentTool = {
         });
 
         if (!addOn) {
-          return { success: false, error: 'Add-on not found' };
+          return {
+            success: false,
+            error: 'Unable to access add-on. Please check the ID and try again.',
+          };
         }
 
         return {
@@ -817,7 +826,10 @@ export const getCustomersTool: AgentTool = {
           where: { id: customerId, tenantId },
         });
         if (!customer) {
-          return { success: false, error: 'Customer not found' };
+          return {
+            success: false,
+            error: 'Unable to access customer. Please check the ID and try again.',
+          };
         }
 
         // Get booking stats for this customer
@@ -1033,7 +1045,10 @@ export const getSegmentsTool: AgentTool = {
           include: { _count: { select: { packages: true } } },
         });
         if (!segment) {
-          return { success: false, error: 'Segment not found' };
+          return {
+            success: false,
+            error: 'Unable to access segment. Please check the ID and try again.',
+          };
         }
         return { success: true, data: formatSegment(segment) };
       }
@@ -1158,7 +1173,7 @@ export const getTrialStatusTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       const now = new Date();
@@ -1222,7 +1237,7 @@ export const getBookingLinkTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       // Determine the base URL
@@ -1247,7 +1262,7 @@ export const getBookingLinkTool: AgentTool = {
         if (!pkg) {
           return {
             success: false,
-            error: `Package with slug "${packageSlug}" not found or inactive. Use get_packages to see available packages.`,
+            error: 'Unable to access package. Please check the slug and try again.',
           };
         }
 
@@ -1301,7 +1316,7 @@ export const refreshContextTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Tenant not found' };
+        return { success: false, error: 'Unable to access business profile. Please try again.' };
       }
 
       // Calculate date ranges

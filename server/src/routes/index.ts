@@ -61,6 +61,7 @@ import { DomainVerificationService } from '../services/domain-verification.servi
 import { createInternalRoutes } from './internal.routes';
 import { createAgentRoutes } from './agent.routes';
 import { registerAllExecutors } from '../agent/executors';
+import { validateExecutorRegistry } from '../agent/proposals/executor-registry';
 import { createPublicCustomerChatRoutes } from './public-customer-chat.routes';
 import { registerCustomerProposalExecutor } from '../agent/customer/executor-registry';
 import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
@@ -682,8 +683,9 @@ export function createV1Router(
     app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentRoutes);
     logger.info('✅ Agent routes mounted at /v1/agent (with rate limiting)');
 
-    // Register agent proposal executors
+    // Register agent proposal executors and validate all are present
     registerAllExecutors(prismaClient);
+    validateExecutorRegistry(); // CRITICAL: Fail fast if any executor is missing
 
     // Register public customer chat routes (for customer-facing chatbot)
     // NO authentication required - uses tenant context from X-Tenant-Key header

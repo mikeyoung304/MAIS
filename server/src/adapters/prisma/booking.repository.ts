@@ -10,46 +10,13 @@ import type { Booking } from '../lib/entities';
 import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
 import { toISODate } from '../lib/date-utils';
+import { hashTenantDate, hashTenantBooking } from '../../lib/advisory-locks';
 
 // Transaction configuration for booking creation
 const BOOKING_TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds
 const BOOKING_ISOLATION_LEVEL = 'ReadCommitted' as const;
 const MAX_TRANSACTION_RETRIES = 3; // Retry up to 3 times on deadlock
 const RETRY_DELAY_MS = 100; // Base delay between retries
-
-/**
- * Generate deterministic lock ID from tenantId + date for PostgreSQL advisory locks
- * Uses FNV-1a hash algorithm to convert string to 32-bit integer
- * Advisory locks provide explicit serialization without phantom read issues
- */
-function hashTenantDate(tenantId: string, date: string): number {
-  const str = `${tenantId}:${date}`;
-  let hash = 2166136261; // FNV offset basis
-
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 16777619); // FNV prime
-  }
-
-  // Convert to 32-bit signed integer (PostgreSQL bigint range)
-  return hash | 0;
-}
-
-/**
- * Generate deterministic lock ID from tenantId + bookingId for advisory locks
- * P1-147 FIX: Provides booking-specific locking for balance payment race prevention
- */
-function hashTenantBooking(tenantId: string, bookingId: string): number {
-  const str = `${tenantId}:balance:${bookingId}`;
-  let hash = 2166136261; // FNV offset basis
-
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 16777619); // FNV prime
-  }
-
-  return hash | 0;
-}
 
 export interface BookingRepositoryConfig {
   isolationLevel?: 'Serializable' | 'ReadCommitted';

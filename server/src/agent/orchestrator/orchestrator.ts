@@ -453,107 +453,147 @@ export class AgentOrchestrator {
         'T2 proposals soft-confirmed by user message'
       );
 
-      // Execute each soft-confirmed proposal
+      // Batch-fetch all proposals in a single query (avoids N sequential database calls)
+      // CRITICAL: Filter by tenantId to prevent cross-tenant execution
+      const proposals = await this.prisma.agentProposal.findMany({
+        where: {
+          id: { in: softConfirmedIds },
+          tenantId, // Multi-tenant isolation
+        },
+      });
+
+      // Build a map for fast lookup
+      const proposalMap = new Map(proposals.map((p) => [p.id, p]));
+
+      // Track proposals that weren't found (possible security issue or race condition)
       for (const proposalId of softConfirmedIds) {
-        try {
-          // Fetch the full proposal to get toolName and payload
-          // CRITICAL: Filter by tenantId to prevent cross-tenant execution
-          const proposal = await this.prisma.agentProposal.findFirst({
-            where: {
-              id: proposalId,
-              tenantId, // Multi-tenant isolation
-            },
-          });
-
-          if (!proposal) {
-            logger.warn(
-              { proposalId, tenantId },
-              'Proposal not found or tenant mismatch - possible security issue'
-            );
-            failedProposals.push({
-              id: proposalId,
-              toolName: 'unknown',
-              reason: 'Proposal not found or access denied',
-            });
-            continue;
-          }
-
-          const executor = getProposalExecutor(proposal.toolName);
-          if (!executor) {
-            logger.error(
-              { proposalId, toolName: proposal.toolName },
-              'No executor registered for tool'
-            );
-            await this.proposalService.markFailed(
-              proposalId,
-              `No executor for ${proposal.toolName}`
-            );
-            failedProposals.push({
-              id: proposalId,
-              toolName: proposal.toolName,
-              reason: `No executor registered for ${proposal.toolName}`,
-            });
-            continue;
-          }
-
-          // Validate and execute the proposal with timeout to prevent blocking Claude response
-          const rawPayload = (proposal.payload as Record<string, unknown>) || {};
-
-          // Validate payload schema before execution (prevents malformed/malicious payloads)
-          let payload: Record<string, unknown>;
-          try {
-            payload = validateExecutorPayload(proposal.toolName, rawPayload);
-          } catch (validationError) {
-            const errorMessage =
-              validationError instanceof Error ? validationError.message : String(validationError);
-            logger.error(
-              { proposalId, toolName: proposal.toolName, error: errorMessage },
-              'Proposal payload validation failed'
-            );
-            await this.proposalService.markFailed(proposalId, errorMessage);
-            failedProposals.push({
-              id: proposalId,
-              toolName: proposal.toolName,
-              reason: errorMessage,
-            });
-            continue;
-          }
-
-          logger.info(
-            { proposalId, toolName: proposal.toolName, tenantId, timeoutMs: EXECUTOR_TIMEOUT_MS },
-            'Executing T2 soft-confirmed proposal with timeout'
+        if (!proposalMap.has(proposalId)) {
+          logger.warn(
+            { proposalId, tenantId },
+            'Proposal not found or tenant mismatch - possible security issue'
           );
-
-          const result = await withTimeout(
-            executor(tenantId, payload),
-            EXECUTOR_TIMEOUT_MS,
-            proposal.toolName
-          );
-          await this.proposalService.markExecuted(proposalId, result);
-
-          logger.info(
-            { proposalId, toolName: proposal.toolName, result },
-            'T2 proposal executed successfully'
-          );
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          logger.error(
-            { proposalId, error: errorMessage },
-            'Failed to execute T2 soft-confirmed proposal'
-          );
-          await this.proposalService.markFailed(proposalId, errorMessage);
-
-          // Fetch toolName for better error context (proposal was fetched successfully above)
-          const proposal = await this.prisma.agentProposal.findFirst({
-            where: { id: proposalId, tenantId },
-            select: { toolName: true },
-          });
           failedProposals.push({
             id: proposalId,
-            toolName: proposal?.toolName || 'unknown',
-            reason: errorMessage,
+            toolName: 'unknown',
+            reason: 'Proposal not found or access denied',
           });
         }
+      }
+
+      // Prepare execution tasks for valid proposals
+      type ExecutionTask = {
+        proposalId: string;
+        toolName: string;
+        executor: (tenantId: string, payload: Record<string, unknown>) => Promise<unknown>;
+        payload: Record<string, unknown>;
+      };
+
+      const executionTasks: ExecutionTask[] = [];
+      const skippedProposals: Array<{ id: string; toolName: string; reason: string }> = [];
+
+      for (const proposal of proposals) {
+        const executor = getProposalExecutor(proposal.toolName);
+        if (!executor) {
+          logger.error(
+            { proposalId: proposal.id, toolName: proposal.toolName },
+            'No executor registered for tool'
+          );
+          skippedProposals.push({
+            id: proposal.id,
+            toolName: proposal.toolName,
+            reason: `No executor registered for ${proposal.toolName}`,
+          });
+          continue;
+        }
+
+        // Validate payload schema before execution (prevents malformed/malicious payloads)
+        const rawPayload = (proposal.payload as Record<string, unknown>) || {};
+        let payload: Record<string, unknown>;
+        try {
+          payload = validateExecutorPayload(proposal.toolName, rawPayload);
+        } catch (validationError) {
+          const errorMessage =
+            validationError instanceof Error ? validationError.message : String(validationError);
+          logger.error(
+            { proposalId: proposal.id, toolName: proposal.toolName, error: errorMessage },
+            'Proposal payload validation failed'
+          );
+          skippedProposals.push({
+            id: proposal.id,
+            toolName: proposal.toolName,
+            reason: errorMessage,
+          });
+          continue;
+        }
+
+        executionTasks.push({
+          proposalId: proposal.id,
+          toolName: proposal.toolName,
+          executor,
+          payload,
+        });
+      }
+
+      // Mark skipped proposals as failed (batch operation would be nice but markFailed is per-proposal)
+      await Promise.all(
+        skippedProposals.map(async (skipped) => {
+          await this.proposalService.markFailed(skipped.id, skipped.reason);
+          failedProposals.push(skipped);
+        })
+      );
+
+      // Execute all valid proposals in parallel with timeout
+      if (executionTasks.length > 0) {
+        logger.info(
+          { tenantId, count: executionTasks.length, timeoutMs: EXECUTOR_TIMEOUT_MS },
+          'Executing T2 soft-confirmed proposals in parallel'
+        );
+
+        const results = await Promise.allSettled(
+          executionTasks.map(async (task) => {
+            const result = await withTimeout(
+              task.executor(tenantId, task.payload),
+              EXECUTOR_TIMEOUT_MS,
+              task.toolName
+            );
+            return { task, result };
+          })
+        );
+
+        // Process results and update proposal statuses
+        await Promise.all(
+          results.map(async (settledResult, index) => {
+            const task = executionTasks[index];
+
+            if (settledResult.status === 'fulfilled') {
+              const executionResult = settledResult.value.result as Record<string, unknown>;
+              await this.proposalService.markExecuted(task.proposalId, executionResult);
+              logger.info(
+                {
+                  proposalId: task.proposalId,
+                  toolName: task.toolName,
+                  result: settledResult.value.result,
+                },
+                'T2 proposal executed successfully'
+              );
+            } else {
+              const errorMessage =
+                settledResult.reason instanceof Error
+                  ? settledResult.reason.message
+                  : String(settledResult.reason);
+              logger.error(
+                { proposalId: task.proposalId, toolName: task.toolName, error: errorMessage },
+                'Failed to execute T2 soft-confirmed proposal'
+              );
+              await this.proposalService.markFailed(task.proposalId, errorMessage);
+              failedProposals.push({
+                id: task.proposalId,
+                toolName: task.toolName,
+                reason: errorMessage,
+              });
+            }
+          })
+        );
       }
     }
 

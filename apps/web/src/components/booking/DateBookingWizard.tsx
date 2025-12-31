@@ -70,7 +70,7 @@ const STEP_LABELS = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 // DayPicker styles
 const DAY_PICKER_MODIFIERS_STYLES = {
   selected: {
-    backgroundColor: '#F97316', // macon-orange
+    backgroundColor: '#45B37F', // sage
     color: 'white',
   },
 } as const;
@@ -106,9 +106,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
       <div className="space-y-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-900">{pkg.title}</h3>
-          <p className="text-3xl font-bold text-macon-orange mt-2">
-            {formatCurrency(pkg.priceCents)}
-          </p>
+          <p className="text-3xl font-bold text-sage mt-2">{formatCurrency(pkg.priceCents)}</p>
         </div>
 
         {pkg.description && (
@@ -143,7 +141,7 @@ const DateSelectionStep = React.memo(
     <Card className="border-neutral-200">
       <CardHeader>
         <CardTitle className="text-2xl">
-          <Calendar className="inline-block w-6 h-6 mr-2 text-macon-orange" />
+          <Calendar className="inline-block w-6 h-6 mr-2 text-sage" />
           Choose Your Date
         </CardTitle>
         <p className="text-neutral-500 text-base mt-1">Select the date for your event</p>
@@ -152,7 +150,7 @@ const DateSelectionStep = React.memo(
         <div className="flex justify-center">
           {isLoadingDates ? (
             <div className="flex flex-col items-center py-8">
-              <Loader2 className="w-8 h-8 text-macon-orange animate-spin" />
+              <Loader2 className="w-8 h-8 text-sage animate-spin" />
               <p className="mt-2 text-neutral-500">Loading available dates...</p>
             </div>
           ) : (
@@ -243,7 +241,7 @@ const DetailsStep = React.memo(
               value={customerDetails.notes}
               onChange={(e) => onUpdateField('notes', e.target.value)}
               placeholder="Any special requests or information..."
-              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-macon-orange focus:outline-none focus:ring-4 focus:ring-macon-orange/30 transition-all"
+              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-sage focus:outline-none focus:ring-4 focus:ring-sage/30 transition-all"
               maxLength={500}
             />
           </div>
@@ -298,9 +296,7 @@ const ReviewStep = React.memo(({ pkg, selectedDate, customerDetails }: ReviewSte
         <div className="pt-4">
           <div className="flex items-baseline justify-between">
             <span className="text-lg text-neutral-600">Total:</span>
-            <span className="text-3xl font-bold text-macon-orange">
-              {formatCurrency(pkg.priceCents)}
-            </span>
+            <span className="text-3xl font-bold text-sage">{formatCurrency(pkg.priceCents)}</span>
           </div>
           <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
         </div>

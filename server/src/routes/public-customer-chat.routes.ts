@@ -347,6 +347,14 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
             throw new Error('Customer ID not found on proposal');
           }
 
+          // Verify customer belongs to this tenant (multi-tenant security)
+          const customer = await tx.customer.findFirst({
+            where: { id: customerId, tenantId },
+          });
+          if (!customer) {
+            throw new Error('Customer not found or access denied');
+          }
+
           const executorResult = await executor(tenantId, customerId, validatedPayload);
 
           // Update proposal as executed

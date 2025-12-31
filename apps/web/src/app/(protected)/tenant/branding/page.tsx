@@ -132,7 +132,7 @@ export default function TenantBrandingPage() {
 
       {/* Success Message */}
       {successMessage && (
-        <Card className="border-sage/20 bg-sage/5">
+        <Card colorScheme="dark" className="border-sage/30 bg-sage/10">
           <CardContent className="flex items-center gap-3 p-4">
             <CheckCircle className="h-5 w-5 text-sage" />
             <p className="text-sage">{successMessage}</p>
@@ -142,17 +142,17 @@ export default function TenantBrandingPage() {
 
       {/* Error Message */}
       {error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card colorScheme="dark" className="border-red-800 bg-red-950/50">
           <CardContent className="flex items-center gap-3 p-4">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <p className="text-red-600">{error}</p>
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <p className="text-red-400">{error}</p>
           </CardContent>
         </Card>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Branding Form */}
-        <Card>
+        <Card colorScheme="dark">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-sage" />
@@ -296,7 +296,7 @@ export default function TenantBrandingPage() {
         </Card>
 
         {/* Live Preview */}
-        <Card>
+        <Card colorScheme="dark">
           <CardHeader>
             <CardTitle>Live Preview</CardTitle>
           </CardHeader>

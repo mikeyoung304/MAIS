@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
 
-          <Card>
+          <Card colorScheme="dark">
             <CardContent className="pt-8 pb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sage/10">
                 <CheckCircle className="h-8 w-8 text-sage" />
@@ -120,12 +120,12 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            MAIS
+            HANDLED
           </Link>
           <p className="mt-2 text-text-muted">Reset your password</p>
         </div>
 
-        <Card>
+        <Card colorScheme="dark">
           <CardHeader>
             <CardTitle>Forgot Password</CardTitle>
             <CardDescription>Enter your email to receive a reset link</CardDescription>

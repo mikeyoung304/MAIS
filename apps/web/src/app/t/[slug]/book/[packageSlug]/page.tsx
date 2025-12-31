@@ -86,7 +86,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
             </p>
             <Link
               href={`/t/${slug}`}
-              className="inline-flex items-center text-macon-orange hover:underline"
+              className="inline-flex items-center text-sage hover:underline"
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
               Back to {tenant.name}
@@ -110,7 +110,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
             </p>
             <Link
               href={`/t/${slug}`}
-              className="inline-flex items-center text-macon-orange hover:underline"
+              className="inline-flex items-center text-sage hover:underline"
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
               View Available Packages
@@ -135,7 +135,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
             </p>
             <Link
               href={`/t/${slug}/book`}
-              className="inline-flex items-center px-6 py-3 bg-macon-orange text-white rounded-lg hover:bg-macon-orange/90 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-sage text-white rounded-lg hover:bg-sage-hover transition-colors"
             >
               Go to Appointment Booking
             </Link>
@@ -152,7 +152,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
         <div className="container mx-auto px-4">
           <Link
             href={`/t/${slug}`}
-            className="inline-flex items-center text-neutral-600 hover:text-macon-orange transition-colors"
+            className="inline-flex items-center text-neutral-600 hover:text-sage transition-colors"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             <span>Back to {tenant.name}</span>

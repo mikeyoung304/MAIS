@@ -23,7 +23,7 @@ function ResetPasswordSkeleton() {
           <div className="font-serif text-3xl font-bold text-text-primary">HANDLED</div>
           <p className="mt-2 text-text-muted">Loading...</p>
         </div>
-        <Card>
+        <Card colorScheme="dark">
           <CardContent className="pt-8 pb-8">
             <div className="flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-sage" />
@@ -141,10 +141,10 @@ function ResetPasswordForm() {
             </Link>
           </div>
 
-          <Card>
+          <Card colorScheme="dark">
             <CardContent className="pt-8 pb-8 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <AlertCircle className="h-8 w-8 text-red-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-950/50">
+                <AlertCircle className="h-8 w-8 text-red-400" />
               </div>
               <h2 className="mb-2 font-serif text-2xl font-bold text-text-primary">
                 Invalid Reset Link
@@ -178,7 +178,7 @@ function ResetPasswordForm() {
             </Link>
           </div>
 
-          <Card>
+          <Card colorScheme="dark">
             <CardContent className="pt-8 pb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sage/10">
                 <CheckCircle className="h-8 w-8 text-sage" />
@@ -220,7 +220,7 @@ function ResetPasswordForm() {
           <p className="mt-2 text-text-muted">Create a new password</p>
         </div>
 
-        <Card>
+        <Card colorScheme="dark">
           <CardHeader>
             <CardTitle>Reset Password</CardTitle>
             <CardDescription>Enter your new password below</CardDescription>

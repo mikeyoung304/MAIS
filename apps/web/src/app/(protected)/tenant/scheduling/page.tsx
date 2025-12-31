@@ -137,8 +137,8 @@ export default function TenantSchedulingPage() {
         </Card>
         <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
           <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-xl bg-macon-orange/10 p-3">
-              <CalendarX className="h-6 w-6 text-macon-orange" />
+            <div className="rounded-xl bg-amber-950/30 p-3">
+              <CalendarX className="h-6 w-6 text-amber-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-text-primary">{blackouts.length}</p>
@@ -222,8 +222,8 @@ export default function TenantSchedulingPage() {
       ) : blackouts.length === 0 ? (
         <Card className="border-2 border-dashed border-sage/20">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 rounded-full bg-macon-orange/10 p-4">
-              <CalendarX className="h-8 w-8 text-macon-orange" />
+            <div className="mb-4 rounded-full bg-amber-950/30 p-4">
+              <CalendarX className="h-8 w-8 text-amber-400" />
             </div>
             <h3 className="mb-2 font-semibold text-text-primary">No blackout dates</h3>
             <p className="mb-6 max-w-sm text-sm text-text-muted">
@@ -241,8 +241,8 @@ export default function TenantSchedulingPage() {
             <Card key={blackout.id} className="transition-all hover:shadow-md">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
-                  <div className="rounded-lg bg-macon-orange/10 p-2">
-                    <CalendarX className="h-5 w-5 text-macon-orange" />
+                  <div className="rounded-lg bg-amber-950/30 p-2">
+                    <CalendarX className="h-5 w-5 text-amber-400" />
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">
