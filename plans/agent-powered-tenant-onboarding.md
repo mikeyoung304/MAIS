@@ -3,8 +3,9 @@
 > Transform signup from "fill out forms" to "have a conversation with your AI business consultant"
 
 **Created**: 2025-12-31
-**Status**: Draft - Pending Review
-**Complexity**: A LOT (Major Feature - Multi-Phase Implementation)
+**Updated**: 2025-12-31 (Post-Review: Quality-First Revision)
+**Status**: Ready for Implementation
+**Complexity**: A LOT (Major Feature - Quality-First Implementation)
 
 ---
 
@@ -14,12 +15,19 @@ Replace passive dashboard onboarding with an **AI-guided conversational journey*
 
 1. **Discover** their business identity and ideal clients
 2. **Research** their local market (competitors, pricing, opportunities)
-3. **Design** their service offerings (segments, tiers, packages)
-4. **Price** strategically based on market data
-5. **Position** with marketing messaging and storefront copy
-6. **Activate** when ready (Stripe connection as final step, not first)
+3. **Design & Price** their service offerings (combined for natural flow)
+4. **Position** with marketing messaging and storefront copy
+5. **Celebrate** when ready (Stripe decoupled — connect later)
 
 **The key shift**: Instead of "here's your empty dashboard, figure it out," we say "let's build your business together."
+
+**Quality-First Principles** (from review):
+
+- Build industry benchmarks first, web search as enhancement
+- Event sourcing for complete audit trail and debugging
+- Formal state machine for provable correctness
+- Live preview panel for magical UX
+- Advisor memory across sessions
 
 ---
 
@@ -45,180 +53,170 @@ Signup → Empty Dashboard → Amber "Connect Stripe" warning → Confusion
 ### Desired State
 
 ```
-Signup → Welcome Modal → Agent-Guided Conversation → Configured Business → Go Live
+Signup → Welcome Message → Agent-Guided Conversation → Configured Business → Celebrate!
 ```
 
 **The experience:**
 
-1. **Welcome modal** sets expectations and introduces the AI assistant
+1. **Welcome message** in Growth Assistant (inline, not modal)
 2. **Discovery phase** — Agent learns about their business through conversation
 3. **Market research** — Agent researches local competition and pricing
-4. **Service design** — Agent helps structure offerings (segments + tiers)
-5. **Pricing strategy** — Agent recommends prices based on market data
-6. **Marketing positioning** — Agent generates storefront copy
-7. **Activation** — Stripe connect only when ready to accept bookings
+4. **Service design with pricing** — Combined for natural flow
+5. **Marketing positioning** — Agent generates storefront copy
+6. **Celebration** — Storefront preview, Stripe offered but not required
 
 ---
 
-## Proposed Solution
+## Architecture Overview
 
-### Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ONBOARDING AGENT SYSTEM                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌─────────────────┐         ┌─────────────────┐                   │
-│  │   Next.js UI    │────────▶│  Express API    │                   │
-│  │                 │         │                 │                   │
-│  │ OnboardingChat  │         │ /v1/agent/chat  │                   │
-│  │ WelcomeModal    │         │ /v1/agent/onb   │                   │
-│  │ ProgressTracker │         │                 │                   │
-│  └─────────────────┘         └────────┬────────┘                   │
-│                                       │                            │
-│                                       ▼                            │
-│  ┌────────────────────────────────────────────────────────────┐   │
-│  │                  AGENT ORCHESTRATOR                         │   │
-│  │                                                             │   │
-│  │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐       │   │
-│  │  │  Discovery  │──▶│   Market    │──▶│   Service   │       │   │
-│  │  │   Phase     │   │  Research   │   │   Design    │       │   │
-│  │  └─────────────┘   └─────────────┘   └─────────────┘       │   │
-│  │         │                │                  │               │   │
-│  │         ▼                ▼                  ▼               │   │
-│  │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐       │   │
-│  │  │   Pricing   │──▶│  Marketing  │──▶│ Activation  │       │   │
-│  │  │  Strategy   │   │ Positioning │   │             │       │   │
-│  │  └─────────────┘   └─────────────┘   └─────────────┘       │   │
-│  │                                                             │   │
-│  └────────────────────────────────────────────────────────────┘   │
-│                              │                                     │
-│                              ▼                                     │
-│  ┌────────────────────────────────────────────────────────────┐   │
-│  │                     TOOL LAYER                              │   │
-│  │                                                             │   │
-│  │  Read Tools          Write Tools          External Tools    │   │
-│  │  ─────────────       ─────────────        ─────────────     │   │
-│  │  get_onboarding_     store_discovery      web_search_       │   │
-│  │    state             create_segment         market          │   │
-│  │  get_tenant_         create_package       get_pricing_      │   │
-│  │    profile           update_branding        benchmarks      │   │
-│  │  get_market_         update_storefront                      │   │
-│  │    research          complete_onboarding                    │   │
-│  │                                                             │   │
-│  └────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Phase State Machine
+### Quality-First Architecture
 
 ```
-                    ┌──────────────┐
-                    │   SIGNUP     │
-                    │   COMPLETE   │
-                    └──────┬───────┘
-                           │
-                           ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                         DISCOVERY                                     │
-│                                                                       │
-│  Inputs:                        Outputs:                              │
-│  • Business type                • discoveryData.businessType          │
-│  • Location                     • discoveryData.location              │
-│  • Ideal clients                • discoveryData.niche                 │
-│  • Experience level             • discoveryData.experience            │
-│  • Goals                        • discoveryData.idealClient           │
-│                                                                       │
-│  Agent Actions:                                                       │
-│  • Ask guided questions                                               │
-│  • Store responses via store_discovery_response tool                  │
-│  • Summarize understanding before proceeding                          │
-└──────────────────────────────────┬───────────────────────────────────┘
-                                   │
-                                   ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                      MARKET_RESEARCH                                  │
-│                                                                       │
-│  Inputs:                        Outputs:                              │
-│  • discoveryData                • marketResearch.competitors[]        │
-│                                 • marketResearch.pricingRange         │
-│  Agent Actions:                 • marketResearch.insights[]           │
-│  • web_search_market tool       • marketResearch.opportunities        │
-│  • Analyze competitors                                                │
-│  • Identify pricing ranges                                            │
-│  • Find market gaps                                                   │
-│  • Present findings to user                                           │
-└──────────────────────────────────┬───────────────────────────────────┘
-                                   │
-                                   ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                      SERVICE_DESIGN                                   │
-│                                                                       │
-│  Inputs:                        Outputs:                              │
-│  • discoveryData                • serviceDesign.segmentStrategy       │
-│  • marketResearch               • serviceDesign.segments[]            │
-│                                 • serviceDesign.tierNames             │
-│  Agent Actions:                                                       │
-│  • Recommend segment structure (single vs multiple)                   │
-│  • Help name segments and tiers                                       │
-│  • Create via create_segment, create_package tools                    │
-│  • Show live preview of storefront                                    │
-└──────────────────────────────────┬───────────────────────────────────┘
-                                   │
-                                   ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                         PRICING                                       │
-│                                                                       │
-│  Inputs:                        Outputs:                              │
-│  • marketResearch.pricingRange  • pricing.strategy                    │
-│  • serviceDesign                • pricing.packages[]                  │
-│                                                                       │
-│  Agent Actions:                                                       │
-│  • Present market pricing data                                        │
-│  • Ask positioning preference (value/market/premium)                  │
-│  • Calculate recommended prices                                       │
-│  • Update packages via update_package_pricing tool                    │
-└──────────────────────────────────┬───────────────────────────────────┘
-                                   │
-                                   ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                        MARKETING                                      │
-│                                                                       │
-│  Inputs:                        Outputs:                              │
-│  • discoveryData                • marketing.positioning               │
-│  • marketResearch               • marketing.heroTitle                 │
-│  • serviceDesign                • marketing.heroSubtitle              │
-│                                 • marketing.aboutText                 │
-│  Agent Actions:                 • marketing.contentIdeas[]            │
-│  • Generate unique positioning statement                              │
-│  • Create hero copy, about text                                       │
-│  • Suggest marketing channels                                         │
-│  • Update storefront via update_storefront_copy tool                  │
-└──────────────────────────────────┬───────────────────────────────────┘
-                                   │
-                                   ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                        ACTIVATION                                     │
-│                                                                       │
-│  Inputs:                        Actions:                              │
-│  • All previous phases          • Show final summary                  │
-│  • Storefront preview           • Preview storefront                  │
-│                                 • Offer Stripe connection             │
-│  Completion:                    • Mark onboarding complete            │
-│  • onboardingState.phase = 'complete'                                 │
-│  • onboardingState.completedAt = now()                                │
-│                                                                       │
-│  Note: Stripe is optional here — can connect later                    │
-└──────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    ONBOARDING AGENT SYSTEM (Quality-First)                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────────┐         ┌──────────────────────┐                 │
+│  │    Next.js UI        │────────▶│    Express API       │                 │
+│  │                      │         │                      │                 │
+│  │ • GrowthAssistant    │         │ /v1/agent/chat       │                 │
+│  │ • LivePreviewPanel   │◀───────▶│ /v1/agent/onboarding │                 │
+│  │ • AdvisorMemoryCtx   │   WS    │                      │                 │
+│  └──────────────────────┘         └──────────┬───────────┘                 │
+│                                              │                              │
+│                                              ▼                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                      ORCHESTRATOR + STATE MACHINE                     │  │
+│  │                                                                       │  │
+│  │   ┌─────────────────────────────────────────────────────────────┐    │  │
+│  │   │                    XState Formal Machine                     │    │  │
+│  │   │                                                              │    │  │
+│  │   │  discovery ──▶ market_research ──▶ service_design ──▶ done  │    │  │
+│  │   │      │              │                    │              │    │    │  │
+│  │   │      └──── SKIP ────┴────── SKIP ───────┴──── SKIP ────┘    │    │  │
+│  │   │                                                              │    │  │
+│  │   │  • Guards validate transitions                               │    │  │
+│  │   │  • Actions persist state + emit events                       │    │  │
+│  │   │  • Retries with exponential backoff                          │    │  │
+│  │   └─────────────────────────────────────────────────────────────┘    │  │
+│  │                                                                       │  │
+│  │   ┌─────────────────────────────────────────────────────────────┐    │  │
+│  │   │                    Event Sourcing Layer                      │    │  │
+│  │   │                                                              │    │  │
+│  │   │  OnboardingEvent[] → projectState() → OnboardingState       │    │  │
+│  │   │                                                              │    │  │
+│  │   │  • Complete audit trail of every decision                    │    │  │
+│  │   │  • Replay for debugging production issues                    │    │  │
+│  │   │  • Analytics: "What questions take longest?"                 │    │  │
+│  │   └─────────────────────────────────────────────────────────────┘    │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                              │                              │
+│                                              ▼                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                         TOOL LAYER (Consolidated)                     │  │
+│  │                                                                       │  │
+│  │   Core Tools (3)              External Tools           Support Tools  │  │
+│  │   ─────────────────           ──────────────           ─────────────  │  │
+│  │   • update_onboarding_state   • search_market          • get_state    │  │
+│  │   • upsert_services           • get_benchmarks         • get_preview  │  │
+│  │   • update_storefront                                                 │  │
+│  │                                                                       │  │
+│  │   All tools use discriminated unions for exhaustive error handling   │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                              │                              │
+│                                              ▼                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                      OBSERVABILITY (OpenTelemetry)                    │  │
+│  │                                                                       │  │
+│  │   • Trace entire onboarding sessions across API calls                │  │
+│  │   • Span per tool execution with timing                              │  │
+│  │   • Connect frontend interactions to backend operations              │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Simplified Phase Flow (4 User Phases, Not 6)
+
+Based on reviewer feedback, we've consolidated phases for more natural conversation:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         USER EXPERIENCE FLOW                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   SIGNUP                                                                     │
+│      │                                                                       │
+│      ▼                                                                       │
+│   ┌──────────────────────────────────────────────────────────────────────┐  │
+│   │                         1. DISCOVERY                                  │  │
+│   │                                                                       │  │
+│   │   "Tell me about your business..."                                   │  │
+│   │   • Business type, location, niche                                   │  │
+│   │   • Ideal client, experience, goals                                  │  │
+│   │   • Store via update_onboarding_state tool                           │  │
+│   │                                                                       │  │
+│   │   Advisor Memory: Summarize and embed for future reference           │  │
+│   └──────────────────────────────────────┬───────────────────────────────┘  │
+│                                          │                                   │
+│                                          ▼                                   │
+│   ┌──────────────────────────────────────────────────────────────────────┐  │
+│   │                      2. MARKET RESEARCH                               │  │
+│   │                                                                       │  │
+│   │   "Let me research your local market..."                             │  │
+│   │                                                                       │  │
+│   │   ┌─────────────────────────────────────────────────────────────┐   │  │
+│   │   │  FALLBACK-FIRST ARCHITECTURE                                 │   │  │
+│   │   │                                                              │   │  │
+│   │   │  1. Load industry benchmarks (ALWAYS available)              │   │  │
+│   │   │  2. Attempt web search (enhancement)                         │   │  │
+│   │   │  3. Merge results, prefer local data when available          │   │  │
+│   │   │                                                              │   │  │
+│   │   │  "I couldn't find specific Austin data, but wedding          │   │  │
+│   │   │   photographers typically charge $2-8k nationally."          │   │  │
+│   │   └─────────────────────────────────────────────────────────────┘   │  │
+│   │                                                                       │  │
+│   │   Live Preview: Show competitor examples if available                │  │
+│   └──────────────────────────────────────┬───────────────────────────────┘  │
+│                                          │                                   │
+│                                          ▼                                   │
+│   ┌──────────────────────────────────────────────────────────────────────┐  │
+│   │                 3. SERVICE DESIGN + PRICING (Combined)                │  │
+│   │                                                                       │  │
+│   │   "Let's design your packages. For elopements, I'm thinking          │  │
+│   │    a 'Micro' package at $1,500 based on the Austin market..."        │  │
+│   │                                                                       │  │
+│   │   • Recommend segment structure                                      │  │
+│   │   • Design tiers with pricing IN THE SAME CONVERSATION              │  │
+│   │   • Create via upsert_services tool (atomic segment + packages)      │  │
+│   │                                                                       │  │
+│   │   Live Preview: Storefront updates in real-time as packages created  │  │
+│   └──────────────────────────────────────┬───────────────────────────────┘  │
+│                                          │                                   │
+│                                          ▼                                   │
+│   ┌──────────────────────────────────────────────────────────────────────┐  │
+│   │                    4. MARKETING + CELEBRATION                         │  │
+│   │                                                                       │  │
+│   │   "Let me write some copy for your storefront..."                    │  │
+│   │   • Generate hero, about sections                                    │  │
+│   │   • Apply via update_storefront tool                                 │  │
+│   │                                                                       │  │
+│   │   "Your storefront is ready! Take a look: [preview link]             │  │
+│   │    When you're ready to accept bookings, just say 'connect           │  │
+│   │    payments' and I'll help you with Stripe."                         │  │
+│   │                                                                       │  │
+│   │   NOTE: Stripe is DECOUPLED. Onboarding complete when storefront     │  │
+│   │   looks good. Payments are a separate, lower-pressure conversation.  │  │
+│   └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Technical Approach
 
-### 1. Database Schema Changes
+### 1. Database Schema (Event Sourcing)
 
 ```prisma
 // schema.prisma additions
@@ -226,982 +224,1105 @@ Signup → Welcome Modal → Agent-Guided Conversation → Configured Business �
 model Tenant {
   // ... existing fields
 
-  // NEW: Onboarding state storage
-  onboardingState    Json?     @default("{}")  // OnboardingState object
-  onboardingPhase    String?   @default("discovery")  // Current phase
-  onboardingStartedAt DateTime?
+  // Onboarding tracking (simple fields for queries)
+  onboardingPhase       String?   @default("discovery")
   onboardingCompletedAt DateTime?
+  onboardingVersion     Int       @default(0)  // Optimistic locking
+
+  // Events are the source of truth
+  onboardingEvents      OnboardingEvent[]
 }
 
-// Type definition (for reference - stored as JSON)
-// interface OnboardingState {
-//   phase: 'discovery' | 'market_research' | 'service_design' | 'pricing' | 'marketing' | 'activation' | 'complete';
-//   discovery?: {
-//     businessType: string;
-//     location: { city: string; state: string; country?: string };
-//     niche: string;
-//     experience: string;
-//     idealClient: string;
-//     goals: string[];
-//   };
-//   marketResearch?: {
-//     competitors: { name: string; priceRange?: string; strengths?: string }[];
-//     pricingBenchmarks: { low: number; mid: number; high: number };
-//     insights: string[];
-//     opportunities: string[];
-//     searchedAt: Date;
-//   };
-//   serviceDesign?: {
-//     segmentStrategy: 'single' | 'multiple';
-//     segments: { id: string; name: string; description: string }[];
-//     tierNames: Record<string, string[]>;
-//   };
-//   pricing?: {
-//     strategy: 'value' | 'market' | 'premium';
-//     packages: { id: string; name: string; price: number }[];
-//   };
-//   marketing?: {
-//     positioning: string;
-//     heroTitle: string;
-//     heroSubtitle: string;
-//     aboutText: string;
-//     contentIdeas: string[];
-//   };
-// }
-```
+// Event sourcing: Every decision is an event
+model OnboardingEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  eventType String   // DISCOVERY_ANSWER, MARKET_SEARCH_COMPLETE, SEGMENT_CREATED, etc.
+  payload   Json     // Event-specific data
+  timestamp DateTime @default(now())
+  version   Int      // For ordering
 
-### 2. New Agent Tools
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-#### Read Tools (server/src/agent/tools/onboarding-read-tools.ts)
-
-```typescript
-// Tool: get_onboarding_state
-{
-  name: 'get_onboarding_state',
-  description: 'Get the current onboarding progress and stored data for this tenant',
-  parameters: {},
-  execute: async ({ tenantId }) => {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        onboardingState: true,
-        onboardingPhase: true,
-        businessName: true,
-        slug: true
-      }
-    });
-    return { state: tenant.onboardingState, phase: tenant.onboardingPhase };
-  }
-}
-
-// Tool: get_tenant_profile
-// Already exists - reuse
-
-// Tool: get_market_research_cache
-{
-  name: 'get_market_research_cache',
-  description: 'Get cached market research if still fresh (within 7 days)',
-  parameters: {},
-  execute: async ({ tenantId }) => {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { onboardingState: true }
-    });
-    const state = tenant.onboardingState as OnboardingState;
-
-    if (state?.marketResearch?.searchedAt) {
-      const searchDate = new Date(state.marketResearch.searchedAt);
-      const daysSinceSearch = (Date.now() - searchDate.getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSinceSearch < 7) {
-        return { cached: true, data: state.marketResearch };
-      }
-    }
-    return { cached: false };
-  }
+  @@index([tenantId, timestamp])
+  @@index([tenantId, version])
 }
 ```
 
-#### Write Tools (server/src/agent/tools/onboarding-write-tools.ts)
+### 2. Type System (Zod Schemas + Discriminated Unions)
 
 ```typescript
-// Tool: store_discovery_response (T1 - auto)
-{
-  name: 'store_discovery_response',
-  description: 'Store user answers from discovery phase',
-  trustTier: 'T1',
-  parameters: {
-    businessType: z.string().describe('Type of business (e.g., "wedding photographer")'),
-    location: z.object({
-      city: z.string(),
-      state: z.string(),
-      country: z.string().optional()
-    }).describe('Business location'),
-    niche: z.string().describe('Specific niche or specialty'),
-    experience: z.string().describe('Years of experience'),
-    idealClient: z.string().describe('Description of ideal client'),
-    goals: z.array(z.string()).describe('Business goals')
-  },
-  execute: async ({ tenantId, input }) => {
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        onboardingPhase: 'market_research',
-        onboardingState: {
-          ...(await getCurrentState(tenantId)),
-          phase: 'market_research',
-          discovery: input
-        }
-      }
-    });
-    return { success: true, nextPhase: 'market_research' };
-  }
-}
+// packages/contracts/src/schemas/onboarding.schema.ts
 
-// Tool: store_market_research (T1 - auto)
-{
-  name: 'store_market_research',
-  description: 'Store market research findings',
-  trustTier: 'T1',
-  parameters: {
-    competitors: z.array(z.object({
+import { z } from 'zod';
+
+// ============ Phase Enum ============
+export const OnboardingPhaseSchema = z.enum([
+  'discovery',
+  'market_research',
+  'service_design', // Includes pricing
+  'marketing',
+  'complete',
+]);
+export type OnboardingPhase = z.infer<typeof OnboardingPhaseSchema>;
+
+// ============ Discovery Data ============
+export const DiscoveryDataSchema = z.object({
+  businessType: z.string(),
+  location: z.object({
+    city: z.string(),
+    state: z.string(),
+    country: z.string().default('US'),
+  }),
+  niche: z.string(),
+  experience: z.string(),
+  idealClient: z.string(),
+  goals: z.array(z.string()),
+});
+export type DiscoveryData = z.infer<typeof DiscoveryDataSchema>;
+
+// ============ Market Research Data ============
+export const MarketResearchDataSchema = z.object({
+  competitors: z.array(
+    z.object({
       name: z.string(),
       priceRange: z.string().optional(),
-      strengths: z.string().optional()
-    })),
-    pricingBenchmarks: z.object({
-      low: z.number(),
-      mid: z.number(),
-      high: z.number()
-    }),
-    insights: z.array(z.string()),
-    opportunities: z.array(z.string())
-  },
-  execute: async ({ tenantId, input }) => {
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        onboardingPhase: 'service_design',
-        onboardingState: {
-          ...(await getCurrentState(tenantId)),
-          phase: 'service_design',
-          marketResearch: { ...input, searchedAt: new Date() }
-        }
-      }
-    });
-    return { success: true, nextPhase: 'service_design' };
-  }
+      strengths: z.string().optional(),
+      source: z.enum(['web_search', 'industry_benchmark']),
+    })
+  ),
+  pricingBenchmarks: z.object({
+    low: z.number(),
+    mid: z.number(),
+    high: z.number(),
+    source: z.enum(['local_search', 'industry_average']),
+  }),
+  insights: z.array(z.string()),
+  opportunities: z.array(z.string()),
+  searchedAt: z.coerce.date(),
+  isFallback: z.boolean().default(false),
+});
+export type MarketResearchData = z.infer<typeof MarketResearchDataSchema>;
+
+// ============ Tool Result Types (Discriminated Unions) ============
+
+// Every tool result is exhaustively typed
+export type UpdateOnboardingStateResult =
+  | { success: true; phase: OnboardingPhase; summary: string }
+  | { success: false; error: 'INCOMPLETE_DATA'; missingFields: string[] }
+  | { success: false; error: 'INVALID_LOCATION'; suggestion: string }
+  | { success: false; error: 'CONCURRENT_MODIFICATION'; currentVersion: number };
+
+export type SearchMarketResult =
+  | { success: true; data: MarketResearchData }
+  | { success: false; error: 'SEARCH_FAILED'; fallbackData: MarketResearchData }
+  | { success: false; error: 'RATE_LIMITED'; retryAfter: number };
+
+export type UpsertServicesResult =
+  | {
+      success: true;
+      segmentId: string;
+      packages: { id: string; name: string; price: number }[];
+      previewUrl: string;
+    }
+  | { success: false; error: 'SEGMENT_EXISTS'; existingSlug: string }
+  | { success: false; error: 'INVALID_TIER_COUNT'; allowed: { min: number; max: number } }
+  | { success: false; error: 'DUPLICATE_PACKAGE_NAME'; duplicateName: string };
+
+export type UpdateStorefrontResult =
+  | { success: true; previewUrl: string }
+  | { success: false; error: 'INVALID_COPY_LENGTH'; field: string; maxLength: number }
+  | { success: false; error: 'LANDING_PAGE_CONFIG_CORRUPT'; recoveryAction: string };
+
+// ============ Event Types ============
+export const OnboardingEventTypeSchema = z.enum([
+  // Discovery
+  'DISCOVERY_QUESTION_ASKED',
+  'DISCOVERY_ANSWER_RECEIVED',
+  'DISCOVERY_COMPLETED',
+
+  // Market Research
+  'MARKET_SEARCH_INITIATED',
+  'MARKET_SEARCH_COMPLETED',
+  'MARKET_SEARCH_FAILED_WITH_FALLBACK',
+
+  // Service Design
+  'SEGMENT_CREATED',
+  'PACKAGE_CREATED',
+  'PRICE_SET',
+  'SERVICE_DESIGN_COMPLETED',
+
+  // Marketing
+  'STOREFRONT_COPY_GENERATED',
+  'STOREFRONT_COPY_APPLIED',
+
+  // Lifecycle
+  'PHASE_SKIPPED',
+  'ONBOARDING_COMPLETED',
+  'ONBOARDING_RESUMED',
+]);
+```
+
+### 3. State Machine (XState)
+
+```typescript
+// server/src/agent/onboarding/state-machine.ts
+
+import { createMachine, assign } from 'xstate';
+import { OnboardingPhase, DiscoveryData, MarketResearchData } from '@macon/contracts';
+
+interface OnboardingContext {
+  tenantId: string;
+  version: number;
+  discovery: DiscoveryData | null;
+  marketResearch: MarketResearchData | null;
+  createdSegments: string[];
+  createdPackages: string[];
+  errors: { phase: string; error: string; timestamp: Date }[];
 }
 
-// Tool: create_segment_with_packages (T2 - soft confirm)
-{
-  name: 'create_segment_with_packages',
-  description: 'Create a service segment with initial packages',
-  trustTier: 'T2',
-  parameters: {
-    segmentName: z.string(),
-    segmentDescription: z.string(),
-    packages: z.array(z.object({
-      name: z.string(),
-      description: z.string(),
-      tierOrder: z.number().min(1).max(10)
-    }))
-  },
-  execute: async ({ tenantId, input }) => {
-    // Create segment
-    const segment = await prisma.segment.create({
-      data: {
-        tenantId,
-        name: input.segmentName,
-        slug: slugify(input.segmentName),
-        description: input.segmentDescription,
-        heroTitle: input.segmentName
-      }
-    });
+type OnboardingEvent =
+  | { type: 'COMPLETE_DISCOVERY'; data: DiscoveryData }
+  | { type: 'COMPLETE_MARKET_RESEARCH'; data: MarketResearchData }
+  | { type: 'COMPLETE_SERVICE_DESIGN'; segmentIds: string[]; packageIds: string[] }
+  | { type: 'COMPLETE_MARKETING' }
+  | { type: 'SKIP_PHASE' }
+  | { type: 'GO_BACK' }
+  | { type: 'ERROR'; error: string };
 
-    // Create packages (prices set to $0 initially)
-    await prisma.package.createMany({
-      data: input.packages.map(pkg => ({
-        tenantId,
-        segmentId: segment.id,
-        name: pkg.name,
-        slug: slugify(pkg.name),
-        description: pkg.description,
-        basePrice: 0, // Pricing phase will set this
-        groupingOrder: pkg.tierOrder,
-        active: true
-      }))
+export const onboardingMachine = createMachine({
+  id: 'onboarding',
+  initial: 'discovery',
+  context: {
+    tenantId: '',
+    version: 0,
+    discovery: null,
+    marketResearch: null,
+    createdSegments: [],
+    createdPackages: [],
+    errors: [],
+  } as OnboardingContext,
+
+  states: {
+    discovery: {
+      on: {
+        COMPLETE_DISCOVERY: {
+          target: 'market_research',
+          actions: [assign({ discovery: (_, event) => event.data }), 'persistState', 'emitEvent'],
+        },
+        SKIP_PHASE: {
+          target: 'market_research',
+          actions: ['emitSkipEvent'],
+        },
+      },
+      onEntry: ['loadAdvisorMemory'],
+    },
+
+    market_research: {
+      initial: 'loading_benchmarks',
+      states: {
+        loading_benchmarks: {
+          invoke: {
+            src: 'loadIndustryBenchmarks',
+            onDone: {
+              target: 'searching',
+              actions: assign({ marketResearch: (_, event) => event.data }),
+            },
+            onError: { target: 'searching' }, // Continue without benchmarks
+          },
+        },
+        searching: {
+          invoke: {
+            src: 'searchMarket',
+            onDone: {
+              target: 'presenting',
+              actions: assign({
+                marketResearch: (ctx, event) => ({
+                  ...ctx.marketResearch,
+                  ...event.data,
+                  // Prefer local data when available
+                  isFallback: event.data.source === 'industry_average',
+                }),
+              }),
+            },
+            onError: { target: 'presenting' }, // Use benchmarks as fallback
+          },
+        },
+        presenting: {
+          on: {
+            COMPLETE_MARKET_RESEARCH: '#onboarding.service_design',
+          },
+        },
+      },
+      on: {
+        GO_BACK: 'discovery',
+        SKIP_PHASE: {
+          target: 'service_design',
+          actions: ['emitSkipEvent'],
+        },
+      },
+    },
+
+    service_design: {
+      // Includes pricing - combined for natural conversation flow
+      on: {
+        COMPLETE_SERVICE_DESIGN: {
+          target: 'marketing',
+          actions: [
+            assign({
+              createdSegments: (_, event) => event.segmentIds,
+              createdPackages: (_, event) => event.packageIds,
+            }),
+            'persistState',
+            'emitEvent',
+          ],
+        },
+        GO_BACK: 'market_research',
+        SKIP_PHASE: {
+          target: 'marketing',
+          actions: ['emitSkipEvent'],
+        },
+      },
+    },
+
+    marketing: {
+      on: {
+        COMPLETE_MARKETING: {
+          target: 'complete',
+          actions: ['persistState', 'emitCompletionEvent'],
+        },
+        GO_BACK: 'service_design',
+        SKIP_PHASE: {
+          target: 'complete',
+          actions: ['emitSkipEvent', 'emitCompletionEvent'],
+        },
+      },
+    },
+
+    complete: {
+      type: 'final',
+      onEntry: ['celebrateCompletion'],
+    },
+  },
+});
+```
+
+### 4. Consolidated Tools (3 Core + 2 External)
+
+Based on DHH's feedback, we consolidate 8+ tools into 3 core tools:
+
+```typescript
+// server/src/agent/tools/onboarding-tools.ts
+
+import { z } from 'zod';
+import {
+  UpdateOnboardingStateResult,
+  UpsertServicesResult,
+  UpdateStorefrontResult,
+  DiscoveryDataSchema,
+} from '@macon/contracts';
+
+// ============ TOOL 1: update_onboarding_state ============
+// Handles all state updates: discovery, market research storage
+export const updateOnboardingStateTool = {
+  name: 'update_onboarding_state',
+  description: 'Store onboarding data (discovery answers, market research, etc.)',
+  trustTier: 'T1' as const,
+
+  inputSchema: z.object({
+    phase: z.enum(['discovery', 'market_research']),
+    data: z.union([DiscoveryDataSchema, MarketResearchDataSchema]),
+  }),
+
+  async execute(
+    context: OnboardingToolContext,
+    input: z.infer<typeof this.inputSchema>
+  ): Promise<UpdateOnboardingStateResult> {
+    return withOnboardingSpan('tool.update_onboarding_state', { phase: input.phase }, async () => {
+      // Transaction with optimistic locking
+      return await prisma.$transaction(async (tx) => {
+        const tenant = await tx.tenant.findUnique({
+          where: { id: context.tenantId },
+          select: { onboardingVersion: true },
+        });
+
+        // Append event (source of truth)
+        await tx.onboardingEvent.create({
+          data: {
+            tenantId: context.tenantId,
+            eventType:
+              input.phase === 'discovery' ? 'DISCOVERY_COMPLETED' : 'MARKET_SEARCH_COMPLETED',
+            payload: input.data,
+            version: tenant.onboardingVersion + 1,
+          },
+        });
+
+        // Update phase pointer (for queries)
+        const nextPhase = input.phase === 'discovery' ? 'market_research' : 'service_design';
+        await tx.tenant.update({
+          where: { id: context.tenantId, onboardingVersion: tenant.onboardingVersion },
+          data: {
+            onboardingPhase: nextPhase,
+            onboardingVersion: tenant.onboardingVersion + 1,
+          },
+        });
+
+        return {
+          success: true,
+          phase: nextPhase,
+          summary: `Saved ${input.phase} data. Moving to ${nextPhase}.`,
+        };
+      });
+    });
+  },
+};
+
+// ============ TOOL 2: upsert_services ============
+// Creates segment + packages with pricing in one atomic operation
+export const upsertServicesTool = {
+  name: 'upsert_services',
+  description: 'Create a service segment with packages and pricing (atomic operation)',
+  trustTier: 'T2' as const,
+
+  inputSchema: z.object({
+    segment: z.object({
+      name: z.string().min(2).max(50),
+      description: z.string().max(200),
+    }),
+    packages: z
+      .array(
+        z.object({
+          name: z.string().min(2).max(50),
+          description: z.string().max(500),
+          price: z.number().min(0), // Price included! Not a separate phase
+          tierOrder: z.number().min(1).max(10),
+          duration: z.string().optional(), // "2 hours", "Full day"
+        })
+      )
+      .min(1)
+      .max(10),
+  }),
+
+  async execute(
+    context: OnboardingToolContext,
+    input: z.infer<typeof this.inputSchema>
+  ): Promise<UpsertServicesResult> {
+    return withOnboardingSpan(
+      'tool.upsert_services',
+      { segmentName: input.segment.name },
+      async () => {
+        const slug = slugify(input.segment.name);
+
+        // Check for existing segment
+        const existing = await prisma.segment.findFirst({
+          where: { tenantId: context.tenantId, slug },
+        });
+        if (existing) {
+          return { success: false, error: 'SEGMENT_EXISTS', existingSlug: slug };
+        }
+
+        // Atomic creation
+        const segment = await prisma.$transaction(async (tx) => {
+          const seg = await tx.segment.create({
+            data: {
+              tenantId: context.tenantId,
+              name: input.segment.name,
+              slug,
+              description: input.segment.description,
+              heroTitle: input.segment.name,
+            },
+          });
+
+          const packages = await Promise.all(
+            input.packages.map((pkg) =>
+              tx.package.create({
+                data: {
+                  tenantId: context.tenantId,
+                  segmentId: seg.id,
+                  name: pkg.name,
+                  slug: slugify(pkg.name),
+                  description: pkg.description,
+                  basePrice: pkg.price,
+                  groupingOrder: pkg.tierOrder,
+                  active: true,
+                },
+              })
+            )
+          );
+
+          // Emit events
+          await tx.onboardingEvent.create({
+            data: {
+              tenantId: context.tenantId,
+              eventType: 'SEGMENT_CREATED',
+              payload: { segmentId: seg.id, name: seg.name },
+              version: await getNextVersion(tx, context.tenantId),
+            },
+          });
+
+          for (const pkg of packages) {
+            await tx.onboardingEvent.create({
+              data: {
+                tenantId: context.tenantId,
+                eventType: 'PACKAGE_CREATED',
+                payload: { packageId: pkg.id, name: pkg.name, price: pkg.basePrice },
+                version: await getNextVersion(tx, context.tenantId),
+              },
+            });
+          }
+
+          return { segment: seg, packages };
+        });
+
+        return {
+          success: true,
+          segmentId: segment.segment.id,
+          packages: segment.packages.map((p) => ({ id: p.id, name: p.name, price: p.basePrice })),
+          previewUrl: `${config.webUrl}/t/${context.tenantSlug}`,
+        };
+      }
+    );
+  },
+};
+
+// ============ TOOL 3: update_storefront ============
+// Updates hero, about, and other storefront copy
+export const updateStorefrontTool = {
+  name: 'update_storefront',
+  description: 'Update storefront copy (hero, about sections)',
+  trustTier: 'T2' as const,
+
+  inputSchema: z.object({
+    heroTitle: z.string().max(100),
+    heroSubtitle: z.string().max(200),
+    aboutText: z.string().max(1000),
+  }),
+
+  async execute(
+    context: OnboardingToolContext,
+    input: z.infer<typeof this.inputSchema>
+  ): Promise<UpdateStorefrontResult> {
+    // Implementation updates landingPageConfig
+    // See existing landing page patterns
+
+    // Emit event
+    await prisma.onboardingEvent.create({
+      data: {
+        tenantId: context.tenantId,
+        eventType: 'STOREFRONT_COPY_APPLIED',
+        payload: input,
+        version: await getNextVersion(prisma, context.tenantId),
+      },
     });
 
     return {
       success: true,
-      segmentId: segment.id,
-      packageCount: input.packages.length
+      previewUrl: `${config.webUrl}/t/${context.tenantSlug}`,
     };
-  }
-}
-
-// Tool: update_package_pricing (T2 - soft confirm)
-{
-  name: 'update_package_pricing',
-  description: 'Set pricing for packages based on strategy',
-  trustTier: 'T2',
-  parameters: {
-    packages: z.array(z.object({
-      packageId: z.string(),
-      price: z.number().min(0)
-    }))
   },
-  execute: async ({ tenantId, input }) => {
-    for (const pkg of input.packages) {
-      await prisma.package.update({
-        where: { id: pkg.packageId, tenantId }, // Tenant isolation!
-        data: { basePrice: pkg.price }
-      });
-    }
-
-    // Update onboarding state
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        onboardingPhase: 'marketing',
-        onboardingState: {
-          ...(await getCurrentState(tenantId)),
-          phase: 'marketing',
-          pricing: {
-            strategy: 'custom', // Will be set by conversation
-            packages: input.packages
-          }
-        }
-      }
-    });
-
-    return { success: true, updatedCount: input.packages.length };
-  }
-}
-
-// Tool: update_storefront_copy (T2 - soft confirm)
-{
-  name: 'update_storefront_copy',
-  description: 'Update storefront hero and about sections',
-  trustTier: 'T2',
-  parameters: {
-    heroTitle: z.string().max(100),
-    heroSubtitle: z.string().max(200),
-    aboutText: z.string().max(1000)
-  },
-  execute: async ({ tenantId, input }) => {
-    // Get current landing page config
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { landingPageConfig: true }
-    });
-
-    const config = tenant.landingPageConfig || { pages: [] };
-    // Update hero section in home page
-    // ... (implementation details)
-
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        landingPageConfig: config,
-        onboardingPhase: 'activation',
-        onboardingState: {
-          ...(await getCurrentState(tenantId)),
-          phase: 'activation',
-          marketing: {
-            heroTitle: input.heroTitle,
-            heroSubtitle: input.heroSubtitle,
-            aboutText: input.aboutText
-          }
-        }
-      }
-    });
-
-    return { success: true };
-  }
-}
-
-// Tool: complete_onboarding (T1 - auto)
-{
-  name: 'complete_onboarding',
-  description: 'Mark onboarding as complete',
-  trustTier: 'T1',
-  parameters: {},
-  execute: async ({ tenantId }) => {
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        onboardingPhase: 'complete',
-        onboardingCompletedAt: new Date(),
-        onboardingState: {
-          ...(await getCurrentState(tenantId)),
-          phase: 'complete',
-          completedAt: new Date().toISOString()
-        }
-      }
-    });
-    return { success: true, completedAt: new Date() };
-  }
-}
+};
 ```
 
-#### External Tools (server/src/agent/tools/external-tools.ts)
+### 5. Industry Benchmarks (Fallback-First)
+
+Build reliable fallbacks BEFORE web search integration:
 
 ```typescript
-// Tool: web_search_market
-{
-  name: 'web_search_market',
-  description: 'Search the web for local market intelligence about competitors and pricing',
-  parameters: {
-    businessType: z.string().describe('Type of business'),
-    location: z.string().describe('City, State format'),
-    searchFocus: z.enum(['pricing', 'competitors', 'trends']).describe('What to focus on')
-  },
-  execute: async ({ input }) => {
-    // Use Tavily or built-in WebSearch
-    const queries = [
-      `${input.businessType} ${input.location} pricing`,
-      `${input.businessType} near ${input.location}`,
-      `${input.businessType} rates ${input.location} 2025`
-    ];
+// server/src/agent/onboarding/industry-benchmarks.ts
 
-    const results = await Promise.all(
-      queries.map(q => webSearchTool.execute({ query: q }))
-    );
+// Static, reliable data that works when web search fails
+export const INDUSTRY_BENCHMARKS: Record<string, IndustryBenchmark> = {
+  wedding_photographer: {
+    pricingRange: { low: 1500, mid: 4000, high: 8000 },
+    typicalPackages: [
+      { name: 'Elopement', priceRange: '1000-2500', hours: '2-4' },
+      { name: 'Half Day', priceRange: '2000-4000', hours: '4-6' },
+      { name: 'Full Day', priceRange: '3500-8000', hours: '8-10' },
+    ],
+    marketInsights: [
+      'Most couples book 8-12 months in advance',
+      'Engagement sessions are popular add-ons',
+      'Second shooters typically add $500-1000',
+    ],
+  },
+  portrait_photographer: {
+    pricingRange: { low: 200, mid: 500, high: 1500 },
+    typicalPackages: [
+      { name: 'Mini Session', priceRange: '150-300', hours: '0.5' },
+      { name: 'Standard Session', priceRange: '300-600', hours: '1-2' },
+      { name: 'Extended Session', priceRange: '500-1500', hours: '2-4' },
+    ],
+    marketInsights: [
+      'Family sessions peak in fall for holiday cards',
+      'Mini sessions are great for building portfolio',
+      'Print sales can double session revenue',
+    ],
+  },
+  therapist: {
+    pricingRange: { low: 100, mid: 175, high: 300 },
+    typicalPackages: [
+      { name: 'Individual Session', priceRange: '100-200', duration: '50 min' },
+      { name: 'Couples Session', priceRange: '150-300', duration: '75 min' },
+      { name: 'Intake Assessment', priceRange: '175-350', duration: '90 min' },
+    ],
+    marketInsights: [
+      'Sliding scale options increase accessibility',
+      'Package deals (6 sessions) improve retention',
+      'Insurance reimbursement affects pricing strategy',
+    ],
+  },
+  life_coach: {
+    pricingRange: { low: 100, mid: 250, high: 500 },
+    typicalPackages: [
+      { name: 'Discovery Call', priceRange: '0-50', duration: '30 min' },
+      { name: 'Single Session', priceRange: '100-300', duration: '60 min' },
+      { name: 'Monthly Package', priceRange: '400-1500', duration: '4 sessions' },
+    ],
+    marketInsights: [
+      'Free discovery calls convert at 30-50%',
+      '3-month packages have best retention',
+      'Group coaching scales income effectively',
+    ],
+  },
+  wedding_planner: {
+    pricingRange: { low: 2000, mid: 5000, high: 15000 },
+    typicalPackages: [
+      { name: 'Day-of Coordination', priceRange: '1500-3000', scope: 'Final month + day' },
+      { name: 'Partial Planning', priceRange: '3000-6000', scope: '3-6 months' },
+      { name: 'Full Planning', priceRange: '5000-15000', scope: '12+ months' },
+    ],
+    marketInsights: [
+      'Day-of coordination is entry point for many',
+      'Venue partnerships drive referrals',
+      'Luxury market has higher margins',
+    ],
+  },
+};
+
+// Get benchmarks for a business type
+export function getIndustryBenchmarks(businessType: string): IndustryBenchmark {
+  const normalized = normalizeBusinessType(businessType);
+  return INDUSTRY_BENCHMARKS[normalized] || getGenericBenchmarks();
+}
+
+function normalizeBusinessType(input: string): string {
+  const lower = input.toLowerCase();
+
+  if (lower.includes('wedding') && lower.includes('photo')) return 'wedding_photographer';
+  if (lower.includes('portrait') || lower.includes('headshot')) return 'portrait_photographer';
+  if (lower.includes('therap') || lower.includes('counsel')) return 'therapist';
+  if (lower.includes('coach')) return 'life_coach';
+  if (lower.includes('wedding') && lower.includes('plan')) return 'wedding_planner';
+
+  return 'generic';
+}
+```
+
+### 6. Market Search with Graceful Fallback
+
+```typescript
+// server/src/agent/onboarding/market-search.ts
+
+export async function searchMarketWithFallback(
+  businessType: string,
+  location: { city: string; state: string }
+): Promise<MarketResearchData> {
+  // ALWAYS start with benchmarks (reliable baseline)
+  const benchmarks = getIndustryBenchmarks(businessType);
+
+  // Attempt web search (enhancement, not dependency)
+  try {
+    const searchResults = await Promise.allSettled([
+      webSearch(`${businessType} ${location.city} ${location.state} pricing 2025`),
+      webSearch(`${businessType} rates ${location.city}`),
+      webSearch(`${businessType} near ${location.city} ${location.state}`),
+    ]);
+
+    const successful = searchResults
+      .filter(
+        (r): r is PromiseFulfilledResult<SearchResult[]> =>
+          r.status === 'fulfilled' && r.value.length > 0
+      )
+      .flatMap((r) => r.value);
+
+    if (successful.length === 0) {
+      // Graceful fallback: use benchmarks with clear messaging
+      return {
+        competitors: benchmarks.typicalPackages.map((p) => ({
+          name: `Typical ${p.name}`,
+          priceRange: p.priceRange,
+          source: 'industry_benchmark' as const,
+        })),
+        pricingBenchmarks: {
+          ...benchmarks.pricingRange,
+          source: 'industry_average' as const,
+        },
+        insights: benchmarks.marketInsights,
+        opportunities: [
+          `Local market data unavailable - these are industry averages`,
+          `Consider researching ${location.city} competitors directly`,
+        ],
+        searchedAt: new Date(),
+        isFallback: true,
+      };
+    }
+
+    // Merge local search results with benchmarks
+    const localData = analyzeSearchResults(successful, businessType);
 
     return {
-      searchResults: results.flat(),
-      searchedAt: new Date()
+      competitors: localData.competitors.map((c) => ({ ...c, source: 'web_search' as const })),
+      pricingBenchmarks: {
+        low: localData.pricingRange?.low ?? benchmarks.pricingRange.low,
+        mid: localData.pricingRange?.mid ?? benchmarks.pricingRange.mid,
+        high: localData.pricingRange?.high ?? benchmarks.pricingRange.high,
+        source: localData.pricingRange ? ('local_search' as const) : ('industry_average' as const),
+      },
+      insights: [...localData.insights, ...benchmarks.marketInsights.slice(0, 2)],
+      opportunities: localData.opportunities,
+      searchedAt: new Date(),
+      isFallback: false,
+    };
+  } catch (error) {
+    logger.warn({ error, businessType, location }, 'Market search failed, using benchmarks');
+
+    // Graceful degradation
+    return {
+      competitors: [],
+      pricingBenchmarks: {
+        ...benchmarks.pricingRange,
+        source: 'industry_average' as const,
+      },
+      insights: benchmarks.marketInsights,
+      opportunities: ['Market search unavailable - using industry averages'],
+      searchedAt: new Date(),
+      isFallback: true,
     };
   }
 }
 ```
 
-### 3. System Prompt for Onboarding Mode
+### 7. Advisor Memory (Cross-Session Context)
+
+```typescript
+// server/src/agent/onboarding/advisor-memory.ts
+
+/**
+ * Advisor Memory: The agent remembers context across sessions
+ *
+ * "Welcome back! Last time we were designing your elopement packages -
+ *  you liked 'Adventure' and 'All-Day Adventure' but weren't sure
+ *  about the entry-level name. Any thoughts?"
+ */
+
+interface AdvisorMemory {
+  // Short-term: recent messages
+  recentMessages: ChatMessage[];
+
+  // Long-term: summarized context
+  summaries: {
+    discovery: string; // "Wedding photographer in Austin, 5 years, specializes in elopements"
+    marketContext: string; // "Mid-market positioning, $3-5k range, limited elopement competition"
+    preferences: string; // "Prefers adventurous naming, wants premium but accessible"
+    decisions: string; // "Created Elopements segment with 3 packages"
+    pendingQuestions: string; // "Still deciding on entry-level package name"
+  };
+}
+
+export class AdvisorMemoryService {
+  async getMemory(tenantId: string): Promise<AdvisorMemory> {
+    // Load events and project into memory
+    const events = await prisma.onboardingEvent.findMany({
+      where: { tenantId },
+      orderBy: { version: 'asc' },
+    });
+
+    return this.projectMemory(events);
+  }
+
+  async summarizeForResume(tenantId: string): Promise<string> {
+    const memory = await this.getMemory(tenantId);
+
+    if (!memory.summaries.discovery) {
+      return "Let's start by learning about your business. What kind of services do you offer?";
+    }
+
+    const parts = [];
+
+    if (memory.summaries.discovery) {
+      parts.push(`I remember: ${memory.summaries.discovery}`);
+    }
+
+    if (memory.summaries.decisions) {
+      parts.push(`So far we've: ${memory.summaries.decisions}`);
+    }
+
+    if (memory.summaries.pendingQuestions) {
+      parts.push(`We were working on: ${memory.summaries.pendingQuestions}`);
+    }
+
+    return `Welcome back! ${parts.join(' ')} Ready to continue?`;
+  }
+
+  private projectMemory(events: OnboardingEvent[]): AdvisorMemory {
+    const memory: AdvisorMemory = {
+      recentMessages: [],
+      summaries: {
+        discovery: '',
+        marketContext: '',
+        preferences: '',
+        decisions: '',
+        pendingQuestions: '',
+      },
+    };
+
+    for (const event of events) {
+      switch (event.eventType) {
+        case 'DISCOVERY_COMPLETED':
+          const d = event.payload as DiscoveryData;
+          memory.summaries.discovery =
+            `${d.businessType} in ${d.location.city}, ${d.location.state}. ` +
+            `${d.experience} experience. Specializes in ${d.niche}. ` +
+            `Ideal client: ${d.idealClient}.`;
+          break;
+
+        case 'MARKET_SEARCH_COMPLETED':
+          const m = event.payload as MarketResearchData;
+          memory.summaries.marketContext =
+            `Pricing range: $${m.pricingBenchmarks.low}-${m.pricingBenchmarks.high}. ` +
+            `${m.competitors.length} competitors found. ` +
+            `Opportunities: ${m.opportunities.slice(0, 2).join(', ')}.`;
+          break;
+
+        case 'SEGMENT_CREATED':
+          memory.summaries.decisions += `Created "${event.payload.name}" segment. `;
+          break;
+
+        case 'PACKAGE_CREATED':
+          memory.summaries.decisions += `Added "${event.payload.name}" package at $${event.payload.price}. `;
+          break;
+      }
+    }
+
+    return memory;
+  }
+}
+```
+
+### 8. Live Preview Panel
+
+```tsx
+// apps/web/src/components/onboarding/LivePreviewPanel.tsx
+
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+interface LivePreviewPanelProps {
+  tenantSlug: string;
+  isOnboarding: boolean;
+}
+
+/**
+ * Live Preview Panel
+ *
+ * Shows the storefront updating in real-time as the agent creates packages.
+ * "Magical UX" - users see their business come to life.
+ */
+export function LivePreviewPanel({ tenantSlug, isOnboarding }: LivePreviewPanelProps) {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Listen for storefront updates via WebSocket or polling
+  useEffect(() => {
+    if (!isOnboarding) return;
+
+    const interval = setInterval(() => {
+      setRefreshKey((k) => k + 1);
+    }, 3000); // Refresh every 3s during onboarding
+
+    return () => clearInterval(interval);
+  }, [isOnboarding]);
+
+  if (!isOnboarding) return null;
+
+  return (
+    <div className="fixed left-0 top-16 bottom-0 w-1/2 border-r bg-neutral-50 overflow-hidden hidden lg:block">
+      <div className="p-4 border-b bg-white">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-text-primary">Live Preview</span>
+          <span className="text-xs text-text-tertiary">Updates as you build</span>
+        </div>
+      </div>
+
+      <iframe
+        key={refreshKey}
+        src={`/t/${tenantSlug}?preview=true`}
+        className="w-full h-full border-0"
+        title="Storefront Preview"
+      />
+    </div>
+  );
+}
+```
+
+### 9. System Prompt (Single, Unified)
+
+Based on DHH's feedback — one excellent prompt, not phase-specific prompts:
 
 ```typescript
 // server/src/agent/prompts/onboarding-system-prompt.ts
 
-export const ONBOARDING_SYSTEM_PROMPT = `
+export function buildOnboardingPrompt(
+  phase: OnboardingPhase,
+  memory: AdvisorMemory,
+  benchmarks: IndustryBenchmark | null
+): string {
+  return `
 You are a business consultant helping a new HANDLED member set up their business.
-Your goal is to guide them through a conversational onboarding experience.
+Your goal is to guide them through a natural conversation that results in a complete storefront.
 
 ## Your Personality
 - Warm, encouraging, and knowledgeable
 - Like talking to a smart friend who happens to know business
 - Celebrate their wins, acknowledge their expertise
 - Never condescending or robotic
+- Ask ONE question at a time
+- Confirm before creating anything
 
-## Current Onboarding Phase: {phase}
-{phaseSpecificInstructions}
+## What You Know About This Business
+${memory.summaries.discovery || 'Still learning - start by asking about their business.'}
 
-## Phase-Specific Instructions
+## Market Context
+${memory.summaries.marketContext || 'Market research pending.'}
 
-### DISCOVERY
-Goal: Understand their business deeply before doing anything.
+## What We've Done Together
+${memory.summaries.decisions || 'Just getting started!'}
 
-Ask these questions naturally (not as a list):
-1. What kind of services do you offer? (get specific)
-2. Where are you based? (city, state for market research)
-3. Who is your ideal client? (help them articulate this)
-4. How long have you been doing this?
-5. What are your main goals? (more clients? higher prices? less admin?)
+## Current Phase: ${phase}
+${getPhaseGuidance(phase)}
 
-After gathering all info, use store_discovery_response to save it.
-Summarize what you learned before moving on.
-
-### MARKET_RESEARCH
-Goal: Research their local market and present findings.
-
-1. Use web_search_market to find competitors and pricing
-2. Analyze the results for patterns
-3. Present findings in a clear format:
-   - Pricing ranges (low/mid/high)
-   - Key competitors (2-3)
-   - Market opportunities
-4. Use store_market_research to save findings
-5. Ask if this matches their experience
-
-### SERVICE_DESIGN
-Goal: Help them structure their offerings.
-
-Based on discovery and research:
-1. Recommend segment strategy (single vs multiple categories)
-2. Help name segments if multiple
-3. Design tier structure (usually 3 tiers per segment)
-4. Create via create_segment_with_packages tool
-5. Show what was created
-
-### PRICING
-Goal: Set strategic prices based on market data.
-
-1. Present market pricing data from research phase
-2. Ask about positioning: value, market rate, or premium
-3. Factor in their experience level
-4. Calculate recommended prices for each tier
-5. Update via update_package_pricing tool
-6. Confirm prices look right
-
-### MARKETING
-Goal: Create compelling storefront messaging.
-
-Based on all previous phases:
-1. Craft a unique positioning statement
-2. Write hero section copy (headline + subheadline)
-3. Write about section text
-4. Suggest marketing channels and content ideas
-5. Update via update_storefront_copy tool
-6. Offer to preview storefront
-
-### ACTIVATION
-Goal: Celebrate and offer next steps.
-
-1. Summarize everything created:
-   - Segments and packages
-   - Pricing strategy
-   - Storefront messaging
-2. Show storefront preview link
-3. Explain Stripe connection (optional, for when ready)
-4. Mark complete via complete_onboarding tool
-5. Transition to growth assistant mode
+## Available Tools
+- update_onboarding_state: Save discovery/research data
+- upsert_services: Create segment with packages AND prices (combined!)
+- update_storefront: Apply hero and about copy
+- search_market: Research local competition (has reliable fallbacks)
 
 ## Key Rules
-- One question at a time in discovery
-- Always confirm before creating/updating
-- Show progress: "Great! Now let's..."
-- If they want to skip a phase, that's okay
-- Never mention "onboarding" - it's just "getting set up"
-- Stripe is NOT required to complete onboarding
-`;
-```
+1. Discovery: Ask about business, location, ideal client, experience, goals
+2. Market Research: ALWAYS works - benchmarks are fallback if search fails
+3. Service Design: Combine packages AND pricing in same conversation
+4. Marketing: Generate copy based on everything learned
+5. Completion: Celebrate! Stripe is optional - they can connect later.
 
-### 4. Frontend Components
+## Conversation Starters by Phase
+${getConversationStarters(phase, memory)}
 
-#### Welcome Modal (apps/web/src/components/onboarding/WelcomeModal.tsx)
-
-```tsx
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-
-interface WelcomeModalProps {
-  businessName: string;
-  isFirstLogin: boolean;
+## When They Return Mid-Onboarding
+${
+  memory.summaries.pendingQuestions
+    ? `Pick up where you left off: "${memory.summaries.pendingQuestions}"`
+    : 'Continue naturally from the current phase.'
 }
 
-export function WelcomeModal({ businessName, isFirstLogin }: WelcomeModalProps) {
-  const [open, setOpen] = useState(isFirstLogin);
-  const router = useRouter();
-
-  const handleStartOnboarding = () => {
-    setOpen(false);
-    // Open Growth Assistant panel and trigger onboarding mode
-    router.push('/tenant/dashboard?onboarding=true');
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogTitle className="sr-only">Welcome to HANDLED</DialogTitle>
-
-        <div className="text-center space-y-6 py-4">
-          {/* Celebration emoji/icon */}
-          <div className="text-6xl">🎉</div>
-
-          <div>
-            <h2 className="text-2xl font-serif font-bold text-text-primary">
-              Welcome to HANDLED, {businessName}!
-            </h2>
-            <p className="text-text-secondary mt-2">
-              You're about to have a lot more time for what you love.
-            </p>
-          </div>
-
-          {/* Steps preview */}
-          <div className="bg-sage-50 rounded-2xl p-6 text-left">
-            <p className="text-sm font-medium text-sage-700 mb-3">
-              Here's how we'll get you set up:
-            </p>
-            <ol className="space-y-2 text-sm text-text-secondary">
-              <li className="flex items-center gap-2">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-sage-100 text-sage-600 flex items-center justify-center text-xs font-bold">
-                  1
-                </span>
-                Build your storefront (your public face)
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-sage-100 text-sage-600 flex items-center justify-center text-xs font-bold">
-                  2
-                </span>
-                Set your packages & pricing
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-sage-100 text-sage-600 flex items-center justify-center text-xs font-bold">
-                  3
-                </span>
-                Connect payments (when you're ready to book)
-              </li>
-            </ol>
-          </div>
-
-          <p className="text-sm text-text-secondary">
-            Your AI assistant is here to help every step.
-          </p>
-
-          <Button
-            onClick={handleStartOnboarding}
-            className="w-full bg-sage hover:bg-sage-hover text-white rounded-full py-6 text-lg"
-          >
-            Let's Build Your Storefront →
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-```
-
-#### Onboarding Progress Tracker (apps/web/src/components/onboarding/OnboardingProgress.tsx)
-
-```tsx
-'use client';
-
-import { cn } from '@/lib/utils';
-
-type Phase =
-  | 'discovery'
-  | 'market_research'
-  | 'service_design'
-  | 'pricing'
-  | 'marketing'
-  | 'activation'
-  | 'complete';
-
-interface OnboardingProgressProps {
-  currentPhase: Phase;
-  className?: string;
+## Never
+- Mention "onboarding" - it's just "getting set up"
+- Push Stripe before they're ready
+- Create things without confirming first
+- Give pricing advice without context (use benchmarks)
+`.trim();
 }
 
-const PHASES: { key: Phase; label: string; shortLabel: string }[] = [
-  { key: 'discovery', label: 'Tell us about you', shortLabel: 'Discovery' },
-  { key: 'market_research', label: 'Market research', shortLabel: 'Research' },
-  { key: 'service_design', label: 'Design services', shortLabel: 'Services' },
-  { key: 'pricing', label: 'Set pricing', shortLabel: 'Pricing' },
-  { key: 'marketing', label: 'Storefront copy', shortLabel: 'Copy' },
-  { key: 'activation', label: 'Go live!', shortLabel: 'Launch' },
-];
+function getPhaseGuidance(phase: OnboardingPhase): string {
+  switch (phase) {
+    case 'discovery':
+      return `
+Gather information through natural conversation:
+- What services do they offer? (get specific)
+- Where are they based? (for market research)
+- Who is their ideal client?
+- How long have they been doing this?
+- What are their main goals?
 
-export function OnboardingProgress({ currentPhase, className }: OnboardingProgressProps) {
-  const currentIndex = PHASES.findIndex((p) => p.key === currentPhase);
-  const progress = currentPhase === 'complete' ? 100 : ((currentIndex + 1) / PHASES.length) * 100;
+When you have everything, use update_onboarding_state to save and proceed.`;
 
-  return (
-    <div className={cn('space-y-3', className)}>
-      {/* Progress bar */}
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-text-primary">Your Setup Progress</span>
-        <span className="text-text-secondary">{Math.round(progress)}%</span>
-      </div>
+    case 'market_research':
+      return `
+Research their local market:
+- Use search_market tool (it has reliable fallbacks)
+- Present pricing ranges clearly
+- Highlight opportunities
+- Ask if it matches their experience
 
-      <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-sage transition-all duration-500 ease-out rounded-full"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+Even if search fails, you'll have industry benchmarks to work with.`;
 
-      {/* Phase indicators */}
-      <div className="flex justify-between">
-        {PHASES.map((phase, index) => {
-          const isComplete = index < currentIndex || currentPhase === 'complete';
-          const isCurrent = phase.key === currentPhase;
+    case 'service_design':
+      return `
+Help design their offerings:
+- Recommend segment structure (single vs multiple)
+- Design packages WITH pricing in the same breath
+- "For elopements, I'm thinking a 'Micro' package at $1,500..."
+- Use upsert_services to create atomically
+- Show the preview link after creation`;
 
-          return (
-            <div
-              key={phase.key}
-              className={cn(
-                'flex flex-col items-center gap-1',
-                isComplete && 'text-sage-600',
-                isCurrent && 'text-sage-700 font-medium',
-                !isComplete && !isCurrent && 'text-text-tertiary'
-              )}
-            >
-              <div
-                className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center text-xs',
-                  isComplete && 'bg-sage-100',
-                  isCurrent && 'bg-sage text-white',
-                  !isComplete && !isCurrent && 'bg-neutral-100'
-                )}
-              >
-                {isComplete ? '✓' : index + 1}
-              </div>
-              <span className="text-xs hidden sm:block">{phase.shortLabel}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-```
+    case 'marketing':
+      return `
+Generate storefront copy:
+- Write hero section (headline + subheadline)
+- Write about section
+- Use update_storefront to apply
+- Share preview link
 
-#### Enhanced Growth Assistant for Onboarding Mode
+Then celebrate! "Your storefront is ready!"`;
 
-```tsx
-// Modifications to apps/web/src/components/agent/GrowthAssistantPanel.tsx
+    case 'complete':
+      return `
+They're done!
+- Show the storefront preview
+- Offer to help with Stripe when THEY'RE ready
+- Transition to growth assistant mode`;
 
-// Add onboarding mode detection
-const { data: tenant } = useQuery(['tenant'], fetchTenant);
-const isOnboarding = tenant?.onboardingPhase !== 'complete';
-
-// In render, show progress tracker when onboarding
-{
-  isOnboarding && (
-    <div className="px-4 py-3 border-b">
-      <OnboardingProgress currentPhase={tenant.onboardingPhase} />
-    </div>
-  );
-}
-
-// Update initial greeting based on onboarding state
-const getInitialGreeting = () => {
-  if (isOnboarding) {
-    return `Hey! 👋 I'm your Growth Assistant. I'm here to help you build your business on HANDLED.
-
-Let's start by learning about you. What kind of services do you offer?`;
+    default:
+      return '';
   }
-  return `Welcome back! How can I help you grow your business today?`;
-};
-```
-
-### 5. API Route Changes
-
-```typescript
-// server/src/routes/agent.routes.ts additions
-
-// GET /v1/agent/onboarding-state
-router.get('/onboarding-state', authenticateTenant, async (req, res) => {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: req.tenantAuth.tenantId },
-    select: {
-      onboardingPhase: true,
-      onboardingState: true,
-      onboardingStartedAt: true,
-      onboardingCompletedAt: true,
-    },
-  });
-
-  return res.json({
-    phase: tenant.onboardingPhase || 'discovery',
-    state: tenant.onboardingState || {},
-    isComplete: tenant.onboardingPhase === 'complete',
-    completedAt: tenant.onboardingCompletedAt,
-  });
-});
-
-// POST /v1/agent/skip-onboarding
-router.post('/skip-onboarding', authenticateTenant, async (req, res) => {
-  await prisma.tenant.update({
-    where: { id: req.tenantAuth.tenantId },
-    data: {
-      onboardingPhase: 'complete',
-      onboardingCompletedAt: new Date(),
-    },
-  });
-
-  return res.json({ success: true });
-});
+}
 ```
 
 ---
 
-## Implementation Phases
+## Implementation Phases (Consolidated: 4 Build Phases)
 
-### Phase 1: Foundation (Week 1)
+Based on reviewer feedback, we've collapsed 10 phases into 4:
 
-**Goal**: Database schema + basic state tracking
+### Build Phase 1: Foundation + State Machine
+
+**Goal**: Event sourcing, XState, industry benchmarks
 
 **Tasks**:
 
-- [ ] Add `onboardingState`, `onboardingPhase` to Tenant model
-- [ ] Create migration: `npx prisma migrate dev --name add_onboarding_state`
+- [ ] Add `OnboardingEvent` model to Prisma schema
+- [ ] Add `onboardingPhase`, `onboardingVersion` to Tenant
+- [ ] Create migration: `npx prisma migrate dev --name add_onboarding_events`
+- [ ] Implement XState state machine with guards and actions
+- [ ] Create Zod schemas in `@macon/contracts`
+- [ ] Build industry benchmarks data file
 - [ ] Add GET `/v1/agent/onboarding-state` endpoint
 - [ ] Add POST `/v1/agent/skip-onboarding` endpoint
-- [ ] Update tenant creation to set `onboardingPhase: 'discovery'`
-
-**Files to create/modify**:
-
-- `server/prisma/schema.prisma`
-- `server/src/routes/agent.routes.ts`
-- `server/src/services/tenant-onboarding.service.ts`
-
-**Success criteria**:
-
-- [ ] New tenants have `onboardingPhase: 'discovery'`
-- [ ] API returns onboarding state correctly
-- [ ] Skip onboarding marks phase as complete
-
----
-
-### Phase 2: Discovery Tools (Week 1-2)
-
-**Goal**: Agent can gather and store discovery data
-
-**Tasks**:
-
-- [ ] Create `get_onboarding_state` read tool
-- [ ] Create `store_discovery_response` write tool (T1)
-- [ ] Register tools in tool registry
-- [ ] Create executor for store_discovery_response
-- [ ] Write unit tests for discovery tools
+- [ ] Add OpenTelemetry tracing setup
 
 **Files to create**:
 
-- `server/src/agent/tools/onboarding-read-tools.ts`
-- `server/src/agent/tools/onboarding-write-tools.ts`
+- `server/prisma/schema.prisma` (modify)
+- `packages/contracts/src/schemas/onboarding.schema.ts`
+- `server/src/agent/onboarding/state-machine.ts`
+- `server/src/agent/onboarding/industry-benchmarks.ts`
+- `server/src/agent/onboarding/tracing.ts`
+
+**Success criteria**:
+
+- [ ] Events persisted for every state transition
+- [ ] State machine prevents invalid transitions
+- [ ] Benchmarks available for all major business types
+- [ ] Traces visible in observability tooling
+
+---
+
+### Build Phase 2: Tools + Market Research
+
+**Goal**: 3 core tools + market search with fallbacks
+
+**Tasks**:
+
+- [ ] Implement `update_onboarding_state` tool
+- [ ] Implement `upsert_services` tool (segment + packages + pricing atomic)
+- [ ] Implement `update_storefront` tool
+- [ ] Implement `searchMarketWithFallback` function
+- [ ] Register tools in tool registry
+- [ ] Create executors with proper error handling
+- [ ] Add discriminated union result types
+- [ ] Write unit tests with property-based testing
+
+**Files to create**:
+
+- `server/src/agent/tools/onboarding-tools.ts`
+- `server/src/agent/onboarding/market-search.ts`
 - `server/src/agent/executors/onboarding-executors.ts`
 - `server/test/agent/onboarding-tools.test.ts`
+- `server/test/agent/onboarding-properties.test.ts`
 
 **Success criteria**:
 
-- [ ] Agent can ask discovery questions
-- [ ] Responses stored in `onboardingState.discovery`
-- [ ] Phase advances to `market_research` after discovery
+- [ ] All tools return discriminated unions
+- [ ] Market search gracefully falls back to benchmarks
+- [ ] Atomic service creation works correctly
+- [ ] Property tests pass for all edge cases
 
 ---
 
-### Phase 3: Market Research Integration (Week 2)
+### Build Phase 3: Conversation + Memory
 
-**Goal**: Agent can research local markets
-
-**Tasks**:
-
-- [ ] Create `web_search_market` external tool
-- [ ] Create `store_market_research` write tool (T1)
-- [ ] Add caching for market research (7-day TTL)
-- [ ] Create fallback for when search returns sparse data
-- [ ] Test with real market searches
-
-**Files to create/modify**:
-
-- `server/src/agent/tools/external-tools.ts`
-- `server/src/agent/tools/onboarding-write-tools.ts`
-
-**Success criteria**:
-
-- [ ] Agent can search for competitors and pricing
-- [ ] Results stored in `onboardingState.marketResearch`
-- [ ] Graceful fallback when data is sparse
-- [ ] Cache prevents redundant searches
-
----
-
-### Phase 4: Service Design Tools (Week 2-3)
-
-**Goal**: Agent can create segments and packages
+**Goal**: System prompt, advisor memory, orchestrator integration
 
 **Tasks**:
 
-- [ ] Create `create_segment_with_packages` write tool (T2)
-- [ ] Create proposal + executor for segment creation
-- [ ] Update existing `upsert_segment` tool for onboarding context
-- [ ] Add live preview capability (return storefront URL)
-- [ ] Test segment + package creation flow
-
-**Files to create/modify**:
-
-- `server/src/agent/tools/onboarding-write-tools.ts`
-- `server/src/agent/executors/onboarding-executors.ts`
-
-**Success criteria**:
-
-- [ ] Agent can create segments with initial packages
-- [ ] Packages created with $0 price (set in pricing phase)
-- [ ] Soft-confirm (T2) works for segment creation
-- [ ] Phase advances to `pricing`
-
----
-
-### Phase 5: Pricing Tools (Week 3)
-
-**Goal**: Agent can set strategic pricing
-
-**Tasks**:
-
-- [ ] Create `update_package_pricing` write tool (T2)
-- [ ] Create pricing recommendation logic
-- [ ] Create executor for bulk price updates
-- [ ] Test pricing flow with market data
-
-**Files to create/modify**:
-
-- `server/src/agent/tools/onboarding-write-tools.ts`
-- `server/src/agent/executors/onboarding-executors.ts`
-
-**Success criteria**:
-
-- [ ] Agent can recommend prices based on market research
-- [ ] Agent can set prices for multiple packages at once
-- [ ] Soft-confirm (T2) works for price changes
-- [ ] Phase advances to `marketing`
-
----
-
-### Phase 6: Marketing Tools (Week 3-4)
-
-**Goal**: Agent can generate and apply storefront copy
-
-**Tasks**:
-
-- [ ] Create `update_storefront_copy` write tool (T2)
-- [ ] Integrate with existing landing page config structure
-- [ ] Create executor for storefront updates
-- [ ] Test copy generation based on discovery data
-
-**Files to create/modify**:
-
-- `server/src/agent/tools/onboarding-write-tools.ts`
-- `server/src/agent/executors/onboarding-executors.ts`
-
-**Success criteria**:
-
-- [ ] Agent generates compelling hero copy
-- [ ] Agent generates about section text
-- [ ] Storefront updates visible in preview
-- [ ] Phase advances to `activation`
-
----
-
-### Phase 7: Activation & Completion (Week 4)
-
-**Goal**: Smooth completion and transition to growth mode
-
-**Tasks**:
-
-- [ ] Create `complete_onboarding` write tool (T1)
-- [ ] Add storefront preview link generation
-- [ ] Update Growth Assistant to detect completion
-- [ ] Create transition messaging
-
-**Files to create/modify**:
-
-- `server/src/agent/tools/onboarding-write-tools.ts`
-- `server/src/agent/prompts/onboarding-system-prompt.ts`
-
-**Success criteria**:
-
-- [ ] Agent can mark onboarding complete
-- [ ] Dashboard shows completion celebration
-- [ ] Growth Assistant switches to growth mode
-- [ ] Stripe connection offered but not required
-
----
-
-### Phase 8: Frontend Polish (Week 4-5)
-
-**Goal**: Beautiful, intuitive UI
-
-**Tasks**:
-
-- [ ] Create WelcomeModal component
-- [ ] Create OnboardingProgress component
-- [ ] Update GrowthAssistantPanel for onboarding mode
-- [ ] Add first-login detection
-- [ ] Add live storefront preview panel
-- [ ] Test full E2E flow
+- [ ] Build unified system prompt with phase injection
+- [ ] Implement AdvisorMemoryService
+- [ ] Integrate onboarding mode into existing orchestrator
+- [ ] Add resume capability with context summary
+- [ ] Test conversation flow for each phase
+- [ ] Add LLM evaluation framework
+- [ ] Create conversation test fixtures
 
 **Files to create**:
 
-- `apps/web/src/components/onboarding/WelcomeModal.tsx`
+- `server/src/agent/prompts/onboarding-system-prompt.ts`
+- `server/src/agent/onboarding/advisor-memory.ts`
+- `server/src/agent/orchestrator/orchestrator.ts` (modify)
+- `server/test/agent/evaluation/evaluator.ts`
+- `server/test/agent/evaluation/personas.ts`
+
+**Success criteria**:
+
+- [ ] Conversation flows naturally through phases
+- [ ] Agent remembers context across sessions
+- [ ] LLM evaluation scores > 0.8 for all quality dimensions
+- [ ] Resume shows correct context summary
+
+---
+
+### Build Phase 4: Frontend + Polish
+
+**Goal**: Live preview, welcome experience, E2E tests
+
+**Tasks**:
+
+- [ ] Create LivePreviewPanel component
+- [ ] Update GrowthAssistantPanel for onboarding mode
+- [ ] Add inline welcome message (not modal, per reviewer feedback)
+- [ ] Add subtle progress indicator
+- [ ] Implement WebSocket/polling for real-time preview updates
+- [ ] Write E2E tests for full flow
+- [ ] Test on mobile (responsive)
+- [ ] Security review (tenant isolation)
+
+**Files to create**:
+
+- `apps/web/src/components/onboarding/LivePreviewPanel.tsx`
 - `apps/web/src/components/onboarding/OnboardingProgress.tsx`
-- `apps/web/src/components/onboarding/StorefrontPreview.tsx`
+- `e2e/tests/onboarding-flow.spec.ts`
 
 **Files to modify**:
 
 - `apps/web/src/components/agent/GrowthAssistantPanel.tsx`
-- `apps/web/src/app/(protected)/tenant/dashboard/page.tsx`
+- `apps/web/src/app/(protected)/tenant/layout.tsx`
 
 **Success criteria**:
 
-- [ ] Welcome modal appears on first login
-- [ ] Progress tracker shows current phase
-- [ ] Live preview updates as agent makes changes
-- [ ] Full onboarding flow completes successfully
-
----
-
-### Phase 9: System Prompt & Conversation Flow (Week 5)
-
-**Goal**: Natural, effective agent conversation
-
-**Tasks**:
-
-- [ ] Write comprehensive onboarding system prompt
-- [ ] Add phase-specific prompt sections
-- [ ] Test conversation flow for each phase
-- [ ] Add fallback responses for edge cases
-- [ ] Create conversation examples for testing
-
-**Files to create/modify**:
-
-- `server/src/agent/prompts/onboarding-system-prompt.ts`
-- `server/src/agent/orchestrator/orchestrator.ts` (add onboarding mode)
-
-**Success criteria**:
-
-- [ ] Agent conversation feels natural
-- [ ] Phase transitions are smooth
-- [ ] Edge cases handled gracefully
-- [ ] User can skip phases if desired
-
----
-
-### Phase 10: Testing & Refinement (Week 5-6)
-
-**Goal**: Production-ready quality
-
-**Tasks**:
-
-- [ ] Write E2E tests for full onboarding flow
-- [ ] Test with real market searches (various business types)
-- [ ] Test resume capability (user leaves mid-onboarding)
-- [ ] Performance testing (web search latency)
-- [ ] Security review (tenant isolation in all tools)
-
-**Test files to create**:
-
-- `server/test/agent/onboarding-flow.integration.test.ts`
-- `e2e/tests/onboarding-flow.spec.ts`
-
-**Success criteria**:
-
-- [ ] All E2E tests pass
-- [ ] Onboarding completes in < 15 minutes
-- [ ] Resume works after browser close
+- [ ] Live preview updates as packages created
+- [ ] Welcome message feels natural, not modal-interruptive
+- [ ] E2E tests pass for complete flow
+- [ ] Mobile experience works
 - [ ] No tenant data leakage
-
----
-
-## Alternative Approaches Considered
-
-### Option A: Separate Onboarding Orchestrator (Rejected)
-
-**Approach**: Create a dedicated `OnboardingOrchestrator` class
-**Why rejected**: Would duplicate 90% of existing orchestrator code. Better to extend current orchestrator with "onboarding mode" flag.
-
-### Option B: Wizard UI Instead of Chat (Rejected)
-
-**Approach**: Traditional step-by-step form wizard
-**Why rejected**: Misses the opportunity for AI personalization. Chat allows market research, intelligent recommendations, and feels more like having a business consultant.
-
-### Option C: Pre-built Templates Only (Rejected)
-
-**Approach**: Let users pick from industry templates
-**Why rejected**: Too generic. A wedding photographer in Austin has different needs than one in NYC. Market research enables true personalization.
 
 ---
 
@@ -1209,246 +1330,107 @@ router.post('/skip-onboarding', authenticateTenant, async (req, res) => {
 
 ### Functional Requirements
 
-- [ ] New tenants see welcome modal on first login
-- [ ] Agent guides through 6 onboarding phases
-- [ ] Web search returns market data for major US cities
-- [ ] Agent creates segments, packages, and storefront copy
+- [ ] New tenants see welcome message in Growth Assistant
+- [ ] Agent guides through 4 user phases (not 6)
+- [ ] Market research ALWAYS works (benchmarks as fallback)
+- [ ] Agent creates segments + packages + pricing atomically
 - [ ] User can skip any phase or entire onboarding
-- [ ] Onboarding state persists across sessions
-- [ ] Progress tracker shows current phase
-- [ ] Stripe connection is optional (last step)
+- [ ] Onboarding state persists via event sourcing
+- [ ] Live preview shows storefront updating
+- [ ] Stripe is decoupled — onboarding complete when storefront looks good
 
 ### Non-Functional Requirements
 
 - [ ] Onboarding completes in < 15 minutes average
-- [ ] Web search responds in < 5 seconds
+- [ ] Market search responds in < 5 seconds (fallback < 100ms)
 - [ ] No tenant data leakage (100% tenant isolation)
 - [ ] Works on mobile (responsive chat UI)
-- [ ] Graceful degradation if web search fails
+- [ ] Events provide complete audit trail
+- [ ] OpenTelemetry traces available for debugging
 
 ### Quality Gates
 
 - [ ] 90%+ test coverage for onboarding tools
+- [ ] Property-based tests pass
+- [ ] LLM evaluation scores > 0.8
 - [ ] E2E test passes for complete flow
 - [ ] Security review completed
-- [ ] UX review with 3+ real users
-- [ ] Performance benchmarks met
 
 ---
 
 ## Success Metrics
 
-| Metric                       | Current     | Target   | Measurement            |
-| ---------------------------- | ----------- | -------- | ---------------------- |
-| Onboarding completion rate   | ~40% (est.) | 80%      | Completed / Started    |
-| Time to first package        | Unknown     | < 10 min | Timestamp delta        |
-| Time to storefront live      | Unknown     | < 20 min | Timestamp delta        |
-| User satisfaction            | Unknown     | 4.5/5    | Post-onboarding survey |
-| Support tickets (onboarding) | Unknown     | -50%     | Ticket volume          |
-
----
-
-## Dependencies & Prerequisites
-
-### Technical Dependencies
-
-- [ ] Existing Growth Assistant infrastructure (DONE)
-- [ ] Proposal system with T1/T2/T3 trust tiers (DONE)
-- [ ] Landing page config system (DONE)
-- [ ] Segment + Package models (DONE)
-
-### External Dependencies
-
-- [ ] Web search API (Tavily or built-in WebSearch tool)
-- [ ] Claude API with tool use capability (DONE)
-
-### Team Dependencies
-
-- [ ] UX review of conversation flow
-- [ ] Copywriting review for system prompts
+| Metric                     | Current     | Target   | Measurement               |
+| -------------------------- | ----------- | -------- | ------------------------- |
+| Onboarding completion rate | ~40% (est.) | 80%      | Completed / Started       |
+| Time to first package      | Unknown     | < 10 min | Event timestamps          |
+| Time to storefront live    | Unknown     | < 20 min | Event timestamps          |
+| User satisfaction          | Unknown     | 4.5/5    | Post-onboarding survey    |
+| Resume success rate        | N/A         | 95%      | Users who return complete |
 
 ---
 
 ## Risk Analysis & Mitigation
 
-| Risk                           | Likelihood | Impact   | Mitigation                                                  |
-| ------------------------------ | ---------- | -------- | ----------------------------------------------------------- |
-| Web search returns poor data   | Medium     | Medium   | Fallback to industry benchmarks; allow manual override      |
-| Onboarding takes too long      | Medium     | High     | Phase skip capability; progress persistence                 |
-| Agent gives bad pricing advice | Low        | High     | Frame as "starting point"; easy to change; disclaimers      |
-| Users abandon mid-onboarding   | Medium     | Medium   | Resume capability; progress persistence; email reminders    |
-| Tenant isolation bug           | Low        | Critical | Security review; test all tools with multi-tenant scenarios |
+| Risk                               | Likelihood | Impact   | Mitigation                                                    |
+| ---------------------------------- | ---------- | -------- | ------------------------------------------------------------- |
+| Web search returns poor data       | Medium     | Low      | Fallback-first architecture with industry benchmarks          |
+| Onboarding takes too long          | Medium     | High     | Phase skip capability; combined service+pricing phase         |
+| Agent gives bad pricing advice     | Low        | Medium   | Frame as "starting point"; benchmarks provide guardrails      |
+| Users abandon mid-onboarding       | Medium     | Medium   | Advisor memory; resume with full context                      |
+| Tenant isolation bug               | Low        | Critical | Event sourcing auditable; security review; multi-tenant tests |
+| State machine enters invalid state | Very Low   | Medium   | XState provides provable correctness                          |
 
 ---
 
-## Future Considerations
+## Review Feedback Incorporated
 
-### Phase 2 Enhancements
+### From DHH
 
-- **Photo upload integration**: Agent helps curate portfolio
-- **Calendar setup**: Connect Google Calendar during onboarding
-- **Email template customization**: Agent writes confirmation emails
-- **Competitor monitoring**: Weekly market updates
+- [x] Consolidated 10 build phases → 4 build phases
+- [x] Reduced tools from 8+ → 3 core tools
+- [x] Build benchmarks first, web search as enhancement
+- [x] Single system prompt with phase injection
+- [x] Combined service design + pricing phases
 
-### Long-term Vision
+### From Kieran (Technical)
 
-- **Industry-specific agents**: Photographer agent, coach agent, therapist agent
-- **Peer benchmarking**: "Photographers like you charge..."
-- **A/B test pricing**: Agent suggests price experiments
-- **Revenue optimization**: Agent recommends upsells
+- [x] XState formal state machine
+- [x] Event sourcing with audit trail
+- [x] Discriminated union tool results
+- [x] OpenTelemetry tracing
+- [x] Zod schemas for all types
+- [x] Property-based testing approach
+- [x] LLM evaluation framework
 
----
+### From Simplicity Reviewer
 
-## Documentation Plan
-
-### User-Facing
-
-- [ ] Help article: "Getting started with HANDLED"
-- [ ] Video walkthrough of onboarding flow
-- [ ] FAQ: Common onboarding questions
-
-### Developer-Facing
-
-- [ ] ADR for onboarding agent architecture
-- [ ] Tool documentation in code comments
-- [ ] System prompt documentation
+- [x] Live preview panel for magical UX
+- [x] Advisor memory across sessions
+- [x] Merged pricing + service design (user thinks of them together)
+- [x] Decoupled Stripe from completion
+- [x] Welcome message inline (not modal)
 
 ---
 
-## References & Research
+## References
 
-### Internal References
+### Internal
 
-- `server/src/agent/orchestrator/orchestrator.ts` - Existing orchestrator pattern
-- `server/src/agent/tools/write-tools.ts` - Tool definition patterns
+- `server/src/agent/orchestrator/orchestrator.ts` - Existing orchestrator
+- `server/src/agent/tools/write-tools.ts` - Tool patterns
 - `server/src/agent/proposals/proposal.service.ts` - Proposal lifecycle
-- `docs/design/BRAND_VOICE_GUIDE.md` - Voice for agent copy
+- `docs/design/BRAND_VOICE_GUIDE.md` - Voice guidance
 
-### External References
+### External
 
 - [AI User Onboarding Best Practices (Userpilot)](https://userpilot.com/blog/ai-user-onboarding/)
 - [How an AI Onboarding Agent Doubled Activation (GrowthMates)](https://www.growthmates.news/p/how-an-ai-powered-user-onboarding)
-- [Wizard UI Pattern Best Practices (Eleken)](https://www.eleken.co/blog-posts/wizard-ui-pattern-explained)
-- [Conversational UI Design Rules](https://www.webdesignerdepot.com/2017/06/3-ux-rules-for-conversational-ui-design/)
+- [XState Documentation](https://xstate.js.org/docs/)
 - [Claude Agent SDK Documentation](https://platform.claude.com/docs/en/agent-sdk/overview)
-
-### Related Work
-
-- Existing Growth Assistant implementation
-- Customer chatbot implementation
-- Tenant self-signup flow (completed)
-
----
-
-## Appendix: Example Conversation Flow
-
-```
-AGENT: Hey! 👋 I'm your Growth Assistant. I'm here to help you build
-       your business on HANDLED.
-
-       Let's start by learning about you. What kind of services
-       do you offer?
-
-USER: I'm a wedding photographer
-
-AGENT: Wedding photography — that's such meaningful work!
-       Where are you based? I'll research your local market.
-
-USER: Austin, Texas
-
-AGENT: Great! A few more questions to help me understand your business:
-
-       Who's your ideal client? (Luxury weddings, budget-conscious
-       couples, elopements, etc.)
-
-USER: I focus on intimate weddings and elopements - couples who
-      want something more personal
-
-AGENT: Love it! That's a clear niche. And how long have you been
-       doing this?
-
-USER: About 5 years
-
-AGENT: Perfect! Let me save what I've learned...
-
-       [Storing discovery data...]
-
-       ✅ Got it! Here's what I understand:
-
-       📍 Wedding photographer in Austin, TX
-       🎯 Specializing in intimate weddings & elopements
-       💼 5 years experience
-       👥 Ideal client: couples wanting authenticity over production
-
-       Sound right? I'm about to research your local market.
-
-USER: Yes, that's right!
-
-AGENT: [Searching Austin wedding photography market...]
-
-       📊 **Austin Wedding Photography Market**
-
-       I looked at your local competition. Here's what I found:
-
-       **Pricing Ranges:**
-       - Budget tier: $1,500 - $2,500
-       - Mid-market: $3,000 - $5,000
-       - Premium: $6,000 - $10,000+
-
-       **Elopement-Specific:**
-       - Hourly: $300-500/hr
-       - Half-day packages: $1,200-2,000
-       - Full-day adventure: $3,000-5,000
-
-       **Market Opportunity:**
-       Only 3-4 Austin photographers explicitly specialize in
-       elopements. That's your edge!
-
-       Does this match your experience?
-
-USER: Yeah, that seems about right. Maybe the high end is even
-      higher for luxury.
-
-AGENT: Good to know! With 5 years experience and a niche focus,
-       you have room to price mid-to-premium.
-
-       Now let's design your service structure. Based on your niche,
-       I see two natural segments:
-
-       1. **Elopements** — Adventure shoots, courthouse ceremonies
-       2. **Intimate Weddings** — Small guest lists, meaningful venues
-
-       Does having two categories make sense for how you think
-       about your business?
-
-USER: Yes! They really are different types of shoots.
-
-AGENT: Perfect! Let's name your tiers within each.
-
-       For **Elopements**, I'm thinking:
-       - "Micro" — Quick ceremony, 2 hours
-       - "Adventure" — Half-day, travel included
-       - "All-Day Adventure" — Full day, unlimited locations
-
-       Do these names resonate?
-
-USER: I like those!
-
-AGENT: Great! Let me create your Elopements segment...
-
-       [Creating segment with packages...]
-
-       ✅ Done! Created "Elopements" with 3 packages:
-       - Micro (2 hours)
-       - Adventure (4 hours)
-       - All-Day Adventure (8 hours)
-
-       Now let's do the same for Intimate Weddings...
-
-[Conversation continues through pricing, marketing, activation...]
-```
 
 ---
 
 _Plan generated by Claude Code workflows:plan_
-_Ready for review: /plan_review or proceed to /workflows:work_
+_Revised with quality-first feedback from DHH, Kieran, and Simplicity reviewers_
+_Ready for implementation: `/workflows:work`_

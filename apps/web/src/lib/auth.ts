@@ -75,7 +75,11 @@ interface MAISSession extends Session {
   };
 }
 
+// Ensure consistent secret across NextAuth and getBackendToken
+const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: authSecret,
   providers: [
     Credentials({
       id: 'credentials',
@@ -268,7 +272,7 @@ export async function getBackendToken(): Promise<string | null> {
 
   const token = await getToken({
     req: req as Parameters<typeof getToken>[0]['req'],
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    secret: authSecret,
   });
 
   if (!token) return null;
