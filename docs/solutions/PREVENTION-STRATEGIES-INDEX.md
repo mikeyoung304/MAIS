@@ -890,6 +890,42 @@ cp server/test/templates/tenant-isolation.test.ts \
 
 **When to read:** When tests hang or slow down progressively, when investigating test infrastructure
 
+#### Phase 5 Testing and Caching Patterns
+
+**Location:** `docs/solutions/patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md`
+
+**Problem:** Four critical issues discovered during Phase 5 code review:
+
+1. **Retryable Keyword Conflicts** - Test error messages containing "timeout", "network", "503" trigger retry logic
+2. **Singleton Cache Testability** - Singleton exports prevent dependency injection for tests
+3. **Cache Invalidation After Writes** - Write tools don't invalidate cache, causing stale data
+4. **Error Sanitization in Logs** - Full error objects logged with sensitive data
+
+**Quick Rules:**
+
+```typescript
+// ❌ Test error triggers retries
+throw new Error('Request timeout');
+
+// ✅ Safe test error
+throw new Error('Request failed');
+
+// ❌ Singleton prevents test injection
+export const contextCache = new ContextCache();
+
+// ✅ Export class + factory for injection
+export class ContextCache { ... }
+export const defaultContextCache = new ContextCache();
+
+// ❌ Full error logged (sensitive data)
+logger.error({ error }, 'API failed');
+
+// ✅ Sanitized error
+logger.error({ error: sanitizeError(error) }, 'API failed');
+```
+
+**When to read:** Before implementing retry logic, caching, or error handling
+
 ---
 
 ### 4. Code Quality Automation
@@ -2221,6 +2257,7 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 **Last Updated:** 2025-12-31
 **Recent Additions (2025-12-31):**
 
+- **[Phase 5 Testing and Caching Prevention](./patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md)** - 4 issues: retryable keyword conflicts in tests, singleton cache testability, cache invalidation after writes, error sanitization in logs
 - **[NextAuth v5 Production Authentication Prevention](./authentication-issues/NEXTAUTH-V5-PREVENTION-INDEX.md)** - Complete prevention guide for NextAuth v5 cookie prefix issues causing 401 on production HTTPS
 - **[NextAuth v5 Secure Cookie Prefix](./authentication-issues/nextauth-v5-secure-cookie-prefix-production-401-MAIS-20251231.md)** - Root cause analysis and fix for `__Secure-` cookie prefix handling
 

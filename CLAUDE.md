@@ -18,7 +18,7 @@ HANDLED (gethandled.ai) is a membership platform for service professionals — p
 
 - Next.js migration: COMPLETE (6 phases, 14 code review fixes applied)
 - Tenant storefronts: SSR-enabled at `/t/[slug]` with custom domain support
-- 1196/1200 tests passing (99.7%), 2 skipped, 2 failing
+- Agent-powered onboarding: COMPLETE (Phases 1-5, event sourcing, dual-mode orchestrator)
 - Tenant self-signup: Backend + Frontend complete (`/signup` → `/tenant/dashboard`)
 - Password reset flow: Complete with Postmark email integration
 - Stripe Connect onboarding: Backend routes + StripeConnectCard.tsx
@@ -412,6 +412,83 @@ Tool creates proposal → PENDING → (T2: soft-confirm / T3: user-confirm) → 
 
 **Critical:** Every state transition to CONFIRMED must trigger executor invocation. Missing this bridge causes proposals to confirm but never execute.
 
+### Business Advisor (Onboarding Agent)
+
+AI-powered onboarding assistant that guides new tenants through initial setup. Collects business info, performs market research, suggests pricing, and configures services.
+
+**Architecture:** GrowthAssistantPanel (React) → `/v1/agent/chat` → Orchestrator → Tools → Event Sourcing
+
+**Dual Mode Orchestrator:**
+
+- **Onboarding Mode:** Active when `tenant.onboardingPhase` is NOT `COMPLETED` or `SKIPPED`
+- **Business Assistant Mode:** Regular chat for established tenants
+
+**Onboarding Phases:**
+
+```
+NOT_STARTED → DISCOVERY → MARKET_RESEARCH → SERVICES → MARKETING → COMPLETED
+                     ↘ (user skips) → SKIPPED
+```
+
+**Key Files:**
+
+- `server/src/agent/onboarding/state-machine.ts` - XState v5 phase machine
+- `server/src/agent/onboarding/event-sourcing.ts` - Event append with optimistic locking
+- `server/src/agent/onboarding/advisor-memory.service.ts` - Session resumption context
+- `server/src/agent/prompts/onboarding-system-prompt.ts` - Phase-specific guidance
+- `server/src/agent/tools/onboarding-tools.ts` - Discovery, market research, upsert_services tools
+- `server/src/agent/executors/onboarding-executors.ts` - Segment/package creation executors
+- `apps/web/src/components/onboarding/OnboardingProgress.tsx` - Phase dots UI
+- `apps/web/src/hooks/useOnboardingState.ts` - Frontend state management
+
+**Trust Tiers:**
+
+| Tool                      | Tier | Behavior                                  |
+| ------------------------- | ---- | ----------------------------------------- |
+| `update_onboarding_state` | T1   | Auto-confirms (metadata only)             |
+| `get_market_research`     | T1   | Read-only, uses industry benchmarks       |
+| `upsert_services`         | T2   | Soft-confirm (creates segment + packages) |
+| `update_storefront`       | T2   | Soft-confirm (updates landing page)       |
+
+**Event Sourcing Pattern:**
+
+```typescript
+// Append event with optimistic locking
+const result = await appendEvent(
+  prisma,
+  tenantId,
+  'DISCOVERY_COMPLETED',
+  discoveryPayload,
+  expectedVersion // Fails if version mismatch (concurrent modification)
+);
+
+// Project state from event history
+const memory = await advisorMemoryRepo.projectFromEvents(tenantId);
+```
+
+**Session Resumption:**
+
+- Events replayed to project current state on session start
+- `isReturning` flag triggers contextual resume message
+- Memory summary injected into system prompt for continuity
+
+**Key Patterns:**
+
+- All events validated by Zod schemas in `@macon/contracts`
+- Tenant isolation enforced at event sourcing level (`tenantId` + `version`)
+- Industry benchmarks (17+ business types) provide pricing guidance when web search unavailable
+- Context caching (5-min TTL) reduces database load for repeated session access
+
+**API Endpoints:**
+
+| Endpoint                     | Method | Purpose                       |
+| ---------------------------- | ------ | ----------------------------- |
+| `/v1/agent/onboarding-state` | GET    | Get current phase + context   |
+| `/v1/agent/skip-onboarding`  | POST   | Skip onboarding, update phase |
+| `/v1/agent/chat`             | POST   | Chat with auto-mode detection |
+
+**Testing:** See `server/test/agent/onboarding/` and `server/test/integration/onboarding-flow.spec.ts`
+
 ## Domain Expertise (Auto-Load Skills)
 
 This project uses the `compound-engineering` plugin. Before starting implementation, check these triggers and load the matching skill:
@@ -716,6 +793,10 @@ export class BookingService {
 17. **T2 proposal confirms but never executes:** State transitions MUST have side effects. After CONFIRMED, always call the registered executor
 18. **Proposal not in API response:** When tools return `requiresApproval: true`, verify proposal object propagates to final response
 19. **Field name mismatches in DTOs:** Use canonical names from contracts package. Executor should accept both old and new field names for backward compatibility
+20. **Test errors with retryable keywords:** Never use "timeout", "network", "503", "rate limit" in test error messages - they trigger retry logic
+21. **Singleton caches prevent DI:** Export class + factory function, not just singleton, to enable test injection
+22. **Missing cache invalidation after writes:** Write tools must invalidate context cache after modifying tenant data
+23. **Logging full error objects:** Use `sanitizeError()` helper - never log full error objects (may contain API keys, headers)
 
 ## Prevention Strategies (Read These!)
 
@@ -734,12 +815,15 @@ The following links prevent common mistakes from recurring:
 - **[circular-dependency-executor-registry](docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md)** - Registry module pattern for breaking circular imports
 - **[auth-form-accessibility-checklist](docs/solutions/patterns/auth-form-accessibility-checklist-MAIS-20251230.md)** - WCAG 2.1 AA checklist for auth forms (ARIA, keyboard, CLS)
 - **[nextauth-v5-secure-cookie-prefix](docs/solutions/authentication-issues/nextauth-v5-secure-cookie-prefix-production-401-MAIS-20251231.md)** - NextAuth v5 HTTPS cookie prefix causing 401 on production
+- **[phase-5-testing-and-caching-prevention](docs/solutions/patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md)** - Retryable keyword conflicts, singleton cache DI, cache invalidation, error sanitization
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
 **Key insight from Unused Variables Fix:** Only prefix with `_` if the variable is TRULY unused. Variables passed to logger calls, used in assignments, or referenced in conditionals are NOT unused - they are used.
 
 **Key insight from Proposal Execution Fix:** Circular dependencies between routes and orchestrators caused executor registry to fail. Solution: Extract shared state (executor registry) to dedicated module (`agent/proposals/executor-registry.ts`). Routes and orchestrators both import from this central module.
+
+**Key insight from Phase 5 Testing/Caching:** Test error messages containing retryable keywords ("timeout", "network", "503") trigger retry logic and cause test failures. Use neutral error messages like "Request failed" in tests. Singleton cache patterns prevent dependency injection - export class + factory, not just instance.
 
 ## Quick Start Checklist
 

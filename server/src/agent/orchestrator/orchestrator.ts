@@ -40,6 +40,8 @@ import {
   getOnboardingGreeting,
 } from '../prompts/onboarding-system-prompt';
 import type { OnboardingPhase } from '@macon/contracts';
+import { withRetry, CLAUDE_API_RETRY_CONFIG } from '../utils/retry';
+import { contextCache, withSessionId } from '../context/context-cache';
 
 /**
  * Validate and parse messages from database JSON to ChatMessage[]
@@ -719,20 +721,25 @@ export class AgentOrchestrator {
     // Build tools for API - use onboarding tools when in onboarding mode
     const tools = this.buildToolsForAPI(isOnboardingMode);
 
-    // Call Claude API
+    // Call Claude API with retry logic for transient failures
     let response: Anthropic.Messages.Message;
     try {
-      response = await this.anthropic.messages.create({
-        model: this.config.model,
-        max_tokens: this.config.maxTokens,
-        temperature: this.config.temperature,
-        system: systemPrompt,
-        messages,
-        tools,
-      });
+      response = await withRetry(
+        () =>
+          this.anthropic.messages.create({
+            model: this.config.model,
+            max_tokens: this.config.maxTokens,
+            temperature: this.config.temperature,
+            system: systemPrompt,
+            messages,
+            tools,
+          }),
+        'claude-api-chat',
+        CLAUDE_API_RETRY_CONFIG
+      );
     } catch (error) {
-      logger.error({ error, tenantId, sessionId }, 'Claude API call failed');
-      throw new Error('Failed to communicate with AI assistant');
+      logger.error({ error, tenantId, sessionId }, 'Claude API call failed after retries');
+      throw new Error('Failed to communicate with AI assistant. Please try again in a moment.');
     }
 
     // Process response - handle tool calls if any
@@ -832,15 +839,36 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Build context for session
+   * Build context for session with caching
+   *
+   * Uses in-memory cache with 5-minute TTL to reduce database load.
+   * Context is per-tenant, sessionId is updated on retrieval.
    */
   private async buildContext(tenantId: string, sessionId: string): Promise<AgentSessionContext> {
     try {
-      return await buildSessionContext(this.prisma, tenantId, sessionId);
+      // Check cache first
+      const cached = contextCache.get(tenantId);
+      if (cached) {
+        // Update sessionId since cache is per-tenant, not per-session
+        return withSessionId(cached, sessionId);
+      }
+
+      // Build fresh context and cache it
+      const context = await buildSessionContext(this.prisma, tenantId, sessionId);
+      contextCache.set(tenantId, context);
+      return context;
     } catch (error) {
       logger.error({ error, tenantId }, 'Failed to build session context');
       return buildFallbackContext(tenantId, sessionId);
     }
+  }
+
+  /**
+   * Invalidate cached context for a tenant
+   * Call after write operations that modify tenant data
+   */
+  invalidateContextCache(tenantId: string): void {
+    contextCache.invalidate(tenantId);
   }
 
   /**
@@ -1107,15 +1135,20 @@ export class AgentOrchestrator {
       { role: 'user', content: toolResultBlocks },
     ];
 
-    // Get final response from Claude (use cached prompt to avoid redundant rebuilds)
-    const finalResponse = await this.anthropic.messages.create({
-      model: this.config.model,
-      max_tokens: this.config.maxTokens,
-      temperature: this.config.temperature,
-      system: cachedSystemPrompt,
-      messages: continuedMessages,
-      tools: this.buildToolsForAPI(isOnboardingMode),
-    });
+    // Get final response from Claude with retry logic (use cached prompt to avoid redundant rebuilds)
+    const finalResponse = await withRetry(
+      () =>
+        this.anthropic.messages.create({
+          model: this.config.model,
+          max_tokens: this.config.maxTokens,
+          temperature: this.config.temperature,
+          system: cachedSystemPrompt,
+          messages: continuedMessages,
+          tools: this.buildToolsForAPI(isOnboardingMode),
+        }),
+      'claude-api-tool-continuation',
+      CLAUDE_API_RETRY_CONFIG
+    );
 
     // Check for more tool calls (recursive with depth limit)
     if (finalResponse.content.some((block) => block.type === 'tool_use')) {
