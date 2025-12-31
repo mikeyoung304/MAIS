@@ -17,6 +17,10 @@ import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { AgentOrchestrator } from '../agent/orchestrator';
 import { buildSessionContext, detectOnboardingState } from '../agent/context/context-builder';
 import type { OnboardingState } from '../agent/context/context-builder';
+import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
+import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
+import { appendEvent } from '../agent/onboarding/event-sourcing';
+import type { OnboardingPhase } from '@macon/contracts';
 
 // Re-export executor registry from centralized module
 // (Avoids circular dependency with orchestrator.ts)
@@ -38,6 +42,10 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
   // Initialize orchestrator (singleton per route instance)
   const orchestrator = new AgentOrchestrator(prisma);
 
+  // Initialize advisor memory service for onboarding
+  const advisorMemoryRepository = new PrismaAdvisorMemoryRepository(prisma);
+  const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepository);
+
   /**
    * Helper to extract tenantId from authenticated request
    */
@@ -45,6 +53,175 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
     const tenantAuth = res.locals.tenantAuth;
     return tenantAuth?.tenantId ?? null;
   };
+
+  // ============================================================================
+  // Onboarding State Endpoints
+  // ============================================================================
+
+  /**
+   * GET /v1/agent/onboarding-state
+   * Get the current onboarding state and context for the tenant
+   *
+   * This endpoint provides:
+   * - Current onboarding phase (NOT_STARTED, DISCOVERY, MARKET_RESEARCH, SERVICES, MARKETING, COMPLETED, SKIPPED)
+   * - Memory summaries for context injection
+   * - Returning user detection for personalized experience
+   *
+   * Response:
+   * - phase: OnboardingPhase - Current phase
+   * - isComplete: boolean - Whether onboarding is finished
+   * - isReturning: boolean - Whether this is a returning user
+   * - lastActiveAt: string | null - ISO timestamp of last activity
+   * - summaries: object - Context summaries for each aspect
+   * - resumeMessage: string | null - Human-friendly resume message for returning users
+   */
+  router.get('/onboarding-state', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const context = await advisorMemoryService.getOnboardingContext(tenantId);
+      const resumeMessage = context.isReturning
+        ? await advisorMemoryService.getResumeSummary(tenantId)
+        : null;
+
+      logger.info(
+        { tenantId, phase: context.currentPhase, isReturning: context.isReturning },
+        'Onboarding state retrieved'
+      );
+
+      res.json({
+        phase: context.currentPhase,
+        isComplete: context.currentPhase === 'COMPLETED' || context.currentPhase === 'SKIPPED',
+        isReturning: context.isReturning,
+        lastActiveAt: context.lastActiveAt?.toISOString() ?? null,
+        summaries: {
+          discovery: context.summaries.discovery || null,
+          marketContext: context.summaries.marketContext || null,
+          preferences: context.summaries.preferences || null,
+          decisions: context.summaries.decisions || null,
+          pendingQuestions: context.summaries.pendingQuestions || null,
+        },
+        resumeMessage,
+        // Include memory data if available (for debugging/advanced UI)
+        memory: context.memory
+          ? {
+              currentPhase: context.memory.currentPhase,
+              discoveryData: context.memory.discoveryData ?? null,
+              marketResearchData: context.memory.marketResearchData ?? null,
+              servicesData: context.memory.servicesData ?? null,
+              marketingData: context.memory.marketingData ?? null,
+              lastEventVersion: context.memory.lastEventVersion,
+            }
+          : null,
+      });
+    } catch (error) {
+      logger.error({ error }, 'Error getting onboarding state');
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/agent/skip-onboarding
+   * Skip the onboarding process entirely
+   *
+   * This endpoint allows users to skip onboarding and proceed to manual setup.
+   * Creates a SKIPPED event and transitions the phase.
+   *
+   * Request body:
+   * - reason: string (optional) - Why the user is skipping
+   *
+   * Response:
+   * - success: boolean - Whether the skip was successful
+   * - phase: OnboardingPhase - New phase (SKIPPED)
+   * - message: string - Confirmation message
+   */
+  router.post('/skip-onboarding', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const { reason } = req.body as { reason?: string };
+
+      // Get current tenant state
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          onboardingPhase: true,
+          onboardingVersion: true,
+        },
+      });
+
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const currentPhase = (tenant.onboardingPhase as OnboardingPhase) || 'NOT_STARTED';
+      const currentVersion = tenant.onboardingVersion || 0;
+
+      // Check if already completed or skipped
+      if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
+        res.status(409).json({
+          error: 'Onboarding already finished',
+          phase: currentPhase,
+        });
+        return;
+      }
+
+      // Append ONBOARDING_SKIPPED event
+      const result = await appendEvent(
+        prisma,
+        tenantId,
+        'ONBOARDING_SKIPPED',
+        {
+          skippedAt: new Date().toISOString(),
+          lastPhase: currentPhase,
+          reason: reason || undefined,
+        },
+        currentVersion
+      );
+
+      if (!result.success) {
+        if (result.error === 'CONCURRENT_MODIFICATION') {
+          res.status(409).json({
+            error: 'Concurrent modification detected. Please try again.',
+            currentVersion: result.currentVersion,
+          });
+          return;
+        }
+        res.status(500).json({ error: result.error || 'Failed to skip onboarding' });
+        return;
+      }
+
+      // Update tenant phase
+      await prisma.tenant.update({
+        where: { id: tenantId },
+        data: {
+          onboardingPhase: 'SKIPPED',
+          onboardingVersion: result.version,
+          onboardingCompletedAt: new Date(),
+        },
+      });
+
+      logger.info({ tenantId, fromPhase: currentPhase, reason }, 'Onboarding skipped');
+
+      res.json({
+        success: true,
+        phase: 'SKIPPED' as OnboardingPhase,
+        message: 'Onboarding skipped. You can configure your business manually.',
+      });
+    } catch (error) {
+      logger.error({ error }, 'Error skipping onboarding');
+      next(error);
+    }
+  });
 
   // ============================================================================
   // Health Check

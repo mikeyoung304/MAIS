@@ -102,11 +102,7 @@ export type DiscoveryData = z.infer<typeof DiscoveryDataSchema>;
 /**
  * Market research source - tracks data provenance (Fix #6: no isFallback)
  */
-export const MarketResearchSourceSchema = z.enum([
-  'web_search',
-  'industry_benchmark',
-  'mixed',
-]);
+export const MarketResearchSourceSchema = z.enum(['web_search', 'industry_benchmark', 'mixed']);
 
 export type MarketResearchSource = z.infer<typeof MarketResearchSourceSchema>;
 
@@ -197,7 +193,10 @@ export const MarketingDataSchema = z.object({
   tagline: z.string().max(300).optional(),
   brandVoice: z.enum(['professional', 'friendly', 'luxurious', 'approachable', 'bold']).optional(),
   heroImageUrl: z.string().url().optional(),
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
 });
 
 export type MarketingData = z.infer<typeof MarketingDataSchema>;
@@ -253,19 +252,24 @@ export const UpdateOnboardingStateInputSchema = z.discriminatedUnion('phase', [
 export type UpdateOnboardingStateInput = z.infer<typeof UpdateOnboardingStateInputSchema>;
 
 // ============================================================================
-// Tool Result Types (Discriminated Unions for Error Handling)
+// Tool Result Types (Union-Based Error Handling)
 // ============================================================================
 
 /**
  * Result from update_onboarding_state tool
+ *
+ * Uses z.union instead of z.discriminatedUnion because we have multiple
+ * error variants all with success: false. Zod's discriminatedUnion requires
+ * unique discriminator values.
  */
-export const UpdateOnboardingStateResultSchema = z.discriminatedUnion('success', [
-  z.object({
-    success: z.literal(true),
-    phase: OnboardingPhaseSchema,
-    summary: z.string(),
-    version: z.number().int(),
-  }),
+const UpdateOnboardingStateSuccessSchema = z.object({
+  success: z.literal(true),
+  phase: OnboardingPhaseSchema,
+  summary: z.string(),
+  version: z.number().int(),
+});
+
+const UpdateOnboardingStateErrorSchema = z.union([
   z.object({
     success: z.literal(false),
     error: z.literal('INCOMPLETE_DATA'),
@@ -284,24 +288,30 @@ export const UpdateOnboardingStateResultSchema = z.discriminatedUnion('success',
   }),
 ]);
 
+export const UpdateOnboardingStateResultSchema = z.union([
+  UpdateOnboardingStateSuccessSchema,
+  UpdateOnboardingStateErrorSchema,
+]);
+
 export type UpdateOnboardingStateResult = z.infer<typeof UpdateOnboardingStateResultSchema>;
 
 /**
  * Result from upsert_services tool
  */
-export const UpsertServicesResultSchema = z.discriminatedUnion('success', [
-  z.object({
-    success: z.literal(true),
-    segmentId: z.string(),
-    packages: z.array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        priceCents: z.number().int(),
-      })
-    ),
-    previewUrl: z.string().url(),
-  }),
+const UpsertServicesSuccessSchema = z.object({
+  success: z.literal(true),
+  segmentId: z.string(),
+  packages: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      priceCents: z.number().int(),
+    })
+  ),
+  previewUrl: z.string().url(),
+});
+
+const UpsertServicesErrorSchema = z.union([
   z.object({
     success: z.literal(false),
     error: z.literal('SEGMENT_EXISTS'),
@@ -317,6 +327,11 @@ export const UpsertServicesResultSchema = z.discriminatedUnion('success', [
     error: z.literal('VALIDATION_ERROR'),
     message: z.string(),
   }),
+]);
+
+export const UpsertServicesResultSchema = z.union([
+  UpsertServicesSuccessSchema,
+  UpsertServicesErrorSchema,
 ]);
 
 export type UpsertServicesResult = z.infer<typeof UpsertServicesResultSchema>;
