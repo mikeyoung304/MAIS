@@ -4,6 +4,7 @@
 
 import type { Package, AddOn, Booking, Service } from './entities';
 import type Stripe from 'stripe';
+import type { AdvisorMemory } from '@macon/contracts';
 
 // ============================================================================
 // Repository Ports

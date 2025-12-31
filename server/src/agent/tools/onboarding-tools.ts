@@ -37,12 +37,9 @@ import {
   TargetMarketSchema,
   OnboardingPhaseSchema,
 } from '@macon/contracts';
-import {
-  createOnboardingActor,
-  getPhaseFromState,
-  type OnboardingMachineEvent,
-} from '../onboarding/state-machine';
-import { appendEvent, type OnboardingEventType } from '../onboarding/event-sourcing';
+import { stateToPhase, isValidTransition } from '../onboarding/state-machine';
+import { appendEvent } from '../onboarding/event-sourcing';
+import type { OnboardingMachineEvent, OnboardingEventType } from '@macon/contracts';
 import { searchMarketPricing } from '../onboarding/market-search';
 import { logger } from '../../lib/core/logger';
 
@@ -207,7 +204,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         where: { id: tenantId },
         select: {
           onboardingPhase: true,
-          onboardingEventVersion: true,
+          onboardingVersion: true,
         },
       });
 
@@ -219,7 +216,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
       }
 
       const currentPhase = (tenant.onboardingPhase as OnboardingPhase) || 'NOT_STARTED';
-      const currentVersion = tenant.onboardingEventVersion || 0;
+      const currentVersion = tenant.onboardingVersion || 0;
 
       // Validate phase data based on target phase
       let validatedData: unknown;
@@ -271,25 +268,9 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         validatedData = result.data;
       }
 
-      // Create XState actor to validate transition
-      const actor = createOnboardingActor({
-        tenantId,
-        sessionId,
-        eventVersion: currentVersion,
-      });
-
-      // Restore to current state
-      actor.start();
-
-      // Simulate transitions to get to current phase
-      if (currentPhase !== 'NOT_STARTED') {
-        // The actor starts at NOT_STARTED, we need to simulate getting to current phase
-        // For now, we'll do direct validation instead of full state restoration
-      }
-
-      // Validate the transition is allowed
-      const machineEvent = getMachineEventForPhase(targetPhase, validatedData);
-      if (!machineEvent && targetPhase !== 'COMPLETED') {
+      // Validate the transition is allowed using state machine rules
+      // Note: Using direct validation instead of full XState actor for simplicity
+      if (!isValidTransition(currentPhase, targetPhase)) {
         return {
           success: false,
           error: 'INVALID_TRANSITION',
@@ -316,7 +297,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
       switch (targetPhase) {
         case 'DISCOVERY':
           eventPayload = {
-            ...validatedData,
+            ...(validatedData as Record<string, unknown>),
             completedAt: timestamp,
           };
           break;
@@ -325,13 +306,13 @@ Use phase: SKIPPED to skip onboarding entirely.`,
           break;
         case 'SERVICES':
           eventPayload = {
-            ...validatedData,
+            ...(validatedData as Record<string, unknown>),
             configuredAt: timestamp,
           };
           break;
         case 'MARKETING':
           eventPayload = {
-            ...validatedData,
+            ...(validatedData as Record<string, unknown>),
             configuredAt: timestamp,
           };
           break;
@@ -357,7 +338,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         prisma,
         tenantId,
         eventType,
-        eventPayload,
+        eventPayload as Parameters<typeof appendEvent>[3],
         currentVersion
       );
 
@@ -380,7 +361,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         where: { id: tenantId },
         data: {
           onboardingPhase: targetPhase,
-          onboardingEventVersion: appendResult.newVersion,
+          onboardingVersion: appendResult.version,
           ...(targetPhase === 'COMPLETED' ? { onboardingCompletedAt: new Date() } : {}),
         },
       });
@@ -390,7 +371,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
           tenantId,
           fromPhase: currentPhase,
           toPhase: targetPhase,
-          version: appendResult.newVersion,
+          version: appendResult.version,
         },
         'Onboarding state transitioned via agent'
       );
@@ -424,10 +405,12 @@ Use phase: SKIPPED to skip onboarding entirely.`,
 
       return {
         success: true,
-        phase: targetPhase,
-        summary,
-        version: appendResult.newVersion,
-      } as AgentToolResult;
+        data: {
+          phase: targetPhase,
+          summary,
+          version: appendResult.version,
+        },
+      };
     } catch (error) {
       return handleToolError(
         error,

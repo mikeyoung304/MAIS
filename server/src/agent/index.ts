@@ -54,7 +54,24 @@ export type { AuditLogInput, AuditLogEntry } from './audit/audit.service';
 
 // Orchestrator (Claude API integration)
 export { AgentOrchestrator } from './orchestrator';
-export type { OrchestratorConfig, ChatMessage, SessionState, ChatResponse } from './orchestrator';
+export type {
+  OrchestratorConfig,
+  ChatMessage,
+  SessionState,
+  ChatResponse,
+  OnboardingSessionContext,
+} from './orchestrator';
 
 // Re-export getAllTools from consolidated module
-export { getAllTools } from './tools/all-tools';
+export { getAllTools, getAllToolsWithOnboarding } from './tools/all-tools';
+
+// Onboarding system prompt
+export {
+  buildOnboardingSystemPrompt,
+  getOnboardingGreeting,
+} from './prompts/onboarding-system-prompt';
+export type { OnboardingPromptContext } from './prompts/onboarding-system-prompt';
+
+// Advisor memory service
+export { AdvisorMemoryService } from './onboarding/advisor-memory.service';
+export type { AdvisorMemorySummary, OnboardingContext } from './onboarding/advisor-memory.service';

@@ -53,3 +53,10 @@ export {
   type MarketSearchError,
   type MarketSearchResponse,
 } from './market-search';
+
+// Advisor Memory Service (Phase 3)
+export {
+  AdvisorMemoryService,
+  type AdvisorMemorySummary,
+  type OnboardingContext,
+} from './advisor-memory.service';

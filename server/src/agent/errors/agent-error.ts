@@ -103,6 +103,16 @@ export class MissingFieldError extends AgentError {
 }
 
 /**
+ * Error for validation failures (invalid input, duplicate resources, etc.)
+ */
+export class ValidationError extends AgentError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(AgentErrorCode.INVALID_FORMAT, message, details);
+    this.name = 'ValidationError';
+  }
+}
+
+/**
  * Error for resource not found (with tenant isolation context)
  *
  * SECURITY: Uses generic error message to prevent resource enumeration attacks.

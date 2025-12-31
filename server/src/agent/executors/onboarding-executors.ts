@@ -58,7 +58,8 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
   // ============================================================================
 
   registerProposalExecutor('upsert_services', async (tenantId, payload) => {
-    const { segmentName, segmentSlug, packages } = payload as UpsertServicesPayload;
+    const typedPayload = payload as unknown as UpsertServicesPayload;
+    const { segmentName, segmentSlug, packages } = typedPayload;
 
     // Validate required fields
     if (!segmentName) {

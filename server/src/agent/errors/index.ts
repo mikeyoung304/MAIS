@@ -9,6 +9,7 @@ export {
   AgentErrorCode,
   type AgentErrorCodeType,
   MissingFieldError,
+  ValidationError,
   ResourceNotFoundError,
   DateUnavailableError,
   InvalidStateError,

@@ -18,9 +18,9 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/resources/messages';
-import type { PrismaClient } from '../../generated/prisma';
-import type { ToolContext, AgentToolResult } from '../tools/types';
-import { getAllTools } from '../tools/all-tools';
+import type { PrismaClient, Prisma } from '../../generated/prisma';
+import type { ToolContext, AgentToolResult, AgentTool } from '../tools/types';
+import { getAllTools, getAllToolsWithOnboarding } from '../tools/all-tools';
 import {
   buildSessionContext,
   buildFallbackContext,
@@ -33,6 +33,32 @@ import { logger } from '../../lib/core/logger';
 import { getProposalExecutor } from '../proposals/executor-registry';
 import { validateExecutorPayload } from '../proposals/executor-schemas';
 import { ErrorMessages } from '../errors';
+import { AdvisorMemoryService } from '../onboarding/advisor-memory.service';
+import { PrismaAdvisorMemoryRepository } from '../../adapters/prisma/advisor-memory.repository';
+import {
+  buildOnboardingSystemPrompt,
+  getOnboardingGreeting,
+} from '../prompts/onboarding-system-prompt';
+import type { OnboardingPhase } from '@macon/contracts';
+
+/**
+ * Validate and parse messages from database JSON to ChatMessage[]
+ * Prisma stores messages as JsonValue, this safely converts them
+ */
+function parseChatMessages(messages: unknown): ChatMessage[] {
+  if (!Array.isArray(messages)) return [];
+
+  return messages.filter((msg): msg is ChatMessage => {
+    return (
+      typeof msg === 'object' &&
+      msg !== null &&
+      'role' in msg &&
+      'content' in msg &&
+      (msg.role === 'user' || msg.role === 'assistant') &&
+      typeof msg.content === 'string'
+    );
+  });
+}
 
 /**
  * System prompt template
@@ -297,6 +323,16 @@ export interface ChatMessage {
 }
 
 /**
+ * Onboarding-specific session context
+ */
+export interface OnboardingSessionContext {
+  isOnboardingMode: boolean;
+  currentPhase: OnboardingPhase;
+  isReturning: boolean;
+  memorySummary?: string;
+}
+
+/**
  * Session state stored in database
  */
 export interface SessionState {
@@ -304,6 +340,7 @@ export interface SessionState {
   tenantId: string;
   messages: ChatMessage[];
   context: AgentSessionContext;
+  onboarding?: OnboardingSessionContext;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -330,12 +367,19 @@ export interface ChatResponse {
 
 /**
  * Agent Orchestrator
+ *
+ * Supports two modes:
+ * - Business Assistant Mode: Regular chat with business tools
+ * - Onboarding Mode: Guided setup with onboarding tools
+ *
+ * Mode is auto-detected based on tenant's onboarding phase.
  */
 export class AgentOrchestrator {
   private anthropic: Anthropic;
   private config: OrchestratorConfig;
   private proposalService: ProposalService;
   private auditService: AuditService;
+  private advisorMemoryService: AdvisorMemoryService;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -347,6 +391,10 @@ export class AgentOrchestrator {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.proposalService = new ProposalService(prisma);
     this.auditService = new AuditService(prisma);
+
+    // Initialize advisor memory service for onboarding mode
+    const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prisma);
+    this.advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
   }
 
   /**
@@ -364,13 +412,17 @@ export class AgentOrchestrator {
       orderBy: { updatedAt: 'desc' },
     });
 
+    // Get onboarding context (needed for both existing and new sessions)
+    const onboardingContext = await this.buildOnboardingContext(tenantId);
+
     if (existingSession) {
       const context = await this.buildContext(tenantId, existingSession.id);
       return {
         sessionId: existingSession.id,
         tenantId,
-        messages: (existingSession.messages as unknown as ChatMessage[]) || [],
+        messages: parseChatMessages(existingSession.messages),
         context,
+        onboarding: onboardingContext,
         createdAt: existingSession.createdAt,
         updatedAt: existingSession.updatedAt,
       };
@@ -386,13 +438,22 @@ export class AgentOrchestrator {
 
     const context = await this.buildContext(tenantId, newSession.id);
 
-    logger.info({ tenantId, sessionId: newSession.id }, 'New agent session created');
+    logger.info(
+      {
+        tenantId,
+        sessionId: newSession.id,
+        isOnboardingMode: onboardingContext.isOnboardingMode,
+        onboardingPhase: onboardingContext.currentPhase,
+      },
+      'New agent session created'
+    );
 
     return {
       sessionId: newSession.id,
       tenantId,
       messages: [],
       context,
+      onboarding: onboardingContext,
       createdAt: newSession.createdAt,
       updatedAt: newSession.updatedAt,
     };
@@ -414,12 +475,14 @@ export class AgentOrchestrator {
     }
 
     const context = await this.buildContext(tenantId, sessionId);
+    const onboardingContext = await this.buildOnboardingContext(tenantId);
 
     return {
       sessionId: session.id,
       tenantId,
-      messages: (session.messages as unknown as ChatMessage[]) || [],
+      messages: parseChatMessages(session.messages),
       context,
+      onboarding: onboardingContext,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
     };
@@ -597,11 +660,45 @@ export class AgentOrchestrator {
       }
     }
 
-    // Build messages for Claude API
-    let systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace(
-      '{BUSINESS_CONTEXT}',
-      session.context.contextPrompt
-    );
+    // Determine if in onboarding mode
+    const isOnboardingMode = session.onboarding?.isOnboardingMode ?? false;
+
+    // Build system prompt based on mode
+    let systemPrompt: string;
+    if (isOnboardingMode && session.onboarding) {
+      // Get tenant for business name
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      });
+
+      // Get advisor memory for context
+      const onboardingCtx = await this.advisorMemoryService.getOnboardingContext(tenantId);
+
+      // Build onboarding-specific system prompt
+      systemPrompt = buildOnboardingSystemPrompt({
+        businessName: tenant?.name || 'Your Business',
+        currentPhase: session.onboarding.currentPhase,
+        advisorMemory: onboardingCtx.memory ?? undefined,
+        isResume: onboardingCtx.isReturning,
+      });
+
+      logger.debug(
+        {
+          tenantId,
+          sessionId,
+          phase: session.onboarding.currentPhase,
+          isReturning: onboardingCtx.isReturning,
+        },
+        'Using onboarding system prompt'
+      );
+    } else {
+      // Use regular business assistant prompt
+      systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace(
+        '{BUSINESS_CONTEXT}',
+        session.context.contextPrompt
+      );
+    }
 
     // If there were failed proposals, add context so Claude can apologize and offer alternatives
     if (failedProposals.length > 0) {
@@ -619,8 +716,8 @@ export class AgentOrchestrator {
     // Add user message
     const messages: MessageParam[] = [...historyMessages, { role: 'user', content: userMessage }];
 
-    // Build tools for API
-    const tools = this.buildToolsForAPI();
+    // Build tools for API - use onboarding tools when in onboarding mode
+    const tools = this.buildToolsForAPI(isOnboardingMode);
 
     // Call Claude API
     let response: Anthropic.Messages.Message;
@@ -644,7 +741,9 @@ export class AgentOrchestrator {
       tenantId,
       sessionId,
       messages,
-      session.context
+      session.context,
+      systemPrompt,
+      isOnboardingMode
     );
 
     // Update session with new messages
@@ -670,7 +769,7 @@ export class AgentOrchestrator {
     await this.prisma.agentSession.update({
       where: { id: sessionId },
       data: {
-        messages: updatedMessages as any,
+        messages: updatedMessages as Prisma.InputJsonValue,
         updatedAt: new Date(),
       },
     });
@@ -702,12 +801,31 @@ export class AgentOrchestrator {
 
   /**
    * Get initial greeting based on user context
-   * Uses HANDLED-voice greetings
+   * Uses HANDLED-voice greetings, or onboarding greeting if in onboarding mode
    */
   async getGreeting(tenantId: string, sessionId: string): Promise<string> {
     const session = await this.getSession(tenantId, sessionId);
     if (!session) {
       return `What should we knock out today?`;
+    }
+
+    // Use onboarding greeting if in onboarding mode
+    if (session.onboarding?.isOnboardingMode) {
+      // Get tenant for business name
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      });
+
+      // Get advisor memory for resume context
+      const onboardingCtx = await this.advisorMemoryService.getOnboardingContext(tenantId);
+
+      return getOnboardingGreeting({
+        businessName: tenant?.name || 'Your Business',
+        currentPhase: session.onboarding.currentPhase,
+        advisorMemory: onboardingCtx.memory ?? undefined,
+        isResume: onboardingCtx.isReturning,
+      });
     }
 
     return getHandledGreeting(session.context);
@@ -726,6 +844,56 @@ export class AgentOrchestrator {
   }
 
   /**
+   * Build onboarding context for session
+   *
+   * Determines if tenant is in onboarding mode and gets relevant context.
+   * Onboarding mode is active when tenant.onboardingPhase is NOT 'COMPLETED' or 'SKIPPED'.
+   */
+  private async buildOnboardingContext(tenantId: string): Promise<OnboardingSessionContext> {
+    try {
+      // Get tenant's onboarding phase
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { onboardingPhase: true },
+      });
+
+      if (!tenant) {
+        return {
+          isOnboardingMode: false,
+          currentPhase: 'NOT_STARTED',
+          isReturning: false,
+        };
+      }
+
+      const currentPhase = (tenant.onboardingPhase as OnboardingPhase) || 'NOT_STARTED';
+
+      // Onboarding is active if not completed or skipped
+      const isOnboardingMode = currentPhase !== 'COMPLETED' && currentPhase !== 'SKIPPED';
+
+      // Get advisor memory context for returning users
+      const onboardingCtx = await this.advisorMemoryService.getOnboardingContext(tenantId);
+      const resumeSummary = onboardingCtx.isReturning
+        ? await this.advisorMemoryService.getResumeSummary(tenantId)
+        : undefined;
+
+      return {
+        isOnboardingMode,
+        currentPhase,
+        isReturning: onboardingCtx.isReturning,
+        memorySummary: resumeSummary ?? undefined,
+      };
+    } catch (error) {
+      logger.error({ error, tenantId }, 'Failed to build onboarding context');
+      // Fallback to non-onboarding mode on error
+      return {
+        isOnboardingMode: false,
+        currentPhase: 'NOT_STARTED',
+        isReturning: false,
+      };
+    }
+  }
+
+  /**
    * Build history messages for API call
    */
   private buildHistoryMessages(messages: ChatMessage[]): MessageParam[] {
@@ -737,9 +905,11 @@ export class AgentOrchestrator {
 
   /**
    * Build tools in Anthropic API format
+   *
+   * @param includeOnboarding - Whether to include onboarding-specific tools
    */
-  private buildToolsForAPI(): Anthropic.Messages.Tool[] {
-    const allTools = getAllTools();
+  private buildToolsForAPI(includeOnboarding: boolean = false): Anthropic.Messages.Tool[] {
+    const allTools = includeOnboarding ? getAllToolsWithOnboarding() : getAllTools();
 
     return allTools.map((tool) => ({
       name: tool.name,
@@ -749,8 +919,17 @@ export class AgentOrchestrator {
   }
 
   /**
+   * Get tools list for tool execution
+   */
+  private getToolsList(includeOnboarding: boolean = false): AgentTool[] {
+    return includeOnboarding ? getAllToolsWithOnboarding() : getAllTools();
+  }
+
+  /**
    * Process Claude response, executing tool calls as needed.
    * @param cachedContext - Pre-built session context to avoid redundant rebuilds
+   * @param cachedSystemPrompt - Pre-built system prompt to avoid redundant rebuilds
+   * @param isOnboardingMode - Whether to use onboarding tools
    * @param depth - Current recursion depth (prevents unbounded tool call loops)
    */
   private async processResponse(
@@ -759,6 +938,8 @@ export class AgentOrchestrator {
     sessionId: string,
     messages: MessageParam[],
     cachedContext: AgentSessionContext,
+    cachedSystemPrompt: string,
+    isOnboardingMode: boolean = false,
     depth: number = 0
   ): Promise<{
     finalMessage: string;
@@ -823,9 +1004,12 @@ export class AgentOrchestrator {
       prisma: this.prisma,
     };
 
+    // Get the appropriate tool list based on mode
+    const availableTools = this.getToolsList(isOnboardingMode);
+
     for (const toolUse of toolUseBlocks) {
       const startTime = Date.now();
-      const tool = getAllTools().find((t) => t.name === toolUse.name);
+      const tool = availableTools.find((t) => t.name === toolUse.name);
 
       if (!tool) {
         logger.warn({ toolName: toolUse.name }, 'Unknown tool requested');
@@ -923,14 +1107,14 @@ export class AgentOrchestrator {
       { role: 'user', content: toolResultBlocks },
     ];
 
-    // Get final response from Claude (use cached context to avoid redundant rebuilds)
+    // Get final response from Claude (use cached prompt to avoid redundant rebuilds)
     const finalResponse = await this.anthropic.messages.create({
       model: this.config.model,
       max_tokens: this.config.maxTokens,
       temperature: this.config.temperature,
-      system: SYSTEM_PROMPT_TEMPLATE.replace('{BUSINESS_CONTEXT}', cachedContext.contextPrompt),
+      system: cachedSystemPrompt,
       messages: continuedMessages,
-      tools: this.buildToolsForAPI(),
+      tools: this.buildToolsForAPI(isOnboardingMode),
     });
 
     // Check for more tool calls (recursive with depth limit)
@@ -942,6 +1126,8 @@ export class AgentOrchestrator {
         sessionId,
         continuedMessages,
         cachedContext,
+        cachedSystemPrompt,
+        isOnboardingMode,
         depth + 1
       );
       return {
