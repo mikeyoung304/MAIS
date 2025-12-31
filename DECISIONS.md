@@ -32,9 +32,10 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-011: PaymentProvider Interface](docs/adrs/ADR-011-payment-provider-interface.md) - Payment abstraction layer (Stripe)
 - [ADR-012: Full Test Coverage for Webhook Handler](docs/adrs/ADR-012-full-test-coverage-webhook-handler.md) - Testing standards for critical paths
 
-### Frontend & Multi-Tenant (ADR-014)
+### Frontend & Multi-Tenant (ADR-014, ADR-017)
 
 - [ADR-014: Next.js App Router Migration](docs/adrs/ADR-014-nextjs-app-router-migration.md) - Migration from Vite SPA to Next.js 14 for tenant storefronts
+- [ADR-017: Dark Theme Auth Pages](docs/adrs/ADR-017-dark-theme-auth-pages.md) - Dark graphite theme for signup/login vs light marketing site
 
 ## Quick Reference by Category
 
@@ -78,6 +79,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 | ADR-012 | Full Test Coverage (Webhooks)  | Accepted   | P0       | Testing       |
 | ADR-013 | PostgreSQL Advisory Locks      | Accepted   | P0       | Concurrency   |
 | ADR-014 | Next.js App Router Migration   | Accepted   | P0       | Frontend      |
+| ADR-017 | Dark Theme Auth Pages          | Accepted   | P2       | Frontend      |
 
 ## Decision Process
 

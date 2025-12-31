@@ -160,7 +160,10 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
-      // Call the signup API directly
+      // Use raw fetch() instead of ts-rest client because:
+      // 1. The signup endpoint is public (no authentication required)
+      // 2. It doesn't follow the authenticated ts-rest contract pattern
+      // 3. The response includes a JWT token for immediate session creation
       const response = await fetch(`${API_BASE_URL}/v1/auth/signup`, {
         method: 'POST',
         headers: {
@@ -282,10 +285,12 @@ function SignupForm() {
                   autoComplete="organization"
                   disabled={isLoading}
                   maxLength={100}
+                  aria-invalid={!!fieldErrors.businessName}
+                  aria-describedby={fieldErrors.businessName ? 'businessName-error' : undefined}
                 />
               </div>
               {fieldErrors.businessName && (
-                <p className="text-sm text-danger-500" role="alert">
+                <p id="businessName-error" className="text-sm text-danger-500" role="alert">
                   {fieldErrors.businessName}
                 </p>
               )}
@@ -316,10 +321,12 @@ function SignupForm() {
                   required
                   autoComplete="email"
                   disabled={isLoading}
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 />
               </div>
               {fieldErrors.email && (
-                <p className="text-sm text-danger-500" role="alert">
+                <p id="email-error" className="text-sm text-danger-500" role="alert">
                   {fieldErrors.email}
                 </p>
               )}
@@ -350,13 +357,14 @@ function SignupForm() {
                   required
                   autoComplete="new-password"
                   disabled={isLoading}
-                  aria-describedby="password-hint"
+                  aria-invalid={!!fieldErrors.password}
+                  aria-describedby={fieldErrors.password ? 'password-error' : 'password-hint'}
                 />
-                {/* Password toggle with 44px touch target */}
+                {/* Password toggle with 44px touch target - uses pr-1 to keep within input bounds */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-sage/50 rounded"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-sage/50 rounded"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -380,7 +388,7 @@ function SignupForm() {
                 </p>
               )}
               {fieldErrors.password && (
-                <p className="text-sm text-danger-500" role="alert">
+                <p id="password-error" className="text-sm text-danger-500" role="alert">
                   {fieldErrors.password}
                 </p>
               )}
@@ -468,6 +476,8 @@ function SignupFormSkeleton() {
             <div key={i} className="space-y-2">
               <div className="h-4 w-24 animate-pulse rounded bg-neutral-700" />
               <div className="h-12 animate-pulse rounded-lg bg-neutral-700" />
+              {/* Password hint skeleton - reserves space to prevent CLS */}
+              {i === 3 && <div className="h-4 w-28 animate-pulse rounded bg-neutral-700" />}
             </div>
           ))}
           <div className="h-12 animate-pulse rounded-full bg-sage/30 mt-6" />

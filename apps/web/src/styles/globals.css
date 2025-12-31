@@ -100,12 +100,21 @@
   border-width: 0;
 }
 
-/* Chrome autofill override for dark theme */
+/* Chrome autofill override for dark theme
+ * Uses CSS variables from Tailwind config for maintainability:
+ * - --autofill-bg: matches surface color (#18181B)
+ * - --autofill-text: matches text-primary color (#FAFAFA)
+ */
+:root {
+  --autofill-bg: #18181B;
+  --autofill-text: #FAFAFA;
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #18181B inset !important;
-  -webkit-text-fill-color: #FAFAFA !important;
-  caret-color: #FAFAFA;
+  -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg) inset !important;
+  -webkit-text-fill-color: var(--autofill-text) !important;
+  caret-color: var(--autofill-text);
   transition: background-color 5000s ease-in-out 0s;
 }

@@ -30,11 +30,11 @@ export default function SignupLoading() {
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-2">
                 <div className="h-4 w-24 animate-pulse rounded bg-neutral-700" />
-                <div className="h-12 animate-pulse rounded-full bg-neutral-700" />
+                <div className="h-12 animate-pulse rounded-lg bg-neutral-700" />
+                {/* Password hint skeleton - reserves space to prevent CLS */}
+                {i === 3 && <div className="h-4 w-28 animate-pulse rounded bg-neutral-700" />}
               </div>
             ))}
-            {/* Password hint placeholder */}
-            <div className="h-4 w-28 animate-pulse rounded bg-neutral-700" />
             <div className="h-12 animate-pulse rounded-full bg-sage/30 mt-6" />
           </div>
         </div>
