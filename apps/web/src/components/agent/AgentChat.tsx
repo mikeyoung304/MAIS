@@ -7,7 +7,10 @@ import { cn } from '@/lib/utils';
 import { Send, Loader2, CheckCircle, XCircle, Bot, User, AlertTriangle } from 'lucide-react';
 import { ChatbotUnavailable } from './ChatbotUnavailable';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Use Next.js API proxy for agent endpoints
+// The proxy (/api/agent/*) handles authentication and forwards to Express backend
+// SECURITY: Backend token is never exposed to client-side code
+const API_URL = '/api';
 
 /**
  * Message in the chat history
@@ -124,9 +127,8 @@ export function AgentChat({
 
     try {
       // Step 1: Pre-flight health check
-      const healthResponse = await fetch(`${API_URL}/v1/agent/health`, {
-        credentials: 'include',
-      });
+      // Calls /api/agent/health → proxied to /v1/agent/health with auth
+      const healthResponse = await fetch(`${API_URL}/agent/health`);
 
       if (!healthResponse.ok) {
         // Network error - try to proceed anyway
@@ -145,9 +147,7 @@ export function AgentChat({
       }
 
       // Step 2: Initialize session
-      const sessionResponse = await fetch(`${API_URL}/v1/agent/session`, {
-        credentials: 'include',
-      });
+      const sessionResponse = await fetch(`${API_URL}/agent/session`);
 
       if (!sessionResponse.ok) {
         throw new Error('Failed to initialize chat session');
@@ -200,12 +200,11 @@ export function AgentChat({
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch(`${API_URL}/v1/agent/chat`, {
+      const response = await fetch(`${API_URL}/agent/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({
           message,
           sessionId,
@@ -248,9 +247,8 @@ export function AgentChat({
   // Handle proposal confirmation
   const confirmProposal = async (proposalId: string) => {
     try {
-      const response = await fetch(`${API_URL}/v1/agent/proposals/${proposalId}/confirm`, {
+      const response = await fetch(`${API_URL}/agent/proposals/${proposalId}/confirm`, {
         method: 'POST',
-        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -281,9 +279,8 @@ export function AgentChat({
   // Handle proposal rejection
   const rejectProposal = async (proposalId: string) => {
     try {
-      const response = await fetch(`${API_URL}/v1/agent/proposals/${proposalId}/reject`, {
+      const response = await fetch(`${API_URL}/agent/proposals/${proposalId}/reject`, {
         method: 'POST',
-        credentials: 'include',
       });
 
       if (!response.ok) {
