@@ -19,9 +19,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
  *
  * Fetches the current landing page configuration.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const token = await getBackendToken();
+    const token = await getBackendToken(request);
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -57,7 +57,7 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const token = await getBackendToken();
+    const token = await getBackendToken(request);
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

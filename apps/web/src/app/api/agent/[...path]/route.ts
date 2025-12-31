@@ -26,7 +26,7 @@ async function handleRequest(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const token = await getBackendToken();
+    const token = await getBackendToken(request);
 
     if (!token) {
       // Return a user-friendly message when not authenticated

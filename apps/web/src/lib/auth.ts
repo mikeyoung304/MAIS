@@ -253,22 +253,47 @@ export type { MAISUser, MAISJWT, MAISSession };
  * SECURITY: This should only be used in Server Components or API routes.
  * The token is not exposed to client-side JavaScript.
  *
+ * @param request - Optional NextRequest from API route handlers
  * @returns The backend JWT token or null if not authenticated
  */
-export async function getBackendToken(): Promise<string | null> {
+export async function getBackendToken(request?: Request): Promise<string | null> {
   // Import getToken from next-auth/jwt for server-side JWT access
   const { getToken } = await import('next-auth/jwt');
-  const { cookies, headers } = await import('next/headers');
 
-  // Get the request cookies to pass to getToken
-  const cookieStore = await cookies();
-  const headerStore = await headers();
+  let req: Parameters<typeof getToken>[0]['req'];
+  let cookieStore: { get: (name: string) => { value: string } | undefined };
 
-  // Create a minimal request object for getToken
-  const req = {
-    cookies: Object.fromEntries(cookieStore.getAll().map((c) => [c.name, c.value])),
-    headers: headerStore,
-  };
+  if (request) {
+    // Use the actual request object from API route handlers
+    req = request as Parameters<typeof getToken>[0]['req'];
+    // Parse cookies from the request
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookieMap = new Map<string, string>();
+    cookieHeader.split(';').forEach((cookie) => {
+      const [name, ...valueParts] = cookie.trim().split('=');
+      if (name) {
+        cookieMap.set(name, valueParts.join('='));
+      }
+    });
+    cookieStore = {
+      get: (name: string) => {
+        const value = cookieMap.get(name);
+        return value !== undefined ? { value } : undefined;
+      },
+    };
+  } else {
+    // Create request object from next/headers (for Server Components)
+    const { cookies, headers } = await import('next/headers');
+    const nextCookieStore = await cookies();
+    const headerStore = await headers();
+
+    req = {
+      cookies: Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value])),
+      headers: headerStore,
+    } as Parameters<typeof getToken>[0]['req'];
+
+    cookieStore = nextCookieStore;
+  }
 
   // NextAuth v5 cookie names vary by environment:
   // - HTTPS (production): __Secure-authjs.session-token
@@ -286,13 +311,15 @@ export async function getBackendToken(): Promise<string | null> {
 
   if (!cookieName) {
     logger.debug('No session cookie found', {
-      availableCookies: cookieStore.getAll().map((c) => c.name),
+      availableCookies: request
+        ? request.headers.get('cookie')?.split(';').map((c) => c.trim().split('=')[0])
+        : 'unknown',
     });
     return null;
   }
 
   const token = await getToken({
-    req: req as Parameters<typeof getToken>[0]['req'],
+    req,
     secret: authSecret,
     cookieName,
   });
