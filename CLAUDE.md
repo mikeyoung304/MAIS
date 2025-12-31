@@ -18,7 +18,7 @@ HANDLED (gethandled.ai) is a membership platform for service professionals — p
 
 - Next.js migration: COMPLETE (6 phases, 14 code review fixes applied)
 - Tenant storefronts: SSR-enabled at `/t/[slug]` with custom domain support
-- 771 server tests + 114 E2E tests (22 passing after migration fixes)
+- 1196/1200 tests passing (99.7%), 2 skipped, 2 failing
 - Tenant self-signup: Backend + Frontend complete (`/signup` → `/tenant/dashboard`)
 - Password reset flow: Complete with Postmark email integration
 - Stripe Connect onboarding: Backend routes + StripeConnectCard.tsx
@@ -519,7 +519,7 @@ MAIS uses a **hybrid migration system** with two patterns. Choose the right one:
 - **Unit tests:** Pure services with mock repositories (no HTTP/network)
 - **Integration tests:** Database-backed, use test isolation patterns
 - **E2E tests:** Playwright, mock mode for speed
-- **Coverage target:** 70% (current: 100% pass rate, 752 passing tests)
+- **Coverage target:** 70% (current: 99.7% pass rate, 1196/1200 tests)
 
 **Integration Test Pattern:**
 
@@ -578,6 +578,7 @@ Optional (graceful fallbacks in real mode):
 - **docs/design/BRAND_VOICE_GUIDE.md** - Brand voice, copy patterns, and UI/UX design system (MUST READ for any UI work)
 - **docs/adrs/ADR-014-nextjs-app-router-migration.md** - Next.js migration architecture decisions
 - **docs/adrs/ADR-016-field-naming-conventions.md** - Database vs API field naming (title/name, priceCents/basePrice)
+- **docs/adrs/ADR-017-dark-theme-auth-pages.md** - Dark theme for auth pages (signup, login) vs light marketing
 - **apps/web/README.md** - Next.js app setup, environment variables, architecture
 
 ## Documentation Conventions
@@ -729,6 +730,7 @@ The following links prevent common mistakes from recurring:
 - **[typescript-unused-variables-build-failure](docs/solutions/build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)** - Unused variable build errors and underscore prefix decision tree
 - **[chatbot-proposal-execution-flow](docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)** - T2 execution, field normalization, tenant validation security
 - **[circular-dependency-executor-registry](docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md)** - Registry module pattern for breaking circular imports
+- **[auth-form-accessibility-checklist](docs/solutions/patterns/auth-form-accessibility-checklist-MAIS-20251230.md)** - WCAG 2.1 AA checklist for auth forms (ARIA, keyboard, CLS)
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
