@@ -270,18 +270,37 @@ export async function getBackendToken(): Promise<string | null> {
     headers: headerStore,
   };
 
+  // NextAuth v5 cookie names vary by environment:
+  // - HTTPS (production): __Secure-authjs.session-token
+  // - HTTP (development): authjs.session-token
+  // - Legacy NextAuth v4: next-auth.session-token or __Secure-next-auth.session-token
+  const possibleCookieNames = [
+    '__Secure-authjs.session-token', // NextAuth v5 on HTTPS (production)
+    'authjs.session-token', // NextAuth v5 on HTTP (development)
+    '__Secure-next-auth.session-token', // NextAuth v4 on HTTPS
+    'next-auth.session-token', // NextAuth v4 on HTTP
+  ];
+
+  // Find which cookie name is actually present
+  const cookieName = possibleCookieNames.find((name) => cookieStore.get(name)?.value !== undefined);
+
+  if (!cookieName) {
+    logger.debug('No session cookie found', {
+      availableCookies: cookieStore.getAll().map((c) => c.name),
+    });
+    return null;
+  }
+
   const token = await getToken({
     req: req as Parameters<typeof getToken>[0]['req'],
     secret: authSecret,
-    // NextAuth v5 uses 'authjs.session-token' by default, but we need to check both
-    // for compatibility during migration
-    cookieName:
-      cookieStore.get('authjs.session-token')?.value !== undefined
-        ? 'authjs.session-token'
-        : 'next-auth.session-token',
+    cookieName,
   });
 
-  if (!token) return null;
+  if (!token) {
+    logger.debug('getToken returned null', { cookieName });
+    return null;
+  }
 
   return (token as MAISJWT).backendToken || null;
 }
