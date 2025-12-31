@@ -33,6 +33,12 @@ async function handleRequest(
     }
 
     const { path } = await params;
+
+    // Validate path segments to prevent traversal attempts
+    if (path.some((segment) => segment === '..' || segment === '.' || segment === '')) {
+      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+    }
+
     const pathString = path.join('/');
     const url = new URL(request.url);
     const queryString = url.search;

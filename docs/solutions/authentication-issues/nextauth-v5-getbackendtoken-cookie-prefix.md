@@ -36,6 +36,7 @@ related_prs: []
 ### Symptom 1: Token Not Found in Production
 
 Production logs showed:
+
 ```
 DEBUG: No session cookie found
    availableCookies: ['__Secure-authjs.session-token', 'other-cookies...']
@@ -43,24 +44,24 @@ DEBUG: No session cookie found
 
 Yet the code was looking for `authjs.session-token` without the `__Secure-` prefix.
 
-### Symptom 2: Silent Failures with Mock Request Objects
+### Symptom 2: Silent Failures in Server Components
 
 When using `getBackendToken()` from Server Components:
 
 ```typescript
-// In Server Component - SILENT FAILURE
-const token = await getBackendToken();  // No request param
+// In Server Component - Returns null unexpectedly
+const token = await getBackendToken(); // No request param
 // Inside getBackendToken():
 const { cookies, headers } = await import('next/headers');
 const nextCookieStore = await cookies();
 const req = {
-  cookies: Object.fromEntries(nextCookieStore.getAll().map(...)),
+  cookies: Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value])),
   headers: headerStore,
 };
-const token = await getToken({ req, secret, cookieName });  // Returns null
+const token = await getToken({ req, secret, cookieName }); // Returns null
 ```
 
-The constructed mock request object didn't have the proper structure `getToken()` expects.
+**Note**: The `Object.fromEntries()` approach is actually correct. The failure was due to the cookie name lookup (Symptom 1) not finding `__Secure-authjs.session-token` in the list of names to check.
 
 ### Why This Caused Production Failures
 
@@ -88,40 +89,44 @@ The constructed mock request object didn't have the proper structure `getToken()
 ```typescript
 // BEFORE: Missing __Secure- prefix for HTTPS
 const possibleCookieNames = [
-  'authjs.session-token',           // No __Secure- prefix
+  'authjs.session-token', // No __Secure- prefix
   '__Secure-next-auth.session-token', // NextAuth v4, not v5
-  'next-auth.session-token',          // NextAuth v4, not v5
+  'next-auth.session-token', // NextAuth v4, not v5
 ];
 ```
 
 **Problem**: The code didn't include `__Secure-authjs.session-token` (the correct name for NextAuth v5 on HTTPS).
 
 **HTTP vs HTTPS Behavior**:
+
 - **HTTP (development)**: NextAuth sets cookies without prefix: `authjs.session-token`
 - **HTTPS (production)**: NextAuth sets cookies with `__Secure-` prefix: `__Secure-authjs.session-token`
 
 This follows the `Secure` cookie flag behavior:
+
 ```
 Secure flag in cookie → browser adds __Secure- prefix to cookie name
 ```
 
-### Root Cause 2: Mock Request Object Structure
+### Root Cause 2: Mock Request Object Structure (Initially Suspected, Later Confirmed Working)
 
-**Location**: `apps/web/src/lib/auth.ts` lines 286-295 (BEFORE)
+**Location**: `apps/web/src/lib/auth.ts` lines 286-295
 
 ```typescript
-// BEFORE: Constructed mock request doesn't match expected type
+// WORKING SOLUTION: Construct cookie object that getToken expects
 req = {
   cookies: Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value])),
   headers: headerStore,
 } as Parameters<typeof getToken>[0]['req'];
 ```
 
-**Problem**: `getToken()` from `next-auth/jwt` expects a real Request object with proper cookie parsing. The constructed object had:
-- `cookies` as a plain object (not a proper CookieStore)
-- `headers` as a Headers object (but might not have `get()` method working properly)
+**Initial Misconception**: Early debugging suspected this pattern was the problem because `getToken()` appeared to expect a "real" Request object. However, investigation revealed:
 
-This caused `getToken()` to fail internally when trying to extract the token from cookies.
+- `getToken()` actually expects `req.cookies` to be a plain `{ name: value }` object
+- The `Object.fromEntries()` approach correctly creates this format
+- The actual issue was Root Cause 1 (missing `__Secure-` prefixed cookie names)
+
+**Why Object.fromEntries Works**: `getToken()` accesses cookies via `req.cookies[cookieName]`, which works perfectly with a plain object. The Next.js `cookies()` CookieStore is NOT directly compatible because it uses method-based access (`.get()`, `.getAll()`) rather than object property access.
 
 ### Root Cause 3: Lack of Actual Request Validation in Development
 
@@ -130,7 +135,7 @@ Developers tested with actual Request objects in API routes:
 ```typescript
 // API route - always passed real request, so bug wasn't caught
 export async function GET(request: Request) {
-  const token = await getBackendToken(request);  // Works fine
+  const token = await getBackendToken(request); // Works fine
 }
 ```
 
@@ -160,9 +165,9 @@ Implemented a three-part fix:
 // AFTER: Include __Secure- prefix first (production/HTTPS priority)
 const possibleCookieNames = [
   '__Secure-authjs.session-token', // NextAuth v5 on HTTPS (production) - CHECK FIRST
-  'authjs.session-token',           // NextAuth v5 on HTTP (development)
+  'authjs.session-token', // NextAuth v5 on HTTP (development)
   '__Secure-next-auth.session-token', // NextAuth v4 on HTTPS (legacy)
-  'next-auth.session-token',        // NextAuth v4 on HTTP (legacy)
+  'next-auth.session-token', // NextAuth v4 on HTTP (legacy)
 ];
 ```
 
@@ -215,43 +220,45 @@ export async function GET(request: Request) {
 **Changes**:
 
 ```typescript
-// AFTER: Use next/headers properly with getToken expectations
+// AFTER: Use Object.fromEntries to create the expected cookie format
 } else {
   // Create request object from next/headers (for Server Components)
   const { cookies, headers } = await import('next/headers');
   const nextCookieStore = await cookies();
   const headerStore = await headers();
 
-  // getToken expects a request-like object with specific structure
-  // Don't try to mock the full Request - just provide what getToken needs
+  // getToken expects req.cookies to be a plain object with cookie key-value pairs
+  // The Next.js cookies() CookieStore is NOT directly compatible
   req = {
-    cookies: nextCookieStore,  // Pass the actual CookieStore object
-    headers: headerStore,      // Pass the actual Headers object
+    cookies: Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value])),
+    headers: headerStore,
   } as Parameters<typeof getToken>[0]['req'];
 
   cookieStore = nextCookieStore;
 }
 ```
 
-**Critical Difference**:
+**Why Object.fromEntries is Required**:
 
 ```typescript
-// BEFORE: Constructed plain object
+// ✓ CORRECT: Convert CookieStore to plain object
 req = {
-  cookies: Object.fromEntries(...),  // ❌ Plain object, not CookieStore
+  cookies: Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value])),
   headers: headerStore,
-};
-
-// AFTER: Pass actual helper objects
-req = {
-  cookies: nextCookieStore,  // ✓ Actual CookieStore from next/headers
-  headers: headerStore,      // ✓ Actual Headers from next/headers
 };
 ```
 
 **Why This Works**:
 
-`getToken()` internally checks if `cookies` is a CookieStore-like object and calls methods on it. By passing the actual objects from `next/headers`, getToken can properly extract cookie values.
+`getToken()` from `next-auth/jwt` expects `req.cookies` to be a plain object where keys are cookie names and values are cookie strings (e.g., `{ 'authjs.session-token': 'jwt-value' }`). The Next.js `cookies()` helper returns a `ReadonlyRequestCookies` (CookieStore) object with methods like `.get()`, `.getAll()`, etc., which is NOT the same format.
+
+By using `Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value]))`, we:
+
+1. Get all cookies as an array of `{ name, value }` objects
+2. Transform to `[name, value]` tuples
+3. Convert to a plain `{ cookieName: cookieValue }` object
+
+This matches the format `getToken()` expects when reading cookies from a mock request object.
 
 ### Step 4: Add Comprehensive Debugging
 
@@ -269,9 +276,7 @@ if (!cookieName) {
           .get('cookie')
           ?.split(';')
           .map((c) => c.trim().split('=')[0])
-      : nextCookieStore
-          .getAll()
-          .map((c) => c.name),
+      : nextCookieStore.getAll().map((c) => c.name),
     checkedNames: possibleCookieNames,
   });
   return null;
@@ -361,8 +366,8 @@ test('getBackendToken returns token on HTTPS', async () => {
 test('getBackendToken works with real Request object', async () => {
   const request = new Request('http://localhost:3000/api/test', {
     headers: {
-      'Cookie': '__Secure-authjs.session-token=valid-token-here'
-    }
+      Cookie: '__Secure-authjs.session-token=valid-token-here',
+    },
   });
   const token = await getBackendToken(request);
   expect(token).toBeTruthy();
@@ -393,8 +398,8 @@ test('getBackendToken returns null when not authenticated', async () => {
 test('getBackendToken returns null for invalid JWT', async () => {
   const request = new Request('http://localhost:3000/api/test', {
     headers: {
-      'Cookie': '__Secure-authjs.session-token=invalid-jwt'
-    }
+      Cookie: '__Secure-authjs.session-token=invalid-jwt',
+    },
   });
   const token = await getBackendToken(request);
   expect(token).toBeNull();
@@ -436,12 +441,14 @@ test('getBackendToken returns null for invalid JWT', async () => {
 ### Common Mistakes to Avoid
 
 1. **Only checking for unprefixed cookie name**:
+
    ```typescript
    // ❌ WRONG - only works on HTTP
    const cookieName = 'authjs.session-token';
    ```
 
 2. **Constructing request object in API routes**:
+
    ```typescript
    // ❌ WRONG - construct request from scratch
    const req = { cookies: {}, headers: {} };
@@ -454,6 +461,7 @@ test('getBackendToken returns null for invalid JWT', async () => {
    ```
 
 3. **Assuming cookie name is consistent across environments**:
+
    ```typescript
    // ❌ WRONG - cookie name changes between HTTP/HTTPS
    const token = cookies.get('authjs.session-token')?.value;
@@ -463,10 +471,11 @@ test('getBackendToken returns null for invalid JWT', async () => {
    ```
 
 4. **Not handling null return value**:
+
    ```typescript
    // ❌ WRONG - assumes getToken always returns a value
    const token = await getBackendToken();
-   const data = await api.call({ token });  // Crashes if token is null
+   const data = await api.call({ token }); // Crashes if token is null
 
    // ✓ RIGHT - handle missing token
    const token = await getBackendToken();
@@ -474,6 +483,7 @@ test('getBackendToken returns null for invalid JWT', async () => {
    ```
 
 5. **Using getToken() on client side**:
+
    ```typescript
    // ❌ WRONG - getToken is server-side only
    'use client';
@@ -521,9 +531,9 @@ document.cookie
 
 ### Quick Reference - Cookie Names by Version & Protocol
 
-| NextAuth Version | HTTP Cookie Name          | HTTPS Cookie Name                | Checked By             |
-| ---------------- | ------------------------- | -------------------------------- | ---------------------- |
-| v5               | `authjs.session-token`    | `__Secure-authjs.session-token`  | getBackendToken() list |
+| NextAuth Version | HTTP Cookie Name          | HTTPS Cookie Name                  | Checked By             |
+| ---------------- | ------------------------- | ---------------------------------- | ---------------------- |
+| v5               | `authjs.session-token`    | `__Secure-authjs.session-token`    | getBackendToken() list |
 | v4               | `next-auth.session-token` | `__Secure-next-auth.session-token` | getBackendToken() list |
 
 **Rule**: Always check HTTPS variant first (most common in production).
@@ -540,9 +550,8 @@ const protocol = request?.url?.startsWith('https') ? 'HTTPS' : 'HTTP';
 logger.debug('Token lookup', {
   env,
   protocol,
-  expectedCookieName: protocol === 'HTTPS'
-    ? '__Secure-authjs.session-token'
-    : 'authjs.session-token',
+  expectedCookieName:
+    protocol === 'HTTPS' ? '__Secure-authjs.session-token' : 'authjs.session-token',
 });
 ```
 
@@ -564,9 +573,9 @@ logger.debug('Token lookup', {
 
 3. **Test environment parity is critical**: Local development (HTTP) and production (HTTPS) have different behavior; must test both
 
-4. **Mock objects can hide bugs**: Constructing request objects in Server Components masked failures that only appeared in production
+4. **Cookie name is the primary issue, not request structure**: Initial debugging focused on the mock request object structure, but the actual problem was missing `__Secure-` prefixed cookie names. The `Object.fromEntries()` approach for constructing the request object works correctly.
 
-5. **Real request objects are more reliable**: Always prefer passing the actual Request object when available (API routes)
+5. **Real request objects are more convenient**: In API routes, pass the actual Request object when available to avoid manual cookie parsing. For Server Components, `Object.fromEntries()` correctly converts the CookieStore to the format `getToken()` expects.
 
 6. **Debug logging is essential for production issues**: Without detailed logging of which cookie names were checked, production token failures are nearly impossible to diagnose
 
@@ -578,12 +587,12 @@ logger.debug('Token lookup', {
 
 ## Code Changes Summary
 
-| File                          | Change                              | Lines     | Purpose                                                |
-| ----------------------------- | ----------------------------------- | --------- | ------------------------------------------------------ |
-| `apps/web/src/lib/auth.ts`    | Add `__Secure-` cookie names first  | 302-307   | Support HTTPS production environments                  |
-| `apps/web/src/lib/auth.ts`    | Fix Server Component request object | 286-296   | Properly pass CookieStore/Headers from next/headers    |
-| `apps/web/src/lib/auth.ts`    | Add environment-aware logging       | 313-318   | Help diagnose production token failures                |
-| All API routes                | Pass actual request parameter       | Various   | Ensure real Request object is available for getToken() |
+| File                       | Change                             | Lines   | Purpose                                                |
+| -------------------------- | ---------------------------------- | ------- | ------------------------------------------------------ |
+| `apps/web/src/lib/auth.ts` | Add `__Secure-` cookie names first | 302-307 | Support HTTPS production environments                  |
+| `apps/web/src/lib/auth.ts` | Use Object.fromEntries for cookies | 286-296 | Convert CookieStore to plain object for getToken()     |
+| `apps/web/src/lib/auth.ts` | Add environment-aware logging      | 313-318 | Help diagnose production token failures                |
+| All API routes             | Pass actual request parameter      | Various | Ensure real Request object is available for getToken() |
 
 ---
 

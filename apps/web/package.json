@@ -9,7 +9,9 @@
     "vercel-build": "cd ../.. && npm install && npm run build -w @macon/contracts && npm run build -w @macon/shared && cd apps/web && next build",
     "start": "next start",
     "lint": "eslint src --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@macon/contracts": "*",
@@ -47,6 +49,7 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }

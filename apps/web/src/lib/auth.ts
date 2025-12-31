@@ -12,9 +12,14 @@
 
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import { getToken } from 'next-auth/jwt';
 import type { JWT } from 'next-auth/jwt';
 import type { User, Session } from 'next-auth';
 import { logger } from '@/lib/logger';
+import { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
+
+// Re-export for backward compatibility
+export { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -78,6 +83,13 @@ interface MAISSession extends Session {
 // Ensure consistent secret across NextAuth and getBackendToken
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
+if (!authSecret) {
+  throw new Error(
+    'AUTH_SECRET or NEXTAUTH_SECRET environment variable must be configured. ' +
+      'Generate one with: openssl rand -base64 32'
+  );
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: authSecret,
   providers: [
@@ -110,8 +122,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   try {
                     return JSON.parse(credentials.impersonation as string);
                   } catch {
+                    const impersonationValue = credentials.impersonation as string | undefined;
                     logger.warn('Failed to parse impersonation data', {
-                      raw: credentials.impersonation,
+                      dataLength: impersonationValue?.length ?? 0,
+                      dataType: typeof credentials.impersonation,
                     });
                     return undefined;
                   }
@@ -248,18 +262,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 export type { MAISUser, MAISJWT, MAISSession };
 
 /**
- * Get backend token for server-side API calls
+ * Get backend token for server-side API calls.
+ *
+ * Retrieves the JWT session token from cookies, supporting both NextAuth v5
+ * and v4 cookie naming conventions across HTTP and HTTPS environments.
  *
  * SECURITY: This should only be used in Server Components or API routes.
  * The token is not exposed to client-side JavaScript.
  *
- * @param request - Optional NextRequest from API route handlers
+ * @version Tested with next-auth@5.x (Auth.js beta.30)
+ * @see https://authjs.dev/reference/core#cookies for cookie naming
+ *
+ * MAINTENANCE NOTE: Cookie names change between NextAuth versions.
+ * When upgrading NextAuth, verify cookie names haven't changed.
+ * See NEXTAUTH_COOKIE_NAMES constant for the current lookup order.
+ *
+ * @param request - REQUIRED for API routes (Next.js Route Handlers).
+ *                  OMIT for Server Components and Server Actions.
  * @returns The backend JWT token or null if not authenticated
  */
 export async function getBackendToken(request?: Request): Promise<string | null> {
-  // Import getToken from next-auth/jwt for server-side JWT access
-  const { getToken } = await import('next-auth/jwt');
-
   let req: Parameters<typeof getToken>[0]['req'];
   let cookieStore: { get: (name: string) => { value: string } | undefined };
 
@@ -295,24 +317,18 @@ export async function getBackendToken(request?: Request): Promise<string | null>
     cookieStore = nextCookieStore;
   }
 
-  // NextAuth v5 cookie names vary by environment:
-  // - HTTPS (production): __Secure-authjs.session-token
-  // - HTTP (development): authjs.session-token
-  // - Legacy NextAuth v4: next-auth.session-token or __Secure-next-auth.session-token
-  const possibleCookieNames = [
-    '__Secure-authjs.session-token', // NextAuth v5 on HTTPS (production)
-    'authjs.session-token', // NextAuth v5 on HTTP (development)
-    '__Secure-next-auth.session-token', // NextAuth v4 on HTTPS
-    'next-auth.session-token', // NextAuth v4 on HTTP
-  ];
-
-  // Find which cookie name is actually present
-  const cookieName = possibleCookieNames.find((name) => cookieStore.get(name)?.value !== undefined);
+  // Find which cookie name is actually present (checks in priority order)
+  const cookieName = NEXTAUTH_COOKIE_NAMES.find(
+    (name) => cookieStore.get(name)?.value !== undefined
+  );
 
   if (!cookieName) {
     logger.debug('No session cookie found', {
       availableCookies: request
-        ? request.headers.get('cookie')?.split(';').map((c) => c.trim().split('=')[0])
+        ? request.headers
+            .get('cookie')
+            ?.split(';')
+            .map((c) => c.trim().split('=')[0])
         : 'unknown',
     });
     return null;

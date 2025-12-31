@@ -19,6 +19,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "typecheck": "tsc --noEmit",
     "test": "npm run test --workspace=server",
+    "test:web": "npm run test --workspace=apps/web",
     "test:unit": "npm run test --workspace=server -- test/ --exclude=\"test/integration/**\" --exclude=\"test/http/**\"",
     "test:integration": "npm run test:integration --workspace=server",
     "test:watch": "npm run test:watch --workspace=server",

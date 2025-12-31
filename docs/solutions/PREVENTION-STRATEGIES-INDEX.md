@@ -144,7 +144,41 @@ This index helps you find the right prevention strategy documentation based on y
 
 ---
 
-### 2.5. Specific Prevention Guides
+### 2.5. Authentication Issues
+
+#### [NextAuth v5 Production Authentication Prevention](./authentication-issues/NEXTAUTH-V5-PREVENTION-INDEX.md)
+
+**Purpose:** Prevent production 401 errors from NextAuth v5 cookie prefix issues
+**Audience:** Engineers working on authentication, API routes, Server Components
+**Key Patterns:** Cookie name lookup order, request object passing, null token handling
+
+**Quick Rules:**
+
+```typescript
+// ✅ Check cookies in correct order (HTTPS first)
+const secureCookie = cookies().get('__Secure-authjs.session-token');
+const httpCookie = cookies().get('authjs.session-token');
+const token = secureCookie?.value ?? httpCookie?.value;
+
+// ✅ Always pass real Request object to getToken()
+const token = await getToken({ req: request }); // Not mock objects
+
+// ✅ Handle null tokens gracefully
+if (!token) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+```
+
+**Related Documentation:**
+
+- [Full Prevention Guide](./authentication-issues/nextauth-v5-getbackendtoken-cookie-prefix.md) - Detailed 45-min read
+- [Quick Reference](./authentication-issues/NEXTAUTH-V5-QUICK-REFERENCE.md) - 5-min checklist
+- [Code Review Checklist](./authentication-issues/NEXTAUTH-V5-CODE-REVIEW-CHECKLIST.md) - PR review checklist
+- [Testing Strategy](./authentication-issues/NEXTAUTH-V5-TESTING-STRATEGY.md) - Test patterns
+
+---
+
+### 2.6. Specific Prevention Guides
 
 #### [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 
@@ -2184,8 +2218,13 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 ---
 
-**Last Updated:** 2025-12-29
-**Recent Additions (2025-12-29):**
+**Last Updated:** 2025-12-31
+**Recent Additions (2025-12-31):**
+
+- **[NextAuth v5 Production Authentication Prevention](./authentication-issues/NEXTAUTH-V5-PREVENTION-INDEX.md)** - Complete prevention guide for NextAuth v5 cookie prefix issues causing 401 on production HTTPS
+- **[NextAuth v5 Secure Cookie Prefix](./authentication-issues/nextauth-v5-secure-cookie-prefix-production-401-MAIS-20251231.md)** - Root cause analysis and fix for `__Secure-` cookie prefix handling
+
+**Previous Additions (2025-12-29):**
 
 - **[Chatbot Proposal Execution Flow](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)** - T2 execution fix, field normalization, P1 tenant validation security
 - **[Circular Dependency Executor Registry Pattern](patterns/circular-dependency-executor-registry-MAIS-20251229.md)** - Registry module pattern for breaking circular imports between orchestrator and routes

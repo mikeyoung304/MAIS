@@ -731,6 +731,7 @@ The following links prevent common mistakes from recurring:
 - **[chatbot-proposal-execution-flow](docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)** - T2 execution, field normalization, tenant validation security
 - **[circular-dependency-executor-registry](docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md)** - Registry module pattern for breaking circular imports
 - **[auth-form-accessibility-checklist](docs/solutions/patterns/auth-form-accessibility-checklist-MAIS-20251230.md)** - WCAG 2.1 AA checklist for auth forms (ARIA, keyboard, CLS)
+- **[nextauth-v5-secure-cookie-prefix](docs/solutions/authentication-issues/nextauth-v5-secure-cookie-prefix-production-401-MAIS-20251231.md)** - NextAuth v5 HTTPS cookie prefix causing 401 on production
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
