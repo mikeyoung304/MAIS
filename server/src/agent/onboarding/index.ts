@@ -43,3 +43,13 @@ export {
   getSupportedBusinessTypes,
   type IndustryBenchmarks,
 } from './industry-benchmarks';
+
+// Market Search (Phase 2)
+export {
+  searchMarketPricing,
+  getMarketResearch,
+  type MarketSearchOptions,
+  type MarketSearchResult,
+  type MarketSearchError,
+  type MarketSearchResponse,
+} from './market-search';

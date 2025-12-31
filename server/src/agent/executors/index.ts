@@ -22,6 +22,7 @@ import {
   InvalidStateError,
   ConfigurationError,
 } from '../errors';
+import { registerOnboardingExecutors } from './onboarding-executors';
 
 /**
  * Type guard for BookingStatus enum
@@ -1147,6 +1148,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       note: 'Open this link to complete your Stripe payment setup.',
     };
   });
+
+  // Register onboarding-specific executors
+  registerOnboardingExecutors(prisma);
 
   logger.info('Agent proposal executors registered');
 }
