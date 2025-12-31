@@ -202,7 +202,7 @@ export function ManageBookingPage() {
       {/* Footer */}
       <footer className="bg-macon-navy-800 border-t border-white/10 mt-12">
         <div className="max-w-3xl mx-auto px-4 py-6">
-          <p className="text-center text-white/40 text-sm">Powered by Macon AI Solutions</p>
+          <p className="text-center text-white/40 text-sm">Powered by HANDLED</p>
         </div>
       </footer>
     </div>

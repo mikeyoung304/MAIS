@@ -48,7 +48,7 @@ function BusinessSchema({ tenant }: { tenant: TenantPublicDto }) {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: tenant.name,
-    url: `https://app.maconaisolutions.com/t/${tenant.slug}`,
+    url: `https://app.gethandled.ai/t/${tenant.slug}`,
     logo: tenant.branding?.logoUrl,
     description: landingPage?.about?.description || landingPage?.hero?.subheadline,
   });

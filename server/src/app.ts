@@ -118,10 +118,10 @@ export function createApp(
         const defaultOrigins = [
           'http://localhost:5173',
           'http://localhost:3000',
-          'https://maconaisolutions.com',
-          'https://www.maconaisolutions.com',
-          'https://app.maconaisolutions.com',
-          'https://widget.maconaisolutions.com',
+          'https://gethandled.ai',
+          'https://www.gethandled.ai',
+          'https://app.gethandled.ai',
+          'https://widget.gethandled.ai',
         ];
 
         // Merge with environment variable overrides

@@ -60,8 +60,8 @@ All error responses follow this format:
 The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requires a raw body and validates the Stripe signature.
     `.trim(),
     contact: {
-      name: 'MAIS Support',
-      email: 'support@maconaisolutions.com',
+      name: 'HANDLED Support',
+      email: 'support@gethandled.ai',
     },
   },
   servers: [
@@ -70,7 +70,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       description: 'Local development server',
     },
     {
-      url: 'https://api.maconaisolutions.com',
+      url: 'https://api.gethandled.ai',
       description: 'Production server',
     },
   ],

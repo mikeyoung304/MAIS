@@ -144,12 +144,12 @@ export function TenantStorefrontLayout() {
             </span>
             <span className="mx-2">&middot;</span>
             <a
-              href="https://maconaisolutions.com"
+              href="https://gethandled.ai"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-primary transition-colors"
             >
-              Powered by MaconAI
+              Powered by HANDLED
             </a>
           </div>
         </Container>

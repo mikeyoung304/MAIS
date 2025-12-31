@@ -59,7 +59,7 @@ export async function buildSessionContext(
     });
 
     if (!tenant) {
-      throw new Error('Tenant not found');
+      throw new Error('Unable to load business profile. Please try again.');
     }
 
     // Get quick stats

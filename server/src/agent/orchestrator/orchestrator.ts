@@ -475,7 +475,7 @@ export class AgentOrchestrator {
           failedProposals.push({
             id: proposalId,
             toolName: 'unknown',
-            reason: 'Proposal not found or access denied',
+            reason: 'Unable to process this action. Please try again.',
           });
         }
       }

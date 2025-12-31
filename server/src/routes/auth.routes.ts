@@ -980,7 +980,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
                 Mike reads every response.
               </p>
               <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-                Macon AI Solutions
+                HANDLED
               </p>
             </td>
           </tr>

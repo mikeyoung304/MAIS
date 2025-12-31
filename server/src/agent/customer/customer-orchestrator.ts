@@ -186,7 +186,7 @@ export class CustomerOrchestrator {
     });
 
     if (!tenant) {
-      throw new Error('Tenant not found');
+      throw new Error('Unable to load business information. Please try again.');
     }
 
     if (existingSession) {

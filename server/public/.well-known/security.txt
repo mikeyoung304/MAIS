@@ -1,6 +1,6 @@
-Contact: mailto:security@maconaisolutions.com
+Contact: mailto:security@gethandled.ai
 Expires: 2026-12-31T23:59:59.000Z
 Preferred-Languages: en
-Canonical: https://maconaisolutions.com/.well-known/security.txt
-Policy: https://maconaisolutions.com/security
-Acknowledgments: https://maconaisolutions.com/security/hall-of-fame
+Canonical: https://gethandled.ai/.well-known/security.txt
+Policy: https://gethandled.ai/security
+Acknowledgments: https://gethandled.ai/security/hall-of-fame

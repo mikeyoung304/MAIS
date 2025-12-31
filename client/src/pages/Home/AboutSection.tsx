@@ -10,24 +10,24 @@ export function AboutSection() {
               id="about-heading"
               className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-macon-navy via-macon-orange to-macon-teal"
             >
-              About Macon AI Solutions
+              About HANDLED
             </h2>
           </div>
           <div className="prose prose-xl max-w-none">
             <p className="text-xl text-neutral-700 leading-relaxed mb-6">
-              Macon AI Solutions believes business growth shouldn't require wearing all the hats.
-              Our mission is to partner with entrepreneurs and small business owners, providing
-              AI-powered consulting, seamless scheduling, professional websites, and marketing
-              automation—all through a revenue-sharing model that aligns our success with yours.
+              HANDLED believes your business deserves done-for-you tech that just works. We partner
+              with service professionals—photographers, coaches, therapists—providing professional
+              websites, seamless booking, and payment processing, all through a membership that
+              aligns our success with yours.
             </p>
             <p className="text-xl text-neutral-700 leading-relaxed mb-6">
-              Headquartered in Macon, Georgia, our team combines deep AI expertise with hands-on
-              business experience. We understand the challenges small business owners face because
-              we've been there—juggling admin tasks, chasing leads, and struggling with tech.
+              Our team combines deep tech expertise with hands-on business experience. We understand
+              the challenges service professionals face because we've been there— juggling admin
+              tasks, chasing bookings, and struggling with tech.
             </p>
             <p className="text-xl text-neutral-700 leading-relaxed">
-              That's why we built the Macon AI Club: a partnership where we invest in your growth,
-              not just sell you software. Want to know more?{' '}
+              That's why we built HANDLED: a membership where we handle your tech so you can focus
+              on what you do best. Want to know more?{' '}
               <a href="#team" className="text-macon-orange hover:text-macon-orange-dark underline">
                 Learn about our team.
               </a>
