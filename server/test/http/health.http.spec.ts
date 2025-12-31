@@ -103,7 +103,7 @@ describe('Health Check HTTP Endpoints', () => {
       expect(response.body).toHaveProperty('status', 'ok');
       expect(response.body).toHaveProperty('timestamp');
       expect(response.body).toHaveProperty('uptime');
-      expect(response.body).toHaveProperty('service', 'mais-api');
+      expect(response.body).toHaveProperty('service', 'handled-api');
     });
   });
 

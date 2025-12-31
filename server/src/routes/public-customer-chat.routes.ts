@@ -338,53 +338,53 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         return;
       }
 
+      // Execute OUTSIDE of a wrapping transaction.
+      // Executors manage their own transactions (with advisory locks for booking operations).
+      // Wrapping them in an outer transaction causes nested transaction issues in PostgreSQL.
+      // See: docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md
       try {
-        // Execute within transaction
-        const result = await prisma.$transaction(async (tx) => {
-          // Execute the booking
-          const customerId = proposal.customerId;
-          if (!customerId) {
-            throw new Error('Customer ID not found on proposal');
-          }
+        // Step 1: Verify customer exists and belongs to tenant (before executor)
+        const customerId = proposal.customerId;
+        if (!customerId) {
+          throw new Error('Customer ID not found on proposal');
+        }
 
-          // Verify customer belongs to this tenant (multi-tenant security)
-          const customer = await tx.customer.findFirst({
-            where: { id: customerId, tenantId },
-          });
-          if (!customer) {
-            throw new Error('Customer not found or access denied');
-          }
+        // Verify customer belongs to this tenant (multi-tenant security)
+        const customer = await prisma.customer.findFirst({
+          where: { id: customerId, tenantId },
+        });
+        if (!customer) {
+          throw new Error('Customer not found or access denied');
+        }
 
-          const executorResult = await executor(tenantId, customerId, validatedPayload);
+        // Step 2: Execute the booking (executor handles its own transaction if needed)
+        const executorResult = await executor(tenantId, customerId, validatedPayload);
 
-          // Update proposal as executed
-          await tx.agentProposal.update({
-            where: { id: proposalId },
-            data: {
-              status: 'EXECUTED',
-              confirmedAt: new Date(),
-              executedAt: new Date(),
-              result: executorResult as Prisma.JsonObject,
-            },
-          });
+        // Step 3: Update proposal status after successful execution
+        await prisma.agentProposal.update({
+          where: { id: proposalId },
+          data: {
+            status: 'EXECUTED',
+            confirmedAt: new Date(),
+            executedAt: new Date(),
+            result: executorResult as Prisma.JsonObject,
+          },
+        });
 
-          // Audit log
-          await tx.agentAuditLog.create({
-            data: {
-              tenantId,
-              sessionId: proposal.sessionId,
-              toolName: proposal.toolName,
-              proposalId,
-              inputSummary: `Confirm customer booking: ${proposal.operation}`.slice(0, 500),
-              outputSummary: JSON.stringify(executorResult).slice(0, 500),
-              trustTier: proposal.trustTier,
-              approvalStatus: 'EXPLICIT',
-              durationMs: Date.now() - startTime,
-              success: true,
-            },
-          });
-
-          return executorResult;
+        // Step 4: Log audit entry
+        await prisma.agentAuditLog.create({
+          data: {
+            tenantId,
+            sessionId: proposal.sessionId,
+            toolName: proposal.toolName,
+            proposalId,
+            inputSummary: `Confirm customer booking: ${proposal.operation}`.slice(0, 500),
+            outputSummary: JSON.stringify(executorResult).slice(0, 500),
+            trustTier: proposal.trustTier,
+            approvalStatus: 'EXPLICIT',
+            durationMs: Date.now() - startTime,
+            success: true,
+          },
         });
 
         logger.info(
@@ -395,7 +395,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         res.json({
           id: proposalId,
           status: 'EXECUTED',
-          result,
+          result: executorResult,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
