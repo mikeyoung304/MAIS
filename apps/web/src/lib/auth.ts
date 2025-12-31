@@ -273,6 +273,12 @@ export async function getBackendToken(): Promise<string | null> {
   const token = await getToken({
     req: req as Parameters<typeof getToken>[0]['req'],
     secret: authSecret,
+    // NextAuth v5 uses 'authjs.session-token' by default, but we need to check both
+    // for compatibility during migration
+    cookieName:
+      cookieStore.get('authjs.session-token')?.value !== undefined
+        ? 'authjs.session-token'
+        : 'next-auth.session-token',
   });
 
   if (!token) return null;
