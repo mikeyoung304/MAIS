@@ -356,9 +356,8 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-sage/50 rounded"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" aria-hidden="true" />
