@@ -351,6 +351,7 @@ export function PanelAgentChat({
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
+            data-growth-assistant-input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
