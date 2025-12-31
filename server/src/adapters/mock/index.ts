@@ -1105,6 +1105,9 @@ export class MockEarlyAccessRepository implements EarlyAccessRepository {
   }
 }
 
+// Export MockAdvisorMemoryRepository for onboarding agent testing
+export { MockAdvisorMemoryRepository } from './advisor-memory.repository';
+
 // Export builder function
 export function buildMockAdapters() {
   return {

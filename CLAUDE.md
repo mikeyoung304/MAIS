@@ -490,10 +490,12 @@ MAIS uses a **hybrid migration system** with two patterns. Choose the right one:
 1. Edit server/prisma/schema.prisma
 2. Find next migration number: ls server/prisma/migrations/ | grep '^[0-9]' | tail -1
 3. Create: server/prisma/migrations/NN_name.sql (idempotent SQL with IF EXISTS)
-4. Apply: psql $DATABASE_URL < migrations/NN_name.sql
+4. Apply: npx prisma db execute --file prisma/migrations/NN_name.sql
 5. npm exec prisma generate
 6. npm test to verify
 ```
+
+> **Note:** Use `prisma db execute` instead of `psql` - it handles Supabase IPv6/pooler connections correctly. See `docs/solutions/database-issues/prisma-db-execute-supabase-migrations-MAIS-20251231.md`
 
 **Decision Guide:**
 | Change | Pattern | Example |

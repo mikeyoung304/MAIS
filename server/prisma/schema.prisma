@@ -104,6 +104,12 @@ model Tenant {
   // Test Data Identification
   isTestTenant Boolean @default(false) @map("is_test_tenant") // Flag for filtering test data from admin dashboard
 
+  // Onboarding State (Event Sourcing + XState)
+  // Phase tracks current state, version enables optimistic locking, completedAt marks finish
+  onboardingPhase       OnboardingPhase @default(NOT_STARTED)
+  onboardingCompletedAt DateTime?       // When onboarding was finished or skipped
+  onboardingVersion     Int             @default(0) // Optimistic locking version counter
+
   // Relations
   users            User[] // Tenant admin users
   customers        Customer[] // Tenant-scoped customers
@@ -123,6 +129,7 @@ model Tenant {
   agentProposals   AgentProposal[] // AI agent write operation proposals
   agentAuditLogs   AgentAuditLog[] // AI agent audit trail
   agentSessions    AgentSession[] // AI agent chat sessions
+  onboardingEvents OnboardingEvent[] // Onboarding event sourcing audit trail
 
   @@index([slug])
   @@index([apiKeyPublic])
@@ -852,4 +859,46 @@ model AgentSession {
 enum SessionType {
   ADMIN    // Tenant owner/admin using the business growth agent
   CUSTOMER // Customer using the public booking chatbot
+}
+
+// ============================================================================
+// Onboarding Agent Models (Event Sourcing)
+// ============================================================================
+
+/// OnboardingEvent - Event sourcing model for onboarding agent
+/// Provides audit trail and state reconstruction for tenant onboarding flow.
+/// Each event represents a state transition or data collection milestone.
+///
+/// Event Types:
+/// - DISCOVERY_STARTED: Initial onboarding session started
+/// - DISCOVERY_COMPLETED: Business type, location, target market collected
+/// - MARKET_RESEARCH_STARTED: Market research phase initiated
+/// - MARKET_RESEARCH_COMPLETED: Pricing benchmarks and competitor data collected
+/// - SERVICES_CONFIGURED: Service packages created/updated
+/// - MARKETING_CONFIGURED: Landing page and brand voice configured
+/// - ONBOARDING_COMPLETED: Full onboarding flow completed
+/// - ONBOARDING_SKIPPED: User chose to skip onboarding
+model OnboardingEvent {
+  id        String   @id @default(cuid())
+  tenantId  String   // Tenant isolation - CRITICAL
+  eventType String   // Discriminated event type (e.g., "discovery_completed")
+  payload   Json     // Event-specific payload (validated by Zod)
+  timestamp DateTime @default(now())
+  version   Int      // Sequential version for optimistic locking
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, timestamp])
+  @@index([tenantId, version])
+}
+
+/// Onboarding phase enum for state machine
+enum OnboardingPhase {
+  NOT_STARTED      // Initial state - no onboarding interaction yet
+  DISCOVERY        // Collecting business info (type, location, target market)
+  MARKET_RESEARCH  // Analyzing market and generating pricing recommendations
+  SERVICES         // Creating service packages based on recommendations
+  MARKETING        // Configuring landing page and brand voice
+  COMPLETED        // Onboarding finished
+  SKIPPED          // User opted to skip onboarding
 }
