@@ -21,6 +21,9 @@ const KNOWN_DOMAINS = [
   'app.gethandled.ai',
   'vercel.app',
   'localhost',
+  // Legacy domains that redirect to gethandled.ai (handled by next.config.js redirects)
+  'maconaisolutions.com',
+  'www.maconaisolutions.com',
 ];
 
 // Routes that require authentication

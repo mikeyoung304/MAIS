@@ -8,6 +8,34 @@ const nextConfig = {
     return [];
   },
 
+  // Redirect old domain to new domain
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'maconaisolutions.com',
+          },
+        ],
+        destination: 'https://gethandled.ai/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.maconaisolutions.com',
+          },
+        ],
+        destination: 'https://gethandled.ai/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   // Environment variables exposed to client
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
