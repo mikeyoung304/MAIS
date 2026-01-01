@@ -34,19 +34,9 @@ export function GallerySection({
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
-  // Don't render if no images
-  if (images.length === 0) {
-    return null;
-  }
-
-  // Transform images for lightbox
-  const lightboxImages: LightboxImage[] = images.map((image) => ({
-    src: image.url,
-    alt: image.alt || `Work by ${tenant.name}`,
-  }));
-
   /**
    * Open lightbox at specific image index
+   * Note: Hooks must be called before any early returns
    */
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -59,6 +49,17 @@ export function GallerySection({
   const handleImageLoad = useCallback((index: number) => {
     setLoadedImages((prev) => new Set(prev).add(index));
   }, []);
+
+  // Don't render if no images (early return AFTER all hooks)
+  if (images.length === 0) {
+    return null;
+  }
+
+  // Transform images for lightbox
+  const lightboxImages: LightboxImage[] = images.map((image) => ({
+    src: image.url,
+    alt: image.alt || `Work by ${tenant.name}`,
+  }));
 
   return (
     <>
@@ -82,12 +83,7 @@ export function GallerySection({
                   aria-label={`View ${image.alt || `image ${i + 1}`} in fullscreen`}
                 >
                   {/* Loading skeleton */}
-                  {!isLoaded && (
-                    <Skeleton
-                      rounded="xl"
-                      className="absolute inset-0 z-10"
-                    />
-                  )}
+                  {!isLoaded && <Skeleton rounded="xl" className="absolute inset-0 z-10" />}
 
                   <Image
                     src={image.url}

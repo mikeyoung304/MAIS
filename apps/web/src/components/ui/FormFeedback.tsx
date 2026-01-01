@@ -220,6 +220,7 @@ export function SuccessCheckmark({ className }: { className?: string }) {
           }}
         />
       </svg>
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style jsx>{`
         @keyframes draw-circle {
           to {
@@ -282,6 +283,7 @@ export function ErrorX({ className }: { className?: string }) {
           }}
         />
       </svg>
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style jsx>{`
         @keyframes draw-circle {
           to {

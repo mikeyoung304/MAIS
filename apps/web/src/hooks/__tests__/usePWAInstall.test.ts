@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import {
   usePWAInstall,
   isStandaloneMode,
@@ -17,7 +17,7 @@ import {
 } from '../usePWAInstall';
 
 // Reset module-level state between tests
-let deferredPromptReset: () => void;
+// Note: deferredPromptReset would be used for resetting deferred prompt state if exposed by the hook
 
 describe('usePWAInstall', () => {
   let beforeInstallPromptListeners: Array<(e: Event) => void>;
@@ -25,7 +25,9 @@ describe('usePWAInstall', () => {
   let mockPrompt: ReturnType<typeof vi.fn>;
   let mockUserChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 
-  function createMockBeforeInstallPromptEvent(
+  // Helper function for creating mock beforeinstallprompt events
+  // Prefixed with _ as it's prepared for future tests that may need it
+  function _createMockBeforeInstallPromptEvent(
     outcome: 'accepted' | 'dismissed' = 'accepted'
   ): Event {
     mockUserChoice = Promise.resolve({ outcome, platform: 'web' });
@@ -38,6 +40,8 @@ describe('usePWAInstall', () => {
 
     return event;
   }
+  // Silence unused warning - function is kept for future test expansion
+  void _createMockBeforeInstallPromptEvent;
 
   beforeEach(() => {
     beforeInstallPromptListeners = [];
