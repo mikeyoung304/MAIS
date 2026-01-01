@@ -998,7 +998,7 @@ export abstract class BaseOrchestrator {
     await this.prisma.agentSession.update({
       where: { id: sessionId },
       data: {
-        messages: updatedMessages as Prisma.InputJsonValue,
+        messages: updatedMessages as unknown as Prisma.InputJsonValue,
         updatedAt: new Date(),
       },
     });
