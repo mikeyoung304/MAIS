@@ -285,6 +285,19 @@ const MAX_RECURSION_DEPTH = 5;
 const EXECUTOR_TIMEOUT_MS = 5000;
 
 /**
+ * Tools that modify tenant data and require cache invalidation after execution.
+ * When these tools succeed, the context cache is invalidated so subsequent
+ * messages reflect the fresh state.
+ */
+const WRITE_TOOLS = new Set([
+  'upsert_services', // Creates segments and packages
+  'update_storefront', // Updates landing page config
+  'update_onboarding_state', // Updates onboarding phase/data
+  'create_booking', // Creates bookings
+  'update_package', // Updates package details
+]);
+
+/**
  * Execute a promise with a timeout.
  * Returns the result if successful, throws TimeoutError if timeout exceeded.
  */
@@ -1098,6 +1111,16 @@ export class AgentOrchestrator {
               JSON.stringify(toolUse.input).slice(0, 500),
               JSON.stringify(result).slice(0, 500),
               Date.now() - startTime
+            );
+          }
+
+          // Invalidate context cache after successful write tool execution
+          // This ensures subsequent messages see fresh data (e.g., new packages)
+          if (WRITE_TOOLS.has(toolUse.name)) {
+            this.invalidateContextCache(tenantId);
+            logger.debug(
+              { tenantId, toolName: toolUse.name },
+              'Context cache invalidated after write tool'
             );
           }
         }
