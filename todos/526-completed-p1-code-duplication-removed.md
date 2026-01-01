@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
-issue_id: "526"
+issue_id: '526'
 tags: [code-review, agent-ecosystem, refactoring, tech-debt]
-dependencies: ["524"]
+dependencies: ['524']
+resolved_date: 2026-01-01
+resolution: Verified that legacy orchestrator files have been deleted (orchestrator.ts and customer-orchestrator.ts). ~2000 lines of duplicated code removed.
 ---
 
 # Massive Code Duplication Between Legacy and New Orchestrators
@@ -13,6 +15,7 @@ dependencies: ["524"]
 There's ~1300 lines of duplicated code between the legacy `orchestrator.ts` (1340 lines) and the new `base-orchestrator.ts` (993 lines). Both contain identical implementations of core methods.
 
 **Why it matters:**
+
 - Double maintenance burden - bugs fixed in one may not be fixed in the other
 - Inconsistent behavior between routes using different orchestrators
 - Increases cognitive load for developers
@@ -22,6 +25,7 @@ There's ~1300 lines of duplicated code between the legacy `orchestrator.ts` (134
 ### Evidence from Pattern Recognition (CRITICAL)
 
 > "`orchestrator.ts` (1340 lines) duplicates almost all of `base-orchestrator.ts` (993 lines). Both contain identical implementations of:
+>
 > - `parseChatMessages()` (lines 56-69 in orchestrator.ts, 144-157 in base)
 > - `withTimeout()` (lines 315-336 in orchestrator.ts, 162-183 in base)
 > - `processResponse()` method (~200 lines duplicated)
@@ -30,17 +34,18 @@ There's ~1300 lines of duplicated code between the legacy `orchestrator.ts` (134
 
 ### Duplicated Components
 
-| Component | orchestrator.ts | base-orchestrator.ts |
-|-----------|-----------------|---------------------|
-| parseChatMessages() | lines 56-69 | lines 144-157 |
-| withTimeout() | lines 315-336 | lines 162-183 |
-| processResponse() | ~200 lines | ~200 lines |
-| SYSTEM_PROMPT_TEMPLATE | 261 lines | N/A (in admin) |
-| WRITE_TOOLS | identical | identical |
+| Component              | orchestrator.ts | base-orchestrator.ts |
+| ---------------------- | --------------- | -------------------- |
+| parseChatMessages()    | lines 56-69     | lines 144-157        |
+| withTimeout()          | lines 315-336   | lines 162-183        |
+| processResponse()      | ~200 lines      | ~200 lines           |
+| SYSTEM_PROMPT_TEMPLATE | 261 lines       | N/A (in admin)       |
+| WRITE_TOOLS            | identical       | identical            |
 
 ## Proposed Solutions
 
 ### Option A: Complete Migration and Delete Legacy (Recommended)
+
 **Pros:** Eliminates duplication, single source of truth
 **Cons:** Breaking change if anything depends on legacy
 **Effort:** Medium
@@ -52,6 +57,7 @@ There's ~1300 lines of duplicated code between the legacy `orchestrator.ts` (134
 4. Remove legacy exports from `index.ts`
 
 ### Option B: Mark as Deprecated
+
 **Pros:** Non-breaking, gradual transition
 **Cons:** Duplication remains temporarily
 **Effort:** Small
@@ -66,6 +72,7 @@ Add `@deprecated` JSDoc and console warnings.
 ## Technical Details
 
 **Files to Delete (after migration):**
+
 - `server/src/agent/orchestrator/orchestrator.ts` (1340 lines)
 - `server/src/agent/customer/customer-orchestrator.ts` (698 lines)
 
@@ -81,8 +88,8 @@ Add `@deprecated` JSDoc and console warnings.
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                              |
+| ---------- | ------------------------ | -------------------------------------- |
 | 2026-01-01 | Created from code review | Duplication creates maintenance burden |
 
 ## Resources

@@ -42,6 +42,17 @@ import {
   DEFAULT_CIRCUIT_BREAKER_CONFIG,
 } from './circuit-breaker';
 
+// Metrics imports
+import {
+  recordToolCall,
+  recordRateLimitHit,
+  recordCircuitBreakerTrip,
+  recordTurnDuration,
+  recordProposal,
+  recordTierBudgetExhausted,
+  recordApiError,
+} from './metrics';
+
 /**
  * Configuration for orchestrator subclasses
  */
@@ -408,6 +419,7 @@ export abstract class BaseOrchestrator {
         { tenantId, sessionId: session.sessionId, reason: circuitCheck.reason },
         'Circuit breaker tripped'
       );
+      recordCircuitBreakerTrip(circuitCheck.reason || 'unknown', config.agentType);
       return {
         message: `I've reached my session limit. ${circuitCheck.reason}. Please start a new conversation.`,
         sessionId: session.sessionId,
@@ -471,6 +483,7 @@ export abstract class BaseOrchestrator {
         'Claude API call failed'
       );
       circuitBreaker.recordError();
+      recordApiError('claude_api_error', config.agentType);
       throw new Error('Failed to communicate with AI assistant. Please try again.');
     }
 
@@ -497,15 +510,32 @@ export abstract class BaseOrchestrator {
     circuitBreaker.recordTurn(estimatedTokens);
     circuitBreaker.recordSuccess();
 
-    logger.debug(
+    // Calculate turn duration and record metrics
+    const turnDurationMs = Date.now() - startTime;
+    const turnDurationSeconds = turnDurationMs / 1000;
+    const hadToolCalls = toolResults !== undefined && toolResults.length > 0;
+
+    recordTurnDuration(turnDurationSeconds, config.agentType, hadToolCalls);
+
+    // Enhanced structured logging for observability
+    logger.info(
       {
         tenantId,
         sessionId: session.sessionId,
+        agentType: config.agentType,
+        turnDurationMs,
+        turnDurationSeconds: Math.round(turnDurationSeconds * 100) / 100,
         budgetUsed: budgetTracker.used,
+        budgetRemaining: budgetTracker.remaining,
         rateLimitStats: this.rateLimiter.getStats(),
         circuitBreakerState: circuitBreaker.getState(),
+        toolsExecuted: toolResults?.length || 0,
+        proposalsCreated: proposals?.length || 0,
+        hadToolCalls,
+        inputTokens: response.usage?.input_tokens || 0,
+        outputTokens: response.usage?.output_tokens || 0,
       },
-      'Turn completed with guardrail stats'
+      'Agent turn completed'
     );
 
     // Update session with new messages
@@ -788,6 +818,7 @@ export abstract class BaseOrchestrator {
       const rateLimitCheck = this.rateLimiter.canCall(toolUse.name);
       if (!rateLimitCheck.allowed) {
         logger.warn({ toolName: toolUse.name, reason: rateLimitCheck.reason }, 'Tool rate limited');
+        recordRateLimitHit(toolUse.name, config.agentType);
         toolResultBlocks.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
@@ -806,6 +837,7 @@ export abstract class BaseOrchestrator {
           { toolName: toolUse.name, tier: toolTier, remaining: budgetTracker.remaining },
           'Tier budget exhausted'
         );
+        recordTierBudgetExhausted(toolTier, config.agentType);
         toolResultBlocks.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
@@ -820,6 +852,9 @@ export abstract class BaseOrchestrator {
       try {
         const result = await tool.execute(toolContext, toolUse.input as Record<string, unknown>);
         this.rateLimiter.recordCall(toolUse.name);
+
+        // Record successful tool call metric
+        recordToolCall(toolUse.name, toolTier, config.agentType, result.success);
 
         toolResults.push({
           toolName: toolUse.name,
@@ -836,6 +871,8 @@ export abstract class BaseOrchestrator {
             trustTier: result.trustTier,
             requiresApproval: result.requiresApproval,
           });
+          // Record proposal metric
+          recordProposal('created', result.trustTier, config.agentType);
         }
 
         toolResultBlocks.push({
@@ -879,6 +916,9 @@ export abstract class BaseOrchestrator {
           { error: sanitizeError(error), toolName: toolUse.name },
           'Tool execution failed'
         );
+
+        // Record failed tool call metric
+        recordToolCall(toolUse.name, toolTier, config.agentType, false);
 
         toolResults.push({
           toolName: toolUse.name,

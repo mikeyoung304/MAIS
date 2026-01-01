@@ -61,6 +61,22 @@ export type {
   ChatResponse,
 } from './base-orchestrator';
 
+// Prometheus metrics for agent observability
+export {
+  agentMetrics,
+  agentRegistry,
+  recordToolCall,
+  recordRateLimitHit,
+  recordCircuitBreakerTrip,
+  recordTurnDuration,
+  recordProposal,
+  recordTierBudgetExhausted,
+  recordApiError,
+  setActiveSessions,
+  getAgentMetrics,
+  getAgentMetricsContentType,
+} from './metrics';
+
 // Note: The legacy AgentOrchestrator and CustomerOrchestrator have been removed.
 // Use AdminOrchestrator, OnboardingOrchestrator, or CustomerChatOrchestrator instead.
 // See: ADR-018 Agent Ecosystem Refactor

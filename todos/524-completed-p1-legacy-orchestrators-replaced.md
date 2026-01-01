@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
-issue_id: "524"
+issue_id: '524'
 tags: [code-review, agent-ecosystem, architecture, migration]
 dependencies: []
+resolved_date: 2026-01-01
+resolution: Verified that production routes now use new orchestrator hierarchy (AdminOrchestrator, CustomerChatOrchestrator). Legacy orchestrators have been deleted.
 ---
 
 # Legacy Orchestrators in Production Routes Don't Use New Guardrails
@@ -41,6 +43,7 @@ LEGACY (in production):
 ## Proposed Solutions
 
 ### Option A: Complete Migration (Recommended)
+
 **Pros:** Activates all guardrails, removes duplication
 **Cons:** Requires testing, potential behavior changes
 **Effort:** Medium
@@ -51,6 +54,7 @@ LEGACY (in production):
 3. Deprecate and remove legacy orchestrators
 
 ### Option B: Phased Migration
+
 **Pros:** Lower risk, gradual rollout
 **Cons:** Temporary complexity
 **Effort:** Medium
@@ -67,10 +71,12 @@ LEGACY (in production):
 ## Technical Details
 
 **Files to Update:**
+
 - `server/src/routes/agent.routes.ts` (line 43)
 - `server/src/routes/public-customer-chat.routes.ts` (line 29)
 
 **Files to Deprecate:**
+
 - `server/src/agent/orchestrator/orchestrator.ts`
 - `server/src/agent/customer/customer-orchestrator.ts`
 
@@ -85,8 +91,8 @@ LEGACY (in production):
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                |
+| ---------- | ------------------------ | ---------------------------------------- |
 | 2026-01-01 | Created from code review | New guardrails not protecting production |
 
 ## Resources
