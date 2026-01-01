@@ -16,11 +16,11 @@ import { MobileNav } from '@/components/home/MobileNav';
 export const metadata: Metadata = {
   title: "Handled — Your business shouldn't forget people.",
   description:
-    'Handled gives every client a shared Project Hub and builds curated Client Memory over time—so projects run cleanly and repeat clients never have to start over.',
+    "Handled gives every client a shared Project Hub and builds curated Client Memory over time—so repeat clients don't start over.",
   openGraph: {
     title: "Handled — Your business shouldn't forget people.",
     description:
-      'Handled gives every client a shared Project Hub and builds curated Client Memory over time—so projects run cleanly and repeat clients never have to start over.',
+      "Handled gives every client a shared Project Hub and builds curated Client Memory over time—so repeat clients don't start over.",
     type: 'website',
   },
 };
@@ -35,33 +35,32 @@ const faqs = [
   {
     question: 'Do clients have to use it?',
     answer:
-      'Clients get a simple link. Many prefer it to texting because it remembers context and keeps everything in one place.',
+      'Clients get a simple link. Many prefer it to texting because everything stays in one place.',
   },
   {
     question: 'What does Handled remember?',
     answer:
-      "Only what's useful. Memory is curated and controlled by the business, with clear boundaries and summaries—not raw noise.",
+      "Only what's useful. Memory is curated and controlled by the business—so it stays clean.",
   },
   {
     question: 'Can I control what clients can do?',
-    answer:
-      'Yes. Businesses can enable or disable Hub capabilities and decide what requires approval.',
+    answer: 'Yes. You decide what the Hub includes and what requires approval.',
   },
   {
     question: 'Does this replace my website?',
     answer:
-      'Handled can power your storefront and booking—but the biggest difference is what happens after booking: the shared Hub.',
+      'Handled can power your storefront and booking. The biggest difference is what happens after booking: the shared Project Hub.',
   },
 ];
 
-// Pricing tiers reframed for continuity/memory
+// Pricing tiers - keep existing prices/names, update descriptions per v2
 const tiers = [
   {
     id: 'foundation',
     name: 'The Foundation',
     price: '$49',
     priceSubtext: '/month',
-    description: 'Project Hub + booking + payments',
+    description: 'Project Hub, booking, payments, and a clean place for everything after checkout.',
     annualSavings: 'Save $118/year',
     features: [
       'Project Hub for every client',
@@ -79,7 +78,7 @@ const tiers = [
     name: 'The System',
     price: '$149',
     priceSubtext: '/month',
-    description: 'Client Memory + AI summaries + customization',
+    description: "Client Memory and AI summaries—so repeat clients don't start over.",
     annualSavings: 'Save $358/year',
     features: [
       'Everything in Foundation',
@@ -98,7 +97,7 @@ const tiers = [
     name: 'The Partnership',
     price: "Let's talk",
     priceSubtext: '',
-    description: 'We build it. You focus on clients.',
+    description: 'Deeper customization and controls—so the Hub fits how you work.',
     annualSavings: null,
     features: [
       'Everything in The System',
@@ -114,26 +113,26 @@ const tiers = [
   },
 ];
 
-// Client Memory example cards
+// Client Memory example cards - exact v2 copy
 const memoryExamples = [
   {
     icon: BookOpen,
     title: 'Tutoring',
-    body: "Pick up where you left off. Remember what clicked, what didn't, and what to focus on next time.",
+    body: "Pick up where you left off—what clicked, what didn't, and what to focus on next.",
   },
   {
     icon: UtensilsCrossed,
     title: 'Catering',
-    body: 'See what was served before, what was loved, and rebook with adjustments—without starting from scratch.',
+    body: 'See what you served before, what they loved, and repeat it with adjustments.',
   },
   {
     icon: Camera,
     title: 'Photography',
-    body: 'Carry forward context that affects the session—so families feel seen and supported.',
+    body: 'Carry forward context that changes the session—so families feel supported, not managed.',
   },
 ];
 
-// How it works steps
+// How it works steps - exact v2 copy
 const steps = [
   {
     number: '1',
@@ -143,12 +142,12 @@ const steps = [
   {
     number: '2',
     title: 'Collaborate',
-    body: 'Clients ask questions, upload files, and request changes inside the Hub.',
+    body: 'They share files, ask questions, and request changes inside the Hub.',
   },
   {
     number: '3',
     title: 'Remember',
-    body: 'Handled summarizes the project and carries the right details forward—so next time is easier.',
+    body: "Handled carries the right details forward—so next time isn't a reset.",
   },
 ];
 
@@ -159,7 +158,7 @@ export default function HomePage() {
     name: 'Handled',
     url: 'https://gethandled.ai',
     description:
-      'Handled gives every client a shared Project Hub and builds curated Client Memory over time—so projects run cleanly and repeat clients never have to start over.',
+      "Handled gives every client a shared Project Hub and builds curated Client Memory over time—so repeat clients don't start over.",
     sameAs: [],
   };
 
@@ -251,7 +250,7 @@ export default function HomePage() {
           {/* ============================================
               SECTION 1 — HERO (H1)
               ============================================ */}
-          <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 px-6">
+          <section className="relative pt-32 pb-24 md:pt-44 md:pb-36 px-6">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
                 Your business shouldn&apos;t forget people.
@@ -261,7 +260,7 @@ export default function HomePage() {
                 Project Hub—and over time, Handled builds Client Memory so repeat clients don&apos;t
                 have to explain themselves again.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   asChild
                   variant="sage"
@@ -280,18 +279,19 @@ export default function HomePage() {
                   </Link>
                 </Button>
               </div>
-              <p className="mt-6 text-sm text-text-muted">
+              <p className="mt-8 text-sm text-text-muted">
                 Calm systems. Real memory. Fewer things to worry about.
               </p>
+              <p className="mt-2 text-xs text-text-muted/70">No more reset-to-zero.</p>
             </div>
           </section>
 
           {/* ============================================
-              SECTION 2 — RECOGNITION (THE PAIN)
+              SECTION 2 — RECOGNITION
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-12">
+          <section className="py-28 md:py-36 px-6 bg-surface-alt">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-14">
                 Every booking resets the relationship.
               </h2>
               <div className="space-y-6 text-lg text-text-muted leading-relaxed">
@@ -305,10 +305,10 @@ export default function HomePage() {
                   remember what matters.
                 </p>
               </div>
-              <div className="mt-10 grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+              <div className="mt-14 grid sm:grid-cols-2 gap-4 max-w-lg mx-auto">
                 {[
                   '"What did we do last time?"',
-                  '"Any allergies / preferences again?"',
+                  '"Any allergies or preferences again?"',
                   '"Where did we talk about that change?"',
                   '"Can you resend that?"',
                 ].map((quote) => (
@@ -316,7 +316,7 @@ export default function HomePage() {
                     key={quote}
                     className="bg-surface rounded-xl p-4 border border-neutral-800 text-center"
                   >
-                    <p className="text-text-muted italic">{quote}</p>
+                    <p className="text-text-muted italic text-sm">{quote}</p>
                   </div>
                 ))}
               </div>
@@ -326,9 +326,9 @@ export default function HomePage() {
           {/* ============================================
               SECTION 3 — THE REAL COST
               ============================================ */}
-          <section className="py-24 md:py-32 px-6">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
+          <section className="py-28 md:py-36 px-6">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-10">
                 Forgetting creates friction.
                 <br />
                 Remembering creates trust.
@@ -346,14 +346,14 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 4 — CATEGORY DEFINITION (WHAT HANDLED IS)
+              SECTION 4 — WHAT HANDLED IS
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-8">
+          <section className="py-28 md:py-36 px-6 bg-surface-alt">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-10">
                 Handled is institutional memory for your business.
               </h2>
-              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center mb-12">
+              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center mb-14">
                 <p>Handled doesn&apos;t just manage bookings.</p>
                 <p>
                   It carries context forward—so every interaction builds on the last instead of
@@ -361,33 +361,31 @@ export default function HomePage() {
                 </p>
               </div>
               {/* Kill shot - styled as standout callout */}
-              <div className="bg-surface rounded-2xl p-8 border border-sage/30 shadow-lg shadow-sage/5">
+              <div className="bg-surface rounded-2xl p-10 border border-sage/30 shadow-lg shadow-sage/5">
                 <p className="text-lg md:text-xl text-text-primary leading-relaxed text-center font-medium">
                   Handled is the system that remembers your clients, carries context forward, and
-                  makes it impossible for important details to get lost — even over years.
+                  makes it impossible for important details to get lost—even over years.
                 </p>
               </div>
             </div>
           </section>
 
           {/* ============================================
-              SECTION 5 — THE PROJECT HUB (THE WEDGE)
+              SECTION 5 — PROJECT HUB (THE WEDGE)
               ============================================ */}
-          <section id="project-hub" className="py-24 md:py-32 px-6 scroll-mt-20">
+          <section id="project-hub" className="py-28 md:py-36 px-6 scroll-mt-20">
             <div className="max-w-5xl mx-auto">
-              <div className="max-w-3xl mx-auto text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
-                  Every client gets a shared Project Hub.
+              <div className="max-w-2xl mx-auto text-center mb-16">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-10">
+                  After booking, everything moves into the Project Hub.
                 </h2>
                 <div className="space-y-6 text-lg text-text-muted leading-relaxed">
                   <p>
-                    After booking, clients enter a shared space where everything lives: questions,
-                    changes, files, preferences, and decisions.
+                    Clients don&apos;t text you &ldquo;quick questions&rdquo; or send scattered
+                    emails.
                   </p>
-                  <p>
-                    Instead of scattered texts and email threads, the Project Hub becomes the single
-                    source of truth.
-                  </p>
+                  <p>They go to one shared link.</p>
+                  <p>Requests, files, decisions, and changes live in one place—and stay there.</p>
                 </div>
               </div>
 
@@ -395,11 +393,11 @@ export default function HomePage() {
               <ProjectHubMockup />
 
               {/* Mini list */}
-              <div className="mt-12 max-w-md mx-auto">
+              <div className="mt-14 max-w-md mx-auto">
                 <ul className="space-y-4">
                   {[
                     'Clients ask for changes without interrupting you',
-                    'AI organizes requests into clear proposals',
+                    'Requests become clear proposals, not messy messages',
                     'History stays searchable forever',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
@@ -409,26 +407,31 @@ export default function HomePage() {
                   ))}
                 </ul>
               </div>
+
+              {/* Microline */}
+              <p className="mt-10 text-center text-sm text-text-muted">
+                This is the single source of truth for the project.
+              </p>
             </div>
           </section>
 
           {/* ============================================
               SECTION 6 — CLIENT MEMORY (REPEAT CLIENTS)
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
+          <section className="py-28 md:py-36 px-6 bg-surface-alt">
             <div className="max-w-5xl mx-auto">
-              <div className="max-w-3xl mx-auto text-center mb-16">
+              <div className="max-w-2xl mx-auto text-center mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
                   Repeat clients don&apos;t repeat themselves.
                 </h2>
                 <p className="text-lg text-text-muted leading-relaxed">
-                  Handled learns what matters—taste, preferences, constraints, and context—so the
-                  next project starts with understanding, not re-explaining.
+                  Handled learns what matters and carries it forward—so the next project starts
+                  ahead.
                 </p>
               </div>
 
               {/* Example cards */}
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-3 gap-8">
                 {memoryExamples.map((example) => (
                   <div
                     key={example.title}
@@ -444,42 +447,42 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Closing line */}
+              <p className="mt-14 text-center text-lg text-text-muted">
+                Over time, your best clients become effortless to serve.
+              </p>
             </div>
           </section>
 
           {/* ============================================
-              SECTION 7 — AI (DE-HYPED, TRUST-BASED)
+              SECTION 7 — AI (ONLY PLACE AI IS MENTIONED)
               ============================================ */}
-          <section className="py-24 md:py-32 px-6">
-            <div className="max-w-3xl mx-auto">
-              <div className="flex items-center justify-center mb-8">
+          <section className="py-28 md:py-36 px-6">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-center justify-center mb-10">
                 <div className="w-14 h-14 rounded-2xl bg-sage/10 flex items-center justify-center">
                   <Sparkles className="w-7 h-7 text-sage" />
                 </div>
               </div>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-8">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-10">
                 AI that remembers.
                 <br />
                 Silence that respects.
               </h2>
-              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center mb-12">
-                <p>
-                  Handled&apos;s AI curates memory, batches updates, and escalates only what needs
-                  your attention.
-                </p>
-                <p className="text-text-primary font-medium">
-                  No prompt babysitting. No notification spam. Just a system that keeps projects
-                  clean.
-                </p>
-              </div>
+              <p className="text-lg text-text-muted leading-relaxed text-center mb-12">
+                Handled batches updates, summarizes activity, and escalates only what needs your
+                attention. No notification spam. No prompt babysitting. Just a calmer way to run
+                work.
+              </p>
 
               {/* Bullets */}
-              <div className="max-w-md mx-auto">
+              <div className="max-w-sm mx-auto">
                 <ul className="space-y-4">
                   {[
                     'Summaries instead of interruptions',
-                    'Proposals instead of messy messages',
-                    "Human control over what's saved",
+                    'Proposals instead of back-and-forth',
+                    "Control over what's saved",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
@@ -492,14 +495,14 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 8 — HOW IT WORKS (3 STEPS, SIMPLE)
+              SECTION 8 — HOW IT WORKS (3 STEPS)
               ============================================ */}
-          <section id="how-it-works" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
+          <section id="how-it-works" className="py-28 md:py-36 px-6 bg-surface-alt scroll-mt-20">
             <div className="max-w-4xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-16">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-20">
                 How it works
               </h2>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-12">
                 {steps.map((step) => (
                   <div key={step.number} className="text-center">
                     <div className="w-16 h-16 rounded-full bg-sage/10 border border-sage/30 flex items-center justify-center mx-auto mb-6">
@@ -516,12 +519,12 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 9 — PRICING (REFRAMED)
+              SECTION 9 — PRICING
               ============================================ */}
-          <section id="pricing" className="py-24 md:py-32 px-6 scroll-mt-20">
+          <section id="pricing" className="py-28 md:py-36 px-6 scroll-mt-20">
             <div className="max-w-6xl mx-auto">
-              <div className="text-center max-w-3xl mx-auto mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
+              <div className="text-center max-w-2xl mx-auto mb-20">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
                   Simple pricing. Compounding value.
                 </h2>
                 <p className="text-lg text-text-muted">
@@ -559,7 +562,9 @@ export default function HomePage() {
                     >
                       {tier.name}
                     </h3>
-                    <p className="mt-1 text-text-muted text-sm">{tier.description}</p>
+                    <p className="mt-2 text-text-muted text-sm leading-relaxed">
+                      {tier.description}
+                    </p>
 
                     <div className="mt-6">
                       <div className="flex items-baseline gap-1">
@@ -609,7 +614,7 @@ export default function HomePage() {
               </div>
 
               {/* CTAs under pricing */}
-              <div className="text-center mt-12">
+              <div className="text-center mt-14">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button
                     asChild
@@ -636,12 +641,12 @@ export default function HomePage() {
           {/* ============================================
               SECTION 10 — FAQ
               ============================================ */}
-          <section id="faq" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary text-center mb-12">
+          <section id="faq" className="py-28 md:py-36 px-6 bg-surface-alt scroll-mt-20">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary text-center mb-14">
                 FAQ
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {faqs.map((faq, index) => (
                   <details
                     key={index}
@@ -659,17 +664,18 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 11 — FINAL CTA (CLOSE)
+              SECTION 11 — FINAL CTA
               ============================================ */}
-          <section className="py-32 md:py-40 px-6 border-t border-neutral-800">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight mb-8">
+          <section className="py-36 md:py-44 px-6 border-t border-neutral-800">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight mb-10">
                 Nothing important should ever have to be remembered manually.
               </h2>
-              <p className="text-lg text-text-muted leading-relaxed mb-10 max-w-xl mx-auto">
-                Handled gives you a system that remembers people, keeps projects clean, and makes
-                repeat business feel effortless.
-              </p>
+              <div className="space-y-4 text-lg text-text-muted leading-relaxed mb-12">
+                <p>Give every client a shared place to collaborate.</p>
+                <p>Let the system carry context forward.</p>
+                <p>Stop starting over.</p>
+              </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   asChild
@@ -689,6 +695,7 @@ export default function HomePage() {
                   </Link>
                 </Button>
               </div>
+              <p className="mt-8 text-sm text-text-muted/70">This should already be handled.</p>
             </div>
           </section>
         </main>
