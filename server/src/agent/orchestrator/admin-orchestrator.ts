@@ -14,7 +14,11 @@
 import type { PrismaClient } from '../../generated/prisma';
 import type { AgentTool } from '../tools/types';
 import { getAllTools, getAllToolsWithOnboarding } from '../tools/all-tools';
-import { buildSessionContext, getHandledGreeting, buildFallbackContext } from '../context/context-builder';
+import {
+  buildSessionContext,
+  getHandledGreeting,
+  buildFallbackContext,
+} from '../context/context-builder';
 import type { AgentSessionContext } from '../context/context-builder';
 import { contextCache, withSessionId } from '../context/context-cache';
 import { logger } from '../../lib/core/logger';
@@ -28,9 +32,10 @@ import {
   type ChatResponse,
   DEFAULT_ORCHESTRATOR_CONFIG,
 } from './base-orchestrator';
-import { DEFAULT_TIER_BUDGETS } from './types';
+import { DEFAULT_TIER_BUDGETS, isOnboardingActive } from './types';
 import { DEFAULT_TOOL_RATE_LIMITS } from './rate-limiter';
 import { DEFAULT_CIRCUIT_BREAKER_CONFIG } from './circuit-breaker';
+import { getRequestContext, runInRequestContext } from './request-context';
 
 /**
  * Admin-specific configuration
@@ -144,11 +149,13 @@ export interface AdminSessionState extends SessionState {
 
 /**
  * Admin Orchestrator
+ *
+ * NOTE: Onboarding mode is tracked per-request using AsyncLocalStorage
+ * (see request-context.ts) to prevent race conditions. Previously used
+ * instance state which caused wrong tools to be returned during concurrent
+ * requests from different tenants.
  */
 export class AdminOrchestrator extends BaseOrchestrator {
-  // Track if we're in onboarding mode for this session
-  private isOnboardingMode: boolean = false;
-
   // ─────────────────────────────────────────────────────────────────────────────
   // Abstract Method Implementations
   // ─────────────────────────────────────────────────────────────────────────────
@@ -158,8 +165,10 @@ export class AdminOrchestrator extends BaseOrchestrator {
   }
 
   protected getTools(): AgentTool[] {
-    // Use onboarding tools if in onboarding mode
-    return this.isOnboardingMode ? getAllToolsWithOnboarding() : getAllTools();
+    // Read onboarding mode from request-scoped context (set in chat() override)
+    // Falls back to regular tools if context not available (defensive)
+    const ctx = getRequestContext();
+    return ctx?.isOnboardingMode ? getAllToolsWithOnboarding() : getAllTools();
   }
 
   protected async buildSystemPrompt(context: PromptContext): Promise<string> {
@@ -175,6 +184,9 @@ export class AdminOrchestrator extends BaseOrchestrator {
 
   /**
    * Override chat to check onboarding mode
+   *
+   * Uses AsyncLocalStorage to store mode per-request, preventing race
+   * conditions when concurrent requests hit the singleton orchestrator.
    */
   async chat(
     tenantId: string,
@@ -187,10 +199,13 @@ export class AdminOrchestrator extends BaseOrchestrator {
       select: { onboardingPhase: true },
     });
 
-    const phase = parseOnboardingPhase(tenant?.onboardingPhase);
-    this.isOnboardingMode = phase !== 'COMPLETED' && phase !== 'SKIPPED';
+    const isOnboardingMode = isOnboardingActive(tenant?.onboardingPhase);
 
-    return super.chat(tenantId, requestedSessionId, userMessage);
+    // Run super.chat() within request-scoped context
+    // This ensures getTools() reads the correct mode for THIS request
+    return runInRequestContext({ isOnboardingMode }, () =>
+      super.chat(tenantId, requestedSessionId, userMessage)
+    );
   }
 
   /**
@@ -220,14 +235,14 @@ export class AdminOrchestrator extends BaseOrchestrator {
     });
 
     const phase = parseOnboardingPhase(tenant?.onboardingPhase);
-    const isOnboardingMode = phase !== 'COMPLETED' && phase !== 'SKIPPED';
+    const onboardingMode = isOnboardingActive(phase);
 
     const context = await this.buildCachedContext(tenantId, sessionId);
 
     return {
       ...baseSession,
       context,
-      isOnboardingMode,
+      isOnboardingMode: onboardingMode,
       onboardingPhase: phase,
     };
   }

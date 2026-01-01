@@ -3,10 +3,18 @@
  *
  * Logs all agent tool calls for security compliance.
  * Retention: 90 days minimum, 7 years for financial operations.
+ *
+ * PERFORMANCE: Supports batched writes via AuditBatcher to avoid N+1 inserts.
  */
 
-import type { PrismaClient, AgentTrustTier, AgentApprovalStatus } from '../../generated/prisma';
+import type {
+  PrismaClient,
+  AgentTrustTier,
+  AgentApprovalStatus,
+  Prisma,
+} from '../../generated/prisma';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 /**
  * Audit log entry input
@@ -23,6 +31,176 @@ export interface AuditLogInput {
   durationMs?: number;
   success: boolean;
   errorMessage?: string;
+}
+
+/**
+ * Audit Batcher
+ *
+ * Collects audit log entries in memory and flushes them in a single
+ * batch write at turn end. This reduces N+1 database writes to a single
+ * createMany() call.
+ *
+ * USAGE:
+ * ```typescript
+ * const batcher = new AuditBatcher(prisma);
+ * batcher.log({ ... }); // Collected in memory
+ * batcher.log({ ... }); // Collected in memory
+ * await batcher.flush(); // Single batch insert
+ * ```
+ *
+ * SAFETY: If flush fails, entries are not lost - they remain in the buffer
+ * for retry. Call clear() explicitly if you want to discard entries.
+ */
+export class AuditBatcher {
+  private entries: Prisma.AgentAuditLogCreateManyInput[] = [];
+
+  constructor(private readonly prisma: PrismaClient) {}
+
+  /**
+   * Add an audit entry to the batch (does not write to DB)
+   */
+  log(input: AuditLogInput): void {
+    this.entries.push({
+      tenantId: input.tenantId,
+      sessionId: input.sessionId,
+      toolName: input.toolName,
+      proposalId: input.proposalId,
+      inputSummary: this.truncate(input.inputSummary, 500),
+      outputSummary: this.truncate(input.outputSummary, 500),
+      trustTier: input.trustTier,
+      approvalStatus: input.approvalStatus,
+      durationMs: input.durationMs,
+      success: input.success,
+      errorMessage: input.errorMessage ? this.truncate(input.errorMessage, 1000) : undefined,
+    });
+  }
+
+  /**
+   * Convenience method for logging successful read operations
+   */
+  logRead(
+    tenantId: string,
+    sessionId: string,
+    toolName: string,
+    inputSummary: string,
+    outputSummary: string,
+    durationMs?: number
+  ): void {
+    this.log({
+      tenantId,
+      sessionId,
+      toolName,
+      inputSummary,
+      outputSummary,
+      trustTier: 'T1',
+      approvalStatus: 'AUTO',
+      durationMs,
+      success: true,
+    });
+  }
+
+  /**
+   * Convenience method for logging proposal creation
+   */
+  logProposalCreated(
+    tenantId: string,
+    sessionId: string,
+    toolName: string,
+    proposalId: string,
+    trustTier: AgentTrustTier,
+    inputSummary: string,
+    durationMs?: number
+  ): void {
+    const approvalStatus: AgentApprovalStatus =
+      trustTier === 'T1' ? 'AUTO' : trustTier === 'T2' ? 'SOFT' : 'EXPLICIT';
+
+    this.log({
+      tenantId,
+      sessionId,
+      toolName,
+      proposalId,
+      inputSummary,
+      outputSummary: `Proposal created: ${proposalId}`,
+      trustTier,
+      approvalStatus,
+      durationMs,
+      success: true,
+    });
+  }
+
+  /**
+   * Convenience method for logging errors
+   */
+  logError(
+    tenantId: string,
+    sessionId: string,
+    toolName: string,
+    inputSummary: string,
+    errorMessage: string,
+    durationMs?: number
+  ): void {
+    this.log({
+      tenantId,
+      sessionId,
+      toolName,
+      inputSummary,
+      outputSummary: 'Error',
+      trustTier: 'T1',
+      approvalStatus: 'AUTO',
+      durationMs,
+      success: false,
+      errorMessage,
+    });
+  }
+
+  /**
+   * Flush all entries to the database in a single batch write
+   *
+   * @returns Number of entries written
+   */
+  async flush(): Promise<number> {
+    if (this.entries.length === 0) {
+      return 0;
+    }
+
+    const count = this.entries.length;
+    const entriesToWrite = [...this.entries]; // Copy to preserve on failure
+
+    try {
+      await this.prisma.agentAuditLog.createMany({
+        data: entriesToWrite,
+      });
+
+      // Clear only on success
+      this.entries = [];
+
+      logger.debug({ count }, 'Audit batch flushed');
+      return count;
+    } catch (error) {
+      // Log but don't fail the operation - entries remain in buffer
+      logger.error({ error: sanitizeError(error), count }, 'Failed to flush audit batch');
+      return 0;
+    }
+  }
+
+  /**
+   * Clear pending entries without flushing
+   */
+  clear(): void {
+    this.entries = [];
+  }
+
+  /**
+   * Get count of pending entries
+   */
+  get pendingCount(): number {
+    return this.entries.length;
+  }
+
+  private truncate(str: string, maxLength: number): string {
+    if (str.length <= maxLength) return str;
+    return str.slice(0, maxLength - 3) + '...';
+  }
 }
 
 /**

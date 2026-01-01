@@ -13,20 +13,14 @@
 
 import type { PrismaClient } from '../../generated/prisma';
 import type { AgentTool } from '../tools/types';
-import { INJECTION_PATTERNS } from '../tools/types';
 import { CUSTOMER_TOOLS } from '../customer/customer-tools';
 import { buildCustomerSystemPrompt } from '../customer/customer-prompt';
-import { logger } from '../../lib/core/logger';
-
 import {
   BaseOrchestrator,
   type OrchestratorConfig,
   type PromptContext,
-  type ChatResponse,
   DEFAULT_ORCHESTRATOR_CONFIG,
 } from './base-orchestrator';
-import { DEFAULT_TIER_BUDGETS } from './types';
-import { DEFAULT_CIRCUIT_BREAKER_CONFIG } from './circuit-breaker';
 
 /**
  * Customer-specific configuration
@@ -125,33 +119,10 @@ ${tenant.email || 'Contact information not available.'}
   // ─────────────────────────────────────────────────────────────────────────────
 
   /**
-   * Override chat to add prompt injection detection
+   * Override injection block message for customer context
    */
-  async chat(
-    tenantId: string,
-    requestedSessionId: string,
-    userMessage: string
-  ): Promise<ChatResponse> {
-    // SECURITY: Check for prompt injection attempts
-    if (this.detectPromptInjection(userMessage)) {
-      logger.warn(
-        { tenantId, messagePreview: userMessage.slice(0, 100) },
-        'Potential prompt injection attempt detected'
-      );
-
-      // Get session for response
-      let session = await this.getSession(tenantId, requestedSessionId);
-      if (!session) {
-        session = await this.getOrCreateSession(tenantId);
-      }
-
-      return {
-        message: "I'm here to help you with booking questions. How can I assist you today?",
-        sessionId: session.sessionId,
-      };
-    }
-
-    return super.chat(tenantId, requestedSessionId, userMessage);
+  protected getInjectionBlockMessage(): string {
+    return "I'm here to help you with booking questions. How can I assist you today?";
   }
 
   /**
@@ -168,15 +139,5 @@ ${tenant.email || 'Contact information not available.'}
     }
 
     return `Hi! I can help you book an appointment with ${tenant.name}. What are you looking for?`;
-  }
-
-  /**
-   * Check for prompt injection patterns
-   * Uses NFKC normalization to catch Unicode lookalike characters
-   * Patterns imported from ../tools/types.ts for single source of truth
-   */
-  private detectPromptInjection(message: string): boolean {
-    const normalized = message.normalize('NFKC');
-    return INJECTION_PATTERNS.some((pattern) => pattern.test(normalized));
   }
 }

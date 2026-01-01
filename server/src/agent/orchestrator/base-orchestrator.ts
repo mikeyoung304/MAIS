@@ -23,6 +23,7 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages';
 import type { PrismaClient, Prisma } from '../../generated/prisma';
 import type { ToolContext, AgentToolResult, AgentTool } from '../tools/types';
+import { INJECTION_PATTERNS } from '../tools/types';
 import { ProposalService } from '../proposals/proposal.service';
 import { AuditService } from '../audit/audit.service';
 import { logger } from '../../lib/core/logger';
@@ -67,6 +68,13 @@ export interface OrchestratorConfig {
   readonly circuitBreaker: CircuitBreakerConfig;
   readonly maxRecursionDepth: number;
   readonly executorTimeoutMs: number;
+  /**
+   * Enable prompt injection detection.
+   * When enabled, user messages are checked against INJECTION_PATTERNS
+   * and blocked if suspicious content is detected.
+   * Default: true (recommended for all orchestrators)
+   */
+  readonly enableInjectionDetection?: boolean;
 }
 
 /**
@@ -82,6 +90,7 @@ export const DEFAULT_ORCHESTRATOR_CONFIG: Omit<OrchestratorConfig, 'agentType'> 
   circuitBreaker: DEFAULT_CIRCUIT_BREAKER_CONFIG,
   maxRecursionDepth: 5,
   executorTimeoutMs: 5000,
+  enableInjectionDetection: true, // Security: enabled by default
 };
 
 /**
@@ -151,9 +160,22 @@ const WRITE_TOOLS = new Set([
 ]);
 
 /**
- * Parse messages from database JSON to ChatMessage[]
+ * Cleanup circuit breakers every N chat calls to prevent unbounded memory growth.
+ * 100 calls provides good balance between cleanup frequency and overhead.
  */
-function parseChatMessages(messages: unknown): ChatMessage[] {
+const CLEANUP_INTERVAL_CALLS = 100;
+
+/**
+ * Maximum number of circuit breakers to keep in memory.
+ * At ~130 bytes per entry, this caps memory at ~130KB.
+ */
+const MAX_CIRCUIT_BREAKERS = 1000;
+
+/**
+ * Parse messages from database JSON to ChatMessage[]
+ * @internal Exported for testing
+ */
+export function parseChatMessages(messages: unknown): ChatMessage[] {
   if (!Array.isArray(messages)) return [];
 
   return messages.filter((msg): msg is ChatMessage => {
@@ -170,8 +192,9 @@ function parseChatMessages(messages: unknown): ChatMessage[] {
 
 /**
  * Execute a promise with timeout
+ * @internal Exported for testing
  */
-async function withTimeout<T>(
+export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
   operationName: string
@@ -274,6 +297,26 @@ export abstract class BaseOrchestrator {
    */
   protected getSessionTtlMs(): number {
     return 24 * 60 * 60 * 1000; // Default: 24 hours
+  }
+
+  /**
+   * Get message for injection detection block
+   * Override in subclasses for agent-specific messages
+   */
+  protected getInjectionBlockMessage(): string {
+    return "I'm here to help with your questions. How can I assist you?";
+  }
+
+  /**
+   * Check for prompt injection patterns
+   * Uses NFKC normalization to catch Unicode lookalike characters.
+   *
+   * SECURITY: This is defense-in-depth. Claude also has built-in safety,
+   * but explicit pattern matching catches known attack vectors.
+   */
+  protected detectPromptInjection(message: string): boolean {
+    const normalized = message.normalize('NFKC');
+    return INJECTION_PATTERNS.some((pattern) => pattern.test(normalized));
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -388,6 +431,26 @@ export abstract class BaseOrchestrator {
     const startTime = Date.now();
     const config = this.getConfig();
 
+    // SECURITY: Check for prompt injection attempts (defense-in-depth)
+    const enableInjectionDetection = config.enableInjectionDetection ?? true;
+    if (enableInjectionDetection && this.detectPromptInjection(userMessage)) {
+      logger.warn(
+        { tenantId, agentType: config.agentType, messagePreview: userMessage.slice(0, 100) },
+        'Potential prompt injection attempt detected'
+      );
+
+      // Get or create session for response (need session ID)
+      let session = await this.getSession(tenantId, requestedSessionId);
+      if (!session) {
+        session = await this.getOrCreateSession(tenantId);
+      }
+
+      return {
+        message: this.getInjectionBlockMessage(),
+        sessionId: session.sessionId,
+      };
+    }
+
     // Get or validate session
     // CRITICAL: Use resolved session's ID, not the requested one (Bug fix from Phase 1)
     let session = await this.getSession(tenantId, requestedSessionId);
@@ -405,9 +468,9 @@ export abstract class BaseOrchestrator {
       this.circuitBreakers.set(session.sessionId, circuitBreaker);
     }
 
-    // Periodic cleanup of old circuit breakers (every 100 calls)
+    // Periodic cleanup of old circuit breakers
     this.circuitBreakerCleanupCounter++;
-    if (this.circuitBreakerCleanupCounter >= 100) {
+    if (this.circuitBreakerCleanupCounter >= CLEANUP_INTERVAL_CALLS) {
       this.cleanupOldCircuitBreakers();
       this.circuitBreakerCleanupCounter = 0;
     }
@@ -1088,7 +1151,6 @@ export abstract class BaseOrchestrator {
     }
 
     // Also enforce a hard cap to prevent unbounded growth
-    const MAX_CIRCUIT_BREAKERS = 1000;
     if (this.circuitBreakers.size > MAX_CIRCUIT_BREAKERS) {
       // Remove oldest entries (first inserted due to Map ordering)
       const toRemove = this.circuitBreakers.size - MAX_CIRCUIT_BREAKERS;

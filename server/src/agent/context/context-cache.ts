@@ -65,6 +65,10 @@ export class ContextCache {
 
   /**
    * Get cached context if valid
+   *
+   * PERFORMANCE: This uses Map insertion order as LRU.
+   * On each access, the entry is deleted and re-inserted to move it to the "end"
+   * (most recently used position). This enables O(1) eviction of the oldest entry.
    */
   get(tenantId: string): AgentSessionContext | null {
     const key = this.getCacheKey(tenantId);
@@ -81,6 +85,10 @@ export class ContextCache {
       logger.debug({ tenantId, ageMs: age }, 'Context cache entry expired');
       return null;
     }
+
+    // LRU: Move to end by delete + re-insert (Map preserves insertion order)
+    this.cache.delete(key);
+    this.cache.set(key, entry);
 
     logger.debug({ tenantId, ageMs: age }, 'Context cache hit');
     return entry.context;
@@ -137,20 +145,17 @@ export class ContextCache {
   }
 
   /**
-   * Evict oldest entry (simple LRU approximation)
+   * Evict oldest entry (true LRU - O(1) operation)
+   *
+   * PERFORMANCE: Uses Map insertion order. The first key is always the
+   * least recently used because get() moves accessed entries to the end.
+   * This is O(1) instead of the previous O(n) scan.
    */
   private evictOldest(): void {
-    let oldestKey: string | null = null;
-    let oldestTime = Infinity;
+    // Map.keys().next() returns the first key (oldest/LRU) in O(1)
+    const oldestKey = this.cache.keys().next().value;
 
-    for (const [key, entry] of this.cache) {
-      if (entry.cachedAt < oldestTime) {
-        oldestTime = entry.cachedAt;
-        oldestKey = key;
-      }
-    }
-
-    if (oldestKey) {
+    if (oldestKey !== undefined) {
       this.cache.delete(oldestKey);
       logger.debug({ evictedKey: oldestKey }, 'Context cache evicted oldest entry');
     }
@@ -192,9 +197,7 @@ export class ContextCache {
  * // In tests - small size for eviction tests
  * const smallCache = createContextCache({ maxEntries: 3 });
  */
-export function createContextCache(
-  config?: Partial<ContextCacheConfig>
-): ContextCache {
+export function createContextCache(config?: Partial<ContextCacheConfig>): ContextCache {
   return new ContextCache(config);
 }
 

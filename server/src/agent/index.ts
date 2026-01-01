@@ -53,7 +53,7 @@ export {
 export type { AgentSessionContext } from './context/context-builder';
 
 // Audit service
-export { AuditService } from './audit/audit.service';
+export { AuditService, AuditBatcher } from './audit/audit.service';
 export type { AuditLogInput, AuditLogEntry } from './audit/audit.service';
 
 // Orchestrators (Claude API integration with code-level guardrails)

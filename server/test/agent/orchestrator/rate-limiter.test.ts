@@ -141,32 +141,6 @@ describe('ToolRateLimiter', () => {
     });
   });
 
-  describe('reset()', () => {
-    it('should reset both turn and session counts', () => {
-      limiter.recordCall('get_services');
-      limiter.recordCall('check_availability');
-
-      limiter.reset();
-
-      const stats = limiter.getStats();
-      expect(Object.keys(stats.turn).length).toBe(0);
-      expect(Object.keys(stats.session).length).toBe(0);
-    });
-
-    it('should allow previously blocked tools after reset', () => {
-      // Exhaust session limit
-      for (let i = 0; i < 10; i++) {
-        limiter.recordCall('update_onboarding_state');
-        limiter.resetTurn();
-      }
-      expect(limiter.canCall('update_onboarding_state').allowed).toBe(false);
-
-      limiter.reset();
-
-      expect(limiter.canCall('update_onboarding_state').allowed).toBe(true);
-    });
-  });
-
   describe('getStats()', () => {
     it('should return empty stats for new limiter', () => {
       const stats = limiter.getStats();

@@ -1,8 +1,9 @@
 /**
  * Tool Rate Limiter
  *
- * Per-tool rate limiting using token bucket pattern.
- * Prevents any single tool from dominating a conversation turn.
+ * Per-tool call counter with turn and session limits.
+ * Tracks calls per turn (reset each turn) and per session (persistent).
+ * Prevents any single tool from dominating a conversation.
  *
  * Based on DoorDash "Budgeting the Loop" pattern.
  */
@@ -54,7 +55,8 @@ const DEFAULT_TOOL_LIMIT: ToolRateLimit = {
 };
 
 /**
- * Per-tool rate limiter using token bucket pattern.
+ * Per-tool rate limiter using call counter pattern.
+ * Each tool has independent turn and session limits.
  */
 export class ToolRateLimiter {
   private turnCounts: Map<string, number> = new Map();
@@ -105,14 +107,6 @@ export class ToolRateLimiter {
    */
   resetTurn(): void {
     this.turnCounts.clear();
-  }
-
-  /**
-   * Reset all counts (call when session resets)
-   */
-  reset(): void {
-    this.turnCounts.clear();
-    this.sessionCounts.clear();
   }
 
   /**

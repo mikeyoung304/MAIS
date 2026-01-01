@@ -125,51 +125,6 @@ describe('BudgetTracker', () => {
     });
   });
 
-  describe('reset()', () => {
-    it('should restore all budgets to initial values', () => {
-      // Use some budget
-      tracker.consume('T1');
-      tracker.consume('T1');
-      tracker.consume('T2');
-      tracker.consume('T3');
-
-      tracker.reset();
-
-      expect(tracker.remaining.T1).toBe(DEFAULT_TIER_BUDGETS.T1);
-      expect(tracker.remaining.T2).toBe(DEFAULT_TIER_BUDGETS.T2);
-      expect(tracker.remaining.T3).toBe(DEFAULT_TIER_BUDGETS.T3);
-    });
-
-    it('should reset usage counters to zero', () => {
-      tracker.consume('T1');
-      tracker.consume('T2');
-      tracker.consume('T3');
-
-      tracker.reset();
-
-      expect(tracker.used.T1).toBe(0);
-      expect(tracker.used.T2).toBe(0);
-      expect(tracker.used.T3).toBe(0);
-    });
-
-    it('should allow consumption again after reset', () => {
-      // Exhaust all tiers
-      for (let i = 0; i < 10; i++) tracker.consume('T1');
-      for (let i = 0; i < 3; i++) tracker.consume('T2');
-      tracker.consume('T3');
-
-      expect(tracker.consume('T1')).toBe(false);
-      expect(tracker.consume('T2')).toBe(false);
-      expect(tracker.consume('T3')).toBe(false);
-
-      tracker.reset();
-
-      expect(tracker.consume('T1')).toBe(true);
-      expect(tracker.consume('T2')).toBe(true);
-      expect(tracker.consume('T3')).toBe(true);
-    });
-  });
-
   describe('immutability', () => {
     it('should return readonly remaining budget', () => {
       const remaining = tracker.remaining;
@@ -211,23 +166,6 @@ describe('BudgetTracker', () => {
 
       // T3 with 0 budget should immediately fail
       expect(customTracker.consume('T3')).toBe(false);
-    });
-
-    it('should reset to custom initial values', () => {
-      const customBudgets: TierBudgets = {
-        T1: 5,
-        T2: 2,
-        T3: 1,
-      };
-      const customTracker = createBudgetTracker(customBudgets);
-
-      customTracker.consume('T1');
-      customTracker.consume('T1');
-      customTracker.reset();
-
-      expect(customTracker.remaining.T1).toBe(5);
-      expect(customTracker.remaining.T2).toBe(2);
-      expect(customTracker.remaining.T3).toBe(1);
     });
   });
 

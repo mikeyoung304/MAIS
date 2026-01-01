@@ -27,13 +27,10 @@ export {
   type AgentType,
   type TierBudgets,
   type BudgetTracker,
-  type SessionId,
-  type TenantId,
   DEFAULT_TIER_BUDGETS,
   SOFT_CONFIRM_WINDOWS,
   createBudgetTracker,
-  toSessionId,
-  toTenantId,
+  isOnboardingActive,
 } from './types';
 
 export {
@@ -76,6 +73,14 @@ export {
   getAgentMetrics,
   getAgentMetricsContentType,
 } from './metrics';
+
+// Request context for per-request state (prevents race conditions)
+export {
+  type OrchestratorRequestContext,
+  requestContext,
+  getRequestContext,
+  runInRequestContext,
+} from './request-context';
 
 // Note: The legacy AgentOrchestrator and CustomerOrchestrator have been removed.
 // Use AdminOrchestrator, OnboardingOrchestrator, or CustomerChatOrchestrator instead.

@@ -1,24 +1,25 @@
 /**
  * Agent Orchestrator Types
  *
- * Branded types prevent sessionId/tenantId mixups at compile time.
- * Based on Kieran's TypeScript review feedback.
+ * Shared types and utilities for agent orchestrators.
  */
 
-// Branded types prevent ID mixups at compile time
-export type SessionId = string & { readonly __brand: 'SessionId' };
-export type TenantId = string & { readonly __brand: 'TenantId' };
-
-export function toSessionId(id: string): SessionId {
-  return id as SessionId;
-}
-
-export function toTenantId(id: string): TenantId {
-  return id as TenantId;
-}
+import { parseOnboardingPhase, type OnboardingPhase } from '@macon/contracts';
 
 // Shared agent type (used across all agent configs)
 export type AgentType = 'onboarding' | 'customer' | 'admin';
+
+/**
+ * Check if a tenant is actively in onboarding (not completed or skipped).
+ * Single source of truth for onboarding mode logic.
+ *
+ * @param phase - The tenant's onboarding phase (raw or parsed)
+ * @returns true if tenant is still in active onboarding
+ */
+export function isOnboardingActive(phase: OnboardingPhase | string | null | undefined): boolean {
+  const parsed = typeof phase === 'string' ? parseOnboardingPhase(phase) : phase;
+  return parsed !== null && parsed !== undefined && parsed !== 'COMPLETED' && parsed !== 'SKIPPED';
+}
 
 // Per-tier recursion budgets (prevents T1 from starving T2/T3)
 export interface TierBudgets {
@@ -40,7 +41,6 @@ export interface BudgetTracker {
   readonly used: Readonly<TierBudgets>;
 
   consume(tier: keyof TierBudgets): boolean; // Returns false if exhausted
-  reset(): void;
 }
 
 // Factory function for creating budget trackers
@@ -61,11 +61,6 @@ export function createBudgetTracker(initial: TierBudgets): BudgetTracker {
       remaining = { ...remaining, [tier]: remaining[tier] - 1 };
       used = { ...used, [tier]: used[tier] + 1 };
       return true;
-    },
-
-    reset(): void {
-      remaining = { ...initial };
-      used = { T1: 0, T2: 0, T3: 0 };
     },
   };
 }

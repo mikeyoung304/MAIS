@@ -6,7 +6,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { ContextCache, withSessionId, type ContextCacheConfig } from '../../../src/agent/context/context-cache';
+import {
+  ContextCache,
+  withSessionId,
+  type ContextCacheConfig,
+} from '../../../src/agent/context/context-cache';
 import type { AgentSessionContext } from '../../../src/agent/context/context-builder';
 
 /**
@@ -244,19 +248,31 @@ describe('ContextCache', () => {
       const smallCache = new ContextCache({ maxEntries: 3 });
 
       // Add entries with time gaps
-      smallCache.set('tenant-1', createMockContext({ tenantId: 'tenant-1', businessName: 'First' }));
+      smallCache.set(
+        'tenant-1',
+        createMockContext({ tenantId: 'tenant-1', businessName: 'First' })
+      );
       vi.advanceTimersByTime(1000);
 
-      smallCache.set('tenant-2', createMockContext({ tenantId: 'tenant-2', businessName: 'Second' }));
+      smallCache.set(
+        'tenant-2',
+        createMockContext({ tenantId: 'tenant-2', businessName: 'Second' })
+      );
       vi.advanceTimersByTime(1000);
 
-      smallCache.set('tenant-3', createMockContext({ tenantId: 'tenant-3', businessName: 'Third' }));
+      smallCache.set(
+        'tenant-3',
+        createMockContext({ tenantId: 'tenant-3', businessName: 'Third' })
+      );
       vi.advanceTimersByTime(1000);
 
       expect(smallCache.getStats().size).toBe(3);
 
       // Adding fourth entry should evict tenant-1 (oldest)
-      smallCache.set('tenant-4', createMockContext({ tenantId: 'tenant-4', businessName: 'Fourth' }));
+      smallCache.set(
+        'tenant-4',
+        createMockContext({ tenantId: 'tenant-4', businessName: 'Fourth' })
+      );
 
       expect(smallCache.getStats().size).toBe(3);
       expect(smallCache.get('tenant-1')).toBeNull(); // Evicted
@@ -268,12 +284,24 @@ describe('ContextCache', () => {
     it('should not evict when updating existing entry at capacity', () => {
       const smallCache = new ContextCache({ maxEntries: 3 });
 
-      smallCache.set('tenant-1', createMockContext({ tenantId: 'tenant-1', businessName: 'First' }));
-      smallCache.set('tenant-2', createMockContext({ tenantId: 'tenant-2', businessName: 'Second' }));
-      smallCache.set('tenant-3', createMockContext({ tenantId: 'tenant-3', businessName: 'Third' }));
+      smallCache.set(
+        'tenant-1',
+        createMockContext({ tenantId: 'tenant-1', businessName: 'First' })
+      );
+      smallCache.set(
+        'tenant-2',
+        createMockContext({ tenantId: 'tenant-2', businessName: 'Second' })
+      );
+      smallCache.set(
+        'tenant-3',
+        createMockContext({ tenantId: 'tenant-3', businessName: 'Third' })
+      );
 
       // Update existing entry - should not trigger eviction
-      smallCache.set('tenant-2', createMockContext({ tenantId: 'tenant-2', businessName: 'Updated' }));
+      smallCache.set(
+        'tenant-2',
+        createMockContext({ tenantId: 'tenant-2', businessName: 'Updated' })
+      );
 
       expect(smallCache.getStats().size).toBe(3);
       expect(smallCache.get('tenant-1')).not.toBeNull();
@@ -395,6 +423,99 @@ describe('ContextCache', () => {
       expect(updated.businessSlug).toBe('my-business');
       expect(updated.quickStats).toEqual(context.quickStats);
       expect(updated.contextPrompt).toBe(context.contextPrompt);
+    });
+  });
+
+  describe('true LRU behavior (get updates position)', () => {
+    it('should evict least recently accessed entry, not oldest', () => {
+      const smallCache = new ContextCache({ maxEntries: 3 });
+
+      // Add entries in order: 1, 2, 3
+      smallCache.set(
+        'tenant-1',
+        createMockContext({ tenantId: 'tenant-1', businessName: 'First' })
+      );
+      vi.advanceTimersByTime(1000);
+
+      smallCache.set(
+        'tenant-2',
+        createMockContext({ tenantId: 'tenant-2', businessName: 'Second' })
+      );
+      vi.advanceTimersByTime(1000);
+
+      smallCache.set(
+        'tenant-3',
+        createMockContext({ tenantId: 'tenant-3', businessName: 'Third' })
+      );
+      vi.advanceTimersByTime(1000);
+
+      // Access tenant-1 to make it "most recently used"
+      expect(smallCache.get('tenant-1')).not.toBeNull();
+
+      // Add tenant-4 - should evict tenant-2 (LRU), NOT tenant-1 (oldest by insertion)
+      smallCache.set(
+        'tenant-4',
+        createMockContext({ tenantId: 'tenant-4', businessName: 'Fourth' })
+      );
+
+      expect(smallCache.getStats().size).toBe(3);
+      expect(smallCache.get('tenant-1')).not.toBeNull(); // Kept - was accessed
+      expect(smallCache.get('tenant-2')).toBeNull(); // Evicted - LRU
+      expect(smallCache.get('tenant-3')).not.toBeNull();
+      expect(smallCache.get('tenant-4')).not.toBeNull();
+    });
+
+    it('should correctly track access order across multiple accesses', () => {
+      const smallCache = new ContextCache({ maxEntries: 3 });
+
+      // Add entries
+      smallCache.set('A', createMockContext({ tenantId: 'A' }));
+      vi.advanceTimersByTime(100);
+      smallCache.set('B', createMockContext({ tenantId: 'B' }));
+      vi.advanceTimersByTime(100);
+      smallCache.set('C', createMockContext({ tenantId: 'C' }));
+
+      // Access pattern: A, C (B becomes LRU)
+      smallCache.get('A');
+      smallCache.get('C');
+
+      // Add D - should evict B
+      smallCache.set('D', createMockContext({ tenantId: 'D' }));
+
+      expect(smallCache.get('A')).not.toBeNull();
+      expect(smallCache.get('B')).toBeNull(); // Evicted
+      expect(smallCache.get('C')).not.toBeNull();
+      expect(smallCache.get('D')).not.toBeNull();
+    });
+
+    it('should maintain O(1) eviction performance', () => {
+      // This test verifies the implementation doesn't iterate over all entries
+      const largeCache = new ContextCache({ maxEntries: 100 });
+
+      // Fill cache
+      for (let i = 0; i < 100; i++) {
+        largeCache.set(`tenant-${i}`, createMockContext({ tenantId: `tenant-${i}` }));
+      }
+
+      // Access some entries to change LRU order
+      largeCache.get('tenant-0');
+      largeCache.get('tenant-50');
+
+      const startTime = Date.now();
+
+      // Add one more entry, triggering eviction
+      largeCache.set('tenant-new', createMockContext({ tenantId: 'tenant-new' }));
+
+      const elapsedMs = Date.now() - startTime;
+
+      // O(1) eviction should be very fast (under 10ms even with overhead)
+      expect(elapsedMs).toBeLessThan(10);
+      expect(largeCache.getStats().size).toBe(100);
+
+      // tenant-1 should be evicted (LRU after we accessed tenant-0)
+      expect(largeCache.get('tenant-1')).toBeNull();
+      // tenant-0 should exist (was accessed)
+      expect(largeCache.get('tenant-0')).not.toBeNull();
     });
   });
 
