@@ -46,9 +46,27 @@ export interface ProposalResult {
 const PROPOSAL_TTL_MS = 30 * 60 * 1000;
 
 /**
- * T2 soft-confirm window in milliseconds (2 minutes)
- * T2 proposals only auto-confirm if created within this window.
- * This prevents accidental confirmations when user changes topics.
+ * Agent type for context-aware soft-confirm windows
+ */
+export type AgentType = 'onboarding' | 'customer' | 'admin';
+
+/**
+ * T2 soft-confirm windows per agent type (in milliseconds)
+ *
+ * Different agent types need different confirmation windows:
+ * - Onboarding: 10 minutes - users need time to read and think about suggestions
+ * - Customer: 2 minutes - quick booking interactions
+ * - Admin: 5 minutes - moderate time for business operations
+ */
+const T2_SOFT_CONFIRM_WINDOWS: Record<AgentType, number> = {
+  onboarding: 10 * 60 * 1000, // 10 minutes
+  customer: 2 * 60 * 1000, // 2 minutes
+  admin: 5 * 60 * 1000, // 5 minutes
+};
+
+/**
+ * Default T2 soft-confirm window (for backwards compatibility)
+ * @deprecated Use T2_SOFT_CONFIRM_WINDOWS with agent type instead
  */
 const T2_SOFT_CONFIRM_WINDOW_MS = 2 * 60 * 1000;
 
@@ -207,12 +225,21 @@ export class ProposalService {
    *
    * Called when user sends a message (soft confirm behavior).
    * Only confirms if user didn't say "wait", "stop", etc.
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param sessionId - Session ID to query proposals for
+   * @param userMessage - User message to check for rejection keywords
+   * @param agentType - Agent type for context-aware window (default: 'customer')
    */
   async softConfirmPendingT2(
     tenantId: string,
     sessionId: string,
-    userMessage: string
+    userMessage: string,
+    agentType: AgentType = 'customer'
   ): Promise<string[]> {
+    // Get context-aware window for this agent type
+    const windowMs = T2_SOFT_CONFIRM_WINDOWS[agentType];
+
     // Normalize unicode before pattern matching (prevent lookalike character bypass)
     const normalizedMessage = userMessage.normalize('NFKC');
 
@@ -244,7 +271,19 @@ export class ProposalService {
     }
 
     const now = new Date();
-    const softConfirmCutoff = new Date(now.getTime() - T2_SOFT_CONFIRM_WINDOW_MS);
+    const softConfirmCutoff = new Date(now.getTime() - windowMs);
+
+    // DEBUG: Log query params for troubleshooting
+    logger.debug(
+      {
+        tenantId,
+        sessionId,
+        agentType,
+        windowMs,
+        softConfirmCutoff: softConfirmCutoff.toISOString(),
+      },
+      'T2 soft-confirm query params'
+    );
 
     // Get pending T2 proposals created within the soft-confirm window
     const proposals = await this.prisma.agentProposal.findMany({

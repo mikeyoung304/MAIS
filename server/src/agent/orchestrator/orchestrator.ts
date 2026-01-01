@@ -43,6 +43,12 @@ import type { OnboardingPhase } from '@macon/contracts';
 import { withRetry, CLAUDE_API_RETRY_CONFIG } from '../utils/retry';
 import { contextCache, withSessionId } from '../context/context-cache';
 
+// Guardrail imports - Phase 2 code-level controls
+import type { AgentType, BudgetTracker, TierBudgets } from './types';
+import { DEFAULT_TIER_BUDGETS, createBudgetTracker } from './types';
+import { ToolRateLimiter } from './rate-limiter';
+import { CircuitBreaker } from './circuit-breaker';
+
 /**
  * Validate and parse messages from database JSON to ChatMessage[]
  * Prisma stores messages as JsonValue, this safely converts them
@@ -262,6 +268,10 @@ export interface OrchestratorConfig {
   maxTokens: number;
   maxHistoryMessages: number;
   temperature?: number;
+  /** Agent type for context-aware behavior (windows, rate limits) */
+  agentType?: AgentType;
+  /** Custom tier budgets (default: T1=10, T2=3, T3=1) */
+  tierBudgets?: TierBudgets;
 }
 
 const DEFAULT_CONFIG: OrchestratorConfig = {
@@ -269,6 +279,7 @@ const DEFAULT_CONFIG: OrchestratorConfig = {
   maxTokens: 4096,
   maxHistoryMessages: 20, // Sliding window
   temperature: 0.7,
+  agentType: 'admin', // Default to admin for backwards compatibility
 };
 
 /**
@@ -396,6 +407,14 @@ export class AgentOrchestrator {
   private auditService: AuditService;
   private advisorMemoryService: AdvisorMemoryService;
 
+  // Guardrails - Phase 2 code-level controls
+  private readonly agentType: AgentType;
+  private readonly rateLimiter: ToolRateLimiter;
+  private readonly tierBudgets: TierBudgets;
+
+  // Per-session state (reset per session, not per turn)
+  private circuitBreaker: CircuitBreaker | null = null;
+
   constructor(
     private readonly prisma: PrismaClient,
     config: Partial<OrchestratorConfig> = {}
@@ -407,9 +426,19 @@ export class AgentOrchestrator {
     this.proposalService = new ProposalService(prisma);
     this.auditService = new AuditService(prisma);
 
+    // Initialize guardrails
+    this.agentType = this.config.agentType || 'admin';
+    this.rateLimiter = new ToolRateLimiter();
+    this.tierBudgets = this.config.tierBudgets || DEFAULT_TIER_BUDGETS;
+
     // Initialize advisor memory service for onboarding mode
     const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prisma);
     this.advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
+
+    logger.debug(
+      { agentType: this.agentType, tierBudgets: this.tierBudgets },
+      'AgentOrchestrator initialized with guardrails'
+    );
   }
 
   /**
@@ -505,21 +534,53 @@ export class AgentOrchestrator {
 
   /**
    * Send a message and get response
+   *
+   * @param tenantId - The tenant ID
+   * @param requestedSessionId - The session ID from the request (may be stale/expired)
+   * @param userMessage - The user's message
    */
-  async chat(tenantId: string, sessionId: string, userMessage: string): Promise<ChatResponse> {
+  async chat(
+    tenantId: string,
+    requestedSessionId: string,
+    userMessage: string
+  ): Promise<ChatResponse> {
     const startTime = Date.now();
 
-    // Get or validate session
-    let session = await this.getSession(tenantId, sessionId);
+    // Get or validate session - IMPORTANT: Use the resolved session's ID, not the requested one
+    let session = await this.getSession(tenantId, requestedSessionId);
     if (!session) {
       session = await this.getOrCreateSession(tenantId);
     }
 
+    // Determine agent type for this session (onboarding mode uses different windows)
+    const isOnboardingMode = session.onboarding?.isOnboardingMode ?? false;
+    const effectiveAgentType: AgentType = isOnboardingMode ? 'onboarding' : this.agentType;
+
+    // Initialize or reset guardrails for this turn
+    this.rateLimiter.resetTurn();
+    if (!this.circuitBreaker) {
+      this.circuitBreaker = new CircuitBreaker();
+    }
+
+    // Check circuit breaker before proceeding
+    const circuitCheck = this.circuitBreaker.check();
+    if (!circuitCheck.allowed) {
+      logger.warn(
+        { tenantId, sessionId: session.sessionId, reason: circuitCheck.reason },
+        'Circuit breaker tripped - session limit reached'
+      );
+      return {
+        message: `I've reached my session limit. ${circuitCheck.reason}. Please start a new conversation to continue.`,
+      };
+    }
+
     // T2 soft-confirm: Process pending proposals if user doesn't say "wait"
+    // FIX: Use session.sessionId (the actual session) not requestedSessionId (which may be stale)
     const softConfirmedIds = await this.proposalService.softConfirmPendingT2(
       tenantId,
-      sessionId,
-      userMessage
+      session.sessionId, // FIX: Use resolved session ID
+      userMessage,
+      effectiveAgentType // Pass agent type for context-aware window
     );
 
     // Track failed proposals to inform Claude so it can apologize and offer alternatives
@@ -675,10 +736,7 @@ export class AgentOrchestrator {
       }
     }
 
-    // Determine if in onboarding mode
-    const isOnboardingMode = session.onboarding?.isOnboardingMode ?? false;
-
-    // Build system prompt based on mode
+    // Build system prompt based on mode (isOnboardingMode already determined above)
     let systemPrompt: string;
     if (isOnboardingMode && session.onboarding) {
       // Get tenant for business name
@@ -755,6 +813,9 @@ export class AgentOrchestrator {
       throw new Error('Failed to communicate with AI assistant. Please try again in a moment.');
     }
 
+    // Create budget tracker for this turn
+    const budgetTracker = createBudgetTracker(this.tierBudgets);
+
     // Process response - handle tool calls if any
     const { finalMessage, toolResults, proposals } = await this.processResponse(
       response,
@@ -763,7 +824,30 @@ export class AgentOrchestrator {
       messages,
       session.context,
       systemPrompt,
-      isOnboardingMode
+      isOnboardingMode,
+      0, // depth
+      budgetTracker
+    );
+
+    // Record turn completion for circuit breaker
+    // Estimate tokens: input + output (rough approximation)
+    const estimatedTokens = Math.ceil(
+      (userMessage.length + finalMessage.length) / 4 + // ~4 chars per token
+        (response.usage?.input_tokens || 0) +
+        (response.usage?.output_tokens || 0)
+    );
+    this.circuitBreaker?.recordTurn(estimatedTokens);
+    this.circuitBreaker?.recordSuccess();
+
+    logger.debug(
+      {
+        tenantId,
+        sessionId: session.sessionId,
+        budgetUsed: budgetTracker.used,
+        rateLimitStats: this.rateLimiter.getStats(),
+        circuitBreakerState: this.circuitBreaker?.getState(),
+      },
+      'Turn completed with guardrail stats'
     );
 
     // Update session with new messages
@@ -772,9 +856,14 @@ export class AgentOrchestrator {
       content: userMessage,
     };
 
+    // Ensure we never store empty content (Claude API rejects empty non-final assistant messages)
+    // If tools were executed but no text was returned, provide a placeholder
+    const messageContent =
+      finalMessage || (toolResults && toolResults.length > 0 ? '[Tools executed]' : 'Done.');
+
     const newAssistantMessage: ChatMessage = {
       role: 'assistant',
-      content: finalMessage,
+      content: messageContent,
       toolUses: toolResults?.map((r) => ({
         toolName: r.toolName,
         input: r.input || {},
@@ -972,6 +1061,7 @@ export class AgentOrchestrator {
    * @param cachedSystemPrompt - Pre-built system prompt to avoid redundant rebuilds
    * @param isOnboardingMode - Whether to use onboarding tools
    * @param depth - Current recursion depth (prevents unbounded tool call loops)
+   * @param budgetTracker - Per-tier budget tracker for this turn
    */
   private async processResponse(
     response: Anthropic.Messages.Message,
@@ -981,7 +1071,8 @@ export class AgentOrchestrator {
     cachedContext: AgentSessionContext,
     cachedSystemPrompt: string,
     isOnboardingMode: boolean = false,
-    depth: number = 0
+    depth: number = 0,
+    budgetTracker?: BudgetTracker
   ): Promise<{
     finalMessage: string;
     toolResults?: {
@@ -997,7 +1088,7 @@ export class AgentOrchestrator {
       requiresApproval: boolean;
     }[];
   }> {
-    // Check recursion depth limit
+    // Check recursion depth limit (legacy, kept for backwards compatibility)
     if (depth >= MAX_RECURSION_DEPTH) {
       logger.warn(
         { tenantId, sessionId, depth },
@@ -1008,6 +1099,9 @@ export class AgentOrchestrator {
           "I've reached my limit for tool operations in a single request. Let me summarize what I've done so far. If you need more actions, please send another message.",
       };
     }
+
+    // Create default budget tracker if not provided (backwards compatibility)
+    const budget = budgetTracker || createBudgetTracker(this.tierBudgets);
 
     // Check if response has tool calls
     const toolUseBlocks = response.content.filter(
@@ -1065,8 +1159,44 @@ export class AgentOrchestrator {
         continue;
       }
 
+      // Check rate limits before execution
+      const rateLimitCheck = this.rateLimiter.canCall(toolUse.name);
+      if (!rateLimitCheck.allowed) {
+        logger.warn({ toolName: toolUse.name, reason: rateLimitCheck.reason }, 'Tool rate limited');
+        toolResultBlocks.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify({
+            success: false,
+            error: `Rate limit reached: ${rateLimitCheck.reason}. Please try again in your next message.`,
+          }),
+        });
+        continue;
+      }
+
+      // Check tier budget before execution
+      const toolTier = tool.trustTier || 'T1';
+      if (!budget.consume(toolTier as keyof TierBudgets)) {
+        logger.warn(
+          { toolName: toolUse.name, tier: toolTier, remaining: budget.remaining },
+          'Tier budget exhausted'
+        );
+        toolResultBlocks.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify({
+            success: false,
+            error: `I've reached my limit for ${toolTier} operations this turn. Please continue in your next message.`,
+          }),
+        });
+        continue;
+      }
+
       try {
         const result = await tool.execute(toolContext, toolUse.input as Record<string, unknown>);
+
+        // Record successful call in rate limiter
+        this.rateLimiter.recordCall(toolUse.name);
 
         toolResults.push({
           toolName: toolUse.name,
@@ -1173,9 +1303,9 @@ export class AgentOrchestrator {
       CLAUDE_API_RETRY_CONFIG
     );
 
-    // Check for more tool calls (recursive with depth limit)
+    // Check for more tool calls (recursive with depth limit and shared budget)
     if (finalResponse.content.some((block) => block.type === 'tool_use')) {
-      // Recursively handle more tool calls (increment depth to enforce limit)
+      // Recursively handle more tool calls (increment depth, pass same budget tracker)
       const recursiveResult = await this.processResponse(
         finalResponse,
         tenantId,
@@ -1184,7 +1314,8 @@ export class AgentOrchestrator {
         cachedContext,
         cachedSystemPrompt,
         isOnboardingMode,
-        depth + 1
+        depth + 1,
+        budget // Pass the same budget tracker for consistent enforcement across recursion
       );
       return {
         finalMessage: recursiveResult.finalMessage,
