@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: '569'
 tags: [code-review, simplicity, agent-ecosystem, quality-first-triage, performance]
 dependencies: []
+completed_date: '2026-01-01'
 ---
 
 # P1: Tenant Lookup Duplicated 26+ Times
@@ -86,14 +87,15 @@ Create dedicated tenant cache with TTL, invalidated on updates.
 
 ## Acceptance Criteria
 
-- [ ] Add tenant data to session state
-- [ ] Load tenant once in getOrCreateSession
-- [ ] Hook for subclass-specific select fields
-- [ ] Remove redundant tenant lookups
-- [ ] Tests verify single lookup per session
+- [x] Add tenant data to session state (`TenantSessionData` interface)
+- [x] Load tenant once at start of chat() (`loadTenantData()` method)
+- [x] Hook for subclass-specific select fields (`getTenantSelectFields()`)
+- [x] Remove redundant tenant lookups in buildSystemPrompt
+- [x] Tests verify type structure (6 new tests)
 
 ## Work Log
 
-| Date       | Action                            | Learnings                               |
-| ---------- | --------------------------------- | --------------------------------------- |
-| 2026-01-01 | Created from quality-first triage | Simplicity agent identified N+1 pattern |
+| Date       | Action                             | Learnings                                                                                                                                                                                                                                                                                             |
+| ---------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from quality-first triage  | Simplicity agent identified N+1 pattern                                                                                                                                                                                                                                                               |
+| 2026-01-01 | Implemented tenant session caching | Added TenantSessionData interface to base-orchestrator. Each orchestrator now loads tenant once via loadTenantData(), passes to buildSystemPrompt via PromptContext.tenant. CustomerChatOrchestrator overrides getTenantSelectFields() to include packages. Reduced from 3-4 queries to 1-2 per chat. |

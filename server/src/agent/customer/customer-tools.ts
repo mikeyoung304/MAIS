@@ -5,12 +5,14 @@
  * - get_services: Browse available packages
  * - check_availability: Check available dates
  * - book_service: Create booking with T3 confirmation
+ * - confirm_proposal: Confirm pending T3 proposals via conversation
  * - get_business_info: Hours, policies, FAQ
  */
 
 import type { PrismaClient, Prisma } from '../../generated/prisma';
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from '../tools/types';
 import { ProposalService } from '../proposals/proposal.service';
+import { getCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';
 import { ErrorMessages } from '../errors';
 
@@ -392,7 +394,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           trustTier: proposal.trustTier,
           requiresApproval: true,
           expiresAt: proposal.expiresAt,
-          message: `Ready to book ${pkg.name} on ${formatDate(date)} for ${formatMoney(pkg.basePrice)}. Click "Confirm Booking" to proceed.`,
+          message: `Ready to book ${pkg.name} on ${formatDate(date)} for ${formatMoney(pkg.basePrice)}. Say "yes, confirm" or "go ahead" to complete your booking.`,
         } as WriteToolProposal;
       } catch (error) {
         logger.error({ error, tenantId, packageId }, 'Failed to create booking proposal');
@@ -402,7 +404,161 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   },
 
   // ============================================================================
-  // 4. GET BUSINESS INFO - Hours, policies, FAQ
+  // 4. CONFIRM PROPOSAL - Confirm pending T3 proposals via conversation
+  // ============================================================================
+  {
+    name: 'confirm_proposal',
+    trustTier: 'T1', // The confirmation step itself is safe - risk was in creation
+    description:
+      'Confirm a pending booking proposal after the customer explicitly approves. Use when customer says "yes", "confirm", "go ahead", etc.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        proposalId: {
+          type: 'string',
+          description: 'ID of the proposal to confirm',
+        },
+      },
+      required: ['proposalId'],
+    },
+    async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+      const customerContext = context as CustomerToolContext;
+      const { tenantId, prisma, sessionId } = customerContext;
+      const { proposalId } = params as { proposalId: string };
+
+      try {
+        // Fetch the proposal with tenant isolation
+        const proposal = await prisma.agentProposal.findFirst({
+          where: {
+            id: proposalId,
+            tenantId, // CRITICAL: Tenant isolation
+            sessionId, // Must belong to this session
+          },
+        });
+
+        if (!proposal) {
+          return {
+            success: false,
+            error: 'Booking proposal not found. It may have expired or already been processed.',
+          };
+        }
+
+        // Check if already processed
+        if (proposal.status !== 'PENDING') {
+          const statusMessages: Record<string, string> = {
+            CONFIRMED: 'This booking is already being processed.',
+            EXECUTED: 'This booking has already been completed.',
+            REJECTED: 'This booking was cancelled.',
+            EXPIRED: 'This booking proposal has expired. Please start a new booking.',
+            FAILED: 'This booking encountered an error. Please try again.',
+          };
+          return {
+            success: false,
+            error: statusMessages[proposal.status] || 'This booking has already been processed.',
+          };
+        }
+
+        // Check expiration
+        if (new Date() > proposal.expiresAt) {
+          await prisma.agentProposal.update({
+            where: { id: proposalId },
+            data: { status: 'EXPIRED' },
+          });
+          return {
+            success: false,
+            error: 'This booking proposal has expired. Please start a new booking.',
+          };
+        }
+
+        // Confirm the proposal
+        await prisma.agentProposal.update({
+          where: { id: proposalId },
+          data: {
+            status: 'CONFIRMED',
+            confirmedAt: new Date(),
+          },
+        });
+
+        logger.info(
+          { tenantId, proposalId, sessionId },
+          'Customer proposal confirmed via conversation'
+        );
+
+        // Execute the proposal immediately
+        const executor = getCustomerProposalExecutor(proposal.operation);
+        if (!executor) {
+          // Mark as failed if no executor found
+          await prisma.agentProposal.update({
+            where: { id: proposalId },
+            data: { status: 'FAILED', error: 'No executor registered for this operation' },
+          });
+          logger.error(
+            { tenantId, proposalId, operation: proposal.operation },
+            'No executor found for customer proposal'
+          );
+          return {
+            success: false,
+            error: 'Unable to complete booking. Please try again or contact support.',
+          };
+        }
+
+        // Execute with customer ID from proposal
+        const customerId = proposal.customerId;
+        if (!customerId) {
+          await prisma.agentProposal.update({
+            where: { id: proposalId },
+            data: { status: 'FAILED', error: 'Missing customer ID on proposal' },
+          });
+          return {
+            success: false,
+            error: 'Unable to complete booking. Please try again.',
+          };
+        }
+
+        const payload = (proposal.payload as Record<string, unknown>) || {};
+        const executionResult = await executor(tenantId, customerId, payload);
+
+        // Mark as executed
+        await prisma.agentProposal.update({
+          where: { id: proposalId },
+          data: {
+            status: 'EXECUTED',
+            executedAt: new Date(),
+            result: executionResult as Prisma.JsonObject,
+          },
+        });
+
+        logger.info(
+          { tenantId, proposalId, customerId, bookingId: executionResult.bookingId },
+          'Customer booking executed successfully'
+        );
+
+        // Return success with booking details
+        return {
+          success: true,
+          data: {
+            action: 'booking_confirmed',
+            bookingId: executionResult.bookingId,
+            confirmationCode: executionResult.confirmationCode,
+            packageName: executionResult.packageName,
+            date: executionResult.formattedDate,
+            price: executionResult.formattedPrice,
+            checkoutUrl: executionResult.checkoutUrl,
+            message: executionResult.message || 'Your booking has been confirmed!',
+          },
+        };
+      } catch (error) {
+        logger.error({ error, tenantId, proposalId }, 'Failed to confirm customer proposal');
+        return {
+          success: false,
+          error: 'Failed to complete your booking. Please try again.',
+        };
+      }
+    },
+  },
+
+  // ============================================================================
+  // 5. GET BUSINESS INFO - Hours, policies, FAQ
   // ============================================================================
   {
     name: 'get_business_info',

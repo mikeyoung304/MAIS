@@ -2,17 +2,104 @@
  * Metrics Routes
  *
  * Provides application metrics endpoint for monitoring systems (Prometheus, Datadog)
- * No authentication required - designed for scraping by monitoring tools
+ *
+ * Security: Protected by bearer token authentication when METRICS_BEARER_TOKEN is set.
+ * Configure Prometheus scrape config with bearer_token to authenticate.
  *
  * Endpoints:
  * - GET /metrics - Prometheus text format (for Prometheus scraping)
  * - GET /metrics/json - JSON format (for debugging and Datadog)
+ * - GET /metrics/agent - Agent-specific metrics in Prometheus format
  */
 
-import type { Express, Request, Response } from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import { register, collectDefaultMetrics, Counter, Gauge } from 'prom-client';
 import { logger } from '../lib/core/logger';
 import { getAgentMetrics, getAgentMetricsContentType } from '../agent/orchestrator/metrics';
+
+/**
+ * Metrics authentication middleware
+ *
+ * When METRICS_BEARER_TOKEN is configured:
+ * - Requires Authorization: Bearer <token> header
+ * - Returns 401 if token is missing or invalid
+ *
+ * When METRICS_BEARER_TOKEN is NOT configured:
+ * - In production (NODE_ENV=production): Returns 403 (metrics disabled)
+ * - In development: Allows access with a warning log
+ */
+function metricsAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const expectedToken = process.env.METRICS_BEARER_TOKEN;
+
+  // If token is configured, require it
+  if (expectedToken) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      res.status(401).json({ error: 'Missing Authorization header' });
+      return;
+    }
+
+    // Check Bearer token format
+    const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (!tokenMatch) {
+      res
+        .status(401)
+        .json({ error: 'Invalid Authorization header format. Expected: Bearer <token>' });
+      return;
+    }
+
+    const providedToken = tokenMatch[1];
+
+    // Constant-time comparison to prevent timing attacks
+    if (!timingSafeEqual(providedToken, expectedToken)) {
+      logger.warn({ ip: req.ip }, 'Invalid metrics bearer token');
+      res.status(401).json({ error: 'Invalid bearer token' });
+      return;
+    }
+
+    next();
+    return;
+  }
+
+  // Token not configured
+  if (process.env.NODE_ENV === 'production') {
+    // In production, refuse to expose metrics without auth
+    logger.error('METRICS_BEARER_TOKEN not configured - metrics endpoint disabled in production');
+    res.status(403).json({
+      error: 'Metrics endpoint disabled. Configure METRICS_BEARER_TOKEN to enable.',
+    });
+    return;
+  }
+
+  // In development, allow but warn (once per startup)
+  if (!metricsAuthWarningLogged) {
+    logger.warn(
+      'METRICS_BEARER_TOKEN not configured - metrics endpoints are unauthenticated. ' +
+        'Set METRICS_BEARER_TOKEN in production.'
+    );
+    metricsAuthWarningLogged = true;
+  }
+
+  next();
+}
+
+// Avoid log spam - warn only once per startup
+let metricsAuthWarningLogged = false;
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
 
 export interface MetricsDeps {
   startTime: number;
@@ -56,9 +143,9 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
    * Returns all metrics in Prometheus text format
    * Combines default Node.js metrics with agent-specific metrics
    *
-   * No authentication required - designed for Prometheus scraping
+   * Protected by bearer token when METRICS_BEARER_TOKEN is configured.
    */
-  app.get('/metrics', async (_req: Request, res: Response) => {
+  app.get('/metrics', metricsAuthMiddleware, async (_req: Request, res: Response) => {
     try {
       // Get default registry metrics (Node.js, HTTP, uptime)
       const defaultMetrics = await register.metrics();
@@ -82,9 +169,9 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
    * Returns metrics in JSON format (backwards compatible)
    * Useful for debugging and non-Prometheus monitoring systems
    *
-   * No authentication required
+   * Protected by bearer token when METRICS_BEARER_TOKEN is configured.
    */
-  app.get('/metrics/json', (_req: Request, res: Response) => {
+  app.get('/metrics/json', metricsAuthMiddleware, (_req: Request, res: Response) => {
     try {
       const now = Date.now();
       const uptimeSeconds = Math.floor((now - deps.startTime) / 1000);
@@ -118,8 +205,10 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
    * GET /metrics/agent
    * Returns only agent-specific metrics in Prometheus format
    * Useful for targeted monitoring of AI agent behavior
+   *
+   * Protected by bearer token when METRICS_BEARER_TOKEN is configured.
    */
-  app.get('/metrics/agent', async (_req: Request, res: Response) => {
+  app.get('/metrics/agent', metricsAuthMiddleware, async (_req: Request, res: Response) => {
     try {
       const agentMetricsText = await getAgentMetrics();
       res.set('Content-Type', getAgentMetricsContentType());

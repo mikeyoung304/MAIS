@@ -100,11 +100,8 @@ export class OnboardingOrchestrator extends BaseOrchestrator {
   }
 
   protected async buildSystemPrompt(context: PromptContext): Promise<string> {
-    // Get tenant info
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: context.tenantId },
-      select: { name: true, onboardingPhase: true },
-    });
+    // Use pre-loaded tenant data from session (avoids N+1 query)
+    const tenant = context.tenant;
 
     const currentPhase = parseOnboardingPhase(tenant?.onboardingPhase);
     const businessName = tenant?.name || 'Your Business';

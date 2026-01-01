@@ -1,9 +1,11 @@
 ---
-status: pending
+status: deferred
 priority: p1
 issue_id: '567'
 tags: [code-review, agent-native, agent-ecosystem, quality-first-triage]
 dependencies: []
+deferred_date: '2026-01-01'
+deferred_reason: 'Product decision: defer to post-MVP. Focus on booking flow first.'
 ---
 
 # P1: No Customer Self-Service Tools (Reschedule/Cancel)
@@ -97,6 +99,7 @@ Add customer-facing tools that mirror web UI:
 
 ## Work Log
 
-| Date       | Action                            | Learnings                                    |
-| ---------- | --------------------------------- | -------------------------------------------- |
-| 2026-01-01 | Created from quality-first triage | Agent-Native agent identified capability gap |
+| Date       | Action                            | Learnings                                                                                |
+| ---------- | --------------------------------- | ---------------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from quality-first triage | Agent-Native agent identified capability gap                                             |
+| 2026-01-01 | Deferred by product decision      | Focus on booking flow (confirm_proposal) first. Self-service tools deferred to post-MVP. |

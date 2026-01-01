@@ -41,6 +41,7 @@ const CUSTOMER_CONFIG: OrchestratorConfig = {
     check_availability: { maxPerTurn: 5, maxPerSession: 30 },
     get_business_info: { maxPerTurn: 2, maxPerSession: 10 },
     book_service: { maxPerTurn: 1, maxPerSession: 3 },
+    confirm_proposal: { maxPerTurn: 1, maxPerSession: 5 }, // Match book_service limits
   },
   circuitBreaker: {
     maxTurnsPerSession: 20, // Shorter sessions
@@ -76,25 +77,37 @@ export class CustomerChatOrchestrator extends BaseOrchestrator {
     return 60 * 60 * 1000; // 1 hour for customer sessions
   }
 
-  protected async buildSystemPrompt(context: PromptContext): Promise<string> {
-    // Get tenant info and services
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: context.tenantId },
-      include: {
-        packages: {
-          where: { active: true },
-          select: { name: true, basePrice: true, description: true },
-          orderBy: { name: 'asc' },
-          take: 10,
-        },
+  /**
+   * Override to include packages for customer chat context
+   */
+  protected getTenantSelectFields(): Record<string, unknown> {
+    return {
+      id: true,
+      name: true,
+      email: true,
+      onboardingPhase: true,
+      // Include active packages for service listing
+      packages: {
+        where: { active: true },
+        select: { name: true, basePrice: true, description: true },
+        orderBy: { name: 'asc' },
+        take: 10,
       },
-    });
+    };
+  }
+
+  protected async buildSystemPrompt(context: PromptContext): Promise<string> {
+    // Use pre-loaded tenant data from session (avoids N+1 query)
+    const tenant = context.tenant;
 
     if (!tenant) {
       return buildCustomerSystemPrompt('Business', 'Business information unavailable.');
     }
 
-    const packageList = tenant.packages
+    // Packages are included via getTenantSelectFields() override
+    const packages =
+      (tenant.packages as Array<{ name: string; basePrice: number; description?: string }>) || [];
+    const packageList = packages
       .map(
         (p) =>
           `- ${p.name}: $${(p.basePrice / 100).toFixed(2)}${p.description ? ` - ${p.description.slice(0, 100)}` : ''}`

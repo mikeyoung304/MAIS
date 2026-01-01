@@ -229,12 +229,18 @@ export class AdminOrchestrator extends BaseOrchestrator {
       return null;
     }
 
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { onboardingPhase: true },
-    });
+    // Use session.tenant if available (pre-loaded during chat)
+    // Only query DB if tenant data not in session (e.g., when called outside chat flow)
+    let onboardingPhase = baseSession.tenant?.onboardingPhase as string | null | undefined;
+    if (onboardingPhase === undefined) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { onboardingPhase: true },
+      });
+      onboardingPhase = tenant?.onboardingPhase;
+    }
 
-    const phase = parseOnboardingPhase(tenant?.onboardingPhase);
+    const phase = parseOnboardingPhase(onboardingPhase);
     const onboardingMode = isOnboardingActive(phase);
 
     const context = await this.buildCachedContext(tenantId, sessionId);

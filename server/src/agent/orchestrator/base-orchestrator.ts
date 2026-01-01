@@ -107,6 +107,26 @@ export interface ChatMessage {
 }
 
 /**
+ * Tenant data loaded once per session to avoid N+1 queries.
+ *
+ * Contains commonly needed fields. Subclasses can extend via getTenantSelectFields().
+ * This replaces the pattern of fetching tenant data in multiple places:
+ * - buildSystemPrompt()
+ * - getGreeting()
+ * - tool executions
+ *
+ * @see getTenantSelectFields() for customization
+ */
+export interface TenantSessionData {
+  id: string;
+  name: string;
+  email: string | null;
+  onboardingPhase: string | null;
+  /** Subclass-specific data (e.g., packages for customer chat) */
+  [key: string]: unknown;
+}
+
+/**
  * Session state stored in database
  */
 export interface SessionState {
@@ -115,6 +135,8 @@ export interface SessionState {
   messages: ChatMessage[];
   createdAt: Date;
   updatedAt: Date;
+  /** Tenant data loaded once per session (avoids N+1 queries) */
+  tenant?: TenantSessionData;
 }
 
 /**
@@ -145,6 +167,8 @@ export interface PromptContext {
   tenantId: string;
   sessionId: string;
   sessionContext?: AgentSessionContext;
+  /** Pre-loaded tenant data (avoids redundant DB queries in buildSystemPrompt) */
+  tenant?: TenantSessionData;
 }
 
 /**
@@ -308,6 +332,52 @@ export abstract class BaseOrchestrator {
   }
 
   /**
+   * Get Prisma select fields for tenant data.
+   * Override in subclasses to include additional fields.
+   *
+   * Base implementation includes common fields needed across all orchestrators.
+   * Subclasses can extend this for agent-specific needs (e.g., packages for customer chat).
+   *
+   * @example
+   * // In CustomerChatOrchestrator:
+   * protected getTenantSelectFields() {
+   *   return {
+   *     ...super.getTenantSelectFields(),
+   *     packages: { where: { active: true }, select: { name: true, basePrice: true } }
+   *   };
+   * }
+   */
+  protected getTenantSelectFields(): Record<string, unknown> {
+    return {
+      id: true,
+      name: true,
+      email: true,
+      onboardingPhase: true,
+    };
+  }
+
+  /**
+   * Load tenant data once per chat request.
+   * Called at the start of chat() to avoid N+1 queries.
+   *
+   * Uses getTenantSelectFields() to determine which fields to load.
+   * Subclasses can override getTenantSelectFields() for custom data needs.
+   */
+  protected async loadTenantData(tenantId: string): Promise<TenantSessionData | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: this.getTenantSelectFields(),
+    });
+
+    if (!tenant) {
+      return null;
+    }
+
+    // Cast to TenantSessionData (select fields match the interface)
+    return tenant as unknown as TenantSessionData;
+  }
+
+  /**
    * Check for prompt injection patterns
    * Uses NFKC normalization to catch Unicode lookalike characters.
    *
@@ -458,6 +528,13 @@ export abstract class BaseOrchestrator {
       session = await this.getOrCreateSession(tenantId);
     }
 
+    // Load tenant data once per chat request (avoids N+1 queries)
+    // This replaces multiple prisma.tenant.findUnique calls in buildSystemPrompt, getGreeting, etc.
+    if (!session.tenant) {
+      const tenantData = await this.loadTenantData(tenantId);
+      session.tenant = tenantData ?? undefined;
+    }
+
     // Initialize or reset guardrails for this turn
     this.rateLimiter.resetTurn();
 
@@ -508,6 +585,7 @@ export abstract class BaseOrchestrator {
     const promptContext: PromptContext = {
       tenantId,
       sessionId: session.sessionId,
+      tenant: session.tenant, // Pass pre-loaded tenant to avoid redundant queries
     };
     let systemPrompt = await this.buildSystemPrompt(promptContext);
 
