@@ -406,10 +406,10 @@ export function ProductPreviewTabs() {
 
       {/* Description below preview */}
       <p className="text-center text-text-muted text-sm mt-4">
-        {activeTab === 'storefront' &&
-          'Conversion-optimized pricing with psychology-backed tier design'}
-        {activeTab === 'booking' && 'Guided booking that converts visitors to clients'}
-        {activeTab === 'after-booking' && 'Shared space for client details and follow-ups'}
+        {activeTab === 'storefront' && 'Clear offerings and pricing that make sense the first time'}
+        {activeTab === 'booking' && 'Choose a tier, get answers, pay, and book—without a thread'}
+        {activeTab === 'after-booking' &&
+          'Questions, changes, files—one shared place that stays organized'}
       </p>
     </div>
   );

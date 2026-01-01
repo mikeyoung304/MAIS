@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
  */
 
 const navLinks = [
-  { href: '#how-it-works', label: 'Product' },
+  { href: '#demo', label: 'Demo' },
+  { href: '#how-it-works', label: 'How it works' },
   { href: '#pricing', label: 'Pricing' },
   { href: '#faq', label: 'FAQ' },
   { href: '/login', label: 'Login' },
@@ -85,7 +86,7 @@ export function MobileNav() {
               className="w-full rounded-full py-3 text-base"
               onClick={closeMenu}
             >
-              <Link href="/signup">Get started</Link>
+              <Link href="/signup">Start your storefront</Link>
             </Button>
           </div>
         </nav>
