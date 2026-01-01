@@ -11,7 +11,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ClientHubMockup } from '@/components/home/ClientHubMockup';
+import { JourneyShowcase } from '@/components/home/JourneyShowcase';
 import { MobileNav } from '@/components/home/MobileNav';
 
 export const metadata: Metadata = {
@@ -326,41 +326,35 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 5: LIVE PREVIEW DEMO
-              Client Hub mockup with labels
+              SECTION 5: THE COMPLETE JOURNEY
+              Scrolling showcase: Storefront → Booking → Hub
               ============================================ */}
           <section id="preview" className="py-24 md:py-32 px-6 scroll-mt-20">
             <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
+              <div className="text-center mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                  What Your Clients See After They Book You
+                  The Complete Client Journey
                 </h2>
                 <p className="text-lg text-text-muted max-w-2xl mx-auto leading-relaxed">
-                  Handled gives every client a permanent page where everything lives. They
-                  don&apos;t have to search their inbox. They don&apos;t have to text you again.
-                  They just go here.
+                  From discovery to delivery, everything flows through one beautiful system. No more
+                  scattered tools. No more lost threads.
                 </p>
                 <p className="mt-4 text-xl text-text-primary font-medium">
                   This is what calm looks like.
                 </p>
               </div>
 
-              {/* Client Hub Mockup */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-sage/5 to-sage/10 rounded-3xl blur-3xl" />
-                <div className="relative">
-                  <ClientHubMockup />
-                </div>
-              </div>
+              {/* Journey Showcase */}
+              <JourneyShowcase />
 
-              <div className="mt-12 text-center">
+              <div className="mt-16 text-center">
                 <Button
                   asChild
                   variant="outline"
                   className="rounded-full px-8 py-5 text-lg border-sage/50 text-sage hover:bg-sage/10 group"
                 >
                   <Link href="/signup" className="flex items-center gap-2">
-                    Preview My Client Hub
+                    Get Your Own Hub
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
