@@ -16,60 +16,53 @@ import { MobileNav } from '@/components/home/MobileNav';
 export const metadata: Metadata = {
   title: "Handled — Your business shouldn't forget people.",
   description:
-    "Handled gives every client a shared Project Hub and builds curated Client Memory over time—so repeat clients don't start over.",
+    'The continuity layer for service businesses. Project Hub and Client Memory that compounds over time.',
   openGraph: {
     title: "Handled — Your business shouldn't forget people.",
     description:
-      "Handled gives every client a shared Project Hub and builds curated Client Memory over time—so repeat clients don't start over.",
+      'The continuity layer for service businesses. Project Hub and Client Memory that compounds over time.',
     type: 'website',
   },
 };
 
-// FAQ aligned with Project Hub + Client Memory wedge
 const faqs = [
   {
     question: 'Is this just a chatbot?',
-    answer:
-      "No. The chatbot is the interface. The product is the Project Hub and Client Memory—so details don't get lost and repeat clients don't start over.",
+    answer: 'The chatbot is the interface. The product is the Project Hub and Client Memory.',
   },
   {
     question: 'Do clients have to use it?',
-    answer:
-      'Clients get a simple link. Many prefer it to texting because everything stays in one place.',
+    answer: 'They get a link. Most prefer it to texting.',
   },
   {
     question: 'What does Handled remember?',
-    answer:
-      "Only what's useful. Memory is curated and controlled by the business—so it stays clean.",
+    answer: 'What matters. Memory is curated by the business.',
   },
   {
     question: 'Can I control what clients can do?',
-    answer: 'Yes. You decide what the Hub includes and what requires approval.',
+    answer: 'Yes. You decide what the Hub includes.',
   },
   {
     question: 'Does this replace my website?',
-    answer:
-      'Handled can power your storefront and booking. The biggest difference is what happens after booking: the shared Project Hub.',
+    answer: 'Handled powers storefronts and booking. The difference is what happens after.',
   },
 ];
 
-// Pricing tiers - keep existing prices/names, update descriptions per v2
 const tiers = [
   {
     id: 'foundation',
     name: 'The Foundation',
     price: '$49',
     priceSubtext: '/month',
-    description: 'Project Hub, booking, payments, and a clean place for everything after checkout.',
+    description: 'Project Hub. Booking. Payments.',
     annualSavings: 'Save $118/year',
     features: [
       'Project Hub for every client',
       'Online booking & payments',
       'Done-for-you website',
-      'Client communication in one place',
-      'Email notifications',
+      'All communication in one place',
     ],
-    ctaText: 'Try the Hub',
+    ctaText: 'Start here',
     ctaHref: '/signup?tier=handled',
     isPopular: false,
   },
@@ -78,16 +71,9 @@ const tiers = [
     name: 'The System',
     price: '$149',
     priceSubtext: '/month',
-    description: "Client Memory and AI summaries—so repeat clients don't start over.",
+    description: 'Client Memory. Context that compounds.',
     annualSavings: 'Save $358/year',
-    features: [
-      'Everything in Foundation',
-      'Client Memory that compounds',
-      'AI summaries & escalation',
-      'Smart reminders',
-      'Priority support',
-      'Custom branding',
-    ],
+    features: ['Everything in Foundation', 'Client Memory', 'AI summaries', 'Priority support'],
     ctaText: 'Get started',
     ctaHref: '/signup?tier=fully-handled',
     isPopular: true,
@@ -97,57 +83,53 @@ const tiers = [
     name: 'The Partnership',
     price: "Let's talk",
     priceSubtext: '',
-    description: 'Deeper customization and controls—so the Hub fits how you work.',
+    description: 'We build it. You run it.',
     annualSavings: null,
     features: [
       'Everything in The System',
       'Custom automations',
       'Voice agents',
-      '1-on-1 strategy sessions',
-      'We build it for you',
-      'Dedicated account manager',
+      'Dedicated support',
     ],
-    ctaText: 'Book a Call',
+    ctaText: 'Book a call',
     ctaHref: '/contact',
     isPopular: false,
   },
 ];
 
-// Client Memory example cards - exact v2 copy
 const memoryExamples = [
   {
     icon: BookOpen,
     title: 'Tutoring',
-    body: "Pick up where you left off—what clicked, what didn't, and what to focus on next.",
+    body: 'Start where you left off.',
   },
   {
     icon: UtensilsCrossed,
     title: 'Catering',
-    body: 'See what you served before, what they loved, and repeat it with adjustments.',
+    body: 'Remember what worked.',
   },
   {
     icon: Camera,
     title: 'Photography',
-    body: 'Carry forward context that changes the session—so families feel supported, not managed.',
+    body: 'Context carries forward.',
   },
 ];
 
-// How it works steps - exact v2 copy
 const steps = [
   {
     number: '1',
     title: 'Book',
-    body: 'A client books and gets a Project Hub automatically.',
+    body: 'Client books. Hub appears.',
   },
   {
     number: '2',
     title: 'Collaborate',
-    body: 'They share files, ask questions, and request changes inside the Hub.',
+    body: 'Files, questions, changes—one place.',
   },
   {
     number: '3',
     title: 'Remember',
-    body: "Handled carries the right details forward—so next time isn't a reset.",
+    body: 'Details carry forward.',
   },
 ];
 
@@ -157,8 +139,7 @@ export default function HomePage() {
     '@type': 'Organization',
     name: 'Handled',
     url: 'https://gethandled.ai',
-    description:
-      "Handled gives every client a shared Project Hub and builds curated Client Memory over time—so repeat clients don't start over.",
+    description: 'The continuity layer for service businesses.',
     sameAs: [],
   };
 
@@ -168,11 +149,10 @@ export default function HomePage() {
     name: 'Handled',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
-    description:
-      'Continuity infrastructure for service businesses. Project Hub and Client Memory that makes repeat business effortless.',
+    description: 'Continuity infrastructure for service businesses.',
     offers: {
       '@type': 'Offer',
-      description: 'Month-to-month subscription with 14-day free trial',
+      description: 'Month-to-month subscription',
       availability: 'https://schema.org/InStock',
     },
   };
@@ -205,9 +185,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <div className="min-h-screen bg-surface">
-        {/* ============================================
-            SECTION 0 — NAV
-            ============================================ */}
+        {/* NAV */}
         <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-b border-neutral-800">
           <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-serif text-2xl font-bold text-text-primary">
@@ -247,20 +225,16 @@ export default function HomePage() {
         </nav>
 
         <main>
-          {/* ============================================
-              SECTION 1 — HERO (H1)
-              ============================================ */}
-          <section className="relative pt-32 pb-24 md:pt-44 md:pb-36 px-6">
+          {/* HERO */}
+          <section className="relative pt-36 pb-28 md:pt-48 md:pb-40 px-6">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
                 Your business shouldn&apos;t forget people.
               </h1>
-              <p className="mt-8 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
-                Handled is the continuity layer for service businesses. Every booking gets a shared
-                Project Hub—and over time, Handled builds Client Memory so repeat clients don&apos;t
-                have to explain themselves again.
+              <p className="mt-10 text-xl md:text-2xl text-text-muted leading-relaxed max-w-xl mx-auto">
+                Handled is the continuity layer for service businesses.
               </p>
-              <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   asChild
                   variant="sage"
@@ -279,318 +253,179 @@ export default function HomePage() {
                   </Link>
                 </Button>
               </div>
-              <p className="mt-8 text-sm text-text-muted">
-                Calm systems. Real memory. Fewer things to worry about.
-              </p>
-              <p className="mt-2 text-xs text-text-muted/70">No more reset-to-zero.</p>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 2 — RECOGNITION
-              ============================================ */}
-          <section className="py-28 md:py-36 px-6 bg-surface-alt">
-            <div className="max-w-2xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-14">
+          {/* RECOGNITION */}
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
+            <div className="max-w-xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-10">
                 Every booking resets the relationship.
               </h2>
-              <div className="space-y-6 text-lg text-text-muted leading-relaxed">
-                <p>Most software treats each job like the first time.</p>
-                <p>
-                  So you end up re-asking the same questions, relearning preferences, and hoping
-                  nothing important slips through.
-                </p>
-                <p>
-                  Clients notice—not because you don&apos;t care, but because your tools don&apos;t
-                  remember what matters.
-                </p>
-              </div>
-              <div className="mt-14 grid sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-                {[
-                  '"What did we do last time?"',
-                  '"Any allergies or preferences again?"',
-                  '"Where did we talk about that change?"',
-                  '"Can you resend that?"',
-                ].map((quote) => (
-                  <div
-                    key={quote}
-                    className="bg-surface rounded-xl p-4 border border-neutral-800 text-center"
-                  >
-                    <p className="text-text-muted italic text-sm">{quote}</p>
-                  </div>
-                ))}
-              </div>
+              <p className="text-lg text-text-muted leading-relaxed">
+                Most software treats each job like the first time. Clients notice.
+              </p>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 3 — THE REAL COST
-              ============================================ */}
-          <section className="py-28 md:py-36 px-6">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-10">
+          {/* THE COST */}
+          <section className="py-32 md:py-40 px-6">
+            <div className="max-w-xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
                 Forgetting creates friction.
                 <br />
                 Remembering creates trust.
               </h2>
-              <div className="space-y-6 text-lg text-text-muted leading-relaxed">
-                <p>
-                  When details get lost, confidence erodes quietly—through extra back-and-forth,
-                  small mistakes, and avoidable stress.
-                </p>
-                <p className="text-text-primary font-medium">
-                  The best service businesses don&apos;t just execute well. They remember well.
-                </p>
-              </div>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 4 — WHAT HANDLED IS
-              ============================================ */}
-          <section className="py-28 md:py-36 px-6 bg-surface-alt">
-            <div className="max-w-2xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-10">
+          {/* WHAT HANDLED IS */}
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
+            <div className="max-w-xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-16">
                 Handled is institutional memory for your business.
               </h2>
-              <div className="space-y-6 text-lg text-text-muted leading-relaxed text-center mb-14">
-                <p>Handled doesn&apos;t just manage bookings.</p>
-                <p>
-                  It carries context forward—so every interaction builds on the last instead of
-                  starting over.
-                </p>
-              </div>
-              {/* Kill shot - styled as standout callout */}
               <div className="bg-surface rounded-2xl p-10 border border-sage/30 shadow-lg shadow-sage/5">
-                <p className="text-lg md:text-xl text-text-primary leading-relaxed text-center font-medium">
-                  Handled is the system that remembers your clients, carries context forward, and
-                  makes it impossible for important details to get lost—even over years.
+                <p className="text-lg md:text-xl text-text-primary leading-relaxed font-medium">
+                  The system that remembers clients, carries context forward, and makes it
+                  impossible for important details to get lost.
                 </p>
               </div>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 5 — PROJECT HUB (THE WEDGE)
-              ============================================ */}
-          <section id="project-hub" className="py-28 md:py-36 px-6 scroll-mt-20">
+          {/* PROJECT HUB */}
+          <section id="project-hub" className="py-32 md:py-40 px-6 scroll-mt-20">
             <div className="max-w-5xl mx-auto">
-              <div className="max-w-2xl mx-auto text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-10">
-                  After booking, everything moves into the Project Hub.
+              <div className="max-w-xl mx-auto text-center mb-20">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
+                  Once someone books, this becomes the relationship.
                 </h2>
-                <div className="space-y-6 text-lg text-text-muted leading-relaxed">
-                  <p>
-                    Clients don&apos;t text you &ldquo;quick questions&rdquo; or send scattered
-                    emails.
-                  </p>
-                  <p>They go to one shared link.</p>
-                  <p>Requests, files, decisions, and changes live in one place—and stay there.</p>
-                </div>
+                <p className="text-lg text-text-muted">
+                  One shared space. Everything in one place.
+                </p>
               </div>
 
-              {/* Project Hub Mockup */}
               <ProjectHubMockup />
 
-              {/* Mini list */}
-              <div className="mt-14 max-w-md mx-auto">
-                <ul className="space-y-4">
-                  {[
-                    'Clients ask for changes without interrupting you',
-                    'Requests become clear proposals, not messy messages',
-                    'History stays searchable forever',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                      <span className="text-text-primary">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Microline */}
-              <p className="mt-10 text-center text-sm text-text-muted">
-                This is the single source of truth for the project.
+              <p className="mt-16 text-center text-sm text-text-muted">
+                The single source of truth.
               </p>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 6 — CLIENT MEMORY (REPEAT CLIENTS)
-              ============================================ */}
-          <section className="py-28 md:py-36 px-6 bg-surface-alt">
-            <div className="max-w-5xl mx-auto">
-              <div className="max-w-2xl mx-auto text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-8">
-                  Repeat clients don&apos;t repeat themselves.
+          {/* CLIENT MEMORY */}
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
+            <div className="max-w-4xl mx-auto">
+              <div className="max-w-xl mx-auto text-center mb-16">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
+                  Repeat clients start ahead.
                 </h2>
-                <p className="text-lg text-text-muted leading-relaxed">
-                  Handled learns what matters and carries it forward—so the next project starts
-                  ahead.
-                </p>
               </div>
 
-              {/* Example cards */}
               <div className="grid md:grid-cols-3 gap-8">
                 {memoryExamples.map((example) => (
                   <div
                     key={example.title}
-                    className="bg-surface rounded-2xl p-8 border border-neutral-800 hover:border-sage/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                    className="bg-surface rounded-2xl p-8 border border-neutral-800"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center mb-6">
-                      <example.icon className="w-6 h-6 text-sage" />
+                    <div className="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center mb-5">
+                      <example.icon className="w-5 h-5 text-sage" />
                     </div>
-                    <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
+                    <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">
                       {example.title}
                     </h3>
-                    <p className="text-text-muted leading-relaxed">{example.body}</p>
+                    <p className="text-text-muted text-sm">{example.body}</p>
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
 
-              {/* Closing line */}
-              <p className="mt-14 text-center text-lg text-text-muted">
-                Over time, your best clients become effortless to serve.
+          {/* AI — quietest section */}
+          <section className="py-24 md:py-28 px-6">
+            <div className="max-w-md mx-auto text-center">
+              <p className="text-text-muted leading-relaxed">
+                AI batches updates and escalates only what matters. No noise.
               </p>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 7 — AI (ONLY PLACE AI IS MENTIONED)
-              ============================================ */}
-          <section className="py-28 md:py-36 px-6">
-            <div className="max-w-2xl mx-auto">
-              <div className="flex items-center justify-center mb-10">
-                <div className="w-14 h-14 rounded-2xl bg-sage/10 flex items-center justify-center">
-                  <Sparkles className="w-7 h-7 text-sage" />
-                </div>
-              </div>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-10">
-                AI that remembers.
-                <br />
-                Silence that respects.
-              </h2>
-              <p className="text-lg text-text-muted leading-relaxed text-center mb-12">
-                Handled batches updates, summarizes activity, and escalates only what needs your
-                attention. No notification spam. No prompt babysitting. Just a calmer way to run
-                work.
-              </p>
-
-              {/* Bullets */}
-              <div className="max-w-sm mx-auto">
-                <ul className="space-y-4">
-                  {[
-                    'Summaries instead of interruptions',
-                    'Proposals instead of back-and-forth',
-                    "Control over what's saved",
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                      <span className="text-text-primary">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* ============================================
-              SECTION 8 — HOW IT WORKS (3 STEPS)
-              ============================================ */}
-          <section id="how-it-works" className="py-28 md:py-36 px-6 bg-surface-alt scroll-mt-20">
-            <div className="max-w-4xl mx-auto">
+          {/* HOW IT WORKS */}
+          <section id="how-it-works" className="py-32 md:py-40 px-6 bg-surface-alt scroll-mt-20">
+            <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center mb-20">
                 How it works
               </h2>
               <div className="grid md:grid-cols-3 gap-12">
                 {steps.map((step) => (
                   <div key={step.number} className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-sage/10 border border-sage/30 flex items-center justify-center mx-auto mb-6">
-                      <span className="text-sage font-serif text-2xl font-bold">{step.number}</span>
+                    <div className="w-14 h-14 rounded-full bg-sage/10 border border-sage/30 flex items-center justify-center mx-auto mb-5">
+                      <span className="text-sage font-serif text-xl font-bold">{step.number}</span>
                     </div>
-                    <h3 className="font-serif text-2xl font-semibold text-text-primary mb-4">
+                    <h3 className="font-serif text-xl font-semibold text-text-primary mb-3">
                       {step.title}
                     </h3>
-                    <p className="text-text-muted leading-relaxed">{step.body}</p>
+                    <p className="text-text-muted text-sm">{step.body}</p>
                   </div>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 9 — PRICING
-              ============================================ */}
-          <section id="pricing" className="py-28 md:py-36 px-6 scroll-mt-20">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center max-w-2xl mx-auto mb-20">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
-                  Simple pricing. Compounding value.
+          {/* PRICING */}
+          <section id="pricing" className="py-32 md:py-40 px-6 scroll-mt-20">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center max-w-xl mx-auto mb-20">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
+                  Pricing
                 </h2>
-                <p className="text-lg text-text-muted">
-                  The first booking is cleaner. The tenth is effortless—because the system
-                  remembers.
-                </p>
+                <p className="text-text-muted">Value compounds over time.</p>
               </div>
 
-              {/* 3-Tier Grid */}
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start pt-6">
+              <div className="grid md:grid-cols-3 gap-6 items-start">
                 {tiers.map((tier) => (
                   <div
                     key={tier.id}
-                    className={`relative bg-surface-alt rounded-2xl p-8 border transition-all duration-300 ${
+                    className={`relative bg-surface-alt rounded-2xl p-7 border transition-all duration-300 ${
                       tier.isPopular
-                        ? 'border-2 border-sage shadow-xl shadow-sage/20 md:-mt-4 md:scale-[1.02] z-10 ring-1 ring-sage/20'
-                        : 'border-neutral-800 hover:shadow-xl hover:-translate-y-1 hover:border-sage/50'
+                        ? 'border-2 border-sage shadow-xl shadow-sage/20 md:-mt-4 md:scale-[1.02] z-10'
+                        : 'border-neutral-800'
                     }`}
                   >
                     {tier.isPopular && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                        <span
-                          className="inline-flex items-center gap-1.5 bg-sage text-white text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg"
-                          role="status"
-                          aria-label="Most popular choice"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          Most Popular
+                        <span className="inline-flex items-center gap-1.5 bg-sage text-white text-xs font-semibold px-3 py-1 rounded-full">
+                          <Sparkles className="w-3 h-3" />
+                          Popular
                         </span>
                       </div>
                     )}
 
                     <h3
-                      className={`font-serif text-2xl font-bold text-text-primary ${tier.isPopular ? 'mt-2' : ''}`}
+                      className={`font-serif text-xl font-bold text-text-primary ${tier.isPopular ? 'mt-1' : ''}`}
                     >
                       {tier.name}
                     </h3>
-                    <p className="mt-2 text-text-muted text-sm leading-relaxed">
-                      {tier.description}
-                    </p>
+                    <p className="mt-1 text-text-muted text-xs">{tier.description}</p>
 
-                    <div className="mt-6">
+                    <div className="mt-5">
                       <div className="flex items-baseline gap-1">
-                        <span
-                          className={`font-bold text-text-primary ${tier.isPopular ? 'text-5xl' : 'text-4xl'}`}
-                        >
-                          {tier.price}
-                        </span>
+                        <span className="font-bold text-text-primary text-3xl">{tier.price}</span>
                         {tier.priceSubtext && (
-                          <span className="text-text-muted">{tier.priceSubtext}</span>
+                          <span className="text-text-muted text-sm">{tier.priceSubtext}</span>
                         )}
                       </div>
                       {tier.annualSavings && (
-                        <div className="mt-2">
-                          <span className="text-xs font-semibold text-sage bg-sage/15 px-2 py-1 rounded">
-                            {tier.annualSavings}
-                          </span>
-                        </div>
+                        <span className="text-xs text-sage mt-1 block">{tier.annualSavings}</span>
                       )}
                     </div>
 
-                    <ul className="mt-6 space-y-3">
+                    <ul className="mt-5 space-y-2">
                       {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-                          <span className="text-text-primary text-sm">{feature}</span>
+                        <li key={feature} className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-sage flex-shrink-0 mt-0.5" />
+                          <span className="text-text-primary text-xs">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -598,116 +433,71 @@ export default function HomePage() {
                     <Button
                       asChild
                       variant={tier.isPopular ? 'sage' : 'outline'}
-                      className={`w-full mt-8 rounded-full py-5 ${
-                        tier.isPopular
-                          ? 'shadow-lg hover:shadow-xl'
-                          : 'border-sage/50 text-sage hover:bg-sage/10 hover:border-sage'
+                      className={`w-full mt-6 rounded-full py-4 text-sm ${
+                        tier.isPopular ? '' : 'border-sage/50 text-sage hover:bg-sage/10'
                       }`}
                     >
-                      <Link href={tier.ctaHref} className="flex items-center justify-center gap-2">
-                        {tier.ctaText}
-                        {tier.isPopular && <ArrowRight className="w-4 h-4" />}
-                      </Link>
+                      <Link href={tier.ctaHref}>{tier.ctaText}</Link>
                     </Button>
                   </div>
                 ))}
               </div>
-
-              {/* CTAs under pricing */}
-              <div className="text-center mt-14">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Button
-                    asChild
-                    variant="sage"
-                    className="rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <Link href="#how-it-works">See how it works</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="text-text-muted hover:text-text-primary rounded-full px-8 py-6 text-lg group"
-                  >
-                    <Link href="/signup" className="flex items-center gap-2">
-                      Get started
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 10 — FAQ
-              ============================================ */}
-          <section id="faq" className="py-28 md:py-36 px-6 bg-surface-alt scroll-mt-20">
-            <div className="max-w-2xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary text-center mb-14">
+          {/* FAQ */}
+          <section id="faq" className="py-32 md:py-40 px-6 bg-surface-alt scroll-mt-20">
+            <div className="max-w-xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary text-center mb-12">
                 FAQ
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {faqs.map((faq, index) => (
                   <details
                     key={index}
-                    className="group bg-surface rounded-xl border border-neutral-800 overflow-hidden"
+                    className="group bg-surface rounded-lg border border-neutral-800 overflow-hidden"
                   >
-                    <summary className="flex items-center justify-between cursor-pointer p-5 list-none">
-                      <span className="font-medium text-text-primary pr-4">{faq.question}</span>
-                      <ChevronDown className="w-5 h-5 text-text-muted flex-shrink-0 transition-transform duration-200 group-open:rotate-180" />
+                    <summary className="flex items-center justify-between cursor-pointer p-4 list-none">
+                      <span className="font-medium text-text-primary text-sm pr-4">
+                        {faq.question}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 group-open:rotate-180" />
                     </summary>
-                    <div className="px-5 pb-5 text-text-muted leading-relaxed">{faq.answer}</div>
+                    <div className="px-4 pb-4 text-text-muted text-sm">{faq.answer}</div>
                   </details>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* ============================================
-              SECTION 11 — FINAL CTA
-              ============================================ */}
+          {/* FINAL CTA — relief, not urgency */}
           <section className="py-36 md:py-44 px-6 border-t border-neutral-800">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary leading-tight mb-10">
-                Nothing important should ever have to be remembered manually.
+            <div className="max-w-xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-10">
+                Nothing important should have to be remembered manually.
               </h2>
-              <div className="space-y-4 text-lg text-text-muted leading-relaxed mb-12">
-                <p>Give every client a shared place to collaborate.</p>
-                <p>Let the system carry context forward.</p>
-                <p>Stop starting over.</p>
-              </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button
-                  asChild
-                  variant="sage"
-                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                >
+                <Button asChild variant="sage" className="rounded-full px-8 py-5 font-medium">
                   <Link href="#how-it-works">See how it works</Link>
                 </Button>
                 <Button
                   asChild
                   variant="ghost"
-                  className="text-text-muted hover:text-text-primary rounded-full px-8 py-6 text-lg group"
+                  className="text-text-muted hover:text-text-primary rounded-full px-8 py-5"
                 >
-                  <Link href="/signup" className="flex items-center gap-2">
-                    Get started
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
+                  <Link href="/signup">Get started</Link>
                 </Button>
               </div>
-              <p className="mt-8 text-sm text-text-muted/70">This should already be handled.</p>
             </div>
           </section>
         </main>
 
-        {/* ============================================
-            FOOTER
-            ============================================ */}
-        <footer className="py-12 px-6 bg-neutral-900 border-t border-neutral-800">
+        {/* FOOTER */}
+        <footer className="py-10 px-6 bg-neutral-900 border-t border-neutral-800">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="font-serif text-xl font-bold text-text-primary">Handled</div>
-              <div className="flex items-center gap-6 text-sm text-text-muted">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="font-serif text-lg font-bold text-text-primary">Handled</div>
+              <div className="flex items-center gap-6 text-xs text-text-muted">
                 <Link href="/terms" className="hover:text-text-primary transition-colors">
                   Terms
                 </Link>
@@ -718,14 +508,6 @@ export default function HomePage() {
                   Contact
                 </Link>
               </div>
-            </div>
-            <div className="mt-8 pt-8 border-t border-neutral-800 text-center">
-              <p className="text-text-muted text-sm leading-relaxed">
-                Continuity infrastructure for service businesses.
-              </p>
-              <p className="text-text-muted/60 text-xs mt-4">
-                © {new Date().getFullYear()} Handled. All rights reserved.
-              </p>
             </div>
           </div>
         </footer>
