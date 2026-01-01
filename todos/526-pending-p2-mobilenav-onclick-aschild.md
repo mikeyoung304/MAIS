@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '526'
 tags:
@@ -8,6 +8,7 @@ tags:
   - radix-ui
   - mobile
 dependencies: []
+completed_date: '2026-01-01'
 ---
 
 # MobileNav onClick with asChild Issue
@@ -32,11 +33,9 @@ The MobileNav component has an `onClick` handler on a Button component with `asC
 <Button
   variant="ghost"
   asChild
-  onClick={onClose}  // This won't work with asChild!
+  onClick={onClose} // This won't work with asChild!
 >
-  <Link href={item.href}>
-    {item.label}
-  </Link>
+  <Link href={item.href}>{item.label}</Link>
 </Button>
 ```
 
@@ -52,7 +51,7 @@ When using `asChild`, the Button component doesn't render itself - it passes pro
 <Button variant="ghost" asChild>
   <Link
     href={item.href}
-    onClick={onClose}  // Handler on the actual rendered element
+    onClick={onClose} // Handler on the actual rendered element
   >
     {item.label}
   </Link>
@@ -79,9 +78,7 @@ When using `asChild`, the Button component doesn't render itself - it passes pro
 ```tsx
 <div onClick={onClose}>
   <Button variant="ghost" asChild>
-    <Link href={item.href}>
-      {item.label}
-    </Link>
+    <Link href={item.href}>{item.label}</Link>
   </Button>
 </div>
 ```
@@ -112,16 +109,17 @@ When using `asChild`, the Button component doesn't render itself - it passes pro
 
 ## Acceptance Criteria
 
-- [ ] Menu closes when navigation link is clicked
-- [ ] Navigation still works correctly
-- [ ] No accessibility regressions
+- [x] Menu closes when navigation link is clicked
+- [x] Navigation still works correctly
+- [x] No accessibility regressions
 - [ ] Manual testing on mobile devices
 
 ## Work Log
 
-| Date       | Action                              | Learnings             |
-| ---------- | ----------------------------------- | --------------------- |
-| 2026-01-01 | Created from mobile UX code review | Radix asChild gotchas |
+| Date       | Action                             | Learnings                                                       |
+| ---------- | ---------------------------------- | --------------------------------------------------------------- |
+| 2026-01-01 | Created from mobile UX code review | Radix asChild gotchas                                           |
+| 2026-01-01 | Verified already implemented       | onClick correctly placed on Link child, not Button with asChild |
 
 ## Resources
 

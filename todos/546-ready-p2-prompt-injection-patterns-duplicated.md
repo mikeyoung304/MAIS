@@ -1,9 +1,10 @@
 ---
-status: ready
+status: completed
 priority: p2
-issue_id: "546"
+issue_id: '546'
 tags: [code-review, security, dry, prompt-injection]
 dependencies: []
+completed_date: '2026-01-01'
 ---
 
 # Prompt Injection Patterns Duplicated
@@ -11,6 +12,7 @@ dependencies: []
 ## Problem Statement
 
 Prompt injection detection patterns are defined in TWO places with different coverage:
+
 1. `tools/types.ts` - 21 comprehensive patterns
 2. `customer-chat-orchestrator.ts` - 8 basic patterns
 
@@ -19,9 +21,11 @@ CustomerChatOrchestrator uses its local (incomplete) patterns, missing protectio
 ## Findings
 
 **Pattern Recognition Specialist:**
+
 > "PROMPT_INJECTION_PATTERNS defined in TWO places with different coverage. CustomerChatOrchestrator only uses local patterns, misses refined patterns from types.ts."
 
 **Evidence:**
+
 ```typescript
 // tools/types.ts - 21 patterns including:
 /\bpretend\s+(?:to\s+be|you\s+are|that\s+you)\b/i,
@@ -36,6 +40,7 @@ CustomerChatOrchestrator uses its local (incomplete) patterns, missing protectio
 ```
 
 **Impact:**
+
 - Inconsistent protection between agents
 - CustomerChatOrchestrator (public-facing) has weaker protection
 - DRY violation makes updates error-prone
@@ -43,6 +48,7 @@ CustomerChatOrchestrator uses its local (incomplete) patterns, missing protectio
 ## Proposed Solutions
 
 ### Option A: Import from single source (Recommended)
+
 CustomerChatOrchestrator imports patterns from types.ts.
 
 ```typescript
@@ -61,6 +67,7 @@ private detectPromptInjection(message: string): boolean {
 **Risk:** Low
 
 ### Option B: Extract to dedicated security module
+
 Create `server/src/agent/security/prompt-injection.ts` with all detection logic.
 
 **Pros:** Clean separation, reusable
@@ -75,21 +82,23 @@ Option A - Import from types.ts (quickest fix)
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/agent/orchestrator/customer-chat-orchestrator.ts:63-74` - Remove local patterns
 - `server/src/agent/tools/types.ts:121-169` - Source patterns (keep)
 
 ## Acceptance Criteria
 
-- [ ] CustomerChatOrchestrator imports patterns from types.ts
-- [ ] Local pattern definition removed
-- [ ] All 21 patterns applied to customer chat
-- [ ] Tests verify protection consistency
+- [x] CustomerChatOrchestrator imports patterns from types.ts
+- [x] Local pattern definition removed
+- [x] All 35 patterns applied to customer chat
+- [x] Tests verify protection consistency
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2026-01-01 | Created from code review | Public-facing agents need strongest protection |
+| Date       | Action                       | Learnings                                                                    |
+| ---------- | ---------------------------- | ---------------------------------------------------------------------------- |
+| 2026-01-01 | Created from code review     | Public-facing agents need strongest protection                               |
+| 2026-01-01 | Verified already implemented | INJECTION_PATTERNS imported from types.ts (35 patterns), no local duplicates |
 
 ## Resources
 

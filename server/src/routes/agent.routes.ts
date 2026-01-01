@@ -20,7 +20,7 @@ import type { OnboardingState } from '../agent/context/context-builder';
 import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
 import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
 import { appendEvent } from '../agent/onboarding/event-sourcing';
-import type { OnboardingPhase } from '@macon/contracts';
+import { parseOnboardingPhase, type OnboardingPhase } from '@macon/contracts';
 
 // Re-export executor registry from centralized module
 // (Avoids circular dependency with orchestrator.ts)
@@ -165,7 +165,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      const currentPhase = (tenant.onboardingPhase as OnboardingPhase) || 'NOT_STARTED';
+      const currentPhase = parseOnboardingPhase(tenant.onboardingPhase);
       const currentVersion = tenant.onboardingVersion || 0;
 
       // Check if already completed or skipped
@@ -216,7 +216,7 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
 
       res.json({
         success: true,
-        phase: 'SKIPPED' as OnboardingPhase,
+        phase: 'SKIPPED',
         message: 'Onboarding skipped. You can configure your business manually.',
       });
     } catch (error) {

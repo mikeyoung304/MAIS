@@ -6,7 +6,7 @@
  */
 
 import type { AdvisorMemoryRepository } from '../../lib/ports';
-import type { AdvisorMemory, OnboardingPhase } from '@macon/contracts';
+import type { AdvisorMemory } from '@macon/contracts';
 
 // In-memory storage keyed by tenantId
 const tenantMemories = new Map<string, AdvisorMemory>();
@@ -35,7 +35,7 @@ export class MockAdvisorMemoryRepository implements AdvisorMemoryRepository {
     // Return default memory for new tenant
     return {
       tenantId,
-      currentPhase: 'NOT_STARTED' as OnboardingPhase,
+      currentPhase: 'NOT_STARTED',
       lastEventVersion: 0,
       lastEventTimestamp: new Date().toISOString(),
     };

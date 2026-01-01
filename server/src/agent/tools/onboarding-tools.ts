@@ -185,20 +185,20 @@ Use phase: SKIPPED to skip onboarding entirely.`,
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma, sessionId } = context;
-    const targetPhase = params.phase as OnboardingPhase;
     const data = params.data as Record<string, unknown> | undefined;
 
     try {
-      // Validate phase
-      const phaseResult = OnboardingPhaseSchema.safeParse(targetPhase);
+      // Validate phase using Zod instead of type assertion
+      const phaseResult = OnboardingPhaseSchema.safeParse(params.phase);
       if (!phaseResult.success) {
         return {
           success: false,
           error: 'INVALID_TRANSITION',
           currentPhase: 'NOT_STARTED',
-          attemptedPhase: targetPhase,
+          attemptedPhase: String(params.phase),
         } as AgentToolResult;
       }
+      const targetPhase = phaseResult.data;
 
       // Get current tenant state
       const tenant = await prisma.tenant.findUnique({

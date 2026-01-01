@@ -1,9 +1,10 @@
 ---
-status: ready
+status: completed
 priority: p2
-issue_id: "545"
+issue_id: '545'
 tags: [code-review, ux, proposals, nlp]
 dependencies: []
+completed_date: '2026-01-01'
 ---
 
 # T2 Rejection Pattern False Negatives
@@ -15,22 +16,25 @@ T2 soft-confirm rejection patterns are contextual to avoid false positives, but 
 ## Findings
 
 **Security Sentinel:**
+
 > "T2 soft-confirm rejection patterns may miss common rejection phrases. Users must use exact phrasing to reject proposals."
 
 **Evidence:**
+
 ```typescript
 // Currently rejected:
-"wait", "stop", "cancel that", "don't do that"
+('wait', 'stop', 'cancel that', "don't do that");
 
 // NOT rejected (but should be):
-"never mind"
-"on second thought"
-"scratch that"
-"forget it"
-"actually, don't"
+('never mind');
+('on second thought');
+('scratch that');
+('forget it');
+("actually, don't");
 ```
 
 **Impact:**
+
 - User says "never mind" but proposal auto-confirms anyway
 - Poor UX: requires learning specific rejection keywords
 - Higher impact for customer chat (2-min window) vs onboarding (10-min)
@@ -38,6 +42,7 @@ T2 soft-confirm rejection patterns are contextual to avoid false positives, but 
 ## Proposed Solutions
 
 ### Option A: Add common rejection phrases (Recommended)
+
 Extend rejection patterns with common alternatives.
 
 ```typescript
@@ -57,6 +62,7 @@ const rejectionPatterns = [
 **Risk:** Low (may introduce few false positives)
 
 ### Option B: NLP intent detection
+
 Use simple sentiment/intent classifier for rejection detection.
 
 **Pros:** More robust, handles variations
@@ -71,22 +77,24 @@ Option A - Add common rejection phrases
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/agent/proposals/proposal.service.ts:249-259`
 
 ## Acceptance Criteria
 
-- [ ] "never mind" triggers rejection
-- [ ] "on second thought" triggers rejection
-- [ ] "scratch that" triggers rejection
-- [ ] "forget it" triggers rejection
-- [ ] Tests added for new patterns
-- [ ] No false positives introduced
+- [x] "never mind" triggers rejection
+- [x] "on second thought" triggers rejection
+- [x] "scratch that" triggers rejection
+- [x] "forget it" triggers rejection
+- [x] Tests added for new patterns
+- [x] No false positives introduced
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2026-01-01 | Created from code review | Balance false positives vs negatives |
+| Date       | Action                       | Learnings                                                   |
+| ---------- | ---------------------------- | ----------------------------------------------------------- |
+| 2026-01-01 | Created from code review     | Balance false positives vs negatives                        |
+| 2026-01-01 | Verified already implemented | Patterns in proposal.service.ts:272-275 with dedicated test |
 
 ## Resources
 

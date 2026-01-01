@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '516'
 tags:
@@ -8,6 +8,7 @@ tags:
   - tests
   - phase-5
 dependencies: []
+completed_date: '2026-01-01'
 ---
 
 # Replace `any` Types in Onboarding Executors Test
@@ -109,16 +110,17 @@ let mockPrisma: Partial<PrismaClient>;
 
 ## Acceptance Criteria
 
-- [ ] No `any` types in `onboarding-executors.test.ts`
-- [ ] All mock objects have explicit types
-- [ ] Tests still pass after type changes
-- [ ] `npm run typecheck` passes
+- [x] No `any` types in `onboarding-executors.test.ts`
+- [x] All mock objects have explicit types
+- [x] Tests still pass after type changes
+- [x] `npm run typecheck` passes
 
 ## Work Log
 
-| Date       | Action                           | Learnings                        |
-| ---------- | -------------------------------- | -------------------------------- |
-| 2025-12-31 | Created from Phase 5 code review | Found during code quality review |
+| Date       | Action                           | Learnings                                             |
+| ---------- | -------------------------------- | ----------------------------------------------------- |
+| 2025-12-31 | Created from Phase 5 code review | Found during code quality review                      |
+| 2026-01-01 | Verified already implemented     | MockFn, MockTransaction, MockPrismaClient types exist |
 
 ## Resources
 
