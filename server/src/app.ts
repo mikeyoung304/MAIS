@@ -31,6 +31,13 @@ export function createApp(
 ): express.Application {
   const app = express();
 
+  // Trust first proxy (Vercel, Cloudflare, etc.)
+  // MUST be set before any middleware that uses req.ip (rate limiters, logging)
+  // Value of 1 = trust first hop only (the immediate proxy in front of our server)
+  // This makes req.ip correctly reflect the client IP from X-Forwarded-For header
+  // See: https://expressjs.com/en/guide/behind-proxies.html
+  app.set('trust proxy', 1);
+
   // Sentry request tracking (MUST be first)
   app.use(sentryRequestHandler());
 

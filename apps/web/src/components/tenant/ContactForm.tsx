@@ -308,6 +308,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-required="true"
           autoComplete="email"
+          inputMode="email"
         />
         {errors.email && (
           <p id="email-error" className="mt-1 text-sm text-red-700" role="alert">
@@ -330,6 +331,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
           disabled={status === 'submitting'}
           className="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage disabled:bg-neutral-50 disabled:cursor-not-allowed"
           autoComplete="tel"
+          inputMode="tel"
         />
       </div>
 

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
 import { getNavigationItems, buildNavHref } from './navigation';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 interface TenantNavProps {
   tenant: TenantPublicDto;
@@ -120,6 +121,30 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
     setIsOpen((prev) => !prev);
   }, []);
 
+  // Swipe-to-close gesture for mobile menu
+  const swipeState = useSwipeGesture(menuRef, {
+    threshold: 50,
+    velocityThreshold: 0.3,
+    directions: ['right'],
+    enabled: isOpen,
+    onSwipeMove: (deltaX) => {
+      // Only track positive (rightward) swipes
+      if (deltaX > 0 && menuRef.current) {
+        menuRef.current.style.transform = `translateX(${deltaX}px)`;
+      }
+    },
+    onSwipe: () => {
+      setIsOpen(false);
+      menuButtonRef.current?.focus();
+    },
+    onSwipeEnd: () => {
+      // Reset position if swipe didn't complete
+      if (menuRef.current) {
+        menuRef.current.style.transform = '';
+      }
+    },
+  });
+
   /**
    * Determines if a navigation link is active based on current pathname.
    *
@@ -213,9 +238,9 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
         <div
           ref={menuRef}
           id="mobile-menu"
-          className={`fixed inset-x-0 top-[65px] bottom-0 z-40 bg-white transition-transform duration-300 md:hidden ${
-            isOpen ? 'translate-x-0' : 'translate-x-full'
-          } motion-reduce:transition-none`}
+          className={`fixed inset-x-0 top-[65px] bottom-0 z-40 bg-white md:hidden ${
+            swipeState.isSwiping ? '' : 'transition-transform duration-300'
+          } ${isOpen ? 'translate-x-0' : 'translate-x-full'} motion-reduce:transition-none`}
           aria-hidden={!isOpen}
         >
           <div className="flex h-full flex-col px-6 py-8">

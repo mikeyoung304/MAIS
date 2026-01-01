@@ -2254,12 +2254,18 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 ---
 
-**Last Updated:** 2025-12-31
+**Last Updated:** 2026-01-01
 **Recent Additions (2025-12-31):**
 
 - **[Phase 5 Testing and Caching Prevention](./patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md)** - 4 issues: retryable keyword conflicts in tests, singleton cache testability, cache invalidation after writes, error sanitization in logs
 - **[NextAuth v5 Production Authentication Prevention](./authentication-issues/NEXTAUTH-V5-PREVENTION-INDEX.md)** - Complete prevention guide for NextAuth v5 cookie prefix issues causing 401 on production HTTPS
 - **[NextAuth v5 Secure Cookie Prefix](./authentication-issues/nextauth-v5-secure-cookie-prefix-production-401-MAIS-20251231.md)** - Root cause analysis and fix for `__Secure-` cookie prefix handling
+
+**Recent Additions (2026-01-01):**
+
+- **[Per-Session State Isolation for Agent Guardrails](./patterns/per-session-state-isolation-agent-guardrails-MAIS-20260101.md)** - Fix shared singleton circuit breakers with Map<sessionId, State> pattern + cleanup
+- **[Required Security Fields on Agent Tools](./security-issues/required-security-fields-agent-tools-MAIS-20260101.md)** - Make trustTier required to prevent silent T1 defaults
+- **[Contextual Rejection Patterns for T2 Proposals](./logic-errors/contextual-rejection-patterns-t2-proposals-MAIS-20260101.md)** - Replace broad keyword matching with positional/contextual regex patterns
 
 **Previous Additions (2025-12-29):**
 

@@ -51,6 +51,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   // ============================================================================
   {
     name: 'get_services',
+    trustTier: 'T1', // Read-only
     description:
       'Browse available services and packages. Returns active packages with name, description, price, and duration.',
     inputSchema: {
@@ -124,6 +125,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   // ============================================================================
   {
     name: 'check_availability',
+    trustTier: 'T1', // Read-only
     description:
       'Check available dates for booking a service. Returns a list of available dates within the date range.',
     inputSchema: {
@@ -238,6 +240,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   // ============================================================================
   {
     name: 'book_service',
+    trustTier: 'T3', // Booking requires explicit confirmation
     description:
       'Book an appointment. Requires customer name, email, and selected date. Creates a proposal that must be confirmed.',
     inputSchema: {
@@ -403,6 +406,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   // ============================================================================
   {
     name: 'get_business_info',
+    trustTier: 'T1', // Read-only
     description:
       'Get business information including name, hours, policies, and FAQ. Use topic parameter to filter.',
     inputSchema: {

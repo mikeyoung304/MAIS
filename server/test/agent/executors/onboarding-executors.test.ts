@@ -26,19 +26,59 @@ vi.mock('../../../src/lib/core/logger', () => ({
   },
 }));
 
+// Type-safe mock function type
+type MockFn = ReturnType<typeof vi.fn>;
+
+// Type for proposal executor function matching executor-registry's ProposalExecutor
+type ProposalExecutorFn = (
+  tenantId: string,
+  payload: Record<string, unknown>
+) => Promise<Record<string, unknown>>;
+
 // Mock the executor-registry to track registrations
-const mockExecutors = new Map<string, any>();
+const mockExecutors = new Map<string, ProposalExecutorFn>();
 
 vi.mock('../../../src/agent/proposals/executor-registry', () => ({
-  registerProposalExecutor: vi.fn((name: string, executor: any) => {
+  registerProposalExecutor: vi.fn((name: string, executor: ProposalExecutorFn) => {
     mockExecutors.set(name, executor);
   }),
   getProposalExecutor: vi.fn((name: string) => mockExecutors.get(name)),
 }));
 
+// Type-safe mock types for Prisma transaction and client
+// Based on actual usage in the onboarding-executors.ts file
+type MockTransaction = {
+  segment: {
+    findFirst: MockFn;
+    create: MockFn;
+  };
+  package: {
+    create: MockFn;
+  };
+  tenant: {
+    findUnique: MockFn;
+    update: MockFn;
+  };
+};
+
+type MockPrismaClient = {
+  segment: {
+    findFirst: MockFn;
+    create: MockFn;
+  };
+  package: {
+    create: MockFn;
+  };
+  tenant: {
+    findUnique: MockFn;
+    update: MockFn;
+  };
+  $transaction: MockFn;
+};
+
 describe('Onboarding Executors', () => {
-  let mockPrisma: any;
-  let mockTx: any;
+  let mockPrisma: MockPrismaClient;
+  let mockTx: MockTransaction;
 
   beforeEach(() => {
     // Clear the mock executor registry
@@ -72,11 +112,12 @@ describe('Onboarding Executors', () => {
         findUnique: vi.fn(),
         update: vi.fn(),
       },
-      $transaction: vi.fn((callback: (tx: any) => Promise<any>) => callback(mockTx)),
+      $transaction: vi.fn(<T>(callback: (tx: MockTransaction) => Promise<T>) => callback(mockTx)),
     };
 
     // Register the executors
-    registerOnboardingExecutors(mockPrisma);
+    // Cast to unknown first then to PrismaClient since we're using a mock
+    registerOnboardingExecutors(mockPrisma as unknown as Parameters<typeof registerOnboardingExecutors>[0]);
   });
 
   afterEach(() => {
@@ -103,7 +144,7 @@ describe('Onboarding Executors', () => {
 
   describe('upsert_services executor', () => {
     const tenantId = 'test-tenant-123';
-    let upsertServicesExecutor: (tenantId: string, payload: any) => Promise<any>;
+    let upsertServicesExecutor: ProposalExecutorFn;
 
     beforeEach(() => {
       upsertServicesExecutor = getProposalExecutor('upsert_services')!;
@@ -477,7 +518,7 @@ describe('Onboarding Executors', () => {
 
   describe('update_storefront executor', () => {
     const tenantId = 'test-tenant-456';
-    let updateStorefrontExecutor: (tenantId: string, payload: any) => Promise<any>;
+    let updateStorefrontExecutor: ProposalExecutorFn;
 
     beforeEach(() => {
       updateStorefrontExecutor = getProposalExecutor('update_storefront')!;

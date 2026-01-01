@@ -97,9 +97,9 @@ const InputEnhanced = React.forwardRef<HTMLInputElement, InputEnhancedProps>(
               'peer flex h-14 w-full rounded-lg border bg-white px-4 py-2.5 text-base',
               'shadow-sm hover:shadow-md',
               'transition-all duration-200 ease-out',
-              'hover:border-macon-navy/40',
-              'focus:border-macon-orange focus:shadow-lg',
-              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-macon-orange/30 focus-visible:ring-offset-0',
+              'hover:border-primary/40',
+              'focus:border-sage focus:shadow-lg',
+              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage/30 focus-visible:ring-offset-0',
               'placeholder:text-neutral-500 placeholder:transition-opacity focus:placeholder:opacity-70',
               'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:border-neutral-200',
               'bg-gradient-to-b from-white to-neutral-50/50',
@@ -131,7 +131,7 @@ const InputEnhanced = React.forwardRef<HTMLInputElement, InputEnhancedProps>(
                 'absolute left-4 pointer-events-none',
                 'transition-all duration-200 ease-in-out',
                 isLabelFloating
-                  ? 'top-2 text-xs font-semibold text-macon-navy'
+                  ? 'top-2 text-xs font-semibold text-primary'
                   : 'top-1/2 -translate-y-1/2 text-base text-neutral-600',
                 leftIcon && (isLabelFloating ? 'left-4' : 'left-10'),
                 hasError && isLabelFloating && 'text-red-700'

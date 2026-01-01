@@ -35,6 +35,7 @@ function isValidBookingStatus(status: string): status is BookingStatus {
  * Returns: name, slug, branding, Stripe status
  */
 export const getTenantTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_tenant',
   description: 'Get business profile including name, branding, and payment setup status',
   inputSchema: {
@@ -111,6 +112,7 @@ export const getTenantTool: AgentTool = {
  * Returns: revenue, booking count, upcoming bookings
  */
 export const getDashboardTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_dashboard',
   description: 'Get business dashboard with package count, booking stats, and revenue overview',
   inputSchema: {
@@ -205,6 +207,7 @@ export const getDashboardTool: AgentTool = {
  * Returns: array of packages or single package if ID provided
  */
 export const getPackagesTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_packages',
   description:
     'Get all packages or a single package by ID. Returns pricing, photos, and booking settings.',
@@ -285,6 +288,7 @@ export const getPackagesTool: AgentTool = {
  * Returns: array of bookings
  */
 export const getBookingsTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_bookings',
   description: 'Get bookings with optional filters for status, date range, or search',
   inputSchema: {
@@ -375,6 +379,7 @@ export const getBookingsTool: AgentTool = {
  * Returns: full booking with customer details
  */
 export const getBookingTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_booking',
   description: 'Get full details of a single booking including customer info and payment status',
   inputSchema: {
@@ -450,6 +455,7 @@ export const getBookingTool: AgentTool = {
  * Returns: boolean availability and any conflicts
  */
 export const checkAvailabilityTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'check_availability',
   description: 'Check if a specific date is available for booking',
   inputSchema: {
@@ -519,73 +525,12 @@ export const checkAvailabilityTool: AgentTool = {
 };
 
 /**
- * get_blackouts - Blocked dates
- *
- * Returns: array of blackout dates
- */
-export const getBlackoutsTool: AgentTool = {
-  name: 'get_blackouts',
-  description: 'Get all blocked dates (blackouts)',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      fromDate: {
-        type: 'string',
-        description: 'Filter blackouts from this date (YYYY-MM-DD)',
-      },
-      toDate: {
-        type: 'string',
-        description: 'Filter blackouts until this date (YYYY-MM-DD)',
-      },
-    },
-    required: [],
-  },
-  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
-    const fromDate = params.fromDate as string | undefined;
-    const toDate = params.toDate as string | undefined;
-
-    try {
-      const limit = 100;
-      const blackouts = await prisma.blackoutDate.findMany({
-        where: {
-          tenantId,
-          ...buildDateRangeFilter(fromDate, toDate),
-        },
-        orderBy: { date: 'asc' },
-        take: limit,
-      });
-
-      return {
-        success: true,
-        data: blackouts.map((b) => ({
-          id: b.id,
-          date: formatDateISO(b.date),
-          reason: b.reason ? sanitizeForContext(b.reason, 100) : null,
-        })),
-        meta: {
-          returned: blackouts.length,
-          limit,
-          hasMore: blackouts.length === limit,
-        },
-      };
-    } catch (error) {
-      return handleToolError(
-        error,
-        'get_blackouts',
-        tenantId,
-        'Failed to fetch blackout dates. Check that any date filters are in YYYY-MM-DD format'
-      );
-    }
-  },
-};
-
-/**
  * get_landing_page - Storefront config
  *
  * Returns: pages, sections, content
  */
 export const getLandingPageTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_landing_page',
   description: 'Get storefront landing page configuration including sections and content',
   inputSchema: {
@@ -628,6 +573,7 @@ export const getLandingPageTool: AgentTool = {
  * Returns: connected status, requirements, dashboard URL
  */
 export const getStripeStatusTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_stripe_status',
   description: 'Get Stripe Connect payment setup status and any pending requirements',
   inputSchema: {
@@ -675,6 +621,7 @@ export const getStripeStatusTool: AgentTool = {
  * Returns: array of add-ons or single add-on if ID provided
  */
 export const getAddonsTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_addons',
   description:
     'Get all add-ons or a single add-on by ID. Add-ons are optional extras that can be added to packages.',
@@ -782,6 +729,7 @@ function formatAddOn(addOn: AddOnWithSegment) {
  * Supports: date range filtering, search, single customer lookup
  */
 export const getCustomersTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_customers',
   description:
     'Get customers who have booked with booking counts and total spent. Supports search by email/name and date range filtering.',
@@ -1017,6 +965,7 @@ function formatCustomerWithStats(
  * Returns: segments with package counts
  */
 export const getSegmentsTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_segments',
   description: 'Get service segments that organize packages',
   inputSchema: {
@@ -1156,6 +1105,7 @@ function formatPackage(pkg: PackageWithAddOns) {
  * Returns: trial status, days remaining, subscription status
  */
 export const getTrialStatusTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_trial_status',
   description: 'Get trial and subscription status for the business',
   inputSchema: {
@@ -1211,6 +1161,7 @@ export const getTrialStatusTool: AgentTool = {
  * Returns: storefront URL and optional package-specific booking URL
  */
 export const getBookingLinkTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_booking_link',
   description:
     'Get the storefront URL where customers can book. Optionally get a direct link to a specific package.',
@@ -1293,6 +1244,7 @@ export const getBookingLinkTool: AgentTool = {
  * Use this when a session has been active for a while and data may be stale.
  */
 export const refreshContextTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'refresh_context',
   description:
     'Refresh business context data that may have become stale during a long session. Returns current Stripe status, package count, upcoming bookings, and revenue this month.',
@@ -1382,6 +1334,7 @@ export const refreshContextTool: AgentTool = {
  * "show me my blocked dates" or "what are my blackout dates"
  */
 export const getBlackoutDatesTool: AgentTool = {
+  trustTier: 'T1', // Read-only
   name: 'get_blackout_dates',
   description:
     'Get all blackout (blocked) dates. Returns list of dates when you are unavailable for bookings, with IDs and reasons.',
@@ -1453,7 +1406,6 @@ export const readTools: AgentTool[] = [
   getBookingsTool,
   getBookingTool,
   checkAvailabilityTool,
-  // Note: getBlackoutsTool removed - duplicate of getBlackoutDatesTool (TODO #452)
   getBlackoutDatesTool,
   getLandingPageTool,
   getStripeStatusTool,

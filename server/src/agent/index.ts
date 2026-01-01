@@ -9,12 +9,16 @@
  * - Server-side proposal mechanism for write operations
  * - Audit logging for all tool calls
  * - Context injection for session initialization
- * - Claude API orchestration via AgentOrchestrator
+ * - Claude API orchestration via BaseOrchestrator subclasses:
+ *   - AdminOrchestrator: Business assistant with onboarding mode detection
+ *   - OnboardingOrchestrator: Specialized onboarding flow
+ *   - CustomerChatOrchestrator: Public customer chatbot with injection detection
  *
  * Security:
  * - TenantId from JWT, never from user input
  * - Server-side approval for sensitive operations
  * - Data sanitization before context injection
+ * - Code-level guardrails (rate limiting, circuit breakers, tier budgets)
  */
 
 // Tool exports
@@ -52,14 +56,23 @@ export type { AgentSessionContext } from './context/context-builder';
 export { AuditService } from './audit/audit.service';
 export type { AuditLogInput, AuditLogEntry } from './audit/audit.service';
 
-// Orchestrator (Claude API integration)
-export { AgentOrchestrator } from './orchestrator';
+// Orchestrators (Claude API integration with code-level guardrails)
+export {
+  BaseOrchestrator,
+  AdminOrchestrator,
+  OnboardingOrchestrator,
+  CustomerChatOrchestrator,
+} from './orchestrator';
 export type {
   OrchestratorConfig,
   ChatMessage,
   SessionState,
   ChatResponse,
-  OnboardingSessionContext,
+  BaseOrchestratorConfig,
+  BaseChatMessage,
+  BaseSessionState,
+  BaseChatResponse,
+  PromptContext,
 } from './orchestrator';
 
 // Re-export getAllTools from consolidated module

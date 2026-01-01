@@ -2,14 +2,11 @@
  * Customer Chatbot Module
  *
  * Exports for customer-facing AI chatbot functionality.
+ *
+ * Note: CustomerOrchestrator has been replaced by CustomerChatOrchestrator.
+ * Import from '../orchestrator' instead.
  */
 
-export { CustomerOrchestrator } from './customer-orchestrator';
-export type {
-  CustomerSessionContext,
-  CustomerSessionState,
-  CustomerChatResponse,
-} from './customer-orchestrator';
 export { CUSTOMER_TOOLS } from './customer-tools';
 export type { CustomerToolContext } from './customer-tools';
 export { CUSTOMER_SYSTEM_PROMPT, buildCustomerSystemPrompt } from './customer-prompt';

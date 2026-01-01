@@ -852,7 +852,8 @@ model AgentSession {
   @@index([tenantId, updatedAt]) // Find recent sessions for tenant
   @@index([tenantId])
   @@index([customerId, updatedAt]) // Query customer sessions
-  @@index([sessionType, updatedAt]) // P1 fix: Cleanup job queries (sessionType + updatedAt)
+  @@index([sessionType, updatedAt]) // Cleanup job queries
+  @@index([tenantId, sessionType, updatedAt]) // #530: getOrCreateSession queries all 3 fields
 }
 
 /// Session type for agent conversations

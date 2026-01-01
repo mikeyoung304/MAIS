@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, logout } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
+import { useLocalStorageBoolean } from '@/hooks/useLocalStorage';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import {
   LayoutDashboard,
   Package,
@@ -104,8 +107,36 @@ const adminNavItems: NavItem[] = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const { user, role, isImpersonating, impersonation } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [userCollapsed, toggleUserCollapsed] = useLocalStorageBoolean('admin-sidebar-collapsed', false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const breakpoint = useBreakpoint();
+
+  // Auto-collapse on tablet (lg breakpoint is 1024px)
+  // User preference takes precedence on desktop, but tablet always collapses
+  const isTablet = breakpoint.current === 'lg' && breakpoint.status === 'resolved';
+  const isCollapsed = isTablet || userCollapsed;
+
+  // Swipe-to-close for mobile sidebar
+  useSwipeGesture(sidebarRef, {
+    threshold: 50,
+    velocityThreshold: 0.3,
+    directions: ['left'],
+    enabled: isMobileOpen,
+    onSwipeMove: (deltaX) => {
+      if (deltaX < 0 && sidebarRef.current) {
+        sidebarRef.current.style.transform = `translateX(${deltaX}px)`;
+      }
+    },
+    onSwipe: () => {
+      setIsMobileOpen(false);
+    },
+    onSwipeEnd: () => {
+      if (sidebarRef.current) {
+        sidebarRef.current.style.transform = '';
+      }
+    },
+  });
 
   // Determine which nav items to show
   const navItems = isImpersonating() || role === 'TENANT_ADMIN' ? tenantNavItems : adminNavItems;
@@ -162,9 +193,11 @@ export function AdminSidebar() {
 
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
         className={`fixed left-0 top-0 z-40 h-screen bg-surface-alt border-r border-neutral-700 transition-all duration-300
           ${isCollapsed ? 'w-20' : 'w-72'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          motion-reduce:transition-none
         `}
       >
         <div className="flex h-full flex-col">
@@ -177,8 +210,9 @@ export function AdminSidebar() {
             )}
             <button
               className="hidden rounded-lg p-1.5 text-text-muted hover:bg-surface-alt lg:block"
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={toggleUserCollapsed}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isTablet ? 'Auto-collapsed on tablet' : undefined}
             >
               <ChevronLeft
                 className={`h-5 w-5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`}

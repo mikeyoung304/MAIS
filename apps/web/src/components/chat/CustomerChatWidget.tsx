@@ -297,7 +297,11 @@ export function CustomerChatWidget({
     <div
       className={cn(
         'fixed bottom-6 right-6 z-50',
-        'w-[380px] h-[600px] max-w-[calc(100vw-48px)] max-h-[calc(100vh-48px)]',
+        'w-[380px] max-w-[calc(100vw-48px)]',
+        // Use dvh with vh fallback for mobile viewport handling
+        'h-[min(600px,calc(100dvh-120px))] max-h-[calc(100vh-120px)]',
+        // Support fallback for browsers without dvh
+        'supports-[height:100dvh]:max-h-[calc(100dvh-120px)]',
         'bg-white rounded-3xl shadow-2xl border border-neutral-100',
         'flex flex-col overflow-hidden',
         'animate-in slide-in-from-bottom-4 duration-300'

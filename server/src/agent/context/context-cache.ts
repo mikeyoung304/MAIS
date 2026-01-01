@@ -43,8 +43,11 @@ const DEFAULT_CONFIG: ContextCacheConfig = {
 
 /**
  * In-memory context cache
+ *
+ * Exported for testability - use createContextCache() factory for custom instances.
+ * For production code, import the singleton `contextCache` instead.
  */
-class ContextCache {
+export class ContextCache {
   private cache = new Map<string, CacheEntry>();
   private config: ContextCacheConfig;
 
@@ -176,9 +179,31 @@ class ContextCache {
 }
 
 /**
- * Singleton context cache instance
+ * Factory function for creating context cache instances
+ *
+ * Use this for:
+ * - Tests: Create isolated cache instances with custom config
+ * - Dependency injection: Inject custom caches into services
+ *
+ * @example
+ * // In tests - short TTL for fast expiration tests
+ * const testCache = createContextCache({ ttlMs: 100 });
+ *
+ * // In tests - small size for eviction tests
+ * const smallCache = createContextCache({ maxEntries: 3 });
  */
-export const contextCache = new ContextCache();
+export function createContextCache(
+  config?: Partial<ContextCacheConfig>
+): ContextCache {
+  return new ContextCache(config);
+}
+
+/**
+ * Default singleton context cache instance
+ *
+ * Use this for production code. For tests, use createContextCache() instead.
+ */
+export const contextCache = createContextCache();
 
 /**
  * Update the session ID in a cached context

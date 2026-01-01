@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold touch-manipulation relative overflow-hidden isolate ' +
-    'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-macon-navy/30 focus-visible:ring-offset-2 ' +
+    'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-2 ' +
     'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed ' +
     'transform-gpu',
   {
@@ -27,9 +27,9 @@ const buttonVariants = cva(
           'active:scale-[0.98] active:shadow-inner ' +
           'transition-all duration-300 ease-spring',
         outline:
-          'border-2 border-macon-navy/20 bg-transparent text-macon-navy ' +
-          'hover:bg-gradient-to-br hover:from-macon-navy/5 hover:to-macon-navy/10 ' +
-          'hover:border-macon-navy/30 hover:shadow-elevation-1 ' +
+          'border-2 border-primary/20 bg-transparent text-primary ' +
+          'hover:bg-gradient-to-br hover:from-primary/5 hover:to-primary/10 ' +
+          'hover:border-primary/30 hover:shadow-elevation-1 ' +
           'active:scale-[0.98] active:shadow-inner ' +
           'transition-all duration-300 ease-spring',
         secondary:
@@ -40,12 +40,12 @@ const buttonVariants = cva(
           'before:absolute before:inset-0 before:bg-gradient-to-t before:from-black/10 before:to-transparent before:opacity-0 ' +
           'hover:before:opacity-100 before:transition-opacity before:-z-10',
         ghost:
-          'text-macon-navy hover:bg-gradient-to-br hover:from-macon-navy/5 hover:to-transparent ' +
-          'hover:text-macon-navy-dark ' +
+          'text-primary hover:bg-gradient-to-br hover:from-primary/5 hover:to-transparent ' +
+          'hover:text-primary ' +
           'active:scale-[0.98] active:shadow-inner ' +
           'transition-all duration-300 ease-spring',
         link:
-          'text-macon-orange underline-offset-4 hover:underline hover:text-macon-orange-dark ' +
+          'text-sage underline-offset-4 hover:underline hover:text-sage-hover ' +
           'active:scale-[0.98] ' +
           'transition-all duration-300 ease-spring',
         teal:

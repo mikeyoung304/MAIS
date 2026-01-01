@@ -1,0 +1,14 @@
+# PWA Icons Directory
+
+This directory contains PWA app icons. Required icons:
+
+- icon-192.png (192x192) - Standard app icon
+- icon-512.png (512x512) - Large app icon for splash screens
+- icon-maskable.png (512x512 with safe zone) - Adaptive icon for Android
+
+Generate these icons from your logo using a tool like:
+- https://realfavicongenerator.net/
+- https://www.pwabuilder.com/imageGenerator
+
+For maskable icons, ensure the important content is within the safe zone
+(center 80% of the image, as outer 10% on each side may be masked).

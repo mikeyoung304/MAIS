@@ -444,10 +444,11 @@ describe('ProposalService', () => {
       });
     });
 
-    it('should reject T2 proposals when message contains "wait"', async () => {
+    it('should reject T2 proposals when message contains "wait" with rejection context', async () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.softConfirmPendingT2(tenantId, sessionId, 'Wait, let me think');
+      // "Wait, don't" has clear rejection intent (not "Wait, let me think" which is just pausing)
+      const result = await service.softConfirmPendingT2(tenantId, sessionId, "Wait, don't do that");
 
       expect(result).toEqual([]);
       expect(mockPrisma.agentProposal.updateMany).toHaveBeenCalledWith({
@@ -459,6 +460,17 @@ describe('ProposalService', () => {
         },
         data: { status: 'REJECTED' },
       });
+    });
+
+    it('should NOT reject when "wait" lacks rejection context', async () => {
+      // "Wait, let me think" is just pausing, not rejecting - should confirm
+      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.softConfirmPendingT2(tenantId, sessionId, 'Wait, let me think');
+
+      // Should return proposals for confirmation, not reject them
+      expect(result.length).toBeGreaterThan(0);
     });
 
     it('should reject T2 proposals when message contains "stop"', async () => {
@@ -510,31 +522,35 @@ describe('ProposalService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should reject T2 proposals when message contains "actually"', async () => {
+    // Updated: "actually" without explicit cancel context should NOT reject
+    // This prevents false positives like "Actually, that looks great!"
+    it('should NOT reject when "actually" is not a cancellation', async () => {
+      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.softConfirmPendingT2(
         tenantId,
         sessionId,
-        'Actually I want something different'
+        'Actually, that looks great!'
       );
 
-      expect(result).toEqual([]);
+      // Should return proposals for confirmation, not reject them
+      expect(result.length).toBeGreaterThan(0);
     });
 
-    it('should reject T2 proposals when message contains "don\'t"', async () => {
+    it('should reject T2 proposals when message contains "don\'t do"', async () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.softConfirmPendingT2(
         tenantId,
         sessionId,
-        "Don't do that please"
+        "Don't do that"
       );
 
       expect(result).toEqual([]);
     });
 
-    it('should reject T2 proposals when message contains "dont"', async () => {
+    it('should reject T2 proposals when message contains "dont proceed"', async () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.softConfirmPendingT2(
@@ -543,6 +559,87 @@ describe('ProposalService', () => {
         'Dont proceed with that'
       );
 
+      expect(result).toEqual([]);
+    });
+
+    it('should reject T2 proposals when message is short standalone "no"', async () => {
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.softConfirmPendingT2(
+        tenantId,
+        sessionId,
+        'no'
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('should NOT reject when "no" is in a non-rejection context', async () => {
+      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.softConfirmPendingT2(
+        tenantId,
+        sessionId,
+        'No, I dont have any other questions'
+      );
+
+      // Should return proposals for confirmation, not reject them
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    // TODO-537: Additional edge case tests for contextual rejection patterns
+    it('should NOT reject when "stop" is in non-rejection context', async () => {
+      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      // "Stop by anytime" uses "stop" but is not a rejection
+      const result = await service.softConfirmPendingT2(tenantId, sessionId, 'Stop by anytime');
+
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should NOT reject when "hold" is in non-rejection context', async () => {
+      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      // "Hold that thought" is not the same as "hold on"
+      const result = await service.softConfirmPendingT2(
+        tenantId,
+        sessionId,
+        'Hold that thought, I have a question'
+      );
+
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should reject on repeated "no" as emphatic rejection', async () => {
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.softConfirmPendingT2(tenantId, sessionId, 'No no no');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should reject on common rejection phrases', async () => {
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      // Test "never mind"
+      let result = await service.softConfirmPendingT2(tenantId, sessionId, 'Never mind');
+      expect(result).toEqual([]);
+
+      vi.clearAllMocks();
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      // Test "scratch that"
+      result = await service.softConfirmPendingT2(tenantId, sessionId, 'Scratch that');
+      expect(result).toEqual([]);
+
+      vi.clearAllMocks();
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+
+      // Test "on second thought"
+      result = await service.softConfirmPendingT2(tenantId, sessionId, 'On second thought, no');
       expect(result).toEqual([]);
     });
 
@@ -618,11 +715,11 @@ describe('ProposalService', () => {
     it('should be case-insensitive for rejection keywords', async () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
-      // Upper case
-      const result1 = await service.softConfirmPendingT2(tenantId, sessionId, 'WAIT please');
+      // Upper case with rejection context
+      const result1 = await service.softConfirmPendingT2(tenantId, sessionId, "WAIT, DON'T DO THAT");
       expect(result1).toEqual([]);
 
-      // Mixed case
+      // Mixed case with explicit stop object
       vi.clearAllMocks();
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
       const result2 = await service.softConfirmPendingT2(tenantId, sessionId, 'StOp that');

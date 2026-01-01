@@ -196,12 +196,28 @@ module.exports = {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
+          '20%, 40%, 60%, 80%': { transform: 'translateX(4px)' },
+        },
+        'slide-in-from-top': {
+          '0%': { opacity: '0', transform: 'translateY(-8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'bounce-subtle': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-4px)' },
+        },
       },
       animation: {
         shimmer: 'shimmer 2s infinite',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
         'fade-in': 'fade-in 0.5s ease-out forwards',
         'scale-in': 'scale-in 0.4s ease-out forwards',
+        shake: 'shake 0.5s ease-in-out',
+        'slide-in-from-top-2': 'slide-in-from-top 0.3s ease-out',
+        'bounce-subtle': 'bounce-subtle 0.6s ease-in-out',
       },
     },
   },

@@ -75,6 +75,13 @@ const DAY_PICKER_MODIFIERS_STYLES = {
   },
 } as const;
 
+// DayPicker custom CSS for WCAG 2.2 AAA touch targets (44x44px minimum)
+const DAY_PICKER_STYLE = {
+  '--rdp-cell-size': '44px',
+  '--rdp-accent-color': '#45B37F',
+  '--rdp-accent-background-color': '#45B37F20',
+} as React.CSSProperties;
+
 // =============================================================================
 // Memoized Step Components
 // =============================================================================
@@ -161,6 +168,7 @@ const DateSelectionStep = React.memo(
               disabled={[{ before: new Date() }, ...unavailableDates]}
               className="border border-neutral-300 rounded-xl p-4 bg-white"
               modifiersStyles={DAY_PICKER_MODIFIERS_STYLES}
+              style={DAY_PICKER_STYLE}
             />
           )}
         </div>

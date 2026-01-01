@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#8B9E86">
+  <title>You're Offline | HANDLED</title>
+  <style>
+    :root {
+      --sage: #8B9E86;
+      --sage-light: #A8B8A4;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b7280;
+      --background: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--background);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      border-radius: 24px;
+      background-color: rgba(139, 158, 134, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      color: var(--sage);
+    }
+
+    h1 {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background-color: var(--sage);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    }
+
+    .button:hover {
+      background-color: var(--sage-light);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .status {
+      margin-top: 32px;
+      padding: 12px 20px;
+      background-color: rgba(139, 158, 134, 0.1);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: none;
+    }
+
+    .status.visible {
+      display: block;
+    }
+
+    .status.online {
+      background-color: rgba(34, 197, 94, 0.1);
+      color: #166534;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #1a1a1a;
+        --text-primary: #f5f5f5;
+        --text-secondary: #9ca3af;
+      }
+
+      .icon {
+        background-color: rgba(139, 158, 134, 0.2);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+    <p>
+      It looks like you've lost your internet connection.
+      Check your connection and try again.
+    </p>
+
+    <button class="button" onclick="tryReconnect()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Try Again
+    </button>
+
+    <div id="status" class="status">
+      Checking connection...
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+
+    function showStatus(message, isOnline) {
+      statusEl.textContent = message;
+      statusEl.classList.add('visible');
+      statusEl.classList.toggle('online', isOnline);
+    }
+
+    function hideStatus() {
+      statusEl.classList.remove('visible', 'online');
+    }
+
+    async function tryReconnect() {
+      showStatus('Checking connection...', false);
+
+      try {
+        // Try to fetch the root page with cache-busting
+        const response = await fetch('/?_=' + Date.now(), {
+          method: 'HEAD',
+          cache: 'no-store'
+        });
+
+        if (response.ok) {
+          showStatus('Connection restored! Redirecting...', true);
+          // Reload the original page the user was trying to access
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          showStatus('Still offline. Please check your connection.', false);
+          setTimeout(hideStatus, 3000);
+        }
+      } catch (error) {
+        showStatus('Still offline. Please check your connection.', false);
+        setTimeout(hideStatus, 3000);
+      }
+    }
+
+    // Check for online status changes
+    window.addEventListener('online', () => {
+      showStatus('Connection restored! Redirecting...', true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    });
+
+    window.addEventListener('offline', () => {
+      showStatus('Connection lost.', false);
+    });
+
+    // Initial check
+    if (navigator.onLine) {
+      // We might be online but the page was cached
+      tryReconnect();
+    }
+  </script>
+</body>
+</html>

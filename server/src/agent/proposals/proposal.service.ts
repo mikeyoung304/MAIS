@@ -243,18 +243,44 @@ export class ProposalService {
     // Normalize unicode before pattern matching (prevent lookalike character bypass)
     const normalizedMessage = userMessage.normalize('NFKC');
 
-    // Check for rejection keywords
+    // Check for rejection keywords - contextual patterns to avoid false positives
+    // Problem: "No, I don't have any questions" or "Wait, I have a question first"
+    //          should NOT reject proposals - user is engaging, not canceling
+    // Solution: Require explicit rejection context, not just keyword presence at start
+    //
+    // TODO-537 fix: Made patterns more contextual to reduce false positives like:
+    // - "Wait, I have a question first" (just pausing to ask)
+    // - "Stop by anytime" (different meaning of "stop")
+    // - "Hold that thought" (not same as "hold on")
     const rejectionPatterns = [
-      /\bwait\b/i,
-      /\bstop\b/i,
-      /\bno\b/i,
-      /\bcancel\b/i,
-      /\bhold\b/i,
-      /\bactually\b/i,
-      /\bdon'?t\b/i,
+      // "No" at start ONLY with explicit cancellation verb following
+      /^no,?\s*(don'?t|cancel|stop|wait)\b/i,
+      // "Wait" at start ONLY with explicit stop/cancel context (not "Wait, I have a question")
+      /^wait[,!]?\s*(don'?t|stop|cancel|no)\b/i,
+      // "Stop" at start with explicit object or followed by ", I" (changed mind pattern)
+      /^stop[,!]?\s*(that|this|it|the|don'?t|now|i\s+(changed|don'?t|want))\b/i,
+      // "Hold on" specifically (not "hold that thought")
+      /^hold\s+on\b/i,
+      // "Cancel" at start is always a rejection intent
+      /^cancel\b/i,
+      // Explicit cancel/stop with object anywhere in message
+      /\b(cancel|stop)\s+(that|this|it|the)\b/i,
+      // Explicit "don't do/proceed/continue" patterns
+      /\bdon'?t\s+(do|proceed|continue|make|create|book)\b/i,
+      // Repeated "no" (emphatic rejection like "no no no")
+      /\bno\s+no\b/i,
+      // Common rejection phrases (TODO-545 fix: false negatives)
+      /\b(never\s+mind|on\s+second\s+thought)\b/i,
+      /\b(scratch\s+that|forget\s+(it|that))\b/i,
+      /\bactually,?\s+don'?t\b/i,
     ];
 
-    const isRejection = rejectionPatterns.some((p) => p.test(normalizedMessage));
+    // Check if message is a very short standalone rejection word
+    const shortRejection = /^(no|stop|wait|cancel|hold)\.?!?$/i;
+    const isShortRejection = shortRejection.test(normalizedMessage.trim());
+
+    const isRejection =
+      isShortRejection || rejectionPatterns.some((p) => p.test(normalizedMessage));
 
     if (isRejection) {
       // Reject all pending T2 proposals

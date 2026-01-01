@@ -14,19 +14,47 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import type { PrismaClient } from '../generated/prisma';
 import { Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
-import { CustomerOrchestrator } from '../agent/customer';
+import { CustomerChatOrchestrator } from '../agent/orchestrator';
 import { getCustomerProposalExecutor } from '../agent/customer/executor-registry';
 import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
+
+/**
+ * IP-based rate limiter for public chat endpoints
+ * - 50 requests per 15 minutes per IP
+ * - Protects against abuse from unauthenticated sources
+ * - Separate from agent-level rate limiting (which is per-session)
+ *
+ * NOTE: Uses default keyGenerator (req.ip) which works correctly because
+ * app.set('trust proxy', 1) is configured in app.ts. This makes Express
+ * extract the real client IP from X-Forwarded-For in a secure way:
+ * - Takes rightmost IP minus trusted proxy count (prevents spoofing)
+ * - Falls back to socket address if no proxy headers
+ * See: https://expressjs.com/en/guide/behind-proxies.html
+ */
+const publicChatRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // 50 requests per window per IP
+  message: { error: 'Too many requests. Please wait a moment before trying again.' },
+  standardHeaders: true, // Return rate limit info in headers
+  legacyHeaders: false, // Disable deprecated headers
+  // Default keyGenerator uses req.ip which is correctly set by trust proxy
+});
 
 /**
  * Create public customer chat routes
  */
 export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
   const router = Router();
-  const orchestrator = new CustomerOrchestrator(prisma);
+  // CustomerChatOrchestrator includes guardrails (rate limiting, circuit breakers, tier budgets)
+  // and prompt injection detection for public-facing endpoints
+  const orchestrator = new CustomerChatOrchestrator(prisma);
+
+  // Apply IP rate limiting to all routes
+  router.use(publicChatRateLimiter);
 
   // ============================================================================
   // Health Check

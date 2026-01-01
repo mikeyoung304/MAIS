@@ -9,6 +9,7 @@
  */
 
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 /**
  * Retry configuration
@@ -142,7 +143,7 @@ export async function withRetry<T>(
       // Don't retry non-retryable errors
       if (!isRetryableError(error)) {
         logger.warn(
-          { error, operationName, attempt },
+          { error: sanitizeError(error), operationName, attempt },
           'Non-retryable error encountered, not retrying'
         );
         throw error;
@@ -151,7 +152,7 @@ export async function withRetry<T>(
       // Don't retry if we've exhausted attempts
       if (attempt >= fullConfig.maxRetries) {
         logger.error(
-          { error, operationName, attempt, maxRetries: fullConfig.maxRetries },
+          { error: sanitizeError(error), operationName, attempt, maxRetries: fullConfig.maxRetries },
           'All retry attempts exhausted'
         );
         throw error;
@@ -160,7 +161,7 @@ export async function withRetry<T>(
       // Calculate delay and wait before retrying
       const delay = calculateDelay(attempt, fullConfig);
       logger.warn(
-        { error, operationName, attempt, nextAttempt: attempt + 1, delayMs: delay },
+        { error: sanitizeError(error), operationName, attempt, nextAttempt: attempt + 1, delayMs: delay },
         'Retryable error encountered, scheduling retry'
       );
 

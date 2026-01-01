@@ -61,6 +61,16 @@ export type AgentToolResult<T = unknown> = ReadToolResult<T> | WriteToolProposal
 export interface AgentTool {
   name: string;
   description: string;
+  /**
+   * Trust tier for write operations:
+   * - T1: Auto-confirm (reads, visibility toggles, file uploads)
+   * - T2: Soft-confirm (proceeds unless user says "wait")
+   * - T3: Hard-confirm (requires explicit "yes"/"confirm")
+   *
+   * REQUIRED for all tools to prevent silent T1 defaults.
+   * Read-only tools should use 'T1'.
+   */
+  trustTier: 'T1' | 'T2' | 'T3';
   inputSchema: {
     type: 'object';
     properties: Record<

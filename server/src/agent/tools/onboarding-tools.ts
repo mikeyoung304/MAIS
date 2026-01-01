@@ -36,6 +36,7 @@ import {
   BusinessTypeSchema,
   TargetMarketSchema,
   OnboardingPhaseSchema,
+  parseOnboardingPhase,
 } from '@macon/contracts';
 import { stateToPhase, isValidTransition } from '../onboarding/state-machine';
 import { appendEvent } from '../onboarding/event-sourcing';
@@ -194,7 +195,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         return {
           success: false,
           error: 'INVALID_TRANSITION',
-          currentPhase: 'NOT_STARTED' as OnboardingPhase,
+          currentPhase: 'NOT_STARTED',
           attemptedPhase: targetPhase,
         } as AgentToolResult;
       }
@@ -215,7 +216,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         };
       }
 
-      const currentPhase = (tenant.onboardingPhase as OnboardingPhase) || 'NOT_STARTED';
+      const currentPhase = parseOnboardingPhase(tenant.onboardingPhase);
       const currentVersion = tenant.onboardingVersion || 0;
 
       // Validate phase data based on target phase

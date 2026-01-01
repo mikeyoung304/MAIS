@@ -14,7 +14,7 @@ import type { PrismaClient } from '../generated/prisma';
 import { Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
-import { AgentOrchestrator } from '../agent/orchestrator';
+import { AdminOrchestrator } from '../agent/orchestrator';
 import { buildSessionContext, detectOnboardingState } from '../agent/context/context-builder';
 import type { OnboardingState } from '../agent/context/context-builder';
 import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
@@ -40,7 +40,9 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
   const router = Router();
 
   // Initialize orchestrator (singleton per route instance)
-  const orchestrator = new AgentOrchestrator(prisma);
+  // AdminOrchestrator includes guardrails (rate limiting, circuit breakers, tier budgets)
+  // and automatically switches to onboarding tools when tenant is in onboarding mode
+  const orchestrator = new AdminOrchestrator(prisma);
 
   // Initialize advisor memory service for onboarding
   const advisorMemoryRepository = new PrismaAdvisorMemoryRepository(prisma);

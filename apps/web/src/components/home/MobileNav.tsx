@@ -111,9 +111,10 @@ export function MobileNav() {
               asChild
               variant="sage"
               className="w-full rounded-full py-3 text-base"
-              onClick={closeMenu}
             >
-              <Link href="/signup">See My Client Page</Link>
+              <Link href="/signup" onClick={closeMenu}>
+                See My Client Page
+              </Link>
             </Button>
           </div>
         </nav>

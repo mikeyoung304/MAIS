@@ -31,6 +31,17 @@ export const OnboardingPhaseSchema = z.enum([
 
 export type OnboardingPhase = z.infer<typeof OnboardingPhaseSchema>;
 
+/**
+ * Safely parse an unknown value to OnboardingPhase
+ * Returns 'NOT_STARTED' if value is invalid or null/undefined
+ *
+ * Prevents unsafe `as OnboardingPhase` type assertions throughout the codebase.
+ */
+export function parseOnboardingPhase(value: unknown): OnboardingPhase {
+  const result = OnboardingPhaseSchema.safeParse(value);
+  return result.success ? result.data : 'NOT_STARTED';
+}
+
 // ============================================================================
 // Business Type and Industry
 // ============================================================================
