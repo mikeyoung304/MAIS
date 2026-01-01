@@ -15,6 +15,7 @@
 import type { AdvisorMemoryRepository, AdvisorMemory as AdvisorMemoryType } from '../../lib/ports';
 import type { OnboardingPhase } from '@macon/contracts';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 /**
  * Summarized advisor memory for prompt injection
@@ -96,7 +97,7 @@ export class AdvisorMemoryService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       // Log sanitized error (don't expose full error object in production)
-      logger.error({ error: errorMessage, tenantId }, 'Error getting onboarding context');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error getting onboarding context');
 
       // If it's a "not found" type error, return default (new user)
       // Otherwise, propagate the error - database failures should not be hidden

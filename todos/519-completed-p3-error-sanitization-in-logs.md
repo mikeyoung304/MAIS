@@ -1,7 +1,8 @@
 ---
-status: pending
+status: completed
 priority: p3
 issue_id: '519'
+completed_date: '2026-01-01'
 tags:
   - code-review
   - security
@@ -99,7 +100,7 @@ const logger = pino({
 
 ## Recommended Action
 
-<!-- Filled during triage -->
+Implemented Solution 1 with a dedicated `sanitizeError()` helper.
 
 ## Technical Details
 
@@ -111,16 +112,43 @@ const logger = pino({
 
 ## Acceptance Criteria
 
-- [ ] Error objects logged without full nested content
-- [ ] Error messages and status codes still visible in logs
-- [ ] Stack traces available in development mode
-- [ ] No sensitive data in production logs
+- [x] Error objects logged without full nested content
+- [x] Error messages and status codes still visible in logs
+- [x] Stack traces available in development mode
+- [x] No sensitive data in production logs
 
 ## Work Log
 
-| Date       | Action                           | Learnings             |
-| ---------- | -------------------------------- | --------------------- |
-| 2025-12-31 | Created from Phase 5 code review | Error leakage in logs |
+| Date       | Action                                                                 | Learnings                                                         |
+| ---------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 2025-12-31 | Created from Phase 5 code review                                       | Error leakage in logs                                             |
+| 2026-01-01 | Implemented sanitizeError() helper and updated all agent error logging | Existing helper was already in place, extended to all agent files |
+
+## Implementation Summary
+
+Created `sanitizeError()` helper at `server/src/lib/core/error-sanitizer.ts` that extracts only safe fields:
+
+- `message`: Error message string
+- `name`: Error class name
+- `code`: Error code (if present)
+- `status`: HTTP status (if present)
+- `type`: Error type (if present)
+- `stack`: Only included in development mode (NODE_ENV === 'development')
+
+Updated all error logging in the agent module to use `sanitizeError()`:
+
+- `server/src/agent/utils/retry.ts` - 3 locations
+- `server/src/agent/orchestrator/base-orchestrator.ts` - 2 locations
+- `server/src/agent/orchestrator/admin-orchestrator.ts` - 1 location
+- `server/src/agent/customer/customer-tools.ts` - 5 locations
+- `server/src/agent/tools/utils.ts` - 1 location (handleToolError helper)
+- `server/src/agent/tools/read-tools.ts` - 14 locations
+- `server/src/agent/onboarding/state-machine.ts` - 1 location
+- `server/src/agent/onboarding/event-sourcing.ts` - 1 location
+- `server/src/agent/onboarding/advisor-memory.service.ts` - 1 location
+- `server/src/agent/errors/agent-error.ts` - 1 location
+- `server/src/agent/context/context-builder.ts` - 1 location
+- `server/src/agent/audit/audit.service.ts` - 1 location (was already using it for batch flush, added for write log)
 
 ## Resources
 

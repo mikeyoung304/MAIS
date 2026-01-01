@@ -20,6 +20,7 @@ import {
   EventPayloadSchemas,
 } from '@macon/contracts';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 // ============================================================================
 // Types
@@ -40,7 +41,12 @@ export type AppendEventResult =
 export type UpdatePhaseResult =
   | { success: true; phase: OnboardingPhase; version: number }
   | { success: false; error: 'CONCURRENT_MODIFICATION'; currentVersion: number }
-  | { success: false; error: 'INVALID_TRANSITION'; currentPhase: OnboardingPhase; attemptedPhase: OnboardingPhase };
+  | {
+      success: false;
+      error: 'INVALID_TRANSITION';
+      currentPhase: OnboardingPhase;
+      attemptedPhase: OnboardingPhase;
+    };
 
 // ============================================================================
 // Version Management (Fix #3: getNextVersion function)
@@ -107,9 +113,7 @@ export function validateEventPayload<T extends OnboardingEventType>(
 export function safeValidateEventPayload<T extends OnboardingEventType>(
   eventType: T,
   payload: unknown
-):
-  | { success: true; data: OnboardingEventPayloads[T] }
-  | { success: false; error: string } {
+): { success: true; data: OnboardingEventPayloads[T] } | { success: false; error: string } {
   try {
     const schema = EventPayloadSchemas[eventType];
     const validated = schema.parse(payload);
@@ -231,7 +235,10 @@ export async function appendEvent<T extends OnboardingEventType>(
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown database error';
-    logger.error({ error, tenantId, eventType }, 'Failed to append onboarding event');
+    logger.error(
+      { error: sanitizeError(error), tenantId, eventType },
+      'Failed to append onboarding event'
+    );
 
     return {
       success: false,

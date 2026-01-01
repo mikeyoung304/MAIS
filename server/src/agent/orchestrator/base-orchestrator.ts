@@ -29,9 +29,13 @@ import { AuditService } from '../audit/audit.service';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { withRetry, CLAUDE_API_RETRY_CONFIG } from '../utils/retry';
-import { contextCache, withSessionId } from '../context/context-cache';
+import { ContextCache, defaultContextCache, withSessionId } from '../context/context-cache';
 import { buildFallbackContext } from '../context/context-builder';
 import type { AgentSessionContext } from '../context/context-builder';
+
+// Proposal execution imports (static to avoid ~1-5ms dynamic import latency)
+import { getProposalExecutor } from '../proposals/executor-registry';
+import { validateExecutorPayload } from '../proposals/executor-schemas';
 
 // Guardrail imports
 import type { AgentType, BudgetTracker, TierBudgets } from './types';
@@ -255,6 +259,7 @@ export abstract class BaseOrchestrator {
   protected readonly proposalService: ProposalService;
   protected readonly auditService: AuditService;
   protected readonly rateLimiter: ToolRateLimiter;
+  protected readonly cache: ContextCache;
 
   // Per-session circuit breakers (keyed by sessionId to prevent cross-session pollution)
   // Each session gets its own circuit breaker so one user's abuse doesn't affect others
@@ -263,7 +268,19 @@ export abstract class BaseOrchestrator {
   // Cleanup old circuit breakers periodically (every 100 chat calls)
   private circuitBreakerCleanupCounter = 0;
 
-  constructor(protected readonly prisma: PrismaClient) {
+  /**
+   * Create a new orchestrator instance.
+   *
+   * @param prisma - Prisma client for database access
+   * @param cache - Optional context cache for caching session context.
+   *                Defaults to defaultContextCache singleton.
+   *                Pass a custom cache instance in tests for isolation.
+   */
+  constructor(
+    protected readonly prisma: PrismaClient,
+    cache: ContextCache = defaultContextCache
+  ) {
+    this.cache = cache;
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       throw new Error('ANTHROPIC_API_KEY is required');
@@ -733,10 +750,6 @@ export abstract class BaseOrchestrator {
       'Executing soft-confirmed proposals'
     );
 
-    // Import executor registry dynamically to avoid circular dependencies
-    const { getProposalExecutor } = await import('../proposals/executor-registry');
-    const { validateExecutorPayload } = await import('../proposals/executor-schemas');
-
     // Fetch all proposals in batch
     const proposals = await this.prisma.agentProposal.findMany({
       where: {
@@ -1047,7 +1060,7 @@ export abstract class BaseOrchestrator {
 
           // Invalidate cache after write tools
           if (WRITE_TOOLS.has(toolUse.name)) {
-            contextCache.invalidate(tenantId);
+            this.cache.invalidate(tenantId);
             logger.debug({ tenantId, toolName: toolUse.name }, 'Context cache invalidated');
           }
         }
@@ -1189,7 +1202,7 @@ export abstract class BaseOrchestrator {
    * Invalidate context cache for tenant
    */
   invalidateContextCache(tenantId: string): void {
-    contextCache.invalidate(tenantId);
+    this.cache.invalidate(tenantId);
   }
 
   /**

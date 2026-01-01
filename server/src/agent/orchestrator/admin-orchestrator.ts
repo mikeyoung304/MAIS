@@ -20,8 +20,9 @@ import {
   buildFallbackContext,
 } from '../context/context-builder';
 import type { AgentSessionContext } from '../context/context-builder';
-import { contextCache, withSessionId } from '../context/context-cache';
+import { withSessionId } from '../context/context-cache';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { parseOnboardingPhase, type OnboardingPhase } from '@macon/contracts';
 
 import {
@@ -261,16 +262,16 @@ export class AdminOrchestrator extends BaseOrchestrator {
     sessionId: string
   ): Promise<AgentSessionContext> {
     try {
-      const cached = contextCache.get(tenantId);
+      const cached = this.cache.get(tenantId);
       if (cached) {
         return withSessionId(cached, sessionId);
       }
 
       const context = await buildSessionContext(this.prisma, tenantId, sessionId);
-      contextCache.set(tenantId, context);
+      this.cache.set(tenantId, context);
       return context;
     } catch (error) {
-      logger.error({ error, tenantId }, 'Failed to build session context');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Failed to build session context');
       return buildFallbackContext(tenantId, sessionId);
     }
   }

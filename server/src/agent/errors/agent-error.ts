@@ -13,6 +13,7 @@
  */
 
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 /**
  * Error codes for agent operations
@@ -213,7 +214,7 @@ export function toUserFriendlyError(error: unknown, action: string): AgentError 
   }
 
   const message = error instanceof Error ? error.message : String(error);
-  logger.error({ error: message, action }, 'Unexpected error in agent operation');
+  logger.error({ error: sanitizeError(error), action }, 'Unexpected error in agent operation');
 
   return new AgentError(
     AgentErrorCode.UNEXPECTED_ERROR,

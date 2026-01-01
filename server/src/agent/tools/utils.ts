@@ -6,6 +6,7 @@
  */
 
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 import type { ToolError } from './types';
 
 /**
@@ -24,7 +25,7 @@ export function handleToolError(
   helpText: string
 ): ToolError {
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  logger.error({ error, tenantId }, `Error in ${toolName} tool`);
+  logger.error({ error: sanitizeError(error), tenantId }, `Error in ${toolName} tool`);
   return {
     success: false,
     error: `${helpText}: ${errorMessage}`,

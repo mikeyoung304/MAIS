@@ -231,7 +231,7 @@ export class AuditService {
       });
     } catch (error) {
       // Log but don't fail the operation
-      logger.error({ error, input }, 'Failed to write audit log');
+      logger.error({ error: sanitizeError(error), input }, 'Failed to write audit log');
     }
   }
 

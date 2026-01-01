@@ -1,9 +1,11 @@
 ---
-status: pending
+status: duplicate
 priority: p2
 issue_id: '559'
 tags: [code-review, duplication, agent-ecosystem, performance]
 dependencies: []
+duplicate_of: '569'
+closed_date: '2026-01-01'
 ---
 
 # P2: Tenant Lookup Pattern Duplication Across Orchestrators
@@ -117,6 +119,7 @@ Implement **Option 1** - load tenant once into session state.
 | Date       | Action                   | Learnings                            |
 | ---------- | ------------------------ | ------------------------------------ |
 | 2026-01-01 | Created from code review | Pattern Duplication Reviewer flagged |
+| 2026-01-01 | Marked as duplicate      | Already resolved by Todo 569         |
 
 ## Resources
 

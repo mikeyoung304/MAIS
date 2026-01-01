@@ -13,21 +13,23 @@ const CACHE_VERSION = 'v1';
 const STATIC_CACHE = `handled-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `handled-pages-${CACHE_VERSION}`;
 
+// Cache size limits to prevent unbounded growth
+const MAX_STATIC_CACHE_SIZE = 100;
+const MAX_PAGES_CACHE_SIZE = 50;
+
+// Background sync retry limits
+const MAX_SYNC_RETRIES = 5;
+
 // URLs to pre-cache on install
-const PRECACHE_URLS = [
-  '/',
-  '/offline.html',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-];
+const PRECACHE_URLS = ['/', '/offline.html', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 // Routes that should NEVER be cached (security-critical)
 const NEVER_CACHE_PATTERNS = [
-  /\/api\/auth\//,              // Auth endpoints
-  /\/api\/v1\/agent\//,         // Agent/AI endpoints
-  /\/api\/v1\/public\/chat\//,  // Public chat endpoints
-  /\/api\/.*\/webhooks/,        // Webhook endpoints
-  /_next\/webpack-hmr/,         // HMR in development
+  /\/api\/auth\//, // Auth endpoints
+  /\/api\/v1\/agent\//, // Agent/AI endpoints
+  /\/api\/v1\/public\/chat\//, // Public chat endpoints
+  /\/api\/.*\/webhooks/, // Webhook endpoints
+  /_next\/webpack-hmr/, // HMR in development
 ];
 
 // API routes (network-first)
@@ -67,6 +69,21 @@ function isStaticAsset(url) {
 function log(message, ...args) {
   // Uncomment for debugging:
   // console.log(`[SW] ${message}`, ...args);
+}
+
+/**
+ * Trim cache to maximum size (LRU eviction).
+ * Removes oldest entries when cache exceeds maxItems.
+ */
+async function trimCache(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxItems) {
+    // Delete oldest entries (first in list)
+    const keysToDelete = keys.slice(0, keys.length - maxItems);
+    await Promise.all(keysToDelete.map((key) => cache.delete(key)));
+    log('Trimmed cache:', cacheName, 'removed', keysToDelete.length, 'entries');
+  }
 }
 
 // ============================================================================
@@ -208,6 +225,9 @@ async function cacheFirst(request, cacheName) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       log('Cached new resource:', request.url);
+
+      // Trim cache to prevent unbounded growth
+      await trimCache(cacheName, MAX_STATIC_CACHE_SIZE);
     }
 
     return networkResponse;
@@ -234,6 +254,9 @@ async function staleWhileRevalidate(request, cacheName) {
       if (networkResponse.ok) {
         await cache.put(request, networkResponse.clone());
         log('Updated cache:', request.url);
+
+        // Trim cache to prevent unbounded growth
+        await trimCache(cacheName, MAX_PAGES_CACHE_SIZE);
       }
 
       return networkResponse;
@@ -325,10 +348,27 @@ async function syncPendingBookings() {
               });
             } else {
               // Update sync attempts
-              booking.syncAttempts = (booking.syncAttempts || 0) + 1;
+              const attempts = (booking.syncAttempts || 0) + 1;
+              booking.syncAttempts = attempts;
               booking.lastSyncAttempt = Date.now();
-              store.put(booking);
-              log('Sync failed, will retry:', booking.id);
+
+              if (attempts >= MAX_SYNC_RETRIES) {
+                // Max retries exceeded - abandon and notify client
+                store.delete(booking.id);
+                log('Max retries exceeded, abandoning booking:', booking.id);
+
+                const clients = await self.clients.matchAll();
+                clients.forEach((client) => {
+                  client.postMessage({
+                    type: 'BOOKING_SYNC_FAILED',
+                    bookingId: booking.id,
+                    reason: 'Max retries exceeded',
+                  });
+                });
+              } else {
+                store.put(booking);
+                log('Sync failed, will retry:', booking.id, 'attempt', attempts);
+              }
             }
           } catch (error) {
             log('Error syncing booking:', booking.id, error);

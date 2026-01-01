@@ -101,7 +101,11 @@ function MobileCard<T>({
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
-          aria-label={isExpanded ? 'Show less details' : `Show ${sortedColumns.length - mobileColumns} more details`}
+          aria-label={
+            isExpanded
+              ? 'Show less details'
+              : `Show ${sortedColumns.length - mobileColumns} more details`
+          }
           className="mt-4 flex w-full items-center justify-center gap-1 rounded-lg border border-neutral-200 py-2 text-sm text-text-muted transition-colors hover:bg-neutral-50"
         >
           {isExpanded ? (
@@ -217,10 +221,10 @@ export function ResponsiveDataTable<T>({
   // Empty state
   if (!isLoading && data.length === 0) {
     return (
-      <div className={cn('rounded-xl border border-neutral-200 bg-white p-8 text-center', className)}>
-        {emptyState ?? (
-          <p className="text-text-muted">No data available</p>
-        )}
+      <div
+        className={cn('rounded-xl border border-neutral-200 bg-white p-8 text-center', className)}
+      >
+        {emptyState ?? <p className="text-text-muted">No data available</p>}
       </div>
     );
   }
@@ -228,7 +232,7 @@ export function ResponsiveDataTable<T>({
   // Mobile card layout
   if (isMobile) {
     return (
-      <div className={cn('space-y-3', className)}>
+      <div className={cn('space-y-3', className)} aria-live="polite" aria-busy={isLoading}>
         {isLoading
           ? Array.from({ length: skeletonRows }).map((_, i) => <MobileSkeletonCard key={i} />)
           : data.map((item, index) => (
@@ -247,7 +251,11 @@ export function ResponsiveDataTable<T>({
 
   // Desktop table layout
   return (
-    <div className={cn('overflow-hidden rounded-xl border border-neutral-200', className)}>
+    <div
+      className={cn('overflow-hidden rounded-xl border border-neutral-200', className)}
+      aria-live="polite"
+      aria-busy={isLoading}
+    >
       <div className="overflow-x-auto">
         <table className="w-full" aria-label="Data table">
           <thead className="border-b border-neutral-200 bg-neutral-50">
@@ -292,7 +300,12 @@ export function ResponsiveDataTable<T>({
                       )}
                     </button>
                   ) : (
-                    <div className={cn('flex items-center gap-1', col.align === 'right' && 'justify-end')}>
+                    <div
+                      className={cn(
+                        'flex items-center gap-1',
+                        col.align === 'right' && 'justify-end'
+                      )}
+                    >
                       {col.header}
                     </div>
                   )}

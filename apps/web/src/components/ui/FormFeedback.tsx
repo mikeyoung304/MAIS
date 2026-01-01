@@ -146,7 +146,7 @@ export function FormFeedback({
         isAnimatingOut
           ? 'translate-y-2 opacity-0'
           : 'translate-y-0 opacity-100 animate-in slide-in-from-top-2',
-        status === 'error' && 'animate-shake',
+        status === 'error' && 'motion-safe:animate-shake',
         statusColors[status],
         className
       )}
@@ -162,7 +162,7 @@ export function FormFeedback({
           <button
             type="button"
             onClick={handleDismiss}
-            className="flex-shrink-0 rounded-lg p-1 opacity-70 hover:opacity-100 transition-opacity"
+            className="flex-shrink-0 flex items-center justify-center min-w-11 min-h-11 -m-2 rounded-lg opacity-70 hover:opacity-100 transition-opacity"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />
@@ -242,7 +242,7 @@ export function SuccessCheckmark({ className }: { className?: string }) {
  */
 export function ErrorX({ className }: { className?: string }) {
   return (
-    <div className={cn('relative animate-shake', className)}>
+    <div className={cn('relative motion-safe:animate-shake', className)}>
       <svg
         className="h-16 w-16 text-red-500"
         viewBox="0 0 52 52"

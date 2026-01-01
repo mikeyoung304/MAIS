@@ -13,6 +13,7 @@
 import type { AgentTool, ToolContext, AgentToolResult } from './types';
 import { sanitizeForContext } from './types';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { BookingStatus, Prisma } from '../../generated/prisma';
 import {
   handleToolError,
@@ -96,7 +97,7 @@ export const getTenantTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_tenant tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_tenant tool');
       return {
         success: false,
         error: `Failed to fetch business profile: ${errorMessage}. Try refreshing your session or contact support if the issue persists.`,
@@ -191,7 +192,7 @@ export const getDashboardTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_dashboard tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_dashboard tool');
       return {
         success: false,
         error: `Failed to fetch dashboard data: ${errorMessage}. This may be a temporary database issue. Try again in a few moments.`,
@@ -272,7 +273,7 @@ export const getPackagesTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_packages tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_packages tool');
       return {
         success: false,
         error: `Failed to fetch packages: ${errorMessage}. Verify your session is valid and try again.`,
@@ -363,7 +364,7 @@ export const getBookingsTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_bookings tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_bookings tool');
       return {
         success: false,
         error: `Failed to fetch bookings: ${errorMessage}. Check that date filters are in YYYY-MM-DD format and try again.`,
@@ -439,7 +440,10 @@ export const getBookingTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, bookingId }, 'Error in get_booking tool');
+      logger.error(
+        { error: sanitizeError(error), tenantId, bookingId },
+        'Error in get_booking tool'
+      );
       return {
         success: false,
         error: `Failed to fetch booking "${bookingId}": ${errorMessage}. Verify the booking ID is correct and belongs to your business.`,
@@ -514,7 +518,10 @@ export const checkAvailabilityTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId, date: dateStr }, 'Error in check_availability tool');
+      logger.error(
+        { error: sanitizeError(error), tenantId, date: dateStr },
+        'Error in check_availability tool'
+      );
       return {
         success: false,
         error: `Failed to check availability for date "${dateStr}": ${errorMessage}. Ensure the date is in YYYY-MM-DD format.`,
@@ -557,7 +564,7 @@ export const getLandingPageTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_landing_page tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_landing_page tool');
       return {
         success: false,
         error: `Failed to fetch landing page configuration: ${errorMessage}. Try refreshing your session.`,
@@ -605,7 +612,7 @@ export const getStripeStatusTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_stripe_status tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_stripe_status tool');
       return {
         success: false,
         error: `Failed to fetch payment setup status: ${errorMessage}. This may be a temporary issue with the payment system.`,
@@ -686,7 +693,7 @@ export const getAddonsTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_addons tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_addons tool');
       return {
         success: false,
         error: `Failed to fetch add-ons: ${errorMessage}. Verify your session is valid and try again.`,
@@ -921,7 +928,7 @@ export const getCustomersTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_customers tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_customers tool');
       return {
         success: false,
         error: `Failed to fetch customers: ${errorMessage}. If searching, try a simpler search term. Ensure dates are in YYYY-MM-DD format.`,
@@ -1021,7 +1028,7 @@ export const getSegmentsTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_segments tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_segments tool');
       return {
         success: false,
         error: `Failed to fetch service segments: ${errorMessage}. Verify your session is valid and try again.`,
@@ -1145,7 +1152,7 @@ export const getTrialStatusTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_trial_status tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_trial_status tool');
       return {
         success: false,
         error: `Failed to fetch trial and subscription status: ${errorMessage}. Try refreshing your session.`,
@@ -1227,7 +1234,7 @@ export const getBookingLinkTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in get_booking_link tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in get_booking_link tool');
       return {
         success: false,
         error: `Failed to get booking link: ${errorMessage}. Try again or verify the package slug if provided.`,
@@ -1316,7 +1323,7 @@ export const refreshContextTool: AgentTool = {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error({ error, tenantId }, 'Error in refresh_context tool');
+      logger.error({ error: sanitizeError(error), tenantId }, 'Error in refresh_context tool');
       return {
         success: false,
         error: `Failed to refresh context: ${errorMessage}. Try again in a few moments.`,

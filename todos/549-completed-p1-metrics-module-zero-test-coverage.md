@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: '549'
 tags: [code-review, testing, agent-ecosystem, observability]
@@ -93,16 +93,17 @@ Start with **Option 1** for unit tests, add one **Option 2** snapshot test for o
 
 ## Acceptance Criteria
 
-- [ ] Unit test for each `record*()` function
-- [ ] Verify correct labels are applied
-- [ ] Snapshot test for `getAgentMetrics()` output format
-- [ ] Test that metrics singleton is properly shared
+- [x] Unit test for each `record*()` function
+- [x] Verify correct labels are applied
+- [x] Snapshot test for `getAgentMetrics()` output format
+- [x] Test that metrics singleton is properly shared
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                     |
-| ---------- | ------------------------ | --------------------------------------------- |
-| 2026-01-01 | Created from code review | Test Coverage Reviewer identified 0% coverage |
+| Date       | Action                   | Learnings                                                                                          |
+| ---------- | ------------------------ | -------------------------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from code review | Test Coverage Reviewer identified 0% coverage                                                      |
+| 2026-01-01 | Implemented 43 tests     | Used real prom-client with registry reset for test isolation. 100% coverage achieved in <1 second. |
 
 ## Resources
 

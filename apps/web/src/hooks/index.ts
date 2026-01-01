@@ -15,7 +15,12 @@
  */
 
 // Responsive & Media Queries
-export { useMediaQuery, useMediaQueryValue, useMediaQueryWithFallback, type MediaQueryState } from './useMediaQuery';
+export {
+  useMediaQuery,
+  useMediaQueryValue,
+  useMediaQueryWithFallback,
+  type MediaQueryState,
+} from './useMediaQuery';
 export {
   useBreakpoint,
   usePrefersReducedMotion,
@@ -28,7 +33,12 @@ export {
 } from './useBreakpoint';
 
 // Layout & Safe Areas
-export { useSafeArea, type SafeAreaInsets } from './useSafeArea';
+export {
+  useSafeArea,
+  useSafeAreaInsets,
+  useSafeAreaBottom,
+  type SafeAreaInsets,
+} from './useSafeArea';
 export { useKeyboardHeight, type KeyboardState } from './useKeyboardHeight';
 
 // Network & Connectivity
@@ -43,8 +53,20 @@ export {
 } from './useNetworkStatus';
 
 // Gestures
-export { useSwipeGesture, useSimpleSwipe, type SwipeEvent, type SwipeDirection, type SwipeGestureOptions, type SwipeGestureState } from './useSwipeGesture';
-export { usePullToRefresh, type PullToRefreshOptions, type PullToRefreshState, type PullToRefreshStatus } from './usePullToRefresh';
+export {
+  useSwipeGesture,
+  useSimpleSwipe,
+  type SwipeEvent,
+  type SwipeDirection,
+  type SwipeGestureOptions,
+  type SwipeGestureState,
+} from './useSwipeGesture';
+export {
+  usePullToRefresh,
+  type PullToRefreshOptions,
+  type PullToRefreshState,
+  type PullToRefreshStatus,
+} from './usePullToRefresh';
 export { usePinchZoom, type PinchZoomOptions, type PinchZoomState } from './usePinchZoom';
 export { useHapticFeedback, type HapticPattern, type HapticIntensity } from './useHapticFeedback';
 
@@ -52,4 +74,9 @@ export { useHapticFeedback, type HapticPattern, type HapticIntensity } from './u
 export { useLocalStorage, useLocalStorageBoolean } from './useLocalStorage';
 
 // Scroll
-export { useScrollRestoration, useScrollToTop, type ScrollRestorationOptions, type ScrollRestorationState } from './useScrollRestoration';
+export {
+  useScrollRestoration,
+  useScrollToTop,
+  type ScrollRestorationOptions,
+  type ScrollRestorationState,
+} from './useScrollRestoration';

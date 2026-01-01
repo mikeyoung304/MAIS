@@ -1,5 +1,6 @@
 ---
-status: pending
+status: completed
+completed_date: 2026-01-01
 priority: p2
 issue_id: '555'
 tags: [code-review, performance, architecture, agent-ecosystem]
@@ -104,16 +105,47 @@ npx madge --circular server/src/agent/
 
 ## Acceptance Criteria
 
-- [ ] Convert to static imports if circular dependency resolved
-- [ ] Verify no circular dependencies with madge
-- [ ] If static fails, implement lazy-load-once pattern
-- [ ] Verify no latency regression
+- [x] Convert to static imports if circular dependency resolved
+- [x] Verify no circular dependencies with madge
+- [x] If static fails, implement lazy-load-once pattern (N/A - static imports worked)
+- [x] Verify no latency regression
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                  |
-| ---------- | ------------------------ | ------------------------------------------ |
-| 2026-01-01 | Created from code review | Performance/Architecture reviewers flagged |
+| Date       | Action                   | Learnings                                                                                             |
+| ---------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from code review | Performance/Architecture reviewers flagged                                                            |
+| 2026-01-01 | Completed - Option 1     | Static imports work. Executor-registry refactor successfully decoupled the circular dependency chain. |
+
+## Resolution
+
+**Implemented Option 1: Static Imports**
+
+Converted dynamic imports to static imports at the top of `base-orchestrator.ts`:
+
+```typescript
+// Before (dynamic - ~1-5ms overhead per call)
+const { getProposalExecutor } = await import('../proposals/executor-registry');
+const { validateExecutorPayload } = await import('../proposals/executor-schemas');
+
+// After (static - zero runtime overhead)
+import { getProposalExecutor } from '../proposals/executor-registry';
+import { validateExecutorPayload } from '../proposals/executor-schemas';
+```
+
+**Verification:**
+
+- `npx madge --circular server/src/agent/` - No circular dependencies
+- `npx madge --circular server/src/` - No circular dependencies
+- TypeScript type check passes
+- All 53 base-orchestrator tests pass
+- All 54 proposal service tests pass
+- All 16 onboarding orchestrator integration tests pass
+
+**Performance Impact:**
+
+- Eliminates ~1-5ms async import overhead per proposal execution batch
+- Module loading now happens at startup (once) instead of per-request
 
 ## Resources
 

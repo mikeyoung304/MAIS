@@ -25,6 +25,7 @@ import type {
 } from '@macon/contracts';
 import { getIndustryBenchmarks, type IndustryBenchmarks } from './industry-benchmarks';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 // ============================================================================
 // Actor Types (for async operations)
@@ -290,7 +291,10 @@ export const onboardingMachine = setup({
           actions: [
             assign({ error: ({ event }) => String(event.error) }),
             ({ event }) => {
-              logger.error({ error: event.error }, 'Failed to load industry benchmarks');
+              logger.error(
+                { error: sanitizeError(event.error) },
+                'Failed to load industry benchmarks'
+              );
             },
           ],
         },

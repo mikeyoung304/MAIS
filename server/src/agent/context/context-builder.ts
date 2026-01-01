@@ -13,6 +13,7 @@
 import type { PrismaClient } from '../../generated/prisma';
 import { sanitizeForContext, DENY_LIST_FIELDS } from '../tools/types';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 
 /**
  * Onboarding state - used for health check and greeting logic
@@ -122,7 +123,7 @@ export async function buildSessionContext(
       },
     };
   } catch (error) {
-    logger.error({ error, tenantId }, 'Error building session context');
+    logger.error({ error: sanitizeError(error), tenantId }, 'Error building session context');
     throw error;
   }
 }

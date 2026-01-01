@@ -1,5 +1,6 @@
 ---
-status: pending
+status: completed
+completed_date: '2026-01-01'
 priority: p3
 issue_id: '528'
 tags:
@@ -54,7 +55,7 @@ async function trimCache(cacheName, maxItems) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
   if (keys.length > maxItems) {
-    await Promise.all(keys.slice(0, keys.length - maxItems).map(key => cache.delete(key)));
+    await Promise.all(keys.slice(0, keys.length - maxItems).map((key) => cache.delete(key)));
   }
 }
 ```
@@ -163,19 +164,20 @@ Address items individually as time permits. Group by type:
 ## Acceptance Criteria
 
 - [x] Unused exports removed
-- [ ] Cache size limits implemented
-- [ ] Background sync has retry limit
-- [ ] All hooks exported from barrel
-- [ ] Animations respect motion preferences
-- [ ] Touch targets meet minimums
-- [ ] Loading states accessible
+- [x] Cache size limits implemented
+- [x] Background sync has retry limit
+- [x] All hooks exported from barrel
+- [x] Animations respect motion preferences
+- [x] Touch targets meet minimums
+- [x] Loading states accessible
 
 ## Work Log
 
-| Date       | Action                              | Learnings          |
-| ---------- | ----------------------------------- | ------------------ |
-| 2026-01-01 | Created from mobile UX code review | Consolidated P3s   |
-| 2026-01-01 | Items 1 & 2 completed: removed unused exports | No consumers found |
+| Date       | Action                                                                                                 | Learnings                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| 2026-01-01 | Created from mobile UX code review                                                                     | Consolidated P3s                                                      |
+| 2026-01-01 | Items 1 & 2 completed: removed unused exports                                                          | No consumers found                                                    |
+| 2026-01-01 | Items 3-8 completed: cache limits, retry limits, barrel exports, motion-safe, touch targets, aria-live | Note: OfflineBanner.tsx and ImageLightbox.tsx don't exist in codebase |
 
 ## Resources
 

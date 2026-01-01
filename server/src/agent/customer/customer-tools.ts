@@ -14,6 +14,7 @@ import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from 
 import { ProposalService } from '../proposals/proposal.service';
 import { getCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';
+import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { ErrorMessages } from '../errors';
 
 /**
@@ -116,7 +117,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           })),
         };
       } catch (error) {
-        logger.error({ error, tenantId }, 'Failed to get services');
+        logger.error({ error: sanitizeError(error), tenantId }, 'Failed to get services');
         return { success: false, error: ErrorMessages.LOAD_SERVICES };
       }
     },
@@ -231,7 +232,10 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           },
         };
       } catch (error) {
-        logger.error({ error, tenantId, packageId }, 'Failed to check availability');
+        logger.error(
+          { error: sanitizeError(error), tenantId, packageId },
+          'Failed to check availability'
+        );
         return { success: false, error: ErrorMessages.CHECK_AVAILABILITY };
       }
     },
@@ -397,7 +401,10 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           message: `Ready to book ${pkg.name} on ${formatDate(date)} for ${formatMoney(pkg.basePrice)}. Say "yes, confirm" or "go ahead" to complete your booking.`,
         } as WriteToolProposal;
       } catch (error) {
-        logger.error({ error, tenantId, packageId }, 'Failed to create booking proposal');
+        logger.error(
+          { error: sanitizeError(error), tenantId, packageId },
+          'Failed to create booking proposal'
+        );
         return { success: false, error: 'Failed to create booking. Please try again.' };
       }
     },
@@ -548,7 +555,10 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           },
         };
       } catch (error) {
-        logger.error({ error, tenantId, proposalId }, 'Failed to confirm customer proposal');
+        logger.error(
+          { error: sanitizeError(error), tenantId, proposalId },
+          'Failed to confirm customer proposal'
+        );
         return {
           success: false,
           error: 'Failed to complete your booking. Please try again.',
@@ -636,7 +646,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           data: info,
         };
       } catch (error) {
-        logger.error({ error, tenantId }, 'Failed to get business info');
+        logger.error({ error: sanitizeError(error), tenantId }, 'Failed to get business info');
         return { success: false, error: ErrorMessages.BUSINESS_INFO };
       }
     },

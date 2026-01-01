@@ -204,9 +204,18 @@ export function createContextCache(config?: Partial<ContextCacheConfig>): Contex
 /**
  * Default singleton context cache instance
  *
- * Use this for production code. For tests, use createContextCache() instead.
+ * Use `defaultContextCache` for explicit naming (preferred in new code).
+ * Use `contextCache` for backward compatibility with existing imports.
+ *
+ * For tests, use createContextCache() to create isolated instances.
  */
-export const contextCache = createContextCache();
+export const defaultContextCache = createContextCache();
+
+/**
+ * Backward-compatible alias for defaultContextCache
+ * @deprecated Prefer `defaultContextCache` for new code
+ */
+export const contextCache = defaultContextCache;
 
 /**
  * Update the session ID in a cached context
