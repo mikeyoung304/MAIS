@@ -387,15 +387,23 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
 
       const { sessionId } = req.query;
 
-      let session;
+      // Get or create base session first
+      let baseSession;
       if (sessionId && typeof sessionId === 'string') {
-        session = await orchestrator.getSession(tenantId, sessionId);
-        if (!session) {
+        baseSession = await orchestrator.getSession(tenantId, sessionId);
+        if (!baseSession) {
           res.status(404).json({ error: 'Session not found' });
           return;
         }
       } else {
-        session = await orchestrator.getOrCreateSession(tenantId);
+        baseSession = await orchestrator.getOrCreateSession(tenantId);
+      }
+
+      // Get admin session with context (extends base session with context property)
+      const session = await orchestrator.getAdminSession(tenantId, baseSession.sessionId);
+      if (!session) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
       }
 
       // Get greeting for this session

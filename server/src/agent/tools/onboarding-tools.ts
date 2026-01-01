@@ -151,6 +151,7 @@ function getMachineEventForPhase(
  */
 export const updateOnboardingStateTool: AgentTool = {
   name: 'update_onboarding_state',
+  trustTier: 'T1', // Metadata update only
   description: `Transition the tenant's onboarding phase. Use after collecting required data for each phase.
 
 Phases flow: NOT_STARTED → DISCOVERY → MARKET_RESEARCH → SERVICES → MARKETING → COMPLETED
@@ -437,6 +438,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
  */
 export const upsertServicesTool: AgentTool = {
   name: 'upsert_services',
+  trustTier: 'T2', // Creates real database records
   description: `Create or update service packages during onboarding.
 
 Use this after market research to create the recommended service tiers.
@@ -571,6 +573,7 @@ Example:
  */
 export const updateStorefrontTool: AgentTool = {
   name: 'update_storefront',
+  trustTier: 'T2', // Updates tenant configuration
   description: `Update storefront landing page content during onboarding.
 
 Use this after marketing phase to configure the tenant's landing page.
@@ -693,6 +696,7 @@ Example:
  */
 export const getMarketResearchTool: AgentTool = {
   name: 'get_market_research',
+  trustTier: 'T1', // Read-only tool
   description: `Get pricing benchmarks for a business type and location.
 
 Use this during the MARKET_RESEARCH phase to get recommended pricing tiers.

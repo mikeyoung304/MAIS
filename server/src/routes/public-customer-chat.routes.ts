@@ -179,10 +179,16 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       const session = await orchestrator.getOrCreateSession(tenantId);
       const greeting = await orchestrator.getGreeting(tenantId);
 
+      // Get business name from tenant (not stored in session)
+      const tenantInfo = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      });
+
       res.json({
         sessionId: session.sessionId,
         greeting,
-        businessName: session.businessName,
+        businessName: tenantInfo?.name ?? null,
         messageCount: session.messages.length,
       });
     } catch (error) {
@@ -253,7 +259,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
           sessionId: actualSessionId,
           messageLength: message.length,
           responseLength: response.message.length,
-          hasProposal: !!response.proposal,
+          hasProposals: !!response.proposals?.length,
         },
         'Customer chat message processed'
       );
@@ -261,7 +267,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       res.json({
         message: response.message,
         sessionId: response.sessionId,
-        proposal: response.proposal,
+        proposals: response.proposals,
         toolResults: response.toolResults,
       });
     } catch (error) {

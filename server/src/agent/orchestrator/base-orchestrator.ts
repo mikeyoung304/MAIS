@@ -253,7 +253,7 @@ export abstract class BaseOrchestrator {
    * Get session type for database queries
    * Override in subclasses for different session types
    */
-  protected getSessionType(): 'BUSINESS' | 'CUSTOMER' | null {
+  protected getSessionType(): 'ADMIN' | 'CUSTOMER' | null {
     return null; // Default: no session type filter
   }
 
@@ -466,7 +466,10 @@ export abstract class BaseOrchestrator {
         CLAUDE_API_RETRY_CONFIG
       );
     } catch (error) {
-      logger.error({ error: sanitizeError(error), tenantId, sessionId: session.sessionId }, 'Claude API call failed');
+      logger.error(
+        { error: sanitizeError(error), tenantId, sessionId: session.sessionId },
+        'Claude API call failed'
+      );
       circuitBreaker.recordError();
       throw new Error('Failed to communicate with AI assistant. Please try again.');
     }
@@ -872,7 +875,10 @@ export abstract class BaseOrchestrator {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        logger.error({ error: sanitizeError(error), toolName: toolUse.name }, 'Tool execution failed');
+        logger.error(
+          { error: sanitizeError(error), toolName: toolUse.name },
+          'Tool execution failed'
+        );
 
         toolResults.push({
           toolName: toolUse.name,
@@ -973,8 +979,7 @@ export abstract class BaseOrchestrator {
     };
 
     const messageContent =
-      assistantMessage ||
-      (toolResults && toolResults.length > 0 ? '[Tools executed]' : 'Done.');
+      assistantMessage || (toolResults && toolResults.length > 0 ? '[Tools executed]' : 'Done.');
 
     const newAssistantMessage: ChatMessage = {
       role: 'assistant',
@@ -1057,7 +1062,10 @@ export abstract class BaseOrchestrator {
     }
 
     if (removed > 0) {
-      logger.debug({ removed, remaining: this.circuitBreakers.size }, 'Cleaned up old circuit breakers');
+      logger.debug(
+        { removed, remaining: this.circuitBreakers.size },
+        'Cleaned up old circuit breakers'
+      );
     }
   }
 }

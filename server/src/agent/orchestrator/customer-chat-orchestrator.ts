@@ -74,7 +74,7 @@ export class CustomerChatOrchestrator extends BaseOrchestrator {
     return CUSTOMER_TOOLS;
   }
 
-  protected getSessionType(): 'BUSINESS' | 'CUSTOMER' {
+  protected getSessionType(): 'ADMIN' | 'CUSTOMER' {
     return 'CUSTOMER';
   }
 

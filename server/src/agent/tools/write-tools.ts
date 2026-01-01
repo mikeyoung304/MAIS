@@ -91,6 +91,7 @@ function isSignificantPriceChange(oldPriceCents: number, newPriceCents: number):
  */
 export const upsertPackageTool: AgentTool = {
   name: 'upsert_package',
+  trustTier: 'T2', // Package updates (price changes may escalate to T3 in execute)
   description:
     'Create a new package or update an existing one. Includes title, description, pricing, and photos. Large price changes (>20% or >$100) require additional confirmation.',
   inputSchema: {
@@ -207,6 +208,7 @@ export const upsertPackageTool: AgentTool = {
  */
 export const upsertAddOnTool: AgentTool = {
   name: 'upsert_addon',
+  trustTier: 'T2', // Soft confirm for add-on changes
   description:
     'Create a new add-on or update an existing one. Add-ons are optional extras for packages.',
   inputSchema: {
@@ -296,6 +298,7 @@ export const upsertAddOnTool: AgentTool = {
  */
 export const deleteAddOnTool: AgentTool = {
   name: 'delete_addon',
+  trustTier: 'T2', // Base T2, dynamically escalates to T3 if has bookings
   description:
     'Delete an add-on (soft delete - marks as inactive). Requires confirmation if add-on has existing bookings.',
   inputSchema: {
@@ -358,6 +361,7 @@ export const deleteAddOnTool: AgentTool = {
  */
 export const deletePackageTool: AgentTool = {
   name: 'delete_package',
+  trustTier: 'T2', // Base T2, dynamically escalates to T3 if has bookings
   description: 'Delete a package. Requires confirmation if package has existing bookings.',
   inputSchema: {
     type: 'object',
@@ -420,6 +424,7 @@ export const deletePackageTool: AgentTool = {
  */
 export const manageBlackoutTool: AgentTool = {
   name: 'manage_blackout',
+  trustTier: 'T1', // Auto-confirm for blackout management
   description: 'Add or remove a blackout date (blocked date for bookings)',
   inputSchema: {
     type: 'object',
@@ -479,6 +484,7 @@ export const manageBlackoutTool: AgentTool = {
  */
 export const addBlackoutDateTool: AgentTool = {
   name: 'add_blackout_date',
+  trustTier: 'T1', // Auto-confirm - low risk, adding restrictions
   description:
     'Block a date or date range for bookings (e.g., vacation, holiday). Supports single day or multi-day ranges.',
   inputSchema: {
@@ -611,6 +617,7 @@ export const addBlackoutDateTool: AgentTool = {
  */
 export const removeBlackoutDateTool: AgentTool = {
   name: 'remove_blackout_date',
+  trustTier: 'T2', // Soft confirm - opens availability, higher risk
   description:
     'Remove a blackout (unblock a date) so bookings can be made again. Use get_blackout_dates to find blackout IDs.',
   inputSchema: {
@@ -674,6 +681,7 @@ export const removeBlackoutDateTool: AgentTool = {
  */
 export const updateBrandingTool: AgentTool = {
   name: 'update_branding',
+  trustTier: 'T1', // Auto-confirm for branding changes
   description: 'Update business branding settings (colors, logo, fonts)',
   inputSchema: {
     type: 'object',
@@ -735,6 +743,7 @@ export const updateBrandingTool: AgentTool = {
  */
 export const updateLandingPageTool: AgentTool = {
   name: 'update_landing_page',
+  trustTier: 'T2', // Soft confirm for landing page updates
   description: 'Update storefront landing page content and sections',
   inputSchema: {
     type: 'object',
@@ -794,6 +803,7 @@ export const updateLandingPageTool: AgentTool = {
  */
 export const requestFileUploadTool: AgentTool = {
   name: 'request_file_upload',
+  trustTier: 'T1', // Read-like operation - just returns upload instructions
   description:
     'Get instructions for uploading a file (logo, photo, etc.). The user will need to upload via UI.',
   inputSchema: {
@@ -845,6 +855,7 @@ export const requestFileUploadTool: AgentTool = {
  */
 export const cancelBookingTool: AgentTool = {
   name: 'cancel_booking',
+  trustTier: 'T3', // Hard confirm - always requires explicit confirmation
   description: 'Cancel a booking and process refund. ALWAYS requires explicit confirmation.',
   inputSchema: {
     type: 'object',
@@ -916,6 +927,7 @@ export const cancelBookingTool: AgentTool = {
  */
 export const createBookingTool: AgentTool = {
   name: 'create_booking',
+  trustTier: 'T3', // Hard confirm - always requires explicit confirmation
   description:
     'Create a manual booking (for phone orders, walk-ins). ALWAYS requires explicit confirmation. Checks availability before creating.',
   inputSchema: {
@@ -1046,6 +1058,7 @@ export const createBookingTool: AgentTool = {
  */
 export const processRefundTool: AgentTool = {
   name: 'process_refund',
+  trustTier: 'T3', // Hard confirm - financial operation
   description:
     'Process a refund for a booking. Can do full or partial refund. ALWAYS requires explicit confirmation.',
   inputSchema: {
@@ -1145,6 +1158,7 @@ export const processRefundTool: AgentTool = {
  */
 export const upsertSegmentTool: AgentTool = {
   name: 'upsert_segment',
+  trustTier: 'T2', // Soft confirm for segment changes
   description: 'Create a new segment or update an existing one. Segments organize packages.',
   inputSchema: {
     type: 'object',
@@ -1237,6 +1251,7 @@ export const upsertSegmentTool: AgentTool = {
  */
 export const deleteSegmentTool: AgentTool = {
   name: 'delete_segment',
+  trustTier: 'T2', // Base T2, dynamically escalates to T3 if has packages
   description:
     'Delete a segment (soft delete - marks as inactive). Requires confirmation if segment has packages.',
   inputSchema: {
@@ -1299,6 +1314,7 @@ export const deleteSegmentTool: AgentTool = {
  */
 export const updateBookingTool: AgentTool = {
   name: 'update_booking',
+  trustTier: 'T2', // Soft confirm - preserves payment status
   description:
     'Reschedule a booking to a new date/time, add notes, or update status. Preserves payment info and customer details.',
   inputSchema: {
@@ -1487,6 +1503,7 @@ export const updateBookingTool: AgentTool = {
  */
 export const updateDepositSettingsTool: AgentTool = {
   name: 'update_deposit_settings',
+  trustTier: 'T3', // Hard confirm - financial configuration changes
   description:
     'Configure deposit requirements for bookings. Set percentage (0-100) or null for full payment.',
   inputSchema: {
@@ -1577,6 +1594,7 @@ export const updateDepositSettingsTool: AgentTool = {
  */
 export const startTrialTool: AgentTool = {
   name: 'start_trial',
+  trustTier: 'T2', // Soft confirm for trial start
   description:
     'Start a 14-day trial for the business. Only available if no trial has been started.',
   inputSchema: {
@@ -1634,6 +1652,7 @@ export const startTrialTool: AgentTool = {
  */
 export const initiateStripeOnboardingTool: AgentTool = {
   name: 'initiate_stripe_onboarding',
+  trustTier: 'T2', // Soft confirm - user will be redirected to Stripe
   description:
     'Start Stripe Connect payment setup. If already connected, returns that status. Otherwise creates a connected account and returns the onboarding URL.',
   inputSchema: {
