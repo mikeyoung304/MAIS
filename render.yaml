@@ -7,7 +7,7 @@ services:
     name: mais-api
     runtime: node
     region: oregon
-    plan: free
+    plan: starter  # Hobby tier in dashboard ($5/month, always-on)
     branch: main
     buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npx prisma generate
     startCommand: cd server && npm run start

@@ -1,9 +1,11 @@
 ---
-status: pending
+status: closed
 priority: p1
 issue_id: '570'
 tags: [code-review, devops, production, infrastructure]
 dependencies: []
+closed_date: '2026-01-01'
+closed_reason: 'Already on Hobby tier ($5/month) in dashboard. render.yaml updated to match.'
 ---
 
 # P1: Production API Running on Render Free Tier
