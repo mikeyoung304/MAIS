@@ -32,6 +32,9 @@ import { withRetry, CLAUDE_API_RETRY_CONFIG } from '../utils/retry';
 import { ContextCache, defaultContextCache, withSessionId } from '../context/context-cache';
 import { buildFallbackContext } from '../context/context-builder';
 import type { AgentSessionContext } from '../context/context-builder';
+// Tracing imports for agent evaluation
+import { ConversationTracer, createTracer } from '../tracing';
+import type { AgentType as TracingAgentType, SupportedModel, TrustTier } from '../tracing';
 
 // Proposal execution imports (static to avoid ~1-5ms dynamic import latency)
 import { getProposalExecutor } from '../proposals/executor-registry';
@@ -79,6 +82,12 @@ export interface OrchestratorConfig {
    * Default: true (recommended for all orchestrators)
    */
   readonly enableInjectionDetection?: boolean;
+  /**
+   * Enable conversation tracing for agent evaluation.
+   * When enabled, all conversations are traced for later analysis.
+   * Default: true (recommended for all orchestrators)
+   */
+  readonly enableTracing?: boolean;
 }
 
 /**
@@ -95,6 +104,7 @@ export const DEFAULT_ORCHESTRATOR_CONFIG: Omit<OrchestratorConfig, 'agentType'> 
   maxRecursionDepth: 5,
   executorTimeoutMs: 5000,
   enableInjectionDetection: true, // Security: enabled by default
+  enableTracing: true, // Evaluation: enabled by default
 };
 
 /**
@@ -264,6 +274,10 @@ export abstract class BaseOrchestrator {
   // Per-session circuit breakers (keyed by sessionId to prevent cross-session pollution)
   // Each session gets its own circuit breaker so one user's abuse doesn't affect others
   private readonly circuitBreakers = new Map<string, CircuitBreaker>();
+
+  // Per-session conversation tracers (keyed by sessionId)
+  // Each session gets its own tracer to capture conversation flow
+  private readonly tracers = new Map<string, ConversationTracer>();
 
   // Cleanup old circuit breakers periodically (every 100 chat calls)
   private circuitBreakerCleanupCounter = 0;
@@ -562,6 +576,20 @@ export abstract class BaseOrchestrator {
       this.circuitBreakers.set(session.sessionId, circuitBreaker);
     }
 
+    // Get or create per-session conversation tracer (lazy initialization)
+    const enableTracing = config.enableTracing ?? true;
+    let tracer: ConversationTracer | null = null;
+    if (enableTracing) {
+      tracer = this.tracers.get(session.sessionId) ?? null;
+      if (!tracer) {
+        tracer = createTracer(this.prisma, {
+          model: config.model as SupportedModel,
+        });
+        tracer.initialize(tenantId, session.sessionId, config.agentType as TracingAgentType);
+        this.tracers.set(session.sessionId, tracer);
+      }
+    }
+
     // Periodic cleanup of old circuit breakers
     this.circuitBreakerCleanupCounter++;
     if (this.circuitBreakerCleanupCounter >= CLEANUP_INTERVAL_CALLS) {
@@ -619,7 +647,12 @@ export abstract class BaseOrchestrator {
     // Build tools for API
     const tools = this.buildToolsForAPI();
 
+    // Trace: Record user message (estimate tokens from message length / 4)
+    const estimatedUserTokens = Math.ceil(userMessage.length / 4);
+    tracer?.recordUserMessage(userMessage, estimatedUserTokens);
+
     // Call Claude API with retry logic
+    const apiStartTime = Date.now();
     let response: Anthropic.Messages.Message;
     try {
       response = await withRetry(
@@ -636,6 +669,13 @@ export abstract class BaseOrchestrator {
         CLAUDE_API_RETRY_CONFIG
       );
     } catch (error) {
+      // Trace: Record error
+      tracer?.recordError({
+        message: error instanceof Error ? error.message : 'Claude API call failed',
+      });
+      tracer?.flag('API error');
+      tracer?.flush(); // Fire-and-forget write
+
       logger.error(
         { error: sanitizeError(error), tenantId, sessionId: session.sessionId },
         'Claude API call failed'
@@ -656,7 +696,8 @@ export abstract class BaseOrchestrator {
       messages,
       systemPrompt,
       0,
-      budgetTracker
+      budgetTracker,
+      tracer // Pass tracer to record tool calls
     );
 
     // Record turn for circuit breaker
@@ -672,6 +713,11 @@ export abstract class BaseOrchestrator {
     const turnDurationMs = Date.now() - startTime;
     const turnDurationSeconds = turnDurationMs / 1000;
     const hadToolCalls = toolResults !== undefined && toolResults.length > 0;
+
+    // Trace: Record assistant response
+    const apiLatencyMs = Date.now() - apiStartTime;
+    const outputTokens = response.usage?.output_tokens || Math.ceil(finalMessage.length / 4);
+    tracer?.recordAssistantResponse(finalMessage, outputTokens, apiLatencyMs);
 
     recordTurnDuration(turnDurationSeconds, config.agentType, hadToolCalls);
 
@@ -718,6 +764,10 @@ export abstract class BaseOrchestrator {
       durationMs: Date.now() - startTime,
       success: true,
     });
+
+    // Trace: Flush trace data (fire-and-forget write)
+    // This persists the trace to the database without blocking the response
+    tracer?.flush();
 
     return {
       message: finalMessage,
@@ -891,7 +941,8 @@ export abstract class BaseOrchestrator {
     messages: MessageParam[],
     systemPrompt: string,
     depth: number,
-    budgetTracker: BudgetTracker
+    budgetTracker: BudgetTracker,
+    tracer?: ConversationTracer | null
   ): Promise<{
     finalMessage: string;
     toolResults?: {
@@ -1004,7 +1055,9 @@ export abstract class BaseOrchestrator {
       }
 
       try {
+        const toolStartTime = Date.now();
         const result = await tool.execute(toolContext, toolUse.input as Record<string, unknown>);
+        const toolLatencyMs = Date.now() - toolStartTime;
         this.rateLimiter.recordCall(toolUse.name);
 
         // Record successful tool call metric
@@ -1014,6 +1067,23 @@ export abstract class BaseOrchestrator {
           toolName: toolUse.name,
           input: toolUse.input as Record<string, unknown>,
           result,
+        });
+
+        // Trace: Record tool call
+        const proposalId = 'proposalId' in result ? result.proposalId : null;
+        const proposalStatus =
+          'requiresApproval' in result && result.requiresApproval ? 'pending' : null;
+        tracer?.recordToolCall({
+          toolName: toolUse.name,
+          input: toolUse.input as Record<string, unknown>,
+          output: result,
+          latencyMs: toolLatencyMs,
+          trustTier: toolTier as TrustTier,
+          success: result.success,
+          error: 'error' in result ? (result.error as string) : null,
+          executionState: result.success ? 'complete' : 'failed',
+          proposalId: proposalId ?? null,
+          proposalStatus,
         });
 
         // Check if result is a proposal
@@ -1066,6 +1136,7 @@ export abstract class BaseOrchestrator {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const toolLatencyMs = Date.now() - startTime;
         logger.error(
           { error: sanitizeError(error), toolName: toolUse.name },
           'Tool execution failed'
@@ -1078,6 +1149,20 @@ export abstract class BaseOrchestrator {
           toolName: toolUse.name,
           input: toolUse.input as Record<string, unknown>,
           result: { success: false, error: errorMessage },
+        });
+
+        // Trace: Record failed tool call
+        tracer?.recordToolCall({
+          toolName: toolUse.name,
+          input: toolUse.input as Record<string, unknown>,
+          output: { success: false, error: errorMessage },
+          latencyMs: toolLatencyMs,
+          trustTier: toolTier as TrustTier,
+          success: false,
+          error: errorMessage,
+          executionState: 'failed',
+          proposalId: null,
+          proposalStatus: null,
         });
 
         toolResultBlocks.push({
@@ -1128,7 +1213,8 @@ export abstract class BaseOrchestrator {
         continuedMessages,
         systemPrompt,
         depth + 1,
-        budgetTracker
+        budgetTracker,
+        tracer // Pass tracer to recursive call
       );
       return {
         finalMessage: recursiveResult.finalMessage,
@@ -1237,6 +1323,17 @@ export abstract class BaseOrchestrator {
       // Remove circuit breakers older than TTL (orphaned after session expiry)
       if (ageMs > CIRCUIT_BREAKER_TTL_MS) {
         this.circuitBreakers.delete(sessionId);
+        // Also clean up corresponding tracer and finalize it
+        const tracer = this.tracers.get(sessionId);
+        if (tracer) {
+          tracer.finalize().catch((error) => {
+            logger.error(
+              { error: sanitizeError(error), sessionId },
+              'Failed to finalize tracer during cleanup'
+            );
+          });
+          this.tracers.delete(sessionId);
+        }
         removed++;
       }
     }
@@ -1249,6 +1346,17 @@ export abstract class BaseOrchestrator {
       for (const [sessionId] of this.circuitBreakers) {
         if (removedForCap >= toRemove) break;
         this.circuitBreakers.delete(sessionId);
+        // Also clean up corresponding tracer
+        const tracer = this.tracers.get(sessionId);
+        if (tracer) {
+          tracer.finalize().catch((error) => {
+            logger.error(
+              { error: sanitizeError(error), sessionId },
+              'Failed to finalize tracer during cap cleanup'
+            );
+          });
+          this.tracers.delete(sessionId);
+        }
         removedForCap++;
         removed++;
       }
@@ -1256,8 +1364,8 @@ export abstract class BaseOrchestrator {
 
     if (removed > 0) {
       logger.debug(
-        { removed, remaining: this.circuitBreakers.size },
-        'Cleaned up old circuit breakers'
+        { removed, remaining: this.circuitBreakers.size, tracersRemaining: this.tracers.size },
+        'Cleaned up old circuit breakers and tracers'
       );
     }
   }

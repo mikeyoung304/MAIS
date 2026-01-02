@@ -21,7 +21,7 @@
  *   PLATFORM_ADMIN_NAME: Optional, defaults to 'Platform Admin' (also accepts legacy ADMIN_NAME)
  */
 
-import { PrismaClient } from '../src/generated/prisma';
+import { createPrismaClient } from '../src/lib/prisma';
 import { seedPlatform } from './seeds/platform';
 import { seedE2E } from './seeds/e2e';
 import { seedDemo } from './seeds/demo';
@@ -32,7 +32,8 @@ import { seedHandled } from './seeds/handled';
 import { upgradeTenantPages } from './seeds/upgrade-tenant-pages';
 import { logger } from '../src/lib/core/logger';
 
-const prisma = new PrismaClient();
+// Prisma 7: Use centralized factory with driver adapter
+const prisma = createPrismaClient();
 
 type SeedMode =
   | 'production'

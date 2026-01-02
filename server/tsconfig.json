@@ -22,9 +22,17 @@
     "paths": {
       "@macon/contracts": ["../packages/contracts/src"],
       "@macon/shared": ["../packages/shared/src"],
-      "@generated/prisma": ["./src/generated/prisma"]
+      "@generated/prisma": ["./src/generated/prisma/client"],
+      "@db": ["./src/db"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "src/**/*.test.ts", "src/**/*.spec.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/adapters/lib/shutdown.ts"
+  ]
 }

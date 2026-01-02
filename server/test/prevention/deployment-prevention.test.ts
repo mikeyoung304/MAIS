@@ -383,7 +383,8 @@ describe('Deployment Prevention Tests', () => {
 
   describe('Build Artifacts', () => {
     it('should have Prisma client generated', () => {
-      const prismaClientPath = path.join(__dirname, '../../src/generated/prisma/index.d.ts');
+      // Prisma 7: Entry point changed from index.d.ts to client.ts
+      const prismaClientPath = path.join(__dirname, '../../src/generated/prisma/client.ts');
 
       // Prisma client should be generated
       expect(fs.existsSync(prismaClientPath)).toBe(true);

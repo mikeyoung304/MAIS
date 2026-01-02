@@ -115,7 +115,7 @@ function redactMessages(messages: TracedMessage[]): TracedMessage[] {
 function redactToolCalls(toolCalls: TracedToolCall[]): TracedToolCall[] {
   return toolCalls.map((tc) => ({
     ...tc,
-    input: redactObjectPII(tc.input),
+    input: redactObjectPII(tc.input) as Record<string, unknown>,
     output: redactObjectPII(tc.output),
   }));
 }
@@ -329,9 +329,9 @@ export class EvalPipeline {
     const startTime = Date.now();
 
     try {
-      // Parse and redact messages/toolCalls
-      const messages = redactMessages((trace.messages as TracedMessage[]) || []);
-      const toolCalls = redactToolCalls((trace.toolCalls as TracedToolCall[]) || []);
+      // Parse and redact messages/toolCalls (cast through unknown for Prisma 7 JSON type compatibility)
+      const messages = redactMessages((trace.messages as unknown as TracedMessage[]) || []);
+      const toolCalls = redactToolCalls((trace.toolCalls as unknown as TracedToolCall[]) || []);
 
       // Build evaluation input
       const input: EvalInput = {

@@ -427,7 +427,7 @@ export class ConversationTracer {
           estimatedCostCents: state.metrics.estimatedCostCents,
           messages: truncatedMessages as unknown as object,
           toolCalls: truncatedToolCalls as unknown as object,
-          errors: state.errors.length > 0 ? (state.errors as unknown as object) : null,
+          errors: state.errors.length > 0 ? (state.errors as unknown as object) : undefined,
           cacheHit: state.cacheHit,
           taskCompleted: state.taskCompleted,
           flagged: state.flagged,
@@ -452,7 +452,7 @@ export class ConversationTracer {
           estimatedCostCents: state.metrics.estimatedCostCents,
           messages: truncatedMessages as unknown as object,
           toolCalls: truncatedToolCalls as unknown as object,
-          errors: state.errors.length > 0 ? (state.errors as unknown as object) : null,
+          errors: state.errors.length > 0 ? (state.errors as unknown as object) : undefined,
           expiresAt,
           promptVersion: state.promptVersion,
           cacheHit: state.cacheHit,
@@ -519,7 +519,7 @@ export class ConversationTracer {
     // Still too large, truncate output
     return toolCalls.map((tc) => ({
       ...tc,
-      input: this.truncateObject(tc.input, 200),
+      input: this.truncateObject(tc.input, 200) as Record<string, unknown>,
       output: this.truncateObject(tc.output, 200),
     }));
   }

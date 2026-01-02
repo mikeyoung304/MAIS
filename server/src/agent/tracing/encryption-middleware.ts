@@ -243,8 +243,8 @@ export const traceEncryptionExtension = Prisma.defineExtension({
 });
 
 /**
- * Type for PrismaClient with trace encryption extension
+ * Type for PrismaClient with trace encryption extension.
+ * In Prisma 7, extensions maintain the base PrismaClient interface
+ * while adding transparent encryption behavior.
  */
-export type PrismaWithTraceEncryption = ReturnType<
-  typeof PrismaClient.prototype.$extends<typeof traceEncryptionExtension>
->;
+export type PrismaWithTraceEncryption = PrismaClient;

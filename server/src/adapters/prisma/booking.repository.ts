@@ -2,8 +2,9 @@
  * Prisma Booking Repository Adapter
  */
 
-import type { Decimal } from '@prisma/client/runtime/library';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+// Prisma 7: Runtime imports moved from /library to /client
+import type { Decimal } from '@prisma/client/runtime/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import type { PrismaClient } from '../../generated/prisma';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
 import type { Booking } from '../lib/entities';

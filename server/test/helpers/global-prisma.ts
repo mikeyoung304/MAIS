@@ -20,6 +20,7 @@
  */
 
 import { PrismaClient } from '../../src/generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 // Singleton instance
 let globalPrisma: PrismaClient | null = null;
@@ -45,12 +46,10 @@ export function getTestPrisma(): PrismaClient {
     const urlBase = baseUrl.split('?')[0];
     const urlWithPool = `${urlBase}?pgbouncer=true&connection_limit=3&pool_timeout=5&connect_timeout=5`;
 
+    // Prisma 7: Use driver adapter for PostgreSQL connections
+    const adapter = new PrismaPg({ connectionString: urlWithPool });
     globalPrisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: urlWithPool,
-        },
-      },
+      adapter,
       log: process.env.DEBUG_PRISMA ? ['query', 'error', 'warn'] : ['error'],
     });
 

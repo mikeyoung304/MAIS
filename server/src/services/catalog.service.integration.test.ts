@@ -6,11 +6,16 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PrismaClient } from '../generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { CatalogService } from './catalog.service';
 import { AuditService } from './audit.service';
 import { PrismaCatalogRepository } from '../adapters/prisma/catalog.repository';
 
-const prisma = new PrismaClient();
+// Prisma 7: Use driver adapter for PostgreSQL connections
+const adapter = process.env.DATABASE_URL
+  ? new PrismaPg({ connectionString: process.env.DATABASE_URL })
+  : undefined;
+const prisma = new PrismaClient({ adapter });
 
 describe('CatalogService Integration - Audit Logging', () => {
   const testTenantId = 'test_tenant_integration';

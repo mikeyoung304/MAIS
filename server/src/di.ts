@@ -42,6 +42,7 @@ import { DevController } from './routes/dev.routes';
 import { PlatformAdminController } from './controllers/platform-admin.controller';
 import { buildMockAdapters } from './adapters/mock';
 import { PrismaClient } from './generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
 import {
   PrismaCatalogRepository,
   PrismaBookingRepository,
@@ -168,7 +169,15 @@ export function buildContainer(config: Config): Container {
     );
 
     // Mock PrismaClient for CommissionService (uses in-memory mock data)
-    const mockPrisma = new PrismaClient();
+    // Prisma 7: Use driver adapter - DATABASE_URL is required even in mock mode
+    const mockDatabaseUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_TEST;
+    if (!mockDatabaseUrl) {
+      throw new Error(
+        'DATABASE_URL or DATABASE_URL_TEST must be set. Prisma 7 requires a database connection.'
+      );
+    }
+    const mockAdapter = new PrismaPg({ connectionString: mockDatabaseUrl });
+    const mockPrisma = new PrismaClient({ adapter: mockAdapter });
 
     // Create CommissionService with mock Prisma
     const commissionService = new CommissionService(mockPrisma);
@@ -377,12 +386,10 @@ export function buildContainer(config: Config): Container {
     logger.info('🔌 Using Supabase Supavisor (pgbouncer) for connection pooling');
   }
 
+  // Prisma 7: Use driver adapter for PostgreSQL connections
+  const adapter = new PrismaPg({ connectionString: databaseUrl.toString() });
   const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: databaseUrl.toString(),
-      },
-    },
+    adapter,
     log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['query', 'error', 'warn'],
   });
 

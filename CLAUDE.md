@@ -816,6 +816,7 @@ The following links prevent common mistakes from recurring:
 - **[auth-form-accessibility-checklist](docs/solutions/patterns/auth-form-accessibility-checklist-MAIS-20251230.md)** - WCAG 2.1 AA checklist for auth forms (ARIA, keyboard, CLS)
 - **[nextauth-v5-secure-cookie-prefix](docs/solutions/authentication-issues/nextauth-v5-secure-cookie-prefix-production-401-MAIS-20251231.md)** - NextAuth v5 HTTPS cookie prefix causing 401 on production
 - **[phase-5-testing-and-caching-prevention](docs/solutions/patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md)** - Retryable keyword conflicts, singleton cache DI, cache invalidation, error sanitization
+- **[prisma-7-json-type-breaking-changes](docs/solutions/database-issues/prisma-7-json-type-breaking-changes-MAIS-20260102.md)** - Prisma 7 JSON field type casting patterns (`as unknown as Type`)
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
@@ -824,6 +825,8 @@ The following links prevent common mistakes from recurring:
 **Key insight from Proposal Execution Fix:** Circular dependencies between routes and orchestrators caused executor registry to fail. Solution: Extract shared state (executor registry) to dedicated module (`agent/proposals/executor-registry.ts`). Routes and orchestrators both import from this central module.
 
 **Key insight from Phase 5 Testing/Caching:** Test error messages containing retryable keywords ("timeout", "network", "503") trigger retry logic and cause test failures. Use neutral error messages like "Request failed" in tests. Singleton cache patterns prevent dependency injection - export class + factory, not just instance.
+
+**Key insight from Prisma 7 Upgrade:** Prisma 7 has stricter JSON field types. Use `as unknown as TargetType` for reads (not `as TargetType`), use `undefined` instead of `null` for optional JSON fields, and don't try to extract `$extends` return types - just alias to `PrismaClient`.
 
 ## Quick Start Checklist
 

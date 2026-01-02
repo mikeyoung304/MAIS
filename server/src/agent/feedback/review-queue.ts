@@ -179,7 +179,7 @@ export class ReviewQueue {
       flagReason: trace.flagReason,
       turnCount: trace.turnCount,
       startedAt: trace.startedAt,
-      messagesPreview: this.redactMessages(trace.messages as TracedMessage[]),
+      messagesPreview: this.redactMessages(trace.messages as unknown as TracedMessage[]),
     }));
   }
 
@@ -217,7 +217,7 @@ export class ReviewQueue {
       flagReason: trace.flagReason,
       turnCount: trace.turnCount,
       startedAt: trace.startedAt,
-      messagesPreview: this.redactMessages(trace.messages as TracedMessage[]),
+      messagesPreview: this.redactMessages(trace.messages as unknown as TracedMessage[]),
     };
   }
 

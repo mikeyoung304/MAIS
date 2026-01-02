@@ -104,7 +104,8 @@ server/prisma/migrations/07_add_scheduling_platform.sql
             │ 3. Write idempotent SQL:                    │
             │    - Use IF EXISTS / IF NOT EXISTS          │
             │    - Use DO $$ blocks for conditionals      │
-            │ 4. Apply: psql $DATABASE_URL < file.sql     │
+            │ 4. Apply: npx prisma db execute --file ...  │
+            │    (NOT psql - has IPv6 issues w/ Supabase) │
             │ 5. Test on dev database first               │
             └────────────────────────────────────────────┘
                     │
@@ -637,8 +638,8 @@ ALTER TABLE "Booking"
   ADD COLUMN IF NOT EXISTS "bookingType" "BookingType" NOT NULL DEFAULT 'DATE';
 EOF
 
-# 5. Apply migration locally
-psql $DATABASE_URL < server/prisma/migrations/08_add_booking_type_enum.sql
+# 5. Apply migration locally (use prisma db execute, NOT psql - IPv6 issues)
+npx prisma db execute --file server/prisma/migrations/08_add_booking_type_enum.sql
 
 # 6. Regenerate Prisma Client
 npm exec prisma generate

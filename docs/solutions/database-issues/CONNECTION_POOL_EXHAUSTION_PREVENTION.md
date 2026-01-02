@@ -107,6 +107,7 @@ describe('Test File B', () => {
  */
 
 import { PrismaClient } from '../../src/generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg'; // Prisma 7: Required driver adapter
 
 let globalPrisma: PrismaClient | null = null;
 
@@ -122,10 +123,10 @@ export function getTestPrisma(): PrismaClient {
     const urlBase = baseUrl.split('?')[0];
     const urlWithPool = `${urlBase}?pgbouncer=true&connection_limit=3&pool_timeout=5&connect_timeout=5`;
 
+    // Prisma 7: Use driver adapter instead of datasources config
+    const adapter = new PrismaPg({ connectionString: urlWithPool });
     globalPrisma = new PrismaClient({
-      datasources: {
-        db: { url: urlWithPool },
-      },
+      adapter,
       log: process.env.DEBUG_PRISMA ? ['query', 'error', 'warn'] : ['error'],
     });
 
@@ -145,6 +146,8 @@ export async function disconnectTestPrisma(): Promise<void> {
   }
 }
 ```
+
+> **Note (Prisma 7):** The `datasources: { db: { url } }` config was removed in Prisma 7. Use `adapter: new PrismaPg({ connectionString })` instead.
 
 **File: `/server/vitest.config.ts`**
 
