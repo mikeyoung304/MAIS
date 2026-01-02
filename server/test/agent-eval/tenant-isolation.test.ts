@@ -8,7 +8,7 @@
  *
  * NOTE: These tests require the ConversationTrace table to exist.
  * The table is created by migration and may not exist in all test databases.
- * Tests will be skipped if the table doesn't exist.
+ * Tests will be skipped (with clear visibility) if the table doesn't exist.
  *
  * @see plans/agent-eval-remediation-plan.md Phase 2.4
  * @see docs/solutions/patterns/mais-critical-patterns.md
@@ -25,13 +25,23 @@ describe('Tenant Isolation - EvalPipeline', () => {
   const { tenantA, tenantB, cleanupTenants } = createMultiTenantSetup(prisma, 'eval-isolation');
   let tableExists = false;
 
+  /**
+   * Helper to conditionally run tests based on table existence.
+   * Issue 607: Replaces silent `if (!tableExists) return;` guards with visible skipIf pattern.
+   *
+   * This provides clear test output:
+   * - Table exists: "✓ should NOT return traces from other tenants"
+   * - Table missing: "↓ should NOT return traces from other tenants [skipped: ConversationTrace table not found]"
+   */
+  const itIfTableExists = it.skipIf(() => !tableExists);
+
   beforeAll(async () => {
     // Check if ConversationTrace table exists
     try {
       await prisma.$queryRaw`SELECT 1 FROM "ConversationTrace" LIMIT 1`;
       tableExists = true;
     } catch {
-      // Table doesn't exist - tests will be skipped
+      // Table doesn't exist - tests will be skipped with clear visibility
       tableExists = false;
       console.log(
         '⚠️  ConversationTrace table not found - skipping tenant isolation tests. Run migrations to enable these tests.'
@@ -62,8 +72,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
   });
 
   describe('getUnevaluatedTraces', () => {
-    it('should NOT return traces from other tenants', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should NOT return traces from other tenants', async () => {
       // Setup: Create traces for both tenants
       const trace1 = await prisma.conversationTrace.create({
         data: {
@@ -102,8 +111,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
       expect(tracesB).not.toContain(trace1.id);
     });
 
-    it('should return empty array when no traces exist for tenant', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should return empty array when no traces exist for tenant', async () => {
       const mockEvaluator = createMockEvaluator();
       const pipeline = createEvalPipeline(prisma, mockEvaluator);
 
@@ -115,8 +123,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
   });
 
   describe('submit', () => {
-    it('should reject submission of trace from another tenant', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should reject submission of trace from another tenant', async () => {
       // Setup: Create trace for tenant A
       const trace = await prisma.conversationTrace.create({
         data: {
@@ -136,8 +143,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
       await expect(pipeline.submit(tenantB.id, trace.id)).rejects.toThrow(TraceNotFoundError);
     });
 
-    it('should allow submission of own tenant trace', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should allow submission of own tenant trace', async () => {
       // Setup: Create trace for tenant A
       const trace = await prisma.conversationTrace.create({
         data: {
@@ -166,8 +172,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
   });
 
   describe('tenantId validation', () => {
-    it('should require tenantId for getUnevaluatedTraces', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should require tenantId for getUnevaluatedTraces', async () => {
       const mockEvaluator = createMockEvaluator();
       const pipeline = createEvalPipeline(prisma, mockEvaluator);
 
@@ -185,8 +190,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
       );
     });
 
-    it('should require tenantId for submit', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should require tenantId for submit', async () => {
       const mockEvaluator = createMockEvaluator();
       const pipeline = createEvalPipeline(prisma, mockEvaluator);
 
@@ -199,8 +203,7 @@ describe('Tenant Isolation - EvalPipeline', () => {
   });
 
   describe('processBatch', () => {
-    it('should only process traces belonging to the specified tenant', async () => {
-      if (!tableExists) return; // Skip if table doesn't exist
+    itIfTableExists('should only process traces belonging to the specified tenant', async () => {
       // Setup: Create traces for both tenants
       const traceA1 = await prisma.conversationTrace.create({
         data: {

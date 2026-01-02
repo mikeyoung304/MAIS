@@ -73,6 +73,40 @@ import { getSupabaseClient } from './config/database';
 import { logger } from './lib/core/logger';
 import path from 'path';
 
+// ============================================================================
+// Evaluation Services DI Helper (Issue 605)
+// ============================================================================
+// Extracted helper to avoid duplication between mock and real mode
+
+interface EvaluationServices {
+  evaluator: ConversationEvaluator;
+  pipeline: EvalPipeline;
+  reviewQueue: ReviewQueue;
+  reviewActions: ReviewActionService;
+}
+
+/**
+ * Build evaluation services for agent quality monitoring.
+ * Requires ANTHROPIC_API_KEY to be set; returns undefined if not configured.
+ */
+function buildEvaluationServices(
+  prisma: PrismaClient,
+  mode: 'mock' | 'real'
+): EvaluationServices | undefined {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    logger.info('⚠️  Agent evaluation services skipped (ANTHROPIC_API_KEY not set)');
+    return undefined;
+  }
+
+  const evaluator = createEvaluator();
+  const pipeline = createEvalPipeline(prisma, evaluator);
+  const reviewQueue = createReviewQueue(prisma);
+  const reviewActions = createReviewActionService(prisma);
+
+  logger.info(`${mode === 'mock' ? '🧪' : '🤖'} Agent evaluation services initialized`);
+  return { evaluator, pipeline, reviewQueue, reviewActions };
+}
+
 export interface Container {
   controllers: {
     packages: PackagesController;
@@ -290,27 +324,9 @@ export function buildContainer(config: Config): Container {
       eventEmitter
     );
 
-    // Agent evaluation services (only if ANTHROPIC_API_KEY is set)
+    // Agent evaluation services (uses extracted helper to avoid duplication)
     // In mock mode, these are optional - tests can inject mock evaluators
-    let evaluation:
-      | {
-          evaluator: ConversationEvaluator;
-          pipeline: EvalPipeline;
-          reviewQueue: ReviewQueue;
-          reviewActions: ReviewActionService;
-        }
-      | undefined;
-
-    if (process.env.ANTHROPIC_API_KEY) {
-      const evaluator = createEvaluator();
-      const pipeline = createEvalPipeline(mockPrisma, evaluator);
-      const reviewQueue = createReviewQueue(mockPrisma);
-      const reviewActions = createReviewActionService(mockPrisma);
-      evaluation = { evaluator, pipeline, reviewQueue, reviewActions };
-      logger.info('🧪 Agent evaluation services initialized (mock mode)');
-    } else {
-      logger.info('⚠️  Agent evaluation services skipped (ANTHROPIC_API_KEY not set)');
-    }
+    const evaluation = buildEvaluationServices(mockPrisma, 'mock');
 
     const services = {
       identity: identityService,
@@ -721,32 +737,9 @@ export function buildContainer(config: Config): Container {
     // No dev controller in real mode
   };
 
-  // Agent evaluation services (requires ANTHROPIC_API_KEY)
+  // Agent evaluation services (uses extracted helper to avoid duplication)
   // P1-583 FIX: Use factory functions for proper DI (dependencies before config)
-  let evaluationServices:
-    | {
-        evaluator: ConversationEvaluator;
-        pipeline: EvalPipeline;
-        reviewQueue: ReviewQueue;
-        reviewActions: ReviewActionService;
-      }
-    | undefined;
-
-  if (process.env.ANTHROPIC_API_KEY) {
-    const evaluator = createEvaluator();
-    const evalPipeline = createEvalPipeline(prisma, evaluator);
-    const reviewQueue = createReviewQueue(prisma);
-    const reviewActions = createReviewActionService(prisma);
-    evaluationServices = {
-      evaluator,
-      pipeline: evalPipeline,
-      reviewQueue,
-      reviewActions,
-    };
-    logger.info('🤖 Agent evaluation services initialized');
-  } else {
-    logger.warn('⚠️  Agent evaluation services skipped (ANTHROPIC_API_KEY not set)');
-  }
+  const evaluationServices = buildEvaluationServices(prisma, 'real');
 
   const services = {
     identity: identityService,

@@ -29,6 +29,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { createEvalPipeline, createEvaluator } from '../src/agent/evals';
 import { logger } from '../src/lib/core/logger';
 import { sanitizeError } from '../src/lib/core/error-sanitizer';
+import { z } from 'zod';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -81,7 +82,17 @@ function parseArgs(args: string[]): CliOptions {
         options.maxPerTenant = value;
       }
     } else if (arg.startsWith('--tenant-id=')) {
-      options.tenantId = arg.split('=')[1];
+      const tenantId = arg.split('=')[1]?.trim();
+      if (!tenantId) {
+        console.error('Error: --tenant-id requires a value');
+        process.exit(1);
+      }
+      const result = z.string().uuid().safeParse(tenantId);
+      if (!result.success) {
+        console.error('Error: --tenant-id must be a valid UUID');
+        process.exit(1);
+      }
+      options.tenantId = result.data;
     }
   }
 
@@ -197,8 +208,10 @@ async function runEvaluationBatch(
       await pipeline.processBatch(tenant.id, traceIds);
 
       // Get flagged count after evaluation
+      // Defense-in-depth: include tenantId even though traceIds are already tenant-scoped
       const flaggedCount = await prisma.conversationTrace.count({
         where: {
+          tenantId: tenant.id,
           id: { in: traceIds },
           flagged: true,
         },
