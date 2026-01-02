@@ -16,6 +16,36 @@ import { getProposalExecutor } from '../agent/proposals/executor-registry';
 import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
 
 /**
+ * Clean up expired conversation traces (P1-584)
+ *
+ * Traces have a 90-day retention period via expiresAt column.
+ * This function deletes traces that have passed their expiration date.
+ *
+ * Per DHH review: Use CLI command triggered by external cron, not in-process scheduler.
+ * Example cron: `0 3 * * * cd /app && npx tsx scripts/cleanup-traces.ts`
+ *
+ * @param prisma - Prisma client for database operations
+ * @returns Number of traces deleted
+ *
+ * @see plans/agent-eval-remediation-plan.md Phase 4.1
+ */
+export async function cleanupExpiredTraces(prisma: PrismaClient): Promise<number> {
+  const now = new Date();
+
+  const result = await prisma.conversationTrace.deleteMany({
+    where: {
+      expiresAt: { lt: now },
+    },
+  });
+
+  logger.info(
+    { deletedCount: result.count, cutoff: now },
+    'Cleaned up expired conversation traces'
+  );
+  return result.count;
+}
+
+/**
  * Clean up expired customer chat sessions
  *
  * Customer sessions are typically short-lived and can be cleaned up
@@ -211,19 +241,21 @@ export async function recoverOrphanedProposals(
  * @returns Object with counts of deleted and recovered items
  */
 export async function runAllCleanupJobs(prisma: PrismaClient): Promise<{
+  traces: number;
   sessions: number;
   proposals: number;
   orphansRecovered: { retried: number; failed: number };
 }> {
   logger.info('Starting cleanup jobs');
 
+  const traces = await cleanupExpiredTraces(prisma);
   const sessions = await cleanupExpiredSessions(prisma);
   const proposals = await cleanupExpiredProposals(prisma);
   const orphansRecovered = await recoverOrphanedProposals(prisma);
 
-  logger.info({ sessions, proposals, orphansRecovered }, 'Cleanup jobs completed');
+  logger.info({ traces, sessions, proposals, orphansRecovered }, 'Cleanup jobs completed');
 
-  return { sessions, proposals, orphansRecovered };
+  return { traces, sessions, proposals, orphansRecovered };
 }
 
 /**

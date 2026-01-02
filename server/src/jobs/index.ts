@@ -16,8 +16,9 @@ export { WebhookQueue, createWebhookQueue, initializeWebhookQueue } from './webh
 export { WebhookProcessor } from './webhook-processor';
 export type { WebhookJobData } from './webhook-queue';
 
-// Cleanup jobs for expired sessions and proposals
+// Cleanup jobs for expired sessions, proposals, and traces
 export {
+  cleanupExpiredTraces, // P1-584: Trace retention cleanup
   cleanupExpiredSessions,
   cleanupExpiredProposals,
   runAllCleanupJobs,

@@ -5,10 +5,7 @@ set -e  # Exit on first error
 if git diff --cached --name-only | grep -q "server/prisma/schema.prisma"; then
   echo "Prisma schema changed, regenerating client..."
   (cd server && npm exec prisma generate)
-  # Stage the regenerated client if it changed
-  if [ -d "server/src/generated/prisma" ]; then
-    git add server/src/generated/prisma
-  fi
+  # Note: generated client is gitignored, no need to stage it
 fi
 
 # Run lint-staged (auto-format staged files with prettier)

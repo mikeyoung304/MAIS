@@ -130,6 +130,11 @@ model Tenant {
   agentAuditLogs   AgentAuditLog[] // AI agent audit trail
   agentSessions    AgentSession[] // AI agent chat sessions
   onboardingEvents OnboardingEvent[] // Onboarding event sourcing audit trail
+  // Agent Evaluation System relations
+  conversationTraces ConversationTrace[] // Agent conversation traces
+  agentUsages        AgentUsage[] // Agent token usage tracking
+  userFeedbacks      UserFeedback[] // User feedback on agent responses
+  reviewActions      ReviewAction[] // Human review actions on flagged traces
 
   @@index([slug])
   @@index([apiKeyPublic])
@@ -902,4 +907,141 @@ enum OnboardingPhase {
   MARKETING        // Configuring landing page and brand voice
   COMPLETED        // Onboarding finished
   SKIPPED          // User opted to skip onboarding
+}
+
+// ============================================================================
+// Agent Evaluation System Models (Phase 1: Observability Foundation)
+// ============================================================================
+
+/// ConversationTrace - Complete conversation trace for agent evaluation
+/// Stores full message history, tool calls, and evaluation results.
+///
+/// Security:
+/// - messages and toolCalls contain PII and are encrypted via Prisma middleware
+/// - All queries MUST be tenant-scoped
+///
+/// Retention:
+/// - 90-day default retention via expiresAt column
+/// - Cleanup job removes expired traces
+model ConversationTrace {
+  id                 String    @id @default(cuid())
+  tenantId           String    // Tenant isolation - CRITICAL
+  sessionId          String    // Agent session identifier
+  agentType          String    // 'customer' | 'onboarding' | 'admin'
+
+  // Timing
+  startedAt          DateTime
+  endedAt            DateTime?
+
+  // Metrics
+  turnCount          Int       @default(0)
+  totalTokens        Int       @default(0)
+  inputTokens        Int       @default(0)
+  outputTokens       Int       @default(0)
+  totalLatencyMs     Int       @default(0)
+  estimatedCostCents Int       @default(0)
+
+  // Content (JSON) - ENCRYPTED via Prisma middleware (contains PII)
+  messages           Json      // TracedMessage[] - encrypted
+  toolCalls          Json      // TracedToolCall[] - encrypted
+  errors             Json?     // Error objects
+
+  // Retention (90-day default)
+  expiresAt          DateTime? // Auto-cleanup after this date
+
+  // Context
+  promptVersion      String?   // For A/B tracking
+  cacheHit           Boolean   @default(false)
+
+  // Outcome
+  taskCompleted      Boolean?
+  userSatisfaction   Int?      // 1-5 rating
+
+  // Evaluation
+  evalScore          Float?    // 0-10 overall score
+  evalDimensions     Json?     // { effectiveness, experience, safety }
+  evalReasoning      String?   @db.Text // LLM's explanation
+  evalConfidence     Float?    // 0-1
+  evaluatedAt        DateTime?
+
+  // Review
+  flagged            Boolean   @default(false)
+  flagReason         String?
+  reviewStatus       String?   // 'pending' | 'reviewed' | 'actioned'
+  reviewedAt         DateTime?
+  reviewedBy         String?
+  reviewNotes        String?   @db.Text
+
+  // Relations
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reviewActions      ReviewAction[]
+  feedbacks          UserFeedback[]
+
+  // CRITICAL: Tenant-scoped indexes only
+  @@index([tenantId, startedAt])
+  @@index([tenantId, agentType, startedAt])
+  @@index([tenantId, flagged, reviewStatus])
+  @@index([tenantId, evalScore])
+  @@index([tenantId, evalScore, startedAt]) // P1-582: getUnevaluatedTraces query optimization
+  @@index([sessionId])
+  @@index([expiresAt]) // For cleanup job
+}
+
+/// AgentUsage - Token usage and cost tracking per agent call
+/// Used for cost monitoring, budget alerts, and billing
+model AgentUsage {
+  id            String   @id @default(cuid())
+  tenantId      String   // Tenant isolation - CRITICAL
+  agentType     String   // 'customer' | 'onboarding' | 'admin'
+  model         String   // LLM model used (e.g., 'claude-sonnet-4-20250514')
+  inputTokens   Int
+  outputTokens  Int
+  cost          Float    // Cost in dollars
+  timestamp     DateTime @default(now())
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, timestamp])
+  @@index([tenantId, agentType, timestamp])
+}
+
+/// UserFeedback - Explicit user feedback on agent responses
+/// Collected via thumbs up/down or 1-5 star rating
+model UserFeedback {
+  id            String   @id @default(cuid())
+  tenantId      String   // Tenant isolation - CRITICAL
+  sessionId     String
+  traceId       String?  // Reference to ConversationTrace
+  rating        Int      // 1-5 star rating
+  comment       String?  @db.Text
+  messageId     String?  // Specific message being rated
+  deviceType    String?  // 'mobile' | 'desktop'
+  createdAt     DateTime @default(now())
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trace         ConversationTrace? @relation(fields: [traceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, sessionId])
+  @@index([tenantId, createdAt])
+  @@index([traceId])
+}
+
+/// ReviewAction - Human review actions on flagged conversations
+/// Tracks what action was taken on each reviewed trace
+model ReviewAction {
+  id              String   @id @default(cuid())
+  tenantId        String   // Tenant isolation - CRITICAL
+  traceId         String
+  action          String   // 'approve' | 'reject' | 'escalate' | 'retrain' | 'prompt_updated' | 'bug_filed'
+  notes           String?  @db.Text
+  correctedScore  Float?   // If reviewer disagrees with LLM eval
+  performedBy     String   // userId or 'system'
+  performedAt     DateTime @default(now())
+
+  trace           ConversationTrace @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, performedAt])
+  @@index([traceId])
+  @@index([tenantId, action])
 }

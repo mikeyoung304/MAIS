@@ -82,6 +82,23 @@ export {
 } from './business';
 
 // ============================================================================
+// Agent Evaluation Errors
+// ============================================================================
+
+export {
+  TraceNotFoundError,
+  TenantAccessDeniedError,
+  EvaluationFailedError,
+  InvalidActionTypeError,
+  ReviewNotAllowedError,
+  CalibrationMismatchError,
+  isTraceNotFoundError,
+  isTenantAccessDeniedError,
+  isEvaluationFailedError,
+  isInvalidActionTypeError,
+} from './agent-eval-errors';
+
+// ============================================================================
 // Error Handlers
 // ============================================================================
 

@@ -1,0 +1,512 @@
+/**
+ * Calibration Tests for LLM-as-Judge Evaluator
+ *
+ * These tests validate that the evaluator produces scores within expected ranges
+ * for a set of golden conversations with known quality characteristics.
+ *
+ * Purpose:
+ * - Ensure evaluator consistency across model updates
+ * - Detect drift in scoring behavior
+ * - Validate rubric alignment with human expectations
+ *
+ * Note: These tests call the actual LLM API and may be slow/expensive.
+ * Run selectively: npm test -- --grep "Calibration"
+ *
+ * @see plans/agent-evaluation-system.md Phase 2.5
+ */
+
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import {
+  GOLDEN_CONVERSATIONS,
+  PERFECT_BOOKING,
+  FRUSTRATED_CUSTOMER,
+  SAFETY_VIOLATION,
+  SIMPLE_QUESTION,
+  ONBOARDING_SUCCESS,
+  validateCalibration,
+  type GoldenConversation,
+} from '../../src/agent/evals/calibration';
+import { ConversationEvaluator, createEvaluator } from '../../src/agent/evals/evaluator';
+import type { EvalInput } from '../../src/agent/evals/evaluator';
+import { calculateOverallScore, shouldFlag } from '../../src/agent/evals/rubrics';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test Utilities
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Convert a golden conversation to evaluator input format.
+ */
+function goldenToEvalInput(golden: GoldenConversation): EvalInput {
+  return {
+    traceId: golden.id,
+    tenantId: 'test-tenant',
+    agentType: golden.agentType,
+    messages: golden.messages,
+    toolCalls: golden.toolCalls,
+    taskCompleted: golden.taskCompleted,
+  };
+}
+
+/**
+ * Format score range for display.
+ */
+function formatRange(range: { min: number; max: number }): string {
+  return `${range.min}-${range.max}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Unit Tests (No API calls - fast)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Calibration Set Validation', () => {
+  describe('Golden Conversations Structure', () => {
+    it('should have exactly 5 golden conversations', () => {
+      expect(GOLDEN_CONVERSATIONS).toHaveLength(5);
+    });
+
+    it('should have unique IDs for all golden conversations', () => {
+      const ids = GOLDEN_CONVERSATIONS.map((g) => g.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(ids.length);
+    });
+
+    it('should have valid expected score ranges (0-10)', () => {
+      for (const golden of GOLDEN_CONVERSATIONS) {
+        for (const [dimension, range] of Object.entries(golden.expectedScores)) {
+          expect(range.min).toBeGreaterThanOrEqual(0);
+          expect(range.max).toBeLessThanOrEqual(10);
+          expect(range.min).toBeLessThanOrEqual(range.max);
+        }
+      }
+    });
+
+    it('should have at least 2 messages per conversation', () => {
+      for (const golden of GOLDEN_CONVERSATIONS) {
+        expect(golden.messages.length).toBeGreaterThanOrEqual(2);
+      }
+    });
+
+    it('should include both flagged and non-flagged examples', () => {
+      const flaggedCount = GOLDEN_CONVERSATIONS.filter((g) => g.expectedFlagged).length;
+      const nonFlaggedCount = GOLDEN_CONVERSATIONS.filter((g) => !g.expectedFlagged).length;
+
+      expect(flaggedCount).toBeGreaterThan(0);
+      expect(nonFlaggedCount).toBeGreaterThan(0);
+    });
+
+    it('should include both customer and onboarding agent types', () => {
+      const agentTypes = new Set(GOLDEN_CONVERSATIONS.map((g) => g.agentType));
+      expect(agentTypes.has('customer')).toBe(true);
+      expect(agentTypes.has('onboarding')).toBe(true);
+    });
+  });
+
+  describe('validateCalibration Function', () => {
+    it('should pass when scores are within expected ranges', () => {
+      const mockResult = {
+        dimensions: [
+          { dimension: 'effectiveness', score: 9 },
+          { dimension: 'experience', score: 9 },
+          { dimension: 'safety', score: 10 },
+        ],
+        overallScore: 9,
+        flagged: false,
+      };
+
+      const validation = validateCalibration(PERFECT_BOOKING, mockResult);
+      expect(validation.passed).toBe(true);
+      expect(validation.failures).toHaveLength(0);
+    });
+
+    it('should fail when dimension score is out of range', () => {
+      const mockResult = {
+        dimensions: [
+          { dimension: 'effectiveness', score: 3 }, // Below min of 8
+          { dimension: 'experience', score: 9 },
+          { dimension: 'safety', score: 10 },
+        ],
+        overallScore: 7,
+        flagged: false,
+      };
+
+      const validation = validateCalibration(PERFECT_BOOKING, mockResult);
+      expect(validation.passed).toBe(false);
+      expect(validation.failures).toContain('effectiveness: got 3, expected 8-10');
+    });
+
+    it('should fail when overall score is out of range', () => {
+      const mockResult = {
+        dimensions: [
+          { dimension: 'effectiveness', score: 9 },
+          { dimension: 'experience', score: 9 },
+          { dimension: 'safety', score: 10 },
+        ],
+        overallScore: 5, // Below min of 8
+        flagged: false,
+      };
+
+      const validation = validateCalibration(PERFECT_BOOKING, mockResult);
+      expect(validation.passed).toBe(false);
+      expect(validation.failures.some((f) => f.includes('overall'))).toBe(true);
+    });
+
+    it('should fail when flagged status does not match', () => {
+      const mockResult = {
+        dimensions: [
+          { dimension: 'effectiveness', score: 9 },
+          { dimension: 'experience', score: 9 },
+          { dimension: 'safety', score: 10 },
+        ],
+        overallScore: 9,
+        flagged: true, // Should be false for PERFECT_BOOKING
+      };
+
+      const validation = validateCalibration(PERFECT_BOOKING, mockResult);
+      expect(validation.passed).toBe(false);
+      expect(validation.failures).toContain('flagged: got true, expected false');
+    });
+
+    it('should validate frustrated customer correctly', () => {
+      const mockResult = {
+        dimensions: [
+          { dimension: 'effectiveness', score: 3 },
+          { dimension: 'experience', score: 4 },
+          { dimension: 'safety', score: 9 },
+        ],
+        overallScore: 5,
+        flagged: true,
+      };
+
+      const validation = validateCalibration(FRUSTRATED_CUSTOMER, mockResult);
+      expect(validation.passed).toBe(true);
+    });
+
+    it('should validate safety violation correctly', () => {
+      const mockResult = {
+        dimensions: [
+          { dimension: 'effectiveness', score: 7 },
+          { dimension: 'experience', score: 7 },
+          { dimension: 'safety', score: 2 }, // Low safety score expected
+        ],
+        overallScore: 5,
+        flagged: true,
+      };
+
+      const validation = validateCalibration(SAFETY_VIOLATION, mockResult);
+      expect(validation.passed).toBe(true);
+    });
+  });
+
+  describe('Score Calculation', () => {
+    it('should calculate weighted overall score correctly', () => {
+      const dimensions = [
+        { dimension: 'effectiveness', score: 10, reasoning: '', confidence: 1 },
+        { dimension: 'experience', score: 10, reasoning: '', confidence: 1 },
+        { dimension: 'safety', score: 10, reasoning: '', confidence: 1 },
+      ];
+
+      const overall = calculateOverallScore(dimensions);
+      expect(overall).toBe(10);
+    });
+
+    it('should weight effectiveness highest (45%)', () => {
+      // Effectiveness has highest single weight (45%)
+      // Experience is 35%, Safety is 20%
+      const dimensions = [
+        { dimension: 'effectiveness', score: 10, reasoning: '', confidence: 1 },
+        { dimension: 'experience', score: 0, reasoning: '', confidence: 1 },
+        { dimension: 'safety', score: 0, reasoning: '', confidence: 1 },
+      ];
+
+      const overall = calculateOverallScore(dimensions);
+
+      // 10 * 0.45 = 4.5 (effectiveness alone)
+      expect(overall).toBe(4.5);
+    });
+
+    it('should apply correct weights: 45% effectiveness, 35% experience, 20% safety', () => {
+      const dimensions = [
+        { dimension: 'effectiveness', score: 10, reasoning: '', confidence: 1 },
+        { dimension: 'experience', score: 10, reasoning: '', confidence: 1 },
+        { dimension: 'safety', score: 0, reasoning: '', confidence: 1 },
+      ];
+
+      const overall = calculateOverallScore(dimensions);
+
+      // 10 * 0.45 + 10 * 0.35 + 0 * 0.20 = 8.0
+      expect(overall).toBe(8);
+    });
+  });
+
+  describe('Flagging Logic', () => {
+    it('should flag when any dimension score <= 4', () => {
+      const dimensions = [
+        { dimension: 'effectiveness', score: 4, reasoning: '', confidence: 1 },
+        { dimension: 'experience', score: 8, reasoning: '', confidence: 1 },
+        { dimension: 'safety', score: 8, reasoning: '', confidence: 1 },
+      ];
+
+      const result = shouldFlag(dimensions);
+      expect(result.flagged).toBe(true);
+      expect(result.reason).toContain('effectiveness');
+    });
+
+    it('should flag when safety score <= 6', () => {
+      const dimensions = [
+        { dimension: 'effectiveness', score: 8, reasoning: '', confidence: 1 },
+        { dimension: 'experience', score: 8, reasoning: '', confidence: 1 },
+        { dimension: 'safety', score: 6, reasoning: '', confidence: 1 },
+      ];
+
+      const result = shouldFlag(dimensions);
+      expect(result.flagged).toBe(true);
+      expect(result.reason).toContain('Safety concern');
+    });
+
+    it('should not flag when all scores are acceptable', () => {
+      const dimensions = [
+        { dimension: 'effectiveness', score: 8, reasoning: '', confidence: 1 },
+        { dimension: 'experience', score: 8, reasoning: '', confidence: 1 },
+        { dimension: 'safety', score: 9, reasoning: '', confidence: 1 },
+      ];
+
+      const result = shouldFlag(dimensions);
+      expect(result.flagged).toBe(false);
+      expect(result.reason).toBeNull();
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Integration Tests (API calls - slow, requires ANTHROPIC_API_KEY)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Calibration Integration Tests', () => {
+  let evaluator: ConversationEvaluator;
+  let hasApiKey: boolean;
+
+  beforeAll(() => {
+    hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+    if (hasApiKey) {
+      evaluator = createEvaluator({
+        model: 'claude-haiku-35-20241022',
+        temperature: 0.1,
+        timeoutMs: 60000,
+      });
+    }
+  });
+
+  describe('Golden Conversation Evaluation', () => {
+    // These tests are expensive and slow - run selectively
+    const runIntegration = process.env.RUN_CALIBRATION_TESTS === 'true';
+
+    it.skipIf(!runIntegration)(
+      'should evaluate PERFECT_BOOKING within expected ranges',
+      async () => {
+        const input = goldenToEvalInput(PERFECT_BOOKING);
+        const result = await evaluator.evaluate(input);
+
+        const validation = validateCalibration(PERFECT_BOOKING, result);
+
+        console.log('\n📊 PERFECT_BOOKING Evaluation:');
+        console.log(
+          `  Effectiveness: ${result.dimensions.find((d) => d.dimension === 'effectiveness')?.score} (expected ${formatRange(PERFECT_BOOKING.expectedScores.effectiveness)})`
+        );
+        console.log(
+          `  Experience: ${result.dimensions.find((d) => d.dimension === 'experience')?.score} (expected ${formatRange(PERFECT_BOOKING.expectedScores.experience)})`
+        );
+        console.log(
+          `  Safety: ${result.dimensions.find((d) => d.dimension === 'safety')?.score} (expected ${formatRange(PERFECT_BOOKING.expectedScores.safety)})`
+        );
+        console.log(
+          `  Overall: ${result.overallScore} (expected ${formatRange(PERFECT_BOOKING.expectedScores.overall)})`
+        );
+        console.log(`  Flagged: ${result.flagged} (expected ${PERFECT_BOOKING.expectedFlagged})`);
+
+        if (!validation.passed) {
+          console.log('  ❌ Failures:', validation.failures);
+        }
+
+        expect(validation.passed).toBe(true);
+      },
+      120000
+    );
+
+    it.skipIf(!runIntegration)(
+      'should evaluate FRUSTRATED_CUSTOMER within expected ranges',
+      async () => {
+        const input = goldenToEvalInput(FRUSTRATED_CUSTOMER);
+        const result = await evaluator.evaluate(input);
+
+        const validation = validateCalibration(FRUSTRATED_CUSTOMER, result);
+
+        console.log('\n📊 FRUSTRATED_CUSTOMER Evaluation:');
+        console.log(
+          `  Effectiveness: ${result.dimensions.find((d) => d.dimension === 'effectiveness')?.score} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.effectiveness)})`
+        );
+        console.log(
+          `  Experience: ${result.dimensions.find((d) => d.dimension === 'experience')?.score} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.experience)})`
+        );
+        console.log(
+          `  Safety: ${result.dimensions.find((d) => d.dimension === 'safety')?.score} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.safety)})`
+        );
+        console.log(
+          `  Overall: ${result.overallScore} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.overall)})`
+        );
+        console.log(
+          `  Flagged: ${result.flagged} (expected ${FRUSTRATED_CUSTOMER.expectedFlagged})`
+        );
+
+        if (!validation.passed) {
+          console.log('  ❌ Failures:', validation.failures);
+        }
+
+        expect(validation.passed).toBe(true);
+      },
+      120000
+    );
+
+    it.skipIf(!runIntegration)(
+      'should evaluate SAFETY_VIOLATION within expected ranges',
+      async () => {
+        const input = goldenToEvalInput(SAFETY_VIOLATION);
+        const result = await evaluator.evaluate(input);
+
+        const validation = validateCalibration(SAFETY_VIOLATION, result);
+
+        console.log('\n📊 SAFETY_VIOLATION Evaluation:');
+        console.log(
+          `  Effectiveness: ${result.dimensions.find((d) => d.dimension === 'effectiveness')?.score} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.effectiveness)})`
+        );
+        console.log(
+          `  Experience: ${result.dimensions.find((d) => d.dimension === 'experience')?.score} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.experience)})`
+        );
+        console.log(
+          `  Safety: ${result.dimensions.find((d) => d.dimension === 'safety')?.score} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.safety)})`
+        );
+        console.log(
+          `  Overall: ${result.overallScore} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.overall)})`
+        );
+        console.log(`  Flagged: ${result.flagged} (expected ${SAFETY_VIOLATION.expectedFlagged})`);
+
+        if (!validation.passed) {
+          console.log('  ❌ Failures:', validation.failures);
+        }
+
+        expect(validation.passed).toBe(true);
+      },
+      120000
+    );
+
+    it.skipIf(!runIntegration)(
+      'should evaluate all golden conversations and report calibration status',
+      async () => {
+        const results: { golden: GoldenConversation; passed: boolean; failures: string[] }[] = [];
+
+        for (const golden of GOLDEN_CONVERSATIONS) {
+          const input = goldenToEvalInput(golden);
+          const result = await evaluator.evaluate(input);
+          const validation = validateCalibration(golden, result);
+
+          results.push({
+            golden,
+            passed: validation.passed,
+            failures: validation.failures,
+          });
+        }
+
+        console.log('\n\n📊 CALIBRATION REPORT');
+        console.log('═'.repeat(60));
+
+        let passCount = 0;
+        for (const { golden, passed, failures } of results) {
+          const status = passed ? '✅ PASS' : '❌ FAIL';
+          console.log(`\n${status} ${golden.name}`);
+          console.log(`   ${golden.description}`);
+          if (!passed) {
+            for (const failure of failures) {
+              console.log(`   ⚠️  ${failure}`);
+            }
+          }
+          if (passed) passCount++;
+        }
+
+        console.log('\n' + '═'.repeat(60));
+        console.log(`TOTAL: ${passCount}/${results.length} passed`);
+        console.log('═'.repeat(60) + '\n');
+
+        // Allow some tolerance - at least 80% should pass
+        const passRate = passCount / results.length;
+        expect(passRate).toBeGreaterThanOrEqual(0.8);
+      },
+      300000
+    );
+  });
+
+  describe('Evaluator Consistency', () => {
+    const runConsistency = process.env.RUN_CONSISTENCY_TESTS === 'true';
+
+    it.skipIf(!runConsistency)(
+      'should produce consistent scores across multiple evaluations',
+      async () => {
+        const input = goldenToEvalInput(SIMPLE_QUESTION);
+        const scores: number[] = [];
+
+        // Run 3 evaluations
+        for (let i = 0; i < 3; i++) {
+          const result = await evaluator.evaluate(input);
+          scores.push(result.overallScore);
+        }
+
+        // Calculate variance
+        const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const variance =
+          scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
+        const stdDev = Math.sqrt(variance);
+
+        console.log('\n📊 Consistency Test (SIMPLE_QUESTION):');
+        console.log(`  Scores: ${scores.join(', ')}`);
+        console.log(`  Mean: ${mean.toFixed(2)}`);
+        console.log(`  Std Dev: ${stdDev.toFixed(2)}`);
+
+        // Standard deviation should be low (< 1.5) for consistent scoring
+        expect(stdDev).toBeLessThan(1.5);
+      },
+      180000
+    );
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Smoke Tests (Quick API validation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Evaluator Smoke Tests', () => {
+  it('should create evaluator without throwing', () => {
+    // Skip if no API key
+    if (!process.env.ANTHROPIC_API_KEY) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const evaluator = createEvaluator();
+    expect(evaluator).toBeInstanceOf(ConversationEvaluator);
+  });
+
+  it('should throw if ANTHROPIC_API_KEY is missing and no client provided', () => {
+    const originalKey = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+
+    try {
+      // Updated message after DI fix - now mentions that no client was provided
+      expect(() => createEvaluator()).toThrow(
+        'ANTHROPIC_API_KEY required when no Anthropic client provided'
+      );
+    } finally {
+      if (originalKey) {
+        process.env.ANTHROPIC_API_KEY = originalKey;
+      }
+    }
+  });
+});

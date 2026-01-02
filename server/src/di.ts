@@ -57,6 +57,10 @@ import {
 } from './adapters/prisma';
 import { PrismaAdvisorMemoryRepository } from './adapters/prisma/advisor-memory.repository';
 import type { AdvisorMemoryRepository } from './lib/ports';
+import type { ConversationEvaluator } from './agent/evals/evaluator';
+import type { EvalPipeline } from './agent/evals/pipeline';
+import type { ReviewQueue } from './agent/feedback/review-queue';
+import type { ReviewActionService } from './agent/feedback/review-actions';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
@@ -94,6 +98,13 @@ export interface Container {
     reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
     landingPage: LandingPageService; // Landing page visual editor (TODO-241)
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
+    // Agent evaluation services (Phase 2 - agent-evaluation-system.md)
+    evaluation?: {
+      evaluator: ConversationEvaluator;
+      pipeline: EvalPipeline;
+      reviewQueue: ReviewQueue;
+      reviewActions: ReviewActionService;
+    };
   };
   repositories?: {
     service?: PrismaServiceRepository;

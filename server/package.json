@@ -23,6 +23,10 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:unit": "vitest run --coverage test/ --exclude=\"test/integration/**\"",
     "test:coverage:report": "open coverage/index.html",
+    "test:agent-eval": "vitest run --config vitest.config.agent-eval.ts",
+    "test:agent-eval:parity": "vitest run --config vitest.config.agent-eval.ts test/agent-eval/parity/",
+    "test:agent-eval:safety": "vitest run --config vitest.config.agent-eval.ts test/agent-eval/safety/",
+    "test:agent-eval:outcomes": "vitest run --config vitest.config.agent-eval.ts test/agent-eval/outcomes/",
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --name initial_schema",
     "db:seed": "tsx prisma/seed.ts",
@@ -90,7 +94,8 @@
     "cross-env": "^10.1.0",
     "pino-pretty": "^13.1.2",
     "supertest": "^7.1.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vitest-mock-extended": "^3.1.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
