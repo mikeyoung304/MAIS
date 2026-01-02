@@ -38,6 +38,7 @@
     "db:seed:all": "cross-env SEED_MODE=all tsx prisma/seed.ts",
     "create-tenant": "tsx scripts/create-tenant.ts",
     "create-tenant-with-stripe": "tsx scripts/create-tenant-with-stripe.ts",
+    "eval-batch": "tsx scripts/run-eval-batch.ts",
     "test:commission": "tsx scripts/test-commission.ts",
     "test:stripe-connect": "tsx scripts/test-stripe-connect.ts",
     "db:diagnose": "tsx scripts/diagnose-database.ts"

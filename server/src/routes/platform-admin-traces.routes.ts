@@ -283,44 +283,57 @@ export function createPlatformAdminTracesRouter(prisma: PrismaClient): Router {
       const { traceId } = traceIdParamSchema.parse(req.params);
       const data = createReviewActionSchema.parse(req.body);
 
-      // Verify trace exists and get tenantId
-      const trace = await prisma.conversationTrace.findUnique({
-        where: { id: traceId },
-        select: { id: true, tenantId: true },
+      // Get user ID from auth
+      const userId = res.locals.user?.id || 'system';
+
+      // P2-588: Use transaction for atomic updates to prevent orphan records
+      // Both the review action creation and trace status update must succeed together
+      const result = await prisma.$transaction(async (tx) => {
+        // Verify trace exists and get tenantId
+        const trace = await tx.conversationTrace.findUnique({
+          where: { id: traceId },
+          select: { id: true, tenantId: true, evalScore: true },
+        });
+
+        if (!trace) {
+          return { success: false, error: 'not_found' } as const;
+        }
+
+        // Create review action
+        const action = await tx.reviewAction.create({
+          data: {
+            tenantId: trace.tenantId,
+            traceId,
+            action: data.action,
+            notes: data.notes,
+            correctedScore: data.correctedScore,
+            performedBy: userId,
+          },
+        });
+
+        // Update trace review status
+        await tx.conversationTrace.update({
+          where: { id: traceId },
+          data: {
+            reviewStatus: 'actioned',
+            reviewedAt: new Date(),
+            reviewedBy: userId,
+            // If correctedScore provided, update evalScore too
+            ...(data.correctedScore !== undefined && { evalScore: data.correctedScore }),
+          },
+        });
+
+        return { success: true, action } as const;
       });
 
-      if (!trace) {
+      if (!result.success) {
         res.status(404).json({ error: 'Trace not found' });
         return;
       }
 
-      // Get user ID from auth
-      const userId = res.locals.user?.id || 'system';
-
-      const action = await prisma.reviewAction.create({
-        data: {
-          tenantId: trace.tenantId,
-          traceId,
-          action: data.action,
-          notes: data.notes,
-          correctedScore: data.correctedScore,
-          performedBy: userId,
-        },
-      });
-
-      // Update trace review status
-      await prisma.conversationTrace.update({
-        where: { id: traceId },
-        data: {
-          reviewStatus: 'actioned',
-          reviewedAt: new Date(),
-          reviewedBy: userId,
-        },
-      });
-
       logger.info({ traceId, action: data.action, userId }, 'Review action created');
 
-      res.status(201).json(action);
+      res.status(201).json(result.action);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: 'Validation error', details: error.errors });

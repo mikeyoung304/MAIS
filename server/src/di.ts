@@ -58,6 +58,10 @@ import {
 } from './adapters/prisma';
 import { PrismaAdvisorMemoryRepository } from './adapters/prisma/advisor-memory.repository';
 import type { AdvisorMemoryRepository } from './lib/ports';
+import { createEvaluator } from './agent/evals/evaluator';
+import { createEvalPipeline } from './agent/evals/pipeline';
+import { createReviewQueue } from './agent/feedback/review-queue';
+import { createReviewActionService } from './agent/feedback/review-actions';
 import type { ConversationEvaluator } from './agent/evals/evaluator';
 import type { EvalPipeline } from './agent/evals/pipeline';
 import type { ReviewQueue } from './agent/feedback/review-queue';
@@ -286,6 +290,28 @@ export function buildContainer(config: Config): Container {
       eventEmitter
     );
 
+    // Agent evaluation services (only if ANTHROPIC_API_KEY is set)
+    // In mock mode, these are optional - tests can inject mock evaluators
+    let evaluation:
+      | {
+          evaluator: ConversationEvaluator;
+          pipeline: EvalPipeline;
+          reviewQueue: ReviewQueue;
+          reviewActions: ReviewActionService;
+        }
+      | undefined;
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      const evaluator = createEvaluator();
+      const pipeline = createEvalPipeline(mockPrisma, evaluator);
+      const reviewQueue = createReviewQueue(mockPrisma);
+      const reviewActions = createReviewActionService(mockPrisma);
+      evaluation = { evaluator, pipeline, reviewQueue, reviewActions };
+      logger.info('🧪 Agent evaluation services initialized (mock mode)');
+    } else {
+      logger.info('⚠️  Agent evaluation services skipped (ANTHROPIC_API_KEY not set)');
+    }
+
     const services = {
       identity: identityService,
       stripeConnect: stripeConnectService,
@@ -301,6 +327,7 @@ export function buildContainer(config: Config): Container {
       packageDraft: packageDraftService,
       reminder: reminderService,
       landingPage: landingPageService,
+      evaluation,
     };
 
     // Create AdvisorMemoryRepository for onboarding agent
@@ -694,6 +721,33 @@ export function buildContainer(config: Config): Container {
     // No dev controller in real mode
   };
 
+  // Agent evaluation services (requires ANTHROPIC_API_KEY)
+  // P1-583 FIX: Use factory functions for proper DI (dependencies before config)
+  let evaluationServices:
+    | {
+        evaluator: ConversationEvaluator;
+        pipeline: EvalPipeline;
+        reviewQueue: ReviewQueue;
+        reviewActions: ReviewActionService;
+      }
+    | undefined;
+
+  if (process.env.ANTHROPIC_API_KEY) {
+    const evaluator = createEvaluator();
+    const evalPipeline = createEvalPipeline(prisma, evaluator);
+    const reviewQueue = createReviewQueue(prisma);
+    const reviewActions = createReviewActionService(prisma);
+    evaluationServices = {
+      evaluator,
+      pipeline: evalPipeline,
+      reviewQueue,
+      reviewActions,
+    };
+    logger.info('🤖 Agent evaluation services initialized');
+  } else {
+    logger.warn('⚠️  Agent evaluation services skipped (ANTHROPIC_API_KEY not set)');
+  }
+
   const services = {
     identity: identityService,
     stripeConnect: stripeConnectService,
@@ -710,6 +764,7 @@ export function buildContainer(config: Config): Container {
     reminder: reminderService,
     landingPage: landingPageService,
     webhookDelivery: webhookDeliveryService,
+    evaluation: evaluationServices,
   };
 
   // Create EarlyAccessRepository for early access request persistence
