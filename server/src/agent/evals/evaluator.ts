@@ -53,12 +53,30 @@ export interface EvaluatorConfig {
   timeoutMs: number;
 }
 
-const DEFAULT_CONFIG: EvaluatorConfig = {
-  model: 'claude-haiku-35-20241022', // Use Haiku for cost-effective evaluation
-  maxTokens: 2048,
-  temperature: 0.1, // Low temperature for consistent scoring
-  timeoutMs: 30000,
-};
+/**
+ * Default evaluation model.
+ * Can be overridden via EVAL_MODEL environment variable.
+ *
+ * @see plans/agent-eval-remediation-plan.md Phase 7.2
+ */
+const DEFAULT_EVAL_MODEL = 'claude-haiku-35-20241022';
+
+/**
+ * Get default evaluator configuration.
+ *
+ * Uses lazy evaluation for EVAL_MODEL to ensure environment variables
+ * are read at usage time, not module load time.
+ *
+ * @see todos/614-pending-p2-env-var-load-time.md
+ */
+function getDefaultConfig(): EvaluatorConfig {
+  return {
+    model: process.env.EVAL_MODEL || DEFAULT_EVAL_MODEL, // Read at call time, not import time
+    maxTokens: 2048,
+    temperature: 0.1, // Low temperature for consistent scoring
+    timeoutMs: 30000,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evaluator Class
@@ -100,7 +118,7 @@ export class ConversationEvaluator {
     anthropic?: Anthropic, // ✅ Dependencies first (Kieran review)
     config: Partial<EvaluatorConfig> = {}
   ) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...getDefaultConfig(), ...config };
 
     // ✅ Validate API key only when creating default client
     if (!anthropic && !process.env.ANTHROPIC_API_KEY) {

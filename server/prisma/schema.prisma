@@ -71,6 +71,11 @@ model Tenant {
   subscriptionStatus SubscriptionStatus @default(NONE) // Current subscription state
   stripeCustomerId   String?            @unique // Stripe Customer ID for Checkout
 
+  // Subscription Tier & AI Usage Limits
+  tier              SubscriptionTier @default(FREE)  // Current pricing tier
+  aiMessagesUsed    Int              @default(0)     // AI messages used this billing cycle
+  aiMessagesResetAt DateTime?                        // When AI message counter was last reset
+
   // Encrypted Secrets Storage
   secrets Json @default("{}") // {stripe: {ciphertext, iv, authTag}}
 
@@ -591,6 +596,13 @@ enum SubscriptionStatus {
   EXPIRED   // Trial ended, didn't pay (soft lock)
 }
 
+/// Subscription tier for pricing/limits
+enum SubscriptionTier {
+  FREE      // Trial tier (14 days, 50 AI messages)
+  STARTER   // $49/month (500 AI messages)
+  PRO       // $150/month (5000 AI messages)
+}
+
 model BlackoutDate {
   id        String   @id @default(cuid())
   tenantId  String // Tenant isolation
@@ -787,6 +799,7 @@ model AgentProposal {
   @@index([tenantId, status])
   @@index([expiresAt]) // For cleanup of expired proposals
   @@index([status, expiresAt]) // P1 fix: Cleanup job queries (status + expiresAt)
+  @@index([status, updatedAt]) // P3-616: Orphan proposal recovery query
   @@index([tenantId])
   @@index([customerId]) // Query proposals by customer
 }

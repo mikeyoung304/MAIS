@@ -12,8 +12,10 @@
  * @see plans/agent-evaluation-system.md Phase 5.3
  */
 
+import { z } from 'zod';
 import type { PrismaClient } from '../../generated/prisma';
 import type { TracedMessage } from '../tracing';
+import { redactMessagesForPreview } from '../../lib/pii-redactor';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -61,20 +63,37 @@ export interface ReviewQueueOptions {
 
 /**
  * Review submission input.
+ *
+ * Validated with Zod schema for security:
+ * - reviewedBy: max 100 characters
+ * - notes: max 2000 characters
+ * - correctEvalScore: 0-10 range
+ *
+ * @see todos/612-pending-p2-review-submission-input-validation.md
  */
-export interface ReviewSubmission {
-  reviewedBy: string;
-  notes: string;
-  correctEvalScore?: number;
-  actionTaken:
-    | 'none'
-    | 'approve'
-    | 'reject'
-    | 'escalate'
-    | 'prompt_updated'
-    | 'bug_filed'
-    | 'retrain';
-}
+export const ReviewSubmissionSchema = z.object({
+  reviewedBy: z
+    .string()
+    .min(1, 'Reviewer identifier is required')
+    .max(100, 'Reviewer identifier must be 100 characters or less'),
+  notes: z.string().max(2000, 'Notes must be 2000 characters or less'),
+  correctEvalScore: z
+    .number()
+    .min(0, 'Score must be at least 0')
+    .max(10, 'Score must be at most 10')
+    .optional(),
+  actionTaken: z.enum([
+    'none',
+    'approve',
+    'reject',
+    'escalate',
+    'prompt_updated',
+    'bug_filed',
+    'retrain',
+  ]),
+});
+
+export type ReviewSubmission = z.infer<typeof ReviewSubmissionSchema>;
 
 /**
  * Queue statistics.
@@ -85,29 +104,6 @@ export interface QueueStats {
   avgEvalScore: number;
   flagReasonBreakdown: Record<string, number>;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PII Redaction Patterns
-// ─────────────────────────────────────────────────────────────────────────────
-
-const PII_PATTERNS: { pattern: RegExp; replacement: string }[] = [
-  {
-    pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-    replacement: '[EMAIL]',
-  },
-  {
-    pattern: /\b(\+\d{1,2}\s?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
-    replacement: '[PHONE]',
-  },
-  {
-    pattern: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g,
-    replacement: '[CARD]',
-  },
-  {
-    pattern: /\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b/g,
-    replacement: '[SSN]',
-  },
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Review Queue Class
@@ -179,7 +175,7 @@ export class ReviewQueue {
       flagReason: trace.flagReason,
       turnCount: trace.turnCount,
       startedAt: trace.startedAt,
-      messagesPreview: this.redactMessages(trace.messages as unknown as TracedMessage[]),
+      messagesPreview: redactMessagesForPreview(trace.messages as unknown as TracedMessage[]),
     }));
   }
 
@@ -217,50 +213,56 @@ export class ReviewQueue {
       flagReason: trace.flagReason,
       turnCount: trace.turnCount,
       startedAt: trace.startedAt,
-      messagesPreview: this.redactMessages(trace.messages as unknown as TracedMessage[]),
+      messagesPreview: redactMessagesForPreview(trace.messages as unknown as TracedMessage[]),
     };
   }
 
   /**
    * Submit a review for a flagged conversation.
+   *
+   * Uses updateMany with tenant ownership check to eliminate N+1 query pattern
+   * and avoid TOCTOU race conditions.
+   *
+   * @throws {z.ZodError} If review submission fails validation
    */
   async submitReview(tenantId: string, traceId: string, review: ReviewSubmission): Promise<void> {
-    // P0 Security: Verify trace belongs to tenant
-    const trace = await this.prisma.conversationTrace.findFirst({
-      where: { id: traceId, tenantId },
-    });
+    // Validate input before processing (P2-612: security validation)
+    const validated = ReviewSubmissionSchema.parse(review);
 
-    if (!trace) {
-      throw new Error('Trace not found or access denied');
-    }
-
-    // Update trace with review
-    await this.prisma.conversationTrace.update({
-      where: { id: traceId },
-      data: {
-        reviewStatus: 'reviewed',
-        reviewedAt: new Date(),
-        reviewedBy: review.reviewedBy,
-        reviewNotes: review.notes,
-        ...(review.correctEvalScore !== undefined && {
-          evalScore: review.correctEvalScore,
-        }),
-      },
-    });
-
-    // Log action if taken
-    if (review.actionTaken !== 'none') {
-      await this.prisma.reviewAction.create({
+    await this.prisma.$transaction(async (tx) => {
+      // Single updateMany with ownership check - eliminates find-then-update N+1
+      const updated = await tx.conversationTrace.updateMany({
+        where: { id: traceId, tenantId }, // P0 Security: tenant scoping
         data: {
-          tenantId,
-          traceId,
-          action: review.actionTaken,
-          notes: review.notes,
-          correctedScore: review.correctEvalScore,
-          performedBy: review.reviewedBy,
+          reviewStatus: 'reviewed',
+          reviewedAt: new Date(),
+          reviewedBy: validated.reviewedBy,
+          reviewNotes: validated.notes,
+          ...(validated.correctEvalScore !== undefined && {
+            evalScore: validated.correctEvalScore,
+          }),
         },
       });
-    }
+
+      // Verify ownership and existence in one step
+      if (updated.count === 0) {
+        throw new Error('Trace not found or access denied');
+      }
+
+      // Log action if taken
+      if (validated.actionTaken !== 'none') {
+        await tx.reviewAction.create({
+          data: {
+            tenantId,
+            traceId,
+            action: validated.actionTaken,
+            notes: validated.notes,
+            correctedScore: validated.correctEvalScore,
+            performedBy: validated.reviewedBy,
+          },
+        });
+      }
+    });
   }
 
   /**
@@ -314,27 +316,6 @@ export class ReviewQueue {
   // ─────────────────────────────────────────────────────────────────────────────
   // Private Methods
   // ─────────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Redact PII from messages and truncate.
-   */
-  private redactMessages(messages: TracedMessage[]): Array<{ role: string; content: string }> {
-    return messages.map((m) => ({
-      role: m.role,
-      content: this.redactPII(m.content).slice(0, 500), // Truncate to 500 chars
-    }));
-  }
-
-  /**
-   * Redact PII from text.
-   */
-  private redactPII(text: string): string {
-    let redacted = text;
-    for (const { pattern, replacement } of PII_PATTERNS) {
-      redacted = redacted.replace(pattern, replacement);
-    }
-    return redacted;
-  }
 
   /**
    * Build order by clause.

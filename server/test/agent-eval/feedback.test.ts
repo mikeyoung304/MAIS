@@ -7,6 +7,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { DeepMockProxy } from 'vitest-mock-extended';
+import type { PrismaClient } from '../../src/generated/prisma';
+import { createMockPrisma } from '../helpers/mock-prisma';
 import {
   ImplicitFeedbackAnalyzer,
   createImplicitFeedbackAnalyzer,
@@ -350,24 +353,13 @@ describe('ImplicitFeedbackAnalyzer', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('ReviewQueue', () => {
-  const mockPrisma = {
-    conversationTrace: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
-      count: vi.fn(),
-      aggregate: vi.fn(),
-      groupBy: vi.fn(),
-    },
-    reviewAction: {
-      create: vi.fn(),
-    },
-  } as any;
-
+  // P3-615: Use shared mock helper for consistency
+  let mockPrisma: DeepMockProxy<PrismaClient>;
   let queue: ReviewQueue;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma = createMockPrisma();
     queue = createReviewQueue(mockPrisma);
   });
 
@@ -458,11 +450,8 @@ describe('ReviewQueue', () => {
 
   describe('submitReview', () => {
     it('should update trace and create action', async () => {
-      mockPrisma.conversationTrace.findFirst.mockResolvedValue({
-        id: 'trace-1',
-        tenantId: 'tenant-1',
-      });
-      mockPrisma.conversationTrace.update.mockResolvedValue({});
+      // New pattern: updateMany in transaction returns count=1 when successful
+      mockPrisma.conversationTrace.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.reviewAction.create.mockResolvedValue({});
 
       await queue.submitReview('tenant-1', 'trace-1', {
@@ -471,9 +460,12 @@ describe('ReviewQueue', () => {
         actionTaken: 'approve',
       });
 
-      expect(mockPrisma.conversationTrace.update).toHaveBeenCalledWith(
+      expect(mockPrisma.conversationTrace.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'trace-1' },
+          where: expect.objectContaining({
+            id: 'trace-1',
+            tenantId: 'tenant-1', // P0: Tenant scoping in the where clause
+          }),
           data: expect.objectContaining({
             reviewStatus: 'reviewed',
             reviewedBy: 'user@example.com',
@@ -491,7 +483,8 @@ describe('ReviewQueue', () => {
     });
 
     it('should reject if trace not found', async () => {
-      mockPrisma.conversationTrace.findFirst.mockResolvedValue(null);
+      // updateMany returns count=0 when trace not found or wrong tenant
+      mockPrisma.conversationTrace.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
         queue.submitReview('tenant-1', 'trace-999', {
@@ -503,11 +496,8 @@ describe('ReviewQueue', () => {
     });
 
     it('should not create action if actionTaken is none', async () => {
-      mockPrisma.conversationTrace.findFirst.mockResolvedValue({
-        id: 'trace-1',
-        tenantId: 'tenant-1',
-      });
-      mockPrisma.conversationTrace.update.mockResolvedValue({});
+      // updateMany returns count=1 when trace found
+      mockPrisma.conversationTrace.updateMany.mockResolvedValue({ count: 1 });
 
       await queue.submitReview('tenant-1', 'trace-1', {
         reviewedBy: 'user@example.com',
@@ -519,11 +509,7 @@ describe('ReviewQueue', () => {
     });
 
     it('should update eval score if corrected', async () => {
-      mockPrisma.conversationTrace.findFirst.mockResolvedValue({
-        id: 'trace-1',
-        tenantId: 'tenant-1',
-      });
-      mockPrisma.conversationTrace.update.mockResolvedValue({});
+      mockPrisma.conversationTrace.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.reviewAction.create.mockResolvedValue({});
 
       await queue.submitReview('tenant-1', 'trace-1', {
@@ -533,13 +519,85 @@ describe('ReviewQueue', () => {
         actionTaken: 'reject',
       });
 
-      expect(mockPrisma.conversationTrace.update).toHaveBeenCalledWith(
+      expect(mockPrisma.conversationTrace.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'trace-1',
+            tenantId: 'tenant-1',
+          }),
           data: expect.objectContaining({
             evalScore: 7.5,
           }),
         })
       );
+    });
+
+    // P2-612: Validation tests
+    it('should reject reviewedBy exceeding 100 characters', async () => {
+      await expect(
+        queue.submitReview('tenant-1', 'trace-1', {
+          reviewedBy: 'a'.repeat(101),
+          notes: 'Valid notes',
+          actionTaken: 'approve',
+        })
+      ).rejects.toThrow('Reviewer identifier must be 100 characters or less');
+    });
+
+    it('should reject notes exceeding 2000 characters', async () => {
+      await expect(
+        queue.submitReview('tenant-1', 'trace-1', {
+          reviewedBy: 'valid@example.com',
+          notes: 'x'.repeat(2001),
+          actionTaken: 'approve',
+        })
+      ).rejects.toThrow('Notes must be 2000 characters or less');
+    });
+
+    it('should reject correctEvalScore below 0', async () => {
+      await expect(
+        queue.submitReview('tenant-1', 'trace-1', {
+          reviewedBy: 'valid@example.com',
+          notes: 'Valid notes',
+          correctEvalScore: -1,
+          actionTaken: 'approve',
+        })
+      ).rejects.toThrow('Score must be at least 0');
+    });
+
+    it('should reject correctEvalScore above 10', async () => {
+      await expect(
+        queue.submitReview('tenant-1', 'trace-1', {
+          reviewedBy: 'valid@example.com',
+          notes: 'Valid notes',
+          correctEvalScore: 11,
+          actionTaken: 'approve',
+        })
+      ).rejects.toThrow('Score must be at most 10');
+    });
+
+    it('should reject empty reviewedBy', async () => {
+      await expect(
+        queue.submitReview('tenant-1', 'trace-1', {
+          reviewedBy: '',
+          notes: 'Valid notes',
+          actionTaken: 'approve',
+        })
+      ).rejects.toThrow('Reviewer identifier is required');
+    });
+
+    it('should accept valid boundary values', async () => {
+      mockPrisma.conversationTrace.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.reviewAction.create.mockResolvedValue({});
+
+      // Max length reviewedBy (100 chars)
+      await queue.submitReview('tenant-1', 'trace-1', {
+        reviewedBy: 'a'.repeat(100),
+        notes: 'b'.repeat(2000), // Max length notes
+        correctEvalScore: 10, // Max score
+        actionTaken: 'approve',
+      });
+
+      expect(mockPrisma.conversationTrace.updateMany).toHaveBeenCalled();
     });
   });
 
@@ -572,24 +630,13 @@ describe('ReviewQueue', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('ReviewActionService', () => {
-  const mockPrisma = {
-    conversationTrace: {
-      findFirst: vi.fn(),
-      update: vi.fn(),
-    },
-    reviewAction: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-      groupBy: vi.fn(),
-      aggregate: vi.fn(),
-    },
-    $transaction: vi.fn(),
-  } as any;
-
+  // P3-615: Use shared mock helper for consistency
+  let mockPrisma: DeepMockProxy<PrismaClient>;
   let service: ReviewActionService;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma = createMockPrisma();
     service = createReviewActionService(mockPrisma);
   });
 
