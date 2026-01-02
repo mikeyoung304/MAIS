@@ -69,6 +69,30 @@ export async function cleanupExpiredSessions(prisma: PrismaClient): Promise<numb
 }
 
 /**
+ * Clean up orphaned user feedback records
+ *
+ * Feedback without associated traces (traceId = null) older than 30 days
+ * can be safely deleted. These occur when traces are deleted but feedback
+ * records remain due to ON DELETE SET NULL constraint.
+ *
+ * @param prisma - Prisma client for database operations
+ * @returns Number of feedback records deleted
+ */
+export async function cleanupOrphanedFeedback(prisma: PrismaClient): Promise<number> {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await prisma.userFeedback.deleteMany({
+    where: {
+      traceId: null,
+      createdAt: { lt: thirtyDaysAgo },
+    },
+  });
+
+  logger.info({ deletedCount: result.count }, 'Cleaned up orphaned feedback');
+  return result.count;
+}
+
+/**
  * Clean up expired and rejected proposals
  *
  * Proposals that have expired or been rejected can be deleted after 7 days.
@@ -149,7 +173,7 @@ export async function recoverOrphanedProposals(
         );
 
         await prisma.agentProposal.update({
-          where: { id: proposalId },
+          where: { id: proposalId, tenantId },
           data: {
             status: 'FAILED',
             error: `Orphaned - no executor registered for tool "${toolName}"`,
@@ -174,7 +198,7 @@ export async function recoverOrphanedProposals(
         );
 
         await prisma.agentProposal.update({
-          where: { id: proposalId },
+          where: { id: proposalId, tenantId },
           data: {
             status: 'FAILED',
             error: `Orphaned - payload validation failed: ${validationMessage}`,
@@ -195,7 +219,7 @@ export async function recoverOrphanedProposals(
 
       // Mark as executed
       await prisma.agentProposal.update({
-        where: { id: proposalId },
+        where: { id: proposalId, tenantId },
         data: {
           status: 'EXECUTED',
           executedAt: new Date(),
@@ -216,7 +240,7 @@ export async function recoverOrphanedProposals(
       );
 
       await prisma.agentProposal.update({
-        where: { id: proposalId },
+        where: { id: proposalId, tenantId },
         data: {
           status: 'FAILED',
           error: `Orphaned recovery failed: ${errorMessage}`,
@@ -244,6 +268,7 @@ export async function runAllCleanupJobs(prisma: PrismaClient): Promise<{
   traces: number;
   sessions: number;
   proposals: number;
+  feedback: number;
   orphansRecovered: { retried: number; failed: number };
 }> {
   logger.info('Starting cleanup jobs');
@@ -251,11 +276,15 @@ export async function runAllCleanupJobs(prisma: PrismaClient): Promise<{
   const traces = await cleanupExpiredTraces(prisma);
   const sessions = await cleanupExpiredSessions(prisma);
   const proposals = await cleanupExpiredProposals(prisma);
+  const feedback = await cleanupOrphanedFeedback(prisma);
   const orphansRecovered = await recoverOrphanedProposals(prisma);
 
-  logger.info({ traces, sessions, proposals, orphansRecovered }, 'Cleanup jobs completed');
+  logger.info(
+    { traces, sessions, proposals, feedback, orphansRecovered },
+    'Cleanup jobs completed'
+  );
 
-  return { traces, sessions, proposals, orphansRecovered };
+  return { traces, sessions, proposals, feedback, orphansRecovered };
 }
 
 /**

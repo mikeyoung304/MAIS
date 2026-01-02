@@ -1037,6 +1037,7 @@ model UserFeedback {
   @@index([tenantId, sessionId])
   @@index([tenantId, createdAt])
   @@index([traceId])
+  @@index([traceId, createdAt]) // For orphan feedback cleanup query
 }
 
 /// ReviewAction - Human review actions on flagged conversations

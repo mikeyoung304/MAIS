@@ -1,11 +1,21 @@
 import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
+import path from 'path';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on mode
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    resolve: {
+      alias: [
+        // Prisma 7 generates client.ts, not index.ts - use regex to catch all relative paths
+        {
+          find: /^(.*)\/generated\/prisma$/,
+          replacement: path.resolve(__dirname, 'src/generated/prisma/client.ts'),
+        },
+      ],
+    },
     test: {
       globals: true,
       environment: 'node',

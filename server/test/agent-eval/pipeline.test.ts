@@ -66,6 +66,24 @@ describe('PII Redactor', () => {
       const result = redactPII(text);
       expect(result).toContain('[NAME]');
     });
+
+    it('should redact IP addresses', () => {
+      expect(redactPII('Server at 192.168.1.100')).toBe('Server at [IP]');
+      expect(redactPII('Access from 10.0.0.1 and 172.16.0.254')).toBe('Access from [IP] and [IP]');
+    });
+
+    it('should redact international phone numbers (E.164)', () => {
+      expect(redactPII('Call +447911123456')).toBe('Call [PHONE]');
+      expect(redactPII('Contact +12025551234 or +4915123456789')).toBe(
+        'Contact [PHONE] or [PHONE]'
+      );
+    });
+
+    it('should redact date of birth patterns', () => {
+      expect(redactPII('DOB: 01/15/1990')).toBe('[DOB]');
+      expect(redactPII('Date of Birth: 12-25-1985')).toBe('[DOB]');
+      expect(redactPII('Birthday: 3/4/92')).toBe('[DOB]');
+    });
   });
 
   describe('redactMessages', () => {
