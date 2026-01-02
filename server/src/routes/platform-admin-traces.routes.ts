@@ -182,171 +182,13 @@ export function createPlatformAdminTracesRouter(prisma: PrismaClient): Router {
   });
 
   /**
-   * GET /v1/platform/admin/traces/:traceId
-   * Get single trace with full details (including messages and tool calls).
-   * Messages and tool calls are decrypted automatically via Prisma middleware.
-   *
-   * @returns 200 - Full trace object
-   * @returns 404 - Trace not found
-   * @returns 500 - Internal server error
-   */
-  router.get('/:traceId', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { traceId } = traceIdParamSchema.parse(req.params);
-
-      const trace = await prisma.conversationTrace.findUnique({
-        where: { id: traceId },
-        include: {
-          reviewActions: {
-            orderBy: { performedAt: 'desc' },
-          },
-          feedbacks: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-      });
-
-      if (!trace) {
-        res.status(404).json({ error: 'Trace not found' });
-        return;
-      }
-
-      res.json(trace);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation error', details: error.errors });
-        return;
-      }
-      next(error);
-    }
-  });
-
-  /**
-   * PATCH /v1/platform/admin/traces/:traceId/review
-   * Update review status and notes for a trace.
-   *
-   * @returns 200 - Updated trace
-   * @returns 404 - Trace not found
-   * @returns 500 - Internal server error
-   */
-  router.patch('/:traceId/review', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { traceId } = traceIdParamSchema.parse(req.params);
-      const data = updateReviewSchema.parse(req.body);
-
-      // Get user ID from auth
-      const userId = res.locals.user?.id || 'system';
-
-      const trace = await prisma.conversationTrace.update({
-        where: { id: traceId },
-        data: {
-          reviewStatus: data.reviewStatus,
-          reviewNotes: data.reviewNotes,
-          reviewedAt: new Date(),
-          reviewedBy: userId,
-          flagged: data.flagged,
-          flagReason: data.flagReason,
-        },
-      });
-
-      logger.info({ traceId, reviewStatus: data.reviewStatus, userId }, 'Trace review updated');
-
-      res.json(trace);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation error', details: error.errors });
-        return;
-      }
-      if (
-        error instanceof Error &&
-        'code' in error &&
-        (error as { code: string }).code === 'P2025'
-      ) {
-        res.status(404).json({ error: 'Trace not found' });
-        return;
-      }
-      next(error);
-    }
-  });
-
-  /**
-   * POST /v1/platform/admin/traces/:traceId/actions
-   * Create a review action for a trace.
-   * Used to track human reviewer decisions.
-   *
-   * @returns 201 - Created review action
-   * @returns 404 - Trace not found
-   * @returns 500 - Internal server error
-   */
-  router.post('/:traceId/actions', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { traceId } = traceIdParamSchema.parse(req.params);
-      const data = createReviewActionSchema.parse(req.body);
-
-      // Get user ID from auth
-      const userId = res.locals.user?.id || 'system';
-
-      // P2-588: Use transaction for atomic updates to prevent orphan records
-      // Both the review action creation and trace status update must succeed together
-      const result = await prisma.$transaction(async (tx) => {
-        // Verify trace exists and get tenantId
-        const trace = await tx.conversationTrace.findUnique({
-          where: { id: traceId },
-          select: { id: true, tenantId: true, evalScore: true },
-        });
-
-        if (!trace) {
-          return { success: false, error: 'not_found' } as const;
-        }
-
-        // Create review action
-        const action = await tx.reviewAction.create({
-          data: {
-            tenantId: trace.tenantId,
-            traceId,
-            action: data.action,
-            notes: data.notes,
-            correctedScore: data.correctedScore,
-            performedBy: userId,
-          },
-        });
-
-        // Update trace review status
-        await tx.conversationTrace.update({
-          where: { id: traceId },
-          data: {
-            reviewStatus: 'actioned',
-            reviewedAt: new Date(),
-            reviewedBy: userId,
-            // If correctedScore provided, update evalScore too
-            ...(data.correctedScore !== undefined && { evalScore: data.correctedScore }),
-          },
-        });
-
-        return { success: true, action } as const;
-      });
-
-      if (!result.success) {
-        res.status(404).json({ error: 'Trace not found' });
-        return;
-      }
-
-      logger.info({ traceId, action: data.action, userId }, 'Review action created');
-
-      res.status(201).json(result.action);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation error', details: error.errors });
-        return;
-      }
-      next(error);
-    }
-  });
-
-  /**
    * GET /v1/platform/admin/traces/stats
    * Get aggregate statistics for traces.
    * Used for dashboard metrics.
+   *
+   * IMPORTANT: This route MUST be defined BEFORE /:traceId to prevent
+   * Express from matching "stats" as a traceId parameter.
+   * See: docs/solutions/code-review-patterns/express-route-ordering-auth-fallback-security-MAIS-20260102.md
    *
    * Query params:
    * - tenantId: Filter by specific tenant
@@ -420,6 +262,178 @@ export function createPlatformAdminTracesRouter(prisma: PrismaClient): Router {
         totalCostDollars: (totalCost._sum.estimatedCostCents || 0) / 100,
         totalTokens: totalTokens._sum.totalTokens || 0,
       });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: 'Validation error', details: error.errors });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * GET /v1/platform/admin/traces/:traceId
+   * Get single trace with full details (including messages and tool calls).
+   * Messages and tool calls are decrypted automatically via Prisma middleware.
+   *
+   * @returns 200 - Full trace object
+   * @returns 404 - Trace not found
+   * @returns 500 - Internal server error
+   */
+  router.get('/:traceId', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { traceId } = traceIdParamSchema.parse(req.params);
+
+      const trace = await prisma.conversationTrace.findUnique({
+        where: { id: traceId },
+        include: {
+          reviewActions: {
+            orderBy: { performedAt: 'desc' },
+          },
+          feedbacks: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+
+      if (!trace) {
+        res.status(404).json({ error: 'Trace not found' });
+        return;
+      }
+
+      res.json(trace);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: 'Validation error', details: error.errors });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * PATCH /v1/platform/admin/traces/:traceId/review
+   * Update review status and notes for a trace.
+   *
+   * @returns 200 - Updated trace
+   * @returns 404 - Trace not found
+   * @returns 500 - Internal server error
+   */
+  router.patch('/:traceId/review', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { traceId } = traceIdParamSchema.parse(req.params);
+      const data = updateReviewSchema.parse(req.body);
+
+      // Require authenticated user - no fallback to 'system'
+      // See: docs/solutions/code-review-patterns/express-route-ordering-auth-fallback-security-MAIS-20260102.md
+      const userId = res.locals.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      const trace = await prisma.conversationTrace.update({
+        where: { id: traceId },
+        data: {
+          reviewStatus: data.reviewStatus,
+          reviewNotes: data.reviewNotes,
+          reviewedAt: new Date(),
+          reviewedBy: userId,
+          flagged: data.flagged,
+          flagReason: data.flagReason,
+        },
+      });
+
+      logger.info({ traceId, reviewStatus: data.reviewStatus, userId }, 'Trace review updated');
+
+      res.json(trace);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: 'Validation error', details: error.errors });
+        return;
+      }
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        (error as { code: string }).code === 'P2025'
+      ) {
+        res.status(404).json({ error: 'Trace not found' });
+        return;
+      }
+      next(error);
+    }
+  });
+
+  /**
+   * POST /v1/platform/admin/traces/:traceId/actions
+   * Create a review action for a trace.
+   * Used to track human reviewer decisions.
+   *
+   * @returns 201 - Created review action
+   * @returns 404 - Trace not found
+   * @returns 500 - Internal server error
+   */
+  router.post('/:traceId/actions', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { traceId } = traceIdParamSchema.parse(req.params);
+      const data = createReviewActionSchema.parse(req.body);
+
+      // Require authenticated user - no fallback to 'system'
+      // See: docs/solutions/code-review-patterns/express-route-ordering-auth-fallback-security-MAIS-20260102.md
+      const userId = res.locals.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      // P2-588: Use transaction for atomic updates to prevent orphan records
+      // Both the review action creation and trace status update must succeed together
+      const result = await prisma.$transaction(async (tx) => {
+        // Verify trace exists and get tenantId
+        const trace = await tx.conversationTrace.findUnique({
+          where: { id: traceId },
+          select: { id: true, tenantId: true, evalScore: true },
+        });
+
+        if (!trace) {
+          return { success: false, error: 'not_found' } as const;
+        }
+
+        // Create review action
+        const action = await tx.reviewAction.create({
+          data: {
+            tenantId: trace.tenantId,
+            traceId,
+            action: data.action,
+            notes: data.notes,
+            correctedScore: data.correctedScore,
+            performedBy: userId,
+          },
+        });
+
+        // Update trace review status
+        await tx.conversationTrace.update({
+          where: { id: traceId },
+          data: {
+            reviewStatus: 'actioned',
+            reviewedAt: new Date(),
+            reviewedBy: userId,
+            // If correctedScore provided, update evalScore too
+            ...(data.correctedScore !== undefined && { evalScore: data.correctedScore }),
+          },
+        });
+
+        return { success: true, action } as const;
+      });
+
+      if (!result.success) {
+        res.status(404).json({ error: 'Trace not found' });
+        return;
+      }
+
+      logger.info({ traceId, action: data.action, userId }, 'Review action created');
+
+      res.status(201).json(result.action);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: 'Validation error', details: error.errors });
