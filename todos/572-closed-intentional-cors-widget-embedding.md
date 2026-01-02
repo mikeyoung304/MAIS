@@ -1,9 +1,11 @@
 ---
-status: pending
+status: closed
 priority: p1
 issue_id: '572'
 tags: [code-review, security, cors, api]
 dependencies: []
+closed_date: '2026-01-01'
+closed_reason: 'Intentional design - CORS is permissive for widget embedding on customer sites'
 ---
 
 # P1: CORS Allows All HTTPS Origins in Production

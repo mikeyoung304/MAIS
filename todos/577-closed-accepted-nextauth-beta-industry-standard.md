@@ -1,9 +1,11 @@
 ---
-status: pending
+status: closed
 priority: p2
 issue_id: '577'
 tags: [code-review, dependencies, nextauth, production]
 dependencies: []
+closed_date: '2026-01-01'
+closed_reason: 'Accepted risk - NextAuth v5 beta is industry standard, used by major companies'
 ---
 
 # P2: NextAuth v5 Beta in Production

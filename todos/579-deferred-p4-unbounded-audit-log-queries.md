@@ -1,9 +1,11 @@
 ---
-status: pending
-priority: p2
+status: deferred
+priority: p4
 issue_id: '579'
 tags: [code-review, performance, database, pagination]
 dependencies: []
+deferred_date: '2026-01-01'
+deferred_reason: 'Performance optimization - Audit logs are small per tenant, pagination not needed yet'
 ---
 
 # P2: Unbounded Audit Log Queries (Performance)

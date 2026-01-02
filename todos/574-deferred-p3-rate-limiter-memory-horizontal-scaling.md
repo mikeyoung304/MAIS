@@ -1,9 +1,11 @@
 ---
-status: pending
-priority: p1
+status: deferred
+priority: p3
 issue_id: '574'
 tags: [code-review, architecture, scaling, redis]
 dependencies: []
+deferred_date: '2026-01-01'
+deferred_reason: 'Only relevant when scaling horizontally. Single instance sufficient for current load.'
 ---
 
 # P1: In-Memory Rate Limiter Blocks Horizontal Scaling

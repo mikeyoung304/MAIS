@@ -1,9 +1,11 @@
 ---
-status: pending
+status: closed
 priority: p1
 issue_id: '575'
 tags: [code-review, security, agent, session-management]
 dependencies: []
+closed_date: '2026-01-01'
+closed_reason: 'Mitigated - Sessions are tenant-scoped, UUIDs are unguessable, no PII in session'
 ---
 
 # P1: Session ID Spoofing Vector in Customer Chat

@@ -1,9 +1,11 @@
 ---
-status: pending
-priority: p1
+status: deferred
+priority: p3
 issue_id: '573'
 tags: [code-review, security, database, multi-tenant, rls]
 dependencies: []
+deferred_date: '2026-01-01'
+deferred_reason: 'Defense-in-depth improvement, not blocking. Application layer enforces tenant isolation.'
 ---
 
 # P1: Row-Level Security (RLS) Missing on Newer Tables

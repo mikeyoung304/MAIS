@@ -1,9 +1,11 @@
 ---
-status: pending
-priority: p1
+status: deferred
+priority: p4
 issue_id: '576'
 tags: [code-review, architecture, layering, prisma]
 dependencies: []
+deferred_date: '2026-01-01'
+deferred_reason: 'Low priority refactor. Current code works, would refactor during feature additions.'
 ---
 
 # P1: Layering Violation - Direct Prisma Usage in Routes
