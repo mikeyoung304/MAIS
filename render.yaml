@@ -47,3 +47,23 @@ services:
         sync: false  # Set manually in dashboard (optional)
       - key: POSTMARK_FROM_EMAIL
         sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Required for agent evaluation
+
+  # Agent Evaluation Cron Job
+  # Runs every 15 minutes to evaluate conversation traces
+  - type: cron
+    name: mais-eval-batch
+    runtime: node
+    region: oregon
+    plan: starter
+    schedule: "*/15 * * * *"  # Every 15 minutes
+    buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npx prisma generate
+    startCommand: cd server && npx tsx scripts/run-eval-batch.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
