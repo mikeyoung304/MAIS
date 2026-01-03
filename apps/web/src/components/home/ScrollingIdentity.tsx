@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 // ✅ FIX: Move outside component to prevent stale closure (DHH)
 const IDENTITIES = [
@@ -16,6 +16,8 @@ export function ScrollingIdentity() {
   const [index, setIndex] = useState(0);
   // ✅ FIX: SSR hydration guard to prevent layout shift (Kieran)
   const [isClient, setIsClient] = useState(false);
+  // P1 FIX: Respect prefers-reduced-motion (WCAG 2.3.3)
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     setIsClient(true);
@@ -48,12 +50,12 @@ export function ScrollingIdentity() {
         <AnimatePresence mode="wait">
           <motion.span
             key={`profession-${index}`}
-            initial={{ opacity: 0, y: 20 }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -20 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4 }}
             className="text-sage inline-block"
-            style={{ willChange: 'transform, opacity' }}
+            style={{ willChange: prefersReducedMotion ? 'auto' : 'transform, opacity' }}
           >
             {profession}
           </motion.span>
@@ -62,12 +64,12 @@ export function ScrollingIdentity() {
         <AnimatePresence mode="wait">
           <motion.span
             key={`verb-${index}`}
-            initial={{ opacity: 0, y: 20 }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, y: -20 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1 }}
             className="inline-block"
-            style={{ willChange: 'transform, opacity' }}
+            style={{ willChange: prefersReducedMotion ? 'auto' : 'transform, opacity' }}
           >
             {verb}
           </motion.span>

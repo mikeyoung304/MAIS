@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * @deprecated This component is not currently used. ProductCarousel has replaced it.
+ * The mockups here are duplicated in ProductCarousel - consider deleting this file
+ * or extracting shared mockups to a common location.
+ * See: docs/solutions/patterns/landing-page-accessibility-patterns-MAIS-20260103.md
+ */
+
 import { useRef } from 'react';
 import { DemoStorefrontShowcase } from './DemoStorefrontShowcase';
 import {
@@ -340,8 +347,8 @@ function Stage({ number, title, description, children, isLast = false }: StagePr
           </div>
         </div>
 
-        {/* Mockup content - taller aspect ratio to avoid cropping vertically-oriented content */}
-        <div className="aspect-[4/5]">{children}</div>
+        {/* Mockup content - fixed height to show full content without cropping */}
+        <div className="h-[480px]">{children}</div>
       </div>
 
       {/* Arrow connector */}

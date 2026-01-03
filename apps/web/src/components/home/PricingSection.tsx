@@ -65,9 +65,14 @@ function PricingCard({ tier }: { tier: PricingTier }) {
           ? 'scale-105 border-2 border-sage shadow-xl shadow-sage/20 z-10'
           : 'border-neutral-800 shadow-lg hover:shadow-xl hover:-translate-y-1'
       )}
+      // P2 FIX: Announce "Most Popular" to screen readers
+      aria-label={tier.isPopular ? `${tier.name} - Most Popular` : tier.name}
     >
       {tier.isPopular && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sage text-white px-4 py-1 rounded-full text-sm font-medium">
+        <span
+          className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sage text-white px-4 py-1 rounded-full text-sm font-medium"
+          aria-hidden="true"
+        >
           Most Popular
         </span>
       )}
@@ -86,7 +91,7 @@ function PricingCard({ tier }: { tier: PricingTier }) {
       <ul className="space-y-3 mb-8">
         {tier.features.map((feature, i) => (
           <li key={i} className="flex items-start gap-3">
-            <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+            <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" aria-hidden="true" />
             <span className="text-sm text-text-primary">{feature}</span>
           </li>
         ))}
@@ -138,6 +143,7 @@ export function PricingSection() {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"

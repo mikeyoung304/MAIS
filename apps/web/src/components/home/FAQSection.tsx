@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
 // Conversational FAQ copy (Frontend Design reviewer)
@@ -40,9 +40,11 @@ const faqs = [
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // P1 FIX: Respect prefers-reduced-motion (WCAG 2.3.3)
+  const prefersReducedMotion = useReducedMotion();
 
-  // Arrow key navigation between questions (Kieran)
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+  // P3 FIX: Memoize handleKeyDown for stable reference
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       const next = (index + 1) % faqs.length;
@@ -61,7 +63,7 @@ export function FAQSection() {
       e.preventDefault();
       document.getElementById(`faq-trigger-${faqs.length - 1}`)?.focus();
     }
-  };
+  }, []);
 
   return (
     <section className="py-20 md:py-28 px-6 bg-surface-alt" id="faq">
@@ -89,10 +91,14 @@ export function FAQSection() {
                 <span className="font-medium text-text-primary">{faq.question}</span>
                 <motion.span
                   animate={{ rotate: openIndex === i ? 180 : 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 300, damping: 30 }
+                  }
                   className="flex-shrink-0"
                 >
-                  <ChevronDown className="w-5 h-5 text-text-muted" />
+                  <ChevronDown className="w-5 h-5 text-text-muted" aria-hidden="true" />
                 </motion.span>
               </button>
               <AnimatePresence>
@@ -101,11 +107,16 @@ export function FAQSection() {
                     id={`faq-panel-${i}`}
                     role="region"
                     aria-labelledby={`faq-trigger-${i}`}
-                    initial={{ height: 0, opacity: 0 }}
+                    initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : { type: 'spring', stiffness: 300, damping: 30 }
+                    }
                     className="overflow-hidden"
+                    style={{ willChange: prefersReducedMotion ? 'auto' : 'height, opacity' }}
                   >
                     <p className="px-6 pb-5 text-text-muted leading-relaxed">{faq.answer}</p>
                   </motion.div>
