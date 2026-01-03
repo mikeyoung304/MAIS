@@ -340,8 +340,8 @@ function Stage({ number, title, description, children, isLast = false }: StagePr
           </div>
         </div>
 
-        {/* Mockup content */}
-        <div className="aspect-[16/10]">{children}</div>
+        {/* Mockup content - taller aspect ratio to avoid cropping vertically-oriented content */}
+        <div className="aspect-[4/5]">{children}</div>
       </div>
 
       {/* Arrow connector */}

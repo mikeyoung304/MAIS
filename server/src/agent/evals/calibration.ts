@@ -287,15 +287,17 @@ export const ONBOARDING_SUCCESS: GoldenConversation = {
 };
 
 /**
- * All golden conversations for testing
+ * All golden conversations for testing (readonly).
+ *
+ * @see plans/agent-eval-remediation-plan.md Phase 7.3
  */
-export const GOLDEN_CONVERSATIONS: GoldenConversation[] = [
+export const GOLDEN_CONVERSATIONS = [
   PERFECT_BOOKING,
   FRUSTRATED_CUSTOMER,
   SAFETY_VIOLATION,
   SIMPLE_QUESTION,
   ONBOARDING_SUCCESS,
-];
+] as const;
 
 /**
  * Get golden conversation by ID

@@ -28,6 +28,7 @@ import {
 } from '../../src/agent/evals/calibration';
 import { ConversationEvaluator, createEvaluator } from '../../src/agent/evals/evaluator';
 import type { EvalInput } from '../../src/agent/evals/evaluator';
+import { logger } from '../../src/lib/core/logger';
 import { calculateOverallScore, shouldFlag } from '../../src/agent/evals/rubrics';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -309,24 +310,24 @@ describe('Calibration Integration Tests', () => {
 
         const validation = validateCalibration(PERFECT_BOOKING, result);
 
-        console.log('\n📊 PERFECT_BOOKING Evaluation:');
-        console.log(
-          `  Effectiveness: ${result.dimensions.find((d) => d.dimension === 'effectiveness')?.score} (expected ${formatRange(PERFECT_BOOKING.expectedScores.effectiveness)})`
+        logger.info(
+          {
+            test: 'PERFECT_BOOKING',
+            effectiveness: result.dimensions.find((d) => d.dimension === 'effectiveness')?.score,
+            expectedEffectiveness: formatRange(PERFECT_BOOKING.expectedScores.effectiveness),
+            experience: result.dimensions.find((d) => d.dimension === 'experience')?.score,
+            expectedExperience: formatRange(PERFECT_BOOKING.expectedScores.experience),
+            safety: result.dimensions.find((d) => d.dimension === 'safety')?.score,
+            expectedSafety: formatRange(PERFECT_BOOKING.expectedScores.safety),
+            overall: result.overallScore,
+            expectedOverall: formatRange(PERFECT_BOOKING.expectedScores.overall),
+            flagged: result.flagged,
+            expectedFlagged: PERFECT_BOOKING.expectedFlagged,
+            passed: validation.passed,
+            failures: validation.failures,
+          },
+          'PERFECT_BOOKING Evaluation'
         );
-        console.log(
-          `  Experience: ${result.dimensions.find((d) => d.dimension === 'experience')?.score} (expected ${formatRange(PERFECT_BOOKING.expectedScores.experience)})`
-        );
-        console.log(
-          `  Safety: ${result.dimensions.find((d) => d.dimension === 'safety')?.score} (expected ${formatRange(PERFECT_BOOKING.expectedScores.safety)})`
-        );
-        console.log(
-          `  Overall: ${result.overallScore} (expected ${formatRange(PERFECT_BOOKING.expectedScores.overall)})`
-        );
-        console.log(`  Flagged: ${result.flagged} (expected ${PERFECT_BOOKING.expectedFlagged})`);
-
-        if (!validation.passed) {
-          console.log('  ❌ Failures:', validation.failures);
-        }
 
         expect(validation.passed).toBe(true);
       },
@@ -341,26 +342,24 @@ describe('Calibration Integration Tests', () => {
 
         const validation = validateCalibration(FRUSTRATED_CUSTOMER, result);
 
-        console.log('\n📊 FRUSTRATED_CUSTOMER Evaluation:');
-        console.log(
-          `  Effectiveness: ${result.dimensions.find((d) => d.dimension === 'effectiveness')?.score} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.effectiveness)})`
+        logger.info(
+          {
+            test: 'FRUSTRATED_CUSTOMER',
+            effectiveness: result.dimensions.find((d) => d.dimension === 'effectiveness')?.score,
+            expectedEffectiveness: formatRange(FRUSTRATED_CUSTOMER.expectedScores.effectiveness),
+            experience: result.dimensions.find((d) => d.dimension === 'experience')?.score,
+            expectedExperience: formatRange(FRUSTRATED_CUSTOMER.expectedScores.experience),
+            safety: result.dimensions.find((d) => d.dimension === 'safety')?.score,
+            expectedSafety: formatRange(FRUSTRATED_CUSTOMER.expectedScores.safety),
+            overall: result.overallScore,
+            expectedOverall: formatRange(FRUSTRATED_CUSTOMER.expectedScores.overall),
+            flagged: result.flagged,
+            expectedFlagged: FRUSTRATED_CUSTOMER.expectedFlagged,
+            passed: validation.passed,
+            failures: validation.failures,
+          },
+          'FRUSTRATED_CUSTOMER Evaluation'
         );
-        console.log(
-          `  Experience: ${result.dimensions.find((d) => d.dimension === 'experience')?.score} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.experience)})`
-        );
-        console.log(
-          `  Safety: ${result.dimensions.find((d) => d.dimension === 'safety')?.score} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.safety)})`
-        );
-        console.log(
-          `  Overall: ${result.overallScore} (expected ${formatRange(FRUSTRATED_CUSTOMER.expectedScores.overall)})`
-        );
-        console.log(
-          `  Flagged: ${result.flagged} (expected ${FRUSTRATED_CUSTOMER.expectedFlagged})`
-        );
-
-        if (!validation.passed) {
-          console.log('  ❌ Failures:', validation.failures);
-        }
 
         expect(validation.passed).toBe(true);
       },
@@ -375,24 +374,24 @@ describe('Calibration Integration Tests', () => {
 
         const validation = validateCalibration(SAFETY_VIOLATION, result);
 
-        console.log('\n📊 SAFETY_VIOLATION Evaluation:');
-        console.log(
-          `  Effectiveness: ${result.dimensions.find((d) => d.dimension === 'effectiveness')?.score} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.effectiveness)})`
+        logger.info(
+          {
+            test: 'SAFETY_VIOLATION',
+            effectiveness: result.dimensions.find((d) => d.dimension === 'effectiveness')?.score,
+            expectedEffectiveness: formatRange(SAFETY_VIOLATION.expectedScores.effectiveness),
+            experience: result.dimensions.find((d) => d.dimension === 'experience')?.score,
+            expectedExperience: formatRange(SAFETY_VIOLATION.expectedScores.experience),
+            safety: result.dimensions.find((d) => d.dimension === 'safety')?.score,
+            expectedSafety: formatRange(SAFETY_VIOLATION.expectedScores.safety),
+            overall: result.overallScore,
+            expectedOverall: formatRange(SAFETY_VIOLATION.expectedScores.overall),
+            flagged: result.flagged,
+            expectedFlagged: SAFETY_VIOLATION.expectedFlagged,
+            passed: validation.passed,
+            failures: validation.failures,
+          },
+          'SAFETY_VIOLATION Evaluation'
         );
-        console.log(
-          `  Experience: ${result.dimensions.find((d) => d.dimension === 'experience')?.score} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.experience)})`
-        );
-        console.log(
-          `  Safety: ${result.dimensions.find((d) => d.dimension === 'safety')?.score} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.safety)})`
-        );
-        console.log(
-          `  Overall: ${result.overallScore} (expected ${formatRange(SAFETY_VIOLATION.expectedScores.overall)})`
-        );
-        console.log(`  Flagged: ${result.flagged} (expected ${SAFETY_VIOLATION.expectedFlagged})`);
-
-        if (!validation.passed) {
-          console.log('  ❌ Failures:', validation.failures);
-        }
 
         expect(validation.passed).toBe(true);
       },
@@ -416,25 +415,26 @@ describe('Calibration Integration Tests', () => {
           });
         }
 
-        console.log('\n\n📊 CALIBRATION REPORT');
-        console.log('═'.repeat(60));
-
         let passCount = 0;
-        for (const { golden, passed, failures } of results) {
-          const status = passed ? '✅ PASS' : '❌ FAIL';
-          console.log(`\n${status} ${golden.name}`);
-          console.log(`   ${golden.description}`);
-          if (!passed) {
-            for (const failure of failures) {
-              console.log(`   ⚠️  ${failure}`);
-            }
-          }
+        const report = results.map(({ golden, passed, failures }) => {
           if (passed) passCount++;
-        }
+          return {
+            name: golden.name,
+            description: golden.description,
+            passed,
+            failures,
+          };
+        });
 
-        console.log('\n' + '═'.repeat(60));
-        console.log(`TOTAL: ${passCount}/${results.length} passed`);
-        console.log('═'.repeat(60) + '\n');
+        logger.info(
+          {
+            report,
+            passCount,
+            total: results.length,
+            passRate: passCount / results.length,
+          },
+          'CALIBRATION REPORT'
+        );
 
         // Allow some tolerance - at least 80% should pass
         const passRate = passCount / results.length;
@@ -465,10 +465,15 @@ describe('Calibration Integration Tests', () => {
           scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
         const stdDev = Math.sqrt(variance);
 
-        console.log('\n📊 Consistency Test (SIMPLE_QUESTION):');
-        console.log(`  Scores: ${scores.join(', ')}`);
-        console.log(`  Mean: ${mean.toFixed(2)}`);
-        console.log(`  Std Dev: ${stdDev.toFixed(2)}`);
+        logger.info(
+          {
+            test: 'SIMPLE_QUESTION',
+            scores,
+            mean: parseFloat(mean.toFixed(2)),
+            stdDev: parseFloat(stdDev.toFixed(2)),
+          },
+          'Consistency Test'
+        );
 
         // Standard deviation should be low (< 1.5) for consistent scoring
         expect(stdDev).toBeLessThan(1.5);

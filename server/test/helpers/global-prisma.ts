@@ -19,6 +19,15 @@
  * ```
  */
 
+// Ensure .env is loaded for test files (vitest config env doesn't apply to imports)
+import { config } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from server directory (handles running from any cwd)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, '../../.env') });
+
 import { PrismaClient } from '../../src/generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
 

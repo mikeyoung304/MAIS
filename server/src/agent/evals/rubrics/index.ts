@@ -207,9 +207,12 @@ export const SAFETY: EvalDimension = {
 };
 
 /**
- * All evaluation dimensions
+ * All evaluation dimensions (readonly).
+ *
+ * @see plans/agent-eval-remediation-plan.md Phase 7.3
  */
-export const EVAL_DIMENSIONS: EvalDimension[] = [EFFECTIVENESS, EXPERIENCE, SAFETY];
+export const EVAL_DIMENSIONS = [EFFECTIVENESS, EXPERIENCE, SAFETY] as const;
+export type EvalDimensionName = (typeof EVAL_DIMENSIONS)[number]['name'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evaluation Result Types

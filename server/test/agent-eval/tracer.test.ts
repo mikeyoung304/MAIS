@@ -12,6 +12,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { mockDeep, type DeepMockProxy } from 'vitest-mock-extended';
+import type { PrismaClient } from '../../src/generated/prisma';
 import {
   ConversationTracer,
   createTracer,
@@ -21,42 +23,38 @@ import {
   MAX_MESSAGES_AFTER_TRUNCATION,
 } from '../../src/agent/tracing';
 
-// Mock PrismaClient
-const mockPrisma = {
-  conversationTrace: {
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-};
+// Type-safe Prisma mock using mockDeep<T>()
+let mockPrisma: DeepMockProxy<PrismaClient>;
 
 describe('ConversationTracer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPrisma.conversationTrace.create.mockResolvedValue({ id: 'trace-123' });
-    mockPrisma.conversationTrace.update.mockResolvedValue({});
+    mockPrisma = mockDeep<PrismaClient>();
+    mockPrisma.conversationTrace.create.mockResolvedValue({ id: 'trace-123' } as any);
+    mockPrisma.conversationTrace.update.mockResolvedValue({} as any);
   });
 
   describe('initialization', () => {
     it('should not be initialized before calling initialize()', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       expect(tracer.isInitialized()).toBe(false);
       expect(tracer.getTraceId()).toBeNull();
     });
 
     it('should be initialized after calling initialize()', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
       expect(tracer.isInitialized()).toBe(true);
     });
 
     it('should use default config when not provided', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
       expect(tracer.isInitialized()).toBe(true);
     });
 
     it('should merge custom config with defaults', () => {
-      const tracer = createTracer(mockPrisma as any, {
+      const tracer = createTracer(mockPrisma, {
         autoFlagHighTurnCount: 5,
       });
       tracer.initialize('tenant-1', 'session-1', 'customer');
@@ -66,7 +64,7 @@ describe('ConversationTracer', () => {
 
   describe('message recording', () => {
     it('should record user messages', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordUserMessage('Hello, I need help', 5);
@@ -76,7 +74,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should record assistant responses with latency', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordUserMessage('Hello', 3);
@@ -86,7 +84,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should skip recording when not initialized', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
 
       // Should not throw when not initialized
       tracer.recordUserMessage('Hello', 5);
@@ -98,7 +96,7 @@ describe('ConversationTracer', () => {
 
   describe('tool call recording', () => {
     it('should record successful tool calls', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordToolCall({
@@ -118,7 +116,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should record failed tool calls', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordToolCall({
@@ -138,7 +136,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should record tool calls with proposals', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordToolCall({
@@ -160,7 +158,7 @@ describe('ConversationTracer', () => {
 
   describe('auto-flagging', () => {
     it('should flag conversations with high turn count', () => {
-      const tracer = createTracer(mockPrisma as any, {
+      const tracer = createTracer(mockPrisma, {
         autoFlagHighTurnCount: 3,
       });
       tracer.initialize('tenant-1', 'session-1', 'customer');
@@ -176,7 +174,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should flag conversations with high latency', () => {
-      const tracer = createTracer(mockPrisma as any, {
+      const tracer = createTracer(mockPrisma, {
         autoFlagHighLatencyMs: 100,
       });
       tracer.initialize('tenant-1', 'session-1', 'customer');
@@ -191,7 +189,7 @@ describe('ConversationTracer', () => {
 
   describe('cost estimation', () => {
     it('should estimate cost based on token counts', () => {
-      const tracer = createTracer(mockPrisma as any, {
+      const tracer = createTracer(mockPrisma, {
         model: 'claude-sonnet-4-20250514',
       });
       tracer.initialize('tenant-1', 'session-1', 'customer');
@@ -207,7 +205,7 @@ describe('ConversationTracer', () => {
 
   describe('error recording', () => {
     it('should record errors', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordError({
@@ -219,7 +217,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should increment error count on recording', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordError({ message: 'Error 1' });
@@ -231,7 +229,7 @@ describe('ConversationTracer', () => {
 
   describe('flagging', () => {
     it('should allow manual flagging with reason', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.flag('User requested human review');
@@ -240,7 +238,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should append multiple flag reasons', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.flag('First reason');
@@ -252,7 +250,7 @@ describe('ConversationTracer', () => {
 
   describe('flush and finalize', () => {
     it('should persist trace on flush', async () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordUserMessage('Hello', 5);
@@ -266,7 +264,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should not flush when no changes', async () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.flush(); // No messages recorded
@@ -276,7 +274,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should update existing trace on subsequent flushes', async () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordUserMessage('Hello', 5);
@@ -295,7 +293,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should return trace ID on finalize', async () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.recordUserMessage('Hello', 5);
@@ -308,7 +306,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should return null on finalize when not initialized', async () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
 
       const traceId = await tracer.finalize();
 
@@ -318,7 +316,7 @@ describe('ConversationTracer', () => {
 
   describe('helper methods', () => {
     it('should set cache hit flag', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.setCacheHit(true);
@@ -327,7 +325,7 @@ describe('ConversationTracer', () => {
     });
 
     it('should set task completed flag', () => {
-      const tracer = createTracer(mockPrisma as any);
+      const tracer = createTracer(mockPrisma);
       tracer.initialize('tenant-1', 'session-1', 'customer');
 
       tracer.setTaskCompleted(true);

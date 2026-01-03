@@ -11,7 +11,11 @@
  */
 
 // Implicit Feedback
-export { ImplicitFeedbackAnalyzer, createImplicitFeedbackAnalyzer } from './implicit';
+export {
+  ImplicitFeedbackAnalyzer,
+  createImplicitFeedbackAnalyzer,
+  IMPLICIT_FEEDBACK_CONFIG,
+} from './implicit';
 export type { ImplicitSignals, ImplicitFeedbackInput } from './implicit';
 
 // Review Queue

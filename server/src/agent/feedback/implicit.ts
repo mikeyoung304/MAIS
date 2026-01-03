@@ -59,6 +59,62 @@ export interface ImplicitFeedbackInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Configuration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Configuration for implicit feedback scoring weights.
+ * These control how different signals affect the satisfaction score.
+ *
+ * Extracted from calculateSatisfactionScore() for configurability and testing.
+ *
+ * @see plans/agent-eval-remediation-plan.md Phase 7.1
+ */
+export const IMPLICIT_FEEDBACK_CONFIG = {
+  /** Starting score before applying modifiers (0-10 scale) */
+  baselineScore: 7,
+
+  /** Weight per retry (subtracted from score) */
+  retryPenalty: 0.5,
+
+  /** Weight per negative signal (subtracted from score) */
+  negativeSignalPenalty: 0.75,
+
+  /** Penalty for abandonment (task not completed) */
+  abandonmentPenalty: 2,
+
+  /** Penalty multiplier for error rate */
+  errorRatePenalty: 3,
+
+  /** Per-turn penalty above threshold */
+  excessiveTurnPenalty: 0.2,
+
+  /** Turn count threshold before applying excess penalty */
+  excessiveTurnThreshold: 10,
+
+  /** Bonus per positive acknowledgment */
+  positiveAcknowledgmentBonus: 0.5,
+
+  /** Max bonus from follow-up questions (if positive) */
+  followUpBonusMax: 1,
+
+  /** Bonus per follow-up question (capped by max) */
+  followUpBonusPerQuestion: 0.2,
+
+  /** Similarity threshold for retry detection (0-1) */
+  retrySimilarityThreshold: 0.6,
+
+  /** Retry count threshold for flagging */
+  flagRetryThreshold: 3,
+
+  /** Negative signal count threshold for flagging */
+  flagNegativeSignalThreshold: 2,
+
+  /** Error rate threshold for flagging (0-1) */
+  flagErrorRateThreshold: 0.3,
+} as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Patterns
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -120,28 +176,34 @@ export class ImplicitFeedbackAnalyzer {
   /**
    * Calculate a satisfaction score from implicit signals.
    * Returns a score from 0-10 where higher is better.
+   *
+   * Uses IMPLICIT_FEEDBACK_CONFIG for all scoring weights.
    */
   calculateSatisfactionScore(signals: ImplicitSignals): number {
-    let score = 7; // Start with neutral-positive baseline
+    const cfg = IMPLICIT_FEEDBACK_CONFIG;
+    let score = cfg.baselineScore;
 
     // Negative factors
-    score -= signals.retryCount * 0.5; // Each retry suggests frustration
-    score -= signals.negativeSignals * 0.75; // Negative language is concerning
-    score -= signals.abandonmentRate * 2; // Abandonment is very bad
-    score -= signals.errorRate * 3; // Errors are bad
+    score -= signals.retryCount * cfg.retryPenalty;
+    score -= signals.negativeSignals * cfg.negativeSignalPenalty;
+    score -= signals.abandonmentRate * cfg.abandonmentPenalty;
+    score -= signals.errorRate * cfg.errorRatePenalty;
 
     // Excessive turns suggest the agent isn't being helpful
-    if (signals.turnCount > 10) {
-      score -= (signals.turnCount - 10) * 0.2;
+    if (signals.turnCount > cfg.excessiveTurnThreshold) {
+      score -= (signals.turnCount - cfg.excessiveTurnThreshold) * cfg.excessiveTurnPenalty;
     }
 
     // Positive factors
-    score += signals.positiveAcknowledgments * 0.5; // Each positive signal is good
+    score += signals.positiveAcknowledgments * cfg.positiveAcknowledgmentBonus;
 
     // Follow-ups can be positive (engaged user) or negative (still needs help)
     // Only count as positive if there are also positive acknowledgments
     if (signals.positiveAcknowledgments > 0) {
-      score += Math.min(signals.followUpQuestions * 0.2, 1);
+      score += Math.min(
+        signals.followUpQuestions * cfg.followUpBonusPerQuestion,
+        cfg.followUpBonusMax
+      );
     }
 
     // Clamp to 0-10
@@ -150,23 +212,26 @@ export class ImplicitFeedbackAnalyzer {
 
   /**
    * Determine if a conversation should be flagged for review based on signals.
+   *
+   * Uses IMPLICIT_FEEDBACK_CONFIG for all thresholds.
    */
   shouldFlag(signals: ImplicitSignals): { flagged: boolean; reason: string | null } {
+    const cfg = IMPLICIT_FEEDBACK_CONFIG;
     const reasons: string[] = [];
 
-    if (signals.retryCount >= 3) {
+    if (signals.retryCount >= cfg.flagRetryThreshold) {
       reasons.push(`High retry count: ${signals.retryCount}`);
     }
 
-    if (signals.negativeSignals >= 2) {
+    if (signals.negativeSignals >= cfg.flagNegativeSignalThreshold) {
       reasons.push(`Multiple negative signals: ${signals.negativeSignals}`);
     }
 
-    if (signals.abandonmentRate === 1 && signals.turnCount >= 3) {
+    if (signals.abandonmentRate === 1 && signals.turnCount >= cfg.flagRetryThreshold) {
       reasons.push('User abandoned after multiple turns');
     }
 
-    if (signals.errorRate > 0.3) {
+    if (signals.errorRate > cfg.flagErrorRateThreshold) {
       reasons.push(`High error rate: ${(signals.errorRate * 100).toFixed(1)}%`);
     }
 
@@ -187,7 +252,7 @@ export class ImplicitFeedbackAnalyzer {
     let retries = 0;
     for (let i = 1; i < messages.length; i++) {
       const similarity = this.textSimilarity(messages[i].content, messages[i - 1].content);
-      if (similarity > 0.6) retries++;
+      if (similarity > IMPLICIT_FEEDBACK_CONFIG.retrySimilarityThreshold) retries++;
     }
     return retries;
   }

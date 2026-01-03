@@ -10,6 +10,15 @@
  * - Database performance (bloated tables)
  */
 
+// Load .env before anything else - global setup runs before vitest config's env is applied
+import { config } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from server directory (handles running from any cwd)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, '../../.env') });
+
 import { getTestPrisma, disconnectTestPrisma } from './global-prisma';
 
 /**

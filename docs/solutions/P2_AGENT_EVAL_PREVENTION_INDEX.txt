@@ -1,0 +1,311 @@
+================================================================================
+P2 AGENT EVALUATION PREVENTION STRATEGIES - DOCUMENT INDEX
+================================================================================
+
+Date Generated: 2026-01-02
+Total Files: 5 documents
+Total Size: 62 KB
+Issues Covered: 6 P2 issues (603-608)
+
+================================================================================
+DOCUMENT GUIDE
+================================================================================
+
+START HERE (5 minutes)
+├─ File: P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md
+├─ Read Time: 5 minutes
+├─ Purpose: Executive overview and how to use all docs
+├─ Best For: Everyone first time
+├─ Contains:
+│  ├─ What was found (6 issues)
+│  ├─ The 4 core patterns explained
+│  ├─ Code review checklist
+│  ├─ How to use documentation
+│  ├─ FAQ
+│  └─ Quick start guide
+
+QUICK LOOKUP (30 seconds)
+├─ File: P2_AGENT_EVAL_QUICK_REFERENCE-MAIS-20260102.md
+├─ Read Time: 30 seconds
+├─ Purpose: Quick reference for code review and development
+├─ Best For: During code review or before committing
+├─ Contains:
+│  ├─ 4 patterns in 30 seconds
+│  ├─ Anti-patterns table
+│  ├─ Code review checklist (2 minutes)
+│  ├─ File locations with line numbers
+│  └─ Commands to run
+
+COMPREHENSIVE REFERENCE (15 minutes)
+├─ File: P2_AGENT_EVAL_PREVENTION_STRATEGIES-MAIS-20260102.md
+├─ Read Time: 15 minutes
+├─ Purpose: Deep understanding of each pattern
+├─ Best For: Implementation, code review, team education
+├─ Contains:
+│  ├─ Pattern 1: Missing tenantId in queries (Issue 603)
+│  │  ├─ Problem explanation
+│  │  ├─ Code examples (wrong vs right)
+│  │  ├─ Code review checklist
+│  │  ├─ Pattern for compound queries
+│  │  └─ File locations to check
+│  │
+│  ├─ Pattern 2: Invalid CLI input (Issues 606, 608)
+│  │  ├─ Problem explanation
+│  │  ├─ Real issues with current code
+│  │  ├─ Current fix (already applied)
+│  │  ├─ CLI validation pattern
+│  │  ├─ Checklist for new scripts
+│  │  └─ Zod + parseArgs pattern
+│  │
+│  ├─ Pattern 3: Duplicated DI code (Issue 605)
+│  │  ├─ Problem explanation
+│  │  ├─ The fix (already applied)
+│  │  ├─ Duplication detection patterns
+│  │  ├─ Code duplication checklist
+│  │  ├─ ESLint rules to help
+│  │  └─ Tools (jscpd)
+│  │
+│  ├─ Pattern 4: Silent test skips (Issue 607)
+│  │  ├─ Problem explanation
+│  │  ├─ The fix (already applied)
+│  │  ├─ Vitest conditional test patterns
+│  │  ├─ Avoiding silent failures checklist
+│  │  └─ File locations
+│  │
+│  ├─ Summary table
+│  ├─ Code review checklist
+│  ├─ Testing patterns
+│  └─ References
+
+NAVIGATION & LINKS (5 minutes)
+├─ File: P2_AGENT_EVAL_INDEX-MAIS-20260102.md
+├─ Read Time: 5 minutes
+├─ Purpose: Navigate all docs and find working examples
+├─ Best For: Finding specific information, cross-references
+├─ Contains:
+│  ├─ Overview of 4 patterns
+│  ├─ Quick links to each issue
+│  ├─ Working code examples
+│  ├─ For different audiences (authors, reviewers, devops)
+│  ├─ Command reference
+│  ├─ Related documentation
+│  ├─ Code examples by language
+│  └─ FAQ
+
+ESLINT RULES & AUTOMATION (10 minutes)
+├─ File: P2_AGENT_EVAL_ESLINT_RULES-MAIS-20260102.md
+├─ Read Time: 10 minutes
+├─ Purpose: Automate detection of patterns
+├─ Best For: Setting up automated checks (optional, recommended)
+├─ Contains:
+│  ├─ ESLint rule 1: Detect silent test skips
+│  ├─ ESLint rule 2: Detect duplicated DI code
+│  ├─ ESLint rule 3: Detect manual arg parsing
+│  ├─ ESLint rule 4: Detect tenant isolation issues
+│  ├─ Complete ESLint configuration
+│  ├─ Installation instructions
+│  ├─ Pre-commit hook integration
+│  ├─ CI configuration
+│  └─ Summary and phase-in recommendations
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+All files located in:
+  /Users/mikeyoung/CODING/MAIS/docs/solutions/patterns/
+
+List all:
+  ls -lah /Users/mikeyoung/CODING/MAIS/docs/solutions/patterns/P2_AGENT_EVAL*.md
+
+View any file:
+  cat docs/solutions/patterns/P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md
+
+================================================================================
+READING PATHS BY ROLE
+================================================================================
+
+CODE AUTHOR (15 minutes total)
+├─ 1. P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md (5 min)
+├─ 2. P2_AGENT_EVAL_QUICK_REFERENCE-MAIS-20260102.md (30 sec)
+├─ 3. Check working examples in code
+└─ 4. Before committing: Use quick reference checklist
+
+CODE REVIEWER (20 minutes total)
+├─ 1. P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md (5 min)
+├─ 2. P2_AGENT_EVAL_QUICK_REFERENCE-MAIS-20260102.md (30 sec)
+├─ 3. Save quick reference bookmark
+├─ 4. Before each PR review: Use checklist
+└─ 5. Link to relevant section if issues found
+
+DEVOPS/TOOLING (25 minutes total)
+├─ 1. P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md (5 min)
+├─ 2. P2_AGENT_EVAL_ESLINT_RULES-MAIS-20260102.md (10 min)
+├─ 3. P2_AGENT_EVAL_QUICK_REFERENCE-MAIS-20260102.md (30 sec)
+└─ 4. Set up rules following recommendations
+
+DEEP LEARNING (30 minutes total)
+├─ 1. P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md (5 min)
+├─ 2. P2_AGENT_EVAL_PREVENTION_STRATEGIES-MAIS-20260102.md (15 min)
+├─ 3. P2_AGENT_EVAL_INDEX-MAIS-20260102.md (5 min)
+├─ 4. P2_AGENT_EVAL_ESLINT_RULES-MAIS-20260102.md (10 min)
+└─ 5. Review working examples in code
+
+================================================================================
+ISSUES COVERED
+================================================================================
+
+Issue 603: Missing tenantId in CLI Flagged Count Query
+├─ Category: Data Integrity (P0 security)
+├─ Severity: Should be P0, marked P2
+├─ Pattern: Missing tenantId in database queries
+├─ Status: FIXED
+├─ Documentation: Pattern 1 in Prevention Strategies
+├─ Example Code: server/scripts/run-eval-batch.ts:214
+└─ Quick Reference: Quick Reference doc, section "1️⃣ Missing tenantId"
+
+Issue 606: Manual Argument Parsing in CLI Script
+├─ Category: Code Quality
+├─ Severity: P2
+├─ Pattern: Hand-rolled argument parsing, 40+ lines
+├─ Status: FIXED (uses Node.parseArgs)
+├─ Documentation: Pattern 2 in Prevention Strategies
+├─ Example Code: server/scripts/run-eval-batch.ts:67-100
+└─ Quick Reference: Quick Reference doc, section "2️⃣ Invalid CLI Input"
+
+Issue 608: CLI Tenant ID Option Lacks Validation
+├─ Category: Security
+├─ Severity: P2 (should be P1)
+├─ Pattern: No validation on CLI arguments
+├─ Status: FIXED (uses Zod validation)
+├─ Documentation: Pattern 2 in Prevention Strategies
+├─ Example Code: server/scripts/run-eval-batch.ts:90-96
+└─ Quick Reference: Quick Reference doc, section "2️⃣ Invalid CLI Input"
+
+Issue 605: DI Evaluation Services Duplicated
+├─ Category: Code Quality
+├─ Severity: P2
+├─ Pattern: 15+ lines identical in mock and real mode
+├─ Status: FIXED (extracted helper function)
+├─ Documentation: Pattern 3 in Prevention Strategies
+├─ Example Code: server/src/di.ts:92-112
+└─ Quick Reference: Quick Reference doc, section "3️⃣ Duplicated DI Code"
+
+Issue 607: Silent Test Skip May Hide CI Failures
+├─ Category: Testing Visibility
+├─ Severity: P2
+├─ Pattern: Tests use early returns, appear to pass when skipped
+├─ Status: FIXED (uses Vitest skipIf)
+├─ Documentation: Pattern 4 in Prevention Strategies
+├─ Example Code: server/test/agent-eval/tenant-isolation.test.ts:36-50
+└─ Quick Reference: Quick Reference doc, section "4️⃣ Silent Test Skips"
+
+Issue 604: Sequential Tenant Processing in CLI Batch
+├─ Category: Performance
+├─ Severity: P2
+├─ Pattern: for...of loop instead of concurrent processing
+├─ Status: FIXED (added --concurrency flag with p-limit)
+├─ Documentation: Not covered in these docs (separate from core patterns)
+├─ Example Code: server/scripts/run-eval-batch.ts:172-250
+└─ Note: Fixed but not part of 4 core patterns
+
+================================================================================
+THE 4 CORE PATTERNS
+================================================================================
+
+Pattern 1: Missing tenantId in Queries (Issue 603)
+├─ Severity: P0 security vulnerability
+├─ Frequency: Every database query in codebase
+├─ Fix Effort: 15 minutes per instance
+├─ Rule: Always include tenantId in WHERE clause
+├─ Files Affected: run-eval-batch.ts, pipeline.ts, all repositories
+└─ Example: server/scripts/run-eval-batch.ts:214
+
+Pattern 2: Invalid CLI Input (Issues 606, 608)
+├─ Severity: P1 security + usability
+├─ Frequency: Every CLI script
+├─ Fix Effort: 20 minutes per script
+├─ Rule: Validate args with Zod, use parseArgs()
+├─ Files Affected: All scripts/*.ts files
+└─ Example: server/scripts/run-eval-batch.ts:90-96
+
+Pattern 3: Duplicated DI Code (Issue 605)
+├─ Severity: P2 maintainability
+├─ Frequency: DI container (di.ts)
+├─ Fix Effort: 30 minutes
+├─ Rule: Extract repeated initialization to helpers
+├─ Files Affected: server/src/di.ts
+└─ Example: server/src/di.ts:92-112
+
+Pattern 4: Silent Test Skips (Issue 607)
+├─ Severity: P2 testing visibility
+├─ Frequency: Conditional tests
+├─ Fix Effort: 5 minutes per test
+├─ Rule: Use skipIf() not early returns
+├─ Files Affected: All test files with conditionals
+└─ Example: server/test/agent-eval/tenant-isolation.test.ts:36
+
+================================================================================
+QUICK COMMANDS
+================================================================================
+
+View this index:
+  cat docs/solutions/P2_AGENT_EVAL_PREVENTION_INDEX.txt
+
+Start with summary:
+  cat docs/solutions/patterns/P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md
+
+Quick reference (30 sec):
+  cat docs/solutions/patterns/P2_AGENT_EVAL_QUICK_REFERENCE-MAIS-20260102.md
+
+Full prevention strategies:
+  cat docs/solutions/patterns/P2_AGENT_EVAL_PREVENTION_STRATEGIES-MAIS-20260102.md
+
+Find specific pattern:
+  grep -n "Pattern 1\|Pattern 2\|Pattern 3\|Pattern 4" \
+    docs/solutions/patterns/P2_AGENT_EVAL_PREVENTION_STRATEGIES-MAIS-20260102.md
+
+Check working examples in code:
+  grep -n "tenantId" server/scripts/run-eval-batch.ts | head -5
+  grep -n "parseArgs\|safeParse" server/scripts/run-eval-batch.ts
+  grep -n "buildEvaluation" server/src/di.ts
+  grep -n "skipIf" server/test/agent-eval/tenant-isolation.test.ts
+
+Search all docs:
+  grep -r "Pattern 1\|Issue 603" docs/solutions/patterns/P2_AGENT_EVAL*
+
+================================================================================
+VERSION & STATUS
+================================================================================
+
+Generated: 2026-01-02
+Version: 1.0
+Status: Complete
+
+All 6 issues: FIXED
+Prevention documentation: COMPLETE
+ESLint rules: PROVIDED (optional setup)
+Code examples: WORKING (in actual codebase)
+
+================================================================================
+RELATED DOCUMENTATION
+================================================================================
+
+Multi-tenant foundation:
+  docs/solutions/patterns/mais-critical-patterns.md
+
+Phase 1 remediation (P1 patterns):
+  docs/solutions/patterns/agent-evaluation-remediation-prevention-MAIS-20260102.md
+
+CLAUDE.md project guidelines:
+  CLAUDE.md (section on multi-tenant architecture)
+
+================================================================================
+END OF INDEX
+================================================================================
+
+Generated: 2026-01-02
+Start here: P2_AGENT_EVAL_SUMMARY-MAIS-20260102.md
+Questions: See FAQ in summary document
+
+For usage instructions, see first document in the list above.

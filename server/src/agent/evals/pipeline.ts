@@ -14,6 +14,7 @@ import type { PrismaClient, ConversationTrace } from '../../generated/prisma';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { TraceNotFoundError } from '../../lib/errors/agent-eval-errors';
+import { redactMessages, redactToolCalls } from '../../lib/pii-redactor';
 import { ConversationEvaluator, createEvaluator } from './evaluator';
 import type { EvalInput } from './evaluator';
 import type { TracedMessage, TracedToolCall, AgentType } from '../tracing';
@@ -45,105 +46,6 @@ const DEFAULT_CONFIG: PipelineConfig = {
   batchSize: 10,
   asyncProcessing: true,
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PII Redaction
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * PII patterns to redact from messages before evaluation.
- * These patterns cover common PII types that shouldn't be sent to evaluator.
- */
-const PII_PATTERNS: { pattern: RegExp; replacement: string }[] = [
-  // Email addresses
-  {
-    pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-    replacement: '[EMAIL]',
-  },
-  // Phone numbers (various formats)
-  {
-    pattern: /\b(\+\d{1,2}\s?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
-    replacement: '[PHONE]',
-  },
-  // Credit card numbers
-  {
-    pattern: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g,
-    replacement: '[CARD]',
-  },
-  // SSN
-  {
-    pattern: /\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b/g,
-    replacement: '[SSN]',
-  },
-  // Addresses (basic pattern)
-  {
-    pattern:
-      /\b\d{1,5}\s+[\w\s]+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|way|court|ct|circle|cir|boulevard|blvd)\b/gi,
-    replacement: '[ADDRESS]',
-  },
-  // Names following "my name is" or "I'm" patterns
-  {
-    pattern: /(?:my name is|I'm|I am)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
-    replacement: 'my name is [NAME]',
-  },
-];
-
-/**
- * Redact PII from a string.
- */
-function redactPII(text: string): string {
-  let redacted = text;
-  for (const { pattern, replacement } of PII_PATTERNS) {
-    redacted = redacted.replace(pattern, replacement);
-  }
-  return redacted;
-}
-
-/**
- * Redact PII from messages array.
- */
-function redactMessages(messages: TracedMessage[]): TracedMessage[] {
-  return messages.map((m) => ({
-    ...m,
-    content: redactPII(m.content),
-  }));
-}
-
-/**
- * Redact PII from tool calls.
- */
-function redactToolCalls(toolCalls: TracedToolCall[]): TracedToolCall[] {
-  return toolCalls.map((tc) => ({
-    ...tc,
-    input: redactObjectPII(tc.input) as Record<string, unknown>,
-    output: redactObjectPII(tc.output),
-  }));
-}
-
-/**
- * Recursively redact PII from an object.
- */
-function redactObjectPII(obj: unknown): unknown {
-  if (typeof obj === 'string') {
-    return redactPII(obj);
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(redactObjectPII);
-  }
-  if (obj !== null && typeof obj === 'object') {
-    const redacted: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-      // Redact sensitive keys entirely
-      if (['email', 'phone', 'address', 'ssn', 'card', 'password'].includes(key.toLowerCase())) {
-        redacted[key] = `[REDACTED_${key.toUpperCase()}]`;
-      } else {
-        redacted[key] = redactObjectPII(value);
-      }
-    }
-    return redacted;
-  }
-  return obj;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sampling

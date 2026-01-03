@@ -46,6 +46,10 @@ export interface UpdateTenantInput {
   trialEndsAt?: Date;
   subscriptionStatus?: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';
   stripeCustomerId?: string;
+  // Tier and AI usage fields
+  tier?: 'FREE' | 'STARTER' | 'PRO';
+  aiMessagesUsed?: number;
+  aiMessagesResetAt?: Date;
 }
 
 /**

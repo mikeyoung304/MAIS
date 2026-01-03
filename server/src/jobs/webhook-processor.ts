@@ -25,6 +25,7 @@ import type { WebhookJobData } from './types';
 const SubscriptionMetadataSchema = z.object({
   tenantId: z.string(),
   checkoutType: z.literal('subscription'),
+  tier: z.enum(['STARTER', 'PRO']).optional(), // Optional for backward compat
 });
 
 // Zod schema for Stripe session (runtime validation)
@@ -140,6 +141,10 @@ export class WebhookProcessor {
         await this.processCheckoutCompleted(event, effectiveTenantId);
       } else if (event.type === 'payment_intent.payment_failed') {
         await this.processPaymentFailed(event, effectiveTenantId);
+      } else if (event.type === 'customer.subscription.deleted') {
+        await this.processSubscriptionCancelled(event);
+      } else if (event.type === 'invoice.payment_failed') {
+        await this.processInvoicePaymentFailed(event);
       } else {
         logger.info(
           { eventId: event.id, type: event.type },
@@ -238,12 +243,7 @@ export class WebhookProcessor {
 
     // Check if this is a chatbot booking payment (booking already exists, needs confirmation)
     if (source === 'customer_chatbot' && bookingId) {
-      await this.processChatbotBookingPayment(
-        event,
-        session,
-        validatedTenantId,
-        bookingId
-      );
+      await this.processChatbotBookingPayment(event, session, validatedTenantId, bookingId);
     }
     // Check if this is a balance payment
     else if (isBalancePayment === 'true' && bookingId) {
@@ -497,9 +497,11 @@ export class WebhookProcessor {
   /**
    * Process subscription checkout completion (Product-Led Growth)
    *
-   * When a tenant completes checkout for the $99/month subscription:
+   * When a tenant completes checkout for tiered subscription:
    * 1. Update subscriptionStatus to ACTIVE
-   * 2. Store stripeCustomerId for future reference
+   * 2. Set tier to STARTER or PRO based on metadata
+   * 3. Reset AI message counter
+   * 4. Store stripeCustomerId for future reference
    */
   private async processSubscriptionCheckout(
     event: Stripe.Event,
@@ -519,23 +521,107 @@ export class WebhookProcessor {
     const customerId =
       typeof session.customer === 'string' ? session.customer : session.customer?.id;
 
+    // Extract tier from metadata (default to STARTER for backward compat)
+    const tier = (session.metadata?.tier as 'STARTER' | 'PRO') || 'STARTER';
+
     logger.info(
       {
         eventId: event.id,
         sessionId: session.id,
         tenantId,
         customerId,
+        tier,
         subscriptionId: session.subscription,
       },
       'Processing subscription checkout completion'
     );
 
-    // Update tenant subscription status to ACTIVE
+    // Update tenant subscription status, tier, and reset usage
     await this.tenantRepo.update(tenantId, {
       subscriptionStatus: 'ACTIVE',
+      tier,
       stripeCustomerId: customerId || undefined,
+      aiMessagesUsed: 0, // Reset on new subscription
+      aiMessagesResetAt: new Date(),
     });
 
-    logger.info({ tenantId, eventId: event.id }, 'Tenant subscription activated successfully');
+    logger.info(
+      { tenantId, tier, eventId: event.id },
+      'Tenant subscription activated successfully'
+    );
+  }
+
+  /**
+   * Process subscription cancellation (customer.subscription.deleted)
+   *
+   * When a subscription is cancelled (either by admin or Stripe due to payment failure):
+   * 1. Downgrade tier to FREE
+   * 2. Update subscriptionStatus to EXPIRED
+   *
+   * Note: We don't reset AI usage - they keep the messages until month ends
+   */
+  private async processSubscriptionCancelled(event: Stripe.Event): Promise<void> {
+    if (!this.tenantRepo) {
+      logger.warn(
+        { eventId: event.id },
+        'TenantRepository not available - cannot process subscription cancellation'
+      );
+      return;
+    }
+
+    const subscription = event.data.object as Stripe.Subscription;
+    const tenantId = subscription.metadata?.tenantId;
+
+    if (!tenantId) {
+      logger.warn(
+        { eventId: event.id, subscriptionId: subscription.id },
+        'Subscription cancellation missing tenantId in metadata'
+      );
+      return;
+    }
+
+    logger.info(
+      { eventId: event.id, tenantId, subscriptionId: subscription.id },
+      'Processing subscription cancellation'
+    );
+
+    await this.tenantRepo.update(tenantId, {
+      tier: 'FREE',
+      subscriptionStatus: 'EXPIRED',
+    });
+
+    logger.info(
+      { tenantId, eventId: event.id },
+      'Tenant subscription cancelled - downgraded to FREE'
+    );
+    // TODO: Send "sorry to see you go" email
+  }
+
+  /**
+   * Process invoice payment failure (invoice.payment_failed)
+   *
+   * When a recurring payment fails, log the event but don't immediately downgrade.
+   * Stripe will retry the payment according to its dunning settings.
+   * Only cancel after subscription.deleted event.
+   */
+  private async processInvoicePaymentFailed(event: Stripe.Event): Promise<void> {
+    const invoice = event.data.object as Stripe.Invoice;
+    const tenantId = (invoice as { subscription_details?: { metadata?: { tenantId?: string } } })
+      .subscription_details?.metadata?.tenantId;
+
+    logger.warn(
+      {
+        eventId: event.id,
+        invoiceId: invoice.id,
+        tenantId: tenantId || 'unknown',
+        customerEmail: invoice.customer_email,
+        amountDue: invoice.amount_due,
+      },
+      'Invoice payment failed - Stripe will retry'
+    );
+
+    // Don't downgrade yet - Stripe will retry the payment
+    // The subscription.deleted event will trigger if all retries fail
+    // TODO: Send payment failed notification email
   }
 }

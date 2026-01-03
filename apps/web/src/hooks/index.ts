@@ -80,3 +80,6 @@ export {
   type ScrollRestorationOptions,
   type ScrollRestorationState,
 } from './useScrollRestoration';
+
+// Subscription & Billing
+export { useSubscription, type SubscriptionTier } from './useSubscription';

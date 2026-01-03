@@ -34,6 +34,27 @@ export type ReviewActionType =
   | 'bug_filed'; // Bug ticket created
 
 /**
+ * Valid action types for runtime validation.
+ * Keep in sync with ReviewActionType.
+ */
+const VALID_ACTION_TYPES: ReadonlySet<string> = new Set<ReviewActionType>([
+  'approve',
+  'reject',
+  'escalate',
+  'retrain',
+  'prompt_updated',
+  'bug_filed',
+]);
+
+/**
+ * Type guard to validate if a string is a valid ReviewActionType.
+ * Use this instead of `as ReviewActionType` to ensure runtime safety.
+ */
+function isValidActionType(action: string): action is ReviewActionType {
+  return VALID_ACTION_TYPES.has(action);
+}
+
+/**
  * Input for recording a review action.
  */
 export interface ReviewActionInput {
@@ -223,15 +244,17 @@ export class ReviewActionService {
     let maxCount = 0;
 
     for (const item of actionCounts) {
-      const actionType = item.action as ReviewActionType;
-      if (actionType in actionBreakdown) {
-        actionBreakdown[actionType] = item._count;
+      // ✅ Use type guard instead of unsafe cast (P1-585)
+      if (isValidActionType(item.action)) {
+        actionBreakdown[item.action] = item._count;
         totalActions += item._count;
         if (item._count > maxCount) {
           maxCount = item._count;
-          mostCommonAction = actionType;
+          mostCommonAction = item.action;
         }
       }
+      // Invalid action types from database are silently skipped
+      // This handles schema drift or manual data modifications
     }
 
     return {

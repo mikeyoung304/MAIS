@@ -269,7 +269,7 @@ export function DemoStorefrontFrame() {
       </div>
 
       {/* Storefront content */}
-      <div className="aspect-[16/10]">
+      <div className="aspect-[4/5]">
         <DemoStorefrontShowcase />
       </div>
     </div>

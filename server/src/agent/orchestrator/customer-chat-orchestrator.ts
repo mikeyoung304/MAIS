@@ -19,8 +19,11 @@ import {
   BaseOrchestrator,
   type OrchestratorConfig,
   type PromptContext,
+  type ChatResponse,
   DEFAULT_ORCHESTRATOR_CONFIG,
 } from './base-orchestrator';
+import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../../config/tiers';
+import { logger } from '../../lib/core/logger';
 
 /**
  * Customer-specific configuration
@@ -78,7 +81,7 @@ export class CustomerChatOrchestrator extends BaseOrchestrator {
   }
 
   /**
-   * Override to include packages for customer chat context
+   * Override to include packages and subscription tier for customer chat context
    */
   protected getTenantSelectFields(): Record<string, unknown> {
     return {
@@ -86,6 +89,10 @@ export class CustomerChatOrchestrator extends BaseOrchestrator {
       name: true,
       email: true,
       onboardingPhase: true,
+      // Subscription tier and usage for quota checking
+      tier: true,
+      aiMessagesUsed: true,
+      aiMessagesResetAt: true,
       // Include active packages for service listing
       packages: {
         where: { active: true },
@@ -152,5 +159,76 @@ ${tenant.email || 'Contact information not available.'}
     }
 
     return `Hi! I can help you book an appointment with ${tenant.name}. What are you looking for?`;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Quota-Limited Chat Override
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Override chat to add AI quota checking.
+   *
+   * Flow:
+   * 1. Check quota BEFORE processing (fail fast)
+   * 2. Process message via parent class
+   * 3. Increment counter AFTER success (atomic)
+   *
+   * Returns usage info in response for frontend to display upgrade prompts.
+   */
+  async chat(
+    tenantId: string,
+    requestedSessionId: string,
+    userMessage: string
+  ): Promise<ChatResponse & { usage?: { used: number; limit: number; remaining: number } }> {
+    // 1. Get tenant with tier info
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { tier: true, aiMessagesUsed: true },
+    });
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    const tier = tenant.tier;
+    const limit = TIER_LIMITS[tier].aiMessages;
+    const used = tenant.aiMessagesUsed;
+
+    // 2. Check quota BEFORE processing
+    if (isOverQuota(tier, used)) {
+      logger.info({ tenantId, tier, used, limit }, 'AI quota exceeded - returning upgrade prompt');
+
+      // Need to get/create session for the response
+      let session = await this.getSession(tenantId, requestedSessionId);
+      if (!session) {
+        session = await this.getOrCreateSession(tenantId);
+      }
+
+      return {
+        message: `You've used all ${limit} AI messages this month. Upgrade your plan to continue chatting.`,
+        sessionId: session.sessionId,
+        usage: { used, limit, remaining: 0 },
+      };
+    }
+
+    // 3. Process message via parent class
+    const response = await super.chat(tenantId, requestedSessionId, userMessage);
+
+    // 4. Increment counter AFTER success (atomic)
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { aiMessagesUsed: { increment: 1 } },
+    });
+
+    // 5. Return response with updated usage
+    const newUsed = used + 1;
+    return {
+      ...response,
+      usage: {
+        used: newUsed,
+        limit,
+        remaining: getRemainingMessages(tier, newUsed),
+      },
+    };
   }
 }

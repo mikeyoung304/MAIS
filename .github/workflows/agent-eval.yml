@@ -1,0 +1,67 @@
+# Agent Evaluation CI
+#
+# Runs the agent evaluation test suite to verify:
+# - Tool/prompt parity between capability maps and implementations
+# - Safety mechanisms (injection detection, rate limiting, circuit breakers)
+# - Critical path coverage for all agent types
+#
+# This is a fast, focused suite (~500ms) that catches agent regressions early.
+
+name: Agent Evaluation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Agent implementation changes
+      - 'server/src/agent/**'
+      - 'server/src/middleware/tenant.ts'
+      # Capability map changes
+      - 'server/test/agent-eval/**'
+      # Workflow changes
+      - '.github/workflows/agent-eval.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server/src/agent/**'
+      - 'server/src/middleware/tenant.ts'
+      - 'server/test/agent-eval/**'
+      - '.github/workflows/agent-eval.yml'
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  agent-eval:
+    name: Agent Evaluation Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build contracts package
+        run: npm run build --workspace=@macon/contracts
+
+      - name: Run Agent Evaluation Tests
+        run: npm run test:agent-eval --workspace=@macon/api
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-results
+          path: server/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

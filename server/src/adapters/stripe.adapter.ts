@@ -184,6 +184,7 @@ export class StripePaymentAdapter implements PaymentProvider {
     priceId: string;
     successUrl: string;
     cancelUrl: string;
+    metadata?: Record<string, string>;
   }): Promise<CheckoutSession> {
     const session = await this.stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -200,6 +201,14 @@ export class StripePaymentAdapter implements PaymentProvider {
       metadata: {
         tenantId: input.tenantId,
         checkoutType: 'subscription', // Distinguish from booking checkouts
+        ...input.metadata, // Include additional metadata (e.g., tier)
+      },
+      // Also set metadata on the subscription for webhook access
+      subscription_data: {
+        metadata: {
+          tenantId: input.tenantId,
+          ...input.metadata,
+        },
       },
     });
 
