@@ -9,6 +9,7 @@ import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
 import { PricingSection } from '@/components/home/PricingSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { FAQSection } from '@/components/home/FAQSection';
+import { LazyMountainDemo } from '@/components/home/LazyMountainDemo';
 
 export const metadata: Metadata = {
   title: 'Handled — Your website, bookings, and marketing — handled.',
@@ -138,6 +139,28 @@ export default function HomePage() {
                 Your business runs on trust and transformation. But booking systems, invoices, and
                 follow-ups? That's not why you started. We handle the tech. You handle the magic.
               </p>
+            </div>
+          </section>
+
+          {/* ============================================
+              MOUNTAIN DEMO - Experience the difference
+              ============================================ */}
+          <section className="py-16 md:py-24 bg-surface">
+            <div className="max-w-5xl mx-auto px-6">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                {/* Left: Context */}
+                <div>
+                  <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-4">
+                    Experience the difference
+                  </h2>
+                  <p className="text-text-muted">
+                    See what it feels like to go from climbing alone to soaring above.
+                  </p>
+                </div>
+
+                {/* Right: Game */}
+                <LazyMountainDemo />
+              </div>
             </div>
           </section>
 

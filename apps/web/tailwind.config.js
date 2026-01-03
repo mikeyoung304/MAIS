@@ -209,6 +209,10 @@ module.exports = {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-4px)' },
         },
+        confetti: {
+          '0%': { transform: 'translateY(-10px) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateY(400px) rotate(720deg)', opacity: '0' },
+        },
       },
       animation: {
         shimmer: 'shimmer 2s infinite',
@@ -218,6 +222,7 @@ module.exports = {
         shake: 'shake 0.5s ease-in-out',
         'slide-in-from-top-2': 'slide-in-from-top 0.3s ease-out',
         'bounce-subtle': 'bounce-subtle 0.6s ease-in-out',
+        confetti: 'confetti 2s ease-out forwards',
       },
     },
   },
