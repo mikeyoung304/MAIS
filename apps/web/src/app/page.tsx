@@ -1,23 +1,14 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
-import {
-  ArrowRight,
-  Check,
-  Globe,
-  Calendar,
-  CreditCard,
-  TrendingUp,
-  FileText,
-  Users,
-  MessageSquare,
-  Sparkles,
-  Brain,
-  Heart,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
+import { ProductCarousel } from '@/components/home/ProductCarousel';
 import { ProjectHubMockup } from '@/components/home/ProjectHubMockup';
-import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
+import { ScrollingIdentity } from '@/components/home/ScrollingIdentity';
+import { PricingSection } from '@/components/home/PricingSection';
+import { TestimonialsSection } from '@/components/home/TestimonialsSection';
+import { FAQSection } from '@/components/home/FAQSection';
 
 export const metadata: Metadata = {
   title: 'Handled — Your website, bookings, and marketing — handled.',
@@ -30,63 +21,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 };
-
-// What Handled Does - 3 pillars
-const pillars = [
-  {
-    icon: Globe,
-    title: 'Your Website',
-    description: 'A clean, professional site built for your business',
-    bullets: ['Services, pricing, and availability already connected', 'No plugins, no duct tape'],
-  },
-  {
-    icon: CreditCard,
-    title: 'Booking & Payments',
-    description: 'Clients book and pay without back-and-forth',
-    bullets: ['Everything stays in one place', "You don't chase confirmations or invoices"],
-  },
-  {
-    icon: TrendingUp,
-    title: 'Built-In Growth Help',
-    description: 'A personalized marketing strategy for your business',
-    bullets: [
-      'Ready-to-use starters for social and LinkedIn posts',
-      'Simple actions that lead to real bookings',
-    ],
-  },
-];
-
-// Growth Plan features
-const growthPlanFeatures = [
-  'A customized marketing strategy based on your business',
-  'Simple prompts for social and LinkedIn posts',
-  'Clear, practical actions that compound into real demand',
-];
-
-// Project Hub bullets
-const projectHubBullets = [
-  'A dedicated page for each booking or event',
-  "A shared, organized breakdown of what's happening, when, and where",
-  'Updates, changes, and requests live in one thread — not texts or emails',
-  'AI assistants on both sides help clarify details and keep things moving',
-  'Everyone always sees the same, current version of the plan',
-];
-
-// Memory section bullets
-const memoryBullets = [
-  'Client preferences remembered across gigs',
-  'Past decisions and nuances always accessible',
-  'Repeat clients feel recognized, not re-onboarded',
-  'AI uses this growing context to make better suggestions and reduce friction',
-];
-
-// Who It's For bullets
-const whoItsForBullets = [
-  'Professionals who sell their time and expertise',
-  'People without teams or operators',
-  'People tired of juggling tools and tabs',
-  'People who want to focus on clients, not systems',
-];
 
 export default function HomePage() {
   const organizationSchema = {
@@ -139,10 +73,10 @@ export default function HomePage() {
                 How it works
               </Link>
               <Link
-                href="#growth"
+                href="#pricing"
                 className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
-                Growth Plan
+                Pricing
               </Link>
               <Link
                 href="/login"
@@ -160,36 +94,20 @@ export default function HomePage() {
 
         <main>
           {/* ============================================
-              SECTION 1: HERO
-              "Your website, bookings, and marketing — handled."
+              HERO - Brand signature scrolling identity
               ============================================ */}
-          <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 px-6">
+          <section className="relative pt-32 pb-16 md:pt-44 md:pb-24 px-6">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
-                Your website, bookings, and marketing — <span className="text-sage">handled.</span>
-              </h1>
-              <p className="mt-8 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
-                Handled builds and runs your professional website, manages bookings and payments,
-                and quietly helps you get more clients — without you learning software or marketing.
+              <ScrollingIdentity />
+              <p className="mt-6 font-serif text-2xl md:text-3xl text-sage font-medium">
+                The rest is handled.
+              </p>
+              <p className="mt-4 text-lg md:text-xl text-text-muted leading-relaxed max-w-xl mx-auto">
+                Done-for-you websites, booking, and AI — plus monthly updates on what's actually
+                worth knowing.
               </p>
 
-              {/* Badge */}
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt px-3 py-1.5 rounded-full border border-neutral-800">
-                  <Globe className="w-3.5 h-3.5 text-sage" />
-                  Website included
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt px-3 py-1.5 rounded-full border border-neutral-800">
-                  <Calendar className="w-3.5 h-3.5 text-sage" />
-                  Booking included
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt px-3 py-1.5 rounded-full border border-neutral-800">
-                  <TrendingUp className="w-3.5 h-3.5 text-sage" />
-                  Marketing guidance included
-                </span>
-              </div>
-
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   asChild
                   variant="sage"
@@ -212,173 +130,55 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 2: WHAT HANDLED DOES
-              3 pillars: Website, Booking, Growth
+              TRANSITION - Narrative flow to features
               ============================================ */}
-          <section id="how-it-works" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                  What Handled Does
-                </h2>
-                <p className="text-lg text-text-muted max-w-2xl mx-auto">
-                  Everything you need to run your business — without juggling tools.
-                </p>
-              </div>
-
-              {/* 3 Pillars */}
-              <div className="grid md:grid-cols-3 gap-8">
-                {pillars.map((pillar) => (
-                  <div
-                    key={pillar.title}
-                    className="bg-surface rounded-2xl p-8 border border-neutral-800 hover:border-sage/50 transition-all duration-300"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center mb-6">
-                      <pillar.icon className="w-6 h-6 text-sage" />
-                    </div>
-                    <h3 className="font-serif text-xl font-bold text-text-primary mb-3">
-                      {pillar.title}
-                    </h3>
-                    <p className="text-text-muted mb-4">{pillar.description}</p>
-                    <ul className="space-y-2">
-                      {pillar.bullets.map((bullet) => (
-                        <li key={bullet} className="flex items-start gap-2 text-sm text-text-muted">
-                          <Check className="w-4 h-4 text-sage mt-0.5 flex-shrink-0" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-
-              {/* Website Preview */}
-              <div className="mt-16">
-                <p className="text-center text-sm text-text-muted mb-6">
-                  What your clients see — a polished storefront with clear pricing
-                </p>
-                <div className="max-w-2xl mx-auto">
-                  <DemoStorefrontFrame />
-                </div>
-              </div>
+          <section className="py-20 bg-surface-alt">
+            <div className="max-w-3xl mx-auto text-center px-6">
+              <p className="text-xl md:text-2xl text-text-secondary leading-relaxed">
+                Your business runs on trust and transformation. But booking systems, invoices, and
+                follow-ups? That's not why you started. We handle the tech. You handle the magic.
+              </p>
             </div>
           </section>
 
           {/* ============================================
-              SECTION 3: GROWTH PLAN ($150/mo)
-              "When you're ready to grow, Handled steps in."
+              PRODUCT CAROUSEL - Show, don't tell
               ============================================ */}
-          <section id="growth" className="py-24 md:py-32 px-6 scroll-mt-20">
+          <section id="how-it-works" className="py-16 md:py-24 px-6 scroll-mt-20">
             <div className="max-w-4xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <div className="inline-flex items-center gap-2 bg-sage/10 border border-sage/30 rounded-full px-4 py-1.5 mb-6">
-                    <TrendingUp className="w-4 h-4 text-sage" />
-                    <span className="text-sm text-sage font-medium">Growth Plan • $150/mo</span>
-                  </div>
-                  <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
-                    When you&apos;re ready to grow, Handled steps in.
-                  </h2>
-                  <p className="text-lg text-text-muted leading-relaxed mb-8">
-                    On our growth plan, Handled doesn&apos;t just keep things organized — it
-                    actively helps you get booked.
-                  </p>
-                  <div className="mb-8">
-                    <p className="text-text-primary font-medium mb-4">You&apos;ll get:</p>
-                    <ul className="space-y-3">
-                      {growthPlanFeatures.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3">
-                          <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check className="w-3 h-3 text-sage" />
-                          </div>
-                          <span className="text-text-muted">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <p className="text-text-primary font-medium">
-                    No courses. No funnels. No guesswork.
-                  </p>
-                </div>
-
-                {/* Visual: Growth indicators */}
-                <div className="bg-surface-alt rounded-2xl p-8 border border-neutral-800">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-neutral-800">
-                      <div className="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center">
-                        <MessageSquare className="w-5 h-5 text-sage" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-text-primary">Social post starter</p>
-                        <p className="text-xs text-text-muted">Ready to customize and post</p>
-                      </div>
-                      <span className="text-xs text-sage font-medium">New</span>
-                    </div>
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-neutral-800">
-                      <div className="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-sage" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-text-primary">Weekly action</p>
-                        <p className="text-xs text-text-muted">
-                          &quot;Reply to 3 comments from last week&quot;
-                        </p>
-                      </div>
-                      <span className="text-xs text-amber-500 font-medium">To-do</span>
-                    </div>
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-emerald-500/30">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                        <Check className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-text-primary">LinkedIn post</p>
-                        <p className="text-xs text-text-muted">Posted yesterday • 340 views</p>
-                      </div>
-                      <span className="text-xs text-emerald-500 font-medium">Done</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="text-center mb-10">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
+                  See what you get.
+                </h2>
               </div>
+
+              <ProductCarousel />
             </div>
           </section>
 
           {/* ============================================
-              SECTION 4: PROJECT HUB
-              "After someone books, everything stays in one place."
+              TESTIMONIALS - Social proof (conditional)
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
-            <div className="max-w-6xl mx-auto">
+          <TestimonialsSection />
+
+          {/* ============================================
+              PROJECT HUB + MEMORY - Combined
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+            <div className="max-w-5xl mx-auto">
               <div className="grid lg:grid-cols-2 gap-12 items-center">
                 <div>
                   <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                    After someone books, everything stays in one place.
+                    After they book, everything stays in one place.
                   </h2>
-                  <p className="text-lg text-text-muted mb-8">
-                    Every booking gets its own dedicated project page — shared by you and your
-                    client — so nothing gets lost, forgotten, or scattered.
+                  <p className="text-lg text-text-muted mb-6">
+                    Every booking gets a shared page. Updates, files, questions — all in one thread.
+                    No more scattered texts and emails.
                   </p>
-
-                  <ul className="space-y-3 mb-8">
-                    {projectHubBullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-sage" />
-                        </div>
-                        <span className="text-text-muted">{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p className="text-text-muted leading-relaxed mb-6">
-                    Instead of chasing messages across email, texts, DMs, and notes, both you and
-                    your client return to the same page — before, during, and after the job.
+                  <p className="text-text-muted mb-6">
+                    And Handled remembers your clients. Repeat clients feel recognized, not
+                    re-onboarded. The more you work together, the easier it gets.
                   </p>
-
-                  <p className="text-text-primary font-medium mb-4">
-                    It becomes the single source of truth for the entire project.
-                  </p>
-
-                  {/* Pull quote */}
                   <div className="border-l-2 border-sage pl-4">
                     <p className="text-lg text-text-primary italic">
                       &quot;If it relates to the job, it lives there.&quot;
@@ -386,7 +186,6 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Project Hub Mockup */}
                 <div>
                   <ProjectHubMockup />
                 </div>
@@ -395,80 +194,17 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 5: MEMORY & REPEAT CLIENT EXPERIENCE
-              "Handled remembers your clients"
+              PRICING - 3-tier with psychology
               ============================================ */}
-          <section className="py-24 md:py-32 px-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 bg-sage/10 border border-sage/30 rounded-full px-4 py-1.5 mb-6">
-                  <Brain className="w-4 h-4 text-sage" />
-                  <span className="text-sm text-sage font-medium">Built-in memory</span>
-                </div>
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
-                  Handled remembers your clients — so they feel taken care of every time.
-                </h2>
-                <p className="text-lg text-text-muted max-w-2xl mx-auto">
-                  Because each project hub lives forever, Handled quietly builds memory over time.
-                  Preferences, patterns, and context from past work carry forward — so repeat
-                  clients don&apos;t have to explain themselves again, and nothing important slips
-                  through the cracks.
-                </p>
-              </div>
-
-              {/* Memory Features Grid */}
-              <div className="grid sm:grid-cols-2 gap-4 mb-12">
-                {memoryBullets.map((bullet, index) => (
-                  <div
-                    key={bullet}
-                    className="flex items-start gap-4 p-5 bg-surface-alt rounded-xl border border-neutral-800"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center flex-shrink-0">
-                      {index === 0 && <Heart className="w-4 h-4 text-sage" />}
-                      {index === 1 && <FileText className="w-4 h-4 text-sage" />}
-                      {index === 2 && <Users className="w-4 h-4 text-sage" />}
-                      {index === 3 && <Sparkles className="w-4 h-4 text-sage" />}
-                    </div>
-                    <p className="text-text-muted">{bullet}</p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-center text-lg text-text-primary font-medium">
-                The more you work with someone, the easier it gets — for both of you.
-              </p>
-            </div>
-          </section>
+          <PricingSection />
 
           {/* ============================================
-              SECTION 6: WHO IT'S FOR
-              "Handled is for people who love their work"
+              FAQ - Conversational accordion
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-12">
-                Handled is for people who love their work — not running a business.
-              </h2>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                {whoItsForBullets.map((bullet) => (
-                  <div
-                    key={bullet}
-                    className="flex items-center gap-3 p-5 bg-surface rounded-xl border border-neutral-800 text-left"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-sage/10 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-4 h-4 text-sage" />
-                    </div>
-                    <span className="text-text-primary">{bullet}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+          <FAQSection />
 
           {/* ============================================
-              SECTION 7: CLOSING CTA
-              "Do what you love. The rest is handled."
+              CLOSING CTA
               ============================================ */}
           <section className="py-24 md:py-32 px-6 border-t border-neutral-800">
             <div className="max-w-2xl mx-auto text-center">
