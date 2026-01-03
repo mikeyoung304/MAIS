@@ -9,7 +9,7 @@ services:
     region: oregon
     plan: starter  # Hobby tier in dashboard ($5/month, always-on)
     branch: main
-    buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npx prisma generate
+    buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/api
     startCommand: cd server && npm run start
     healthCheckPath: /health/live
     envVars:
@@ -58,7 +58,7 @@ services:
     region: oregon
     plan: starter
     schedule: "*/15 * * * *"  # Every 15 minutes
-    buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npx prisma generate
+    buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npm run prisma:generate
     startCommand: cd server && npx tsx scripts/run-eval-batch.ts
     envVars:
       - key: NODE_ENV

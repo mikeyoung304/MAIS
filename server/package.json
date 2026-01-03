@@ -11,7 +11,7 @@
     "dev": "tsx watch src/index.ts",
     "dev:mock": "cross-env ADAPTERS_PRESET=mock tsx watch src/index.ts",
     "dev:real": "cross-env ADAPTERS_PRESET=real tsx watch src/index.ts",
-    "build": "prisma generate && tsc -b",
+    "build": "npm run prisma:generate && tsc -b",
     "start": "npx tsx src/index.ts",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run --reporter=verbose",
