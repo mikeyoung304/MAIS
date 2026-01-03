@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,12 @@ import { useSwipeGesture } from '@/hooks/useSwipeGesture';
  *
  * Slides in from the right with overlay backdrop.
  * Closes on link click or backdrop tap.
+ *
+ * Accessibility features:
+ * - Focus trap when menu is open (Tab cycles within menu)
+ * - Escape key closes menu
+ * - Focus returns to hamburger button on close
+ * - aria-modal and role="dialog" for screen readers
  */
 
 const navLinks = [
@@ -19,12 +25,62 @@ const navLinks = [
   { href: '/login', label: 'Login' },
 ];
 
+// Focusable elements selector
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  const closeMenu = () => setIsOpen(false);
+  const closeMenu = useCallback(() => {
+    setIsOpen(false);
+    // Return focus to hamburger button
+    menuButtonRef.current?.focus();
+  }, []);
+
+  // Focus trap effect - traps Tab navigation within menu when open
+  useEffect(() => {
+    if (!isOpen || !menuRef.current) return;
+
+    // Focus the close button when menu opens
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close on Escape
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMenu();
+        return;
+      }
+
+      // Focus trap on Tab
+      if (e.key === 'Tab' && menuRef.current) {
+        const focusableElements = menuRef.current.querySelectorAll(FOCUSABLE_SELECTOR);
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          // Shift+Tab: if on first element, wrap to last
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          // Tab: if on last element, wrap to first
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, closeMenu]);
 
   // Swipe-to-close gesture for mobile menu
   const swipeState = useSwipeGesture(menuRef, {
@@ -39,8 +95,7 @@ export function MobileNav() {
       }
     },
     onSwipe: () => {
-      setIsOpen(false);
-      menuButtonRef.current?.focus();
+      closeMenu();
     },
     onSwipeEnd: () => {
       // Reset position if swipe didn't complete
@@ -56,10 +111,12 @@ export function MobileNav() {
       <button
         ref={menuButtonRef}
         onClick={() => setIsOpen(true)}
-        className="md:hidden p-2 -mr-2 text-text-muted hover:text-text-primary transition-colors"
+        className="md:hidden p-2 -mr-2 text-text-muted hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg"
         aria-label="Open menu"
+        aria-expanded={isOpen}
+        aria-controls="mobile-nav-menu"
       >
-        <Menu className="w-6 h-6" />
+        <Menu className="w-6 h-6" aria-hidden="true" />
       </button>
 
       {/* Overlay backdrop */}
@@ -71,9 +128,13 @@ export function MobileNav() {
         />
       )}
 
-      {/* Slide-in menu */}
+      {/* Slide-in menu - focus trapped dialog */}
       <div
         ref={menuRef}
+        id="mobile-nav-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
         className={`fixed top-0 right-0 h-full w-72 bg-surface border-l border-neutral-800 z-50 md:hidden ${
           swipeState.isSwiping ? '' : 'transform transition-transform duration-300 ease-in-out'
         } ${isOpen ? 'translate-x-0' : 'translate-x-full'} motion-reduce:transition-none`}
@@ -81,11 +142,12 @@ export function MobileNav() {
         {/* Close button */}
         <div className="flex justify-end p-4">
           <button
+            ref={closeButtonRef}
             onClick={closeMenu}
-            className="p-2 text-text-muted hover:text-text-primary transition-colors"
+            className="p-2 text-text-muted hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg"
             aria-label="Close menu"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6" aria-hidden="true" />
           </button>
         </div>
 
