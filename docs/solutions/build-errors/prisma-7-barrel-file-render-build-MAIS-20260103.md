@@ -1,5 +1,5 @@
 ---
-title: "Prisma 7 Build Failure - Barrel File Required for Render Deployment"
+title: 'Prisma 7 Build Failure - Barrel File Required for Render Deployment'
 slug: prisma-7-barrel-file-render-build
 date: 2026-01-03
 category: build-errors
@@ -30,9 +30,9 @@ error TS2307: Cannot find module './generated/prisma' or its corresponding type 
 Prisma 7 changed the generated entry point:
 
 | Prisma Version | Entry Point |
-|----------------|-------------|
-| Prisma 6 | `index.ts` |
-| Prisma 7 | `client.ts` |
+| -------------- | ----------- |
+| Prisma 6       | `index.ts`  |
+| Prisma 7       | `client.ts` |
 
 Existing imports expect `index.ts`:
 
@@ -88,9 +88,21 @@ try {
 
 ```yaml
 buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/api
+envVars:
+  - key: DATABASE_URL
+    sync: false
+  - key: DIRECT_URL
+    sync: false
 ```
 
 The `npm run build` now includes `prisma:generate` which runs both `prisma generate` AND the postgenerate script.
+
+**CRITICAL:** Both `DATABASE_URL` and `DIRECT_URL` environment variables must be set on Render:
+
+- `DATABASE_URL` = Session Pooler connection (for runtime queries)
+- `DIRECT_URL` = Transaction Pooler connection (for `prisma generate` schema introspection)
+
+Without `DIRECT_URL`, Prisma 7 fails with: `PrismaConfigEnvError: Cannot resolve environment variable: DIRECT_URL`
 
 ## Why This Works
 

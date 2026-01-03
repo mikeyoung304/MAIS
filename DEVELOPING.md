@@ -157,10 +157,12 @@ Install PostgreSQL 14+. Options:
    createdb mais_dev
    ```
 
-2. **Set DATABASE_URL in `server/.env`:**
+2. **Set database URLs in `server/.env`:**
 
    ```bash
+   # Prisma 7 requires both URLs
    DATABASE_URL="postgresql://username:password@localhost:5432/mais_dev?schema=public"
+   DIRECT_URL="postgresql://username:password@localhost:5432/mais_dev"
    ```
 
 3. **Run migrations:**
@@ -219,7 +221,9 @@ JWT_SECRET=change-me  # Generate: openssl rand -hex 32
 TENANT_SECRETS_ENCRYPTION_KEY=...  # Generate: openssl rand -hex 32
 
 # Real mode - Database (✅ IMPLEMENTED)
+# Prisma 7 requires both URLs - see prisma.config.ts
 DATABASE_URL=postgresql://username:password@localhost:5432/mais_dev?schema=public
+DIRECT_URL=postgresql://username:password@localhost:5432/mais_dev  # For prisma generate/migrations
 
 # Real mode - Stripe (✅ IMPLEMENTED)
 STRIPE_SECRET_KEY=sk_test_xxx

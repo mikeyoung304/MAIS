@@ -32,9 +32,11 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-011: PaymentProvider Interface](docs/adrs/ADR-011-payment-provider-interface.md) - Payment abstraction layer (Stripe)
 - [ADR-012: Full Test Coverage for Webhook Handler](docs/adrs/ADR-012-full-test-coverage-webhook-handler.md) - Testing standards for critical paths
 
-### Frontend & Multi-Tenant (ADR-014, ADR-017)
+### Frontend & Multi-Tenant (ADR-014 to ADR-017)
 
 - [ADR-014: Next.js App Router Migration](docs/adrs/ADR-014-nextjs-app-router-migration.md) - Migration from Vite SPA to Next.js 14 for tenant storefronts
+- [ADR-015: API Proxy Pattern](docs/adrs/ADR-015-api-proxy-pattern.md) - Secure proxy pattern for Next.js client component authentication
+- [ADR-016: Field Naming Conventions](docs/adrs/ADR-016-field-naming-conventions.md) - Database vs API/Frontend field naming (title/name, priceCents/basePrice)
 - [ADR-017: Dark Theme Auth Pages](docs/adrs/ADR-017-dark-theme-auth-pages.md) - Dark graphite theme for signup/login vs light marketing site
 
 ## Quick Reference by Category
@@ -45,6 +47,8 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - **Ports & Adapters:** ADR-006, ADR-011
 - **Mock-First:** ADR-007
 - **Next.js App Router:** ADR-014
+- **API Proxy:** ADR-015
+- **Field Naming:** ADR-016
 
 ### Concurrency Control
 
@@ -79,6 +83,8 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 | ADR-012 | Full Test Coverage (Webhooks)  | Accepted   | P0       | Testing       |
 | ADR-013 | PostgreSQL Advisory Locks      | Accepted   | P0       | Concurrency   |
 | ADR-014 | Next.js App Router Migration   | Accepted   | P0       | Frontend      |
+| ADR-015 | API Proxy Pattern              | Accepted   | P1       | Architecture  |
+| ADR-016 | Field Naming Conventions       | Accepted   | P2       | Architecture  |
 | ADR-017 | Dark Theme Auth Pages          | Accepted   | P2       | Frontend      |
 
 ## Decision Process

@@ -1,5 +1,5 @@
 ---
-title: "Agent Evaluation Cron Job Setup on Render"
+title: 'Agent Evaluation Cron Job Setup on Render'
 slug: agent-eval-cron-job-setup
 date: 2026-01-03
 category: patterns
@@ -24,7 +24,7 @@ Set up automated agent conversation evaluation using Claude Haiku 4.5 as an LLM-
   runtime: node
   region: oregon
   plan: starter
-  schedule: "*/15 * * * *"  # Every 15 minutes
+  schedule: '*/15 * * * *' # Every 15 minutes
   buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npm run prisma:generate
   startCommand: cd server && npx tsx scripts/run-eval-batch.ts
   envVars:
@@ -32,16 +32,21 @@ Set up automated agent conversation evaluation using Claude Haiku 4.5 as an LLM-
       value: production
     - key: DATABASE_URL
       sync: false
+    - key: DIRECT_URL
+      sync: false
     - key: ANTHROPIC_API_KEY
       sync: false
 ```
 
 ### Required Environment Variables
 
-| Key | Description |
-|-----|-------------|
-| `DATABASE_URL` | Copy from mais-api service |
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
+| Key                 | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| `DATABASE_URL`      | Session Pooler connection (port 5432) - copy from mais-api service         |
+| `DIRECT_URL`        | Transaction Pooler connection (port 6543) - required for `prisma generate` |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key                                                     |
+
+**Note:** Both `DATABASE_URL` and `DIRECT_URL` are required for Prisma 7. Without `DIRECT_URL`, the build fails with `PrismaConfigEnvError: Cannot resolve environment variable: DIRECT_URL`.
 
 ## Key Settings
 
@@ -49,7 +54,7 @@ Set up automated agent conversation evaluation using Claude Haiku 4.5 as an LLM-
 
 ```typescript
 // server/src/agent/evals/evaluator.ts
-const DEFAULT_EVAL_MODEL = 'claude-haiku-4-5';  // Fast, cheap, smart
+const DEFAULT_EVAL_MODEL = 'claude-haiku-4-5'; // Fast, cheap, smart
 ```
 
 ### Sampling Rate
@@ -57,7 +62,7 @@ const DEFAULT_EVAL_MODEL = 'claude-haiku-4-5';  // Fast, cheap, smart
 ```typescript
 // server/src/agent/evals/pipeline.ts
 const DEFAULT_CONFIG: PipelineConfig = {
-  samplingRate: 1.0,  // 100% for low-volume phase
+  samplingRate: 1.0, // 100% for low-volume phase
   evaluateFlagged: true,
   evaluateFailedTasks: true,
   batchSize: 10,

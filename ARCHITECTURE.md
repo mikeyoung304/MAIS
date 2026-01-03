@@ -637,7 +637,7 @@ See `DECISIONS.md` for architectural decision records (ADRs) explaining key desi
 ### Deployment Status: Demo Users (January 2025)
 
 **Target Environment:** Production deployment for initial demo users
-**Infrastructure:** Supabase (PostgreSQL), Upstash (Redis), Vercel/Railway (hosting)
+**Infrastructure:** Supabase (PostgreSQL), Upstash (Redis), Render (API + cron jobs), Vercel (Next.js storefronts)
 **Readiness:** Platform is production-ready (9.8/10 maturity)
 
 ### Production Requirements
@@ -687,7 +687,7 @@ SENTRY_DSN=...                      # Error tracking
 - [ ] Supabase project created with connection pooling enabled
 - [ ] Upstash Redis instance created (for caching)
 - [ ] DNS records configured (app.maconaisolutions.com)
-- [ ] SSL certificates provisioned (automatic with Vercel/Railway)
+- [ ] SSL certificates provisioned (automatic with Render/Vercel)
 
 **2. Database Migration**
 

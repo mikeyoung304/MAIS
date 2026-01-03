@@ -259,7 +259,7 @@ Learn more: [ARCHITECTURE.md](./ARCHITECTURE.md) | [MULTI_TENANT_IMPLEMENTATION_
 - **Framework**: Express 4 (HTTP server)
 - **Language**: TypeScript 5.9.3 (strict mode)
 - **Database**: PostgreSQL 15 (via Supabase)
-- **ORM**: Prisma 6 (type-safe queries, migrations)
+- **ORM**: Prisma 7 (type-safe queries, migrations)
 - **API Contract**: ts-rest + Zod (type-safe API)
 - **Payments**: Stripe (checkout + webhooks)
 - **Email**: Postmark (with file-sink fallback)
@@ -308,13 +308,21 @@ mais/
 │   │   └── seed.ts
 │   └── test/            # Unit and integration tests
 │
-├── client/              # Frontend web application
+├── client/              # Legacy admin (Vite SPA)
 │   ├── src/
 │   │   ├── pages/       # Route components
 │   │   ├── features/    # Feature-based modules (booking, catalog, admin)
 │   │   ├── components/  # Reusable UI components
 │   │   └── lib/         # Client utilities
 │   └── public/          # Static assets
+│
+├── apps/
+│   └── web/             # Next.js 14 storefronts (primary frontend)
+│       ├── src/
+│       │   ├── app/     # App Router pages (/t/[slug], auth, etc.)
+│       │   ├── components/  # React components (tenant, ui)
+│       │   └── lib/     # Auth, API client, utilities
+│       └── public/      # Static assets
 │
 ├── packages/
 │   ├── contracts/       # Shared API contracts (Zod schemas + endpoints)

@@ -8,7 +8,7 @@ HANDLED (gethandled.ai) is a membership platform for service professionals — p
 
 **Tech Stack:**
 
-- Backend: Express 4, TypeScript 5.9.3 (strict), Prisma 6, PostgreSQL
+- Backend: Express 4, TypeScript 5.9.3 (strict), Prisma 7, PostgreSQL
 - Frontend (Admin): React 18, Vite 6, TailwindCSS, Radix UI, TanStack Query
 - Frontend (Storefronts): Next.js 14 App Router, NextAuth.js v5, ISR
 - API: ts-rest + Zod for type-safe contracts
@@ -488,6 +488,31 @@ const memory = await advisorMemoryRepo.projectFromEvents(tenantId);
 | `/v1/agent/chat`             | POST   | Chat with auto-mode detection |
 
 **Testing:** See `server/test/agent/onboarding/` and `server/test/integration/onboarding-flow.spec.ts`
+
+### Agent Evaluation System
+
+Automated quality assessment for AI agent conversations. Evaluates traces for safety, accuracy, and goal completion via Render cron job (every 15 min).
+
+**Architecture:** Cron Job (Render) → `run-eval-batch.ts` → EvalPipeline → Evaluator (Claude Haiku 4.5)
+
+**Key Files:**
+
+- `server/src/agent/evals/pipeline.ts` - Batch processing pipeline
+- `server/src/agent/evals/evaluator.ts` - LLM-based evaluator
+- `server/scripts/run-eval-batch.ts` - CLI batch runner
+- `render.yaml` - Cron job configuration
+
+**Commands:**
+
+```bash
+npm run eval-batch                    # Run evaluation batch manually
+npm run eval-batch -- --dry-run       # Preview without executing
+npm run eval-batch -- --tenant-id=X   # Single tenant
+```
+
+**Environment:** Requires `ANTHROPIC_API_KEY` for evaluator LLM calls.
+
+**Deployment:** See `docs/solutions/deployment-issues/agent-eval-cron-job-render-setup-MAIS-20260102.md`
 
 ## Domain Expertise (Auto-Load Skills)
 
