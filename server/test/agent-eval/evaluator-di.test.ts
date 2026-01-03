@@ -65,7 +65,7 @@ describe('ConversationEvaluator DI', () => {
       const evaluator = new ConversationEvaluator(mockAnthropic);
 
       // Verify default config is applied
-      expect(evaluator['config'].model).toBe('claude-3-5-haiku-20241022');
+      expect(evaluator['config'].model).toBe('claude-haiku-4-5');
       expect(evaluator['config'].maxTokens).toBe(2048);
       expect(evaluator['config'].temperature).toBe(0.1);
       expect(evaluator['config'].timeoutMs).toBe(30000);
@@ -150,7 +150,7 @@ describe('ConversationEvaluator DI', () => {
             }),
           },
         ],
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5',
         stop_reason: 'end_turn',
         stop_sequence: null,
         usage: { input_tokens: 100, output_tokens: 50 },
