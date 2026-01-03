@@ -43,7 +43,7 @@ export interface EvalInput {
  * Configuration for the evaluator
  */
 export interface EvaluatorConfig {
-  /** Model to use for evaluation (default: claude-haiku-35-20241022 for cost) */
+  /** Model to use for evaluation (default: claude-3-5-haiku-20241022 for cost) */
   model: string;
   /** Maximum tokens for evaluation response */
   maxTokens: number;
@@ -59,7 +59,7 @@ export interface EvaluatorConfig {
  *
  * @see plans/agent-eval-remediation-plan.md Phase 7.2
  */
-const DEFAULT_EVAL_MODEL = 'claude-haiku-35-20241022';
+const DEFAULT_EVAL_MODEL = 'claude-3-5-haiku-20241022';
 
 /**
  * Get default evaluator configuration.

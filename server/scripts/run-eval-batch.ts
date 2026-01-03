@@ -1,5 +1,8 @@
 #!/usr/bin/env tsx
 
+// Load environment variables first
+import 'dotenv/config';
+
 /**
  * CLI command to run evaluation batch
  *
@@ -134,13 +137,11 @@ async function runEvaluationBatch(
   const { maxPerTenant, dryRun, tenantId } = options;
 
   // Get tenants to process
-  const whereClause = tenantId
-    ? { id: tenantId, status: 'ACTIVE' as const }
-    : { status: 'ACTIVE' as const };
+  const whereClause = tenantId ? { id: tenantId, isActive: true } : { isActive: true };
 
   const tenants = await prisma.tenant.findMany({
     where: whereClause,
-    select: { id: true, businessName: true, slug: true },
+    select: { id: true, name: true, slug: true },
     orderBy: { createdAt: 'asc' },
   });
 
@@ -170,7 +171,7 @@ async function runEvaluationBatch(
   const results: BatchResult[] = [];
 
   for (const tenant of tenants) {
-    const displayName = tenant.businessName || tenant.slug || tenant.id;
+    const displayName = tenant.name || tenant.slug || tenant.id;
 
     try {
       // Get unevaluated traces for this tenant

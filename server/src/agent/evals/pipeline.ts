@@ -40,7 +40,7 @@ export interface PipelineConfig {
 }
 
 const DEFAULT_CONFIG: PipelineConfig = {
-  samplingRate: 0.1, // 10% sampling for cost control
+  samplingRate: 1.0, // 100% - evaluate all traces (adjust when volume increases)
   evaluateFlagged: true,
   evaluateFailedTasks: true,
   batchSize: 10,
