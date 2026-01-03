@@ -104,12 +104,10 @@ export function createTenantAdminBillingRoutes(
   });
 
   /**
-   * GET /v1/tenant-admin/billing/status
-   * Get current billing/subscription status
-   *
-   * Returns subscription status, tier info, trial info, and AI usage.
+   * Shared handler for billing status
+   * Used by both /status and /subscription endpoints
    */
-  router.get('/status', async (_req: Request, res: Response, next: NextFunction) => {
+  async function handleBillingStatus(_req: Request, res: Response, next: NextFunction) {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -168,17 +166,21 @@ export function createTenantAdminBillingRoutes(
     } catch (error) {
       next(error);
     }
-  });
+  }
+
+  /**
+   * GET /v1/tenant-admin/billing/status
+   * Get current billing/subscription status
+   *
+   * Returns subscription status, tier info, trial info, and AI usage.
+   */
+  router.get('/status', handleBillingStatus);
 
   /**
    * GET /v1/tenant-admin/billing/subscription
    * Alias for /status - matches frontend naming convention
    */
-  router.get('/subscription', async (req: Request, res: Response, next: NextFunction) => {
-    // Forward to /status handler
-    req.url = '/status';
-    router.handle(req, res, next);
-  });
+  router.get('/subscription', handleBillingStatus);
 
   return router;
 }
