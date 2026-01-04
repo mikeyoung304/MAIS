@@ -145,20 +145,20 @@ export default function HomePage() {
           {/* ============================================
               MOUNTAIN DEMO - Experience the difference
               ============================================ */}
-          <section className="py-16 md:py-24 bg-surface">
-            <div className="max-w-5xl mx-auto px-6">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                {/* Left: Context */}
-                <div>
-                  <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                    Experience the difference
-                  </h2>
-                  <p className="text-text-muted">
-                    See what it feels like to go from climbing alone to soaring above.
-                  </p>
-                </div>
+          <section className="py-8 md:py-12 bg-surface">
+            <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-2">
+                  Experience the difference
+                </h2>
+                <p className="text-text-muted text-lg">
+                  See what it feels like to go from climbing alone to soaring above.
+                </p>
+              </div>
 
-                {/* Right: Game */}
+              {/* Game - Full width, 80% viewport height */}
+              <div className="w-full">
                 <LazyMountainDemo />
               </div>
             </div>

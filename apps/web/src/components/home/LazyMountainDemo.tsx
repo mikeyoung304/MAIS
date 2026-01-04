@@ -28,7 +28,11 @@ export function LazyMountainDemo() {
   }, []);
 
   return (
-    <div ref={ref} className="w-full aspect-video max-h-[500px] rounded-2xl overflow-hidden">
+    <div
+      ref={ref}
+      className="w-full rounded-2xl overflow-hidden"
+      style={{ height: '70vh', minHeight: '400px' }}
+    >
       {shouldLoad ? <MountainDemo /> : <Placeholder />}
     </div>
   );
