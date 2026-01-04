@@ -1,17 +1,9 @@
 'use client';
 
-import {
-  Check,
-  GraduationCap,
-  Clock,
-  MessageSquare,
-  Trophy,
-  Sparkles,
-  ArrowRight,
-} from 'lucide-react';
+import { Check, Clock, MessageSquare, Star, Sparkles, ArrowRight, Users } from 'lucide-react';
 
 /**
- * DemoStorefrontShowcase - Realistic demo storefront for a college tutor
+ * DemoStorefrontShowcase - Generic template storefront for any service professional
  *
  * Psychology-optimized three-tier pricing display implementing:
  * - Anchoring effect (premium tier sets high reference point)
@@ -20,67 +12,63 @@ import {
  * - Outcome-focused naming (benefits over features)
  * - Visual hierarchy (elevated popular tier)
  *
- * Based on 2025 pricing page best practices research:
- * - 41.4% of successful startups use exactly three tiers
- * - Three-tier approach yields 25-40% higher average purchase values
- * - 70% of buyers choose the middle option when properly positioned
+ * Designed to be industry-agnostic so visitors can picture their own business.
  */
 
-// Demo tenant data - college STEM tutor
+// Generic template data - applicable to any service professional
 const demoTenant = {
-  name: 'Alex Chen',
-  tagline: 'STEM Tutoring',
-  subject: 'Math & Physics',
-  initials: 'AC',
+  name: 'Your Business',
+  tagline: 'Your services, your way',
+  description: 'Professional services tailored to your clients',
+  initials: 'YB',
 };
 
-// Psychologically optimized tier structure
-// Research: Price middle tier 20-30% more than basic with 100%+ feature value increase
+// Generic tier structure that works for any service business
 const tiers = [
   {
     id: 'basic',
-    name: 'Quick Help',
-    description: 'One-time session',
-    price: 85,
-    priceDisplay: '$85',
+    name: 'Starter',
+    description: 'Single session',
+    price: 75,
+    priceDisplay: '$75',
     priceSubtext: '',
-    features: ['1 hour', 'Notes included'],
+    features: ['1 session', 'Summary notes'],
     ctaText: 'Book',
     isPopular: false,
   },
   {
     id: 'standard',
-    name: 'Grade Boost',
+    name: 'Essential',
     description: '4 sessions',
-    price: 320,
-    priceDisplay: '$320',
+    price: 275,
+    priceDisplay: '$275',
     priceSubtext: '',
-    perSession: '$80/ea',
+    perSession: '$69/ea',
     savings: '',
-    features: ['Study plan', 'Priority booking', 'Text support'],
+    features: ['Custom plan', 'Priority booking', 'Direct messaging'],
     ctaText: 'Book',
     isPopular: true,
   },
   {
     id: 'premium',
-    name: 'Semester',
+    name: 'Complete',
     description: '8 sessions',
-    price: 560,
-    priceDisplay: '$560',
+    price: 495,
+    priceDisplay: '$495',
     priceSubtext: '',
-    perSession: '$70/ea',
+    perSession: '$62/ea',
     savings: 'Best value',
-    features: ['Full support', 'Guaranteed slots', 'Unlimited chat'],
+    features: ['Full support', 'Flexible scheduling', 'Unlimited chat'],
     ctaText: 'Book',
     isPopular: false,
   },
 ];
 
-// Social proof stats
+// Generic social proof stats
 const proofStats = [
-  { icon: Trophy, value: '4.9', label: 'rating' },
-  { icon: GraduationCap, value: '200+', label: 'students helped' },
-  { icon: Clock, value: '5 yrs', label: 'experience' },
+  { icon: Star, value: '5.0', label: 'rating' },
+  { icon: Users, value: '150+', label: 'clients' },
+  { icon: Clock, value: '3+ yrs', label: 'experience' },
 ];
 
 interface DemoStorefrontShowcaseProps {
@@ -114,7 +102,7 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
           </div>
         </div>
         <p className="text-[11px] text-text-muted max-w-xs mx-auto leading-snug">
-          Ace your {demoTenant.subject} courses with personalized 1-on-1 tutoring
+          {demoTenant.description}
         </p>
 
         {/* Social proof bar */}
@@ -285,13 +273,13 @@ export function DemoStorefrontFrame() {
         </div>
         <div className="flex-1 mx-4">
           <div className="bg-neutral-800 rounded-md px-3 py-1 text-xs text-text-muted max-w-xs mx-auto text-center">
-            alexchen.gethandled.ai
+            yourbusiness.gethandled.ai
           </div>
         </div>
       </div>
 
-      {/* Storefront content - fixed height on mobile, aspect ratio on desktop */}
-      <div className="h-[500px] sm:h-auto sm:aspect-[4/5]">
+      {/* Storefront content - responsive height optimized for hero placement */}
+      <div className="h-[420px] sm:h-[460px] lg:h-auto lg:aspect-[4/5]">
         <DemoStorefrontShowcase />
       </div>
     </div>

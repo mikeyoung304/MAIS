@@ -60,6 +60,36 @@
   animation: fade-slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
+/* Chat message fade-in animation for BookingFlowDemo */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Single bounce animation for confirmation checkmark */
+@keyframes bounce-once {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.animate-bounce-once {
+  animation: bounce-once 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-slide-up {

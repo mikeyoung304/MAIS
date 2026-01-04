@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Check,
   Globe,
-  Calendar,
   CreditCard,
   TrendingUp,
   FileText,
@@ -18,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
 import { ProjectHubMockup } from '@/components/home/ProjectHubMockup';
 import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
+import { BookingFlowDemo } from '@/components/home/BookingFlowDemo';
 
 export const metadata: Metadata = {
   title: 'Handled — Your website, bookings, and marketing — handled.',
@@ -161,52 +161,43 @@ export default function HomePage() {
         <main>
           {/* ============================================
               SECTION 1: HERO
-              "Your website, bookings, and marketing — handled."
+              Split layout: 40% text left, 60% visual right
+              Scannable in 5 seconds, single primary CTA
               ============================================ */}
-          <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 px-6">
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.1] tracking-tight">
-                Your website, bookings, and marketing — <span className="text-sage">handled.</span>
-              </h1>
-              <p className="mt-8 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
-                Handled builds and runs your professional website, manages bookings and payments,
-                and quietly helps you get more clients — without you learning software or marketing.
-              </p>
+          <section className="relative pt-28 pb-12 md:pt-32 md:pb-16 lg:pt-36 lg:pb-20 px-6">
+            <div className="max-w-6xl mx-auto w-full">
+              <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start lg:items-center">
+                {/* Text content - 40% on desktop */}
+                <div className="lg:col-span-5 text-center lg:text-left flex flex-col justify-center">
+                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight">
+                    Your Website, Bookings, and Marketing—
+                    <span className="text-sage">Handled.</span>
+                  </h1>
+                  <p className="mt-6 text-lg text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
+                    Build a professional site, handle bookings seamlessly, and grow your business
+                    without juggling tools.
+                  </p>
+                  <div className="mt-8">
+                    <Button
+                      asChild
+                      variant="sage"
+                      className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Link href="/signup">Get Started Free</Link>
+                    </Button>
+                  </div>
+                </div>
 
-              {/* Badge */}
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt px-3 py-1.5 rounded-full border border-neutral-800">
-                  <Globe className="w-3.5 h-3.5 text-sage" />
-                  Website included
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt px-3 py-1.5 rounded-full border border-neutral-800">
-                  <Calendar className="w-3.5 h-3.5 text-sage" />
-                  Booking included
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt px-3 py-1.5 rounded-full border border-neutral-800">
-                  <TrendingUp className="w-3.5 h-3.5 text-sage" />
-                  Marketing guidance included
-                </span>
+                {/* Visual - 60% on desktop: Full Booking Flow Demo */}
+                <div className="lg:col-span-7 flex items-start justify-center lg:justify-end">
+                  <BookingFlowDemo />
+                </div>
               </div>
 
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button
-                  asChild
-                  variant="sage"
-                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Link href="/signup">Get started</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="text-text-muted hover:text-text-primary rounded-full px-8 py-6 text-lg group"
-                >
-                  <Link href="#how-it-works" className="flex items-center gap-2">
-                    See how it works
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
+              {/* Scroll indicator - positioned relative to content flow */}
+              <div className="mt-10 md:mt-12 flex flex-col items-center gap-2 text-text-muted animate-bounce">
+                <span className="text-xs tracking-wide uppercase">Scroll to explore</span>
+                <ArrowRight className="w-4 h-4 rotate-90" />
               </div>
             </div>
           </section>
