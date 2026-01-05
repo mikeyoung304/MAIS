@@ -853,16 +853,6 @@ e2e/tests/booking-timeslots.spec.ts
 - Booking success rate >95%
 - Availability calculation <500ms
 
-#### Phase 1 Known Limitations (Deferred to Phase 2)
-
-| Field | Status | Rationale | Todo |
-|-------|--------|-----------|------|
-| `maxPerDay` | Schema complete, enforcement deferred | Field stored in Service model but `SchedulingAvailabilityService` does not check daily booking counts when generating slots. Enforcement requires counting existing bookings per day and filtering slots when limit reached. | #625 |
-
-**Why defer:** The schema is correct and the field is persisted. Enforcement adds query complexity (count existing bookings per service/date) that should be implemented alongside the full availability calculation expansion in Phase 2.
-
-**User communication:** Tool descriptions should clarify that `maxPerDay` is "stored for future use" until Phase 2 enforcement is implemented.
-
 ---
 
 ### Phase 2: Enhanced Features (Week 6-8)
@@ -876,7 +866,6 @@ e2e/tests/booking-timeslots.spec.ts
 - Intake forms (custom fields per service)
 - Admin dashboard (today's view, upcoming bookings)
 - Manual appointment creation by admin
-- **maxPerDay enforcement** in `SchedulingAvailabilityService` (#625)
 
 #### Deliverables
 

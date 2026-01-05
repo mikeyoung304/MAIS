@@ -628,6 +628,20 @@ const handleEdit = useCallback(
 className = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-sage';
 ```
 
+#### [Multi-Agent Code Review for Multi-Tenant Security (2026-01-05)](./code-review-patterns/multi-agent-code-review-booking-links-phase0-MAIS-20260105.md)
+
+**Purpose:** Multi-agent code review workflow for catching tenant isolation, TOCTOU, and registration issues
+**Audience:** Engineers doing code reviews, especially for multi-tenant agent features
+**Key Patterns:** 5 parallel review agents, triage voting with enterprise quality standards, 4 P1 escalations
+**Findings:** 4 P1 (tenant isolation, TOCTOU, executor registration, DRY), 4 P3 (deferred)
+
+**Key Prevention Patterns:**
+
+- Tenant isolation: Always include `tenantId` in delete/update where clauses
+- REQUIRED_EXECUTOR_TOOLS: Every T2 tool must be registered
+- TOCTOU: Wrap check-then-act in transactions with row locks
+- DRY: Extract shared utilities to `agent/shared/`
+
 #### [Parallel TODO Resolution Review (2025-12-29)](./code-review-patterns/parallel-todo-resolution-review-MAIS-20251229.md)
 
 **Purpose:** Comprehensive review of 20-TODO parallel resolution commit (df56db1)
@@ -1181,6 +1195,51 @@ logger.error({ error: sanitizeError(error) }, 'API failed');
 - [ ] Verify component size reduction
 - [ ] Check ESLint passes (exhaustive-deps)
 - [ ] Validate test coverage
+
+---
+
+### "I'm building agent tools with draft/publish workflow"
+
+**Read:**
+
+1. [Build Mode Implementation Prevention Strategies](./patterns/build-mode-implementation-prevention-MAIS-20260105.md) (20 min)
+2. [Agent Tool Architecture Prevention Strategies](./agent-design/AGENT-TOOL-ARCHITECTURE-PREVENTION-STRATEGIES-MAIS-20251228.md) (15 min)
+
+**Pre-Planning Checklist:**
+
+- [ ] Enumerated ALL UI actions user can perform
+- [ ] Created tool for EACH action (including publish/discard)
+- [ ] Defined trust tiers (T1 auto, T2 soft, T3 explicit)
+- [ ] Documented what goes to draft vs live
+- [ ] Created shared Zod schemas in `@macon/contracts`
+
+**Implementation Checklist:**
+
+- [ ] Tools use imported schemas from contracts (no duplication)
+- [ ] Executors use same schemas (single source of truth)
+- [ ] Helper functions in shared module (getDraftConfig, getTenantSlug)
+- [ ] ALL visual changes go to draft (including branding)
+- [ ] PostMessage uses Zod validation + origin check
+- [ ] Draft preview requires authentication
+- [ ] Version field for optimistic locking
+
+**Testing Checklist:**
+
+- [ ] 80% coverage on tools/executors
+- [ ] Trust tier transition tests
+- [ ] Concurrent edit tests
+- [ ] PostMessage origin validation tests
+- [ ] Schema parsing tests
+
+**Quick Reference:**
+
+```
+TOOLS: publish_draft, discard_draft, get_draft must exist
+SCHEMAS: @macon/contracts, import in tools AND executors
+DRAFT: ALL visual = draft (pages, sections, branding, logo)
+POSTMESSAGE: parseChildMessage() returns typed | null
+AUTH: ?preview=draft requires session check
+```
 
 ---
 
@@ -1942,6 +2001,69 @@ Are you creating a todo based on a plan?
 
 ### 4. Agent Design Prevention Guides
 
+#### [Build Mode Implementation Prevention Strategies](./patterns/build-mode-implementation-prevention-MAIS-20260105.md)
+
+**Purpose:** Prevent 10 critical issues discovered in Build Mode code review (agent parity, DRY, PostMessage, draft systems)
+**Audience:** Engineers building agent-integrated features with draft/publish workflows
+**Length:** ~5,000 words (comprehensive with code patterns and checklists)
+**Date Created:** 2026-01-05
+**Issues Prevented:** Agent parity gaps, Zod schema duplication, PostMessage type safety, inconsistent draft systems, test coverage gaps
+
+**Covers 10 Prevention Strategies:**
+
+1. **Agent Parity Gap (P1)** - Every UI action must have corresponding agent tool
+2. **DRY Violations - Schemas (P1)** - Extract Zod schemas to `@macon/contracts`
+3. **DRY Violations - Helpers (P1)** - Extract shared helpers to dedicated module
+4. **Testing Gap (P1)** - Minimum 80% coverage on agent tools/executors
+5. **Inconsistent Draft System (P1)** - ALL visual changes go to draft, not live
+6. **PostMessage Type Safety (P2)** - Zod validation for all messages, never cast
+7. **PostMessage Security (P2)** - Always validate origin before processing
+8. **Draft Preview Auth (P2)** - Authenticate all `?preview=draft` URLs
+9. **Concurrency (P2)** - Optimistic locking with version field
+10. **Performance (P2)** - Single query with all needed fields, not N+1
+
+**Key Patterns:**
+
+```typescript
+// Agent Parity: Map ALL UI actions to tools
+| UI Action | Agent Tool | Trust Tier |
+| Edit section | update_page_section | T2 |
+| Publish draft | publish_draft | T2 |  // <-- MISSING!
+| Discard draft | discard_draft | T2 |  // <-- MISSING!
+
+// DRY: Single schema source in contracts
+import { UpdatePageSectionPayloadSchema } from '@macon/contracts';
+// Used in BOTH tools AND executors
+
+// PostMessage: Always validate, never cast
+const message = parseChildMessage(event.data);  // Returns typed | null
+if (!message) return;  // Invalid message
+
+// Draft consistency: ALL visual changes to draft
+await saveDraftConfig(prisma, tenantId, { pages, branding });  // Not direct tenant update
+```
+
+**Quick Reference Card:**
+
+```
+BUILD MODE QUICK REFERENCE
+==========================
+TOOLS: List ALL UI actions, create tool for EACH
+SCHEMAS: Put in @macon/contracts, import everywhere
+POSTMESSAGE: Zod schema + origin check + parseX() function
+DRAFT: ALL visual changes to draft (including branding!)
+TESTS: 80% coverage on tools/executors
+```
+
+**When to Read:**
+
+- Building agent tools for any feature
+- Implementing draft/publish workflows
+- Adding PostMessage iframe communication
+- Code reviewing agent feature PRs
+
+---
+
 #### [Agent Tool Architecture Prevention Strategies](./agent-design/AGENT-TOOL-ARCHITECTURE-PREVENTION-STRATEGIES-MAIS-20251228.md)
 
 **Purpose:** Prevent 7 critical agent tool architecture issues discovered during code review
@@ -2254,7 +2376,12 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 ---
 
-**Last Updated:** 2026-01-01
+**Last Updated:** 2026-01-05
+**Recent Additions (2026-01-05):**
+
+- **[Build Mode Implementation Prevention](./patterns/build-mode-implementation-prevention-MAIS-20260105.md)** - Comprehensive prevention strategies for agent tools, draft systems, PostMessage protocols, and testing requirements based on Build Mode code review findings
+- **[Multi-Agent Code Review for Multi-Tenant Security](./code-review-patterns/multi-agent-code-review-booking-links-phase0-MAIS-20260105.md)** - 5 parallel review agents, triage voting, 4 P1 issues (tenant isolation, TOCTOU, executor registration, DRY)
+
 **Recent Additions (2025-12-31):**
 
 - **[Phase 5 Testing and Caching Prevention](./patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md)** - 4 issues: retryable keyword conflicts in tests, singleton cache testability, cache invalidation after writes, error sanitization in logs

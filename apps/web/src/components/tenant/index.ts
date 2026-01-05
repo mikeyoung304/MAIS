@@ -13,3 +13,7 @@ export { AboutPageContent, ContactPageContent, FAQPageContent, ServicesPageConte
 
 // Error boundary
 export { TenantErrorBoundary, createTenantErrorBoundary } from './TenantErrorBoundary';
+
+// Build Mode
+export { BuildModeWrapper } from './BuildModeWrapper';
+export { TenantLandingPageClient } from './TenantLandingPageClient';

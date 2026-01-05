@@ -96,7 +96,8 @@ model Tenant {
   balanceDueDays Int      @default(30)       // Days before event balance is due
 
   // Landing Page Configuration
-  landingPageConfig Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
+  landingPageConfig      Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
+  landingPageConfigDraft Json? // Draft version for Build Mode editing (published via copy to landingPageConfig)
 
   // Tier Display Names - Tenant customization for tier labels
   // Structure: {"tier_1": "The Grounding Reset", "tier_2": "The Team Recharge", "tier_3": "The Executive Reset"}
@@ -105,9 +106,6 @@ model Tenant {
 
   // Customer Chatbot Settings
   chatEnabled Boolean @default(true) // Whether customer-facing chatbot is enabled for this tenant
-
-  // Booking/Scheduling Settings (Phase 1 - Calendly-style scheduling)
-  timezone String @default("America/New_York") // Tenant's timezone for availability calculations
 
   // Test Data Identification
   isTestTenant Boolean @default(false) @map("is_test_tenant") // Flag for filtering test data from admin dashboard
@@ -506,11 +504,6 @@ model Service {
   timezone         String   @default("America/New_York") // Tenant's timezone for availability
   active           Boolean  @default(true)
   sortOrder        Int      @default(0)
-
-  // Booking Link Settings (Phase 1 - Calendly-style scheduling)
-  minNoticeMinutes Int      @default(120)  // Minimum advance notice required (default 2 hours)
-  maxAdvanceDays   Int      @default(60)   // How far in advance bookings can be made (default 60 days)
-  maxPerDay        Int?                    // Maximum bookings per day (null = unlimited)
 
   // Optional segment association
   segmentId        String?

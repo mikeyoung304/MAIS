@@ -845,6 +845,7 @@ The following links prevent common mistakes from recurring:
 - **[express-route-ordering-auth-fallback](docs/solutions/code-review-patterns/express-route-ordering-auth-fallback-security-MAIS-20260102.md)** - Express route ordering (static before parameterized), auth fallback guards, tenant defense-in-depth
 - **[vitest-skipif-collection-phase-timing](docs/solutions/test-failures/vitest-skipif-collection-phase-timing-MAIS-20260102.md)** - Vitest `skipIf` evaluates at collection time before `beforeAll`; use `describe.runIf` with sync checks
 - **[turbopack-hmr-module-cache-staleness](docs/solutions/dev-workflow/TURBOPACK_HMR_MODULE_CACHE_STALENESS_PREVENTION.md)** - Stale HMR cache prevention (import removal, build mode switching, branch changes) + quick recovery scripts
+- **[build-mode-storefront-editor-patterns](docs/solutions/patterns/build-mode-storefront-editor-patterns-MAIS-20260105.md)** - Agent parity, DRY schemas, PostMessage validation, draft system consistency, trust tiers
 - **[agent-tools-prevention-index](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Master index for agent tool patterns (tenant isolation, executor registry, TOCTOU prevention, DRY utilities)
 - **[booking-links-phase-0-prevention](docs/solutions/patterns/BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md)** - 4 prevention patterns from booking links code review (P1 fixes)
 
@@ -863,6 +864,8 @@ The following links prevent common mistakes from recurring:
 **Key insight from Agent-Eval Code Review:** Express matches routes in registration order. Static paths (`/stats`) must be defined BEFORE parameterized paths (`/:traceId`) or they become unreachable. Never use `|| 'system'` auth fallbacks - require authenticated user and return 401. Always include `tenantId` in queries even when IDs are pre-filtered (defense-in-depth).
 
 **Key insight from Turbopack HMR Cache Issues:** Turbopack maintains an in-memory module graph that becomes stale when removing imports or switching build modes. Recovery is always the same: clear caches (`rm -rf .next .turbo`) and restart. Prevention: proactively clear after branch switches, npm installs, and dependency removals. Use `npm run dev:fresh` script (added to apps/web/package.json) for one-liner recovery.
+
+**Key insight from Build Mode Code Review:** Agent parity is critical - every UI action needs a corresponding tool (publish_draft, discard_draft, get_draft were missing). Zod schemas MUST live in `@macon/contracts` and be imported in both tools AND executors (not duplicated). All visual changes (including branding) must go to draft, not live. PostMessage handlers must validate origin AND parse through Zod before processing - never cast `event.data as SomeType`.
 
 ## Quick Start Checklist
 

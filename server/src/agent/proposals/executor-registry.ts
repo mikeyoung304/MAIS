@@ -81,6 +81,15 @@ const REQUIRED_EXECUTOR_TOOLS = [
   'start_trial',
   'initiate_stripe_onboarding',
 
+  // Storefront Build Mode
+  'update_page_section',
+  'remove_page_section',
+  'reorder_page_sections',
+  'toggle_page_enabled',
+  'update_storefront_branding',
+  'publish_draft',
+  'discard_draft',
+
   // Booking link management
   'manage_bookable_service',
   'manage_working_hours',

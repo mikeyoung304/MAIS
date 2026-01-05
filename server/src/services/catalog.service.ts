@@ -21,6 +21,9 @@ import {
 } from '../lib/cache-helpers';
 import { validatePrice, validateRequiredFields } from '../lib/validation';
 import type { AuditService } from './audit.service';
+import type { PrismaSegmentRepository } from '../adapters/prisma/segment.repository';
+import type { TenantOnboardingService } from './tenant-onboarding.service';
+import { logger } from '../lib/core/logger';
 
 export interface PackageWithAddOns extends Package {
   addOns: AddOn[];
@@ -40,7 +43,9 @@ export class CatalogService {
   constructor(
     private readonly repository: CatalogRepository,
     private readonly cache?: CacheServicePort,
-    private readonly auditService?: AuditService
+    private readonly auditService?: AuditService,
+    private readonly segmentRepo?: PrismaSegmentRepository,
+    private readonly tenantOnboardingService?: TenantOnboardingService
   ) {}
 
   /**
@@ -196,7 +201,67 @@ export class CatalogService {
       throw new ValidationError(`Package with slug "${data.slug}" already exists`);
     }
 
-    const result = await this.repository.createPackage(tenantId, data);
+    // =========================================================================
+    // SEGMENT VALIDATION & AUTO-ASSIGNMENT (Defense-in-depth for #631)
+    // =========================================================================
+    // All packages must be linked to a segment. This service-layer validation
+    // catches orphaned packages from any code path (API, agent, scripts).
+    // =========================================================================
+    let resolvedSegmentId = data.segmentId;
+
+    if (resolvedSegmentId) {
+      // Verify provided segmentId belongs to this tenant (security + tenant isolation)
+      if (this.segmentRepo) {
+        const segment = await this.segmentRepo.findById(tenantId, resolvedSegmentId);
+        if (!segment) {
+          throw new ValidationError(
+            'Segment not found or access denied. Use a valid segment ID for this tenant.'
+          );
+        }
+        logger.debug(
+          { tenantId, segmentId: resolvedSegmentId, segmentName: segment.name },
+          'Package linked to existing segment'
+        );
+      }
+    } else {
+      // Auto-assign to "General" segment if no segmentId provided
+      if (this.segmentRepo) {
+        const generalSegment = await this.segmentRepo.findBySlug(tenantId, 'general');
+
+        if (generalSegment) {
+          resolvedSegmentId = generalSegment.id;
+          logger.debug(
+            { tenantId, segmentId: resolvedSegmentId },
+            'Package auto-assigned to General segment'
+          );
+        } else if (this.tenantOnboardingService) {
+          // Create default segment if it doesn't exist (tenant may have been created before segments)
+          logger.info(
+            { tenantId },
+            'General segment not found, creating default segment for tenant'
+          );
+          const { segment } = await this.tenantOnboardingService.createDefaultData({ tenantId });
+          resolvedSegmentId = segment.id;
+          logger.info(
+            { tenantId, segmentId: resolvedSegmentId },
+            'Created default segment and assigned package'
+          );
+        } else {
+          // No segment repo or onboarding service - log warning but allow null segmentId
+          // for backward compatibility during migration
+          logger.warn(
+            { tenantId },
+            'No segment repository available - package created without segment'
+          );
+        }
+      }
+    }
+
+    // Create package with resolved segment ID
+    const result = await this.repository.createPackage(tenantId, {
+      ...data,
+      segmentId: resolvedSegmentId ?? null,
+    });
 
     // Audit log (Sprint 2.1 - legacy CRUD tracking during migration)
     if (this.auditService && auditCtx) {

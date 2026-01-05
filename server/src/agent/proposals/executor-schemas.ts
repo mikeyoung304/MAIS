@@ -9,6 +9,16 @@
  */
 
 import { z } from 'zod';
+import {
+  SectionSchema,
+  PAGE_NAMES,
+  type PageName,
+  type Section,
+  type LandingPageConfig,
+  type PagesConfig,
+  type PageConfig,
+  DEFAULT_PAGES_CONFIG,
+} from '@macon/contracts';
 
 // ============================================================================
 // Shared Constants
@@ -298,6 +308,85 @@ export const InitiateStripeOnboardingPayloadSchema = z.object({
 export type InitiateStripeOnboardingPayload = z.infer<typeof InitiateStripeOnboardingPayloadSchema>;
 
 // ============================================================================
+// Storefront Build Mode Executor Schemas
+// ============================================================================
+
+/**
+ * update_page_section executor payload
+ * Updates or adds a section on a tenant's landing page draft
+ */
+export const UpdatePageSectionPayloadSchema = z.object({
+  pageName: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
+  sectionIndex: z.number().int().min(-1), // -1 = append
+  sectionData: SectionSchema,
+});
+
+export type UpdatePageSectionPayload = z.infer<typeof UpdatePageSectionPayloadSchema>;
+
+/**
+ * remove_page_section executor payload
+ */
+export const RemovePageSectionPayloadSchema = z.object({
+  pageName: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
+  sectionIndex: z.number().int().min(0),
+});
+
+export type RemovePageSectionPayload = z.infer<typeof RemovePageSectionPayloadSchema>;
+
+/**
+ * reorder_page_sections executor payload
+ */
+export const ReorderPageSectionsPayloadSchema = z.object({
+  pageName: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
+  fromIndex: z.number().int().min(0),
+  toIndex: z.number().int().min(0),
+});
+
+export type ReorderPageSectionsPayload = z.infer<typeof ReorderPageSectionsPayloadSchema>;
+
+/**
+ * toggle_page_enabled executor payload
+ */
+export const TogglePageEnabledPayloadSchema = z.object({
+  pageName: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
+  enabled: z.boolean(),
+});
+
+export type TogglePageEnabledPayload = z.infer<typeof TogglePageEnabledPayloadSchema>;
+
+/**
+ * update_storefront_branding executor payload
+ */
+export const UpdateStorefrontBrandingPayloadSchema = z.object({
+  primaryColor: HexColorSchema.optional(),
+  secondaryColor: HexColorSchema.optional(),
+  accentColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.optional(),
+  fontFamily: z.string().max(100).optional(),
+  logoUrl: z.string().url().max(2048).optional(),
+});
+
+export type UpdateStorefrontBrandingPayload = z.infer<typeof UpdateStorefrontBrandingPayloadSchema>;
+
+/**
+ * publish_draft executor payload
+ */
+export const PublishDraftPayloadSchema = z.object({
+  // No payload needed - publishes current draft
+});
+
+export type PublishDraftPayload = z.infer<typeof PublishDraftPayloadSchema>;
+
+/**
+ * discard_draft executor payload
+ */
+export const DiscardDraftPayloadSchema = z.object({
+  // No payload needed - discards current draft
+});
+
+export type DiscardDraftPayload = z.infer<typeof DiscardDraftPayloadSchema>;
+
+// ============================================================================
 // Customer Booking Executor Schemas
 // ============================================================================
 
@@ -358,6 +447,15 @@ export const executorSchemaRegistry: Record<string, z.ZodType<unknown>> = {
 
   // Customer-facing operations (T3)
   create_customer_booking: CreateCustomerBookingPayloadSchema,
+
+  // Storefront Build Mode operations
+  update_page_section: UpdatePageSectionPayloadSchema,
+  remove_page_section: RemovePageSectionPayloadSchema,
+  reorder_page_sections: ReorderPageSectionsPayloadSchema,
+  toggle_page_enabled: TogglePageEnabledPayloadSchema,
+  update_storefront_branding: UpdateStorefrontBrandingPayloadSchema,
+  publish_draft: PublishDraftPayloadSchema,
+  discard_draft: DiscardDraftPayloadSchema,
 };
 
 /**
@@ -396,3 +494,18 @@ export function validateExecutorPayload(
 export function hasExecutorSchema(toolName: string): boolean {
   return toolName in executorSchemaRegistry;
 }
+
+// ============================================================================
+// Re-exports for Landing Page Types (used by storefront tools/executors)
+// ============================================================================
+
+export {
+  SectionSchema,
+  PAGE_NAMES,
+  DEFAULT_PAGES_CONFIG,
+  type PageName,
+  type Section,
+  type LandingPageConfig,
+  type PagesConfig,
+  type PageConfig,
+} from '@macon/contracts';

@@ -9,6 +9,3 @@ export { Contracts } from './api.v1';
 
 // Onboarding Agent Schemas
 export * from './schemas/onboarding.schema';
-
-// Booking Link Agent Schemas
-export * from './schemas/booking-link.schema';

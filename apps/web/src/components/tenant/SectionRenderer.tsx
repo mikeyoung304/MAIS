@@ -18,6 +18,10 @@ interface SectionRendererProps {
   tenant: TenantPublicDto;
   /** Base path for links (e.g., '/t/slug' for slug routes) */
   basePath?: string;
+  /** Whether Build Mode is active (adds data attributes for selection) */
+  isEditMode?: boolean;
+  /** Starting index offset for sections (for split rendering) */
+  indexOffset?: number;
 }
 
 /**
@@ -36,7 +40,13 @@ interface SectionRendererProps {
  * />
  * ```
  */
-export function SectionRenderer({ sections, tenant, basePath = '' }: SectionRendererProps) {
+export function SectionRenderer({
+  sections,
+  tenant,
+  basePath = '',
+  isEditMode = false,
+  indexOffset = 0,
+}: SectionRendererProps) {
   if (!sections || sections.length === 0) {
     return null;
   }
@@ -44,37 +54,52 @@ export function SectionRenderer({ sections, tenant, basePath = '' }: SectionRend
   return (
     <>
       {sections.map((section, index) => {
+        const absoluteIndex = indexOffset + index;
+        const sectionKey = `${section.type}-${absoluteIndex}`;
+
         // Render based on section type
-        switch (section.type) {
-          case 'hero':
-            return (
-              <HeroSection key={`hero-${index}`} {...section} tenant={tenant} basePath={basePath} />
-            );
-          case 'text':
-            return <TextSection key={`text-${index}`} {...section} tenant={tenant} />;
-          case 'gallery':
-            return <GallerySection key={`gallery-${index}`} {...section} tenant={tenant} />;
-          case 'testimonials':
-            return (
-              <TestimonialsSection key={`testimonials-${index}`} {...section} tenant={tenant} />
-            );
-          case 'faq':
-            return <FAQSection key={`faq-${index}`} {...section} tenant={tenant} />;
-          case 'contact':
-            return <ContactSection key={`contact-${index}`} {...section} tenant={tenant} />;
-          case 'cta':
-            return (
-              <CTASection key={`cta-${index}`} {...section} tenant={tenant} basePath={basePath} />
-            );
-          case 'pricing':
-            return <PricingSection key={`pricing-${index}`} {...section} tenant={tenant} />;
-          case 'features':
-            return <FeaturesSection key={`features-${index}`} {...section} tenant={tenant} />;
-          default: {
-            const _exhaustive: never = section;
-            return _exhaustive;
+        const sectionComponent = (() => {
+          switch (section.type) {
+            case 'hero':
+              return <HeroSection {...section} tenant={tenant} basePath={basePath} />;
+            case 'text':
+              return <TextSection {...section} tenant={tenant} />;
+            case 'gallery':
+              return <GallerySection {...section} tenant={tenant} />;
+            case 'testimonials':
+              return <TestimonialsSection {...section} tenant={tenant} />;
+            case 'faq':
+              return <FAQSection {...section} tenant={tenant} />;
+            case 'contact':
+              return <ContactSection {...section} tenant={tenant} />;
+            case 'cta':
+              return <CTASection {...section} tenant={tenant} basePath={basePath} />;
+            case 'pricing':
+              return <PricingSection {...section} tenant={tenant} />;
+            case 'features':
+              return <FeaturesSection {...section} tenant={tenant} />;
+            default: {
+              const _exhaustive: never = section;
+              return _exhaustive;
+            }
           }
+        })();
+
+        // Wrap in a div with data-section-index for Build Mode selection
+        if (isEditMode) {
+          return (
+            <div
+              key={sectionKey}
+              data-section-index={absoluteIndex}
+              data-section-type={section.type}
+            >
+              {sectionComponent}
+            </div>
+          );
         }
+
+        // Normal mode - no wrapper needed
+        return <div key={sectionKey}>{sectionComponent}</div>;
       })}
     </>
   );

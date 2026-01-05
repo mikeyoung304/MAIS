@@ -130,6 +130,11 @@ export const upsertPackageTool: AgentTool = {
         type: 'boolean',
         description: 'Whether package is visible to customers',
       },
+      segmentId: {
+        type: 'string',
+        description:
+          'Service segment ID to assign the package to (optional - will auto-assign to General segment if not provided)',
+      },
     },
     required: ['title', 'priceCents'],
   },
@@ -178,6 +183,8 @@ export const upsertPackageTool: AgentTool = {
         photoUrl: params.photoUrl,
         bookingType: params.bookingType || 'DATE',
         active: params.active ?? true,
+        // Pass segmentId to executor - if not provided, executor will auto-assign to General (#629)
+        segmentId: params.segmentId,
       };
 
       // Build preview

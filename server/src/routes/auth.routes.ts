@@ -8,9 +8,8 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import crypto from 'node:crypto';
 import type { IdentityService } from '../services/identity.service';
 import type { TenantAuthService } from '../services/tenant-auth.service';
-import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
+import type { TenantProvisioningService } from '../services/tenant-provisioning.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
-import type { ApiKeyService } from '../lib/api-key.service';
 import type { EarlyAccessRepository } from '../lib/ports';
 import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
@@ -26,7 +25,6 @@ export interface UnifiedAuthRoutesOptions {
   identityService: IdentityService;
   tenantAuthService: TenantAuthService;
   tenantRepo: PrismaTenantRepository;
-  apiKeyService: ApiKeyService;
   config: {
     earlyAccessNotificationEmail?: string;
     adminNotificationEmail?: string;
@@ -35,7 +33,8 @@ export interface UnifiedAuthRoutesOptions {
     sendPasswordReset: (to: string, resetToken: string, resetUrl: string) => Promise<void>;
     sendEmail: (input: { to: string; subject: string; html: string }) => Promise<void>;
   };
-  tenantOnboardingService?: TenantOnboardingService;
+  /** Atomic tenant provisioning service for signup (creates tenant + segment + packages in transaction) */
+  tenantProvisioningService?: TenantProvisioningService;
   earlyAccessRepo?: EarlyAccessRepository;
 }
 
@@ -270,10 +269,9 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
     identityService,
     tenantAuthService,
     tenantRepo,
-    apiKeyService,
     config,
     mailProvider,
-    tenantOnboardingService,
+    tenantProvisioningService,
     earlyAccessRepo,
   } = options;
 
@@ -418,43 +416,32 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         throw new ConflictError('Please try again');
       }
 
-      // Generate API keys
-      const publicKey = apiKeyService.generatePublicKey(slug);
-      const secretKey = apiKeyService.generateSecretKey(slug);
-      const secretKeyHash = apiKeyService.hashSecretKey(secretKey);
-
       // Hash password
       const passwordHash = await tenantAuthService.hashPassword(password);
 
-      // Create tenant
-      const tenant = await tenantRepo.create({
+      // =========================================================================
+      // ATOMIC TENANT PROVISIONING (#632)
+      // =========================================================================
+      // Uses TenantProvisioningService for atomic creation of:
+      // - Tenant record with API keys
+      // - Default "General" segment
+      // - Default packages (Basic/Standard/Premium)
+      //
+      // If any part fails, the entire transaction rolls back.
+      // No more orphaned tenants without segments!
+      // =========================================================================
+      if (!tenantProvisioningService) {
+        throw new Error('Tenant provisioning service not configured');
+      }
+
+      const provisionedTenant = await tenantProvisioningService.createFromSignup({
         slug,
-        name: businessName,
+        businessName,
         email: normalizedEmail,
         passwordHash,
-        apiKeyPublic: publicKey,
-        apiKeySecret: secretKeyHash,
-        commissionPercent: 10.0,
-        emailVerified: false,
       });
 
-      // Create default segment and packages for new tenant
-      // Uses TenantOnboardingService for transactional, parallel creation
-      if (tenantOnboardingService) {
-        try {
-          await tenantOnboardingService.createDefaultData({ tenantId: tenant.id });
-        } catch (defaultDataError) {
-          // Don't fail signup if default data creation fails
-          // The tenant can still create their own packages manually
-          logger.warn(
-            {
-              tenantId: tenant.id,
-              error: defaultDataError instanceof Error ? defaultDataError.message : 'Unknown error',
-            },
-            'Failed to create default segment/packages for new tenant'
-          );
-        }
-      }
+      const { tenant } = provisionedTenant;
 
       // Generate JWT token
       const { token } = await tenantAuthService.login(normalizedEmail, password);
@@ -470,7 +457,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
           ipAddress,
           timestamp: new Date().toISOString(),
         },
-        'New tenant signup'
+        'New tenant signup (atomic provisioning)'
       );
 
       // Send admin notification - best effort, don't fail signup if email fails
@@ -559,7 +546,6 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         slug: tenant.slug,
         email: tenant.email,
         apiKeyPublic: tenant.apiKeyPublic,
-        secretKey, // Shown ONCE, not stored in DB
       });
     } catch (error) {
       // Log failed signup attempts

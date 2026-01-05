@@ -96,19 +96,18 @@ describe('POST /v1/auth/signup - Tenant Signup', () => {
         .expect(201);
 
       // Verify response structure
+      // Note: secretKey is no longer returned for self-signup (users authenticate via password)
       expect(res.body).toHaveProperty('token');
       expect(res.body).toHaveProperty('tenantId');
       expect(res.body).toHaveProperty('slug');
       expect(res.body).toHaveProperty('email', email);
       expect(res.body).toHaveProperty('apiKeyPublic');
-      expect(res.body).toHaveProperty('secretKey');
 
       // Verify token is a valid JWT format (3 parts separated by dots)
       expect(res.body.token.split('.').length).toBe(3);
 
-      // Verify API key formats
+      // Verify API key format (only public key is returned for self-signup)
       expect(res.body.apiKeyPublic).toMatch(/^pk_live_[a-z0-9-]+_[a-f0-9]{16}$/);
-      expect(res.body.secretKey).toMatch(/^sk_live_[a-z0-9-]+_[a-f0-9]{32}$/);
 
       // Verify slug is generated from business name (kebab-case with timestamp suffix)
       expect(res.body.slug).toMatch(/^test-business-corp-\d+$/);
@@ -132,8 +131,8 @@ describe('POST /v1/auth/signup - Tenant Signup', () => {
       expect(Number(tenant?.commissionPercent)).toBe(10);
       expect(tenant?.stripeOnboarded).toBe(false);
 
-      // Test 2: Verify default segment and packages were created
-      // TenantOnboardingService creates these in a transaction during signup
+      // Test 2: Verify default segment and packages were created atomically
+      // TenantProvisioningService creates these in a single transaction during signup (#632)
       const segments = await prisma.segment.findMany({
         where: { tenantId: res.body.tenantId },
       });

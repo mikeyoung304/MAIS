@@ -18,6 +18,7 @@ import { AuditService } from './services/audit.service';
 import { IdempotencyService } from './services/idempotency.service';
 import { SegmentService } from './services/segment.service';
 import { TenantOnboardingService } from './services/tenant-onboarding.service';
+import { TenantProvisioningService } from './services/tenant-provisioning.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
 import { PackageDraftService } from './services/package-draft.service';
@@ -227,16 +228,30 @@ export function buildContainer(config: Config): Container {
     const idempotencyService = new IdempotencyService(mockPrisma);
     idempotencyService.startCleanupScheduler();
 
+    // Mock TenantRepository (moved before CatalogService for proper dependency order)
+    const mockTenantRepo = new PrismaTenantRepository(mockPrisma);
+
+    // Create SegmentService and TenantOnboardingService BEFORE CatalogService (#631)
+    const segmentRepo = new PrismaSegmentRepository(mockPrisma);
+    const tenantOnboardingService = new TenantOnboardingService(mockPrisma);
+
+    // Create TenantProvisioningService for atomic tenant creation (#634)
+    const tenantProvisioningService = new TenantProvisioningService(mockPrisma);
+
     // Build domain services with caching and audit logging
-    const catalogService = new CatalogService(adapters.catalogRepo, cacheAdapter, auditService);
+    // CatalogService now receives segmentRepo and onboardingService for segment validation (#631)
+    const catalogService = new CatalogService(
+      adapters.catalogRepo,
+      cacheAdapter,
+      auditService,
+      segmentRepo,
+      tenantOnboardingService
+    );
     const availabilityService = new AvailabilityService(
       adapters.calendarProvider,
       adapters.blackoutRepo,
       adapters.bookingRepo
     );
-
-    // Mock TenantRepository
-    const mockTenantRepo = new PrismaTenantRepository(mockPrisma);
 
     // Create scheduling repositories and service for TIMESLOT bookings
     const serviceRepo = new PrismaServiceRepository(mockPrisma);
@@ -276,11 +291,8 @@ export function buildContainer(config: Config): Container {
     const tenantAuthService = new TenantAuthService(mockTenantRepo, config.JWT_SECRET);
 
     // Create SegmentService with mock Prisma segment repo and storage provider
-    const segmentRepo = new PrismaSegmentRepository(mockPrisma);
+    // Note: segmentRepo and tenantOnboardingService already created above for CatalogService (#631)
     const segmentService = new SegmentService(segmentRepo, cacheAdapter, storageProvider);
-
-    // Create TenantOnboardingService with mock Prisma
-    const tenantOnboardingService = new TenantOnboardingService(mockPrisma);
 
     // Create PackageDraftService with mock catalog repository
     const packageDraftService = new PackageDraftService(adapters.catalogRepo, cacheAdapter);
@@ -338,6 +350,7 @@ export function buildContainer(config: Config): Container {
       audit: auditService,
       segment: segmentService,
       tenantOnboarding: tenantOnboardingService,
+      tenantProvisioning: tenantProvisioningService,
       googleCalendar: googleCalendarService,
       schedulingAvailability: schedulingAvailabilityService,
       packageDraft: packageDraftService,
@@ -558,8 +571,21 @@ export function buildContainer(config: Config): Container {
   const idempotencyService = new IdempotencyService(prisma);
   idempotencyService.startCleanupScheduler();
 
+  // Create TenantOnboardingService BEFORE CatalogService (#631) for segment validation
+  const tenantOnboardingService = new TenantOnboardingService(prisma);
+
+  // Create TenantProvisioningService for atomic tenant creation (#634)
+  const tenantProvisioningService = new TenantProvisioningService(prisma);
+
   // Build domain services with caching and audit logging
-  const catalogService = new CatalogService(catalogRepo, cacheAdapter, auditService);
+  // CatalogService now receives segmentRepo and onboardingService for segment validation (#631)
+  const catalogService = new CatalogService(
+    catalogRepo,
+    cacheAdapter,
+    auditService,
+    segmentRepo,
+    tenantOnboardingService
+  );
   const availabilityService = new AvailabilityService(calendarProvider, blackoutRepo, bookingRepo);
   // P3-342 FIX: Use options object pattern to avoid undefined placeholders
   const bookingService = new BookingService({
@@ -580,9 +606,6 @@ export function buildContainer(config: Config): Container {
 
   // Create SegmentService with real Prisma segment repo and storage provider
   const segmentService = new SegmentService(segmentRepo, cacheAdapter, storageProvider);
-
-  // Create TenantOnboardingService with real Prisma
-  const tenantOnboardingService = new TenantOnboardingService(prisma);
 
   // Create GoogleCalendarService with real calendar provider
   const googleCalendarService = new GoogleCalendarService(calendarProvider);
@@ -751,6 +774,7 @@ export function buildContainer(config: Config): Container {
     audit: auditService,
     segment: segmentService,
     tenantOnboarding: tenantOnboardingService,
+    tenantProvisioning: tenantProvisioningService,
     googleCalendar: googleCalendarService,
     schedulingAvailability: schedulingAvailabilityService,
     packageDraft: packageDraftService,
