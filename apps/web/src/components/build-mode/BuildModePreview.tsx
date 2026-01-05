@@ -38,10 +38,20 @@ export function BuildModePreview({
   className,
 }: BuildModePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeReadyTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (iframeReadyTimeoutRef.current) {
+        clearTimeout(iframeReadyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Build iframe URL with preview mode
   const iframeUrl = `/t/${tenantSlug}/${currentPage === 'home' ? '' : currentPage}?preview=draft&edit=true`;
@@ -121,8 +131,12 @@ export function BuildModePreview({
 
   // Handle iframe load
   const handleIframeLoad = useCallback(() => {
+    // Clear any previous timeout
+    if (iframeReadyTimeoutRef.current) {
+      clearTimeout(iframeReadyTimeoutRef.current);
+    }
     // Give the iframe content time to initialize
-    setTimeout(() => {
+    iframeReadyTimeoutRef.current = setTimeout(() => {
       if (!isReady) {
         // If not ready after timeout, show a warning
         setIsLoading(false);
@@ -205,10 +219,13 @@ export function BuildModePreview({
         <div
           className={cn(
             'h-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300',
-            viewportMode === 'mobile'
-              ? `max-w-[${BUILD_MODE_CONFIG.viewport.mobileWidth}px]`
-              : 'w-full'
+            viewportMode === 'desktop' && 'w-full'
           )}
+          style={
+            viewportMode === 'mobile'
+              ? { maxWidth: BUILD_MODE_CONFIG.viewport.mobileWidth }
+              : undefined
+          }
         >
           {/* Loading state */}
           {isLoading && (

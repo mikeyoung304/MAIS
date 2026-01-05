@@ -87,6 +87,8 @@ const REQUIRED_EXECUTOR_TOOLS = [
   'reorder_page_sections',
   'toggle_page_enabled',
   'update_storefront_branding',
+  'publish_draft',
+  'discard_draft',
 ] as const;
 
 /**

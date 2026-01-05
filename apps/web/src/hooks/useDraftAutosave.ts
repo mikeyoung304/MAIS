@@ -72,6 +72,7 @@ export function useDraftAutosave({
   const [draftConfig, setDraftConfig] = useState<PagesConfig | null>(initialConfig);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const statusResetRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Create API client instance
   const apiClient = useMemo(() => createClientApiClient(), []);
@@ -109,8 +110,9 @@ export function useDraftAutosave({
         setIsDirty(false);
         onSave?.();
 
-        // Reset to idle after a delay
-        setTimeout(() => {
+        // Reset to idle after a delay (clear previous timeout first)
+        if (statusResetRef.current) clearTimeout(statusResetRef.current);
+        statusResetRef.current = setTimeout(() => {
           setSaveStatus('idle');
         }, BUILD_MODE_CONFIG.timing.saveStatusResetDelay);
       } catch (error) {
@@ -118,8 +120,9 @@ export function useDraftAutosave({
         setSaveStatus('error');
         onError?.(error as Error);
 
-        // Reset to idle after a delay
-        setTimeout(() => {
+        // Reset to idle after a delay (clear previous timeout first)
+        if (statusResetRef.current) clearTimeout(statusResetRef.current);
+        statusResetRef.current = setTimeout(() => {
           setSaveStatus('idle');
         }, BUILD_MODE_CONFIG.timing.errorStatusResetDelay);
       }
@@ -222,6 +225,9 @@ export function useDraftAutosave({
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
+      }
+      if (statusResetRef.current) {
+        clearTimeout(statusResetRef.current);
       }
     };
   }, []);
