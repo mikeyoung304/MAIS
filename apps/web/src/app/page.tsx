@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
 import {
-  ArrowRight,
   Check,
   TrendingUp,
   FileText,
@@ -160,10 +159,10 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Scroll indicator - positioned relative to content flow */}
-              <div className="mt-6 md:mt-8 flex flex-col items-center gap-2 text-text-muted animate-bounce">
-                <span className="text-xs tracking-wide uppercase">Scroll to explore</span>
-                <ArrowRight className="w-4 h-4 rotate-90" />
+              {/* Scroll indicator - subtle, integrated with page rhythm */}
+              <div className="mt-8 md:mt-10 flex flex-col items-center gap-1.5 opacity-40 hover:opacity-60 transition-opacity duration-300 cursor-default">
+                <div className="w-px h-6 bg-gradient-to-b from-transparent via-neutral-500 to-neutral-500" />
+                <ChevronDown className="w-4 h-4 text-neutral-500" />
               </div>
             </div>
           </section>
