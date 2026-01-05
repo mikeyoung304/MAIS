@@ -848,6 +848,9 @@ The following links prevent common mistakes from recurring:
 - **[build-mode-storefront-editor-patterns](docs/solutions/patterns/build-mode-storefront-editor-patterns-MAIS-20260105.md)** - Agent parity, DRY schemas, PostMessage validation, draft system consistency, trust tiers
 - **[agent-tools-prevention-index](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Master index for agent tool patterns (tenant isolation, executor registry, TOCTOU prevention, DRY utilities)
 - **[booking-links-phase-0-prevention](docs/solutions/patterns/BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md)** - 4 prevention patterns from booking links code review (P1 fixes)
+- **[atomic-tenant-provisioning-defense-in-depth](docs/solutions/patterns/atomic-tenant-provisioning-defense-in-depth-MAIS-20260105.md)** - Multi-entity creation patterns: atomic transactions, shared provisioning service, DI container consistency, DRY constants, defense-in-depth validation (P1 issues #629-634)
+
+**Key insight from Atomic Tenant Provisioning:** Multi-entity creation requires three defenses: (1) atomic transaction to prevent partial state, (2) centralized provisioning service to prevent logic duplication, (3) validation layer to catch regressions. Never have the same "create tenant + defaults" logic in multiple places. When service paths diverge (admin API vs signup), unify them immediately using shared provisioning service.
 
 **Key insight from Booking Links Phase 0:** All agent write tools MUST be in `REQUIRED_EXECUTOR_TOOLS` for startup validation. Use `updateMany`/`deleteMany` with `tenantId` in where clause (defense-in-depth). Wrap check-then-act patterns in transactions with `FOR UPDATE` locks. Extract shared utilities to `agent/utils/` immediately (not "later").
 
