@@ -18,13 +18,11 @@
  * ```
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import type { PagesConfig, LandingPageConfig } from '@macon/contracts';
 import { BUILD_MODE_CONFIG } from '@/lib/build-mode/config';
 import { logger } from '@/lib/logger';
-
-// TODO: Enable when landingPageAdminContract is added to Contracts in api.v1.ts
-// import { createClientApiClient } from '@/lib/api';
+import { createClientApiClient } from '@/lib/api';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -75,11 +73,10 @@ export function useDraftAutosave({
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // TODO: Create client API instance when landingPageAdminContract is added to Contracts
-  // const apiClient = useMemo(() => createClientApiClient(), []);
+  // Create API client instance
+  const apiClient = useMemo(() => createClientApiClient(), []);
 
   // Save draft to backend
-  // TODO: Enable API call when landingPageAdminContract is integrated
   const saveDraft = useCallback(
     async (config: PagesConfig) => {
       setSaveStatus('saving');
@@ -90,17 +87,25 @@ export function useDraftAutosave({
           pages: config,
         };
 
-        // TODO: Replace with actual API call when integrated
-        logger.info('[useDraftAutosave] Saving draft (stub)', {
+        logger.info('[useDraftAutosave] Saving draft', {
           pagesCount: Object.keys(config).length,
         });
-        void landingPageConfig; // Silence unused variable warning
 
-        // Simulate successful save
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Call the API to save draft
+        const response = await apiClient.saveDraft({
+          body: landingPageConfig,
+        });
+
+        if (response.status !== 200) {
+          throw new Error(
+            response.body && typeof response.body === 'object' && 'error' in response.body
+              ? String(response.body.error)
+              : 'Failed to save draft'
+          );
+        }
 
         setSaveStatus('saved');
-        setLastSaved(new Date());
+        setLastSaved(new Date(response.body.draftUpdatedAt));
         setIsDirty(false);
         onSave?.();
 
@@ -109,6 +114,7 @@ export function useDraftAutosave({
           setSaveStatus('idle');
         }, BUILD_MODE_CONFIG.timing.saveStatusResetDelay);
       } catch (error) {
+        logger.error('[useDraftAutosave] Save failed', { error });
         setSaveStatus('error');
         onError?.(error as Error);
 
@@ -118,53 +124,73 @@ export function useDraftAutosave({
         }, BUILD_MODE_CONFIG.timing.errorStatusResetDelay);
       }
     },
-    [onError, onSave]
+    [apiClient, onError, onSave]
   );
 
   // Publish draft to live
-  // TODO: Enable API call when landingPageAdminContract is integrated
   const publishDraft = useCallback(async (): Promise<boolean> => {
     setSaveStatus('saving');
 
     try {
-      // TODO: Replace with actual API call when integrated
-      logger.info('[useDraftAutosave] Publishing draft (stub)');
+      logger.info('[useDraftAutosave] Publishing draft');
 
-      // Simulate successful publish
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Call the API to publish draft
+      const response = await apiClient.publishDraft({
+        body: {},
+      });
+
+      if (response.status !== 200) {
+        throw new Error(
+          response.body && typeof response.body === 'object' && 'error' in response.body
+            ? String(response.body.error)
+            : 'Failed to publish draft'
+        );
+      }
 
       setSaveStatus('saved');
       setIsDirty(false);
+      logger.info('[useDraftAutosave] Published successfully', {
+        publishedAt: response.body.publishedAt,
+      });
       return true;
     } catch (error) {
+      logger.error('[useDraftAutosave] Publish failed', { error });
       setSaveStatus('error');
       onError?.(error as Error);
       return false;
     }
-  }, [onError]);
+  }, [apiClient, onError]);
 
   // Discard draft changes
-  // TODO: Enable API call when landingPageAdminContract is integrated
   const discardDraft = useCallback(async (): Promise<boolean> => {
     setSaveStatus('saving');
 
     try {
-      // TODO: Replace with actual API call when integrated
-      logger.info('[useDraftAutosave] Discarding draft (stub)');
+      logger.info('[useDraftAutosave] Discarding draft');
 
-      // Simulate successful discard
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // Call the API to discard draft (no body required for DELETE)
+      const response = await apiClient.discardDraft({});
+
+      if (response.status !== 200) {
+        throw new Error(
+          response.body && typeof response.body === 'object' && 'error' in response.body
+            ? String(response.body.error)
+            : 'Failed to discard draft'
+        );
+      }
 
       setSaveStatus('idle');
       setIsDirty(false);
       setDraftConfig(initialConfig);
+      logger.info('[useDraftAutosave] Draft discarded successfully');
       return true;
     } catch (error) {
+      logger.error('[useDraftAutosave] Discard failed', { error });
       setSaveStatus('error');
       onError?.(error as Error);
       return false;
     }
-  }, [initialConfig, onError]);
+  }, [apiClient, initialConfig, onError]);
 
   // Queue a debounced save
   const queueSave = useCallback(
