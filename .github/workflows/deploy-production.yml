@@ -135,6 +135,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
+        env:
+          # Prisma 7 requires DATABASE_URL even for generate (to parse schema)
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
 
       - name: Build workspace packages
         run: |
@@ -279,6 +282,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
+        env:
+          # Prisma 7 requires DATABASE_URL even for generate (to parse schema)
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
       - name: Verify database connection
         run: |

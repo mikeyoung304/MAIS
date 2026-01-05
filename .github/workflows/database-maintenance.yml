@@ -81,6 +81,8 @@ jobs:
 
       - name: Generate and verify Prisma Client
         run: npm run --workspace=server prisma:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_validation
 
       - name: Test database queries
         run: |
@@ -238,6 +240,8 @@ jobs:
 
       - name: Generate Prisma Client
         run: npm run --workspace=server prisma:generate
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
       - name: Verify database connection
         run: |
