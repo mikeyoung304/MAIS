@@ -45,7 +45,7 @@ interface TierContent {
 const TIER_CONTENT: Record<SignupTier | 'default', TierContent> = {
   handled: {
     title: "Let's build your storefront.",
-    subtitle: 'Done-for-you website + booking. 14 days free, no credit card.',
+    subtitle: 'Done-for-you website + booking. Try free for 14 days.',
     cta: 'Start my storefront',
     loadingCta: 'Setting up your storefront...',
   },
@@ -57,7 +57,7 @@ const TIER_CONTENT: Record<SignupTier | 'default', TierContent> = {
   },
   default: {
     title: 'Bring your passion.',
-    subtitle: 'The rest is handled. 14 days free, no credit card.',
+    subtitle: 'The rest is handled. Try free for 14 days.',
     cta: 'Get Handled',
     loadingCta: 'Setting up your storefront...',
   },
@@ -204,9 +204,11 @@ function SignupForm() {
     }
   };
 
-  // Dark theme input styles
-  const inputBaseStyles =
-    'bg-surface border-neutral-700 text-text-primary placeholder:text-text-muted/60 focus:border-sage focus:ring-2 focus:ring-sage/20 focus:outline-none hover:border-neutral-600 transition-colors duration-200';
+  // Light inputs on dark card - maximum contrast, premium feel
+  // Uses default Input component styles (bg-white) with sage focus ring
+  const inputStyles =
+    'bg-white border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-sage focus:ring-2 focus:ring-sage/30 focus:outline-none hover:border-neutral-300 transition-all duration-200';
+  const inputErrorStyles = 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20';
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -221,7 +223,7 @@ function SignupForm() {
       <div className="flex justify-center mb-6">
         <div className="inline-flex items-center gap-2 bg-sage/15 text-sage text-sm font-medium px-4 py-2 rounded-full border border-sage/30">
           <Sparkles className="w-4 h-4" aria-hidden="true" />
-          14 days free — no credit card
+          14-day free trial
         </div>
       </div>
 
@@ -266,7 +268,7 @@ function SignupForm() {
               </Label>
               <div className="relative">
                 <Building2
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
                   aria-hidden="true"
                 />
                 <Input
@@ -280,7 +282,7 @@ function SignupForm() {
                       setFieldErrors((prev) => ({ ...prev, businessName: '' }));
                     }
                   }}
-                  className={`pl-10 ${inputBaseStyles} ${fieldErrors.businessName ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20' : ''}`}
+                  className={`pl-10 ${inputStyles} ${fieldErrors.businessName ? inputErrorStyles : ''}`}
                   required
                   autoComplete="organization"
                   disabled={isLoading}
@@ -303,7 +305,7 @@ function SignupForm() {
               </Label>
               <div className="relative">
                 <Mail
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
                   aria-hidden="true"
                 />
                 <Input
@@ -317,7 +319,7 @@ function SignupForm() {
                       setFieldErrors((prev) => ({ ...prev, email: '' }));
                     }
                   }}
-                  className={`pl-10 ${inputBaseStyles} ${fieldErrors.email ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20' : ''}`}
+                  className={`pl-10 ${inputStyles} ${fieldErrors.email ? inputErrorStyles : ''}`}
                   required
                   autoComplete="email"
                   disabled={isLoading}
@@ -339,7 +341,7 @@ function SignupForm() {
               </Label>
               <div className="relative">
                 <Lock
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
                   aria-hidden="true"
                 />
                 <Input
@@ -353,7 +355,7 @@ function SignupForm() {
                       setFieldErrors((prev) => ({ ...prev, password: '' }));
                     }
                   }}
-                  className={`pl-10 pr-12 ${inputBaseStyles} ${fieldErrors.password ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20' : ''}`}
+                  className={`pl-10 pr-12 ${inputStyles} ${fieldErrors.password ? inputErrorStyles : ''}`}
                   required
                   autoComplete="new-password"
                   disabled={isLoading}
@@ -364,7 +366,7 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-sage/50 rounded"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-400 hover:text-neutral-600 transition-colors focus:outline-none focus:ring-2 focus:ring-sage/50 rounded"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
