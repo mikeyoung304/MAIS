@@ -318,6 +318,17 @@ export default function HomePage() {
                 </p>
                 <ChevronDown className="w-5 h-5 text-sage animate-bounce" />
               </div>
+
+              {/* CTA */}
+              <div className="mt-10 text-center">
+                <Link
+                  href="#pricing"
+                  className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+                >
+                  See what&apos;s included
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </section>
 
@@ -516,6 +527,17 @@ export default function HomePage() {
                   </span>
                   .
                 </p>
+
+                {/* CTA */}
+                <div className="mt-10">
+                  <Link
+                    href="#pricing"
+                    className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+                  >
+                    See pricing
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
               </div>
             </div>
           </section>
@@ -629,6 +651,17 @@ export default function HomePage() {
               ============================================ */}
           <ProjectHubWedge />
 
+          {/* CTA after Project Hub */}
+          <div className="py-10 text-center bg-surface-alt">
+            <Link
+              href="#pricing"
+              className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+            >
+              See pricing
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
           {/* ============================================
               SECTION 5: MEMORY & REPEAT CLIENT EXPERIENCE
               "Handled remembers your clients"
@@ -672,6 +705,17 @@ export default function HomePage() {
               <p className="text-center text-lg text-text-primary font-medium">
                 The more you work with someone, the easier it gets — for both of you.
               </p>
+
+              {/* CTA */}
+              <div className="mt-10 text-center">
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+                >
+                  Start your free trial
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </section>
 
