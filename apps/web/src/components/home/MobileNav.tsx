@@ -14,8 +14,8 @@ import { useSwipeGesture } from '@/hooks/useSwipeGesture';
  */
 
 const navLinks = [
-  { href: '#how-it-works', label: 'How it works' },
-  { href: '#growth', label: 'Growth Plan' },
+  { href: '#problem', label: 'The Problem' },
+  { href: '#pricing', label: 'Pricing' },
   { href: '/login', label: 'Login' },
 ];
 

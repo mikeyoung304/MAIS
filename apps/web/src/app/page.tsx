@@ -5,13 +5,13 @@ import {
   TrendingUp,
   FileText,
   Users,
-  MessageSquare,
   Sparkles,
   Brain,
   Heart,
   X,
   Clock,
   ChevronDown,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
@@ -30,11 +30,65 @@ export const metadata: Metadata = {
   },
 };
 
-// Growth Plan features
-const growthPlanFeatures = [
-  'A customized marketing strategy based on your business',
-  'Simple prompts for social and LinkedIn posts',
-  'Clear, practical actions that compound into real demand',
+// 3-Tier Pricing - Psychology Optimized
+// Implements: Anchoring, Decoy Effect, Social Proof, Outcome-Focused Naming
+const tiers = [
+  {
+    id: 'foundation',
+    name: 'The Foundation',
+    price: '$49',
+    priceSubtext: '/month',
+    description: 'Professional presence. Zero tech headaches.',
+    annualSavings: 'Save $118/year',
+    features: [
+      'Done-for-you website',
+      'Conversion-optimized design',
+      'Match your brand colors & fonts',
+      'Online booking & payments',
+      'Monthly growth newsletter',
+      'Live monthly Zoom calls',
+    ],
+    ctaText: 'Get Started',
+    ctaHref: '/signup?tier=handled',
+    isPopular: false,
+  },
+  {
+    id: 'system',
+    name: 'The System',
+    price: '$149',
+    priceSubtext: '/month',
+    description: 'One extra booking per month and it pays for itself.',
+    annualSavings: 'Save $358/year',
+    features: [
+      'Everything in Foundation',
+      'AI chatbot that books clients 24/7',
+      'Auto email responder for inquiries',
+      'Smart reminders that reduce no-shows',
+      'Priority support',
+    ],
+    ctaText: 'Start Growing',
+    ctaHref: '/signup?tier=fully-handled',
+    isPopular: true,
+  },
+  {
+    id: 'partnership',
+    name: 'The Partnership',
+    price: "Let's talk",
+    priceSubtext: '',
+    description: 'We build it. You book clients.',
+    annualSavings: null,
+    features: [
+      'Everything in The System',
+      'Custom automations',
+      'Voice agents',
+      '1-on-1 strategy sessions',
+      'We build it for you',
+      'Dedicated account manager',
+    ],
+    ctaText: 'Book a Call',
+    ctaHref: '/contact',
+    isPopular: false,
+  },
 ];
 
 // Memory section bullets
@@ -104,10 +158,10 @@ export default function HomePage() {
                 The Problem
               </Link>
               <Link
-                href="#growth"
+                href="#pricing"
                 className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
-                Growth Plan
+                Pricing
               </Link>
               <Link
                 href="/login"
@@ -467,80 +521,105 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 4: GROWTH PLAN ($150/mo)
-              "When you're ready to grow, Handled steps in."
+              SECTION 4: PRICING (3-TIER) - PSYCHOLOGY OPTIMIZED
+              Implements: Anchoring, Decoy Effect, Elevated Popular Tier
               ============================================ */}
-          <section id="growth" className="py-24 md:py-32 px-6 scroll-mt-20">
-            <div className="max-w-4xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <div className="inline-flex items-center gap-2 bg-sage/10 border border-sage/30 rounded-full px-4 py-1.5 mb-6">
-                    <TrendingUp className="w-4 h-4 text-sage" />
-                    <span className="text-sm text-sage font-medium">Growth Plan • $150/mo</span>
-                  </div>
-                  <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
-                    When you&apos;re ready to grow, Handled steps in.
-                  </h2>
-                  <p className="text-lg text-text-muted leading-relaxed mb-8">
-                    On our growth plan, Handled doesn&apos;t just keep things organized — it
-                    actively helps you get booked.
-                  </p>
-                  <div className="mb-8">
-                    <p className="text-text-primary font-medium mb-4">You&apos;ll get:</p>
-                    <ul className="space-y-3">
-                      {growthPlanFeatures.map((feature) => (
+          <section id="pricing" className="py-24 md:py-32 px-6 scroll-mt-20">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
+                  Simple pricing. No guesswork.
+                </h2>
+                <p className="text-xl text-text-muted">
+                  No contracts. No surprises. Cancel anytime.
+                </p>
+              </div>
+
+              {/* 3-Tier Grid - pt-6 accommodates elevated badge */}
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start pt-6">
+                {tiers.map((tier) => (
+                  <div
+                    key={tier.id}
+                    className={`relative bg-surface-alt rounded-2xl p-8 border transition-all duration-300 ${
+                      tier.isPopular
+                        ? 'border-2 border-sage shadow-xl shadow-sage/20 md:-mt-4 md:scale-[1.02] z-10 ring-1 ring-sage/20'
+                        : 'border-neutral-800 hover:shadow-xl hover:-translate-y-1 hover:border-sage/50'
+                    }`}
+                  >
+                    {/* Elevated "Most Popular" badge */}
+                    {tier.isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                        <span
+                          className="inline-flex items-center gap-1.5 bg-sage text-white text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg"
+                          role="status"
+                          aria-label="Most popular choice"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+
+                    <h3
+                      className={`font-serif text-2xl font-bold text-text-primary ${tier.isPopular ? 'mt-2' : ''}`}
+                    >
+                      {tier.name}
+                    </h3>
+                    <p className="mt-1 text-text-muted text-sm">{tier.description}</p>
+
+                    {/* Price with savings badge */}
+                    <div className="mt-6">
+                      <div className="flex items-baseline gap-1">
+                        <span
+                          className={`font-bold text-text-primary ${tier.isPopular ? 'text-5xl' : 'text-4xl'}`}
+                        >
+                          {tier.price}
+                        </span>
+                        {tier.priceSubtext && (
+                          <span className="text-text-muted">{tier.priceSubtext}</span>
+                        )}
+                      </div>
+                      {tier.annualSavings && (
+                        <div className="mt-2">
+                          <span className="text-xs font-semibold text-sage bg-sage/15 px-2 py-1 rounded">
+                            {tier.annualSavings}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <ul className="mt-6 space-y-3">
+                      {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check className="w-3 h-3 text-sage" />
-                          </div>
-                          <span className="text-text-muted">{feature}</span>
+                          <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
+                          <span className="text-text-primary text-sm">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                  </div>
-                  <p className="text-text-primary font-medium">
-                    No courses. No funnels. No guesswork.
-                  </p>
-                </div>
 
-                {/* Visual: Growth indicators */}
-                <div className="bg-surface-alt rounded-2xl p-8 border border-neutral-800">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-neutral-800">
-                      <div className="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center">
-                        <MessageSquare className="w-5 h-5 text-sage" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-text-primary">Social post starter</p>
-                        <p className="text-xs text-text-muted">Ready to customize and post</p>
-                      </div>
-                      <span className="text-xs text-sage font-medium">New</span>
-                    </div>
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-neutral-800">
-                      <div className="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-sage" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-text-primary">Weekly action</p>
-                        <p className="text-xs text-text-muted">
-                          &quot;Reply to 3 comments from last week&quot;
-                        </p>
-                      </div>
-                      <span className="text-xs text-amber-500 font-medium">To-do</span>
-                    </div>
-                    <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-emerald-500/30">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                        <Check className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-text-primary">LinkedIn post</p>
-                        <p className="text-xs text-text-muted">Posted yesterday • 340 views</p>
-                      </div>
-                      <span className="text-xs text-emerald-500 font-medium">Done</span>
-                    </div>
+                    {/* CTA with arrow for popular tier */}
+                    <Button
+                      asChild
+                      variant={tier.isPopular ? 'sage' : 'outline'}
+                      className={`w-full mt-8 rounded-full py-5 ${
+                        tier.isPopular
+                          ? 'shadow-lg hover:shadow-xl'
+                          : 'border-sage/50 text-sage hover:bg-sage/10 hover:border-sage'
+                      }`}
+                    >
+                      <Link href={tier.ctaHref} className="flex items-center justify-center gap-2">
+                        {tier.ctaText}
+                        {tier.isPopular && <ArrowRight className="w-4 h-4" />}
+                      </Link>
+                    </Button>
                   </div>
-                </div>
+                ))}
               </div>
+
+              {/* Fine print */}
+              <p className="text-center text-text-muted text-sm mt-10">
+                Try it free for 14 days. No credit card required.
+              </p>
             </div>
           </section>
 
