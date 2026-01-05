@@ -59,6 +59,7 @@ export async function getTenantInfo(
     where: { id: tenantId },
     select: {
       slug: true,
+      timezone: true, // Phase 1: Now stored in database
       domains: {
         where: { verified: true, isPrimary: true },
         select: { domain: true },
@@ -75,11 +76,9 @@ export async function getTenantInfo(
     customDomain: tenant.domains[0]?.domain,
   };
 
-  // Add timezone if requested
-  // Note: Currently defaults to 'America/New_York' as tenant timezone field
-  // is not yet implemented (tracked for Phase 1 schema migration)
+  // Add timezone if requested (Phase 1: Now fetched from tenant record)
   if (options?.includeTimezone) {
-    result.timezone = 'America/New_York';
+    result.timezone = tenant.timezone;
   }
 
   return result;

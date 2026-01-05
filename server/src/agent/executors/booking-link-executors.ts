@@ -39,6 +39,7 @@ interface CreateServicePayload {
   bufferMinutes: number;
   minNoticeMinutes: number;
   maxAdvanceDays: number;
+  maxPerDay?: number | null;
 }
 
 interface UpdateServicePayload {
@@ -51,6 +52,7 @@ interface UpdateServicePayload {
     bufferMinutes?: number;
     minNoticeMinutes?: number;
     maxAdvanceDays?: number;
+    maxPerDay?: number | null;
     active?: boolean;
   };
 }
@@ -122,7 +124,10 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.bufferMinutes !== undefined) updateData.bufferMinutes = updates.bufferMinutes;
       if (updates.active !== undefined) updateData.active = updates.active;
-      // Note: minNoticeMinutes and maxAdvanceDays require schema migration (Phase 1)
+      // Phase 1: Booking link scheduling fields now stored in database
+      if (updates.minNoticeMinutes !== undefined) updateData.minNoticeMinutes = updates.minNoticeMinutes;
+      if (updates.maxAdvanceDays !== undefined) updateData.maxAdvanceDays = updates.maxAdvanceDays;
+      if (updates.maxPerDay !== undefined) updateData.maxPerDay = updates.maxPerDay;
 
       // Use transaction with updateMany for tenant isolation, then fetch updated record
       const updated = await prisma.$transaction(async (tx) => {
@@ -220,7 +225,16 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
     } else {
       // Create operation
       const typedPayload = payload as unknown as CreateServicePayload;
-      const { name, description, durationMinutes, priceCents, bufferMinutes } = typedPayload;
+      const {
+        name,
+        description,
+        durationMinutes,
+        priceCents,
+        bufferMinutes,
+        minNoticeMinutes,
+        maxAdvanceDays,
+        maxPerDay,
+      } = typedPayload;
 
       if (!name) {
         throw new MissingFieldError('name', 'manage_bookable_service');
@@ -243,13 +257,17 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
         );
       }
 
+      // Get tenant info for timezone and URL building (single query, #628 fix)
+      const tenantInfo = await getTenantInfo(prisma, tenantId, { includeTimezone: true });
+      const serviceTimezone = tenantInfo?.timezone ?? 'America/New_York';
+
       // Get max sort order
       const maxSortOrder = await prisma.service.aggregate({
         where: { tenantId },
         _max: { sortOrder: true },
       });
 
-      // Create the service
+      // Create the service with Phase 1 scheduling fields
       const service = await prisma.service.create({
         data: {
           tenantId,
@@ -259,9 +277,13 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
           durationMinutes,
           priceCents: priceCents ?? 0,
           bufferMinutes: bufferMinutes ?? 0,
-          timezone: 'America/New_York', // Default, should be from tenant settings
+          timezone: serviceTimezone,
           active: true,
           sortOrder: (maxSortOrder._max.sortOrder ?? 0) + 1,
+          // Phase 1: Booking link scheduling fields
+          minNoticeMinutes: minNoticeMinutes ?? 120,
+          maxAdvanceDays: maxAdvanceDays ?? 60,
+          maxPerDay: maxPerDay ?? null,
         },
       });
 
@@ -270,8 +292,7 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
         'Service created via booking link executor'
       );
 
-      // Get tenant info for URL
-      const tenantInfo = await getTenantInfo(prisma, tenantId);
+      // Build URL from tenant info fetched earlier (#628 fix - reuse single query)
       const bookingUrl = tenantInfo
         ? buildBookingUrl(tenantInfo.slug, slug, tenantInfo.customDomain)
         : undefined;
@@ -322,19 +343,25 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
         });
       }
 
-      // Update tenant timezone if provided
-      // Note: Tenant model may need a timezone field (Phase 1 migration)
+      // Update tenant timezone if provided (#627 fix - now implemented)
+      if (timezone) {
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: { timezone },
+        });
+      }
     });
 
     logger.info(
-      { tenantId, activeDays: workingHours.filter((h) => h.isActive).length },
+      { tenantId, activeDays: workingHours.filter((h) => h.isActive).length, timezoneUpdated: !!timezone },
       'Working hours updated via executor'
     );
 
     return {
       action: 'updated',
       workingHours,
-      timezone: timezone || 'unchanged',
+      timezone: timezone ?? 'unchanged',
+      timezoneUpdated: !!timezone,
     };
   });
 

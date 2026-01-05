@@ -1,10 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: 621
 tags: [code-review, architecture, booking-links, schema]
 dependencies: []
 created: 2026-01-05
+resolved: 2026-01-05
 ---
 
 # Schema Fields Not in Database: minNoticeMinutes, maxAdvanceDays, maxPerDay
@@ -102,19 +103,20 @@ model Service {
 ## Acceptance Criteria
 
 For Phase 0 (if Option 2):
-- [ ] Remove unsupported fields from input schemas
-- [ ] Don't return fake default values in list response
+- [x] Remove unsupported fields from input schemas - Skipped (kept for Phase 1)
+- [x] Don't return fake default values in list response - Fixed in Phase 1
 
 For Phase 1:
-- [ ] Schema migration adds columns
-- [ ] Executor saves these fields
-- [ ] List tool returns actual stored values
+- [x] Schema migration adds columns (`23_booking_links_phase1.sql`)
+- [x] Executor saves these fields (`booking-link-executors.ts`)
+- [x] List tool returns actual stored values (`booking-link-tools.ts`)
 
 ## Work Log
 
 | Date       | Action                           | Learnings                                    |
 | ---------- | -------------------------------- | -------------------------------------------- |
 | 2026-01-05 | Created during /workflows:review | Identified by architecture-strategist and code-simplicity-reviewer agents |
+| 2026-01-05 | Resolved in Phase 1 | Added minNoticeMinutes, maxAdvanceDays, maxPerDay to Service model via migration 23. Updated executors to use new fields. Updated list_bookable_services to return stored values. |
 
 ## Resources
 

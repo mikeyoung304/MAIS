@@ -28,7 +28,6 @@ import {
   generateServiceSlug,
   buildBookingUrl,
   isValidTimeRange,
-  DEFAULT_WORKING_HOURS,
   type BookableService,
   type WorkingHoursEntry,
 } from '@macon/contracts';
@@ -400,9 +399,10 @@ Returns:
         durationMinutes: s.durationMinutes,
         priceCents: s.priceCents,
         bufferMinutes: s.bufferMinutes,
-        minNoticeMinutes: 120, // Default, should be stored in DB
-        maxAdvanceDays: 60, // Default, should be stored in DB
-        maxPerDay: null,
+        // Phase 1: Now using actual stored values from database
+        minNoticeMinutes: s.minNoticeMinutes,
+        maxAdvanceDays: s.maxAdvanceDays,
+        maxPerDay: s.maxPerDay,
         active: s.active,
         bookingUrl: buildBookingUrl(tenantInfo.slug, s.slug, tenantInfo.customDomain),
         createdAt: s.createdAt.toISOString(),

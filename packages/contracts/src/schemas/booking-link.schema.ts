@@ -17,6 +17,28 @@
 import { z } from 'zod';
 
 // ============================================================================
+// IANA Timezone Schema (#626 fix)
+// ============================================================================
+
+/**
+ * Validates timezone string against IANA timezone database
+ * Uses Intl.DateTimeFormat for validation without external dependencies
+ */
+export const IANATimezoneSchema = z.string().refine(
+  (tz) => {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: tz });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { message: 'Invalid IANA timezone identifier (e.g., "America/New_York", "Europe/London")' }
+);
+
+export type IANATimezone = z.infer<typeof IANATimezoneSchema>;
+
+// ============================================================================
 // Working Hours Schema
 // ============================================================================
 
@@ -138,7 +160,7 @@ export const GetAvailabilityQuerySchema = z.object({
   serviceId: z.string().cuid(),
   startDate: z.string().date(),
   endDate: z.string().date(),
-  timezone: z.string().min(1),
+  timezone: IANATimezoneSchema,
 });
 
 export type GetAvailabilityQuery = z.infer<typeof GetAvailabilityQuerySchema>;
@@ -161,7 +183,7 @@ export type BookingInvitee = z.infer<typeof BookingInviteeSchema>;
 export const CreateBookingFromLinkSchema = z.object({
   serviceId: z.string().cuid(),
   startTime: z.string().datetime(),
-  timezone: z.string(),
+  timezone: IANATimezoneSchema,
   invitee: BookingInviteeSchema,
 });
 
@@ -220,7 +242,7 @@ export type ManageBookableServiceInput = z.infer<typeof ManageBookableServiceInp
  */
 export const ManageWorkingHoursInputSchema = z.object({
   workingHours: WeeklyWorkingHoursSchema,
-  timezone: z.string().optional(), // Update tenant timezone if provided
+  timezone: IANATimezoneSchema.optional(), // Update tenant timezone if provided
 });
 
 export type ManageWorkingHoursInput = z.infer<typeof ManageWorkingHoursInputSchema>;

@@ -1,10 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: 622
 tags: [code-review, booking-links, timezone, phase-1]
 dependencies: []
 created: 2026-01-05
+resolved: 2026-01-05
 ---
 
 # Hardcoded Timezone Default Instead of Tenant Setting
@@ -83,15 +84,16 @@ The Service model already has a timezone field, but it's set to the hardcoded de
 
 ## Acceptance Criteria
 
-- [ ] Timezone comes from tenant settings (or sensible default)
-- [ ] Service.timezone reflects actual tenant timezone
-- [ ] Non-US tenants have correct availability calculations
+- [x] Timezone comes from tenant settings (or sensible default) - Added `timezone` field to Tenant model with default `America/New_York`
+- [x] Service.timezone reflects actual tenant timezone - Executor now fetches tenant timezone when creating services
+- [x] Non-US tenants have correct availability calculations - getTenantInfo utility updated to return stored timezone
 
 ## Work Log
 
 | Date       | Action                           | Learnings                                    |
 | ---------- | -------------------------------- | -------------------------------------------- |
 | 2026-01-05 | Created during /workflows:review | Identified by multiple reviewers, acknowledged in code comments |
+| 2026-01-05 | Resolved in Phase 1 | Added timezone field to Tenant model via migration 23. Updated getTenantInfo to fetch stored timezone. Updated executor to use tenant timezone when creating services. |
 
 ## Resources
 
