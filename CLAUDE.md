@@ -844,6 +844,7 @@ The following links prevent common mistakes from recurring:
 - **[prisma-7-json-type-breaking-changes](docs/solutions/database-issues/prisma-7-json-type-breaking-changes-MAIS-20260102.md)** - Prisma 7 JSON field type casting patterns (`as unknown as Type`)
 - **[express-route-ordering-auth-fallback](docs/solutions/code-review-patterns/express-route-ordering-auth-fallback-security-MAIS-20260102.md)** - Express route ordering (static before parameterized), auth fallback guards, tenant defense-in-depth
 - **[vitest-skipif-collection-phase-timing](docs/solutions/test-failures/vitest-skipif-collection-phase-timing-MAIS-20260102.md)** - Vitest `skipIf` evaluates at collection time before `beforeAll`; use `describe.runIf` with sync checks
+- **[turbopack-hmr-module-cache-staleness](docs/solutions/dev-workflow/TURBOPACK_HMR_MODULE_CACHE_STALENESS_PREVENTION.md)** - Stale HMR cache prevention (import removal, build mode switching, branch changes) + quick recovery scripts
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
@@ -856,6 +857,8 @@ The following links prevent common mistakes from recurring:
 **Key insight from Prisma 7 Upgrade:** Prisma 7 has stricter JSON field types. Use `as unknown as TargetType` for reads (not `as TargetType`), use `undefined` instead of `null` for optional JSON fields, and don't try to extract `$extends` return types - just alias to `PrismaClient`.
 
 **Key insight from Agent-Eval Code Review:** Express matches routes in registration order. Static paths (`/stats`) must be defined BEFORE parameterized paths (`/:traceId`) or they become unreachable. Never use `|| 'system'` auth fallbacks - require authenticated user and return 401. Always include `tenantId` in queries even when IDs are pre-filtered (defense-in-depth).
+
+**Key insight from Turbopack HMR Cache Issues:** Turbopack maintains an in-memory module graph that becomes stale when removing imports or switching build modes. Recovery is always the same: clear caches (`rm -rf .next .turbo`) and restart. Prevention: proactively clear after branch switches, npm installs, and dependency removals. Use `npm run dev:fresh` script (added to apps/web/package.json) for one-liner recovery.
 
 ## Quick Start Checklist
 

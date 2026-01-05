@@ -3,8 +3,6 @@ import { Metadata } from 'next';
 import {
   ArrowRight,
   Check,
-  Globe,
-  CreditCard,
   TrendingUp,
   FileText,
   Users,
@@ -12,11 +10,13 @@ import {
   Sparkles,
   Brain,
   Heart,
+  X,
+  Clock,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
-import { ProjectHubMockup } from '@/components/home/ProjectHubMockup';
-import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
+import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 import { BookingFlowDemo } from '@/components/home/BookingFlowDemo';
 
 export const metadata: Metadata = {
@@ -31,45 +31,11 @@ export const metadata: Metadata = {
   },
 };
 
-// What Handled Does - 3 pillars
-const pillars = [
-  {
-    icon: Globe,
-    title: 'Your Website',
-    description: 'A clean, professional site built for your business',
-    bullets: ['Services, pricing, and availability already connected', 'No plugins, no duct tape'],
-  },
-  {
-    icon: CreditCard,
-    title: 'Booking & Payments',
-    description: 'Clients book and pay without back-and-forth',
-    bullets: ['Everything stays in one place', "You don't chase confirmations or invoices"],
-  },
-  {
-    icon: TrendingUp,
-    title: 'Built-In Growth Help',
-    description: 'A personalized marketing strategy for your business',
-    bullets: [
-      'Ready-to-use starters for social and LinkedIn posts',
-      'Simple actions that lead to real bookings',
-    ],
-  },
-];
-
 // Growth Plan features
 const growthPlanFeatures = [
   'A customized marketing strategy based on your business',
   'Simple prompts for social and LinkedIn posts',
   'Clear, practical actions that compound into real demand',
-];
-
-// Project Hub bullets
-const projectHubBullets = [
-  'A dedicated page for each booking or event',
-  "A shared, organized breakdown of what's happening, when, and where",
-  'Updates, changes, and requests live in one thread — not texts or emails',
-  'AI assistants on both sides help clarify details and keep things moving',
-  'Everyone always sees the same, current version of the plan',
 ];
 
 // Memory section bullets
@@ -83,8 +49,8 @@ const memoryBullets = [
 // Who It's For bullets
 const whoItsForBullets = [
   'Professionals who sell their time and expertise',
-  'People without teams or operators',
   'People tired of juggling tools and tabs',
+  "People who know they should use AI but don't have time to learn",
   'People who want to focus on clients, not systems',
 ];
 
@@ -133,10 +99,10 @@ export default function HomePage() {
             </Link>
             <div className="hidden md:flex items-center gap-8">
               <Link
-                href="#how-it-works"
+                href="#problem"
                 className="text-text-muted hover:text-text-primary transition-colors text-sm"
               >
-                How it works
+                The Problem
               </Link>
               <Link
                 href="#growth"
@@ -164,9 +130,9 @@ export default function HomePage() {
               Split layout: 40% text left, 60% visual right
               Scannable in 5 seconds, single primary CTA
               ============================================ */}
-          <section className="relative pt-28 pb-12 md:pt-32 md:pb-16 lg:pt-36 lg:pb-20 px-6">
+          <section className="relative pt-32 pb-8 md:pt-28 md:pb-10 lg:pt-32 lg:pb-12 px-6">
             <div className="max-w-6xl mx-auto w-full">
-              <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start lg:items-center">
+              <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start lg:items-center">
                 {/* Text content - 40% on desktop */}
                 <div className="lg:col-span-5 text-center lg:text-left flex flex-col justify-center">
                   <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight">
@@ -195,7 +161,7 @@ export default function HomePage() {
               </div>
 
               {/* Scroll indicator - positioned relative to content flow */}
-              <div className="mt-10 md:mt-12 flex flex-col items-center gap-2 text-text-muted animate-bounce">
+              <div className="mt-6 md:mt-8 flex flex-col items-center gap-2 text-text-muted animate-bounce">
                 <span className="text-xs tracking-wide uppercase">Scroll to explore</span>
                 <ArrowRight className="w-4 h-4 rotate-90" />
               </div>
@@ -203,60 +169,306 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 2: WHAT HANDLED DOES
-              3 pillars: Website, Booking, Growth
+              SECTION 2: THE PROBLEM
+              Two-column contrast: The Grind vs Handled
               ============================================ */}
-          <section id="how-it-works" className="py-24 md:py-32 px-6 bg-surface-alt scroll-mt-20">
-            <div className="max-w-6xl mx-auto">
+          <section id="problem" className="py-20 md:py-24 px-6 bg-surface scroll-mt-20">
+            <div className="max-w-5xl mx-auto">
+              {/* Headline + Subhead */}
               <div className="text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                  What Handled Does
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.1] tracking-tight mb-6">
+                  You didn&apos;t start this to become a tech expert.
                 </h2>
-                <p className="text-lg text-text-muted max-w-2xl mx-auto">
-                  Everything you need to run your business — without juggling tools.
+                <p className="text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
+                  Somewhere along the way, you stopped running your business — and your business
+                  started running you.
                 </p>
               </div>
 
-              {/* 3 Pillars */}
-              <div className="grid md:grid-cols-3 gap-8">
-                {pillars.map((pillar) => (
-                  <div
-                    key={pillar.title}
-                    className="bg-surface rounded-2xl p-8 border border-neutral-800 hover:border-sage/50 transition-all duration-300"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center mb-6">
-                      <pillar.icon className="w-6 h-6 text-sage" />
+              {/* Two-column contrast grid */}
+              <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-16">
+                {/* The Grind Card - Dark theme */}
+                <div className="relative bg-neutral-800/50 rounded-2xl p-8 border border-neutral-700 overflow-hidden">
+                  {/* Subtle dark gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/20 to-transparent pointer-events-none" />
+
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-neutral-700/50 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-neutral-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-neutral-300">The Grind</h3>
                     </div>
-                    <h3 className="font-serif text-xl font-bold text-text-primary mb-3">
-                      {pillar.title}
-                    </h3>
-                    <p className="text-text-muted mb-4">{pillar.description}</p>
-                    <ul className="space-y-2">
-                      {pillar.bullets.map((bullet) => (
-                        <li key={bullet} className="flex items-start gap-2 text-sm text-text-muted">
-                          <Check className="w-4 h-4 text-sage mt-0.5 flex-shrink-0" />
-                          <span>{bullet}</span>
+
+                    <ul className="space-y-4">
+                      {[
+                        'Answering endless emails, texts, and DMs',
+                        'Resending invoices and chasing deposits',
+                        'Constant rescheduling and adjustments',
+                        'Explaining pricing, policies, and next steps — again and again',
+                      ].map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded-full bg-neutral-700/60 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <X className="w-3 h-3 text-neutral-500" />
+                          </div>
+                          <span className="text-neutral-400 leading-relaxed">{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                ))}
+                </div>
+
+                {/* Handled Card - Sage accent */}
+                <div className="relative bg-sage/[0.08] rounded-2xl p-8 border border-sage/20 overflow-hidden">
+                  {/* Subtle sage glow */}
+                  <div className="absolute -top-24 -right-24 w-48 h-48 bg-sage/10 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-sage/15 flex items-center justify-center">
+                        <Check className="w-5 h-5 text-sage" />
+                      </div>
+                      <h3 className="text-lg font-medium text-text-primary">Handled</h3>
+                    </div>
+
+                    <ul className="space-y-4">
+                      {[
+                        'Nothing slips through the cracks',
+                        'Clients feel understood and supported',
+                        'Focus on what you love',
+                        'Get back your time',
+                      ].map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-sage" />
+                          </div>
+                          <span className="text-text-muted leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
 
-              {/* Website Preview */}
-              <div className="mt-16">
-                <p className="text-center text-sm text-text-muted mb-6">
-                  What your clients see — a polished storefront with clear pricing
+              {/* Bridge copy */}
+              <div className="text-center max-w-2xl mx-auto mb-12">
+                <p className="text-lg md:text-xl text-text-muted leading-relaxed">
+                  Running a modern business quietly demands the majority of your headspace. A dozen
+                  systems, constant follow-ups, and a perfect memory — all at once.
                 </p>
-                <div className="max-w-2xl mx-auto">
-                  <DemoStorefrontFrame />
-                </div>
+              </div>
+
+              {/* Closing question */}
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-xl md:text-2xl text-text-primary font-serif font-medium">
+                  What if it was all handled?
+                </p>
+                <ChevronDown className="w-5 h-5 text-sage animate-bounce" />
               </div>
             </div>
           </section>
 
           {/* ============================================
-              SECTION 3: GROWTH PLAN ($150/mo)
+              SECTION 3: THE PROMISE
+              "What if it was all handled?" → Here's how.
+              Three pillars: Website, Bookings (anchor), Marketing
+              ============================================ */}
+          <section className="py-24 md:py-32 px-6 bg-surface-alt">
+            <div className="max-w-5xl mx-auto">
+              {/* Opening answer to "What if it was all handled?" */}
+              <div className="text-center mb-12 md:mb-16">
+                <p className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
+                  Here&apos;s how it works
+                </p>
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.1] tracking-tight mb-5">
+                  One subscription. Your admin on autopilot.
+                </h2>
+                <p className="text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
+                  Handled is the system that quietly runs your business, so you can focus on the
+                  work you love.
+                </p>
+              </div>
+
+              {/* Three pillars - generous spacing, intentional layout */}
+              <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16 items-stretch">
+                {/* Pillar 1: Website */}
+                <div className="group relative bg-neutral-800/40 rounded-2xl p-8 lg:p-10 border border-neutral-700/80 overflow-hidden transition-all duration-300 hover:border-neutral-600 hover:bg-neutral-800/50 flex flex-col">
+                  {/* Top accent line */}
+                  <div className="absolute top-0 left-8 right-8 lg:left-10 lg:right-10 h-px bg-gradient-to-r from-transparent via-neutral-600/50 to-transparent" />
+
+                  <div className="relative flex flex-col flex-1">
+                    {/* Top section - grows to fill space, keeps checklist aligned */}
+                    <div className="flex-1">
+                      {/* Header */}
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center border border-sage/20">
+                          <FileText className="w-6 h-6 text-sage" />
+                        </div>
+                        <h3 className="text-xl font-medium text-text-primary">Website</h3>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-text-muted leading-relaxed">
+                        Professional, clear, and built to convert visitors into clients.
+                      </p>
+                    </div>
+
+                    {/* Checklist - consistent position across all cards */}
+                    <ul className="space-y-4 pt-8">
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Designed for your brand
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">Built for booking</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Hosted and maintained
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Pillar 2: Bookings - subtle sage accent (anchor) */}
+                <div className="group relative bg-neutral-800/40 rounded-2xl p-8 lg:p-10 border border-sage/30 overflow-hidden transition-all duration-300 hover:border-sage/40 hover:bg-neutral-800/50 flex flex-col">
+                  {/* Top accent line - sage for anchor */}
+                  <div className="absolute top-0 left-8 right-8 lg:left-10 lg:right-10 h-px bg-gradient-to-r from-transparent via-sage/40 to-transparent" />
+
+                  <div className="relative flex flex-col flex-1">
+                    {/* Top section - grows to fill space, keeps checklist aligned */}
+                    <div className="flex-1">
+                      {/* Header */}
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-xl bg-sage/15 flex items-center justify-center border border-sage/25">
+                          <Users className="w-6 h-6 text-sage" />
+                        </div>
+                        <h3 className="text-xl font-medium text-text-primary">Bookings</h3>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-text-muted leading-relaxed">
+                        Clients book, payments process, details confirmed.{' '}
+                        <span className="text-text-primary font-medium">You just show up.</span>
+                      </p>
+                    </div>
+
+                    {/* Checklist - consistent position across all cards */}
+                    <ul className="space-y-4 pt-8">
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Online scheduling, no back-and-forth
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Deposits and payments handled
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Automatic reminders sent
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Pillar 3: Marketing + Community */}
+                <div className="group relative bg-neutral-800/40 rounded-2xl p-8 lg:p-10 border border-neutral-700/80 overflow-hidden transition-all duration-300 hover:border-neutral-600 hover:bg-neutral-800/50 flex flex-col">
+                  {/* Top accent line */}
+                  <div className="absolute top-0 left-8 right-8 lg:left-10 lg:right-10 h-px bg-gradient-to-r from-transparent via-neutral-600/50 to-transparent" />
+
+                  <div className="relative flex flex-col flex-1">
+                    {/* Top section - grows to fill space, keeps checklist aligned */}
+                    <div className="flex-1">
+                      {/* Header */}
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center border border-sage/20">
+                          <TrendingUp className="w-6 h-6 text-sage" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-medium text-text-primary">Marketing</h3>
+                          <span className="text-xs text-text-muted">+ Community</span>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-text-muted leading-relaxed">
+                        1-on-1 strategy. Monthly Zooms. A newsletter that filters the AI noise.
+                      </p>
+                    </div>
+
+                    {/* Checklist - consistent position across all cards */}
+                    <ul className="space-y-4 pt-8">
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Founder builds your playbook
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          Monthly calls, real talk
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-sage" />
+                        </div>
+                        <span className="text-text-muted leading-relaxed">
+                          AI tools worth knowing
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Closing statement */}
+              <div className="text-center">
+                <p className="text-lg text-text-muted mb-6 max-w-2xl mx-auto">
+                  No stitched-together tools. No systems to configure. No tech stack to learn.
+                </p>
+                <p className="text-2xl md:text-3xl text-text-primary font-serif font-medium tracking-tight">
+                  Do what you love. The rest is{' '}
+                  <span className="text-sage relative inline-block">
+                    handled
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-sage/40 rounded-full" />
+                  </span>
+                  .
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SECTION 4: GROWTH PLAN ($150/mo)
               "When you're ready to grow, Handled steps in."
               ============================================ */}
           <section id="growth" className="py-24 md:py-32 px-6 scroll-mt-20">
@@ -334,56 +546,10 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              SECTION 4: PROJECT HUB
-              "After someone books, everything stays in one place."
+              SECTION 4: PROJECT HUB WEDGE
+              Pain-first approach with dual dashboards
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
-            <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 items-center">
-                <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                    After someone books, everything stays in one place.
-                  </h2>
-                  <p className="text-lg text-text-muted mb-8">
-                    Every booking gets its own dedicated project page — shared by you and your
-                    client — so nothing gets lost, forgotten, or scattered.
-                  </p>
-
-                  <ul className="space-y-3 mb-8">
-                    {projectHubBullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-sage" />
-                        </div>
-                        <span className="text-text-muted">{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p className="text-text-muted leading-relaxed mb-6">
-                    Instead of chasing messages across email, texts, DMs, and notes, both you and
-                    your client return to the same page — before, during, and after the job.
-                  </p>
-
-                  <p className="text-text-primary font-medium mb-4">
-                    It becomes the single source of truth for the entire project.
-                  </p>
-
-                  {/* Pull quote */}
-                  <div className="border-l-2 border-sage pl-4">
-                    <p className="text-lg text-text-primary italic">
-                      &quot;If it relates to the job, it lives there.&quot;
-                    </p>
-                  </div>
-                </div>
-
-                {/* Project Hub Mockup */}
-                <div>
-                  <ProjectHubMockup />
-                </div>
-              </div>
-            </div>
-          </section>
+          <ProjectHubWedge />
 
           {/* ============================================
               SECTION 5: MEMORY & REPEAT CLIENT EXPERIENCE
@@ -438,7 +604,7 @@ export default function HomePage() {
           <section className="py-24 md:py-32 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-12">
-                Handled is for people who love their work — not running a business.
+                Handled is for people who love their work — not the admin.
               </h2>
 
               <div className="grid sm:grid-cols-2 gap-4">

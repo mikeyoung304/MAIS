@@ -37,7 +37,7 @@ export function BookingFlowDemo() {
   }, []);
 
   return (
-    <div className="w-full max-w-[520px] mx-auto">
+    <div className="w-full max-w-[520px] lg:max-w-[620px] xl:max-w-none">
       <BrowserFrame>
         <div className="flex h-full">
           {/* Left panel - Main content (58%) */}

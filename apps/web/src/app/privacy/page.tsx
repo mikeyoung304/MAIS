@@ -156,8 +156,8 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-text-muted leading-relaxed">
               If you have any questions about this Privacy Policy, please contact us at{' '}
-              <a href="mailto:privacy@gethandled.ai" className="text-sage hover:underline">
-                privacy@gethandled.ai
+              <a href="mailto:mike@gethandled.ai" className="text-sage hover:underline">
+                mike@gethandled.ai
               </a>
               .
             </p>

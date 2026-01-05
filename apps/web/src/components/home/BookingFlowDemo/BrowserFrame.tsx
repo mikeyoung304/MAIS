@@ -36,7 +36,7 @@ export function BrowserFrame({ children }: BrowserFrameProps) {
       </div>
 
       {/* Content area */}
-      <div className="h-[400px] sm:h-[420px] lg:h-[440px]">{children}</div>
+      <div className="h-[400px] sm:h-[420px] lg:h-[460px] xl:h-[480px]">{children}</div>
     </div>
   );
 }
