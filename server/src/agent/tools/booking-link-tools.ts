@@ -20,6 +20,7 @@ import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from 
 import { sanitizeForContext } from './types';
 import { ProposalService } from '../proposals/proposal.service';
 import { handleToolError, formatPrice } from './utils';
+import { getTenantInfo } from '../utils/tenant-info';
 import {
   ManageBookableServiceInputSchema,
   ManageWorkingHoursInputSchema,
@@ -68,34 +69,6 @@ async function createProposal(
     trustTier: result.trustTier,
     requiresApproval: result.requiresApproval,
     expiresAt: result.expiresAt,
-  };
-}
-
-/**
- * Get tenant info for URL building
- */
-async function getTenantInfo(
-  prisma: ToolContext['prisma'],
-  tenantId: string
-): Promise<{ slug: string; customDomain?: string; timezone: string } | null> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      slug: true,
-      domains: {
-        where: { verified: true, isPrimary: true },
-        select: { domain: true },
-        take: 1,
-      },
-    },
-  });
-
-  if (!tenant) return null;
-
-  return {
-    slug: tenant.slug,
-    customDomain: tenant.domains[0]?.domain,
-    timezone: 'America/New_York', // Default, should be fetched from tenant settings
   };
 }
 
@@ -403,7 +376,7 @@ Returns:
     const includeInactive = params.includeInactive === true;
 
     try {
-      const tenantInfo = await getTenantInfo(prisma, tenantId);
+      const tenantInfo = await getTenantInfo(prisma, tenantId, { includeTimezone: true });
       if (!tenantInfo) {
         return {
           success: false,

@@ -80,6 +80,11 @@ const REQUIRED_EXECUTOR_TOOLS = [
   // Onboarding
   'start_trial',
   'initiate_stripe_onboarding',
+
+  // Booking link management
+  'manage_bookable_service',
+  'manage_working_hours',
+  'manage_date_overrides',
 ] as const;
 
 /**

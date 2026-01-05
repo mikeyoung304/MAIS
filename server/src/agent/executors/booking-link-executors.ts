@@ -19,6 +19,7 @@ import type { PrismaClient } from '../../generated/prisma';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { MissingFieldError, ResourceNotFoundError, ValidationError } from '../errors';
+import { getTenantInfo } from '../utils/tenant-info';
 import {
   generateServiceSlug,
   buildBookingUrl,
@@ -81,37 +82,6 @@ interface ClearDateOverridesPayload {
 }
 
 // ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Get tenant info for URL building
- */
-async function getTenantInfo(
-  prisma: PrismaClient,
-  tenantId: string
-): Promise<{ slug: string; customDomain?: string } | null> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      slug: true,
-      domains: {
-        where: { verified: true, isPrimary: true },
-        select: { domain: true },
-        take: 1,
-      },
-    },
-  });
-
-  if (!tenant) return null;
-
-  return {
-    slug: tenant.slug,
-    customDomain: tenant.domains[0]?.domain,
-  };
-}
-
-// ============================================================================
 // Executor Registration
 // ============================================================================
 
@@ -154,9 +124,20 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
       if (updates.active !== undefined) updateData.active = updates.active;
       // Note: minNoticeMinutes and maxAdvanceDays require schema migration (Phase 1)
 
-      const updated = await prisma.service.update({
-        where: { id: serviceId },
-        data: updateData,
+      // Use transaction with updateMany for tenant isolation, then fetch updated record
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.service.updateMany({
+          where: { id: serviceId, tenantId },
+          data: updateData,
+        });
+
+        if (result.count === 0) {
+          throw new ResourceNotFoundError('Service', serviceId);
+        }
+
+        return tx.service.findFirstOrThrow({
+          where: { id: serviceId, tenantId },
+        });
       });
 
       logger.info(
@@ -194,25 +175,36 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
         throw new ResourceNotFoundError('Service', serviceId);
       }
 
-      // Check for upcoming bookings
-      const upcomingBookings = await prisma.booking.count({
-        where: {
-          serviceId,
-          tenantId,
-          date: { gte: new Date() },
-          status: { in: ['PENDING', 'CONFIRMED'] },
-        },
-      });
+      // Use transaction with row lock to prevent TOCTOU race condition
+      // A booking could be created between the check and delete without this
+      await prisma.$transaction(async (tx) => {
+        // Lock the service row to prevent concurrent modifications
+        await tx.$executeRaw`SELECT id FROM "Service" WHERE id = ${serviceId} FOR UPDATE`;
 
-      if (upcomingBookings > 0) {
-        throw new ValidationError(
-          `Cannot delete service with ${upcomingBookings} upcoming booking(s). Cancel or complete them first.`
-        );
-      }
+        // Check for upcoming bookings within the transaction
+        const upcomingBookings = await tx.booking.count({
+          where: {
+            serviceId,
+            tenantId,
+            date: { gte: new Date() },
+            status: { in: ['PENDING', 'CONFIRMED'] },
+          },
+        });
 
-      // Delete the service
-      await prisma.service.delete({
-        where: { id: serviceId },
+        if (upcomingBookings > 0) {
+          throw new ValidationError(
+            `Cannot delete service with ${upcomingBookings} upcoming booking(s). Cancel or complete them first.`
+          );
+        }
+
+        // Delete the service with tenant isolation (defense-in-depth)
+        const deleted = await tx.service.deleteMany({
+          where: { id: serviceId, tenantId },
+        });
+
+        if (deleted.count === 0) {
+          throw new ResourceNotFoundError('Service', serviceId);
+        }
       });
 
       logger.info(
