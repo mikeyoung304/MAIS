@@ -42,7 +42,7 @@ import type {
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
-import { TenantProvisioningService } from '../services/tenant-provisioning.service';
+import type { TenantProvisioningService } from '../services/tenant-provisioning.service';
 import { createTenantAdminStripeRoutes } from './tenant-admin-stripe.routes';
 import { createTenantAdminBillingRoutes } from './tenant-admin-billing.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
@@ -119,6 +119,7 @@ interface Services {
   schedulingAvailability?: SchedulingAvailabilityService;
   packageDraft?: PackageDraftService;
   tenantOnboarding?: TenantOnboardingService;
+  tenantProvisioning?: TenantProvisioningService;
   reminder?: ReminderService;
   landingPage?: LandingPageService;
   webhookDelivery?: WebhookDeliveryService;
@@ -471,8 +472,18 @@ export function createV1Router(
   );
 
   // Register admin tenant management routes (Express router, not ts-rest)
-  // Use factory function with shared prisma instance to avoid connection pool exhaustion
-  app.use('/v1/admin/tenants', authMiddleware, createAdminTenantsRoutes(prismaClient));
+  // Use factory function with shared services from DI container (#634)
+  if (!services?.tenantProvisioning) {
+    throw new Error('TenantProvisioningService is required - ensure DI container provides it');
+  }
+  app.use(
+    '/v1/admin/tenants',
+    authMiddleware,
+    createAdminTenantsRoutes({
+      prisma: prismaClient,
+      provisioningService: services.tenantProvisioning,
+    })
+  );
 
   // Register admin Stripe Connect routes (Express router, not ts-rest)
   // Use factory function with shared prisma instance to avoid connection pool exhaustion
@@ -516,9 +527,7 @@ export function createV1Router(
     // /v1/auth/forgot-password - public - request password reset
     // /v1/auth/reset-password - public - complete password reset
     // /v1/auth/early-access - public - early access waitlist signup
-    // Create TenantProvisioningService for atomic signup (tenant + segment + packages in transaction)
-    const tenantProvisioningService = new TenantProvisioningService(prisma);
-
+    // Use TenantProvisioningService from DI container for atomic signup (#634)
     const unifiedAuthRoutes = createUnifiedAuthRoutes({
       identityService,
       tenantAuthService: services.tenantAuth,
@@ -528,7 +537,7 @@ export function createV1Router(
         adminNotificationEmail: config.ADMIN_NOTIFICATION_EMAIL,
       },
       mailProvider,
-      tenantProvisioningService,
+      tenantProvisioningService: services.tenantProvisioning,
       earlyAccessRepo: repositories?.earlyAccess,
     });
     app.use('/v1/auth', unifiedAuthRoutes);

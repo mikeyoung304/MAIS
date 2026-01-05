@@ -8,44 +8,7 @@
 
 import type { PrismaClient, Segment, Package } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
-
-/**
- * Default segment configuration for new tenants
- */
-const DEFAULT_SEGMENT = {
-  name: 'General',
-  slug: 'general',
-  heroTitle: 'Our Services',
-  description: 'Your main service offerings',
-} as const;
-
-/**
- * Default pricing tier configurations
- * Helps guide users toward a 3-tier pricing structure
- */
-const DEFAULT_PACKAGE_TIERS = {
-  BASIC: {
-    slug: 'basic-package',
-    name: 'Basic Package',
-    description: 'Your starter option - perfect for budget-conscious clients',
-    basePrice: 0,
-    groupingOrder: 1,
-  },
-  STANDARD: {
-    slug: 'standard-package',
-    name: 'Standard Package',
-    description: 'Our most popular option - great value for most clients',
-    basePrice: 0,
-    groupingOrder: 2,
-  },
-  PREMIUM: {
-    slug: 'premium-package',
-    name: 'Premium Package',
-    description: 'The full experience - for clients who want the best',
-    basePrice: 0,
-    groupingOrder: 3,
-  },
-} as const;
+import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';
 
 /**
  * Options for createDefaultData

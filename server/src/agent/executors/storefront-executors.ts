@@ -11,11 +11,11 @@
  * - Uses defense-in-depth with tenantId in all queries
  */
 
-import type { PrismaClient, Prisma } from '../../generated/prisma';
+import { Prisma, type PrismaClient } from '../../generated/prisma';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { ResourceNotFoundError, ValidationError } from '../errors/index';
-import { getDraftConfig, getTenantSlug } from '../tools/utils';
+import { getDraftConfig, getDraftConfigWithSlug } from '../tools/utils';
 import {
   // Validation schemas (DRY - shared with tools)
   UpdatePageSectionPayloadSchema,
@@ -78,8 +78,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const { pageName, sectionIndex, sectionData } = validationResult.data;
 
-    // Get current draft config
-    const { pages } = await getDraftConfig(prisma, tenantId);
+    // Get current draft config and slug in single query (#627 N+1 fix)
+    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
     // Validate page exists
     const page = pages[pageName as keyof PagesConfig];
@@ -114,7 +114,6 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     // Save to draft
     await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
 
-    const slug = await getTenantSlug(prisma, tenantId);
     const resultIndex = sectionIndex === -1 ? newSections.length - 1 : sectionIndex;
 
     logger.info(
@@ -146,8 +145,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const { pageName, sectionIndex } = validationResult.data;
 
-    // Get current draft config
-    const { pages } = await getDraftConfig(prisma, tenantId);
+    // Get current draft config and slug in single query (#627 N+1 fix)
+    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
     // Validate page exists
     const page = pages[pageName as keyof PagesConfig];
@@ -184,8 +183,6 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     // Save to draft
     await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
 
-    const slug = await getTenantSlug(prisma, tenantId);
-
     logger.info(
       { tenantId, pageName, sectionIndex, sectionType: removedType },
       'Page section removed via Build Mode'
@@ -216,8 +213,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const { pageName, fromIndex, toIndex } = validationResult.data;
 
-    // Get current draft config
-    const { pages } = await getDraftConfig(prisma, tenantId);
+    // Get current draft config and slug in single query (#627 N+1 fix)
+    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
     // Validate page exists
     const page = pages[pageName as keyof PagesConfig];
@@ -255,8 +252,6 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     // Save to draft
     await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
 
-    const slug = await getTenantSlug(prisma, tenantId);
-
     logger.info(
       { tenantId, pageName, fromIndex, toIndex, sectionType: movedSection.type },
       'Page sections reordered via Build Mode'
@@ -292,8 +287,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       throw new ValidationError('Home page cannot be disabled.');
     }
 
-    // Get current draft config
-    const { pages } = await getDraftConfig(prisma, tenantId);
+    // Get current draft config and slug in single query (#627 N+1 fix)
+    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
     // Validate page exists
     const page = pages[pageName as keyof PagesConfig];
@@ -315,8 +310,6 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     // Save to draft
     await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
-
-    const slug = await getTenantSlug(prisma, tenantId);
 
     logger.info({ tenantId, pageName, enabled }, 'Page visibility toggled via Build Mode');
 
@@ -351,14 +344,15 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     if (accentColor) tenantUpdates.accentColor = accentColor;
     if (backgroundColor) tenantUpdates.backgroundColor = backgroundColor;
 
-    // Font and logo go in branding JSON field
+    // Font and logo go in branding JSON field (#627 N+1 fix - combine queries)
+    // Get tenant once for both branding and slug
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { branding: true, slug: true },
+    });
+
     let brandingUpdates: Prisma.JsonObject | undefined;
     if (fontFamily || logoUrl) {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { branding: true },
-      });
-
       brandingUpdates = {
         ...((tenant?.branding as Record<string, unknown>) || {}),
         ...(fontFamily && { fontFamily }),
@@ -381,7 +375,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       ...(logoUrl ? ['logo'] : []),
     ];
 
-    const slug = await getTenantSlug(prisma, tenantId);
+    const slug = tenant?.slug;
 
     logger.info({ tenantId, changes }, 'Storefront branding updated via Build Mode');
 
@@ -424,11 +418,12 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     }
 
     // Copy draft to live config and clear draft
+    // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
     await prisma.tenant.update({
       where: { id: tenantId },
       data: {
         landingPageConfig: tenant.landingPageConfigDraft,
-        landingPageConfigDraft: null, // Clear the draft
+        landingPageConfigDraft: Prisma.DbNull, // Clear the draft (Prisma 7 pattern)
       },
     });
 
@@ -472,10 +467,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     }
 
     // Clear the draft
+    // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
     await prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        landingPageConfigDraft: null,
+        landingPageConfigDraft: Prisma.DbNull, // Prisma 7 pattern for clearing JSON field
       },
     });
 

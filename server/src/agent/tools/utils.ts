@@ -102,6 +102,14 @@ export interface DraftConfigResult {
 }
 
 /**
+ * Result from getDraftConfigWithSlug
+ * Combined result to avoid N+1 queries when both config and slug are needed
+ */
+export interface DraftConfigWithSlugResult extends DraftConfigResult {
+  slug: string | null;
+}
+
+/**
  * Get or initialize draft config from tenant
  * Uses existing draft if available, otherwise copies from live config
  *
@@ -156,4 +164,49 @@ export async function getTenantSlug(
     select: { slug: true },
   });
   return tenant?.slug ?? null;
+}
+
+/**
+ * Get draft config AND slug in a single query
+ * Use this when both config and slug are needed to avoid N+1 queries
+ *
+ * @param prisma - Prisma client
+ * @param tenantId - Tenant ID
+ * @returns Combined draft config result with slug
+ * @throws Error if tenant not found
+ */
+export async function getDraftConfigWithSlug(
+  prisma: PrismaClient,
+  tenantId: string
+): Promise<DraftConfigWithSlugResult> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      landingPageConfig: true,
+      landingPageConfigDraft: true,
+      slug: true,
+    },
+  });
+
+  if (!tenant) {
+    throw new Error('Tenant not found');
+  }
+
+  // If draft exists, use it
+  if (tenant.landingPageConfigDraft) {
+    const draft = tenant.landingPageConfigDraft as unknown as LandingPageConfig;
+    return {
+      pages: draft.pages || DEFAULT_PAGES_CONFIG,
+      hasDraft: true,
+      slug: tenant.slug,
+    };
+  }
+
+  // Otherwise, initialize from live config or defaults
+  const live = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+  return {
+    pages: live?.pages || DEFAULT_PAGES_CONFIG,
+    hasDraft: false,
+    slug: tenant.slug,
+  };
 }

@@ -22,7 +22,7 @@ import { useDraftAutosave } from '@/hooks/useDraftAutosave';
  */
 export default function BuildModePage() {
   const router = useRouter();
-  const { slug, isAuthenticated } = useAuth();
+  const { slug, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // State
   const [currentPage, setCurrentPage] = useState<PageName>('home');
@@ -107,8 +107,8 @@ export default function BuildModePage() {
     tenantSlug: slug || '',
   }), [currentPage, draftConfig, isDirty, slug]);
 
-  // Loading state - TEST with simple div
-  if (isLoading) {
+  // Loading state - show while auth or draft config is loading
+  if (authLoading || isLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-neutral-50">
         <div className="flex flex-col items-center gap-3">

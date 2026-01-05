@@ -14,17 +14,25 @@ import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import type { PrismaClient } from '../../generated/prisma';
 import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
-import { TenantProvisioningService } from '../../services/tenant-provisioning.service';
+import type { TenantProvisioningService } from '../../services/tenant-provisioning.service';
 import { ValidationError, NotFoundError } from '../../lib/errors';
 
 /**
- * Create admin tenants router with shared Prisma instance
- * @param prisma - Shared PrismaClient instance from DI container
+ * Options for admin tenants routes
  */
-export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
+export interface AdminTenantsRoutesOptions {
+  prisma: PrismaClient;
+  provisioningService: TenantProvisioningService;
+}
+
+/**
+ * Create admin tenants router with shared services from DI container
+ * @param options - Services and dependencies from DI container (#634)
+ */
+export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Router {
+  const { prisma, provisioningService } = options;
   const router = Router();
   const tenantRepo = new PrismaTenantRepository(prisma);
-  const provisioningService = new TenantProvisioningService(prisma);
 
   /**
    * GET /api/v1/admin/tenants

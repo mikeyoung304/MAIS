@@ -18,6 +18,7 @@ import { AuditService } from './services/audit.service';
 import { IdempotencyService } from './services/idempotency.service';
 import { SegmentService } from './services/segment.service';
 import { TenantOnboardingService } from './services/tenant-onboarding.service';
+import { TenantProvisioningService } from './services/tenant-provisioning.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
 import { PackageDraftService } from './services/package-draft.service';
@@ -234,6 +235,9 @@ export function buildContainer(config: Config): Container {
     const segmentRepo = new PrismaSegmentRepository(mockPrisma);
     const tenantOnboardingService = new TenantOnboardingService(mockPrisma);
 
+    // Create TenantProvisioningService for atomic tenant creation (#634)
+    const tenantProvisioningService = new TenantProvisioningService(mockPrisma);
+
     // Build domain services with caching and audit logging
     // CatalogService now receives segmentRepo and onboardingService for segment validation (#631)
     const catalogService = new CatalogService(
@@ -346,6 +350,7 @@ export function buildContainer(config: Config): Container {
       audit: auditService,
       segment: segmentService,
       tenantOnboarding: tenantOnboardingService,
+      tenantProvisioning: tenantProvisioningService,
       googleCalendar: googleCalendarService,
       schedulingAvailability: schedulingAvailabilityService,
       packageDraft: packageDraftService,
@@ -569,6 +574,9 @@ export function buildContainer(config: Config): Container {
   // Create TenantOnboardingService BEFORE CatalogService (#631) for segment validation
   const tenantOnboardingService = new TenantOnboardingService(prisma);
 
+  // Create TenantProvisioningService for atomic tenant creation (#634)
+  const tenantProvisioningService = new TenantProvisioningService(prisma);
+
   // Build domain services with caching and audit logging
   // CatalogService now receives segmentRepo and onboardingService for segment validation (#631)
   const catalogService = new CatalogService(
@@ -766,6 +774,7 @@ export function buildContainer(config: Config): Container {
     audit: auditService,
     segment: segmentService,
     tenantOnboarding: tenantOnboardingService,
+    tenantProvisioning: tenantProvisioningService,
     googleCalendar: googleCalendarService,
     schedulingAvailability: schedulingAvailabilityService,
     packageDraft: packageDraftService,

@@ -19,7 +19,7 @@
 
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from './types';
 import { ProposalService } from '../proposals/proposal.service';
-import { handleToolError, getDraftConfig, getTenantSlug } from './utils';
+import { handleToolError, getDraftConfigWithSlug } from './utils';
 import {
   // Validation schemas (DRY - shared with executors)
   RemovePageSectionPayloadSchema,
@@ -194,8 +194,8 @@ Changes are saved to draft - user must publish to make live.`,
 
       const validatedSection = validationResult.data as Section;
 
-      // Get current draft config
-      const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -208,7 +208,6 @@ Changes are saved to draft - user must publish to make live.`,
         sectionIndex === undefined || sectionIndex === -1 ? page.sections.length : sectionIndex;
 
       const isAppend = resolvedIndex >= page.sections.length;
-      const isUpdate = !isAppend && resolvedIndex < page.sections.length;
 
       const operation = isAppend
         ? `Add ${sectionType} section to ${pageName} page`
@@ -222,7 +221,6 @@ Changes are saved to draft - user must publish to make live.`,
       };
 
       // Build preview
-      const slug = await getTenantSlug(prisma, tenantId);
       const preview: Record<string, unknown> = {
         action: isAppend ? 'add' : 'update',
         page: pageName,
@@ -294,8 +292,8 @@ Can be undone by discarding draft.`,
         };
       }
 
-      // Get current draft config
-      const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -317,7 +315,6 @@ Can be undone by discarding draft.`,
       const operation = `Remove ${sectionType} section from ${pageName} page`;
       const payload = { pageName, sectionIndex };
 
-      const slug = await getTenantSlug(prisma, tenantId);
       const preview: Record<string, unknown> = {
         action: 'remove',
         page: pageName,
@@ -391,8 +388,8 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
         };
       }
 
-      // Get current draft config
-      const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -422,7 +419,6 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
       const operation = `Move ${sectionType} section from position ${fromIndex} to ${toIndex} on ${pageName}`;
       const payload = { pageName, fromIndex, toIndex };
 
-      const slug = await getTenantSlug(prisma, tenantId);
       const preview: Record<string, unknown> = {
         action: 'reorder',
         page: pageName,
@@ -497,8 +493,8 @@ Auto-confirms since visibility toggles are low-risk.`,
         return { success: false, error: 'Home page cannot be disabled.' };
       }
 
-      // Get current draft config
-      const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -517,7 +513,6 @@ Auto-confirms since visibility toggles are low-risk.`,
       const operation = enabled ? `Enable ${pageName} page` : `Disable ${pageName} page`;
       const payload = { pageName, enabled };
 
-      const slug = await getTenantSlug(prisma, tenantId);
       const preview: Record<string, unknown> = {
         action: enabled ? 'enable' : 'disable',
         page: pageName,
@@ -609,7 +604,13 @@ All colors should be hex format (e.g., "#1a365d").`,
       const operation = `Update branding (${changes.join(', ')})`;
       const payload = validatedParams;
 
-      const slug = await getTenantSlug(prisma, tenantId);
+      // Get slug for preview URL (#627 - only fetch slug, no draft needed)
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      const slug = tenant?.slug;
+
       const preview: Record<string, unknown> = {
         action: 'update_branding',
         changes,
@@ -659,8 +660,8 @@ Use this when the user is satisfied with their changes and wants them visible to
     const { tenantId, prisma } = context;
 
     try {
-      // Check if there's a draft to publish
-      const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);
+      // Check if there's a draft to publish (#627 N+1 fix - single query)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       if (!hasDraft) {
         return {
@@ -672,7 +673,6 @@ Use this when the user is satisfied with their changes and wants them visible to
       const operation = 'Publish draft changes to live storefront';
       const payload = {};
 
-      const slug = await getTenantSlug(prisma, tenantId);
       const preview: Record<string, unknown> = {
         action: 'publish',
         pageCount: Object.keys(pages).length,
@@ -709,8 +709,8 @@ Use this when the user wants to start over or abandon their changes.`,
     const { tenantId, prisma } = context;
 
     try {
-      // Check if there's a draft to discard
-      const { hasDraft } = await getDraftConfig(prisma, tenantId);
+      // Check if there's a draft to discard (#627 N+1 fix - single query)
+      const { hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       if (!hasDraft) {
         return {
@@ -722,7 +722,6 @@ Use this when the user wants to start over or abandon their changes.`,
       const operation = 'Discard draft changes';
       const payload = {};
 
-      const slug = await getTenantSlug(prisma, tenantId);
       const preview: Record<string, unknown> = {
         action: 'discard',
         previewUrl: slug ? `/t/${slug}` : undefined,
@@ -769,8 +768,8 @@ Use this to understand the current editing state before making changes.`,
     const pageName = params.pageName as string | undefined;
 
     try {
-      const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);
-      const slug = await getTenantSlug(prisma, tenantId);
+      // Get draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
 
       // Build summary of pages and their section counts
       const pageSummary = Object.entries(pages).map(([name, page]) => ({
