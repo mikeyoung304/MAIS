@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: 624
 tags: [code-review, data-integrity, booking-links, validation]
