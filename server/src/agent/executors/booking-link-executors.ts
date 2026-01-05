@@ -305,19 +305,21 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
         where: { tenantId, serviceId: null },
       });
 
-      // Create new rules for active days
-      for (const entry of workingHours) {
-        if (entry.isActive) {
-          await tx.availabilityRule.create({
-            data: {
-              tenantId,
-              serviceId: null, // Default for all services
-              dayOfWeek: entry.dayOfWeek,
-              startTime: entry.startTime,
-              endTime: entry.endTime,
-            },
-          });
-        }
+      // Create new rules for active days using batch insert (#623 optimization)
+      const activeRules = workingHours
+        .filter((entry) => entry.isActive)
+        .map((entry) => ({
+          tenantId,
+          serviceId: null, // Default for all services
+          dayOfWeek: entry.dayOfWeek,
+          startTime: entry.startTime,
+          endTime: entry.endTime,
+        }));
+
+      if (activeRules.length > 0) {
+        await tx.availabilityRule.createMany({
+          data: activeRules,
+        });
       }
 
       // Update tenant timezone if provided
@@ -346,6 +348,15 @@ export function registerBookingLinkExecutors(prisma: PrismaClient): void {
       // Clear range operation
       const typedPayload = payload as unknown as ClearDateOverridesPayload;
       const { startDate, endDate } = typedPayload;
+
+      // Validate date range (#624 fix)
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (start > end) {
+        throw new ValidationError(
+          `Invalid date range: startDate (${startDate}) must be before or equal to endDate (${endDate})`
+        );
+      }
 
       // Delete all blackout dates in range
       const deleted = await prisma.blackoutDate.deleteMany({
