@@ -536,11 +536,11 @@ export default function HomePage() {
               </div>
 
               {/* 3-Tier Grid - pt-6 accommodates elevated badge */}
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start pt-6">
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch pt-6">
                 {tiers.map((tier) => (
                   <div
                     key={tier.id}
-                    className={`relative bg-surface-alt rounded-2xl p-8 border transition-all duration-300 ${
+                    className={`relative bg-surface-alt rounded-2xl p-8 border transition-all duration-300 flex flex-col ${
                       tier.isPopular
                         ? 'border-2 border-sage shadow-xl shadow-sage/20 md:-mt-4 md:scale-[1.02] z-10 ring-1 ring-sage/20'
                         : 'border-neutral-800 hover:shadow-xl hover:-translate-y-1 hover:border-sage/50'
@@ -588,7 +588,7 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <ul className="mt-6 space-y-3">
+                    <ul className="mt-6 space-y-3 flex-1">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
                           <Check className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
@@ -601,7 +601,7 @@ export default function HomePage() {
                     <Button
                       asChild
                       variant={tier.isPopular ? 'sage' : 'outline'}
-                      className={`w-full mt-8 rounded-full py-5 ${
+                      className={`w-full mt-auto pt-8 rounded-full py-5 ${
                         tier.isPopular
                           ? 'shadow-lg hover:shadow-xl'
                           : 'border-sage/50 text-sage hover:bg-sage/10 hover:border-sage'
