@@ -7,7 +7,7 @@ node_modules
 
 # Build outputs
 dist
-build
+/build
 .next
 .turbo
 
@@ -64,3 +64,4 @@ server/tmp/
 *.jsonl
 MAIS/
 .vercel
+.worktrees

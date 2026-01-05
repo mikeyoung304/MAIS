@@ -63,7 +63,7 @@ export const Stepper = memo(function Stepper({ steps, currentStep, className = '
                     className={cn(
                       'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors',
                       isComplete && 'bg-green-600 border-green-600',
-                      isCurrent && 'bg-macon-orange border-macon-orange',
+                      isCurrent && 'bg-sage border-sage',
                       isUpcoming && 'bg-neutral-100 border-neutral-300'
                     )}
                   >
@@ -86,7 +86,7 @@ export const Stepper = memo(function Stepper({ steps, currentStep, className = '
                     className={cn(
                       'absolute top-12 left-1/2 -translate-x-1/2 text-sm font-medium whitespace-nowrap',
                       isComplete && 'text-green-700',
-                      isCurrent && 'text-macon-orange',
+                      isCurrent && 'text-sage',
                       isUpcoming && 'text-neutral-500'
                     )}
                   >
