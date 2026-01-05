@@ -89,6 +89,11 @@ const REQUIRED_EXECUTOR_TOOLS = [
   'update_storefront_branding',
   'publish_draft',
   'discard_draft',
+
+  // Booking link management
+  'manage_bookable_service',
+  'manage_working_hours',
+  'manage_date_overrides',
 ] as const;
 
 /**

@@ -24,6 +24,7 @@ import {
 } from '../errors';
 import { registerOnboardingExecutors } from './onboarding-executors';
 import { registerStorefrontExecutors } from './storefront-executors';
+import { registerBookingLinkExecutors } from './booking-link-executors';
 
 /**
  * Type guard for BookingStatus enum
@@ -1219,6 +1220,9 @@ export function registerAllExecutors(prisma: PrismaClient): void {
 
   // Register storefront Build Mode executors
   registerStorefrontExecutors(prisma);
+
+  // Register booking link executors
+  registerBookingLinkExecutors(prisma);
 
   logger.info('Agent proposal executors registered');
 }
