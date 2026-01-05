@@ -42,6 +42,7 @@ import type {
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
 import { createTenantAdminRoutes } from './tenant-admin.routes';
+import { TenantProvisioningService } from '../services/tenant-provisioning.service';
 import { createTenantAdminStripeRoutes } from './tenant-admin-stripe.routes';
 import { createTenantAdminBillingRoutes } from './tenant-admin-billing.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
@@ -515,17 +516,19 @@ export function createV1Router(
     // /v1/auth/forgot-password - public - request password reset
     // /v1/auth/reset-password - public - complete password reset
     // /v1/auth/early-access - public - early access waitlist signup
+    // Create TenantProvisioningService for atomic signup (tenant + segment + packages in transaction)
+    const tenantProvisioningService = new TenantProvisioningService(prisma);
+
     const unifiedAuthRoutes = createUnifiedAuthRoutes({
       identityService,
       tenantAuthService: services.tenantAuth,
       tenantRepo,
-      apiKeyService,
       config: {
         earlyAccessNotificationEmail: config.EARLY_ACCESS_NOTIFICATION_EMAIL,
         adminNotificationEmail: config.ADMIN_NOTIFICATION_EMAIL,
       },
       mailProvider,
-      tenantOnboardingService: services?.tenantOnboarding,
+      tenantProvisioningService,
       earlyAccessRepo: repositories?.earlyAccess,
     });
     app.use('/v1/auth', unifiedAuthRoutes);

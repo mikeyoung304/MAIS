@@ -39,6 +39,7 @@ function isValidBookingStatus(status: string): status is BookingStatus {
  */
 export function registerAllExecutors(prisma: PrismaClient): void {
   // upsert_package - Create or update package
+  // Defense-in-depth: Auto-assigns to General segment if not provided (#629)
   registerProposalExecutor('upsert_package', async (tenantId, payload) => {
     // Accept both 'title' (old) and 'name' (new) field names, plus 'basePrice'/'priceCents'
     const {
@@ -52,6 +53,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       photoUrl,
       bookingType,
       active,
+      segmentId: inputSegmentId,
     } = payload as {
       packageId?: string;
       slug?: string;
@@ -63,6 +65,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       photoUrl?: string;
       bookingType?: string;
       active?: boolean;
+      segmentId?: string;
     };
 
     // Normalize field names (name takes precedence, fall back to title)
@@ -91,6 +94,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       }
 
       // Update existing package (now safe after tenant verification)
+      // Note: segmentId updates use the provided value if present, otherwise preserve existing
       const updated = await prisma.package.update({
         where: { id: packageId },
         data: {
@@ -100,6 +104,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
           basePrice: packagePrice,
           ...(bookingType && { bookingType: bookingType as 'DATE' | 'TIMESLOT' }),
           ...(active !== undefined && { active }),
+          ...(inputSegmentId !== undefined && { segmentId: inputSegmentId || null }),
         },
       });
 
@@ -110,6 +115,60 @@ export function registerAllExecutors(prisma: PrismaClient): void {
         name: updated.name,
         basePrice: updated.basePrice,
       };
+    }
+
+    // =========================================================================
+    // SEGMENT AUTO-ASSIGNMENT (#629)
+    // =========================================================================
+    // All packages must be linked to a segment. If no segmentId provided,
+    // look up the "General" segment for this tenant.
+    // =========================================================================
+    let resolvedSegmentId = inputSegmentId;
+
+    if (!resolvedSegmentId) {
+      // Look up the "General" segment (slug: 'general')
+      const generalSegment = await prisma.segment.findUnique({
+        where: {
+          tenantId_slug: {
+            tenantId,
+            slug: 'general',
+          },
+        },
+        select: { id: true },
+      });
+
+      if (generalSegment) {
+        resolvedSegmentId = generalSegment.id;
+        logger.debug(
+          { tenantId, segmentId: resolvedSegmentId },
+          'Package auto-assigned to General segment via agent'
+        );
+      } else {
+        // No General segment exists - this shouldn't happen for properly onboarded tenants
+        // Log warning but allow creation (CatalogService will handle this case)
+        logger.warn(
+          { tenantId },
+          'General segment not found - package created without segment assignment'
+        );
+      }
+    } else {
+      // Verify provided segmentId belongs to this tenant
+      const segment = await prisma.segment.findFirst({
+        where: { id: resolvedSegmentId, tenantId },
+        select: { id: true, name: true },
+      });
+
+      if (!segment) {
+        throw new ResourceNotFoundError(
+          'segment',
+          resolvedSegmentId,
+          'Use get_segments to find available segments for this business.'
+        );
+      }
+      logger.debug(
+        { tenantId, segmentId: resolvedSegmentId, segmentName: segment.name },
+        'Package assigned to specified segment via agent'
+      );
     }
 
     // Create new package - generate slug if not provided
@@ -129,16 +188,21 @@ export function registerAllExecutors(prisma: PrismaClient): void {
         basePrice: packagePrice,
         bookingType: (bookingType as 'DATE' | 'TIMESLOT') || 'DATE',
         active: active ?? true,
+        segmentId: resolvedSegmentId || null,
       },
     });
 
-    logger.info({ tenantId, packageId: created.id }, 'Package created via agent');
+    logger.info(
+      { tenantId, packageId: created.id, segmentId: resolvedSegmentId },
+      'Package created via agent'
+    );
     return {
       action: 'created',
       packageId: created.id,
       name: created.name,
       basePrice: created.basePrice,
       slug: created.slug,
+      segmentId: resolvedSegmentId,
     };
   });
 

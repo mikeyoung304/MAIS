@@ -4,7 +4,7 @@
  *
  * Endpoints:
  * - GET    /api/v1/admin/tenants       - List all tenants
- * - POST   /api/v1/admin/tenants       - Create new tenant
+ * - POST   /api/v1/admin/tenants       - Create new tenant (atomic, includes segment + packages)
  * - GET    /api/v1/admin/tenants/:id   - Get tenant details
  * - PUT    /api/v1/admin/tenants/:id   - Update tenant
  * - DELETE /api/v1/admin/tenants/:id   - Deactivate tenant
@@ -14,7 +14,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import type { PrismaClient } from '../../generated/prisma';
 import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
-import { apiKeyService } from '../../lib/api-key.service';
+import { TenantProvisioningService } from '../../services/tenant-provisioning.service';
 import { ValidationError, NotFoundError } from '../../lib/errors';
 
 /**
@@ -24,6 +24,7 @@ import { ValidationError, NotFoundError } from '../../lib/errors';
 export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
   const router = Router();
   const tenantRepo = new PrismaTenantRepository(prisma);
+  const provisioningService = new TenantProvisioningService(prisma);
 
   /**
    * GET /api/v1/admin/tenants
@@ -50,7 +51,10 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
 
   /**
    * POST /api/v1/admin/tenants
-   * Create new tenant with API keys
+   * Create new tenant with API keys, default segment, and default packages
+   *
+   * This is an ATOMIC operation - either all data is created or none.
+   * Prevents orphaned tenants without segments/packages.
    *
    * Body:
    * - slug: string (required, URL-safe identifier)
@@ -60,6 +64,8 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
    * Returns:
    * - tenant: Created tenant object
    * - secretKey: SECRET API KEY (shown ONCE, never stored in plaintext)
+   * - segment: Default "General" segment
+   * - packages: Default packages (Basic/Standard/Premium)
    */
   router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -80,30 +86,34 @@ export function createAdminTenantsRoutes(prisma: PrismaClient): Router {
         throw new ValidationError(`Tenant with slug "${slug}" already exists`);
       }
 
-      // Generate API key pair
-      const keys = apiKeyService.generateKeyPair(slug);
-
-      // Create tenant
-      const tenant = await tenantRepo.create({
+      // Create fully provisioned tenant (atomic: tenant + segment + packages)
+      const result = await provisioningService.createFullyProvisioned({
         slug,
         name,
-        apiKeyPublic: keys.publicKey,
-        apiKeySecret: keys.secretKeyHash,
         commissionPercent: commission,
-        branding: {},
       });
 
       res.status(201).json({
         tenant: {
-          id: tenant.id,
-          slug: tenant.slug,
-          name: tenant.name,
-          apiKeyPublic: tenant.apiKeyPublic,
-          commissionPercent: Number(tenant.commissionPercent),
-          isActive: tenant.isActive,
-          createdAt: tenant.createdAt.toISOString(),
+          id: result.tenant.id,
+          slug: result.tenant.slug,
+          name: result.tenant.name,
+          apiKeyPublic: result.tenant.apiKeyPublic,
+          commissionPercent: Number(result.tenant.commissionPercent),
+          isActive: result.tenant.isActive,
+          createdAt: result.tenant.createdAt.toISOString(),
         },
-        secretKey: keys.secretKey, // ⚠️ Shown ONCE, never stored in plaintext
+        secretKey: result.secretKey, // ⚠️ Shown ONCE, never stored in plaintext
+        segment: {
+          id: result.segment.id,
+          slug: result.segment.slug,
+          name: result.segment.name,
+        },
+        packages: result.packages.map((pkg) => ({
+          id: pkg.id,
+          slug: pkg.slug,
+          name: pkg.name,
+        })),
       });
     } catch (error) {
       next(error);
