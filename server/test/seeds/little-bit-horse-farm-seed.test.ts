@@ -2,10 +2,10 @@
  * Unit tests for Little Bit Horse Farm seed (seeds/little-bit-horse-farm.ts)
  *
  * Tests:
- * - Segment creation (Corporate Wellness Retreat)
- * - 3-tier package creation (tier_1/tier_2/tier_3)
- * - 18 add-ons creation (global scope)
- * - PackageAddOn links (54 total)
+ * - Segment creation (3 segments: Wellness, Elopements, Weekend Getaways)
+ * - 9 packages (3 per segment, tier_1/tier_2/tier_3)
+ * - 33 add-ons creation (segment-scoped)
+ * - PackageAddOn links (99 total)
  * - Idempotency (safe to run multiple times)
  */
 
@@ -53,26 +53,39 @@ describe('Little Bit Horse Farm Seed', () => {
   });
 
   describe('Segment Creation', () => {
-    it('should create Corporate Wellness Retreat segment', async () => {
+    it('should create 3 segments (Wellness, Elopements, Weekend Getaways)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.segment.upsert).toHaveBeenCalledTimes(1);
-      const segmentCall = mockPrisma.segment.upsert.mock.calls[0][0];
-      expect(segmentCall.where.tenantId_slug.slug).toBe('corporate-wellness-retreat');
-      expect(segmentCall.create.name).toBe('Corporate Wellness Retreats');
-      expect(segmentCall.create.heroTitle).toBe('Reset. Reconnect. Return Stronger.');
+      expect(mockPrisma.segment.upsert).toHaveBeenCalledTimes(3);
+      const slugs = mockPrisma.segment.upsert.mock.calls.map((c) => c[0].where.tenantId_slug.slug);
+      expect(slugs).toContain('corporate-wellness-retreat');
+      expect(slugs).toContain('elopements');
+      expect(slugs).toContain('weekend-getaways');
+    });
+
+    it('should create Corporate Wellness Retreat segment with correct hero', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      const wellnessCall = mockPrisma.segment.upsert.mock.calls.find(
+        (c) => c[0].where.tenantId_slug.slug === 'corporate-wellness-retreat'
+      );
+      expect(wellnessCall).toBeDefined();
+      expect(wellnessCall![0].create.name).toBe('Corporate Wellness Retreats');
+      expect(wellnessCall![0].create.heroTitle).toBe('Reset. Reconnect. Return Stronger.');
     });
   });
 
-  describe('Package Creation (3 Tiers)', () => {
-    it('should create 3 packages', async () => {
+  describe('Package Creation (9 Total - 3 per segment)', () => {
+    it('should create 9 packages (3 per segment)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.package.upsert).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.package.upsert).toHaveBeenCalledTimes(9);
     });
 
     it('should create Grounding Reset (tier_1) at $450', async () => {
@@ -121,13 +134,13 @@ describe('Little Bit Horse Farm Seed', () => {
     });
   });
 
-  describe('Add-on Creation (18 Total)', () => {
-    it('should create 18 add-ons', async () => {
+  describe('Add-on Creation (33 Total - segment-scoped)', () => {
+    it('should create 33 add-ons (18 wellness + 4 elopements + 11 weekends)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.addOn.upsert).toHaveBeenCalledTimes(18);
+      expect(mockPrisma.addOn.upsert).toHaveBeenCalledTimes(33);
     });
 
     it('should create food & hospitality add-ons', async () => {
@@ -186,24 +199,29 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(mocktailBar![0].create.price).toBe(25000); // $250 base
     });
 
-    it('should set all add-ons as global (segmentId: null)', async () => {
+    it('should set all add-ons as segment-scoped (not global)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
+      // All add-ons should have a segmentId (not null)
       mockPrisma.addOn.upsert.mock.calls.forEach((call) => {
-        expect(call[0].create.segmentId).toBeNull();
+        expect(call[0].create.segmentId).not.toBeNull();
       });
     });
   });
 
   describe('PackageAddOn Links', () => {
-    it('should create 54 package-addon links (18 add-ons × 3 packages)', async () => {
+    it('should create 99 package-addon links (54 wellness + 12 elopement + 33 weekend)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalledTimes(54);
+      // 18 add-ons × 3 wellness packages = 54
+      // 4 add-ons × 3 elopement packages = 12
+      // 11 add-ons × 3 weekend packages = 33
+      // Total = 99
+      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalledTimes(99);
     });
   });
 
