@@ -321,13 +321,13 @@ export default function HomePage() {
 
               {/* CTA */}
               <div className="mt-10 text-center">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+                <Button
+                  asChild
+                  variant="sage"
+                  className="rounded-full px-10 py-4 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  Get Handled
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                  <Link href="/signup">Get Handled</Link>
+                </Button>
               </div>
             </div>
           </section>
@@ -530,13 +530,13 @@ export default function HomePage() {
 
                 {/* CTA */}
                 <div className="mt-10">
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+                  <Button
+                    asChild
+                    variant="sage"
+                    className="rounded-full px-10 py-4 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    Get Handled
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                    <Link href="/signup">Get Handled</Link>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -653,13 +653,13 @@ export default function HomePage() {
 
           {/* CTA after Project Hub */}
           <div className="py-10 text-center bg-surface-alt">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+            <Button
+              asChild
+              variant="sage"
+              className="rounded-full px-10 py-4 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              Get Handled
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+              <Link href="/signup">Get Handled</Link>
+            </Button>
           </div>
 
           {/* ============================================
@@ -708,13 +708,13 @@ export default function HomePage() {
 
               {/* CTA */}
               <div className="mt-10 text-center">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
+                <Button
+                  asChild
+                  variant="sage"
+                  className="rounded-full px-10 py-4 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  Get Handled
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                  <Link href="/signup">Get Handled</Link>
+                </Button>
               </div>
             </div>
           </section>
