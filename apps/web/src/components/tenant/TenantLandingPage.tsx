@@ -28,6 +28,8 @@ interface TenantLandingPageProps {
   basePath?: string;
   /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
   domainParam?: string;
+  /** Whether Build Mode is active (adds data attributes for section selection) */
+  isEditMode?: boolean;
 }
 
 /**
@@ -168,6 +170,7 @@ export function TenantLandingPage({
   data,
   basePath = '',
   domainParam = '',
+  isEditMode = false,
 }: TenantLandingPageProps) {
   const { tenant, packages, segments } = data;
   const landingConfig = tenant.branding?.landingPage;
@@ -197,7 +200,13 @@ export function TenantLandingPage({
   return (
     <>
       {/* ===== PRE-PACKAGES SECTIONS (Hero, etc.) ===== */}
-      <SectionRenderer sections={preSections} tenant={tenant} basePath={basePath} />
+      <SectionRenderer
+        sections={preSections}
+        tenant={tenant}
+        basePath={basePath}
+        isEditMode={isEditMode}
+        indexOffset={0}
+      />
 
       {/* ===== SOCIAL PROOF BAR ===== */}
       {landingConfig?.sections?.socialProofBar && landingConfig?.socialProofBar && (
@@ -295,7 +304,13 @@ export function TenantLandingPage({
       )}
 
       {/* ===== POST-PACKAGES SECTIONS (About, Testimonials, Gallery, FAQ) ===== */}
-      <SectionRenderer sections={postSections} tenant={tenant} basePath={basePath} />
+      <SectionRenderer
+        sections={postSections}
+        tenant={tenant}
+        basePath={basePath}
+        isEditMode={isEditMode}
+        indexOffset={preSections.length}
+      />
 
       {/* ===== FINAL CTA ===== */}
       {finalCta && (

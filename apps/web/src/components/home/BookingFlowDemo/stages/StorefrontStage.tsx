@@ -81,8 +81,8 @@ export function StorefrontStage({ active }: StageProps) {
       {/* Section label */}
       <p className="text-[10px] text-text-muted text-center mb-2">Choose a Package</p>
 
-      {/* Tier cards */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Tier cards - responsive: 1 col mobile, 3 cols tablet+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {tiers.map((tier, index) => (
           <div
             key={tier.id}

@@ -96,7 +96,8 @@ model Tenant {
   balanceDueDays Int      @default(30)       // Days before event balance is due
 
   // Landing Page Configuration
-  landingPageConfig Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
+  landingPageConfig      Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
+  landingPageConfigDraft Json? // Draft version for Build Mode editing (published via copy to landingPageConfig)
 
   // Tier Display Names - Tenant customization for tier labels
   // Structure: {"tier_1": "The Grounding Reset", "tier_2": "The Team Recharge", "tier_3": "The Executive Reset"}

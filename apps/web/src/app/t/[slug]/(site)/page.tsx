@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TenantLandingPage } from '@/components/tenant';
+import { TenantLandingPageClient } from '@/components/tenant';
 import { getTenantStorefrontData, TenantNotFoundError, normalizeToPages } from '@/lib/tenant';
 import type { TenantPublicDto, ContactSection, LandingPageConfig } from '@macon/contracts';
 
@@ -77,7 +77,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
-        <TenantLandingPage data={data} basePath={`/t/${slug}`} />
+        <TenantLandingPageClient data={data} basePath={`/t/${slug}`} />
       </>
     );
   } catch (error) {

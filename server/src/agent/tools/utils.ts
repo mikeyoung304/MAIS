@@ -2,11 +2,14 @@
  * Agent Tool Utilities
  *
  * Common helper functions for agent tools to reduce duplication.
- * DRY implementations of error handling, date formatting, and price formatting.
+ * DRY implementations of error handling, date formatting, price formatting,
+ * and landing page draft operations.
  */
 
+import type { PrismaClient } from '../../generated/prisma';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
+import { type PagesConfig, type LandingPageConfig, DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 import type { ToolError } from './types';
 
 /**
@@ -84,4 +87,73 @@ export function formatPriceLocale(cents: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+// ============================================================================
+// Landing Page Draft Helpers (used by storefront tools/executors)
+// ============================================================================
+
+/**
+ * Result from getDraftConfig
+ */
+export interface DraftConfigResult {
+  pages: PagesConfig;
+  hasDraft: boolean;
+}
+
+/**
+ * Get or initialize draft config from tenant
+ * Uses existing draft if available, otherwise copies from live config
+ *
+ * @param prisma - Prisma client
+ * @param tenantId - Tenant ID
+ * @returns Current pages config and whether a draft exists
+ * @throws Error if tenant not found
+ */
+export async function getDraftConfig(
+  prisma: PrismaClient,
+  tenantId: string
+): Promise<DraftConfigResult> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { landingPageConfig: true, landingPageConfigDraft: true },
+  });
+
+  if (!tenant) {
+    throw new Error('Tenant not found');
+  }
+
+  // If draft exists, use it
+  if (tenant.landingPageConfigDraft) {
+    const draft = tenant.landingPageConfigDraft as unknown as LandingPageConfig;
+    return {
+      pages: draft.pages || DEFAULT_PAGES_CONFIG,
+      hasDraft: true,
+    };
+  }
+
+  // Otherwise, initialize from live config or defaults
+  const live = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+  return {
+    pages: live?.pages || DEFAULT_PAGES_CONFIG,
+    hasDraft: false,
+  };
+}
+
+/**
+ * Get tenant slug for preview URL
+ *
+ * @param prisma - Prisma client
+ * @param tenantId - Tenant ID
+ * @returns Tenant slug or null if not found
+ */
+export async function getTenantSlug(
+  prisma: PrismaClient,
+  tenantId: string
+): Promise<string | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { slug: true },
+  });
+  return tenant?.slug ?? null;
 }

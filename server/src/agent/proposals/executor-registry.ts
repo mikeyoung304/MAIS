@@ -80,6 +80,13 @@ const REQUIRED_EXECUTOR_TOOLS = [
   // Onboarding
   'start_trial',
   'initiate_stripe_onboarding',
+
+  // Storefront Build Mode
+  'update_page_section',
+  'remove_page_section',
+  'reorder_page_sections',
+  'toggle_page_enabled',
+  'update_storefront_branding',
 ] as const;
 
 /**

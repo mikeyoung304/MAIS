@@ -71,7 +71,7 @@ export function BuildModePreview({
           break;
 
         case 'BUILD_MODE_SECTION_SELECTED':
-          onSectionSelect?.(message.data.pageId, message.data.sectionIndex);
+          onSectionSelect?.(message.data.pageId as PageName, message.data.sectionIndex);
           break;
 
         case 'BUILD_MODE_PAGE_CHANGE':

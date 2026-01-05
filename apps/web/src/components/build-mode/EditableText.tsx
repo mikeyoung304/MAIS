@@ -114,10 +114,10 @@ export function EditableText({
     }
   }, []);
 
-  // In edit mode, render as contenteditable
+  // In edit mode, render as contenteditable div (polymorphic elements have TS issues)
   if (isEditMode) {
     return (
-      <Component
+      <div
         ref={contentRef as React.RefObject<HTMLDivElement>}
         contentEditable
         suppressContentEditableWarning
@@ -133,7 +133,7 @@ export function EditableText({
         data-editable-field={field}
       >
         {localValue || placeholder}
-      </Component>
+      </div>
     );
   }
 

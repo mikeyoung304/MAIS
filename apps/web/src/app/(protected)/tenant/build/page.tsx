@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { useAuth } from '@/lib/auth-client';
 import { BuildModeHeader, BuildModePreview, BuildModeChat, PageSelector, ConfirmDialog } from '@/components/build-mode';
 import { DEFAULT_PAGES_CONFIG, type PageName, type PagesConfig } from '@macon/contracts';
@@ -28,7 +28,9 @@ import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
  */
 export default function BuildModePage() {
   const router = useRouter();
-  const { tenantId, slug, isAuthenticated } = useAuth();
+  const { tenantId: _tenantId, slug, isAuthenticated } = useAuth();
+  // Note: _tenantId available for future API calls that need it
+  void _tenantId;
 
   // State
   const [currentPage, setCurrentPage] = useState<PageName>('home');
@@ -258,7 +260,7 @@ export default function BuildModePage() {
 
       {/* Main content: resizable panels */}
       <div className="flex-1 min-h-0">
-        <PanelGroup direction="horizontal" className="h-full">
+        <PanelGroup orientation="horizontal" className="h-full">
           {/* Left panel: Chat */}
           <Panel defaultSize={35} minSize={25} maxSize={50}>
             <BuildModeChat

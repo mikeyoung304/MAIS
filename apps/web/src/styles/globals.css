@@ -148,3 +148,33 @@ input:-webkit-autofill:focus {
   caret-color: var(--autofill-text);
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* ============================================================================
+   Build Mode Styles
+   ============================================================================
+   Styles for the split-screen storefront editor.
+   Applied when storefront pages are loaded in the Build Mode iframe.
+   ============================================================================ */
+
+/* Section hover state - subtle highlight on hover */
+.build-mode-active [data-section-index] {
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, outline 0.2s ease;
+  position: relative;
+}
+
+.build-mode-active [data-section-index]:hover {
+  box-shadow: inset 0 0 0 2px rgba(79, 113, 97, 0.3);
+}
+
+/* Section selected/highlighted state */
+.build-mode-highlight {
+  box-shadow: inset 0 0 0 3px rgba(79, 113, 97, 0.8) !important;
+  outline: 3px solid rgba(79, 113, 97, 0.3);
+  outline-offset: 2px;
+}
+
+/* Build mode indicator bar offset */
+.build-mode-active {
+  scroll-padding-top: 3rem;
+}

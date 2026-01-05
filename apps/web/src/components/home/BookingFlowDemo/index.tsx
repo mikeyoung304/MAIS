@@ -40,16 +40,16 @@ export function BookingFlowDemo() {
     <div className="w-full max-w-[520px] lg:max-w-[620px] xl:max-w-none">
       <BrowserFrame>
         <div className="flex h-full">
-          {/* Left panel - Main content (58%) */}
-          <div className="w-[58%] border-r border-neutral-800 relative bg-surface">
+          {/* Main content - full width on mobile, 58% on larger screens */}
+          <div className="w-full sm:w-[58%] sm:border-r border-neutral-800 relative bg-surface">
             <StorefrontStage active={activeStage === 'storefront'} />
             <CalendarStage active={activeStage === 'calendar'} />
             <CheckoutStage active={activeStage === 'checkout'} />
             <ConfirmationStage active={activeStage === 'confirmation'} />
           </div>
 
-          {/* Right panel - Chat Assistant (42%) */}
-          <div className="w-[42%]">
+          {/* Chat Assistant - hidden on mobile, 42% on larger screens */}
+          <div className="hidden sm:block w-[42%]">
             <ChatAssistant stage={activeStage} />
           </div>
         </div>

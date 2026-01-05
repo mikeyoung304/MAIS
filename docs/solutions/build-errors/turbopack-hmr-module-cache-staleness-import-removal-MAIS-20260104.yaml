@@ -1,0 +1,260 @@
+---
+title: "Turbopack HMR Module Cache Staleness After Removing Imports"
+category: "build-errors"
+subcategory: "dev-environment"
+tags:
+  - turbopack
+  - nextjs
+  - hmr
+  - module-cache
+  - dev-mode
+  - import-removal
+  - incremental-bundling
+severity: "medium"
+status: "resolved"
+date: "2026-01-04"
+affected_versions:
+  - "next 14.x"
+  - "turbopack 1.x"
+keywords:
+  - "HMR cache"
+  - "module graph"
+  - "stale dependencies"
+  - "bundle invalidation"
+  - "import cleanup"
+
+# SYMPTOMS AND DETECTION
+symptoms:
+  - "Browser displays 'Something went sideways' error page after removing an import"
+  - "Error references modules that no longer exist (e.g., 'Module [project]/apps/web/node_modules/lucide-react/dist/esm/icons/map-pin.js')"
+  - "Server compiles successfully (no compilation errors shown in terminal)"
+  - "Occurs immediately after refactoring component (removing unused imports)"
+  - "Hard refresh (Cmd+Shift+R) temporarily fixes it"
+  - "Error mentions 'was instantiated because it was required from' but 'module factory is not available'"
+  - "Browser console shows HMR errors in network tab (WebSocket 101 Upgrade)"
+
+detection_checklist:
+  - "Just refactored a component and removed unused imports"
+  - "Server-side compilation succeeded (no errors in terminal)"
+  - "Client shows error but refresh/reload fixes it"
+  - "Error specifically references lucide-react icons or other tree-shakeable modules"
+  - "Browser DevTools shows HMR/WebSocket activity in Network tab"
+
+# AFFECTED AREAS
+affected_components:
+  - "apps/web/src/components/home/BookingFlowDemo/stages/"
+  - "Any component using tree-shakeable imports (lucide-react, @icons, etc.)"
+  - "Components with large icon/utility imports from libraries with per-export modules"
+
+affected_files:
+  - "apps/web/src/components/**/*.tsx"
+  - "apps/web/next.config.js"
+  - "apps/web/package.json (scripts)"
+
+# ROOT CAUSE ANALYSIS
+root_cause:
+  description: "Turbopack incremental bundling creates per-route module dependency graphs. When you remove an import, the source file is invalidated but Turbopack's browser-side HMR cache may still hold references to the old module dependency tree."
+
+  mechanism:
+    - "Component source file is updated (import removed)"
+    - "Turbopack detects change and triggers recompilation"
+    - "Server successfully recompiles without the removed import"
+    - "Browser receives HMR update (via WebSocket)"
+    - "Browser's cached module graph still references the removed dependency"
+    - "HMR tries to hydrate old module references → 'module factory is not available'"
+    - "App shows error page; manual refresh clears browser cache and fixes it"
+
+  key_difference:
+    - "Production build: Full bundling, all dependencies resolved upfront"
+    - "Turbopack dev: Incremental bundling per-route, module graph built dynamically"
+    - "Issue occurs at: HMR boundary between stale browser cache and refreshed server state"
+
+# FREQUENCY AND IMPACT
+frequency: "Occasional (2-3 times per development session during active refactoring)"
+impact: "Blocks development for 30 seconds (refresh required), not data-loss critical"
+user_impact: "Visual, no silent failures; immediately visible error"
+
+# TRIGGERS AND PATTERNS
+triggers:
+  - "Removing imports from tree-shakeable modules (lucide-react, @heroicons, etc.)"
+  - "Refactoring components with large icon libraries"
+  - "Cleaning up unused utility imports"
+  - "Bulk import removals in single file"
+  - "Less common with monolithic imports (React, utils)"
+
+pattern_examples:
+  - "Removed MapPin from lucide-react imports"
+  - "Cleaned up unused Sparkles, FileText icons"
+  - "Deleted unnecessary utility function imports"
+
+# SOLUTIONS AND FIXES
+solutions:
+  quick_fix:
+    name: "Browser Hard Refresh"
+    steps:
+      - "Press Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)"
+      - "Or: DevTools → Application → Clear Site Data → Reload"
+      - "Takes: 2-5 seconds"
+    why_it_works: "Clears browser's cached module graph and HMR state; server already has correct code"
+    effectiveness: "99%"
+    best_for: "Single occurrence, isolated import removal"
+
+  server_fix:
+    name: "Clear Turbopack Cache"
+    steps:
+      - "Interrupt dev server (Ctrl+C)"
+      - "Run: cd apps/web && rm -rf .next .turbo node_modules/.cache"
+      - "Run: npm run dev"
+      - "Takes: 5-10 seconds"
+    why_it_works: "Nukes both server and browser cache, forces full rebuild"
+    effectiveness: "100%"
+    best_for: "Persistent issues, multiple import changes, or stuck state"
+
+  full_recovery:
+    name: "Full Node Process Cleanup"
+    steps:
+      - "Run: pkill -9 -f 'next\\|node'"
+      - "Run: cd apps/web && rm -rf .next .turbo node_modules/.cache"
+      - "Run: npm run dev"
+      - "Takes: 10-15 seconds"
+    why_it_works: "Kills all Node processes and clears all caches; fresh start"
+    effectiveness: "100%"
+    best_for: "Stuck dev server, multiple cascading issues"
+
+  prevention_strategies:
+    - "Monitor import changes: Before removing imports, verify they're unused (IDE warning)"
+    - "Incremental cleanup: Remove one import per refactor, test, then proceed"
+    - "Batch remove before restart: If removing multiple, do them all, then hard refresh"
+    - "Script helper: Add npm script `dev:clean` for quick cleanup"
+
+# RELATED ISSUES AND PATTERNS
+related:
+  "turbopack-hmr-cache-conflict-after-production-build":
+    description: "Similar root cause (mode-specific `.next` structures), but triggered by switching between build and dev modes"
+    connection: "Both involve Turbopack cache staleness, but different triggers"
+    solution_overlap: "Same fix: clear .next/.turbo caches"
+
+  "unused-imports-build-warning":
+    description: "TypeScript warnings about unused imports"
+    connection: "These should be cleaned up proactively to avoid triggering HMR issues"
+    action: "Act on IDE unused import warnings immediately"
+
+# PREVENTION AND BEST PRACTICES
+prevention:
+  enable_lint_rules:
+    - "Enable ESLint rule: no-unused-vars"
+    - "Use IDE quick-fix: 'Remove unused imports'"
+    - "Automate: Add pre-commit hook to detect unused imports"
+
+  development_workflow:
+    - "Remove one import per change, test in browser immediately"
+    - "Use IDE warnings as source of truth (highlighted gray text)"
+    - "When in doubt, hard refresh: Cmd+Shift+R is your friend"
+    - "Keep dev server running continuously; only restart on persistent issues"
+
+  package_scripts:
+    ```json
+    {
+      "dev": "next dev --turbo --port 3000",
+      "dev:clean": "rm -rf apps/web/.next apps/web/.turbo && npm run dev",
+      "dev:reset": "pkill -9 -f 'next\\|node'; npm run dev:clean"
+    }
+    ```
+
+# TECHNICAL DEEP DIVE
+turbopack_architecture:
+  bundling_model: "Per-route incremental bundling (unlike production full bundling)"
+  hmr_mechanism: "WebSocket-based HMR with module factory registry"
+  cache_locations:
+    - ".next/: Dev server module output"
+    - ".turbo/: Turbopack task cache"
+    - "node_modules/.cache/: Node module cache"
+    - "Browser DevTools cache: HTTP/WebSocket state"
+
+  module_graph:
+    description: "Turbopack maintains a dependency graph for each route"
+    invalidation: "When source changes, graph is marked dirty and recomputed"
+    issue: "Browser's cached graph may not update immediately with HMR"
+    solution: "Full page refresh forces browser to request new graph"
+
+incremental_bundling_vs_full_bundling:
+  incremental:
+    - "Turbopack dev mode"
+    - "Per-route bundling"
+    - "Module graph computed on-demand"
+    - "Fast iteration, HMR updates"
+    - "Prone to cache staleness"
+
+  full:
+    - "Production build"
+    - "Whole-app bundling"
+    - "All dependencies resolved upfront"
+    - "Optimized output"
+    - "No HMR, no cache staleness"
+
+# REPRODUCTION STEPS
+reproduction:
+  setup:
+    - "Start dev server: npm run dev (from apps/web)"
+    - "Open browser to http://localhost:3000"
+
+  trigger:
+    - "Navigate to a component page"
+    - "Open src/components/.../SomeComponent.tsx in editor"
+    - "Remove an import from tree-shakeable module (e.g., lucide-react)"
+    - "Save file"
+
+  observe:
+    - "Server successfully recompiles (no error in terminal)"
+    - "Browser shows 'Something went sideways' error"
+    - "Error mentions module that was just removed"
+
+  confirm:
+    - "Hard refresh browser (Cmd+Shift+R)"
+    - "Error disappears, component renders correctly"
+
+# ENVIRONMENT AND CONTEXT
+environment:
+  project: "MAIS (gethandled.ai)"
+  location: "apps/web/"
+  tech_stack:
+    - "Next.js 14 with App Router"
+    - "Turbopack (via next dev --turbo)"
+    - "TypeScript 5.9.3"
+    - "TailwindCSS, Radix UI"
+    - "lucide-react for icons"
+
+  configuration:
+    - "next.config.js: Standard, no special Turbopack settings"
+    - "No explicit HMR configuration (using Turbopack defaults)"
+
+# TESTING NOTES
+test_coverage:
+  not_applicable: "This is a dev environment issue; no unit tests needed"
+  manual_verification: "Manual QA after removing imports in dev mode"
+
+# REFERENCES AND LINKS
+references:
+  - "Existing compound doc: turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md"
+  - "Issue file: apps/web/src/components/home/BookingFlowDemo/stages/ConfirmationStage.tsx"
+  - "Commit that exposed this: 99c99694 (docs: compound Turbopack HMR cache conflict solution)"
+  - "Next.js Turbopack docs: https://nextjs.org/docs/architecture/turbopack"
+  - "Related: HMR module factory errors in incremental bundlers"
+
+# FUTURE IMPROVEMENTS
+potential_solutions:
+  - "Add ESLint rule to catch unused imports before commit"
+  - "Create git pre-commit hook to verify no unused imports"
+  - "Consider webpack/Turbopack cache invalidation strategy"
+  - "Monitor if Turbopack/Next.js releases improve HMR cache handling"
+
+# DECISION LOG
+decisions:
+  - decision: "Prioritized browser hard refresh as primary fix over cache clearing"
+    rationale: "Faster for isolated incidents, aligns with user workflow (Cmd+Shift+R is familiar)"
+
+  - decision: "Documented alongside production build issue, not as separate pattern"
+    rationale: "Both are Turbopack cache staleness, same root cause family"
+
+  - decision: "Documented as medium severity, not critical"
+    rationale: "No data loss, no silent failures, user-visible and immediately fixable"
