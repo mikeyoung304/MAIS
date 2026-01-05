@@ -845,6 +845,10 @@ The following links prevent common mistakes from recurring:
 - **[express-route-ordering-auth-fallback](docs/solutions/code-review-patterns/express-route-ordering-auth-fallback-security-MAIS-20260102.md)** - Express route ordering (static before parameterized), auth fallback guards, tenant defense-in-depth
 - **[vitest-skipif-collection-phase-timing](docs/solutions/test-failures/vitest-skipif-collection-phase-timing-MAIS-20260102.md)** - Vitest `skipIf` evaluates at collection time before `beforeAll`; use `describe.runIf` with sync checks
 - **[turbopack-hmr-module-cache-staleness](docs/solutions/dev-workflow/TURBOPACK_HMR_MODULE_CACHE_STALENESS_PREVENTION.md)** - Stale HMR cache prevention (import removal, build mode switching, branch changes) + quick recovery scripts
+- **[agent-tools-prevention-index](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Master index for agent tool patterns (tenant isolation, executor registry, TOCTOU prevention, DRY utilities)
+- **[booking-links-phase-0-prevention](docs/solutions/patterns/BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md)** - 4 prevention patterns from booking links code review (P1 fixes)
+
+**Key insight from Booking Links Phase 0:** All agent write tools MUST be in `REQUIRED_EXECUTOR_TOOLS` for startup validation. Use `updateMany`/`deleteMany` with `tenantId` in where clause (defense-in-depth). Wrap check-then-act patterns in transactions with `FOR UPDATE` locks. Extract shared utilities to `agent/utils/` immediately (not "later").
 
 **Key insight from Commit 417b8c0:** ts-rest has type compatibility issues with Express 4.x/5.x. The `{ req: any }` in route handlers is REQUIRED and must not be removed. Document library limitations instead of trying to "fix" them.
 
