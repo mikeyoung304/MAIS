@@ -48,8 +48,8 @@ const tiers = [
       'Monthly growth newsletter',
       'Live monthly Zoom calls',
     ],
-    ctaText: 'Get Started',
-    ctaHref: '/signup?tier=handled',
+    ctaText: 'Get Handled',
+    ctaHref: '/signup',
     isPopular: false,
   },
   {
@@ -66,8 +66,8 @@ const tiers = [
       'Smart reminders that reduce no-shows',
       'Priority support',
     ],
-    ctaText: 'Start Growing',
-    ctaHref: '/signup?tier=fully-handled',
+    ctaText: 'Get Handled',
+    ctaHref: '/signup',
     isPopular: true,
   },
   {
@@ -85,8 +85,8 @@ const tiers = [
       'We build it for you',
       'Dedicated account manager',
     ],
-    ctaText: 'Book a Call',
-    ctaHref: '/contact',
+    ctaText: 'Get Handled',
+    ctaHref: '/signup',
     isPopular: false,
   },
 ];
@@ -170,7 +170,7 @@ export default function HomePage() {
                 Login
               </Link>
               <Button asChild variant="sage" className="rounded-full px-6 py-2">
-                <Link href="/signup">Get Started</Link>
+                <Link href="/signup">Get Handled</Link>
               </Button>
             </div>
             <MobileNav />
@@ -202,7 +202,7 @@ export default function HomePage() {
                       variant="sage"
                       className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                     >
-                      <Link href="/signup">Get Started Free</Link>
+                      <Link href="/signup">Get Handled</Link>
                     </Button>
                   </div>
                 </div>
@@ -322,10 +322,10 @@ export default function HomePage() {
               {/* CTA */}
               <div className="mt-10 text-center">
                 <Link
-                  href="#pricing"
+                  href="/signup"
                   className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
                 >
-                  See what&apos;s included
+                  Get Handled
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -531,10 +531,10 @@ export default function HomePage() {
                 {/* CTA */}
                 <div className="mt-10">
                   <Link
-                    href="#pricing"
+                    href="/signup"
                     className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
                   >
-                    See pricing
+                    Get Handled
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
@@ -654,10 +654,10 @@ export default function HomePage() {
           {/* CTA after Project Hub */}
           <div className="py-10 text-center bg-surface-alt">
             <Link
-              href="#pricing"
+              href="/signup"
               className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
             >
-              See pricing
+              Get Handled
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -712,7 +712,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex items-center gap-2 text-sage hover:text-sage-hover font-medium transition-colors group"
                 >
-                  Start your free trial
+                  Get Handled
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -762,7 +762,7 @@ export default function HomePage() {
                 variant="sage"
                 className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <Link href="/signup">Get started</Link>
+                <Link href="/signup">Get Handled</Link>
               </Button>
             </div>
           </section>

@@ -109,7 +109,7 @@ export function MobileNav() {
           <div className="mt-8 pt-6 border-t border-neutral-800">
             <Button asChild variant="sage" className="w-full rounded-full py-3 text-base">
               <Link href="/signup" onClick={closeMenu}>
-                Get Started
+                Get Handled
               </Link>
             </Button>
           </div>
