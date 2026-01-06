@@ -1,6 +1,6 @@
 'use server';
 
-import { auth, signIn, getBackendToken } from '@/lib/auth';
+import { auth, unstable_update, getBackendToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -94,18 +94,34 @@ export async function impersonateTenant(tenantId: string) {
   });
 
   try {
-    // Re-authenticate to update NextAuth session with impersonation data
-    await signIn('credentials', {
-      token: data.token,
-      email: data.email,
-      role: data.role,
-      tenantId: data.tenantId,
-      slug: data.slug,
-      impersonation: JSON.stringify(data.impersonation),
-      redirect: false,
+    // Update NextAuth session with impersonation data using unstable_update
+    // This is more reliable than signIn() in Server Actions because it directly
+    // updates the session cookie without going through the full auth flow
+    //
+    // Note: We cast to 'unknown' first because:
+    // 1. MAISSession.user intentionally excludes backendToken (security - not sent to client)
+    // 2. But the JWT callback needs backendToken to update the server-side JWT
+    // 3. unstable_update passes this entire object to jwt callback with trigger='update'
+    // 4. The jwt callback in auth.ts handles extracting backendToken from session.user
+    await unstable_update({
+      user: {
+        id: data.tenantId,
+        email: data.email,
+        role: data.role,
+        tenantId: data.tenantId,
+        slug: data.slug,
+        impersonation: data.impersonation,
+        backendToken: data.token, // Passed to JWT callback, not exposed to client
+      } as unknown as { id: string; email: string },
+    });
+
+    logger.info('Impersonation session started', {
+      adminEmail: session.user.email,
+      targetTenantId: data.tenantId,
+      targetSlug: data.slug,
     });
   } catch (error) {
-    // Rollback cookie if signIn fails to prevent session desync
+    // Rollback cookie if session update fails to prevent session desync
     logger.error('Failed to sync session after impersonation', { error });
     if (originalToken) {
       cookieStore.set('mais_backend_token', originalToken, {
@@ -171,15 +187,27 @@ export async function stopImpersonation() {
   });
 
   try {
-    // Re-authenticate as admin (no impersonation)
-    await signIn('credentials', {
-      token: data.token,
-      email: data.email,
-      role: data.role,
-      redirect: false,
+    // Update NextAuth session to clear impersonation data using unstable_update
+    // This is more reliable than signIn() in Server Actions
+    //
+    // Note: Same type assertion pattern as impersonateTenant - see comments there
+    await unstable_update({
+      user: {
+        id: session.user.id,
+        email: data.email,
+        role: data.role,
+        tenantId: undefined, // Clear tenant context
+        slug: undefined,
+        backendToken: data.token, // Restore admin token
+        impersonation: undefined, // Clear impersonation
+      } as unknown as { id: string; email: string },
+    });
+
+    logger.info('Impersonation session ended', {
+      adminEmail: data.email,
     });
   } catch (error) {
-    // Rollback cookie if signIn fails to prevent session desync
+    // Rollback cookie if session update fails to prevent session desync
     logger.error('Failed to sync session after stopping impersonation', { error });
     if (impersonationToken) {
       cookieStore.set('mais_backend_token', impersonationToken, {

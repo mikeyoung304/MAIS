@@ -58,6 +58,12 @@ export interface UnifiedLoginResponse {
   userId?: string; // Platform admin ID
   slug?: string; // Tenant slug
   apiKeyPublic?: string; // Tenant public API key (for impersonation)
+  impersonation?: {
+    tenantId: string;
+    tenantSlug: string;
+    tenantEmail: string;
+    startedAt: string;
+  };
 }
 
 /**
@@ -188,17 +194,20 @@ export class UnifiedAuthController {
       throw new UnauthorizedError('Tenant not found');
     }
 
+    // Build impersonation data (used in both token and response)
+    const impersonationData = {
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+      tenantEmail: tenant.email || '',
+      startedAt: new Date().toISOString(),
+    };
+
     // Create new token with impersonation data
     const impersonationToken = this.identityService.createImpersonationToken({
       userId: payload.userId,
       email: payload.email,
       role: 'PLATFORM_ADMIN' as const,
-      impersonating: {
-        tenantId: tenant.id,
-        tenantSlug: tenant.slug,
-        tenantEmail: tenant.email || '',
-        startedAt: new Date().toISOString(),
-      },
+      impersonating: impersonationData,
     });
 
     logger.info(
@@ -219,6 +228,7 @@ export class UnifiedAuthController {
       tenantId: tenant.id,
       slug: tenant.slug,
       apiKeyPublic: tenant.apiKeyPublic,
+      impersonation: impersonationData,
     };
   }
 

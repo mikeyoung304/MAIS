@@ -90,7 +90,7 @@ if (!authSecret) {
   );
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
   secret: authSecret,
   providers: [
     Credentials({
@@ -190,8 +190,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
      * JWT Callback
      * Called when JWT is created or updated
      * Store backend token and user info in JWT
+     *
+     * Triggers:
+     * - 'signIn': Initial login - receives full user object
+     * - 'update': Session update via unstable_update() - receives session data
+     * - 'signUp': After signup (same as signIn for credentials)
+     * - undefined: Token refresh on subsequent requests
      */
-    async jwt({ token, user }): Promise<MAISJWT> {
+    async jwt({ token, user, trigger, session }): Promise<MAISJWT> {
+      // Handle session updates from unstable_update()
+      // This is used for impersonation without re-authenticating
+      if (trigger === 'update' && session?.user) {
+        const updatedUser = session.user as Partial<MAISUser>;
+        logger.debug('JWT callback: updating session', {
+          trigger,
+          hasImpersonation: !!updatedUser.impersonation,
+          role: updatedUser.role,
+        });
+        return {
+          ...token,
+          ...(updatedUser.id && { id: updatedUser.id }),
+          ...(updatedUser.email && { email: updatedUser.email }),
+          ...(updatedUser.role && { role: updatedUser.role }),
+          ...(updatedUser.tenantId !== undefined && { tenantId: updatedUser.tenantId }),
+          ...(updatedUser.slug !== undefined && { slug: updatedUser.slug }),
+          ...(updatedUser.backendToken && { backendToken: updatedUser.backendToken }),
+          // Allow clearing impersonation by setting to undefined
+          impersonation: updatedUser.impersonation,
+        } as MAISJWT;
+      }
+
+      // Handle initial sign-in
       if (user) {
         const maisUser = user as MAISUser;
         return {
