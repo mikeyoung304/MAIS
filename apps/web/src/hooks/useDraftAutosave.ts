@@ -22,7 +22,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import type { PagesConfig, LandingPageConfig } from '@macon/contracts';
 import { BUILD_MODE_CONFIG } from '@/lib/build-mode/config';
 import { logger } from '@/lib/logger';
-import { createClientApiClient } from '@/lib/api';
+import { createClientApiClient } from '@/lib/api.client';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 

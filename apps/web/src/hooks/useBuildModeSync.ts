@@ -111,7 +111,7 @@ export function useBuildModeSync({
           onConfigChangeRef.current?.(message.data.config);
           break;
 
-        case 'BUILD_MODE_HIGHLIGHT_SECTION':
+        case 'BUILD_MODE_HIGHLIGHT_SECTION': {
           setHighlightedSection(message.data.sectionIndex);
           // Scroll section into view
           const sectionEl = document.querySelector(
@@ -119,6 +119,7 @@ export function useBuildModeSync({
           );
           sectionEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           break;
+        }
 
         case 'BUILD_MODE_CLEAR_HIGHLIGHT':
           setHighlightedSection(null);
