@@ -29,11 +29,12 @@ import { AuditService } from '../audit/audit.service';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { withRetry, CLAUDE_API_RETRY_CONFIG } from '../utils/retry';
-import { ContextCache, defaultContextCache, withSessionId } from '../context/context-cache';
-import { buildFallbackContext } from '../context/context-builder';
+import type { ContextCache } from '../context/context-cache';
+import { defaultContextCache } from '../context/context-cache';
 import type { AgentSessionContext } from '../context/context-builder';
 // Tracing imports for agent evaluation
-import { ConversationTracer, createTracer } from '../tracing';
+import type { ConversationTracer } from '../tracing';
+import { createTracer } from '../tracing';
 import type { AgentType as TracingAgentType, SupportedModel, TrustTier } from '../tracing';
 
 // Proposal execution imports (static to avoid ~1-5ms dynamic import latency)
@@ -42,7 +43,7 @@ import { validateExecutorPayload } from '../proposals/executor-schemas';
 
 // Guardrail imports
 import type { AgentType, BudgetTracker, TierBudgets } from './types';
-import { DEFAULT_TIER_BUDGETS, createBudgetTracker, SOFT_CONFIRM_WINDOWS } from './types';
+import { DEFAULT_TIER_BUDGETS, createBudgetTracker } from './types';
 import { ToolRateLimiter, type ToolRateLimits, DEFAULT_TOOL_RATE_LIMITS } from './rate-limiter';
 import {
   CircuitBreaker,
@@ -612,7 +613,6 @@ export abstract class BaseOrchestrator {
     }
 
     // Process pending T2 proposals (soft-confirm on next message)
-    const softConfirmWindow = SOFT_CONFIRM_WINDOWS[config.agentType];
     const softConfirmedIds = await this.proposalService.softConfirmPendingT2(
       tenantId,
       session.sessionId, // Use resolved session ID

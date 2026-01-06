@@ -15,7 +15,8 @@ import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { TraceNotFoundError } from '../../lib/errors/agent-eval-errors';
 import { redactMessages, redactToolCalls } from '../../lib/pii-redactor';
-import { ConversationEvaluator, createEvaluator } from './evaluator';
+import type { ConversationEvaluator } from './evaluator';
+import { createEvaluator } from './evaluator';
 import type { EvalInput } from './evaluator';
 import type { TracedMessage, TracedToolCall, AgentType } from '../tracing';
 

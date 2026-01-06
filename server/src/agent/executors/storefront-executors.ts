@@ -15,7 +15,7 @@ import { Prisma, type PrismaClient } from '../../generated/prisma';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { ResourceNotFoundError, ValidationError } from '../errors/index';
-import { getDraftConfig, getDraftConfigWithSlug } from '../tools/utils';
+import { getDraftConfigWithSlug } from '../tools/utils';
 import {
   // Validation schemas (DRY - shared with tools)
   UpdatePageSectionPayloadSchema,

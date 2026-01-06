@@ -65,7 +65,6 @@ import { createAgentRoutes } from './agent.routes';
 import { registerAllExecutors } from '../agent/executors';
 import { validateExecutorRegistry } from '../agent/proposals/executor-registry';
 import { createPublicCustomerChatRoutes } from './public-customer-chat.routes';
-import { registerCustomerProposalExecutor } from '../agent/customer/executor-registry';
 import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
 import { startCleanupScheduler } from '../jobs/cleanup';
 import {
@@ -86,7 +85,6 @@ import {
   customerChatLimiter,
 } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
-import { apiKeyService } from '../lib/api-key.service';
 import type { StripeConnectService } from '../services/stripe-connect.service';
 import type { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';

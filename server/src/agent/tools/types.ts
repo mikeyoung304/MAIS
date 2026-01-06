@@ -4,7 +4,7 @@
  * Type definitions for MCP tool implementation.
  */
 
-import type { AgentTrustTier } from '../../generated/prisma';
+import type { AgentTrustTier, PrismaClient } from '../../generated/prisma';
 
 /**
  * Context provided to each tool execution
@@ -15,7 +15,7 @@ export interface ToolContext {
   /** Agent session ID for correlation */
   sessionId: string;
   /** Prisma client for database access */
-  prisma: import('../../generated/prisma').PrismaClient;
+  prisma: PrismaClient;
 }
 
 /**

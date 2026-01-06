@@ -267,6 +267,7 @@ export function createApp(
       schedulingAvailability: container.services.schedulingAvailability,
       packageDraft: container.services.packageDraft,
       tenantOnboarding: container.services.tenantOnboarding,
+      tenantProvisioning: container.services.tenantProvisioning,
       reminder: container.services.reminder,
       landingPage: container.services.landingPage,
     },

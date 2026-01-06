@@ -11,7 +11,7 @@
  */
 
 import type { PrismaClient } from '../../generated/prisma';
-import { sanitizeForContext, DENY_LIST_FIELDS } from '../tools/types';
+import { sanitizeForContext } from '../tools/types';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 

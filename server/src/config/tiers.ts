@@ -5,7 +5,7 @@
  * This is the single source of truth for all tier-related data.
  */
 
-import { SubscriptionTier } from '../generated/prisma';
+import type { SubscriptionTier } from '../generated/prisma';
 
 /**
  * Tier limits configuration

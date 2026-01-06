@@ -18,7 +18,7 @@
 import type { PrismaClient, Prisma } from '../../generated/prisma';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
-import { MissingFieldError, ResourceNotFoundError, ValidationError } from '../errors';
+import { MissingFieldError, ValidationError } from '../errors';
 
 // ============================================================================
 // Types

@@ -830,7 +830,6 @@ export const requestFileUploadTool: AgentTool = {
   },
   async execute(_context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const fileType = params.fileType as string;
-    const filename = params.filename as string;
 
     // This is essentially a read operation - just returns upload instructions
     const uploadInfo = {

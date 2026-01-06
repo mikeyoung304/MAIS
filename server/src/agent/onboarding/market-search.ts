@@ -22,11 +22,7 @@ import type {
   MarketResearchSource,
   PricingTierRecommendation,
 } from '@macon/contracts';
-import {
-  getIndustryBenchmarks,
-  toPricingBenchmarks,
-  type IndustryBenchmarks,
-} from './industry-benchmarks';
+import { getIndustryBenchmarks, type IndustryBenchmarks } from './industry-benchmarks';
 import { logger } from '../../lib/core/logger';
 
 // ============================================================================
@@ -156,14 +152,6 @@ function getCOLMultiplier(state?: string): number {
 }
 
 /**
- * Apply COL adjustment to price
- */
-function adjustForCOL(priceCents: number, state?: string): number {
-  const multiplier = getCOLMultiplier(state);
-  return Math.round(priceCents * multiplier);
-}
-
-/**
  * Apply COL adjustment to pricing benchmarks
  */
 function adjustBenchmarksForCOL(
@@ -259,15 +247,7 @@ function industryBenchmarksToData(
 export async function searchMarketPricing(
   options: MarketSearchOptions
 ): Promise<MarketSearchResponse> {
-  const {
-    businessType,
-    targetMarket,
-    city,
-    state,
-    country = 'US',
-    tenantId,
-    skipWebSearch = false,
-  } = options;
+  const { businessType, targetMarket, city, state, tenantId, skipWebSearch = false } = options;
 
   logger.debug({ tenantId, businessType, targetMarket, city, state }, 'Starting market search');
 

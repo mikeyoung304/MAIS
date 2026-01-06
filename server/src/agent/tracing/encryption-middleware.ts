@@ -41,7 +41,7 @@ interface EncryptedWrapper {
   data: EncryptedData;
 }
 
-type FieldName = (typeof FIELDS_TO_ENCRYPT)[number];
+type _FieldName = (typeof FIELDS_TO_ENCRYPT)[number];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions

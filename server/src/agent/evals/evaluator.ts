@@ -9,7 +9,6 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { z } from 'zod';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import {

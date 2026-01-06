@@ -10,8 +10,12 @@
  * Security: Prevents prompt injection from bypassing approval.
  */
 
-import type { PrismaClient, AgentTrustTier, AgentProposalStatus } from '../../generated/prisma';
-import { Prisma } from '../../generated/prisma';
+import type {
+  PrismaClient,
+  AgentTrustTier,
+  AgentProposalStatus,
+  Prisma,
+} from '../../generated/prisma';
 import { logger } from '../../lib/core/logger';
 
 /**
@@ -63,12 +67,6 @@ const T2_SOFT_CONFIRM_WINDOWS: Record<AgentType, number> = {
   customer: 2 * 60 * 1000, // 2 minutes
   admin: 5 * 60 * 1000, // 5 minutes
 };
-
-/**
- * Default T2 soft-confirm window (for backwards compatibility)
- * @deprecated Use T2_SOFT_CONFIRM_WINDOWS with agent type instead
- */
-const T2_SOFT_CONFIRM_WINDOW_MS = 2 * 60 * 1000;
 
 /**
  * Agent Proposal Service

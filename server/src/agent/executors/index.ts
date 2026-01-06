@@ -10,8 +10,8 @@
  * 3. Returns the result for storage and display
  */
 
-import type { PrismaClient } from '../../generated/prisma';
-import { Prisma, BookingStatus } from '../../generated/prisma';
+import type { PrismaClient, Prisma } from '../../generated/prisma';
+import { BookingStatus } from '../../generated/prisma';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { hashTenantDate } from '../../lib/advisory-locks';
@@ -51,7 +51,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       description,
       priceCents,
       basePrice,
-      photoUrl,
+      // photoUrl is accepted but not currently stored in Package model
       bookingType,
       active,
       segmentId: inputSegmentId,
@@ -416,7 +416,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       };
     }
 
-    const updated = await prisma.tenant.update({
+    await prisma.tenant.update({
       where: { id: tenantId },
       data: {
         ...updateData,

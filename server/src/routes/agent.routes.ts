@@ -10,17 +10,15 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import type { PrismaClient } from '../generated/prisma';
-import { Prisma } from '../generated/prisma';
+import type { PrismaClient, Prisma } from '../generated/prisma';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { AdminOrchestrator } from '../agent/orchestrator';
 import { buildSessionContext, detectOnboardingState } from '../agent/context/context-builder';
 import type { OnboardingState } from '../agent/context/context-builder';
 import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
 import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
 import { appendEvent } from '../agent/onboarding/event-sourcing';
-import { parseOnboardingPhase, type OnboardingPhase } from '@macon/contracts';
+import { parseOnboardingPhase } from '@macon/contracts';
 
 // Re-export executor registry from centralized module
 // (Avoids circular dependency with orchestrator.ts)
