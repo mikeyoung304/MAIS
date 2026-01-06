@@ -7,7 +7,7 @@
  * For the main application, use the DI container in di.ts instead.
  */
 
-import { PrismaClient } from '../generated/prisma/client';
+import { PrismaClient } from '../../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 /**
