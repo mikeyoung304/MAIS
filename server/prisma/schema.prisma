@@ -107,6 +107,9 @@ model Tenant {
   // Customer Chatbot Settings
   chatEnabled Boolean @default(true) // Whether customer-facing chatbot is enabled for this tenant
 
+  // Booking/Scheduling Settings (Phase 1 - Calendly-style scheduling)
+  timezone String @default("America/New_York") // Tenant's timezone for availability calculations
+
   // Test Data Identification
   isTestTenant Boolean @default(false) @map("is_test_tenant") // Flag for filtering test data from admin dashboard
 
@@ -504,6 +507,11 @@ model Service {
   timezone         String   @default("America/New_York") // Tenant's timezone for availability
   active           Boolean  @default(true)
   sortOrder        Int      @default(0)
+
+  // Booking Link Settings (Phase 1 - Calendly-style scheduling)
+  minNoticeMinutes Int      @default(120)  // Minimum advance notice required (default 2 hours)
+  maxAdvanceDays   Int      @default(60)   // How far in advance bookings can be made (default 60 days)
+  maxPerDay        Int?                    // Maximum bookings per day (null = unlimited)
 
   // Optional segment association
   segmentId        String?

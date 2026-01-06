@@ -16,7 +16,7 @@
  */
 
 import type { PrismaClient, ReviewAction } from '../../generated/prisma';
-import { TraceNotFoundError, TenantAccessDeniedError } from '../../lib/errors/agent-eval-errors';
+import { TraceNotFoundError } from '../../lib/errors/agent-eval-errors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

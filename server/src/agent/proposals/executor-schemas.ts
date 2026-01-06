@@ -9,15 +9,13 @@
  */
 
 import { z } from 'zod';
-import {
-  SectionSchema,
-  PAGE_NAMES,
-  type PageName,
-  type Section,
-  type LandingPageConfig,
-  type PagesConfig,
-  type PageConfig,
-  DEFAULT_PAGES_CONFIG,
+import { SectionSchema, PAGE_NAMES } from '@macon/contracts';
+export type {
+  PageName,
+  Section,
+  LandingPageConfig,
+  PagesConfig,
+  PageConfig,
 } from '@macon/contracts';
 
 // ============================================================================

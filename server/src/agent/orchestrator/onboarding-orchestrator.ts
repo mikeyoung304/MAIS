@@ -20,7 +20,6 @@ import {
 } from '../prompts/onboarding-system-prompt';
 import { AdvisorMemoryService } from '../onboarding/advisor-memory.service';
 import { PrismaAdvisorMemoryRepository } from '../../adapters/prisma/advisor-memory.repository';
-import { logger } from '../../lib/core/logger';
 import { parseOnboardingPhase, type OnboardingPhase } from '@macon/contracts';
 
 import {
@@ -30,9 +29,7 @@ import {
   type SessionState,
   DEFAULT_ORCHESTRATOR_CONFIG,
 } from './base-orchestrator';
-import { DEFAULT_TIER_BUDGETS } from './types';
 import { DEFAULT_TOOL_RATE_LIMITS } from './rate-limiter';
-import { DEFAULT_CIRCUIT_BREAKER_CONFIG } from './circuit-breaker';
 
 /**
  * Onboarding-specific configuration

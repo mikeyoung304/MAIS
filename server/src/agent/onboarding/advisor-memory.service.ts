@@ -397,7 +397,7 @@ export class AdvisorMemoryService {
    * Build human-friendly resume summary
    */
   private buildResumeSummary(context: OnboardingContext): string {
-    const { summaries, currentPhase, lastActiveAt } = context;
+    const { summaries, lastActiveAt } = context;
     const parts: string[] = [];
 
     // Time context if more than a day ago

@@ -11,7 +11,6 @@
  * - Switches to OnboardingOrchestrator when tenant is in onboarding
  */
 
-import type { PrismaClient } from '../../generated/prisma';
 import type { AgentTool } from '../tools/types';
 import { getAllTools, getAllToolsWithOnboarding } from '../tools/all-tools';
 import {

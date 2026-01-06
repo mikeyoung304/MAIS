@@ -64,7 +64,7 @@ export function registerCustomerBookingExecutor(
   config?: CustomerBookingExecutorConfig
 ): void {
   // Default configuration
-  const storefrontBaseUrl =
+  const _storefrontBaseUrl =
     config?.storefrontBaseUrl || process.env.STOREFRONT_URL || 'http://localhost:3000';
 
   registerCustomerProposalExecutor(

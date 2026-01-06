@@ -14,14 +14,9 @@ import type { AgentTool, ToolContext, AgentToolResult } from './types';
 import { sanitizeForContext } from './types';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
-import { BookingStatus, Prisma } from '../../generated/prisma';
-import {
-  handleToolError,
-  buildDateRangeFilter,
-  formatPrice,
-  formatDateISO,
-  formatPriceLocale,
-} from './utils';
+import type { Prisma } from '../../generated/prisma';
+import { BookingStatus } from '../../generated/prisma';
+import { handleToolError, buildDateRangeFilter, formatPrice, formatDateISO } from './utils';
 
 /**
  * Type guard for BookingStatus enum

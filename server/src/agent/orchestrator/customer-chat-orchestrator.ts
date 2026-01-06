@@ -11,7 +11,6 @@
  * - Shorter session TTL (1 hour vs 24 hours for admin)
  */
 
-import type { PrismaClient } from '../../generated/prisma';
 import type { AgentTool } from '../tools/types';
 import { CUSTOMER_TOOLS } from '../customer/customer-tools';
 import { buildCustomerSystemPrompt } from '../customer/customer-prompt';

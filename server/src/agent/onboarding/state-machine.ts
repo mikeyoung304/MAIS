@@ -14,15 +14,7 @@
  */
 
 import { setup, assign, fromPromise } from 'xstate';
-import type {
-  OnboardingContext,
-  OnboardingMachineEvent,
-  DiscoveryData,
-  MarketResearchData,
-  ServicesData,
-  MarketingData,
-  OnboardingPhase,
-} from '@macon/contracts';
+import type { OnboardingContext, OnboardingMachineEvent, OnboardingPhase } from '@macon/contracts';
 import { getIndustryBenchmarks, type IndustryBenchmarks } from './industry-benchmarks';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
