@@ -1400,6 +1400,100 @@ export const getBlackoutDatesTool: AgentTool = {
   },
 };
 
+/**
+ * get_availability_rules - Weekly availability rules
+ *
+ * Returns: array of availability rules with days, times, and service assignments
+ * This enables agents to understand the tenant's working hours configuration.
+ */
+export const getAvailabilityRulesTool: AgentTool = {
+  trustTier: 'T1', // Read-only
+  name: 'get_availability_rules',
+  description:
+    'Get all availability rules that define working hours. Returns day of week, start/end times, and optional service assignments.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      serviceId: {
+        type: 'string',
+        description: 'Filter by service ID (omit for default/all-service rules)',
+      },
+      dayOfWeek: {
+        type: 'number',
+        description: 'Filter by day of week (0=Sunday, 6=Saturday)',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const serviceId = params.serviceId as string | undefined;
+    const dayOfWeek = params.dayOfWeek as number | undefined;
+
+    try {
+      const limit = 100;
+
+      // Build where clause with optional filters
+      const whereClause: {
+        tenantId: string;
+        serviceId?: string | null;
+        dayOfWeek?: number;
+      } = { tenantId };
+
+      if (serviceId !== undefined) {
+        whereClause.serviceId = serviceId;
+      }
+      if (dayOfWeek !== undefined) {
+        whereClause.dayOfWeek = dayOfWeek;
+      }
+
+      const rules = await prisma.availabilityRule.findMany({
+        where: whereClause,
+        include: {
+          service: { select: { id: true, name: true } },
+        },
+        orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+        take: limit,
+      });
+
+      // Format rules for agent context
+      const formattedRules = rules.map((rule) => ({
+        id: rule.id,
+        dayOfWeek: rule.dayOfWeek,
+        dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+          rule.dayOfWeek
+        ],
+        startTime: rule.startTime,
+        endTime: rule.endTime,
+        serviceId: rule.serviceId,
+        serviceName: rule.service ? sanitizeForContext(rule.service.name, 50) : null,
+        effectiveFrom: formatDateISO(rule.effectiveFrom),
+        effectiveTo: rule.effectiveTo ? formatDateISO(rule.effectiveTo) : null,
+      }));
+
+      return {
+        success: true,
+        data: {
+          rules: formattedRules,
+          count: formattedRules.length,
+        },
+        meta: {
+          returned: formattedRules.length,
+          limit,
+          hasMore: rules.length === limit,
+        },
+      };
+    } catch (error) {
+      return handleToolError(
+        error,
+        'get_availability_rules',
+        tenantId,
+        'Failed to fetch availability rules. Verify your session is valid and try again'
+      );
+    }
+  },
+};
+
 export const readTools: AgentTool[] = [
   getTenantTool,
   getDashboardTool,
@@ -1409,6 +1503,7 @@ export const readTools: AgentTool[] = [
   getBookingTool,
   checkAvailabilityTool,
   getBlackoutDatesTool,
+  getAvailabilityRulesTool,
   getLandingPageTool,
   getStripeStatusTool,
   getCustomersTool,

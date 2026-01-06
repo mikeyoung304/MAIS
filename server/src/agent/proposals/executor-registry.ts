@@ -52,6 +52,7 @@ const REQUIRED_EXECUTOR_TOOLS = [
   // Package management
   'upsert_package',
   'delete_package',
+  'delete_package_photo',
 
   // Add-on management
   'upsert_addon',

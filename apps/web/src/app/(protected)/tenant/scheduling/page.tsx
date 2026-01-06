@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-client';
 import { Card, CardContent } from '@/components/ui/card';
+import { queryKeys, queryOptions } from '@/lib/query-client';
 import {
   Calendar,
   Loader2,
@@ -37,39 +39,43 @@ interface Blackout {
  */
 export default function TenantSchedulingPage() {
   const { isAuthenticated } = useAuth();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [blackouts, setBlackouts] = useState<Blackout[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!isAuthenticated) return;
+  // Fetch bookings with React Query
+  const {
+    data: bookings = [],
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.bookings,
+    queryFn: async () => {
+      const res = await fetch('/api/tenant-admin/bookings');
+      if (!res.ok) throw new Error('Failed to load bookings');
+      const data = await res.json();
+      return Array.isArray(data) ? (data as Booking[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.realtime, // Bookings should refresh frequently
+  });
 
-      try {
-        const [bookingsRes, blackoutsRes] = await Promise.all([
-          fetch('/api/tenant-admin/bookings'),
-          fetch('/api/tenant-admin/blackouts'),
-        ]);
+  // Fetch blackouts with React Query
+  const {
+    data: blackouts = [],
+    isLoading: blackoutsLoading,
+    error: blackoutsError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.blackouts,
+    queryFn: async () => {
+      const res = await fetch('/api/tenant-admin/blackouts');
+      if (!res.ok) throw new Error('Failed to load blackouts');
+      const data = await res.json();
+      return Array.isArray(data) ? (data as Blackout[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Blackouts change less frequently
+  });
 
-        if (bookingsRes.ok) {
-          const data = await bookingsRes.json();
-          setBookings(Array.isArray(data) ? data : []);
-        }
-
-        if (blackoutsRes.ok) {
-          const data = await blackoutsRes.json();
-          setBlackouts(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        setError('Failed to load scheduling data');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [isAuthenticated]);
+  const isLoading = bookingsLoading || blackoutsLoading;
+  const error = bookingsError || blackoutsError;
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -142,7 +148,9 @@ export default function TenantSchedulingPage() {
         <Card className="border-red-200 bg-red-50">
           <CardContent className="flex items-center gap-3 p-6">
             <AlertCircle className="h-5 w-5 text-red-600" />
-            <p className="text-red-600">{error}</p>
+            <p className="text-red-600">
+              {error instanceof Error ? error.message : 'Failed to load scheduling data'}
+            </p>
           </CardContent>
         </Card>
       )}

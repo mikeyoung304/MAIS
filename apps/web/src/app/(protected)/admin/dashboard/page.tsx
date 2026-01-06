@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DashboardMetrics } from '@/components/admin/DashboardMetrics';
 import { AlertCircle, ArrowRight, Building2, Calendar, RefreshCw } from 'lucide-react';
-import { logger } from '@/lib/logger';
-import { getErrorMessage } from '@/lib/errors';
+import { queryKeys, queryOptions } from '@/lib/query-client';
 import type { PlatformStats } from '@macon/contracts';
 
 /**
@@ -21,41 +20,29 @@ import type { PlatformStats } from '@macon/contracts';
  */
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth();
-  const [stats, setStats] = useState<PlatformStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchStats = useCallback(async () => {
-    if (!isAuthenticated) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  // Fetch platform stats with React Query
+  const {
+    data: stats,
+    isLoading,
+    error: queryError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: queryKeys.admin.stats,
+    queryFn: async () => {
       const response = await fetch('/api/admin/stats');
-
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || `Request failed with status ${response.status}`);
       }
+      return response.json() as Promise<PlatformStats>;
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.realtime, // Dashboard stats should refresh frequently
+  });
 
-      const data = await response.json();
-      setStats(data);
-    } catch (err) {
-      logger.error(
-        'Failed to fetch platform stats',
-        err instanceof Error ? err : { error: String(err) }
-      );
-      setError(getErrorMessage(err));
-      setStats(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  const error = queryError ? (queryError as Error).message : null;
 
   const quickActions = [
     {
@@ -88,6 +75,9 @@ export default function AdminDashboardPage() {
     bookingsThisMonth: 0,
   };
 
+  // Use isFetching for refresh button state (shows loading even on background refetches)
+  const isRefreshing = isLoading || isFetching;
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
@@ -101,11 +91,11 @@ export default function AdminDashboardPage() {
         </div>
         <Button
           variant="outline-light"
-          onClick={fetchStats}
-          disabled={isLoading}
+          onClick={() => refetch()}
+          disabled={isRefreshing}
           className="self-start sm:self-auto"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -123,7 +113,7 @@ export default function AdminDashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={fetchStats}
+                onClick={() => refetch()}
                 className="flex items-center gap-2"
               >
                 <RefreshCw className="h-4 w-4" />

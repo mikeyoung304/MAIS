@@ -95,6 +95,14 @@ export const ADMIN_AGENT_CAPABILITIES: AgentCapabilityMap = {
       category: 'read',
     },
     {
+      id: 'view-availability-rules',
+      description: 'View working hours and availability rules',
+      requiredTool: 'get_availability_rules',
+      trustTier: 'T1',
+      promptKeywords: ['working hours', 'availability', 'schedule', 'hours'],
+      category: 'read',
+    },
+    {
       id: 'view-landing-page',
       description: 'Get storefront landing page configuration',
       requiredTool: 'get_landing_page',
@@ -169,6 +177,15 @@ export const ADMIN_AGENT_CAPABILITIES: AgentCapabilityMap = {
       requiredTool: 'delete_package',
       trustTier: 'T2', // Escalates to T3 if has bookings
       promptKeywords: ['delete package', 'remove service', 'deactivate', 'deletes'],
+      category: 'catalog',
+    },
+    {
+      id: 'delete-package-photo',
+      description: 'Delete a photo from a package (can be re-uploaded)',
+      requiredTool: 'delete_package_photo',
+      trustTier: 'T2',
+      // Matches "Package changes" in admin prompt (T2 operations section)
+      promptKeywords: ['package changes', 'delete photo', 'remove photo', 'package photo'],
       category: 'catalog',
     },
     {

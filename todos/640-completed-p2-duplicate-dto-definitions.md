@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '640'
 tags: [code-review, architecture, dry, contracts]
@@ -75,15 +75,16 @@ Option A - Import types directly from contracts.
 
 ## Acceptance Criteria
 
-- [ ] All scheduling pages import types from `@macon/contracts`
-- [ ] No local interface definitions that duplicate contract types
-- [ ] TypeScript still compiles successfully
+- [x] All scheduling pages import types from `@macon/contracts`
+- [x] No local interface definitions that duplicate contract types
+- [x] TypeScript still compiles successfully
 
 ## Work Log
 
-| Date       | Action                   | Learnings                       |
-| ---------- | ------------------------ | ------------------------------- |
-| 2026-01-05 | Created from code review | Use contracts for all DTO types |
+| Date       | Action                   | Learnings                                               |
+| ---------- | ------------------------ | ------------------------------------------------------- |
+| 2026-01-05 | Created from code review | Use contracts for all DTO types                         |
+| 2026-01-05 | Completed implementation | Replaced local interfaces with @macon/contracts imports |
 
 ## Resources
 

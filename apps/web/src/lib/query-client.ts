@@ -61,12 +61,23 @@ export const queryKeys = {
   admin: {
     bookings: ['admin', 'bookings'] as const,
     blackouts: ['admin', 'blackouts'] as const,
+    stats: ['admin', 'stats'] as const,
   },
   tenantAdmin: {
     dashboard: ['tenant-admin', 'dashboard'] as const,
     depositSettings: ['tenant-admin', 'deposit', 'settings'] as const,
     packages: ['tenant-admin', 'packages'] as const,
     branding: ['tenant-admin', 'branding'] as const,
+    // Scheduling-related query keys
+    bookings: ['tenant-admin', 'bookings'] as const,
+    blackouts: ['tenant-admin', 'blackouts'] as const,
+    appointments: (filters?: Record<string, string>) =>
+      filters
+        ? (['tenant-admin', 'appointments', filters] as const)
+        : (['tenant-admin', 'appointments'] as const),
+    services: ['tenant-admin', 'services'] as const,
+    customers: ['tenant-admin', 'customers'] as const,
+    availabilityRules: ['tenant-admin', 'availability-rules'] as const,
   },
 } as const;
 

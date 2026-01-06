@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '642'
 tags: [code-review, performance, react-query, caching]
@@ -82,16 +82,17 @@ Option A - Migrate to React Query for proper caching.
 
 ## Acceptance Criteria
 
-- [ ] All scheduling pages use `useQuery` for data fetching
-- [ ] Admin dashboard uses `useQuery` for stats
-- [ ] Query keys follow existing patterns in `query-client.ts`
-- [ ] Caching works between page navigations
+- [x] All scheduling pages use `useQuery` for data fetching
+- [x] Admin dashboard uses `useQuery` for stats
+- [x] Query keys follow existing patterns in `query-client.ts`
+- [x] Caching works between page navigations
 
 ## Work Log
 
-| Date       | Action                   | Learnings                         |
-| ---------- | ------------------------ | --------------------------------- |
-| 2026-01-05 | Created from code review | React Query is already configured |
+| Date       | Action                   | Learnings                                                      |
+| ---------- | ------------------------ | -------------------------------------------------------------- |
+| 2026-01-05 | Created from code review | React Query is already configured                              |
+| 2026-01-05 | Completed implementation | Migrated all scheduling pages + admin dashboard to React Query |
 
 ## Resources
 

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '639'
 tags: [code-review, architecture, ux, nextjs]
@@ -78,15 +78,16 @@ Option A - Add loading.tsx to each route for consistent UX.
 
 ## Acceptance Criteria
 
-- [ ] All 5 scheduling routes have loading.tsx files
-- [ ] Loading state uses sage spinner (consistent with other routes)
-- [ ] No layout shift during navigation
+- [x] All 5 scheduling routes have loading.tsx files
+- [x] Loading state uses sage spinner (consistent with other routes)
+- [x] No layout shift during navigation
 
 ## Work Log
 
-| Date       | Action                   | Learnings                            |
-| ---------- | ------------------------ | ------------------------------------ |
-| 2026-01-05 | Created from code review | Follow existing loading.tsx patterns |
+| Date       | Action                   | Learnings                                                        |
+| ---------- | ------------------------ | ---------------------------------------------------------------- |
+| 2026-01-05 | Created from code review | Follow existing loading.tsx patterns                             |
+| 2026-01-05 | Completed implementation | Created 5 loading.tsx files with consistent sage spinner pattern |
 
 ## Resources
 

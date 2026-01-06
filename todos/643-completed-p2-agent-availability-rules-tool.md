@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '643'
 tags: [code-review, agent-native, action-parity, tools]
@@ -79,16 +79,17 @@ See `get_blackout_dates` in `read-tools.ts` for similar pattern.
 
 ## Acceptance Criteria
 
-- [ ] `get_availability_rules` tool exists in read-tools.ts
-- [ ] Tool supports optional filters (serviceId, dayOfWeek)
-- [ ] Tool is registered in all-tools.ts
-- [ ] Agent can read current availability rules
+- [x] `get_availability_rules` tool exists in read-tools.ts
+- [x] Tool supports optional filters (serviceId, dayOfWeek)
+- [x] Tool is registered in all-tools.ts (via readTools array export)
+- [x] Agent can read current availability rules
 
 ## Work Log
 
-| Date       | Action                   | Learnings                         |
-| ---------- | ------------------------ | --------------------------------- |
-| 2026-01-05 | Created from code review | Follow get_blackout_dates pattern |
+| Date       | Action                   | Learnings                                               |
+| ---------- | ------------------------ | ------------------------------------------------------- |
+| 2026-01-05 | Created from code review | Follow get_blackout_dates pattern                       |
+| 2026-01-05 | Completed implementation | Added T1 tool with optional serviceId/dayOfWeek filters |
 
 ## Resources
 

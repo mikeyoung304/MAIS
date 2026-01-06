@@ -4,7 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, DollarSign, Pencil, Trash2, CheckCircle, XCircle, Timer } from 'lucide-react';
 import { formatPriceWithCents, formatDuration } from '@/lib/format';
-import type { AppointmentTypeDto } from '@/app/(protected)/tenant/scheduling/appointment-types/page';
+import type { ServiceDto } from '@macon/contracts';
+
+/**
+ * Appointment Type DTO - alias for ServiceDto from contracts
+ * UI uses "Appointment Type" terminology.
+ */
+type AppointmentTypeDto = ServiceDto;
 
 interface AppointmentTypesListProps {
   appointmentTypes: AppointmentTypeDto[];

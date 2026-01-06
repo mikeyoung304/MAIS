@@ -10,7 +10,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { AppointmentTypeDto } from '@/app/(protected)/tenant/scheduling/appointment-types/page';
+import type { ServiceDto } from '@macon/contracts';
+
+/**
+ * Appointment Type DTO - alias for ServiceDto from contracts
+ * UI uses "Appointment Type" terminology.
+ */
+type AppointmentTypeDto = ServiceDto;
 
 interface DeleteAppointmentTypeDialogProps {
   isOpen: boolean;

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,26 +11,15 @@ import { AppointmentTypeForm } from '@/components/scheduling/AppointmentTypeForm
 import { DeleteAppointmentTypeDialog } from '@/components/scheduling/DeleteAppointmentTypeDialog';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { queryKeys, queryOptions } from '@/lib/query-client';
+import type { ServiceDto } from '@macon/contracts';
 
 /**
  * Appointment Type DTO
  *
- * Matches the ServiceDto from the backend.
- * UI uses "Appointment Type" terminology.
+ * Uses ServiceDto from contracts - UI uses "Appointment Type" terminology.
  */
-export interface AppointmentTypeDto {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  durationMinutes: number;
-  bufferMinutes: number;
-  priceCents: number;
-  timezone: string;
-  sortOrder: number;
-  active: boolean;
-  segmentId: string | null;
-}
+export type AppointmentTypeDto = ServiceDto;
 
 /**
  * Form data for creating/editing appointment types
@@ -66,9 +56,26 @@ const initialFormData: AppointmentTypeFormData = {
  */
 export default function AppointmentTypesPage() {
   const { isAuthenticated } = useAuth();
-  const [appointmentTypes, setAppointmentTypes] = useState<AppointmentTypeDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Fetch appointment types with React Query
+  const {
+    data: appointmentTypes = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.services,
+    queryFn: async () => {
+      const response = await fetch('/api/tenant-admin/services');
+      if (!response.ok) throw new Error('Failed to load appointment types');
+      const data = await response.json();
+      return Array.isArray(data) ? (data as AppointmentTypeDto[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Services change less frequently
+  });
+
+  const error = queryError ? (queryError as Error).message : null;
 
   // Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -82,32 +89,11 @@ export default function AppointmentTypesPage() {
   const [typeToDelete, setTypeToDelete] = useState<AppointmentTypeDto | null>(null);
 
   /**
-   * Fetch appointment types from API
+   * Invalidate and refetch appointment types after mutations
    */
-  const fetchAppointmentTypes = useCallback(async () => {
-    if (!isAuthenticated) return;
-
-    try {
-      const response = await fetch('/api/tenant-admin/services');
-
-      if (response.ok) {
-        const data = await response.json();
-        setAppointmentTypes(Array.isArray(data) ? data : []);
-        setError(null);
-      } else {
-        setError('Failed to load appointment types');
-      }
-    } catch (err) {
-      logger.error('Failed to fetch appointment types', { error: err });
-      setError('Failed to load appointment types');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    fetchAppointmentTypes();
-  }, [fetchAppointmentTypes]);
+  const invalidateAppointmentTypes = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.services });
+  }, [queryClient]);
 
   /**
    * Generate slug from name (kebab-case)
@@ -279,7 +265,7 @@ export default function AppointmentTypesPage() {
         toast.success(editingId ? 'Appointment type updated' : 'Appointment type created');
         setIsFormOpen(false);
         resetForm();
-        fetchAppointmentTypes();
+        invalidateAppointmentTypes();
       } else {
         const errorData = await response.json().catch(() => ({}));
         toast.error('Failed to save appointment type', {
@@ -327,7 +313,7 @@ export default function AppointmentTypesPage() {
         toast.success('Appointment type deleted');
         setDeleteDialogOpen(false);
         setTypeToDelete(null);
-        fetchAppointmentTypes();
+        invalidateAppointmentTypes();
       } else {
         toast.error('Failed to delete appointment type', {
           description: 'Please try again',
@@ -362,7 +348,7 @@ export default function AppointmentTypesPage() {
 
       if (response.ok) {
         toast.success(`Appointment type ${!type.active ? 'activated' : 'deactivated'}`);
-        fetchAppointmentTypes();
+        invalidateAppointmentTypes();
       } else {
         toast.error('Failed to update status', {
           description: 'Please try again',

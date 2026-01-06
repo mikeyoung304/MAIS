@@ -1751,11 +1751,93 @@ export const initiateStripeOnboardingTool: AgentTool = {
   },
 };
 
+/**
+ * delete_package_photo - Remove a photo from a package
+ *
+ * Trust Tier: T2 (soft confirm) - deletion is reversible via re-upload
+ */
+export const deletePackagePhotoTool: AgentTool = {
+  name: 'delete_package_photo',
+  trustTier: 'T2', // Soft confirm - deletion is reversible via re-upload
+  description:
+    'Delete a photo from a package. The photo can be re-uploaded if needed. Use get_packages to see current photos.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      packageId: {
+        type: 'string',
+        description: 'Package ID containing the photo',
+      },
+      filename: {
+        type: 'string',
+        description: 'Filename of the photo to delete (from package photos array)',
+      },
+    },
+    required: ['packageId', 'filename'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const packageId = params.packageId as string;
+    const filename = params.filename as string;
+
+    try {
+      // Verify package exists and belongs to tenant
+      const pkg = await prisma.package.findFirst({
+        where: { id: packageId, tenantId },
+        select: {
+          id: true,
+          name: true,
+          photos: true,
+        },
+      });
+
+      if (!pkg) {
+        return {
+          success: false,
+          error: 'Unable to access package. Please check the ID and try again.',
+        };
+      }
+
+      // Verify photo exists in package
+      const currentPhotos =
+        (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) || [];
+      const photoToDelete = currentPhotos.find((p) => p.filename === filename);
+
+      if (!photoToDelete) {
+        return {
+          success: false,
+          error: `Photo "${sanitizeForContext(filename, 50)}" not found in package. Use get_packages to see current photos.`,
+        };
+      }
+
+      const operation = `Delete photo "${sanitizeForContext(filename, 30)}" from package "${sanitizeForContext(pkg.name, 30)}"`;
+      const payload = { packageId, filename };
+      const preview: Record<string, unknown> = {
+        packageName: sanitizeForContext(pkg.name, 50),
+        filename: sanitizeForContext(filename, 50),
+        photoUrl: photoToDelete.url,
+        remainingPhotos: currentPhotos.length - 1,
+        note: 'Photo can be re-uploaded if needed.',
+      };
+
+      return createProposal(context, 'delete_package_photo', operation, 'T2', payload, preview);
+    } catch (error) {
+      return handleToolError(
+        error,
+        'delete_package_photo',
+        tenantId,
+        `Failed to create delete proposal for photo "${filename}". Verify the package ID and filename are correct`
+      );
+    }
+  },
+};
+
 export const writeTools: AgentTool[] = [
   upsertPackageTool,
   upsertAddOnTool,
   deleteAddOnTool,
   deletePackageTool,
+  deletePackagePhotoTool,
   // Note: manageBlackoutTool removed - superseded by add/remove_blackout_date (TODO #452)
   addBlackoutDateTool,
   removeBlackoutDateTool,

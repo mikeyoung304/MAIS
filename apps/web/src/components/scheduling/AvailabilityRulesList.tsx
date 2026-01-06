@@ -17,29 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { formatTime } from '@/lib/format';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-
-/**
- * DTO Types
- */
-interface AvailabilityRuleDto {
-  id: string;
-  tenantId: string;
-  serviceId: string | null;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ServiceDto {
-  id: string;
-  name: string;
-  slug: string;
-  sortOrder: number;
-}
+import type { AvailabilityRuleDto, ServiceDto } from '@macon/contracts';
 
 interface AvailabilityRulesListProps {
   rules: AvailabilityRuleDto[];

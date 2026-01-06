@@ -1,35 +1,15 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Plus, Loader2, AlertCircle } from 'lucide-react';
 import { AvailabilityRulesList } from '@/components/scheduling/AvailabilityRulesList';
 import { AvailabilityRuleForm } from '@/components/scheduling/AvailabilityRuleForm';
-
-/**
- * DTO Types
- */
-interface AvailabilityRuleDto {
-  id: string;
-  tenantId: string;
-  serviceId: string | null;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ServiceDto {
-  id: string;
-  name: string;
-  slug: string;
-  sortOrder: number;
-}
+import { queryKeys, queryOptions } from '@/lib/query-client';
+import type { AvailabilityRuleDto, ServiceDto } from '@macon/contracts';
 
 /**
  * Tenant Availability Rules Page
@@ -39,62 +19,63 @@ interface ServiceDto {
  */
 export default function TenantAvailabilityRulesPage() {
   const { isAuthenticated } = useAuth();
-  const [rules, setRules] = useState<AvailabilityRuleDto[]>([]);
-  const [services, setServices] = useState<ServiceDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [isCreatingRule, setIsCreatingRule] = useState(false);
 
-  const fetchRules = useCallback(async () => {
-    try {
+  // Fetch availability rules with React Query
+  const {
+    data: rules = [],
+    isLoading: rulesLoading,
+    error: rulesError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.availabilityRules,
+    queryFn: async () => {
       const response = await fetch('/api/tenant-admin/availability-rules');
-      if (response.ok) {
-        const data = await response.json();
-        setRules(Array.isArray(data) ? data : []);
-      } else {
-        setError('Failed to load availability rules');
-      }
-    } catch {
-      setError('Failed to load availability rules');
-    }
-  }, []);
+      if (!response.ok) throw new Error('Failed to load availability rules');
+      const data = await response.json();
+      return Array.isArray(data) ? (data as AvailabilityRuleDto[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Rules change less frequently
+  });
 
-  const fetchServices = useCallback(async () => {
-    try {
+  // Fetch services with React Query (for dropdown)
+  const { data: servicesRaw = [] } = useQuery({
+    queryKey: queryKeys.tenantAdmin.services,
+    queryFn: async () => {
       const response = await fetch('/api/tenant-admin/services');
-      if (response.ok) {
-        const data = await response.json();
-        // Sort services by sortOrder ascending
-        const sortedServices = [...data].sort(
-          (a: ServiceDto, b: ServiceDto) => a.sortOrder - b.sortOrder
-        );
-        setServices(sortedServices);
-      }
-    } catch {
-      // Services are optional for rule creation, so we don't set an error
-    }
-  }, []);
+      if (!response.ok) throw new Error('Failed to load services');
+      const data = await response.json();
+      return Array.isArray(data) ? (data as ServiceDto[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Services change less frequently
+  });
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!isAuthenticated) return;
+  // Sort services by sortOrder ascending
+  const services = useMemo(
+    () => [...servicesRaw].sort((a, b) => a.sortOrder - b.sortOrder),
+    [servicesRaw]
+  );
 
-      setIsLoading(true);
-      await Promise.all([fetchRules(), fetchServices()]);
-      setIsLoading(false);
-    }
+  const isLoading = rulesLoading;
+  const error = rulesError ? (rulesError as Error).message : null;
 
-    fetchData();
-  }, [isAuthenticated, fetchRules, fetchServices]);
+  /**
+   * Invalidate and refetch availability rules after mutations
+   */
+  const invalidateRules = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.availabilityRules });
+  }, [queryClient]);
 
   const handleRuleCreated = useCallback(() => {
     setIsCreatingRule(false);
-    fetchRules();
-  }, [fetchRules]);
+    invalidateRules();
+  }, [invalidateRules]);
 
   const handleRuleDeleted = useCallback(() => {
-    fetchRules();
-  }, [fetchRules]);
+    invalidateRules();
+  }, [invalidateRules]);
 
   if (isLoading) {
     return (

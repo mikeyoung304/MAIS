@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import {
 import { CalendarX, Plus, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import { BlackoutForm } from '@/components/scheduling/BlackoutForm';
 import { logger } from '@/lib/logger';
+import { queryKeys, queryOptions } from '@/lib/query-client';
 
 interface Blackout {
   id: string;
@@ -30,36 +32,36 @@ interface Blackout {
  */
 export default function TenantBlackoutsPage() {
   const { isAuthenticated } = useAuth();
-  const [blackouts, setBlackouts] = useState<Blackout[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [mutationError, setMutationError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchBlackouts = useCallback(async () => {
-    if (!isAuthenticated) return;
-
-    try {
+  // Fetch blackouts with React Query
+  const {
+    data: blackouts = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.blackouts,
+    queryFn: async () => {
       const response = await fetch('/api/tenant-admin/blackouts');
+      if (!response.ok) throw new Error('Failed to load blackout dates');
+      const data = await response.json();
+      return Array.isArray(data) ? (data as Blackout[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Blackouts change less frequently
+  });
 
-      if (response.ok) {
-        const data = await response.json();
-        setBlackouts(Array.isArray(data) ? data : []);
-        setError(null);
-      } else {
-        setError('Failed to load blackout dates');
-      }
-    } catch (err) {
-      logger.error('Failed to fetch blackouts', err instanceof Error ? err : undefined);
-      setError('Failed to load blackout dates');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
+  const error = queryError ? (queryError as Error).message : mutationError;
 
-  useEffect(() => {
-    fetchBlackouts();
-  }, [fetchBlackouts]);
+  /**
+   * Invalidate and refetch blackouts after mutations
+   */
+  const invalidateBlackouts = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tenantAdmin.blackouts });
+  }, [queryClient]);
 
   const handleCreate = async (data: { startDate: string; endDate: string; reason?: string }) => {
     try {
@@ -75,7 +77,7 @@ export default function TenantBlackoutsPage() {
       }
 
       setIsDialogOpen(false);
-      await fetchBlackouts();
+      invalidateBlackouts();
     } catch (err) {
       logger.error('Failed to create blackout', err instanceof Error ? err : undefined);
       throw err;
@@ -86,6 +88,7 @@ export default function TenantBlackoutsPage() {
     if (deletingId) return;
 
     setDeletingId(id);
+    setMutationError(null);
     try {
       const response = await fetch(`/api/tenant-admin/blackouts/${id}`, {
         method: 'DELETE',
@@ -96,10 +99,10 @@ export default function TenantBlackoutsPage() {
         throw new Error(errorData.error || 'Failed to delete blackout');
       }
 
-      await fetchBlackouts();
+      invalidateBlackouts();
     } catch (err) {
       logger.error('Failed to delete blackout', err instanceof Error ? err : undefined);
-      setError('Failed to delete blackout');
+      setMutationError('Failed to delete blackout');
     } finally {
       setDeletingId(null);
     }
@@ -118,8 +121,12 @@ export default function TenantBlackoutsPage() {
     return startDate !== endDate;
   };
 
-  const sortedBlackouts = [...blackouts].sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  const sortedBlackouts = useMemo(
+    () =>
+      [...blackouts].sort(
+        (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      ),
+    [blackouts]
   );
 
   if (isLoading) {
@@ -165,7 +172,7 @@ export default function TenantBlackoutsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setError(null)}
+              onClick={() => setMutationError(null)}
               className="ml-auto text-red-600 hover:text-red-700"
             >
               Dismiss

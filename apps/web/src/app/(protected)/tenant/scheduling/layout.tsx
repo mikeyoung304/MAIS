@@ -61,11 +61,15 @@ export default function SchedulingLayout({ children }: { children: React.ReactNo
   return (
     <div className="space-y-6">
       {/* Sub-navigation tabs */}
-      <nav className="flex flex-wrap gap-2 border-b border-neutral-200 pb-4">
+      <nav
+        className="flex flex-wrap gap-2 border-b border-neutral-200 pb-4"
+        aria-label="Scheduling sections"
+      >
         {schedulingSubNav.map((item) => (
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive(item.href) ? 'page' : undefined}
             className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
               isActive(item.href)
                 ? 'bg-sage text-white shadow-md'

@@ -1,0 +1,213 @@
+---
+# Legacy-to-Next.js Migration P2 Code Review Summary
+# Date: 2026-01-05
+# Status: COMPLETE - All 6 issues resolved
+
+migration:
+  name: "Legacy Vite SPA → Next.js 14 App Router"
+  duration: "2-3 weeks (ahead of 6-8 week estimate)"
+  phases: 6
+  breaking_change: "Removed legacy client/ folder (428 files, 54K LOC)"
+  files_added: 106
+  lines_added: "~16,000"
+  status: "production-ready"
+
+code_review:
+  methodology: "6-agent parallel review"
+  severity_distribution:
+    p1: 8
+    p2: 6
+    p3: 1
+  total_issues: 15
+  p2_resolution_rate: "100% (6/6 completed)"
+  time_to_resolve_all_p2: "1 day"
+
+issues_resolved:
+  - id: 639
+    title: "Missing loading.tsx Suspense Boundaries for Scheduling Routes"
+    severity: p2
+    component: "nextjs-ux"
+    files_created: 5
+    pattern: "Consistent sage spinner in Suspense boundaries"
+    prevention: "Template every route folder with loading.tsx stub"
+
+  - id: 640
+    title: "Duplicate DTO Definitions Instead of Importing from Contracts"
+    severity: p2
+    component: "architecture-dry"
+    files_modified: 5
+    root_cause: "Types defined locally instead of importing from @macon/contracts"
+    pattern: "Single source of truth for all API schemas"
+    prevention: "Lint rule: warn on interface definitions for API DTOs"
+
+  - id: 641
+    title: "Missing ARIA Accessibility Attributes in Scheduling Navigation"
+    severity: p2
+    component: "accessibility-wcag"
+    files_modified: 1
+    wcag_level: "2.1 AA"
+    missing_attributes:
+      - "aria-label on <nav>"
+      - "aria-current='page' on active link"
+    prevention: "Add WCAG a11y review before code review (not after)"
+
+  - id: 642
+    title: "Missing React Query Integration (Raw useEffect+fetch)"
+    severity: p2
+    component: "performance-caching"
+    files_modified: 6
+    pages_affected:
+      - "/tenant/scheduling/overview"
+      - "/tenant/scheduling/appointments"
+      - "/tenant/scheduling/appointment-types"
+      - "/tenant/scheduling/availability"
+      - "/tenant/scheduling/blackouts"
+      - "/admin/dashboard"
+    root_cause: "React Query configured but not used in new pages"
+    pattern: "Always use useQuery when caching library available"
+    prevention: "Lint rule: warn on useEffect+fetch pattern if React Query available"
+
+  - id: 643
+    title: "Missing get_availability_rules Agent Read Tool"
+    severity: p2
+    component: "agent-native-action-parity"
+    tool_type: "T1 (read-only)"
+    action_gap: "UI can list rules, agent cannot read them"
+    pattern: "Every UI read capability needs agent tool"
+    files_modified:
+      - "server/src/agent/tools/read-tools.ts (added tool)"
+      - "server/src/agent/tools/all-tools.ts (registered)"
+    inputs:
+      - "serviceId (optional)"
+      - "dayOfWeek (optional)"
+
+  - id: 644
+    title: "Missing delete_package_photo Agent Write Tool"
+    severity: p2
+    component: "agent-native-action-parity"
+    tool_type: "T2 (soft confirm)"
+    action_gap: "UI can delete photos, agent cannot"
+    trust_rationale: "Deletion reversible via re-upload"
+    pattern: "Every write action needs tool + executor"
+    validation: "All write tools must be in REQUIRED_EXECUTOR_TOOLS at startup"
+    files_modified:
+      - "server/src/agent/tools/write-tools.ts (added tool)"
+      - "server/src/agent/executors/index.ts (added executor)"
+      - "server/src/agent/proposals/executor-registry.ts (added to REQUIRED_EXECUTOR_TOOLS)"
+
+key_learnings:
+  1_ux_completeness:
+    title: "Every route needs loading state"
+    pattern: "loading.tsx in every data-fetching route"
+    why: "Prevents layout shift and provides visual feedback during SSR"
+
+  2_single_source_of_truth:
+    title: "All API types in @macon/contracts"
+    anti_pattern: "Duplicating interfaces across multiple files"
+    cost: "Type drift, maintenance burden, schema violations"
+    guideline: "If writing interface for API DTO, check contracts first"
+
+  3_accessibility_non_negotiable:
+    title: "Navigation must have ARIA labels"
+    wcag_requirement: "2.1 AA minimum"
+    required_attributes:
+      - "aria-label on <nav>"
+      - "aria-current='page' on active link"
+    prevention: "Add accessibility review to code review checklist"
+
+  4_use_configured_infrastructure:
+    title: "React Query configured, so use it"
+    anti_pattern: "Raw useEffect+fetch when caching lib available"
+    cost_of_not_using:
+      - "Lost request deduplication"
+      - "Lost caching (slower navigation)"
+      - "Lost error boundaries"
+      - "Manual refetch logic (more bugs)"
+
+  5_action_parity_is_architecture:
+    title: "Whatever users can do, agents can do"
+    why: "Reduces special-casing, makes agents feel native"
+    validation: "Startup verification of REQUIRED_EXECUTOR_TOOLS"
+    pattern: "Every write tool needs executor"
+
+code_review_methodology:
+  agents_used: 6
+  parallel_execution: true
+  issue_distribution:
+    architecture_strategist:
+      - 639
+      - 640
+    performance_oracle:
+      - 642
+    kieran_typescript:
+      - 640
+    agent_native_reviewer:
+      - 643
+      - 644
+    code_simplicity_reviewer:
+      - 640
+    accessibility_reviewer:
+      - 641
+
+prevention_strategies:
+  pre_merge_checklist:
+    ux_completeness:
+      - "error.tsx on every dynamic route"
+      - "loading.tsx on every data-fetching route"
+      - "Global error boundary exists"
+    type_safety:
+      - "No local interfaces duplicating @macon/contracts"
+      - "Single source of truth for API schemas"
+      - "No type drift risk"
+    performance:
+      - "No raw useEffect+fetch patterns"
+      - "All data fetching uses React Query"
+      - "Query keys follow queryKeys.* pattern"
+    accessibility:
+      - "All navigation has aria-label"
+      - "Active page indicated with aria-current"
+      - "WCAG 2.1 AA compliant"
+    agent_parity:
+      - "Every UI action has corresponding tool"
+      - "All write tools in REQUIRED_EXECUTOR_TOOLS"
+
+  ci_cd_gates:
+    - "npm run typecheck (catch type drift)"
+    - "npm run build (catch missing files)"
+    - "npm run test (catch broken features)"
+    - "npm run lint (catch patterns)"
+    - "npx madge --circular server/src (catch circular deps)"
+
+metrics:
+  total_p2_issues: 6
+  resolution_rate: "100%"
+  files_modified: "~40"
+  lines_changed: "~1200"
+  time_to_resolve: "1 day"
+  parallel_reviewers: 6
+  review_coverage: "100%"
+
+related_documents:
+  - "docs/solutions/code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md"
+  - "docs/solutions/patterns/auth-form-accessibility-checklist-MAIS-20251230.md"
+  - "docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md"
+  - "docs/solutions/best-practices/ts-rest-any-type-library-limitations-MAIS-20251204.md"
+  - "docs/adrs/ADR-016-field-naming-conventions.md"
+
+tags:
+  - nextjs
+  - migration
+  - code-review
+  - ux
+  - accessibility
+  - a11y
+  - wcag
+  - react-query
+  - performance
+  - agent-native
+  - action-parity
+  - contracts
+  - dry
+  - architecture
+
+status: "COMPLETE - All 6 P2 issues resolved on 2026-01-05"

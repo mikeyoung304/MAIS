@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { queryKeys, queryOptions } from '@/lib/query-client';
 import {
   AppointmentFilters,
   type AppointmentFiltersState,
@@ -14,61 +16,14 @@ import {
   AppointmentsList,
   type EnrichedAppointment,
 } from '@/components/scheduling/AppointmentsList';
+import type { AppointmentDto, ServiceDto, CustomerDto } from '@macon/contracts';
 
 /**
- * Appointment data from API (matching AppointmentDto in contracts)
+ * Type aliases for clarity - imports from @macon/contracts
  */
-interface Appointment {
-  id: string;
-  tenantId: string;
-  customerId: string;
-  serviceId: string;
-  packageId: string | null;
-  date: string;
-  startTime: string;
-  endTime: string;
-  clientTimezone: string | null;
-  status: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
-  totalPrice: number;
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-  confirmedAt: string | null;
-  cancelledAt: string | null;
-}
-
-/**
- * Service data from API (matching ServiceDto in contracts)
- */
-interface Service {
-  id: string;
-  tenantId: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  durationMinutes: number;
-  bufferMinutes: number;
-  priceCents: number;
-  timezone: string;
-  active: boolean;
-  sortOrder: number;
-  segmentId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Customer data from API (matching CustomerDto in contracts)
- */
-interface Customer {
-  id: string;
-  tenantId: string;
-  email: string | null;
-  phone: string | null;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
+type Appointment = AppointmentDto;
+type Service = ServiceDto;
+type Customer = CustomerDto;
 
 /**
  * Initial filter state
@@ -81,6 +36,41 @@ const initialFilters: AppointmentFiltersState = {
 };
 
 /**
+ * Build query string from filters
+ */
+function buildQueryString(filterState: AppointmentFiltersState): string {
+  const params = new URLSearchParams();
+
+  if (filterState.status !== 'all') {
+    params.append('status', filterState.status);
+  }
+  if (filterState.serviceId !== 'all') {
+    params.append('serviceId', filterState.serviceId);
+  }
+  if (filterState.startDate) {
+    params.append('startDate', filterState.startDate);
+  }
+  if (filterState.endDate) {
+    params.append('endDate', filterState.endDate);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
+/**
+ * Build filter key for query cache
+ */
+function buildFilterKey(filterState: AppointmentFiltersState): Record<string, string> {
+  const key: Record<string, string> = {};
+  if (filterState.status !== 'all') key.status = filterState.status;
+  if (filterState.serviceId !== 'all') key.serviceId = filterState.serviceId;
+  if (filterState.startDate) key.startDate = filterState.startDate;
+  if (filterState.endDate) key.endDate = filterState.endDate;
+  return key;
+}
+
+/**
  * Tenant Appointments Page
  *
  * Displays a filterable list of appointments with enriched customer and service data.
@@ -88,98 +78,61 @@ const initialFilters: AppointmentFiltersState = {
  */
 export default function TenantAppointmentsPage() {
   const { isAuthenticated } = useAuth();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [filters, setFilters] = useState<AppointmentFiltersState>(initialFilters);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Build query string from filters
-  const buildQueryString = useCallback((filterState: AppointmentFiltersState): string => {
-    const params = new URLSearchParams();
+  // Build filter key for React Query cache
+  const filterKey = useMemo(() => buildFilterKey(filters), [filters]);
 
-    if (filterState.status !== 'all') {
-      params.append('status', filterState.status);
-    }
-    if (filterState.serviceId !== 'all') {
-      params.append('serviceId', filterState.serviceId);
-    }
-    if (filterState.startDate) {
-      params.append('startDate', filterState.startDate);
-    }
-    if (filterState.endDate) {
-      params.append('endDate', filterState.endDate);
-    }
-
-    const queryString = params.toString();
-    return queryString ? `?${queryString}` : '';
-  }, []);
-
-  // Fetch appointments with current filters
-  const fetchAppointments = useCallback(
-    async (filterState: AppointmentFiltersState) => {
-      try {
-        const queryString = buildQueryString(filterState);
-        const res = await fetch(`/api/tenant-admin/appointments${queryString}`);
-
-        if (res.ok) {
-          const data = await res.json();
-          setAppointments(Array.isArray(data) ? data : []);
-        } else if (res.status === 401) {
-          setError('Session expired. Please log in again.');
-        } else {
-          setError('Failed to load appointments');
-        }
-      } catch {
-        setError('Failed to load appointments');
+  // Fetch appointments with React Query (filter-dependent)
+  const {
+    data: appointments = [],
+    isLoading: appointmentsLoading,
+    error: appointmentsError,
+    isFetching: appointmentsFetching,
+  } = useQuery({
+    queryKey: queryKeys.tenantAdmin.appointments(filterKey),
+    queryFn: async () => {
+      const queryString = buildQueryString(filters);
+      const res = await fetch(`/api/tenant-admin/appointments${queryString}`);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Session expired. Please log in again.');
+        throw new Error('Failed to load appointments');
       }
+      const data = await res.json();
+      return Array.isArray(data) ? (data as Appointment[]) : [];
     },
-    [buildQueryString]
-  );
+    enabled: isAuthenticated,
+    ...queryOptions.realtime, // Appointments should refresh frequently
+  });
 
-  // Initial data fetch
-  useEffect(() => {
-    async function fetchData() {
-      if (!isAuthenticated) return;
+  // Fetch services with React Query (static, for filter dropdown)
+  const { data: services = [] } = useQuery({
+    queryKey: queryKeys.tenantAdmin.services,
+    queryFn: async () => {
+      const res = await fetch('/api/tenant-admin/services');
+      if (!res.ok) throw new Error('Failed to load services');
+      const data = await res.json();
+      return Array.isArray(data) ? (data as Service[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Services change less frequently
+  });
 
-      setIsLoading(true);
-      setError(null);
+  // Fetch customers with React Query (for enrichment)
+  const { data: customers = [] } = useQuery({
+    queryKey: queryKeys.tenantAdmin.customers,
+    queryFn: async () => {
+      const res = await fetch('/api/tenant-admin/customers');
+      if (!res.ok) throw new Error('Failed to load customers');
+      const data = await res.json();
+      return Array.isArray(data) ? (data as Customer[]) : [];
+    },
+    enabled: isAuthenticated,
+    ...queryOptions.catalog, // Customers change less frequently
+  });
 
-      try {
-        // Fetch appointments, services, and customers in parallel
-        const [appointmentsRes, servicesRes, customersRes] = await Promise.all([
-          fetch(`/api/tenant-admin/appointments${buildQueryString(filters)}`),
-          fetch('/api/tenant-admin/services'),
-          fetch('/api/tenant-admin/customers'),
-        ]);
-
-        if (appointmentsRes.ok) {
-          const data = await appointmentsRes.json();
-          setAppointments(Array.isArray(data) ? data : []);
-        } else if (appointmentsRes.status === 401) {
-          setError('Session expired. Please log in again.');
-        }
-
-        if (servicesRes.ok) {
-          const data = await servicesRes.json();
-          setServices(Array.isArray(data) ? data : []);
-        }
-
-        if (customersRes.ok) {
-          const data = await customersRes.json();
-          setCustomers(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        setError('Failed to load appointment data');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  const isLoading = appointmentsLoading;
+  const error = appointmentsError ? (appointmentsError as Error).message : null;
 
   // Build Maps for O(1) lookups instead of O(N*M*K) array searches
   const serviceMap = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
@@ -202,21 +155,14 @@ export default function TenantAppointmentsPage() {
     });
   }, [appointments, serviceMap, customerMap]);
 
-  // Filter change handlers
-  const handleFilterChange = useCallback(
-    (newFilters: AppointmentFiltersState) => {
-      setFilters(newFilters);
-      setIsLoading(true);
-      fetchAppointments(newFilters).finally(() => setIsLoading(false));
-    },
-    [fetchAppointments]
-  );
+  // Filter change handlers - just update state, React Query handles refetch automatically
+  const handleFilterChange = useCallback((newFilters: AppointmentFiltersState) => {
+    setFilters(newFilters);
+  }, []);
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    setIsLoading(true);
-    fetchAppointments(initialFilters).finally(() => setIsLoading(false));
-  }, [fetchAppointments]);
+  }, []);
 
   // Loading state
   if (isLoading && appointments.length === 0) {
@@ -304,7 +250,7 @@ export default function TenantAppointmentsPage() {
       ) : (
         <AppointmentsList
           appointments={enrichedAppointments}
-          isLoading={isLoading}
+          isLoading={appointmentsFetching}
           totalCount={appointments.length}
         />
       )}

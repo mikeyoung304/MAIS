@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: '644'
 tags: [code-review, agent-native, action-parity, tools]
@@ -79,16 +79,17 @@ T2 (soft confirm) - Deletion is reversible via re-upload.
 
 ## Acceptance Criteria
 
-- [ ] `delete_package_photo` tool exists in write-tools.ts
-- [ ] Tool validates package ownership (tenantId)
-- [ ] Executor is registered in executor-registry.ts
-- [ ] Agent can delete photos from packages
+- [x] `delete_package_photo` tool exists in write-tools.ts
+- [x] Tool validates package ownership (tenantId)
+- [x] Executor is registered in executor-registry.ts
+- [x] Agent can delete photos from packages
 
 ## Work Log
 
-| Date       | Action                   | Learnings                      |
-| ---------- | ------------------------ | ------------------------------ |
-| 2026-01-05 | Created from code review | Add to REQUIRED_EXECUTOR_TOOLS |
+| Date       | Action                   | Learnings                                                                   |
+| ---------- | ------------------------ | --------------------------------------------------------------------------- |
+| 2026-01-05 | Created from code review | Add to REQUIRED_EXECUTOR_TOOLS                                              |
+| 2026-01-05 | Completed implementation | T2 tool with executor, verifies tenant ownership, deletes file from storage |
 
 ## Resources
 

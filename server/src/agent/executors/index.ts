@@ -238,6 +238,61 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     };
   });
 
+  // delete_package_photo - Remove a photo from a package
+  registerProposalExecutor('delete_package_photo', async (tenantId, payload) => {
+    const { packageId, filename } = payload as { packageId: string; filename: string };
+
+    // CRITICAL: Verify tenant ownership before update (prevent cross-tenant access)
+    const pkg = await prisma.package.findFirst({
+      where: { id: packageId, tenantId },
+      select: { id: true, name: true, photos: true },
+    });
+
+    if (!pkg) {
+      throw new ResourceNotFoundError(
+        'package',
+        packageId,
+        'Try using get_packages to find available packages.'
+      );
+    }
+
+    // Get current photos and verify the target photo exists
+    const currentPhotos =
+      (pkg.photos as Array<{ url: string; filename: string; size: number; order: number }>) || [];
+    const photoToDelete = currentPhotos.find((p) => p.filename === filename);
+
+    if (!photoToDelete) {
+      throw new ResourceNotFoundError(
+        'photo',
+        filename,
+        'Use get_packages to see current package photos.'
+      );
+    }
+
+    // Remove photo from array
+    const updatedPhotos = currentPhotos.filter((p) => p.filename !== filename);
+
+    // Delete file from storage (import uploadService dynamically to avoid circular deps)
+    const { uploadService } = await import('../../services/upload.service');
+    await uploadService.deletePackagePhoto(filename);
+
+    // Update package with remaining photos
+    await prisma.package.update({
+      where: { id: packageId },
+      data: { photos: updatedPhotos },
+    });
+
+    logger.info({ tenantId, packageId, filename }, 'Package photo deleted via agent');
+
+    return {
+      action: 'deleted',
+      packageId,
+      packageName: pkg.name,
+      filename,
+      remainingPhotos: updatedPhotos.length,
+    };
+  });
+
   // manage_blackout - Create or delete blackout date
   registerProposalExecutor('manage_blackout', async (tenantId, payload) => {
     const { action, date, reason } = payload as {

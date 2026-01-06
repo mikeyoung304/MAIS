@@ -15,16 +15,7 @@ import {
 } from '@/components/ui/select';
 import { formatTime } from '@/lib/format';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-
-/**
- * DTO Types
- */
-interface ServiceDto {
-  id: string;
-  name: string;
-  slug: string;
-  sortOrder: number;
-}
+import type { ServiceDto } from '@macon/contracts';
 
 interface RuleFormData {
   serviceId: string | null;
