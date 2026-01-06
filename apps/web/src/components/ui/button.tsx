@@ -44,6 +44,18 @@ const buttonVariants = cva(
           'hover:text-primary ' +
           'active:scale-[0.98] active:shadow-inner ' +
           'transition-all duration-300 ease-spring',
+        // For use on dark backgrounds (admin dashboard, dark cards)
+        'outline-light':
+          'border-2 border-text-muted/30 bg-transparent text-text-primary ' +
+          'hover:bg-text-primary/10 hover:border-text-muted/50 ' +
+          'hover:shadow-elevation-1 ' +
+          'active:scale-[0.98] ' +
+          'transition-all duration-300 ease-spring',
+        // Ghost variant for dark backgrounds
+        'ghost-light':
+          'text-text-muted hover:bg-text-primary/10 hover:text-text-primary ' +
+          'active:scale-[0.98] ' +
+          'transition-all duration-300 ease-spring',
         link:
           'text-sage underline-offset-4 hover:underline hover:text-sage-hover ' +
           'active:scale-[0.98] ' +
@@ -96,8 +108,10 @@ export interface ButtonProps
     | 'default'
     | 'destructive'
     | 'outline'
+    | 'outline-light'
     | 'secondary'
     | 'ghost'
+    | 'ghost-light'
     | 'link'
     | 'teal'
     | 'success'

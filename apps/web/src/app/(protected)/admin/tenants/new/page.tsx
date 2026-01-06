@@ -121,7 +121,12 @@ export default function NewTenantPage() {
                 <code className="flex-1 font-mono text-sm text-sage break-all select-all">
                   {secretKey}
                 </code>
-                <Button variant="outline" size="sm" onClick={handleCopyKey} className="shrink-0">
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  onClick={handleCopyKey}
+                  className="shrink-0"
+                >
                   {copied ? (
                     <CheckCircle className="h-4 w-4 text-sage" />
                   ) : (
@@ -148,7 +153,7 @@ export default function NewTenantPage() {
                 Back to Tenants
               </Button>
               <Button
-                variant="outline"
+                variant="outline-light"
                 onClick={() => {
                   setSecretKey(null);
                   setFormData({ name: '', slug: '', commission: '10' });
@@ -258,7 +263,7 @@ export default function NewTenantPage() {
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="outline-light"
                 onClick={() => router.push('/admin/tenants')}
                 disabled={isSubmitting}
               >

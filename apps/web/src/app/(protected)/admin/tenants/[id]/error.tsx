@@ -44,7 +44,7 @@ export default function EditTenantError({
               <RefreshCw className="mr-2 h-4 w-4" />
               Try Again
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline-light" asChild>
               <Link href="/admin/tenants">Go Back</Link>
             </Button>
           </div>

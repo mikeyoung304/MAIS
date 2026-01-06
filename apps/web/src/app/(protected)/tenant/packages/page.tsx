@@ -1,10 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Plus, Pencil, Trash2, Loader2, AlertCircle, DollarSign } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Package,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  AlertCircle,
+  DollarSign,
+  Image as ImageIcon,
+} from 'lucide-react';
+import { PhotoUploader } from '@/components/photos';
+import type { PackagePhoto } from '@/hooks/usePhotoUpload';
 
 interface PackageDto {
   id: string;
@@ -16,41 +35,46 @@ interface PackageDto {
   currency: string;
   isActive: boolean;
   sortOrder: number;
+  photos?: PackagePhoto[];
+  photoUrl?: string;
 }
 
 /**
  * Tenant Packages Page
  *
  * Allows tenant admins to manage their service packages.
+ * Includes photo upload functionality for each package.
  */
 export default function TenantPackagesPage() {
   const { isAuthenticated } = useAuth();
   const [packages, setPackages] = useState<PackageDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingPackage, setEditingPackage] = useState<PackageDto | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const fetchPackages = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      const response = await fetch('/api/tenant-admin/packages');
+
+      if (response.ok) {
+        const data = await response.json();
+        setPackages(Array.isArray(data) ? data : []);
+      } else {
+        setError('Failed to load packages');
+      }
+    } catch {
+      setError('Failed to load packages');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    async function fetchPackages() {
-      if (!isAuthenticated) return;
-
-      try {
-        const response = await fetch('/api/tenant-admin/packages');
-
-        if (response.ok) {
-          const data = await response.json();
-          setPackages(Array.isArray(data) ? data : []);
-        } else {
-          setError('Failed to load packages');
-        }
-      } catch (err) {
-        setError('Failed to load packages');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     fetchPackages();
-  }, [isAuthenticated]);
+  }, [fetchPackages]);
 
   const formatPrice = (price: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
@@ -58,6 +82,42 @@ export default function TenantPackagesPage() {
       currency: currency || 'USD',
     }).format(price / 100);
   };
+
+  /**
+   * Open edit dialog for a package
+   */
+  const handleEditClick = useCallback((pkg: PackageDto) => {
+    setEditingPackage(pkg);
+    setIsEditDialogOpen(true);
+  }, []);
+
+  /**
+   * Close edit dialog
+   */
+  const handleCloseEditDialog = useCallback(() => {
+    setIsEditDialogOpen(false);
+    setEditingPackage(null);
+  }, []);
+
+  /**
+   * Handle photos change - update local state
+   */
+  const handlePhotosChange = useCallback(
+    (photos: PackagePhoto[]) => {
+      if (!editingPackage) return;
+
+      // Update the editing package
+      setEditingPackage((prev) => (prev ? { ...prev, photos } : null));
+
+      // Update the packages list
+      setPackages((prev) =>
+        prev.map((pkg) =>
+          pkg.id === editingPackage.id ? { ...pkg, photos, photoUrl: photos[0]?.url } : pkg
+        )
+      );
+    },
+    [editingPackage]
+  );
 
   if (isLoading) {
     return (
@@ -136,8 +196,31 @@ export default function TenantPackagesPage() {
           {packages.map((pkg) => (
             <Card
               key={pkg.id}
-              className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden"
             >
+              {/* Package Photo Thumbnail */}
+              <div className="relative aspect-video bg-neutral-100">
+                {pkg.photoUrl || pkg.photos?.[0]?.url ? (
+                  <Image
+                    src={pkg.photoUrl || pkg.photos![0].url}
+                    alt={pkg.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <ImageIcon className="h-12 w-12 text-neutral-300" />
+                  </div>
+                )}
+                {/* Photo count badge */}
+                {pkg.photos && pkg.photos.length > 0 && (
+                  <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                    {pkg.photos.length} photo{pkg.photos.length !== 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{pkg.name}</CardTitle>
@@ -167,7 +250,12 @@ export default function TenantPackagesPage() {
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" variant="outline" className="flex-1 rounded-full">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 rounded-full"
+                    onClick={() => handleEditClick(pkg)}
+                  >
                     <Pencil className="mr-2 h-3 w-3" />
                     Edit
                   </Button>
@@ -184,6 +272,34 @@ export default function TenantPackagesPage() {
           ))}
         </div>
       )}
+
+      {/* Edit Package Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent maxWidth="2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Package</DialogTitle>
+            <DialogDescription>
+              {editingPackage ? `Manage photos for "${editingPackage.name}"` : 'Loading...'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingPackage && (
+            <div className="mt-4">
+              <PhotoUploader
+                packageId={editingPackage.id}
+                initialPhotos={editingPackage.photos || []}
+                onPhotosChange={handlePhotosChange}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end mt-6">
+            <Button variant="outline" onClick={handleCloseEditDialog}>
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

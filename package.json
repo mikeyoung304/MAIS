@@ -5,7 +5,6 @@
   "description": "Macon AI Solutions - AI-Powered Tenant Management Platform",
   "workspaces": [
     "apps/*",
-    "client",
     "server",
     "packages/*"
   ],
@@ -31,9 +30,9 @@
     "test:e2e:headed": "playwright test -c e2e/playwright.config.ts --headed",
     "test:playwright:diagnostics": "node test-playwright-diagnostics.js",
     "dev:api": "npm run dev --workspace=server",
-    "dev:client": "npm run dev --workspace=client",
-    "dev:all": "concurrently -n server,client,stripe -c cyan,magenta,yellow \"npm run dev:api\" \"npm run dev:client\" \"stripe listen --forward-to localhost:3001/v1/webhooks/stripe\"",
-    "dev:e2e": "concurrently -n server,client -c cyan,magenta \"npm run dev:api\" \"npm run dev:client\"",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:all": "concurrently -n server,web,stripe -c cyan,magenta,yellow \"npm run dev:api\" \"npm run dev:web\" \"stripe listen --forward-to localhost:3001/v1/webhooks/stripe\"",
+    "dev:e2e": "concurrently -n server,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "wait-for-servers": "node e2e/wait-for-servers.js",
     "verify-build": "bash scripts/verify-build.sh",
     "verify-nextjs": "bash scripts/verify-nextjs-build.sh",

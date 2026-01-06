@@ -19,7 +19,6 @@ import {
   Menu,
   X,
   ChevronLeft,
-  Users,
   Building2,
   Globe,
   FileText,
@@ -97,17 +96,20 @@ const adminNavItems: NavItem[] = [
     description: 'Manage tenants',
   },
   {
-    href: '/admin/segments',
-    label: 'Segments',
-    icon: <Users className="h-5 w-5" />,
-    description: 'Customer segments',
+    href: '/admin/bookings',
+    label: 'Bookings',
+    icon: <Calendar className="h-5 w-5" />,
+    description: 'All platform bookings',
   },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const { user, role, isImpersonating, impersonation } = useAuth();
-  const [userCollapsed, toggleUserCollapsed] = useLocalStorageBoolean('admin-sidebar-collapsed', false);
+  const [userCollapsed, toggleUserCollapsed] = useLocalStorageBoolean(
+    'admin-sidebar-collapsed',
+    false
+  );
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const breakpoint = useBreakpoint();
@@ -252,7 +254,7 @@ export function AdminSidebar() {
               </div>
             )}
             <Button
-              variant="outline"
+              variant="outline-light"
               size={isCollapsed ? 'icon' : 'default'}
               className="w-full"
               onClick={handleLogout}

@@ -115,7 +115,7 @@ export function TenantsList({ tenants }: TenantsListProps) {
             </p>
             {hasFilters && (
               <Button
-                variant="outline"
+                variant="outline-light"
                 size="sm"
                 className="mt-4"
                 onClick={() => {
@@ -167,12 +167,12 @@ export function TenantsList({ tenants }: TenantsListProps) {
                       Impersonate
                     </Button>
                   </form>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline-light" size="sm" asChild>
                     <Link href={`/admin/tenants/${tenant.id}`}>
                       <Pencil className="h-3 w-3" />
                     </Link>
                   </Button>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline-light" size="sm" asChild>
                     <a href={`/t/${tenant.slug}`} target="_blank" rel="noopener noreferrer">
                       View Site
                     </a>

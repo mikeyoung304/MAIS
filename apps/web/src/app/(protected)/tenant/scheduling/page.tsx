@@ -1,10 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-client';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Plus, Loader2, AlertCircle, CalendarDays, CalendarX } from 'lucide-react';
+import {
+  Calendar,
+  Loader2,
+  AlertCircle,
+  CalendarDays,
+  CalendarX,
+  Clock,
+  CalendarClock,
+  ArrowRight,
+} from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -22,9 +31,9 @@ interface Blackout {
 }
 
 /**
- * Tenant Scheduling Page
+ * Tenant Scheduling Overview Page
  *
- * Overview of bookings and blackout dates.
+ * Dashboard view with summary stats and quick links to scheduling sub-pages.
  */
 export default function TenantSchedulingPage() {
   const { isAuthenticated } = useAuth();
@@ -32,7 +41,6 @@ export default function TenantSchedulingPage() {
   const [blackouts, setBlackouts] = useState<Blackout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'bookings' | 'blackouts'>('bookings');
 
   useEffect(() => {
     async function fetchData() {
@@ -68,7 +76,6 @@ export default function TenantSchedulingPage() {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     });
   };
 
@@ -85,11 +92,35 @@ export default function TenantSchedulingPage() {
     }
   };
 
+  // Get upcoming bookings (next 7 days) - memoized to prevent recalculation on every render
+  const upcomingBookings = useMemo(() => {
+    const now = new Date();
+    const weekFromNow = new Date();
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+    return bookings
+      .filter((b) => {
+        const bookingDate = new Date(b.date);
+        return bookingDate >= now && bookingDate <= weekFromNow;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3);
+  }, [bookings]);
+
+  // Get upcoming blackouts - memoized to prevent recalculation on every render
+  const upcomingBlackouts = useMemo(() => {
+    const now = new Date();
+    return blackouts
+      .filter((b) => new Date(b.endDate) >= now)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .slice(0, 3);
+  }, [blackouts]);
+
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in-up">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-text-primary">Scheduling</h1>
+          <h1 className="font-serif text-3xl font-bold text-text-primary">Scheduling Overview</h1>
           <p className="mt-2 text-text-muted">Manage your bookings and availability</p>
         </div>
         <div className="flex items-center justify-center py-12">
@@ -100,17 +131,11 @@ export default function TenantSchedulingPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-text-primary">Scheduling</h1>
-          <p className="mt-2 text-text-muted">Manage your bookings and availability</p>
-        </div>
-        <Button variant="sage" className="rounded-full">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Blackout
-        </Button>
+      <div>
+        <h1 className="font-serif text-3xl font-bold text-text-primary">Scheduling Overview</h1>
+        <p className="mt-2 text-text-muted">Manage your bookings and availability</p>
       </div>
 
       {error && (
@@ -122,144 +147,166 @@ export default function TenantSchedulingPage() {
         </Card>
       )}
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-xl bg-sage/10 p-3">
-              <CalendarDays className="h-6 w-6 text-sage" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary">{bookings.length}</p>
-              <p className="text-sm text-text-muted">Total Bookings</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-xl bg-amber-950/30 p-3">
-              <CalendarX className="h-6 w-6 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary">{blackouts.length}</p>
-              <p className="text-sm text-text-muted">Blackout Dates</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-neutral-200">
-        <button
-          onClick={() => setActiveTab('bookings')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'bookings'
-              ? 'border-b-2 border-sage text-sage'
-              : 'text-text-muted hover:text-text-primary'
-          }`}
-        >
-          <CalendarDays className="mr-2 inline-block h-4 w-4" />
-          Bookings ({bookings.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('blackouts')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'blackouts'
-              ? 'border-b-2 border-sage text-sage'
-              : 'text-text-muted hover:text-text-primary'
-          }`}
-        >
-          <CalendarX className="mr-2 inline-block h-4 w-4" />
-          Blackouts ({blackouts.length})
-        </button>
-      </div>
-
-      {/* Content */}
-      {activeTab === 'bookings' ? (
-        bookings.length === 0 ? (
-          <Card className="border-2 border-dashed border-sage/20">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-4 rounded-full bg-sage/10 p-4">
-                <Calendar className="h-8 w-8 text-sage" />
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/tenant/scheduling/appointments">
+          <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-xl bg-sage/10 p-3">
+                <CalendarDays className="h-6 w-6 text-sage" />
               </div>
-              <h3 className="mb-2 font-semibold text-text-primary">No bookings yet</h3>
-              <p className="max-w-sm text-sm text-text-muted">
-                When customers book your services, they&apos;ll appear here.
-              </p>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{bookings.length}</p>
+                <p className="text-sm text-text-muted">Total Bookings</p>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          <div className="space-y-3">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="transition-all hover:shadow-md">
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-sage/10 p-2">
-                      <Calendar className="h-5 w-5 text-sage" />
+        </Link>
+
+        <Link href="/tenant/scheduling/blackouts">
+          <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-xl bg-amber-950/30 p-3">
+                <CalendarX className="h-6 w-6 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{blackouts.length}</p>
+                <p className="text-sm text-text-muted">Blackout Dates</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/tenant/scheduling/appointment-types">
+          <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-xl bg-blue-100 p-3">
+                <CalendarClock className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text-primary">Appointment Types</p>
+                <p className="text-xs text-text-muted">Configure services</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/tenant/scheduling/availability">
+          <Card className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-xl bg-purple-100 p-3">
+                <Clock className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text-primary">Availability</p>
+                <p className="text-xs text-text-muted">Set your hours</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Quick Access Sections */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Upcoming Bookings */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-text-primary">Upcoming Bookings</h2>
+              <Link
+                href="/tenant/scheduling/appointments"
+                className="flex items-center gap-1 text-sm text-sage hover:text-sage-hover"
+              >
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {upcomingBookings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Calendar className="mb-3 h-8 w-8 text-text-muted/50" />
+                <p className="text-sm text-text-muted">No upcoming bookings this week</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingBookings.map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="flex items-center justify-between rounded-lg border border-neutral-100 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-sage/10 p-2">
+                        <Calendar className="h-4 w-4 text-sage" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">
+                          {booking.packageName}
+                        </p>
+                        <p className="text-xs text-text-muted">{formatDate(booking.date)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-text-primary">{booking.packageName}</p>
-                      <p className="text-sm text-text-muted">{formatDate(booking.date)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {booking.customerEmail && (
-                      <span className="text-sm text-text-muted">{booking.customerEmail}</span>
-                    )}
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                        booking.status
-                      )}`}
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(booking.status)}`}
                     >
                       {booking.status}
                     </span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )
-      ) : blackouts.length === 0 ? (
-        <Card className="border-2 border-dashed border-sage/20">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 rounded-full bg-amber-950/30 p-4">
-              <CalendarX className="h-8 w-8 text-amber-400" />
-            </div>
-            <h3 className="mb-2 font-semibold text-text-primary">No blackout dates</h3>
-            <p className="mb-6 max-w-sm text-sm text-text-muted">
-              Block out dates when you&apos;re unavailable for bookings.
-            </p>
-            <Button variant="sage" className="rounded-full">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Blackout Date
-            </Button>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-3">
-          {blackouts.map((blackout) => (
-            <Card key={blackout.id} className="transition-all hover:shadow-md">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-lg bg-amber-950/30 p-2">
-                    <CalendarX className="h-5 w-5 text-amber-400" />
+
+        {/* Upcoming Blackouts */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-text-primary">Upcoming Blackouts</h2>
+              <Link
+                href="/tenant/scheduling/blackouts"
+                className="flex items-center gap-1 text-sm text-sage hover:text-sage-hover"
+              >
+                Manage <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {upcomingBlackouts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <CalendarX className="mb-3 h-8 w-8 text-text-muted/50" />
+                <p className="text-sm text-text-muted">No upcoming blackout dates</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingBlackouts.map((blackout) => (
+                  <div
+                    key={blackout.id}
+                    className="flex items-center justify-between rounded-lg border border-neutral-100 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-amber-950/30 p-2">
+                        <CalendarX className="h-4 w-4 text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">
+                          {formatDate(blackout.startDate)}
+                          {blackout.startDate !== blackout.endDate && (
+                            <span className="text-text-muted">
+                              {' '}
+                              - {formatDate(blackout.endDate)}
+                            </span>
+                          )}
+                        </p>
+                        {blackout.reason && (
+                          <p className="text-xs text-text-muted">{blackout.reason}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-text-primary">
-                      {formatDate(blackout.startDate)}
-                      {blackout.endDate !== blackout.startDate &&
-                        ` - ${formatDate(blackout.endDate)}`}
-                    </p>
-                    {blackout.reason && (
-                      <p className="text-sm text-text-muted">{blackout.reason}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

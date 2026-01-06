@@ -2,7 +2,7 @@
   "files": [],
   "references": [
     { "path": "./server" },
-    { "path": "./client" },
+    { "path": "./apps/web" },
     { "path": "./packages/contracts" },
     { "path": "./packages/shared" }
   ]

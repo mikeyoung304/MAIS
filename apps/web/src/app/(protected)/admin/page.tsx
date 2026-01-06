@@ -1,11 +1,10 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Admin Dashboard
+ * Admin Root Page
  *
- * Redirects to the tenants page for now.
- * Future: Could show platform metrics and overview.
+ * Redirects to the dashboard page for platform overview.
  */
 export default function AdminPage() {
-  redirect('/admin/tenants');
+  redirect('/admin/dashboard');
 }

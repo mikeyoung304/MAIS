@@ -41,9 +41,8 @@ This is an npm workspace monorepo. Key points:
 
 ```bash
 npm run dev:api                    # Start API server (mock mode default)
-npm run dev:client                 # Start React client (Vite, legacy admin)
-npm run dev:web                    # Start Next.js storefronts (port 3000)
-npm run dev:all                    # API + client + Stripe webhooks
+npm run dev:web                    # Start Next.js app (port 3000)
+npm run dev:all                    # API + Next.js + Stripe webhooks
 
 # Environment modes
 ADAPTERS_PRESET=mock npm run dev:api   # In-memory, no external services
@@ -112,11 +111,6 @@ npm run test:e2e -- e2e/tests/booking-mock.spec.ts
 - **Adapters:** `*.adapter.ts` or `*.repository.ts`
 - **Tests:** `*.test.ts` or `*.spec.ts`
 - **Contracts:** Match route names in `packages/contracts/`
-
-### Frontend - Legacy (client/)
-
-- **Components:** PascalCase (e.g., `BookingForm.tsx`)
-- **Utilities:** camelCase (e.g., `formatMoney.ts`)
 
 ### Frontend - Next.js (apps/web/)
 
@@ -537,7 +531,7 @@ Invoke the skill by name. The skill's SKILL.md loads automatically and provides:
 
 ### Skill + Project Docs Work Together
 
-**For UI work (`apps/web/`, `client/`, any component):**
+**For UI work (`apps/web/`, any component):**
 
 1. FIRST: Load `frontend-design` skill (universal design excellence)
 2. THEN: Read `docs/design/BRAND_VOICE_GUIDE.md` (HANDLED brand identity)
@@ -940,13 +934,6 @@ server/                         # Express API (port 3001)
 │   │   ├── ports.ts           # Repository interfaces
 │   │   └── entities.ts        # Domain models
 │   └── di.ts                  # Dependency injection container
-
-client/                         # Vite SPA (port 5173) - legacy admin
-├── src/
-│   ├── features/              # Feature modules
-│   ├── pages/                 # Route components
-│   ├── ui/                    # Shared components
-│   └── lib/                   # API client, utilities
 
 packages/
 ├── contracts/                  # API contracts (Zod + ts-rest)

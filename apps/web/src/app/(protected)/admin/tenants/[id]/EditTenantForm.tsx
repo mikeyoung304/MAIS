@@ -192,7 +192,7 @@ export function EditTenantForm({ tenant }: EditTenantFormProps) {
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="outline-light"
                 onClick={() => router.push('/admin/tenants')}
                 disabled={isSubmitting}
               >

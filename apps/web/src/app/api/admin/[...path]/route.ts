@@ -1,17 +1,15 @@
 /**
- * Tenant Admin API Proxy Route
+ * Admin API Proxy Route
  *
- * Proxies all /api/tenant-admin/* requests to the backend API with authentication.
+ * Proxies all /api/admin/* requests to the backend API with authentication.
  * This allows client components to make API calls without exposing the backend token.
  *
  * The backend token is securely retrieved from the server-side session and added
  * to the request headers.
  *
- * Supports both JSON and multipart/form-data (for file uploads).
- *
  * Example:
- *   Client calls: /api/tenant-admin/packages
- *   Proxied to:   ${API_BASE_URL}/v1/tenant-admin/packages
+ *   Client calls: /api/admin/stats
+ *   Proxied to:   ${API_BASE_URL}/v1/admin/stats
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -46,35 +44,24 @@ async function handleRequest(
     const queryString = url.search;
 
     // Build the backend URL
-    const backendUrl = `${API_BASE_URL}/v1/tenant-admin/${pathString}${queryString}`;
+    const backendUrl = `${API_BASE_URL}/v1/admin/${pathString}${queryString}`;
 
-    // Prepare headers - always include auth
+    // Prepare headers
     const headers: HeadersInit = {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',
     };
 
+    // Add content-type for requests with body
     const method = request.method;
-    let body: BodyInit | undefined;
+    let body: string | undefined;
 
     if (method !== 'GET' && method !== 'HEAD') {
       const contentType = request.headers.get('content-type');
-
-      // Handle multipart/form-data separately - forward the raw body
-      // Don't set Content-Type header - let fetch set it with proper boundary
-      if (contentType?.includes('multipart/form-data')) {
-        // Clone the request to get the form data
-        const formData = await request.formData();
-        body = formData;
-        // Note: We intentionally don't set Content-Type for multipart
-        // The fetch API will set it correctly with the boundary
-      } else {
-        // For JSON and other content types, forward as text
-        if (contentType) {
-          headers['Content-Type'] = contentType;
-        }
-        body = await request.text();
+      if (contentType) {
+        headers['Content-Type'] = contentType;
       }
+      body = await request.text();
     }
 
     // Make the request to the backend
@@ -102,7 +89,7 @@ async function handleRequest(
 
     return NextResponse.json(responseData, { status: response.status });
   } catch (error) {
-    logger.error('Tenant admin API proxy error', {
+    logger.error('Admin API proxy error', {
       error,
       method: request.method,
       url: request.url,
