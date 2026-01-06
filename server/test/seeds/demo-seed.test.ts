@@ -38,7 +38,7 @@ vi.mock('crypto', () => ({
 }));
 
 import { seedDemo } from '../../prisma/seeds/demo';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 describe('Demo Seed', () => {
   beforeEach(() => {

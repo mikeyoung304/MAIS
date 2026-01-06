@@ -10,7 +10,7 @@
  * - Uses Zod schemas for payload validation
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { AdvisorMemoryRepository, AdvisorMemory } from '../../lib/ports';
 import {
   DiscoveryDataSchema,
@@ -79,9 +79,10 @@ export class PrismaAdvisorMemoryRepository implements AdvisorMemoryRepository {
       tenantId,
       currentPhase: tenant?.onboardingPhase || 'NOT_STARTED',
       lastEventVersion: tenant?.onboardingVersion || 0,
-      lastEventTimestamp: events.length > 0
-        ? events[events.length - 1].timestamp.toISOString()
-        : new Date().toISOString(),
+      lastEventTimestamp:
+        events.length > 0
+          ? events[events.length - 1].timestamp.toISOString()
+          : new Date().toISOString(),
     };
 
     // Replay events to build state

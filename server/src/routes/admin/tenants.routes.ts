@@ -12,7 +12,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
 import type { TenantProvisioningService } from '../../services/tenant-provisioning.service';
 import { ValidationError, NotFoundError } from '../../lib/errors';
@@ -47,9 +47,19 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
 
       res.json({
         tenants: tenants.map((t) => ({
-          ...t,
+          id: t.id,
+          slug: t.slug,
+          name: t.name,
+          email: t.email,
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
+          stripeConnected: t.stripeOnboarded,
+          packageCount: t.stats.packages,
+          // Additional fields for detail view
+          apiKeyPublic: t.apiKeyPublic,
+          commissionPercent: t.commissionPercent,
+          isActive: t.isActive,
+          bookingCount: t.stats.bookings,
         })),
       });
     } catch (error) {

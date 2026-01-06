@@ -10,7 +10,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { PrismaTenantRepository } from '../../adapters/prisma/tenant.repository';
 import { ValidationError, NotFoundError } from '../../lib/errors';
 // Types for documentation/reference (may be used in future implementation)

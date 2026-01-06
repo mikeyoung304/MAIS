@@ -21,7 +21,7 @@ import type {
   AgentProposal,
   AgentTrustTier,
   AgentProposalStatus,
-} from '../../../src/generated/prisma';
+} from '../../../src/generated/prisma/client';
 
 // Mock the logger
 vi.mock('../../../src/lib/core/logger', () => ({
@@ -464,7 +464,9 @@ describe('ProposalService', () => {
 
     it('should NOT reject when "wait" lacks rejection context', async () => {
       // "Wait, let me think" is just pausing, not rejecting - should confirm
-      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.findMany.mockResolvedValue([
+        createMockProposal({ trustTier: 'T2' }),
+      ]);
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.softConfirmPendingT2(tenantId, sessionId, 'Wait, let me think');
@@ -525,7 +527,9 @@ describe('ProposalService', () => {
     // Updated: "actually" without explicit cancel context should NOT reject
     // This prevents false positives like "Actually, that looks great!"
     it('should NOT reject when "actually" is not a cancellation', async () => {
-      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.findMany.mockResolvedValue([
+        createMockProposal({ trustTier: 'T2' }),
+      ]);
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.softConfirmPendingT2(
@@ -541,11 +545,7 @@ describe('ProposalService', () => {
     it('should reject T2 proposals when message contains "don\'t do"', async () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.softConfirmPendingT2(
-        tenantId,
-        sessionId,
-        "Don't do that"
-      );
+      const result = await service.softConfirmPendingT2(tenantId, sessionId, "Don't do that");
 
       expect(result).toEqual([]);
     });
@@ -565,17 +565,15 @@ describe('ProposalService', () => {
     it('should reject T2 proposals when message is short standalone "no"', async () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.softConfirmPendingT2(
-        tenantId,
-        sessionId,
-        'no'
-      );
+      const result = await service.softConfirmPendingT2(tenantId, sessionId, 'no');
 
       expect(result).toEqual([]);
     });
 
     it('should NOT reject when "no" is in a non-rejection context', async () => {
-      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.findMany.mockResolvedValue([
+        createMockProposal({ trustTier: 'T2' }),
+      ]);
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.softConfirmPendingT2(
@@ -590,7 +588,9 @@ describe('ProposalService', () => {
 
     // TODO-537: Additional edge case tests for contextual rejection patterns
     it('should NOT reject when "stop" is in non-rejection context', async () => {
-      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.findMany.mockResolvedValue([
+        createMockProposal({ trustTier: 'T2' }),
+      ]);
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       // "Stop by anytime" uses "stop" but is not a rejection
@@ -600,7 +600,9 @@ describe('ProposalService', () => {
     });
 
     it('should NOT reject when "hold" is in non-rejection context', async () => {
-      mockPrisma.agentProposal.findMany.mockResolvedValue([createMockProposal({ trustTier: 'T2' })]);
+      mockPrisma.agentProposal.findMany.mockResolvedValue([
+        createMockProposal({ trustTier: 'T2' }),
+      ]);
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       // "Hold that thought" is not the same as "hold on"
@@ -716,7 +718,11 @@ describe('ProposalService', () => {
       mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
 
       // Upper case with rejection context
-      const result1 = await service.softConfirmPendingT2(tenantId, sessionId, "WAIT, DON'T DO THAT");
+      const result1 = await service.softConfirmPendingT2(
+        tenantId,
+        sessionId,
+        "WAIT, DON'T DO THAT"
+      );
       expect(result1).toEqual([]);
 
       // Mixed case with explicit stop object

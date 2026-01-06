@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import type { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma/client';
 import { apiKeyService } from '../lib/api-key.service';
 import { logger } from '../lib/core/logger';
 

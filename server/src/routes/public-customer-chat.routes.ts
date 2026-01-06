@@ -15,7 +15,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import type { PrismaClient, Prisma } from '../generated/prisma';
+import type { PrismaClient, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { CustomerChatOrchestrator } from '../agent/orchestrator';
 import { getCustomerProposalExecutor } from '../agent/customer/executor-registry';

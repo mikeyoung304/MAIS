@@ -11,7 +11,7 @@
  * - Higher tier budgets for service creation workflows
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { AgentTool } from '../tools/types';
 import { getAllToolsWithOnboarding } from '../tools/all-tools';
 import {

@@ -9,7 +9,7 @@
  * - get_business_info: Hours, policies, FAQ
  */
 
-import type { Prisma } from '../../generated/prisma';
+import type { Prisma } from '../../generated/prisma/client';
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from '../tools/types';
 import type { ProposalService } from '../proposals/proposal.service';
 import { getCustomerProposalExecutor } from './executor-registry';

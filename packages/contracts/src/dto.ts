@@ -580,6 +580,7 @@ export const TenantDtoSchema = z.object({
   commissionPercent: z.number(),
   stripeAccountId: z.string().nullable(),
   stripeOnboarded: z.boolean(),
+  stripeConnected: z.boolean().optional(), // Alias for frontend compatibility
   isActive: z.boolean(),
   isTestTenant: z.boolean(),
   createdAt: z.string(), // ISO date string

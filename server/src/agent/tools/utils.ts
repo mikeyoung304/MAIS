@@ -6,7 +6,7 @@
  * and landing page draft operations.
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { type PagesConfig, type LandingPageConfig, DEFAULT_PAGES_CONFIG } from '@macon/contracts';

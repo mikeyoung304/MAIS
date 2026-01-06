@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import cron from 'node-cron';
 import type { Container } from '../src/di';
 import type { ReminderService } from '../src/services/reminder.service';
-import type { PrismaClient } from '../src/generated/prisma';
+import type { PrismaClient } from '../src/generated/prisma/client';
 
 // Mock node-cron
 vi.mock('node-cron', () => ({

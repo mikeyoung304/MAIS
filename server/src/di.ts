@@ -42,7 +42,7 @@ import { TenantAuthController } from './routes/tenant-auth.routes';
 import { DevController } from './routes/dev.routes';
 import { PlatformAdminController } from './controllers/platform-admin.controller';
 import { buildMockAdapters } from './adapters/mock';
-import { PrismaClient } from './generated/prisma';
+import { PrismaClient } from './generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   PrismaCatalogRepository,

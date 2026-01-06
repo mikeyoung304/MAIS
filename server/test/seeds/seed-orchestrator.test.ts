@@ -24,7 +24,7 @@ vi.mock('bcryptjs', () => ({
 }));
 
 // Mock Prisma client
-vi.mock('../../src/generated/prisma', () => ({
+vi.mock('../../src/generated/prisma/client', () => ({
   PrismaClient: vi.fn().mockImplementation(() => ({
     $connect: vi.fn(),
     $disconnect: vi.fn(),

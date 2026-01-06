@@ -9,7 +9,7 @@
  * - trackLegacyChange() - For legacy CRUD during migration (Package, Tenant, BlackoutDate)
  */
 
-import { Prisma, type PrismaClient } from '../generated/prisma';
+import { Prisma, type PrismaClient } from '../generated/prisma/client';
 
 export interface AuditServiceDeps {
   prisma: PrismaClient;

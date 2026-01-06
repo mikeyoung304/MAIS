@@ -28,7 +28,7 @@ vi.mock('bcryptjs', () => ({
 }));
 
 import { seedPlatform } from '../../prisma/seeds/platform';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 describe('Platform Seed', () => {
   const originalEnv = process.env;
@@ -93,36 +93,36 @@ describe('Platform Seed', () => {
   });
 
   describe('Password Length Validation', () => {
-    it('should reject password shorter than 12 characters', async () => {
+    it('should reject password shorter than 8 characters', async () => {
       process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
       process.env.PLATFORM_ADMIN_PASSWORD = 'short'; // Only 5 chars
 
       const mockPrisma = createMockPrisma();
 
       await expect(seedPlatform(mockPrisma)).rejects.toThrow(
-        'PLATFORM_ADMIN_PASSWORD must be at least 12 characters'
+        'PLATFORM_ADMIN_PASSWORD must be at least 8 characters'
       );
     });
 
-    it('should reject password with exactly 11 characters', async () => {
+    it('should reject password with exactly 7 characters', async () => {
       process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
-      process.env.PLATFORM_ADMIN_PASSWORD = '12345678901'; // 11 chars
+      process.env.PLATFORM_ADMIN_PASSWORD = '1234567'; // 7 chars
 
       const mockPrisma = createMockPrisma();
 
-      await expect(seedPlatform(mockPrisma)).rejects.toThrow(/at least 12 characters/);
+      await expect(seedPlatform(mockPrisma)).rejects.toThrow(/at least 8 characters/);
     });
 
-    it('should accept password with exactly 12 characters', async () => {
+    it('should accept password with exactly 8 characters', async () => {
       process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
-      process.env.PLATFORM_ADMIN_PASSWORD = '123456789012'; // 12 chars
+      process.env.PLATFORM_ADMIN_PASSWORD = '12345678'; // 8 chars
 
       const mockPrisma = createMockPrisma();
 
       await expect(seedPlatform(mockPrisma)).resolves.not.toThrow();
     });
 
-    it('should accept password longer than 12 characters', async () => {
+    it('should accept password longer than 8 characters', async () => {
       process.env.PLATFORM_ADMIN_EMAIL = 'admin@example.com';
       process.env.PLATFORM_ADMIN_PASSWORD = 'verylongsecurepassword123!@#';
 

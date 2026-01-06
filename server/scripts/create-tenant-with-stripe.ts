@@ -24,7 +24,7 @@
  *   - Secret key shown ONCE - save immediately!
  */
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaTenantRepository } from '../src/adapters/prisma/tenant.repository';
 import { apiKeyService } from '../src/lib/api-key.service';
 

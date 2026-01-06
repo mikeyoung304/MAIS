@@ -12,8 +12,8 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Package, AddOn } from '../../src/generated/prisma';
-import { BookingType } from '../../src/generated/prisma';
+import type { PrismaClient, Segment, Package, AddOn } from '../../src/generated/prisma/client';
+import { BookingType } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
 import { createOrUpdateTenant } from './utils';

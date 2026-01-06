@@ -21,7 +21,7 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/resources/messages';
-import type { PrismaClient, Prisma } from '../../generated/prisma';
+import type { PrismaClient, Prisma } from '../../generated/prisma/client';
 import type { ToolContext, AgentToolResult, AgentTool } from '../tools/types';
 import { INJECTION_PATTERNS } from '../tools/types';
 import { ProposalService } from '../proposals/proposal.service';

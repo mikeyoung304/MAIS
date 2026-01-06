@@ -15,7 +15,7 @@
  * @see plans/agent-evaluation-system.md Phase 5.4
  */
 
-import type { PrismaClient, ReviewAction } from '../../generated/prisma';
+import type { PrismaClient, ReviewAction } from '../../generated/prisma/client';
 import { TraceNotFoundError } from '../../lib/errors/agent-eval-errors';
 
 // ─────────────────────────────────────────────────────────────────────────────

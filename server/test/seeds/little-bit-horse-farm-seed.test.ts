@@ -45,7 +45,7 @@ vi.mock('crypto', async (importOriginal) => {
 });
 
 import { seedLittleBitHorseFarm } from '../../prisma/seeds/little-bit-horse-farm';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 describe('Little Bit Horse Farm Seed', () => {
   beforeEach(() => {

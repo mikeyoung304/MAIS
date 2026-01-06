@@ -671,7 +671,7 @@ export const Contracts = c.router({
       })
       .optional(),
     responses: {
-      200: z.array(TenantDtoSchema),
+      200: z.object({ tenants: z.array(TenantDtoSchema) }),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,

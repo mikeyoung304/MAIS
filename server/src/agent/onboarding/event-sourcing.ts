@@ -12,7 +12,7 @@
  * @see CLAUDE.md for double-booking prevention pattern (similar approach)
  */
 
-import type { PrismaClient, Prisma } from '../../generated/prisma';
+import type { PrismaClient, Prisma } from '../../generated/prisma/client';
 import {
   type OnboardingEventType,
   type OnboardingEventPayloads,

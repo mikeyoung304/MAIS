@@ -10,7 +10,7 @@
  *   npx ts-node scripts/reset-monthly-usage.ts --dry-run # Preview without changes
  */
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
 

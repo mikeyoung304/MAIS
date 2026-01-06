@@ -15,7 +15,7 @@
  * - Returns IDs for newly created resources (for state machine tracking)
  */
 
-import type { PrismaClient, Prisma } from '../../generated/prisma';
+import type { PrismaClient, Prisma } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { MissingFieldError, ValidationError } from '../errors';

@@ -12,7 +12,7 @@
  * 5. Webhook handler updates booking to CONFIRMED on payment success
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { PaymentProvider, CheckoutSession } from '../../lib/ports';
 import { registerCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';

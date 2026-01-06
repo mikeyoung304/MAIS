@@ -5,7 +5,7 @@
  * This repository is tenant-agnostic (platform-level feature).
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { EarlyAccessRepository, EarlyAccessRequest } from '../../lib/ports';
 
 export class PrismaEarlyAccessRepository implements EarlyAccessRepository {

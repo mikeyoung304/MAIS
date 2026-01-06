@@ -7,10 +7,12 @@
  * Run with: SEED_MODE=upgrade-tenant-pages npx prisma db seed
  */
 
-import { PrismaClient } from '../../src/generated/prisma';
+import { createPrismaClient } from '../../src/lib/prisma';
 import { logger } from '../../src/lib/core/logger';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
-const prisma = new PrismaClient();
+// Lazy-loaded prisma client (created when upgradeTenantPages is called)
+let prisma: PrismaClient;
 
 /**
  * Landing page configuration for La Petit Mariage
@@ -434,6 +436,9 @@ From CRM setup to marketing automation, we've got you covered. Think of us as th
 };
 
 export async function upgradeTenantPages(): Promise<void> {
+  // Initialize prisma lazily (after env vars are loaded)
+  prisma = createPrismaClient();
+
   logger.info('Starting tenant pages upgrade...');
 
   const updates = [

@@ -2,7 +2,7 @@
  * Test fixtures for User entities
  */
 
-import type { User, UserRole } from '../../generated/prisma';
+import type { User, UserRole } from '../../generated/prisma/client';
 
 /**
  * Build a test user with optional overrides

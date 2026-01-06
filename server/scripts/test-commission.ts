@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { CommissionService } from '../src/services/commission.service';
 
 const prisma = new PrismaClient();

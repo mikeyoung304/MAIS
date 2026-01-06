@@ -2,7 +2,7 @@
  * Prisma Catalog Repository Adapter
  */
 
-import { Prisma, type PrismaClient } from '../../generated/prisma';
+import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 import type {
   CatalogRepository,
   CreatePackageInput,

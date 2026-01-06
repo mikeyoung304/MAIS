@@ -7,7 +7,7 @@
  * @see plans/agent-evaluation-system.md Phase 3.3
  */
 
-import type { PrismaClient } from '../../../src/generated/prisma';
+import type { PrismaClient } from '../../../src/generated/prisma/client';
 import { ConversationEvaluator, createEvaluator } from '../../../src/agent/evals';
 import type { EvalInput } from '../../../src/agent/evals';
 import type { TracedMessage, TracedToolCall } from '../../../src/agent/tracing';

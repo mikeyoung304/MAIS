@@ -2,7 +2,7 @@
  * Prisma User Repository Adapter
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { UserRepository, User } from '../lib/ports';
 
 export class PrismaUserRepository implements UserRepository {

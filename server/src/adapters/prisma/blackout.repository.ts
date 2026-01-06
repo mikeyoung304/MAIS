@@ -2,7 +2,7 @@
  * Prisma Blackout Repository Adapter
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { BlackoutRepository } from '../lib/ports';
 import { toISODate } from '../lib/date-utils';
 

@@ -17,7 +17,7 @@
  * @see plans/agent-evaluation-system.md Phase 1.4
  */
 
-import { Prisma, type PrismaClient } from '../../generated/prisma';
+import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 import { encryptionService, type EncryptedData } from '../../lib/encryption.service';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';

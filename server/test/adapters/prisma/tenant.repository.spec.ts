@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PrismaTenantRepository } from '../../../src/adapters/prisma/tenant.repository';
 import { createMockPrismaClient, type MockPrismaClient } from '../../mocks/prisma.mock';
 import { buildTenant, sampleTenant } from '../../fixtures/tenants';
-import { Prisma } from '../../../src/generated/prisma';
+import { Prisma } from '../../../src/generated/prisma/client';
 
 describe('PrismaTenantRepository', () => {
   let repository: PrismaTenantRepository;

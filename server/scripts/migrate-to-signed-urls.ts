@@ -13,7 +13,7 @@
  *   2. Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env
  */
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();

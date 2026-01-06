@@ -2,8 +2,8 @@
  * Test fixtures for Tenant entities
  */
 
-import type { Tenant } from '../../src/generated/prisma';
-import { Prisma } from '../../src/generated/prisma';
+import type { Tenant } from '../../src/generated/prisma/client';
+import { Prisma } from '../../src/generated/prisma/client';
 
 /**
  * Build a test tenant with optional overrides

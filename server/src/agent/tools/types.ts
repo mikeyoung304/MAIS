@@ -4,7 +4,7 @@
  * Type definitions for MCP tool implementation.
  */
 
-import type { AgentTrustTier, PrismaClient } from '../../generated/prisma';
+import type { AgentTrustTier, PrismaClient } from '../../generated/prisma/client';
 
 /**
  * Context provided to each tool execution

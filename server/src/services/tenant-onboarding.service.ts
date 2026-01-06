@@ -6,7 +6,7 @@
  * data consistency (no partial failures).
  */
 
-import type { PrismaClient, Segment, Package } from '../generated/prisma';
+import type { PrismaClient, Segment, Package } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';
 

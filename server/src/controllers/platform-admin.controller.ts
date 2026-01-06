@@ -48,6 +48,7 @@ export class PlatformAdminController {
         commissionPercent: Number(tenant.commissionPercent),
         stripeAccountId: tenant.stripeAccountId,
         stripeOnboarded: tenant.stripeOnboarded,
+        stripeConnected: tenant.stripeOnboarded, // Alias for frontend compatibility
         isActive: tenant.isActive,
         isTestTenant: tenant.isTestTenant,
         createdAt: tenant.createdAt.toISOString(),

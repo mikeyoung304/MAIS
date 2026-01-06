@@ -84,6 +84,25 @@ Three files work together:
 - Extension type changes
 - Prevention checklist for types
 
+### For Seed Script Failures (If seeding breaks after upgrade)
+
+**IF SEED SCRIPTS FAIL:** `prisma-7-seed-script-module-resolution-MAIS-20260105.md`
+
+- Seed file import path changes
+- Driver adapter requirement (PrismaPg instantiation)
+- Environment variable loading order
+- Centralized factory function pattern
+- Lazy initialization for conditional seeds
+- All 9 seed files fixed and documented
+
+**Quick Reference:** `PRISMA_7_SEED_QUICK_REFERENCE.md`
+
+- 3-minute fix for seed script errors
+- Import path correction (from `generated/prisma` → `generated/prisma/client`)
+- Factory function creation
+- Seed function signature pattern
+- Testing checklist
+
 ### For Complete Checklist
 
 **COMPREHENSIVE TESTING:** `prisma-upgrade-checklist-MAIS-20260102.md`
@@ -102,6 +121,8 @@ Three files work together:
 | "How does this work?"               | `prisma-major-upgrade-build-failure-prevention-MAIS-20260102.md` | 30 min |
 | "Before deploying, what do I test?" | `prisma-upgrade-deployment-checklist-MAIS-20260102.md`           | 45 min |
 | "I'm getting type errors too"       | `prisma-7-json-type-breaking-changes-MAIS-20260102.md`           | 15 min |
+| "My seed scripts are broken"        | `prisma-7-seed-script-module-resolution-MAIS-20260105.md`        | 20 min |
+| "Quick fix for seed scripts"        | `PRISMA_7_SEED_QUICK_REFERENCE.md`                               | 5 min  |
 | "I need a complete checklist"       | `prisma-upgrade-checklist-MAIS-20260102.md`                      | 60 min |
 
 ## The 3-Minute Solution

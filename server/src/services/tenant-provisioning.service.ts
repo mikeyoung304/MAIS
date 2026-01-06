@@ -18,7 +18,7 @@
  * @see todos/630-pending-p1-admin-api-skips-tenant-onboarding.md
  */
 
-import type { PrismaClient, Tenant, Segment, Package } from '../generated/prisma';
+import type { PrismaClient, Tenant, Segment, Package } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
 import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';

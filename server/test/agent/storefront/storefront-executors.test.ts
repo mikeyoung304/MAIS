@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { PrismaClient } from '../../../src/generated/prisma';
+import type { PrismaClient } from '../../../src/generated/prisma/client';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 
 // Mock dependencies

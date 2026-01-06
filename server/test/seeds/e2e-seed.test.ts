@@ -27,7 +27,7 @@ vi.mock('../../src/lib/api-key.service', () => ({
 }));
 
 import { seedE2E, E2E_KEYS } from '../../prisma/seeds/e2e';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 describe('E2E Seed', () => {
   const originalEnv = process.env;

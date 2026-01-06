@@ -2,7 +2,7 @@
  * Prisma Service Repository Adapter
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { ServiceRepository, CreateServiceInput, UpdateServiceInput } from '../lib/ports';
 import type { Service } from '../lib/entities';
 import { DomainError } from '../lib/errors';

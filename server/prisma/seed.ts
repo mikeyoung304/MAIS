@@ -21,6 +21,9 @@
  *   PLATFORM_ADMIN_NAME: Optional, defaults to 'Platform Admin' (also accepts legacy ADMIN_NAME)
  */
 
+// Load environment variables before any other imports
+import 'dotenv/config';
+
 import { createPrismaClient } from '../src/lib/prisma';
 import { seedPlatform } from './seeds/platform';
 import { seedE2E } from './seeds/e2e';

@@ -15,7 +15,7 @@
  * - Returns IDs and URLs for newly created resources
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { MissingFieldError, ResourceNotFoundError, ValidationError } from '../errors';

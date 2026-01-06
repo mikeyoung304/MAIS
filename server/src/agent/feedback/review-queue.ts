@@ -13,7 +13,7 @@
  */
 
 import { z } from 'zod';
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { TracedMessage } from '../tracing';
 import { redactMessagesForPreview } from '../../lib/pii-redactor';
 

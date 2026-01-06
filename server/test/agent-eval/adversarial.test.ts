@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockDeep, type DeepMockProxy } from 'vitest-mock-extended';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import { createEvalPipeline, EvalPipeline } from '../../src/agent/evals/pipeline';
 import { createMockEvaluator } from '../helpers/mock-evaluator';
 import { redactPII, redactMessages, redactObjectPII } from '../../src/lib/pii-redactor';

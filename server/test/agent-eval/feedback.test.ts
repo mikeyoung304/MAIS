@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { DeepMockProxy } from 'vitest-mock-extended';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import { createMockPrisma } from '../helpers/mock-prisma';
 import {
   ImplicitFeedbackAnalyzer,

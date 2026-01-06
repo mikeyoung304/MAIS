@@ -14,7 +14,7 @@
 
 import { promises as dns } from 'dns';
 import { randomBytes } from 'crypto';
-import type { PrismaClient, TenantDomain } from '../generated/prisma';
+import type { PrismaClient, TenantDomain } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 
 /**

@@ -3,7 +3,7 @@
  * Handles webhook event deduplication and tracking
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { WebhookRepository } from '../../lib/ports';
 import { logger } from '../../lib/core/logger';
 

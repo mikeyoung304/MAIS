@@ -10,7 +10,7 @@
  * - Uses tenantId from JWT only
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { sanitizeForContext } from '../tools/types';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';

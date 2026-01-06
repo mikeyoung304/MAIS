@@ -15,7 +15,7 @@ import type {
   AgentTrustTier,
   AgentProposalStatus,
   Prisma,
-} from '../../generated/prisma';
+} from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 
 /**

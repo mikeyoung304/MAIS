@@ -13,7 +13,7 @@ import { closeSupabaseConnections } from './config/database';
 import { initializeScheduler } from './scheduler';
 import { initializeWebhookQueue } from './jobs/webhook-queue';
 import { startCleanupScheduler, recoverOrphanedProposalsOnStartup } from './jobs/cleanup';
-import type { PrismaClient } from './generated/prisma';
+import type { PrismaClient } from './generated/prisma/client';
 
 /**
  * Verify database connection using Prisma

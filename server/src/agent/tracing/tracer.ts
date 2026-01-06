@@ -14,7 +14,7 @@
  * @see plans/agent-evaluation-system.md Phase 1.3
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import type {

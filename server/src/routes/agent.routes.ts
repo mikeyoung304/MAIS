@@ -10,7 +10,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import type { PrismaClient, Prisma } from '../generated/prisma';
+import type { PrismaClient, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { AdminOrchestrator } from '../agent/orchestrator';
 import { buildSessionContext, detectOnboardingState } from '../agent/context/context-builder';

@@ -3,7 +3,7 @@
  * Handles business logic for tenant segments (e.g., "Wellness Retreat", "Micro-Wedding")
  */
 
-import type { Segment, Package, AddOn } from '../generated/prisma';
+import type { Segment, Package, AddOn } from '../generated/prisma/client';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import type { CacheServicePort, StorageProvider } from '../lib/ports';
 import {

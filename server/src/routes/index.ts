@@ -28,7 +28,7 @@ import {
   getTenantId,
   type TenantRequest,
 } from '../middleware/tenant';
-import type { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma/client';
 import { PrismaTenantRepository, PrismaBlackoutRepository } from '../adapters/prisma';
 import type {
   ServiceRepository,
@@ -304,7 +304,7 @@ export function createV1Router(
         // Auth middleware applied via app.use('/v1/admin/tenants', authMiddleware)
         const includeTestTenants = query?.includeTest === 'true';
         const data = await controllers.platformAdmin.getAllTenants(includeTestTenants);
-        return { status: 200 as const, body: data };
+        return { status: 200 as const, body: { tenants: data } };
       },
 
       platformCreateTenant: async ({ body: _body }: { body: unknown }) => {

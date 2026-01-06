@@ -22,7 +22,7 @@ import {
   getTenant,
   type TenantRequest,
 } from '../../src/middleware/tenant';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 // Mock logger module globally
 vi.mock('../../src/lib/core/logger', () => ({

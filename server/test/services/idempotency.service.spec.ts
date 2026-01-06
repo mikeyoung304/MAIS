@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { IdempotencyService } from '../../src/services/idempotency.service';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 describe('IdempotencyService', () => {
   let service: IdempotencyService;

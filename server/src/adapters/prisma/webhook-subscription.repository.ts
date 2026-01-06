@@ -3,7 +3,7 @@
  * Handles tenant webhook subscription management and delivery tracking
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 import type { WebhookSubscriptionRepository } from '../../lib/ports';
 import { logger } from '../../lib/core/logger';
 import { NotFoundError } from '../../lib/errors';

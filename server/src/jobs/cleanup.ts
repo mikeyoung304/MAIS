@@ -10,7 +10,7 @@
  * to prevent database bloat and recover from crashes.
  */
 
-import type { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { getProposalExecutor } from '../agent/proposals/executor-registry';
 import { validateExecutorPayload } from '../agent/proposals/executor-schemas';

@@ -14,8 +14,8 @@ import type { AgentTool, ToolContext, AgentToolResult } from './types';
 import { sanitizeForContext } from './types';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
-import type { Prisma } from '../../generated/prisma';
-import { BookingStatus } from '../../generated/prisma';
+import type { Prisma } from '../../generated/prisma/client';
+import { BookingStatus } from '../../generated/prisma/client';
 import { handleToolError, buildDateRangeFilter, formatPrice, formatDateISO } from './utils';
 
 /**

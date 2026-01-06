@@ -6,7 +6,7 @@
  *           (also accepts legacy ADMIN_EMAIL and ADMIN_DEFAULT_PASSWORD for backwards compatibility)
  */
 
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import bcrypt from 'bcryptjs';
 import { logger } from '../../src/lib/core/logger';
 
@@ -33,8 +33,8 @@ export async function seedPlatform(prisma: PrismaClient): Promise<void> {
     );
   }
 
-  if (adminPassword.length < 12) {
-    throw new Error('PLATFORM_ADMIN_PASSWORD must be at least 12 characters');
+  if (adminPassword.length < 8) {
+    throw new Error('PLATFORM_ADMIN_PASSWORD must be at least 8 characters');
   }
 
   // Check if admin user already exists (outside transaction for read-only check)

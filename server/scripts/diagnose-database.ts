@@ -274,7 +274,7 @@ async function checkDatabaseConnection(url: URL): Promise<void> {
 
   // Dynamically import PrismaClient to avoid compilation issues if not generated
   try {
-    const { PrismaClient } = await import('../src/generated/prisma');
+    const { PrismaClient } = await import('../src/generated/prisma/client');
 
     const prisma = new PrismaClient({
       datasources: {

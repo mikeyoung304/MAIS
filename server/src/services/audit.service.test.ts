@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuditService } from './audit.service';
-import { Prisma, type PrismaClient } from '../generated/prisma';
+import { Prisma, type PrismaClient } from '../generated/prisma/client';
 
 // Mock Prisma Client
 const mockPrisma = {

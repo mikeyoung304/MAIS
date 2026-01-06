@@ -9,7 +9,7 @@
 
 import type { Express, Request, Response } from 'express';
 import { logger } from '../lib/core/logger';
-import type { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma/client';
 import type { Config } from '../lib/core/config';
 import type { HealthCheckService } from '../services/health-check.service';
 

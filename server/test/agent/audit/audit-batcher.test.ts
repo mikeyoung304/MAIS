@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuditBatcher, type AuditLogInput } from '../../../src/agent/audit/audit.service';
-import type { PrismaClient } from '../../../src/generated/prisma';
+import type { PrismaClient } from '../../../src/generated/prisma/client';
 
 /**
  * Create a mock Prisma client

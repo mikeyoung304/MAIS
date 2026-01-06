@@ -12,7 +12,7 @@ import type {
   AgentTrustTier,
   AgentApprovalStatus,
   Prisma,
-} from '../../generated/prisma';
+} from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 

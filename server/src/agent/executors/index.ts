@@ -10,8 +10,8 @@
  * 3. Returns the result for storage and display
  */
 
-import type { PrismaClient, Prisma } from '../../generated/prisma';
-import { BookingStatus } from '../../generated/prisma';
+import type { PrismaClient, Prisma } from '../../generated/prisma/client';
+import { BookingStatus } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { hashTenantDate } from '../../lib/advisory-locks';

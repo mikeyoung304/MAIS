@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockDeep, type DeepMockProxy } from 'vitest-mock-extended';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import {
   ConversationTracer,
   createTracer,

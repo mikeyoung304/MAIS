@@ -8,7 +8,7 @@
  *
  * Usage:
  * ```typescript
- * // Instead of: import { PrismaClient } from './generated/prisma'
+ * // Instead of: import { PrismaClient } from './generated/prisma/client'
  * import { PrismaClient, Prisma } from './db'
  * ```
  */

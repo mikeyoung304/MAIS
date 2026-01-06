@@ -9,7 +9,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
-import type { PrismaClient, Prisma } from '../generated/prisma';
+import type { PrismaClient, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 
 // ─────────────────────────────────────────────────────────────────────────────

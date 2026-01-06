@@ -10,7 +10,7 @@
  */
 
 import type { Server } from 'http';
-import type { PrismaClient } from '../generated/prisma';
+import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from './core/logger';
 
 export interface ShutdownManager {

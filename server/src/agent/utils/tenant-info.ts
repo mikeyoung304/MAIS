@@ -9,7 +9,7 @@
  * @see booking-link-executors.ts - Uses this for URL building after execution
  */
 
-import type { PrismaClient } from '../../generated/prisma';
+import type { PrismaClient } from '../../generated/prisma/client';
 
 /**
  * Tenant info result with optional fields based on query options

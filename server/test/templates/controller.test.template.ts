@@ -12,7 +12,7 @@ import request from 'supertest';
 import type { Express } from 'express';
 import { createApp } from '../../src/app';
 import { loadConfig } from '../../src/lib/core/config';
-import { PrismaClient } from '../../src/generated/prisma';
+import { PrismaClient } from '../../src/generated/prisma/client';
 
 /**
  * TODO: Update these imports:

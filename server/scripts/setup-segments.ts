@@ -7,7 +7,7 @@
  * Run with: npx tsx scripts/setup-segments.ts
  */
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient();
 

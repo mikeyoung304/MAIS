@@ -19,7 +19,7 @@
  */
 
 import { mockDeep, type DeepMockProxy } from 'vitest-mock-extended';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 
 /**
  * Create a type-safe Prisma mock with common configurations.

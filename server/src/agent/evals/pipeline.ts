@@ -10,7 +10,7 @@
  * @see plans/agent-evaluation-system.md Phase 2.3
  */
 
-import type { PrismaClient, ConversationTrace } from '../../generated/prisma';
+import type { PrismaClient, ConversationTrace } from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { TraceNotFoundError } from '../../lib/errors/agent-eval-errors';

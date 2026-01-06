@@ -27,7 +27,7 @@ import 'dotenv/config';
  * @see plans/agent-eval-remediation-plan.md Phase 4.3
  */
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { createEvalPipeline, createEvaluator } from '../src/agent/evals';
 import { logger } from '../src/lib/core/logger';

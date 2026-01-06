@@ -11,7 +11,7 @@
  * - Uses defense-in-depth with tenantId in all queries
  */
 
-import { Prisma, type PrismaClient } from '../../generated/prisma';
+import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { ResourceNotFoundError, ValidationError } from '../errors/index';

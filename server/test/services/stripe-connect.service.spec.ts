@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StripeConnectService } from '../../src/services/stripe-connect.service';
-import type { PrismaClient } from '../../src/generated/prisma';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import type Stripe from 'stripe';
 
 // Mock the encryption service module
