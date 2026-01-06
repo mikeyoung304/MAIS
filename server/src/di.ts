@@ -132,6 +132,7 @@ export interface Container {
     audit: AuditService;
     segment: SegmentService;
     tenantOnboarding: TenantOnboardingService; // Tenant signup default data creation
+    tenantProvisioning: TenantProvisioningService; // Atomic tenant + segment + package creation
     googleCalendar?: GoogleCalendarService; // Optional - only if calendar provider supports sync
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
     packageDraft: PackageDraftService; // Visual editor draft management
