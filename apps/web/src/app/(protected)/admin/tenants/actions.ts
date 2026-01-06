@@ -2,7 +2,6 @@
 
 import { auth, unstable_update, getBackendToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/lib/logger';
 import { API_URL } from '@/lib/config';
@@ -43,25 +42,45 @@ async function safeParseJSON<T>(response: Response): Promise<T> {
 }
 
 /**
+ * Result type for impersonation actions
+ * Returns success status instead of redirecting, allowing client to handle
+ * navigation with proper session refresh to avoid stale cache issues.
+ */
+export type ImpersonationResult =
+  | {
+      success: true;
+      redirectTo: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+/**
  * Impersonate a tenant
  *
  * Allows PLATFORM_ADMIN to view the platform as a specific tenant.
  * Updates both the backend token cookie and NextAuth session.
+ *
+ * IMPORTANT: Returns result instead of redirecting. Client must:
+ * 1. Call router.refresh() to invalidate RSC cache
+ * 2. Call update() from useSession to refresh client session
+ * 3. Navigate to redirectTo path
  */
-export async function impersonateTenant(tenantId: string) {
+export async function impersonateTenant(tenantId: string): Promise<ImpersonationResult> {
   const session = await auth();
 
   if (session?.user?.role !== 'PLATFORM_ADMIN') {
-    throw new Error('Unauthorized');
+    return { success: false, error: 'Unauthorized' };
   }
 
   if (session?.user?.impersonation) {
-    throw new Error('Cannot impersonate while already impersonating');
+    return { success: false, error: 'Cannot impersonate while already impersonating' };
   }
 
   const backendToken = await getBackendToken();
   if (!backendToken) {
-    throw new Error('Not authenticated');
+    return { success: false, error: 'Not authenticated' };
   }
 
   const response = await fetch(`${API_URL}/v1/auth/impersonate`, {
@@ -75,7 +94,7 @@ export async function impersonateTenant(tenantId: string) {
 
   if (!response.ok) {
     const error = await safeParseJSON<{ message?: string }>(response);
-    throw new Error(error.message || 'Impersonation failed');
+    return { success: false, error: error.message || 'Impersonation failed' };
   }
 
   const data = await safeParseJSON<ImpersonateResponse>(response);
@@ -134,11 +153,11 @@ export async function impersonateTenant(tenantId: string) {
     } else {
       cookieStore.delete('mais_backend_token');
     }
-    throw new Error('Failed to start impersonation session');
+    return { success: false, error: 'Failed to start impersonation session' };
   }
 
   revalidatePath('/');
-  redirect('/tenant/dashboard');
+  return { success: true, redirectTo: '/tenant/dashboard' };
 }
 
 /**
@@ -146,17 +165,22 @@ export async function impersonateTenant(tenantId: string) {
  *
  * Returns the PLATFORM_ADMIN to their normal admin view.
  * Restores the original admin token and clears impersonation state.
+ *
+ * IMPORTANT: Returns result instead of redirecting. Client must:
+ * 1. Call router.refresh() to invalidate RSC cache
+ * 2. Call update() from useSession to refresh client session
+ * 3. Navigate to redirectTo path
  */
-export async function stopImpersonation() {
+export async function stopImpersonation(): Promise<ImpersonationResult> {
   const session = await auth();
 
   if (!session?.user?.impersonation) {
-    redirect('/admin/tenants');
+    return { success: true, redirectTo: '/admin/tenants' };
   }
 
   const backendToken = await getBackendToken();
   if (!backendToken) {
-    throw new Error('Not authenticated');
+    return { success: false, error: 'Not authenticated' };
   }
 
   const response = await fetch(`${API_URL}/v1/auth/stop-impersonation`, {
@@ -168,7 +192,7 @@ export async function stopImpersonation() {
 
   if (!response.ok) {
     const error = await safeParseJSON<{ message?: string }>(response);
-    throw new Error(error.message || 'Failed to stop impersonation');
+    return { success: false, error: error.message || 'Failed to stop impersonation' };
   }
 
   const data = await safeParseJSON<StopImpersonationResponse>(response);
@@ -218,9 +242,9 @@ export async function stopImpersonation() {
         path: '/',
       });
     }
-    throw new Error('Failed to restore admin session');
+    return { success: false, error: 'Failed to restore admin session' };
   }
 
   revalidatePath('/');
-  redirect('/admin/tenants');
+  return { success: true, redirectTo: '/admin/tenants' };
 }

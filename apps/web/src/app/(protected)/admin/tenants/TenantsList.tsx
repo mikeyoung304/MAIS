@@ -11,6 +11,16 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { impersonateTenant } from './actions';
 import type { Tenant } from './types';
 
+/**
+ * Format a date string in a hydration-safe way.
+ * Returns ISO date (YYYY-MM-DD) which is consistent across server and client.
+ * This avoids hydration mismatches from locale-dependent toLocaleDateString().
+ */
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toISOString().split('T')[0];
+}
+
 interface TenantsListProps {
   tenants: Tenant[];
 }
@@ -20,9 +30,43 @@ type FilterMode = 'all' | 'stripe' | 'no-stripe';
 export function TenantsList({ tenants }: TenantsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
 
   // Debounce search query to prevent excessive re-renders with large tenant lists
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 150);
+
+  /**
+   * Handle impersonation with proper session refresh
+   *
+   * After the server action updates the JWT, we use window.location.href
+   * for a hard navigation that forces a complete page reload. This ensures
+   * both the RSC cache and SessionProvider get fresh data from the server.
+   *
+   * IMPORTANT: We call the server action directly (not in startTransition)
+   * because React's concurrent features can interfere with side effects
+   * like navigation. The async/await pattern is sufficient here since
+   * we're doing a full page reload anyway.
+   */
+  const handleImpersonate = async (tenantId: string) => {
+    setImpersonatingId(tenantId);
+
+    try {
+      const result = await impersonateTenant(tenantId);
+
+      if (result.success) {
+        // Full page reload to ensure fresh session state
+        // This is more reliable than router.push() or startTransition
+        window.location.href = result.redirectTo;
+      } else {
+        // Reset state on error - could add toast notification here
+        setImpersonatingId(null);
+        console.error('Impersonation failed:', result.error);
+      }
+    } catch (error) {
+      setImpersonatingId(null);
+      console.error('Impersonation error:', error);
+    }
+  };
 
   /**
    * Filter and search tenants
@@ -158,15 +202,19 @@ export function TenantsList({ tenants }: TenantsListProps) {
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {new Date(tenant.createdAt).toLocaleDateString()}
+                    {formatDate(tenant.createdAt)}
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <form action={impersonateTenant.bind(null, tenant.id)} className="flex-1">
-                    <Button type="submit" variant="sage" size="sm" className="w-full">
-                      Impersonate
-                    </Button>
-                  </form>
+                  <Button
+                    variant="sage"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleImpersonate(tenant.id)}
+                    disabled={impersonatingId === tenant.id}
+                  >
+                    {impersonatingId === tenant.id ? 'Impersonating...' : 'Impersonate'}
+                  </Button>
                   <Button variant="outline-light" size="sm" asChild>
                     <Link href={`/admin/tenants/${tenant.id}`}>
                       <Pencil className="h-3 w-3" />
