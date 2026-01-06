@@ -78,8 +78,11 @@ export interface AgentCapabilityMap {
  */
 export function getAllCapabilityMaps(): AgentCapabilityMap[] {
   // Import dynamically to avoid circular deps in test files
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { CUSTOMER_AGENT_CAPABILITIES } = require('./customer-agent.cap');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ONBOARDING_AGENT_CAPABILITIES } = require('./onboarding-agent.cap');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ADMIN_AGENT_CAPABILITIES } = require('./admin-agent.cap');
 
   return [CUSTOMER_AGENT_CAPABILITIES, ONBOARDING_AGENT_CAPABILITIES, ADMIN_AGENT_CAPABILITIES];

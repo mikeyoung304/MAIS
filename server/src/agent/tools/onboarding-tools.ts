@@ -26,9 +26,9 @@ import {
   type DiscoveryData,
   type MarketResearchData,
   type ServicesData,
-  type MarketingData,
   type BusinessType,
   type TargetMarket,
+  type OnboardingEventType,
   DiscoveryDataSchema,
   MarketResearchDataSchema,
   ServicesDataSchema,
@@ -38,9 +38,8 @@ import {
   OnboardingPhaseSchema,
   parseOnboardingPhase,
 } from '@macon/contracts';
-import { stateToPhase, isValidTransition } from '../onboarding/state-machine';
+import { isValidTransition } from '../onboarding/state-machine';
 import { appendEvent } from '../onboarding/event-sourcing';
-import type { OnboardingMachineEvent, OnboardingEventType } from '@macon/contracts';
 import { searchMarketPricing } from '../onboarding/market-search';
 import { logger } from '../../lib/core/logger';
 
@@ -82,18 +81,7 @@ async function createProposal(
   };
 }
 
-/**
- * Map onboarding phase to event type for "started" events
- */
-function getStartedEventType(phase: OnboardingPhase): OnboardingEventType | null {
-  const mapping: Partial<Record<OnboardingPhase, OnboardingEventType>> = {
-    DISCOVERY: 'DISCOVERY_STARTED',
-    MARKET_RESEARCH: 'MARKET_RESEARCH_STARTED',
-    SERVICES: 'SERVICES_STARTED',
-    MARKETING: 'MARKETING_STARTED',
-  };
-  return mapping[phase] || null;
-}
+// Note: getStartedEventType was removed - events are now handled in state-machine.ts
 
 /**
  * Map onboarding phase to event type for "completed" events
@@ -110,28 +98,8 @@ function getCompletedEventType(phase: OnboardingPhase): OnboardingEventType | nu
   return mapping[phase] || null;
 }
 
-/**
- * Map phase to machine event type
- */
-function getMachineEventForPhase(
-  phase: OnboardingPhase,
-  data?: unknown
-): OnboardingMachineEvent | null {
-  switch (phase) {
-    case 'DISCOVERY':
-      return data ? { type: 'COMPLETE_DISCOVERY', data: data as DiscoveryData } : null;
-    case 'MARKET_RESEARCH':
-      return data ? { type: 'COMPLETE_MARKET_RESEARCH', data: data as MarketResearchData } : null;
-    case 'SERVICES':
-      return data ? { type: 'COMPLETE_SERVICES', data: data as ServicesData } : null;
-    case 'MARKETING':
-      return data ? { type: 'COMPLETE_MARKETING', data: data as MarketingData } : null;
-    case 'SKIPPED':
-      return { type: 'SKIP' };
-    default:
-      return null;
-  }
-}
+// Note: getMachineEventForPhase and getStartedEventType were removed
+// Events are now handled in state-machine.ts; these functions were unused
 
 // ============================================================================
 // Tool 1: update_onboarding_state
@@ -185,7 +153,7 @@ Use phase: SKIPPED to skip onboarding entirely.`,
     required: ['phase'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma, sessionId } = context;
+    const { tenantId, prisma } = context;
     const data = params.data as Record<string, unknown> | undefined;
 
     try {
@@ -384,14 +352,16 @@ Use phase: SKIPPED to skip onboarding entirely.`,
         case 'DISCOVERY':
           summary = `Discovery complete! We know you're a ${(validatedData as DiscoveryData).businessType} in ${(validatedData as DiscoveryData).location.city}, ${(validatedData as DiscoveryData).location.state}.`;
           break;
-        case 'MARKET_RESEARCH':
+        case 'MARKET_RESEARCH': {
           const mrData = validatedData as MarketResearchData;
           summary = `Market research complete! Found pricing range ${formatPrice(mrData.pricingBenchmarks.marketLowCents)} - ${formatPrice(mrData.pricingBenchmarks.marketHighCents)}.`;
           break;
-        case 'SERVICES':
+        }
+        case 'SERVICES': {
           const svcData = validatedData as ServicesData;
           summary = `Services configured! Created ${svcData.segments.length} segment(s) with ${svcData.createdPackageIds.length} package(s).`;
           break;
+        }
         case 'MARKETING':
           summary = 'Marketing content configured! Your storefront is ready.';
           break;
@@ -517,12 +487,6 @@ Example:
           existingSlug: segmentSlug,
         } as AgentToolResult;
       }
-
-      // Get tenant slug for preview URL
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { slug: true },
-      });
 
       // Build preview
       const totalPackages = packages.length;

@@ -23,7 +23,6 @@ import type {
   TraceMetrics,
   TracerConfig,
   AgentType,
-  SupportedModel,
   TracedError,
 } from './types';
 import {

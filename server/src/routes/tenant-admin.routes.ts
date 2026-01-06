@@ -1615,7 +1615,7 @@ export function createTenantAdminRoutes(
         return;
       }
 
-      const { fileType, filename, contentType } = req.body || {};
+      const { fileType, filename, contentType: _contentType } = req.body || {};
 
       // Validate required fields
       if (!fileType || !filename) {

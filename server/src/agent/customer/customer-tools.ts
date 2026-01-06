@@ -9,9 +9,9 @@
  * - get_business_info: Hours, policies, FAQ
  */
 
-import type { PrismaClient, Prisma } from '../../generated/prisma';
+import type { Prisma } from '../../generated/prisma';
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from '../tools/types';
-import { ProposalService } from '../proposals/proposal.service';
+import type { ProposalService } from '../proposals/proposal.service';
 import { getCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
