@@ -849,8 +849,14 @@ The following links prevent common mistakes from recurring:
 - **[agent-tools-prevention-index](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Master index for agent tool patterns (tenant isolation, executor registry, TOCTOU prevention, DRY utilities)
 - **[booking-links-phase-0-prevention](docs/solutions/patterns/BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md)** - 4 prevention patterns from booking links code review (P1 fixes)
 - **[atomic-tenant-provisioning-defense-in-depth](docs/solutions/patterns/atomic-tenant-provisioning-defense-in-depth-MAIS-20260105.md)** - Multi-entity creation patterns: atomic transactions, shared provisioning service, DI container consistency, DRY constants, defense-in-depth validation (P1 issues #629-634)
+- **[eslint-dead-code-prevention-index](docs/solutions/patterns/ESLINT_PREVENTION_INDEX.md)** - Complete prevention strategy for dead code (unused imports, unused variables, type-only imports, dead functions). Start here for decision trees, checklists, and implementation guides.
+  - Quick reference: [ESLINT_DEAD_CODE_QUICK_REFERENCE.md](docs/solutions/patterns/ESLINT_DEAD_CODE_QUICK_REFERENCE.md) - Print & pin (2 min read)
+  - Implementation: [ESLINT_PRE_COMMIT_IMPLEMENTATION_GUIDE.md](docs/solutions/patterns/ESLINT_PRE_COMMIT_IMPLEMENTATION_GUIDE.md) - Add ESLint to pre-commit hook
+  - Strategy: [ESLINT_DEAD_CODE_PREVENTION_STRATEGY-MAIS-20260105.md](docs/solutions/patterns/ESLINT_DEAD_CODE_PREVENTION_STRATEGY-MAIS-20260105.md) - 7 comprehensive strategies
 
 **Key insight from Atomic Tenant Provisioning:** Multi-entity creation requires three defenses: (1) atomic transaction to prevent partial state, (2) centralized provisioning service to prevent logic duplication, (3) validation layer to catch regressions. Never have the same "create tenant + defaults" logic in multiple places. When service paths diverge (admin API vs signup), unify them immediately using shared provisioning service.
+
+**Key insight from ESLint Dead Code Prevention (Commit 764b9132):** Dead code accumulates when only ESLint is used - it catches syntax patterns but misses semantic issues. Prevention requires: (1) pre-commit hooks running ESLint with `--max-warnings 0`, (2) decision tree for delete vs underscore prefix, (3) code review checklist enforcing YAGNI, (4) TypeScript strictness (noUnusedLocals + noUnusedParameters), (5) IDE integration for real-time feedback. Golden rule: **Delete > Prefix > Keep**. Use underscore prefix ONLY for required function parameters you don't use; delete everything else.
 
 **Key insight from Booking Links Phase 0:** All agent write tools MUST be in `REQUIRED_EXECUTOR_TOOLS` for startup validation. Use `updateMany`/`deleteMany` with `tenantId` in where clause (defense-in-depth). Wrap check-then-act patterns in transactions with `FOR UPDATE` locks. Extract shared utilities to `agent/utils/` immediately (not "later").
 
