@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
+import { Toaster } from 'sonner';
 import { Providers } from './providers';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import '@/styles/globals.css';
@@ -80,6 +81,7 @@ export default function RootLayout({
         <Providers>
           <main id="main-content">{children}</main>
         </Providers>
+        <Toaster position="top-right" richColors closeButton />
         <ServiceWorkerRegistration />
         <Analytics />
       </body>
