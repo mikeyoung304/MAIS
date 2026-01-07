@@ -229,13 +229,9 @@ export default function HomePage() {
             <div className="max-w-5xl mx-auto">
               {/* Headline + Subhead */}
               <div className="text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.1] tracking-tight mb-6">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.1] tracking-tight">
                   You didn&apos;t start this to become a tech expert.
                 </h2>
-                <p className="text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
-                  Somewhere along the way, you stopped running your business — and your business
-                  started running you.
-                </p>
               </div>
 
               {/* Two-column contrast grid */}
