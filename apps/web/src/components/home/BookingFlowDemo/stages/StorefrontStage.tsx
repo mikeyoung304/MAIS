@@ -61,11 +61,11 @@ export function StorefrontStage({ active }: StageProps) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-sage/20 flex items-center justify-center">
-            <span className="text-[10px] font-semibold text-sage">YB</span>
+            <span className="text-[10px] font-semibold text-sage">AC</span>
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-text-primary">Your Business</p>
-            <p className="text-[9px] text-text-muted">Professional services</p>
+            <p className="text-[11px] font-semibold text-text-primary">Alex Chen</p>
+            <p className="text-[9px] text-text-muted">Math Tutor</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
