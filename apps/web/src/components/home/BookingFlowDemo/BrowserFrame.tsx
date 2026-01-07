@@ -27,7 +27,7 @@ export function BrowserFrame({ children }: BrowserFrameProps) {
         {/* URL bar */}
         <div className="flex-1 mx-3">
           <div className="bg-neutral-800 rounded-md px-3 py-1 text-[11px] text-text-muted max-w-[200px] mx-auto text-center truncate">
-            alexchen.gethandled.ai
+            yourbusiness.gethandled.ai
           </div>
         </div>
 
