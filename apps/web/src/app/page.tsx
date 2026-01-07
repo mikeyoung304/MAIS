@@ -18,6 +18,9 @@ import { MobileNav } from '@/components/home/MobileNav';
 import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 import { BookingFlowDemo } from '@/components/home/BookingFlowDemo';
 
+// Revalidate homepage every 60 seconds to ensure fresh content after deploys
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: 'Handled — Your website, bookings, and marketing — handled.',
   description:
