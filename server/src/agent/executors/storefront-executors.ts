@@ -263,70 +263,86 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const { pageName, sectionIndex } = validationResult.data;
 
-    // Get current draft config and slug in single query (#627 N+1 fix)
-    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+    // P0 Security Fix: Wrap read-validate-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where two concurrent deletes could both succeed
+    // against stale data, corrupting the sections array
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        // Lock is automatically released when transaction commits/aborts
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Validate page exists
-    const page = pages[pageName as keyof PagesConfig];
-    if (!page) {
-      throw new ValidationError(`Page "${pageName}" not found`);
-    }
+        // Get current draft config and slug within the transaction
+        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
 
-    // Validate section exists
-    if (sectionIndex < 0 || sectionIndex >= page.sections.length) {
-      throw new ValidationError(
-        `Section index ${sectionIndex} is out of bounds. Page has ${page.sections.length} sections.`
-      );
-    }
+        // Validate page exists
+        const page = pages[pageName as keyof PagesConfig];
+        if (!page) {
+          throw new ValidationError(`Page "${pageName}" not found`);
+        }
 
-    const removedSection = page.sections[sectionIndex];
-    const removedType = removedSection.type;
-    const removedId =
-      'id' in removedSection && typeof removedSection.id === 'string'
-        ? removedSection.id
-        : undefined;
+        // Validate section exists
+        if (sectionIndex < 0 || sectionIndex >= page.sections.length) {
+          throw new ValidationError(
+            `Section index ${sectionIndex} is out of bounds. Page has ${page.sections.length} sections.`
+          );
+        }
 
-    // Clone and remove section
-    const newSections = [...page.sections];
-    newSections.splice(sectionIndex, 1);
+        const removedSection = page.sections[sectionIndex];
+        const removedType = removedSection.type;
+        const removedId =
+          'id' in removedSection && typeof removedSection.id === 'string'
+            ? removedSection.id
+            : undefined;
 
-    // Update page
-    const updatedPage: PageConfig = {
-      ...page,
-      sections: newSections,
-    };
+        // Clone and remove section
+        const newSections = [...page.sections];
+        newSections.splice(sectionIndex, 1);
 
-    // Update pages config
-    const updatedPages = {
-      ...pages,
-      [pageName]: updatedPage,
-    };
+        // Update page
+        const updatedPage: PageConfig = {
+          ...page,
+          sections: newSections,
+        };
 
-    // Save to draft
-    await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
+        // Update pages config
+        const updatedPages = {
+          ...pages,
+          [pageName]: updatedPage,
+        };
 
-    // Audit logging with section ID for traceability
-    logger.info(
-      {
-        tenantId,
-        pageName,
-        sectionIndex,
-        sectionType: removedType,
-        sectionId: removedId,
-        action: 'DELETE',
+        // Save to draft within same transaction
+        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
+
+        // Audit logging with section ID for traceability
+        logger.info(
+          {
+            tenantId,
+            pageName,
+            sectionIndex,
+            sectionType: removedType,
+            sectionId: removedId,
+            action: 'DELETE',
+          },
+          'Page section removed via Build Mode'
+        );
+
+        return {
+          action: 'removed',
+          pageName,
+          sectionIndex,
+          removedSectionType: removedType,
+          removedSectionId: removedId,
+          remainingSections: newSections.length,
+          previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+        };
       },
-      'Page section removed via Build Mode'
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
     );
-
-    return {
-      action: 'removed',
-      pageName,
-      sectionIndex,
-      removedSectionType: removedType,
-      removedSectionId: removedId,
-      remainingSections: newSections.length,
-      previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
-    };
   });
 
   // ============================================================================
@@ -344,58 +360,84 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const { pageName, fromIndex, toIndex } = validationResult.data;
 
-    // Get current draft config and slug in single query (#627 N+1 fix)
-    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+    // P0 Security Fix: Wrap read-validate-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where concurrent reorders could read stale indices
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        // Lock is automatically released when transaction commits/aborts
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Validate page exists
-    const page = pages[pageName as keyof PagesConfig];
-    if (!page) {
-      throw new ValidationError(`Page "${pageName}" not found`);
-    }
+        // Get current draft config and slug within the transaction
+        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
 
-    // Validate indices
-    const maxIndex = page.sections.length - 1;
-    if (fromIndex < 0 || fromIndex > maxIndex || toIndex < 0 || toIndex > maxIndex) {
-      throw new ValidationError(
-        `Invalid indices. Page has ${page.sections.length} sections (indices 0-${maxIndex}).`
-      );
-    }
+        // Validate page exists
+        const page = pages[pageName as keyof PagesConfig];
+        if (!page) {
+          throw new ValidationError(`Page "${pageName}" not found`);
+        }
 
-    // Clone sections array
-    const newSections = [...page.sections];
+        // Validate indices
+        const maxIndex = page.sections.length - 1;
+        if (fromIndex < 0 || fromIndex > maxIndex || toIndex < 0 || toIndex > maxIndex) {
+          throw new ValidationError(
+            `Invalid indices. Page has ${page.sections.length} sections (indices 0-${maxIndex}).`
+          );
+        }
 
-    // Remove from old position and insert at new position
-    const [movedSection] = newSections.splice(fromIndex, 1);
-    newSections.splice(toIndex, 0, movedSection);
+        // Clone sections array
+        const newSections = [...page.sections];
 
-    // Update page
-    const updatedPage: PageConfig = {
-      ...page,
-      sections: newSections,
-    };
+        // Remove from old position and insert at new position
+        const [movedSection] = newSections.splice(fromIndex, 1);
+        newSections.splice(toIndex, 0, movedSection);
 
-    // Update pages config
-    const updatedPages = {
-      ...pages,
-      [pageName]: updatedPage,
-    };
+        // Update page
+        const updatedPage: PageConfig = {
+          ...page,
+          sections: newSections,
+        };
 
-    // Save to draft
-    await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
+        // Update pages config
+        const updatedPages = {
+          ...pages,
+          [pageName]: updatedPage,
+        };
 
-    logger.info(
-      { tenantId, pageName, fromIndex, toIndex, sectionType: movedSection.type },
-      'Page sections reordered via Build Mode'
+        // Save to draft within same transaction
+        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
+
+        const movedSectionId =
+          'id' in movedSection && typeof movedSection.id === 'string' ? movedSection.id : undefined;
+
+        logger.info(
+          {
+            tenantId,
+            pageName,
+            fromIndex,
+            toIndex,
+            sectionType: movedSection.type,
+            sectionId: movedSectionId,
+          },
+          'Page sections reordered via Build Mode'
+        );
+
+        return {
+          action: 'reordered',
+          pageName,
+          fromIndex,
+          toIndex,
+          movedSectionType: movedSection.type,
+          movedSectionId,
+          previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+        };
+      },
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
     );
-
-    return {
-      action: 'reordered',
-      pageName,
-      fromIndex,
-      toIndex,
-      movedSectionType: movedSection.type,
-      previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
-    };
   });
 
   // ============================================================================

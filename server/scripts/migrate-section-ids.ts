@@ -20,14 +20,13 @@
  */
 
 import '@dotenvx/dotenvx/config';
-import { getPrismaClient } from '../src/generated/prisma/client';
+import { PrismaClient } from '../src/generated/prisma/client';
 import {
   generateSectionId,
   SECTION_TYPES,
   type PageName,
   type SectionTypeName,
   type LandingPageConfig,
-  type PagesConfig,
 } from '@macon/contracts';
 
 // Section type validation - using canonical list from contracts
@@ -42,15 +41,20 @@ interface MigrationStats {
   errors: string[];
 }
 
-interface Section {
+// Local interface for migration script - looser than contracts for handling legacy data
+interface MigrationSection {
   id?: string;
   type: string;
   [key: string]: unknown;
 }
 
-interface PageConfig {
-  enabled: boolean;
-  sections: Section[];
+interface MigrationPageConfig {
+  enabled?: boolean;
+  sections: MigrationSection[];
+}
+
+interface MigrationPagesConfig {
+  [pageName: string]: MigrationPageConfig;
 }
 
 /**
@@ -67,6 +71,9 @@ function parseArgs(): { dryRun: boolean; tenantId?: string } {
 /**
  * Backfill IDs for a single pages config
  * Returns updated config and count of new IDs assigned
+ *
+ * Note: Uses looser MigrationPagesConfig type to handle legacy data that
+ * may not strictly conform to current contracts schema.
  */
 function backfillConfigIds(
   config: LandingPageConfig | null,
@@ -79,11 +86,11 @@ function backfillConfigIds(
   let newIdsAssigned = 0;
   let preservedIds = 0;
 
-  const updatedPages: PagesConfig = {} as PagesConfig;
+  const updatedPages: MigrationPagesConfig = {};
 
   for (const [pageName, pageConfig] of Object.entries(config.pages)) {
-    const page = pageConfig as PageConfig;
-    const updatedSections: Section[] = [];
+    const page = pageConfig as MigrationPageConfig;
+    const updatedSections: MigrationSection[] = [];
 
     for (const section of page.sections || []) {
       // Skip invalid section types
@@ -116,14 +123,15 @@ function backfillConfigIds(
       });
     }
 
-    updatedPages[pageName as keyof PagesConfig] = {
+    updatedPages[pageName] = {
       ...page,
       sections: updatedSections,
-    } as PageConfig;
+    };
   }
 
+  // Cast back to LandingPageConfig - the shape is compatible after migration
   return {
-    updatedConfig: { pages: updatedPages },
+    updatedConfig: { pages: updatedPages } as unknown as LandingPageConfig,
     newIdsAssigned,
     preservedIds,
   };
@@ -134,7 +142,7 @@ function backfillConfigIds(
  */
 async function main(): Promise<void> {
   const { dryRun, tenantId } = parseArgs();
-  const prisma = getPrismaClient();
+  const prisma = new PrismaClient();
 
   console.log('\n🔧 Section ID Migration');
   console.log('='.repeat(50));
