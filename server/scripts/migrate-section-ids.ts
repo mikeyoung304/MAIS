@@ -19,8 +19,9 @@
  *   --tenant-id   Process a single tenant instead of all
  */
 
-import '@dotenvx/dotenvx/config';
+import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import {
   generateSectionId,
   SECTION_TYPES,
@@ -142,7 +143,8 @@ function backfillConfigIds(
  */
 async function main(): Promise<void> {
   const { dryRun, tenantId } = parseArgs();
-  const prisma = new PrismaClient();
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  const prisma = new PrismaClient({ adapter });
 
   console.log('\n🔧 Section ID Migration');
   console.log('='.repeat(50));
@@ -169,7 +171,7 @@ async function main(): Promise<void> {
       where: tenantId ? { id: tenantId } : undefined,
       select: {
         id: true,
-        businessName: true,
+        name: true,
         slug: true,
         landingPageConfig: true,
         landingPageConfigDraft: true,
@@ -200,8 +202,8 @@ async function main(): Promise<void> {
       const hasDraftChanges = draftResult.newIdsAssigned > 0;
 
       if (hasLiveChanges || hasDraftChanges) {
-        const name = tenant.businessName || tenant.slug || tenant.id;
-        console.log(`📦 Tenant: ${name}`);
+        const displayName = tenant.name || tenant.slug || tenant.id;
+        console.log(`📦 Tenant: ${displayName}`);
         if (hasLiveChanges) {
           console.log(
             `   Live: +${liveResult.newIdsAssigned} new IDs (${liveResult.preservedIds} preserved)`

@@ -765,8 +765,10 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
         id: 'contact-contact-main',
         type: 'contact',
         headline: '[Contact Headline]',
-        email: '[Email Address]',
-        phone: '[Phone Number]',
+        // NOTE: email/phone left undefined (not placeholders) because:
+        // 1. sanitizeObject() strips invalid emails/phones to empty strings
+        // 2. Tests expect DEFAULT_PAGES_CONFIG to survive saveDraft() round-trip
+        // 3. Empty fields in UI are self-evident, unlike text fields
         address: '[Business Address]',
         hours: '[Business Hours]',
       },
