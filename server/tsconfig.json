@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "preserveSymlinks": true,
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
@@ -33,6 +34,6 @@
     "test",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
-    "src/adapters/lib/shutdown.ts"
+    "src/adapters/lib"
   ]
 }
