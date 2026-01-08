@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p2
 issue_id: '661'
 tags:
@@ -89,18 +89,43 @@ toPosition: { enum: ['before', 'after'], description: 'Place before or after tar
 
 ## Acceptance Criteria
 
-- [ ] `fromSectionId` parameter added and works
-- [ ] Resolution logic uses shared helper (from #660)
-- [ ] Error messages include available section IDs
-- [ ] Tool description updated
-- [ ] Tests added for sectionId path
+- [x] `fromSectionId` parameter added and works
+- [x] Resolution logic uses shared helper (from #660)
+- [x] Error messages include available section IDs
+- [x] Tool description updated
+- [x] Tests added for sectionId path
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                                       |
-| ---------- | ------------------------ | --------------------------------------------------------------- |
-| 2026-01-08 | Created from code review | Identified by agent-native-reviewer and architecture-strategist |
-| 2026-01-08 | Approved for work        | Quality triage: API consistency is UX quality. Depends on #660. |
+| Date       | Action                   | Learnings                                                                                                                                                      |
+| ---------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review | Identified by agent-native-reviewer and architecture-strategist                                                                                                |
+| 2026-01-08 | Approved for work        | Quality triage: API consistency is UX quality. Depends on #660.                                                                                                |
+| 2026-01-08 | Completed implementation | Added `fromSectionId` param, extracted DRY `resolveSectionIndex` helper, updated existing tools to use shared helper, added 6 new tests for fromSectionId path |
+
+## Implementation Summary
+
+**Changes Made:**
+
+1. **New shared helper** (`server/src/agent/tools/utils.ts`):
+   - Added `resolveSectionIndex()` function for DRY sectionId-to-index resolution
+   - Returns discriminated union for type-safe error handling
+   - Includes cross-page detection and available IDs in error messages
+
+2. **Updated `reorder_page_sections` tool** (`server/src/agent/tools/storefront-tools.ts`):
+   - Added `fromSectionId` parameter (PREFERRED path)
+   - Made `fromIndex` optional (FALLBACK path)
+   - Updated required fields: `['pageName', 'toIndex']`
+   - Uses shared `resolveSectionIndex` helper
+
+3. **Refactored existing tools** to use shared helper:
+   - `update_page_section` now uses `resolveSectionIndex`
+   - `remove_page_section` now uses `resolveSectionIndex`
+   - Reduced ~50 lines of duplicated resolution logic
+
+4. **Added tests** (`server/test/agent/storefront/storefront-tools.test.ts`):
+   - 6 new tests for reorder tool's fromSectionId path
+   - 6 new tests for shared `resolveSectionIndex` helper
 
 ## Resources
 

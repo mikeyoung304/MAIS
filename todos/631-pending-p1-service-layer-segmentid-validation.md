@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: '631'
 tags: [code-review, data-integrity, packages, segments, validation, defense-in-depth]
@@ -132,7 +132,7 @@ segmentId String  // Required
 
 ### Triage Notes (2026-01-05)
 
-**Priority UPGRADED: P2 → P1** - This is the foundation that protects all other code paths.
+**Priority UPGRADED: P2 -> P1** - This is the foundation that protects all other code paths.
 
 **Reviewer Split:** DHH + TypeScript reviewers say P1 (defense-in-depth). Simplicity reviewer says close it.
 
@@ -164,12 +164,12 @@ segmentId String  // Required
 
 ## Acceptance Criteria
 
-- [ ] `createPackage()` auto-assigns to "General" segment if `segmentId` not provided
-- [ ] Creates "General" segment if it doesn't exist
-- [ ] Validates provided `segmentId` belongs to tenant
-- [ ] Throws `ValidationError` if `segmentId` invalid
-- [ ] Existing tests pass
-- [ ] New tests for auto-assignment and validation
+- [x] `createPackage()` auto-assigns to "General" segment if `segmentId` not provided
+- [x] Creates "General" segment if it doesn't exist
+- [x] Validates provided `segmentId` belongs to tenant
+- [x] Throws `ValidationError` if `segmentId` invalid
+- [x] Existing tests pass
+- [x] New tests for auto-assignment and validation
 
 ## Work Log
 
@@ -177,6 +177,41 @@ segmentId String  // Required
 | ---------- | -------------------------------------- | ---------------------------------------- |
 | 2026-01-05 | Created from system review             | Defense-in-depth needed at service layer |
 | 2026-01-05 | Triaged by 3 reviewers, upgraded to P1 | Foundation fix - implement first         |
+| 2026-01-08 | Implemented service-layer validation   | Added tests for all acceptance criteria  |
+
+## Implementation Summary (2026-01-08)
+
+### What Was Done
+
+1. **Verified existing implementation in `catalog.service.ts`** (lines 204-258)
+   - The segment validation logic was already present in `createPackage()`
+   - Auto-assigns to "General" segment when `segmentId` not provided
+   - Creates default segment via `TenantOnboardingService` if General doesn't exist
+   - Validates provided `segmentId` belongs to tenant (tenant isolation)
+   - Throws `ValidationError` for invalid segment IDs
+
+2. **Added comprehensive unit tests** (6 new tests)
+   - `auto-assigns to existing General segment when segmentId not provided`
+   - `creates default segment when General does not exist and segmentId not provided`
+   - `validates provided segmentId belongs to tenant`
+   - `throws ValidationError when segmentId does not exist`
+   - `accepts valid segmentId that belongs to tenant`
+   - `isolates segments by tenant - same segmentId works for correct tenant only`
+
+3. **Created test helpers** in `server/test/helpers/fakes.ts`
+   - `FakeSegmentRepository` - Mock segment repository for unit tests
+   - `FakeTenantOnboardingService` - Mock onboarding service for unit tests
+   - `buildSegment()` - Builder function for test segments
+
+### Test Results
+
+- All 28 catalog service tests pass (22 existing + 6 new)
+- All 80 catalog-related tests pass across the test suite
+
+### Key Files Modified
+
+- `/Users/mikeyoung/CODING/MAIS/server/test/catalog.service.spec.ts` - Added 6 segment validation tests
+- `/Users/mikeyoung/CODING/MAIS/server/test/helpers/fakes.ts` - Added FakeSegmentRepository and FakeTenantOnboardingService
 
 ## Resources
 

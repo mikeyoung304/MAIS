@@ -23,8 +23,9 @@ import {
   discardDraftTool,
   getLandingPageDraftTool,
 } from '../../../src/agent/tools/storefront-tools';
+import { resolveSectionIndex } from '../../../src/agent/tools/utils';
 import type { ToolContext } from '../../../src/agent/tools/types';
-import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
+import { DEFAULT_PAGES_CONFIG, type PagesConfig } from '@macon/contracts';
 
 // Mock dependencies
 vi.mock('../../../src/agent/proposals/proposal.service', () => ({
@@ -180,8 +181,11 @@ describe('Storefront Build Mode Tools', () => {
       expect(reorderPageSectionsTool.name).toBe('reorder_page_sections');
       expect(reorderPageSectionsTool.trustTier).toBe('T1'); // Auto-confirm
       expect(reorderPageSectionsTool.inputSchema.required).toContain('pageName');
-      expect(reorderPageSectionsTool.inputSchema.required).toContain('fromIndex');
       expect(reorderPageSectionsTool.inputSchema.required).toContain('toIndex');
+      // fromIndex is now optional (fallback for fromSectionId)
+      expect(reorderPageSectionsTool.inputSchema.required).not.toContain('fromIndex');
+      // New: fromSectionId is PREFERRED path
+      expect(reorderPageSectionsTool.inputSchema.properties).toHaveProperty('fromSectionId');
     });
 
     it('should return error when from and to are the same', async () => {
@@ -200,6 +204,105 @@ describe('Storefront Build Mode Tools', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('same');
+    });
+
+    it('should resolve fromSectionId to correct index', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      // Move home-hero-main (index 0) to position 1
+      const result = await reorderPageSectionsTool.execute(mockContext, {
+        pageName: 'home',
+        fromSectionId: 'home-hero-main', // PREFERRED path
+        toIndex: 1,
+      });
+
+      // Should create proposal successfully
+      expect(result.success).toBe(true);
+      expect(result).toHaveProperty('proposalId');
+    });
+
+    it('should return error when fromSectionId is not found', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await reorderPageSectionsTool.execute(mockContext, {
+        pageName: 'home',
+        fromSectionId: 'nonexistent-section',
+        toIndex: 1,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not found');
+      expect(result.error).toContain('Available IDs');
+    });
+
+    it('should return error when fromSectionId is on different page', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      // Try to reorder about-text-main on home page (cross-page error)
+      const result = await reorderPageSectionsTool.execute(mockContext, {
+        pageName: 'home',
+        fromSectionId: 'about-text-main', // Exists on about page, not home
+        toIndex: 1,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('about');
+      expect(result.error).toContain('not "home"');
+    });
+
+    it('should return error when neither fromSectionId nor fromIndex provided', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await reorderPageSectionsTool.execute(mockContext, {
+        pageName: 'home',
+        toIndex: 1,
+        // Missing both fromSectionId and fromIndex
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('fromSectionId or fromIndex is required');
+    });
+
+    it('should use fromIndex when both fromSectionId and fromIndex provided', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      // Provide both - fromIndex takes precedence (explicit value wins)
+      // This matches behavior of update_page_section and remove_page_section
+      const result = await reorderPageSectionsTool.execute(mockContext, {
+        pageName: 'home',
+        fromSectionId: 'home-hero-main', // Would resolve to index 0
+        fromIndex: 1, // Explicit index used instead
+        toIndex: 0,
+      });
+
+      // Should create proposal successfully using explicit fromIndex
+      expect(result.success).toBe(true);
+      expect(result).toHaveProperty('proposalId');
     });
   });
 
@@ -470,6 +573,270 @@ describe('Storefront Build Mode Tools', () => {
     });
   });
 
+  // ============================================================================
+  // Edge Case Tests: Cross-Page Section ID Detection
+  // ============================================================================
+  // WHY THESE TESTS EXIST:
+  // When a user provides a sectionId that exists in the config but on a different
+  // page than pageName, we need to return a helpful error message pointing them
+  // to the correct page. Without these tests, regressions could break this UX.
+
+  describe('update_page_section cross-page sectionId error', () => {
+    it('should return helpful error when sectionId exists on different page', async () => {
+      // Setup: about-text-main exists on about page, user tries to use it on home page
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [{ id: 'home-hero-main', type: 'hero', headline: 'Test' }],
+            },
+            about: {
+              enabled: true,
+              sections: [
+                { id: 'about-text-main', type: 'text', headline: 'About', content: 'Content' },
+              ],
+            },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await updatePageSectionTool.execute(mockContext, {
+        pageName: 'home',
+        sectionId: 'about-text-main', // Exists on about, not home
+        sectionType: 'text',
+        content: 'Updated content',
+      });
+
+      expect(result.success).toBe(false);
+      // Error should tell user where the section actually is
+      expect(result.error).toContain('exists on page');
+      expect(result.error).toContain('"about"');
+      expect(result.error).toContain('not "home"');
+    });
+
+    it('should succeed when sectionId is on correct page', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [{ id: 'home-hero-main', type: 'hero', headline: 'Test' }],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await updatePageSectionTool.execute(mockContext, {
+        pageName: 'home',
+        sectionId: 'home-hero-main', // Correct page
+        sectionType: 'hero',
+        headline: 'Updated headline',
+      });
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('remove_page_section cross-page sectionId error', () => {
+    it('should return helpful error when sectionId exists on different page', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [{ id: 'home-hero-main', type: 'hero', headline: 'Test' }],
+            },
+            faq: {
+              enabled: true,
+              sections: [{ id: 'faq-faq-main', type: 'faq', headline: 'FAQ', items: [] }],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await removePageSectionTool.execute(mockContext, {
+        pageName: 'home',
+        sectionId: 'faq-faq-main', // Exists on faq, not home
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('exists on page');
+      expect(result.error).toContain('"faq"');
+    });
+  });
+
+  // ============================================================================
+  // Edge Case Tests: Legacy ID Generation
+  // ============================================================================
+  // WHY THESE TESTS EXIST:
+  // Existing tenant configs may have sections without IDs (pre-migration data).
+  // Discovery tools generate synthetic IDs in format "${page}-${type}-legacy"
+  // for backward compatibility. These tests prevent regressions in that fallback.
+
+  describe('list_section_ids legacy ID generation', () => {
+    it('should generate legacy ID for sections without ID field', async () => {
+      // Setup: section has no id field (legacy data)
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [
+                { type: 'hero', headline: 'No ID Hero' }, // No id field
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await listSectionIdsTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (
+        result as { data: { sections: Array<{ id: string; page: string; type: string }> } }
+      ).data;
+
+      // Should find the legacy section with generated ID
+      const legacySection = data.sections.find((s) => s.page === 'home' && s.type === 'hero');
+      expect(legacySection).toBeDefined();
+      expect(legacySection!.id).toBe('home-hero-legacy');
+    });
+
+    it('should use actual ID when section has id field', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [{ id: 'home-hero-main', type: 'hero', headline: 'Has ID' }],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await listSectionIdsTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { sections: Array<{ id: string }> } }).data;
+      const heroSection = data.sections.find((s) => s.id === 'home-hero-main');
+      expect(heroSection).toBeDefined();
+    });
+  });
+
+  describe('get_section_by_id legacy ID lookup', () => {
+    it('should find section by legacy ID when section has no id field', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [
+                { type: 'hero', headline: 'Legacy Hero', subheadline: 'No ID' }, // No id field
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await getSectionByIdTool.execute(mockContext, {
+        sectionId: 'home-hero-legacy', // Legacy format
+      });
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { section: { headline: string }; page: string } }).data;
+      expect(data.section.headline).toBe('Legacy Hero');
+      expect(data.page).toBe('home');
+    });
+  });
+
+  describe('get_unfilled_placeholders legacy ID handling', () => {
+    it('should use legacy ID format in unfilled items list', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: {
+          pages: {
+            home: {
+              enabled: true,
+              sections: [
+                { type: 'hero', headline: '[Placeholder Headline]' }, // No id, has placeholder
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await getUnfilledPlaceholdersTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { unfilledItems: Array<{ sectionId: string }> } }).data;
+      expect(data.unfilledItems.length).toBeGreaterThan(0);
+      // The unfilled section should have legacy ID format
+      const heroPlaceholder = data.unfilledItems.find((p) => p.sectionId === 'home-hero-legacy');
+      expect(heroPlaceholder).toBeDefined();
+    });
+  });
+
   describe('get_unfilled_placeholders tool', () => {
     it('should have correct metadata', () => {
       expect(getUnfilledPlaceholdersTool.name).toBe('get_unfilled_placeholders');
@@ -533,5 +900,86 @@ describe('Storefront Build Mode Tools', () => {
       expect(data.unfilledCount).toBe(0);
       expect(data.summary).toContain('Ready to publish');
     });
+  });
+});
+
+// ============================================================================
+// Shared Helper Tests: resolveSectionIndex
+// ============================================================================
+// DRY implementation tested in isolation to ensure consistency across all tools
+// that use it (update_page_section, remove_page_section, reorder_page_sections)
+
+describe('resolveSectionIndex helper', () => {
+  const testPages: PagesConfig = {
+    home: {
+      enabled: true,
+      sections: [
+        { id: 'home-hero-main', type: 'hero', headline: 'Hero' },
+        { id: 'home-cta-main', type: 'cta', headline: 'CTA', ctaText: 'Click' },
+      ],
+    },
+    about: {
+      enabled: true,
+      sections: [{ id: 'about-text-main', type: 'text', headline: 'About', content: 'Content' }],
+    },
+    services: { enabled: true, sections: [] },
+    faq: { enabled: true, sections: [] },
+    contact: { enabled: true, sections: [] },
+    gallery: { enabled: false, sections: [] },
+    testimonials: { enabled: false, sections: [] },
+  };
+
+  it('should return success with index when section found', () => {
+    const result = resolveSectionIndex('home-hero-main', 'home', testPages);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.index).toBe(0);
+    }
+  });
+
+  it('should return success with correct index for non-first section', () => {
+    const result = resolveSectionIndex('home-cta-main', 'home', testPages);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.index).toBe(1);
+    }
+  });
+
+  it('should return error with available IDs when section not found', () => {
+    const result = resolveSectionIndex('nonexistent', 'home', testPages);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('not found');
+      expect(result.error).toContain('Available IDs');
+      expect(result.error).toContain('home-hero-main');
+      expect(result.error).toContain('home-cta-main');
+    }
+  });
+
+  it('should return helpful error when section exists on different page', () => {
+    const result = resolveSectionIndex('about-text-main', 'home', testPages);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('exists on page');
+      expect(result.error).toContain('"about"');
+      expect(result.error).toContain('not "home"');
+    }
+  });
+
+  it('should return error when page not found', () => {
+    const result = resolveSectionIndex('home-hero-main', 'invalid-page', testPages);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('Page "invalid-page" not found');
+    }
+  });
+
+  it('should handle empty sections array', () => {
+    const result = resolveSectionIndex('some-section', 'services', testPages);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('not found');
+      // Should indicate no IDs available (or empty list)
+    }
   });
 });

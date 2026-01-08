@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p3
 issue_id: '665'
 tags:
@@ -72,10 +72,10 @@ if (sectionIndex === -1 || sectionIndex >= newSections.length) {
 
 ## Acceptance Criteria
 
-- [ ] Executor generates ID if section has none
-- [ ] Generated ID uses monotonic counter correctly
-- [ ] Existing tests still pass
-- [ ] New test for ID generation fallback
+- [x] Executor generates ID if section has none
+- [x] Generated ID uses monotonic counter correctly
+- [x] Existing tests still pass
+- [x] New test for ID generation fallback
 
 ## Work Log
 
@@ -83,7 +83,28 @@ if (sectionIndex === -1 || sectionIndex >= newSections.length) {
 | ---------- | ------------------------ | ------------------------------------------------------------------------------- |
 | 2026-01-08 | Created from code review | Identified by architecture-strategist agent                                     |
 | 2026-01-08 | Approved for work        | Quality triage: Defense-in-depth is quality. Catch tool bugs at executor level. |
+| 2026-01-08 | Implemented              | Added server-side ID generation with monotonic counter. 3 new tests added.      |
 
 ## Resources
 
 - `generateSectionId` in `@macon/contracts`
+
+## Implementation Summary
+
+Added defense-in-depth server-side ID generation to `update_page_section` executor:
+
+1. **New helper functions:**
+   - `collectAllSectionIds(pages)` - Collects all existing section IDs across all pages
+   - `isValidSectionType(type)` - Type guard for valid section types
+
+2. **Executor change:** In the append path (sectionIndex === -1 or >= length):
+   - Check if section has an ID
+   - If no ID, generate one using `generateSectionId` from `@macon/contracts`
+   - Log warning when fallback triggers (indicates tool bug)
+
+3. **New tests (3 added):**
+   - Should generate ID for section without ID when appending
+   - Should use monotonic counter for generated IDs
+   - Should not overwrite existing ID on section
+
+All 23 tests pass.

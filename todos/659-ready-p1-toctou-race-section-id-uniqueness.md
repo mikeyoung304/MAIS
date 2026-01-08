@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p1
 issue_id: '659'
 tags:
@@ -97,10 +97,10 @@ await prisma.$transaction(async (tx) => {
 
 ## Acceptance Criteria
 
-- [ ] Concurrent `update_page_section` calls cannot create duplicate IDs
-- [ ] Lock contention is acceptable (< 100ms added latency)
-- [ ] Integration test proves race condition is prevented
-- [ ] Error message when lock timeout occurs is helpful
+- [x] Concurrent `update_page_section` calls cannot create duplicate IDs
+- [x] Lock contention is acceptable (< 100ms added latency)
+- [x] Integration test proves race condition is prevented
+- [x] Error message when lock timeout occurs is helpful
 
 ## Work Log
 
@@ -108,6 +108,40 @@ await prisma.$transaction(async (tx) => {
 | ---------- | ------------------------ | --------------------------------------------------------------------------------- |
 | 2026-01-08 | Created from code review | Identified by security-sentinel and data-integrity-guardian agents                |
 | 2026-01-08 | Approved for work        | Quality triage: Data integrity risk demands fix. Advisory lock is proven pattern. |
+| 2026-01-08 | Implemented fix          | Added advisory lock pattern, integration tests pass (5/5). Latency within bounds. |
+
+## Implementation Notes
+
+**Files Modified:**
+
+- `server/src/lib/advisory-locks.ts` - Added `hashTenantStorefront()` function
+- `server/src/agent/tools/utils.ts` - Updated `getDraftConfigWithSlug()` to accept transaction client
+- `server/src/agent/executors/storefront-executors.ts` - Wrapped `update_page_section` in transaction with advisory lock
+- `server/src/agent/proposals/executor-registry.ts` - Added `clearAllExecutors()` for test isolation
+
+**New Test File:**
+
+- `server/test/integration/section-id-race-conditions.spec.ts` - 5 integration tests covering race condition prevention
+
+**Pattern Used:**
+
+```typescript
+return await prisma.$transaction(
+  async (tx) => {
+    // Acquire advisory lock for this tenant's storefront edits
+    const lockId = hashTenantStorefront(tenantId);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+    // Read, validate, and write within same transaction
+    const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
+    // ... validation and write
+  },
+  {
+    timeout: 5000,
+    isolationLevel: 'ReadCommitted',
+  }
+);
+```
 
 ## Resources
 

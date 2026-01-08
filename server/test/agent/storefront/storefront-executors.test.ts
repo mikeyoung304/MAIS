@@ -32,6 +32,7 @@ describe('Storefront Executors', () => {
       findUnique: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
     };
+    $transaction: ReturnType<typeof vi.fn>;
   };
 
   let registeredExecutors: Map<string, (tenantId: string, payload: unknown) => Promise<unknown>>;
@@ -52,6 +53,15 @@ describe('Storefront Executors', () => {
         findUnique: vi.fn(),
         update: vi.fn(),
       },
+      // Mock $transaction to pass through the callback with a mock tx that uses same tenant mock
+      $transaction: vi.fn().mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        // The tx object inside the callback uses $executeRaw and tenant operations
+        const mockTx = {
+          $executeRaw: vi.fn().mockResolvedValue(1), // Advisory lock returns 1
+          tenant: mockPrisma.tenant,
+        };
+        return fn(mockTx);
+      }),
     };
 
     // Import and register executors
@@ -379,6 +389,305 @@ describe('Storefront Executors', () => {
         where: { id: 'tenant-123' },
         data: expect.objectContaining({}),
       });
+    });
+  });
+
+  // ============================================================================
+  // Edge Case Tests: Cross-Page Section ID Collision Detection
+  // ============================================================================
+  // WHY THESE TESTS EXIST:
+  // The executor must reject section updates where the incoming section ID
+  // already exists on a DIFFERENT page. This prevents duplicate IDs across
+  // the entire config and maintains referential integrity. Without this test,
+  // regressions could allow ID collisions that break AI chatbot references.
+
+  describe('update_page_section cross-page ID collision', () => {
+    it('should reject section with ID that exists on different page', async () => {
+      const executor = registeredExecutors.get('update_page_section')!;
+
+      // Config where 'about-text-main' exists on about page
+      const configWithExistingId = {
+        home: {
+          enabled: true as const,
+          sections: [{ id: 'home-hero-main', type: 'hero' as const, headline: 'Home Hero' }],
+        },
+        about: {
+          enabled: true,
+          sections: [
+            { id: 'about-text-main', type: 'text' as const, headline: 'About', content: 'Content' },
+          ],
+        },
+        services: { enabled: true, sections: [] },
+        faq: { enabled: true, sections: [] },
+        contact: { enabled: true, sections: [] },
+        gallery: { enabled: false, sections: [] },
+        testimonials: { enabled: false, sections: [] },
+      };
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          landingPageConfig: { pages: configWithExistingId },
+          landingPageConfigDraft: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+        });
+
+      // Try to add a section to home page with ID that exists on about page
+      await expect(
+        executor('tenant-123', {
+          pageName: 'home',
+          sectionIndex: -1, // Append
+          sectionData: {
+            id: 'about-text-main', // COLLISION - exists on about page
+            type: 'text',
+            headline: 'New Section',
+            content: 'Content',
+          },
+        })
+      ).rejects.toThrow("already exists on page 'about'");
+    });
+
+    it('should allow updating same section with same ID', async () => {
+      const executor = registeredExecutors.get('update_page_section')!;
+
+      const configWithId = {
+        home: {
+          enabled: true as const,
+          sections: [{ id: 'home-hero-main', type: 'hero' as const, headline: 'Original' }],
+        },
+        about: { enabled: true, sections: [] },
+        services: { enabled: true, sections: [] },
+        faq: { enabled: true, sections: [] },
+        contact: { enabled: true, sections: [] },
+        gallery: { enabled: false, sections: [] },
+        testimonials: { enabled: false, sections: [] },
+      };
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          landingPageConfig: { pages: configWithId },
+          landingPageConfigDraft: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+        });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      // Updating existing section at index 0 with same ID should succeed
+      const result = await executor('tenant-123', {
+        pageName: 'home',
+        sectionIndex: 0, // Update existing
+        sectionData: {
+          id: 'home-hero-main', // Same ID as existing section
+          type: 'hero',
+          headline: 'Updated Headline',
+        },
+      });
+
+      expect(result).toHaveProperty('action', 'updated');
+    });
+
+    it('should reject duplicate ID within same page', async () => {
+      const executor = registeredExecutors.get('update_page_section')!;
+
+      // Config with two sections on home page
+      const configWithTwoSections = {
+        home: {
+          enabled: true as const,
+          sections: [
+            { id: 'home-hero-main', type: 'hero' as const, headline: 'Hero' },
+            { id: 'home-cta-main', type: 'cta' as const, headline: 'CTA' },
+          ],
+        },
+        about: { enabled: true, sections: [] },
+        services: { enabled: true, sections: [] },
+        faq: { enabled: true, sections: [] },
+        contact: { enabled: true, sections: [] },
+        gallery: { enabled: false, sections: [] },
+        testimonials: { enabled: false, sections: [] },
+      };
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          landingPageConfig: { pages: configWithTwoSections },
+          landingPageConfigDraft: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+        });
+
+      // Try to update second section (index 1) with ID of first section
+      await expect(
+        executor('tenant-123', {
+          pageName: 'home',
+          sectionIndex: 1, // Second section
+          sectionData: {
+            id: 'home-hero-main', // COLLISION - exists at index 0
+            type: 'cta',
+            headline: 'Updated CTA',
+          },
+        })
+      ).rejects.toThrow("already exists on page 'home'");
+    });
+  });
+
+  // ============================================================================
+  // Defense-in-Depth: Server-Side ID Generation (#665)
+  // ============================================================================
+  // WHY THIS TEST EXISTS:
+  // As defense-in-depth, the executor should generate IDs server-side for
+  // sections that arrive without IDs (e.g., due to a tool bug). This catches
+  // tool bugs and ensures all sections have stable IDs for AI chatbot references.
+
+  describe('update_page_section server-side ID generation fallback', () => {
+    it('should generate ID for section without ID when appending', async () => {
+      const executor = registeredExecutors.get('update_page_section')!;
+
+      const configWithExistingIds = {
+        home: {
+          enabled: true as const,
+          sections: [{ id: 'home-hero-main', type: 'hero' as const, headline: 'Hero' }],
+        },
+        about: { enabled: true, sections: [] },
+        services: { enabled: true, sections: [] },
+        faq: { enabled: true, sections: [] },
+        contact: { enabled: true, sections: [] },
+        gallery: { enabled: false, sections: [] },
+        testimonials: { enabled: false, sections: [] },
+      };
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          landingPageConfig: { pages: configWithExistingIds },
+          landingPageConfigDraft: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+        });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      // Append section WITHOUT an ID (simulating tool bug)
+      const result = await executor('tenant-123', {
+        pageName: 'home',
+        sectionIndex: -1, // Append
+        sectionData: {
+          // No 'id' field - defense-in-depth should generate one
+          type: 'text',
+          headline: 'New Text Section',
+          content: 'Some content',
+        },
+      });
+
+      expect(result).toHaveProperty('action', 'added');
+      // The executor should have generated an ID
+      expect(result).toHaveProperty('sectionId');
+      expect((result as { sectionId: string }).sectionId).toMatch(/^home-text-/);
+    });
+
+    it('should use monotonic counter for generated IDs', async () => {
+      const executor = registeredExecutors.get('update_page_section')!;
+
+      // Config with existing text-main and text-2 IDs
+      const configWithMultipleSections = {
+        home: {
+          enabled: true as const,
+          sections: [
+            { id: 'home-hero-main', type: 'hero' as const, headline: 'Hero' },
+            { id: 'home-text-main', type: 'text' as const, headline: 'Text 1', content: 'Content' },
+            { id: 'home-text-2', type: 'text' as const, headline: 'Text 2', content: 'Content' },
+          ],
+        },
+        about: { enabled: true, sections: [] },
+        services: { enabled: true, sections: [] },
+        faq: { enabled: true, sections: [] },
+        contact: { enabled: true, sections: [] },
+        gallery: { enabled: false, sections: [] },
+        testimonials: { enabled: false, sections: [] },
+      };
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          landingPageConfig: { pages: configWithMultipleSections },
+          landingPageConfigDraft: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+        });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      const result = await executor('tenant-123', {
+        pageName: 'home',
+        sectionIndex: -1,
+        sectionData: {
+          // No ID - should generate home-text-3 (next in sequence)
+          type: 'text',
+          headline: 'Text 3',
+          content: 'More content',
+        },
+      });
+
+      expect(result).toHaveProperty('action', 'added');
+      // Should be home-text-3 (monotonic counter: main exists, 2 exists, so next is 3)
+      expect((result as { sectionId: string }).sectionId).toBe('home-text-3');
+    });
+
+    it('should not overwrite existing ID on section', async () => {
+      const executor = registeredExecutors.get('update_page_section')!;
+
+      const configWithExistingIds = {
+        home: {
+          enabled: true as const,
+          sections: [],
+        },
+        about: { enabled: true, sections: [] },
+        services: { enabled: true, sections: [] },
+        faq: { enabled: true, sections: [] },
+        contact: { enabled: true, sections: [] },
+        gallery: { enabled: false, sections: [] },
+        testimonials: { enabled: false, sections: [] },
+      };
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          landingPageConfig: { pages: configWithExistingIds },
+          landingPageConfigDraft: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+        });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      // Append section WITH an ID (tool working correctly)
+      const result = await executor('tenant-123', {
+        pageName: 'home',
+        sectionIndex: -1,
+        sectionData: {
+          id: 'home-text-main', // ID provided - should NOT be overwritten
+          type: 'text',
+          headline: 'Text Section',
+          content: 'Content',
+        },
+      });
+
+      expect(result).toHaveProperty('action', 'added');
+      expect((result as { sectionId: string }).sectionId).toBe('home-text-main');
     });
   });
 

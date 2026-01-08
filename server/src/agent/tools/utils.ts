@@ -9,7 +9,12 @@
 import type { PrismaClient } from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
-import { type PagesConfig, type LandingPageConfig, DEFAULT_PAGES_CONFIG } from '@macon/contracts';
+import {
+  isSectionWithId,
+  type PagesConfig,
+  type LandingPageConfig,
+  DEFAULT_PAGES_CONFIG,
+} from '@macon/contracts';
 import type { ToolError } from './types';
 
 /**
@@ -167,16 +172,25 @@ export async function getTenantSlug(
 }
 
 /**
+ * Prisma transaction client type (subset of PrismaClient)
+ * Used to allow both PrismaClient and transaction context to be passed
+ */
+type PrismaTransactionClient = Pick<PrismaClient, 'tenant'>;
+
+/**
  * Get draft config AND slug in a single query
  * Use this when both config and slug are needed to avoid N+1 queries
  *
- * @param prisma - Prisma client
+ * P1-659 FIX: Accepts either PrismaClient or transaction client to support
+ * advisory lock patterns for TOCTOU prevention on JSON field updates.
+ *
+ * @param prisma - Prisma client or transaction client
  * @param tenantId - Tenant ID
  * @returns Combined draft config result with slug
  * @throws Error if tenant not found
  */
 export async function getDraftConfigWithSlug(
-  prisma: PrismaClient,
+  prisma: PrismaClient | PrismaTransactionClient,
   tenantId: string
 ): Promise<DraftConfigWithSlugResult> {
   const tenant = await prisma.tenant.findUnique({
@@ -208,5 +222,103 @@ export async function getDraftConfigWithSlug(
     pages: live?.pages || DEFAULT_PAGES_CONFIG,
     hasDraft: false,
     slug: tenant.slug,
+  };
+}
+
+// ============================================================================
+// Legacy Section ID Helper (DRY - used by discovery tools)
+// ============================================================================
+
+/**
+ * Suffix used for sections without explicit IDs
+ * Extracted as constant to prevent magic string repetition (#666)
+ */
+export const LEGACY_ID_SUFFIX = 'legacy';
+
+/**
+ * Generate a legacy section ID for sections without explicit IDs
+ * Format: {page}-{type}-legacy (e.g., "home-hero-legacy")
+ *
+ * @param page - Page name (home, about, services, etc.)
+ * @param type - Section type (hero, text, gallery, etc.)
+ * @returns Legacy section ID string
+ */
+export function getLegacySectionId(page: string, type: string): string {
+  return `${page}-${type}-${LEGACY_ID_SUFFIX}`;
+}
+
+// ============================================================================
+// Section ID Resolution Helper (DRY - used by update, remove, reorder tools)
+// ============================================================================
+
+/**
+ * Result from resolveSectionIndex
+ */
+export type SectionResolutionResult =
+  | { success: true; index: number }
+  | { success: false; error: string };
+
+/**
+ * Resolve a sectionId to its index within a page's sections array.
+ * Provides helpful error messages including:
+ * - Available section IDs on the target page
+ * - Hints when the section exists on a different page
+ *
+ * DRY implementation: Used by update_page_section, remove_page_section,
+ * and reorder_page_sections tools for consistent behavior.
+ *
+ * @param sectionId - The section ID to resolve (e.g., "home-hero-main")
+ * @param pageName - The page to search in
+ * @param pages - All pages config
+ * @returns Success with index, or failure with descriptive error
+ *
+ * @example
+ * ```typescript
+ * const result = resolveSectionIndex('home-hero-main', 'home', pages);
+ * if (!result.success) {
+ *   return { success: false, error: result.error };
+ * }
+ * const sectionIndex = result.index;
+ * ```
+ */
+export function resolveSectionIndex(
+  sectionId: string,
+  pageName: string,
+  pages: PagesConfig
+): SectionResolutionResult {
+  const page = pages[pageName as keyof PagesConfig];
+  if (!page) {
+    return { success: false, error: `Page "${pageName}" not found` };
+  }
+
+  // Find section by ID using type guard (#664)
+  const foundIndex = page.sections.findIndex((s) => isSectionWithId(s) && s.id === sectionId);
+
+  if (foundIndex !== -1) {
+    return { success: true, index: foundIndex };
+  }
+
+  // Section not found - provide helpful error
+
+  // Check other pages for the section ID (common mistake)
+  for (const [otherPage, otherConfig] of Object.entries(pages)) {
+    if (otherPage === pageName) continue;
+    const idxInOther = otherConfig.sections.findIndex(
+      (s) => isSectionWithId(s) && s.id === sectionId
+    );
+    if (idxInOther !== -1) {
+      return {
+        success: false,
+        error: `Section "${sectionId}" exists on page "${otherPage}", not "${pageName}". Change pageName or use the correct sectionId.`,
+      };
+    }
+  }
+
+  // List available IDs on this page using type guard (#664)
+  const availableIds = page.sections.filter(isSectionWithId).map((s) => s.id);
+
+  return {
+    success: false,
+    error: `Section "${sectionId}" not found on page "${pageName}". Available IDs: ${availableIds.join(', ') || 'none (use list_section_ids to discover)'}`,
   };
 }

@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p3
 issue_id: '666'
 tags:
@@ -71,16 +71,17 @@ export function getLegacySectionId(page: PageName, type: SectionTypeName): strin
 
 ## Acceptance Criteria
 
-- [ ] Single constant/function for legacy ID generation
-- [ ] All 4 usages updated
-- [ ] Tests still pass
+- [x] Single constant/function for legacy ID generation
+- [x] All 4 usages updated
+- [x] Tests still pass
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                                            |
-| ---------- | ------------------------ | -------------------------------------------------------------------- |
-| 2026-01-08 | Created from code review | Identified by data-integrity-guardian and code-simplicity agents     |
-| 2026-01-08 | Approved for work        | Quality triage: Magic strings are maintainability debt. Extract now. |
+| Date       | Action                   | Learnings                                                                                                                                   |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review | Identified by data-integrity-guardian and code-simplicity agents                                                                            |
+| 2026-01-08 | Approved for work        | Quality triage: Magic strings are maintainability debt. Extract now.                                                                        |
+| 2026-01-08 | Completed                | Added LEGACY_ID_SUFFIX constant and getLegacySectionId helper to utils.ts. Updated 4 occurrences in storefront-tools.ts. All 71 tests pass. |
 
 ## Resources
 

@@ -490,3 +490,105 @@ export class FakeWebhookRepository implements WebhookRepository {
     this.events = [];
   }
 }
+
+// --- Segment Repository Fake ---
+
+export interface Segment {
+  id: string;
+  tenantId: string;
+  slug: string;
+  name: string;
+  heroTitle: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  description?: string;
+  sortOrder: number;
+  active: boolean;
+}
+
+export class FakeSegmentRepository {
+  private segments: Segment[] = [];
+
+  async findById(tenantId: string, id: string): Promise<Segment | null> {
+    return this.segments.find((s) => s.tenantId === tenantId && s.id === id) || null;
+  }
+
+  async findBySlug(tenantId: string, slug: string): Promise<Segment | null> {
+    return this.segments.find((s) => s.tenantId === tenantId && s.slug === slug) || null;
+  }
+
+  async findByTenant(tenantId: string, onlyActive = true): Promise<Segment[]> {
+    return this.segments.filter((s) => s.tenantId === tenantId && (!onlyActive || s.active));
+  }
+
+  async create(data: Omit<Segment, 'id'>): Promise<Segment> {
+    const segment: Segment = {
+      id: `seg_${Date.now()}_${Math.random()}`,
+      ...data,
+    };
+    this.segments.push(segment);
+    return segment;
+  }
+
+  // Test helpers
+  addSegment(segment: Segment): void {
+    this.segments.push(segment);
+  }
+
+  clear(): void {
+    this.segments = [];
+  }
+}
+
+export function buildSegment(overrides?: Partial<Segment>): Segment {
+  return {
+    id: 'seg_general',
+    tenantId: 'test-tenant',
+    slug: 'general',
+    name: 'General',
+    heroTitle: 'General Services',
+    sortOrder: 0,
+    active: true,
+    ...overrides,
+  };
+}
+
+// --- Tenant Onboarding Service Fake ---
+
+export class FakeTenantOnboardingService {
+  public createDefaultDataCalls: Array<{ tenantId: string }> = [];
+  private createdSegment: Segment | null = null;
+
+  async createDefaultData(options: { tenantId: string }): Promise<{
+    segment: Segment;
+    packages: Package[];
+  }> {
+    this.createDefaultDataCalls.push({ tenantId: options.tenantId });
+
+    const segment: Segment = {
+      id: `seg_default_${Date.now()}`,
+      tenantId: options.tenantId,
+      slug: 'general',
+      name: 'General',
+      heroTitle: 'General Services',
+      sortOrder: 0,
+      active: true,
+    };
+    this.createdSegment = segment;
+
+    return {
+      segment,
+      packages: [],
+    };
+  }
+
+  // Test helpers
+  getCreatedSegment(): Segment | null {
+    return this.createdSegment;
+  }
+
+  clear(): void {
+    this.createDefaultDataCalls = [];
+    this.createdSegment = null;
+  }
+}

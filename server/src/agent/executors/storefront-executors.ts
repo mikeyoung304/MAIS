@@ -9,6 +9,10 @@
  * - Validates all payloads against Zod schemas (P0 requirement)
  * - Verifies tenant ownership before all operations
  * - Uses defense-in-depth with tenantId in all queries
+ *
+ * Concurrency:
+ * - P1-659 FIX: Uses PostgreSQL advisory locks for TOCTOU prevention
+ * - All section ID uniqueness checks wrapped in transactions
  */
 
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';
@@ -16,6 +20,7 @@ import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { ResourceNotFoundError, ValidationError } from '../errors/index';
 import { getDraftConfigWithSlug } from '../tools/utils';
+import { hashTenantStorefront } from '../../lib/advisory-locks';
 import {
   // Validation schemas (DRY - shared with tools)
   UpdatePageSectionPayloadSchema,
@@ -31,16 +36,60 @@ import {
   type PagesConfig,
   type PageConfig,
 } from '../proposals/executor-schemas';
+import {
+  generateSectionId,
+  type PageName,
+  type SectionTypeName,
+  SECTION_TYPES,
+} from '@macon/contracts';
+
+// Transaction configuration for storefront edits
+const STOREFRONT_TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds
+const STOREFRONT_ISOLATION_LEVEL = 'ReadCommitted' as const;
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 /**
+ * Collect all existing section IDs from pages config.
+ * Used for uniqueness checks and monotonic ID generation.
+ *
+ * @param pages - The pages configuration to scan
+ * @returns Set of all section IDs found across all pages
+ */
+function collectAllSectionIds(pages: PagesConfig): Set<string> {
+  const ids = new Set<string>();
+  for (const pageConfig of Object.values(pages)) {
+    for (const section of pageConfig.sections || []) {
+      if ('id' in section && typeof section.id === 'string') {
+        ids.add(section.id);
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * Check if a section type is valid for ID generation.
+ * Type guard to satisfy TypeScript for generateSectionId call.
+ */
+function isValidSectionType(type: string): type is SectionTypeName {
+  return SECTION_TYPES.includes(type as SectionTypeName);
+}
+
+/**
+ * Prisma transaction client type (subset of PrismaClient with tenant methods)
+ * P1-659 FIX: Enables advisory lock pattern for TOCTOU prevention
+ */
+type PrismaTransactionClient = Pick<PrismaClient, 'tenant' | '$executeRaw'>;
+
+/**
  * Save pages config to draft
+ * P1-659 FIX: Accepts transaction client for atomic operations
  */
 async function saveDraftConfig(
-  prisma: PrismaClient,
+  prisma: PrismaClient | PrismaTransactionClient,
   tenantId: string,
   pages: PagesConfig
 ): Promise<void> {
@@ -65,6 +114,7 @@ async function saveDraftConfig(
 export function registerStorefrontExecutors(prisma: PrismaClient): void {
   // ============================================================================
   // update_page_section - Update or add a section on a landing page
+  // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
   // ============================================================================
 
   registerProposalExecutor('update_page_section', async (tenantId, payload) => {
@@ -78,93 +128,124 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const { pageName, sectionIndex, sectionData } = validationResult.data;
 
-    // Get current draft config and slug in single query (#627 N+1 fix)
-    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+    // P1-659 FIX: Wrap read-validate-write in transaction with advisory lock
+    // This prevents TOCTOU race conditions where two concurrent requests could
+    // both pass uniqueness checks against stale data
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        // Lock is automatically released when transaction commits/aborts
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Validate page exists
-    const page = pages[pageName as keyof PagesConfig];
-    if (!page) {
-      throw new ValidationError(`Page "${pageName}" not found`);
-    }
+        // Get current draft config and slug within the transaction
+        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
 
-    // =========================================================================
-    // Section ID Uniqueness Validation
-    // If the incoming section has an ID, ensure it doesn't conflict with
-    // any other section in the entire config (except the section being updated)
-    // =========================================================================
-    const incomingId =
-      'id' in sectionData && typeof sectionData.id === 'string' ? sectionData.id : null;
+        // Validate page exists
+        const page = pages[pageName as keyof PagesConfig];
+        if (!page) {
+          throw new ValidationError(`Page "${pageName}" not found`);
+        }
 
-    if (incomingId) {
-      // Collect all existing IDs across all pages
-      for (const [pName, pConfig] of Object.entries(pages)) {
-        for (let i = 0; i < pConfig.sections.length; i++) {
-          const section = pConfig.sections[i];
-          if ('id' in section && section.id === incomingId) {
-            // If updating the same section at the same position, allow it
-            const isUpdatingSameSection = pName === pageName && i === sectionIndex;
-            if (!isUpdatingSameSection) {
-              throw new ValidationError(
-                `Section ID '${incomingId}' already exists on page '${pName}'. IDs must be unique.`
-              );
+        // =========================================================================
+        // Section ID Uniqueness Validation (now protected by advisory lock)
+        // =========================================================================
+        const incomingId =
+          'id' in sectionData && typeof sectionData.id === 'string' ? sectionData.id : null;
+
+        if (incomingId) {
+          // Collect all existing IDs across all pages
+          for (const [pName, pConfig] of Object.entries(pages)) {
+            for (let i = 0; i < pConfig.sections.length; i++) {
+              const section = pConfig.sections[i];
+              if ('id' in section && section.id === incomingId) {
+                // If updating the same section at the same position, allow it
+                const isUpdatingSameSection = pName === pageName && i === sectionIndex;
+                if (!isUpdatingSameSection) {
+                  throw new ValidationError(
+                    `Section ID '${incomingId}' already exists on page '${pName}'. IDs must be unique.`
+                  );
+                }
+              }
             }
           }
         }
-      }
-    }
 
-    // Clone sections array to avoid mutation
-    const newSections = [...page.sections];
+        // Clone sections array to avoid mutation
+        const newSections = [...page.sections];
 
-    // Determine operation: append or update
-    if (sectionIndex === -1 || sectionIndex >= newSections.length) {
-      // Append new section
-      newSections.push(sectionData as Section);
-    } else {
-      // Update existing section
-      newSections[sectionIndex] = sectionData as Section;
-    }
+        // Determine operation: append or update
+        if (sectionIndex === -1 || sectionIndex >= newSections.length) {
+          // Defense-in-depth: Ensure section has ID before appending
+          // If tool bug passed section without ID, generate one server-side
+          if (!('id' in sectionData) || !sectionData.id) {
+            if (isValidSectionType(sectionData.type)) {
+              const existingIds = collectAllSectionIds(pages);
+              const generatedId = generateSectionId(
+                pageName as PageName,
+                sectionData.type,
+                existingIds
+              );
+              (sectionData as Section & { id: string }).id = generatedId;
+              logger.warn(
+                { tenantId, pageName, generatedId, sectionType: sectionData.type },
+                'Executor generated missing section ID - tool bug detected'
+              );
+            }
+          }
+          // Append new section
+          newSections.push(sectionData as Section);
+        } else {
+          // Update existing section
+          newSections[sectionIndex] = sectionData as Section;
+        }
 
-    // Update page with new sections
-    const updatedPage: PageConfig = {
-      ...page,
-      sections: newSections,
-    };
+        // Update page with new sections
+        const updatedPage: PageConfig = {
+          ...page,
+          sections: newSections,
+        };
 
-    // Update pages config
-    const updatedPages = {
-      ...pages,
-      [pageName]: updatedPage,
-    };
+        // Update pages config
+        const updatedPages = {
+          ...pages,
+          [pageName]: updatedPage,
+        };
 
-    // Save to draft
-    await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
+        // Save to draft within same transaction
+        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
 
-    const resultIndex = sectionIndex === -1 ? newSections.length - 1 : sectionIndex;
-    const sectionId =
-      'id' in sectionData && typeof sectionData.id === 'string' ? sectionData.id : undefined;
+        const resultIndex = sectionIndex === -1 ? newSections.length - 1 : sectionIndex;
+        const sectionId =
+          'id' in sectionData && typeof sectionData.id === 'string' ? sectionData.id : undefined;
 
-    // Audit logging with section ID for traceability
-    logger.info(
-      {
-        tenantId,
-        pageName,
-        sectionIndex: resultIndex,
-        sectionType: sectionData.type,
-        sectionId,
-        action: sectionIndex === -1 ? 'CREATE' : 'UPDATE',
+        // Audit logging with section ID for traceability
+        logger.info(
+          {
+            tenantId,
+            pageName,
+            sectionIndex: resultIndex,
+            sectionType: sectionData.type,
+            sectionId,
+            action: sectionIndex === -1 ? 'CREATE' : 'UPDATE',
+          },
+          'Page section modified via Build Mode'
+        );
+
+        return {
+          action: sectionIndex === -1 ? 'added' : 'updated',
+          pageName,
+          sectionIndex: resultIndex,
+          sectionType: sectionData.type,
+          sectionId,
+          previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+        };
       },
-      'Page section modified via Build Mode'
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
     );
-
-    return {
-      action: sectionIndex === -1 ? 'added' : 'updated',
-      pageName,
-      sectionIndex: resultIndex,
-      sectionType: sectionData.type,
-      sectionId,
-      previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
-    };
   });
 
   // ============================================================================

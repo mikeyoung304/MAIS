@@ -129,3 +129,14 @@ export function validateExecutorRegistry(): void {
 export function getRequiredExecutorTools(): readonly string[] {
   return REQUIRED_EXECUTOR_TOOLS;
 }
+
+/**
+ * Clear all registered executors.
+ * FOR TESTING ONLY - allows tests to register fresh executors
+ * without interference from previous test runs.
+ *
+ * @internal
+ */
+export function clearAllExecutors(): void {
+  proposalExecutors.clear();
+}

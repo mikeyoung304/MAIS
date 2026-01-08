@@ -67,3 +67,31 @@ export function hashTenantBooking(tenantId: string, bookingId: string): number {
 
   return hash | 0;
 }
+
+/**
+ * Generate deterministic lock ID from tenantId for storefront edits.
+ * Used for TOCTOU prevention on JSON field updates (landingPageConfigDraft).
+ *
+ * P1-659 FIX: Provides tenant-level locking for storefront draft edits to prevent
+ * race conditions when concurrent section updates check for ID uniqueness.
+ *
+ * @param tenantId - Tenant identifier for isolation
+ * @returns 32-bit signed integer suitable for PostgreSQL advisory lock
+ *
+ * @example
+ * ```typescript
+ * const lockId = hashTenantStorefront(tenantId);
+ * await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+ * ```
+ */
+export function hashTenantStorefront(tenantId: string): number {
+  const str = `${tenantId}:storefront:draft`;
+  let hash = 2166136261; // FNV-1a offset basis
+
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619); // FNV prime
+  }
+
+  return hash | 0;
+}

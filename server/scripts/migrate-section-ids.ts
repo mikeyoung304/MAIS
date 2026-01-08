@@ -23,24 +23,15 @@ import '@dotenvx/dotenvx/config';
 import { getPrismaClient } from '../src/generated/prisma/client';
 import {
   generateSectionId,
+  SECTION_TYPES,
   type PageName,
   type SectionTypeName,
   type LandingPageConfig,
   type PagesConfig,
 } from '@macon/contracts';
 
-// Section type validation
-const VALID_SECTION_TYPES: ReadonlySet<string> = new Set([
-  'hero',
-  'text',
-  'gallery',
-  'testimonials',
-  'faq',
-  'contact',
-  'cta',
-  'pricing',
-  'features',
-]);
+// Section type validation - using canonical list from contracts
+const VALID_SECTION_TYPES: ReadonlySet<string> = new Set(SECTION_TYPES);
 
 interface MigrationStats {
   tenantsProcessed: number;

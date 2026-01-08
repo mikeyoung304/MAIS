@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p3
 issue_id: '664'
 tags:
@@ -69,19 +69,48 @@ export function isSectionWithId(section: Section): section is SectionWithId {
 
 - `packages/contracts/src/landing-page.ts` (keep or remove)
 - `server/src/agent/tools/storefront-tools.ts` (use if kept)
+- `server/src/agent/tools/utils.ts` (use if kept)
 
 ## Acceptance Criteria
 
-- [ ] Decision made: use or remove
-- [ ] If use: all inline ID checks replaced with type guard
-- [ ] If remove: function and tests deleted
+- [x] Decision made: use or remove
+- [x] If use: all inline ID checks replaced with type guard
+- [ ] ~~If remove: function and tests deleted~~ (N/A - using, not removing)
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                                                  |
-| ---------- | ------------------------ | -------------------------------------------------------------------------- |
-| 2026-01-08 | Created from code review | Identified by code-simplicity-reviewer agent                               |
-| 2026-01-08 | Approved for work        | Quality triage: Use it or delete it. Type guards improve quality - use it. |
+| Date       | Action                   | Learnings                                                                                                                          |
+| ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review | Identified by code-simplicity-reviewer agent                                                                                       |
+| 2026-01-08 | Approved for work        | Quality triage: Use it or delete it. Type guards improve quality - use it.                                                         |
+| 2026-01-08 | Completed                | Replaced 10 inline checks with isSectionWithId() type guard across storefront-tools.ts and utils.ts. All 74 storefront tests pass. |
+
+## Implementation Summary
+
+**Changes made:**
+
+1. **storefront-tools.ts:**
+   - Added `isSectionWithId` to imports from `executor-schemas`
+   - Replaced inline `'id' in section && typeof section.id === 'string'` checks with `isSectionWithId(section)` in:
+     - `removePageSectionTool` (removedId extraction)
+     - `reorderPageSectionsTool` (movedId extraction)
+     - `collectSectionIds()` helper function
+     - `listSectionIdsTool` (sectionId resolution)
+     - `getSectionByIdTool` (currentId and availableIds)
+     - `getUnfilledPlaceholdersTool` (sectionId for unfilled items)
+
+2. **utils.ts:**
+   - Added `isSectionWithId` to imports from `@macon/contracts`
+   - Updated `resolveSectionIndex()` helper to use type guard in:
+     - Section ID lookup (`findIndex` calls)
+     - Available IDs filtering
+
+**Benefits achieved:**
+
+- Better TypeScript type narrowing (no more `as { id: string }` casts)
+- Consistent ID validation (validates format via Zod schema)
+- DRY code (single source of truth for ID detection logic)
+- Cleaner, more readable code
 
 ## Resources
 

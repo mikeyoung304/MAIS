@@ -26,13 +26,20 @@
 
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from './types';
 import { ProposalService } from '../proposals/proposal.service';
-import { handleToolError, getDraftConfigWithSlug } from './utils';
+import {
+  handleToolError,
+  getDraftConfigWithSlug,
+  resolveSectionIndex,
+  getLegacySectionId,
+} from './utils';
 import {
   // Validation schemas (DRY - shared with executors)
   RemovePageSectionPayloadSchema,
   ReorderPageSectionsPayloadSchema,
   TogglePageEnabledPayloadSchema,
   UpdateStorefrontBrandingPayloadSchema,
+  // Type guard for section ID detection (#664)
+  isSectionWithId,
   // Types
   SectionSchema,
   PAGE_NAMES,
@@ -184,37 +191,14 @@ Changes are saved to draft - user must publish to make live.`,
 
       // =========================================================================
       // Resolve sectionId to sectionIndex (PREFERRED path)
+      // Uses shared helper for DRY consistency (#661)
       // =========================================================================
       if (sectionId && sectionIndex === undefined) {
-        const foundIndex = page.sections.findIndex((s) => 'id' in s && s.id === sectionId);
-
-        if (foundIndex === -1) {
-          // Check other pages too to give helpful error message
-          for (const [otherPage, otherConfig] of Object.entries(pages)) {
-            if (otherPage === pageName) continue;
-            const idxInOther = otherConfig.sections.findIndex(
-              (s) => 'id' in s && s.id === sectionId
-            );
-            if (idxInOther !== -1) {
-              return {
-                success: false,
-                error: `Section "${sectionId}" exists on page "${otherPage}", not "${pageName}". Change pageName or use the correct sectionId.`,
-              };
-            }
-          }
-
-          // List available IDs on this page
-          const availableIds = page.sections
-            .filter((s) => 'id' in s && typeof s.id === 'string')
-            .map((s) => (s as { id: string }).id);
-
-          return {
-            success: false,
-            error: `Section "${sectionId}" not found on page "${pageName}". Available IDs: ${availableIds.join(', ') || 'none (use list_section_ids to discover)'}`,
-          };
+        const resolution = resolveSectionIndex(sectionId, pageName, pages);
+        if (!resolution.success) {
+          return { success: false, error: resolution.error };
         }
-
-        sectionIndex = foundIndex;
+        sectionIndex = resolution.index;
       }
 
       // Build section data from params
@@ -362,37 +346,14 @@ Can be undone by discarding draft.`,
 
       // =========================================================================
       // Resolve sectionId to sectionIndex (PREFERRED path)
+      // Uses shared helper for DRY consistency (#661)
       // =========================================================================
       if (sectionId && sectionIndex === undefined) {
-        const foundIndex = page.sections.findIndex((s) => 'id' in s && s.id === sectionId);
-
-        if (foundIndex === -1) {
-          // Check other pages too to give helpful error message
-          for (const [otherPage, otherConfig] of Object.entries(pages)) {
-            if (otherPage === pageName) continue;
-            const idxInOther = otherConfig.sections.findIndex(
-              (s) => 'id' in s && s.id === sectionId
-            );
-            if (idxInOther !== -1) {
-              return {
-                success: false,
-                error: `Section "${sectionId}" exists on page "${otherPage}", not "${pageName}". Change pageName or use the correct sectionId.`,
-              };
-            }
-          }
-
-          // List available IDs on this page
-          const availableIds = page.sections
-            .filter((s) => 'id' in s && typeof s.id === 'string')
-            .map((s) => (s as { id: string }).id);
-
-          return {
-            success: false,
-            error: `Section "${sectionId}" not found on page "${pageName}". Available IDs: ${availableIds.join(', ') || 'none'}`,
-          };
+        const resolution = resolveSectionIndex(sectionId, pageName, pages);
+        if (!resolution.success) {
+          return { success: false, error: resolution.error };
         }
-
-        sectionIndex = foundIndex;
+        sectionIndex = resolution.index;
       }
 
       // Require either sectionId or sectionIndex
@@ -425,7 +386,7 @@ Can be undone by discarding draft.`,
 
       const sectionToRemove = page.sections[sectionIndex];
       const sectionType = sectionToRemove.type;
-      const removedId = 'id' in sectionToRemove ? sectionToRemove.id : undefined;
+      const removedId = isSectionWithId(sectionToRemove) ? sectionToRemove.id : undefined;
 
       const operation = sectionId
         ? `Remove ${sectionType} section (${sectionId}) from ${pageName} page`
@@ -459,13 +420,19 @@ Can be undone by discarding draft.`,
  * reorder_page_sections - Move a section to a new position
  *
  * Trust Tier: T1 (auto-confirm) - Low risk, easily reversible
+ *
+ * RECOMMENDED: Use fromSectionId instead of fromIndex for reliable targeting.
+ * Get section IDs from list_section_ids tool first.
  */
 export const reorderPageSectionsTool: AgentTool = {
   name: 'reorder_page_sections',
   trustTier: 'T1',
   description: `Reorder sections on a landing page by moving a section from one position to another.
 
-Specify the page, source index (fromIndex), and target index (toIndex).
+PREFERRED: Use fromSectionId (e.g., "home-hero-main") to identify the section to move.
+FALLBACK: Use fromIndex (0-based) if sectionId is not available.
+
+Get section IDs from list_section_ids tool first.
 Auto-confirms since order changes are low-risk and easily reversible.`,
   inputSchema: {
     type: 'object',
@@ -475,25 +442,60 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
         description: 'Which page to modify',
         enum: PAGE_NAMES as unknown as string[],
       },
+      fromSectionId: {
+        type: 'string',
+        description:
+          'PREFERRED: Section ID to move (e.g., "home-cta-main"). Get IDs from list_section_ids.',
+      },
       fromIndex: {
         type: 'number',
-        description: 'Current position of section to move (0-based)',
+        description: 'FALLBACK: Current position of section to move (0-based)',
       },
       toIndex: {
         type: 'number',
         description: 'Target position to move section to (0-based)',
       },
     },
-    required: ['pageName', 'fromIndex', 'toIndex'],
+    required: ['pageName', 'toIndex'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const pageName = params.pageName as PageName;
-    const fromIndex = params.fromIndex as number;
+    const fromSectionId = params.fromSectionId as string | undefined;
+    let fromIndex = params.fromIndex as number | undefined;
     const toIndex = params.toIndex as number;
 
     try {
-      // Validate payload
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+
+      // Validate page exists
+      const page = pages[pageName as keyof PagesConfig];
+      if (!page) {
+        return { success: false, error: `Page "${pageName}" not found` };
+      }
+
+      // =========================================================================
+      // Resolve fromSectionId to fromIndex (PREFERRED path)
+      // Uses shared helper for DRY consistency (#661)
+      // =========================================================================
+      if (fromSectionId && fromIndex === undefined) {
+        const resolution = resolveSectionIndex(fromSectionId, pageName, pages);
+        if (!resolution.success) {
+          return { success: false, error: resolution.error };
+        }
+        fromIndex = resolution.index;
+      }
+
+      // Require either fromSectionId or fromIndex
+      if (fromIndex === undefined) {
+        return {
+          success: false,
+          error: 'Either fromSectionId or fromIndex is required.',
+        };
+      }
+
+      // Validate payload (with resolved fromIndex)
       const validationResult = ReorderPageSectionsPayloadSchema.safeParse({
         pageName,
         fromIndex,
@@ -504,15 +506,6 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
           success: false,
           error: `Invalid parameters: ${validationResult.error.errors.map((e) => e.message).join(', ')}`,
         };
-      }
-
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
-
-      // Validate page exists
-      const page = pages[pageName as keyof PagesConfig];
-      if (!page) {
-        return { success: false, error: `Page "${pageName}" not found` };
       }
 
       // Validate indices
@@ -533,8 +526,11 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
 
       const sectionToMove = page.sections[fromIndex];
       const sectionType = sectionToMove.type;
+      const movedId = isSectionWithId(sectionToMove) ? sectionToMove.id : undefined;
 
-      const operation = `Move ${sectionType} section from position ${fromIndex} to ${toIndex} on ${pageName}`;
+      const operation = fromSectionId
+        ? `Move ${sectionType} section (${fromSectionId}) to position ${toIndex} on ${pageName}`
+        : `Move ${sectionType} section from position ${fromIndex} to ${toIndex} on ${pageName}`;
       const payload = { pageName, fromIndex, toIndex };
 
       const preview: Record<string, unknown> = {
@@ -543,6 +539,7 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
         sectionType,
         fromIndex,
         toIndex,
+        ...(movedId && { sectionId: movedId }),
         hasDraft,
         previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
       };
@@ -553,7 +550,7 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
         error,
         'reorder_page_sections',
         tenantId,
-        'Failed to create reorder proposal. Verify section indices are valid'
+        'Failed to create reorder proposal. Verify fromSectionId or fromIndex is valid'
       );
     }
   },
@@ -1041,7 +1038,7 @@ function collectSectionIds(config: LandingPageConfig | null): Set<string> {
 
   for (const pageConfig of Object.values(config.pages)) {
     for (const section of pageConfig.sections || []) {
-      if ('id' in section && typeof section.id === 'string') {
+      if (isSectionWithId(section)) {
         ids.add(section.id);
       }
     }
@@ -1133,11 +1130,10 @@ Filters:
         for (const section of pageConfig.sections || []) {
           if (sectionType && section.type !== sectionType) continue;
 
-          // Generate legacy ID for sections without IDs
-          const sectionId =
-            'id' in section && typeof section.id === 'string'
-              ? section.id
-              : `${page}-${section.type}-legacy`;
+          // Use type guard for section ID detection (#664)
+          const sectionId = isSectionWithId(section)
+            ? section.id
+            : getLegacySectionId(page, section.type);
 
           const headline = getSectionHeadline(section);
           const placeholderFields = findPlaceholderFields(section);
@@ -1221,10 +1217,10 @@ Get IDs from list_section_ids first.`,
       // Find section by ID across all pages
       for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
         for (const section of pageConfig.sections || []) {
-          const currentId =
-            'id' in section && typeof section.id === 'string'
-              ? section.id
-              : `${pageName}-${section.type}-legacy`;
+          // Use type guard for section ID detection (#664)
+          const currentId = isSectionWithId(section)
+            ? section.id
+            : getLegacySectionId(pageName, section.type);
 
           if (currentId === sectionId) {
             return {
@@ -1247,10 +1243,10 @@ Get IDs from list_section_ids first.`,
       const availableIds: string[] = [];
       for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
         for (const section of pageConfig.sections || []) {
-          const id =
-            'id' in section && typeof section.id === 'string'
-              ? section.id
-              : `${pageName}-${section.type}-legacy`;
+          // Use type guard for section ID detection (#664)
+          const id = isSectionWithId(section)
+            ? section.id
+            : getLegacySectionId(pageName, section.type);
           availableIds.push(id);
         }
       }
@@ -1323,10 +1319,10 @@ Use this to:
 
       for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
         for (const section of pageConfig.sections || []) {
-          const sectionId =
-            'id' in section && typeof section.id === 'string'
-              ? section.id
-              : `${pageName}-${section.type}-legacy`;
+          // Use type guard for section ID detection (#664)
+          const sectionId = isSectionWithId(section)
+            ? section.id
+            : getLegacySectionId(pageName, section.type);
 
           const placeholders = findPlaceholderFields(section);
 

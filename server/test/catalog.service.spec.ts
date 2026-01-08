@@ -5,7 +5,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CatalogService } from '../src/services/catalog.service';
 import { NotFoundError, ValidationError } from '../src/lib/errors';
-import { FakeCatalogRepository, buildPackage, buildAddOn } from './helpers/fakes';
+import {
+  FakeCatalogRepository,
+  FakeSegmentRepository,
+  FakeTenantOnboardingService,
+  buildPackage,
+  buildAddOn,
+  buildSegment,
+} from './helpers/fakes';
 
 describe('CatalogService', () => {
   let service: CatalogService;
@@ -129,6 +136,180 @@ describe('CatalogService', () => {
       await expect(service.createPackage('test-tenant', data)).rejects.toThrow(ValidationError);
       await expect(service.createPackage('test-tenant', data)).rejects.toThrow(
         'Package with slug "existing" already exists'
+      );
+    });
+  });
+
+  describe('createPackage with segment validation', () => {
+    let segmentRepo: FakeSegmentRepository;
+    let onboardingService: FakeTenantOnboardingService;
+    let serviceWithSegments: CatalogService;
+
+    beforeEach(() => {
+      segmentRepo = new FakeSegmentRepository();
+      onboardingService = new FakeTenantOnboardingService();
+      // Pass segment repo and onboarding service to enable segment validation
+      serviceWithSegments = new CatalogService(
+        catalogRepo,
+        undefined, // cache
+        undefined, // auditService
+        segmentRepo as any, // segmentRepo
+        onboardingService as any // tenantOnboardingService
+      );
+    });
+
+    it('auto-assigns to existing General segment when segmentId not provided', async () => {
+      // Arrange: Add a General segment for the tenant
+      const generalSegment = buildSegment({
+        id: 'seg_general_123',
+        tenantId: 'test-tenant',
+        slug: 'general',
+        name: 'General',
+      });
+      segmentRepo.addSegment(generalSegment);
+
+      const data = {
+        slug: 'new-package',
+        title: 'New Package',
+        description: 'A brand new package',
+        priceCents: 100000,
+        // Note: no segmentId provided
+      };
+
+      // Act
+      const result = await serviceWithSegments.createPackage('test-tenant', data);
+
+      // Assert: Package was created (we can't check segmentId directly from result,
+      // but we can verify onboarding service was NOT called since segment exists)
+      expect(result.slug).toBe('new-package');
+      expect(onboardingService.createDefaultDataCalls).toHaveLength(0);
+    });
+
+    it('creates default segment when General does not exist and segmentId not provided', async () => {
+      // Arrange: No segments exist for the tenant
+      const data = {
+        slug: 'new-package',
+        title: 'New Package',
+        description: 'A brand new package',
+        priceCents: 100000,
+        // Note: no segmentId provided
+      };
+
+      // Act
+      const result = await serviceWithSegments.createPackage('test-tenant', data);
+
+      // Assert: Package was created and onboarding service was called to create default segment
+      expect(result.slug).toBe('new-package');
+      expect(onboardingService.createDefaultDataCalls).toHaveLength(1);
+      expect(onboardingService.createDefaultDataCalls[0].tenantId).toBe('test-tenant');
+    });
+
+    it('validates provided segmentId belongs to tenant', async () => {
+      // Arrange: Add a segment for a DIFFERENT tenant
+      const otherTenantSegment = buildSegment({
+        id: 'seg_other_123',
+        tenantId: 'other-tenant', // Different tenant!
+        slug: 'general',
+        name: 'General',
+      });
+      segmentRepo.addSegment(otherTenantSegment);
+
+      const data = {
+        slug: 'new-package',
+        title: 'New Package',
+        description: 'A brand new package',
+        priceCents: 100000,
+        segmentId: 'seg_other_123', // ID exists but belongs to different tenant
+      };
+
+      // Act & Assert: Should throw ValidationError for invalid segment
+      await expect(serviceWithSegments.createPackage('test-tenant', data)).rejects.toThrow(
+        ValidationError
+      );
+      await expect(serviceWithSegments.createPackage('test-tenant', data)).rejects.toThrow(
+        'Segment not found or access denied'
+      );
+    });
+
+    it('throws ValidationError when segmentId does not exist', async () => {
+      // Arrange: No segments exist
+      const data = {
+        slug: 'new-package',
+        title: 'New Package',
+        description: 'A brand new package',
+        priceCents: 100000,
+        segmentId: 'seg_nonexistent', // ID does not exist
+      };
+
+      // Act & Assert: Should throw ValidationError
+      await expect(serviceWithSegments.createPackage('test-tenant', data)).rejects.toThrow(
+        ValidationError
+      );
+      await expect(serviceWithSegments.createPackage('test-tenant', data)).rejects.toThrow(
+        'Segment not found or access denied'
+      );
+    });
+
+    it('accepts valid segmentId that belongs to tenant', async () => {
+      // Arrange: Add a segment for the tenant
+      const segment = buildSegment({
+        id: 'seg_wellness_123',
+        tenantId: 'test-tenant',
+        slug: 'wellness',
+        name: 'Wellness Retreats',
+      });
+      segmentRepo.addSegment(segment);
+
+      const data = {
+        slug: 'wellness-package',
+        title: 'Wellness Package',
+        description: 'A wellness package',
+        priceCents: 250000,
+        segmentId: 'seg_wellness_123', // Valid segment ID for this tenant
+      };
+
+      // Act
+      const result = await serviceWithSegments.createPackage('test-tenant', data);
+
+      // Assert: Package was created successfully
+      expect(result.slug).toBe('wellness-package');
+      expect(result.title).toBe('Wellness Package');
+      // Onboarding service was NOT called since segmentId was provided
+      expect(onboardingService.createDefaultDataCalls).toHaveLength(0);
+    });
+
+    it('isolates segments by tenant - same segmentId works for correct tenant only', async () => {
+      // Arrange: Add segments with same ID pattern for different tenants
+      const tenantASegment = buildSegment({
+        id: 'seg_shared_123',
+        tenantId: 'tenant-A',
+        slug: 'general',
+        name: 'General A',
+      });
+      const tenantBSegment = buildSegment({
+        id: 'seg_shared_456',
+        tenantId: 'tenant-B',
+        slug: 'general',
+        name: 'General B',
+      });
+      segmentRepo.addSegment(tenantASegment);
+      segmentRepo.addSegment(tenantBSegment);
+
+      // Try to use tenant-A's segment from tenant-B
+      const data = {
+        slug: 'cross-tenant-attempt',
+        title: 'Cross Tenant Attempt',
+        description: 'Should fail',
+        priceCents: 100000,
+        segmentId: 'seg_shared_123', // Tenant-A's segment
+      };
+
+      // Act & Assert: Should fail for tenant-B
+      await expect(serviceWithSegments.createPackage('tenant-B', data)).rejects.toThrow(
+        ValidationError
+      );
+      await expect(serviceWithSegments.createPackage('tenant-B', data)).rejects.toThrow(
+        'Segment not found or access denied'
       );
     });
   });

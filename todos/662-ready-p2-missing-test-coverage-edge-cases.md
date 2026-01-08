@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p2
 issue_id: '662'
 tags:
@@ -92,17 +92,18 @@ it('should generate legacy ID for sections without ID', async () => {
 
 ## Acceptance Criteria
 
-- [ ] Test for cross-page sectionId error message
-- [ ] Test for legacy ID generation in discovery tools
-- [ ] Test for executor cross-page collision detection
-- [ ] All tests documented with why they exist
+- [x] Test for cross-page sectionId error message
+- [x] Test for legacy ID generation in discovery tools
+- [x] Test for executor cross-page collision detection
+- [x] All tests documented with why they exist
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                                            |
-| ---------- | ------------------------ | -------------------------------------------------------------------- |
-| 2026-01-08 | Created from code review | Identified by code-simplicity-reviewer agent                         |
-| 2026-01-08 | Approved for work        | Quality triage: Untested code is unverified code. Edge cases matter. |
+| Date       | Action                   | Learnings                                                                                     |
+| ---------- | ------------------------ | --------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review | Identified by code-simplicity-reviewer agent                                                  |
+| 2026-01-08 | Approved for work        | Quality triage: Untested code is unverified code. Edge cases matter.                          |
+| 2026-01-08 | Completed                | Added 11 new tests covering all edge cases. Also fixed executor mock to include $transaction. |
 
 ## Resources
 

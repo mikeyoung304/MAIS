@@ -393,6 +393,7 @@ export class PrismaTenantRepository {
             chatEnabled: true,
             branding: true,
             tierDisplayNames: true,
+            landingPageConfig: true, // Include for branding.landingPage
             isActive: true,
           },
         },
@@ -406,6 +407,17 @@ export class PrismaTenantRepository {
 
     const tenant = tenantDomain.tenant;
 
+    // Extract published landing page config from the draft wrapper structure
+    // The landingPageConfig column uses { draft, published, ... } wrapper
+    // For public display, we use the published config (or direct config for legacy format)
+    const landingPageConfig = this.extractPublishedLandingPage(tenant.landingPageConfig);
+
+    // Build branding object with landingPage merged in
+    const branding = tenant.branding as Record<string, unknown> | null;
+    const mergedBranding = landingPageConfig
+      ? { ...branding, landingPage: landingPageConfig }
+      : branding;
+
     // Build and validate response (same as findBySlugPublic)
     const candidateDto = {
       id: tenant.id,
@@ -417,7 +429,7 @@ export class PrismaTenantRepository {
       accentColor: tenant.accentColor,
       backgroundColor: tenant.backgroundColor,
       chatEnabled: tenant.chatEnabled,
-      branding: tenant.branding,
+      branding: mergedBranding,
       tierDisplayNames: tenant.tierDisplayNames as
         | { tier_1?: string; tier_2?: string; tier_3?: string }
         | undefined,
@@ -484,12 +496,24 @@ export class PrismaTenantRepository {
         chatEnabled: true,
         branding: true,
         tierDisplayNames: true,
+        landingPageConfig: true, // Include for branding.landingPage
       },
     });
 
     if (!tenant) {
       return null;
     }
+
+    // Extract published landing page config from the draft wrapper structure
+    // The landingPageConfig column uses { draft, published, ... } wrapper
+    // For public display, we use the published config (or direct config for legacy format)
+    const landingPageConfig = this.extractPublishedLandingPage(tenant.landingPageConfig);
+
+    // Build branding object with landingPage merged in
+    const branding = tenant.branding as Record<string, unknown> | null;
+    const mergedBranding = landingPageConfig
+      ? { ...branding, landingPage: landingPageConfig }
+      : branding;
 
     // Build candidate response object
     const candidateDto = {
@@ -502,7 +526,7 @@ export class PrismaTenantRepository {
       accentColor: tenant.accentColor,
       backgroundColor: tenant.backgroundColor,
       chatEnabled: tenant.chatEnabled,
-      branding: tenant.branding,
+      branding: mergedBranding,
       tierDisplayNames: tenant.tierDisplayNames as
         | { tier_1?: string; tier_2?: string; tier_3?: string }
         | undefined,
@@ -668,6 +692,34 @@ export class PrismaTenantRepository {
    * LandingPageVersion table with proper version tracking.
    * See docs/solutions/ for schema design documentation.
    */
+
+  /**
+   * Extract the published landing page config for public display.
+   *
+   * The landingPageConfig column can contain either:
+   * 1. Draft wrapper format: { draft, published, draftUpdatedAt, publishedAt }
+   * 2. Legacy direct format: { pages: {...}, sections: {...}, ... }
+   *
+   * This method extracts the appropriate config for public storefront display.
+   * Reuses getLandingPageWrapper for wrapper extraction, letting Zod schema
+   * validation determine format validity.
+   *
+   * @param config - Raw JSON from database (may be null, undefined, or malformed)
+   * @returns The published/live landing page config, or null if not set
+   */
+  private extractPublishedLandingPage(config: unknown): LandingPageConfig | null {
+    const wrapper = this.getLandingPageWrapper(config);
+
+    // Draft wrapper format with published content
+    if (wrapper.published) {
+      const result = LandingPageConfigSchema.safeParse(wrapper.published);
+      return result.success ? result.data : null;
+    }
+
+    // Legacy direct format or empty - let schema validation decide
+    const result = LandingPageConfigSchema.safeParse(config);
+    return result.success ? result.data : null;
+  }
 
   /**
    * Parse raw JSON config into strongly-typed wrapper structure.
