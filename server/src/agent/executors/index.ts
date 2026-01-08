@@ -853,17 +853,27 @@ export function registerAllExecutors(prisma: PrismaClient): void {
 
   // upsert_segment - Create or update segment
   registerProposalExecutor('upsert_segment', async (tenantId, payload) => {
-    const { segmentId, slug, name, heroTitle, heroSubtitle, description, sortOrder, active } =
-      payload as {
-        segmentId?: string;
-        slug: string;
-        name: string;
-        heroTitle: string;
-        heroSubtitle?: string;
-        description?: string;
-        sortOrder?: number;
-        active?: boolean;
-      };
+    const {
+      segmentId,
+      slug,
+      name,
+      heroTitle,
+      heroSubtitle,
+      heroImage,
+      description,
+      sortOrder,
+      active,
+    } = payload as {
+      segmentId?: string;
+      slug: string;
+      name: string;
+      heroTitle: string;
+      heroSubtitle?: string;
+      heroImage?: string;
+      description?: string;
+      sortOrder?: number;
+      active?: boolean;
+    };
 
     if (segmentId) {
       // CRITICAL: Verify tenant ownership before update
@@ -887,6 +897,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
           name,
           heroTitle,
           ...(heroSubtitle !== undefined && { heroSubtitle }),
+          ...(heroImage !== undefined && { heroImage }),
           ...(description !== undefined && { description }),
           ...(sortOrder !== undefined && { sortOrder }),
           ...(active !== undefined && { active }),
@@ -910,6 +921,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
         name,
         heroTitle,
         heroSubtitle: heroSubtitle || null,
+        heroImage: heroImage || null,
         description: description || null,
         sortOrder: sortOrder ?? 0,
         active: active ?? true,

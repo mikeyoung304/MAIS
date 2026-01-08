@@ -2,24 +2,21 @@
  * TenantLandingPage - Main landing page component
  *
  * Uses SectionRenderer for flexible section display.
- * Packages (tier cards) are handled separately as they require special
- * rendering logic (sorting, "Most Popular" badge, booking links).
+ * Packages are displayed through SegmentPackagesSection which provides
+ * a segment-first browsing experience.
  *
  * Layout:
  * 1. Pre-packages sections (hero, social proof, text, etc.)
- * 2. Segment picker (if multiple segments)
- * 3. Packages/tier cards
- * 4. Post-packages sections (about, gallery, testimonials, faq)
- * 5. Final CTA
+ * 2. Segment-first packages section (shows segments → tiers within)
+ * 3. Post-packages sections (about, gallery, testimonials, faq)
+ * 4. Final CTA
  */
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant';
 import { normalizeToPages } from '@/lib/tenant';
-import { formatPrice } from '@/lib/format';
-import { TIER_ORDER } from '@/lib/packages';
 import { SectionRenderer } from './SectionRenderer';
+import { SegmentPackagesSection } from './SegmentPackagesSection';
 import type { Section, HeroSection, CTASection, LandingPageConfig } from '@macon/contracts';
 
 interface TenantLandingPageProps {
@@ -172,30 +169,11 @@ export function TenantLandingPage({
   domainParam = '',
   isEditMode = false,
 }: TenantLandingPageProps) {
-  const { tenant, packages, segments } = data;
+  const { tenant } = data;
   const landingConfig = tenant.branding?.landingPage;
 
   // Build sections for rendering
   const { preSections, postSections, finalCta } = buildHomeSections(landingConfig, tenant.name);
-
-  // Sort packages by tier for display
-  // Check isActive (new) or active (legacy) for filtering
-  const sortedPackages = [...packages]
-    .filter((p) => p.isActive ?? p.active)
-    .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99));
-
-  // Get unique tiers for emphasis (middle tier is popular)
-  const midIndex = Math.floor(sortedPackages.length / 2);
-
-  // Build book link based on route type
-  // For domain routes, booking still uses /t/[slug] paths
-  const getBookLink = (packageSlug: string) => {
-    if (domainParam) {
-      // Domain routes redirect to slug-based booking for full context
-      return `/t/${tenant.slug}/book/${packageSlug}`;
-    }
-    return `${basePath}/book/${packageSlug}`;
-  };
 
   return (
     <>
@@ -221,87 +199,9 @@ export function TenantLandingPage({
         </section>
       )}
 
-      {/* ===== SEGMENT PICKER ===== */}
-      {segments.length > 1 && (
-        <section className="py-12">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="flex flex-wrap justify-center gap-4">
-              {segments.map((segment) => (
-                <Button key={segment.id} variant="outline" size="lg">
-                  {segment.name}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== TIER CARDS (PACKAGES) ===== */}
-      {/* Special rendering - not a generic section due to booking links & tier logic */}
-      {sortedPackages.length > 0 && (
-        <section id="packages" className="py-32 md:py-40">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="text-center">
-              <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
-                Choose your package.
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-text-muted">
-                Select the perfect option for your needs.
-              </p>
-            </div>
-
-            <div
-              className={`mt-16 grid gap-8 ${
-                sortedPackages.length === 1
-                  ? 'md:grid-cols-1 max-w-md mx-auto'
-                  : sortedPackages.length === 2
-                    ? 'md:grid-cols-2 max-w-2xl mx-auto'
-                    : 'md:grid-cols-3'
-              }`}
-            >
-              {sortedPackages.map((pkg, index) => {
-                const isPopular = sortedPackages.length > 2 && index === midIndex;
-                const tierLabel =
-                  tenant.tierDisplayNames?.[
-                    pkg.tier.toLowerCase() as keyof typeof tenant.tierDisplayNames
-                  ] || pkg.title;
-
-                return (
-                  <div
-                    key={pkg.id}
-                    className={`relative rounded-3xl p-8 transition-all duration-300 ${
-                      isPopular
-                        ? 'border-2 border-sage bg-white shadow-xl'
-                        : 'border border-neutral-100 bg-white shadow-lg hover:-translate-y-1 hover:shadow-xl'
-                    }`}
-                  >
-                    {isPopular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-sage px-4 py-1 text-sm font-medium text-white">
-                        Most Popular
-                      </div>
-                    )}
-                    <h3 className="text-lg font-semibold text-text-primary">{tierLabel}</h3>
-                    <p className="mt-2 text-3xl font-bold text-text-primary">
-                      {formatPrice(pkg.priceCents)}
-                      <span className="text-base font-normal text-text-muted">/session</span>
-                    </p>
-                    {pkg.description && (
-                      <p className="mt-4 text-sm text-text-muted">{pkg.description}</p>
-                    )}
-                    <Button
-                      asChild
-                      variant={isPopular ? 'sage' : 'outline'}
-                      className="mt-8 w-full"
-                    >
-                      <Link href={getBookLink(pkg.slug)}>Book {tierLabel}</Link>
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ===== SEGMENT-FIRST PACKAGES SECTION ===== */}
+      {/* Shows segments as entry points, expands to reveal tiers when clicked */}
+      <SegmentPackagesSection data={data} basePath={basePath} domainParam={domainParam} />
 
       {/* ===== POST-PACKAGES SECTIONS (About, Testimonials, Gallery, FAQ) ===== */}
       <SectionRenderer

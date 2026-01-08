@@ -238,9 +238,9 @@ describe('Customer Tools', () => {
       expect(toolNames).toContain('confirm_proposal');
     });
 
-    it('should have 5 tools total', () => {
-      // get_services, check_availability, book_service, confirm_proposal, get_business_info
-      expect(CUSTOMER_TOOLS).toHaveLength(5);
+    it('should have 6 tools total', () => {
+      // browse_service_categories, get_services, check_availability, book_service, confirm_proposal, get_business_info
+      expect(CUSTOMER_TOOLS).toHaveLength(6);
     });
   });
 });

@@ -3,6 +3,7 @@
  *
  * MVP tools for customer-facing booking assistant:
  * - get_services: Browse available packages
+ * - browse_service_categories: List service categories (segments)
  * - check_availability: Check available dates
  * - book_service: Create booking with T3 confirmation
  * - confirm_proposal: Confirm pending T3 proposals via conversation
@@ -124,7 +125,62 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   },
 
   // ============================================================================
-  // 2. CHECK AVAILABILITY - Get available dates for a service
+  // 2. BROWSE SERVICE CATEGORIES - List available segments
+  // ============================================================================
+  {
+    name: 'browse_service_categories',
+    trustTier: 'T1', // Read-only, no confirmation needed
+    description:
+      'Browse available service categories. Returns list of service types with names, descriptions, and package counts. Use when customer asks about service types or categories.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [] as string[],
+    },
+    async execute(context: ToolContext): Promise<AgentToolResult> {
+      const { tenantId, prisma } = context;
+
+      try {
+        const segments = await prisma.segment.findMany({
+          where: { tenantId, active: true },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            heroTitle: true,
+            heroSubtitle: true,
+            heroImage: true,
+            description: true,
+            _count: { select: { packages: { where: { active: true } } } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        });
+
+        return {
+          success: true,
+          data: segments.map((s) => ({
+            id: s.id,
+            slug: s.slug,
+            name: s.name,
+            title: s.heroTitle,
+            subtitle: s.heroSubtitle,
+            image: s.heroImage,
+            description: s.description,
+            packageCount: s._count.packages,
+          })),
+        };
+      } catch (error) {
+        logger.error(
+          { error: sanitizeError(error), tenantId },
+          'Failed to browse service categories'
+        );
+        return { success: false, error: 'Unable to load service categories. Please try again.' };
+      }
+    },
+  },
+
+  // ============================================================================
+  // 3. CHECK AVAILABILITY - Get available dates for a service
   // ============================================================================
   {
     name: 'check_availability',
@@ -242,7 +298,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   },
 
   // ============================================================================
-  // 3. BOOK SERVICE - Create booking with T3 confirmation
+  // 4. BOOK SERVICE - Create booking with T3 confirmation
   // ============================================================================
   {
     name: 'book_service',
@@ -411,7 +467,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   },
 
   // ============================================================================
-  // 4. CONFIRM PROPOSAL - Confirm pending T3 proposals via conversation
+  // 5. CONFIRM PROPOSAL - Confirm pending T3 proposals via conversation
   // ============================================================================
   {
     name: 'confirm_proposal',
@@ -568,7 +624,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
   },
 
   // ============================================================================
-  // 5. GET BUSINESS INFO - Hours, policies, FAQ
+  // 6. GET BUSINESS INFO - Hours, policies, FAQ
   // ============================================================================
   {
     name: 'get_business_info',

@@ -12,6 +12,7 @@ import type {
   PageName,
   PagesConfig,
   Section,
+  SegmentDto,
 } from '@macon/contracts';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 
@@ -391,18 +392,21 @@ export interface PackageData {
 }
 
 /**
+ * Segment data as returned by the API
+ * Includes hero information for storefront display
+ *
+ * Aliased from @macon/contracts SegmentDto for backward compatibility
+ */
+export type SegmentData = SegmentDto;
+
+/**
  * Type for the complete tenant storefront data
  * Combines tenant info, packages, and segments
  */
 export interface TenantStorefrontData {
   tenant: TenantPublicDto;
   packages: PackageData[];
-  segments: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-    displayOrder: number;
-  }>;
+  segments: SegmentData[];
 }
 
 /**

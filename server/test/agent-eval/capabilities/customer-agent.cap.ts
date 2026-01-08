@@ -26,6 +26,15 @@ export const CUSTOMER_AGENT_CAPABILITIES: AgentCapabilityMap = {
     // READ CAPABILITIES
     // ─────────────────────────────────────────────────────────────────────────
     {
+      id: 'browse-service-categories',
+      description:
+        'Browse available service categories/segments with descriptions and package counts',
+      requiredTool: 'browse_service_categories',
+      trustTier: 'T1',
+      promptKeywords: ['categories', 'types', 'segments', 'what kinds', 'service types'],
+      category: 'read',
+    },
+    {
       id: 'browse-services',
       description: 'View available services and packages with pricing',
       requiredTool: 'get_services',
@@ -81,7 +90,10 @@ export const CUSTOMER_AGENT_CAPABILITIES: AgentCapabilityMap = {
  * 3. Booking - Create and confirm a booking
  */
 export const CUSTOMER_JOURNEY_STAGES = [
-  { stage: 'discovery', capabilities: ['browse-services', 'get-business-info'] },
+  {
+    stage: 'discovery',
+    capabilities: ['browse-service-categories', 'browse-services', 'get-business-info'],
+  },
   { stage: 'exploration', capabilities: ['check-availability', 'get-business-info'] },
   { stage: 'booking', capabilities: ['book-service', 'confirm-booking'] },
 ] as const;

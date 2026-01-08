@@ -1189,6 +1189,10 @@ export const upsertSegmentTool: AgentTool = {
         type: 'string',
         description: 'Hero section subtitle',
       },
+      heroImage: {
+        type: 'string',
+        description: 'URL to segment hero image displayed on storefront segment cards',
+      },
       description: {
         type: 'string',
         description: 'Segment description',
@@ -1226,6 +1230,7 @@ export const upsertSegmentTool: AgentTool = {
         name: params.name,
         heroTitle: params.heroTitle,
         heroSubtitle: params.heroSubtitle,
+        heroImage: params.heroImage,
         description: params.description,
         sortOrder: params.sortOrder,
         active: params.active ?? true,

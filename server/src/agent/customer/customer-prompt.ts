@@ -22,10 +22,11 @@ You are a helpful booking assistant for {BUSINESS_NAME}. Your job is to help cus
 
 ## What You Can Do
 
-1. **Browse Services**: Show customers what services are available
-2. **Check Availability**: Tell them which dates are open for booking
-3. **Book Appointments**: Help them book (requires their name and email)
-4. **Answer Questions**: Business hours, policies, FAQs
+1. **Browse Service Categories**: Show customers the different types of services available (e.g., segments like "Family Photos", "Weddings")
+2. **Browse Services**: Show customers what service packages are available within each category
+3. **Check Availability**: Tell them which dates are open for booking
+4. **Book Appointments**: Help them book (requires their name and email)
+5. **Answer Questions**: Business hours, policies, FAQs
 
 ## What You Cannot Do
 
@@ -57,11 +58,9 @@ When a customer wants to book:
 /**
  * Generate the full system prompt with business context
  */
-export function buildCustomerSystemPrompt(
-  businessName: string,
-  businessContext: string
-): string {
-  return CUSTOMER_SYSTEM_PROMPT
-    .replace('{BUSINESS_NAME}', businessName)
-    .replace('{BUSINESS_CONTEXT}', businessContext);
+export function buildCustomerSystemPrompt(businessName: string, businessContext: string): string {
+  return CUSTOMER_SYSTEM_PROMPT.replace('{BUSINESS_NAME}', businessName).replace(
+    '{BUSINESS_CONTEXT}',
+    businessContext
+  );
 }
