@@ -320,23 +320,7 @@ export function SegmentPackagesSection({
     [segments, packagesBySegment]
   );
 
-  // Empty state - no segments have active packages
-  if (segmentsWithPackages.length === 0) {
-    return (
-      <section id="packages" className="py-32 md:py-40">
-        <div className="mx-auto max-w-6xl px-6 text-center">
-          <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
-            Services coming soon
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-text-muted">
-            We&apos;re preparing something special for you. Check back soon!
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  // Get booking link
+  // Get booking link - must be before any conditional returns (React Rules of Hooks)
   const getBookHref = useCallback(
     (packageSlug: string) => {
       if (domainParam) {
@@ -347,13 +331,8 @@ export function SegmentPackagesSection({
     [basePath, domainParam, tenant.slug]
   );
 
-  // Get selected segment and its packages
-  const selectedSegment = selectedSegmentId
-    ? segments.find((s) => s.id === selectedSegmentId)
-    : null;
-  const selectedPackages = selectedSegmentId ? packagesBySegment.get(selectedSegmentId) || [] : [];
-
   // Handle segment selection - update URL hash for browser history
+  // Must be before any conditional returns (React Rules of Hooks)
   const handleSelectSegment = useCallback(
     (segmentId: string) => {
       const segment = segments.find((s) => s.id === segmentId);
@@ -372,7 +351,7 @@ export function SegmentPackagesSection({
     [segments]
   );
 
-  // Handle back to segments
+  // Handle back to segments - must be before any conditional returns (React Rules of Hooks)
   const handleBack = useCallback(() => {
     // Push to history so browser forward works
     window.history.pushState(null, '', '#packages');
@@ -380,6 +359,29 @@ export function SegmentPackagesSection({
     // Announce to screen readers (WCAG 4.1.3 Status Messages)
     setAnnouncement('Returned to service categories');
   }, []);
+
+  // Get selected segment and its packages (derived state, not a hook)
+  const selectedSegment = selectedSegmentId
+    ? segments.find((s) => s.id === selectedSegmentId)
+    : null;
+  const selectedPackages = selectedSegmentId ? packagesBySegment.get(selectedSegmentId) || [] : [];
+
+  // Empty state - no segments have active packages
+  // This must come AFTER all hooks are called (React Rules of Hooks)
+  if (segmentsWithPackages.length === 0) {
+    return (
+      <section id="packages" className="py-32 md:py-40">
+        <div className="mx-auto max-w-6xl px-6 text-center">
+          <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+            Services coming soon
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-text-muted">
+            We&apos;re preparing something special for you. Check back soon!
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   // If only one segment, skip segment selection and show tiers directly
   if (segmentsWithPackages.length === 1) {
