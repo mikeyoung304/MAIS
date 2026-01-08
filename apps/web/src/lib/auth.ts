@@ -17,11 +17,10 @@ import type { JWT } from 'next-auth/jwt';
 import type { User, Session } from 'next-auth';
 import { logger } from '@/lib/logger';
 import { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
+import { API_URL } from '@/lib/config';
 
 // Re-export for backward compatibility
 export { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Extended User type with MAIS-specific fields
@@ -140,7 +139,7 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
         }
 
         try {
-          const response = await fetch(`${API_BASE_URL}/v1/auth/login`, {
+          const response = await fetch(`${API_URL}/v1/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

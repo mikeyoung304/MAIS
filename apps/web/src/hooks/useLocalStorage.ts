@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useSyncExternalStore } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * SSR-safe localStorage hook using useSyncExternalStore.
@@ -69,7 +70,7 @@ export function useLocalStorage<T>(
       return JSON.parse(item) as T;
     } catch {
       // If parsing fails, return default
-      console.warn(`Failed to parse localStorage key "${key}"`);
+      logger.debug(`Failed to parse localStorage key "${key}"`);
       return defaultValue;
     }
   }, [key, defaultValue]);
@@ -98,7 +99,7 @@ export function useLocalStorage<T>(
         // Dispatch custom event for same-tab listeners
         window.dispatchEvent(new CustomEvent(`localStorage:${key}`));
       } catch (error) {
-        console.warn(`Failed to set localStorage key "${key}"`, error);
+        logger.debug(`Failed to set localStorage key "${key}"`, { error });
       }
     },
     [key, getSnapshot]
@@ -110,7 +111,7 @@ export function useLocalStorage<T>(
       window.localStorage.removeItem(key);
       window.dispatchEvent(new CustomEvent(`localStorage:${key}`));
     } catch (error) {
-      console.warn(`Failed to remove localStorage key "${key}"`, error);
+      logger.debug(`Failed to remove localStorage key "${key}"`, { error });
     }
   }, [key]);
 

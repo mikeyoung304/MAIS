@@ -150,7 +150,7 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
   return pages;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 /**
  * Custom error for tenant not found
@@ -245,7 +245,7 @@ export function validateDomain(domain: string | undefined): string {
  * @throws TenantApiError for other API failures
  */
 export const getTenantBySlug = cache(async (slug: string): Promise<TenantPublicDto> => {
-  const url = `${API_BASE_URL}/v1/public/tenants/${encodeURIComponent(slug)}`;
+  const url = `${API_URL}/v1/public/tenants/${encodeURIComponent(slug)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -284,7 +284,7 @@ export const getTenantByDomain = cache(async (domain: string): Promise<TenantPub
   // TODO: Implement domain lookup endpoint in Express API
   // For now, we'll use a fallback approach - search by domain
   // The backend endpoint would be: GET /v1/public/tenants/by-domain/:domain
-  const url = `${API_BASE_URL}/v1/public/tenants/by-domain/${encodeURIComponent(domain)}`;
+  const url = `${API_URL}/v1/public/tenants/by-domain/${encodeURIComponent(domain)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -319,7 +319,7 @@ export const getTenantByDomain = cache(async (domain: string): Promise<TenantPub
  * @returns Array of package DTOs
  */
 export async function getTenantPackages(apiKeyPublic: string) {
-  const url = `${API_BASE_URL}/v1/packages`;
+  const url = `${API_URL}/v1/packages`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -348,7 +348,7 @@ export async function getTenantPackages(apiKeyPublic: string) {
  * @returns Array of segment DTOs
  */
 export async function getTenantSegments(apiKeyPublic: string) {
-  const url = `${API_BASE_URL}/v1/segments`;
+  const url = `${API_URL}/v1/segments`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -446,7 +446,7 @@ export async function getTenantPackageBySlug(
   apiKeyPublic: string,
   packageSlug: string
 ): Promise<PackageData | null> {
-  const url = `${API_BASE_URL}/v1/packages/${encodeURIComponent(packageSlug)}`;
+  const url = `${API_URL}/v1/packages/${encodeURIComponent(packageSlug)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -482,7 +482,7 @@ export async function getUnavailableDates(
   startDate: string,
   endDate: string
 ): Promise<string[]> {
-  const url = `${API_BASE_URL}/v1/availability/unavailable-dates?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+  const url = `${API_URL}/v1/availability/unavailable-dates?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -512,7 +512,7 @@ export async function getUnavailableDates(
  * @returns Whether the date is available
  */
 export async function checkDateAvailability(apiKeyPublic: string, date: string): Promise<boolean> {
-  const url = `${API_BASE_URL}/v1/availability?date=${encodeURIComponent(date)}`;
+  const url = `${API_URL}/v1/availability?date=${encodeURIComponent(date)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -550,7 +550,7 @@ export async function createDateBooking(
     notes?: string;
   }
 ): Promise<{ checkoutUrl: string } | { error: string; status: number }> {
-  const url = `${API_BASE_URL}/v1/bookings/date`;
+  const url = `${API_URL}/v1/bookings/date`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -596,7 +596,7 @@ export async function getBookingById(
   totalCents: number;
   status: string;
 } | null> {
-  const url = `${API_BASE_URL}/v1/bookings/${encodeURIComponent(bookingId)}`;
+  const url = `${API_URL}/v1/bookings/${encodeURIComponent(bookingId)}`;
 
   const response = await fetch(url, {
     method: 'GET',

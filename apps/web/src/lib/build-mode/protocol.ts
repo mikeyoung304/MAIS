@@ -12,6 +12,7 @@
 
 import { z } from 'zod';
 import { PAGE_NAMES, PagesConfigSchema } from '@macon/contracts';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Parent → Iframe Message Schemas
@@ -167,7 +168,7 @@ export function isSameOrigin(origin: string): boolean {
  */
 export function sendToIframe(iframe: HTMLIFrameElement, message: BuildModeParentMessage): void {
   if (!iframe.contentWindow) {
-    console.warn('[BuildMode] Cannot send to iframe: no contentWindow');
+    logger.warn('[BuildMode] Cannot send to iframe: no contentWindow');
     return;
   }
   iframe.contentWindow.postMessage(message, window.location.origin);
@@ -179,7 +180,7 @@ export function sendToIframe(iframe: HTMLIFrameElement, message: BuildModeParent
  */
 export function sendToParent(message: BuildModeChildMessage): void {
   if (typeof window === 'undefined' || window.parent === window) {
-    console.warn('[BuildMode] Not in iframe context');
+    logger.warn('[BuildMode] Not in iframe context');
     return;
   }
   window.parent.postMessage(message, window.location.origin);

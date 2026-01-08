@@ -1,6 +1,7 @@
 'use client';
 
 import { AgentChat } from '@/components/agent';
+import { logger } from '@/lib/logger';
 
 /**
  * Business Growth Assistant Page
@@ -33,11 +34,11 @@ export default function AssistantPage() {
           className="h-full"
           onSessionStart={(sessionId) => {
             // Could track analytics here
-            console.log('Agent session started:', sessionId);
+            logger.debug('Agent session started', { sessionId });
           }}
           onProposalConfirmed={(proposalId, result) => {
             // Could show toast notification here
-            console.log('Proposal confirmed:', proposalId, result);
+            logger.info('Proposal confirmed', { proposalId, result });
           }}
         />
       </div>
