@@ -1132,11 +1132,13 @@ logger.error({ error: sanitizeError(error) }, 'API failed');
 
 1. [React Memoization Prevention Strategy](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md) (memoization best practices)
 2. [React Memoization Quick Reference](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (quick checklist)
-3. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
-4. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+3. [React Hooks Early Return Prevention](./patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md) (adding early returns to existing components)
+4. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+5. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **Checklist:**
 
+- [ ] **All hooks BEFORE any early returns** (Rules of Hooks)
 - [ ] Callback props wrapped in `useCallback()`
 - [ ] Derived values (filter, map, sort) wrapped in `useMemo()`
 - [ ] List items (10+ items) wrapped in `React.memo()`
@@ -1144,6 +1146,7 @@ logger.error({ error: sanitizeError(error) }, 'API failed');
 - [ ] No window.confirm/alert/prompt (use AlertDialog)
 - [ ] WCAG focus indicators (focus-visible:ring-2)
 - [ ] Keyboard accessible (Escape, Tab navigation)
+- [ ] ESLint `react-hooks/rules-of-hooks` passes
 - [ ] ESLint `react-hooks/exhaustive-deps` passes
 
 **Test:**
@@ -1151,6 +1154,7 @@ logger.error({ error: sanitizeError(error) }, 'API failed');
 - [ ] Accessibility test
 - [ ] Performance test (React DevTools Profiler - no unexpected re-renders)
 - [ ] List performance test (check memo works with 10+ items)
+- [ ] Run `npm run build` before committing (catches hooks violations)
 
 ---
 
@@ -1517,15 +1521,22 @@ Task('Remove unused import', {
 - [Prisma TypeScript Build Failure Prevention](./PRISMA-TYPESCRIPT-BUILD-PREVENTION.md)
 - [TypeScript Build Errors Resolution (2025-12-27)](./TYPESCRIPT-BUILD-ERRORS-RESOLUTION-20251227.md) - Property name mismatches, type assertions, stub service patterns
 - [TypeScript Unused Variable Underscore Prefix (TS6133)](./build-errors/typescript-unused-variable-underscore-prefix-MAIS-20251227.md) - When to prefix unused parameters with `_`
+- [TypeScript Symlink Resolution Prevention](./patterns/TYPESCRIPT_SYMLINK_RESOLUTION_PREVENTION.md) - Comprehensive guide: symlinks in src cause double compilation
+  - Quick Reference: [TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md](./patterns/TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md)
+- [React Hooks Early Return Prevention](./patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md) - Build passes locally but fails on Vercel when hooks called after early return
+  - Quick Reference: [REACT_HOOKS_EARLY_RETURN_QUICK_REFERENCE.md](./patterns/REACT_HOOKS_EARLY_RETURN_QUICK_REFERENCE.md)
 
 **Key patterns:**
 
+- **Never put symlinks in src directories** - Use tsconfig paths or workspace packages instead
+- **All hooks before any early returns** - Rules of Hooks requires same call order every render
 - Correct Prisma imports (value, not type-only)
 - JSON field casting with `Prisma.InputJsonValue`
 - Null handling with `Prisma.JsonNull`
 - Property names: Verify against source schema (e.g., `heroImage` vs `heroImageUrl`)
 - Type assertions: Validate key exists before asserting with `in` operator
 - Stub services: Use `as unknown as Type` for partial implementations
+- Always run `npm run build` locally before pushing (catches what lint misses)
 
 ---
 
@@ -2376,7 +2387,15 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 ---
 
-**Last Updated:** 2026-01-05
+**Last Updated:** 2026-01-08
+**Recent Additions (2026-01-08):**
+
+- **[React Hooks Early Return Prevention](./patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md)** - Comprehensive guide for React Rules of Hooks violations when adding early returns to existing components. Includes 3 correct patterns, ESLint rules, code review checklist, and test strategies.
+  - Quick Reference: [REACT_HOOKS_EARLY_RETURN_QUICK_REFERENCE.md](./patterns/REACT_HOOKS_EARLY_RETURN_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[TypeScript Symlink Resolution Prevention](./patterns/TYPESCRIPT_SYMLINK_RESOLUTION_PREVENTION.md)** - Comprehensive guide for preventing double compilation from symlinks in TypeScript source directories. Includes tsconfig paths solutions, CI detection, and migration steps.
+  - Quick Reference: [TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md](./patterns/TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[Segment-First Browsing URL Hash State](./patterns/segment-first-browsing-url-hash-state-MAIS-20260108.md)** - UX pattern for tenant storefronts: segment-first browsing, URL hash state for browser back/forward, stock photo fallback system. Prevents dead page on back button, missing segment images.
+
 **Recent Additions (2026-01-05):**
 
 - **[Build Mode Implementation Prevention](./patterns/build-mode-implementation-prevention-MAIS-20260105.md)** - Comprehensive prevention strategies for agent tools, draft systems, PostMessage protocols, and testing requirements based on Build Mode code review findings

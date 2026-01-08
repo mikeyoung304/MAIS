@@ -37,6 +37,8 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 | Problem                                | Prevention Strategy                                                                                                                            | Audience                 |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Multi-segment storefront UX            | [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md)                         | Frontend developers      |
+| Segment storefront quick reference     | [SEGMENT_FIRST_QUICK_REFERENCE.md](patterns/SEGMENT_FIRST_QUICK_REFERENCE.md)                                                                 | Frontend developers      |
 | AI agent proposal execution missing    | [chatbot-proposal-execution-flow-MAIS-20251229.md](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)                              | Backend/Agent developers |
 | Circular dependencies in agent modules | [circular-dependency-executor-registry-MAIS-20251229.md](patterns/circular-dependency-executor-registry-MAIS-20251229.md)                      | Backend developers       |
 | Next.js App Router migration pitfalls  | [nextjs-migration-lessons-learned-MAIS-20251225.md](code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)                    | Frontend developers      |
@@ -54,9 +56,11 @@ Complete guide to preventing common issues in the MAIS codebase.
 1. [NEXTJS_CLIENT_API_QUICK_REFERENCE.md](NEXTJS_CLIENT_API_QUICK_REFERENCE.md) - 2-min orientation
 2. [NEXTJS_CLIENT_API_PROXY_PREVENTION.md](NEXTJS_CLIENT_API_PROXY_PREVENTION.md) - Deep understanding
 3. [auth-form-accessibility-checklist.md](patterns/auth-form-accessibility-checklist-MAIS-20251230.md) - WCAG compliance
+4. [SEGMENT_FIRST_QUICK_REFERENCE.md](patterns/SEGMENT_FIRST_QUICK_REFERENCE.md) - Storefront UX (1-min read)
 
 **Should Read:**
 
+- [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md) - Full storefront pattern (browser history, URL sync)
 - [nextjs-migration-lessons-learned-MAIS-20251225.md](code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md) - 10 App Router gotchas
 - [any-types-quick-reference-MAIS-20251204.md](best-practices/any-types-quick-reference-MAIS-20251204.md) - TypeScript `any` decision tree
 
