@@ -859,6 +859,10 @@ The following links prevent common mistakes from recurring:
   - Quick reference: [TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md](docs/solutions/patterns/TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - **[storefront-section-ids-prevention](docs/solutions/patterns/STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md)** - TOCTOU races on JSON fields, DRY for tool logic, API consistency across related tools, testing error paths
   - Quick reference: [STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md](docs/solutions/patterns/STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[nextjs-server-client-boundary](docs/solutions/best-practices/nextjs-migration-audit-server-client-boundary-MAIS-20260108.md)** - Server/client import boundary pattern: files importing `next/headers` are "tainted" and cannot be imported by client components. Multi-reviewer audit methodology.
+  - Quick reference: [NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md](docs/solutions/best-practices/NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md) - Print & pin (2 min read)
+
+**Key insight from Next.js Server/Client Boundary (Commit 09230b16):** Files that import server-only modules (`next/headers`, `cookies`) "taint" the entire file - client components cannot import ANYTHING from it, even functions that don't use the server import. This means apparent "duplicate" code (like `api.client.ts` duplicating functions from `api.ts`) is often INTENTIONAL. Before deleting "dead code", check if the original file has server-only imports. Multi-reviewer validation (DHH, TypeScript, Simplicity personas) catches different issues.
 
 **Key insight from Storefront Section IDs Code Review:** JSON field check-then-write patterns need transaction + advisory lock (TOCTOU). Extract shared resolution logic to `agent/utils/` - don't duplicate between tools. All related tools must support same parameters (sectionId preferred, sectionIndex fallback). Test cross-page errors and legacy data (sections without IDs).
 
