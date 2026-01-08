@@ -15,6 +15,140 @@
 import { z } from 'zod';
 
 // ============================================================================
+// Section ID Schema (Stable Section Identifiers)
+// ============================================================================
+
+/**
+ * Reserved JavaScript patterns that could cause prototype pollution.
+ * Section IDs containing these patterns are rejected.
+ *
+ * @see https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html
+ */
+const RESERVED_PATTERNS = ['__proto__', 'constructor', 'prototype'] as const;
+
+/**
+ * Page names for iteration and type safety.
+ * Used in section ID validation regex.
+ */
+export const PAGE_NAMES = [
+  'home',
+  'about',
+  'services',
+  'faq',
+  'contact',
+  'gallery',
+  'testimonials',
+] as const;
+export type PageName = (typeof PAGE_NAMES)[number];
+
+/**
+ * Section type names for iteration and type safety.
+ * Used in section ID validation regex.
+ */
+export const SECTION_TYPES = [
+  'hero',
+  'text',
+  'gallery',
+  'testimonials',
+  'faq',
+  'contact',
+  'cta',
+  'pricing',
+  'features',
+] as const;
+export type SectionTypeName = (typeof SECTION_TYPES)[number];
+
+/**
+ * Section ID Schema - Strict validation for human-readable IDs
+ *
+ * Format: {page}-{type}-{qualifier}
+ * - page: One of PAGE_NAMES (home, about, services, etc.)
+ * - type: One of SECTION_TYPES (hero, text, gallery, etc.)
+ * - qualifier: 'main' for primary section, or a number (2, 3, etc.) for additional sections
+ *
+ * Examples:
+ * - home-hero-main (primary hero on home page)
+ * - about-text-2 (second text section on about page)
+ * - faq-faq-main (FAQ section on FAQ page)
+ *
+ * Security:
+ * - Max 50 characters to prevent DoS
+ * - Strict regex prevents injection
+ * - Reserved pattern validation blocks prototype pollution
+ */
+export const SectionIdSchema = z
+  .string()
+  .max(50, 'Section ID must not exceed 50 characters')
+  .regex(
+    /^(home|about|services|faq|contact|gallery|testimonials)-(hero|text|gallery|testimonials|faq|contact|cta|pricing|features)-(main|[a-z]+|[0-9]+)$/,
+    'Section ID must be {page}-{type}-{qualifier} format (e.g., home-hero-main, about-text-2)'
+  )
+  .refine((id) => !RESERVED_PATTERNS.some((pattern) => id.includes(pattern)), {
+    message: 'Section ID contains reserved JavaScript pattern',
+  });
+
+export type SectionId = z.infer<typeof SectionIdSchema>;
+
+/**
+ * Type guard to check if a section has a valid stable ID.
+ * Use during migration period when IDs are optional.
+ *
+ * @param section - Any section object
+ * @returns true if section has a valid id field that passes SectionIdSchema
+ */
+export function isSectionWithId<T extends { id?: string }>(
+  section: T
+): section is T & { id: SectionId } {
+  return (
+    'id' in section &&
+    typeof section.id === 'string' &&
+    SectionIdSchema.safeParse(section.id).success
+  );
+}
+
+/**
+ * Generate a unique section ID for a new section.
+ *
+ * Uses monotonic counter strategy - never reuses IDs even after deletion.
+ * This prevents confusion when referencing sections by ID.
+ *
+ * Algorithm:
+ * 1. Try {page}-{type}-main if not taken
+ * 2. Otherwise, find highest existing number suffix
+ * 3. Return {page}-{type}-{max+1}
+ *
+ * @param pageName - Target page (must be valid PageName)
+ * @param sectionType - Section type (must be valid SectionTypeName)
+ * @param existingIds - Set of all existing section IDs for uniqueness check
+ * @returns New unique section ID
+ */
+export function generateSectionId(
+  pageName: PageName,
+  sectionType: SectionTypeName,
+  existingIds: Set<string>
+): SectionId {
+  const baseId = `${pageName}-${sectionType}-main`;
+
+  // Try main variant first
+  if (!existingIds.has(baseId)) {
+    return baseId as SectionId;
+  }
+
+  // Find highest existing number suffix (monotonic - never reuse)
+  let maxCounter = 1;
+  const counterPattern = new RegExp(`^${pageName}-${sectionType}-(\\d+)$`);
+
+  for (const id of existingIds) {
+    const match = id.match(counterPattern);
+    if (match && match[1]) {
+      maxCounter = Math.max(maxCounter, parseInt(match[1], 10));
+    }
+  }
+
+  return `${pageName}-${sectionType}-${maxCounter + 1}` as SectionId;
+}
+
+// ============================================================================
 // Safe URL Schemas (XSS Prevention)
 // ============================================================================
 
@@ -229,6 +363,7 @@ export type FinalCtaSectionConfig = z.infer<typeof FinalCtaSectionConfigSchema>;
  * Hero section - main banner with headline, subheadline, and CTA
  */
 export const HeroSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('hero'),
   headline: z.string().min(1).max(60),
   subheadline: z.string().max(150).optional(),
@@ -242,6 +377,7 @@ export type HeroSection = z.infer<typeof HeroSectionSchema>;
  * Text section - content block with optional image
  */
 export const TextSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('text'),
   headline: z.string().max(60).optional(),
   content: z.string().min(1).max(2000),
@@ -255,6 +391,7 @@ export type TextSection = z.infer<typeof TextSectionSchema>;
  * Gallery section - image showcase with optional Instagram link
  */
 export const GallerySectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('gallery'),
   headline: z.string().max(60).default('Our Work'),
   images: z
@@ -275,6 +412,7 @@ export type GallerySection = z.infer<typeof GallerySectionSchema>;
  * Testimonials section - customer reviews with ratings
  */
 export const TestimonialsSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('testimonials'),
   headline: z.string().max(60).default('What Clients Say'),
   items: z
@@ -297,6 +435,7 @@ export type TestimonialsSection = z.infer<typeof TestimonialsSectionSchema>;
  * FAQ section - questions and answers
  */
 export const FAQSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('faq'),
   headline: z.string().max(60).default('FAQ'),
   items: z
@@ -316,6 +455,7 @@ export type FAQSection = z.infer<typeof FAQSectionSchema>;
  * Contact section - contact information display
  */
 export const ContactSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('contact'),
   headline: z.string().max(60).default('Get in Touch'),
   email: z.string().email().optional(),
@@ -330,6 +470,7 @@ export type ContactSection = z.infer<typeof ContactSectionSchema>;
  * CTA section - call-to-action block
  */
 export const CTASectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('cta'),
   headline: z.string().max(60),
   subheadline: z.string().max(150).optional(),
@@ -369,6 +510,7 @@ export type PricingTier = z.infer<typeof PricingTierSchema>;
  * Pricing section - tier-based pricing cards
  */
 export const PricingSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('pricing'),
   headline: z.string().max(60),
   subheadline: z.string().max(150).optional(),
@@ -393,6 +535,7 @@ export type FeatureItem = z.infer<typeof FeatureItemSchema>;
  * Features section - icon + text feature grid
  */
 export const FeaturesSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
   type: z.literal('features'),
   headline: z.string().max(60),
   subheadline: z.string().max(150).optional(),
@@ -451,19 +594,8 @@ export const PagesConfigSchema = z.object({
 
 export type PagesConfig = z.infer<typeof PagesConfigSchema>;
 
-/**
- * Page names for iteration and type safety
- */
-export const PAGE_NAMES = [
-  'home',
-  'about',
-  'services',
-  'faq',
-  'contact',
-  'gallery',
-  'testimonials',
-] as const;
-export type PageName = (typeof PAGE_NAMES)[number];
+// NOTE: PAGE_NAMES and PageName are defined at the top of this file
+// in the Section ID Schema section
 
 // ============================================================================
 // Section Visibility Toggles (Legacy - for backward compatibility)
@@ -568,23 +700,30 @@ export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSections = {
 
 /**
  * Default page configuration for new tenants
- * All 7 pages enabled by default with sensible placeholder content
+ *
+ * Features:
+ * - All sections have stable IDs following {page}-{type}-{qualifier} pattern
+ * - Placeholder content uses [Bracket Format] for AI discoverability
+ * - AI can identify unfilled fields and guide users through setup
+ * - Section IDs enable reliable updates without fragile array indices
  */
 export const DEFAULT_PAGES_CONFIG: PagesConfig = {
   home: {
     enabled: true as const,
     sections: [
       {
+        id: 'home-hero-main',
         type: 'hero',
-        headline: 'Welcome to Our Studio',
-        subheadline: 'Professional services tailored to your needs',
-        ctaText: 'View Packages',
+        headline: '[Hero Headline]',
+        subheadline: '[Hero Subheadline - describe your business in one sentence]',
+        ctaText: '[CTA Button Text]',
       },
       {
+        id: 'home-cta-main',
         type: 'cta',
-        headline: 'Ready to get started?',
-        subheadline: 'Book your session today',
-        ctaText: 'View Packages',
+        headline: '[CTA Headline - call to action]',
+        subheadline: '[CTA Subheadline]',
+        ctaText: '[CTA Button Text]',
       },
     ],
   },
@@ -592,40 +731,29 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
     enabled: true,
     sections: [
       {
+        id: 'about-text-main',
         type: 'text',
-        headline: 'About Us',
-        content:
-          'We are passionate professionals dedicated to delivering exceptional service. Our team brings years of experience and a commitment to quality that shows in every project we undertake.',
+        headline: '[About Headline]',
+        content: '[About Content - tell your story, who you serve, and why you do what you do]',
         imagePosition: 'left',
       },
     ],
   },
   services: {
     enabled: true,
-    sections: [], // Services page pulls from packages, not sections
+    sections: [], // Services page pulls from segments/packages dynamically
   },
   faq: {
     enabled: true,
     sections: [
       {
+        id: 'faq-faq-main',
         type: 'faq',
-        headline: 'Frequently Asked Questions',
+        headline: '[FAQ Headline]',
         items: [
-          {
-            question: 'How do I book?',
-            answer:
-              'Browse our services and complete the booking form. You will receive a confirmation email with all the details.',
-          },
-          {
-            question: 'What is your cancellation policy?',
-            answer:
-              'Cancel up to 48 hours before your appointment for a full refund. Cancellations within 48 hours may be subject to a fee.',
-          },
-          {
-            question: 'Do you offer custom packages?',
-            answer:
-              'Yes! Contact us to discuss your specific needs and we will create a customized package just for you.',
-          },
+          { question: '[Question 1]', answer: '[Answer 1]' },
+          { question: '[Question 2]', answer: '[Answer 2]' },
+          { question: '[Question 3]', answer: '[Answer 3]' },
         ],
       },
     ],
@@ -634,31 +762,40 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
     enabled: true,
     sections: [
       {
+        id: 'contact-contact-main',
         type: 'contact',
-        headline: 'Get in Touch',
+        headline: '[Contact Headline]',
+        email: '[Email Address]',
+        phone: '[Phone Number]',
+        address: '[Business Address]',
+        hours: '[Business Hours]',
       },
     ],
   },
   gallery: {
-    enabled: true,
+    enabled: false, // Disabled by default - enable when user has images
     sections: [
       {
+        id: 'gallery-gallery-main',
         type: 'gallery',
-        headline: 'Our Work',
+        headline: '[Gallery Headline]',
         images: [],
+        instagramHandle: '[Instagram Handle]',
       },
     ],
   },
   testimonials: {
-    enabled: true,
+    enabled: false, // Disabled by default - enable when user has testimonials
     sections: [
       {
+        id: 'testimonials-testimonials-main',
         type: 'testimonials',
-        headline: 'What Clients Say',
+        headline: '[Testimonials Headline]',
         items: [
           {
-            quote: 'Wonderful experience from start to finish!',
-            authorName: 'Happy Client',
+            quote: '[Testimonial Quote]',
+            authorName: '[Author Name]',
+            authorRole: '[Author Role]',
             rating: 5,
           },
         ],

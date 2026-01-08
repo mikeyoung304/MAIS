@@ -11,6 +11,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   storefrontTools,
+  listSectionIdsTool,
+  getSectionByIdTool,
+  getUnfilledPlaceholdersTool,
   updatePageSectionTool,
   removePageSectionTool,
   reorderPageSectionsTool,
@@ -75,12 +78,17 @@ describe('Storefront Build Mode Tools', () => {
   });
 
   describe('storefrontTools list', () => {
-    it('should include all 8 storefront tools', () => {
-      expect(storefrontTools).toHaveLength(8);
+    it('should include all 11 storefront tools', () => {
+      expect(storefrontTools).toHaveLength(11);
     });
 
     it('should include all expected tools', () => {
       const toolNames = storefrontTools.map((t) => t.name);
+      // Discovery tools (T1 - read-only)
+      expect(toolNames).toContain('list_section_ids');
+      expect(toolNames).toContain('get_section_by_id');
+      expect(toolNames).toContain('get_unfilled_placeholders');
+      // Write tools
       expect(toolNames).toContain('update_page_section');
       expect(toolNames).toContain('remove_page_section');
       expect(toolNames).toContain('reorder_page_sections');
@@ -144,7 +152,9 @@ describe('Storefront Build Mode Tools', () => {
       expect(removePageSectionTool.name).toBe('remove_page_section');
       expect(removePageSectionTool.trustTier).toBe('T2');
       expect(removePageSectionTool.inputSchema.required).toContain('pageName');
-      expect(removePageSectionTool.inputSchema.required).toContain('sectionIndex');
+      // sectionIndex is no longer required - can use sectionId instead (PREFERRED)
+      expect(removePageSectionTool.inputSchema.properties).toHaveProperty('sectionId');
+      expect(removePageSectionTool.inputSchema.properties).toHaveProperty('sectionIndex');
     });
 
     it('should return error for out of bounds section index', async () => {
@@ -249,7 +259,8 @@ describe('Storefront Build Mode Tools', () => {
   describe('publish_draft tool', () => {
     it('should have correct metadata', () => {
       expect(publishDraftTool.name).toBe('publish_draft');
-      expect(publishDraftTool.trustTier).toBe('T2');
+      // T3 because publishing makes changes live to visitors - high impact
+      expect(publishDraftTool.trustTier).toBe('T3');
       expect(publishDraftTool.description).toContain('Publish');
     });
 
@@ -352,6 +363,175 @@ describe('Storefront Build Mode Tools', () => {
           where: { id: 'tenant-123' },
         })
       );
+    });
+  });
+
+  // ============================================================================
+  // Discovery Tools (New in Section ID feature)
+  // ============================================================================
+
+  describe('list_section_ids tool', () => {
+    it('should have correct metadata', () => {
+      expect(listSectionIdsTool.name).toBe('list_section_ids');
+      expect(listSectionIdsTool.trustTier).toBe('T1'); // Read-only
+      expect(listSectionIdsTool.description).toContain('Discover');
+      expect(listSectionIdsTool.description).toContain('CALL THIS FIRST');
+    });
+
+    it('should return sections with IDs and placeholder flags', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await listSectionIdsTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { sections: unknown[]; totalCount: number } }).data;
+      expect(data.sections).toBeDefined();
+      expect(data.totalCount).toBeGreaterThan(0);
+    });
+
+    it('should filter by page name', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await listSectionIdsTool.execute(mockContext, { pageName: 'home' });
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { sections: Array<{ page: string }> } }).data;
+      expect(data.sections.every((s) => s.page === 'home')).toBe(true);
+    });
+
+    it('should handle empty config gracefully', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: null,
+        landingPageConfigDraft: null,
+      });
+
+      const result = await listSectionIdsTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { totalCount: number } }).data;
+      expect(data.totalCount).toBe(0);
+    });
+  });
+
+  describe('get_section_by_id tool', () => {
+    it('should have correct metadata', () => {
+      expect(getSectionByIdTool.name).toBe('get_section_by_id');
+      expect(getSectionByIdTool.trustTier).toBe('T1'); // Read-only
+      expect(getSectionByIdTool.inputSchema.required).toContain('sectionId');
+    });
+
+    it('should return section content when ID exists', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      // home-hero-main exists in DEFAULT_PAGES_CONFIG
+      const result = await getSectionByIdTool.execute(mockContext, {
+        sectionId: 'home-hero-main',
+      });
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { section: { type: string }; page: string } }).data;
+      expect(data.section).toBeDefined();
+      expect(data.section.type).toBe('hero');
+      expect(data.page).toBe('home');
+    });
+
+    it('should return error with available IDs when section not found', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await getSectionByIdTool.execute(mockContext, {
+        sectionId: 'nonexistent-section-id',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not found');
+      expect(result.error).toContain('Available sections');
+    });
+  });
+
+  describe('get_unfilled_placeholders tool', () => {
+    it('should have correct metadata', () => {
+      expect(getUnfilledPlaceholdersTool.name).toBe('get_unfilled_placeholders');
+      expect(getUnfilledPlaceholdersTool.trustTier).toBe('T1'); // Read-only
+      expect(getUnfilledPlaceholdersTool.description).toContain('placeholder');
+    });
+
+    it('should detect placeholder content in sections', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: null,
+      });
+
+      const result = await getUnfilledPlaceholdersTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { unfilledCount: number; percentComplete: number } }).data;
+      // DEFAULT_PAGES_CONFIG has [Placeholder] content
+      expect(data.unfilledCount).toBeGreaterThan(0);
+      expect(data.percentComplete).toBeDefined();
+    });
+
+    it('should return 100% complete when no placeholders', async () => {
+      // Config with real content (no [Bracket] placeholders)
+      const filledConfig = {
+        pages: {
+          home: {
+            enabled: true as const,
+            sections: [
+              {
+                id: 'home-hero-main',
+                type: 'hero',
+                headline: 'Real Headline',
+                subheadline: 'Real subheadline',
+                ctaText: 'Book Now',
+              },
+            ],
+          },
+          about: { enabled: true, sections: [] },
+          services: { enabled: true, sections: [] },
+          faq: { enabled: true, sections: [] },
+          contact: { enabled: true, sections: [] },
+          gallery: { enabled: false, sections: [] },
+          testimonials: { enabled: false, sections: [] },
+        },
+      };
+
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: filledConfig,
+        landingPageConfigDraft: null,
+      });
+
+      const result = await getUnfilledPlaceholdersTool.execute(mockContext, {});
+
+      expect(result.success).toBe(true);
+      const data = (result as { data: { unfilledCount: number; summary: string } }).data;
+      expect(data.unfilledCount).toBe(0);
+      expect(data.summary).toContain('Ready to publish');
     });
   });
 });

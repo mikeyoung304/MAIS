@@ -439,6 +439,8 @@ Extract during implementation, not after. It's faster that way.
 
 - **PREVENTION_STRATEGIES_INDEX.md:** Complete index of all prevention strategies
 - **PREVENTION-QUICK-REFERENCE.md:** Quick reference cards
+- **STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md:** TOCTOU on JSON fields, DRY tool logic, API consistency (Issues #659-666)
+  - Quick reference: STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md
 
 ### Implementation Files
 
@@ -451,7 +453,7 @@ Extract during implementation, not after. It's faster that way.
 
 ## Document Maintenance
 
-**Last updated:** 2026-01-05
+**Last updated:** 2026-01-08
 **Status:** Complete and ready for use
 **Applies to:** All new agent tool implementations
 
@@ -461,12 +463,14 @@ When implementing new tools, copy the checklists and adapt them to your specific
 
 ## Quick Links
 
-| Need                  | Document                                       | Section                  |
-| --------------------- | ---------------------------------------------- | ------------------------ |
-| Complete guide        | BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md | All sections             |
-| Code review checklist | AGENT_TOOLS_PEER_REVIEW_CHECKLIST.md           | Full document            |
-| Testing guide         | AGENT_TOOL_TEST_PATTERNS.md                    | All sections             |
-| Decision tree         | AGENT_TOOLS_PEER_REVIEW_CHECKLIST.md           | Quick Decision Tree      |
-| Code templates        | BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md | Pattern templates        |
-| Test templates        | AGENT_TOOL_TEST_PATTERNS.md                    | Test structure templates |
-| Pre-merge checklist   | AGENT_TOOLS_PREVENTION_INDEX.md                | Checklist section        |
+| Need                  | Document                                        | Section                  |
+| --------------------- | ----------------------------------------------- | ------------------------ |
+| Complete guide        | BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md  | All sections             |
+| Code review checklist | AGENT_TOOLS_PEER_REVIEW_CHECKLIST.md            | Full document            |
+| Testing guide         | AGENT_TOOL_TEST_PATTERNS.md                     | All sections             |
+| Decision tree         | AGENT_TOOLS_PEER_REVIEW_CHECKLIST.md            | Quick Decision Tree      |
+| Code templates        | BOOKING_LINKS_PHASE_0_PREVENTION_STRATEGIES.md  | Pattern templates        |
+| Test templates        | AGENT_TOOL_TEST_PATTERNS.md                     | Test structure templates |
+| Pre-merge checklist   | AGENT_TOOLS_PREVENTION_INDEX.md                 | Checklist section        |
+| JSON field TOCTOU     | STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md | Prevention Strategy 1    |
+| Tool API consistency  | STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md | Prevention Strategy 3    |

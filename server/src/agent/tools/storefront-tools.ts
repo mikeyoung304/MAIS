@@ -5,16 +5,23 @@
  * These tools enable AI-assisted editing of landing pages with real-time preview.
  *
  * Trust Tiers:
- * - T1: Auto-confirmed (reorder sections, toggle pages)
- * - T2: Soft confirm (content updates, branding changes)
+ * - T1: Auto-confirmed (reorder sections, toggle pages, discovery tools)
+ * - T2: Soft confirm (content updates, branding changes, discard draft)
+ * - T3: Requires approval (publish_draft - makes changes live to visitors)
  *
- * All operations target the draft config (`landingPageConfigDraft`).
- * Changes become live only when user explicitly publishes.
+ * All write operations target the draft config (`landingPageConfigDraft`).
+ * Changes become live only when user explicitly publishes (T3 approval required).
+ *
+ * Section ID Support:
+ * - All section tools prefer sectionId over sectionIndex for reliable targeting
+ * - Use list_section_ids to discover IDs before updating
+ * - IDs follow {page}-{type}-{qualifier} pattern (e.g., "home-hero-main")
  *
  * Security:
  * - All tools use tenantId from JWT context
  * - Payloads validated against Zod schemas from executor-schemas (DRY)
  * - Server-side proposals prevent prompt injection bypass
+ * - Section IDs validated against reserved patterns (prototype pollution prevention)
  */
 
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from './types';
@@ -29,9 +36,12 @@ import {
   // Types
   SectionSchema,
   PAGE_NAMES,
+  SECTION_TYPES,
   type PageName,
+  type SectionTypeName,
   type Section,
   type PagesConfig,
+  type LandingPageConfig,
 } from '../proposals/executor-schemas';
 
 // ============================================================================
@@ -81,6 +91,9 @@ async function createProposal(
  *
  * Trust Tier: T2 (soft confirm) - Content changes
  * Saves to draft config, not live
+ *
+ * RECOMMENDED: Use sectionId instead of sectionIndex for reliable updates.
+ * Get section IDs from list_section_ids tool first.
  */
 export const updatePageSectionTool: AgentTool = {
   name: 'update_page_section',
@@ -90,7 +103,10 @@ export const updatePageSectionTool: AgentTool = {
 Pages: home, about, services, faq, contact, gallery, testimonials
 Section types: hero, text, gallery, testimonials, faq, contact, cta, pricing, features
 
-Use sectionIndex to update existing section (0-based), or omit/use -1 to append new section.
+PREFERRED: Use sectionId (e.g., "home-hero-main") to target specific section.
+Get section IDs from list_section_ids tool first.
+
+FALLBACK: Use sectionIndex (0-based) or omit to append new section.
 Changes are saved to draft - user must publish to make live.`,
   inputSchema: {
     type: 'object',
@@ -100,9 +116,15 @@ Changes are saved to draft - user must publish to make live.`,
         description: 'Which page to update',
         enum: PAGE_NAMES as unknown as string[],
       },
+      sectionId: {
+        type: 'string',
+        description:
+          'PREFERRED: Section ID to update (e.g., "home-hero-main"). Get IDs from list_section_ids.',
+      },
       sectionIndex: {
         type: 'number',
-        description: 'Index of section to update (0-based). Omit or use -1 to append new section.',
+        description:
+          'FALLBACK: Index of section to update (0-based). Omit or use -1 to append new section.',
       },
       sectionType: {
         type: 'string',
@@ -146,14 +168,64 @@ Changes are saved to draft - user must publish to make live.`,
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const pageName = params.pageName as PageName;
-    const sectionIndex = params.sectionIndex as number | undefined;
+    const sectionId = params.sectionId as string | undefined;
+    let sectionIndex = params.sectionIndex as number | undefined;
     const sectionType = params.sectionType as string;
 
     try {
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+
+      // Validate page exists
+      const page = pages[pageName as keyof PagesConfig];
+      if (!page) {
+        return { success: false, error: `Page "${pageName}" not found` };
+      }
+
+      // =========================================================================
+      // Resolve sectionId to sectionIndex (PREFERRED path)
+      // =========================================================================
+      if (sectionId && sectionIndex === undefined) {
+        const foundIndex = page.sections.findIndex((s) => 'id' in s && s.id === sectionId);
+
+        if (foundIndex === -1) {
+          // Check other pages too to give helpful error message
+          for (const [otherPage, otherConfig] of Object.entries(pages)) {
+            if (otherPage === pageName) continue;
+            const idxInOther = otherConfig.sections.findIndex(
+              (s) => 'id' in s && s.id === sectionId
+            );
+            if (idxInOther !== -1) {
+              return {
+                success: false,
+                error: `Section "${sectionId}" exists on page "${otherPage}", not "${pageName}". Change pageName or use the correct sectionId.`,
+              };
+            }
+          }
+
+          // List available IDs on this page
+          const availableIds = page.sections
+            .filter((s) => 'id' in s && typeof s.id === 'string')
+            .map((s) => (s as { id: string }).id);
+
+          return {
+            success: false,
+            error: `Section "${sectionId}" not found on page "${pageName}". Available IDs: ${availableIds.join(', ') || 'none (use list_section_ids to discover)'}`,
+          };
+        }
+
+        sectionIndex = foundIndex;
+      }
+
       // Build section data from params
       const sectionData: Record<string, unknown> = {
         type: sectionType,
       };
+
+      // If updating existing section by ID, preserve the ID
+      if (sectionId) {
+        sectionData.id = sectionId;
+      }
 
       // Copy relevant fields based on section type
       const fieldsToCopy = [
@@ -194,15 +266,6 @@ Changes are saved to draft - user must publish to make live.`,
 
       const validatedSection = validationResult.data as Section;
 
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
-
-      // Validate page exists
-      const page = pages[pageName as keyof PagesConfig];
-      if (!page) {
-        return { success: false, error: `Page "${pageName}" not found` };
-      }
-
       // Determine operation
       const resolvedIndex =
         sectionIndex === undefined || sectionIndex === -1 ? page.sections.length : sectionIndex;
@@ -211,7 +274,7 @@ Changes are saved to draft - user must publish to make live.`,
 
       const operation = isAppend
         ? `Add ${sectionType} section to ${pageName} page`
-        : `Update ${sectionType} section on ${pageName} page`;
+        : `Update ${sectionType} section on ${pageName} page${sectionId ? ` (${sectionId})` : ''}`;
 
       // Build payload
       const payload = {
@@ -256,7 +319,9 @@ export const removePageSectionTool: AgentTool = {
   trustTier: 'T2',
   description: `Remove a section from a landing page.
 
-Specify the page name and section index (0-based) to remove.
+PREFERRED: Use sectionId (e.g., "home-hero-main") to target specific section.
+FALLBACK: Use sectionIndex (0-based) to remove by position.
+
 Changes are saved to draft - user must publish to make live.
 Can be undone by discarding draft.`,
   inputSchema: {
@@ -267,19 +332,77 @@ Can be undone by discarding draft.`,
         description: 'Which page to modify',
         enum: PAGE_NAMES as unknown as string[],
       },
+      sectionId: {
+        type: 'string',
+        description:
+          'PREFERRED: Section ID to remove (e.g., "home-cta-main"). Get IDs from list_section_ids.',
+      },
       sectionIndex: {
         type: 'number',
-        description: 'Index of section to remove (0-based)',
+        description: 'FALLBACK: Index of section to remove (0-based)',
       },
     },
-    required: ['pageName', 'sectionIndex'],
+    required: ['pageName'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const pageName = params.pageName as PageName;
-    const sectionIndex = params.sectionIndex as number;
+    const sectionId = params.sectionId as string | undefined;
+    let sectionIndex = params.sectionIndex as number | undefined;
 
     try {
+      // Get current draft config and slug in single query (#627 N+1 fix)
+      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+
+      // Validate page exists
+      const page = pages[pageName as keyof PagesConfig];
+      if (!page) {
+        return { success: false, error: `Page "${pageName}" not found` };
+      }
+
+      // =========================================================================
+      // Resolve sectionId to sectionIndex (PREFERRED path)
+      // =========================================================================
+      if (sectionId && sectionIndex === undefined) {
+        const foundIndex = page.sections.findIndex((s) => 'id' in s && s.id === sectionId);
+
+        if (foundIndex === -1) {
+          // Check other pages too to give helpful error message
+          for (const [otherPage, otherConfig] of Object.entries(pages)) {
+            if (otherPage === pageName) continue;
+            const idxInOther = otherConfig.sections.findIndex(
+              (s) => 'id' in s && s.id === sectionId
+            );
+            if (idxInOther !== -1) {
+              return {
+                success: false,
+                error: `Section "${sectionId}" exists on page "${otherPage}", not "${pageName}". Change pageName or use the correct sectionId.`,
+              };
+            }
+          }
+
+          // List available IDs on this page
+          const availableIds = page.sections
+            .filter((s) => 'id' in s && typeof s.id === 'string')
+            .map((s) => (s as { id: string }).id);
+
+          return {
+            success: false,
+            error: `Section "${sectionId}" not found on page "${pageName}". Available IDs: ${availableIds.join(', ') || 'none'}`,
+          };
+        }
+
+        sectionIndex = foundIndex;
+      }
+
+      // Require either sectionId or sectionIndex
+      if (sectionIndex === undefined) {
+        return {
+          success: false,
+          error: 'Either sectionId or sectionIndex is required.',
+        };
+      }
+
       // Validate payload
       const validationResult = RemovePageSectionPayloadSchema.safeParse({
         pageName,
@@ -292,15 +415,6 @@ Can be undone by discarding draft.`,
         };
       }
 
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
-
-      // Validate page exists
-      const page = pages[pageName as keyof PagesConfig];
-      if (!page) {
-        return { success: false, error: `Page "${pageName}" not found` };
-      }
-
       // Validate section exists
       if (sectionIndex < 0 || sectionIndex >= page.sections.length) {
         return {
@@ -311,8 +425,11 @@ Can be undone by discarding draft.`,
 
       const sectionToRemove = page.sections[sectionIndex];
       const sectionType = sectionToRemove.type;
+      const removedId = 'id' in sectionToRemove ? sectionToRemove.id : undefined;
 
-      const operation = `Remove ${sectionType} section from ${pageName} page`;
+      const operation = sectionId
+        ? `Remove ${sectionType} section (${sectionId}) from ${pageName} page`
+        : `Remove ${sectionType} section from ${pageName} page`;
       const payload = { pageName, sectionIndex };
 
       const preview: Record<string, unknown> = {
@@ -320,6 +437,7 @@ Can be undone by discarding draft.`,
         page: pageName,
         sectionType,
         sectionIndex,
+        ...(removedId && { sectionId: removedId }),
         hasDraft,
         previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
         note: 'Section will be removed. Discard draft to undo.',
@@ -331,7 +449,7 @@ Can be undone by discarding draft.`,
         error,
         'remove_page_section',
         tenantId,
-        `Failed to create section removal proposal. Verify section index is valid`
+        `Failed to create section removal proposal. Verify sectionId or sectionIndex is valid`
       );
     }
   },
@@ -640,17 +758,23 @@ All colors should be hex format (e.g., "#1a365d").`,
 /**
  * publish_draft - Publish draft changes to live storefront
  *
- * Trust Tier: T2 (soft confirm) - Makes draft changes live
+ * Trust Tier: T3 (requires approval) - Makes changes live to visitors
  * Copies landingPageConfigDraft to landingPageConfig and clears draft
+ *
+ * T3 because this action has REAL IMPACT on visitors - once published,
+ * changes are immediately visible. User must explicitly approve.
  */
 export const publishDraftTool: AgentTool = {
   name: 'publish_draft',
-  trustTier: 'T2',
+  trustTier: 'T3',
   description: `Publish the current draft to make it live on the storefront.
 
 This copies all draft changes to the live landing page configuration.
 The draft is cleared after publishing.
-Use this when the user is satisfied with their changes and wants them visible to visitors.`,
+Use this when the user is satisfied with their changes and wants them visible to visitors.
+
+IMPORTANT: This requires explicit user approval because changes will be immediately
+visible to all visitors.`,
   inputSchema: {
     type: 'object',
     properties: {},
@@ -677,10 +801,11 @@ Use this when the user is satisfied with their changes and wants them visible to
         action: 'publish',
         pageCount: Object.keys(pages).length,
         previewUrl: slug ? `/t/${slug}` : undefined,
-        note: 'Draft changes will become visible to visitors.',
+        note: 'Draft changes will become visible to visitors immediately.',
+        warning: 'This action requires your explicit approval.',
       };
 
-      return createProposal(context, 'publish_draft', operation, 'T2', payload, preview);
+      return createProposal(context, 'publish_draft', operation, 'T3', payload, preview);
     } catch (error) {
       return handleToolError(error, 'publish_draft', tenantId, 'Failed to create publish proposal');
     }
@@ -819,6 +944,478 @@ Use this to understand the current editing state before making changes.`,
 };
 
 // ============================================================================
+// Discovery Tools (T1 - Read-only)
+// ============================================================================
+
+/**
+ * Placeholder detection regex
+ * Matches content like [Hero Headline] or [Your Business Name]
+ */
+const PLACEHOLDER_REGEX = /^\[[\w\s-]+\]$/;
+
+/**
+ * Section summary for discovery response
+ */
+interface SectionSummary {
+  id: string;
+  page: PageName;
+  type: SectionTypeName;
+  headline: string;
+  hasPlaceholder: boolean;
+  placeholderFields: string[];
+  existsInDraft: boolean;
+  existsInLive: boolean;
+  itemCount?: number;
+}
+
+/**
+ * Find fields containing placeholder text [Like This]
+ */
+function findPlaceholderFields(section: Section): string[] {
+  const placeholders: string[] = [];
+
+  const checkValue = (key: string, value: unknown): void => {
+    if (typeof value === 'string' && PLACEHOLDER_REGEX.test(value)) {
+      placeholders.push(key);
+    } else if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          Object.entries(item).forEach(([k, v]) => {
+            if (typeof v === 'string' && PLACEHOLDER_REGEX.test(v)) {
+              placeholders.push(`${key}[${index}].${k}`);
+            }
+          });
+        }
+      });
+    }
+  };
+
+  // Check all fields except type and id
+  Object.entries(section).forEach(([key, value]) => {
+    if (key !== 'type' && key !== 'id') {
+      checkValue(key, value);
+    }
+  });
+
+  return placeholders;
+}
+
+/**
+ * Get item count for array-based sections
+ */
+function getItemCount(section: Section): number | undefined {
+  if ('items' in section && Array.isArray(section.items)) {
+    return section.items.length;
+  }
+  if ('images' in section && Array.isArray(section.images)) {
+    return section.images.length;
+  }
+  if ('tiers' in section && Array.isArray(section.tiers)) {
+    return section.tiers.length;
+  }
+  if ('features' in section && Array.isArray(section.features)) {
+    return section.features.length;
+  }
+  return undefined;
+}
+
+/**
+ * Get headline from a section (handles different section types)
+ */
+function getSectionHeadline(section: Section): string {
+  if ('headline' in section && typeof section.headline === 'string') {
+    return section.headline;
+  }
+  if ('content' in section && typeof section.content === 'string') {
+    return section.content.substring(0, 50) + (section.content.length > 50 ? '...' : '');
+  }
+  return '';
+}
+
+/**
+ * Collect all section IDs from a config
+ */
+function collectSectionIds(config: LandingPageConfig | null): Set<string> {
+  const ids = new Set<string>();
+  if (!config?.pages) return ids;
+
+  for (const pageConfig of Object.values(config.pages)) {
+    for (const section of pageConfig.sections || []) {
+      if ('id' in section && typeof section.id === 'string') {
+        ids.add(section.id);
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * list_section_ids - Discover all sections in tenant's storefront
+ *
+ * Trust Tier: T1 (auto-confirm) - Read-only operation
+ * CALL THIS FIRST before updating any sections.
+ */
+export const listSectionIdsTool: AgentTool = {
+  name: 'list_section_ids',
+  trustTier: 'T1',
+  description: `Discover all sections in the tenant's storefront.
+
+Returns section IDs, types, and whether they contain placeholder content.
+CALL THIS FIRST before updating any sections to get the correct IDs.
+
+Filters:
+- pageName: Filter by specific page
+- sectionType: Filter by section type
+- includeOnlyPlaceholders: Only return sections needing content`,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      pageName: {
+        type: 'string',
+        enum: PAGE_NAMES as unknown as string[],
+        description: 'Filter by page (optional). Omit to get all pages.',
+      },
+      sectionType: {
+        type: 'string',
+        enum: SECTION_TYPES as unknown as string[],
+        description: 'Filter by section type (optional).',
+      },
+      includeOnlyPlaceholders: {
+        type: 'boolean',
+        description: 'If true, only return sections with placeholder content.',
+      },
+    },
+    required: [],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const { pageName, sectionType, includeOnlyPlaceholders } = params as {
+      pageName?: PageName;
+      sectionType?: SectionTypeName;
+      includeOnlyPlaceholders?: boolean;
+    };
+
+    try {
+      // Get both draft and live configs
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { landingPageConfig: true, landingPageConfigDraft: true, slug: true },
+      });
+
+      const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
+      const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
+
+      // Use draft if exists, otherwise live, otherwise empty
+      const workingConfig = draftConfig || liveConfig;
+      if (!workingConfig?.pages) {
+        return {
+          success: true,
+          data: {
+            sections: [],
+            totalCount: 0,
+            hasDraft: false,
+            placeholderCount: 0,
+            note: 'No landing page configuration found. Use update_page_section to add sections.',
+          },
+        };
+      }
+
+      // Collect IDs from both configs for existsInDraft/existsInLive flags
+      const draftIds = collectSectionIds(draftConfig);
+      const liveIds = collectSectionIds(liveConfig);
+
+      const sections: SectionSummary[] = [];
+
+      // Iterate through working config pages
+      for (const [page, pageConfig] of Object.entries(workingConfig.pages)) {
+        if (pageName && page !== pageName) continue;
+
+        for (const section of pageConfig.sections || []) {
+          if (sectionType && section.type !== sectionType) continue;
+
+          // Generate legacy ID for sections without IDs
+          const sectionId =
+            'id' in section && typeof section.id === 'string'
+              ? section.id
+              : `${page}-${section.type}-legacy`;
+
+          const headline = getSectionHeadline(section);
+          const placeholderFields = findPlaceholderFields(section);
+          const hasPlaceholder = placeholderFields.length > 0;
+
+          if (includeOnlyPlaceholders && !hasPlaceholder) continue;
+
+          sections.push({
+            id: sectionId,
+            page: page as PageName,
+            type: section.type as SectionTypeName,
+            headline,
+            hasPlaceholder,
+            placeholderFields,
+            existsInDraft: draftIds.has(sectionId),
+            existsInLive: liveIds.has(sectionId),
+            itemCount: getItemCount(section),
+          });
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          sections,
+          totalCount: sections.length,
+          hasDraft: !!draftConfig,
+          placeholderCount: sections.filter((s) => s.hasPlaceholder).length,
+          previewUrl: tenant?.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+        },
+      };
+    } catch (error) {
+      return handleToolError(error, 'list_section_ids', tenantId, 'Failed to list sections');
+    }
+  },
+};
+
+/**
+ * get_section_by_id - Get full content of a section by its ID
+ *
+ * Trust Tier: T1 (auto-confirm) - Read-only operation
+ */
+export const getSectionByIdTool: AgentTool = {
+  name: 'get_section_by_id',
+  trustTier: 'T1',
+  description: `Get full content of a section by its ID.
+
+Use this to see current content before making updates.
+Get IDs from list_section_ids first.`,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      sectionId: {
+        type: 'string',
+        description: 'Section ID (e.g., "home-hero-main"). Get IDs from list_section_ids.',
+      },
+    },
+    required: ['sectionId'],
+  },
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+    const { sectionId } = params as { sectionId: string };
+
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { landingPageConfig: true, landingPageConfigDraft: true, slug: true },
+      });
+
+      const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
+      const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
+      const workingConfig = draftConfig || liveConfig;
+
+      if (!workingConfig?.pages) {
+        return {
+          success: false,
+          error: 'No landing page configuration found.',
+        };
+      }
+
+      // Find section by ID across all pages
+      for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
+        for (const section of pageConfig.sections || []) {
+          const currentId =
+            'id' in section && typeof section.id === 'string'
+              ? section.id
+              : `${pageName}-${section.type}-legacy`;
+
+          if (currentId === sectionId) {
+            return {
+              success: true,
+              data: {
+                section,
+                page: pageName,
+                source: draftConfig ? 'draft' : 'live',
+                placeholderFields: findPlaceholderFields(section),
+                previewUrl: tenant?.slug
+                  ? `/t/${tenant.slug}?preview=draft&page=${pageName}`
+                  : undefined,
+              },
+            };
+          }
+        }
+      }
+
+      // Not found - list available IDs
+      const availableIds: string[] = [];
+      for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
+        for (const section of pageConfig.sections || []) {
+          const id =
+            'id' in section && typeof section.id === 'string'
+              ? section.id
+              : `${pageName}-${section.type}-legacy`;
+          availableIds.push(id);
+        }
+      }
+
+      return {
+        success: false,
+        error: `Section '${sectionId}' not found. Available sections: ${availableIds.join(', ') || 'none'}`,
+      };
+    } catch (error) {
+      return handleToolError(error, 'get_section_by_id', tenantId, 'Failed to get section');
+    }
+  },
+};
+
+/**
+ * get_unfilled_placeholders - Get all unfilled placeholder fields
+ *
+ * Trust Tier: T1 (auto-confirm) - Read-only operation
+ * Use this to guide users through setup.
+ */
+export const getUnfilledPlaceholdersTool: AgentTool = {
+  name: 'get_unfilled_placeholders',
+  trustTier: 'T1',
+  description: `Get all sections and fields that still contain placeholder content [Like This].
+
+Use this to:
+- See what content still needs to be filled in
+- Guide users through setup
+- Track completion progress`,
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  async execute(context: ToolContext): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { landingPageConfig: true, landingPageConfigDraft: true, slug: true },
+      });
+
+      const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
+      const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
+      const workingConfig = draftConfig || liveConfig;
+
+      if (!workingConfig?.pages) {
+        return {
+          success: true,
+          data: {
+            unfilledItems: [],
+            unfilledCount: 0,
+            percentComplete: 100,
+            summary: 'No landing page configuration found.',
+          },
+        };
+      }
+
+      const unfilledItems: Array<{
+        sectionId: string;
+        page: string;
+        sectionType: string;
+        field: string;
+        currentValue: string;
+      }> = [];
+
+      let totalFields = 0;
+      let filledFields = 0;
+
+      for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
+        for (const section of pageConfig.sections || []) {
+          const sectionId =
+            'id' in section && typeof section.id === 'string'
+              ? section.id
+              : `${pageName}-${section.type}-legacy`;
+
+          const placeholders = findPlaceholderFields(section);
+
+          // Count editable fields for completion percentage
+          const editableKeys = [
+            'headline',
+            'subheadline',
+            'content',
+            'ctaText',
+            'email',
+            'phone',
+            'address',
+            'hours',
+          ];
+          let sectionFields = 0;
+          for (const key of editableKeys) {
+            if (key in section) sectionFields++;
+          }
+          // Add array items to count
+          const itemCount = getItemCount(section);
+          if (itemCount) {
+            sectionFields += itemCount * 2; // question+answer or quote+author etc
+          }
+          sectionFields = Math.max(sectionFields, 1);
+
+          totalFields += sectionFields;
+          filledFields += sectionFields - placeholders.length;
+
+          // Add placeholder items to list
+          for (const field of placeholders) {
+            const value = getFieldValue(section, field);
+            unfilledItems.push({
+              sectionId,
+              page: pageName,
+              sectionType: section.type,
+              field,
+              currentValue: value,
+            });
+          }
+        }
+      }
+
+      const percentComplete =
+        totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 100;
+
+      return {
+        success: true,
+        data: {
+          unfilledItems,
+          unfilledCount: unfilledItems.length,
+          percentComplete,
+          summary:
+            unfilledItems.length === 0
+              ? 'All content is filled in! Ready to publish.'
+              : `${unfilledItems.length} fields still need content. ${percentComplete}% complete.`,
+          previewUrl: tenant?.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+        },
+      };
+    } catch (error) {
+      return handleToolError(
+        error,
+        'get_unfilled_placeholders',
+        tenantId,
+        'Failed to get placeholder status'
+      );
+    }
+  },
+};
+
+/**
+ * Get value at a field path like "items[0].question"
+ */
+function getFieldValue(section: Section, fieldPath: string): string {
+  const parts = fieldPath.split(/[\[\].]+/).filter(Boolean);
+  let value: unknown = section;
+
+  for (const part of parts) {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') {
+      value = (value as Record<string, unknown>)[part];
+    } else {
+      return '';
+    }
+  }
+
+  return typeof value === 'string' ? value : '';
+}
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -826,6 +1423,11 @@ Use this to understand the current editing state before making changes.`,
  * All storefront tools exported as array for registration
  */
 export const storefrontTools: AgentTool[] = [
+  // Discovery tools (T1 - read-only)
+  listSectionIdsTool,
+  getSectionByIdTool,
+  getUnfilledPlaceholdersTool,
+  // Write tools (T1/T2)
   updatePageSectionTool,
   removePageSectionTool,
   reorderPageSectionsTool,

@@ -87,6 +87,32 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       throw new ValidationError(`Page "${pageName}" not found`);
     }
 
+    // =========================================================================
+    // Section ID Uniqueness Validation
+    // If the incoming section has an ID, ensure it doesn't conflict with
+    // any other section in the entire config (except the section being updated)
+    // =========================================================================
+    const incomingId =
+      'id' in sectionData && typeof sectionData.id === 'string' ? sectionData.id : null;
+
+    if (incomingId) {
+      // Collect all existing IDs across all pages
+      for (const [pName, pConfig] of Object.entries(pages)) {
+        for (let i = 0; i < pConfig.sections.length; i++) {
+          const section = pConfig.sections[i];
+          if ('id' in section && section.id === incomingId) {
+            // If updating the same section at the same position, allow it
+            const isUpdatingSameSection = pName === pageName && i === sectionIndex;
+            if (!isUpdatingSameSection) {
+              throw new ValidationError(
+                `Section ID '${incomingId}' already exists on page '${pName}'. IDs must be unique.`
+              );
+            }
+          }
+        }
+      }
+    }
+
     // Clone sections array to avoid mutation
     const newSections = [...page.sections];
 
@@ -115,10 +141,20 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
 
     const resultIndex = sectionIndex === -1 ? newSections.length - 1 : sectionIndex;
+    const sectionId =
+      'id' in sectionData && typeof sectionData.id === 'string' ? sectionData.id : undefined;
 
+    // Audit logging with section ID for traceability
     logger.info(
-      { tenantId, pageName, sectionIndex: resultIndex, sectionType: sectionData.type },
-      'Page section updated via Build Mode'
+      {
+        tenantId,
+        pageName,
+        sectionIndex: resultIndex,
+        sectionType: sectionData.type,
+        sectionId,
+        action: sectionIndex === -1 ? 'CREATE' : 'UPDATE',
+      },
+      'Page section modified via Build Mode'
     );
 
     return {
@@ -126,6 +162,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       pageName,
       sectionIndex: resultIndex,
       sectionType: sectionData.type,
+      sectionId,
       previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
     };
   });
@@ -163,6 +200,10 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     const removedSection = page.sections[sectionIndex];
     const removedType = removedSection.type;
+    const removedId =
+      'id' in removedSection && typeof removedSection.id === 'string'
+        ? removedSection.id
+        : undefined;
 
     // Clone and remove section
     const newSections = [...page.sections];
@@ -183,8 +224,16 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     // Save to draft
     await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
 
+    // Audit logging with section ID for traceability
     logger.info(
-      { tenantId, pageName, sectionIndex, sectionType: removedType },
+      {
+        tenantId,
+        pageName,
+        sectionIndex,
+        sectionType: removedType,
+        sectionId: removedId,
+        action: 'DELETE',
+      },
       'Page section removed via Build Mode'
     );
 
@@ -193,6 +242,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       pageName,
       sectionIndex,
       removedSectionType: removedType,
+      removedSectionId: removedId,
       remainingSections: newSections.length,
       previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
     };
@@ -417,6 +467,18 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       throw new ValidationError('No draft changes to publish.');
     }
 
+    // Count sections for audit log
+    const draftConfig = tenant.landingPageConfigDraft as unknown as {
+      pages?: Record<string, { sections?: unknown[] }>;
+    };
+    const totalSections = draftConfig?.pages
+      ? Object.values(draftConfig.pages).reduce(
+          (sum, page) => sum + (page?.sections?.length || 0),
+          0
+        )
+      : 0;
+    const pageCount = draftConfig?.pages ? Object.keys(draftConfig.pages).length : 0;
+
     // Copy draft to live config and clear draft
     // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
     await prisma.tenant.update({
@@ -427,7 +489,16 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       },
     });
 
-    logger.info({ tenantId }, 'Draft published to live storefront via Build Mode');
+    // Audit logging with publish details
+    logger.info(
+      {
+        tenantId,
+        action: 'PUBLISH',
+        pageCount,
+        totalSections,
+      },
+      'Draft published to live storefront via Build Mode'
+    );
 
     return {
       action: 'published',

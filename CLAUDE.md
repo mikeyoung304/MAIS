@@ -816,6 +816,11 @@ export class BookingService {
 21. **Singleton caches prevent DI:** Export class + factory function, not just singleton, to enable test injection
 22. **Missing cache invalidation after writes:** Write tools must invalidate context cache after modifying tenant data
 23. **Logging full error objects:** Use `sanitizeError()` helper - never log full error objects (may contain API keys, headers)
+24. **Early return before hooks:** Adding early returns to existing components BEFORE hooks violates Rules of Hooks. Move all hooks above returns.
+25. **Symlinks in TypeScript src directories:** Symlinks cause double compilation. Use tsconfig paths or npm workspaces instead.
+26. **TOCTOU on JSON field validation:** Read-validate-write on JSON fields (landingPageConfig, etc.) without transaction allows duplicate data. Wrap in `$transaction` + advisory lock.
+27. **Duplicated tool logic:** Same validation logic in multiple tools diverges over time. Extract to `server/src/agent/utils/` immediately.
+28. **Inconsistent tool parameters:** Related tools must support same patterns (e.g., all section tools should support sectionId, not just some).
 
 ## Prevention Strategies (Read These!)
 
@@ -848,6 +853,14 @@ The following links prevent common mistakes from recurring:
   - Quick reference: [ESLINT_DEAD_CODE_QUICK_REFERENCE.md](docs/solutions/patterns/ESLINT_DEAD_CODE_QUICK_REFERENCE.md) - Print & pin (2 min read)
   - Implementation: [ESLINT_PRE_COMMIT_IMPLEMENTATION_GUIDE.md](docs/solutions/patterns/ESLINT_PRE_COMMIT_IMPLEMENTATION_GUIDE.md) - Add ESLint to pre-commit hook
   - Strategy: [ESLINT_DEAD_CODE_PREVENTION_STRATEGY-MAIS-20260105.md](docs/solutions/patterns/ESLINT_DEAD_CODE_PREVENTION_STRATEGY-MAIS-20260105.md) - 7 comprehensive strategies
+- **[react-hooks-early-return-prevention](docs/solutions/patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md)** - React Rules of Hooks: early returns before hooks cause Vercel build failure (local passes, CI fails). Move ALL hooks above ANY returns.
+  - Quick reference: [REACT_HOOKS_EARLY_RETURN_QUICK_REFERENCE.md](docs/solutions/patterns/REACT_HOOKS_EARLY_RETURN_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[typescript-symlink-resolution-prevention](docs/solutions/patterns/TYPESCRIPT_SYMLINK_RESOLUTION_PREVENTION.md)** - Symlinks in src cause double compilation. Use tsconfig paths or workspaces instead.
+  - Quick reference: [TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md](docs/solutions/patterns/TYPESCRIPT_SYMLINK_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[storefront-section-ids-prevention](docs/solutions/patterns/STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md)** - TOCTOU races on JSON fields, DRY for tool logic, API consistency across related tools, testing error paths
+  - Quick reference: [STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md](docs/solutions/patterns/STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md) - Print & pin (2 min read)
+
+**Key insight from Storefront Section IDs Code Review:** JSON field check-then-write patterns need transaction + advisory lock (TOCTOU). Extract shared resolution logic to `agent/utils/` - don't duplicate between tools. All related tools must support same parameters (sectionId preferred, sectionIndex fallback). Test cross-page errors and legacy data (sections without IDs).
 
 **Key insight from Atomic Tenant Provisioning:** Multi-entity creation requires three defenses: (1) atomic transaction to prevent partial state, (2) centralized provisioning service to prevent logic duplication, (3) validation layer to catch regressions. Never have the same "create tenant + defaults" logic in multiple places. When service paths diverge (admin API vs signup), unify them immediately using shared provisioning service.
 
@@ -870,6 +883,12 @@ The following links prevent common mistakes from recurring:
 **Key insight from Turbopack HMR Cache Issues:** Turbopack maintains an in-memory module graph that becomes stale when removing imports or switching build modes. Recovery is always the same: clear caches (`rm -rf .next .turbo`) and restart. Prevention: proactively clear after branch switches, npm installs, and dependency removals. Use `npm run dev:fresh` script (added to apps/web/package.json) for one-liner recovery.
 
 **Key insight from Build Mode Code Review:** Agent parity is critical - every UI action needs a corresponding tool (publish_draft, discard_draft, get_draft were missing). Zod schemas MUST live in `@macon/contracts` and be imported in both tools AND executors (not duplicated). All visual changes (including branding) must go to draft, not live. PostMessage handlers must validate origin AND parse through Zod before processing - never cast `event.data as SomeType`.
+
+**Key insight from React Hooks Early Return:** Adding an early return BEFORE existing hooks violates React's Rules of Hooks (hooks must be called in the same order every render). Build passes locally but fails on Vercel due to different ESLint strictness. Solution: Move ALL hooks above ANY early returns, use optional chaining (`?.`) and nullish coalescing (`??`) in hook initializers. Always run `npm run build` locally before pushing.
+
+**Key insight from TypeScript Symlinks:** Symlinks in TypeScript source directories cause double compilation - same file resolved via two different paths is treated as two different modules. This breaks `instanceof` checks, creates duplicate singletons, and causes "duplicate identifier" errors. Solution: Never put symlinks in src directories. Use tsconfig.json `paths` or npm workspaces instead. Detect with: `find apps/*/src server/src -type l`.
+
+**Key insight from Section ID Pattern:** Array indices are fragile for AI chatbot references - they drift on delete/reorder. Solution: Human-readable IDs (`{page}-{type}-{qualifier}` like `home-hero-main`) with monotonic counter (never reuse deleted IDs). TOCTOU prevention: wrap uniqueness checks in transactions with advisory locks. DRY: extract shared ID resolution logic to `agent/utils/`. See `docs/solutions/patterns/STOREFRONT_SECTION_ID_PATTERN-MAIS-20260108.md`.
 
 ## Quick Start Checklist
 

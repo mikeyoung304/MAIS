@@ -492,9 +492,15 @@ export function hasExecutorSchema(toolName: string): boolean {
 
 export {
   SectionSchema,
+  SectionIdSchema,
   PAGE_NAMES,
+  SECTION_TYPES,
   DEFAULT_PAGES_CONFIG,
+  isSectionWithId,
+  generateSectionId,
   type PageName,
+  type SectionTypeName,
+  type SectionId,
   type Section,
   type LandingPageConfig,
   type PagesConfig,
