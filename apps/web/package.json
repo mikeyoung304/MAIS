@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbo --port 3000",
     "dev:fresh": "rm -rf .next .turbo node_modules/.cache && npm run dev",
+    "dev:no-sw": "DISABLE_SW=true npm run dev",
     "build": "next build",
     "build:clean": "rm -rf .next .turbo && npm run build",
     "build:deps": "npm run build -w @macon/contracts && npm run build -w @macon/shared",
@@ -40,6 +41,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
+    "immer": "^11.1.3",
     "lucide-react": "^0.441.0",
     "next": "14.2.35",
     "next-auth": "^5.0.0-beta.25",
@@ -49,7 +51,8 @@
     "react-resizable-panels": "^4.2.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.5.2",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.56.2",
