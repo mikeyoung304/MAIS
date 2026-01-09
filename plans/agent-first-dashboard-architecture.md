@@ -2,18 +2,18 @@
 
 **Date:** 2026-01-09
 **Type:** Major Refactoring
-**Status:** Phase 3 Complete - Ready for Phase 4
+**Status:** Phase 4 Complete - Ready for Phase 5 (E2E Tests)
 **Review Status:** Reviewed by 4 specialized agents (DHH, Kieran, Principal Architect, Agent-Native)
 
 ### Implementation Progress
 
-| Phase                           | Status         | Notes                                                        |
-| ------------------------------- | -------------- | ------------------------------------------------------------ |
-| Phase 1: Foundation             | ✅ Complete    | Zustand store, useDraftConfig, capability registry           |
-| Phase 2: Content Area & Preview | ✅ Complete    | ContentArea, PreviewPanel, DashboardView, layout integration |
-| Phase 3: Agent Integration      | ✅ Complete    | UI tools, onUIAction callback, agent-controlled navigation   |
-| Phase 4: Layout Refactoring     | 🔲 Not Started | Remove /tenant/build, redirect handling                      |
-| Phase 5: Cleanup & Testing      | 🔲 Not Started | Remove deprecated code, E2E tests                            |
+| Phase                           | Status         | Notes                                                                     |
+| ------------------------------- | -------------- | ------------------------------------------------------------------------- |
+| Phase 1: Foundation             | ✅ Complete    | Zustand store, useDraftConfig, capability registry                        |
+| Phase 2: Content Area & Preview | ✅ Complete    | ContentArea, PreviewPanel, DashboardView, layout integration              |
+| Phase 3: Agent Integration      | ✅ Complete    | UI tools, onUIAction callback, agent-controlled navigation                |
+| Phase 4: Layout Refactoring     | ✅ Complete    | GrowthAssistantPanel → AgentPanel, redirect /tenant/build, remove context |
+| Phase 5: Cleanup & Testing      | 🔲 Not Started | E2E tests for agent UI control                                            |
 
 ---
 
@@ -1370,13 +1370,13 @@ export default function DashboardPage() {
 
 **Phase 4 Tasks:**
 
-- [ ] Update `tenant/layout.tsx` to use ContentArea and AgentPanel
-- [ ] Remove GrowthAssistantContext (replaced by Zustand store)
-- [ ] Redirect `/tenant/build` → `/tenant/dashboard?showPreview=true`
-- [ ] Handle `showPreview` query param in dashboard page
-- [ ] Remove deprecated BuildModeChat component (or deprecate)
-- [ ] Update navigation links throughout app
-- [ ] Remove `/tenant/build/layout.tsx` (no longer needed)
+- [x] Update `tenant/layout.tsx` to use ContentArea and AgentPanel
+- [x] Remove GrowthAssistantContext (replaced by Zustand store)
+- [x] Redirect `/tenant/build` → `/tenant/dashboard?showPreview=true`
+- [x] Handle `showPreview` query param in dashboard page
+- [x] Remove deprecated BuildModeChat component (or deprecate) - marked @deprecated
+- [x] Update navigation links throughout app
+- [x] Simplify `/tenant/build/layout.tsx` (minimal wrapper for redirect)
 
 ---
 
@@ -1384,20 +1384,20 @@ export default function DashboardPage() {
 
 ### Functional Requirements
 
-- [ ] Agent chat is visible on ALL tenant dashboard pages
-- [ ] Agent can trigger "show preview" and preview appears in content area
-- [ ] Agent can trigger "hide preview" and dashboard returns
-- [ ] Agent can navigate user to different dashboard pages
-- [ ] Section highlights work when agent mentions a section
-- [ ] Draft changes reflect in preview within 2 seconds
-- [ ] Publish requires T3 confirmation (dialog)
-- [ ] Discard requires T3 confirmation (dialog)
-- [ ] Existing `/tenant/build` URL redirects to dashboard with preview
-- [ ] Cmd+K focuses agent input from anywhere
+- [x] Agent chat is visible on ALL tenant dashboard pages
+- [x] Agent can trigger "show preview" and preview appears in content area
+- [x] Agent can trigger "hide preview" and dashboard returns
+- [x] Agent can navigate user to different dashboard pages
+- [x] Section highlights work when agent mentions a section
+- [ ] Draft changes reflect in preview within 2 seconds (needs testing)
+- [x] Publish requires T3 confirmation (dialog)
+- [x] Discard requires T3 confirmation (dialog)
+- [x] Existing `/tenant/build` URL redirects to dashboard with preview
+- [x] Cmd+K focuses agent input from anywhere
 
 ### Non-Functional Requirements
 
-- [ ] No duplicate chat interfaces (single source of truth)
+- [x] No duplicate chat interfaces (single source of truth) - AgentPanel is the only active chat
 - [ ] Preview iframe loads under 1 second
 - [ ] State persists across navigation within tenant area
 - [ ] No hydration mismatches (SSR-safe)
