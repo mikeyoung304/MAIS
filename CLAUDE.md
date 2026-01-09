@@ -483,6 +483,32 @@ const memory = await advisorMemoryRepo.projectFromEvents(tenantId);
 
 **Testing:** See `server/test/agent/onboarding/` and `server/test/integration/onboarding-flow.spec.ts`
 
+**Dual-Mode Consistency (P1 Prevention Strategy):**
+
+When ALL methods that vary by onboarding phase must check mode consistently:
+
+```typescript
+// Extract mode check to one reusable method
+protected async isOnboardingActive(): Promise<boolean> {
+  const ctx = getRequestContext();
+  return ctx?.isOnboardingMode && ACTIVE_ONBOARDING_PHASES.includes(tenant.onboardingPhase);
+}
+
+// Every mode-aware method calls it FIRST
+protected async buildSystemPrompt(): Promise<string> {
+  if (await this.isOnboardingActive()) {
+    return buildOnboardingSystemPrompt(...);
+  }
+  return buildAdminSystemPrompt(...);
+}
+```
+
+**Watch These Methods:** `getTools()`, `buildSystemPrompt()`, `getGreeting()`, `buildContext()` — if one checks mode, ALL must.
+
+**Test:** buildSystemPrompt() must return different content for DISCOVERY phase vs COMPLETED phase, and tools/prompt must align.
+
+**Reference:** `docs/solutions/patterns/DUAL_MODE_ORCHESTRATOR_PREVENTION.md` (full strategy), `docs/solutions/patterns/DUAL_MODE_ORCHESTRATOR_QUICK_REFERENCE.md` (2 min cheat sheet)
+
 ### Agent Evaluation System
 
 Automated quality assessment for AI agent conversations. Evaluates traces for safety, accuracy, and goal completion via Render cron job (every 15 min).
@@ -821,6 +847,7 @@ export class BookingService {
 26. **TOCTOU on JSON field validation:** Read-validate-write on JSON fields (landingPageConfig, etc.) without transaction allows duplicate data. Wrap in `$transaction` + advisory lock.
 27. **Duplicated tool logic:** Same validation logic in multiple tools diverges over time. Extract to `server/src/agent/utils/` immediately.
 28. **Inconsistent tool parameters:** Related tools must support same patterns (e.g., all section tools should support sectionId, not just some).
+29. **Dual-mode orchestrator method inconsistency:** If `getTools()` checks `isOnboardingMode`, then `buildSystemPrompt()` and `getGreeting()` MUST also check. Otherwise agent has right tools but wrong instructions.
 
 ## Prevention Strategies (Read These!)
 
@@ -861,6 +888,9 @@ The following links prevent common mistakes from recurring:
   - Quick reference: [STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md](docs/solutions/patterns/STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - **[nextjs-server-client-boundary](docs/solutions/best-practices/nextjs-migration-audit-server-client-boundary-MAIS-20260108.md)** - Server/client import boundary pattern: files importing `next/headers` are "tainted" and cannot be imported by client components. Multi-reviewer audit methodology.
   - Quick reference: [NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md](docs/solutions/best-practices/NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[onboarding-mode-orchestrator-system-prompt](docs/solutions/agent-issues/onboarding-mode-orchestrator-system-prompt-MAIS-20260108.md)** - Dual-mode orchestrator must check mode in ALL methods (getTools, buildSystemPrompt, getGreeting). If one checks but others don't, agent has right tools but wrong instructions.
+
+**Key insight from Dual-Mode Orchestrator (Commit TBD):** When orchestrator has dual modes (onboarding vs admin), ALL methods must check mode consistently. Bug: `getTools()` checked `isOnboardingMode` but `buildSystemPrompt()` always returned admin template saying "connect Stripe first". Result: agent had onboarding tools but followed admin instructions, skipping discovery phase. Fix: Extract `isOnboardingActive()` method, call from getTools(), buildSystemPrompt(), AND getGreeting().
 
 **Key insight from Next.js Server/Client Boundary (Commit 09230b16):** Files that import server-only modules (`next/headers`, `cookies`) "taint" the entire file - client components cannot import ANYTHING from it, even functions that don't use the server import. This means apparent "duplicate" code (like `api.client.ts` duplicating functions from `api.ts`) is often INTENTIONAL. Before deleting "dead code", check if the original file has server-only imports. Multi-reviewer validation (DHH, TypeScript, Simplicity personas) catches different issues.
 

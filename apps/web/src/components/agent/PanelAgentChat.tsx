@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
+import { parseQuickReplies } from '@/lib/parseQuickReplies';
+import { QuickReplyChips } from './QuickReplyChips';
 
 // Use Next.js API proxy to handle authentication
 // The proxy at /api/agent/* adds the backend token from the session
@@ -132,7 +134,7 @@ export function PanelAgentChat({
       setMessages([
         {
           role: 'assistant',
-          content: welcomeMessage,
+          content: data.greeting || welcomeMessage,
           timestamp: new Date(),
         },
       ]);
@@ -301,14 +303,38 @@ export function PanelAgentChat({
     <div className={cn('flex flex-col h-full', className)}>
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth">
-        {messages.map((message, index) => (
-          <CompactMessage
-            key={index}
-            message={message}
-            onConfirmProposal={confirmProposal}
-            onRejectProposal={rejectProposal}
-          />
-        ))}
+        {messages.map((message, index) => {
+          // Check if this is the last assistant message
+          const isLastAssistantMessage =
+            message.role === 'assistant' && index === messages.length - 1;
+
+          // Parse quick replies from assistant messages
+          const { message: displayContent, quickReplies } =
+            message.role === 'assistant'
+              ? parseQuickReplies(message.content)
+              : { message: message.content, quickReplies: [] };
+
+          return (
+            <div key={index}>
+              <CompactMessage
+                message={{ ...message, content: displayContent }}
+                onConfirmProposal={confirmProposal}
+                onRejectProposal={rejectProposal}
+              />
+              {/* Quick replies - only on last assistant message */}
+              {isLastAssistantMessage && quickReplies.length > 0 && (
+                <QuickReplyChips
+                  replies={quickReplies}
+                  onSelect={(reply) => {
+                    setInputValue(reply);
+                    inputRef.current?.focus();
+                  }}
+                  disabled={isLoading}
+                />
+              )}
+            </div>
+          );
+        })}
 
         {/* Loading indicator */}
         {isLoading && (

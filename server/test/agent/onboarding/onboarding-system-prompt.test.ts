@@ -93,9 +93,9 @@ describe('buildOnboardingSystemPrompt', () => {
         isResume: false,
       });
 
-      expect(prompt).toContain('Marketing');
+      expect(prompt).toContain('Website Setup');
       expect(prompt).toContain('headline');
-      expect(prompt).toContain('update_storefront');
+      expect(prompt).toContain('update_page_section');
     });
 
     it('includes completion guidance for COMPLETED phase', () => {

@@ -23,6 +23,12 @@ import { withSessionId } from '../context/context-cache';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { parseOnboardingPhase, type OnboardingPhase } from '@macon/contracts';
+import {
+  buildOnboardingSystemPrompt,
+  getOnboardingGreeting,
+} from '../prompts/onboarding-system-prompt';
+import { AdvisorMemoryService } from '../onboarding/advisor-memory.service';
+import { PrismaAdvisorMemoryRepository } from '../../adapters/prisma/advisor-memory.repository';
 
 import {
   BaseOrchestrator,
@@ -184,6 +190,14 @@ export interface AdminSessionState extends SessionState {
  * requests from different tenants.
  */
 export class AdminOrchestrator extends BaseOrchestrator {
+  private advisorMemoryService: AdvisorMemoryService;
+
+  constructor(prisma: import('../../generated/prisma/client').PrismaClient) {
+    super(prisma);
+    const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prisma);
+    this.advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // Abstract Method Implementations
   // ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +214,26 @@ export class AdminOrchestrator extends BaseOrchestrator {
   }
 
   protected async buildSystemPrompt(context: PromptContext): Promise<string> {
-    // Build session context with caching
+    // Check if we're in onboarding mode (from request context)
+    const requestCtx = getRequestContext();
+    if (requestCtx?.isOnboardingMode) {
+      // Use onboarding-specific system prompt
+      const tenant = context.tenant;
+      const currentPhase = parseOnboardingPhase(tenant?.onboardingPhase);
+      const businessName = tenant?.name || 'Your Business';
+
+      // Get advisor memory for session continuity
+      const onboardingCtx = await this.advisorMemoryService.getOnboardingContext(context.tenantId);
+
+      return buildOnboardingSystemPrompt({
+        businessName,
+        currentPhase,
+        advisorMemory: onboardingCtx.memory ?? undefined,
+        isResume: onboardingCtx.isReturning,
+      });
+    }
+
+    // Build session context with caching for regular admin mode
     const sessionContext = await this.buildCachedContext(context.tenantId, context.sessionId);
 
     return SYSTEM_PROMPT_TEMPLATE.replace('{BUSINESS_CONTEXT}', sessionContext.contextPrompt);
@@ -243,6 +276,24 @@ export class AdminOrchestrator extends BaseOrchestrator {
     const session = await this.getAdminSession(tenantId, sessionId);
     if (!session) {
       return 'What should we knock out today?';
+    }
+
+    // Check if onboarding is active and use onboarding greeting
+    if (session.isOnboardingMode && session.onboardingPhase) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      });
+      const businessName = tenant?.name || 'Your Business';
+
+      const onboardingCtx = await this.advisorMemoryService.getOnboardingContext(tenantId);
+
+      return getOnboardingGreeting({
+        businessName,
+        currentPhase: session.onboardingPhase,
+        advisorMemory: onboardingCtx.memory ?? undefined,
+        isResume: onboardingCtx.isReturning,
+      });
     }
 
     return getHandledGreeting(session.context);
