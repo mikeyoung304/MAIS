@@ -58,6 +58,8 @@ interface UseDraftAutosaveResult {
   publishDraft: () => Promise<boolean>;
   /** Discard draft changes */
   discardDraft: () => Promise<boolean>;
+  /** Cancel any pending debounced save (call before publish/discard to prevent race condition) */
+  cancelPendingSave: () => void;
 }
 
 export function useDraftAutosave({
@@ -220,6 +222,17 @@ export function useDraftAutosave({
     setIsDirty(true);
   }, []);
 
+  // Cancel any pending debounced save
+  // Call this before publish/discard to prevent race condition where
+  // a stale debounced save fires AFTER the publish/discard completes
+  const cancelPendingSave = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = undefined;
+      logger.debug('[useDraftAutosave] Cancelled pending save');
+    }
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -250,5 +263,6 @@ export function useDraftAutosave({
     updateDraft,
     publishDraft,
     discardDraft,
+    cancelPendingSave,
   };
 }

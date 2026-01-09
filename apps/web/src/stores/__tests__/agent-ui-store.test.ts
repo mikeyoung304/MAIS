@@ -102,7 +102,7 @@ describe('agent-ui-store', () => {
           {
             id: 'action_1',
             type: 'SHOW_PREVIEW',
-            payload: {},
+            payload: { page: 'home' },
             timestamp: Date.now(),
             agentSessionId: null,
             tenantId: 'tenant_old',

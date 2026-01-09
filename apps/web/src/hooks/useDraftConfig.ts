@@ -221,11 +221,33 @@ export function useDraftConfig(): UseDraftConfigResult {
 // ============================================
 
 /**
- * Query client reference for external invalidation
+ * Module-level QueryClient Reference
  *
- * Agent tool handlers need to invalidate the draft config cache
- * after making modifications. Since they run outside React,
- * we provide a way to store and access the query client.
+ * This singleton pattern allows external code (agent tool handlers) to invalidate
+ * the draft config cache without needing React context access.
+ *
+ * Agent tool handlers need to invalidate the draft config cache after making
+ * modifications. Since they run outside React, we provide a way to store and
+ * access the query client.
+ *
+ * DESIGN RATIONALE:
+ * - Agent tool handlers execute outside React component tree
+ * - They need to trigger cache invalidation after modifying draft config
+ * - This pattern provides that bridge without complex context drilling
+ *
+ * LIMITATIONS (acknowledged and acceptable):
+ * - After HMR in development, the ref may briefly point to an old client
+ *   → Impact: Cache invalidation may silently fail once, UI shows stale data
+ *   → Recovery: Next user action or page refresh resolves it
+ *
+ * - Multiple QueryClientProvider instances could cause issues
+ *   → Not expected in this app (single provider at root)
+ *
+ * The ref is set during component mount and stays valid for the app lifecycle.
+ * This pattern is acceptable because:
+ * 1. The app has a single QueryClientProvider at the root
+ * 2. Cache invalidation failure is recoverable (UI shows stale data briefly)
+ * 3. The alternative (context drilling through props) is significantly more complex
  */
 let queryClientRef: QueryClient | null = null;
 

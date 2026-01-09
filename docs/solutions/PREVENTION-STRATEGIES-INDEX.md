@@ -2400,6 +2400,11 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 - **[React Unstable Array Dependency Prevention](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_PREVENTION.md)** - Comprehensive guide for preventing useEffect re-runs caused by unstable array references. Arrays created during render (`[].filter()`, parser returns) are new references each time, triggering effects. Fix with `useMemo()` to stabilize.
   - Quick Reference: [REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md) - Print & pin (2 min read)
 
+**Recent Additions (2026-01-09):**
+
+- **[Agent UI Phase 5 Code Review Patterns](./patterns/AGENT_UI_PHASE_5_CODE_REVIEW_PATTERNS.md)** - 5 critical solution patterns from Phase 5 code review fixes (#678, #680, #682, #683, #684, #686). Covers: FIFO buffer for unbounded arrays, debounce cancellation before critical ops, async dialog handling, capability registry hygiene, singleton pattern documentation. **P1 patterns** (memory leaks, race conditions) + **P2/P3** (feature alignment, code clarity).
+  - Quick Reference: [AGENT_UI_PHASE_5_QUICK_REFERENCE.md](./patterns/AGENT_UI_PHASE_5_QUICK_REFERENCE.md) - Print & pin (1 min read)
+
 **Recent Additions (2026-01-08):**
 
 - **[React Hooks Early Return Prevention](./patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md)** - Comprehensive guide for React Rules of Hooks violations when adding early returns to existing components. Includes 3 correct patterns, ESLint rules, code review checklist, and test strategies.

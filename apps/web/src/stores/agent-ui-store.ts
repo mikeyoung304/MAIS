@@ -23,6 +23,9 @@ import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { PageName } from '@macon/contracts';
 
+// Maximum number of actions to keep in the log (FIFO buffer - oldest removed first)
+const MAX_ACTION_LOG_SIZE = 100;
+
 // ============================================
 // DISCRIMINATED UNIONS - Eliminate impossible states
 // ============================================
@@ -60,6 +63,15 @@ export type ViewState =
 // ============================================
 
 /**
+ * Event Sourcing / Undo Scaffolding
+ *
+ * The actionLog and undoLastAction() are scaffolding for the planned undo/redo feature.
+ * Currently used only in tests but architecture is in place for Phase X implementation.
+ *
+ * @see plans/agent-first-dashboard-architecture.md (Future Considerations - Undo/Redo)
+ */
+
+/**
  * Agent action types for event log
  *
  * Every UI-controlling action is logged with:
@@ -79,18 +91,31 @@ export type AgentActionType =
   | 'SET_ERROR';
 
 /**
- * Agent action event for audit log
+ * Base fields shared by all agent actions
  */
-export interface AgentAction {
+interface AgentActionBase {
   id: string;
-  type: AgentActionType;
-  payload: unknown;
   timestamp: number;
   /** Agent session ID if triggered by agent, null if by user */
   agentSessionId: string | null;
   /** Tenant ID for security isolation */
   tenantId: string;
 }
+
+/**
+ * Agent action event for audit log - discriminated union by type
+ *
+ * Each action type has a specific payload shape, enabling TypeScript
+ * to narrow the payload type based on the action type.
+ */
+export type AgentAction =
+  | (AgentActionBase & { type: 'SHOW_PREVIEW'; payload: { page: PageName } })
+  | (AgentActionBase & { type: 'HIDE_PREVIEW'; payload: Record<string, never> })
+  | (AgentActionBase & { type: 'HIGHLIGHT_SECTION'; payload: { sectionId: string } })
+  | (AgentActionBase & { type: 'CLEAR_HIGHLIGHT'; payload: Record<string, never> })
+  | (AgentActionBase & { type: 'NAVIGATE'; payload: { page: PageName } })
+  | (AgentActionBase & { type: 'SET_PAGE'; payload: { page: PageName } })
+  | (AgentActionBase & { type: 'SET_ERROR'; payload: { error: string } });
 
 // ============================================
 // STORE INTERFACE
@@ -250,6 +275,10 @@ export const useAgentUIStore = create<AgentUIState>()(
             };
 
             state.actionLog.push(action);
+            // FIFO: Remove oldest actions when limit exceeded
+            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+              state.actionLog.shift();
+            }
             state.view = {
               status: 'preview',
               config: { currentPage: page, highlightedSectionId: null },
@@ -271,6 +300,10 @@ export const useAgentUIStore = create<AgentUIState>()(
             };
 
             state.actionLog.push(action);
+            // FIFO: Remove oldest actions when limit exceeded
+            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+              state.actionLog.shift();
+            }
             state.view = { status: 'dashboard' };
           }),
 
@@ -289,6 +322,10 @@ export const useAgentUIStore = create<AgentUIState>()(
             };
 
             state.actionLog.push(action);
+            // FIFO: Remove oldest actions when limit exceeded
+            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+              state.actionLog.shift();
+            }
 
             // Extract page from section ID
             const pageFromId = extractPageFromSectionId(sectionId);
@@ -339,6 +376,10 @@ export const useAgentUIStore = create<AgentUIState>()(
               };
 
               state.actionLog.push(action);
+              // FIFO: Remove oldest actions when limit exceeded
+              if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+                state.actionLog.shift();
+              }
               state.view.config.currentPage = page;
               state.view.config.highlightedSectionId = null;
             }
@@ -365,6 +406,10 @@ export const useAgentUIStore = create<AgentUIState>()(
             };
 
             state.actionLog.push(action);
+            // FIFO: Remove oldest actions when limit exceeded
+            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+              state.actionLog.shift();
+            }
             state.view = { status: 'error', error, recovery };
           }),
 
@@ -502,3 +547,27 @@ export const selectError = (state: AgentUIState) =>
  * Select whether store is initialized
  */
 export const selectIsInitialized = (state: AgentUIState) => state.tenantId !== null;
+
+// ============================================
+// E2E TEST SUPPORT - Expose on window for Playwright
+// ============================================
+
+/**
+ * Expose store and actions on window for E2E testing
+ *
+ * Only runs in browser (not SSR) and exposes:
+ * - window.useAgentUIStore - Direct store access
+ * - window.agentUIActions - Action helpers
+ *
+ * This allows E2E tests to:
+ * 1. Initialize store with tenantId
+ * 2. Trigger actions like showPreview, showDashboard
+ * 3. Assert on store state
+ *
+ * @see e2e/tests/agent-ui-control.spec.ts
+ */
+if (typeof window !== 'undefined') {
+  (window as unknown as { useAgentUIStore: typeof useAgentUIStore }).useAgentUIStore =
+    useAgentUIStore;
+  (window as unknown as { agentUIActions: typeof agentUIActions }).agentUIActions = agentUIActions;
+}

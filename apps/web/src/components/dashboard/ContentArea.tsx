@@ -16,7 +16,7 @@
  * @see plans/agent-first-dashboard-architecture.md for architecture details
  */
 
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import { useAgentUIStore } from '@/stores/agent-ui-store';
 import { useDraftConfig } from '@/hooks/useDraftConfig';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 // Lazy load PreviewPanel to reduce initial bundle size
-import { PreviewPanel } from '@/components/preview/PreviewPanel';
+const PreviewPanel = lazy(() => import('@/components/preview/PreviewPanel'));
 
 // ============================================
 // LOADING STATE

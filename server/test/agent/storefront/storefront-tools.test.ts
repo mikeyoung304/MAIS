@@ -399,7 +399,8 @@ describe('Storefront Build Mode Tools', () => {
   describe('discard_draft tool', () => {
     it('should have correct metadata', () => {
       expect(discardDraftTool.name).toBe('discard_draft');
-      expect(discardDraftTool.trustTier).toBe('T2');
+      // T3 because discard is destructive and irreversible - requires explicit user confirmation
+      expect(discardDraftTool.trustTier).toBe('T3');
       expect(discardDraftTool.description).toContain('Discard');
     });
 

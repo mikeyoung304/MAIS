@@ -889,6 +889,10 @@ The following links prevent common mistakes from recurring:
 - **[nextjs-server-client-boundary](docs/solutions/best-practices/nextjs-migration-audit-server-client-boundary-MAIS-20260108.md)** - Server/client import boundary pattern: files importing `next/headers` are "tainted" and cannot be imported by client components. Multi-reviewer audit methodology.
   - Quick reference: [NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md](docs/solutions/best-practices/NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - **[onboarding-mode-orchestrator-system-prompt](docs/solutions/agent-issues/onboarding-mode-orchestrator-system-prompt-MAIS-20260108.md)** - Dual-mode orchestrator must check mode in ALL methods (getTools, buildSystemPrompt, getGreeting). If one checks but others don't, agent has right tools but wrong instructions.
+- **[agent-ui-phase-5-patterns](docs/solutions/patterns/AGENT_UI_PHASE_5_CODE_REVIEW_PATTERNS.md)** - 5 critical patterns: FIFO buffer for unbounded arrays, cancelPendingSave for debounce races, async dialog handling, capability registry hygiene, singleton documentation.
+  - Quick reference: [AGENT_UI_PHASE_5_QUICK_REFERENCE.md](docs/solutions/patterns/AGENT_UI_PHASE_5_QUICK_REFERENCE.md) - Print & pin (2 min read)
+
+**Key insight from Agent UI Phase 5 Code Review:** Arrays that grow over time (action logs, event queues) need MAX_SIZE + FIFO (shift oldest). Debounced operations need exported cancel methods called before critical operations (publish/discard). Dialogs with async callbacks must await before closing. Capability registries must match backend tools bidirectionally - add missing, remove dead.
 
 **Key insight from Dual-Mode Orchestrator (Commit TBD):** When orchestrator has dual modes (onboarding vs admin), ALL methods must check mode consistently. Bug: `getTools()` checked `isOnboardingMode` but `buildSystemPrompt()` always returned admin template saying "connect Stripe first". Result: agent had onboarding tools but followed admin instructions, skipping discovery phase. Fix: Extract `isOnboardingActive()` method, call from getTools(), buildSystemPrompt(), AND getGreeting().
 

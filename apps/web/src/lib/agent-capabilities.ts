@@ -1,5 +1,9 @@
 /**
- * Agent Capability Registry
+ * Agent Capabilities Registry
+ *
+ * This module defines discoverable agent capabilities for the future command palette (Cmd+K).
+ * The helper functions (searchCapabilities, getCapabilitiesByCategory, etc.) are scaffolding
+ * for the command palette feature planned in Phase X.
  *
  * Central registry of all agent capabilities for:
  * - User discoverability (what can the agent do?)
@@ -12,7 +16,7 @@
  * - T2: Soft-confirm (content edits, draft modifications)
  * - T3: Hard-confirm (publish, discard - critical/irreversible actions)
  *
- * @see plans/agent-first-dashboard-architecture.md
+ * @see plans/agent-first-dashboard-architecture.md (Future Considerations)
  */
 
 // ============================================
@@ -122,6 +126,15 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
     trustTier: 'T1',
     example: 'What am I looking at?',
   },
+  {
+    id: 'highlight_section',
+    name: 'Highlight Section',
+    description: "Highlight a specific section in the preview to show what you're referring to",
+    category: 'navigation',
+    keywords: ['highlight', 'show', 'point', 'section', 'indicate', 'focus'],
+    trustTier: 'T1',
+    example: 'Highlight the hero section',
+  },
 
   // ===========================================
   // DISCOVERY (T1 - Read-only)
@@ -178,9 +191,9 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
     example: 'Update the headline on my homepage',
   },
   {
-    id: 'add_section',
+    id: 'update_page_section',
     name: 'Add Section',
-    description: 'Add a new section to your storefront',
+    description: 'Add or update a section on your storefront page',
     category: 'editing',
     keywords: ['add', 'new', 'create', 'section', 'testimonials', 'faq', 'gallery'],
     trustTier: 'T2',
@@ -245,20 +258,6 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
     keywords: ['discard', 'revert', 'undo', 'cancel', 'reset'],
     trustTier: 'T3', // CRITICAL: Deletes work
     example: 'Discard all my changes',
-  },
-
-  // ===========================================
-  // SETTINGS (T2)
-  // ===========================================
-
-  {
-    id: 'update_business_info',
-    name: 'Update Business Info',
-    description: 'Update your business name, contact info, or hours',
-    category: 'settings',
-    keywords: ['business', 'name', 'contact', 'phone', 'email', 'hours', 'info'],
-    trustTier: 'T2',
-    example: 'Update my business hours',
   },
 
   // ===========================================
