@@ -14,7 +14,10 @@ interface BuildModePreviewProps {
   currentPage: PageName;
   draftConfig: PagesConfig | null;
   onSectionSelect?: (pageId: PageName, sectionIndex: number) => void;
+  /** @deprecated Use highlightedSectionId for more reliable targeting */
   highlightedSection?: number | null;
+  /** Section ID to highlight (preferred over highlightedSection) */
+  highlightedSectionId?: string | null;
   className?: string;
 }
 
@@ -35,6 +38,7 @@ export function BuildModePreview({
   draftConfig,
   onSectionSelect,
   highlightedSection,
+  highlightedSectionId,
   className,
 }: BuildModePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -105,11 +109,19 @@ export function BuildModePreview({
     iframeRef.current.contentWindow.postMessage(updateMessage, window.location.origin);
   }, [isReady, draftConfig]);
 
-  // Send section highlight to iframe
+  // Send section highlight to iframe (prefer ID-based over index-based)
   useEffect(() => {
     if (!isReady || !iframeRef.current?.contentWindow) return;
 
-    if (highlightedSection !== null && highlightedSection !== undefined) {
+    // Prefer ID-based highlighting (more reliable, stable across reordering)
+    if (highlightedSectionId) {
+      const highlightMessage: BuildModeParentMessage = {
+        type: 'BUILD_MODE_HIGHLIGHT_SECTION_BY_ID',
+        data: { sectionId: highlightedSectionId },
+      };
+      iframeRef.current.contentWindow.postMessage(highlightMessage, window.location.origin);
+    } else if (highlightedSection !== null && highlightedSection !== undefined) {
+      // Fallback to index-based highlighting (legacy)
       const highlightMessage: BuildModeParentMessage = {
         type: 'BUILD_MODE_HIGHLIGHT_SECTION',
         data: { pageId: currentPage, sectionIndex: highlightedSection },
@@ -121,7 +133,7 @@ export function BuildModePreview({
       };
       iframeRef.current.contentWindow.postMessage(clearMessage, window.location.origin);
     }
-  }, [isReady, highlightedSection, currentPage]);
+  }, [isReady, highlightedSection, highlightedSectionId, currentPage]);
 
   // Handle iframe load error
   const handleIframeError = useCallback(() => {

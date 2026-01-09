@@ -121,6 +121,24 @@ export function useBuildModeSync({
           break;
         }
 
+        case 'BUILD_MODE_HIGHLIGHT_SECTION_BY_ID': {
+          // ID-based highlighting - find section by data-section-id attribute
+          const sectionByIdEl = document.querySelector(
+            `[data-section-id="${message.data.sectionId}"]`
+          );
+          if (sectionByIdEl) {
+            // Get the section index for the highlight state
+            const indexAttr = sectionByIdEl.getAttribute('data-section-index');
+            const sectionIndex = indexAttr ? parseInt(indexAttr, 10) : null;
+            if (sectionIndex !== null && !isNaN(sectionIndex)) {
+              setHighlightedSection(sectionIndex);
+            }
+            // Scroll section into view
+            sectionByIdEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          break;
+        }
+
         case 'BUILD_MODE_CLEAR_HIGHLIGHT':
           setHighlightedSection(null);
           break;

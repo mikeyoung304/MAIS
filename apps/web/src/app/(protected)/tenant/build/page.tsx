@@ -30,6 +30,7 @@ export default function BuildModePage() {
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedSection, setHighlightedSection] = useState<number | null>(null);
+  const [highlightedSectionId, setHighlightedSectionId] = useState<string | null>(null);
 
   // Dialog state
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -124,6 +125,14 @@ export default function BuildModePage() {
   const handleSectionHighlight = (pageId: PageName, sectionIndex: number) => {
     if (pageId !== currentPage) setCurrentPage(pageId);
     setHighlightedSection(sectionIndex);
+    setHighlightedSectionId(null); // Clear ID when using index
+  };
+  const handleSectionHighlightById = (sectionId: string) => {
+    // Parse page from section ID (format: {page}-{type}-{qualifier})
+    const pageId = sectionId.split('-')[0] as PageName;
+    if (pageId && pageId !== currentPage) setCurrentPage(pageId);
+    setHighlightedSectionId(sectionId);
+    setHighlightedSection(null); // Clear index when using ID
   };
 
   // Publish draft - calls the real API via useDraftAutosave hook
@@ -190,6 +199,7 @@ export default function BuildModePage() {
                 context={chatContext}
                 onConfigUpdate={handleConfigUpdate}
                 onSectionHighlight={handleSectionHighlight}
+                onSectionHighlightById={handleSectionHighlightById}
               />
             </div>
           </Panel>
@@ -204,6 +214,7 @@ export default function BuildModePage() {
                 currentPage={currentPage}
                 draftConfig={draftConfig}
                 highlightedSection={highlightedSection}
+                highlightedSectionId={highlightedSectionId}
               />
             </div>
           </Panel>

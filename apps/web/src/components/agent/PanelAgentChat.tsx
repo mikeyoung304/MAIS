@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -65,6 +65,8 @@ interface PanelAgentChatProps {
   initialMessage?: string | null;
   /** Callback when initial message has been consumed */
   onMessageConsumed?: () => void;
+  /** Callback when quick replies status changes (true = agent provided quick replies) */
+  onQuickRepliesChange?: (hasQuickReplies: boolean) => void;
   /** Additional CSS classes */
   className?: string;
 }
@@ -83,6 +85,7 @@ export function PanelAgentChat({
   onSectionHighlight,
   initialMessage,
   onMessageConsumed,
+  onQuickRepliesChange,
   className,
 }: PanelAgentChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -97,6 +100,21 @@ export function PanelAgentChat({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Calculate whether the last assistant message has quick replies
+  // Memoized to avoid recalculating on every render
+  const hasAgentQuickReplies = useMemo(() => {
+    if (messages.length === 0) return false;
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role !== 'assistant') return false;
+    const { quickReplies } = parseQuickReplies(lastMessage.content);
+    return quickReplies.length > 0;
+  }, [messages]);
+
+  // Notify parent when quick replies status changes
+  useEffect(() => {
+    onQuickRepliesChange?.(hasAgentQuickReplies);
+  }, [hasAgentQuickReplies, onQuickRepliesChange]);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = useCallback(() => {
@@ -583,6 +601,9 @@ function CompactProposalCard({
  *
  * Triggers the highlight callback when mounted, with staggered timing for multiple highlights.
  * Renders nothing - purely for side effects.
+ *
+ * Uses JSON.stringify to stabilize the array dependency and prevent re-triggering
+ * on every parent re-render.
  */
 function HighlightTrigger({
   highlights,
@@ -591,11 +612,20 @@ function HighlightTrigger({
   highlights: string[];
   onSectionHighlight?: (sectionId: string) => void;
 }) {
+  // Stringify highlights to create a stable dependency
+  // This prevents the effect from re-running when parent re-renders
+  // but the actual highlight IDs haven't changed
+  const highlightsKey = JSON.stringify(highlights);
+
   useEffect(() => {
-    if (!onSectionHighlight || highlights.length === 0) return;
+    if (!onSectionHighlight) return;
+
+    // Parse highlights from the stable key
+    const parsedHighlights: string[] = JSON.parse(highlightsKey);
+    if (parsedHighlights.length === 0) return;
 
     // Trigger highlights with staggered timing (500ms between each)
-    const timeouts = highlights.map((sectionId, index) =>
+    const timeouts = parsedHighlights.map((sectionId, index) =>
       setTimeout(() => {
         onSectionHighlight(sectionId);
       }, index * 500)
@@ -605,7 +635,7 @@ function HighlightTrigger({
     return () => {
       timeouts.forEach(clearTimeout);
     };
-  }, [highlights, onSectionHighlight]);
+  }, [highlightsKey, onSectionHighlight]);
 
   return null; // Renders nothing
 }

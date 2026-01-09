@@ -10,7 +10,10 @@ import { Palette, FileEdit, Layers, Type, Image, MessageSquare } from 'lucide-re
 interface BuildModeChatProps {
   context: BuildModeChatContext;
   onConfigUpdate?: () => void;
+  /** @deprecated Use onSectionHighlightById for more reliable targeting */
   onSectionHighlight?: (pageId: PageName, sectionIndex: number) => void;
+  /** Callback when agent message contains section highlight instruction (ID-based) */
+  onSectionHighlightById?: (sectionId: string) => void;
   className?: string;
 }
 
@@ -50,22 +53,33 @@ export function BuildModeChat({
   context,
   onConfigUpdate,
   onSectionHighlight,
+  onSectionHighlightById,
   className,
 }: BuildModeChatProps) {
   // State for pending message from quick action chips
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  // Track whether agent has provided quick replies (to hide static chips)
+  const [hasAgentQuickReplies, setHasAgentQuickReplies] = useState(false);
 
   // Handle section highlight from agent messages
+  // Prefers ID-based callback (more reliable), falls back to legacy index-based
   const handleSectionHighlight = useCallback(
     (sectionId: string) => {
-      if (!onSectionHighlight) return;
+      // Prefer ID-based callback (new, more reliable)
+      if (onSectionHighlightById) {
+        onSectionHighlightById(sectionId);
+        return;
+      }
 
-      const resolved = resolveSectionId(sectionId);
-      if (resolved) {
-        onSectionHighlight(resolved.pageId, resolved.sectionIndex);
+      // Fallback to legacy index-based callback
+      if (onSectionHighlight) {
+        const resolved = resolveSectionId(sectionId);
+        if (resolved) {
+          onSectionHighlight(resolved.pageId, resolved.sectionIndex);
+        }
       }
     },
-    [onSectionHighlight]
+    [onSectionHighlight, onSectionHighlightById]
   );
 
   const welcomeMessage = `Hey! Welcome to Build Mode! 🎨
@@ -120,37 +134,39 @@ What would you like to work on first?
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="px-4 py-2 border-b border-neutral-700 bg-surface-alt/50 overflow-x-auto">
-        <div className="flex items-center gap-2 text-xs text-text-muted min-w-max">
-          <span className="text-text-muted/60">Quick:</span>
-          <QuickActionChip
-            icon={<FileEdit className="h-3 w-3" />}
-            label="Edit headline"
-            onClick={() => handleQuickAction('headline')}
-          />
-          <QuickActionChip
-            icon={<Layers className="h-3 w-3" />}
-            label="Add section"
-            onClick={() => handleQuickAction('section')}
-          />
-          <QuickActionChip
-            icon={<Type className="h-3 w-3" />}
-            label="Edit text"
-            onClick={() => handleQuickAction('text')}
-          />
-          <QuickActionChip
-            icon={<Image className="h-3 w-3" />}
-            label="Images"
-            onClick={() => handleQuickAction('image')}
-          />
-          <QuickActionChip
-            icon={<MessageSquare className="h-3 w-3" />}
-            label="Testimonials"
-            onClick={() => handleQuickAction('testimonials')}
-          />
+      {/* Quick actions - hidden when agent provides dynamic quick replies (agent takes precedence) */}
+      {!hasAgentQuickReplies && (
+        <div className="px-4 py-2 border-b border-neutral-700 bg-surface-alt/50 overflow-x-auto">
+          <div className="flex items-center gap-2 text-xs text-text-muted min-w-max">
+            <span className="text-text-muted/60">Quick:</span>
+            <QuickActionChip
+              icon={<FileEdit className="h-3 w-3" />}
+              label="Edit headline"
+              onClick={() => handleQuickAction('headline')}
+            />
+            <QuickActionChip
+              icon={<Layers className="h-3 w-3" />}
+              label="Add section"
+              onClick={() => handleQuickAction('section')}
+            />
+            <QuickActionChip
+              icon={<Type className="h-3 w-3" />}
+              label="Edit text"
+              onClick={() => handleQuickAction('text')}
+            />
+            <QuickActionChip
+              icon={<Image className="h-3 w-3" />}
+              label="Images"
+              onClick={() => handleQuickAction('image')}
+            />
+            <QuickActionChip
+              icon={<MessageSquare className="h-3 w-3" />}
+              label="Testimonials"
+              onClick={() => handleQuickAction('testimonials')}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Chat interface */}
       <div className="flex-1 min-h-0">
@@ -160,6 +176,7 @@ What would you like to work on first?
           onSectionHighlight={handleSectionHighlight}
           initialMessage={pendingMessage}
           onMessageConsumed={() => setPendingMessage(null)}
+          onQuickRepliesChange={setHasAgentQuickReplies}
           className="h-full"
         />
       </div>

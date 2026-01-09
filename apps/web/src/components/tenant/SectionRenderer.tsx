@@ -85,13 +85,15 @@ export function SectionRenderer({
           }
         })();
 
-        // Wrap in a div with data-section-index for Build Mode selection
+        // Wrap in a div with data attributes for Build Mode selection and highlighting
         if (isEditMode) {
           return (
             <div
               key={sectionKey}
               data-section-index={absoluteIndex}
               data-section-type={section.type}
+              // Add section ID for ID-based highlighting (preferred over index-based)
+              {...('id' in section && section.id ? { 'data-section-id': section.id } : {})}
             >
               {sectionComponent}
             </div>

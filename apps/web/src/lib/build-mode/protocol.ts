@@ -39,13 +39,29 @@ export const BuildModeConfigUpdateSchema = z.object({
 });
 
 /**
- * Highlight section message - sent to highlight a specific section
+ * Highlight section message - sent to highlight a specific section by index
+ * @deprecated Use BUILD_MODE_HIGHLIGHT_SECTION_BY_ID for more reliable targeting
  */
 export const BuildModeHighlightSectionSchema = z.object({
   type: z.literal('BUILD_MODE_HIGHLIGHT_SECTION'),
   data: z.object({
     pageId: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
     sectionIndex: z.number().int().min(0),
+  }),
+});
+
+/**
+ * Highlight section by ID message - sent to highlight a specific section by its stable ID
+ *
+ * Preferred over BUILD_MODE_HIGHLIGHT_SECTION because:
+ * - IDs are stable across section reordering
+ * - Agent can reference sections by meaningful names (e.g., "home-hero-main")
+ * - No need to resolve index in parent - iframe looks up by data-section-id
+ */
+export const BuildModeHighlightSectionByIdSchema = z.object({
+  type: z.literal('BUILD_MODE_HIGHLIGHT_SECTION_BY_ID'),
+  data: z.object({
+    sectionId: z.string().min(1).max(50),
   }),
 });
 
@@ -63,6 +79,7 @@ export const BuildModeParentMessageSchema = z.discriminatedUnion('type', [
   BuildModeInitSchema,
   BuildModeConfigUpdateSchema,
   BuildModeHighlightSectionSchema,
+  BuildModeHighlightSectionByIdSchema,
   BuildModeClearHighlightSchema,
 ]);
 
