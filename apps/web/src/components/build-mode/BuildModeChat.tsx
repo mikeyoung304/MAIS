@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { PanelAgentChat } from '@/components/agent/PanelAgentChat';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import type { PageName } from '@macon/contracts';
 import type { BuildModeChatContext } from '@/lib/build-mode/types';
 import { Palette, FileEdit, Layers, Type, Image, MessageSquare } from 'lucide-react';
@@ -32,14 +33,19 @@ export function BuildModeChat({
   // Note: _onSectionHighlight is available for future use when AI highlights sections
   void _onSectionHighlight;
 
-  const welcomeMessage = `I'm here to help you edit your ${context.currentPage} page. You can ask me to:
+  const welcomeMessage = `Hey! Welcome to Build Mode! 🎨
 
-• Update text, headlines, or descriptions
-• Add or remove sections
-• Change colors or branding
-• Reorder content
+This is where you customize your website. I'm here to help — just tell me what you'd like to change:
 
-What would you like to change?`;
+• "Update my headline to..."
+• "Add a testimonials section"
+• "Change the colors to..."
+
+Your changes save automatically to a draft. When you're happy, hit Publish to go live.
+
+What would you like to work on first?
+
+[Quick Replies: Update headline | Add section | Change colors]`;
 
   // Handle quick action clicks
   // TODO: Integrate with PanelAgentChat to pre-fill input when that prop is available
@@ -53,7 +59,7 @@ What would you like to change?`;
         testimonials: `Update the testimonials section`,
       };
       // Log the prompt for now - will be integrated with chat input
-      console.log('[BuildModeChat] Quick action:', prompts[action]);
+      logger.debug('[BuildModeChat] Quick action', { action, prompt: prompts[action] });
     },
     [context.currentPage]
   );
@@ -137,7 +143,8 @@ function QuickActionChip({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 px-2 py-1 rounded-full bg-neutral-700/50 hover:bg-neutral-700 text-text-muted hover:text-text-secondary transition-colors whitespace-nowrap"
+      title={`Ask AI to help ${label.toLowerCase()}`}
+      className="flex items-center gap-1 px-2 py-1 rounded-full bg-neutral-700/50 hover:bg-neutral-700 text-text-muted hover:text-text-secondary transition-colors whitespace-nowrap focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-surface-alt focus-visible:outline-none"
     >
       {icon}
       <span>{label}</span>

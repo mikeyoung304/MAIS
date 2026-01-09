@@ -10,6 +10,9 @@ import {
   useGrowthAssistantContext,
 } from '@/contexts/GrowthAssistantContext';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth-client';
+import { useOnboardingState } from '@/hooks/useOnboardingState';
+import { useBuildModeRedirect } from '@/hooks/useBuildModeRedirect';
 
 /**
  * Tenant Admin Layout Content
@@ -20,6 +23,11 @@ import { cn } from '@/lib/utils';
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const { isOpen, setIsOpen } = useGrowthAssistantContext();
   const [isMounted, setIsMounted] = useState(false);
+  const { tenantId } = useAuth();
+  const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
+
+  // Auto-redirect to Build Mode when reaching MARKETING phase
+  useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
 
   useEffect(() => {
     setIsMounted(true);

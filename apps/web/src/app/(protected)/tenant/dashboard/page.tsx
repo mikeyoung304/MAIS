@@ -144,23 +144,23 @@ export default function TenantDashboardPage() {
 
   const quickActions = [
     {
+      title: 'Edit Website',
+      description: 'Customize your storefront with AI',
+      href: '/tenant/build',
+      icon: <Palette className="h-5 w-5" />,
+      highlight: true,
+    },
+    {
       title: 'Growth Assistant',
       description: 'AI-powered help for your business',
       href: '/tenant/assistant',
       icon: <Bot className="h-5 w-5" />,
-      highlight: true,
     },
     {
       title: 'Manage Pages',
       description: 'Configure your website pages',
       href: '/tenant/pages',
       icon: <FileEdit className="h-5 w-5" />,
-    },
-    {
-      title: 'Branding Settings',
-      description: 'Update colors, logo, and fonts',
-      href: '/tenant/branding',
-      icon: <Palette className="h-5 w-5" />,
     },
     {
       title: 'View Storefront',
