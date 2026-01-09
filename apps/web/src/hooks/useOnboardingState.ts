@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { OnboardingPhase } from '@macon/contracts';
+import { queryKeys } from '@/lib/query-client';
 
 const API_PROXY = '/api/agent';
 
@@ -32,7 +33,46 @@ interface OnboardingStateResponse {
 }
 
 /**
+ * Result type for unauthenticated state
+ */
+interface UnauthenticatedResult {
+  isAuthenticated: false;
+}
+
+/**
+ * Fetch onboarding state from API
+ * Returns null for 401 (unauthenticated), throws for other errors
+ */
+async function fetchOnboardingState(): Promise<OnboardingStateResponse | UnauthenticatedResult> {
+  const response = await fetch(`${API_PROXY}/onboarding-state`);
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      // Return a marker object for unauthenticated state
+      return { isAuthenticated: false };
+    }
+    throw new Error('Failed to fetch onboarding state');
+  }
+
+  return response.json();
+}
+
+/**
+ * Type guard to check if result is unauthenticated
+ */
+function isUnauthenticated(
+  result: OnboardingStateResponse | UnauthenticatedResult | undefined
+): result is UnauthenticatedResult {
+  return result !== undefined && 'isAuthenticated' in result && result.isAuthenticated === false;
+}
+
+/**
  * Hook for managing onboarding state
+ *
+ * Uses TanStack Query for:
+ * - Automatic request deduplication (multiple components share one request)
+ * - Intelligent caching with staleTime
+ * - Coordinated refetching after mutations
  *
  * Features:
  * - Fetches onboarding state from API
@@ -41,82 +81,44 @@ interface OnboardingStateResponse {
  * - Auto-refreshes after skip
  */
 export function useOnboardingState() {
-  const [state, setState] = useState<OnboardingStateResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isSkipping, setIsSkipping] = useState(false);
-  const [skipError, setSkipError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch onboarding state
-  const fetchState = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // Fetch onboarding state with TanStack Query
+  // Multiple hook instances share the same cache entry
+  const { data, isLoading, error } = useQuery({
+    queryKey: queryKeys.onboarding.state,
+    queryFn: fetchOnboardingState,
+    staleTime: 60_000, // 1 minute - matches default in query-client.ts
+  });
 
-    try {
-      const response = await fetch(`${API_PROXY}/onboarding-state`);
+  // Skip onboarding mutation
+  const skipMutation = useMutation({
+    mutationFn: async (reason?: string) => {
+      const response = await fetch(`${API_PROXY}/skip-onboarding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          // User is not authenticated - track this explicitly
-          setIsAuthenticated(false);
-          setState(null);
-          return;
-        }
-        throw new Error('Failed to fetch onboarding state');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to skip onboarding');
       }
 
-      setIsAuthenticated(true);
-      const data = await response.json();
-      setState(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(message);
-      setState(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Skip onboarding
-  const skipOnboarding = useCallback(
-    async (reason?: string) => {
-      setIsSkipping(true);
-      setSkipError(null);
-
-      try {
-        const response = await fetch(`${API_PROXY}/skip-onboarding`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason }),
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Failed to skip onboarding');
-        }
-
-        // Refresh state after skip
-        await fetchState();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to skip onboarding';
-        setSkipError(message);
-        throw err; // Re-throw so caller can handle
-      } finally {
-        setIsSkipping(false);
-      }
+      return response.json();
     },
-    [fetchState]
-  );
+    onSuccess: () => {
+      // Invalidate and refetch onboarding state after skip
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
+    },
+  });
 
-  // Initial fetch
-  useEffect(() => {
-    fetchState();
-  }, [fetchState]);
+  // Determine authentication and state
+  const isUnauthenticatedResult = isUnauthenticated(data);
+  const state = isUnauthenticatedResult ? null : (data as OnboardingStateResponse | undefined);
 
   // Derived values
   const isOnboarding = state ? state.phase !== 'COMPLETED' && state.phase !== 'SKIPPED' : false;
-
   const currentPhase = state?.phase ?? 'NOT_STARTED';
 
   return {
@@ -131,14 +133,14 @@ export function useOnboardingState() {
 
     // Loading/Error/Auth
     isLoading,
-    error,
-    isAuthenticated,
+    error: error?.message ?? null,
+    isAuthenticated: data !== undefined ? !isUnauthenticatedResult : null,
 
     // Actions
-    skipOnboarding,
-    isSkipping,
-    skipError,
-    refetch: fetchState,
+    skipOnboarding: skipMutation.mutateAsync,
+    isSkipping: skipMutation.isPending,
+    skipError: skipMutation.error?.message ?? null,
+    refetch: () => queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state }),
   };
 }
 

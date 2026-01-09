@@ -58,6 +58,9 @@ export const queryKeys = {
     public: (slug: string) => ['tenant', 'public', slug] as const,
     config: (slug: string) => ['tenant', 'config', slug] as const,
   },
+  onboarding: {
+    state: ['onboarding', 'state'] as const,
+  },
   admin: {
     bookings: ['admin', 'bookings'] as const,
     blackouts: ['admin', 'blackouts'] as const,
