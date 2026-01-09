@@ -14,9 +14,7 @@ interface BuildModePreviewProps {
   currentPage: PageName;
   draftConfig: PagesConfig | null;
   onSectionSelect?: (pageId: PageName, sectionIndex: number) => void;
-  /** @deprecated Use highlightedSectionId for more reliable targeting */
-  highlightedSection?: number | null;
-  /** Section ID to highlight (preferred over highlightedSection) */
+  /** Section ID to highlight */
   highlightedSectionId?: string | null;
   className?: string;
 }
@@ -37,7 +35,6 @@ export function BuildModePreview({
   currentPage,
   draftConfig,
   onSectionSelect,
-  highlightedSection,
   highlightedSectionId,
   className,
 }: BuildModePreviewProps) {
@@ -109,22 +106,14 @@ export function BuildModePreview({
     iframeRef.current.contentWindow.postMessage(updateMessage, window.location.origin);
   }, [isReady, draftConfig]);
 
-  // Send section highlight to iframe (prefer ID-based over index-based)
+  // Send section highlight to iframe
   useEffect(() => {
     if (!isReady || !iframeRef.current?.contentWindow) return;
 
-    // Prefer ID-based highlighting (more reliable, stable across reordering)
     if (highlightedSectionId) {
       const highlightMessage: BuildModeParentMessage = {
         type: 'BUILD_MODE_HIGHLIGHT_SECTION_BY_ID',
         data: { sectionId: highlightedSectionId },
-      };
-      iframeRef.current.contentWindow.postMessage(highlightMessage, window.location.origin);
-    } else if (highlightedSection !== null && highlightedSection !== undefined) {
-      // Fallback to index-based highlighting (legacy)
-      const highlightMessage: BuildModeParentMessage = {
-        type: 'BUILD_MODE_HIGHLIGHT_SECTION',
-        data: { pageId: currentPage, sectionIndex: highlightedSection },
       };
       iframeRef.current.contentWindow.postMessage(highlightMessage, window.location.origin);
     } else {
@@ -133,7 +122,7 @@ export function BuildModePreview({
       };
       iframeRef.current.contentWindow.postMessage(clearMessage, window.location.origin);
     }
-  }, [isReady, highlightedSection, highlightedSectionId, currentPage]);
+  }, [isReady, highlightedSectionId]);
 
   // Handle iframe load error
   const handleIframeError = useCallback(() => {

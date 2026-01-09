@@ -29,8 +29,10 @@ export default function BuildModePage() {
   const [draftConfig, setDraftConfig] = useState<PagesConfig | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [highlightedSection, setHighlightedSection] = useState<number | null>(null);
   const [highlightedSectionId, setHighlightedSectionId] = useState<string | null>(null);
+
+  // Ref for highlight auto-clear timeout
+  const highlightTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Dialog state
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -44,10 +46,11 @@ export default function BuildModePage() {
   // Ref for toast timeout cleanup
   const toastTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Cleanup toast timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
     };
   }, []);
 
@@ -122,17 +125,17 @@ export default function BuildModePage() {
 
   // Event handlers
   const handleConfigUpdate = async () => { await fetchDraftConfig(); setIsDirty(true); };
-  const handleSectionHighlight = (pageId: PageName, sectionIndex: number) => {
-    if (pageId !== currentPage) setCurrentPage(pageId);
-    setHighlightedSection(sectionIndex);
-    setHighlightedSectionId(null); // Clear ID when using index
-  };
-  const handleSectionHighlightById = (sectionId: string) => {
+  const handleSectionHighlight = (sectionId: string) => {
     // Parse page from section ID (format: {page}-{type}-{qualifier})
     const pageId = sectionId.split('-')[0] as PageName;
     if (pageId && pageId !== currentPage) setCurrentPage(pageId);
     setHighlightedSectionId(sectionId);
-    setHighlightedSection(null); // Clear index when using ID
+
+    // Auto-clear highlight after 3 seconds
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedSectionId(null);
+    }, 3000);
   };
 
   // Publish draft - calls the real API via useDraftAutosave hook
@@ -199,7 +202,6 @@ export default function BuildModePage() {
                 context={chatContext}
                 onConfigUpdate={handleConfigUpdate}
                 onSectionHighlight={handleSectionHighlight}
-                onSectionHighlightById={handleSectionHighlightById}
               />
             </div>
           </Panel>
@@ -213,7 +215,6 @@ export default function BuildModePage() {
                 tenantSlug={slug || ''}
                 currentPage={currentPage}
                 draftConfig={draftConfig}
-                highlightedSection={highlightedSection}
                 highlightedSectionId={highlightedSectionId}
               />
             </div>
