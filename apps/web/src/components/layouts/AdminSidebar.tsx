@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, logout } from '@/lib/auth-client';
+import { HandledLogo } from '@/components/ui/handled-logo';
 import { Button } from '@/components/ui/button';
 import { useLocalStorageBoolean } from '@/hooks/useLocalStorage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -205,11 +206,12 @@ export function AdminSidebar() {
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-neutral-700 p-4">
-            {!isCollapsed && (
-              <Link href="/" className="font-serif text-xl font-bold text-text-primary">
-                HANDLED
-              </Link>
-            )}
+            <HandledLogo
+              variant="dark"
+              size={isCollapsed ? 'sm' : 'md'}
+              showText={!isCollapsed}
+              href="/"
+            />
             <button
               className="hidden rounded-lg p-1.5 text-text-muted hover:bg-surface-alt lg:block"
               onClick={toggleUserCollapsed}

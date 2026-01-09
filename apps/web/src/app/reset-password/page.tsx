@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { HandledLogo } from '@/components/ui/handled-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -213,11 +214,9 @@ function ResetPasswordForm() {
         </Link>
 
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            HANDLED
-          </Link>
-          <p className="mt-2 text-text-muted">Create a new password</p>
+        <div className="mb-8 flex flex-col items-center">
+          <HandledLogo variant="dark" size="lg" href="/" />
+          <p className="mt-3 text-text-muted">Create a new password</p>
         </div>
 
         <Card colorScheme="dark">

@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login, useAuth } from '@/lib/auth-client';
+import { HandledLogo } from '@/components/ui/handled-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -194,11 +195,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            HANDLED
-          </Link>
-          <p className="mt-2 text-text-muted">Sign in to your account</p>
+        <div className="mb-8 flex flex-col items-center">
+          <HandledLogo variant="dark" size="lg" href="/" />
+          <p className="mt-3 text-text-muted">Sign in to your account</p>
         </div>
 
         <Suspense fallback={<LoginFormSkeleton />}>

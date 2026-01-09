@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, loginWithToken } from '@/lib/auth-client';
+import { HandledLogo } from '@/components/ui/handled-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -213,10 +214,8 @@ function SignupForm() {
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Logo */}
-      <div className="mb-8 text-center">
-        <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-          HANDLED
-        </Link>
+      <div className="mb-8 flex justify-center">
+        <HandledLogo variant="dark" size="lg" href="/" />
       </div>
 
       {/* Trial Badge - with border for pop */}

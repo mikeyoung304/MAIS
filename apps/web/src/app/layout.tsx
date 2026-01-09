@@ -54,7 +54,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#8B9E86',
+  themeColor: '#45B37F', // Electric Sage
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,

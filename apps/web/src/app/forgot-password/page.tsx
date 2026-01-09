@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { HandledLogo } from '@/components/ui/handled-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -118,11 +119,9 @@ export default function ForgotPasswordPage() {
         </Link>
 
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <Link href="/" className="font-serif text-3xl font-bold text-text-primary">
-            HANDLED
-          </Link>
-          <p className="mt-2 text-text-muted">Reset your password</p>
+        <div className="mb-8 flex flex-col items-center">
+          <HandledLogo variant="dark" size="lg" href="/" />
+          <p className="mt-3 text-text-muted">Reset your password</p>
         </div>
 
         <Card colorScheme="dark">
