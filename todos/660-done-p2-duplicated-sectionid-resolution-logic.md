@@ -1,5 +1,5 @@
 ---
-status: ready
+status: done
 priority: p2
 issue_id: '660'
 tags:
@@ -99,17 +99,18 @@ export function resolveSectionIdToIndex(
 
 ## Acceptance Criteria
 
-- [ ] Single source of truth for sectionId → index resolution
-- [ ] Both tools use shared helper
-- [ ] Error messages remain identical
-- [ ] All existing tests pass
+- [x] Single source of truth for sectionId → index resolution
+- [x] Both tools use shared helper
+- [x] Error messages remain identical
+- [x] All existing tests pass
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                                                |
-| ---------- | ------------------------ | ------------------------------------------------------------------------ |
-| 2026-01-08 | Created from code review | Identified by code-simplicity-reviewer agent                             |
-| 2026-01-08 | Approved for work        | Quality triage: DRY violation = divergence bugs. Extract now, not later. |
+| Date       | Action                   | Learnings                                                                                                                             |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review | Identified by code-simplicity-reviewer agent                                                                                          |
+| 2026-01-08 | Approved for work        | Quality triage: DRY violation = divergence bugs. Extract now, not later.                                                              |
+| 2026-01-08 | Resolved via #661        | Shared helper `resolveSectionIndex()` implemented in utils.ts. All 3 tools (update, remove, reorder) now use it. DRY violation fixed. |
 
 ## Resources
 
