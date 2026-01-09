@@ -54,13 +54,28 @@ interface ToolResult {
   error?: string;
 }
 
+/**
+ * UI Action from agent tool responses
+ * Matches the uiAction payloads from ui-tools.ts
+ */
+export interface AgentUIAction {
+  type: 'SHOW_PREVIEW' | 'SHOW_DASHBOARD' | 'HIGHLIGHT_SECTION' | 'NAVIGATE';
+  page?: string;
+  sectionId?: string;
+  path?: string;
+}
+
 interface PanelAgentChatProps {
   /** Custom welcome message for first-time users */
   welcomeMessage?: string;
   /** Callback when user sends their first message */
   onFirstMessage?: () => void;
+  /** Callback when a message completes with successful tool results (config may have changed) */
+  onToolComplete?: () => void;
   /** Callback when agent message contains section highlight instruction */
   onSectionHighlight?: (sectionId: string) => void;
+  /** Callback when agent tool returns a UI action (preview, navigate, etc.) */
+  onUIAction?: (action: AgentUIAction) => void;
   /** Initial message to populate in input field (from quick actions) */
   initialMessage?: string | null;
   /** Callback when initial message has been consumed */
@@ -82,7 +97,9 @@ interface PanelAgentChatProps {
 export function PanelAgentChat({
   welcomeMessage = 'Salutations. Are you ready to get handled? Tell me a little about yourself.',
   onFirstMessage,
+  onToolComplete,
   onSectionHighlight,
+  onUIAction,
   initialMessage,
   onMessageConsumed,
   onQuickRepliesChange,
@@ -231,6 +248,24 @@ export function PanelAgentChat({
         toolResults: data.toolResults,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Notify parent if tools executed successfully (config may have changed)
+      if (data.toolResults?.some((r: ToolResult) => r.success)) {
+        onToolComplete?.();
+      }
+
+      // Handle UI actions from tool results
+      // UI tools return uiAction in their data payload
+      if (data.toolResults && onUIAction) {
+        for (const result of data.toolResults as ToolResult[]) {
+          if (result.success && result.data) {
+            const toolData = result.data as { uiAction?: AgentUIAction };
+            if (toolData.uiAction) {
+              onUIAction(toolData.uiAction);
+            }
+          }
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
@@ -260,6 +295,11 @@ export function PanelAgentChat({
           timestamp: new Date(),
         },
       ]);
+
+      // Notify parent - proposal execution may have changed config
+      if (result.status === 'EXECUTED') {
+        onToolComplete?.();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to confirm proposal');
     }

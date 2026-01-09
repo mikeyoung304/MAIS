@@ -10,13 +10,14 @@ import { readTools } from './read-tools';
 import { writeTools } from './write-tools';
 import { onboardingTools } from './onboarding-tools';
 import { storefrontTools } from './storefront-tools';
+import { uiTools } from './ui-tools';
 import type { AgentTool } from './types';
 
 /**
- * Get all agent tools (read + write + storefront)
+ * Get all agent tools (read + write + storefront + UI)
  */
 export function getAllTools(): AgentTool[] {
-  return [...readTools, ...writeTools, ...storefrontTools];
+  return [...readTools, ...writeTools, ...storefrontTools, ...uiTools];
 }
 
 /**
@@ -24,7 +25,7 @@ export function getAllTools(): AgentTool[] {
  * Use this for tenant admin agent with onboarding mode enabled
  */
 export function getAllToolsWithOnboarding(): AgentTool[] {
-  return [...readTools, ...writeTools, ...storefrontTools, ...onboardingTools];
+  return [...readTools, ...writeTools, ...storefrontTools, ...uiTools, ...onboardingTools];
 }
 
 /**

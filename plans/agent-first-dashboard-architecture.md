@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-09
 **Type:** Major Refactoring
-**Status:** Phase 2 Complete - Ready for Phase 3
+**Status:** Phase 3 Complete - Ready for Phase 4
 **Review Status:** Reviewed by 4 specialized agents (DHH, Kieran, Principal Architect, Agent-Native)
 
 ### Implementation Progress
@@ -11,8 +11,9 @@
 | ------------------------------- | -------------- | ------------------------------------------------------------ |
 | Phase 1: Foundation             | ✅ Complete    | Zustand store, useDraftConfig, capability registry           |
 | Phase 2: Content Area & Preview | ✅ Complete    | ContentArea, PreviewPanel, DashboardView, layout integration |
-| Phase 3: Agent Integration      | 🔲 Not Started | UI tools, agent panel rename, tool handlers                  |
+| Phase 3: Agent Integration      | ✅ Complete    | UI tools, onUIAction callback, agent-controlled navigation   |
 | Phase 4: Layout Refactoring     | 🔲 Not Started | Remove /tenant/build, redirect handling                      |
+| Phase 5: Cleanup & Testing      | 🔲 Not Started | Remove deprecated code, E2E tests                            |
 
 ---
 
@@ -1213,13 +1214,13 @@ export function AgentPanel() {
 
 **Phase 3 Tasks:**
 
-- [ ] Create `server/src/agent/tools/ui-tools.ts` with all UI control tools
-- [ ] Add `onUIAction` callback to PanelAgentChat
-- [ ] Rename GrowthAssistantPanel → AgentPanel
-- [ ] Add UI tools to admin orchestrator's tool list
-- [ ] Update API response to include `uiAction` field
-- [ ] Register T3 executors for publish_draft and discard_draft
-- [ ] Write E2E tests for agent UI control
+- [x] Create `server/src/agent/tools/ui-tools.ts` with all UI control tools
+- [x] Add `onUIAction` callback to PanelAgentChat
+- [x] Update GrowthAssistantPanel to handle UI actions (rename deferred to Phase 4)
+- [x] Add UI tools to all-tools.ts exports (auto-included in orchestrator)
+- [x] API response already includes `uiAction` via toolResults.data
+- [x] T3 executors already exist (publish_draft, discard_draft in storefront-executors.ts)
+- [ ] Write E2E tests for agent UI control (deferred to Phase 5)
 
 ---
 

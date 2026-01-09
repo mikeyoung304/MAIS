@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
-import { PanelAgentChat } from './PanelAgentChat';
+import { PanelAgentChat, type AgentUIAction } from './PanelAgentChat';
 import { useGrowthAssistantContext } from '@/contexts/GrowthAssistantContext';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
+import { agentUIActions } from '@/stores/agent-ui-store';
+import type { PageName } from '@macon/contracts';
 
 // Welcome messages based on onboarding state
 const WELCOME_MESSAGES = {
@@ -40,12 +43,38 @@ interface GrowthAssistantPanelProps {
  * - Uses personalized welcome messages for returning users
  */
 export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantPanelProps) {
+  const router = useRouter();
   const { isOpen, setIsOpen, isFirstVisit, markWelcomed } = useGrowthAssistantContext();
   const [isMounted, setIsMounted] = useState(false);
 
   // Onboarding state
   const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
     useOnboardingState();
+
+  // Handle UI actions from agent tools
+  const handleUIAction = useCallback(
+    (action: AgentUIAction) => {
+      switch (action.type) {
+        case 'SHOW_PREVIEW':
+          agentUIActions.showPreview((action.page as PageName) || 'home');
+          break;
+        case 'SHOW_DASHBOARD':
+          agentUIActions.showDashboard();
+          break;
+        case 'HIGHLIGHT_SECTION':
+          if (action.sectionId) {
+            agentUIActions.highlightSection(action.sectionId);
+          }
+          break;
+        case 'NAVIGATE':
+          if (action.path) {
+            router.push(action.path);
+          }
+          break;
+      }
+    },
+    [router]
+  );
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -201,6 +230,7 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
           <PanelAgentChat
             welcomeMessage={getWelcomeMessage()}
             onFirstMessage={handleFirstMessage}
+            onUIAction={handleUIAction}
             className="h-full"
           />
         </div>
