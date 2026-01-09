@@ -1,18 +1,12 @@
-'use client';
-
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-
 /**
- * Build Mode Layout
+ * Build Mode Layout - DEPRECATED
  *
- * Full-screen layout for the Build Mode editor.
- * Does NOT include the normal admin sidebar or Growth Assistant panel.
- * This allows the split-screen editor to use the full viewport.
+ * This layout is kept for backwards compatibility but is no longer used.
+ * The build page now redirects to /tenant/dashboard?showPreview=true.
+ *
+ * @deprecated Build Mode is now integrated into the dashboard via agent-first architecture
  */
 export default function BuildModeLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ProtectedRoute allowedRoles={['TENANT_ADMIN']}>
-      <div className="h-screen w-screen overflow-hidden">{children}</div>
-    </ProtectedRoute>
-  );
+  // Children will be the redirect page component, so just render it
+  return <>{children}</>;
 }

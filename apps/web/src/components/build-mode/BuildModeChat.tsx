@@ -17,6 +17,16 @@ interface BuildModeChatProps {
 /**
  * BuildModeChat - Chat panel for Build Mode
  *
+ * @deprecated This component is deprecated in favor of the agent-first architecture.
+ * The unified AgentPanel now handles all chat functionality across the dashboard.
+ * Build Mode has been integrated into the main dashboard with dynamic preview.
+ *
+ * This component is kept for backwards compatibility but will be removed in a future release.
+ *
+ * @see components/agent/AgentPanel.tsx for the new unified chat panel
+ * @see components/dashboard/ContentArea.tsx for preview mode handling
+ *
+ * Original description:
  * Wraps PanelAgentChat with Build Mode specific:
  * - Context about current page being edited
  * - Welcome message focused on editing
@@ -124,7 +134,7 @@ What would you like to work on first?
       <div className="flex-1 min-h-0">
         <PanelAgentChat
           welcomeMessage={welcomeMessage}
-          onFirstMessage={onConfigUpdate}
+          onToolComplete={onConfigUpdate}
           onSectionHighlight={onSectionHighlight}
           initialMessage={pendingMessage}
           onMessageConsumed={() => setPendingMessage(null)}

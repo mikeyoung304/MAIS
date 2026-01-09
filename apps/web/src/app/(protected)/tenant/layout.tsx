@@ -5,12 +5,8 @@ import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/reac
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminSidebar } from '@/components/layouts/AdminSidebar';
 import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
-import { GrowthAssistantPanel } from '@/components/agent/GrowthAssistantPanel';
+import { AgentPanel } from '@/components/agent/AgentPanel';
 import { ContentArea } from '@/components/dashboard/ContentArea';
-import {
-  GrowthAssistantProvider,
-  useGrowthAssistantContext,
-} from '@/contexts/GrowthAssistantContext';
 import { useAgentUIStore, selectIsPreviewActive } from '@/stores/agent-ui-store';
 import { setQueryClientRef } from '@/hooks/useDraftConfig';
 import { cn } from '@/lib/utils';
@@ -34,16 +30,14 @@ const queryClient = new QueryClient({
 /**
  * Tenant Admin Layout Content
  *
- * Inner component that consumes Growth Assistant context
- * for dynamic content margin when panel is open.
- *
  * Integrates with Agent UI Store for:
  * - Preview mode detection (full-bleed vs padded layout)
  * - Store initialization with tenantId (security isolation)
  * - QueryClient ref for external cache invalidation
+ *
+ * Agent Panel state is managed internally by AgentPanel component.
  */
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
-  const { isOpen, setIsOpen } = useGrowthAssistantContext();
   const [isMounted, setIsMounted] = useState(false);
   const { tenantId } = useAuth();
   const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
@@ -72,48 +66,33 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
     setQueryClientRef(localQueryClient);
   }, [localQueryClient]);
 
-  // Cmd+K / Ctrl+K keyboard shortcut to toggle Growth Assistant
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        // Don't intercept if user is typing in an input/textarea (except the assistant input)
-        const target = e.target as HTMLElement;
-        const isAssistantInput = target.hasAttribute('data-growth-assistant-input');
-        if (!isAssistantInput && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-          return;
-        }
-
-        e.preventDefault();
-
-        if (!isOpen) {
-          // Open panel and focus input after animation
-          setIsOpen(true);
-          setTimeout(() => {
-            const input = document.querySelector<HTMLTextAreaElement>(
-              '[data-growth-assistant-input]'
-            );
-            input?.focus();
-          }, 350); // Slightly longer than 300ms transition
-        } else {
-          // If already open, just focus the input
-          const input = document.querySelector<HTMLTextAreaElement>(
-            '[data-growth-assistant-input]'
-          );
-          input?.focus();
-        }
+  // Cmd+K / Ctrl+K keyboard shortcut to focus agent input
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      // Don't intercept if user is typing in an input/textarea (except the assistant input)
+      const target = e.target as HTMLElement;
+      const isAssistantInput = target.hasAttribute('data-growth-assistant-input');
+      if (!isAssistantInput && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
       }
-    },
-    [isOpen, setIsOpen]
-  );
+
+      e.preventDefault();
+
+      // Focus the agent input
+      const input = document.querySelector<HTMLTextAreaElement>('[data-growth-assistant-input]');
+      input?.focus();
+    }
+  }, []);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Match SSR default during hydration to prevent mismatch
-  const shouldPushContent = isMounted ? isOpen : true;
+  // Always push content since panel is always visible (just may be collapsed)
+  // Default to pushed during SSR to prevent hydration mismatch
+  const shouldPushContent = isMounted ? true : true;
 
   return (
     <div className="min-h-screen bg-surface">
@@ -121,7 +100,7 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           'lg:pl-72 transition-[padding-right] duration-300 ease-in-out',
-          // Push content left when panel is open (desktop only)
+          // Push content left when panel is visible (desktop only)
           shouldPushContent && 'lg:pr-[400px]'
         )}
       >
@@ -136,8 +115,8 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
           <ContentArea>{children}</ContentArea>
         </div>
       </main>
-      {/* Growth Assistant - always visible side panel */}
-      <GrowthAssistantPanel />
+      {/* Agent Panel - always visible side panel */}
+      <AgentPanel />
     </div>
   );
 }
@@ -146,12 +125,12 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
  * Tenant Admin Layout
  *
  * Protected layout for all /tenant/* routes.
- * Includes sidebar navigation, Growth Assistant panel, and requires TENANT_ADMIN role.
+ * Includes sidebar navigation, Agent Panel, and requires TENANT_ADMIN role.
  * Shows impersonation banner when a PLATFORM_ADMIN is impersonating.
  *
  * Architecture:
  * - QueryClientProvider: Enables TanStack Query for draft config caching
- * - GrowthAssistantProvider: Manages assistant panel open/close state
+ * - AgentPanel: Agent-first architecture - AI chatbot is THE central interface
  * - ContentArea: Agent-controlled view switching (dashboard vs preview)
  * - AgentUIStore: Zustand store for preview state (initialized in TenantLayoutContent)
  *
@@ -162,10 +141,8 @@ export default function TenantLayout({ children }: { children: React.ReactNode }
   return (
     <ProtectedRoute allowedRoles={['TENANT_ADMIN']}>
       <QueryClientProvider client={queryClient}>
-        <GrowthAssistantProvider>
-          <ImpersonationBanner />
-          <TenantLayoutContent>{children}</TenantLayoutContent>
-        </GrowthAssistantProvider>
+        <ImpersonationBanner />
+        <TenantLayoutContent>{children}</TenantLayoutContent>
       </QueryClientProvider>
     </ProtectedRoute>
   );

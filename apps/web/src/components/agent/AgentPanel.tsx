@@ -6,11 +6,15 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
 import { PanelAgentChat, type AgentUIAction } from './PanelAgentChat';
-import { useGrowthAssistantContext } from '@/contexts/GrowthAssistantContext';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
+import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
 import type { PageName } from '@macon/contracts';
+
+// LocalStorage keys for panel state
+const PANEL_OPEN_KEY = 'agent-panel-open';
+const WELCOMED_KEY = 'agent-panel-welcomed';
 
 // Welcome messages based on onboarding state
 const WELCOME_MESSAGES = {
@@ -19,22 +23,19 @@ const WELCOME_MESSAGES = {
   default: 'Salutations. Are you ready to get handled? Tell me a little about yourself.',
 };
 
-interface GrowthAssistantPanelProps {
-  /** Tenant slug for storefront link */
-  tenantSlug?: string;
+interface AgentPanelProps {
   /** Additional CSS classes */
   className?: string;
 }
 
 /**
- * GrowthAssistantPanel - Right-side AI assistant panel
+ * AgentPanel - Right-side AI assistant panel (formerly GrowthAssistantPanel)
  *
- * Cursor-style side panel for tenant dashboard:
+ * Agent-first architecture: The AI chatbot is THE central interface for tenant dashboard.
  * - Always visible by default (fixed position on right)
  * - Persists open/closed state to localStorage
- * - Welcome message for first-time users
+ * - Handles UI actions from agent tools (show preview, navigate, etc.)
  * - Onboarding progress indicator when in onboarding mode
- * - Integrates PanelAgentChat for messaging
  *
  * Onboarding Mode:
  * - Shows progress dots indicating current phase
@@ -42,14 +43,41 @@ interface GrowthAssistantPanelProps {
  * - Offers "Skip setup" option for manual configuration
  * - Uses personalized welcome messages for returning users
  */
-export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantPanelProps) {
+export function AgentPanel({ className }: AgentPanelProps) {
   const router = useRouter();
-  const { isOpen, setIsOpen, isFirstVisit, markWelcomed } = useGrowthAssistantContext();
+  const { slug: tenantSlug } = useAuth();
+
+  // Panel open/closed state (persisted to localStorage)
+  const [isOpen, setIsOpenState] = useState(true); // Default open
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   // Onboarding state
   const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
     useOnboardingState();
+
+  // Load persisted state from localStorage on mount
+  useEffect(() => {
+    setIsMounted(true);
+
+    const storedOpen = localStorage.getItem(PANEL_OPEN_KEY);
+    const welcomed = localStorage.getItem(WELCOMED_KEY);
+
+    // Check if this is first visit
+    if (!welcomed) {
+      setIsFirstVisit(true);
+      setIsOpenState(true); // Auto-open for first-time visitors
+    } else {
+      // Use stored preference or default to open
+      setIsOpenState(storedOpen === null ? true : storedOpen === 'true');
+    }
+  }, []);
+
+  // Persist open state to localStorage
+  const setIsOpen = useCallback((open: boolean) => {
+    setIsOpenState(open);
+    localStorage.setItem(PANEL_OPEN_KEY, String(open));
+  }, []);
 
   // Handle UI actions from agent tools
   const handleUIAction = useCallback(
@@ -76,17 +104,13 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
     [router]
   );
 
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Handle first message sent
-  const handleFirstMessage = () => {
+  // Handle first message sent - mark user as welcomed
+  const handleFirstMessage = useCallback(() => {
     if (isFirstVisit) {
-      markWelcomed();
+      localStorage.setItem(WELCOMED_KEY, 'true');
+      setIsFirstVisit(false);
     }
-  };
+  }, [isFirstVisit]);
 
   // Determine welcome message based on state
   const getWelcomeMessage = () => {
@@ -112,7 +136,7 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
           className
         )}
         role="complementary"
-        aria-label="Growth Assistant"
+        aria-label="AI Assistant"
         aria-busy="true"
       >
         {/* Skeleton header */}
@@ -147,7 +171,7 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
             'shadow-lg hover:shadow-xl transition-all duration-300',
             'flex flex-col items-center gap-2'
           )}
-          aria-label="Open Growth Assistant"
+          aria-label="Open AI Assistant"
         >
           <MessageCircle className="w-5 h-5" />
           <span className="text-xs font-medium" style={{ writingMode: 'vertical-rl' }}>
@@ -168,7 +192,7 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
           className
         )}
         role="complementary"
-        aria-label="Growth Assistant"
+        aria-label="AI Assistant"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
@@ -177,9 +201,7 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
               <Sparkles className="w-4 h-4 text-sage" />
             </div>
             <div>
-              <h2 className="text-base font-serif font-semibold text-text-primary">
-                Growth Assistant
-              </h2>
+              <h2 className="text-base font-serif font-semibold text-text-primary">AI Assistant</h2>
               <p className="text-xs text-text-muted">Powered by AI</p>
             </div>
           </div>
@@ -248,4 +270,4 @@ export function GrowthAssistantPanel({ tenantSlug, className }: GrowthAssistantP
   );
 }
 
-export default GrowthAssistantPanel;
+export default AgentPanel;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ import {
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
 import { StartTrialCard, TrialBanner } from '@/components/trial';
+import { agentUIActions } from '@/stores/agent-ui-store';
 
 interface DashboardStats {
   packagesCount: number;
@@ -42,14 +44,28 @@ interface TrialStatus {
  * - Quick stats overview
  * - Quick action buttons
  * - Recent activity (future)
+ *
+ * Supports ?showPreview=true query param to auto-open preview mode
+ * (used when redirected from /tenant/build)
  */
 export default function TenantDashboardPage() {
   const { tenantId, user, slug: authSlug, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(authSlug || null);
+
+  // Handle showPreview query param (from /tenant/build redirect)
+  useEffect(() => {
+    if (searchParams.get('showPreview') === 'true') {
+      // Trigger preview mode via agent UI store
+      agentUIActions.showPreview('home');
+      // Clean up URL to prevent re-triggering on refresh
+      window.history.replaceState({}, '', '/tenant/dashboard');
+    }
+  }, [searchParams]);
 
   const fetchDashboardData = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -144,7 +160,7 @@ export default function TenantDashboardPage() {
   const quickActions = [
     {
       title: 'Site Builder',
-      description: 'Build your storefront with AI assistance',
+      description: 'Preview and edit your storefront',
       href: '/tenant/build',
       icon: <Palette className="h-5 w-5" />,
       highlight: true,
