@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { parseQuickReplies } from '@/lib/parseQuickReplies';
+import { parseHighlights } from '@/lib/parseHighlights';
 import { QuickReplyChips } from './QuickReplyChips';
 
 // Use Next.js API proxy to handle authentication
@@ -58,6 +59,12 @@ interface PanelAgentChatProps {
   welcomeMessage?: string;
   /** Callback when user sends their first message */
   onFirstMessage?: () => void;
+  /** Callback when agent message contains section highlight instruction */
+  onSectionHighlight?: (sectionId: string) => void;
+  /** Initial message to populate in input field (from quick actions) */
+  initialMessage?: string | null;
+  /** Callback when initial message has been consumed */
+  onMessageConsumed?: () => void;
   /** Additional CSS classes */
   className?: string;
 }
@@ -73,6 +80,9 @@ interface PanelAgentChatProps {
 export function PanelAgentChat({
   welcomeMessage = 'Salutations. Are you ready to get handled? Tell me a little about yourself.',
   onFirstMessage,
+  onSectionHighlight,
+  initialMessage,
+  onMessageConsumed,
   className,
 }: PanelAgentChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -149,6 +159,15 @@ export function PanelAgentChat({
   useEffect(() => {
     initializeChat();
   }, [initializeChat]);
+
+  // Handle initial message from quick actions
+  useEffect(() => {
+    if (initialMessage && !isLoading && sessionId) {
+      setInputValue(initialMessage);
+      inputRef.current?.focus();
+      onMessageConsumed?.();
+    }
+  }, [initialMessage, isLoading, sessionId, onMessageConsumed]);
 
   // Send a message to the agent
   const sendMessage = async () => {
@@ -308,14 +327,28 @@ export function PanelAgentChat({
           const isLastAssistantMessage =
             message.role === 'assistant' && index === messages.length - 1;
 
-          // Parse quick replies from assistant messages
-          const { message: displayContent, quickReplies } =
-            message.role === 'assistant'
-              ? parseQuickReplies(message.content)
-              : { message: message.content, quickReplies: [] };
+          // Parse highlights and quick replies from assistant messages (chained)
+          let displayContent = message.content;
+          let quickReplies: string[] = [];
+          let highlights: string[] = [];
+
+          if (message.role === 'assistant') {
+            // First, extract highlights
+            const highlightResult = parseHighlights(message.content);
+            highlights = highlightResult.highlights;
+
+            // Then, parse quick replies from the cleaned content
+            const quickReplyResult = parseQuickReplies(highlightResult.message);
+            displayContent = quickReplyResult.message;
+            quickReplies = quickReplyResult.quickReplies;
+          }
 
           return (
             <div key={index}>
+              {/* Trigger highlights when this message is rendered */}
+              {isLastAssistantMessage && highlights.length > 0 && (
+                <HighlightTrigger highlights={highlights} onSectionHighlight={onSectionHighlight} />
+              )}
               <CompactMessage
                 message={{ ...message, content: displayContent }}
                 onConfirmProposal={confirmProposal}
@@ -543,6 +576,38 @@ function CompactProposalCard({
       </div>
     </div>
   );
+}
+
+/**
+ * HighlightTrigger - Effect-only component to trigger section highlights
+ *
+ * Triggers the highlight callback when mounted, with staggered timing for multiple highlights.
+ * Renders nothing - purely for side effects.
+ */
+function HighlightTrigger({
+  highlights,
+  onSectionHighlight,
+}: {
+  highlights: string[];
+  onSectionHighlight?: (sectionId: string) => void;
+}) {
+  useEffect(() => {
+    if (!onSectionHighlight || highlights.length === 0) return;
+
+    // Trigger highlights with staggered timing (500ms between each)
+    const timeouts = highlights.map((sectionId, index) =>
+      setTimeout(() => {
+        onSectionHighlight(sectionId);
+      }, index * 500)
+    );
+
+    // Cleanup timeouts on unmount
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
+  }, [highlights, onSectionHighlight]);
+
+  return null; // Renders nothing
 }
 
 export default PanelAgentChat;

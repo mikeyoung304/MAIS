@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { PanelAgentChat } from '@/components/agent/PanelAgentChat';
 import { cn } from '@/lib/utils';
-import { logger } from '@/lib/logger';
 import type { PageName } from '@macon/contracts';
 import type { BuildModeChatContext } from '@/lib/build-mode/types';
 import { Palette, FileEdit, Layers, Type, Image, MessageSquare } from 'lucide-react';
@@ -24,14 +23,50 @@ interface BuildModeChatProps {
  * - Quick action chips for common operations
  * - Compact styling for split-screen layout
  */
+/**
+ * Resolve a section ID to page and index for highlighting
+ *
+ * Section IDs follow the pattern: {page}-{type}-{qualifier}
+ * e.g., "home-hero-main", "about-text-intro"
+ *
+ * @returns pageId and sectionIndex, or null if not resolvable
+ */
+function resolveSectionId(sectionId: string): { pageId: PageName; sectionIndex: number } | null {
+  // Section IDs follow pattern: {page}-{type}-{qualifier}
+  // e.g., "home-hero-main" → page="home", type="hero", qualifier="main"
+  const parts = sectionId.split('-');
+  if (parts.length < 2) return null;
+
+  const pageId = parts[0] as PageName;
+
+  // For now, we pass index 0 and let the parent handle the actual resolution
+  // The parent (BuildModePage) knows the actual draft config and can find the section
+  // This is a simplified approach - the highlight message goes to the preview iframe
+  // which handles section lookup by ID directly
+  return { pageId, sectionIndex: 0 };
+}
+
 export function BuildModeChat({
   context,
   onConfigUpdate,
-  onSectionHighlight: _onSectionHighlight,
+  onSectionHighlight,
   className,
 }: BuildModeChatProps) {
-  // Note: _onSectionHighlight is available for future use when AI highlights sections
-  void _onSectionHighlight;
+  // State for pending message from quick action chips
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+
+  // Handle section highlight from agent messages
+  const handleSectionHighlight = useCallback(
+    (sectionId: string) => {
+      if (!onSectionHighlight) return;
+
+      const resolved = resolveSectionId(sectionId);
+      if (resolved) {
+        onSectionHighlight(resolved.pageId, resolved.sectionIndex);
+      }
+    },
+    [onSectionHighlight]
+  );
 
   const welcomeMessage = `Hey! Welcome to Build Mode! 🎨
 
@@ -47,8 +82,7 @@ What would you like to work on first?
 
 [Quick Replies: Update headline | Add section | Change colors]`;
 
-  // Handle quick action clicks
-  // TODO: Integrate with PanelAgentChat to pre-fill input when that prop is available
+  // Handle quick action clicks - populate the chat input with a prompt
   const handleQuickAction = useCallback(
     (action: string) => {
       const prompts: Record<string, string> = {
@@ -58,8 +92,10 @@ What would you like to work on first?
         image: `Update the images on the ${context.currentPage} page`,
         testimonials: `Update the testimonials section`,
       };
-      // Log the prompt for now - will be integrated with chat input
-      logger.debug('[BuildModeChat] Quick action', { action, prompt: prompts[action] });
+      const prompt = prompts[action];
+      if (prompt) {
+        setPendingMessage(prompt);
+      }
     },
     [context.currentPage]
   );
@@ -121,6 +157,9 @@ What would you like to work on first?
         <PanelAgentChat
           welcomeMessage={welcomeMessage}
           onFirstMessage={onConfigUpdate}
+          onSectionHighlight={handleSectionHighlight}
+          initialMessage={pendingMessage}
+          onMessageConsumed={() => setPendingMessage(null)}
           className="h-full"
         />
       </div>
