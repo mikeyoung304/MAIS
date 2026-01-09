@@ -40,7 +40,7 @@ function LoginForm() {
   useEffect(() => {
     if (isAuthenticated && !sessionLoading) {
       const redirectUrl =
-        callbackUrl || (role === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/dashboard');
+        callbackUrl || (role === 'PLATFORM_ADMIN' ? '/admin/dashboard' : '/tenant/build');
       router.push(redirectUrl);
     }
   }, [isAuthenticated, sessionLoading, callbackUrl, role, router]);

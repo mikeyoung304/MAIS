@@ -108,7 +108,7 @@ function SignupForm() {
       if (role === 'PLATFORM_ADMIN') {
         router.push('/admin/dashboard');
       } else if (role === 'TENANT_ADMIN') {
-        router.push('/tenant/dashboard');
+        router.push('/tenant/build');
       }
     }
   }, [isAuthenticated, role, sessionLoading, router]);
@@ -191,9 +191,9 @@ function SignupForm() {
         slug: data.slug,
       });
 
-      // Refresh to pick up the new session and redirect
-      router.refresh();
-      router.push('/tenant/dashboard');
+      // Use window.location for hard redirect to Build Mode
+      // This ensures clean navigation after session creation
+      window.location.href = '/tenant/build';
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);

@@ -35,14 +35,15 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     const hasAllowedRole = allowedRoles.some((r) => hasRole(r));
 
     if (!hasAllowedRole) {
-      // Redirect to appropriate dashboard
+      // Redirect to appropriate home page
       if (isImpersonating()) {
-        // Admin impersonating should go to tenant dashboard
-        router.push('/tenant/dashboard');
+        // Admin impersonating should go to tenant build (primary workspace)
+        router.push('/tenant/build');
       } else if (role === 'PLATFORM_ADMIN') {
         router.push('/admin/dashboard');
       } else if (role === 'TENANT_ADMIN') {
-        router.push('/tenant/dashboard');
+        // Tenant admins go to build mode as primary workspace
+        router.push('/tenant/build');
       } else {
         router.push('/login');
       }
