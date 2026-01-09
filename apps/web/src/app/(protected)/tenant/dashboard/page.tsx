@@ -16,7 +16,6 @@ import {
   FileEdit,
   AlertCircle,
   RefreshCw,
-  Bot,
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
@@ -144,17 +143,11 @@ export default function TenantDashboardPage() {
 
   const quickActions = [
     {
-      title: 'Edit Website',
-      description: 'Customize your storefront with AI',
+      title: 'Site Builder',
+      description: 'Build your storefront with AI assistance',
       href: '/tenant/build',
       icon: <Palette className="h-5 w-5" />,
       highlight: true,
-    },
-    {
-      title: 'Growth Assistant',
-      description: 'AI-powered help for your business',
-      href: '/tenant/assistant',
-      icon: <Bot className="h-5 w-5" />,
     },
     {
       title: 'Manage Pages',
