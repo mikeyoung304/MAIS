@@ -81,6 +81,8 @@ const REQUIRED_EXECUTOR_TOOLS = [
   // Onboarding
   'start_trial',
   'initiate_stripe_onboarding',
+  'upsert_services',
+  'update_storefront',
 
   // Storefront Build Mode
   'update_page_section',

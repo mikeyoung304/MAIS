@@ -19,6 +19,7 @@ import type { PrismaClient, Prisma } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { MissingFieldError, ValidationError } from '../errors';
+import type { LandingPageConfig, PagesConfig, Section } from '@macon/contracts';
 
 // ============================================================================
 // Types
@@ -178,14 +179,14 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
 
     // Build update data
     const tenantUpdates: Prisma.TenantUpdateInput = {};
-    const landingPageUpdates: Record<string, unknown> = {};
 
     // Direct tenant field updates
     if (primaryColor) {
       tenantUpdates.primaryColor = primaryColor;
     }
 
-    // Landing page config updates
+    // Landing page config updates - update hero section at correct path
+    // Structure: landingPageConfig.pages.home.sections[0] (where type === 'hero')
     if (headline || tagline || heroImageUrl) {
       // Get current landing page config
       const tenant = await prisma.tenant.findUnique({
@@ -193,18 +194,47 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
         select: { landingPageConfig: true },
       });
 
-      const currentConfig = (tenant?.landingPageConfig as Record<string, unknown>) || {};
-      const currentHero = (currentConfig.hero as Record<string, unknown>) || {};
-
-      // Build updated hero section
-      const heroUpdate: Record<string, unknown> = {
-        ...currentHero,
-        ...(headline && { headline }),
-        ...(tagline && { subheadline: tagline }),
-        ...(heroImageUrl && { backgroundImageUrl: heroImageUrl }),
+      const currentConfig = (tenant?.landingPageConfig as LandingPageConfig | null) || {
+        pages: {} as Partial<PagesConfig>,
       };
+      const pages = (currentConfig.pages || {}) as Partial<PagesConfig>;
+      const homePage = pages.home || { enabled: true as const, sections: [] as Section[] };
+      const sections: Section[] = [...(homePage.sections || [])];
 
-      landingPageUpdates.hero = heroUpdate;
+      // Find the hero section (type === 'hero')
+      const heroIndex = sections.findIndex((s) => s.type === 'hero');
+      if (heroIndex >= 0) {
+        // Update existing hero section
+        const currentHero = sections[heroIndex];
+        sections[heroIndex] = {
+          ...currentHero,
+          ...(headline && { headline }),
+          ...(tagline && { subheadline: tagline }),
+          ...(heroImageUrl && { backgroundImageUrl: heroImageUrl }),
+        } as Section;
+      } else {
+        // Create hero section if it doesn't exist
+        sections.unshift({
+          id: 'home-hero-main',
+          type: 'hero',
+          headline: headline || '[Hero Headline]',
+          subheadline: tagline || '[Hero Subheadline]',
+          ctaText: '[CTA Button Text]',
+          ...(heroImageUrl && { backgroundImageUrl: heroImageUrl }),
+        } as Section);
+      }
+
+      // Build updated config with correct structure
+      tenantUpdates.landingPageConfig = {
+        ...currentConfig,
+        pages: {
+          ...pages,
+          home: {
+            ...homePage,
+            sections,
+          },
+        },
+      } as Prisma.JsonObject;
     }
 
     // Brand voice goes in branding JSON field
@@ -218,20 +248,6 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
       tenantUpdates.branding = {
         ...currentBranding,
         voice: brandVoice,
-      } as Prisma.JsonObject;
-    }
-
-    // Merge landing page config if we have updates
-    if (Object.keys(landingPageUpdates).length > 0) {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { landingPageConfig: true },
-      });
-
-      const currentConfig = (tenant?.landingPageConfig as Record<string, unknown>) || {};
-      tenantUpdates.landingPageConfig = {
-        ...currentConfig,
-        ...landingPageUpdates,
       } as Prisma.JsonObject;
     }
 

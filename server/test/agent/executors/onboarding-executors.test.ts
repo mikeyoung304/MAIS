@@ -117,7 +117,9 @@ describe('Onboarding Executors', () => {
 
     // Register the executors
     // Cast to unknown first then to PrismaClient since we're using a mock
-    registerOnboardingExecutors(mockPrisma as unknown as Parameters<typeof registerOnboardingExecutors>[0]);
+    registerOnboardingExecutors(
+      mockPrisma as unknown as Parameters<typeof registerOnboardingExecutors>[0]
+    );
   });
 
   afterEach(() => {
@@ -539,16 +541,13 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
-          where: { id: tenantId },
-          data: expect.objectContaining({
-            landingPageConfig: expect.objectContaining({
-              hero: expect.objectContaining({
-                headline: 'Capturing Your Moments',
-              }),
-            }),
-          }),
-        });
+        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+
+        // Should create hero section with headline in the correct structure
+        expect(heroSection.headline).toBe('Capturing Your Moments');
+        expect(heroSection.type).toBe('hero');
+        expect(heroSection.id).toBe('home-hero-main');
       });
 
       it('should update tagline as subheadline in hero section', async () => {
@@ -565,16 +564,13 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
-          where: { id: tenantId },
-          data: expect.objectContaining({
-            landingPageConfig: expect.objectContaining({
-              hero: expect.objectContaining({
-                subheadline: "Professional photography for life's special moments",
-              }),
-            }),
-          }),
-        });
+        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+
+        // Should create hero section with subheadline (from tagline) in the correct structure
+        expect(heroSection.subheadline).toBe("Professional photography for life's special moments");
+        expect(heroSection.type).toBe('hero');
+        expect(heroSection.id).toBe('home-hero-main');
       });
     });
 
@@ -656,10 +652,21 @@ describe('Onboarding Executors', () => {
       it('should not overwrite unrelated landing page fields', async () => {
         mockPrisma.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {
-            services: { enabled: true },
-            testimonials: [{ text: 'Great!' }],
-            hero: {
-              backgroundImageUrl: 'existing-image.jpg',
+            pages: {
+              home: {
+                enabled: true,
+                sections: [
+                  {
+                    id: 'home-hero-main',
+                    type: 'hero',
+                    headline: 'Old Headline',
+                    subheadline: 'Old Subheadline',
+                    ctaText: 'Book Now',
+                    backgroundImageUrl: 'existing-image.jpg',
+                  },
+                ],
+              },
+              services: { enabled: true, sections: [] },
             },
           },
           branding: {},
@@ -676,23 +683,30 @@ describe('Onboarding Executors', () => {
         const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
         const landingPageConfig = updateCall.data.landingPageConfig;
 
-        expect(landingPageConfig).toMatchObject({
-          services: { enabled: true },
-          testimonials: [{ text: 'Great!' }],
-          hero: expect.objectContaining({
-            headline: 'New Headline',
-            backgroundImageUrl: 'existing-image.jpg', // Preserved
-          }),
-        });
+        // Services page should be preserved
+        expect(landingPageConfig.pages.services).toEqual({ enabled: true, sections: [] });
+        // Hero section should be updated with headline, preserving other fields
+        const heroSection = landingPageConfig.pages.home.sections[0];
+        expect(heroSection.headline).toBe('New Headline');
+        expect(heroSection.backgroundImageUrl).toBe('existing-image.jpg'); // Preserved
       });
 
       it('should preserve existing hero fields when updating', async () => {
         mockPrisma.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {
-            hero: {
-              headline: 'Old Headline',
-              subheadline: 'Old Tagline',
-              buttonText: 'Book Now',
+            pages: {
+              home: {
+                enabled: true,
+                sections: [
+                  {
+                    id: 'home-hero-main',
+                    type: 'hero',
+                    headline: 'Old Headline',
+                    subheadline: 'Old Tagline',
+                    ctaText: 'Book Now',
+                  },
+                ],
+              },
             },
           },
           branding: {},
@@ -708,12 +722,12 @@ describe('Onboarding Executors', () => {
         await updateStorefrontExecutor(tenantId, payload);
 
         const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-        const hero = updateCall.data.landingPageConfig.hero;
+        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
 
-        expect(hero).toEqual({
+        expect(heroSection).toMatchObject({
           headline: 'Updated Headline',
           subheadline: 'Old Tagline', // Preserved
-          buttonText: 'Book Now', // Preserved
+          ctaText: 'Book Now', // Preserved
         });
       });
     });
@@ -788,16 +802,13 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
-          where: { id: tenantId },
-          data: expect.objectContaining({
-            landingPageConfig: expect.objectContaining({
-              hero: expect.objectContaining({
-                backgroundImageUrl: 'https://example.com/hero.jpg',
-              }),
-            }),
-          }),
-        });
+        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
+        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+
+        // Should create hero section with backgroundImageUrl in the correct structure
+        expect(heroSection.backgroundImageUrl).toBe('https://example.com/hero.jpg');
+        expect(heroSection.type).toBe('hero');
+        expect(heroSection.id).toBe('home-hero-main');
       });
     });
 
