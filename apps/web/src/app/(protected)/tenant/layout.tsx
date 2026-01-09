@@ -1,30 +1,57 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminSidebar } from '@/components/layouts/AdminSidebar';
 import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
 import { GrowthAssistantPanel } from '@/components/agent/GrowthAssistantPanel';
+import { ContentArea } from '@/components/dashboard/ContentArea';
 import {
   GrowthAssistantProvider,
   useGrowthAssistantContext,
 } from '@/contexts/GrowthAssistantContext';
+import { useAgentUIStore, selectIsPreviewActive } from '@/stores/agent-ui-store';
+import { setQueryClientRef } from '@/hooks/useDraftConfig';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-client';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useBuildModeRedirect } from '@/hooks/useBuildModeRedirect';
 
 /**
+ * Create query client outside component to prevent recreation
+ * This ensures stable caching across renders
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000, // 30 seconds
+      retry: 1,
+    },
+  },
+});
+
+/**
  * Tenant Admin Layout Content
  *
  * Inner component that consumes Growth Assistant context
  * for dynamic content margin when panel is open.
+ *
+ * Integrates with Agent UI Store for:
+ * - Preview mode detection (full-bleed vs padded layout)
+ * - Store initialization with tenantId (security isolation)
+ * - QueryClient ref for external cache invalidation
  */
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const { isOpen, setIsOpen } = useGrowthAssistantContext();
   const [isMounted, setIsMounted] = useState(false);
   const { tenantId } = useAuth();
   const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
+  const localQueryClient = useQueryClient();
+
+  // Agent UI store - preview mode detection
+  const isPreviewActive = useAgentUIStore(selectIsPreviewActive);
+  const initialize = useAgentUIStore((state) => state.initialize);
 
   // Auto-redirect to Build Mode when reaching MARKETING phase
   useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
@@ -32,6 +59,18 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Initialize agent UI store with tenant ID (security isolation)
+  useEffect(() => {
+    if (tenantId) {
+      initialize(tenantId);
+    }
+  }, [tenantId, initialize]);
+
+  // Set query client ref for external invalidation (agent tool handlers)
+  useEffect(() => {
+    setQueryClientRef(localQueryClient);
+  }, [localQueryClient]);
 
   // Cmd+K / Ctrl+K keyboard shortcut to toggle Growth Assistant
   const handleKeyDown = useCallback(
@@ -86,7 +125,16 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
           shouldPushContent && 'lg:pr-[400px]'
         )}
       >
-        <div className="p-6 lg:p-8">{children}</div>
+        {/* Dynamic padding based on preview mode */}
+        <div
+          className={cn(
+            'transition-all duration-300',
+            // Full-bleed when preview is active, padded otherwise
+            isPreviewActive ? 'p-0 h-[calc(100vh)]' : 'p-6 lg:p-8'
+          )}
+        >
+          <ContentArea>{children}</ContentArea>
+        </div>
       </main>
       {/* Growth Assistant - always visible side panel */}
       <GrowthAssistantPanel />
@@ -100,14 +148,25 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
  * Protected layout for all /tenant/* routes.
  * Includes sidebar navigation, Growth Assistant panel, and requires TENANT_ADMIN role.
  * Shows impersonation banner when a PLATFORM_ADMIN is impersonating.
+ *
+ * Architecture:
+ * - QueryClientProvider: Enables TanStack Query for draft config caching
+ * - GrowthAssistantProvider: Manages assistant panel open/close state
+ * - ContentArea: Agent-controlled view switching (dashboard vs preview)
+ * - AgentUIStore: Zustand store for preview state (initialized in TenantLayoutContent)
+ *
+ * @see components/dashboard/ContentArea.tsx for view routing
+ * @see stores/agent-ui-store.ts for view state management
  */
 export default function TenantLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute allowedRoles={['TENANT_ADMIN']}>
-      <GrowthAssistantProvider>
-        <ImpersonationBanner />
-        <TenantLayoutContent>{children}</TenantLayoutContent>
-      </GrowthAssistantProvider>
+      <QueryClientProvider client={queryClient}>
+        <GrowthAssistantProvider>
+          <ImpersonationBanner />
+          <TenantLayoutContent>{children}</TenantLayoutContent>
+        </GrowthAssistantProvider>
+      </QueryClientProvider>
     </ProtectedRoute>
   );
 }
