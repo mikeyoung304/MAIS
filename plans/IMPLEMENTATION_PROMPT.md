@@ -1,109 +1,92 @@
-# Implementation Prompt for World-Class Customer Agent
+# Implementation Prompt for Storefront AI-Chatbot Integration
 
-Copy and paste everything below this line into a new Claude Code chat:
+Copy everything below the line and paste into a new Claude Code session:
 
 ---
 
-## Task: Complete Customer Chatbot for Launch
+## Context
 
-I need you to complete the customer chatbot for launch. An end-to-end scan revealed critical gaps in the booking flow that must be fixed before expanding features.
+I'm implementing the **Storefront AI-Chatbot Integration** feature for MAIS - a multi-tenant service booking platform. The goal is to replace fragile array indices with stable, human-readable section IDs so our AI chatbot can reliably update tenant storefronts.
 
-### Context
+## The Plan
 
-- **Branch:** `feat/customer-chatbot`
-- **Plan file:** `plans/world-class-customer-agent-roadmap.md` (READ THIS FIRST)
-- **Key gap:** Bookings are created but NO confirmation email sent, NO payment collected
+Read the implementation plan at: `plans/storefront-ai-chatbot-integration-FINAL.md`
 
-### Critical Discovery
+This plan has been reviewed by 6 specialist agents (DHH, TypeScript expert, Security Sentinel, Architecture Strategist, Code Simplicity, Agent-Native Architect) and incorporates all their feedback.
 
-The scan found these TODOs in the code:
+## Key Files to Understand
 
-```typescript
-// server/src/agent/customer/customer-booking-executor.ts:115-116
-// TODO: Send confirmation email to customer
-// TODO: Notify tenant of new booking
-```
+Before starting, read these files for context:
 
-Customers complete bookings but receive nothing. This is a launch blocker.
+- `packages/contracts/src/landing-page.ts` - Current section schemas and DEFAULT_PAGES_CONFIG
+- `server/src/agent/tools/storefront-tools.ts` - Current storefront tools
+- `server/src/agent/executors/storefront-executors.ts` - Current executors
 
-### Implementation Order
+## Implementation Order
 
-**Phase 0: Core Booking Flow (LAUNCH BLOCKERS)**
+**Phase 1: Schema Foundation + Defaults** (Start here)
 
-1. **Booking emails** (highest priority)
-   - Implement customer confirmation email in `customer-booking-executor.ts`
-   - Implement tenant notification email
-   - Use existing `mailAdapter` from `@/adapters/postmark.adapter`
+1. Add `SectionIdSchema` with strict validation
+2. Add `isSectionWithId()` type guard
+3. Add `generateSectionId()` function
+4. Update all 9 section type schemas with optional `id` field
+5. Update `DEFAULT_PAGES_CONFIG` with IDs and placeholders
+6. Write unit tests
 
-2. **Stripe checkout integration**
-   - Create checkout session after booking confirmation
-   - Return `checkoutUrl` in executor response
-   - Add webhook handler for `checkout.session.completed`
-   - Add `paidAt` field to Booking model
+**Phase 2: Discovery Tools + Migration**
 
-3. **Basic test coverage**
-   - Create `server/test/integration/customer-chat.spec.ts`
-   - Test session creation, message handling, booking flow
+1. Add `list_section_ids` tool
+2. Add `get_section_by_id` tool
+3. Add `get_unfilled_placeholders` tool
+4. Create migration script at `server/scripts/migrate-section-ids.ts`
+5. Add uniqueness validation in executors
+6. Write integration tests
 
-4. **Cleanup jobs**
-   - Create `server/src/jobs/cleanup.ts`
-   - Add expired session cleanup (24hr+)
-   - Add expired proposal cleanup (7 days+)
+**Phase 3: ID-Based Tool Updates**
 
-**Phase 0B: Schema & Validation**
+1. Update `UpdatePageSectionPayloadSchema` for ID support
+2. Add `sectionId` parameter to `update_page_section` tool
+3. Add `sectionId` parameter to `remove_page_section` tool
+4. Adjust trust tiers (publish_draft → T3)
+5. Add audit logging
 
-5. **Add `confirmationCode` to Booking model**
-   - Migration + backfill existing bookings
+**Phase 4: Unification + Agent Intelligence**
 
-6. **Add Zod validation schemas**
-   - Create `packages/contracts/src/schemas/customer-chat.schema.ts`
+1. Expose Build Mode tools in onboarding MARKETING phase
+2. Update system prompt with disambiguation flow
 
-7. **Add escalation rate limiter**
-   - 3/hour (separate from chat's 20/min)
+## Critical Requirements
 
-**Then Phase 1-3 as documented in plan.**
+From the reviews, these are NON-NEGOTIABLE:
 
-### Files to Modify
+1. **Strict ID Regex** - Validate known pages and section types:
 
-```
-server/src/agent/customer/customer-booking-executor.ts  # Add emails + Stripe
-server/src/routes/webhooks.routes.ts                    # Add payment webhook
-server/prisma/schema.prisma                             # Add paidAt, confirmationCode
-server/src/jobs/cleanup.ts                              # NEW - cleanup jobs
-server/test/integration/customer-chat.spec.ts           # NEW - tests
-packages/contracts/src/schemas/customer-chat.schema.ts  # NEW - Zod schemas
-server/src/middleware/rateLimiter.ts                    # Add escalation limiter
-```
+   ```typescript
+   /^(home|about|services|faq|contact|gallery|testimonials)-(hero|text|gallery|testimonials|faq|contact|cta|pricing|features)-(main|[a-z]+|[0-9]+)$/;
+   ```
 
-### Testing Requirements
+2. **Reserved Pattern Validation** - Block JavaScript prototype pollution:
 
-After each section, verify:
+   ```typescript
+   .refine(id => !['__proto__', 'constructor', 'prototype'].some(p => id.includes(p)))
+   ```
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm test` passes (once tests exist)
-- [ ] Manual test: book through widget, check email received
+3. **Tenant Isolation in Migration** - Fresh `existingIds` Set per tenant
 
-### Environment Variables Required
+4. **Monotonic Counter** - Never reuse deleted IDs
 
-```bash
-ANTHROPIC_API_KEY=sk-ant-xxx       # For Claude API
-POSTMARK_SERVER_TOKEN=xxx          # For emails
-STRIPE_SECRET_KEY=sk_xxx           # For payments
-STRIPE_WEBHOOK_SECRET=whsec_xxx    # For webhook validation
-```
+5. **Trust Tier T3 for publish_draft** - Makes changes live to visitors
 
-### DO NOT
+## Commands
 
-- Skip email implementation (launch blocker)
-- Skip Stripe integration (revenue blocker)
-- Expand to CSAT/streaming before core flow works
-- Implement Phase 4.2 (Voice) or 4.4 (pgvector) - deferred
+Run these as you work:
 
-### Start
+- `npm run typecheck` - After schema changes
+- `npm test` - After each phase
+- `npm run build` - Before committing
 
-1. Read `plans/world-class-customer-agent-roadmap.md` - especially Phase 0
-2. Read `server/src/agent/customer/customer-booking-executor.ts` to see current state
-3. Create a TodoWrite list for Phase 0
-4. Begin with booking emails (the TODO at line 115)
+## Start
 
-Let's fix the core booking flow first.
+Begin with Phase 1. After completing each phase, run tests and get my approval before proceeding to the next phase.
+
+Let's start! Read the plan file and begin implementing Phase 1.
