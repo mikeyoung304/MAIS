@@ -19,7 +19,7 @@ HANDLED (gethandled.ai) is a membership platform for service professionals — p
 - Next.js migration: COMPLETE (6 phases, 14 code review fixes applied)
 - Tenant storefronts: SSR-enabled at `/t/[slug]` with custom domain support
 - Agent-powered onboarding: COMPLETE (Phases 1-5, event sourcing, dual-mode orchestrator)
-- Tenant self-signup: Backend + Frontend complete (`/signup` → `/tenant/dashboard`)
+- Tenant self-signup: Backend + Frontend complete (`/signup` → `/tenant/build`)
 - Password reset flow: Complete with Postmark email integration
 - Stripe Connect onboarding: Backend routes + StripeConnectCard.tsx
 - Multi-tenant architecture: 100% complete
@@ -915,6 +915,8 @@ The following links prevent common mistakes from recurring:
 **Key insight from Agent-Eval Code Review:** Express matches routes in registration order. Static paths (`/stats`) must be defined BEFORE parameterized paths (`/:traceId`) or they become unreachable. Never use `|| 'system'` auth fallbacks - require authenticated user and return 401. Always include `tenantId` in queries even when IDs are pre-filtered (defense-in-depth).
 
 **Key insight from Turbopack HMR Cache Issues:** Turbopack maintains an in-memory module graph that becomes stale when removing imports or switching build modes. Recovery is always the same: clear caches (`rm -rf .next .turbo`) and restart. Prevention: proactively clear after branch switches, npm installs, and dependency removals. Use `npm run dev:fresh` script (added to apps/web/package.json) for one-liner recovery.
+
+**Key insight from Uncommitted Next.js Changes (Commit b87da8bb):** When code changes don't take effect in Next.js despite file edits, check if changes are COMMITTED. Next.js compiles from HEAD, not working directory. Diagnosis: `git show HEAD:path/to/file` vs `cat path/to/file`. Solution: Commit → Clear cache (`rm -rf .next .turbo`) → Restart. See `docs/solutions/dev-workflow/uncommitted-nextjs-changes-not-reflected-MAIS-20260109.md`.
 
 **Key insight from Build Mode Code Review:** Agent parity is critical - every UI action needs a corresponding tool (publish_draft, discard_draft, get_draft were missing). Zod schemas MUST live in `@macon/contracts` and be imported in both tools AND executors (not duplicated). All visual changes (including branding) must go to draft, not live. PostMessage handlers must validate origin AND parse through Zod before processing - never cast `event.data as SomeType`.
 
