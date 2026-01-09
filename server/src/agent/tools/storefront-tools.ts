@@ -812,12 +812,12 @@ visible to all visitors.`,
 /**
  * discard_draft - Discard all draft changes
  *
- * Trust Tier: T2 (soft confirm) - Destructive but reversible
+ * Trust Tier: T3 (user confirm) - Destructive and irreversible
  * Clears landingPageConfigDraft without affecting live config
  */
 export const discardDraftTool: AgentTool = {
   name: 'discard_draft',
-  trustTier: 'T2',
+  trustTier: 'T3',
   description: `Discard all draft changes and revert to the current live version.
 
 This clears the draft without affecting the live landing page.
@@ -850,7 +850,7 @@ Use this when the user wants to start over or abandon their changes.`,
         note: 'All draft changes will be lost. This cannot be undone.',
       };
 
-      return createProposal(context, 'discard_draft', operation, 'T2', payload, preview);
+      return createProposal(context, 'discard_draft', operation, 'T3', payload, preview);
     } catch (error) {
       return handleToolError(error, 'discard_draft', tenantId, 'Failed to create discard proposal');
     }

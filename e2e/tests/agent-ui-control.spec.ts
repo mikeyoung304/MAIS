@@ -134,10 +134,7 @@ test.describe('Agent UI Control', () => {
     // Trigger show_preview action (simulating agent tool execution)
     await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
 
-    // Wait for state change
-    await authenticatedPage.waitForTimeout(500);
-
-    // Should now show preview panel
+    // Should now show preview panel (assertion handles waiting for state change)
     await expect(authenticatedPage.locator('[data-testid="content-area-preview"]')).toBeVisible({
       timeout: 5000,
     });
@@ -160,10 +157,7 @@ test.describe('Agent UI Control', () => {
     // Then trigger hide_preview (showDashboard)
     await callAgentUIAction(authenticatedPage, 'showDashboard');
 
-    // Wait for state change
-    await authenticatedPage.waitForTimeout(500);
-
-    // Should be back to dashboard
+    // Should be back to dashboard (assertion handles waiting for state change)
     await expect(authenticatedPage.locator('[data-testid="content-area-dashboard"]')).toBeVisible({
       timeout: 5000,
     });
@@ -202,61 +196,53 @@ test.describe('Agent UI Control', () => {
   });
 
   /**
-   * Test 4: Section highlight sends PostMessage to iframe
+   * Test 4: Section highlight updates store state
    *
-   * When highlightSection is called, it should send a PostMessage
-   * to the preview iframe with the section ID.
+   * When highlightSection is called, the store should update with the
+   * section ID and switch to preview mode if not already in it.
+   *
+   * Note: PostMessage to iframe is tested separately via unit tests since
+   * it requires a fully loaded iframe which is slow/flaky in E2E.
    */
-  test('sends PostMessage when highlighting section', async ({ authenticatedPage }) => {
-    // Show preview first
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
-    await expect(authenticatedPage.locator('[data-testid="preview-panel"]')).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Wait for iframe to be ready
-    const iframe = authenticatedPage.locator('[data-testid="preview-iframe"]');
-    await expect(iframe).toBeVisible({ timeout: 10000 });
-
-    // Set up message listener before triggering highlight
-    const messagePromise = authenticatedPage.evaluate(() => {
-      return new Promise<{ type: string; data: unknown }>((resolve) => {
-        const timeout = setTimeout(() => resolve({ type: 'timeout', data: null }), 3000);
-        window.addEventListener(
-          'message',
-          (event) => {
-            if (event.data?.type?.includes('HIGHLIGHT')) {
-              clearTimeout(timeout);
-              resolve(event.data);
-            }
-          },
-          { once: true }
-        );
-      });
-    });
-
-    // Trigger section highlight
+  test('updates store when highlighting section', async ({ authenticatedPage }) => {
+    // Trigger section highlight - this should also show preview
     await callAgentUIAction(authenticatedPage, 'highlightSection', 'home-hero-main');
 
-    // Verify the store state was updated (even if PostMessage timing is tricky)
-    const highlightedId = await authenticatedPage.evaluate(() => {
+    // Wait a moment for store update to propagate
+    await authenticatedPage.waitForTimeout(500);
+
+    // Verify the store state was updated
+    const storeState = await authenticatedPage.evaluate(() => {
       const store = (
         window as unknown as {
           useAgentUIStore?: {
-            getState: () => { view: { config?: { highlightedSectionId: string | null } } };
+            getState: () => {
+              view: {
+                status: string;
+                config?: { currentPage: string; highlightedSectionId: string | null };
+              };
+            };
           };
         }
       ).useAgentUIStore;
       if (store) {
         const state = store.getState();
-        if (state.view && 'config' in state.view) {
-          return state.view.config?.highlightedSectionId;
-        }
+        return {
+          status: state.view.status,
+          currentPage: 'config' in state.view ? state.view.config?.currentPage : null,
+          highlightedSectionId:
+            'config' in state.view ? state.view.config?.highlightedSectionId : null,
+        };
       }
       return null;
     });
 
-    expect(highlightedId).toBe('home-hero-main');
+    // highlightSection should switch to preview mode and set the section
+    expect(storeState).not.toBeNull();
+    expect(storeState?.status).toBe('preview');
+    expect(storeState?.highlightedSectionId).toBe('home-hero-main');
+    // Page should be 'home' (extracted from section ID 'home-hero-main')
+    expect(storeState?.currentPage).toBe('home');
   });
 
   /**
@@ -416,12 +402,8 @@ test.describe('Agent UI Control', () => {
     // Press Cmd+K (Meta+K on Mac)
     await authenticatedPage.keyboard.press('Meta+k');
 
-    // Wait for focus
-    await authenticatedPage.waitForTimeout(200);
-
-    // Verify input is now focused
-    const isFocusedAfter = await chatInput.evaluate((el) => document.activeElement === el);
-    expect(isFocusedAfter).toBe(true);
+    // Wait for input to be focused (assertion handles waiting)
+    await expect(chatInput).toBeFocused({ timeout: 2000 });
   });
 });
 

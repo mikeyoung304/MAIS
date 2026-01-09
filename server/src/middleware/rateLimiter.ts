@@ -2,6 +2,10 @@ import rateLimit from 'express-rate-limit';
 import type { Request, Response, NextFunction } from 'express';
 import { logger } from '../lib/core/logger';
 
+// Check if we're in a test environment (unit tests OR E2E tests)
+// Must be defined before rate limiters that use it
+const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
+
 /**
  * Helper to normalize IP addresses for rate limiting
  * Handles IPv6 addresses properly by extracting the /64 prefix
@@ -25,7 +29,7 @@ function normalizeIp(ip: string | undefined): string {
 
 export const publicLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // 300 requests per 15 minutes
+  max: isTestEnvironment ? 5000 : 300, // 300 requests per 15 minutes (5000 in test)
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req: Request, res: Response) =>
@@ -37,7 +41,7 @@ export const publicLimiter = rateLimit({
 
 export const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 120, // 120 requests per 15 minutes
+  max: isTestEnvironment ? 2000 : 120, // 120 requests per 15 minutes (2000 in test)
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req: Request, res: Response) =>
@@ -60,9 +64,6 @@ export const loginLimiter = rateLimit({
       message: 'Too many login attempts. Please try again in 15 minutes.',
     }),
 });
-
-// Check if we're in a test environment (unit tests OR E2E tests)
-const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
 
 export const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour

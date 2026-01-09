@@ -21,7 +21,7 @@ import {
 import { logger } from '@/lib/logger';
 import { getErrorMessage } from '@/lib/errors';
 import { StartTrialCard, TrialBanner } from '@/components/trial';
-import { agentUIActions } from '@/stores/agent-ui-store';
+import { agentUIActions, useAgentUIStore, selectIsInitialized } from '@/stores/agent-ui-store';
 
 interface DashboardStats {
   packagesCount: number;
@@ -57,15 +57,20 @@ export default function TenantDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(authSlug || null);
 
+  // Check if agent UI store is initialized (has tenantId)
+  const isStoreInitialized = useAgentUIStore(selectIsInitialized);
+
   // Handle showPreview query param (from /tenant/build redirect)
+  // IMPORTANT: Must wait for store initialization (tenantId) before calling showPreview
+  // Otherwise the action is silently ignored due to security check in store
   useEffect(() => {
-    if (searchParams.get('showPreview') === 'true') {
+    if (isStoreInitialized && searchParams.get('showPreview') === 'true') {
       // Trigger preview mode via agent UI store
       agentUIActions.showPreview('home');
       // Clean up URL to prevent re-triggering on refresh
       window.history.replaceState({}, '', '/tenant/dashboard');
     }
-  }, [searchParams]);
+  }, [searchParams, isStoreInitialized]);
 
   const fetchDashboardData = useCallback(async () => {
     if (!isAuthenticated) return;

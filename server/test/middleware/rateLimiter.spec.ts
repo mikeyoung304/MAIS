@@ -334,7 +334,8 @@ describe('Rate Limiter Middleware', () => {
       const response = await request(app).get('/api/test');
 
       expect(response.status).toBe(200);
-      expect(response.headers['ratelimit-limit']).toBe('300');
+      // Test environment uses higher limit (5000) to allow parallel E2E tests
+      expect(response.headers['ratelimit-limit']).toBe('5000');
     });
   });
 

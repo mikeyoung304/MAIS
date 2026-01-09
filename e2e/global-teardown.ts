@@ -11,10 +11,32 @@
  * - test-* prefix in slug
  */
 
-import { PrismaClient } from '../server/src/generated/prisma/client';
+/**
+ * Global teardown to clean up test tenants after E2E test runs.
+ *
+ * Note: Due to Prisma 7 ESM/CJS module conflicts, we dynamically import
+ * PrismaClient and gracefully handle initialization failures.
+ */
 
 async function globalTeardown() {
   console.log('\n🧹 E2E Global Teardown: Cleaning up test tenants...');
+
+  // Skip cleanup if no DATABASE_URL is set
+  if (!process.env.DATABASE_URL) {
+    console.log('⚠️ DATABASE_URL not set, skipping cleanup');
+    return;
+  }
+
+  let PrismaClient;
+  try {
+    // Dynamic import to avoid ESM/CJS conflicts
+    const prismaModule = await import('@prisma/client');
+    PrismaClient = prismaModule.PrismaClient;
+  } catch (importError) {
+    console.log('⚠️ Could not import Prisma client, skipping cleanup');
+    console.log('   Run "npx prisma generate" if you need cleanup');
+    return;
+  }
 
   const prisma = new PrismaClient({
     datasources: {

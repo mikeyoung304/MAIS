@@ -848,6 +848,10 @@ export class BookingService {
 27. **Duplicated tool logic:** Same validation logic in multiple tools diverges over time. Extract to `server/src/agent/utils/` immediately.
 28. **Inconsistent tool parameters:** Related tools must support same patterns (e.g., all section tools should support sectionId, not just some).
 29. **Dual-mode orchestrator method inconsistency:** If `getTools()` checks `isOnboardingMode`, then `buildSystemPrompt()` and `getGreeting()` MUST also check. Otherwise agent has right tools but wrong instructions.
+30. **E2E rate limiter misses:** ALL rate limiters need `isTestEnvironment` check (not just some). New limiters often copy old code and forget the test bypass.
+31. **Missing store window exposure:** Zustand stores need `if (typeof window !== 'undefined') { window.store = store }` for Playwright access.
+32. **Form hydration race:** Next.js forms need `waitForTimeout(500)` after `waitForSelector` before filling - hydration clears values.
+33. **Session leak in E2E:** Use `browser.newContext()` for session isolation, not `clearCookies()` - NextAuth httpOnly cookies don't clear reliably.
 
 ## Prevention Strategies (Read These!)
 
@@ -891,6 +895,10 @@ The following links prevent common mistakes from recurring:
 - **[onboarding-mode-orchestrator-system-prompt](docs/solutions/agent-issues/onboarding-mode-orchestrator-system-prompt-MAIS-20260108.md)** - Dual-mode orchestrator must check mode in ALL methods (getTools, buildSystemPrompt, getGreeting). If one checks but others don't, agent has right tools but wrong instructions.
 - **[agent-ui-phase-5-patterns](docs/solutions/patterns/AGENT_UI_PHASE_5_CODE_REVIEW_PATTERNS.md)** - 5 critical patterns: FIFO buffer for unbounded arrays, cancelPendingSave for debounce races, async dialog handling, capability registry hygiene, singleton documentation.
   - Quick reference: [AGENT_UI_PHASE_5_QUICK_REFERENCE.md](docs/solutions/patterns/AGENT_UI_PHASE_5_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[e2e-nextjs-migration-prevention](docs/solutions/patterns/E2E_NEXTJS_MIGRATION_PREVENTION_STRATEGIES.md)** - 5 E2E test failure patterns after framework migrations: rate limiter test bypasses, Zustand store exposure, React effect order, Next.js hydration waits, NextAuth session isolation.
+  - Quick reference: [E2E_NEXTJS_MIGRATION_QUICK_REFERENCE.md](docs/solutions/patterns/E2E_NEXTJS_MIGRATION_QUICK_REFERENCE.md) - Print & pin (2 min read)
+
+**Key insight from E2E Next.js Migration (Agent-First Phase 5):** Framework migrations (SPA to SSR) introduce systematic E2E failures. Rate limiters: ALL must use shared `isTestEnvironment` constant. Stores: expose on `window` for Playwright. Effects: child runs before parent - guard against undefined. Hydration: add 500ms wait after `waitForSelector`. Sessions: use `browser.newContext()` not `clearCookies()`.
 
 **Key insight from Agent UI Phase 5 Code Review:** Arrays that grow over time (action logs, event queues) need MAX_SIZE + FIFO (shift oldest). Debounced operations need exported cancel methods called before critical operations (publish/discard). Dialogs with async callbacks must await before closing. Capability registries must match backend tools bidirectionally - add missing, remove dead.
 
