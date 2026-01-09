@@ -11,7 +11,7 @@
  * - test-* prefix in slug
  */
 
-import { PrismaClient } from '../server/src/generated/prisma';
+import { PrismaClient } from '../server/src/generated/prisma/client';
 
 async function globalTeardown() {
   console.log('\n🧹 E2E Global Teardown: Cleaning up test tenants...');

@@ -36,7 +36,7 @@ export default defineConfig({
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:3000',
 
     // Deterministic timezone for E2E tests
     timezoneId: 'UTC',
@@ -74,7 +74,7 @@ export default defineConfig({
     command:
       'ADAPTERS_PRESET=real E2E_TEST=1 VITE_API_URL=http://localhost:3001 VITE_APP_MODE=mock VITE_E2E=1 VITE_TENANT_API_KEY=pk_live_handled-e2e_0000000000000000 npm run dev:e2e',
     cwd: '..',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

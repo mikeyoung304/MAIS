@@ -60,11 +60,10 @@ export const test = base.extend<{
     // Wait for signup form
     await page.waitForSelector('#businessName', { timeout: 10000 });
 
-    // Fill signup form
+    // Fill signup form (Note: confirmPassword was removed in Next.js migration)
     await page.fill('#businessName', testTenant.businessName);
     await page.fill('#email', testTenant.email);
     await page.fill('#password', testTenant.password);
-    await page.fill('#confirmPassword', testTenant.password);
 
     // Submit and wait for response
     const responsePromise = page.waitForResponse(
