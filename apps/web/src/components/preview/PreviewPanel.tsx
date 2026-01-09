@@ -262,7 +262,10 @@ export function PreviewPanel({
   };
 
   return (
-    <div className="h-full flex flex-col bg-neutral-100 dark:bg-surface-alt">
+    <div
+      className="h-full flex flex-col bg-neutral-100 dark:bg-surface-alt"
+      data-testid="preview-panel"
+    >
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-surface border-b border-neutral-200 dark:border-neutral-700">
         {/* Page tabs */}
@@ -271,6 +274,7 @@ export function PreviewPanel({
             <button
               key={page.id}
               onClick={() => handlePageChange(page.id)}
+              data-testid={`preview-page-tab-${page.id}`}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors whitespace-nowrap',
                 currentPage === page.id
@@ -347,6 +351,7 @@ export function PreviewPanel({
                 onClick={() => setShowDiscardDialog(true)}
                 disabled={isDiscarding}
                 className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400"
+                data-testid="preview-discard-button"
               >
                 {isDiscarding ? (
                   <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -360,6 +365,7 @@ export function PreviewPanel({
                 size="sm"
                 onClick={() => setShowPublishDialog(true)}
                 disabled={isPublishing}
+                data-testid="preview-publish-button"
               >
                 {isPublishing ? (
                   <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -378,6 +384,7 @@ export function PreviewPanel({
             onClick={handleClose}
             className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             title="Close preview"
+            data-testid="preview-close-button"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -432,6 +439,7 @@ export function PreviewPanel({
             onLoad={handleIframeLoad}
             onError={handleIframeError}
             sandbox="allow-same-origin allow-scripts allow-forms"
+            data-testid="preview-iframe"
           />
         </div>
       </div>

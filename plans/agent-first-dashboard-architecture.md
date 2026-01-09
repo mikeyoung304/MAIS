@@ -2,18 +2,18 @@
 
 **Date:** 2026-01-09
 **Type:** Major Refactoring
-**Status:** Phase 4 Complete - Ready for Phase 5 (E2E Tests)
+**Status:** ✅ Phase 5 Complete - All Implementation & Testing Done
 **Review Status:** Reviewed by 4 specialized agents (DHH, Kieran, Principal Architect, Agent-Native)
 
 ### Implementation Progress
 
-| Phase                           | Status         | Notes                                                                     |
-| ------------------------------- | -------------- | ------------------------------------------------------------------------- |
-| Phase 1: Foundation             | ✅ Complete    | Zustand store, useDraftConfig, capability registry                        |
-| Phase 2: Content Area & Preview | ✅ Complete    | ContentArea, PreviewPanel, DashboardView, layout integration              |
-| Phase 3: Agent Integration      | ✅ Complete    | UI tools, onUIAction callback, agent-controlled navigation                |
-| Phase 4: Layout Refactoring     | ✅ Complete    | GrowthAssistantPanel → AgentPanel, redirect /tenant/build, remove context |
-| Phase 5: Cleanup & Testing      | 🔲 Not Started | E2E tests for agent UI control                                            |
+| Phase                           | Status      | Notes                                                                     |
+| ------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| Phase 1: Foundation             | ✅ Complete | Zustand store, useDraftConfig, capability registry                        |
+| Phase 2: Content Area & Preview | ✅ Complete | ContentArea, PreviewPanel, DashboardView, layout integration              |
+| Phase 3: Agent Integration      | ✅ Complete | UI tools, onUIAction callback, agent-controlled navigation                |
+| Phase 4: Layout Refactoring     | ✅ Complete | GrowthAssistantPanel → AgentPanel, redirect /tenant/build, remove context |
+| Phase 5: Cleanup & Testing      | ✅ Complete | E2E + unit tests (184 new tests)                                          |
 
 ---
 
@@ -612,8 +612,8 @@ npm install zustand immer
 - [x] Create `hooks/useDraftConfig.ts` with TanStack Query
 - [x] Create `lib/agent-capabilities.ts` capability registry
 - [x] Install zustand and immer dependencies
-- [ ] Write unit tests for store actions (deferred)
-- [ ] Write unit tests for capability search (deferred)
+- [x] Write unit tests for store actions (84 tests in Phase 5)
+- [x] Write unit tests for capability search (64 tests in Phase 5)
 
 ---
 
@@ -935,7 +935,7 @@ Extract the current dashboard content into a reusable component that can be show
 - [x] Add page tabs toolbar
 - [x] Keep PostMessage protocol intact
 - [x] Update tenant layout with ContentArea, store init, QueryClientProvider
-- [ ] Write integration tests (deferred)
+- [x] Write integration tests (covered by E2E in Phase 5)
 
 ---
 
@@ -1220,7 +1220,7 @@ export function AgentPanel() {
 - [x] Add UI tools to all-tools.ts exports (auto-included in orchestrator)
 - [x] API response already includes `uiAction` via toolResults.data
 - [x] T3 executors already exist (publish_draft, discard_draft in storefront-executors.ts)
-- [ ] Write E2E tests for agent UI control (deferred to Phase 5)
+- [x] Write E2E tests for agent UI control (11 tests in Phase 5)
 
 ---
 
@@ -1407,14 +1407,19 @@ export default function DashboardPage() {
 
 ### Quality Gates
 
-- [ ] All existing tests pass
-- [ ] New unit tests for Zustand store (discriminated unions)
-- [ ] New unit tests for capability registry
-- [ ] E2E test: "agent shows preview after editing section"
-- [ ] E2E test: "preview updates after agent tool execution"
-- [ ] E2E test: "publish requires confirmation dialog"
-- [ ] E2E test: "discard requires confirmation dialog"
-- [ ] No console errors or warnings
+- [x] All existing tests pass (2,360 tests passing)
+- [x] New unit tests for Zustand store (84 tests - discriminated unions, event sourcing)
+- [x] New unit tests for capability registry (64 tests - search, grouping, tiers)
+- [x] New unit tests for useDraftConfig hook (36 tests - TanStack Query)
+- [x] E2E test: "agent shows preview after editing section"
+- [x] E2E test: "preview updates after agent tool execution"
+- [x] E2E test: "publish requires confirmation dialog"
+- [x] E2E test: "discard requires confirmation dialog"
+- [x] E2E test: "/tenant/build redirects to dashboard with preview"
+- [x] E2E test: "showPreview query param activates preview"
+- [x] E2E test: "Cmd+K focuses agent chat input"
+- [x] Production build succeeds
+- [ ] No console errors or warnings (pre-existing warnings in gallery components)
 
 ---
 

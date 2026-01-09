@@ -469,6 +469,7 @@ export function PanelAgentChat({
           <textarea
             ref={inputRef}
             data-growth-assistant-input
+            data-testid="agent-chat-input"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}

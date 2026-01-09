@@ -127,21 +127,21 @@ export function ContentArea({ children, className }: ContentAreaProps) {
   switch (view.status) {
     case 'loading':
       return (
-        <div className={cn('h-full', className)}>
+        <div className={cn('h-full', className)} data-testid="content-area-loading">
           <LoadingView />
         </div>
       );
 
     case 'error':
       return (
-        <div className={cn('h-full', className)}>
+        <div className={cn('h-full', className)} data-testid="content-area-error">
           <ErrorView error={view.error} onRetry={view.recovery} />
         </div>
       );
 
     case 'preview':
       return (
-        <div className={cn('h-full', className)}>
+        <div className={cn('h-full', className)} data-testid="content-area-preview">
           <Suspense fallback={<PreviewLoader />}>
             <PreviewPanel
               currentPage={view.config.currentPage}
@@ -158,7 +158,7 @@ export function ContentArea({ children, className }: ContentAreaProps) {
     case 'dashboard':
     default:
       // Render children (page content) - this allows each page to have its own content
-      return <>{children}</>;
+      return <div data-testid="content-area-dashboard">{children}</div>;
   }
 }
 

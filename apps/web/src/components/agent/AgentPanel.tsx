@@ -193,6 +193,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
         )}
         role="complementary"
         aria-label="AI Assistant"
+        data-testid="agent-panel"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
