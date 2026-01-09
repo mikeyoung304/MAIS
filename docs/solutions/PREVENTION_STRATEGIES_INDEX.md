@@ -24,6 +24,13 @@ Complete guide to preventing common issues in the MAIS codebase.
 | Database client mismatch             | [database-client-mismatch.md](database-issues/database-client-mismatch-MAIS-20251204.md)                 | Backend developers |
 | IPv6 connection issues with Supabase | [supabase-ipv6-session-pooler-connection.md](database-issues/supabase-ipv6-session-pooler-connection.md) | DevOps / Backend   |
 
+### Development Workflow
+
+| Problem                                                    | Prevention Strategy                                                                                                                                       | Audience            |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Service Worker serving stale JS bundles after code changes | [service-worker-cache-stale-js-bundles-MAIS-20260105.md](dev-workflow/service-worker-cache-stale-js-bundles-MAIS-20260105.md)                             | Frontend developers |
+| App broken after running production build then dev server  | [turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md](build-errors/turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md) | Frontend developers |
+
 ### Type Safety & TypeScript
 
 | Problem                             | Prevention Strategy                                                                                                                   | Audience                    |
@@ -37,8 +44,8 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 | Problem                                | Prevention Strategy                                                                                                                            | Audience                 |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Multi-segment storefront UX            | [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md)                         | Frontend developers      |
-| Segment storefront quick reference     | [SEGMENT_FIRST_QUICK_REFERENCE.md](patterns/SEGMENT_FIRST_QUICK_REFERENCE.md)                                                                 | Frontend developers      |
+| Multi-segment storefront UX            | [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md)                          | Frontend developers      |
+| Segment storefront quick reference     | [SEGMENT_FIRST_QUICK_REFERENCE.md](patterns/SEGMENT_FIRST_QUICK_REFERENCE.md)                                                                  | Frontend developers      |
 | AI agent proposal execution missing    | [chatbot-proposal-execution-flow-MAIS-20251229.md](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)                              | Backend/Agent developers |
 | Circular dependencies in agent modules | [circular-dependency-executor-registry-MAIS-20251229.md](patterns/circular-dependency-executor-registry-MAIS-20251229.md)                      | Backend developers       |
 | Next.js App Router migration pitfalls  | [nextjs-migration-lessons-learned-MAIS-20251225.md](code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)                    | Frontend developers      |
@@ -63,6 +70,7 @@ Complete guide to preventing common issues in the MAIS codebase.
 - [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md) - Full storefront pattern (browser history, URL sync)
 - [nextjs-migration-lessons-learned-MAIS-20251225.md](code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md) - 10 App Router gotchas
 - [any-types-quick-reference-MAIS-20251204.md](best-practices/any-types-quick-reference-MAIS-20251204.md) - TypeScript `any` decision tree
+- [service-worker-cache-stale-js-bundles-MAIS-20260105.md](dev-workflow/service-worker-cache-stale-js-bundles-MAIS-20260105.md) - Service Worker caching issues
 
 **If Deploying:**
 
@@ -116,6 +124,16 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 ## By Problem Domain
 
+### Six Critical Prevention Strategies (NEW - MUST READ)
+
+**Comprehensive guide to preventing 6 most common development issues:**
+
+| Document                                                                                                            | Issues Covered                                                                                                                                            | Coverage       |
+| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| [SIX_CRITICAL_PREVENTION_STRATEGIES_MAIS-20260105.md](patterns/SIX_CRITICAL_PREVENTION_STRATEGIES_MAIS-20260105.md) | 1. Console.log stubs 2. Prop name mismatches 3. Executor registry gaps 4. Timeout memory leaks 5. Dynamic Tailwind classes 6. Incomplete feature shipping | All developers |
+
+---
+
 ### Client-Server Communication
 
 **The Core Issue:** How do client components safely call authenticated backend APIs?
@@ -168,6 +186,17 @@ Complete guide to preventing common issues in the MAIS codebase.
 | Document                                                                                            | What                     |
 | --------------------------------------------------------------------------------------------------- | ------------------------ |
 | [auth-form-accessibility-checklist.md](patterns/auth-form-accessibility-checklist-MAIS-20251230.md) | Checklist + code samples |
+
+---
+
+### Development Workflow & Build System
+
+**The Core Issue:** Stale caches blocking code changes in development
+
+| Document                                                                                                                                                  | What                          | Why                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------- |
+| [service-worker-cache-stale-js-bundles-MAIS-20260105.md](dev-workflow/service-worker-cache-stale-js-bundles-MAIS-20260105.md)                             | Service Worker cache clearing | SW serves old code after restarts |
+| [turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md](build-errors/turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md) | Turbopack cache conflicts     | Mode-specific `.next` structures  |
 
 ---
 
@@ -288,17 +317,19 @@ These are reference docs, not prevention strategies. Prevention strategies teach
 
 ## Quick Stats
 
-**Total Prevention Strategies:** 11+
+**Total Prevention Strategies:** 18+ (12 original + 6 new critical patterns)
 
 **By Category:**
 
+- Critical Patterns: 6 (NEW)
 - Architecture & Patterns: 3
 - Client-Server Communication: 3
 - Database Issues: 3
 - Type Safety: 2
 - Deployment: 1
-- Build Errors: 1
+- Build Errors: 2
 - Accessibility: 1
+- Development Workflow: 1
 
 **Coverage:**
 
@@ -317,10 +348,12 @@ These are reference docs, not prevention strategies. Prevention strategies teach
 
 ## Last Updated
 
-2025-12-30 - Added Next.js Client API Proxy prevention strategies
+2026-01-05 - Added Six Critical Prevention Strategies (console.log stubs, prop mismatches, executor gaps, timeouts, dynamic Tailwind, incomplete shipping)
 
 Previous updates:
 
+- 2026-01-05: Added Service Worker caching solution for stale JS bundles
+- 2025-12-30: Added Next.js Client API Proxy prevention strategies
 - 2025-12-29: Added agent execution & circular dependency patterns
 - 2025-12-27: Added TypeScript unused variable strategy
 - 2025-12-26: Added Vercel deployment strategy

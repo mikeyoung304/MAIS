@@ -1133,14 +1133,16 @@ logger.error({ error: sanitizeError(error) }, 'API failed');
 1. [React Memoization Prevention Strategy](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md) (memoization best practices)
 2. [React Memoization Quick Reference](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (quick checklist)
 3. [React Hooks Early Return Prevention](./patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md) (adding early returns to existing components)
-4. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
-5. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
+4. [React Unstable Array Dependency Prevention](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_PREVENTION.md) (useEffect with arrays)
+5. [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
+6. [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
 **Checklist:**
 
 - [ ] **All hooks BEFORE any early returns** (Rules of Hooks)
 - [ ] Callback props wrapped in `useCallback()`
 - [ ] Derived values (filter, map, sort) wrapped in `useMemo()`
+- [ ] **Arrays in useEffect deps stabilized with useMemo** (prevents effect re-runs)
 - [ ] List items (10+ items) wrapped in `React.memo()`
 - [ ] All memoized components have `displayName` for DevTools
 - [ ] No window.confirm/alert/prompt (use AlertDialog)
@@ -1154,6 +1156,7 @@ logger.error({ error: sanitizeError(error) }, 'API failed');
 - [ ] Accessibility test
 - [ ] Performance test (React DevTools Profiler - no unexpected re-renders)
 - [ ] List performance test (check memo works with 10+ items)
+- [ ] useEffect trigger count test (effect shouldn't run on every render)
 - [ ] Run `npm run build` before committing (catches hooks violations)
 
 ---
@@ -1491,6 +1494,8 @@ Task('Remove unused import', {
 
 - [React Memoization Prevention Strategy](./react-performance/REACT-MEMOIZATION-PREVENTION-STRATEGY.md) (callback memoization, list optimization)
 - [React Memoization Quick Reference](./react-performance/REACT-MEMOIZATION-QUICK-REFERENCE.md) (quick checklist)
+- [React Unstable Array Dependency Prevention](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_PREVENTION.md) (useEffect dependency arrays, useMemo for stability)
+  - Quick Reference: [REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
 - [React Hooks Performance & WCAG Review](./code-review-patterns/react-hooks-performance-wcag-review.md)
 
@@ -1498,6 +1503,7 @@ Task('Remove unused import', {
 
 - `useCallback()` for callback props (prevents child re-renders)
 - `useMemo()` for derived values (filter, map, sort, object literals)
+- `useMemo()` to stabilize array references in useEffect dependencies (prevents effect re-runs)
 - `React.memo()` for list items (10+ items to prevent cascading re-renders)
 - Always add `displayName` to memoized components for React DevTools
 - AlertDialog instead of window.confirm()
@@ -1511,6 +1517,7 @@ Task('Remove unused import', {
 - Performance testing before production
 - Code reviewing React components
 - Debugging unnecessary re-renders
+- useEffect running more often than expected
 
 ---
 
@@ -2387,7 +2394,12 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 ---
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-09
+**Recent Additions (2026-01-09):**
+
+- **[React Unstable Array Dependency Prevention](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_PREVENTION.md)** - Comprehensive guide for preventing useEffect re-runs caused by unstable array references. Arrays created during render (`[].filter()`, parser returns) are new references each time, triggering effects. Fix with `useMemo()` to stabilize.
+  - Quick Reference: [REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md) - Print & pin (2 min read)
+
 **Recent Additions (2026-01-08):**
 
 - **[React Hooks Early Return Prevention](./patterns/REACT_HOOKS_EARLY_RETURN_PREVENTION.md)** - Comprehensive guide for React Rules of Hooks violations when adding early returns to existing components. Includes 3 correct patterns, ESLint rules, code review checklist, and test strategies.
