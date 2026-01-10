@@ -15,6 +15,7 @@ import { BookingStatus } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { hashTenantDate } from '../../lib/advisory-locks';
+import { resolveOrCreateGeneralSegment, validateSegmentOwnership } from '../../lib/segment-utils';
 import {
   MissingFieldError,
   ResourceNotFoundError,
@@ -25,6 +26,7 @@ import {
 import { registerOnboardingExecutors } from './onboarding-executors';
 import { registerStorefrontExecutors } from './storefront-executors';
 import { registerBookingLinkExecutors } from './booking-link-executors';
+import { UpsertPackagePayloadSchema } from '../proposals/executor-schemas';
 
 /**
  * Type guard for BookingStatus enum
@@ -42,7 +44,8 @@ export function registerAllExecutors(prisma: PrismaClient): void {
   // upsert_package - Create or update package
   // Defense-in-depth: Auto-assigns to General segment if not provided (#629)
   registerProposalExecutor('upsert_package', async (tenantId, payload) => {
-    // Accept both 'title' (old) and 'name' (new) field names, plus 'basePrice'/'priceCents'
+    // Validate payload with Zod schema (accepts both old and new field names)
+    const validated = UpsertPackagePayloadSchema.parse(payload);
     const {
       packageId,
       slug,
@@ -55,19 +58,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
       bookingType,
       active,
       segmentId: inputSegmentId,
-    } = payload as {
-      packageId?: string;
-      slug?: string;
-      title?: string;
-      name?: string;
-      description?: string;
-      priceCents?: number;
-      basePrice?: number;
-      photoUrl?: string;
-      bookingType?: string;
-      active?: boolean;
-      segmentId?: string;
-    };
+    } = validated;
 
     // Normalize field names (name takes precedence, fall back to title)
     const packageName = name || title;
@@ -119,45 +110,33 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     }
 
     // =========================================================================
-    // SEGMENT AUTO-ASSIGNMENT (#629)
+    // SEGMENT AUTO-ASSIGNMENT (#629, #635)
     // =========================================================================
     // All packages must be linked to a segment. If no segmentId provided,
-    // look up the "General" segment for this tenant.
+    // resolve or create the "General" segment for this tenant.
+    // Uses shared utility from segment-utils.ts to prevent logic duplication.
     // =========================================================================
     let resolvedSegmentId = inputSegmentId;
 
     if (!resolvedSegmentId) {
-      // Look up the "General" segment (slug: 'general')
-      const generalSegment = await prisma.segment.findUnique({
-        where: {
-          tenantId_slug: {
-            tenantId,
-            slug: 'general',
-          },
-        },
-        select: { id: true },
-      });
+      // Auto-assign to "General" segment (creates if missing)
+      const { segmentId, wasCreated } = await resolveOrCreateGeneralSegment(prisma, tenantId);
+      resolvedSegmentId = segmentId;
 
-      if (generalSegment) {
-        resolvedSegmentId = generalSegment.id;
+      if (wasCreated) {
+        logger.info(
+          { tenantId, segmentId: resolvedSegmentId },
+          'Created General segment and assigned package via agent'
+        );
+      } else if (segmentId) {
         logger.debug(
           { tenantId, segmentId: resolvedSegmentId },
           'Package auto-assigned to General segment via agent'
         );
-      } else {
-        // No General segment exists - this shouldn't happen for properly onboarded tenants
-        // Log warning but allow creation (CatalogService will handle this case)
-        logger.warn(
-          { tenantId },
-          'General segment not found - package created without segment assignment'
-        );
       }
     } else {
       // Verify provided segmentId belongs to this tenant
-      const segment = await prisma.segment.findFirst({
-        where: { id: resolvedSegmentId, tenantId },
-        select: { id: true, name: true },
-      });
+      const segment = await validateSegmentOwnership(prisma, tenantId, resolvedSegmentId);
 
       if (!segment) {
         throw new ResourceNotFoundError(

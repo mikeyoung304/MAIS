@@ -1,31 +1,40 @@
 /**
- * Landing Page Service - Visual Editor Draft Management
+ * Landing Page Service - Unified Landing Page Operations
  *
- * Manages draft state for landing page configuration in the visual editor.
- * Follows the same patterns as PackageDraftService for consistency.
+ * This service is the SINGLE SOURCE OF TRUTH for all landing page operations.
+ * It handles both draft systems:
+ *
+ * 1. **Build Mode (AI Tools)**: Uses separate `landingPageConfigDraft` column
+ * 2. **Visual Editor (REST API)**: Uses wrapper format in `landingPageConfig`
  *
  * Key Concepts:
  * - Autosave: Changes save to draft field (2s debounce on client)
  * - Publish: Copies draft to published, clears draft
  * - Discard: Clears draft, keeps published
  *
- * ARCHITECTURE NOTE (TODO-241):
- * This service layer was added for consistency with other features
- * (booking, catalog, scheduling). Business logic includes:
+ * ARCHITECTURE NOTE (TODO-704):
+ * This service was extended to consolidate ALL landing page access patterns.
+ * Previously, there were 4 different access paths with incompatible formats.
+ * Now all AI tools, REST API, and executors use this service.
+ *
+ * Business logic includes:
  * - Input sanitization (XSS prevention)
  * - Image URL validation (protocol validation)
  * - Audit logging
+ * - Format translation between systems
  *
  * The repository handles data persistence and transaction management.
  */
 
-import type { LandingPageConfig, LandingPageSections } from '@macon/contracts';
+import type { LandingPageConfig, LandingPageSections, PagesConfig } from '@macon/contracts';
+import { DEFAULT_PAGES_CONFIG, LandingPageConfigSchema } from '@macon/contracts';
 import type {
   PrismaTenantRepository,
   LandingPageDraftWrapper,
 } from '../adapters/prisma/tenant.repository';
 import { sanitizeObject } from '../lib/sanitization';
 import { logger } from '../lib/core/logger';
+import { NotFoundError } from '../lib/errors';
 
 /**
  * Service result types
@@ -58,6 +67,50 @@ export interface PublishResult {
 
 export interface DiscardResult {
   success: boolean;
+}
+
+// ============================================================================
+// Build Mode Types (AI Tools / Separate Column System)
+// ============================================================================
+
+/**
+ * Result from getBuildModeDraft - includes pages config and metadata
+ * Used by AI tools that need to read the current draft state
+ */
+export interface BuildModeDraftResult {
+  pages: PagesConfig;
+  hasDraft: boolean;
+}
+
+/**
+ * Extended result that includes tenant slug for preview URL generation
+ * Used when both config and slug are needed to avoid N+1 queries
+ */
+export interface BuildModeDraftWithSlugResult extends BuildModeDraftResult {
+  slug: string | null;
+  /** Raw draft config (null if no draft exists) - use for existsInDraft checks */
+  rawDraftConfig: LandingPageConfig | null;
+  /** Raw live config (null if no live config exists) - use for existsInLive checks */
+  rawLiveConfig: LandingPageConfig | null;
+}
+
+/**
+ * Result from publishBuildModeDraft
+ */
+export interface BuildModePublishResult {
+  action: 'published';
+  previewUrl?: string;
+  note: string;
+  pageCount: number;
+  totalSections: number;
+}
+
+/**
+ * Result from discardBuildModeDraft
+ */
+export interface BuildModeDiscardResult {
+  action: 'discarded';
+  note: string;
 }
 
 /**
@@ -224,5 +277,342 @@ export class LandingPageService {
     );
 
     return result;
+  }
+
+  // ============================================================================
+  // Build Mode Methods (AI Tools / Separate Column System)
+  // ============================================================================
+  // These methods use the landingPageConfigDraft column for AI tool operations.
+  // The publish method writes to the wrapper format in landingPageConfig for
+  // compatibility with the public API.
+
+  /**
+   * Get draft config for Build Mode (AI tools)
+   *
+   * Uses the separate landingPageConfigDraft column.
+   * Falls back to live config or defaults if no draft exists.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @returns Pages config and draft status
+   * @throws NotFoundError if tenant not found
+   */
+  async getBuildModeDraft(tenantId: string): Promise<BuildModeDraftResult> {
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    // If draft exists, validate and use it
+    if (tenant.landingPageConfigDraft) {
+      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      if (!result.success) {
+        logger.warn(
+          { tenantId, errors: result.error.issues },
+          'Invalid draft config in landingPageConfigDraft, falling back to defaults'
+        );
+        return {
+          pages: structuredClone(DEFAULT_PAGES_CONFIG),
+          hasDraft: false,
+        };
+      }
+      return {
+        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+        hasDraft: true,
+      };
+    }
+
+    // Otherwise, validate and initialize from live config or defaults
+    if (tenant.landingPageConfig) {
+      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+      if (!result.success) {
+        logger.warn(
+          { tenantId, errors: result.error.issues },
+          'Invalid live config, falling back to defaults'
+        );
+        return {
+          pages: structuredClone(DEFAULT_PAGES_CONFIG),
+          hasDraft: false,
+        };
+      }
+      return {
+        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+        hasDraft: false,
+      };
+    }
+
+    return {
+      pages: structuredClone(DEFAULT_PAGES_CONFIG),
+      hasDraft: false,
+    };
+  }
+
+  /**
+   * Get draft config with tenant slug for Build Mode (AI tools)
+   *
+   * Combined query to avoid N+1 pattern when both config and slug are needed.
+   * Also returns raw configs for existsInDraft/existsInLive checks.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @returns Pages config, draft status, slug, and raw configs
+   * @throws NotFoundError if tenant not found
+   */
+  async getBuildModeDraftWithSlug(tenantId: string): Promise<BuildModeDraftWithSlugResult> {
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    // Cast raw configs for discovery tools
+    const rawDraftConfig = tenant.landingPageConfigDraft as unknown as LandingPageConfig | null;
+    const rawLiveConfig = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+
+    // If draft exists, validate and use it
+    if (tenant.landingPageConfigDraft) {
+      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      if (!result.success) {
+        logger.warn(
+          { tenantId, errors: result.error.issues },
+          'Invalid draft config, falling back to defaults'
+        );
+        return {
+          pages: structuredClone(DEFAULT_PAGES_CONFIG),
+          hasDraft: false,
+          slug: tenant.slug,
+          rawDraftConfig,
+          rawLiveConfig,
+        };
+      }
+      return {
+        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+        hasDraft: true,
+        slug: tenant.slug,
+        rawDraftConfig,
+        rawLiveConfig,
+      };
+    }
+
+    // Otherwise, validate and initialize from live config or defaults
+    if (tenant.landingPageConfig) {
+      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+      if (!result.success) {
+        logger.warn(
+          { tenantId, errors: result.error.issues },
+          'Invalid live config, falling back to defaults'
+        );
+        return {
+          pages: structuredClone(DEFAULT_PAGES_CONFIG),
+          hasDraft: false,
+          slug: tenant.slug,
+          rawDraftConfig,
+          rawLiveConfig,
+        };
+      }
+      return {
+        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+        hasDraft: false,
+        slug: tenant.slug,
+        rawDraftConfig,
+        rawLiveConfig,
+      };
+    }
+
+    return {
+      pages: structuredClone(DEFAULT_PAGES_CONFIG),
+      hasDraft: false,
+      slug: tenant.slug,
+      rawDraftConfig,
+      rawLiveConfig,
+    };
+  }
+
+  /**
+   * Save draft for Build Mode (AI tools)
+   *
+   * Writes to the separate landingPageConfigDraft column.
+   * Used by AI tools during storefront editing.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @param config - Landing page configuration to save as draft
+   * @throws NotFoundError if tenant not found
+   */
+  async saveBuildModeDraft(tenantId: string, config: LandingPageConfig): Promise<void> {
+    // Sanitize all text fields (XSS prevention)
+    const sanitizedConfig = sanitizeObject(config, { allowHtml: [] });
+
+    await this.tenantRepo.update(tenantId, {
+      landingPageConfigDraft: sanitizedConfig,
+    });
+
+    logger.info(
+      {
+        action: 'build_mode_draft_saved',
+        tenantId,
+      },
+      'Build Mode draft saved to landingPageConfigDraft'
+    );
+  }
+
+  /**
+   * Publish Build Mode draft to live
+   *
+   * Copies from landingPageConfigDraft to landingPageConfig wrapper format.
+   * This ensures compatibility with the public API's extractPublishedLandingPage.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @returns Publish result with metadata
+   * @throws NotFoundError if tenant not found
+   * @throws Error if no draft to publish
+   */
+  async publishBuildModeDraft(tenantId: string): Promise<BuildModePublishResult> {
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    if (!tenant.landingPageConfigDraft) {
+      throw new Error('No draft changes to publish.');
+    }
+
+    // Count sections for audit log
+    const draftConfig = tenant.landingPageConfigDraft as unknown as {
+      pages?: Record<string, { sections?: unknown[] }>;
+    };
+    const totalSections = draftConfig?.pages
+      ? Object.values(draftConfig.pages).reduce(
+          (sum, page) => sum + (page?.sections?.length || 0),
+          0
+        )
+      : 0;
+    const pageCount = draftConfig?.pages ? Object.keys(draftConfig.pages).length : 0;
+
+    // Copy draft to live config using wrapper format expected by findBySlugPublic
+    // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
+    // See: #697 - Dual draft system publish mismatch fix
+    const publishedWrapper = {
+      draft: null,
+      draftUpdatedAt: null,
+      published: tenant.landingPageConfigDraft,
+      publishedAt: new Date().toISOString(),
+    };
+
+    // Update both fields atomically
+    await this.tenantRepo.update(tenantId, {
+      landingPageConfig: publishedWrapper,
+      landingPageConfigDraft: null, // Clear the draft
+    });
+
+    logger.info(
+      {
+        tenantId,
+        action: 'build_mode_publish',
+        pageCount,
+        totalSections,
+      },
+      'Build Mode draft published to live storefront'
+    );
+
+    return {
+      action: 'published',
+      previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
+      note: 'Changes are now live.',
+      pageCount,
+      totalSections,
+    };
+  }
+
+  /**
+   * Discard Build Mode draft
+   *
+   * Clears the landingPageConfigDraft column without affecting live config.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @returns Discard result
+   * @throws NotFoundError if tenant not found
+   * @throws Error if no draft to discard
+   */
+  async discardBuildModeDraft(tenantId: string): Promise<BuildModeDiscardResult> {
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    if (!tenant.landingPageConfigDraft) {
+      throw new Error('No draft changes to discard.');
+    }
+
+    // Clear the draft
+    await this.tenantRepo.update(tenantId, {
+      landingPageConfigDraft: null,
+    });
+
+    logger.info(
+      {
+        tenantId,
+        action: 'build_mode_discard',
+      },
+      'Build Mode draft discarded'
+    );
+
+    return {
+      action: 'discarded',
+      note: 'Draft changes discarded. Reverting to published content.',
+    };
+  }
+
+  /**
+   * Get published landing page configuration
+   *
+   * Returns the published/live configuration that visitors see.
+   * Extracts from the wrapper format in landingPageConfig.
+   *
+   * @param tenantId - Tenant ID for data isolation
+   * @returns Published landing page config or null if not published
+   */
+  async getPublished(tenantId: string): Promise<LandingPageConfig | null> {
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      throw new NotFoundError('Tenant not found');
+    }
+
+    if (!tenant.landingPageConfig) {
+      return null;
+    }
+
+    // Handle both wrapper format and direct config format for backward compatibility
+    const config = tenant.landingPageConfig as unknown as
+      | LandingPageConfig
+      | { published?: LandingPageConfig };
+
+    // Check if it's wrapper format (has published property)
+    if ('published' in config && config.published) {
+      const result = LandingPageConfigSchema.safeParse(config.published);
+      if (result.success) {
+        return result.data;
+      }
+      logger.warn({ tenantId }, 'Invalid published config in wrapper format');
+      return null;
+    }
+
+    // Direct config format (legacy)
+    const result = LandingPageConfigSchema.safeParse(config);
+    if (result.success) {
+      return result.data;
+    }
+
+    logger.warn({ tenantId }, 'Invalid landing page config format');
+    return null;
+  }
+
+  /**
+   * Get tenant slug
+   *
+   * Helper method for preview URL generation.
+   *
+   * @param tenantId - Tenant ID
+   * @returns Tenant slug or null if not found
+   */
+  async getTenantSlug(tenantId: string): Promise<string | null> {
+    const tenant = await this.tenantRepo.findById(tenantId);
+    return tenant?.slug ?? null;
   }
 }

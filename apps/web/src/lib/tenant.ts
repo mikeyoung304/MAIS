@@ -436,6 +436,89 @@ export const getTenantStorefrontData = cache(
 );
 
 /**
+ * Fetch tenant data for preview mode (with draft config)
+ *
+ * Used when preview token is provided to fetch draft landing page config
+ * instead of published config. This enables the preview panel to show
+ * draft changes without flashing published content.
+ *
+ * SECURITY:
+ * - Token is validated server-side before draft data is returned
+ * - Token must match the tenant slug
+ * - ISR cache is bypassed (no-store) to prevent cache poisoning
+ *
+ * @param slug - Tenant slug
+ * @param previewToken - Valid preview JWT token
+ * @returns Tenant public data with draft landing page config
+ * @throws TenantApiError if token is invalid or expired
+ */
+export async function getTenantPreviewData(
+  slug: string,
+  previewToken: string
+): Promise<TenantPublicDto> {
+  const url = `${API_URL}/v1/public/tenants/${encodeURIComponent(slug)}/preview?token=${encodeURIComponent(previewToken)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    // CRITICAL: No caching for preview data to prevent ISR cache poisoning
+    cache: 'no-store',
+  });
+
+  if (response.status === 401) {
+    const body = await response.json();
+    throw new TenantApiError(body.error || 'Invalid or expired preview token', 401);
+  }
+
+  if (response.status === 404) {
+    throw new TenantNotFoundError(slug);
+  }
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new TenantApiError(`Failed to fetch preview data: ${errorBody}`, response.status);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch storefront data with preview support
+ *
+ * If previewToken is provided, fetches draft content via preview endpoint.
+ * Otherwise, fetches normal published content.
+ *
+ * This is the main entry point for page components that need to support
+ * both preview mode and normal mode.
+ *
+ * @param slug - Tenant slug
+ * @param previewToken - Optional preview token for draft mode
+ * @returns Complete storefront data (with draft or published config)
+ */
+export async function getTenantStorefrontDataWithPreview(
+  slug: string,
+  previewToken?: string | null
+): Promise<TenantStorefrontData> {
+  if (previewToken) {
+    // Preview mode: fetch draft data
+    const tenant = await getTenantPreviewData(slug, previewToken);
+
+    // Fetch packages and segments in parallel
+    const [packages, segments] = await Promise.all([
+      getTenantPackages(tenant.apiKeyPublic),
+      getTenantSegments(tenant.apiKeyPublic),
+    ]);
+
+    return { tenant, packages, segments };
+  }
+
+  // Normal mode: use cached function
+  return getTenantStorefrontData(slug);
+}
+
+/**
  * Fetch a single package by slug
  *
  * @param apiKeyPublic - Tenant's public API key

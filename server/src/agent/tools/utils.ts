@@ -110,9 +110,21 @@ export interface DraftConfigResult {
 /**
  * Result from getDraftConfigWithSlug
  * Combined result to avoid N+1 queries when both config and slug are needed
+ *
+ * Includes raw configs for discovery tools that need to compute:
+ * - existsInDraft / existsInLive flags (list_section_ids)
+ * - isShowingDefaults flag (all discovery tools)
+ *
+ * TODO #718 FIX: Added rawDraftConfig and rawLiveConfig to eliminate
+ * the N+1 query pattern where discovery tools called getDraftConfigWithSlug
+ * then made a second query to fetch the same raw configs.
  */
 export interface DraftConfigWithSlugResult extends DraftConfigResult {
   slug: string | null;
+  /** Raw draft config (null if no draft exists) - use for existsInDraft checks */
+  rawDraftConfig: LandingPageConfig | null;
+  /** Raw live config (null if no live config exists) - use for existsInLive checks */
+  rawLiveConfig: LandingPageConfig | null;
 }
 
 /**
@@ -159,12 +171,12 @@ export async function getDraftConfig(
         'Invalid draft config, falling back to defaults'
       );
       return {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: structuredClone(DEFAULT_PAGES_CONFIG),
         hasDraft: false,
       };
     }
     return {
-      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
+      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
       hasDraft: true,
     };
   }
@@ -178,18 +190,18 @@ export async function getDraftConfig(
         'Invalid live config, falling back to defaults'
       );
       return {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: structuredClone(DEFAULT_PAGES_CONFIG),
         hasDraft: false,
       };
     }
     return {
-      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
+      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
       hasDraft: false,
     };
   }
 
   return {
-    pages: DEFAULT_PAGES_CONFIG,
+    pages: structuredClone(DEFAULT_PAGES_CONFIG),
     hasDraft: false,
   };
 }
@@ -251,6 +263,11 @@ export async function getDraftConfigWithSlug(
     throw new Error('Tenant not found');
   }
 
+  // Cast raw configs for discovery tools (TODO #718 fix)
+  // These are passed through unchanged so tools can compute existsInDraft/existsInLive
+  const rawDraftConfig = tenant.landingPageConfigDraft as unknown as LandingPageConfig | null;
+  const rawLiveConfig = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+
   // If draft exists, validate and use it
   if (tenant.landingPageConfigDraft) {
     const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
@@ -260,15 +277,19 @@ export async function getDraftConfigWithSlug(
         'Invalid draft config, falling back to defaults'
       );
       return {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: structuredClone(DEFAULT_PAGES_CONFIG),
         hasDraft: false,
         slug: tenant.slug,
+        rawDraftConfig,
+        rawLiveConfig,
       };
     }
     return {
-      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
+      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
       hasDraft: true,
       slug: tenant.slug,
+      rawDraftConfig,
+      rawLiveConfig,
     };
   }
 
@@ -281,22 +302,28 @@ export async function getDraftConfigWithSlug(
         'Invalid live config, falling back to defaults'
       );
       return {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: structuredClone(DEFAULT_PAGES_CONFIG),
         hasDraft: false,
         slug: tenant.slug,
+        rawDraftConfig,
+        rawLiveConfig,
       };
     }
     return {
-      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
+      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
       hasDraft: false,
       slug: tenant.slug,
+      rawDraftConfig,
+      rawLiveConfig,
     };
   }
 
   return {
-    pages: DEFAULT_PAGES_CONFIG,
+    pages: structuredClone(DEFAULT_PAGES_CONFIG),
     hasDraft: false,
     slug: tenant.slug,
+    rawDraftConfig,
+    rawLiveConfig,
   };
 }
 

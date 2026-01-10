@@ -42,6 +42,7 @@ export interface UpdateTenantInput {
   passwordResetExpires?: Date | null;
   // Landing page configuration
   landingPageConfig?: any;
+  landingPageConfigDraft?: any | null; // Separate column for Build Mode (AI tools)
   // Trial & Subscription fields (Product-Led Growth)
   trialEndsAt?: Date;
   subscriptionStatus?: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';

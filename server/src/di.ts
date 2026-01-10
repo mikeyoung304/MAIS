@@ -240,13 +240,13 @@ export function buildContainer(config: Config): Container {
     const tenantProvisioningService = new TenantProvisioningService(mockPrisma);
 
     // Build domain services with caching and audit logging
-    // CatalogService now receives segmentRepo and onboardingService for segment validation (#631)
+    // CatalogService now receives segmentRepo and prisma for segment validation (#631, #635)
     const catalogService = new CatalogService(
       adapters.catalogRepo,
       cacheAdapter,
       auditService,
       segmentRepo,
-      tenantOnboardingService
+      mockPrisma
     );
     const availabilityService = new AvailabilityService(
       adapters.calendarProvider,
@@ -581,13 +581,13 @@ export function buildContainer(config: Config): Container {
   const tenantProvisioningService = new TenantProvisioningService(prisma);
 
   // Build domain services with caching and audit logging
-  // CatalogService now receives segmentRepo and onboardingService for segment validation (#631)
+  // CatalogService now receives segmentRepo and prisma for segment validation (#631, #635)
   const catalogService = new CatalogService(
     catalogRepo,
     cacheAdapter,
     auditService,
     segmentRepo,
-    tenantOnboardingService
+    prisma
   );
   const availabilityService = new AvailabilityService(calendarProvider, blackoutRepo, bookingRepo);
   const identityService = new IdentityService(userRepo, config.JWT_SECRET);

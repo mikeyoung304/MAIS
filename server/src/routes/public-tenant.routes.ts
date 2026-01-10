@@ -16,8 +16,13 @@
 
 import { Router } from 'express';
 import { setTimeout } from 'timers/promises';
-import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
+import type {
+  PrismaTenantRepository,
+  LandingPageDraftWrapper,
+} from '../adapters/prisma/tenant.repository';
 import { logger } from '../lib/core/logger';
+import { validatePreviewToken } from '../lib/preview-tokens';
+import type { LandingPageConfig, TenantPublicDto } from '@macon/contracts';
 
 /**
  * Create public tenant routes
@@ -118,6 +123,91 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
       logger.error({ error, domain }, 'Error fetching tenant by domain');
       return res.status(500).json({
         error: 'Failed to fetch tenant',
+      });
+    }
+  });
+
+  /**
+   * GET /v1/public/tenants/:slug/preview
+   * Get tenant info with DRAFT landing page config for preview
+   *
+   * SECURITY:
+   * - Requires valid preview token (JWT signed, 10 minute expiry)
+   * - Token must be tenant-scoped (can only preview own tenant's draft)
+   * - Token validation happens before any data is returned
+   * - Does NOT use timing attack mitigation (token validation is sufficient)
+   *
+   * CACHE BEHAVIOR:
+   * - Response includes `Cache-Control: no-store` to prevent ISR cache poisoning
+   * - Draft content is never cached
+   *
+   * @param token - Preview token (required query parameter)
+   * @returns TenantPublicDto with draft landing page config (instead of published)
+   */
+  router.get('/:slug/preview', async (req, res) => {
+    const { slug } = req.params;
+    const { token } = req.query;
+
+    // Validate token presence
+    if (!token || typeof token !== 'string') {
+      return res.status(401).json({
+        error: 'Preview token required',
+      });
+    }
+
+    // Validate token
+    const tokenResult = validatePreviewToken(token, slug);
+    if (!tokenResult.valid) {
+      logger.info({ slug, error: tokenResult.error }, 'Preview token validation failed');
+      return res.status(401).json({
+        error: tokenResult.message,
+        code: tokenResult.error,
+      });
+    }
+
+    try {
+      // Get base tenant data using existing public method
+      const tenant = await tenantRepository.findBySlugPublic(slug);
+
+      if (!tenant) {
+        return res.status(404).json({
+          error: 'Tenant not available',
+        });
+      }
+
+      // Get draft landing page config
+      const draftWrapper = await tenantRepository.getLandingPageDraft(tokenResult.payload.tenantId);
+
+      // Determine which config to use (draft if exists, otherwise published)
+      const landingPageConfig: LandingPageConfig | null =
+        draftWrapper.draft ?? draftWrapper.published ?? null;
+
+      // Build response with draft config merged into branding
+      const branding = tenant.branding as Record<string, unknown> | null;
+      const mergedBranding = landingPageConfig
+        ? { ...branding, landingPage: landingPageConfig }
+        : branding;
+
+      const previewResponse: TenantPublicDto = {
+        ...tenant,
+        branding: mergedBranding,
+      };
+
+      // Set cache headers to prevent ISR cache poisoning
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      logger.info(
+        { tenantId: tokenResult.payload.tenantId, slug, hasDraft: !!draftWrapper.draft },
+        'Preview data served'
+      );
+
+      return res.status(200).json(previewResponse);
+    } catch (error) {
+      logger.error({ error, slug }, 'Error fetching preview data');
+      return res.status(500).json({
+        error: 'Failed to fetch preview data',
       });
     }
   });

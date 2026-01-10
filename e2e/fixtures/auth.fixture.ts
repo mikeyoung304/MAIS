@@ -52,6 +52,12 @@ export const test = base.extend<{
 
   /**
    * Authenticated page - signs up and logs in before each test
+   *
+   * Next.js migration notes:
+   * - Form uses window.location.href for redirect (not Next.js router)
+   * - confirmPassword field was removed
+   * - Redirect flow: /signup → /tenant/build → /tenant/dashboard?showPreview=true
+   * - Must wait for hydration before form interaction
    */
   authenticatedPage: async ({ page, testTenant }, use) => {
     // Navigate to signup and wait for full page load + hydration
@@ -80,25 +86,54 @@ export const test = base.extend<{
       { timeout: 5000 }
     );
 
-    // Submit and wait for response
+    // Set up response listener BEFORE clicking
+    // Note: Signup uses window.location.href redirect, which may cause the response
+    // to be received after navigation starts. We use Promise.race to handle both cases.
     const responsePromise = page.waitForResponse(
       (response) => response.url().includes('/v1/auth/signup'),
       { timeout: 30000 }
     );
+
+    // Click submit button
     await page.click('button[type="submit"]');
 
-    const response = await responsePromise;
-    if (response.status() === 429) {
-      throw new Error('Rate limited - run tests with lower parallelism or wait');
-    }
-    if (response.status() !== 201) {
-      const body = await response.text();
-      throw new Error(`Signup failed with status ${response.status()}: ${body}`);
+    // Wait for API response first to check for errors
+    // The signup page shows loading state while waiting for response
+    try {
+      const response = await Promise.race([
+        responsePromise,
+        // Also create a timeout promise that rejects after navigation
+        page.waitForURL(/\/tenant\//, { timeout: 30000 }).then(() => null),
+      ]);
+
+      // If we got a response (not null from navigation), check it
+      if (response) {
+        if (response.status() === 429) {
+          throw new Error('Rate limited - run tests with lower parallelism or wait');
+        }
+        if (response.status() !== 201) {
+          const body = await response.text();
+          throw new Error(`Signup failed with status ${response.status()}: ${body}`);
+        }
+      }
+    } catch (error) {
+      // If the error is from navigation timeout, that's expected behavior
+      // because signup might redirect before we can capture the response
+      if (error instanceof Error && error.message.includes('Rate limited')) {
+        throw error;
+      }
+      if (error instanceof Error && error.message.includes('Signup failed')) {
+        throw error;
+      }
+      // Otherwise continue - navigation might have already happened
     }
 
     // Wait for redirect to Dashboard (Build Mode redirects to dashboard with preview)
     // /tenant/build → /tenant/dashboard?showPreview=true
     await page.waitForURL(/\/tenant\/dashboard/, { timeout: 15000 });
+
+    // Wait for dashboard to be fully loaded
+    await page.waitForLoadState('networkidle', { timeout: 10000 });
 
     // NextAuth.js v5 uses httpOnly cookies - token not accessible via JS
     // Auth is validated by successful navigation to protected route

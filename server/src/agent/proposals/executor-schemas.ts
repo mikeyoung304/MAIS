@@ -61,6 +61,9 @@ export const UpsertPackagePayloadSchema = z
     photoUrl: z.string().url().optional(),
     bookingType: z.enum(['DATE', 'TIMESLOT']).optional(),
     active: z.boolean().optional(),
+    // Segment assignment (auto-assigns to General if not provided)
+    segmentId: z.string().optional(),
+    groupingOrder: z.number().int().min(0).optional(),
   })
   .refine((data) => data.name || data.title, {
     message: 'Either name or title is required',

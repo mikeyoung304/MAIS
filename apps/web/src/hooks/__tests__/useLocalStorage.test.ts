@@ -42,24 +42,28 @@ describe('useLocalStorage', () => {
     const originalAddEventListener = window.addEventListener.bind(window);
     const originalRemoveEventListener = window.removeEventListener.bind(window);
 
-    vi.spyOn(window, 'addEventListener').mockImplementation((type: string, listener: EventListenerOrEventListenerObject) => {
-      if (type.startsWith('localStorage:')) {
-        if (!customEventListeners.has(type)) {
-          customEventListeners.set(type, new Set());
+    vi.spyOn(window, 'addEventListener').mockImplementation(
+      (type: string, listener: EventListenerOrEventListenerObject) => {
+        if (type.startsWith('localStorage:')) {
+          if (!customEventListeners.has(type)) {
+            customEventListeners.set(type, new Set());
+          }
+          customEventListeners.get(type)!.add(listener as () => void);
+        } else {
+          originalAddEventListener(type, listener);
         }
-        customEventListeners.get(type)!.add(listener as () => void);
-      } else {
-        originalAddEventListener(type, listener);
       }
-    });
+    );
 
-    vi.spyOn(window, 'removeEventListener').mockImplementation((type: string, listener: EventListenerOrEventListenerObject) => {
-      if (type.startsWith('localStorage:')) {
-        customEventListeners.get(type)?.delete(listener as () => void);
-      } else {
-        originalRemoveEventListener(type, listener);
+    vi.spyOn(window, 'removeEventListener').mockImplementation(
+      (type: string, listener: EventListenerOrEventListenerObject) => {
+        if (type.startsWith('localStorage:')) {
+          customEventListeners.get(type)?.delete(listener as () => void);
+        } else {
+          originalRemoveEventListener(type, listener);
+        }
       }
-    });
+    );
 
     vi.spyOn(window, 'dispatchEvent').mockImplementation((event: Event) => {
       const listeners = customEventListeners.get(event.type);
@@ -134,7 +138,7 @@ describe('useLocalStorage', () => {
       const { result } = renderHook(() => useLocalStorage('counter-key', 0));
 
       act(() => {
-        result.current[1]((prev) => prev + 1);
+        result.current[1]((prev: number) => prev + 1);
       });
 
       expect(localStorageStore['counter-key']).toBe(JSON.stringify(6));
@@ -235,7 +239,7 @@ describe('useLocalStorage', () => {
       localStorageStore['key-b'] = JSON.stringify('value-b');
 
       const { result, rerender } = renderHook(
-        ({ key }) => useLocalStorage(key, 'default'),
+        ({ key }: { key: string }) => useLocalStorage(key, 'default'),
         { initialProps: { key: 'key-a' } }
       );
 

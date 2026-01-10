@@ -17,10 +17,11 @@
  * @see hooks/useDraftConfig.ts for draft data fetching
  */
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
 import { useDraftConfig } from '@/hooks/useDraftConfig';
+import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/build-mode/ConfirmDialog';
 import { parseChildMessage } from '@/lib/build-mode/protocol';
@@ -103,6 +104,9 @@ export function PreviewPanel({
   const iframeReadyTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const { publishDraft, discardDraft, isPublishing, isDiscarding } = useDraftConfig();
 
+  // Preview token for draft access
+  const { token: previewToken, isLoading: isTokenLoading, error: tokenError } = usePreviewToken();
+
   // Local state
   const [isIframeReady, setIsIframeReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -113,8 +117,20 @@ export function PreviewPanel({
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  // Build iframe URL
-  const iframeUrl = `/t/${slug}/${currentPage === 'home' ? '' : currentPage}?preview=draft&edit=true`;
+  // Build iframe URL with preview token
+  // Token is included to authenticate draft content access server-side
+  const iframeUrl = useMemo(() => {
+    const pagePath = currentPage === 'home' ? '' : currentPage;
+    const baseUrl = `/t/${slug}/${pagePath}`;
+    const params = new URLSearchParams({
+      preview: 'draft',
+      edit: 'true',
+    });
+    if (previewToken) {
+      params.set('token', previewToken);
+    }
+    return `${baseUrl}?${params.toString()}`;
+  }, [slug, currentPage, previewToken]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -341,7 +357,11 @@ export function PreviewPanel({
 
           {/* Open in new tab */}
           <a
-            href={`/t/${slug}?preview=draft`}
+            href={
+              previewToken
+                ? `/t/${slug}?preview=draft&token=${previewToken}`
+                : `/t/${slug}?preview=draft`
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
@@ -415,7 +435,7 @@ export function PreviewPanel({
           }
         >
           {/* Loading state */}
-          {(isLoading || isConfigLoading) && (
+          {(isLoading || isConfigLoading || isTokenLoading) && (
             <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-surface z-10">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-sage" />
@@ -427,11 +447,13 @@ export function PreviewPanel({
           )}
 
           {/* Error state */}
-          {error && (
+          {(error || tokenError) && (
             <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-surface z-10">
               <div className="flex flex-col items-center gap-3 text-center p-4">
                 <AlertCircle className="h-8 w-8 text-red-500" />
-                <span className="text-sm text-neutral-700 dark:text-text-primary">{error}</span>
+                <span className="text-sm text-neutral-700 dark:text-text-primary">
+                  {error || tokenError?.message || 'Failed to load preview'}
+                </span>
                 <Button variant="outline" size="sm" onClick={handleRefresh}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Try again

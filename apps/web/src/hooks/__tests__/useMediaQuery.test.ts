@@ -140,9 +140,12 @@ describe('useMediaQuery', () => {
     const query1 = createMediaQuery('min-width', 'md');
     const query2 = createMediaQuery('min-width', 'lg');
 
-    const { rerender } = renderHook(({ query }) => useMediaQuery(query), {
-      initialProps: { query: query1 },
-    });
+    const { rerender } = renderHook(
+      ({ query }: { query: MediaQueryString }) => useMediaQuery(query),
+      {
+        initialProps: { query: query1 },
+      }
+    );
 
     // First query setup
     expect(window.matchMedia).toHaveBeenCalledWith(query1);

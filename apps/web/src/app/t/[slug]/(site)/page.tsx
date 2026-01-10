@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TenantLandingPageClient } from '@/components/tenant';
-import { getTenantStorefrontData, TenantNotFoundError, normalizeToPages } from '@/lib/tenant';
+import {
+  getTenantStorefrontData,
+  getTenantStorefrontDataWithPreview,
+  TenantNotFoundError,
+  TenantApiError,
+  normalizeToPages,
+} from '@/lib/tenant';
 import type { TenantPublicDto, ContactSection, LandingPageConfig } from '@macon/contracts';
 
 interface TenantPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string; token?: string; edit?: string }>;
 }
 
 /**
@@ -63,20 +70,34 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
   }
 }
 
-export default async function TenantPage({ params }: TenantPageProps) {
+export default async function TenantPage({ params, searchParams }: TenantPageProps) {
   const { slug } = await params;
+  const { preview, token } = await searchParams;
+
+  // Determine if this is a preview request
+  // Preview mode requires both preview=draft and a valid token
+  const isPreviewMode = preview === 'draft' && !!token;
 
   try {
-    const data = await getTenantStorefrontData(slug);
+    // Fetch data based on mode
+    // Preview mode: Use token to fetch draft content from preview endpoint
+    // Normal mode: Use cached ISR-friendly endpoint
+    const data = isPreviewMode
+      ? await getTenantStorefrontDataWithPreview(slug, token)
+      : await getTenantStorefrontData(slug);
+
     const localBusinessSchema = generateLocalBusinessSchema(data.tenant, slug);
 
     return (
       <>
         {/* Schema.org LocalBusiness structured data for SEO */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-        />
+        {/* Only include for non-preview pages to prevent SEO indexing of drafts */}
+        {!isPreviewMode && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+          />
+        )}
         <TenantLandingPageClient data={data} basePath={`/t/${slug}`} />
       </>
     );
@@ -85,13 +106,35 @@ export default async function TenantPage({ params }: TenantPageProps) {
       notFound();
     }
 
+    // Handle expired/invalid preview tokens gracefully
+    // Fall back to published content instead of showing error
+    if (error instanceof TenantApiError && error.statusCode === 401 && isPreviewMode) {
+      // Token invalid/expired - fall back to normal published content
+      // This prevents jarring error pages when token expires during preview
+      const fallbackData = await getTenantStorefrontData(slug);
+      const localBusinessSchema = generateLocalBusinessSchema(fallbackData.tenant, slug);
+      return (
+        <>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+          />
+          <TenantLandingPageClient data={fallbackData} basePath={`/t/${slug}`} />
+        </>
+      );
+    }
+
     // For other errors, log and show a generic error
     // In production, you might want to show a proper error page
     throw error;
   }
 }
 
-// ISR: Revalidate every 60 seconds
+// ISR: Revalidate every 60 seconds for non-preview requests
+// Preview requests automatically become dynamic because:
+// 1. They access searchParams (Next.js opts out of static generation)
+// 2. The preview endpoint sets Cache-Control: no-store
+// 3. Only normal requests benefit from ISR caching
 export const revalidate = 60;
 
 /**

@@ -53,8 +53,8 @@ export const adminLimiter = rateLimit({
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  // Allow more login attempts in test environment for testing
-  max: process.env.NODE_ENV === 'test' ? 100 : 5,
+  // Allow more login attempts in test environment for testing (unit tests AND E2E tests)
+  max: isTestEnvironment ? 100 : 5,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Only count failed login attempts
@@ -85,7 +85,7 @@ export const signupLimiter = rateLimit({
  */
 export const uploadLimiterIP = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: process.env.NODE_ENV === 'test' ? 500 : 200, // 200 uploads per hour per IP
+  max: isTestEnvironment ? 500 : 200, // 200 uploads per hour per IP
   standardHeaders: true,
   legacyHeaders: false,
   // Use normalized IP to handle IPv6 addresses properly
@@ -106,7 +106,7 @@ export const uploadLimiterIP = rateLimit({
  */
 export const uploadLimiterTenant = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: process.env.NODE_ENV === 'test' ? 500 : 50, // 50 uploads per hour per tenant
+  max: isTestEnvironment ? 500 : 50, // 50 uploads per hour per tenant
   standardHeaders: true,
   legacyHeaders: false,
   // Prefer tenantId, fallback to normalized IP
@@ -134,7 +134,7 @@ export const uploadLimiter = uploadLimiterIP;
  */
 export const draftAutosaveLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: process.env.NODE_ENV === 'test' ? 500 : 120, // 120 saves per minute (2/sec)
+  max: isTestEnvironment ? 500 : 120, // 120 saves per minute (2/sec)
   standardHeaders: true,
   legacyHeaders: false,
   // Key by tenantId for per-tenant limiting
@@ -155,7 +155,7 @@ export const draftAutosaveLimiter = rateLimit({
  */
 export const publicTenantLookupLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'test' ? 500 : 100, // 100 lookups per 15 minutes
+  max: isTestEnvironment ? 500 : 100, // 100 lookups per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req: Request, res: Response) =>

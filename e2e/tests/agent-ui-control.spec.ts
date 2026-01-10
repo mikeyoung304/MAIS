@@ -208,33 +208,94 @@ test.describe('Agent UI Control', () => {
     // Trigger section highlight - this should also show preview
     await callAgentUIAction(authenticatedPage, 'highlightSection', 'home-hero-main');
 
-    // Wait a moment for store update to propagate
-    await authenticatedPage.waitForTimeout(500);
+    // Wait for preview panel to become visible (indicates store update propagated to UI)
+    await expect(authenticatedPage.locator('[data-testid="content-area-preview"]')).toBeVisible({
+      timeout: 5000,
+    });
 
-    // Verify the store state was updated
-    const storeState = await authenticatedPage.evaluate(() => {
-      const store = (
-        window as unknown as {
-          useAgentUIStore?: {
-            getState: () => {
-              view: {
-                status: string;
-                config?: { currentPage: string; highlightedSectionId: string | null };
+    // Poll store state until it reflects the highlight (replaces arbitrary timeout)
+    const storeState = await authenticatedPage.evaluate(async () => {
+      // Helper to wait for store state condition
+      const waitForStoreState = (
+        maxAttempts = 20,
+        interval = 100
+      ): Promise<{
+        status: string;
+        currentPage: string | null;
+        highlightedSectionId: string | null;
+      } | null> => {
+        return new Promise((resolve) => {
+          let attempts = 0;
+          const check = () => {
+            const store = (
+              window as unknown as {
+                useAgentUIStore?: {
+                  getState: () => {
+                    view: {
+                      status: string;
+                      config?: { currentPage: string; highlightedSectionId: string | null };
+                    };
+                  };
+                };
+              }
+            ).useAgentUIStore;
+
+            if (store) {
+              const state = store.getState();
+              const result = {
+                status: state.view.status,
+                currentPage:
+                  'config' in state.view ? (state.view.config?.currentPage ?? null) : null,
+                highlightedSectionId:
+                  'config' in state.view ? (state.view.config?.highlightedSectionId ?? null) : null,
               };
-            };
+
+              // Check if store has updated with the expected values
+              if (result.status === 'preview' && result.highlightedSectionId === 'home-hero-main') {
+                resolve(result);
+                return;
+              }
+            }
+
+            attempts++;
+            if (attempts >= maxAttempts) {
+              // Return current state even if not matching (let test assertion fail with details)
+              const store2 = (
+                window as unknown as {
+                  useAgentUIStore?: {
+                    getState: () => {
+                      view: {
+                        status: string;
+                        config?: { currentPage: string; highlightedSectionId: string | null };
+                      };
+                    };
+                  };
+                }
+              ).useAgentUIStore;
+              if (store2) {
+                const state = store2.getState();
+                resolve({
+                  status: state.view.status,
+                  currentPage:
+                    'config' in state.view ? (state.view.config?.currentPage ?? null) : null,
+                  highlightedSectionId:
+                    'config' in state.view
+                      ? (state.view.config?.highlightedSectionId ?? null)
+                      : null,
+                });
+              } else {
+                resolve(null);
+              }
+              return;
+            }
+
+            setTimeout(check, interval);
           };
-        }
-      ).useAgentUIStore;
-      if (store) {
-        const state = store.getState();
-        return {
-          status: state.view.status,
-          currentPage: 'config' in state.view ? state.view.config?.currentPage : null,
-          highlightedSectionId:
-            'config' in state.view ? state.view.config?.highlightedSectionId : null,
-        };
-      }
-      return null;
+          check();
+        });
+      };
+
+      return waitForStoreState();
     });
 
     // highlightSection should switch to preview mode and set the section
@@ -425,23 +486,67 @@ test.describe('Preview Panel Navigation', () => {
     await expect(aboutTab).toBeVisible({ timeout: 5000 });
     await aboutTab.click();
 
-    // Wait for page change
-    await authenticatedPage.waitForTimeout(500);
+    // Wait for tab to become active (CSS class indicates active state: bg-sage/10)
+    await expect(aboutTab).toHaveClass(/bg-sage/, { timeout: 5000 });
 
-    // Verify the store state changed to 'about'
-    const currentPage = await authenticatedPage.evaluate(() => {
-      const store = (
-        window as unknown as {
-          useAgentUIStore?: { getState: () => { view: { config?: { currentPage: string } } } };
-        }
-      ).useAgentUIStore;
-      if (store) {
-        const state = store.getState();
-        if (state.view && 'config' in state.view) {
-          return state.view.config?.currentPage;
-        }
-      }
-      return null;
+    // Poll store state until it reflects 'about' (replaces arbitrary timeout)
+    const currentPage = await authenticatedPage.evaluate(async () => {
+      // Helper to wait for store state condition
+      const waitForPageState = (
+        expectedPage: string,
+        maxAttempts = 20,
+        interval = 100
+      ): Promise<string | null> => {
+        return new Promise((resolve) => {
+          let attempts = 0;
+          const check = () => {
+            const store = (
+              window as unknown as {
+                useAgentUIStore?: {
+                  getState: () => { view: { config?: { currentPage: string } } };
+                };
+              }
+            ).useAgentUIStore;
+
+            if (store) {
+              const state = store.getState();
+              if (state.view && 'config' in state.view) {
+                const page = state.view.config?.currentPage;
+                if (page === expectedPage) {
+                  resolve(page);
+                  return;
+                }
+              }
+            }
+
+            attempts++;
+            if (attempts >= maxAttempts) {
+              // Return current state even if not matching
+              const store2 = (
+                window as unknown as {
+                  useAgentUIStore?: {
+                    getState: () => { view: { config?: { currentPage: string } } };
+                  };
+                }
+              ).useAgentUIStore;
+              if (store2) {
+                const state = store2.getState();
+                if (state.view && 'config' in state.view) {
+                  resolve(state.view.config?.currentPage ?? null);
+                  return;
+                }
+              }
+              resolve(null);
+              return;
+            }
+
+            setTimeout(check, interval);
+          };
+          check();
+        });
+      };
+
+      return waitForPageState('about');
     });
 
     expect(currentPage).toBe('about');

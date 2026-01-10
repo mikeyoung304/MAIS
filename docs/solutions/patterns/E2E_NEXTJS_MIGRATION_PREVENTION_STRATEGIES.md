@@ -82,16 +82,21 @@ When reviewing rate limiter changes:
 
 ### Quick Reference
 
-| Limiter Type | Production | Test | Check Used             |
-| ------------ | ---------- | ---- | ---------------------- |
-| Login        | 5/15min    | 100  | isTestEnvironment      |
-| Signup       | 5/hour     | 100  | isTestEnvironment      |
-| Admin API    | 120/15min  | 2000 | isTestEnvironment      |
-| Public API   | 300/15min  | 5000 | isTestEnvironment      |
-| Upload (IP)  | 200/hour   | 500  | NODE_ENV only (legacy) |
-| Agent Chat   | 30/5min    | 500  | isTestEnvironment      |
+| Limiter Type    | Production | Test | Check Used        |
+| --------------- | ---------- | ---- | ----------------- |
+| Login           | 5/15min    | 100  | isTestEnvironment |
+| Signup          | 5/hour     | 100  | isTestEnvironment |
+| Admin API       | 120/15min  | 2000 | isTestEnvironment |
+| Public API      | 300/15min  | 5000 | isTestEnvironment |
+| Upload (IP)     | 200/hour   | 500  | isTestEnvironment |
+| Upload (Tenant) | 50/hour    | 500  | isTestEnvironment |
+| Draft Autosave  | 120/min    | 500  | isTestEnvironment |
+| Tenant Lookup   | 100/15min  | 500  | isTestEnvironment |
+| Agent Chat      | 30/5min    | 500  | isTestEnvironment |
+| Customer Chat   | 20/min     | 500  | isTestEnvironment |
+| Webhook         | 100/min    | 500  | isTestEnvironment |
 
-**If "NODE_ENV only" in table, migrate to `isTestEnvironment`.**
+**All rate limiters now use `isTestEnvironment` (fixed 2026-01-10 in TODO #693).**
 
 ---
 

@@ -22,7 +22,8 @@ import {
 import { validatePrice, validateRequiredFields } from '../lib/validation';
 import type { AuditService } from './audit.service';
 import type { PrismaSegmentRepository } from '../adapters/prisma/segment.repository';
-import type { TenantOnboardingService } from './tenant-onboarding.service';
+import type { PrismaClient } from '../generated/prisma/client';
+import { resolveOrCreateGeneralSegment, validateSegmentOwnership } from '../lib/segment-utils';
 import { logger } from '../lib/core/logger';
 
 export interface PackageWithAddOns extends Package {
@@ -45,7 +46,7 @@ export class CatalogService {
     private readonly cache?: CacheServicePort,
     private readonly auditService?: AuditService,
     private readonly segmentRepo?: PrismaSegmentRepository,
-    private readonly tenantOnboardingService?: TenantOnboardingService
+    private readonly prisma?: PrismaClient
   ) {}
 
   /**
@@ -206,13 +207,14 @@ export class CatalogService {
     // =========================================================================
     // All packages must be linked to a segment. This service-layer validation
     // catches orphaned packages from any code path (API, agent, scripts).
+    // Uses shared utility from segment-utils.ts to prevent logic duplication (#635).
     // =========================================================================
     let resolvedSegmentId = data.segmentId;
 
     if (resolvedSegmentId) {
       // Verify provided segmentId belongs to this tenant (security + tenant isolation)
-      if (this.segmentRepo) {
-        const segment = await this.segmentRepo.findById(tenantId, resolvedSegmentId);
+      if (this.prisma) {
+        const segment = await validateSegmentOwnership(this.prisma, tenantId, resolvedSegmentId);
         if (!segment) {
           throw new ValidationError(
             'Segment not found or access denied. Use a valid segment ID for this tenant.'
@@ -225,35 +227,28 @@ export class CatalogService {
       }
     } else {
       // Auto-assign to "General" segment if no segmentId provided
-      if (this.segmentRepo) {
-        const generalSegment = await this.segmentRepo.findBySlug(tenantId, 'general');
-
-        if (generalSegment) {
-          resolvedSegmentId = generalSegment.id;
+      // Uses shared utility that finds or creates the General segment
+      if (this.prisma) {
+        const { segmentId, wasCreated } = await resolveOrCreateGeneralSegment(
+          this.prisma,
+          tenantId
+        );
+        resolvedSegmentId = segmentId;
+        if (wasCreated) {
+          logger.info(
+            { tenantId, segmentId: resolvedSegmentId },
+            'Created General segment and assigned package'
+          );
+        } else if (segmentId) {
           logger.debug(
             { tenantId, segmentId: resolvedSegmentId },
             'Package auto-assigned to General segment'
           );
-        } else if (this.tenantOnboardingService) {
-          // Create default segment if it doesn't exist (tenant may have been created before segments)
-          logger.info(
-            { tenantId },
-            'General segment not found, creating default segment for tenant'
-          );
-          const { segment } = await this.tenantOnboardingService.createDefaultData({ tenantId });
-          resolvedSegmentId = segment.id;
-          logger.info(
-            { tenantId, segmentId: resolvedSegmentId },
-            'Created default segment and assigned package'
-          );
-        } else {
-          // No segment repo or onboarding service - log warning but allow null segmentId
-          // for backward compatibility during migration
-          logger.warn(
-            { tenantId },
-            'No segment repository available - package created without segment'
-          );
         }
+      } else {
+        // No prisma client available - log warning but allow null segmentId
+        // for backward compatibility during migration
+        logger.warn({ tenantId }, 'No Prisma client available - package created without segment');
       }
     }
 

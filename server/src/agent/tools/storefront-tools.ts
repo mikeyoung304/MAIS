@@ -1099,26 +1099,21 @@ Filters:
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
+      // TODO #718 FIX: Use raw configs from single query instead of N+1 pattern
       const {
         pages: workingPages,
         hasDraft,
         slug,
+        rawDraftConfig,
+        rawLiveConfig,
       } = await getDraftConfigWithSlug(prisma, tenantId);
 
-      // Also fetch raw configs for existsInDraft/existsInLive comparison
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { landingPageConfig: true, landingPageConfigDraft: true },
-      });
-      const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
-      const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
-
       // Collect IDs from both configs for existsInDraft/existsInLive flags
-      const draftIds = collectSectionIds(draftConfig);
-      const liveIds = collectSectionIds(liveConfig);
+      const draftIds = collectSectionIds(rawDraftConfig);
+      const liveIds = collectSectionIds(rawLiveConfig);
 
       // Determine if we're showing defaults (neither draft nor live exists)
-      const isShowingDefaults = !draftConfig && !liveConfig;
+      const isShowingDefaults = !rawDraftConfig && !rawLiveConfig;
 
       const sections: SectionSummary[] = [];
 
@@ -1211,20 +1206,17 @@ Get IDs from list_section_ids first.`,
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
+      // TODO #718 FIX: Use raw configs from single query instead of N+1 pattern
       const {
         pages: workingPages,
         hasDraft,
         slug,
+        rawDraftConfig,
+        rawLiveConfig,
       } = await getDraftConfigWithSlug(prisma, tenantId);
 
-      // Also fetch raw configs to determine source state
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { landingPageConfig: true, landingPageConfigDraft: true },
-      });
-      const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
-      const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
-      const isShowingDefaults = !draftConfig && !liveConfig;
+      // Determine source state from raw configs
+      const isShowingDefaults = !rawDraftConfig && !rawLiveConfig;
 
       // Find section by ID across all pages
       for (const [pageName, pageConfig] of Object.entries(workingPages)) {
@@ -1309,20 +1301,17 @@ Use this to:
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
+      // TODO #718 FIX: Use raw configs from single query instead of N+1 pattern
       const {
         pages: workingPages,
         hasDraft,
         slug,
+        rawDraftConfig,
+        rawLiveConfig,
       } = await getDraftConfigWithSlug(prisma, tenantId);
 
-      // Also fetch raw configs to determine source state
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { landingPageConfig: true, landingPageConfigDraft: true },
-      });
-      const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
-      const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
-      const isShowingDefaults = !draftConfig && !liveConfig;
+      // Determine source state from raw configs
+      const isShowingDefaults = !rawDraftConfig && !rawLiveConfig;
 
       const unfilledItems: Array<{
         sectionId: string;
