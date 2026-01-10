@@ -16,7 +16,10 @@ import { LandingPageService } from '../../src/services/landing-page.service';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import type { LandingPageConfig, PagesConfig } from '@macon/contracts';
-import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
+import {
+  VALID_MOCK_PAGES_CONFIG,
+  VALID_MOCK_LANDING_PAGE_CONFIG,
+} from '../helpers/mock-landing-page-config';
 
 describe.sequential('Landing Page Admin Routes Integration Tests', () => {
   const ctx = setupCompleteIntegrationTest('landing-page-routes');
@@ -58,14 +61,14 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save a draft first
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, draftConfig);
 
       const result = await service.getDraft(tenant.id);
 
       expect(result.draft).not.toBeNull();
-      expect(result.draft?.pages).toEqual(DEFAULT_PAGES_CONFIG);
+      expect(result.draft?.pages).toEqual(VALID_MOCK_PAGES_CONFIG);
       expect(result.draftUpdatedAt).not.toBeNull();
     });
 
@@ -83,7 +86,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
 
       const result = await service.saveDraft(tenant.id, draftConfig);
@@ -102,7 +105,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save draft
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, draftConfig);
 
@@ -116,15 +119,15 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save initial draft
       const initialConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, initialConfig);
 
       // Modify and save again
       const modifiedPages = {
-        ...DEFAULT_PAGES_CONFIG,
+        ...VALID_MOCK_PAGES_CONFIG,
         home: {
-          ...DEFAULT_PAGES_CONFIG.home,
+          ...VALID_MOCK_PAGES_CONFIG.home,
           enabled: false,
         },
       };
@@ -140,7 +143,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
     it('should throw NotFoundError for non-existent tenant', async () => {
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
 
       await expect(service.saveDraft('non-existent-tenant-id', draftConfig)).rejects.toThrow(
@@ -159,7 +162,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save draft
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, draftConfig);
 
@@ -175,7 +178,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save draft
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, draftConfig);
 
@@ -214,7 +217,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save draft
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, draftConfig);
 
@@ -235,16 +238,16 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Create live config by saving and publishing
       const liveConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, liveConfig);
       await service.publish(tenant.id);
 
       // Save a different draft
       const modifiedPages = {
-        ...DEFAULT_PAGES_CONFIG,
+        ...VALID_MOCK_PAGES_CONFIG,
         home: {
-          ...DEFAULT_PAGES_CONFIG.home,
+          ...VALID_MOCK_PAGES_CONFIG.home,
           enabled: false,
         },
       };
@@ -285,7 +288,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save draft for tenant A
       const draftA: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenantA.id, draftA);
 
@@ -304,7 +307,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Save and publish for tenant A
       const configA: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenantA.id, configA);
       await service.publish(tenantA.id);
@@ -329,7 +332,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Step 2: Save draft (simulating Build Mode autosave)
       const draftConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, draftConfig);
 
@@ -345,7 +348,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const final = await service.getDraft(tenant.id);
       expect(final.draft).toBeNull();
       expect(final.published).not.toBeNull();
-      expect(final.published?.pages).toEqual(DEFAULT_PAGES_CONFIG);
+      expect(final.published?.pages).toEqual(VALID_MOCK_PAGES_CONFIG);
     });
 
     it('should support discard workflow', async () => {
@@ -353,16 +356,16 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
 
       // Establish live config
       const liveConfig: LandingPageConfig = {
-        pages: DEFAULT_PAGES_CONFIG,
+        pages: VALID_MOCK_PAGES_CONFIG,
       };
       await service.saveDraft(tenant.id, liveConfig);
       await service.publish(tenant.id);
 
       // Make draft changes
       const modifiedPages = {
-        ...DEFAULT_PAGES_CONFIG,
+        ...VALID_MOCK_PAGES_CONFIG,
         about: {
-          ...DEFAULT_PAGES_CONFIG.about,
+          ...VALID_MOCK_PAGES_CONFIG.about,
           enabled: false,
         },
       };

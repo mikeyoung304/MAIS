@@ -27,6 +27,53 @@ import { resolveSectionIndex } from '../../../src/agent/tools/utils';
 import type { ToolContext } from '../../../src/agent/tools/types';
 import { DEFAULT_PAGES_CONFIG, type PagesConfig } from '@macon/contracts';
 
+/**
+ * VALID mock config for tests that need schema-compliant data.
+ *
+ * WHY THIS EXISTS:
+ * DEFAULT_PAGES_CONFIG contains intentionally long placeholder strings
+ * (e.g., "[Your Transformation Headline - what change do you create?]")
+ * designed for user guidance, NOT schema compliance.
+ *
+ * When these go through Zod validation in getDraftConfigWithSlug(),
+ * they fail max length constraints (e.g., headline max 60 chars).
+ * This causes hasDraft to return false unexpectedly.
+ *
+ * This test config uses short, valid content that passes validation.
+ */
+const VALID_MOCK_PAGES_CONFIG: PagesConfig = {
+  home: {
+    enabled: true as const,
+    sections: [
+      { id: 'home-hero-main', type: 'hero', headline: 'Welcome', ctaText: 'Book' },
+      { id: 'home-text-about', type: 'text', headline: 'About', content: 'About us.' },
+      {
+        id: 'home-testimonials-main',
+        type: 'testimonials',
+        headline: 'Reviews',
+        items: [{ quote: 'Great service!', authorName: 'Jane', rating: 5 }],
+      },
+      {
+        id: 'home-faq-main',
+        type: 'faq',
+        headline: 'FAQ',
+        items: [{ question: 'Hours?', answer: '9-5' }],
+      },
+      { id: 'home-contact-main', type: 'contact', headline: 'Contact' },
+      { id: 'home-cta-main', type: 'cta', headline: 'Ready?', ctaText: 'Book' },
+    ],
+  },
+  about: {
+    enabled: true,
+    sections: [{ id: 'about-text-main', type: 'text', headline: 'About', content: 'About us.' }],
+  },
+  services: { enabled: true, sections: [] },
+  faq: { enabled: true, sections: [] },
+  contact: { enabled: true, sections: [] },
+  gallery: { enabled: false, sections: [] },
+  testimonials: { enabled: false, sections: [] },
+};
+
 // Mock dependencies
 vi.mock('../../../src/agent/proposals/proposal.service', () => ({
   ProposalService: vi.fn().mockImplementation(() => ({
@@ -246,10 +293,11 @@ describe('Storefront Build Mode Tools', () => {
     });
 
     it('should return error when fromSectionId is on different page', async () => {
+      // Use VALID_MOCK_PAGES_CONFIG which has about-text-main on the about page
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-123',
         slug: 'test-tenant',
-        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfig: { pages: VALID_MOCK_PAGES_CONFIG },
         landingPageConfigDraft: null,
       });
 
@@ -382,11 +430,14 @@ describe('Storefront Build Mode Tools', () => {
     });
 
     it('should create proposal when draft exists', async () => {
+      // Use VALID_MOCK_PAGES_CONFIG - DEFAULT_PAGES_CONFIG has placeholder text
+      // that exceeds schema max lengths (e.g., headline > 60 chars), causing
+      // validation to fail and hasDraft to return false
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-123',
         slug: 'test-tenant',
-        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
-        landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG }, // Has draft
+        landingPageConfig: { pages: VALID_MOCK_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: VALID_MOCK_PAGES_CONFIG }, // Has draft
       });
 
       const result = await publishDraftTool.execute(mockContext, {});
@@ -427,11 +478,13 @@ describe('Storefront Build Mode Tools', () => {
     });
 
     it('should return draft state when draft exists', async () => {
+      // Use VALID_MOCK_PAGES_CONFIG - DEFAULT_PAGES_CONFIG has placeholder text
+      // that exceeds schema max lengths, causing validation to fail
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-123',
         slug: 'test-tenant',
-        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
-        landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfig: { pages: VALID_MOCK_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: VALID_MOCK_PAGES_CONFIG },
       });
 
       const result = await getLandingPageDraftTool.execute(mockContext, {});
