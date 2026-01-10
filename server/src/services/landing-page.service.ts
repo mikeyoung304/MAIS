@@ -26,8 +26,8 @@
  * The repository handles data persistence and transaction management.
  */
 
-import type { LandingPageConfig, LandingPageSections, PagesConfig } from '@macon/contracts';
-import { DEFAULT_PAGES_CONFIG, LandingPageConfigSchema } from '@macon/contracts';
+import type { LandingPageConfig, LandingPageSections } from '@macon/contracts';
+import { LandingPageConfigSchema } from '@macon/contracts';
 import type {
   PrismaTenantRepository,
   LandingPageDraftWrapper,
@@ -67,31 +67,6 @@ export interface PublishResult {
 
 export interface DiscardResult {
   success: boolean;
-}
-
-// ============================================================================
-// Build Mode Types (AI Tools / Separate Column System)
-// ============================================================================
-
-/**
- * Result from getBuildModeDraft - includes pages config and metadata
- * Used by AI tools that need to read the current draft state
- */
-export interface BuildModeDraftResult {
-  pages: PagesConfig;
-  hasDraft: boolean;
-}
-
-/**
- * Extended result that includes tenant slug for preview URL generation
- * Used when both config and slug are needed to avoid N+1 queries
- */
-export interface BuildModeDraftWithSlugResult extends BuildModeDraftResult {
-  slug: string | null;
-  /** Raw draft config (null if no draft exists) - use for existsInDraft checks */
-  rawDraftConfig: LandingPageConfig | null;
-  /** Raw live config (null if no live config exists) - use for existsInLive checks */
-  rawLiveConfig: LandingPageConfig | null;
 }
 
 /**
@@ -285,145 +260,11 @@ export class LandingPageService {
   // These methods use the landingPageConfigDraft column for AI tool operations.
   // The publish method writes to the wrapper format in landingPageConfig for
   // compatibility with the public API.
-
-  /**
-   * Get draft config for Build Mode (AI tools)
-   *
-   * Uses the separate landingPageConfigDraft column.
-   * Falls back to live config or defaults if no draft exists.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @returns Pages config and draft status
-   * @throws NotFoundError if tenant not found
-   */
-  async getBuildModeDraft(tenantId: string): Promise<BuildModeDraftResult> {
-    const tenant = await this.tenantRepo.findById(tenantId);
-    if (!tenant) {
-      throw new NotFoundError('Tenant not found');
-    }
-
-    // If draft exists, validate and use it
-    if (tenant.landingPageConfigDraft) {
-      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
-      if (!result.success) {
-        logger.warn(
-          { tenantId, errors: result.error.issues },
-          'Invalid draft config in landingPageConfigDraft, falling back to defaults'
-        );
-        return {
-          pages: structuredClone(DEFAULT_PAGES_CONFIG),
-          hasDraft: false,
-        };
-      }
-      return {
-        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: true,
-      };
-    }
-
-    // Otherwise, validate and initialize from live config or defaults
-    if (tenant.landingPageConfig) {
-      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
-      if (!result.success) {
-        logger.warn(
-          { tenantId, errors: result.error.issues },
-          'Invalid live config, falling back to defaults'
-        );
-        return {
-          pages: structuredClone(DEFAULT_PAGES_CONFIG),
-          hasDraft: false,
-        };
-      }
-      return {
-        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: false,
-      };
-    }
-
-    return {
-      pages: structuredClone(DEFAULT_PAGES_CONFIG),
-      hasDraft: false,
-    };
-  }
-
-  /**
-   * Get draft config with tenant slug for Build Mode (AI tools)
-   *
-   * Combined query to avoid N+1 pattern when both config and slug are needed.
-   * Also returns raw configs for existsInDraft/existsInLive checks.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @returns Pages config, draft status, slug, and raw configs
-   * @throws NotFoundError if tenant not found
-   */
-  async getBuildModeDraftWithSlug(tenantId: string): Promise<BuildModeDraftWithSlugResult> {
-    const tenant = await this.tenantRepo.findById(tenantId);
-    if (!tenant) {
-      throw new NotFoundError('Tenant not found');
-    }
-
-    // Cast raw configs for discovery tools
-    const rawDraftConfig = tenant.landingPageConfigDraft as unknown as LandingPageConfig | null;
-    const rawLiveConfig = tenant.landingPageConfig as unknown as LandingPageConfig | null;
-
-    // If draft exists, validate and use it
-    if (tenant.landingPageConfigDraft) {
-      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
-      if (!result.success) {
-        logger.warn(
-          { tenantId, errors: result.error.issues },
-          'Invalid draft config, falling back to defaults'
-        );
-        return {
-          pages: structuredClone(DEFAULT_PAGES_CONFIG),
-          hasDraft: false,
-          slug: tenant.slug,
-          rawDraftConfig,
-          rawLiveConfig,
-        };
-      }
-      return {
-        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: true,
-        slug: tenant.slug,
-        rawDraftConfig,
-        rawLiveConfig,
-      };
-    }
-
-    // Otherwise, validate and initialize from live config or defaults
-    if (tenant.landingPageConfig) {
-      const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
-      if (!result.success) {
-        logger.warn(
-          { tenantId, errors: result.error.issues },
-          'Invalid live config, falling back to defaults'
-        );
-        return {
-          pages: structuredClone(DEFAULT_PAGES_CONFIG),
-          hasDraft: false,
-          slug: tenant.slug,
-          rawDraftConfig,
-          rawLiveConfig,
-        };
-      }
-      return {
-        pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: false,
-        slug: tenant.slug,
-        rawDraftConfig,
-        rawLiveConfig,
-      };
-    }
-
-    return {
-      pages: structuredClone(DEFAULT_PAGES_CONFIG),
-      hasDraft: false,
-      slug: tenant.slug,
-      rawDraftConfig,
-      rawLiveConfig,
-    };
-  }
+  //
+  // NOTE: getDraftConfig() and getDraftConfigWithSlug() in agent/tools/utils.ts
+  // are the canonical implementations for reading draft state. They accept
+  // PrismaClient directly to support transaction patterns (TOCTOU prevention).
+  // Do NOT duplicate those methods here.
 
   /**
    * Save draft for Build Mode (AI tools)

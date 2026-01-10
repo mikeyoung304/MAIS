@@ -4,34 +4,49 @@
  * This module is safe to import in 'use client' components.
  * It does NOT import any server-only APIs like next/headers.
  *
+ * IMPORTANT: For authenticated API calls, use the /api/* proxy routes instead.
+ * The proxy pattern is required because:
+ * 1. backendToken is stored in encrypted JWT, not readable client-side
+ * 2. NextAuth cookies are HTTP-only for security
+ * 3. The proxy reads the token server-side and injects the Authorization header
+ *
+ * Example (correct):
+ *   fetch('/api/tenant-admin/packages', { method: 'GET' })
+ *
+ * Example (incorrect - will fail auth):
+ *   fetch('http://localhost:3001/v1/tenant-admin/packages', { method: 'GET' })
+ *
  * For Server Components, use api.server.ts instead.
  */
 
 import { initClient } from '@ts-rest/core';
 import { Contracts } from '@macon/contracts';
-import { API_URL } from '@/lib/config';
 
 /**
  * Client-side API client for use in Client Components
  *
- * This version reads tokens from cookies automatically via browser.
- * Use this in 'use client' components with React Query.
+ * WARNING: This client does NOT inject auth headers automatically.
+ * For authenticated routes, use /api/* proxy routes which handle auth server-side.
+ *
+ * Only use this client for:
+ * - Public/unauthenticated endpoints
+ * - Routes where you manually handle auth via the proxy pattern
  */
 export function createClientApiClient() {
-  // On the client, cookies are sent automatically with fetch
-  // We just need to set credentials: 'include'
   return initClient(Contracts, {
-    baseUrl: API_URL,
+    baseUrl: '', // Empty = relative URLs, goes through Next.js proxy
     baseHeaders: {},
     api: async ({ path, method, headers, body }) => {
-      const response = await fetch(`${API_URL}${path}`, {
+      const requestHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...headers,
+      };
+
+      const response = await fetch(path, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
+        headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
-        credentials: 'include', // Include cookies automatically
+        credentials: 'include',
       });
 
       const responseBody = await response.json().catch(() => null);

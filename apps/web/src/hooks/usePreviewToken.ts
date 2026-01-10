@@ -9,9 +9,11 @@
  * - Tokens are tenant-scoped (can only preview own tenant's draft)
  * - Tokens expire after 10 minutes
  * - No cache poisoning: preview requests bypass ISR cache
+ * - Uses Next.js API proxy for secure auth (no direct backend calls)
  *
  * @see server/src/lib/preview-tokens.ts for token generation
  * @see server/src/routes/public-tenant.routes.ts for preview endpoint
+ * @see docs/solutions/NEXTJS_CLIENT_API_QUICK_REFERENCE.md for proxy pattern
  */
 
 'use client';
@@ -19,7 +21,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import type { PreviewTokenResponse } from '@macon/contracts';
-import { API_URL } from '@/lib/config';
 import { logger } from '@/lib/logger';
 
 // ============================================
@@ -52,12 +53,14 @@ const PREVIEW_TOKEN_QUERY_KEY = ['preview-token'] as const;
 // ============================================
 
 async function fetchPreviewToken(): Promise<PreviewTokenResponse> {
-  const response = await fetch(`${API_URL}/v1/tenant-admin/preview-token`, {
+  // Use Next.js API proxy route - handles auth securely on the server
+  // The proxy reads the HTTP-only session cookie and adds Authorization header
+  // See: apps/web/src/app/api/tenant-admin/[...path]/route.ts
+  const response = await fetch('/api/tenant-admin/preview-token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Include auth cookies
   });
 
   if (!response.ok) {

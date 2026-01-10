@@ -15,6 +15,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { getToken } from 'next-auth/jwt';
 import type { JWT } from 'next-auth/jwt';
 import type { User, Session } from 'next-auth';
+import type { NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
 import { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
 import { API_URL } from '@/lib/config';
@@ -309,56 +310,40 @@ export type { MAISUser, MAISJWT, MAISSession };
  *                  OMIT for Server Components and Server Actions.
  * @returns The backend JWT token or null if not authenticated
  */
-export async function getBackendToken(request?: Request): Promise<string | null> {
-  let req: Parameters<typeof getToken>[0]['req'];
+export async function getBackendToken(request?: NextRequest): Promise<string | null> {
+  // Unified cookie store interface - works with both NextRequest.cookies and next/headers
   let cookieStore: { get: (name: string) => { value: string } | undefined };
+  let req: Parameters<typeof getToken>[0]['req'];
 
   if (request) {
-    // Use the actual request object from API route handlers
+    // API Route Handlers: Use NextRequest.cookies API (validated, handles edge cases)
+    cookieStore = request.cookies;
     req = request as Parameters<typeof getToken>[0]['req'];
-    // Parse cookies from the request
-    const cookieHeader = request.headers.get('cookie') || '';
-    const cookieMap = new Map<string, string>();
-    cookieHeader.split(';').forEach((cookie) => {
-      const [name, ...valueParts] = cookie.trim().split('=');
-      if (name) {
-        cookieMap.set(name, valueParts.join('='));
-      }
-    });
-    cookieStore = {
-      get: (name: string) => {
-        const value = cookieMap.get(name);
-        return value !== undefined ? { value } : undefined;
-      },
-    };
   } else {
-    // Create request object from next/headers (for Server Components)
+    // Server Components: Use next/headers API
     const { cookies, headers } = await import('next/headers');
     const nextCookieStore = await cookies();
     const headerStore = await headers();
 
+    cookieStore = nextCookieStore;
     req = {
       cookies: Object.fromEntries(nextCookieStore.getAll().map((c) => [c.name, c.value])),
       headers: headerStore,
     } as Parameters<typeof getToken>[0]['req'];
-
-    cookieStore = nextCookieStore;
   }
 
   // Find which cookie name is actually present (checks in priority order)
-  const cookieName = NEXTAUTH_COOKIE_NAMES.find(
-    (name) => cookieStore.get(name)?.value !== undefined
-  );
+  // NOTE: Must check for empty strings - cookies with no value should be skipped
+  const cookieName = NEXTAUTH_COOKIE_NAMES.find((name) => {
+    const value = cookieStore.get(name)?.value;
+    if (value === '') {
+      logger.debug('Found empty cookie value', { cookieName: name });
+    }
+    return value !== undefined && value !== '';
+  });
 
   if (!cookieName) {
-    logger.debug('No session cookie found', {
-      availableCookies: request
-        ? request.headers
-            .get('cookie')
-            ?.split(';')
-            .map((c) => c.trim().split('=')[0])
-        : 'unknown',
-    });
+    logger.debug('No session cookie found');
     return null;
   }
 

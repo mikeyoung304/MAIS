@@ -4,7 +4,7 @@
  * Proxies all /api/tenant-admin/* requests to the backend API with authentication.
  * This allows client components to make API calls without exposing the backend token.
  *
- * The backend token is securely retrieved from the server-side session and added
+ * The backend token is securely retrieved from the NextAuth session JWT and added
  * to the request headers.
  *
  * Supports both JSON and multipart/form-data (for file uploads).
@@ -12,11 +12,14 @@
  * Example:
  *   Client calls: /api/tenant-admin/packages
  *   Proxied to:   ${API_BASE_URL}/v1/tenant-admin/packages
+ *
+ * @see apps/web/src/app/api/agent/[...path]/route.ts - Same pattern for agent proxy
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getBackendToken } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { unauthorizedResponse, badRequestResponse, serverErrorResponse } from '@/lib/proxy-errors';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -28,17 +31,19 @@ async function handleRequest(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
+    // Get backend token from NextAuth session (same pattern as agent proxy)
     const token = await getBackendToken(request);
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      logger.debug('Tenant admin proxy: No backend token in session');
+      return unauthorizedResponse();
     }
 
     const { path } = await params;
 
     // Validate path segments to prevent traversal attempts
     if (path.some((segment) => segment === '..' || segment === '.' || segment === '')) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+      return badRequestResponse('Invalid path');
     }
 
     const pathString = path.join('/');
@@ -107,7 +112,7 @@ async function handleRequest(
       method: request.method,
       url: request.url,
     });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return serverErrorResponse();
   }
 }
 

@@ -605,6 +605,63 @@ git commit -m "chore(schema): add my_index"
 
 ---
 
+#### [Multi-Agent Parallel Code Review: Prevention Strategies & Best Practices](./patterns/MULTI_AGENT_REVIEW_PREVENTION_STRATEGIES.md)
+
+**Purpose:** Comprehensive guide to preventing security, performance, and architecture issues in multi-agent reviews
+**Audience:** All engineers using `/workflows:review`
+**Date Created:** 2026-01-10
+**Length:** ~6,000 words with prevention frameworks, checklists, and best practices
+
+**Key Sections:**
+
+1. **Prevent Missing Security Issues** - Security-first files checklist, heuristics review, verification checklist
+2. **Prevent Missing Performance Issues** - When to invoke Performance Oracle, heuristics, detailed checklist
+3. **Prevent Missing DRY Violations** - Code Simplicity Reviewer patterns, duplication detection, extraction strategies
+4. **Prevent Incomplete Code Reviews** - Dimensional coverage matrix, agent selection decision tree
+5. **Workflow Best Practices** - When to use multi-agent, running reviews, triage framework
+6. **Triage Best Practices** - Severity levels, decision framework, TODO creation templates
+7. **Fix Verification Best Practices** - Post-fix verification process, specific fix type verification
+8. **Performance & Efficiency** - Maximize parallelism, grouping strategy, right model selection
+9. **Common Pitfalls & Solutions** - Incomplete coverage, stale TODOs, context exhaustion, merge conflicts
+
+**When to Use:**
+
+- Before merging any PR > 500 lines
+- Security-sensitive code changes
+- Multi-tenant data access patterns
+- Database schema modifications
+- Agent tool implementations
+
+**Quick Reference:** [MULTI_AGENT_REVIEW_QUICK_REFERENCE.md](./patterns/MULTI_AGENT_REVIEW_QUICK_REFERENCE.md) (print and pin - 2 min read!)
+
+---
+
+#### [Multi-Agent Code Review: Common Mistakes & Prevention](./patterns/MULTI_AGENT_REVIEW_COMMON_MISTAKES.md)
+
+**Purpose:** Learn from real code review mistakes and how to prevent them
+**Audience:** All engineers, especially those new to multi-agent review
+**Date Created:** 2026-01-10
+**Length:** ~3,000 words with practical examples and decision trees
+
+**10 Common Mistakes Covered:**
+
+1. **Incomplete Dimensional Coverage** - Reviews missing orthogonal concerns (e.g., TypeScript passes but performance fails)
+2. **Skipping or Dismissing P1 Findings** - Critical vulnerabilities deferred instead of fixed immediately
+3. **Running Review on Incomplete Code** - Code half-finished but review runs anyway, creates false positives
+4. **Merging With TypeScript Errors** - Local build passes but CI fails due to uncommitted changes
+5. **Not Grouping Related Fixes** - One agent per tiny fix leads to inefficiency and waste
+6. **Creating Stale TODOs** - Findings for already-implemented features or recent fixes
+7. **Merging Without Manual Smoke Test** - Tests pass but actual usage breaks in edge cases
+8. **Ignoring Agent Complexity Warnings** - Running all agents on massive refactors causes timeouts
+9. **Not Updating TODO Status After Fixing** - No visibility into what's actually done
+10. **Deferring All P2s Instead of Fixing** - Technical debt accumulates instead of being addressed
+
+**Escalation Path:** Clear guidance on when to ask for help
+
+**When to Read:** Before first multi-agent review, when things go wrong, during onboarding
+
+---
+
 #### [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
 
 **Purpose:** Prevent UI anti-patterns and missing audit trails
@@ -2010,6 +2067,34 @@ Before creating TODO from plan:
    - Set appropriate timeouts
 
 **Quick Reference:** [Multi-Agent Quick Reference](./methodology/MULTI-AGENT-QUICK-REFERENCE.md) (print and pin!)
+
+#### [Multi-Agent Parallel Review: Preview Token Session (2026-01-10)](./methodology/multi-agent-parallel-review-preview-token-session-MAIS-20260110.md)
+
+**Purpose:** Case study of 6-agent parallel code review with non-overlapping findings
+**Audience:** Engineers learning multi-agent review methodology
+**Date Created:** 2026-01-10
+**Key Insight:** Specialized reviewers find non-overlapping issues - each agent caught what others missed
+
+**Demonstrates:**
+
+- 6 specialized agents reviewing preview token system + DRY segment utilities
+- Security-sentinel found rate limiting gap (others missed)
+- Data-integrity-guardian confirmed excellent tenant isolation
+- Code-simplicity-reviewer found duplicate implementations
+- 0 P1, 6 P2, 3 P3 findings from single session
+- Comprehensive todo file creation and review document generation
+
+**Key Takeaways:**
+
+1. **Non-overlapping coverage** - Each agent finds issues ONLY in their domain
+2. **Commendations matter** - When data-integrity confirms "no issues", trust it
+3. **Parallel = faster** - All 6 agents complete in single round
+4. **Todo files = action** - Every finding becomes trackable work item
+
+**Related Files:**
+
+- Review document: `docs/reviews/2026-01-10-preview-token-system-review.md`
+- Todo files: `todos/721-729-*.md`
 
 #### [Parallel TODO Resolution with Playwright Verification](./methodology/parallel-todo-resolution-with-playwright-verification-MAIS-20251225.md)
 

@@ -16,13 +16,10 @@
 
 import { Router } from 'express';
 import { setTimeout } from 'timers/promises';
-import type {
-  PrismaTenantRepository,
-  LandingPageDraftWrapper,
-} from '../adapters/prisma/tenant.repository';
+import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { logger } from '../lib/core/logger';
 import { validatePreviewToken } from '../lib/preview-tokens';
-import type { LandingPageConfig, TenantPublicDto } from '@macon/contracts';
+import type { TenantPublicDto } from '@macon/contracts';
 
 /**
  * Create public tenant routes
@@ -168,32 +165,15 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
     }
 
     try {
-      // Get base tenant data using existing public method
-      const tenant = await tenantRepository.findBySlugPublic(slug);
+      // PERFORMANCE: Single query fetches tenant + both draft and published configs
+      // Previously made 2 sequential queries (findBySlugPublic + getLandingPageDraft)
+      const result = await tenantRepository.findBySlugForPreview(slug);
 
-      if (!tenant) {
+      if (!result) {
         return res.status(404).json({
           error: 'Tenant not available',
         });
       }
-
-      // Get draft landing page config
-      const draftWrapper = await tenantRepository.getLandingPageDraft(tokenResult.payload.tenantId);
-
-      // Determine which config to use (draft if exists, otherwise published)
-      const landingPageConfig: LandingPageConfig | null =
-        draftWrapper.draft ?? draftWrapper.published ?? null;
-
-      // Build response with draft config merged into branding
-      const branding = tenant.branding as Record<string, unknown> | null;
-      const mergedBranding = landingPageConfig
-        ? { ...branding, landingPage: landingPageConfig }
-        : branding;
-
-      const previewResponse: TenantPublicDto = {
-        ...tenant,
-        branding: mergedBranding,
-      };
 
       // Set cache headers to prevent ISR cache poisoning
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -201,11 +181,11 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
       res.setHeader('Expires', '0');
 
       logger.info(
-        { tenantId: tokenResult.payload.tenantId, slug, hasDraft: !!draftWrapper.draft },
+        { tenantId: tokenResult.payload.tenantId, slug, hasDraft: result.hasDraft },
         'Preview data served'
       );
 
-      return res.status(200).json(previewResponse);
+      return res.status(200).json(result.tenant);
     } catch (error) {
       logger.error({ error, slug }, 'Error fetching preview data');
       return res.status(500).json({

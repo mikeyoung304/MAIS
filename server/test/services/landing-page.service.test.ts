@@ -11,9 +11,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { LandingPageService } from '../../src/services/landing-page.service';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
-import { NotFoundError } from '../../src/lib/errors';
 import { getTestPrisma } from '../helpers/global-prisma';
-import { DEFAULT_PAGES_CONFIG, type PagesConfig } from '@macon/contracts';
+import type { PagesConfig } from '@macon/contracts';
 
 const prisma = getTestPrisma();
 
@@ -100,88 +99,9 @@ describe('LandingPageService', () => {
         .catch(() => {});
     });
 
-    describe('getBuildModeDraft', () => {
-      it('should return defaults when no config exists', async () => {
-        const result = await service.getBuildModeDraft(testTenantId);
-
-        expect(result.hasDraft).toBe(false);
-        expect(result.pages).toEqual(DEFAULT_PAGES_CONFIG);
-      });
-
-      it('should return draft config when draft exists', async () => {
-        // Use VALID_MOCK_PAGES_CONFIG - invalid schema causes hasDraft to be false
-        const draftConfig = {
-          pages: structuredClone(VALID_MOCK_PAGES_CONFIG),
-        };
-
-        await prisma.tenant.update({
-          where: { id: testTenantId },
-          data: { landingPageConfigDraft: draftConfig },
-        });
-
-        const result = await service.getBuildModeDraft(testTenantId);
-
-        expect(result.hasDraft).toBe(true);
-        expect(result.pages.home).toBeDefined();
-      });
-
-      it('should fall back to live config when no draft exists', async () => {
-        const liveConfig = {
-          pages: {
-            home: {
-              enabled: true,
-              title: 'Live Home',
-              sections: [],
-            },
-          },
-        };
-
-        await prisma.tenant.update({
-          where: { id: testTenantId },
-          data: { landingPageConfig: liveConfig },
-        });
-
-        const result = await service.getBuildModeDraft(testTenantId);
-
-        expect(result.hasDraft).toBe(false);
-        expect(result.pages.home).toBeDefined();
-      });
-
-      it('should throw NotFoundError for non-existent tenant', async () => {
-        await expect(service.getBuildModeDraft('non-existent-tenant-id')).rejects.toThrow(
-          NotFoundError
-        );
-      });
-    });
-
-    describe('getBuildModeDraftWithSlug', () => {
-      it('should return slug along with draft config', async () => {
-        const result = await service.getBuildModeDraftWithSlug(testTenantId);
-
-        expect(result.slug).toBe(testSlug);
-        expect(result.hasDraft).toBe(false);
-        expect(result.rawDraftConfig).toBeNull();
-        expect(result.rawLiveConfig).toBeNull();
-      });
-
-      it('should return raw configs for discovery tools', async () => {
-        const draftConfig = { pages: {} };
-        const liveConfig = { pages: {} };
-
-        await prisma.tenant.update({
-          where: { id: testTenantId },
-          data: {
-            landingPageConfigDraft: draftConfig,
-            landingPageConfig: liveConfig,
-          },
-        });
-
-        const result = await service.getBuildModeDraftWithSlug(testTenantId);
-
-        expect(result.rawDraftConfig).toEqual(draftConfig);
-        expect(result.rawLiveConfig).toEqual(liveConfig);
-      });
-    });
+    // NOTE: getBuildModeDraft and getBuildModeDraftWithSlug were removed (#724 DRY fix)
+    // The canonical implementations are getDraftConfig() and getDraftConfigWithSlug()
+    // in agent/tools/utils.ts which accept PrismaClient for transaction support.
 
     describe('saveBuildModeDraft', () => {
       it('should save draft to landingPageConfigDraft column', async () => {

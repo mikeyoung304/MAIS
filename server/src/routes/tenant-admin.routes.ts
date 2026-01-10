@@ -1089,6 +1089,19 @@ export function createTenantAdminRoutes(
   };
 
   /**
+   * Middleware to require authentication before proceeding.
+   * Use this BEFORE rate limiters to ensure auth errors are returned
+   * instead of rate limit errors (see issue #733).
+   */
+  const requireAuth = (_req: Request, res: Response, next: NextFunction): void => {
+    if (!res.locals.tenantAuth) {
+      res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+      return;
+    }
+    next();
+  };
+
+  /**
    * GET /v1/tenant-admin/addons
    * List all add-ons for authenticated tenant
    */
@@ -1924,14 +1937,12 @@ export function createTenantAdminRoutes(
    */
   router.post(
     '/preview-token',
+    requireAuth, // Auth check BEFORE rate limiter (see issue #733)
     draftAutosaveLimiter,
     async (_req: Request, res: Response, next: NextFunction) => {
       try {
-        const tenantId = getTenantId(res);
-        if (!tenantId) {
-          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-          return;
-        }
+        // Auth is guaranteed by requireAuth middleware - safe to assert non-null
+        const tenantId = res.locals.tenantAuth!.tenantId;
 
         // Get tenant to include slug in token
         const tenant = await tenantRepository.findById(tenantId);

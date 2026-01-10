@@ -953,6 +953,10 @@ The following links prevent common mistakes from recurring:
 
 **Key insight from Multi-Agent Parallel Review (Commit 5cd5bfb1):** Specialized parallel review catches issues that generalist review misses. Example: Data Integrity Guardian found P1 TOCTOU race condition in `maxPerDay` enforcement that 5 other specialized agents (TypeScript, Security, Architecture, Performance, Simplicity) did not flag. Each agent applies domain-specific heuristics (e.g., Data Integrity checks all check-then-act patterns for transaction wrapping). Run `/workflows:review` before merging significant PRs. See `docs/solutions/methodology/MULTI_AGENT_REVIEW_QUICK_REFERENCE.md` for the 6-agent breakdown.
 
+**Key insight from Preview Token Review (2026-01-10):** 6-agent parallel review produces non-overlapping findings - each specialist catches issues others miss entirely. Security-sentinel found rate limiting gap (#721) and error disclosure (#722), data-integrity-guardian confirmed excellent tenant isolation (zero issues), typescript-reviewer found missing shared contract (#726), performance-oracle found extra DB query (#723), code-simplicity-reviewer found duplicate implementations (#724, #725). Result: 6 P2 findings with zero overlap. When an agent says "no issues in my domain", trust it - that domain was thoroughly checked. See `docs/solutions/methodology/multi-agent-parallel-review-preview-token-session-MAIS-20260110.md`.
+
+**Key insight from Agent Executor Draft Field Bug (2026-01-10):** Two bugs made the AI agent appear broken: (1) Backend `update_storefront` executor wrote to `landingPageConfig` (published) instead of `landingPageConfigDraft` - preview reads from draft so changes appeared to fail silently; (2) Frontend `useAgentChat.ts` discarded session history on mount, showing only greeting even though backend returned full conversation. Backend sessions ARE unified correctly (scoped by tenantId + sessionType). Fix: Change field names in executor, load history before showing greeting in frontend. See `docs/solutions/agent-issues/agent-executor-draft-field-context-loss-MAIS-20260110.md`.
+
 ## Quick Start Checklist
 
 When starting work on this codebase:

@@ -22,8 +22,23 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import { loadConfig } from './core/config';
 import { logger } from './core/logger';
+
+/**
+ * Zod schema for validating preview token payload
+ *
+ * Validates BEFORE type assertion to ensure type safety.
+ * This schema matches the PreviewTokenPayload interface.
+ */
+const PreviewTokenPayloadSchema = z.object({
+  tenantId: z.string(),
+  slug: z.string(),
+  type: z.literal('preview'),
+  iat: z.number().optional(),
+  exp: z.number().optional(),
+});
 
 /**
  * Preview token payload structure
@@ -130,12 +145,27 @@ export function validatePreviewToken(
   const config = loadConfig();
 
   try {
-    const payload = jwt.verify(token, config.JWT_SECRET, {
+    const rawPayload = jwt.verify(token, config.JWT_SECRET, {
       algorithms: ['HS256'],
-    }) as PreviewTokenPayload;
+    });
 
-    // Validate payload structure
-    if (!payload.tenantId || !payload.slug || !payload.type) {
+    // Validate payload structure with Zod BEFORE type assertion
+    // This ensures type safety - we only get PreviewTokenPayload after validation succeeds
+    const parseResult = PreviewTokenPayloadSchema.safeParse(rawPayload);
+    if (!parseResult.success) {
+      // Check if the issue is specifically the wrong type field
+      if (
+        typeof rawPayload === 'object' &&
+        rawPayload !== null &&
+        'type' in rawPayload &&
+        (rawPayload as { type: unknown }).type !== 'preview'
+      ) {
+        return {
+          valid: false,
+          error: 'wrong_type',
+          message: `Invalid token type: expected preview, got ${(rawPayload as { type: unknown }).type}`,
+        };
+      }
       return {
         valid: false,
         error: 'malformed',
@@ -143,14 +173,7 @@ export function validatePreviewToken(
       };
     }
 
-    // Validate token type
-    if (payload.type !== 'preview') {
-      return {
-        valid: false,
-        error: 'wrong_type',
-        message: `Invalid token type: expected preview, got ${payload.type}`,
-      };
-    }
+    const payload = parseResult.data;
 
     // Validate slug if provided (ensures token matches requested tenant)
     if (expectedSlug && payload.slug !== expectedSlug) {

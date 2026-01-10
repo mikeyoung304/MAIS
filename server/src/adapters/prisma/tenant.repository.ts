@@ -467,6 +467,125 @@ export class PrismaTenantRepository {
   }
 
   /**
+   * Find active tenant by slug with draft config for preview mode
+   * Used by preview endpoint to serve draft landing page content
+   *
+   * PERFORMANCE: Single query fetches both published and draft configs,
+   * eliminating the need for a second query to getLandingPageDraft.
+   *
+   * SECURITY: Only returns allowlisted fields (same as findBySlugPublic)
+   * plus draft config for authenticated preview.
+   *
+   * @param slug - URL-safe tenant identifier
+   * @returns TenantPreviewDto (with draft/published configs) or null if not found/inactive
+   */
+  async findBySlugForPreview(slug: string): Promise<TenantPreviewDto | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: {
+        slug,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        apiKeyPublic: true,
+        primaryColor: true,
+        secondaryColor: true,
+        accentColor: true,
+        backgroundColor: true,
+        chatEnabled: true,
+        branding: true,
+        tierDisplayNames: true,
+        landingPageConfig: true, // Published config
+        landingPageConfigDraft: true, // Draft config (for preview)
+      },
+    });
+
+    if (!tenant) {
+      return null;
+    }
+
+    // Parse draft config from separate column
+    let draft: LandingPageConfig | null = null;
+    if (tenant.landingPageConfigDraft) {
+      const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      if (draftResult.success) {
+        draft = draftResult.data;
+      } else {
+        logger.warn(
+          { tenantId: tenant.id, slug, errors: draftResult.error.issues },
+          'Invalid draft config in findBySlugForPreview'
+        );
+      }
+    }
+
+    // Parse published config from main column
+    const published = this.extractPublishedLandingPage(tenant.landingPageConfig);
+
+    // Build branding object - use draft if available, otherwise published
+    const landingPageConfig = draft ?? published;
+    const branding = tenant.branding as Record<string, unknown> | null;
+    const mergedBranding = landingPageConfig
+      ? { ...branding, landingPage: landingPageConfig }
+      : branding;
+
+    // Build candidate response object
+    const candidateDto = {
+      id: tenant.id,
+      slug: tenant.slug,
+      name: tenant.name,
+      apiKeyPublic: tenant.apiKeyPublic,
+      primaryColor: tenant.primaryColor,
+      secondaryColor: tenant.secondaryColor,
+      accentColor: tenant.accentColor,
+      backgroundColor: tenant.backgroundColor,
+      chatEnabled: tenant.chatEnabled,
+      branding: mergedBranding,
+      tierDisplayNames: tenant.tierDisplayNames as
+        | { tier_1?: string; tier_2?: string; tier_3?: string }
+        | undefined,
+    };
+
+    // Validate entire response with Zod schema
+    const validationResult = TenantPublicDtoSchema.safeParse(candidateDto);
+
+    if (!validationResult.success) {
+      logger.warn(
+        {
+          tenantId: tenant.id,
+          slug: tenant.slug,
+          errorCount: validationResult.error.issues.length,
+        },
+        'Invalid tenant data during preview lookup'
+      );
+
+      // Return response with branding/tierDisplayNames set to undefined (graceful degradation)
+      return {
+        tenant: {
+          id: tenant.id,
+          slug: tenant.slug,
+          name: tenant.name,
+          apiKeyPublic: tenant.apiKeyPublic,
+          primaryColor: tenant.primaryColor,
+          secondaryColor: tenant.secondaryColor,
+          accentColor: tenant.accentColor,
+          backgroundColor: tenant.backgroundColor,
+          chatEnabled: tenant.chatEnabled,
+          branding: undefined,
+          tierDisplayNames: undefined,
+        },
+        hasDraft: !!draft,
+      };
+    }
+
+    return {
+      tenant: validationResult.data,
+      hasDraft: !!draft,
+    };
+  }
+
+  /**
    * Find active tenant by slug with public fields only
    * Used for public storefront routing - returns only safe fields
    *
@@ -1086,6 +1205,17 @@ export interface LandingPageDraftWrapper {
   published: LandingPageConfig | null;
   draftUpdatedAt: string | null;
   publishedAt: string | null;
+}
+
+/**
+ * Tenant preview DTO for preview endpoint
+ * Combines public tenant data with draft indicator for logging
+ *
+ * PERFORMANCE: Single query return type for findBySlugForPreview
+ */
+export interface TenantPreviewDto {
+  tenant: TenantPublicDto;
+  hasDraft: boolean;
 }
 
 /**

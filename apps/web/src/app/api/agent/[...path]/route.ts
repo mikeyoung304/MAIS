@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBackendToken } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { unauthorizedResponse, badRequestResponse, serverErrorResponse } from '@/lib/proxy-errors';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -29,22 +30,14 @@ async function handleRequest(
     const token = await getBackendToken(request);
 
     if (!token) {
-      // Return a user-friendly message when not authenticated
-      return NextResponse.json(
-        {
-          available: false,
-          reason: 'not_authenticated',
-          message: 'Please sign in to access your assistant.',
-        },
-        { status: 401 }
-      );
+      return unauthorizedResponse();
     }
 
     const { path } = await params;
 
     // Validate path segments to prevent traversal attempts
     if (path.some((segment) => segment === '..' || segment === '.' || segment === '')) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+      return badRequestResponse('Invalid path');
     }
 
     const pathString = path.join('/');
@@ -102,14 +95,7 @@ async function handleRequest(
       method: request.method,
       url: request.url,
     });
-    return NextResponse.json(
-      {
-        available: false,
-        reason: 'proxy_error',
-        message: 'Having trouble connecting to your assistant. Try again?',
-      },
-      { status: 500 }
-    );
+    return serverErrorResponse();
   }
 }
 
