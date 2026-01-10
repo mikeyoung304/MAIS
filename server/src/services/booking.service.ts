@@ -253,13 +253,16 @@ export class BookingService {
       balancePaidAt: new Date(), // P1 fix: Set payment timestamp for reporting queries
     });
 
-    // Fetch package title for the event payload
-    const pkg = await this.catalogRepo.getPackageById(tenantId, booking.packageId);
-    const packageTitle = pkg?.title || 'Package';
+    // Fetch package title for the event payload (only for DATE bookings with packageId)
+    let packageTitle = 'Package';
+    if (booking.packageId) {
+      const pkg = await this.catalogRepo.getPackageById(tenantId, booking.packageId);
+      packageTitle = pkg?.title || 'Package';
+    }
 
-    // Fetch add-on titles if any
+    // Fetch add-on titles if any (only for DATE bookings with packageId)
     const addOnTitles: string[] = [];
-    if (booking.addOnIds && booking.addOnIds.length > 0) {
+    if (booking.packageId && booking.addOnIds && booking.addOnIds.length > 0) {
       const addOns = await this.catalogRepo.getAddOnsByPackageId(tenantId, booking.packageId);
       for (const addOn of addOns) {
         if (booking.addOnIds.includes(addOn.id)) {

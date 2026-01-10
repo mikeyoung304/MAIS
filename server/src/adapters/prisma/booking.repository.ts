@@ -1003,7 +1003,7 @@ export class PrismaBookingRepository implements BookingRepository {
 
   private toDomainBooking(booking: {
     id: string;
-    packageId: string;
+    packageId: string | null; // Nullable for TIMESLOT bookings
     date: Date;
     totalPrice: number;
     commissionAmount: number;

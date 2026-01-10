@@ -254,7 +254,7 @@ export class AppointmentBookingService {
           tenantId,
           customerId: customer.id,
           serviceId: input.serviceId,
-          packageId: null, // TIMESLOT bookings don't have packages
+          // packageId omitted - TIMESLOT bookings don't have packages (undefined by default)
           date: new Date(dateStr),
           totalPrice: input.totalCents,
           status: 'CONFIRMED',
@@ -265,7 +265,7 @@ export class AppointmentBookingService {
           notes: input.notes || null,
           commissionAmount: 0,
           commissionPercent: 0,
-          stripeCheckoutSessionId: input.sessionId,
+          stripePaymentIntentId: input.sessionId,
         },
       });
 
@@ -290,7 +290,7 @@ export class AppointmentBookingService {
         totalCents: bookingData.totalPrice,
         notes: bookingData.notes || null,
         commissionAmount: bookingData.commissionAmount,
-        commissionPercent: bookingData.commissionPercent,
+        commissionPercent: bookingData.commissionPercent.toNumber(),
         stripePaymentIntentId: input.sessionId,
         createdAt: bookingData.createdAt.toISOString(),
         updatedAt: bookingData.updatedAt.toISOString(),

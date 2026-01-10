@@ -282,7 +282,7 @@ export interface AppointmentDto {
   tenantId: string;
   customerId: string;
   serviceId: string | null;
-  packageId: string;
+  packageId: string | null; // Nullable for TIMESLOT bookings
   date: string; // YYYY-MM-DD
   startTime: string | null; // ISO datetime
   endTime: string | null; // ISO datetime

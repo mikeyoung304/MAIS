@@ -36,7 +36,7 @@ interface PackageDto {
  */
 interface BookingDto {
   id: string;
-  packageId: string;
+  packageId: string | null; // Nullable for TIMESLOT bookings
   coupleName: string;
   email: string;
   phone?: string;

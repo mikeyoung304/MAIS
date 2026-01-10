@@ -1494,8 +1494,10 @@ export function createTenantAdminRoutes(
         return;
       }
 
-      // Get package details for context
-      const pkg = await catalogService.getPackageById(tenantId, booking.packageId);
+      // Get package details for context (only for DATE bookings with packageId)
+      const pkg = booking.packageId
+        ? await catalogService.getPackageById(tenantId, booking.packageId)
+        : null;
 
       const bookingDto = {
         id: booking.id,

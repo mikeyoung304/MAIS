@@ -77,15 +77,20 @@ export class ReminderService {
 
       logger.info({ tenantId, count: bookingsToRemind.length }, 'Processing overdue reminders');
 
-      // Batch fetch all packages to avoid N+1 query
-      const packageIds = [...new Set(bookingsToRemind.map((b) => b.packageId))];
-      const packages = await this.catalogRepo.getPackagesByIds(tenantId, packageIds);
+      // Batch fetch all packages to avoid N+1 query (filter out null packageIds for TIMESLOT bookings)
+      const packageIds = [
+        ...new Set(
+          bookingsToRemind.map((b) => b.packageId).filter((id): id is string => id !== null)
+        ),
+      ];
+      const packages =
+        packageIds.length > 0 ? await this.catalogRepo.getPackagesByIds(tenantId, packageIds) : [];
       const packageMap = new Map(packages.map((p) => [p.id, p]));
 
       // Process each reminder
       for (const booking of bookingsToRemind) {
         try {
-          const pkg = packageMap.get(booking.packageId);
+          const pkg = booking.packageId ? packageMap.get(booking.packageId) : undefined;
           await this.sendReminderForBooking(tenantId, booking, pkg);
 
           // Mark reminder as sent

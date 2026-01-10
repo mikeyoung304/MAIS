@@ -190,7 +190,7 @@ export type BatchAvailabilityDto = z.infer<typeof BatchAvailabilityDtoSchema>;
 // Booking DTO
 export const BookingDtoSchema = z.object({
   id: z.string(),
-  packageId: z.string(),
+  packageId: z.string().nullable(), // Nullable for TIMESLOT bookings
   coupleName: z.string(),
   email: z.string().email(),
   phone: z.string().optional(),

@@ -55,7 +55,7 @@ export interface AddOn {
 export interface Booking {
   id: string;
   tenantId?: string; // Tenant isolation (optional for backward compatibility)
-  packageId: string;
+  packageId: string | null; // Nullable for TIMESLOT bookings (which use serviceId instead)
   customerId?: string; // Customer reference (for timeslot bookings)
   venueId?: string | null; // Venue reference
   coupleName: string;
