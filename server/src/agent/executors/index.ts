@@ -121,7 +121,7 @@ export function registerAllExecutors(prisma: PrismaClient): void {
     if (!resolvedSegmentId) {
       // Auto-assign to "General" segment (creates if missing)
       const { segmentId, wasCreated } = await resolveOrCreateGeneralSegment(prisma, tenantId);
-      resolvedSegmentId = segmentId;
+      resolvedSegmentId = segmentId ?? undefined; // Convert null to undefined for type compatibility
 
       if (wasCreated) {
         logger.info(

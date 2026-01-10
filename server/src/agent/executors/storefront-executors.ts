@@ -599,10 +599,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     const publishedWrapper = createPublishedWrapper(tenant.landingPageConfigDraft);
 
     // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
+    // Cast wrapper for Prisma 7 JSON field type compatibility
     await prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        landingPageConfig: publishedWrapper,
+        landingPageConfig: publishedWrapper as unknown as Prisma.InputJsonValue,
         landingPageConfigDraft: Prisma.DbNull, // Clear the draft (Prisma 7 pattern)
       },
     });
