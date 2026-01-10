@@ -1182,3 +1182,23 @@ export const CalendarTestResponseSchema = z.object({
 });
 
 export type CalendarTestResponse = z.infer<typeof CalendarTestResponseSchema>;
+
+// ============================================================================
+// Preview Token DTOs
+// ============================================================================
+
+/**
+ * Preview token response for draft content preview
+ * Used by visual editor to authenticate iframe preview requests
+ *
+ * @see server/src/lib/preview-tokens.ts for token generation
+ * @see server/src/routes/public-tenant.routes.ts for preview endpoint
+ */
+export const PreviewTokenResponseSchema = z.object({
+  /** Short-lived JWT token for preview access */
+  token: z.string(),
+  /** ISO datetime when the token expires (10 minutes from generation) */
+  expiresAt: z.string().datetime(),
+});
+
+export type PreviewTokenResponse = z.infer<typeof PreviewTokenResponseSchema>;

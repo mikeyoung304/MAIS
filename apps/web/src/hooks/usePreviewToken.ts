@@ -18,17 +18,13 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import type { PreviewTokenResponse } from '@macon/contracts';
 import { API_URL } from '@/lib/config';
 import { logger } from '@/lib/logger';
 
 // ============================================
 // TYPES
 // ============================================
-
-interface PreviewTokenResponse {
-  token: string;
-  expiresAt: string;
-}
 
 interface UsePreviewTokenResult {
   /** Current preview token (null if not yet fetched or expired) */

@@ -158,10 +158,12 @@ export function createPublicTenantRoutes(tenantRepository: PrismaTenantRepositor
     // Validate token
     const tokenResult = validatePreviewToken(token, slug);
     if (!tokenResult.valid) {
+      // Log detailed error for debugging, but return generic message to client
+      // SECURITY: Don't reveal specific failure reason (expired vs invalid vs tenant mismatch)
+      // to prevent attackers from learning about token format or multi-tenancy
       logger.info({ slug, error: tokenResult.error }, 'Preview token validation failed');
       return res.status(401).json({
-        error: tokenResult.message,
-        code: tokenResult.error,
+        error: 'Invalid or expired preview token',
       });
     }
 

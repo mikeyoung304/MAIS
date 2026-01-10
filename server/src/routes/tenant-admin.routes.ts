@@ -1922,38 +1922,42 @@ export function createTenantAdminRoutes(
    *
    * @returns { token: string, expiresAt: string } - JWT token and expiry timestamp
    */
-  router.post('/preview-token', async (_req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = getTenantId(res);
-      if (!tenantId) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
+  router.post(
+    '/preview-token',
+    draftAutosaveLimiter,
+    async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantId = getTenantId(res);
+        if (!tenantId) {
+          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+          return;
+        }
+
+        // Get tenant to include slug in token
+        const tenant = await tenantRepository.findById(tenantId);
+        if (!tenant) {
+          res.status(404).json({ error: 'Tenant not found' });
+          return;
+        }
+
+        // Generate preview token (10 minute expiry)
+        const expiryMinutes = 10;
+        const token = generatePreviewToken(tenantId, tenant.slug, expiryMinutes);
+
+        // Calculate expiry timestamp
+        const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000).toISOString();
+
+        logger.info({ tenantId, slug: tenant.slug }, 'Preview token generated');
+
+        res.json({
+          token,
+          expiresAt,
+        });
+      } catch (error) {
+        next(error);
       }
-
-      // Get tenant to include slug in token
-      const tenant = await tenantRepository.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
-        return;
-      }
-
-      // Generate preview token (10 minute expiry)
-      const expiryMinutes = 10;
-      const token = generatePreviewToken(tenantId, tenant.slug, expiryMinutes);
-
-      // Calculate expiry timestamp
-      const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000).toISOString();
-
-      logger.info({ tenantId, slug: tenant.slug }, 'Preview token generated');
-
-      res.json({
-        token,
-        expiresAt,
-      });
-    } catch (error) {
-      next(error);
     }
-  });
+  );
 
   return router;
 }
