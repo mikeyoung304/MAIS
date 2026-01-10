@@ -102,38 +102,50 @@ import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
 
 ## Cleanup Execution Steps
 
-### Phase 1: Fix Real-Time Updates
+### Phase 1: Fix Real-Time Updates ✅ COMPLETE
 
-- [ ] Add `onToolComplete` to AgentPanel
-- [ ] Test: Agent updates → preview refreshes
+- [x] Add `onToolComplete` to AgentPanel
+- [x] Test: Agent updates → preview refreshes
 
-### Phase 2: Delete Dead Code
+### Phase 2: Delete Dead Code ✅ COMPLETE (2026-01-10)
 
-- [ ] Delete `BuildModeChat.tsx`
-- [ ] Delete `BuildModePreview.tsx`
-- [ ] Delete `PageSelector.tsx`
-- [ ] Delete `BuildModeHeader.tsx`
-- [ ] Delete `EditableText.tsx`
-- [ ] Delete `RichTextEditor.tsx`
-- [ ] Delete `AgentChat.tsx`
-- [ ] Update `build-mode/index.ts` exports
-- [ ] Update `agent/index.ts` exports
+- [x] Delete `BuildModeChat.tsx`
+- [x] Delete `BuildModePreview.tsx`
+- [x] Delete `PageSelector.tsx`
+- [x] Delete `BuildModeHeader.tsx`
+- [x] Delete `EditableText.tsx`
+- [x] Delete `RichTextEditor.tsx`
+- [x] Delete `AgentChat.tsx`
+- [x] Delete `ChatbotUnavailable.tsx` (bonus - was orphaned)
+- [x] Delete `useDraftAutosave.ts` (bonus - agent handles saves now)
+- [x] Delete `useUnsavedChangesWarning.ts` (bonus - never used)
+- [x] Delete `/tenant/assistant` page (bonus - orphaned route)
+- [x] Update `build-mode/index.ts` exports
+- [x] Update `agent/index.ts` exports
+- [x] Clean up orphaned types in `build-mode/types.ts`
 
-### Phase 3: Update Barrel Exports
+### Phase 3: Update Barrel Exports ✅ COMPLETE
 
-After deletions, `components/build-mode/index.ts` should only export:
+`components/build-mode/index.ts` now only exports:
 
 ```typescript
 export { ConfirmDialog } from './ConfirmDialog';
-// Everything else deleted
 ```
 
-### Phase 4: Verify
+`components/agent/index.ts` now only exports:
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run build` passes
-- [ ] Preview still works in dashboard
-- [ ] Agent can update storefront in real-time
+```typescript
+export { AgentPanel } from './AgentPanel';
+export { PanelAgentChat } from './PanelAgentChat';
+export { QuickReplyChips } from './QuickReplyChips';
+```
+
+### Phase 4: Verify ✅ COMPLETE
+
+- [x] `npm run typecheck` passes
+- [x] `npm run build` passes
+- [x] Preview works in dashboard
+- [x] Agent updates storefront in real-time
 
 ---
 
@@ -142,14 +154,13 @@ export { ConfirmDialog } from './ConfirmDialog';
 ```
 components/
 ├── agent/
-│   ├── AgentPanel.tsx         ✅ Keep (fix cache)
-│   ├── PanelAgentChat.tsx     ✅ Keep
-│   ├── QuickReplyChips.tsx    ✅ Keep
-│   └── ChatbotUnavailable.tsx ✅ Keep
+│   ├── AgentPanel.tsx         ✅ Active
+│   ├── PanelAgentChat.tsx     ✅ Active
+│   └── QuickReplyChips.tsx    ✅ Active
 │
 ├── build-mode/
-│   ├── ConfirmDialog.tsx      ✅ Keep
-│   └── index.ts               📝 Update exports
+│   ├── ConfirmDialog.tsx      ✅ Active
+│   └── index.ts               ✅ Updated
 │
 ├── chat/
 │   ├── ChatMessage.tsx        ✅ Keep

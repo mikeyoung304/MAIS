@@ -534,6 +534,53 @@ npm run eval-batch -- --tenant-id=X   # Single tenant
 
 **Deployment:** See `docs/solutions/deployment-issues/agent-eval-cron-job-render-setup-MAIS-20260102.md`
 
+### Build Mode (Agent-First Storefront Editor)
+
+Tenant dashboard uses an agent-first architecture for storefront editing. The AI assistant is the primary interface for all content changes - no inline editing UI.
+
+**Architecture:** AgentPanel (persistent sidebar) → PanelAgentChat → Agent Tools → Executors → Draft System → PreviewPanel → iframe PostMessage sync
+
+**Key Files:**
+
+- `apps/web/src/components/agent/AgentPanel.tsx` - Persistent chat sidebar with real-time cache invalidation
+- `apps/web/src/components/agent/PanelAgentChat.tsx` - Compact chat UI for agent
+- `apps/web/src/components/preview/PreviewPanel.tsx` - Storefront preview with page tabs
+- `apps/web/src/components/tenant/BuildModeWrapper.tsx` - iframe PostMessage handler
+- `apps/web/src/hooks/useDraftConfig.ts` - Draft config state + publish/discard
+- `apps/web/src/hooks/useBuildModeSync.ts` - PostMessage protocol
+- `apps/web/src/lib/tenant.client.ts` - Client-safe tenant utilities (pure functions, types)
+- `server/src/agent/tools/landing-page-tools.ts` - Agent tools (update_page_section, etc.)
+- `server/src/agent/executors/landing-page-executors.ts` - Tool executors
+
+**Real-Time Updates:**
+
+Agent tools write to `landingPageConfigDraft`, then invalidate frontend cache. AgentPanel calls `invalidateDraftConfig()` in `onToolComplete` callback, triggering PreviewPanel to refetch and render updated content. PostMessage protocol syncs iframe.
+
+**Draft/Publish Flow:**
+
+1. **Draft Mode**: All changes save to `landingPageConfigDraft`
+2. **Publish**: Copy draft → live config via `publish_landing_page_draft`
+3. **Discard**: Clear draft, revert to published config via `discard_landing_page_draft`
+
+**Trust Tiers:**
+
+- T1 (Auto-confirm): `reorder_page_sections`, `toggle_page_enabled`, `get_landing_page_draft`
+- T2 (Soft-confirm): `update_page_section`, `remove_page_section`, `update_storefront_branding`, `publish_landing_page_draft`, `discard_landing_page_draft`
+
+**Server/Client Module Split:**
+
+`tenant.ts` imports server-only code (`cache()`, `API_URL`). To prevent Turbopack HMR issues, client components import from `tenant.client.ts` which contains only pure functions and types.
+
+**Deleted Components (2026-01-10):**
+
+- `BuildModeChat.tsx`, `BuildModePreview.tsx`, `PageSelector.tsx`, `BuildModeHeader.tsx` - Replaced by AgentPanel + PreviewPanel
+- `EditableText.tsx`, `RichTextEditor.tsx` - Inline editing replaced by agent chat
+- `AgentChat.tsx` (full-page variant) - Replaced by `PanelAgentChat`
+- `useDraftAutosave.ts` - Agent handles saves now
+- `/tenant/assistant` page - Orphaned, AgentPanel always visible in sidebar
+
+See `docs/architecture/BUILD_MODE_VISION.md` and `docs/architecture/BUILD_MODE_LEGACY_CLEANUP.md` for details.
+
 ## Domain Expertise (Auto-Load Skills)
 
 This project uses the `compound-engineering` plugin. Before starting implementation, check these triggers and load the matching skill:
@@ -706,6 +753,8 @@ Optional (graceful fallbacks in real mode):
 - **apps/web/README.md** - Next.js app setup, environment variables, architecture
 - **docs/solutions/methodology/multi-agent-parallel-code-review-workflow-MAIS-20260109.md** - Multi-agent parallel review workflow (6 specialized agents)
   - Quick reference: [MULTI_AGENT_REVIEW_QUICK_REFERENCE.md](docs/solutions/methodology/MULTI_AGENT_REVIEW_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **docs/architecture/BUILD_MODE_VISION.md** - Agent-first storefront editor architecture
+- **docs/architecture/BUILD_MODE_LEGACY_CLEANUP.md** - Dead code removal checklist, what to keep vs delete
 
 ## Documentation Conventions
 

@@ -114,15 +114,15 @@ See: [BUILD_MODE_LEGACY_CLEANUP.md](./BUILD_MODE_LEGACY_CLEANUP.md)
 
 ## Components Involved
 
-| Component            | Role                           | Status                        |
-| -------------------- | ------------------------------ | ----------------------------- |
-| `AgentPanel`         | Persistent chat sidebar        | Keep (fix cache invalidation) |
-| `ContentArea`        | Switches between views         | Keep                          |
-| `PreviewPanel`       | Renders storefront preview     | Keep                          |
-| `useDraftConfig`     | Fetches draft, publish/discard | Keep                          |
-| `BuildModeChat`      | Old separate chat              | **DEPRECATED - Remove**       |
-| `BuildModePreview`   | Old separate preview           | **Check if still used**       |
-| `CustomerChatWidget` | Customer-facing chatbot        | Keep (separate from agent)    |
+| Component            | Role                           | Status                               |
+| -------------------- | ------------------------------ | ------------------------------------ |
+| `AgentPanel`         | Persistent chat sidebar        | ✅ Active (cache invalidation fixed) |
+| `ContentArea`        | Switches between views         | ✅ Active                            |
+| `PreviewPanel`       | Renders storefront preview     | ✅ Active                            |
+| `useDraftConfig`     | Fetches draft, publish/discard | ✅ Active                            |
+| `CustomerChatWidget` | Customer-facing chatbot        | ✅ Active (separate from agent)      |
+| `PanelAgentChat`     | Compact chat UI for agent      | ✅ Active                            |
+| `BuildModeWrapper`   | iframe PostMessage handler     | ✅ Active                            |
 
 ---
 
