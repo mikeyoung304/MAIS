@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '720'
 tags:
@@ -73,13 +73,21 @@ const aboutSection = homeSections.find((s) => s.id === 'home-text-about');
 
 - `apps/web/src/components/tenant/TenantLandingPage.tsx`
 
+## Recommended Action
+
+**APPROVED** - Option A (Use Section ID Instead of Type)
+
+Rationale: Fragile assumption. Current pattern will break when tenants add multiple text sections. Trivial 5 min fix with clear benefit.
+
 ## Acceptance Criteria
 
-- [ ] About section reliably appears before packages
-- [ ] Multiple text sections don't cause confusion
+- [x] About section reliably appears before packages
+- [x] Multiple text sections don't cause confusion
 
 ## Work Log
 
 | Date       | Action                   | Learnings                                 |
 | ---------- | ------------------------ | ----------------------------------------- |
 | 2026-01-10 | Created from code review | Simplicity reviewer noted this assumption |
+| 2026-01-10 | **Triage: APPROVED** | Fragile assumption will break with multiple text sections. Trivial fix. |
+| 2026-01-10 | **COMPLETE** | Changed `buildHomeSections()` to find about section by ID (`home-text-about`) instead of type. Updated post-sections filter to exclude by ID instead of type, allowing other text sections to appear after packages. |

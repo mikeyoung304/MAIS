@@ -1,7 +1,9 @@
 ---
-status: pending
+status: deferred
 priority: p3
 issue_id: '706'
+deferred_reason: Documentation-only change that depends on #697 and #704 completing first
+deferred_until: After #704 (LandingPageService) is completed
 tags: [code-review, documentation, naming, tech-debt]
 dependencies: ['697', '704']
 ---
@@ -32,11 +34,23 @@ After consolidating on single system (#697, #704):
 2. Update code comments to use consistent terminology
 3. Update Prisma schema comments
 
+## Recommended Action
+
+**DEFERRED** - Documentation-only change. Depends on #697 and #704 completing first.
+
+Rationale: This is pure documentation that should be done AFTER the code is consolidated. Doing it now would be premature since the behavior will change.
+
 ## Acceptance Criteria
 
 - [ ] CLAUDE.md has "Landing Page Config Terminology" section
 - [ ] All code comments use consistent terms
 - [ ] Schema comments match actual behavior
+
+## Work Log
+
+| Date       | Action              | Learnings                                                         |
+| ---------- | ------------------- | ----------------------------------------------------------------- |
+| 2026-01-10 | **Triage: DEFERRED** | Documentation depends on #697 and #704 completing first. |
 
 ## Resources
 

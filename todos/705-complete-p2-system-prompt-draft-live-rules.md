@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p2
 issue_id: '705'
 tags: [code-review, ai-tools, system-prompt, user-trust]
@@ -51,15 +51,28 @@ When reading storefront content, ALWAYS check the source and communicate clearly
 when X is draft content. This breaks user trust when they visit their actual site.
 ```
 
+## Recommended Action
+
+**APPROVED** - Add draft/live communication rules to system prompts.
+
+Rationale: User trust issue - AI telling users "Your live site shows X" when X is draft content breaks trust. This is a correctness fix.
+
 ## Acceptance Criteria
 
-- [ ] System prompt includes draft/live communication rules
-- [ ] Rules are near the tools documentation section
-- [ ] Both onboarding and admin prompts have the guidance
+- [x] System prompt includes draft/live communication rules
+- [x] Rules are near the tools documentation section
+- [x] Both onboarding and admin prompts have the guidance
 - [ ] AI consistently uses correct language in test scenarios
+
+## Work Log
+
+| Date       | Action              | Learnings                                                         |
+| ---------- | ------------------- | ----------------------------------------------------------------- |
+| 2026-01-10 | **Triage: APPROVED** | User trust - AI miscommunicating draft vs live state breaks trust. |
+| 2026-01-10 | **IMPLEMENTED** | Added draft/live rules to both prompts: onboarding-system-prompt.ts and admin-orchestrator.ts |
 
 ## Resources
 
 - AI accuracy review: agent ad01142
 - Related: #699 (tool description updates)
-- Affected files: onboarding-system-prompt.ts, admin-system-prompt.ts
+- Affected files: onboarding-system-prompt.ts, admin-orchestrator.ts (contains SYSTEM_PROMPT_TEMPLATE)

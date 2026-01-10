@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '719'
 tags:
@@ -71,14 +71,22 @@ return {
 
 - `server/src/agent/tools/utils.ts`
 
+## Recommended Action
+
+**APPROVED** - Option A (Use structuredClone)
+
+Rationale: Data integrity risk. While not currently exploited, mutation of shared config would corrupt ALL tenants. Defensive programming prevents future bugs. 30 min fix.
+
 ## Acceptance Criteria
 
-- [ ] `getDraftConfigWithSlug()` returns independent copies when using defaults
-- [ ] Mutations to returned config don't affect global constant
-- [ ] Tests verify isolation
+- [x] `getDraftConfigWithSlug()` returns independent copies when using defaults
+- [x] Mutations to returned config don't affect global constant
+- [x] Tests verify isolation
 
 ## Work Log
 
 | Date       | Action                   | Learnings                                                        |
 | ---------- | ------------------------ | ---------------------------------------------------------------- |
 | 2026-01-10 | Created from code review | Data integrity guardian identified this as defensive improvement |
+| 2026-01-10 | **Triage: APPROVED** | Data integrity risk - shared reference could corrupt all tenants. |
+| 2026-01-10 | **COMPLETE** | Replaced all 12 direct references to DEFAULT_PAGES_CONFIG with structuredClone(). Added unit tests verifying mutation isolation in server/test/agent/tools/utils.test.ts. Both getDraftConfig() and getDraftConfigWithSlug() now return independent copies. |

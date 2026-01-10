@@ -1,7 +1,9 @@
 ---
-status: pending
-priority: p1
+status: deferred
+priority: p3
 issue_id: '561'
+deferred_reason: Pure refactoring with no functional impact - invest in security/data issues first
+deferred_until: When adding major agent features that would benefit from the split
 tags: [code-review, simplicity, agent-ecosystem, refactoring, quality-first-triage]
 dependencies: ['548']
 ---
@@ -72,7 +74,9 @@ The file follows a clear flow and is well-organized with sections.
 
 ## Recommended Action
 
-Defer to **Option 2** for now, implement **Option 1** when adding major features.
+**DEFERRED** - Pure refactoring with no functional impact. Better to invest time in fixing security/data issues first.
+
+Rationale: While the file is large (1419 lines), it's well-organized and functional. This is technical debt, not a correctness issue. Defer until adding major agent features that would benefit from the split.
 
 ## Technical Details
 
@@ -101,6 +105,7 @@ Defer to **Option 2** for now, implement **Option 1** when adding major features
 | Date       | Action                   | Learnings                                    |
 | ---------- | ------------------------ | -------------------------------------------- |
 | 2026-01-01 | Created from code review | Simplicity Reviewer flagged as P2, marked P3 |
+| 2026-01-10 | **Triage: DEFERRED** | Pure refactoring - no functional impact. Revisit when adding major agent features. |
 
 ## Resources
 
