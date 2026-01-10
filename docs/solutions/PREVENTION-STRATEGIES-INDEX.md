@@ -654,6 +654,51 @@ const handleEdit = useCallback(
 className = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-sage';
 ```
 
+#### [Code Review Resolution - P1/P2 Fixes with Working Patterns (2026-01-09)](./code-review-patterns/CODE_REVIEW_RESOLUTION_P1_P2_FIXES_MAIS_20260109.md)
+
+**Purpose:** Extract working solutions and code patterns from completed code review fixes (#708-717)
+**Audience:** All engineers, especially those implementing concurrent operations, type safety, and component patterns
+**Length:** ~2,500 words with extensive code examples
+**Key Patterns:** 6 working patterns with copy-paste templates, decision frameworks, verification checklist
+**Status:** P1 complete (1 fix), P2 complete (5 fixes), P3 deferred (4 issues with new todos)
+
+**6 Working Patterns Documented:**
+
+1. **TOCTOU Prevention with Advisory Lock** - FNV-1a hash + `pg_advisory_xact_lock()` + transaction (P1 #708)
+2. **Type Guard for Runtime Safety** - Discriminating function for malformed data validation (P2 #709)
+3. **Variant-Based Component Styling** - Single component + variant prop + style map (P2 #711)
+4. **DRY Component Extraction** - ProposalCard with compact/default variants (P2 #712)
+5. **DRY Service Method Extraction** - Private utility for multi-path reuse (P2 #713)
+6. **React Ref Type Compatibility** - useRef as React.RefObject for React 18/19 (Bonus)
+
+**When to Use Each Pattern:**
+
+- **Pattern 1:** Check-then-act operations that race (booking limits, balance updates, duplicate prevention)
+- **Pattern 2:** Data from external sources (APIs, webhooks, tool results, user input)
+- **Pattern 3:** Components that appear in multiple contexts with styling variations
+- **Pattern 4:** Duplicated component logic across 2+ files
+- **Pattern 5:** Same business logic in 2+ public methods
+
+**Quick Ref:** [CODE_REVIEW_RESOLUTION_QUICK_REFERENCE_MAIS_20260109.md](./code-review-patterns/CODE_REVIEW_RESOLUTION_QUICK_REFERENCE_MAIS_20260109.md) (print and pin! - 2 min read with templates)
+
+**Files Changed:** 24 files, ~1,900 insertions, commit `02cde7e8`
+
+#### [Code Review Findings Resolution - P1/P2/P3 Fixes (2026-01-09)](./code-review-patterns/CODE_REVIEW_FINDINGS_RESOLUTION_P1P2P3_20260109.md)
+
+**Purpose:** Document resolution of 6 code review findings from parallel multi-agent review
+**Audience:** All engineers, especially those reviewing code for TOCTOU, type safety, and duplication
+**Key Patterns:** Advisory locks for TOCTOU prevention, type guards for safety, component variants, DRY service extraction
+**Findings:** 1 P1 (maxPerDay TOCTOU), 5 P2 (type safety + duplication), 4 P3 deferred
+
+**P1 Fixed:** maxPerDay race condition with advisory lock on `hashServiceDate()`
+**P2 Fixed:**
+
+- Type guard safety with `hasUIAction()`
+- MessageBubble/ProposalCard component deduplication
+- Tenant provisioning service DRY extraction
+
+**Related Quick Ref:** [CODE_REVIEW_FINDINGS_QUICK_REFERENCE.md](./code-review-patterns/CODE_REVIEW_FINDINGS_QUICK_REFERENCE.md) (print and pin!)
+
 #### [Multi-Agent Code Review for Multi-Tenant Security (2026-01-05)](./code-review-patterns/multi-agent-code-review-booking-links-phase0-MAIS-20260105.md)
 
 **Purpose:** Multi-agent code review workflow for catching tenant isolation, TOCTOU, and registration issues
@@ -2422,6 +2467,9 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 **Last Updated:** 2026-01-09
 **Recent Additions (2026-01-09):**
+
+- **[Code Review #708-717 Prevention Strategies](./patterns/CODE_REVIEW_708_717_PREVENTION_STRATEGIES.md)** - Comprehensive prevention guide for 10 code review findings from parallel agent review (commit 02cde7e8). Covers: TOCTOU race conditions with advisory locks (#708), unsafe type assertions with type guards (#709), premature optimization decision trees (#710), component duplication with variant patterns (#711-712), service logic DRY extraction (#713), XSS sanitization gaps (#714), unused type exports (#715), callback memoization profiling (#716), quota increment races (#717), and React 19 ref type compatibility. **P1 fix** (TOCTOU) + **P2 fixes** (5 patterns) + **P3 deferred** (4 patterns).
+  - Quick Reference: [CODE_REVIEW_708_717_QUICK_REFERENCE.md](./patterns/CODE_REVIEW_708_717_QUICK_REFERENCE.md) - Print & pin (2 min read)
 
 - **[React Unstable Array Dependency Prevention](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_PREVENTION.md)** - Comprehensive guide for preventing useEffect re-runs caused by unstable array references. Arrays created during render (`[].filter()`, parser returns) are new references each time, triggering effects. Fix with `useMemo()` to stabilize.
   - Quick Reference: [REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md](./patterns/REACT_UNSTABLE_ARRAY_DEPENDENCY_QUICK_REFERENCE.md) - Print & pin (2 min read)
