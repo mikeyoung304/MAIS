@@ -21,6 +21,7 @@ import { logger } from '../../lib/core/logger';
 import { ResourceNotFoundError, ValidationError } from '../errors/index';
 import { getDraftConfigWithSlug } from '../tools/utils';
 import { hashTenantStorefront } from '../../lib/advisory-locks';
+import { createPublishedWrapper, countSectionsInConfig } from '../../lib/landing-page-utils';
 import {
   // Validation schemas (DRY - shared with tools)
   UpdatePageSectionPayloadSchema,
@@ -576,7 +577,6 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
       select: {
-        landingPageConfig: true,
         landingPageConfigDraft: true,
         slug: true,
       },
@@ -590,27 +590,13 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       throw new ValidationError('No draft changes to publish.');
     }
 
-    // Count sections for audit log
-    const draftConfig = tenant.landingPageConfigDraft as unknown as {
-      pages?: Record<string, { sections?: unknown[] }>;
-    };
-    const totalSections = draftConfig?.pages
-      ? Object.values(draftConfig.pages).reduce(
-          (sum, page) => sum + (page?.sections?.length || 0),
-          0
-        )
-      : 0;
-    const pageCount = draftConfig?.pages ? Object.keys(draftConfig.pages).length : 0;
+    // Count sections for audit log (shared utility from lib/landing-page-utils.ts)
+    const { totalSections, pageCount } = countSectionsInConfig(tenant.landingPageConfigDraft);
 
-    // Copy draft to live config using wrapper format expected by findBySlugPublic
+    // Create wrapper format (shared utility from lib/landing-page-utils.ts)
     // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
-    // See: #697 - Dual draft system publish mismatch fix
-    const publishedWrapper = {
-      draft: null,
-      draftUpdatedAt: null,
-      published: tenant.landingPageConfigDraft,
-      publishedAt: new Date().toISOString(),
-    };
+    // See: #697 - Dual draft system publish mismatch fix, #725 - DRY refactor
+    const publishedWrapper = createPublishedWrapper(tenant.landingPageConfigDraft);
 
     // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
     await prisma.tenant.update({

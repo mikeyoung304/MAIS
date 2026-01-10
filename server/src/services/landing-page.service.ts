@@ -35,6 +35,7 @@ import type {
 import { sanitizeObject } from '../lib/sanitization';
 import { logger } from '../lib/core/logger';
 import { NotFoundError } from '../lib/errors';
+import { createPublishedWrapper, countSectionsInConfig } from '../lib/landing-page-utils';
 
 /**
  * Service result types
@@ -314,27 +315,13 @@ export class LandingPageService {
       throw new Error('No draft changes to publish.');
     }
 
-    // Count sections for audit log
-    const draftConfig = tenant.landingPageConfigDraft as unknown as {
-      pages?: Record<string, { sections?: unknown[] }>;
-    };
-    const totalSections = draftConfig?.pages
-      ? Object.values(draftConfig.pages).reduce(
-          (sum, page) => sum + (page?.sections?.length || 0),
-          0
-        )
-      : 0;
-    const pageCount = draftConfig?.pages ? Object.keys(draftConfig.pages).length : 0;
+    // Count sections for audit log (shared utility from lib/landing-page-utils.ts)
+    const { totalSections, pageCount } = countSectionsInConfig(tenant.landingPageConfigDraft);
 
-    // Copy draft to live config using wrapper format expected by findBySlugPublic
+    // Create wrapper format (shared utility from lib/landing-page-utils.ts)
     // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
     // See: #697 - Dual draft system publish mismatch fix
-    const publishedWrapper = {
-      draft: null,
-      draftUpdatedAt: null,
-      published: tenant.landingPageConfigDraft,
-      publishedAt: new Date().toISOString(),
-    };
+    const publishedWrapper = createPublishedWrapper(tenant.landingPageConfigDraft);
 
     // Update both fields atomically
     await this.tenantRepo.update(tenantId, {

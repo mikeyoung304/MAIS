@@ -100,6 +100,46 @@ export function formatPriceLocale(cents: number): string {
 // ============================================================================
 
 /**
+ * Result from validateAndExtractPages
+ * Used internally to reduce duplication in getDraftConfig and getDraftConfigWithSlug
+ */
+interface ValidatedPagesResult {
+  pages: PagesConfig;
+  isValid: boolean;
+}
+
+/**
+ * Validate landing page config and extract pages, falling back to defaults on failure
+ *
+ * DRY helper to eliminate repeated validation + fallback pattern across:
+ * - getDraftConfig (draft and live config validation)
+ * - getDraftConfigWithSlug (draft and live config validation)
+ *
+ * @param config - Raw config from database (unknown type)
+ * @param tenantId - Tenant ID for logging context
+ * @param label - Label for log message ('draft' or 'live')
+ * @returns Validated pages config and whether validation succeeded
+ */
+export function validateAndExtractPages(
+  config: unknown,
+  tenantId: string,
+  label: 'draft' | 'live'
+): ValidatedPagesResult {
+  const result = LandingPageConfigSchema.safeParse(config);
+  if (!result.success) {
+    logger.warn(
+      { tenantId, errors: result.error.issues },
+      `Invalid ${label} config, falling back to defaults`
+    );
+    return { pages: structuredClone(DEFAULT_PAGES_CONFIG), isValid: false };
+  }
+  return {
+    pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+    isValid: true,
+  };
+}
+
+/**
  * Result from getDraftConfig
  */
 export interface DraftConfigResult {
@@ -164,38 +204,18 @@ export async function getDraftConfig(
 
   // If draft exists, validate and use it
   if (tenant.landingPageConfigDraft) {
-    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
-    if (!result.success) {
-      logger.warn(
-        { tenantId, errors: result.error.issues },
-        'Invalid draft config, falling back to defaults'
-      );
-      return {
-        pages: structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: false,
-      };
-    }
+    const validated = validateAndExtractPages(tenant.landingPageConfigDraft, tenantId, 'draft');
     return {
-      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
-      hasDraft: true,
+      pages: validated.pages,
+      hasDraft: validated.isValid,
     };
   }
 
   // Otherwise, validate and initialize from live config or defaults
   if (tenant.landingPageConfig) {
-    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
-    if (!result.success) {
-      logger.warn(
-        { tenantId, errors: result.error.issues },
-        'Invalid live config, falling back to defaults'
-      );
-      return {
-        pages: structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: false,
-      };
-    }
+    const validated = validateAndExtractPages(tenant.landingPageConfig, tenantId, 'live');
     return {
-      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+      pages: validated.pages,
       hasDraft: false,
     };
   }
@@ -270,23 +290,10 @@ export async function getDraftConfigWithSlug(
 
   // If draft exists, validate and use it
   if (tenant.landingPageConfigDraft) {
-    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
-    if (!result.success) {
-      logger.warn(
-        { tenantId, errors: result.error.issues },
-        'Invalid draft config, falling back to defaults'
-      );
-      return {
-        pages: structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: false,
-        slug: tenant.slug,
-        rawDraftConfig,
-        rawLiveConfig,
-      };
-    }
+    const validated = validateAndExtractPages(tenant.landingPageConfigDraft, tenantId, 'draft');
     return {
-      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
-      hasDraft: true,
+      pages: validated.pages,
+      hasDraft: validated.isValid,
       slug: tenant.slug,
       rawDraftConfig,
       rawLiveConfig,
@@ -295,22 +302,9 @@ export async function getDraftConfigWithSlug(
 
   // Otherwise, validate and initialize from live config or defaults
   if (tenant.landingPageConfig) {
-    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
-    if (!result.success) {
-      logger.warn(
-        { tenantId, errors: result.error.issues },
-        'Invalid live config, falling back to defaults'
-      );
-      return {
-        pages: structuredClone(DEFAULT_PAGES_CONFIG),
-        hasDraft: false,
-        slug: tenant.slug,
-        rawDraftConfig,
-        rawLiveConfig,
-      };
-    }
+    const validated = validateAndExtractPages(tenant.landingPageConfig, tenantId, 'live');
     return {
-      pages: result.data.pages || structuredClone(DEFAULT_PAGES_CONFIG),
+      pages: validated.pages,
       hasDraft: false,
       slug: tenant.slug,
       rawDraftConfig,
