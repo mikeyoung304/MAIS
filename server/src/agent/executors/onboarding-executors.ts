@@ -13,13 +13,18 @@
  * - Uses transaction for segment + packages creation (atomicity)
  * - Validates tenant ownership before all mutations (tenant isolation)
  * - Returns IDs for newly created resources (for state machine tracking)
+ *
+ * P0-FIX (2026-01-10): update_storefront now uses DraftUpdateService to write
+ * to landingPageConfigDraft instead of landingPageConfig. This ensures changes
+ * appear in the preview system.
  */
 
-import type { PrismaClient, Prisma } from '../../generated/prisma/client';
+import type { PrismaClient } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
 import { MissingFieldError, ValidationError } from '../errors';
-import type { LandingPageConfig, PagesConfig, Section } from '@macon/contracts';
+import { DraftUpdateService } from '../services/draft-update.service';
+import { UpdateStorefrontPayloadSchema } from '../proposals/executor-schemas';
 
 // ============================================================================
 // Types
@@ -37,13 +42,8 @@ interface UpsertServicesPayload {
   }>;
 }
 
-interface UpdateStorefrontPayload {
-  headline?: string;
-  tagline?: string;
-  brandVoice?: string;
-  heroImageUrl?: string;
-  primaryColor?: string;
-}
+// UpdateStorefrontPayload is now imported from executor-schemas.ts
+// Type is inferred from UpdateStorefrontPayloadSchema
 
 // ============================================================================
 // Executor Registration
@@ -171,118 +171,61 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
 
   // ============================================================================
   // update_storefront - Update landing page configuration
+  //
+  // P0-FIX (2026-01-10): Refactored to use DraftUpdateService
+  // - Writes to landingPageConfigDraft (NOT landingPageConfig)
+  // - Uses advisory lock for TOCTOU prevention
+  // - Returns hasDraft: true for frontend cache invalidation
   // ============================================================================
 
   registerProposalExecutor('update_storefront', async (tenantId, payload) => {
-    const { headline, tagline, brandVoice, heroImageUrl, primaryColor } =
-      payload as UpdateStorefrontPayload;
-
-    // Build update data
-    const tenantUpdates: Prisma.TenantUpdateInput = {};
-
-    // Direct tenant field updates
-    if (primaryColor) {
-      tenantUpdates.primaryColor = primaryColor;
+    // P0: Validate payload against strict schema (TypeScript reviewer requirement)
+    const validationResult = UpdateStorefrontPayloadSchema.safeParse(payload);
+    if (!validationResult.success) {
+      throw new ValidationError(
+        `Invalid payload: ${validationResult.error.errors.map((e) => e.message).join(', ')}`
+      );
     }
 
-    // Landing page config updates - update hero section at correct path
-    // Structure: landingPageConfig.pages.home.sections[0] (where type === 'hero')
+    const { headline, tagline, brandVoice, heroImageUrl, primaryColor } = validationResult.data;
+
+    // Use shared service (DHH requirement: single source of truth)
+    const draftService = new DraftUpdateService(prisma);
+
+    const allUpdatedFields: string[] = [];
+
+    // Update hero section in draft (P0-FIX: writes to landingPageConfigDraft)
     if (headline || tagline || heroImageUrl) {
-      // Get current landing page config
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { landingPageConfig: true },
+      const result = await draftService.updateHeroSection(tenantId, {
+        headline,
+        tagline,
+        heroImageUrl,
       });
-
-      const currentConfig = (tenant?.landingPageConfig as LandingPageConfig | null) || {
-        pages: {} as Partial<PagesConfig>,
-      };
-      const pages = (currentConfig.pages || {}) as Partial<PagesConfig>;
-      const homePage = pages.home || { enabled: true as const, sections: [] as Section[] };
-      const sections: Section[] = [...(homePage.sections || [])];
-
-      // Find the hero section (type === 'hero')
-      const heroIndex = sections.findIndex((s) => s.type === 'hero');
-      if (heroIndex >= 0) {
-        // Update existing hero section
-        const currentHero = sections[heroIndex];
-        sections[heroIndex] = {
-          ...currentHero,
-          ...(headline && { headline }),
-          ...(tagline && { subheadline: tagline }),
-          ...(heroImageUrl && { backgroundImageUrl: heroImageUrl }),
-        } as Section;
-      } else {
-        // Create hero section if it doesn't exist
-        sections.unshift({
-          id: 'home-hero-main',
-          type: 'hero',
-          headline: headline || '[Hero Headline]',
-          subheadline: tagline || '[Hero Subheadline]',
-          ctaText: '[CTA Button Text]',
-          ...(heroImageUrl && { backgroundImageUrl: heroImageUrl }),
-        } as Section);
-      }
-
-      // Build updated config with correct structure
-      tenantUpdates.landingPageConfig = {
-        ...currentConfig,
-        pages: {
-          ...pages,
-          home: {
-            ...homePage,
-            sections,
-          },
-        },
-      } as Prisma.JsonObject;
+      allUpdatedFields.push(...result.updatedFields);
     }
 
-    // Brand voice goes in branding JSON field
-    if (brandVoice) {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { branding: true },
+    // Update branding (applies immediately, not part of draft system)
+    if (primaryColor || brandVoice) {
+      const result = await draftService.updateBranding(tenantId, {
+        primaryColor,
+        brandVoice,
       });
-
-      const currentBranding = (tenant?.branding as Record<string, unknown>) || {};
-      tenantUpdates.branding = {
-        ...currentBranding,
-        voice: brandVoice,
-      } as Prisma.JsonObject;
+      allUpdatedFields.push(...result.updatedFields);
     }
 
-    // Apply updates if any
-    if (Object.keys(tenantUpdates).length > 0) {
-      await prisma.tenant.update({
-        where: { id: tenantId },
-        data: tenantUpdates,
-      });
-    }
-
-    // Build list of what was updated
-    const updatedFields: string[] = [];
-    if (headline) updatedFields.push('headline');
-    if (tagline) updatedFields.push('tagline');
-    if (brandVoice) updatedFields.push('brandVoice');
-    if (heroImageUrl) updatedFields.push('heroImageUrl');
-    if (primaryColor) updatedFields.push('primaryColor');
-
-    logger.info({ tenantId, updatedFields }, 'Storefront updated via onboarding');
-
-    // Get tenant slug for preview URL
+    // Get preview URL
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { slug: true },
     });
 
-    const previewUrl = tenant?.slug
-      ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/t/${tenant.slug}`
-      : undefined;
+    logger.info({ tenantId, updatedFields: allUpdatedFields }, 'Storefront updated via onboarding');
 
     return {
       action: 'updated',
-      updatedFields,
-      previewUrl,
+      updatedFields: allUpdatedFields,
+      previewUrl: tenant?.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+      hasDraft: true, // Signal for frontend cache invalidation
     };
   });
 

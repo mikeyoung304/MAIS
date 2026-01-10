@@ -185,6 +185,7 @@ export function useAgentChat({
   }, [messages, scrollToBottom]);
 
   // Health check and session initialization
+  // P1-FIX (2026-01-10): Load history from backend instead of discarding it
   const initializeChat = useCallback(async () => {
     setIsCheckingHealth(true);
     setError(null);
@@ -220,7 +221,35 @@ export function useAgentChat({
       setIsAvailable(true);
       onSessionStart?.(data.sessionId);
 
-      // Add greeting message
+      // P1-FIX: Load existing messages from history if session has them
+      // This fixes the "context loss" bug where switching tabs discards history
+      if (data.messageCount > 0) {
+        try {
+          // Fetch full message history
+          const historyResponse = await fetch(`${apiUrl}/session/${data.sessionId}/history`);
+          if (historyResponse.ok) {
+            const historyData = await historyResponse.json();
+            if (historyData.messages && historyData.messages.length > 0) {
+              // Load historical messages
+              setMessages(
+                historyData.messages.map(
+                  (m: { role: string; content: string; timestamp?: string }) => ({
+                    role: m.role as 'user' | 'assistant',
+                    content: m.content,
+                    timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+                  })
+                )
+              );
+              return; // Don't show greeting - we have history
+            }
+          }
+        } catch (historyErr) {
+          // If history fetch fails, fall through to showing greeting
+          console.warn('Failed to load chat history, showing greeting', historyErr);
+        }
+      }
+
+      // New session or failed history fetch - show greeting
       const greeting = initialGreeting || data.greeting || fallbackGreeting;
       setMessages([
         {

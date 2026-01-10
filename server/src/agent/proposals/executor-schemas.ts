@@ -399,6 +399,33 @@ export const CreateCustomerBookingPayloadSchema = z.object({
 export type CreateCustomerBookingPayload = z.infer<typeof CreateCustomerBookingPayloadSchema>;
 
 // ============================================================================
+// Onboarding Executor Schemas
+// ============================================================================
+
+/**
+ * update_storefront executor payload (onboarding flow)
+ * Updates hero section in draft and optionally branding fields.
+ *
+ * P0-FIX: This schema validates the payload before the executor writes to
+ * landingPageConfigDraft (NOT landingPageConfig). See ADR for draft system.
+ */
+export const UpdateStorefrontPayloadSchema = z
+  .object({
+    headline: z.string().max(200).optional(),
+    tagline: z.string().max(300).optional(),
+    brandVoice: z
+      .enum(['professional', 'friendly', 'luxurious', 'approachable', 'bold'])
+      .optional(),
+    heroImageUrl: z.string().url().optional(),
+    primaryColor: HexColorSchema.optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: 'At least one field must be provided',
+  });
+
+export type UpdateStorefrontPayload = z.infer<typeof UpdateStorefrontPayloadSchema>;
+
+// ============================================================================
 // Schema Registry
 // ============================================================================
 
@@ -450,6 +477,9 @@ export const executorSchemaRegistry: Record<string, z.ZodType<unknown>> = {
   update_storefront_branding: UpdateStorefrontBrandingPayloadSchema,
   publish_draft: PublishDraftPayloadSchema,
   discard_draft: DiscardDraftPayloadSchema,
+
+  // Onboarding operations
+  update_storefront: UpdateStorefrontPayloadSchema,
 };
 
 /**

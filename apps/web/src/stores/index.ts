@@ -28,3 +28,11 @@ export {
   type AgentActionType,
   type AgentUIState,
 } from './agent-ui-store';
+
+export {
+  // Session store hook
+  useAgentSessionStore,
+  // Helper functions
+  getAgentSessionId,
+  isAgentSessionValid,
+} from './agent-session-store';

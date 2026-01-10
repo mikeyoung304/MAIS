@@ -45,6 +45,19 @@ vi.mock('../../../src/agent/proposals/executor-registry', () => ({
   getProposalExecutor: vi.fn((name: string) => mockExecutors.get(name)),
 }));
 
+// P0-FIX: Mock getDraftConfigWithSlug for DraftUpdateService
+// This mock returns what the transaction mock provides
+vi.mock('../../../src/agent/tools/utils', () => ({
+  getDraftConfigWithSlug: vi.fn(),
+}));
+
+// P0-FIX: Mock advisory locks
+vi.mock('../../../src/lib/advisory-locks', () => ({
+  hashTenantStorefront: vi.fn().mockReturnValue(123456789),
+}));
+
+import { getDraftConfigWithSlug } from '../../../src/agent/tools/utils';
+
 // Type-safe mock types for Prisma transaction and client
 // Based on actual usage in the onboarding-executors.ts file
 type MockTransaction = {
@@ -59,6 +72,8 @@ type MockTransaction = {
     findUnique: MockFn;
     update: MockFn;
   };
+  // P0-FIX: Added for DraftUpdateService advisory lock support
+  $executeRaw: MockFn;
 };
 
 type MockPrismaClient = {
@@ -97,6 +112,8 @@ describe('Onboarding Executors', () => {
         findUnique: vi.fn(),
         update: vi.fn(),
       },
+      // P0-FIX: Added for DraftUpdateService advisory lock support
+      $executeRaw: vi.fn().mockResolvedValue(null),
     };
 
     // Setup mock Prisma client
@@ -524,16 +541,45 @@ describe('Onboarding Executors', () => {
 
     beforeEach(() => {
       updateStorefrontExecutor = getProposalExecutor('update_storefront')!;
+
+      // P0-FIX: Mock the DraftUpdateService dependencies
+      // The executor now uses DraftUpdateService which requires $transaction
+      mockPrisma.$transaction.mockImplementation(
+        async <T>(callback: (tx: MockTransaction) => Promise<T>): Promise<T> => {
+          return callback(mockTx);
+        }
+      );
+      mockTx.$executeRaw = vi.fn().mockResolvedValue(null);
+
+      // P0-FIX: Default mock for getDraftConfigWithSlug - empty pages with defaults
+      const mockGetDraftConfigWithSlug = vi.mocked(getDraftConfigWithSlug);
+      mockGetDraftConfigWithSlug.mockResolvedValue({
+        pages: {
+          home: { enabled: true, sections: [] },
+          about: { enabled: true, sections: [] },
+          services: { enabled: true, sections: [] },
+          faq: { enabled: true, sections: [] },
+          contact: { enabled: true, sections: [] },
+          gallery: { enabled: true, sections: [] },
+          testimonials: { enabled: true, sections: [] },
+        },
+        slug: 'test-tenant',
+        hasDraft: false,
+        rawDraftConfig: null,
+        rawLiveConfig: null,
+      });
     });
 
-    describe('Headline and Tagline Updates', () => {
-      it('should update headline in landingPageConfig', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
-          landingPageConfig: {},
-          branding: {},
+    describe('P0-FIX: Write to landingPageConfigDraft NOT landingPageConfig', () => {
+      it('should write to landingPageConfigDraft (not landingPageConfig)', async () => {
+        // Mock getDraftConfigWithSlug
+        mockTx.tenant.findUnique.mockResolvedValue({
+          landingPageConfig: null,
+          landingPageConfigDraft: null,
           slug: 'test-tenant',
         });
-        mockPrisma.tenant.update.mockResolvedValue({});
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
 
         const payload = {
           headline: 'Capturing Your Moments',
@@ -541,8 +587,70 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+        // CRITICAL: Verify we're writing to DRAFT, not LIVE
+        const updateCall = mockTx.tenant.update.mock.calls[0][0];
+        expect(updateCall.data).toHaveProperty('landingPageConfigDraft');
+        expect(updateCall.data).not.toHaveProperty('landingPageConfig');
+      });
+
+      it('should return hasDraft: true for frontend cache invalidation', async () => {
+        mockTx.tenant.findUnique.mockResolvedValue({
+          landingPageConfig: null,
+          landingPageConfigDraft: null,
+          slug: 'test-tenant',
+        });
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
+
+        const payload = {
+          headline: 'Test Headline',
+        };
+
+        const result = await updateStorefrontExecutor(tenantId, payload);
+
+        expect(result.hasDraft).toBe(true);
+      });
+
+      it('should include ?preview=draft in previewUrl', async () => {
+        mockTx.tenant.findUnique.mockResolvedValue({
+          landingPageConfig: null,
+          landingPageConfigDraft: null,
+          slug: 'bella-weddings',
+        });
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'bella-weddings' });
+
+        const payload = {
+          headline: 'Capturing Love',
+        };
+
+        const result = await updateStorefrontExecutor(tenantId, payload);
+
+        expect(result.previewUrl).toContain('?preview=draft');
+      });
+    });
+
+    describe('Headline and Tagline Updates', () => {
+      it('should update headline in landingPageConfigDraft', async () => {
+        mockTx.tenant.findUnique.mockResolvedValue({
+          landingPageConfig: {},
+          landingPageConfigDraft: null,
+          slug: 'test-tenant',
+        });
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
+
+        const payload = {
+          headline: 'Capturing Your Moments',
+        };
+
+        await updateStorefrontExecutor(tenantId, payload);
+
+        const updateCall = mockTx.tenant.update.mock.calls[0][0];
+        const draft = updateCall.data.landingPageConfigDraft as {
+          pages: { home: { sections: Array<{ headline?: string; type?: string; id?: string }> } };
+        };
+        const heroSection = draft.pages.home.sections[0];
 
         // Should create hero section with headline in the correct structure
         expect(heroSection.headline).toBe('Capturing Your Moments');
@@ -551,12 +659,13 @@ describe('Onboarding Executors', () => {
       });
 
       it('should update tagline as subheadline in hero section', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
+        mockTx.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {},
-          branding: {},
+          landingPageConfigDraft: null,
           slug: 'test-tenant',
         });
-        mockPrisma.tenant.update.mockResolvedValue({});
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
 
         const payload = {
           tagline: "Professional photography for life's special moments",
@@ -564,8 +673,13 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+        const updateCall = mockTx.tenant.update.mock.calls[0][0];
+        const draft = updateCall.data.landingPageConfigDraft as {
+          pages: {
+            home: { sections: Array<{ subheadline?: string; type?: string; id?: string }> };
+          };
+        };
+        const heroSection = draft.pages.home.sections[0];
 
         // Should create hero section with subheadline (from tagline) in the correct structure
         expect(heroSection.subheadline).toBe("Professional photography for life's special moments");
@@ -575,8 +689,10 @@ describe('Onboarding Executors', () => {
     });
 
     describe('primaryColor Updates', () => {
-      it('should update primaryColor on tenant directly', async () => {
+      it('should update primaryColor on tenant directly (not in draft)', async () => {
+        // P0-FIX: Branding updates use mockPrisma directly, not transaction
         mockPrisma.tenant.findUnique.mockResolvedValue({
+          branding: {},
           slug: 'test-tenant',
         });
         mockPrisma.tenant.update.mockResolvedValue({});
@@ -587,6 +703,7 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
+        // Branding is updated directly via DraftUpdateService.updateBranding
         expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
           where: { id: tenantId },
           data: expect.objectContaining({
@@ -598,9 +715,9 @@ describe('Onboarding Executors', () => {
 
     describe('brandVoice Updates', () => {
       it('should update brandVoice in branding JSON field', async () => {
+        // P0-FIX: Branding updates use mockPrisma directly via DraftUpdateService
         mockPrisma.tenant.findUnique.mockResolvedValue({
           branding: { fonts: { heading: 'Playfair' } },
-          landingPageConfig: {},
           slug: 'test-tenant',
         });
         mockPrisma.tenant.update.mockResolvedValue({});
@@ -628,7 +745,6 @@ describe('Onboarding Executors', () => {
             logo: 'logo-url.png',
             fonts: { body: 'Inter' },
           },
-          landingPageConfig: {},
           slug: 'test-tenant',
         });
         mockPrisma.tenant.update.mockResolvedValue({});
@@ -650,29 +766,37 @@ describe('Onboarding Executors', () => {
 
     describe('Merging with Existing Config', () => {
       it('should not overwrite unrelated landing page fields', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
-          landingPageConfig: {
-            pages: {
-              home: {
-                enabled: true,
-                sections: [
-                  {
-                    id: 'home-hero-main',
-                    type: 'hero',
-                    headline: 'Old Headline',
-                    subheadline: 'Old Subheadline',
-                    ctaText: 'Book Now',
-                    backgroundImageUrl: 'existing-image.jpg',
-                  },
-                ],
-              },
-              services: { enabled: true, sections: [] },
+        // P0-FIX: Mock getDraftConfigWithSlug to return existing config
+        const mockGetDraftConfigWithSlug = vi.mocked(getDraftConfigWithSlug);
+        mockGetDraftConfigWithSlug.mockResolvedValue({
+          pages: {
+            home: {
+              enabled: true,
+              sections: [
+                {
+                  id: 'home-hero-main',
+                  type: 'hero',
+                  headline: 'Old Headline',
+                  subheadline: 'Old Subheadline',
+                  ctaText: 'Book Now',
+                  backgroundImageUrl: 'existing-image.jpg',
+                },
+              ],
             },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: true, sections: [] },
+            testimonials: { enabled: true, sections: [] },
           },
-          branding: {},
           slug: 'test-tenant',
+          hasDraft: true,
+          rawDraftConfig: null,
+          rawLiveConfig: null,
         });
-        mockPrisma.tenant.update.mockResolvedValue({});
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
 
         const payload = {
           headline: 'New Headline',
@@ -680,39 +804,55 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-        const landingPageConfig = updateCall.data.landingPageConfig;
+        const updateCall = mockTx.tenant.update.mock.calls[0][0];
+        const draft = updateCall.data.landingPageConfigDraft as {
+          pages: {
+            home: {
+              sections: Array<{ headline?: string; backgroundImageUrl?: string }>;
+            };
+            services: { enabled: boolean; sections: unknown[] };
+          };
+        };
 
         // Services page should be preserved
-        expect(landingPageConfig.pages.services).toEqual({ enabled: true, sections: [] });
+        expect(draft.pages.services).toEqual({ enabled: true, sections: [] });
         // Hero section should be updated with headline, preserving other fields
-        const heroSection = landingPageConfig.pages.home.sections[0];
+        const heroSection = draft.pages.home.sections[0];
         expect(heroSection.headline).toBe('New Headline');
         expect(heroSection.backgroundImageUrl).toBe('existing-image.jpg'); // Preserved
       });
 
       it('should preserve existing hero fields when updating', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
-          landingPageConfig: {
-            pages: {
-              home: {
-                enabled: true,
-                sections: [
-                  {
-                    id: 'home-hero-main',
-                    type: 'hero',
-                    headline: 'Old Headline',
-                    subheadline: 'Old Tagline',
-                    ctaText: 'Book Now',
-                  },
-                ],
-              },
+        // P0-FIX: Mock getDraftConfigWithSlug to return existing hero config
+        const mockGetDraftConfigWithSlug = vi.mocked(getDraftConfigWithSlug);
+        mockGetDraftConfigWithSlug.mockResolvedValue({
+          pages: {
+            home: {
+              enabled: true,
+              sections: [
+                {
+                  id: 'home-hero-main',
+                  type: 'hero',
+                  headline: 'Old Headline',
+                  subheadline: 'Old Tagline',
+                  ctaText: 'Book Now',
+                },
+              ],
             },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: true, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: true, sections: [] },
+            testimonials: { enabled: true, sections: [] },
           },
-          branding: {},
           slug: 'test-tenant',
+          hasDraft: true,
+          rawDraftConfig: null,
+          rawLiveConfig: null,
         });
-        mockPrisma.tenant.update.mockResolvedValue({});
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
 
         const payload = {
           headline: 'Updated Headline',
@@ -721,8 +861,15 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+        const updateCall = mockTx.tenant.update.mock.calls[0][0];
+        const draft = updateCall.data.landingPageConfigDraft as {
+          pages: {
+            home: {
+              sections: Array<{ headline?: string; subheadline?: string; ctaText?: string }>;
+            };
+          };
+        };
+        const heroSection = draft.pages.home.sections[0];
 
         expect(heroSection).toMatchObject({
           headline: 'Updated Headline',
@@ -734,8 +881,14 @@ describe('Onboarding Executors', () => {
 
     describe('Return Structure', () => {
       it('should return list of updated fields', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
+        // P0-FIX: Separate mocks for draft (transaction) and branding (direct)
+        mockTx.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {},
+          landingPageConfigDraft: null,
+          slug: 'test-tenant',
+        });
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({
           branding: {},
           slug: 'test-tenant',
         });
@@ -755,13 +908,14 @@ describe('Onboarding Executors', () => {
         });
       });
 
-      it('should return previewUrl with tenant slug', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
+      it('should return previewUrl with tenant slug and draft query param', async () => {
+        mockTx.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {},
-          branding: {},
+          landingPageConfigDraft: null,
           slug: 'bella-weddings',
         });
-        mockPrisma.tenant.update.mockResolvedValue({});
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'bella-weddings' });
 
         const payload = {
           headline: 'Capturing Love',
@@ -770,31 +924,26 @@ describe('Onboarding Executors', () => {
         const result = await updateStorefrontExecutor(tenantId, payload);
 
         expect(result.previewUrl).toContain('/t/bella-weddings');
+        expect(result.previewUrl).toContain('?preview=draft');
       });
 
-      it('should not make update call when no fields to update', async () => {
-        // If payload is empty, no updates should be made
-        mockPrisma.tenant.findUnique.mockResolvedValue({
-          slug: 'test-tenant',
-        });
-
+      it('should throw ValidationError when payload is empty', async () => {
+        // P0-FIX: With schema validation, empty payload should throw
         const payload = {};
 
-        const result = await updateStorefrontExecutor(tenantId, payload);
-
-        expect(mockPrisma.tenant.update).not.toHaveBeenCalled();
-        expect(result.updatedFields).toHaveLength(0);
+        await expect(updateStorefrontExecutor(tenantId, payload)).rejects.toThrow();
       });
     });
 
     describe('Hero Image URL Updates', () => {
-      it('should update heroImageUrl as backgroundImageUrl', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
+      it('should update heroImageUrl as backgroundImageUrl in draft', async () => {
+        mockTx.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {},
-          branding: {},
+          landingPageConfigDraft: null,
           slug: 'test-tenant',
         });
-        mockPrisma.tenant.update.mockResolvedValue({});
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-tenant' });
 
         const payload = {
           heroImageUrl: 'https://example.com/hero.jpg',
@@ -802,10 +951,21 @@ describe('Onboarding Executors', () => {
 
         await updateStorefrontExecutor(tenantId, payload);
 
-        const updateCall = mockPrisma.tenant.update.mock.calls[0][0];
-        const heroSection = updateCall.data.landingPageConfig.pages.home.sections[0];
+        const updateCall = mockTx.tenant.update.mock.calls[0][0];
+        const draft = updateCall.data.landingPageConfigDraft as {
+          pages: {
+            home: {
+              sections: Array<{
+                backgroundImageUrl?: string;
+                type?: string;
+                id?: string;
+              }>;
+            };
+          };
+        };
+        const heroSection = draft.pages.home.sections[0];
 
-        // Should create hero section with backgroundImageUrl in the correct structure
+        // Should create hero section with backgroundImageUrl in the DRAFT structure
         expect(heroSection.backgroundImageUrl).toBe('https://example.com/hero.jpg');
         expect(heroSection.type).toBe('hero');
         expect(heroSection.id).toBe('home-hero-main');
@@ -814,8 +974,14 @@ describe('Onboarding Executors', () => {
 
     describe('Multiple Field Updates', () => {
       it('should handle all fields updated together', async () => {
-        mockPrisma.tenant.findUnique.mockResolvedValue({
+        // P0-FIX: Separate mocks for transaction and direct updates
+        mockTx.tenant.findUnique.mockResolvedValue({
           landingPageConfig: {},
+          landingPageConfigDraft: null,
+          slug: 'complete-business',
+        });
+        mockTx.tenant.update.mockResolvedValue({});
+        mockPrisma.tenant.findUnique.mockResolvedValue({
           branding: {},
           slug: 'complete-business',
         });
@@ -841,6 +1007,8 @@ describe('Onboarding Executors', () => {
           ])
         );
         expect(result.previewUrl).toContain('/t/complete-business');
+        expect(result.previewUrl).toContain('?preview=draft');
+        expect(result.hasDraft).toBe(true);
       });
     });
   });
