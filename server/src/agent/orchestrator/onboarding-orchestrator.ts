@@ -58,7 +58,8 @@ const ONBOARDING_CONFIG: OrchestratorConfig = {
     maxTimePerSessionMs: 60 * 60 * 1000, // 1 hour
     maxConsecutiveErrors: 5,
   },
-  maxRecursionDepth: 5,
+  // T1(10) + T2(5) + T3(1) + buffer(5) = 21
+  maxRecursionDepth: 21,
   executorTimeoutMs: 5000,
 };
 

@@ -51,7 +51,8 @@ const CUSTOMER_CONFIG: OrchestratorConfig = {
     maxTimePerSessionMs: 15 * 60 * 1000, // 15 minutes
     maxConsecutiveErrors: 3,
   },
-  maxRecursionDepth: 3,
+  // T1(5) + T2(2) + T3(1) + buffer(5) = 13
+  maxRecursionDepth: 13,
   executorTimeoutMs: 5000,
 };
 

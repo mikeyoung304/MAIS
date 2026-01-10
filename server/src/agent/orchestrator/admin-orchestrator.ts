@@ -55,7 +55,8 @@ const ADMIN_CONFIG: OrchestratorConfig = {
   tierBudgets: DEFAULT_TIER_BUDGETS,
   toolRateLimits: DEFAULT_TOOL_RATE_LIMITS,
   circuitBreaker: DEFAULT_CIRCUIT_BREAKER_CONFIG,
-  maxRecursionDepth: 5,
+  // T1(10) + T2(3) + T3(1) + buffer(5) = 19
+  maxRecursionDepth: 19,
   executorTimeoutMs: 5000,
 };
 

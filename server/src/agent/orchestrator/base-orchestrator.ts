@@ -102,7 +102,8 @@ export const DEFAULT_ORCHESTRATOR_CONFIG: Omit<OrchestratorConfig, 'agentType'> 
   tierBudgets: DEFAULT_TIER_BUDGETS,
   toolRateLimits: DEFAULT_TOOL_RATE_LIMITS,
   circuitBreaker: DEFAULT_CIRCUIT_BREAKER_CONFIG,
-  maxRecursionDepth: 5,
+  // T1(10) + T2(3) + T3(1) + buffer(5) = 19
+  maxRecursionDepth: 19,
   executorTimeoutMs: 5000,
   enableInjectionDetection: true, // Security: enabled by default
   enableTracing: true, // Evaluation: enabled by default
