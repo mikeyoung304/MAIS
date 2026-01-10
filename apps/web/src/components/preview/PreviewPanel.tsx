@@ -247,8 +247,8 @@ export function PreviewPanel({
       setShowPublishDialog(false);
 
       // Force iframe reload to show fresh published content
-      if (iframeRef.current) {
-        iframeRef.current.src = iframeRef.current.src;
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.location.reload();
       }
     } catch (err) {
       setError('Failed to publish changes');
@@ -263,8 +263,8 @@ export function PreviewPanel({
       setShowDiscardDialog(false);
 
       // Force iframe reload to show original content
-      if (iframeRef.current) {
-        iframeRef.current.src = iframeRef.current.src;
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.location.reload();
       }
     } catch (err) {
       setError('Failed to discard changes');
