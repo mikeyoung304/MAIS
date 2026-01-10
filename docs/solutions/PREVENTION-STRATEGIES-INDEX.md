@@ -579,6 +579,32 @@ git commit -m "chore(schema): add my_index"
 
 ### 2.5. Code Review Pattern Guides
 
+#### [Multi-Agent Code Review Prevention Strategies](./patterns/MULTI_AGENT_CODE_REVIEW_PREVENTION_STRATEGIES.md)
+
+**Purpose:** Best practices for multi-agent code review workflows using `/workflows:review`
+**Audience:** All engineers, especially during PR reviews
+**Date Created:** 2026-01-09
+**Key Patterns:** Specialized reviewers, parallel execution, immediate todo creation, severity classification
+
+**Key Learnings:**
+
+1. **Specialized reviewers catch domain-specific issues** - Data Integrity Guardian found TOCTOU that others missed
+2. **Parallel execution makes comprehensive review feasible** - 6+ agents run simultaneously
+3. **Structured todo file creation ensures findings are actionable** - Create immediately, not after approval
+4. **P1/P2/P3 severity classification helps prioritization** - P1 blocks merge
+
+**When to Use:**
+
+- Database migrations (data-integrity-guardian REQUIRED)
+- Agent tool changes (agent-native-reviewer REQUIRED)
+- Auth/security changes (security-sentinel REQUIRED)
+- Large PRs (>300 lines)
+- Pre-release quality gates
+
+**Quick Reference:** [MULTI_AGENT_CODE_REVIEW_QUICK_REFERENCE.md](./patterns/MULTI_AGENT_CODE_REVIEW_QUICK_REFERENCE.md) (print and pin!)
+
+---
+
 #### [React UI Patterns & Audit Logging Review](./code-review-patterns/react-ui-patterns-audit-logging-review.md)
 
 **Purpose:** Prevent UI anti-patterns and missing audit trails

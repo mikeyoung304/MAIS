@@ -95,3 +95,33 @@ export function hashTenantStorefront(tenantId: string): number {
 
   return hash | 0;
 }
+
+/**
+ * Generate deterministic lock ID from tenantId + serviceId + date for appointment booking.
+ * Used for TOCTOU prevention on maxPerDay limit enforcement.
+ *
+ * TODO-708 FIX: Provides service+date-level locking to prevent race conditions
+ * where concurrent appointment bookings exceed maxPerDay limits.
+ *
+ * @param tenantId - Tenant identifier for isolation
+ * @param serviceId - Service identifier for granular locking
+ * @param date - Date string (YYYY-MM-DD format)
+ * @returns 32-bit signed integer suitable for PostgreSQL advisory lock
+ *
+ * @example
+ * ```typescript
+ * const lockId = hashServiceDate(tenantId, serviceId, '2025-06-15');
+ * await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+ * ```
+ */
+export function hashServiceDate(tenantId: string, serviceId: string, date: string): number {
+  const str = `${tenantId}:service:${serviceId}:${date}`;
+  let hash = 2166136261; // FNV-1a offset basis
+
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619); // FNV prime
+  }
+
+  return hash | 0;
+}

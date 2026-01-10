@@ -3,11 +3,12 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Send, Loader2, CheckCircle, XCircle, Bot, User, AlertTriangle } from 'lucide-react';
+import { Send, Loader2, Bot, AlertTriangle } from 'lucide-react';
 import { ChatbotUnavailable } from './ChatbotUnavailable';
 import { parseQuickReplies } from '@/lib/parseQuickReplies';
 import { QuickReplyChips } from './QuickReplyChips';
-import { useAgentChat, type ChatMessage, type Proposal } from '@/hooks/useAgentChat';
+import { useAgentChat } from '@/hooks/useAgentChat';
+import { ChatMessage } from '@/components/chat/ChatMessage';
 
 // Use Next.js API proxy for agent endpoints
 // The proxy (/api/agent/*) handles authentication and forwards to Express backend
@@ -145,8 +146,9 @@ export function AgentChat({
 
           return (
             <div key={index}>
-              <MessageBubble
+              <ChatMessage
                 message={{ ...message, content: displayContent }}
+                variant="default"
                 onConfirmProposal={confirmProposal}
                 onRejectProposal={rejectProposal}
               />
@@ -245,137 +247,6 @@ export function AgentChat({
         <p className="mt-2 text-xs text-text-muted text-center">
           Press Enter to send, Shift+Enter for new line
         </p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Individual message bubble component
- * Styled to match HANDLED brand: warm, professional, minimal
- */
-function MessageBubble({
-  message,
-  onConfirmProposal,
-  onRejectProposal,
-}: {
-  message: ChatMessage;
-  onConfirmProposal: (id: string) => void;
-  onRejectProposal: (id: string) => void;
-}) {
-  const isUser = message.role === 'user';
-
-  return (
-    <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
-      {/* Avatar */}
-      <div
-        className={cn(
-          'shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-          isUser ? 'bg-neutral-200' : 'bg-sage/10'
-        )}
-      >
-        {isUser ? (
-          <User className="w-4 h-4 text-text-muted" />
-        ) : (
-          <Bot className="w-4 h-4 text-sage" />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className={cn('flex-1 max-w-[85%]', isUser && 'flex flex-col items-end')}>
-        <div
-          className={cn(
-            'rounded-2xl px-4 py-3 shadow-sm',
-            isUser
-              ? 'bg-sage text-white rounded-br-sm'
-              : 'bg-white text-text-primary border border-neutral-100 rounded-bl-sm'
-          )}
-        >
-          <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-        </div>
-
-        {/* Tool Results */}
-        {message.toolResults && message.toolResults.length > 0 && (
-          <div className="mt-2 space-y-1">
-            {message.toolResults.map((result, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  'inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border',
-                  result.success
-                    ? 'bg-green-50 text-green-700 border-green-100'
-                    : 'bg-red-50 text-red-700 border-red-100'
-                )}
-              >
-                {result.success ? (
-                  <CheckCircle className="w-3 h-3" />
-                ) : (
-                  <XCircle className="w-3 h-3" />
-                )}
-                <span>{result.toolName}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Proposals requiring confirmation */}
-        {message.proposals &&
-          message.proposals
-            .filter((p) => p.requiresApproval && p.trustTier === 'T3')
-            .map((proposal) => (
-              <ProposalCard
-                key={proposal.proposalId}
-                proposal={proposal}
-                onConfirm={() => onConfirmProposal(proposal.proposalId)}
-                onReject={() => onRejectProposal(proposal.proposalId)}
-              />
-            ))}
-
-        {/* Timestamp */}
-        <span className="text-xs text-text-muted/60 mt-1.5 px-1">
-          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Proposal confirmation card
- * Styled to match HANDLED brand with warm amber tones
- */
-function ProposalCard({
-  proposal,
-  onConfirm,
-  onReject,
-}: {
-  proposal: Proposal;
-  onConfirm: () => void;
-  onReject: () => void;
-}) {
-  return (
-    <div className="mt-3 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/60 shadow-sm">
-      <p className="font-medium text-amber-900 mb-2">{proposal.operation}</p>
-
-      {/* Preview of what will change */}
-      <div className="text-sm text-amber-800/90 mb-4 space-y-1">
-        {Object.entries(proposal.preview).map(([key, value]) => (
-          <div key={key} className="flex gap-2">
-            <span className="font-medium">{key}:</span>
-            <span>{String(value)}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Confirmation buttons - follow HANDLED button patterns */}
-      <div className="flex gap-2">
-        <Button onClick={onConfirm} variant="sage" size="sm" className="rounded-full px-4">
-          <CheckCircle className="w-4 h-4 mr-1.5" />
-          Confirm
-        </Button>
-        <Button onClick={onReject} variant="outline" size="sm" className="rounded-full px-4">
-          Cancel
-        </Button>
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ import type { IdempotencyService } from './idempotency.service';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
 import type { AvailabilityService } from './availability.service';
 import { logger } from '../lib/core/logger';
+import type { PrismaClient } from '../generated/prisma/client';
 
 // Import decomposed services
 import { BookingQueryService, type GetAppointmentsFilters } from './booking-query.service';
@@ -72,6 +73,8 @@ export interface BookingServiceOptions {
   serviceRepo?: ServiceRepository;
   /** Availability service for DATE booking availability checks */
   availabilityService?: AvailabilityService;
+  /** Prisma client for transactional operations with advisory locks (TODO-708) */
+  prisma?: PrismaClient;
 }
 
 /**
@@ -148,14 +151,16 @@ export class BookingService {
       );
     }
 
-    // Initialize AppointmentBookingService (optional - requires scheduling dependencies)
-    if (options.serviceRepo && options.schedulingAvailabilityService) {
+    // Initialize AppointmentBookingService (optional - requires scheduling dependencies + Prisma)
+    // TODO-708: Prisma is now required for advisory lock-based TOCTOU prevention
+    if (options.serviceRepo && options.schedulingAvailabilityService && options.prisma) {
       this.appointmentService = new AppointmentBookingService({
         bookingRepo: options.bookingRepo,
         serviceRepo: options.serviceRepo,
         schedulingAvailabilityService: options.schedulingAvailabilityService,
         checkoutSessionFactory: this.checkoutFactory,
         eventEmitter: options.eventEmitter,
+        prisma: options.prisma,
       });
     }
 

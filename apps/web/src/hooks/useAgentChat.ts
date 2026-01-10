@@ -123,9 +123,9 @@ export interface UseAgentChatReturn {
   setInputValue: (value: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 
-  // Refs for component integration
-  messagesEndRef: React.RefObject<HTMLDivElement | null>;
-  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  // Refs for component integration (cast to remove | null for React 18 JSX compatibility)
+  messagesEndRef: React.RefObject<HTMLDivElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement>;
 
   // Event handlers
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -171,9 +171,9 @@ export function useAgentChat({
   // First message tracking
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
-  // Refs
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  // Refs (cast to remove | null for React 18 JSX compatibility)
+  const messagesEndRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const inputRef = useRef<HTMLTextAreaElement>(null) as React.RefObject<HTMLTextAreaElement>;
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = useCallback(() => {

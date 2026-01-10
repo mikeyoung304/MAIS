@@ -4,25 +4,12 @@ import * as React from 'react';
 import { useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  Send,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Bot,
-  User,
-  AlertTriangle,
-  Sparkles,
-} from 'lucide-react';
+import { Send, Loader2, Bot, AlertTriangle, Sparkles } from 'lucide-react';
 import { parseQuickReplies } from '@/lib/parseQuickReplies';
 import { parseHighlights } from '@/lib/parseHighlights';
 import { QuickReplyChips } from './QuickReplyChips';
-import {
-  useAgentChat,
-  type ChatMessage,
-  type Proposal,
-  type ToolResult,
-} from '@/hooks/useAgentChat';
+import { useAgentChat } from '@/hooks/useAgentChat';
+import { ChatMessage } from '@/components/chat/ChatMessage';
 
 // Use Next.js API proxy to handle authentication
 // The proxy at /api/agent/* adds the backend token from the session
@@ -37,6 +24,26 @@ export interface AgentUIAction {
   page?: string;
   sectionId?: string;
   path?: string;
+}
+
+/**
+ * Type guard to validate uiAction data from tool results
+ * Provides runtime validation to prevent errors from malformed data
+ */
+function hasUIAction(data: unknown): data is { uiAction: AgentUIAction } {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+  if (!('uiAction' in obj) || typeof obj.uiAction !== 'object' || obj.uiAction === null) {
+    return false;
+  }
+
+  const action = obj.uiAction as Record<string, unknown>;
+  const validTypes = ['SHOW_PREVIEW', 'SHOW_DASHBOARD', 'HIGHLIGHT_SECTION', 'NAVIGATE'];
+
+  return typeof action.type === 'string' && validTypes.includes(action.type);
 }
 
 interface PanelAgentChatProps {
@@ -108,11 +115,8 @@ export function PanelAgentChat({
       // Handle UI actions from tool results
       if (onUIAction) {
         for (const result of toolResults) {
-          if (result.success && result.data) {
-            const toolData = result.data as { uiAction?: AgentUIAction };
-            if (toolData.uiAction) {
-              onUIAction(toolData.uiAction);
-            }
+          if (result.success && hasUIAction(result.data)) {
+            onUIAction(result.data.uiAction);
           }
         }
       }
@@ -214,10 +218,12 @@ export function PanelAgentChat({
               {isLastAssistantMessage && highlights.length > 0 && (
                 <HighlightTrigger highlights={highlights} onSectionHighlight={onSectionHighlight} />
               )}
-              <CompactMessage
+              <ChatMessage
                 message={{ ...message, content: displayContent }}
+                variant="compact"
                 onConfirmProposal={confirmProposal}
                 onRejectProposal={rejectProposal}
+                showTimestamp={false}
               />
               {/* Quick replies - only on last assistant message */}
               {isLastAssistantMessage && quickReplies.length > 0 && (
@@ -305,140 +311,6 @@ export function PanelAgentChat({
             )}
           </Button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Compact message bubble for panel
- */
-function CompactMessage({
-  message,
-  onConfirmProposal,
-  onRejectProposal,
-}: {
-  message: ChatMessage;
-  onConfirmProposal: (id: string) => void;
-  onRejectProposal: (id: string) => void;
-}) {
-  const isUser = message.role === 'user';
-
-  return (
-    <div className={cn('flex gap-2', isUser && 'flex-row-reverse')}>
-      {/* Avatar */}
-      <div
-        className={cn(
-          'shrink-0 w-6 h-6 rounded-lg flex items-center justify-center',
-          isUser ? 'bg-neutral-700' : 'bg-sage/10'
-        )}
-      >
-        {isUser ? (
-          <User className="w-3.5 h-3.5 text-text-muted" />
-        ) : (
-          <Bot className="w-3.5 h-3.5 text-sage" />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className={cn('flex-1 max-w-[85%]', isUser && 'flex flex-col items-end')}>
-        <div
-          className={cn(
-            'rounded-xl px-3 py-2 text-sm',
-            isUser
-              ? 'bg-sage text-white rounded-br-sm'
-              : 'bg-surface text-text-primary rounded-bl-sm'
-          )}
-        >
-          <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-        </div>
-
-        {/* Tool Results */}
-        {message.toolResults && message.toolResults.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {message.toolResults.map((result, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border',
-                  result.success
-                    ? 'bg-green-950/50 text-green-400 border-green-800'
-                    : 'bg-red-950/50 text-red-400 border-red-800'
-                )}
-              >
-                {result.success ? (
-                  <CheckCircle className="w-2.5 h-2.5" />
-                ) : (
-                  <XCircle className="w-2.5 h-2.5" />
-                )}
-                <span>{result.toolName}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Proposals */}
-        {message.proposals &&
-          message.proposals
-            .filter((p) => p.requiresApproval && p.trustTier === 'T3')
-            .map((proposal) => (
-              <CompactProposalCard
-                key={proposal.proposalId}
-                proposal={proposal}
-                onConfirm={() => onConfirmProposal(proposal.proposalId)}
-                onReject={() => onRejectProposal(proposal.proposalId)}
-              />
-            ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Compact proposal card for panel
- */
-function CompactProposalCard({
-  proposal,
-  onConfirm,
-  onReject,
-}: {
-  proposal: Proposal;
-  onConfirm: () => void;
-  onReject: () => void;
-}) {
-  return (
-    <div className="mt-2 p-3 rounded-xl bg-amber-950/50 border border-amber-800">
-      <p className="text-xs font-medium text-amber-300 mb-1.5">{proposal.operation}</p>
-
-      <div className="text-[10px] text-amber-400 mb-2 space-y-0.5">
-        {Object.entries(proposal.preview)
-          .slice(0, 2)
-          .map(([key, value]) => (
-            <div key={key} className="flex gap-1.5">
-              <span className="font-medium">{key}:</span>
-              <span className="truncate">{String(value)}</span>
-            </div>
-          ))}
-      </div>
-
-      <div className="flex gap-1.5">
-        <Button
-          onClick={onConfirm}
-          variant="sage"
-          size="sm"
-          className="rounded-lg px-2.5 py-1 h-auto text-xs"
-        >
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Confirm
-        </Button>
-        <Button
-          onClick={onReject}
-          variant="outline"
-          size="sm"
-          className="rounded-lg px-2.5 py-1 h-auto text-xs"
-        >
-          Cancel
-        </Button>
       </div>
     </div>
   );

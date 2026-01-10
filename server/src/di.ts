@@ -282,6 +282,8 @@ export function buildContainer(config: Config): Container {
       schedulingAvailabilityService,
       serviceRepo,
       availabilityService,
+      // TODO-708: Prisma required for advisory lock-based TOCTOU prevention in appointments
+      prisma: mockPrisma,
     });
     const identityService = new IdentityService(adapters.userRepo, config.JWT_SECRET);
 
@@ -588,18 +590,6 @@ export function buildContainer(config: Config): Container {
     tenantOnboardingService
   );
   const availabilityService = new AvailabilityService(calendarProvider, blackoutRepo, bookingRepo);
-  // P3-342 FIX: Use options object pattern to avoid undefined placeholders
-  const bookingService = new BookingService({
-    bookingRepo,
-    catalogRepo,
-    eventEmitter,
-    paymentProvider,
-    commissionService,
-    tenantRepo,
-    idempotencyService,
-    // Optional dependencies - will be set up after scheduling service is created
-    availabilityService,
-  });
   const identityService = new IdentityService(userRepo, config.JWT_SECRET);
 
   // Create TenantAuthService with real Prisma tenant repo
@@ -621,6 +611,23 @@ export function buildContainer(config: Config): Container {
     googleCalendarService, // Two-way sync with Google Calendar
     cacheAdapter // Cache for Google Calendar busy times (5 min TTL)
   );
+
+  // P3-342 FIX: Use options object pattern to avoid undefined placeholders
+  // TODO-708 FIX: BookingService moved after scheduling dependencies for proper DI
+  const bookingService = new BookingService({
+    bookingRepo,
+    catalogRepo,
+    eventEmitter,
+    paymentProvider,
+    commissionService,
+    tenantRepo,
+    idempotencyService,
+    availabilityService,
+    // TODO-708: Now includes all scheduling dependencies for appointment booking
+    schedulingAvailabilityService,
+    serviceRepo,
+    prisma,
+  });
 
   // Create PackageDraftService with real catalog repository
   const packageDraftService = new PackageDraftService(catalogRepo, cacheAdapter);

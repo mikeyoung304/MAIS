@@ -119,6 +119,19 @@ export interface DraftConfigWithSlugResult extends DraftConfigResult {
  * Get or initialize draft config from tenant
  * Uses existing draft if available, otherwise copies from live config
  *
+ * PERFORMANCE NOTE (TODO #710): Zod validation runs on every call (~5-30ms).
+ * This is ACCEPTED LATENCY because:
+ * 1. Database query dominates total latency (50-200ms typically)
+ * 2. Caching would require invalidation on every draft write operation
+ * 3. No cache invalidation infrastructure exists for this yet (contextCache
+ *    is for AgentSessionContext, not draft configs)
+ * 4. Validation ensures data integrity before AI tools receive the config
+ *
+ * Future optimization: If profiling shows this as a bottleneck in high-frequency
+ * tool pipelines, consider:
+ * - Adding validated draft cache with write-through invalidation
+ * - Moving validation to write time only (store pre-validated flag)
+ *
  * @param prisma - Prisma client
  * @param tenantId - Tenant ID
  * @returns Current pages config and whether a draft exists
@@ -211,6 +224,10 @@ type PrismaTransactionClient = Pick<PrismaClient, 'tenant'>;
  *
  * P1-659 FIX: Accepts either PrismaClient or transaction client to support
  * advisory lock patterns for TOCTOU prevention on JSON field updates.
+ *
+ * PERFORMANCE NOTE (TODO #710): Same as getDraftConfig - Zod validation
+ * runs on every call. See getDraftConfig docstring for rationale on why
+ * this is accepted latency rather than cached.
  *
  * @param prisma - Prisma client or transaction client
  * @param tenantId - Tenant ID

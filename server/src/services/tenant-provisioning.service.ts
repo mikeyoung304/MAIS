@@ -54,6 +54,9 @@ export interface ProvisionedTenantResult {
   secretKey?: string;
 }
 
+/** Transaction client type for Prisma interactive transactions */
+type PrismaTransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
+
 /**
  * Service for atomic tenant provisioning
  *
@@ -64,6 +67,55 @@ export interface ProvisionedTenantResult {
  */
 export class TenantProvisioningService {
   constructor(private readonly prisma: PrismaClient) {}
+
+  /**
+   * Create default segment and packages for a tenant
+   *
+   * This is the single source of truth for the 1×3 setup:
+   * - 1 "General" segment
+   * - 3 packages (Basic, Standard, Premium) linked to that segment
+   *
+   * @param tx - Prisma transaction client
+   * @param tenantId - ID of the tenant to create defaults for
+   * @returns Created segment and packages
+   */
+  private async createDefaultSegmentAndPackages(
+    tx: PrismaTransactionClient,
+    tenantId: string
+  ): Promise<{ segment: Segment; packages: Package[] }> {
+    // Create default segment
+    const segment = await tx.segment.create({
+      data: {
+        tenantId,
+        slug: DEFAULT_SEGMENT.slug,
+        name: DEFAULT_SEGMENT.name,
+        heroTitle: DEFAULT_SEGMENT.heroTitle,
+        description: DEFAULT_SEGMENT.description,
+        sortOrder: 0,
+        active: true,
+      },
+    });
+
+    // Create default packages in parallel
+    const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
+      tx.package.create({
+        data: {
+          tenantId,
+          segmentId: segment.id,
+          slug: tier.slug,
+          name: tier.name,
+          description: tier.description,
+          basePrice: tier.basePrice,
+          groupingOrder: tier.groupingOrder,
+          active: true,
+        },
+      })
+    );
+
+    const packages = await Promise.all(packagePromises);
+
+    return { segment, packages };
+  }
 
   /**
    * Create a fully provisioned tenant (admin API)
@@ -93,36 +145,8 @@ export class TenantProvisioningService {
         },
       });
 
-      // Create default segment
-      const segment = await tx.segment.create({
-        data: {
-          tenantId: tenant.id,
-          slug: DEFAULT_SEGMENT.slug,
-          name: DEFAULT_SEGMENT.name,
-          heroTitle: DEFAULT_SEGMENT.heroTitle,
-          description: DEFAULT_SEGMENT.description,
-          sortOrder: 0,
-          active: true,
-        },
-      });
-
-      // Create default packages in parallel
-      const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
-        tx.package.create({
-          data: {
-            tenantId: tenant.id,
-            segmentId: segment.id,
-            slug: tier.slug,
-            name: tier.name,
-            description: tier.description,
-            basePrice: tier.basePrice,
-            groupingOrder: tier.groupingOrder,
-            active: true,
-          },
-        })
-      );
-
-      const packages = await Promise.all(packagePromises);
+      // Create default segment and packages using shared method
+      const { segment, packages } = await this.createDefaultSegmentAndPackages(tx, tenant.id);
 
       logger.info(
         {
@@ -184,36 +208,8 @@ export class TenantProvisioningService {
           },
         });
 
-        // Create default segment
-        const segment = await tx.segment.create({
-          data: {
-            tenantId: tenant.id,
-            slug: DEFAULT_SEGMENT.slug,
-            name: DEFAULT_SEGMENT.name,
-            heroTitle: DEFAULT_SEGMENT.heroTitle,
-            description: DEFAULT_SEGMENT.description,
-            sortOrder: 0,
-            active: true,
-          },
-        });
-
-        // Create default packages in parallel
-        const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
-          tx.package.create({
-            data: {
-              tenantId: tenant.id,
-              segmentId: segment.id,
-              slug: tier.slug,
-              name: tier.name,
-              description: tier.description,
-              basePrice: tier.basePrice,
-              groupingOrder: tier.groupingOrder,
-              active: true,
-            },
-          })
-        );
-
-        const packages = await Promise.all(packagePromises);
+        // Create default segment and packages using shared method
+        const { segment, packages } = await this.createDefaultSegmentAndPackages(tx, tenant.id);
 
         logger.info(
           {

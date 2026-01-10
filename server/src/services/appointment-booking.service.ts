@@ -13,6 +13,8 @@ import type { CheckoutSessionFactory } from './checkout-session.factory';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
 import { NotFoundError, MaxBookingsPerDayExceededError } from '../lib/errors';
 import { logger } from '../lib/core/logger';
+import type { PrismaClient } from '../generated/prisma/client';
+import { hashServiceDate } from '../lib/advisory-locks';
 
 /** Input for creating an appointment checkout session */
 export interface CreateAppointmentInput {
@@ -45,6 +47,8 @@ export interface AppointmentBookingServiceOptions {
   schedulingAvailabilityService: SchedulingAvailabilityService;
   checkoutSessionFactory: CheckoutSessionFactory;
   eventEmitter: EventEmitter;
+  /** Prisma client for transactional operations with advisory locks (TODO-708) */
+  prisma: PrismaClient;
 }
 
 /**
@@ -57,6 +61,7 @@ export class AppointmentBookingService {
   private readonly schedulingAvailabilityService: SchedulingAvailabilityService;
   private readonly checkoutSessionFactory: CheckoutSessionFactory;
   private readonly eventEmitter: EventEmitter;
+  private readonly prisma: PrismaClient;
 
   constructor(options: AppointmentBookingServiceOptions) {
     this.bookingRepo = options.bookingRepo;
@@ -64,6 +69,7 @@ export class AppointmentBookingService {
     this.schedulingAvailabilityService = options.schedulingAvailabilityService;
     this.checkoutSessionFactory = options.checkoutSessionFactory;
     this.eventEmitter = options.eventEmitter;
+    this.prisma = options.prisma;
   }
 
   /**
@@ -155,12 +161,12 @@ export class AppointmentBookingService {
    * Called by Stripe webhook handler after successful payment for TIMESLOT bookings.
    * Creates a booking record with TIMESLOT type and emits AppointmentBooked event.
    *
-   * Defense-in-depth: Re-validates maxPerDay limit even though checkout already checked.
-   * This prevents race conditions where multiple checkouts pass validation but only
-   * some should succeed based on maxPerDay limit.
+   * TODO-708 FIX: Uses PostgreSQL advisory locks to prevent TOCTOU race conditions.
+   * The count check and booking creation are wrapped in a single transaction with
+   * an advisory lock to ensure atomic enforcement of maxPerDay limits.
    *
    * @throws {NotFoundError} If service doesn't exist
-   * @throws {MaxBookingsPerDayExceededError} If maxPerDay limit is reached (defense-in-depth)
+   * @throws {MaxBookingsPerDayExceededError} If maxPerDay limit is reached
    */
   async onAppointmentPaymentCompleted(
     tenantId: string,
@@ -171,67 +177,129 @@ export class AppointmentBookingService {
       throw new NotFoundError(`Service ${input.serviceId} not found`);
     }
 
-    // Defense-in-depth: Re-validate maxPerDay limit
-    // This handles race conditions where multiple concurrent checkouts
-    // may have passed validation but only some should succeed
-    if (service.maxPerDay !== null) {
-      const existingBookingsCount = await this.bookingRepo.countTimeslotBookingsForServiceOnDate(
-        tenantId,
-        input.serviceId,
-        input.startTime
-      );
+    const dateStr = input.startTime.toISOString().split('T')[0];
 
-      if (existingBookingsCount >= service.maxPerDay) {
-        const dateStr = input.startTime.toISOString().split('T')[0];
-        logger.warn(
-          {
+    // TODO-708 FIX: Wrap count check AND booking creation in a single transaction
+    // with advisory lock to prevent TOCTOU race condition on maxPerDay enforcement
+    const created = await this.prisma.$transaction(async (tx) => {
+      // Acquire advisory lock for this specific tenant+service+date combination
+      // Lock is automatically released when transaction commits or aborts
+      const lockId = hashServiceDate(tenantId, input.serviceId, dateStr);
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+      // Now safe to check count atomically within the lock
+      if (service.maxPerDay !== null) {
+        const startOfDay = new Date(input.startTime);
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const endOfDay = new Date(input.startTime);
+        endOfDay.setUTCHours(23, 59, 59, 999);
+
+        const existingBookingsCount = await tx.booking.count({
+          where: {
             tenantId,
             serviceId: input.serviceId,
-            date: dateStr,
-            existingCount: existingBookingsCount,
-            maxPerDay: service.maxPerDay,
-            sessionId: input.sessionId,
+            bookingType: 'TIMESLOT',
+            startTime: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+            status: {
+              in: ['PENDING', 'CONFIRMED'],
+            },
           },
-          'maxPerDay limit exceeded during payment completion - possible race condition'
-        );
-        throw new MaxBookingsPerDayExceededError(dateStr, service.maxPerDay);
+        });
+
+        if (existingBookingsCount >= service.maxPerDay) {
+          logger.warn(
+            {
+              tenantId,
+              serviceId: input.serviceId,
+              date: dateStr,
+              existingCount: existingBookingsCount,
+              maxPerDay: service.maxPerDay,
+              sessionId: input.sessionId,
+            },
+            'maxPerDay limit exceeded during payment completion - blocked by advisory lock'
+          );
+          throw new MaxBookingsPerDayExceededError(dateStr, service.maxPerDay);
+        }
       }
-    }
 
-    const booking: Booking = {
-      id: `booking_${Date.now()}`,
-      tenantId,
-      serviceId: input.serviceId,
-      customerId: `customer_${Date.now()}`,
-      packageId: '',
-      venueId: null,
-      coupleName: input.clientName,
-      email: input.clientEmail,
-      phone: input.clientPhone,
-      eventDate: new Date(
-        input.startTime.getFullYear(),
-        input.startTime.getMonth(),
-        input.startTime.getDate()
-      )
-        .toISOString()
-        .split('T')[0],
-      addOnIds: [],
-      startTime: input.startTime.toISOString(),
-      endTime: input.endTime.toISOString(),
-      bookingType: 'TIMESLOT' as const,
-      clientTimezone: input.clientTimezone || null,
-      status: 'CONFIRMED',
-      totalCents: input.totalCents,
-      notes: input.notes || null,
-      commissionAmount: 0,
-      commissionPercent: 0,
-      stripePaymentIntentId: input.sessionId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      // Normalize email for customer lookup/creation
+      const normalizedEmail = input.clientEmail.toLowerCase().trim();
 
-    const created = await this.bookingRepo.create(tenantId, booking);
+      // Create or find the customer (tenant-scoped)
+      const customer = await tx.customer.upsert({
+        where: {
+          tenantId_email: {
+            tenantId,
+            email: normalizedEmail,
+          },
+        },
+        update: {
+          name: input.clientName,
+          phone: input.clientPhone,
+        },
+        create: {
+          tenantId,
+          email: normalizedEmail,
+          name: input.clientName,
+          phone: input.clientPhone,
+        },
+      });
 
+      // Create booking atomically within the same transaction
+      const bookingData = await tx.booking.create({
+        data: {
+          tenantId,
+          customerId: customer.id,
+          serviceId: input.serviceId,
+          packageId: null, // TIMESLOT bookings don't have packages
+          date: new Date(dateStr),
+          totalPrice: input.totalCents,
+          status: 'CONFIRMED',
+          bookingType: 'TIMESLOT',
+          startTime: input.startTime,
+          endTime: input.endTime,
+          clientTimezone: input.clientTimezone || null,
+          notes: input.notes || null,
+          commissionAmount: 0,
+          commissionPercent: 0,
+          stripeCheckoutSessionId: input.sessionId,
+        },
+      });
+
+      // Map Prisma model to domain entity
+      const booking: Booking = {
+        id: bookingData.id,
+        tenantId: bookingData.tenantId,
+        serviceId: bookingData.serviceId || undefined,
+        customerId: bookingData.customerId,
+        packageId: bookingData.packageId || '',
+        venueId: null,
+        coupleName: input.clientName,
+        email: input.clientEmail,
+        phone: input.clientPhone,
+        eventDate: dateStr,
+        addOnIds: [],
+        startTime: bookingData.startTime?.toISOString(),
+        endTime: bookingData.endTime?.toISOString(),
+        bookingType: 'TIMESLOT' as const,
+        clientTimezone: bookingData.clientTimezone || null,
+        status: 'CONFIRMED',
+        totalCents: bookingData.totalPrice,
+        notes: bookingData.notes || null,
+        commissionAmount: bookingData.commissionAmount,
+        commissionPercent: bookingData.commissionPercent,
+        stripePaymentIntentId: input.sessionId,
+        createdAt: bookingData.createdAt.toISOString(),
+        updatedAt: bookingData.updatedAt.toISOString(),
+      };
+
+      return booking;
+    });
+
+    // Emit event outside transaction (event emission should not block transaction)
     await this.eventEmitter.emit(AppointmentEvents.BOOKED, {
       bookingId: created.id,
       tenantId,

@@ -704,6 +704,8 @@ Optional (graceful fallbacks in real mode):
 - **docs/adrs/ADR-016-field-naming-conventions.md** - Database vs API field naming (title/name, priceCents/basePrice)
 - **docs/adrs/ADR-017-dark-theme-auth-pages.md** - Dark theme for auth pages (signup, login) vs light marketing
 - **apps/web/README.md** - Next.js app setup, environment variables, architecture
+- **docs/solutions/methodology/multi-agent-parallel-code-review-workflow-MAIS-20260109.md** - Multi-agent parallel review workflow (6 specialized agents)
+  - Quick reference: [MULTI_AGENT_REVIEW_QUICK_REFERENCE.md](docs/solutions/methodology/MULTI_AGENT_REVIEW_QUICK_REFERENCE.md) - Print & pin (2 min read)
 
 ## Documentation Conventions
 
@@ -944,6 +946,8 @@ The following links prevent common mistakes from recurring:
 **Key insight from TypeScript Symlinks:** Symlinks in TypeScript source directories cause double compilation - same file resolved via two different paths is treated as two different modules. This breaks `instanceof` checks, creates duplicate singletons, and causes "duplicate identifier" errors. Solution: Never put symlinks in src directories. Use tsconfig.json `paths` or npm workspaces instead. Detect with: `find apps/*/src server/src -type l`.
 
 **Key insight from Section ID Pattern:** Array indices are fragile for AI chatbot references - they drift on delete/reorder. Solution: Human-readable IDs (`{page}-{type}-{qualifier}` like `home-hero-main`) with monotonic counter (never reuse deleted IDs). TOCTOU prevention: wrap uniqueness checks in transactions with advisory locks. DRY: extract shared ID resolution logic to `agent/utils/`. See `docs/solutions/patterns/STOREFRONT_SECTION_ID_PATTERN-MAIS-20260108.md`.
+
+**Key insight from Multi-Agent Parallel Review (Commit 5cd5bfb1):** Specialized parallel review catches issues that generalist review misses. Example: Data Integrity Guardian found P1 TOCTOU race condition in `maxPerDay` enforcement that 5 other specialized agents (TypeScript, Security, Architecture, Performance, Simplicity) did not flag. Each agent applies domain-specific heuristics (e.g., Data Integrity checks all check-then-act patterns for transaction wrapping). Run `/workflows:review` before merging significant PRs. See `docs/solutions/methodology/MULTI_AGENT_REVIEW_QUICK_REFERENCE.md` for the 6-agent breakdown.
 
 ## Quick Start Checklist
 
