@@ -1,16 +1,18 @@
-# Potential Tenant (Prospect) Journey
+# Potential Member (Prospect) Journey
 
-**Document Version:** 1.0
-**Last Updated:** November 21, 2025
+**Document Version:** 2.0
+**Last Updated:** January 10, 2026
 **Status:** Current Implementation Analysis
 
 ---
 
 ## Executive Summary
 
-This document maps the complete journey for potential tenants (business owners interested in joining the Macon AI Club) from initial awareness to becoming an active, paying member. Based on a comprehensive codebase analysis, this outlines what's implemented, what's planned, and the technical architecture supporting each stage.
+This document maps the complete journey for potential members (service professionals interested in joining HANDLED) from initial awareness to becoming an active member. Based on a comprehensive codebase analysis, this outlines what's implemented, what's planned, and the technical architecture supporting each stage.
 
-**Key Finding:** The MAIS platform currently operates in a **platform admin-provisioned model**. There is NO self-service tenant signup flow. All tenant onboarding happens through CLI tools executed by platform administrators.
+**Key Finding:** The HANDLED platform currently operates in a **platform admin-provisioned model**. There is NO self-service member signup flow. All member onboarding happens through CLI tools executed by platform administrators.
+
+**Business Model:** HANDLED is a membership platform with a flat monthly fee. Standard members keep 100% of their bookings. The platform also supports commission-based pricing for custom arrangements.
 
 ---
 
@@ -43,10 +45,10 @@ A **potential tenant** is a small business owner or entrepreneur who:
   - Professional web presence without hiring developers
   - Never miss a booking or payment
 - **Decision Factors:**
-  - Revenue-sharing model (aligned incentives, no upfront fees)
-  - Dedicated AI strategist support
-  - Proven ROI from existing members
-  - Quick setup (5 minutes application, live in 1-2 weeks)
+  - Flat monthly membership (predictable cost, keep 100% of bookings)
+  - Done-for-you tech + done-with-you education
+  - Proven results from existing members
+  - Quick setup (application to live in 1-2 weeks)
 
 ### Value Propositions
 
@@ -552,16 +554,17 @@ model AgentProposal {
 
 ---
 
-### Stage 8: Retention (Commission Model)
+### Stage 8: Retention (Membership Model)
 
 **Status:** ✅ **FULLY IMPLEMENTED**
 
-**Revenue-Sharing Model:**
+**Membership Model:**
 
-- **No Monthly Fees:** Tenants pay nothing upfront or as a subscription
-- **Commission-Based:** Platform takes X% of each booking (default 10%)
-- **Configurable:** Each tenant can have custom commission rate
-- **Transparent:** Commission shown on every booking record
+- **Flat Monthly Fee:** Members pay one predictable monthly membership fee
+- **Keep 100% of Bookings:** Standard members keep all their booking revenue
+- **Commission Option:** Platform supports percentage-based pricing for custom arrangements
+- **All-Inclusive:** Optimized storefront, booking, AI chatbot, newsletters, and Zoom calls included
+- **Cancel Anytime:** No long-term contracts required
 
 **Database:**
 
@@ -1077,8 +1080,8 @@ model Tenant {
 1. ✅ **Solid Technical Foundation:** Multi-tenant isolation, secure API keys, Stripe Connect integration
 2. ✅ **Professional Marketing:** Clear value props, social proof, compelling CTAs
 3. ✅ **Robust Booking System:** Race condition prevention, transaction safety, webhook idempotency
-4. ✅ **Tenant Self-Management:** Dashboard for packages, branding, blackouts
-5. ✅ **Commission Model:** Transparent, automated revenue sharing via Stripe
+4. ✅ **Member Self-Management:** Dashboard for packages, branding, blackouts
+5. ✅ **Membership Model:** Flat monthly fee, members keep 100% of bookings
 
 ### What Needs Attention
 

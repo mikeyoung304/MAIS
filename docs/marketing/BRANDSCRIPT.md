@@ -1,14 +1,14 @@
-# MAIS BrandScript
+# HANDLED BrandScript
 
 > **Canonical Source of Truth** - All marketing copy derives from this document.
 > **Framework:** Donald Miller's StoryBrand (SB7)
-> **Last Updated:** November 24, 2025
+> **Last Updated:** January 10, 2026
 
 ---
 
 ## One-Liner
 
-> We help small business owners escape the admin trap so they can focus on what they do best.
+> Done-for-you tech. Done-with-you education. For the service professional who wants to focus on their craft.
 
 ---
 
@@ -41,7 +41,7 @@ To run a business that runs itself—so they can focus on their craft and their 
 
 ---
 
-### 3. THE GUIDE (MAIS)
+### 3. THE GUIDE (HANDLED)
 
 **Empathy:**
 
@@ -49,11 +49,11 @@ To run a business that runs itself—so they can focus on their craft and their 
 
 **Authority:**
 
-> "We've helped 50+ business owners escape the admin trap."
+> "We've helped 50+ service professionals escape the admin trap."
 
 **Differentiator:**
 
-> "We're your growth partner, not another tool. We only profit when you do."
+> "We handle the tech so you can handle your clients. One membership, everything included."
 
 ---
 
@@ -69,8 +69,8 @@ To run a business that runs itself—so they can focus on their craft and their 
 
 **Risk Reversal:**
 
-- No upfront costs
-- No monthly fees
+- One predictable monthly fee
+- Keep 100% of your bookings
 - Cancel anytime
 
 ---
@@ -172,25 +172,25 @@ What happens if they don't act:
 
 ## FAQ Answers
 
-**Revenue-sharing model:**
+**Membership model:**
 
-> "We take a small percentage (10-15%) of new revenue we help generate. No monthly fees, no upfront costs. We only profit when you do."
+> "One monthly fee, everything included. Optimized storefront, booking system, AI chatbot, monthly newsletters, and Zoom calls. Standard members keep 100% of their bookings."
 
 **Already have a website:**
 
-> "Great! We can work with it or upgrade it. Our systems integrate with most platforms."
+> "Great! We can migrate your content to your new HANDLED site, or we can integrate the booking system with your existing site."
 
 **How long for results:**
 
-> "Booking system live within 2 weeks. Measurable revenue impact in 60-90 days."
+> "Your website and booking system are typically live within 2 weeks. Most members see booking improvements in the first month."
 
-**AI strategist support:**
+**What's included:**
 
-> "Your dedicated strategist handles campaigns, booking setup, website updates, and growth strategy. Think of them as your part-time marketing department."
+> "Done-for-you tech (optimized storefront, booking, AI chatbot) plus done-with-you education (monthly newsletter on AI trends, live Zoom calls with Q&A). We build it, we maintain it, you focus on clients."
 
 **Cancel policy:**
 
-> "Yes, anytime. No long-term contracts. We don't need to lock you in—we're confident in our partnership model."
+> "Yes, anytime. No long-term contracts. We're confident you'll stay because the value is obvious."
 
 ---
 

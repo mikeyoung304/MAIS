@@ -1,6 +1,6 @@
-# MAIS Documentation
+# HANDLED Documentation
 
-**MAIS (Macon AI Solutions)** is a multi-tenant business growth club platform partnering with entrepreneurs and small business owners through revenue-sharing partnerships. Built as a modular monolith with Express + React, featuring complete data isolation, config-driven architecture, and mock-first development.
+**HANDLED** ([gethandled.ai](https://gethandled.ai)) is a membership platform for service professionals — from photographers to therapists to personal trainers — combining done-for-you tech with done-with-you education. Built as a multi-tenant modular monolith with Express + Next.js, featuring complete data isolation, config-driven architecture, and mock-first development.
 
 Whether you're setting up your development environment, responding to a production incident, or understanding the architecture, this guide will help you find what you need quickly.
 

@@ -65,9 +65,9 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
       } as any, // Cast because Section is discriminated union
       {
         type: 'text',
-        headline: 'Why MAIS?',
-        content: `<p>MAIS is a business growth club that partners with entrepreneurs and small business owners through revenue-sharing partnerships.</p>
-                 <p>Instead of isolated tools, we provide a complete platform: AI consulting, professional websites, seamless booking, and marketing automation.</p>`,
+        headline: 'Why HANDLED?',
+        content: `<p>HANDLED is a membership platform for service professionals — from photographers to therapists to personal trainers.</p>
+                 <p>We combine done-for-you tech (optimized storefront, booking, AI chatbots) with done-with-you education (monthly newsletters, Zoom calls). One membership fee, everything included.</p>`,
         imageUrl: '/images/corporate/features.jpg',
         imagePosition: 'right' as const,
       } as any,
@@ -91,8 +91,8 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
       {
         type: 'text',
         headline: 'Our Mission',
-        content: `<p>We believe entrepreneurs should focus on running their business, not managing tools.</p>
-                 <p>MAIS combines AI expertise, beautiful design, and revenue-sharing partnerships to help small businesses grow profitably.</p>`,
+        content: `<p>We believe service professionals should focus on their craft, not their tech.</p>
+                 <p>HANDLED combines professional websites, booking systems, and AI chatbots with ongoing education — so you can serve your clients, not wrestle with software.</p>`,
         imageUrl: '/images/corporate/mission.jpg',
         imagePosition: 'left' as const,
       } as any,
@@ -110,9 +110,9 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
           },
           {
             name: 'Marcus Johnson',
-            role: 'Consultant',
+            role: 'Business Coach',
             content:
-              'Finally, a platform that understood my business. The revenue share model means we win together.',
+              'Finally, a platform that understood my business. The monthly membership is predictable, and I keep 100% of my bookings.',
             rating: 5,
             imageUrl: '/images/corporate/marcus.jpg',
           },
@@ -147,19 +147,21 @@ export const CORPORATE_PAGES_CONFIG: PagesConfig = {
     sections: [
       {
         type: 'hero',
-        headline: 'Simple, Fair Pricing',
-        subheadline: 'No hidden fees. We succeed when you succeed.',
+        headline: 'Simple, Predictable Pricing',
+        subheadline: 'One membership fee. Everything included. No percentage of your bookings.',
       } as any,
       {
         type: 'text',
-        headline: 'Revenue-Share Model',
-        content: `<p>Instead of monthly subscriptions, we partner with you. You pay us a percentage of revenue we help you generate.</p>
+        headline: 'Membership Model',
+        content: `<p>HANDLED is a straightforward membership — one monthly fee, everything included:</p>
                  <ul>
-                   <li>AI Consulting: 10% of consulting revenue</li>
-                   <li>Professional Website: 10% of bookings</li>
-                   <li>Booking System: 5% of booking fees</li>
-                   <li>Marketing Automation: 8% of attributed revenue</li>
-                 </ul>`,
+                   <li>Professional website with booking and payments</li>
+                   <li>AI chatbot for 24/7 client inquiries</li>
+                   <li>Monthly newsletter on AI trends that matter</li>
+                   <li>Live Zoom calls with community and experts</li>
+                   <li>Ongoing support when you need it</li>
+                 </ul>
+                 <p>You keep 100% of your bookings — we charge a membership fee, not a percentage.</p>`,
       } as any,
     ],
   },
@@ -236,13 +238,14 @@ export async function revalidateCorporateSite() {
  * Pass this as 'tenant' to SectionRenderer for consistency
  */
 export const CORPORATE_BRANDING = {
-  id: 'mais-corp',
-  name: 'MAIS',
-  slug: 'mais',
-  description: 'AI-powered business growth club for entrepreneurs',
-  website: 'https://mais.co',
-  email: 'hello@mais.co',
-  phone: '+1-555-MAIS-CO',
+  id: 'handled-corp',
+  name: 'HANDLED',
+  slug: 'handled',
+  description:
+    'Membership platform for service professionals - done-for-you tech, done-with-you education',
+  website: 'https://gethandled.ai',
+  email: 'hello@gethandled.ai',
+  phone: '+1-555-HANDLED',
   branding: {
     logoUrl: '/images/mais-logo.svg',
     primaryColor: '#16a34a', // sage green
@@ -261,13 +264,13 @@ import { SectionRenderer } from '@/components/tenant/SectionRenderer';
 import { getCorporatePages, CORPORATE_BRANDING } from '@/lib/corporate-site';
 
 export const metadata: Metadata = {
-  title: 'MAIS - AI-Powered Business Growth',
-  description: 'Transform your business with AI consulting, professional websites, seamless booking, and marketing automation.',
+  title: 'HANDLED - Done-for-you tech for service professionals',
+  description: 'Optimized storefronts, booking systems, and AI chatbots for service professionals. One membership fee, everything included.',
   openGraph: {
-    title: 'MAIS - AI-Powered Business Growth',
-    description: 'Transform your business with AI consulting, professional websites, seamless booking, and marketing automation.',
-    url: 'https://mais.co',
-    siteName: 'MAIS',
+    title: 'HANDLED - Done-for-you tech for service professionals',
+    description: 'Optimized storefronts, booking systems, and AI chatbots for service professionals. One membership fee, everything included.',
+    url: 'https://gethandled.ai',
+    siteName: 'HANDLED',
     images: [
       {
         url: '/images/corporate/og-image.jpg',

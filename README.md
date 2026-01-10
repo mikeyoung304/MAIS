@@ -1,4 +1,4 @@
-# Macon AI Solutions - Business Growth Club Platform
+# HANDLED - Membership Platform for Service Professionals
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
@@ -9,58 +9,77 @@
 [![Production Ready](https://img.shields.io/badge/production-ready-brightgreen)](./ARCHITECTURE.md)
 [![Platform Maturity](https://img.shields.io/badge/maturity-9.8%2F10-brightgreen)](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md)
 
-> Your all-in-one partner for AI consulting, booking, scheduling, website builds, and business growth through revenue-sharing partnerships.
+> Done-for-you tech. Done-with-you education. For service professionals who want to focus on their craft.
 
 ---
 
-## What is Macon AI Solutions?
+## What is HANDLED?
 
-**Macon AI Solutions** is a **business growth club** that partners with entrepreneurs and small business owners through a revenue-sharing model. We provide AI consulting, seamless scheduling and booking systems, professional websites, and marketing automation—all aligned with your success through shared incentives.
+**HANDLED** ([gethandled.ai](https://gethandled.ai)) is a **membership platform for service professionals** — from photographers to therapists to personal trainers — combining done-for-you tech with done-with-you education.
 
-### The Club Model
+Members get:
 
-Unlike traditional SaaS subscriptions, the Macon AI Club operates on a **revenue-sharing partnership**:
+- **Optimized storefront** showcasing your services and brand
+- **Integrated booking & payments** through Stripe
+- **AI-powered chatbot** that handles client inquiries 24/7
+- **Monthly newsletter** about what's worth knowing in AI
+- **Live Zoom calls** with the community and experts
 
-- **Small base fee + % of sales** - We only earn when you earn
-- **Dedicated AI strategist** - Your personal business growth partner
-- **Done-for-you services** - We handle the tech, you focus on your business
-- **Application-based membership** - Curated community of growth-focused businesses
+### The Membership Model
 
-### Three Pillars of Growth
+HANDLED is a straightforward membership — one monthly fee, everything included:
 
-**1. Business Growth, Accelerated**
+- **Done-for-you tech** - We build and maintain your website, booking system, and AI chatbot
+- **Done-with-you education** - Monthly newsletters and Zoom calls about AI trends that matter
+- **Community access** - Connect with other service professionals on the same journey
+- **Ongoing support** - We're here when you need help, not just at setup
 
-- Hands-on marketing and bespoke consulting
-- Sales-driven strategies powered by cutting-edge AI
-- We execute alongside you, not just provide tools
+### What Members Get
 
-**2. Seamless Scheduling & Bookings**
+**1. Professional Website + Booking**
 
-- Effortless appointment and payment management
-- Client flow automation tailored to your brand
-- Save 60+ hours/month, never lose a lead
+- Beautiful, conversion-optimized website showcasing your services
+- Integrated booking system with calendar sync
+- Payment processing through Stripe (you keep 100% of your earnings)
 
-**3. Your Website, Your Way**
+**2. AI Chatbot for Your Business**
 
-- Professional website design, launch, and maintenance
-- No dev skills required—we handle the tech
-- Digital presence that converts visitors to customers
+- 24/7 client inquiry handling
+- Answers questions about your services and availability
+- Books appointments directly into your calendar
 
-### Target Members
+**3. Monthly Education**
 
-- **The Solopreneur** - Wearing all the hats and drowning in admin
-- **The Scaling Startup** - Proven concept, needs systems to scale
-- **The Pivot Artist** - Shifting business models or launching new offerings
-- **Service Professionals** - Coaches, consultants, salon owners, fitness trainers
-- **Small Business Owners** - Ready to level up with AI and digital essentials
+- Newsletter covering AI trends relevant to service businesses
+- Live Zoom calls with Q&A and guest experts
+- No fluff — just what's actually useful
 
-### Business Value
+### Who Is HANDLED For?
 
-- **Aligned Incentives**: We invest in your growth through revenue-sharing
-- **Lower Barrier**: No large upfront costs or monthly fees eating profits
-- **Partnership Approach**: Dedicated team working on your success
-- **Comprehensive Support**: Tech, marketing, booking, and consulting in one place
-- **Scalable Growth**: Systems that grow with your business
+Any service professional who books clients and wants to look professional online:
+
+- **Health & Wellness** — Therapists, personal trainers, yoga instructors, massage therapists
+- **Creative Professionals** — Photographers, videographers, graphic designers, musicians
+- **Coaches & Consultants** — Life coaches, business coaches, career consultants
+- **Event Professionals** — Wedding planners, event coordinators, DJs, caterers
+- **Home Services** — Interior designers, organizers, tutors, pet sitters
+- **And more** — If you book appointments with clients, HANDLED works for you
+
+### Why Members Love It
+
+- **One monthly fee** — No surprise charges, predictable cost
+- **Tech handled for you** — No DIY website builders or plugin nightmares
+- **Stay current on AI** — Learn what matters without drowning in hype
+- **Community support** — You're not figuring this out alone
+
+### Platform Capabilities
+
+The HANDLED platform supports flexible pricing models:
+
+- **Membership-based** — Flat monthly fee (current default)
+- **Commission-based** — Platform fee as percentage of bookings (available for custom arrangements)
+
+Members on the standard membership keep 100% of their booking revenue.
 
 ### Member Platform Features
 
@@ -121,7 +140,7 @@ Club members currently have self-service access to:
 
 ## Agent-Powered Platform (Future Roadmap)
 
-MAIS has a planned evolution into an **agent-powered, config-driven platform** that enables AI agents to collaborate with human admins in managing tenant configurations.
+HANDLED has a planned evolution into an **agent-powered, config-driven platform** that enables AI agents to collaborate with members in managing their website and booking configurations.
 
 ### What's Changing
 
@@ -894,4 +913,4 @@ Built with modern, production-ready tools:
 
 ---
 
-**Made with care for entrepreneurs and small business owners ready to unlock their growth potential.**
+**Made with care for service professionals who want to focus on their craft, not their tech.**
