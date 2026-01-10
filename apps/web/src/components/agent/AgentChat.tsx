@@ -1,75 +1,18 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Send, Loader2, CheckCircle, XCircle, Bot, User, AlertTriangle } from 'lucide-react';
 import { ChatbotUnavailable } from './ChatbotUnavailable';
 import { parseQuickReplies } from '@/lib/parseQuickReplies';
 import { QuickReplyChips } from './QuickReplyChips';
+import { useAgentChat, type ChatMessage, type Proposal } from '@/hooks/useAgentChat';
 
 // Use Next.js API proxy for agent endpoints
 // The proxy (/api/agent/*) handles authentication and forwards to Express backend
 // SECURITY: Backend token is never exposed to client-side code
-const API_URL = '/api';
-
-/**
- * Message in the chat history
- */
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  proposals?: Proposal[];
-  toolResults?: ToolResult[];
-}
-
-/**
- * Proposal requiring user confirmation
- */
-interface Proposal {
-  proposalId: string;
-  operation: string;
-  preview: Record<string, unknown>;
-  trustTier: string;
-  requiresApproval: boolean;
-}
-
-/**
- * Tool execution result
- */
-interface ToolResult {
-  toolName: string;
-  success: boolean;
-  data?: unknown;
-  error?: string;
-}
-
-/**
- * Session context from backend
- */
-interface SessionContext {
-  businessName: string;
-  businessSlug: string;
-  quickStats: {
-    stripeConnected: boolean;
-    packageCount: number;
-    upcomingBookings: number;
-    totalBookings: number;
-    revenueThisMonth: number;
-  };
-}
-
-/**
- * Health check response from backend
- */
-interface HealthCheckResponse {
-  available: boolean;
-  reason: string | null;
-  onboardingState: 'needs_stripe' | 'needs_packages' | 'needs_bookings' | 'ready';
-  capabilities: string[];
-}
+const API_URL = '/api/agent';
 
 interface AgentChatProps {
   /** Initial greeting to display (optional, will fetch from API if not provided) */
@@ -97,222 +40,31 @@ export function AgentChat({
   onProposalConfirmed,
   className,
 }: AgentChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [context, setContext] = useState<SessionContext | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pendingProposals, setPendingProposals] = useState<Proposal[]>([]);
-
-  // Health check state
-  const [isCheckingHealth, setIsCheckingHealth] = useState(true);
-  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
-  const [unavailableReason, setUnavailableReason] = useState<string | null>(null);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Health check and session initialization
-  const initializeChat = useCallback(async () => {
-    setIsCheckingHealth(true);
-    setError(null);
-
-    try {
-      // Step 1: Pre-flight health check
-      // Calls /api/agent/health → proxied to /v1/agent/health with auth
-      const healthResponse = await fetch(`${API_URL}/agent/health`);
-
-      if (!healthResponse.ok) {
-        // Network error - try to proceed anyway
-        console.warn('Health check failed, attempting session init...');
-      } else {
-        const health: HealthCheckResponse = await healthResponse.json();
-
-        if (!health.available) {
-          setIsAvailable(false);
-          setUnavailableReason(health.reason);
-          setIsCheckingHealth(false);
-          return;
-        }
-        // onboardingState is available in health.onboardingState for future use
-        // (e.g., showing progress indicators)
-      }
-
-      // Step 2: Initialize session
-      const sessionResponse = await fetch(`${API_URL}/agent/session`);
-
-      if (!sessionResponse.ok) {
-        throw new Error('Failed to initialize chat session');
-      }
-
-      const data = await sessionResponse.json();
-      setSessionId(data.sessionId);
-      setContext(data.context);
-      setIsAvailable(true);
-      onSessionStart?.(data.sessionId);
-
-      // Add greeting message
-      const greeting = initialGreeting || data.greeting;
-      setMessages([
-        {
-          role: 'assistant',
-          content: greeting,
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (err) {
-      setIsAvailable(false);
-      setUnavailableReason('context_unavailable');
-      setError(err instanceof Error ? err.message : 'Failed to start chat');
-    } finally {
-      setIsCheckingHealth(false);
-    }
-  }, [initialGreeting, onSessionStart]);
-
-  // Initialize on mount
-  useEffect(() => {
-    initializeChat();
-  }, [initializeChat]);
-
-  // Send a message to the agent
-  const sendMessage = async () => {
-    const message = inputValue.trim();
-    if (!message || isLoading || !sessionId) return;
-
-    setInputValue('');
-    setError(null);
-    setIsLoading(true);
-
-    // Add user message to chat
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const response = await fetch(`${API_URL}/agent/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          sessionId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json();
-
-      // Add assistant message
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: data.message,
-        timestamp: new Date(),
-        proposals: data.proposals,
-        toolResults: data.toolResults,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Track pending proposals that need confirmation
-      if (data.proposals?.length) {
-        const needsConfirmation = data.proposals.filter(
-          (p: Proposal) => p.requiresApproval && p.trustTier === 'T3'
-        );
-        if (needsConfirmation.length) {
-          setPendingProposals((prev) => [...prev, ...needsConfirmation]);
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
-    }
-  };
-
-  // Handle proposal confirmation
-  const confirmProposal = async (proposalId: string) => {
-    try {
-      const response = await fetch(`${API_URL}/agent/proposals/${proposalId}/confirm`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to confirm proposal');
-      }
-
-      const result = await response.json();
-
-      // Remove from pending
-      setPendingProposals((prev) => prev.filter((p) => p.proposalId !== proposalId));
-
-      // Add confirmation message
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `Done! ${result.status === 'EXECUTED' ? 'The change has been applied.' : 'Confirmed.'}`,
-          timestamp: new Date(),
-        },
-      ]);
-
-      onProposalConfirmed?.(proposalId, result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to confirm proposal');
-    }
-  };
-
-  // Handle proposal rejection
-  const rejectProposal = async (proposalId: string) => {
-    try {
-      const response = await fetch(`${API_URL}/agent/proposals/${proposalId}/reject`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to reject proposal');
-      }
-
-      // Remove from pending
-      setPendingProposals((prev) => prev.filter((p) => p.proposalId !== proposalId));
-
-      // Add rejection message
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: "No problem, I won't make that change. What else can I help with?",
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject proposal');
-    }
-  };
-
-  // Handle textarea enter key
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  const {
+    messages,
+    inputValue,
+    isLoading,
+    sessionId,
+    context,
+    error,
+    pendingProposals,
+    isCheckingHealth,
+    isAvailable,
+    unavailableReason,
+    sendMessage,
+    confirmProposal,
+    rejectProposal,
+    initializeChat,
+    setInputValue,
+    messagesEndRef,
+    inputRef,
+    handleKeyDown,
+  } = useAgentChat({
+    apiUrl: API_URL,
+    initialGreeting,
+    onSessionStart,
+    onProposalConfirmed,
+  });
 
   // Loading state - matches HANDLED card pattern
   if (isCheckingHealth) {

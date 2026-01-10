@@ -13,7 +13,12 @@ import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repositor
 import type { EarlyAccessRepository } from '../lib/ports';
 import { loginLimiter, signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
-import { UnauthorizedError, ConflictError, ValidationError } from '../lib/errors';
+import {
+  UnauthorizedError,
+  ConflictError,
+  ValidationError,
+  TenantProvisioningError,
+} from '../lib/errors';
 import { sanitizePlainText } from '../lib/sanitization';
 import { EarlyAccessRequestDtoSchema } from '@macon/contracts';
 
@@ -558,17 +563,26 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         apiKeyPublic: tenant.apiKeyPublic,
       });
     } catch (error) {
-      // Log failed signup attempts
-      logger.warn(
+      // Log failed signup attempts with appropriate level
+      // TenantProvisioningError is a known failure mode - log at error level
+      // Other errors (validation, conflict) are expected - log at warn level
+      const isCriticalError = error instanceof TenantProvisioningError;
+
+      const logFn = isCriticalError ? logger.error.bind(logger) : logger.warn.bind(logger);
+      logFn(
         {
-          event: 'tenant_signup_failed',
+          event: isCriticalError ? 'tenant_provisioning_failed' : 'tenant_signup_failed',
           endpoint: '/v1/auth/signup',
           email: req.body.email,
           ipAddress,
           timestamp: new Date().toISOString(),
           error: error instanceof Error ? error.message : 'Unknown error',
+          // Include original cause for provisioning errors (internal debugging)
+          ...(isCriticalError && error.originalError ? { cause: error.originalError.message } : {}),
         },
-        'Failed signup attempt'
+        isCriticalError
+          ? 'Tenant provisioning failed - signup aborted, no partial tenant created'
+          : 'Failed signup attempt'
       );
 
       next(error);

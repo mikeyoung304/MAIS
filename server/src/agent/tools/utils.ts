@@ -14,6 +14,7 @@ import {
   type PagesConfig,
   type LandingPageConfig,
   DEFAULT_PAGES_CONFIG,
+  LandingPageConfigSchema,
 } from '@macon/contracts';
 import type { ToolError } from './types';
 
@@ -136,19 +137,46 @@ export async function getDraftConfig(
     throw new Error('Tenant not found');
   }
 
-  // If draft exists, use it
+  // If draft exists, validate and use it
   if (tenant.landingPageConfigDraft) {
-    const draft = tenant.landingPageConfigDraft as unknown as LandingPageConfig;
+    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+    if (!result.success) {
+      logger.warn(
+        { tenantId, errors: result.error.issues },
+        'Invalid draft config, falling back to defaults'
+      );
+      return {
+        pages: DEFAULT_PAGES_CONFIG,
+        hasDraft: false,
+      };
+    }
     return {
-      pages: draft.pages || DEFAULT_PAGES_CONFIG,
+      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
       hasDraft: true,
     };
   }
 
-  // Otherwise, initialize from live config or defaults
-  const live = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+  // Otherwise, validate and initialize from live config or defaults
+  if (tenant.landingPageConfig) {
+    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+    if (!result.success) {
+      logger.warn(
+        { tenantId, errors: result.error.issues },
+        'Invalid live config, falling back to defaults'
+      );
+      return {
+        pages: DEFAULT_PAGES_CONFIG,
+        hasDraft: false,
+      };
+    }
+    return {
+      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
+      hasDraft: false,
+    };
+  }
+
   return {
-    pages: live?.pages || DEFAULT_PAGES_CONFIG,
+    pages: DEFAULT_PAGES_CONFIG,
     hasDraft: false,
   };
 }
@@ -206,20 +234,50 @@ export async function getDraftConfigWithSlug(
     throw new Error('Tenant not found');
   }
 
-  // If draft exists, use it
+  // If draft exists, validate and use it
   if (tenant.landingPageConfigDraft) {
-    const draft = tenant.landingPageConfigDraft as unknown as LandingPageConfig;
+    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+    if (!result.success) {
+      logger.warn(
+        { tenantId, errors: result.error.issues },
+        'Invalid draft config, falling back to defaults'
+      );
+      return {
+        pages: DEFAULT_PAGES_CONFIG,
+        hasDraft: false,
+        slug: tenant.slug,
+      };
+    }
     return {
-      pages: draft.pages || DEFAULT_PAGES_CONFIG,
+      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
       hasDraft: true,
       slug: tenant.slug,
     };
   }
 
-  // Otherwise, initialize from live config or defaults
-  const live = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+  // Otherwise, validate and initialize from live config or defaults
+  if (tenant.landingPageConfig) {
+    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+    if (!result.success) {
+      logger.warn(
+        { tenantId, errors: result.error.issues },
+        'Invalid live config, falling back to defaults'
+      );
+      return {
+        pages: DEFAULT_PAGES_CONFIG,
+        hasDraft: false,
+        slug: tenant.slug,
+      };
+    }
+    return {
+      pages: result.data.pages || DEFAULT_PAGES_CONFIG,
+      hasDraft: false,
+      slug: tenant.slug,
+    };
+  }
+
   return {
-    pages: live?.pages || DEFAULT_PAGES_CONFIG,
+    pages: DEFAULT_PAGES_CONFIG,
     hasDraft: false,
     slug: tenant.slug,
   };

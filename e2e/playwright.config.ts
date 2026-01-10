@@ -70,9 +70,10 @@ export default defineConfig({
   ],
 
   // Run your local dev server before starting the tests
+  // Note: Next.js uses NEXT_PUBLIC_* env vars (not VITE_*)
+  // The E2E tenant key is set in apps/web/.env.local for development
   webServer: {
-    command:
-      'ADAPTERS_PRESET=real E2E_TEST=1 VITE_API_URL=http://localhost:3001 VITE_APP_MODE=mock VITE_E2E=1 VITE_TENANT_API_KEY=pk_live_handled-e2e_0000000000000000 npm run dev:e2e',
+    command: 'ADAPTERS_PRESET=real E2E_TEST=1 npm run dev:e2e',
     cwd: '..',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,

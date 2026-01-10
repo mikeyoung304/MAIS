@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '632'
 tags: [code-review, tenant-onboarding, auth, error-handling]
@@ -201,20 +201,52 @@ if (tenantsWithoutPackages.length > 0) {
 
 ## Acceptance Criteria
 
-- [ ] Auth signup uses `TenantProvisioningService.createFullyProvisioned()`
-- [ ] Signup wrapped in `prisma.$transaction()`
-- [ ] If onboarding fails, signup fails (no partial tenant)
-- [ ] Clear error message returned to user on failure
-- [ ] Existing signup tests pass
-- [ ] New test: signup fails cleanly if onboarding fails
-- [ ] New test: no tenant record exists after failed signup
+- [x] Auth signup uses `TenantProvisioningService.createFromSignup()` (already done)
+- [x] Signup wrapped in `prisma.$transaction()` (in TenantProvisioningService)
+- [x] If onboarding fails, signup fails (no partial tenant)
+- [x] Clear error message returned to user on failure
+- [x] Existing signup tests pass
+- [x] New test: signup fails cleanly if onboarding fails
+- [x] New test: no tenant record exists after failed signup
 
 ## Work Log
 
-| Date       | Action                     | Learnings                                    |
-| ---------- | -------------------------- | -------------------------------------------- |
-| 2026-01-05 | Created from system review | Silent degradation can create broken tenants |
-| 2026-01-05 | Triaged by 3 reviewers     | Merge with #630, use shared service          |
+| Date       | Action                                 | Learnings                                     |
+| ---------- | -------------------------------------- | --------------------------------------------- |
+| 2026-01-05 | Created from system review             | Silent degradation can create broken tenants  |
+| 2026-01-05 | Triaged by 3 reviewers                 | Merge with #630, use shared service           |
+| 2026-01-09 | Implemented TenantProvisioningError    | Added specific error type for atomic failures |
+| 2026-01-09 | Updated provisioning service           | Errors now throw TenantProvisioningError      |
+| 2026-01-09 | Improved auth.routes.ts error handling | Differentiates provisioning from other errors |
+| 2026-01-09 | Added comprehensive test suite         | Tests for error handling and rollback         |
+
+## Implementation Summary
+
+### Changes Made
+
+1. **New Error Type**: `TenantProvisioningError` (`server/src/lib/errors/business.ts`)
+   - Specific error for atomic tenant provisioning failures
+   - Includes original error as `cause` for debugging
+   - Returns user-friendly message: "Failed to complete signup. Please try again."
+   - HTTP status code 422 with code `TENANT_PROVISIONING_ERROR`
+
+2. **Enhanced Provisioning Service** (`server/src/services/tenant-provisioning.service.ts`)
+   - `createFromSignup()` now catches errors and throws `TenantProvisioningError`
+   - Detailed error logging for debugging (slug, email, original error message/stack)
+   - Transaction ensures atomic rollback on any failure
+
+3. **Better Error Logging** (`server/src/routes/auth.routes.ts`)
+   - Differentiates between critical (provisioning) and expected (validation) errors
+   - Critical errors log at ERROR level with event `tenant_provisioning_failed`
+   - Includes original cause for internal debugging
+   - Clear message: "Tenant provisioning failed - signup aborted, no partial tenant created"
+
+4. **Comprehensive Tests** (`server/test/services/tenant-provisioning.service.test.ts`)
+   - Tests successful atomic creation (tenant + segment + 3 packages)
+   - Tests that `TenantProvisioningError` is thrown on failure
+   - Tests that original error is preserved as cause
+   - Tests that no partial tenant data exists after failure
+   - Tests error code for HTTP handler compatibility
 
 ## Resources
 

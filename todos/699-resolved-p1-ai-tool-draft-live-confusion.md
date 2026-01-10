@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '699'
 tags: [code-review, ai-tools, user-trust, messaging]
 dependencies: []
+resolved_in: 4607f2f3
 ---
 
 # AI Tools Misleading About Draft vs Live Status

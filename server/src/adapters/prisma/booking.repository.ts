@@ -534,6 +534,59 @@ export class PrismaBookingRepository implements BookingRepository {
   }
 
   /**
+   * Count TIMESLOT bookings for a specific service on a specific date
+   *
+   * Used for maxPerDay enforcement. Only counts active bookings (PENDING, CONFIRMED).
+   *
+   * MULTI-TENANT: Filtered by tenantId for data isolation
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param serviceId - Service ID to count bookings for
+   * @param date - The date to count bookings for
+   * @returns Number of active bookings for this service on this date
+   *
+   * @example
+   * ```typescript
+   * const count = await repository.countTimeslotBookingsForServiceOnDate(
+   *   'tenant_123',
+   *   'service_abc',
+   *   new Date('2025-06-15')
+   * );
+   * // Returns number of active bookings for this service on 2025-06-15
+   * ```
+   */
+  async countTimeslotBookingsForServiceOnDate(
+    tenantId: string,
+    serviceId: string,
+    date: Date
+  ): Promise<number> {
+    // Calculate start and end of day in UTC
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const count = await this.prisma.booking.count({
+      where: {
+        tenantId,
+        serviceId,
+        bookingType: 'TIMESLOT',
+        startTime: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        // Only count active bookings (exclude cancelled)
+        status: {
+          in: ['PENDING', 'CONFIRMED'],
+        },
+      },
+    });
+
+    return count;
+  }
+
+  /**
    * Find all TIMESLOT bookings within a date range (batch query)
    *
    * PERFORMANCE: Single query optimization to avoid N+1 problem.

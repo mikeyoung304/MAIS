@@ -679,6 +679,23 @@ export class MockBookingRepository implements BookingRepository {
     return [];
   }
 
+  async countTimeslotBookingsForServiceOnDate(
+    _tenantId: string,
+    serviceId: string,
+    date: Date
+  ): Promise<number> {
+    // Mock mode: Count TIMESLOT bookings for this service on this date
+    // Since mock mode doesn't store TIMESLOT bookings properly, return 0
+    logger.debug(
+      {
+        serviceId,
+        date: date.toISOString(),
+      },
+      'countTimeslotBookingsForServiceOnDate called'
+    );
+    return 0;
+  }
+
   async findAppointments(
     tenantId: string,
     filters?: {

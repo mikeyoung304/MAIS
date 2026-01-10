@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '671'
 tags:
@@ -8,6 +8,7 @@ tags:
   - agent
   - frontend
 dependencies: []
+resolved_in: this-commit
 ---
 
 # Quick Reply Content Could Be Exploited for Indirect Prompt Injection

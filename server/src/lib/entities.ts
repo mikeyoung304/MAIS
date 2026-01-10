@@ -138,6 +138,8 @@ export interface Service {
   active: boolean;
   sortOrder: number;
   segmentId: string | null;
+  /** Maximum bookings allowed per day for this service. null = unlimited */
+  maxPerDay: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

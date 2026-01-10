@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '629'
 tags: [code-review, agent-tools, data-integrity, packages, segments]
 dependencies: []
+resolved_in: 4607f2f3
 ---
 
 # upsert_package Agent Tool Creates Orphaned Packages

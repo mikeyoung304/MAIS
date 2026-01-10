@@ -203,6 +203,22 @@ export interface BookingRepository {
   ): Promise<TimeslotBooking[]>;
 
   /**
+   * Count TIMESLOT bookings for a specific service on a specific date
+   *
+   * Used for maxPerDay enforcement. Only counts active bookings (PENDING, CONFIRMED).
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param serviceId - Service ID to count bookings for
+   * @param date - The date to count bookings for
+   * @returns Number of active bookings for this service on this date
+   */
+  countTimeslotBookingsForServiceOnDate(
+    tenantId: string,
+    serviceId: string,
+    date: Date
+  ): Promise<number>;
+
+  /**
    * Find all appointments (TIMESLOT bookings) with optional filters
    *
    * Performs server-side filtering for efficient queries.

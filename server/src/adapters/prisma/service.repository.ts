@@ -211,6 +211,7 @@ export class PrismaServiceRepository implements ServiceRepository {
     active: boolean;
     sortOrder: number;
     segmentId: string | null;
+    maxPerDay: number | null;
     createdAt: Date;
     updatedAt: Date;
   }): Service {
@@ -227,6 +228,7 @@ export class PrismaServiceRepository implements ServiceRepository {
       active: service.active,
       sortOrder: service.sortOrder,
       segmentId: service.segmentId,
+      maxPerDay: service.maxPerDay,
       createdAt: service.createdAt,
       updatedAt: service.updatedAt,
     };

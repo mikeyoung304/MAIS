@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import type { PagesConfig, PageName } from '@macon/contracts';
 import { useBuildModeSync } from '@/hooks/useBuildModeSync';
 import { cn } from '@/lib/utils';
@@ -35,12 +36,19 @@ interface BuildModeWrapperProps {
 export function BuildModeWrapper({ initialConfig, pageName, children }: BuildModeWrapperProps) {
   const [currentConfig, setCurrentConfig] = useState<PagesConfig | null>(initialConfig);
 
-  const { isEditMode, draftConfig, highlightedSection, selectSection, notifyPageChange } =
-    useBuildModeSync({
-      enabled: true,
-      initialConfig,
-      onConfigChange: setCurrentConfig,
-    });
+  const {
+    isEditMode,
+    draftConfig,
+    highlightedSection,
+    isReady,
+    hasTimedOut,
+    selectSection,
+    notifyPageChange,
+  } = useBuildModeSync({
+    enabled: true,
+    initialConfig,
+    onConfigChange: setCurrentConfig,
+  });
 
   // Use draft config in edit mode, otherwise use initial/current
   const effectiveConfig = isEditMode && draftConfig ? draftConfig : currentConfig;
@@ -49,6 +57,16 @@ export function BuildModeWrapper({ initialConfig, pageName, children }: BuildMod
   useEffect(() => {
     notifyPageChange(pageName);
   }, [pageName, notifyPageChange]);
+
+  // Show loading state during handshake (prevents flash of published content)
+  if (isEditMode && !isReady && !hasTimedOut) {
+    return <PreviewLoadingState />;
+  }
+
+  // Show error state if handshake timed out
+  if (isEditMode && hasTimedOut) {
+    return <PreviewTimeoutError />;
+  }
 
   return (
     <div className={cn('relative', isEditMode && 'build-mode-active')}>
@@ -71,6 +89,43 @@ export function BuildModeWrapper({ initialConfig, pageName, children }: BuildMod
           onSelectSection={selectSection}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Loading state shown during PostMessage handshake
+ * Prevents flash of published content before draft appears
+ */
+function PreviewLoadingState() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface">
+      <div className="text-center">
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-sage" />
+        <p className="mt-4 text-lg font-medium text-text-primary">Loading draft preview...</p>
+        <p className="mt-2 text-sm text-text-secondary">Syncing with editor</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Error state shown when PostMessage handshake times out
+ */
+function PreviewTimeoutError() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface">
+      <div className="mx-auto max-w-md text-center">
+        <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+        <h2 className="mt-4 text-xl font-semibold text-text-primary">Preview Connection Failed</h2>
+        <p className="mt-2 text-text-secondary">
+          Unable to sync with the editor. Please close this preview and try again from the Build
+          Mode panel.
+        </p>
+        <p className="mt-4 text-sm text-text-tertiary">
+          If this issue persists, try refreshing the parent page.
+        </p>
+      </div>
     </div>
   );
 }

@@ -83,3 +83,15 @@ export {
 
 // Subscription & Billing
 export { useSubscription, type SubscriptionTier } from './useSubscription';
+
+// Agent Chat
+export {
+  useAgentChat,
+  type ChatMessage,
+  type Proposal,
+  type ToolResult,
+  type HealthCheckResponse,
+  type SessionContext,
+  type UseAgentChatOptions,
+  type UseAgentChatReturn,
+} from './useAgentChat';

@@ -101,6 +101,31 @@ export class BookingCannotBeRescheduledError extends BookingError {
 }
 
 /**
+ * Maximum bookings per day exceeded
+ * Use when a service has maxPerDay limit and that limit has been reached
+ */
+export class MaxBookingsPerDayExceededError extends BookingError {
+  constructor(
+    public readonly date: string,
+    public readonly maxPerDay: number
+  ) {
+    super(
+      `Maximum bookings per day (${maxPerDay}) has been reached for ${date}`,
+      'MAX_BOOKINGS_PER_DAY_EXCEEDED'
+    );
+    this.name = 'MaxBookingsPerDayExceededError';
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      date: this.date,
+      maxPerDay: this.maxPerDay,
+    };
+  }
+}
+
+/**
  * Payment-specific errors
  */
 export class PaymentError extends AppError {
@@ -239,6 +264,35 @@ export class InvalidTenantKeyError extends TenantError {
   constructor() {
     super('Invalid or missing tenant key', 'INVALID_TENANT_KEY');
     this.name = 'InvalidTenantKeyError';
+  }
+}
+
+/**
+ * Tenant provisioning failed
+ * Use when atomic tenant creation (tenant + segment + packages) fails during signup
+ * The transaction should have already rolled back - no partial tenant exists
+ *
+ * @see TenantProvisioningService
+ * @see todos/632-pending-p2-stricter-signup-error-handling.md
+ */
+export class TenantProvisioningError extends TenantError {
+  constructor(
+    message: string = 'Failed to complete tenant setup. Please try again.',
+    public readonly originalError?: Error
+  ) {
+    super(message, 'TENANT_PROVISIONING_ERROR');
+    this.name = 'TenantProvisioningError';
+    if (originalError) {
+      this.cause = originalError;
+    }
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      // Don't expose internal error details to client
+      cause: this.originalError?.message,
+    };
   }
 }
 

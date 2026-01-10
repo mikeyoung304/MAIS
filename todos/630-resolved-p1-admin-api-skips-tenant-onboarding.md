@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '630'
 tags: [code-review, tenant-onboarding, admin-api, data-integrity]
 dependencies: []
+resolved_in: 4607f2f3
 ---
 
 # Admin API Skips Tenant Onboarding

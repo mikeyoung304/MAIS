@@ -23,8 +23,11 @@ interface UseBuildModeSyncResult {
   /** Currently highlighted section index */
   highlightedSection: number | null;
 
-  /** Whether Build Mode is ready */
+  /** Whether Build Mode is ready (handshake completed) */
   isReady: boolean;
+
+  /** Whether handshake timed out */
+  hasTimedOut: boolean;
 
   /** Notify parent of section selection */
   selectSection: (pageId: PageName, sectionIndex: number) => void;
@@ -56,6 +59,9 @@ interface UseBuildModeSyncResult {
  * const config = isEditMode ? draftConfig : initialConfig;
  * ```
  */
+/** Timeout for PostMessage handshake in milliseconds */
+const HANDSHAKE_TIMEOUT_MS = 5000;
+
 export function useBuildModeSync({
   enabled = true,
   initialConfig = null,
@@ -65,6 +71,7 @@ export function useBuildModeSync({
   const [draftConfig, setDraftConfig] = useState<PagesConfig | null>(initialConfig);
   const [highlightedSection, setHighlightedSection] = useState<number | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
   const onConfigChangeRef = useRef(onConfigChange);
 
   // Keep callback ref up to date
@@ -86,6 +93,19 @@ export function useBuildModeSync({
       sendToParent({ type: 'BUILD_MODE_READY' });
     }
   }, [enabled]);
+
+  // Timeout for handshake - if we're in edit mode but not ready within timeout, show error
+  useEffect(() => {
+    if (!isEditMode || isReady) return;
+
+    const timeoutId = setTimeout(() => {
+      if (!isReady) {
+        setHasTimedOut(true);
+      }
+    }, HANDSHAKE_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [isEditMode, isReady]);
 
   // Listen for messages from parent
   useEffect(() => {
@@ -190,6 +210,7 @@ export function useBuildModeSync({
     draftConfig,
     highlightedSection,
     isReady,
+    hasTimedOut,
     selectSection,
     editSection,
     notifyPageChange,

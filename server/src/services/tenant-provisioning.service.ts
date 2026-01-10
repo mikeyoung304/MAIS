@@ -22,6 +22,7 @@ import type { PrismaClient, Tenant, Segment, Package } from '../generated/prisma
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
 import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';
+import { TenantProvisioningError } from '../lib/errors';
 
 /**
  * Input for creating a new tenant via admin API
@@ -149,8 +150,15 @@ export class TenantProvisioningService {
    * Creates tenant with auth credentials, segment, and packages atomically.
    * No secret key is returned as signup users authenticate via password.
    *
+   * If any part of the provisioning fails, the entire transaction rolls back
+   * and a TenantProvisioningError is thrown. This ensures no orphaned tenants
+   * exist without their required segment and packages.
+   *
    * @param input - Tenant configuration from signup form
    * @returns Provisioned tenant with all default data
+   * @throws TenantProvisioningError if provisioning fails (transaction rolled back)
+   *
+   * @see todos/632-pending-p2-stricter-signup-error-handling.md
    */
   async createFromSignup(input: SignupCreateTenantInput): Promise<ProvisionedTenantResult> {
     const { slug, businessName, email, passwordHash } = input;
@@ -160,66 +168,85 @@ export class TenantProvisioningService {
     const secretKey = apiKeyService.generateSecretKey(slug);
     const secretKeyHash = apiKeyService.hashSecretKey(secretKey);
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      // Create tenant with auth credentials
-      const tenant = await tx.tenant.create({
-        data: {
-          slug,
-          name: businessName,
-          email,
-          passwordHash,
-          apiKeyPublic: publicKey,
-          apiKeySecret: secretKeyHash,
-          commissionPercent: 10.0,
-          emailVerified: false,
-        },
-      });
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Create tenant with auth credentials
+        const tenant = await tx.tenant.create({
+          data: {
+            slug,
+            name: businessName,
+            email,
+            passwordHash,
+            apiKeyPublic: publicKey,
+            apiKeySecret: secretKeyHash,
+            commissionPercent: 10.0,
+            emailVerified: false,
+          },
+        });
 
-      // Create default segment
-      const segment = await tx.segment.create({
-        data: {
-          tenantId: tenant.id,
-          slug: DEFAULT_SEGMENT.slug,
-          name: DEFAULT_SEGMENT.name,
-          heroTitle: DEFAULT_SEGMENT.heroTitle,
-          description: DEFAULT_SEGMENT.description,
-          sortOrder: 0,
-          active: true,
-        },
-      });
-
-      // Create default packages in parallel
-      const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
-        tx.package.create({
+        // Create default segment
+        const segment = await tx.segment.create({
           data: {
             tenantId: tenant.id,
-            segmentId: segment.id,
-            slug: tier.slug,
-            name: tier.name,
-            description: tier.description,
-            basePrice: tier.basePrice,
-            groupingOrder: tier.groupingOrder,
+            slug: DEFAULT_SEGMENT.slug,
+            name: DEFAULT_SEGMENT.name,
+            heroTitle: DEFAULT_SEGMENT.heroTitle,
+            description: DEFAULT_SEGMENT.description,
+            sortOrder: 0,
             active: true,
           },
-        })
-      );
+        });
 
-      const packages = await Promise.all(packagePromises);
+        // Create default packages in parallel
+        const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
+          tx.package.create({
+            data: {
+              tenantId: tenant.id,
+              segmentId: segment.id,
+              slug: tier.slug,
+              name: tier.name,
+              description: tier.description,
+              basePrice: tier.basePrice,
+              groupingOrder: tier.groupingOrder,
+              active: true,
+            },
+          })
+        );
 
-      logger.info(
+        const packages = await Promise.all(packagePromises);
+
+        logger.info(
+          {
+            tenantId: tenant.id,
+            slug: tenant.slug,
+            email: tenant.email,
+            segmentId: segment.id,
+            packagesCreated: packages.length,
+          },
+          'Fully provisioned new tenant via signup'
+        );
+
+        return { tenant, segment, packages };
+      });
+
+      return result;
+    } catch (error) {
+      // Log the detailed error for debugging
+      logger.error(
         {
-          tenantId: tenant.id,
-          slug: tenant.slug,
-          email: tenant.email,
-          segmentId: segment.id,
-          packagesCreated: packages.length,
+          slug,
+          email,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
         },
-        'Fully provisioned new tenant via signup'
+        'Tenant provisioning failed - transaction rolled back'
       );
 
-      return { tenant, segment, packages };
-    });
-
-    return result;
+      // Throw a user-friendly error (original error preserved as cause)
+      throw new TenantProvisioningError(
+        'Failed to complete signup. Please try again.',
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
   }
 }

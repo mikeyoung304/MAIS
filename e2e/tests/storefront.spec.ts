@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
  * - Image fallback handling
  * - Grid layout responsiveness
  *
- * Note: The E2E test tenant (handled-e2e) is configured via VITE_TENANT_API_KEY
+ * Note: The E2E test tenant (handled-e2e) is configured in apps/web/.env.local
  * and has minimal seed data (starter/growth packages, no segments).
  */
 test.describe('Storefront Navigation', () => {

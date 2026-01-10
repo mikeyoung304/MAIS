@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '697'
 tags: [code-review, architecture, data-integrity, landing-page]
 dependencies: []
+resolved_in: 4607f2f3
 ---
 
 # Dual Draft System: Publish Executor Doesn't Use Wrapper Format

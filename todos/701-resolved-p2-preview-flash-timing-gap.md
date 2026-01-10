@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '701'
 tags: [code-review, ux, preview, build-mode]
@@ -69,9 +69,36 @@ Can be superseded by #698 if server-side draft preview is implemented.
 
 ## Acceptance Criteria
 
-- [ ] No flash of published content in preview
-- [ ] Loading indicator shown during PostMessage handshake
-- [ ] Handshake timeout shows error message (not infinite loading)
+- [x] No flash of published content in preview
+- [x] Loading indicator shown during PostMessage handshake
+- [x] Handshake timeout shows error message (not infinite loading)
+
+## Resolution
+
+**Implemented Option A** - Added loading state during PostMessage handshake.
+
+### Changes Made
+
+1. **useBuildModeSync.ts** - Added timeout mechanism:
+   - Added `hasTimedOut` state to track handshake failures
+   - Added 5-second timeout (`HANDSHAKE_TIMEOUT_MS = 5000`)
+   - Timeout effect starts when edit mode is detected, clears on success
+
+2. **BuildModeWrapper.tsx** - Added loading and error states:
+   - `PreviewLoadingState` component shown during handshake with spinner
+   - `PreviewTimeoutError` component shown if handshake times out
+   - Uses existing `isReady` flag from hook to gate content rendering
+
+### How It Works
+
+1. User opens preview in Build Mode (`?edit=true` in iframe)
+2. `useBuildModeSync` detects edit mode and sends `BUILD_MODE_READY`
+3. `BuildModeWrapper` shows loading spinner (not SSR content)
+4. Parent responds with `BUILD_MODE_INIT` containing draft config
+5. Hook sets `isReady = true`, loading state clears
+6. Draft content renders immediately (no flash)
+
+If step 4 doesn't happen within 5 seconds, timeout error is shown.
 
 ## Resources
 

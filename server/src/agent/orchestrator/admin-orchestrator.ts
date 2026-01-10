@@ -42,6 +42,7 @@ import { DEFAULT_TIER_BUDGETS, isOnboardingActive } from './types';
 import { DEFAULT_TOOL_RATE_LIMITS } from './rate-limiter';
 import { DEFAULT_CIRCUIT_BREAKER_CONFIG } from './circuit-breaker';
 import { getRequestContext, runInRequestContext } from './request-context';
+import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../../config/tiers';
 
 /**
  * Admin-specific configuration
@@ -245,29 +246,80 @@ export class AdminOrchestrator extends BaseOrchestrator {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /**
-   * Override chat to check onboarding mode
+   * Override chat to check onboarding mode and enforce AI quota.
    *
    * Uses AsyncLocalStorage to store mode per-request, preventing race
    * conditions when concurrent requests hit the singleton orchestrator.
+   *
+   * Flow:
+   * 1. Check quota BEFORE processing (fail fast)
+   * 2. Check onboarding mode for tool selection
+   * 3. Process message via parent class
+   * 4. Increment counter AFTER success (atomic)
+   *
+   * Returns usage info in response for frontend to display upgrade prompts.
    */
   async chat(
     tenantId: string,
     requestedSessionId: string,
     userMessage: string
-  ): Promise<ChatResponse> {
-    // Check if tenant is in onboarding mode
+  ): Promise<ChatResponse & { usage?: { used: number; limit: number; remaining: number } }> {
+    // 1. Get tenant with tier info and onboarding phase
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { onboardingPhase: true },
+      select: { tier: true, aiMessagesUsed: true, onboardingPhase: true },
     });
 
-    const isOnboardingMode = isOnboardingActive(tenant?.onboardingPhase);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
 
-    // Run super.chat() within request-scoped context
+    const tier = tenant.tier;
+    const limit = TIER_LIMITS[tier].aiMessages;
+    const used = tenant.aiMessagesUsed;
+
+    // 2. Check quota BEFORE processing
+    if (isOverQuota(tier, used)) {
+      logger.info({ tenantId, tier, used, limit }, 'AI quota exceeded - returning upgrade prompt');
+
+      // Need to get/create session for the response
+      let session = await this.getSession(tenantId, requestedSessionId);
+      if (!session) {
+        session = await this.getOrCreateSession(tenantId);
+      }
+
+      return {
+        message: `You've used all ${limit} AI messages this month. Upgrade your plan to continue chatting.`,
+        sessionId: session.sessionId,
+        usage: { used, limit, remaining: 0 },
+      };
+    }
+
+    // 3. Determine onboarding mode for tool selection
+    const isOnboardingMode = isOnboardingActive(tenant.onboardingPhase);
+
+    // 4. Process message via parent class within request-scoped context
     // This ensures getTools() reads the correct mode for THIS request
-    return runInRequestContext({ isOnboardingMode }, () =>
+    const response = await runInRequestContext({ isOnboardingMode }, () =>
       super.chat(tenantId, requestedSessionId, userMessage)
     );
+
+    // 5. Increment counter AFTER success (atomic)
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { aiMessagesUsed: { increment: 1 } },
+    });
+
+    // 6. Return response with updated usage
+    const newUsed = used + 1;
+    return {
+      ...response,
+      usage: {
+        used: newUsed,
+        limit,
+        remaining: getRemainingMessages(tier, newUsed),
+      },
+    };
   }
 
   /**

@@ -11,7 +11,8 @@ import type { EventEmitter } from '../lib/core/events';
 import { AppointmentEvents } from '../lib/core/events';
 import type { CheckoutSessionFactory } from './checkout-session.factory';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
-import { NotFoundError } from '../lib/errors';
+import { NotFoundError, MaxBookingsPerDayExceededError } from '../lib/errors';
+import { logger } from '../lib/core/logger';
 
 /** Input for creating an appointment checkout session */
 export interface CreateAppointmentInput {
@@ -71,6 +72,7 @@ export class AppointmentBookingService {
    * MULTI-TENANT: Accepts tenantId for data isolation
    * @throws {NotFoundError} If service doesn't exist
    * @throws {Error} If time slot is not available
+   * @throws {MaxBookingsPerDayExceededError} If maxPerDay limit is reached
    */
   async createAppointmentCheckout(
     tenantId: string,
@@ -91,6 +93,30 @@ export class AppointmentBookingService {
     );
     if (!isAvailable) {
       throw new Error(`Time slot starting at ${input.startTime.toISOString()} is not available`);
+    }
+
+    // Enforce maxPerDay limit if configured
+    if (service.maxPerDay !== null) {
+      const existingBookingsCount = await this.bookingRepo.countTimeslotBookingsForServiceOnDate(
+        tenantId,
+        input.serviceId,
+        input.startTime
+      );
+
+      if (existingBookingsCount >= service.maxPerDay) {
+        const dateStr = input.startTime.toISOString().split('T')[0];
+        logger.info(
+          {
+            tenantId,
+            serviceId: input.serviceId,
+            date: dateStr,
+            existingCount: existingBookingsCount,
+            maxPerDay: service.maxPerDay,
+          },
+          'maxPerDay limit reached for service'
+        );
+        throw new MaxBookingsPerDayExceededError(dateStr, service.maxPerDay);
+      }
     }
 
     const metadata = {
@@ -128,7 +154,13 @@ export class AppointmentBookingService {
    * MULTI-TENANT: Accepts tenantId for data isolation
    * Called by Stripe webhook handler after successful payment for TIMESLOT bookings.
    * Creates a booking record with TIMESLOT type and emits AppointmentBooked event.
+   *
+   * Defense-in-depth: Re-validates maxPerDay limit even though checkout already checked.
+   * This prevents race conditions where multiple checkouts pass validation but only
+   * some should succeed based on maxPerDay limit.
+   *
    * @throws {NotFoundError} If service doesn't exist
+   * @throws {MaxBookingsPerDayExceededError} If maxPerDay limit is reached (defense-in-depth)
    */
   async onAppointmentPaymentCompleted(
     tenantId: string,
@@ -137,6 +169,33 @@ export class AppointmentBookingService {
     const service = await this.serviceRepo.getById(tenantId, input.serviceId);
     if (!service) {
       throw new NotFoundError(`Service ${input.serviceId} not found`);
+    }
+
+    // Defense-in-depth: Re-validate maxPerDay limit
+    // This handles race conditions where multiple concurrent checkouts
+    // may have passed validation but only some should succeed
+    if (service.maxPerDay !== null) {
+      const existingBookingsCount = await this.bookingRepo.countTimeslotBookingsForServiceOnDate(
+        tenantId,
+        input.serviceId,
+        input.startTime
+      );
+
+      if (existingBookingsCount >= service.maxPerDay) {
+        const dateStr = input.startTime.toISOString().split('T')[0];
+        logger.warn(
+          {
+            tenantId,
+            serviceId: input.serviceId,
+            date: dateStr,
+            existingCount: existingBookingsCount,
+            maxPerDay: service.maxPerDay,
+            sessionId: input.sessionId,
+          },
+          'maxPerDay limit exceeded during payment completion - possible race condition'
+        );
+        throw new MaxBookingsPerDayExceededError(dateStr, service.maxPerDay);
+      }
     }
 
     const booking: Booking = {

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -17,42 +17,16 @@ import {
 import { parseQuickReplies } from '@/lib/parseQuickReplies';
 import { parseHighlights } from '@/lib/parseHighlights';
 import { QuickReplyChips } from './QuickReplyChips';
+import {
+  useAgentChat,
+  type ChatMessage,
+  type Proposal,
+  type ToolResult,
+} from '@/hooks/useAgentChat';
 
 // Use Next.js API proxy to handle authentication
 // The proxy at /api/agent/* adds the backend token from the session
 const API_PROXY = '/api/agent';
-
-/**
- * Message in the chat history
- */
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  proposals?: Proposal[];
-  toolResults?: ToolResult[];
-}
-
-/**
- * Proposal requiring user confirmation
- */
-interface Proposal {
-  proposalId: string;
-  operation: string;
-  preview: Record<string, unknown>;
-  trustTier: string;
-  requiresApproval: boolean;
-}
-
-/**
- * Tool execution result
- */
-interface ToolResult {
-  toolName: string;
-  success: boolean;
-  data?: unknown;
-  error?: string;
-}
 
 /**
  * UI Action from agent tool responses
@@ -105,18 +79,45 @@ export function PanelAgentChat({
   onQuickRepliesChange,
   className,
 }: PanelAgentChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [hasHealthCheckFailed, setHasHealthCheckFailed] = useState(false);
-  const [healthCheckMessage, setHealthCheckMessage] = useState<string | null>(null);
-  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+  // Use shared hook with panel-specific callbacks
+  const {
+    messages,
+    inputValue,
+    isLoading,
+    sessionId,
+    error,
+    isCheckingHealth,
+    isAvailable,
+    unavailableReason,
+    sendMessage,
+    confirmProposal,
+    rejectProposal,
+    initializeChat,
+    setInputValue,
+    messagesEndRef,
+    inputRef,
+    handleKeyDown,
+  } = useAgentChat({
+    apiUrl: API_PROXY,
+    fallbackGreeting: welcomeMessage,
+    onFirstMessage,
+    onToolComplete: (toolResults) => {
+      // Notify parent about tool completion
+      onToolComplete?.();
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+      // Handle UI actions from tool results
+      if (onUIAction) {
+        for (const result of toolResults) {
+          if (result.success && result.data) {
+            const toolData = result.data as { uiAction?: AgentUIAction };
+            if (toolData.uiAction) {
+              onUIAction(toolData.uiAction);
+            }
+          }
+        }
+      }
+    },
+  });
 
   // Calculate whether the last assistant message has quick replies
   // Memoized to avoid recalculating on every render
@@ -133,68 +134,6 @@ export function PanelAgentChat({
     onQuickRepliesChange?.(hasAgentQuickReplies);
   }, [hasAgentQuickReplies, onQuickRepliesChange]);
 
-  // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Initialize chat session
-  const initializeChat = useCallback(async () => {
-    setIsInitializing(true);
-    setError(null);
-    setHasHealthCheckFailed(false);
-    setHealthCheckMessage(null);
-
-    try {
-      // Health check first (via Next.js proxy for auth)
-      const healthResponse = await fetch(`${API_PROXY}/health`);
-
-      if (!healthResponse.ok) {
-        console.warn('Health check failed, attempting session init...');
-      } else {
-        const health = await healthResponse.json();
-        if (!health.available) {
-          setHasHealthCheckFailed(true);
-          setHealthCheckMessage(health.message || null);
-          setIsInitializing(false);
-          return;
-        }
-      }
-
-      // Initialize session (via Next.js proxy for auth)
-      const sessionResponse = await fetch(`${API_PROXY}/session`);
-
-      if (!sessionResponse.ok) {
-        throw new Error('Failed to initialize chat session');
-      }
-
-      const data = await sessionResponse.json();
-      setSessionId(data.sessionId);
-
-      // Add welcome message
-      setMessages([
-        {
-          role: 'assistant',
-          content: data.greeting || welcomeMessage,
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start chat');
-      setHasHealthCheckFailed(true);
-    } finally {
-      setIsInitializing(false);
-    }
-  }, [welcomeMessage]);
-
-  useEffect(() => {
-    initializeChat();
-  }, [initializeChat]);
-
   // Handle initial message from quick actions
   useEffect(() => {
     if (initialMessage && !isLoading && sessionId) {
@@ -202,142 +141,10 @@ export function PanelAgentChat({
       inputRef.current?.focus();
       onMessageConsumed?.();
     }
-  }, [initialMessage, isLoading, sessionId, onMessageConsumed]);
-
-  // Send a message to the agent
-  const sendMessage = async () => {
-    const message = inputValue.trim();
-    if (!message || isLoading || !sessionId) return;
-
-    // Track first message
-    if (!hasSentFirstMessage) {
-      setHasSentFirstMessage(true);
-      onFirstMessage?.();
-    }
-
-    setInputValue('');
-    setError(null);
-    setIsLoading(true);
-
-    // Add user message
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const response = await fetch(`${API_PROXY}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, sessionId }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json();
-
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: data.message,
-        timestamp: new Date(),
-        proposals: data.proposals,
-        toolResults: data.toolResults,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Notify parent if tools executed successfully (config may have changed)
-      if (data.toolResults?.some((r: ToolResult) => r.success)) {
-        onToolComplete?.();
-      }
-
-      // Handle UI actions from tool results
-      // UI tools return uiAction in their data payload
-      if (data.toolResults && onUIAction) {
-        for (const result of data.toolResults as ToolResult[]) {
-          if (result.success && result.data) {
-            const toolData = result.data as { uiAction?: AgentUIAction };
-            if (toolData.uiAction) {
-              onUIAction(toolData.uiAction);
-            }
-          }
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
-    }
-  };
-
-  // Handle proposal confirmation
-  const confirmProposal = async (proposalId: string) => {
-    try {
-      const response = await fetch(`${API_PROXY}/proposals/${proposalId}/confirm`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to confirm proposal');
-      }
-
-      const result = await response.json();
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `Done! ${result.status === 'EXECUTED' ? 'The change has been applied.' : 'Confirmed.'}`,
-          timestamp: new Date(),
-        },
-      ]);
-
-      // Notify parent - proposal execution may have changed config
-      if (result.status === 'EXECUTED') {
-        onToolComplete?.();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to confirm proposal');
-    }
-  };
-
-  // Handle proposal rejection
-  const rejectProposal = async (proposalId: string) => {
-    try {
-      const response = await fetch(`${API_PROXY}/proposals/${proposalId}/reject`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to reject proposal');
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: "No problem, I won't make that change. What else can I help with?",
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject proposal');
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  }, [initialMessage, isLoading, sessionId, setInputValue, onMessageConsumed, inputRef]);
 
   // Loading state
-  if (isInitializing) {
+  if (isCheckingHealth) {
     return (
       <div className={cn('flex flex-col h-full items-center justify-center p-6', className)}>
         <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center mb-3">
@@ -349,7 +156,7 @@ export function PanelAgentChat({
   }
 
   // Unavailable state
-  if (hasHealthCheckFailed) {
+  if (isAvailable === false) {
     return (
       <div
         className={cn(
@@ -362,7 +169,7 @@ export function PanelAgentChat({
         </div>
         <p className="text-sm font-medium text-text-primary mb-1">Assistant Unavailable</p>
         <p className="text-xs text-text-muted mb-3">
-          {healthCheckMessage || 'Unable to connect to your assistant.'}
+          {unavailableReason || 'Unable to connect to your assistant.'}
         </p>
         <Button
           variant="outline"

@@ -1,9 +1,10 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '703'
 tags: [code-review, validation, data-integrity]
 dependencies: []
+resolved_in: this-commit
 ---
 
 # Missing Schema Validation for Draft Config Reads
@@ -64,9 +65,20 @@ Add Zod validation with graceful fallback to defaults.
 
 ## Acceptance Criteria
 
-- [ ] Malformed draft data doesn't crash AI tools
-- [ ] Validation failures logged as warnings
-- [ ] Graceful fallback to defaults on validation failure
+- [x] Malformed draft data doesn't crash AI tools
+- [x] Validation failures logged as warnings
+- [x] Graceful fallback to defaults on validation failure
+
+## Resolution
+
+**Fixed in:** `server/src/agent/tools/utils.ts`
+
+Both `getDraftConfig` and `getDraftConfigWithSlug` now:
+
+1. Use `LandingPageConfigSchema.safeParse()` for validation
+2. Log validation failures as warnings with Zod error issues
+3. Return `DEFAULT_PAGES_CONFIG` with `hasDraft: false` on validation failure
+4. Also validate live config when falling back (not just draft)
 
 ## Resources
 
