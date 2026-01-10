@@ -869,9 +869,14 @@ export const getLandingPageDraftTool: AgentTool = {
   description: `Get the current draft state of the landing page.
 
 Returns:
-- Whether a draft exists
-- The current draft pages and sections
+- Whether a draft exists (hasDraft)
+- The current pages and sections from DRAFT if exists, otherwise from LIVE
 - Summary of changes from live version
+
+COMMUNICATION RULES (#699):
+- If hasDraft=true: Say "In your unpublished draft..." or "Your draft shows..."
+- If hasDraft=false: Say "On your live storefront..." or "Visitors currently see..."
+- NEVER say "live" or "on your storefront" when hasDraft=true
 
 Use this to understand the current editing state before making changes.`,
   inputSchema: {
@@ -925,8 +930,8 @@ Use this to understand the current editing state before making changes.`,
           ...(pageDetails && { pageDetails }),
           previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
           note: hasDraft
-            ? 'Draft has unpublished changes. Use publish_draft to make them live.'
-            : 'No draft changes. Live config is being shown.',
+            ? 'DRAFT content shown above. Say "In your draft..." when discussing. Never say "live" or "on your storefront" - this is unpublished.'
+            : 'LIVE content shown above. Say "On your live storefront..." when discussing - visitors see this now.',
         },
       };
     } catch (error) {
@@ -1163,6 +1168,9 @@ Filters:
           hasDraft: !!draftConfig,
           placeholderCount: sections.filter((s) => s.hasPlaceholder).length,
           previewUrl: tenant?.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+          note: draftConfig
+            ? 'Sections from DRAFT. Say "In your draft..." when discussing content. Not live yet.'
+            : 'Sections from LIVE. Say "On your storefront..." - visitors see this content.',
         },
       };
     } catch (error) {
@@ -1233,6 +1241,9 @@ Get IDs from list_section_ids first.`,
                 previewUrl: tenant?.slug
                   ? `/t/${tenant.slug}?preview=draft&page=${pageName}`
                   : undefined,
+                note: draftConfig
+                  ? 'Content from DRAFT. Say "In your draft..." when discussing. Not yet live.'
+                  : 'Content from LIVE. Say "On your storefront..." - visitors see this.',
               },
             };
           }

@@ -987,7 +987,7 @@ export type TierDisplayNames = z.infer<typeof TierDisplayNamesSchema>;
  * SECURITY: Only safe public fields - never expose secrets, Stripe IDs, or PII
  */
 export const TenantPublicDtoSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(), // Prisma uses CUIDs, not UUIDs
   slug: z.string(),
   name: z.string(),
   apiKeyPublic: z.string(), // Needed to set X-Tenant-Key for subsequent API calls

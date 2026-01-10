@@ -344,12 +344,18 @@ describe('Storefront Executors', () => {
       const result = await executor('tenant-123', {});
 
       expect(result).toHaveProperty('action', 'published');
-      // Verify update was called with correct structure
+      // Verify update was called with wrapper format (#697 fix)
+      // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
       // Note: Prisma 7 uses DbNull instead of null for JSON fields
       expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
         where: { id: 'tenant-123' },
         data: expect.objectContaining({
-          landingPageConfig: draftConfig,
+          landingPageConfig: expect.objectContaining({
+            draft: null,
+            draftUpdatedAt: null,
+            published: draftConfig,
+            publishedAt: expect.any(String),
+          }),
         }),
       });
     });

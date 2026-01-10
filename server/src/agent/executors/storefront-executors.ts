@@ -602,12 +602,21 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       : 0;
     const pageCount = draftConfig?.pages ? Object.keys(draftConfig.pages).length : 0;
 
-    // Copy draft to live config and clear draft
+    // Copy draft to live config using wrapper format expected by findBySlugPublic
+    // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
+    // See: #697 - Dual draft system publish mismatch fix
+    const publishedWrapper = {
+      draft: null,
+      draftUpdatedAt: null,
+      published: tenant.landingPageConfigDraft,
+      publishedAt: new Date().toISOString(),
+    };
+
     // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
     await prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        landingPageConfig: tenant.landingPageConfigDraft,
+        landingPageConfig: publishedWrapper,
         landingPageConfigDraft: Prisma.DbNull, // Clear the draft (Prisma 7 pattern)
       },
     });
