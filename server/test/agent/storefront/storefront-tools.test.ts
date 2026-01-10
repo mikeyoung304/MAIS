@@ -513,8 +513,16 @@ describe('Storefront Build Mode Tools', () => {
       expect(data.sections.every((s) => s.page === 'home')).toBe(true);
     });
 
-    it('should handle empty config gracefully', async () => {
-      mockPrisma.tenant.findUnique.mockResolvedValue({
+    it('should return default sections when no config exists', async () => {
+      // First call from getDraftConfigWithSlug
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: null,
+        landingPageConfigDraft: null,
+      });
+      // Second call for draft/live comparison
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
         id: 'tenant-123',
         slug: 'test-tenant',
         landingPageConfig: null,
@@ -524,8 +532,13 @@ describe('Storefront Build Mode Tools', () => {
       const result = await listSectionIdsTool.execute(mockContext, {});
 
       expect(result.success).toBe(true);
-      const data = (result as { data: { totalCount: number } }).data;
-      expect(data.totalCount).toBe(0);
+      const data = (
+        result as { data: { totalCount: number; isShowingDefaults: boolean; note: string } }
+      ).data;
+      // Now returns DEFAULT_PAGES_CONFIG sections instead of empty
+      expect(data.totalCount).toBeGreaterThan(0);
+      expect(data.isShowingDefaults).toBe(true);
+      expect(data.note).toContain('DEFAULT template');
     });
   });
 

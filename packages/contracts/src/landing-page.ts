@@ -701,108 +701,145 @@ export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSections = {
 /**
  * Default page configuration for new tenants
  *
+ * SINGLE-PAGE SCROLL EXPERIENCE
+ * All key sections are on the home page for one continuous scroll.
+ * Order: Hero → About → (Packages auto-injected) → Testimonials → FAQ → Contact → CTA
+ *
  * Features:
  * - All sections have stable IDs following {page}-{type}-{qualifier} pattern
  * - Placeholder content uses [Bracket Format] for AI discoverability
+ * - Educational placeholders teach tenants what each section is for
  * - AI can identify unfilled fields and guide users through setup
  * - Section IDs enable reliable updates without fragile array indices
+ *
+ * Multi-page navigation is disabled by default - tenants can enable individual
+ * pages later if they prefer separate pages for content.
  */
 export const DEFAULT_PAGES_CONFIG: PagesConfig = {
   home: {
     enabled: true as const,
     sections: [
+      // ===== HERO: First impression, transformation headline =====
       {
         id: 'home-hero-main',
         type: 'hero',
-        headline: '[Hero Headline]',
-        subheadline: '[Hero Subheadline - describe your business in one sentence]',
-        ctaText: '[CTA Button Text]',
+        headline: '[Your Transformation Headline - what change do you create for clients?]',
+        subheadline:
+          '[One sentence about who you help and the outcome they get. Example: "Helping busy professionals find calm through mindful photography sessions."]',
+        ctaText: '[Action Button - e.g., "Book Your Session", "Get Started", "See Packages"]',
       },
+      // ===== ABOUT: Build trust and connection =====
       {
-        id: 'home-cta-main',
-        type: 'cta',
-        headline: '[CTA Headline - call to action]',
-        subheadline: '[CTA Subheadline]',
-        ctaText: '[CTA Button Text]',
-      },
-    ],
-  },
-  about: {
-    enabled: true,
-    sections: [
-      {
-        id: 'about-text-main',
+        id: 'home-text-about',
         type: 'text',
-        headline: '[About Headline]',
-        content: '[About Content - tell your story, who you serve, and why you do what you do]',
-        imagePosition: 'left',
+        headline: '[About Section Title - e.g., "Meet Your Guide", "Why I Do This"]',
+        content:
+          '[Tell your story here. Who are you? Why do you do this work? Who do you serve best? What makes your approach different? Keep it personal - clients book people, not businesses. 2-3 paragraphs works well.]',
+        imagePosition: 'right',
       },
-    ],
-  },
-  services: {
-    enabled: true,
-    sections: [], // Services page pulls from segments/packages dynamically
-  },
-  faq: {
-    enabled: true,
-    sections: [
+      // NOTE: Packages/services are auto-injected here by TenantLandingPage
+      // ===== TESTIMONIALS: Social proof from past clients =====
       {
-        id: 'faq-faq-main',
-        type: 'faq',
-        headline: '[FAQ Headline]',
-        items: [
-          { question: '[Question 1]', answer: '[Answer 1]' },
-          { question: '[Question 2]', answer: '[Answer 2]' },
-          { question: '[Question 3]', answer: '[Answer 3]' },
-        ],
-      },
-    ],
-  },
-  contact: {
-    enabled: true,
-    sections: [
-      {
-        id: 'contact-contact-main',
-        type: 'contact',
-        headline: '[Contact Headline]',
-        // NOTE: email/phone left undefined (not placeholders) because:
-        // 1. sanitizeObject() strips invalid emails/phones to empty strings
-        // 2. Tests expect DEFAULT_PAGES_CONFIG to survive saveDraft() round-trip
-        // 3. Empty fields in UI are self-evident, unlike text fields
-        address: '[Business Address]',
-        hours: '[Business Hours]',
-      },
-    ],
-  },
-  gallery: {
-    enabled: false, // Disabled by default - enable when user has images
-    sections: [
-      {
-        id: 'gallery-gallery-main',
-        type: 'gallery',
-        headline: '[Gallery Headline]',
-        images: [],
-        instagramHandle: '[Instagram Handle]',
-      },
-    ],
-  },
-  testimonials: {
-    enabled: false, // Disabled by default - enable when user has testimonials
-    sections: [
-      {
-        id: 'testimonials-testimonials-main',
+        id: 'home-testimonials-main',
         type: 'testimonials',
-        headline: '[Testimonials Headline]',
+        headline: '[Testimonials Title - e.g., "What Clients Say", "Kind Words"]',
         items: [
           {
-            quote: '[Testimonial Quote]',
-            authorName: '[Author Name]',
-            authorRole: '[Author Role]',
+            quote:
+              '[Paste a real client testimonial here. Great testimonials mention the specific transformation or result.]',
+            authorName: '[Client Name]',
+            authorRole: '[Optional: their title or context, e.g., "Wedding Client, June 2024"]',
+            rating: 5,
+          },
+          {
+            quote: '[Another testimonial. Tip: Ask clients for permission to share their words!]',
+            authorName: '[Client Name]',
+            authorRole: '[Optional context]',
             rating: 5,
           },
         ],
       },
+      // ===== FAQ: Address common questions and objections =====
+      {
+        id: 'home-faq-main',
+        type: 'faq',
+        headline: '[FAQ Title - e.g., "Common Questions", "Before You Book"]',
+        items: [
+          {
+            question:
+              '[Most common question - e.g., "How long is a typical session?", "What should I wear?"]',
+            answer:
+              '[Your answer. Be specific and helpful. This builds trust and reduces back-and-forth.]',
+          },
+          {
+            question: '[Second most common question - often about pricing or process]',
+            answer: '[Your answer]',
+          },
+          {
+            question:
+              '[Address an objection - e.g., "What if I\'m not photogenic?", "Is this right for beginners?"]',
+            answer:
+              '[Reassure them! This is your chance to overcome hesitation before they even ask.]',
+          },
+        ],
+      },
+      // ===== CONTACT: How to reach you =====
+      {
+        id: 'home-contact-main',
+        type: 'contact',
+        headline: '[Contact Title - e.g., "Get In Touch", "Let\'s Connect"]',
+        // NOTE: email/phone left undefined (not placeholders) because:
+        // 1. sanitizeObject() strips invalid emails/phones to empty strings
+        // 2. Tests expect DEFAULT_PAGES_CONFIG to survive saveDraft() round-trip
+        // 3. Empty fields in UI are self-evident, unlike text fields
+        address: '[Your location - city/region is fine if you serve a local area]',
+        hours: '[Your availability - e.g., "Weekdays 9am-5pm, Weekends by appointment"]',
+      },
+      // ===== FINAL CTA: Last push to action =====
+      {
+        id: 'home-cta-main',
+        type: 'cta',
+        headline:
+          '[Final Call to Action - e.g., "Ready to Begin?", "Let\'s Create Something Beautiful"]',
+        subheadline:
+          '[Brief encouraging message - e.g., "Book your complimentary consultation today."]',
+        ctaText: '[Button Text - same as hero or a softer ask like "Schedule a Call"]',
+      },
     ],
+  },
+  // Multi-page navigation disabled by default for single-scroll experience
+  // Tenants can enable these later if they prefer separate pages
+  about: {
+    enabled: false,
+    sections: [],
+  },
+  services: {
+    enabled: false, // Services are shown on home page via SegmentPackagesSection
+    sections: [],
+  },
+  faq: {
+    enabled: false,
+    sections: [],
+  },
+  contact: {
+    enabled: false,
+    sections: [],
+  },
+  gallery: {
+    enabled: false,
+    sections: [
+      {
+        id: 'gallery-gallery-main',
+        type: 'gallery',
+        headline: '[Gallery Title - e.g., "Recent Work", "Portfolio"]',
+        images: [], // Add images when ready
+        instagramHandle: "[Your Instagram handle - we'll pull your latest posts]",
+      },
+    ],
+  },
+  testimonials: {
+    enabled: false,
+    sections: [],
   },
 };
 

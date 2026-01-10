@@ -1098,38 +1098,32 @@ Filters:
     };
 
     try {
-      // Get both draft and live configs
+      // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
+      const {
+        pages: workingPages,
+        hasDraft,
+        slug,
+      } = await getDraftConfigWithSlug(prisma, tenantId);
+
+      // Also fetch raw configs for existsInDraft/existsInLive comparison
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { landingPageConfig: true, landingPageConfigDraft: true, slug: true },
+        select: { landingPageConfig: true, landingPageConfigDraft: true },
       });
-
       const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
       const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
-
-      // Use draft if exists, otherwise live, otherwise empty
-      const workingConfig = draftConfig || liveConfig;
-      if (!workingConfig?.pages) {
-        return {
-          success: true,
-          data: {
-            sections: [],
-            totalCount: 0,
-            hasDraft: false,
-            placeholderCount: 0,
-            note: 'No landing page configuration found. Use update_page_section to add sections.',
-          },
-        };
-      }
 
       // Collect IDs from both configs for existsInDraft/existsInLive flags
       const draftIds = collectSectionIds(draftConfig);
       const liveIds = collectSectionIds(liveConfig);
 
+      // Determine if we're showing defaults (neither draft nor live exists)
+      const isShowingDefaults = !draftConfig && !liveConfig;
+
       const sections: SectionSummary[] = [];
 
-      // Iterate through working config pages
-      for (const [page, pageConfig] of Object.entries(workingConfig.pages)) {
+      // Iterate through working config pages (includes defaults if no custom config)
+      for (const [page, pageConfig] of Object.entries(workingPages)) {
         if (pageName && page !== pageName) continue;
 
         for (const section of pageConfig.sections || []) {
@@ -1160,17 +1154,27 @@ Filters:
         }
       }
 
+      // Build contextual note based on config state
+      let note: string;
+      if (isShowingDefaults) {
+        note =
+          'Showing DEFAULT template sections. This is the starting frame for new tenants - all fields have [placeholder] values. Update sections to customize their storefront.';
+      } else if (hasDraft) {
+        note = 'Sections from DRAFT. Say "In your draft..." when discussing content. Not live yet.';
+      } else {
+        note = 'Sections from LIVE. Say "On your storefront..." - visitors see this content.';
+      }
+
       return {
         success: true,
         data: {
           sections,
           totalCount: sections.length,
-          hasDraft: !!draftConfig,
+          hasDraft,
+          isShowingDefaults,
           placeholderCount: sections.filter((s) => s.hasPlaceholder).length,
-          previewUrl: tenant?.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
-          note: draftConfig
-            ? 'Sections from DRAFT. Say "In your draft..." when discussing content. Not live yet.'
-            : 'Sections from LIVE. Say "On your storefront..." - visitors see this content.',
+          previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
+          note,
         },
       };
     } catch (error) {
@@ -1206,24 +1210,24 @@ Get IDs from list_section_ids first.`,
     const { sectionId } = params as { sectionId: string };
 
     try {
+      // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
+      const {
+        pages: workingPages,
+        hasDraft,
+        slug,
+      } = await getDraftConfigWithSlug(prisma, tenantId);
+
+      // Also fetch raw configs to determine source state
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { landingPageConfig: true, landingPageConfigDraft: true, slug: true },
+        select: { landingPageConfig: true, landingPageConfigDraft: true },
       });
-
       const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
       const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
-      const workingConfig = draftConfig || liveConfig;
-
-      if (!workingConfig?.pages) {
-        return {
-          success: false,
-          error: 'No landing page configuration found.',
-        };
-      }
+      const isShowingDefaults = !draftConfig && !liveConfig;
 
       // Find section by ID across all pages
-      for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
+      for (const [pageName, pageConfig] of Object.entries(workingPages)) {
         for (const section of pageConfig.sections || []) {
           // Use type guard for section ID detection (#664)
           const currentId = isSectionWithId(section)
@@ -1231,19 +1235,27 @@ Get IDs from list_section_ids first.`,
             : getLegacySectionId(pageName, section.type);
 
           if (currentId === sectionId) {
+            // Build contextual note based on config state
+            let note: string;
+            if (isShowingDefaults) {
+              note =
+                'Content from DEFAULT template. All [placeholder] fields need to be customized. Update to personalize this section.';
+            } else if (hasDraft) {
+              note = 'Content from DRAFT. Say "In your draft..." when discussing. Not yet live.';
+            } else {
+              note = 'Content from LIVE. Say "On your storefront..." - visitors see this.';
+            }
+
             return {
               success: true,
               data: {
                 section,
                 page: pageName,
-                source: draftConfig ? 'draft' : 'live',
+                source: isShowingDefaults ? 'defaults' : hasDraft ? 'draft' : 'live',
+                isShowingDefaults,
                 placeholderFields: findPlaceholderFields(section),
-                previewUrl: tenant?.slug
-                  ? `/t/${tenant.slug}?preview=draft&page=${pageName}`
-                  : undefined,
-                note: draftConfig
-                  ? 'Content from DRAFT. Say "In your draft..." when discussing. Not yet live.'
-                  : 'Content from LIVE. Say "On your storefront..." - visitors see this.',
+                previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+                note,
               },
             };
           }
@@ -1252,7 +1264,7 @@ Get IDs from list_section_ids first.`,
 
       // Not found - list available IDs
       const availableIds: string[] = [];
-      for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
+      for (const [pageName, pageConfig] of Object.entries(workingPages)) {
         for (const section of pageConfig.sections || []) {
           // Use type guard for section ID detection (#664)
           const id = isSectionWithId(section)
@@ -1296,26 +1308,21 @@ Use this to:
     const { tenantId, prisma } = context;
 
     try {
+      // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
+      const {
+        pages: workingPages,
+        hasDraft,
+        slug,
+      } = await getDraftConfigWithSlug(prisma, tenantId);
+
+      // Also fetch raw configs to determine source state
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { landingPageConfig: true, landingPageConfigDraft: true, slug: true },
+        select: { landingPageConfig: true, landingPageConfigDraft: true },
       });
-
       const draftConfig = tenant?.landingPageConfigDraft as unknown as LandingPageConfig | null;
       const liveConfig = tenant?.landingPageConfig as unknown as LandingPageConfig | null;
-      const workingConfig = draftConfig || liveConfig;
-
-      if (!workingConfig?.pages) {
-        return {
-          success: true,
-          data: {
-            unfilledItems: [],
-            unfilledCount: 0,
-            percentComplete: 100,
-            summary: 'No landing page configuration found.',
-          },
-        };
-      }
+      const isShowingDefaults = !draftConfig && !liveConfig;
 
       const unfilledItems: Array<{
         sectionId: string;
@@ -1328,7 +1335,7 @@ Use this to:
       let totalFields = 0;
       let filledFields = 0;
 
-      for (const [pageName, pageConfig] of Object.entries(workingConfig.pages)) {
+      for (const [pageName, pageConfig] of Object.entries(workingPages)) {
         for (const section of pageConfig.sections || []) {
           // Use type guard for section ID detection (#664)
           const sectionId = isSectionWithId(section)
@@ -1379,17 +1386,26 @@ Use this to:
       const percentComplete =
         totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 100;
 
+      // Build contextual summary based on config state
+      let summary: string;
+      if (isShowingDefaults) {
+        summary = `Showing DEFAULT template. ${unfilledItems.length} placeholder fields to customize. Start by telling me about your business!`;
+      } else if (unfilledItems.length === 0) {
+        summary = 'All content is filled in! Ready to publish.';
+      } else {
+        summary = `${unfilledItems.length} fields still need content. ${percentComplete}% complete.`;
+      }
+
       return {
         success: true,
         data: {
           unfilledItems,
           unfilledCount: unfilledItems.length,
           percentComplete,
-          summary:
-            unfilledItems.length === 0
-              ? 'All content is filled in! Ready to publish.'
-              : `${unfilledItems.length} fields still need content. ${percentComplete}% complete.`,
-          previewUrl: tenant?.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+          isShowingDefaults,
+          hasDraft,
+          summary,
+          previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
         },
       };
     } catch (error) {

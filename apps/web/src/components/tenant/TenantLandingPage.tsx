@@ -58,12 +58,20 @@ function buildHomeSections(
     // Find hero (usually first) and CTA (usually last)
     const heroSection = homeSections.find((s): s is HeroSection => s.type === 'hero');
     const ctaSection = homeSections.find((s): s is CTASection => s.type === 'cta');
+    // Find "About" section (text type) - should appear before packages for trust-building
+    const aboutSection = homeSections.find((s) => s.type === 'text');
 
-    // Pre-sections = hero only (packages come next)
+    // Pre-sections = hero + about (builds trust before showing packages)
     const preSections: Section[] = heroSection ? [heroSection] : [defaultHero];
+    if (aboutSection) {
+      preSections.push(aboutSection);
+    }
 
-    // Post-sections = everything except hero and cta
-    const postSections = homeSections.filter((s) => s.type !== 'hero' && s.type !== 'cta');
+    // Post-sections = everything except hero, text (about), and cta
+    // These appear after packages: testimonials, FAQ, contact, gallery
+    const postSections = homeSections.filter(
+      (s) => s.type !== 'hero' && s.type !== 'text' && s.type !== 'cta'
+    );
 
     return { preSections, postSections, finalCta: ctaSection || null };
   }
