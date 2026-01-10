@@ -13,8 +13,8 @@
  */
 
 import { useSearchParams } from 'next/navigation';
-import type { TenantStorefrontData } from '@/lib/tenant';
-import { normalizeToPages } from '@/lib/tenant';
+import type { TenantStorefrontData } from '@/lib/tenant.client';
+import { normalizeToPages } from '@/lib/tenant.client';
 import { BuildModeWrapper } from './BuildModeWrapper';
 import { TenantLandingPage } from './TenantLandingPage';
 import type { PagesConfig } from '@macon/contracts';

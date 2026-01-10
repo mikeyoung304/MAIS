@@ -10,6 +10,7 @@ import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
+import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
 import type { PageName } from '@macon/contracts';
 
 // LocalStorage keys for panel state
@@ -254,6 +255,11 @@ export function AgentPanel({ className }: AgentPanelProps) {
             welcomeMessage={getWelcomeMessage()}
             onFirstMessage={handleFirstMessage}
             onUIAction={handleUIAction}
+            onToolComplete={() => {
+              // P0-FIX: Invalidate draft config cache so preview shows updated content
+              // Without this, agent tool updates write to DB but frontend shows stale data
+              invalidateDraftConfig();
+            }}
             className="h-full"
           />
         </div>

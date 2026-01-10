@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { getSegmentStockPhoto } from '@/lib/constants/stock-photos';
 import { formatPrice } from '@/lib/format';
 import { TIER_ORDER } from '@/lib/packages';
-import type { TenantStorefrontData, PackageData, SegmentData } from '@/lib/tenant';
+import type { TenantStorefrontData, PackageData, SegmentData } from '@/lib/tenant.client';
 
 interface SegmentPackagesSectionProps {
   data: TenantStorefrontData;
