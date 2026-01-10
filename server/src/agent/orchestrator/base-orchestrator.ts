@@ -1089,6 +1089,54 @@ export abstract class BaseOrchestrator {
 
         // Check if result is a proposal
         if ('proposalId' in result && result.success) {
+          // Record proposal metric
+          recordProposal('created', result.trustTier, config.agentType);
+
+          // T1 proposals: Execute immediately (auto-confirm behavior)
+          // T1 tools are low-risk operations that don't require user confirmation
+          if (result.trustTier === 'T1' && !result.requiresApproval) {
+            const executor = getProposalExecutor(toolUse.name);
+            if (executor) {
+              try {
+                // Get the proposal payload from the database
+                const proposal = await this.prisma.agentProposal.findUnique({
+                  where: { id: result.proposalId },
+                });
+
+                if (proposal && proposal.status === 'CONFIRMED') {
+                  const payload = validateExecutorPayload(
+                    toolUse.name,
+                    (proposal.payload as Record<string, unknown>) || {}
+                  );
+                  const executionResult = await executor(tenantId, payload);
+                  await this.proposalService.markExecuted(
+                    result.proposalId,
+                    executionResult as Record<string, unknown>
+                  );
+                  logger.info(
+                    { proposalId: result.proposalId, toolName: toolUse.name },
+                    'T1 proposal executed immediately'
+                  );
+                  // Record execution metric
+                  recordProposal('executed', result.trustTier, config.agentType);
+                }
+              } catch (execError) {
+                const errorMsg = execError instanceof Error ? execError.message : 'Unknown error';
+                await this.proposalService.markFailed(result.proposalId, errorMsg);
+                logger.error(
+                  { proposalId: result.proposalId, toolName: toolUse.name, error: sanitizeError(execError) },
+                  'T1 proposal execution failed'
+                );
+              }
+            } else {
+              logger.warn(
+                { toolName: toolUse.name, proposalId: result.proposalId },
+                'No executor found for T1 tool - proposal will not execute'
+              );
+            }
+          }
+
+          // Add to proposals array for response (T2/T3 need user action)
           proposals.push({
             proposalId: result.proposalId,
             operation: result.operation,
@@ -1096,8 +1144,6 @@ export abstract class BaseOrchestrator {
             trustTier: result.trustTier,
             requiresApproval: result.requiresApproval,
           });
-          // Record proposal metric
-          recordProposal('created', result.trustTier, config.agentType);
         }
 
         toolResultBlocks.push({
