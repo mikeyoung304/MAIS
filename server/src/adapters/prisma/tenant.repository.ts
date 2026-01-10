@@ -837,20 +837,63 @@ export class PrismaTenantRepository {
    *
    * SECURITY: Tenant isolation enforced via tenantId parameter
    *
+   * P2-FIX: Now reads from BOTH columns:
+   * - `landingPageConfigDraft` for draft content (what AI tools write to)
+   * - `landingPageConfig` for published content
+   *
+   * Previously only read from `landingPageConfig` and expected wrapper format,
+   * which didn't align with the actual schema using separate columns.
+   *
    * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
    * @returns Draft wrapper with draft/published configs
    */
   async getLandingPageDraft(tenantId: string): Promise<LandingPageDraftWrapper> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { landingPageConfig: true },
+      select: {
+        landingPageConfig: true,
+        landingPageConfigDraft: true,
+      },
     });
 
     if (!tenant) {
       throw new NotFoundError('Tenant not found');
     }
 
-    return this.getLandingPageWrapper(tenant.landingPageConfig);
+    // Parse draft from separate column (what AI tools write to)
+    let draft: LandingPageConfig | null = null;
+    if (tenant.landingPageConfigDraft) {
+      const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      if (draftResult.success) {
+        draft = draftResult.data;
+      } else {
+        logger.warn(
+          { tenantId, errors: draftResult.error.issues },
+          'Invalid draft config in getLandingPageDraft'
+        );
+      }
+    }
+
+    // Parse published from main column
+    let published: LandingPageConfig | null = null;
+    if (tenant.landingPageConfig) {
+      const publishedResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+      if (publishedResult.success) {
+        published = publishedResult.data;
+      } else {
+        logger.warn(
+          { tenantId, errors: publishedResult.error.issues },
+          'Invalid published config in getLandingPageDraft'
+        );
+      }
+    }
+
+    return {
+      draft,
+      published,
+      draftUpdatedAt: null, // TODO: Add timestamp column if needed
+      publishedAt: null, // TODO: Add timestamp column if needed
+    };
   }
 
   /**
