@@ -852,6 +852,9 @@ export class BookingService {
 31. **Missing store window exposure:** Zustand stores need `if (typeof window !== 'undefined') { window.store = store }` for Playwright access.
 32. **Form hydration race:** Next.js forms need `waitForTimeout(500)` after `waitForSelector` before filling - hydration clears values.
 33. **Session leak in E2E:** Use `browser.newContext()` for session isolation, not `clearCookies()` - NextAuth httpOnly cookies don't clear reliably.
+34. **UUID validation on CUID fields:** Zod `z.string().uuid()` fails on Prisma-generated CUIDs. Use `z.string()` or `z.string().cuid()` for database IDs.
+35. **Multi-path data format mismatch:** When AI executor and admin API both write to same field, verify format matches what read paths expect. Reader expected `{published: config}`, writer stored raw config - silent failure.
+36. **AI tool responses missing state guidance:** Tools returning draft/live content need `hasDraft` indicator AND `note` field with communication rules ("Say 'In your draft...'") to prevent AI from confusing states.
 
 ## Prevention Strategies (Read These!)
 
@@ -897,6 +900,10 @@ The following links prevent common mistakes from recurring:
   - Quick reference: [AGENT_UI_PHASE_5_QUICK_REFERENCE.md](docs/solutions/patterns/AGENT_UI_PHASE_5_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - **[e2e-nextjs-migration-prevention](docs/solutions/patterns/E2E_NEXTJS_MIGRATION_PREVENTION_STRATEGIES.md)** - 5 E2E test failure patterns after framework migrations: rate limiter test bypasses, Zustand store exposure, React effect order, Next.js hydration waits, NextAuth session isolation.
   - Quick reference: [E2E_NEXTJS_MIGRATION_QUICK_REFERENCE.md](docs/solutions/patterns/E2E_NEXTJS_MIGRATION_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[dual-draft-system-prevention](docs/solutions/patterns/DUAL_DRAFT_SYSTEM_PREVENTION_STRATEGIES.md)** - Schema validation alignment (UUID vs CUID), read/write path consistency for multi-path data, AI tool communication clarity (draft vs live state guidance).
+  - Quick reference: [DUAL_DRAFT_SYSTEM_QUICK_REFERENCE.md](docs/solutions/patterns/DUAL_DRAFT_SYSTEM_QUICK_REFERENCE.md) - Print & pin (2 min read)
+
+**Key insight from Dual Draft System Bug (#697, #699):** When multiple code paths write the same data (AI executor vs admin API), ALL must agree on format. Zod `z.string().uuid()` fails on Prisma CUIDs - use `z.string()` for database IDs. Read path expected `{published: config}` wrapper but write path stored raw config - verify format matches before writing. AI tools need explicit state indicators (`hasDraft`) and communication notes ("Say 'In your draft...'") to prevent confusing draft with live content.
 
 **Key insight from E2E Next.js Migration (Agent-First Phase 5):** Framework migrations (SPA to SSR) introduce systematic E2E failures. Rate limiters: ALL must use shared `isTestEnvironment` constant. Stores: expose on `window` for Playwright. Effects: child runs before parent - guard against undefined. Hydration: add 500ms wait after `waitForSelector`. Sessions: use `browser.newContext()` not `clearCookies()`.
 
