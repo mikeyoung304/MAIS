@@ -2,17 +2,17 @@
  * Unit tests for CatalogService
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CatalogService } from '../src/services/catalog.service';
 import { NotFoundError, ValidationError } from '../src/lib/errors';
 import {
   FakeCatalogRepository,
   FakeSegmentRepository,
-  FakeTenantOnboardingService,
   buildPackage,
   buildAddOn,
   buildSegment,
 } from './helpers/fakes';
+import type { PrismaClient } from '../src/generated/prisma/client';
 
 describe('CatalogService', () => {
   let service: CatalogService;
@@ -142,19 +142,29 @@ describe('CatalogService', () => {
 
   describe('createPackage with segment validation', () => {
     let segmentRepo: FakeSegmentRepository;
-    let onboardingService: FakeTenantOnboardingService;
+    let mockPrisma: PrismaClient;
     let serviceWithSegments: CatalogService;
 
     beforeEach(() => {
       segmentRepo = new FakeSegmentRepository();
-      onboardingService = new FakeTenantOnboardingService();
-      // Pass segment repo and onboarding service to enable segment validation
+
+      // Create mock PrismaClient for segment operations
+      // The segment-utils.ts functions need prisma.segment.findUnique, findFirst, and create
+      mockPrisma = {
+        segment: {
+          findUnique: vi.fn(),
+          findFirst: vi.fn(),
+          create: vi.fn(),
+        },
+      } as unknown as PrismaClient;
+
+      // Pass segment repo and mock prisma to enable segment validation
       serviceWithSegments = new CatalogService(
         catalogRepo,
         undefined, // cache
         undefined, // auditService
         segmentRepo as any, // segmentRepo
-        onboardingService as any // tenantOnboardingService
+        mockPrisma // prisma
       );
     });
 
@@ -168,6 +178,11 @@ describe('CatalogService', () => {
       });
       segmentRepo.addSegment(generalSegment);
 
+      // Configure mock Prisma to find the existing General segment
+      vi.mocked(mockPrisma.segment.findUnique).mockResolvedValue({
+        id: generalSegment.id,
+      } as any);
+
       const data = {
         slug: 'new-package',
         title: 'New Package',
@@ -179,14 +194,31 @@ describe('CatalogService', () => {
       // Act
       const result = await serviceWithSegments.createPackage('test-tenant', data);
 
-      // Assert: Package was created (we can't check segmentId directly from result,
-      // but we can verify onboarding service was NOT called since segment exists)
+      // Assert: Package was created with the existing General segment
       expect(result.slug).toBe('new-package');
-      expect(onboardingService.createDefaultDataCalls).toHaveLength(0);
+      // Verify findUnique was called with correct parameters
+      expect(mockPrisma.segment.findUnique).toHaveBeenCalledWith({
+        where: {
+          tenantId_slug: {
+            tenantId: 'test-tenant',
+            slug: 'general',
+          },
+        },
+        select: { id: true },
+      });
+      // Segment.create should NOT be called since segment exists
+      expect(mockPrisma.segment.create).not.toHaveBeenCalled();
     });
 
     it('creates default segment when General does not exist and segmentId not provided', async () => {
       // Arrange: No segments exist for the tenant
+      // Configure mock Prisma to NOT find existing General segment
+      vi.mocked(mockPrisma.segment.findUnique).mockResolvedValue(null);
+      // Configure mock Prisma to create a new segment
+      vi.mocked(mockPrisma.segment.create).mockResolvedValue({
+        id: 'seg_new_general',
+      } as any);
+
       const data = {
         slug: 'new-package',
         title: 'New Package',
@@ -198,10 +230,18 @@ describe('CatalogService', () => {
       // Act
       const result = await serviceWithSegments.createPackage('test-tenant', data);
 
-      // Assert: Package was created and onboarding service was called to create default segment
+      // Assert: Package was created and segment.create was called to create default segment
       expect(result.slug).toBe('new-package');
-      expect(onboardingService.createDefaultDataCalls).toHaveLength(1);
-      expect(onboardingService.createDefaultDataCalls[0].tenantId).toBe('test-tenant');
+      expect(mockPrisma.segment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            tenantId: 'test-tenant',
+            slug: 'general',
+            name: 'General',
+          }),
+          select: { id: true },
+        })
+      );
     });
 
     it('validates provided segmentId belongs to tenant', async () => {
@@ -213,6 +253,10 @@ describe('CatalogService', () => {
         name: 'General',
       });
       segmentRepo.addSegment(otherTenantSegment);
+
+      // Configure mock Prisma to NOT find the segment for this tenant
+      // (validateSegmentOwnership uses findFirst with tenantId filter)
+      vi.mocked(mockPrisma.segment.findFirst).mockResolvedValue(null);
 
       const data = {
         slug: 'new-package',
@@ -233,6 +277,9 @@ describe('CatalogService', () => {
 
     it('throws ValidationError when segmentId does not exist', async () => {
       // Arrange: No segments exist
+      // Configure mock Prisma to NOT find any segment
+      vi.mocked(mockPrisma.segment.findFirst).mockResolvedValue(null);
+
       const data = {
         slug: 'new-package',
         title: 'New Package',
@@ -260,6 +307,12 @@ describe('CatalogService', () => {
       });
       segmentRepo.addSegment(segment);
 
+      // Configure mock Prisma to find the segment for this tenant
+      vi.mocked(mockPrisma.segment.findFirst).mockResolvedValue({
+        id: segment.id,
+        name: segment.name,
+      } as any);
+
       const data = {
         slug: 'wellness-package',
         title: 'Wellness Package',
@@ -274,8 +327,11 @@ describe('CatalogService', () => {
       // Assert: Package was created successfully
       expect(result.slug).toBe('wellness-package');
       expect(result.title).toBe('Wellness Package');
-      // Onboarding service was NOT called since segmentId was provided
-      expect(onboardingService.createDefaultDataCalls).toHaveLength(0);
+      // Verify validateSegmentOwnership was called with correct parameters
+      expect(mockPrisma.segment.findFirst).toHaveBeenCalledWith({
+        where: { id: 'seg_wellness_123', tenantId: 'test-tenant' },
+        select: { id: true, name: true },
+      });
     });
 
     it('isolates segments by tenant - same segmentId works for correct tenant only', async () => {
@@ -294,6 +350,10 @@ describe('CatalogService', () => {
       });
       segmentRepo.addSegment(tenantASegment);
       segmentRepo.addSegment(tenantBSegment);
+
+      // Configure mock Prisma to NOT find tenant-A's segment when queried with tenant-B
+      // (validateSegmentOwnership uses findFirst with both id and tenantId)
+      vi.mocked(mockPrisma.segment.findFirst).mockResolvedValue(null);
 
       // Try to use tenant-A's segment from tenant-B
       const data = {

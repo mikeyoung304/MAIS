@@ -723,16 +723,16 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         id: 'home-hero-main',
         type: 'hero',
-        headline: '[Your Transformation Headline - what change do you create for clients?]',
+        headline: '[Your Transformation Headline]',
         subheadline:
-          '[One sentence about who you help and the outcome they get. Example: "Helping busy professionals find calm through mindful photography sessions."]',
-        ctaText: '[Action Button - e.g., "Book Your Session", "Get Started", "See Packages"]',
+          '[Who you help and the outcome they get. Example: "Helping busy professionals find calm."]',
+        ctaText: '[Book Your Session]',
       },
       // ===== ABOUT: Build trust and connection =====
       {
         id: 'home-text-about',
         type: 'text',
-        headline: '[About Section Title - e.g., "Meet Your Guide", "Why I Do This"]',
+        headline: '[About You - Meet Your Guide]',
         content:
           '[Tell your story here. Who are you? Why do you do this work? Who do you serve best? What makes your approach different? Keep it personal - clients book people, not businesses. 2-3 paragraphs works well.]',
         imagePosition: 'right',
@@ -742,13 +742,13 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         id: 'home-testimonials-main',
         type: 'testimonials',
-        headline: '[Testimonials Title - e.g., "What Clients Say", "Kind Words"]',
+        headline: '[What Clients Say]',
         items: [
           {
             quote:
               '[Paste a real client testimonial here. Great testimonials mention the specific transformation or result.]',
             authorName: '[Client Name]',
-            authorRole: '[Optional: their title or context, e.g., "Wedding Client, June 2024"]',
+            authorRole: '[Their context, e.g., Wedding Client 2024]',
             rating: 5,
           },
           {
@@ -763,7 +763,7 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         id: 'home-faq-main',
         type: 'faq',
-        headline: '[FAQ Title - e.g., "Common Questions", "Before You Book"]',
+        headline: '[Common Questions]',
         items: [
           {
             question:
@@ -787,7 +787,7 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         id: 'home-contact-main',
         type: 'contact',
-        headline: '[Contact Title - e.g., "Get In Touch", "Let\'s Connect"]',
+        headline: '[Get In Touch]',
         // NOTE: email/phone left undefined (not placeholders) because:
         // 1. sanitizeObject() strips invalid emails/phones to empty strings
         // 2. Tests expect DEFAULT_PAGES_CONFIG to survive saveDraft() round-trip
@@ -799,11 +799,9 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         id: 'home-cta-main',
         type: 'cta',
-        headline:
-          '[Final Call to Action - e.g., "Ready to Begin?", "Let\'s Create Something Beautiful"]',
-        subheadline:
-          '[Brief encouraging message - e.g., "Book your complimentary consultation today."]',
-        ctaText: '[Button Text - same as hero or a softer ask like "Schedule a Call"]',
+        headline: '[Ready to Begin?]',
+        subheadline: '[Book your complimentary consultation today.]',
+        ctaText: '[Schedule a Call]',
       },
     ],
   },
@@ -831,9 +829,9 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
       {
         id: 'gallery-gallery-main',
         type: 'gallery',
-        headline: '[Gallery Title - e.g., "Recent Work", "Portfolio"]',
+        headline: '[Recent Work]',
         images: [], // Add images when ready
-        instagramHandle: "[Your Instagram handle - we'll pull your latest posts]",
+        instagramHandle: '[your_instagram_handle]',
       },
     ],
   },
