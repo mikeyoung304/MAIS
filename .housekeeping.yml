@@ -1,0 +1,27 @@
+# Housekeeping Configuration
+# Used by /workflows:housekeeping for weekly maintenance
+
+thresholds:
+  max_docs: 500              # Alert if docs/solutions exceeds this
+  max_size_mb: 10            # Alert if total size exceeds this
+  max_cluster_files: 3       # Max files per topic (guide + quick ref)
+  stale_days: 90             # Files older than this with no recent refs
+
+auto_consolidate:
+  - duplicates               # Always auto-merge exact duplicates
+  - exact_name_matches       # Auto-merge case variants
+
+skip_patterns:
+  - docs/archive/**          # Never consolidate archived docs
+  - docs/solutions/patterns/mais-critical-patterns.md  # Keep critical patterns
+  - docs/solutions/PREVENTION-QUICK-REFERENCE.md      # Keep master quick ref
+
+consolidation_targets:
+  - docs/solutions/          # Primary target
+  - docs/                    # Check root docs too
+
+# Weekly schedule (optional - for automation)
+schedule:
+  day: friday                # Day of week to run
+  time: "16:00"              # Afternoon cleanup
+  auto_commit: true          # Auto-commit if changes < 50 files
