@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo --port 3000",
+    "dev": "next dev --port 3000",
+    "dev:turbo": "next dev --turbo --port 3000",
     "dev:fresh": "rm -rf .next .turbo node_modules/.cache && npm run dev",
     "dev:no-sw": "DISABLE_SW=true npm run dev",
     "build": "next build",
