@@ -907,8 +907,62 @@ describe('Storefront Executors', () => {
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    // Note: toggle_page_enabled doesn't use advisory locks yet (Phase 3)
-    // Test will be added in Phase 3 when lock is implemented
+    it('should verify advisory lock called for toggle_page_enabled', async () => {
+      const executor = registeredExecutors.get('toggle_page_enabled')!;
+
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+      });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      await executor('tenant-123', {
+        pageName: 'about',
+        enabled: false,
+      });
+
+      // Verify transaction (with advisory lock) was used
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('should verify advisory lock called for publish_draft', async () => {
+      const executor = registeredExecutors.get('publish_draft')!;
+
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+      });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      await executor('tenant-123', {});
+
+      // Verify transaction (with advisory lock) was used
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('should verify advisory lock called for discard_draft', async () => {
+      const executor = registeredExecutors.get('discard_draft')!;
+
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+      });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      await executor('tenant-123', {});
+
+      // Verify transaction (with advisory lock) was used
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
 
     it('should handle concurrent updates to different pages safely', async () => {
       const executor = registeredExecutors.get('update_page_section')!;
