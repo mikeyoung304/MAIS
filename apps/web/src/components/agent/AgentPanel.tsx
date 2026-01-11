@@ -17,6 +17,9 @@ import type { PageName } from '@macon/contracts';
 const PANEL_OPEN_KEY = 'agent-panel-open';
 const WELCOMED_KEY = 'agent-panel-welcomed';
 
+// Mobile breakpoint (matches Tailwind's lg)
+const MOBILE_BREAKPOINT = 1024;
+
 // Welcome messages based on onboarding state
 const WELCOME_MESSAGES = {
   new: "Salutations! I'm here to help you set up your business. Instead of filling out forms, we'll just have a conversation and I'll handle the setup for you.\n\nSo — what kind of services do you offer?",
@@ -49,17 +52,34 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const { slug: tenantSlug } = useAuth();
 
   // Panel open/closed state (persisted to localStorage)
-  const [isOpen, setIsOpenState] = useState(true); // Default open
+  const [isOpen, setIsOpenState] = useState(true); // Default open on desktop
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Mobile-specific state
+  // Initialize isMobile synchronously to prevent flash of desktop UI on mobile
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < MOBILE_BREAKPOINT;
+    }
+    return true; // Default to mobile on SSR (safer - panel hidden by default)
+  });
 
   // Onboarding state
   const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
     useOnboardingState();
 
-  // Load persisted state from localStorage on mount
+  // Load persisted state from localStorage on mount + mobile detection
   useEffect(() => {
     setIsMounted(true);
+
+    // Mobile detection
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
 
     const storedOpen = localStorage.getItem(PANEL_OPEN_KEY);
     const welcomed = localStorage.getItem(WELCOMED_KEY);
@@ -67,11 +87,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
     // Check if this is first visit
     if (!welcomed) {
       setIsFirstVisit(true);
-      setIsOpenState(true); // Auto-open for first-time visitors
+      setIsOpenState(true); // Auto-open for first-time visitors (desktop only)
     } else {
       // Use stored preference or default to open
       setIsOpenState(storedOpen === null ? true : storedOpen === 'true');
     }
+
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Persist open state to localStorage
@@ -127,13 +149,16 @@ export function AgentPanel({ className }: AgentPanelProps) {
   };
 
   // Return skeleton during SSR to prevent hydration flash
+  // On mobile, skeleton is hidden (panel is hidden by default on mobile)
   if (!isMounted) {
     return (
       <aside
         className={cn(
           'fixed right-0 top-0 h-screen z-40',
-          'w-[400px] max-w-[90vw]',
+          'w-[400px] max-w-full',
           'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
+          // Hidden on mobile during SSR
+          'hidden lg:flex',
           className
         )}
         role="complementary"
@@ -159,18 +184,48 @@ export function AgentPanel({ className }: AgentPanelProps) {
     );
   }
 
+  // Determine if panel should be shown based on device type
+  const isPanelVisible = isMobile ? isMobileOpen : isOpen;
+
   return (
     <>
-      {/* Collapsed state toggle button */}
-      {!isOpen && (
+      {/* Mobile overlay backdrop */}
+      {isMobile && isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile FAB toggle button - bottom right */}
+      {isMobile && !isMobileOpen && (
+        <Button
+          onClick={() => setIsMobileOpen(true)}
+          variant="sage"
+          className={cn(
+            'fixed right-4 bottom-4 z-50 lg:hidden',
+            'h-14 w-14 rounded-full',
+            'shadow-lg hover:shadow-xl transition-all duration-300',
+            'flex items-center justify-center'
+          )}
+          aria-label="Open AI Assistant"
+        >
+          <Sparkles className="w-6 h-6" />
+        </Button>
+      )}
+
+      {/* Desktop collapsed state toggle button */}
+      {!isMobile && !isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
           variant="sage"
           className={cn(
             'fixed right-0 top-1/2 -translate-y-1/2 z-40',
+            'hidden lg:flex',
             'h-auto py-4 px-2 rounded-l-xl rounded-r-none',
             'shadow-lg hover:shadow-xl transition-all duration-300',
-            'flex flex-col items-center gap-2'
+            'flex-col items-center gap-2'
           )}
           aria-label="Open AI Assistant"
         >
@@ -186,10 +241,12 @@ export function AgentPanel({ className }: AgentPanelProps) {
       <aside
         className={cn(
           'fixed right-0 top-0 h-screen z-40',
-          'w-[400px] max-w-[90vw]',
+          // Full width on mobile, fixed width on desktop
+          'w-full lg:w-[400px]',
           'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
           'transition-transform duration-300 ease-in-out',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
+          // Slide in/out based on device type
+          isPanelVisible ? 'translate-x-0' : 'translate-x-full',
           className
         )}
         role="complementary"
@@ -210,7 +267,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsOpen(false)}
+            onClick={() => (isMobile ? setIsMobileOpen(false) : setIsOpen(false))}
             className="h-8 w-8 rounded-lg hover:bg-neutral-700"
             aria-label="Collapse panel"
           >
