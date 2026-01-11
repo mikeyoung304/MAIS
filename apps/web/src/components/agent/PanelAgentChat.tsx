@@ -63,6 +63,10 @@ interface PanelAgentChatProps {
   onMessageConsumed?: () => void;
   /** Callback when quick replies status changes (true = agent provided quick replies) */
   onQuickRepliesChange?: (hasQuickReplies: boolean) => void;
+  /** Ref for the input textarea (for focus management from parent) */
+  inputRef?: React.RefObject<HTMLTextAreaElement>;
+  /** ARIA role for messages container (default "log" for screen readers) */
+  messagesRole?: 'log' | 'region';
   /** Additional CSS classes */
   className?: string;
 }
@@ -84,6 +88,8 @@ export function PanelAgentChat({
   initialMessage,
   onMessageConsumed,
   onQuickRepliesChange,
+  inputRef: externalInputRef,
+  messagesRole = 'log',
   className,
 }: PanelAgentChatProps) {
   // Use shared hook with panel-specific callbacks
@@ -102,7 +108,7 @@ export function PanelAgentChat({
     initializeChat,
     setInputValue,
     messagesEndRef,
-    inputRef,
+    inputRef: internalInputRef,
     handleKeyDown,
   } = useAgentChat({
     apiUrl: API_PROXY,
@@ -122,6 +128,62 @@ export function PanelAgentChat({
       }
     },
   });
+
+  // Use external ref if provided, otherwise use internal ref
+  const inputRef = externalInputRef || internalInputRef;
+
+  // Platform detection for keyboard handling
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [isAndroid, setIsAndroid] = React.useState(false);
+  const [isIOS, setIsIOS] = React.useState(false);
+
+  // Detect platform on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mobile = window.innerWidth < 768; // md breakpoint
+    const android = /Android/i.test(navigator.userAgent);
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    setIsMobile(mobile);
+    setIsAndroid(android);
+    setIsIOS(ios);
+  }, []);
+
+  // Platform-specific keyboard handling for mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    if (isAndroid) {
+      // Android: Viewport resizes naturally, add bottom padding to input
+      if (inputRef.current) {
+        inputRef.current.style.paddingBottom = '60px';
+      }
+    } else if (isIOS) {
+      // iOS: Manual viewport monitoring with visualViewport API
+      const handleViewportChange = () => {
+        if (!window.visualViewport) return;
+
+        const vh = window.visualViewport.height;
+        const keyboardHeight = window.innerHeight - vh;
+
+        if (keyboardHeight > 150) {
+          // Keyboard open (threshold to distinguish from browser chrome)
+          // Scroll input into view after layout settles
+          requestAnimationFrame(() => {
+            inputRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'nearest', // NOT 'center' - causes over-scroll (issue #216)
+            });
+          });
+        }
+        // Note: No need to adjust drawer height - Vaul handles this automatically
+      };
+
+      window.visualViewport?.addEventListener('resize', handleViewportChange);
+      return () => window.visualViewport?.removeEventListener('resize', handleViewportChange);
+    }
+  }, [isMobile, isAndroid, isIOS, inputRef]);
 
   // Calculate whether the last assistant message has quick replies
   // Memoized to avoid recalculating on every render
@@ -190,7 +252,11 @@ export function PanelAgentChat({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth">
+      <div
+        role={messagesRole}
+        aria-label="Chat messages"
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth"
+      >
         {messages.map((message, index) => {
           // Check if this is the last assistant message
           const isLastAssistantMessage =
@@ -282,7 +348,7 @@ export function PanelAgentChat({
           <textarea
             ref={inputRef}
             data-growth-assistant-input
-            data-testid="agent-chat-input"
+            data-testid="agent-input"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}

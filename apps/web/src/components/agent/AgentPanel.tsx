@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,13 +13,12 @@ import { agentUIActions } from '@/stores/agent-ui-store';
 import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
 import type { PageName } from '@macon/contracts';
 import { useQueryClient } from '@tanstack/react-query';
+import { Drawer } from 'vaul';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 // LocalStorage keys for panel state
 const PANEL_OPEN_KEY = 'agent-panel-open';
 const WELCOMED_KEY = 'agent-panel-welcomed';
-
-// Mobile breakpoint (matches Tailwind's lg)
-const MOBILE_BREAKPOINT = 1024;
 
 // Welcome messages based on onboarding state
 const WELCOME_MESSAGES = {
@@ -52,20 +51,22 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const router = useRouter();
   const { slug: tenantSlug } = useAuth();
 
+  // Mobile/desktop detection
+  const isMobileQuery = useIsMobile();
+  const isMobile = isMobileQuery ?? false; // Fallback to false during SSR
+
   // Panel open/closed state (persisted to localStorage)
   const [isOpen, setIsOpenState] = useState(true); // Default open on desktop
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Mobile-specific state
-  // Initialize isMobile synchronously to prevent flash of desktop UI on mobile
+  // Mobile-specific state for Vaul drawer
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < MOBILE_BREAKPOINT;
-    }
-    return true; // Default to mobile on SSR (safer - panel hidden by default)
-  });
+
+  // Refs for accessibility (focus management)
+  const announcerRef = useRef<HTMLDivElement>(null);
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Onboarding state
   const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
@@ -74,16 +75,16 @@ export function AgentPanel({ className }: AgentPanelProps) {
   // React Query client for optimistic updates (Phase 1.4)
   const queryClient = useQueryClient();
 
-  // Load persisted state from localStorage on mount + mobile detection
+  // WCAG 4.1.3: Screen reader announcement helper
+  const announce = useCallback((message: string) => {
+    if (announcerRef.current) {
+      announcerRef.current.textContent = message;
+    }
+  }, []);
+
+  // Load persisted state from localStorage on mount
   useEffect(() => {
     setIsMounted(true);
-
-    // Mobile detection
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
 
     const storedOpen = localStorage.getItem(PANEL_OPEN_KEY);
     const welcomed = localStorage.getItem(WELCOMED_KEY);
@@ -96,8 +97,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
       // Use stored preference or default to open
       setIsOpenState(storedOpen === null ? true : storedOpen === 'true');
     }
-
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Persist open state to localStorage
@@ -105,6 +104,25 @@ export function AgentPanel({ className }: AgentPanelProps) {
     setIsOpenState(open);
     localStorage.setItem(PANEL_OPEN_KEY, String(open));
   }, []);
+
+  // WCAG 2.4.3: Background inert management for mobile drawer
+  useEffect(() => {
+    if (!isMobile) return; // Desktop doesn't need inert management
+
+    const main = document.getElementById('main-content');
+    if (isMobileOpen && main) {
+      main.setAttribute('inert', 'true');
+    } else if (main) {
+      main.removeAttribute('inert');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (main) {
+        main.removeAttribute('inert');
+      }
+    };
+  }, [isMobileOpen, isMobile]);
 
   // Handle UI actions from agent tools
   const handleUIAction = useCallback(
@@ -154,7 +172,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
   // Return skeleton during SSR to prevent hydration flash
   // On mobile, skeleton is hidden (panel is hidden by default on mobile)
-  if (!isMounted) {
+  if (!isMounted || isMobileQuery === undefined) {
     return (
       <aside
         className={cn(
@@ -188,172 +206,327 @@ export function AgentPanel({ className }: AgentPanelProps) {
     );
   }
 
-  // Determine if panel should be shown based on device type
-  const isPanelVisible = isMobile ? isMobileOpen : isOpen;
+  // Desktop: Use fixed aside panel (unchanged from before)
+  if (!isMobile) {
+    return (
+      <>
+        {/* Desktop collapsed state toggle button */}
+        {!isOpen && (
+          <Button
+            onClick={() => setIsOpen(true)}
+            variant="sage"
+            className={cn(
+              'fixed right-0 top-1/2 -translate-y-1/2 z-40',
+              'h-auto py-4 px-2 rounded-l-xl rounded-r-none',
+              'shadow-lg hover:shadow-xl transition-all duration-300',
+              'flex-col items-center gap-2'
+            )}
+            aria-label="Open AI Assistant"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-xs font-medium" style={{ writingMode: 'vertical-rl' }}>
+              Assistant
+            </span>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        )}
 
+        {/* Fixed side panel (desktop) */}
+        <aside
+          className={cn(
+            'fixed right-0 top-0 h-screen z-40',
+            'w-[400px]',
+            'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
+            'transition-transform duration-300 ease-in-out',
+            isOpen ? 'translate-x-0' : 'translate-x-full',
+            className
+          )}
+          role="complementary"
+          aria-label="AI Assistant"
+          data-testid="agent-panel"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-sage/10 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-sage" />
+              </div>
+              <div>
+                <h2 className="text-base font-serif font-semibold text-text-primary">
+                  AI Assistant
+                </h2>
+                <p className="text-xs text-text-muted">Powered by AI</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              className="h-8 w-8 rounded-lg hover:bg-neutral-700"
+              aria-label="Collapse panel"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Onboarding Progress (when in onboarding mode) */}
+          {isOnboarding && (
+            <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
+              <OnboardingProgress
+                currentPhase={currentPhase}
+                onSkip={handleSkip}
+                isSkipping={isSkipping}
+                skipError={skipError}
+              />
+
+              {/* Storefront Preview Link */}
+              {tenantSlug && (
+                <a
+                  href={`/t/${tenantSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    'flex items-center gap-2 mt-3 px-3 py-2',
+                    'bg-sage/10 hover:bg-sage/20 rounded-lg',
+                    'text-sm text-sage transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-sage/30'
+                  )}
+                  aria-label="Preview your storefront in a new tab"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>View your storefront</span>
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Chat content */}
+          <div className="flex-1 overflow-hidden">
+            <PanelAgentChat
+              welcomeMessage={getWelcomeMessage()}
+              onFirstMessage={handleFirstMessage}
+              onUIAction={handleUIAction}
+              onToolComplete={(toolResults) => {
+                // Phase 1.4: Optimistic updates with 50ms failsafe
+                // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
+                const resultWithConfig = toolResults?.find(
+                  (r: any) => r.success && r.data?.updatedConfig
+                );
+
+                if (resultWithConfig?.data?.updatedConfig) {
+                  // Optimistic update: Immediately set cached config from executor response
+                  queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
+
+                  // CRITICAL: 50ms failsafe for READ COMMITTED propagation
+                  // This is a database consistency pattern, not just optimization
+                  // Prevents stale data if executor returns slightly outdated config
+                  setTimeout(() => {
+                    invalidateDraftConfig();
+                  }, 50);
+                } else {
+                  // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
+                  // Use 100ms delay for extra safety margin
+                  setTimeout(() => {
+                    invalidateDraftConfig();
+                  }, 100);
+                }
+              }}
+              className="h-full"
+            />
+          </div>
+
+          {/* First-time badge (only when not in onboarding) */}
+          {isFirstVisit && !isOnboarding && (
+            <div className="absolute top-16 right-4 z-10">
+              <div className="bg-sage text-white text-xs font-medium px-2 py-1 rounded-full shadow-md animate-pulse">
+                New
+              </div>
+            </div>
+          )}
+        </aside>
+      </>
+    );
+  }
+
+  // Mobile: Vaul bottom sheet with full accessibility
   return (
     <>
-      {/* Mobile overlay backdrop */}
-      {isMobile && isMobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {/* WCAG: Screen reader announcer (persistent, hidden) */}
+      <div
+        ref={announcerRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
 
-      {/* Mobile FAB toggle button - bottom right */}
-      {isMobile && !isMobileOpen && (
-        <Button
-          onClick={() => setIsMobileOpen(true)}
-          variant="sage"
-          className={cn(
-            'fixed right-4 bottom-4 z-50 lg:hidden',
-            'h-14 w-14 rounded-full',
-            'shadow-lg hover:shadow-xl transition-all duration-300',
-            'flex items-center justify-center'
-          )}
-          aria-label="Open AI Assistant"
-        >
-          <Sparkles className="w-6 h-6" />
-        </Button>
-      )}
-
-      {/* Desktop collapsed state toggle button */}
-      {!isMobile && !isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          variant="sage"
-          className={cn(
-            'fixed right-0 top-1/2 -translate-y-1/2 z-40',
-            'hidden lg:flex',
-            'h-auto py-4 px-2 rounded-l-xl rounded-r-none',
-            'shadow-lg hover:shadow-xl transition-all duration-300',
-            'flex-col items-center gap-2'
-          )}
-          aria-label="Open AI Assistant"
-        >
-          <MessageCircle className="w-5 h-5" />
-          <span className="text-xs font-medium" style={{ writingMode: 'vertical-rl' }}>
-            Assistant
-          </span>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-      )}
-
-      {/* Fixed side panel */}
-      <aside
-        className={cn(
-          'fixed right-0 top-0 h-screen z-40',
-          // Full width on mobile, fixed width on desktop
-          'w-full lg:w-[400px]',
-          'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
-          'transition-transform duration-300 ease-in-out',
-          // Slide in/out based on device type
-          isPanelVisible ? 'translate-x-0' : 'translate-x-full',
-          className
-        )}
-        role="complementary"
-        aria-label="AI Assistant"
-        data-testid="agent-panel"
+      <Drawer.Root
+        open={isMobileOpen}
+        onOpenChange={(open) => {
+          setIsMobileOpen(open);
+          announce(
+            open
+              ? 'AI Assistant drawer opened. Use Tab to navigate, Escape to close.'
+              : 'AI Assistant drawer closed.'
+          );
+        }}
+        repositionInputs={false} // iOS Safari fix for issue #574
+        dismissible={true} // Allow dismissing with swipe-down gesture
+        modal={true} // Trap focus within drawer
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-sage/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-sage" />
-            </div>
-            <div>
-              <h2 className="text-base font-serif font-semibold text-text-primary">AI Assistant</h2>
-              <p className="text-xs text-text-muted">Powered by AI</p>
-            </div>
-          </div>
+        {/* Mobile FAB trigger button - bottom right */}
+        <Drawer.Trigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => (isMobile ? setIsMobileOpen(false) : setIsOpen(false))}
-            className="h-8 w-8 rounded-lg hover:bg-neutral-700"
-            aria-label="Collapse panel"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Onboarding Progress (when in onboarding mode) */}
-        {isOnboarding && (
-          <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-            <OnboardingProgress
-              currentPhase={currentPhase}
-              onSkip={handleSkip}
-              isSkipping={isSkipping}
-              skipError={skipError}
-            />
-
-            {/* Storefront Preview Link */}
-            {tenantSlug && (
-              <a
-                href={`/t/${tenantSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  'flex items-center gap-2 mt-3 px-3 py-2',
-                  'bg-sage/10 hover:bg-sage/20 rounded-lg',
-                  'text-sm text-sage transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-sage/30'
-                )}
-                aria-label="Preview your storefront in a new tab"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>View your storefront</span>
-              </a>
+            ref={fabRef}
+            variant="sage"
+            className={cn(
+              'fixed right-6 bottom-6 z-50',
+              'h-14 w-14 rounded-full',
+              'shadow-lg hover:shadow-xl transition-all duration-300',
+              'flex items-center justify-center'
             )}
-          </div>
-        )}
+            aria-label="Open AI Assistant chat"
+          >
+            <Sparkles className="w-6 h-6" />
+          </Button>
+        </Drawer.Trigger>
 
-        {/* Chat content */}
-        <div className="flex-1 overflow-hidden">
-          <PanelAgentChat
-            welcomeMessage={getWelcomeMessage()}
-            onFirstMessage={handleFirstMessage}
-            onUIAction={handleUIAction}
-            onToolComplete={(toolResults) => {
-              // Phase 1.4: Optimistic updates with 50ms failsafe
-              // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
-              const resultWithConfig = toolResults?.find(
-                (r: any) => r.success && r.data?.updatedConfig
-              );
-
-              if (resultWithConfig?.data?.updatedConfig) {
-                // Optimistic update: Immediately set cached config from executor response
-                queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
-
-                // CRITICAL: 50ms failsafe for READ COMMITTED propagation
-                // This is a database consistency pattern, not just optimization
-                // Prevents stale data if executor returns slightly outdated config
-                setTimeout(() => {
-                  invalidateDraftConfig();
-                }, 50);
-              } else {
-                // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
-                // Use 100ms delay for extra safety margin
-                setTimeout(() => {
-                  invalidateDraftConfig();
-                }, 100);
-              }
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
+          <Drawer.Content
+            role="dialog"
+            aria-modal="true"
+            aria-label="AI Assistant Chat"
+            className={cn(
+              'fixed bottom-0 left-0 right-0 z-50',
+              'h-[85vh]',
+              'flex flex-col',
+              'rounded-t-3xl bg-surface-alt shadow-xl'
+            )}
+            onOpenAutoFocus={(e) => {
+              // Focus input when drawer opens
+              e.preventDefault();
+              setTimeout(() => {
+                inputRef.current?.focus();
+              }, 100);
             }}
-            className="h-full"
-          />
-        </div>
-
-        {/* First-time badge (only when not in onboarding) */}
-        {isFirstVisit && !isOnboarding && (
-          <div className="absolute top-16 right-4 z-10">
-            <div className="bg-sage text-white text-xs font-medium px-2 py-1 rounded-full shadow-md animate-pulse">
-              New
+            onCloseAutoFocus={(e) => {
+              // Focus FAB when drawer closes
+              e.preventDefault();
+              setTimeout(() => {
+                fabRef.current?.focus();
+              }, 100);
+            }}
+          >
+            {/* WCAG 2.5.8: Drag handle (24px minimum touch target) */}
+            <div className="flex justify-center py-3 shrink-0">
+              <div className="w-12 h-6 rounded-full bg-neutral-300" aria-hidden="true" />
             </div>
-          </div>
-        )}
-      </aside>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-sage/10 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-sage" />
+                </div>
+                <div>
+                  <h2 className="text-base font-serif font-semibold text-text-primary">
+                    AI Assistant
+                  </h2>
+                  <p className="text-xs text-text-muted">Powered by AI</p>
+                </div>
+              </div>
+              <Drawer.Close asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg hover:bg-neutral-700"
+                  aria-label="Close drawer"
+                >
+                  <ChevronRight className="w-4 h-4 rotate-90" />
+                </Button>
+              </Drawer.Close>
+            </div>
+
+            {/* Onboarding Progress (when in onboarding mode) */}
+            {isOnboarding && (
+              <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
+                <OnboardingProgress
+                  currentPhase={currentPhase}
+                  onSkip={handleSkip}
+                  isSkipping={isSkipping}
+                  skipError={skipError}
+                />
+
+                {/* Storefront Preview Link */}
+                {tenantSlug && (
+                  <a
+                    href={`/t/${tenantSlug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'flex items-center gap-2 mt-3 px-3 py-2',
+                      'bg-sage/10 hover:bg-sage/20 rounded-lg',
+                      'text-sm text-sage transition-colors',
+                      'focus:outline-none focus:ring-2 focus:ring-sage/30'
+                    )}
+                    aria-label="Preview your storefront in a new tab"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>View your storefront</span>
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Chat content */}
+            <div className="flex-1 overflow-hidden">
+              <PanelAgentChat
+                welcomeMessage={getWelcomeMessage()}
+                onFirstMessage={handleFirstMessage}
+                onUIAction={handleUIAction}
+                onToolComplete={(toolResults) => {
+                  // Phase 1.4: Optimistic updates with 50ms failsafe
+                  // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
+                  const resultWithConfig = toolResults?.find(
+                    (r: any) => r.success && r.data?.updatedConfig
+                  );
+
+                  if (resultWithConfig?.data?.updatedConfig) {
+                    // Optimistic update: Immediately set cached config from executor response
+                    queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
+
+                    // CRITICAL: 50ms failsafe for READ COMMITTED propagation
+                    // This is a database consistency pattern, not just optimization
+                    // Prevents stale data if executor returns slightly outdated config
+                    setTimeout(() => {
+                      invalidateDraftConfig();
+                    }, 50);
+                  } else {
+                    // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
+                    // Use 100ms delay for extra safety margin
+                    setTimeout(() => {
+                      invalidateDraftConfig();
+                    }, 100);
+                  }
+                }}
+                inputRef={inputRef}
+                messagesRole="log" // WCAG: Screen reader support for messages
+                className="h-full"
+              />
+            </div>
+
+            {/* First-time badge (only when not in onboarding) */}
+            {isFirstVisit && !isOnboarding && (
+              <div className="absolute top-16 right-4 z-10">
+                <div className="bg-sage text-white text-xs font-medium px-2 py-1 rounded-full shadow-md animate-pulse">
+                  New
+                </div>
+              </div>
+            )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
     </>
   );
 }
