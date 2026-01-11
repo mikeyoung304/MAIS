@@ -21,7 +21,10 @@ export function CheckoutStage({ active }: StageProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <button className="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center">
+          <button
+            className="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center"
+            aria-label="Go back to previous step"
+          >
             <ChevronLeft className="w-3 h-3 text-text-muted" />
           </button>
           <p className="text-[11px] font-semibold text-text-primary">Checkout</p>

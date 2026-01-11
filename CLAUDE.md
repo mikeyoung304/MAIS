@@ -189,6 +189,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 28. Trust tier mismatch tool definition vs createProposal
 29. TanStack Query staleTime blocking real-time (use `staleTime: 0`)
 30. Race condition on cache invalidation (add 100ms delay)
+31. Sage background with white text (fails WCAG AA - use teal/navy for backgrounds, sage for text only)
 
 ## Prevention Strategies
 

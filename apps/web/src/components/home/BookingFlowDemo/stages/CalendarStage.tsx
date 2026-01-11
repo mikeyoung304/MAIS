@@ -37,7 +37,10 @@ export function CalendarStage({ active }: StageProps) {
     >
       {/* Header with back button */}
       <div className="flex items-center gap-2 mb-3">
-        <button className="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center">
+        <button
+          className="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center"
+          aria-label="Go back to previous step"
+        >
           <ChevronLeft className="w-3 h-3 text-text-muted" />
         </button>
         <div className="flex-1">
@@ -50,11 +53,11 @@ export function CalendarStage({ active }: StageProps) {
       <div className="bg-neutral-800/50 rounded-xl p-2.5 mb-2.5">
         {/* Month header */}
         <div className="flex items-center justify-between mb-2">
-          <button className="p-0.5">
+          <button className="p-0.5" aria-label="Previous month">
             <ChevronLeft className="w-3 h-3 text-text-muted" />
           </button>
           <span className="text-[10px] font-medium text-text-primary">January 2025</span>
-          <button className="p-0.5">
+          <button className="p-0.5" aria-label="Next month">
             <ChevronRight className="w-3 h-3 text-text-muted" />
           </button>
         </div>

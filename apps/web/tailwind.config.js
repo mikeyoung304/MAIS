@@ -9,11 +9,11 @@ module.exports = {
         surface: '#18181B', // Dark graphite background
         'surface-alt': '#27272A', // Slightly lighter graphite for sections
 
-        // Primary: Electric Sage accent on dark
-        sage: '#45B37F', // Electric Sage - pops on dark
-        'sage-hover': '#5CC98F', // Lighter on hover for dark mode
-        'sage-light': '#6BC495', // Decorative
-        'sage-text': '#45B37F', // Sage is readable on dark backgrounds
+        // Primary: Electric Sage accent (original brand color restored)
+        sage: '#45B37F', // Original Electric Sage - works for text and brand elements
+        'sage-hover': '#5CC98F', // Original hover state
+        'sage-light': '#6BC495', // Decorative light sage
+        'sage-text': '#45B37F', // Match default sage
 
         // Text colors for dark mode
         'text-primary': '#FAFAFA', // Near-white text

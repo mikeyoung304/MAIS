@@ -32,7 +32,7 @@
     "dev:api": "npm run dev --workspace=server",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:all": "concurrently -n server,web,stripe -c cyan,magenta,yellow \"npm run dev:api\" \"npm run dev:web\" \"stripe listen --forward-to localhost:3001/v1/webhooks/stripe\"",
-    "dev:e2e": "concurrently -n server,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:e2e": "E2E_TEST=1 concurrently -n server,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "wait-for-servers": "node e2e/wait-for-servers.js",
     "verify-build": "bash scripts/verify-build.sh",
     "verify-nextjs": "bash scripts/verify-nextjs-build.sh",

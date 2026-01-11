@@ -98,7 +98,10 @@ export function ChatAssistant({ stage }: ChatAssistantProps) {
           <div className="flex-1 rounded-full border border-neutral-700 px-3 py-1.5 text-[10px] text-neutral-500 bg-neutral-800/50">
             Ask a question...
           </div>
-          <button className="w-7 h-7 rounded-full bg-sage flex items-center justify-center">
+          <button
+            className="w-7 h-7 rounded-full bg-sage flex items-center justify-center"
+            aria-label="Send message"
+          >
             <Send className="w-3 h-3 text-white" />
           </button>
         </div>
