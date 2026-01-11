@@ -36,6 +36,7 @@ import {
   type LandingPageConfig,
   type PagesConfig,
   type PageConfig,
+  type WriteExecutorResult,
 } from '../proposals/executor-schemas';
 import {
   generateSectionId,
@@ -233,7 +234,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           'Page section modified via Build Mode'
         );
 
+        // Phase 1.4: Return updated config for optimistic frontend updates
         return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: `Section ${sectionIndex === -1 ? 'added' : 'updated'} successfully`,
           action: sectionIndex === -1 ? 'added' : 'updated',
           pageName,
           sectionIndex: resultIndex,
@@ -329,7 +334,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           'Page section removed via Build Mode'
         );
 
+        // Phase 1.4: Return updated config for optimistic frontend updates
         return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: 'Section removed successfully',
           action: 'removed',
           pageName,
           sectionIndex,
@@ -424,7 +433,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           'Page sections reordered via Build Mode'
         );
 
+        // Phase 1.4: Return updated config for optimistic frontend updates
         return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: 'Sections reordered successfully',
           action: 'reordered',
           pageName,
           fromIndex,
@@ -487,7 +500,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     logger.info({ tenantId, pageName, enabled }, 'Page visibility toggled via Build Mode');
 
+    // Phase 1.4: Return updated config for optimistic frontend updates
     return {
+      success: true,
+      updatedConfig: { pages: updatedPages } as LandingPageConfig,
+      message: `Page ${enabled ? 'enabled' : 'disabled'} successfully`,
       action: enabled ? 'enabled' : 'disabled',
       pageName,
       enabled,
@@ -553,7 +570,14 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     logger.info({ tenantId, changes }, 'Storefront branding updated via Build Mode');
 
+    // Phase 1.4: Fetch and return current draft config for consistency
+    // (Branding updates don't modify draft, but frontend expects updatedConfig)
+    const { pages } = await getDraftConfigWithSlug(prisma, tenantId);
+
     return {
+      success: true,
+      updatedConfig: { pages } as LandingPageConfig,
+      message: 'Branding updated successfully',
       action: 'updated',
       changes,
       previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
@@ -619,7 +643,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       'Draft published to live storefront via Build Mode'
     );
 
+    // Phase 1.4: After publish, draft is cleared so return empty config
     return {
+      success: true,
+      updatedConfig: { pages: {} } as unknown as LandingPageConfig,
+      message: 'Draft published successfully. Changes are now live.',
       action: 'published',
       previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
       note: 'Changes are now live.',
@@ -667,7 +695,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
     logger.info({ tenantId }, 'Draft discarded via Build Mode');
 
+    // Phase 1.4: After discard, draft is cleared so return empty config
     return {
+      success: true,
+      updatedConfig: { pages: {} } as unknown as LandingPageConfig,
+      message: 'Draft discarded successfully. Showing live version.',
       action: 'discarded',
       previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
       note: 'Draft changes have been discarded. Showing live version.',

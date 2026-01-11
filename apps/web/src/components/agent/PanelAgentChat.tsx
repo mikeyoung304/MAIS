@@ -52,7 +52,7 @@ interface PanelAgentChatProps {
   /** Callback when user sends their first message */
   onFirstMessage?: () => void;
   /** Callback when a message completes with successful tool results (config may have changed) */
-  onToolComplete?: () => void;
+  onToolComplete?: (toolResults?: Array<{ success: boolean; data?: any }>) => void;
   /** Callback when agent message contains section highlight instruction */
   onSectionHighlight?: (sectionId: string) => void;
   /** Callback when agent tool returns a UI action (preview, navigate, etc.) */
@@ -109,8 +109,8 @@ export function PanelAgentChat({
     fallbackGreeting: welcomeMessage,
     onFirstMessage,
     onToolComplete: (toolResults) => {
-      // Notify parent about tool completion
-      onToolComplete?.();
+      // Notify parent about tool completion (pass results for Phase 1.4 optimistic updates)
+      onToolComplete?.(toolResults);
 
       // Handle UI actions from tool results
       if (onUIAction) {

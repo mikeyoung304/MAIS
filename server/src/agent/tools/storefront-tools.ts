@@ -56,6 +56,22 @@ import {
 // ============================================================================
 
 /**
+ * Get draft config with optional caching from ToolContext
+ * Uses cached config if available (Phase 1 optimization), otherwise fetches from database
+ *
+ * @param context - Tool execution context
+ * @returns Draft config with slug
+ */
+async function getDraftConfigCached(context: ToolContext) {
+  // Use cached config if available (set by base-orchestrator.ts pre-fetch)
+  if (context.draftConfig) {
+    return context.draftConfig;
+  }
+  // Fallback to database query (ENABLE_CONTEXT_CACHE=false or non-storefront turn)
+  return getDraftConfigWithSlug(context.prisma, context.tenantId);
+}
+
+/**
  * Create a proposal for a write operation
  */
 async function createProposal(
@@ -180,8 +196,8 @@ Changes are saved to draft - user must publish to make live.`,
     const sectionType = params.sectionType as string;
 
     try {
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      // Get current draft config (from cache if available, otherwise query database)
+      const { pages, hasDraft, slug } = await getDraftConfigCached(context);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -335,8 +351,8 @@ Can be undone by discarding draft.`,
     let sectionIndex = params.sectionIndex as number | undefined;
 
     try {
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      // Get current draft config (from cache if available, otherwise query database)
+      const { pages, hasDraft, slug } = await getDraftConfigCached(context);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -466,8 +482,8 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
     const toIndex = params.toIndex as number;
 
     try {
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      // Get current draft config (from cache if available, otherwise query database)
+      const { pages, hasDraft, slug } = await getDraftConfigCached(context);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -608,8 +624,8 @@ Auto-confirms since visibility toggles are low-risk.`,
         return { success: false, error: 'Home page cannot be disabled.' };
       }
 
-      // Get current draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      // Get current draft config (from cache if available, otherwise query database)
+      const { pages, hasDraft, slug } = await getDraftConfigCached(context);
 
       // Validate page exists
       const page = pages[pageName as keyof PagesConfig];
@@ -782,7 +798,7 @@ visible to all visitors.`,
 
     try {
       // Check if there's a draft to publish (#627 N+1 fix - single query)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      const { pages, hasDraft, slug } = await getDraftConfigCached(context);
 
       if (!hasDraft) {
         return {
@@ -832,7 +848,7 @@ Use this when the user wants to start over or abandon their changes.`,
 
     try {
       // Check if there's a draft to discard (#627 N+1 fix - single query)
-      const { hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      const { hasDraft, slug } = await getDraftConfigCached(context);
 
       if (!hasDraft) {
         return {
@@ -896,7 +912,7 @@ Use this to understand the current editing state before making changes.`,
 
     try {
       // Get draft config and slug in single query (#627 N+1 fix)
-      const { pages, hasDraft, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+      const { pages, hasDraft, slug } = await getDraftConfigCached(context);
 
       // Build summary of pages and their section counts
       const pageSummary = Object.entries(pages).map(([name, page]) => ({
@@ -1099,14 +1115,14 @@ Filters:
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
-      // TODO #718 FIX: Use raw configs from single query instead of N+1 pattern
+      // Phase 1.5 FIXED: Uses cached config from context (eliminates N+1 when ENABLE_CONTEXT_CACHE=true)
       const {
         pages: workingPages,
         hasDraft,
         slug,
         rawDraftConfig,
         rawLiveConfig,
-      } = await getDraftConfigWithSlug(prisma, tenantId);
+      } = await getDraftConfigCached(context);
 
       // Collect IDs from both configs for existsInDraft/existsInLive flags
       const draftIds = collectSectionIds(rawDraftConfig);
@@ -1206,14 +1222,14 @@ Get IDs from list_section_ids first.`,
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
-      // TODO #718 FIX: Use raw configs from single query instead of N+1 pattern
+      // Phase 1.5 FIXED: Uses cached config from context (eliminates N+1 when ENABLE_CONTEXT_CACHE=true)
       const {
         pages: workingPages,
         hasDraft,
         slug,
         rawDraftConfig,
         rawLiveConfig,
-      } = await getDraftConfigWithSlug(prisma, tenantId);
+      } = await getDraftConfigCached(context);
 
       // Determine source state from raw configs
       const isShowingDefaults = !rawDraftConfig && !rawLiveConfig;
@@ -1301,14 +1317,14 @@ Use this to:
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
-      // TODO #718 FIX: Use raw configs from single query instead of N+1 pattern
+      // Phase 1.5 FIXED: Uses cached config from context (eliminates N+1 when ENABLE_CONTEXT_CACHE=true)
       const {
         pages: workingPages,
         hasDraft,
         slug,
         rawDraftConfig,
         rawLiveConfig,
-      } = await getDraftConfigWithSlug(prisma, tenantId);
+      } = await getDraftConfigCached(context);
 
       // Determine source state from raw configs
       const isShowingDefaults = !rawDraftConfig && !rawLiveConfig;

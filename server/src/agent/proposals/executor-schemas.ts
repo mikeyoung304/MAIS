@@ -9,7 +9,48 @@
  */
 
 import { z } from 'zod';
-import { SectionSchema, PAGE_NAMES } from '@macon/contracts';
+import { SectionSchema, PAGE_NAMES, type LandingPageConfig } from '@macon/contracts';
+
+// ============================================================================
+// Executor Result Interfaces (Phase 1.4 - TypeScript Safety)
+// ============================================================================
+
+/**
+ * Result from write executors that modify storefront config
+ *
+ * **Phase 1.4 TypeScript Safety:**
+ * - Forces all write executors to return updatedConfig
+ * - Enables frontend optimistic updates without 100ms delay
+ * - Prevents stale data by providing fresh config after writes
+ *
+ * @property updatedConfig - Fresh config after write (REQUIRED for optimistic updates)
+ * @property message - Human-readable success message
+ * @property error - Error message if operation failed
+ */
+export interface WriteExecutorResult {
+  success: boolean;
+  updatedConfig: LandingPageConfig;
+  message: string;
+  error?: string;
+  // Allow additional metadata fields from existing executors
+  [key: string]: unknown;
+}
+
+/**
+ * Result from read-only executors (no config changes)
+ */
+export interface ReadExecutorResult {
+  success: boolean;
+  data?: unknown;
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Union type for all executor results
+ */
+export type ExecutorResult = WriteExecutorResult | ReadExecutorResult;
 
 // ============================================================================
 // Shared Constants

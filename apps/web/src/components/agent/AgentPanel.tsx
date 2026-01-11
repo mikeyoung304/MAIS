@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
 import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
 import type { PageName } from '@macon/contracts';
+import { useQueryClient } from '@tanstack/react-query';
 
 // LocalStorage keys for panel state
 const PANEL_OPEN_KEY = 'agent-panel-open';
@@ -69,6 +70,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
   // Onboarding state
   const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
     useOnboardingState();
+
+  // React Query client for optimistic updates (Phase 1.4)
+  const queryClient = useQueryClient();
 
   // Load persisted state from localStorage on mount + mobile detection
   useEffect(() => {
@@ -312,14 +316,30 @@ export function AgentPanel({ className }: AgentPanelProps) {
             welcomeMessage={getWelcomeMessage()}
             onFirstMessage={handleFirstMessage}
             onUIAction={handleUIAction}
-            onToolComplete={() => {
-              // P0-FIX: Invalidate draft config cache so preview shows updated content
-              // Without this, agent tool updates write to DB but frontend shows stale data
-              // P2-FIX: Small delay ensures PostgreSQL transaction is visible before refetch
-              // (prevents race condition with connection pooling / ReadCommitted isolation)
-              setTimeout(() => {
-                invalidateDraftConfig();
-              }, 100);
+            onToolComplete={(toolResults) => {
+              // Phase 1.4: Optimistic updates with 50ms failsafe
+              // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
+              const resultWithConfig = toolResults?.find(
+                (r: any) => r.success && r.data?.updatedConfig
+              );
+
+              if (resultWithConfig?.data?.updatedConfig) {
+                // Optimistic update: Immediately set cached config from executor response
+                queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
+
+                // CRITICAL: 50ms failsafe for READ COMMITTED propagation
+                // This is a database consistency pattern, not just optimization
+                // Prevents stale data if executor returns slightly outdated config
+                setTimeout(() => {
+                  invalidateDraftConfig();
+                }, 50);
+              } else {
+                // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
+                // Use 100ms delay for extra safety margin
+                setTimeout(() => {
+                  invalidateDraftConfig();
+                }, 100);
+              }
             }}
             className="h-full"
           />

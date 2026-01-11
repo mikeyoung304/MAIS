@@ -62,6 +62,37 @@ import {
   recordApiError,
 } from './metrics';
 
+// Feature flag imports
+import { ENABLE_CONTEXT_CACHE } from '../../lib/feature-flags';
+
+// Storefront tool context caching imports
+import { getDraftConfigWithSlug } from '../tools/utils';
+
+/**
+ * Build Mode storefront tools that benefit from draft config caching
+ * Pre-fetching eliminates N+1 queries (15+ → 3 per turn)
+ */
+const STOREFRONT_TOOLS = new Set([
+  'update_page_section',
+  'remove_page_section',
+  'reorder_page_sections',
+  'toggle_page_enabled',
+  'update_storefront_branding',
+  'publish_draft',
+  'discard_draft',
+  'get_landing_page_draft',
+  'list_section_ids',
+  'get_section_by_id',
+  'get_unfilled_placeholders',
+]);
+
+/**
+ * Check if any tool in the list is a storefront tool
+ */
+function hasStorefrontTool(toolNames: string[]): boolean {
+  return toolNames.some((name) => STOREFRONT_TOOLS.has(name));
+}
+
 /**
  * Configuration for orchestrator subclasses
  */
@@ -1033,10 +1064,20 @@ export abstract class BaseOrchestrator {
     }[] = [];
     const toolResultBlocks: ToolResultBlockParam[] = [];
 
+    // Pre-fetch draft config if any storefront tools are being called (Phase 1 optimization)
+    // Eliminates N+1 query pattern: 15+ queries → 3 queries per turn
+    // Gated by ENABLE_CONTEXT_CACHE feature flag for safe rollout
+    const toolNames = toolUseBlocks.map((t) => t.name);
+    const shouldCacheConfig = ENABLE_CONTEXT_CACHE && hasStorefrontTool(toolNames);
+
     const toolContext: ToolContext = {
       tenantId,
       sessionId,
       prisma: this.prisma,
+      // Conditionally add draftConfig if storefront tools detected
+      ...(shouldCacheConfig && {
+        draftConfig: await getDraftConfigWithSlug(this.prisma, tenantId),
+      }),
     };
 
     const availableTools = this.getTools();
@@ -1152,6 +1193,19 @@ export abstract class BaseOrchestrator {
                     { proposalId: result.proposalId, toolName: toolUse.name },
                     'T1 proposal executed immediately'
                   );
+
+                  // Phase 1.6 CRITICAL: Invalidate context cache after T1 execution
+                  // Prevents TOCTOU vulnerability where subsequent tools in same turn see stale data
+                  // Rationale: All T1 tools modify draft state (otherwise they'd be read-only)
+                  // Cost: 1 extra query per T1 execution (~30ms) - negligible vs TOCTOU risk
+                  if (toolContext.draftConfig) {
+                    toolContext.draftConfig = undefined; // Force refetch for next tool
+                    logger.debug(
+                      { toolName: toolUse.name, proposalId: result.proposalId },
+                      'T1 execution complete - context invalidated for next tool'
+                    );
+                  }
+
                   // Record execution metric
                   recordProposal('executed', result.trustTier, config.agentType);
                 }
