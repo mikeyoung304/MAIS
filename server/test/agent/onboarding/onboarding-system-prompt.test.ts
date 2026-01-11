@@ -23,16 +23,17 @@ describe('buildOnboardingSystemPrompt', () => {
       expect(prompt).toContain('Test Photography');
     });
 
-    it('includes HANDLED brand voice guidelines', () => {
+    it('includes terse voice guidelines', () => {
       const prompt = buildOnboardingSystemPrompt({
         businessName: 'Test Studio',
         currentPhase: 'DISCOVERY',
         isResume: false,
       });
 
-      expect(prompt).toContain('Cheeky but professional');
-      expect(prompt).toContain('Anti-hype');
-      expect(prompt).toContain('Words to avoid');
+      expect(prompt).toContain('Terse');
+      expect(prompt).toContain('bet');
+      expect(prompt).toContain('done');
+      expect(prompt).toContain('heard');
     });
 
     it('includes trust tier documentation', () => {
@@ -58,8 +59,7 @@ describe('buildOnboardingSystemPrompt', () => {
       });
 
       expect(prompt).toContain('Getting Started');
-      expect(prompt).toContain('kind of services');
-      expect(prompt).toContain('Where are you based');
+      expect(prompt).toContain('What do you do');
     });
 
     it('includes market research guidance for MARKET_RESEARCH phase', () => {
@@ -71,7 +71,6 @@ describe('buildOnboardingSystemPrompt', () => {
 
       expect(prompt).toContain('Market Research');
       expect(prompt).toContain('get_market_research');
-      expect(prompt).toContain('pricing');
     });
 
     it('includes services guidance for SERVICES phase', () => {
@@ -94,8 +93,7 @@ describe('buildOnboardingSystemPrompt', () => {
       });
 
       expect(prompt).toContain('Website Setup');
-      expect(prompt).toContain('headline');
-      expect(prompt).toContain('update_page_section');
+      expect(prompt).toContain('Hero');
     });
 
     it('includes completion guidance for COMPLETED phase', () => {
@@ -105,9 +103,8 @@ describe('buildOnboardingSystemPrompt', () => {
         isResume: false,
       });
 
-      expect(prompt).toContain('Onboarding Complete');
-      expect(prompt).toContain('Celebrate');
-      expect(prompt).toContain('Next Steps');
+      expect(prompt).toContain('Complete');
+      expect(prompt).toContain('live');
     });
   });
 
@@ -172,9 +169,8 @@ describe('getOnboardingGreeting', () => {
         isResume: false,
       });
 
-      expect(greeting).toContain('help you set up');
-      expect(greeting).toContain('Test Studio');
-      expect(greeting).toContain('what kind of services');
+      expect(greeting).toContain('Welcome to Handled');
+      expect(greeting).toContain('jump right in');
     });
 
     it('returns appropriate greeting for DISCOVERY', () => {
@@ -184,7 +180,8 @@ describe('getOnboardingGreeting', () => {
         isResume: false,
       });
 
-      expect(greeting).toContain('pick up where we left off');
+      expect(greeting).toContain('Back');
+      expect(greeting).toContain('What do you do');
     });
 
     it('returns appropriate greeting for COMPLETED', () => {
@@ -194,13 +191,12 @@ describe('getOnboardingGreeting', () => {
         isResume: false,
       });
 
-      expect(greeting).toContain('complete');
       expect(greeting).toContain('live');
     });
   });
 
   describe('returning user greetings', () => {
-    it('returns welcome back greeting with context', () => {
+    it('returns terse greeting with context', () => {
       const advisorMemory: AdvisorMemory = {
         tenantId: 'tenant_123',
         currentPhase: 'SERVICES' as OnboardingPhase,
@@ -226,9 +222,8 @@ describe('getOnboardingGreeting', () => {
         isResume: true,
       });
 
-      expect(greeting).toContain('Welcome back');
+      expect(greeting).toContain('Back');
       expect(greeting).toContain('photographer');
-      expect(greeting).toContain('Austin');
       expect(greeting).toContain('3 packages');
     });
   });

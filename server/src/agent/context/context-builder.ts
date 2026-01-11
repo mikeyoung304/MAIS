@@ -222,34 +222,29 @@ export function detectOnboardingState(context: AgentSessionContext): OnboardingS
 
 /**
  * Get HANDLED-voice greeting based on context
- * Matches brand voice: cheeky, professional, direct
+ * Hip, terse, gets to the point
  */
 export function getHandledGreeting(context: AgentSessionContext): string {
   const { quickStats } = context;
 
-  // Needs Stripe
-  if (!quickStats.stripeConnected) {
-    return `Your Stripe isn't connected yet. I can handle that — takes about 3 minutes, then you never touch it again. Want to knock it out?`;
-  }
-
-  // Has Stripe, no packages
-  if (quickStats.packageCount === 0) {
-    return `Stripe's connected. ✓ Now you need something to sell. What do you offer — sessions, packages, something else?`;
-  }
-
-  // Has packages, no bookings
-  if (quickStats.totalBookings === 0) {
-    return `You've got ${quickStats.packageCount} package${quickStats.packageCount > 1 ? 's' : ''} ready to go. Now let's get some clients booking. Want me to help you share your booking link?`;
-  }
-
   // Returning user with upcoming bookings
   const upcoming = quickStats.upcomingBookings;
   if (upcoming > 0) {
-    return `${upcoming} client${upcoming > 1 ? 's' : ''} coming up. What should we work on?`;
+    return `${upcoming} booking${upcoming > 1 ? 's' : ''} coming up. What's next?`;
+  }
+
+  // Has packages, no bookings yet
+  if (quickStats.packageCount > 0 && quickStats.totalBookings === 0) {
+    return `Packages set. Time to get some bookings. Need help sharing your link?`;
+  }
+
+  // No packages yet
+  if (quickStats.packageCount === 0) {
+    return `What do you sell — sessions, packages, day rates?`;
   }
 
   // Active user, no upcoming
-  return `What should we knock out today?`;
+  return `What's next?`;
 }
 
 /**

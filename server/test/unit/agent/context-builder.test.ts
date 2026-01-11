@@ -79,43 +79,35 @@ describe('Agent Context Builder', () => {
       },
     });
 
-    it('prompts for Stripe when not connected', () => {
-      const context = createContext({ stripeConnected: false });
+    it('prompts for packages when none exist', () => {
+      const context = createContext({ packageCount: 0, upcomingBookings: 0 });
       const greeting = getHandledGreeting(context);
-      expect(greeting).toContain("Stripe isn't connected yet");
-      expect(greeting).toContain('3 minutes');
-    });
-
-    it('prompts for packages when Stripe connected but no packages', () => {
-      const context = createContext({ packageCount: 0 });
-      const greeting = getHandledGreeting(context);
-      expect(greeting).toContain("Stripe's connected");
-      expect(greeting).toContain('something to sell');
+      expect(greeting).toContain('What do you sell');
     });
 
     it('prompts to share booking link when packages exist but no bookings', () => {
-      const context = createContext({ totalBookings: 0 });
+      const context = createContext({ totalBookings: 0, upcomingBookings: 0 });
       const greeting = getHandledGreeting(context);
-      expect(greeting).toContain('package');
-      expect(greeting).toContain('booking');
+      expect(greeting).toContain('Packages set');
+      expect(greeting).toContain('bookings');
     });
 
     it('shows upcoming bookings count for returning users', () => {
       const context = createContext({ upcomingBookings: 5 });
       const greeting = getHandledGreeting(context);
-      expect(greeting).toContain('5 clients coming up');
+      expect(greeting).toContain('5 bookings coming up');
     });
 
-    it('shows singular client for 1 upcoming booking', () => {
+    it('shows singular booking for 1 upcoming', () => {
       const context = createContext({ upcomingBookings: 1 });
       const greeting = getHandledGreeting(context);
-      expect(greeting).toContain('1 client coming up');
+      expect(greeting).toContain('1 booking coming up');
     });
 
-    it('shows generic greeting for active business with no upcoming', () => {
+    it('shows terse greeting for active business with no upcoming', () => {
       const context = createContext({ upcomingBookings: 0 });
       const greeting = getHandledGreeting(context);
-      expect(greeting).toContain('knock out today');
+      expect(greeting).toContain("What's next?");
     });
 
     it('uses HANDLED brand voice (no hype words)', () => {
