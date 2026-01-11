@@ -10,6 +10,7 @@
 This document captures prevention strategies and best practices for the **Segment-First Service Browsing** pattern implemented in `apps/web/src/components/tenant/SegmentPackagesSection.tsx`.
 
 The feature allows customers to:
+
 1. Browse services organized by segment (e.g., "Family Photos", "Weddings", "Engagements")
 2. Click a segment to expand and view tiers/pricing within that segment
 3. Use browser back/forward to navigate between segment views
@@ -85,14 +86,17 @@ export function SegmentPackagesSection({ data }: Props) {
   }, [segments]); // Listen while segments available
 
   // 3. Push to history when user selects via click
-  const handleSelectSegment = useCallback((segmentId: string) => {
-    const segment = segments.find((s) => s.id === segmentId);
-    if (segment) {
-      // Push BEFORE state update to ensure history is in sync
-      window.history.pushState(null, '', `#segment-${segment.slug}`);
-      setSelectedSegmentId(segmentId);
-    }
-  }, [segments]);
+  const handleSelectSegment = useCallback(
+    (segmentId: string) => {
+      const segment = segments.find((s) => s.id === segmentId);
+      if (segment) {
+        // Push BEFORE state update to ensure history is in sync
+        window.history.pushState(null, '', `#segment-${segment.slug}`);
+        setSelectedSegmentId(segmentId);
+      }
+    },
+    [segments]
+  );
 
   // 4. Back button also updates history
   const handleBack = useCallback(() => {
@@ -127,6 +131,7 @@ Choose a consistent hash format early:
 ```
 
 **Reasoning:**
+
 - Use **slug** (not ID) because slugs are stable (ID can change in database)
 - Use **prefix** (`segment-`) to distinguish from other hash routes
 - Keep format **simple** (one state per hash)
@@ -159,13 +164,13 @@ Test all navigation patterns:
 
 #### Pattern 4: When to Use Hash vs Query Params
 
-| Scenario | Use Hash | Use Query | Use Path |
-|----------|----------|-----------|----------|
-| SPA navigation (no server change) | ✅ | ❌ | ❌ |
-| Filter state (preserved on refresh) | ⚠️ | ✅ | ❌ |
-| Multi-step wizard | ⚠️ | ✅ | ✅ |
-| SEO-critical state | ❌ | ⚠️ | ✅ |
-| Page route | ❌ | ❌ | ✅ |
+| Scenario                            | Use Hash | Use Query | Use Path |
+| ----------------------------------- | -------- | --------- | -------- |
+| SPA navigation (no server change)   | ✅       | ❌        | ❌       |
+| Filter state (preserved on refresh) | ⚠️       | ✅        | ❌       |
+| Multi-step wizard                   | ⚠️       | ✅        | ✅       |
+| SEO-critical state                  | ❌       | ⚠️        | ✅       |
+| Page route                          | ❌       | ❌        | ✅       |
 
 **For segment browsing (SPA on storefront):** Hash is correct.
 
@@ -176,6 +181,7 @@ Test all navigation patterns:
 ### Problem Summary
 
 Service Workers cached old JavaScript bundles, causing stale stock photo URLs and placeholder images to persist even after:
+
 - Clearing `.next` directory
 - Restarting dev server
 - Hard refreshing browser (Cmd+Shift+R)
@@ -208,6 +214,7 @@ module.exports = withPWA(nextConfig);
 ```
 
 **Verify:**
+
 ```bash
 # Check current config
 grep -A 5 "disable:" apps/web/next.config.js
@@ -263,6 +270,7 @@ Add to `apps/web/package.json`:
 ```
 
 **Usage:**
+
 ```bash
 npm run dev:fresh  # Instead of npm run dev
 ```
@@ -297,14 +305,14 @@ clearAllCaches();
 
 Signs your issue is Service Worker cache (not code error):
 
-| Sign | Check |
-|------|-------|
-| **Component worked before, suddenly undefined** | Yes → likely SW cache |
-| **Hard refresh (Cmd+Shift+R) doesn't fix** | Yes → likely SW cache |
-| **Dev server shows no errors** | Yes → likely SW cache |
-| **Network tab shows old bundle dates** | Yes → check Last-Modified header |
-| **Chrome DevTools → Application → Service Workers shows active SWs** | Yes → unregister them |
-| **One tab broken, another tab works** | Yes → SW cache per-tab |
+| Sign                                                                 | Check                            |
+| -------------------------------------------------------------------- | -------------------------------- |
+| **Component worked before, suddenly undefined**                      | Yes → likely SW cache            |
+| **Hard refresh (Cmd+Shift+R) doesn't fix**                           | Yes → likely SW cache            |
+| **Dev server shows no errors**                                       | Yes → likely SW cache            |
+| **Network tab shows old bundle dates**                               | Yes → check Last-Modified header |
+| **Chrome DevTools → Application → Service Workers shows active SWs** | Yes → unregister them            |
+| **One tab broken, another tab works**                                | Yes → SW cache per-tab           |
 
 **If multiple signs match → Service Worker cache issue is probable.**
 
@@ -387,6 +395,7 @@ function getSegmentStockPhoto(segment: SegmentData): string {
 ```
 
 **Key Points:**
+
 - **Order matters:** Check keywords in priority order (more specific first)
 - **Skip 'default' in loop:** Otherwise default always matches
 - **Case-insensitive:** Convert to lowercase for matching
@@ -410,6 +419,7 @@ function getSegmentImage(segment: SegmentData): string {
 ```
 
 **Reasoning:**
+
 - Tenants always see their own images first
 - Stock photos are a sensible fallback
 - No configuration needed
@@ -447,6 +457,7 @@ const SEGMENT_STOCK_PHOTOS: Record<string, string> = {
 ```
 
 **Benefits:**
+
 - **Clear at a glance** what categories are covered
 - **Easy to add more:** Just copy section and add keyword + URL
 - **Consistent quality:** All from same source (Unsplash)
@@ -456,12 +467,12 @@ const SEGMENT_STOCK_PHOTOS: Record<string, string> = {
 
 **DO:** Use free, attribution-optional sources:
 
-| Source | License | Attribution | Recommended |
-|--------|---------|-------------|-------------|
-| Unsplash | Creative Commons Zero (CC0) | Optional | ✅ Recommended |
-| Pexels | Free | Not required | ✅ Alternative |
-| Pixabay | Free for commercial | Not required | ✅ Alternative |
-| Unsplash Collections | CC0 | Optional | ✅ Best for branding |
+| Source               | License                     | Attribution  | Recommended          |
+| -------------------- | --------------------------- | ------------ | -------------------- |
+| Unsplash             | Creative Commons Zero (CC0) | Optional     | ✅ Recommended       |
+| Pexels               | Free                        | Not required | ✅ Alternative       |
+| Pixabay              | Free for commercial         | Not required | ✅ Alternative       |
+| Unsplash Collections | CC0                         | Optional     | ✅ Best for branding |
 
 **For MAIS:** Use Unsplash Collections curated specifically for service professionals (photographers, coaches, therapists).
 
@@ -471,20 +482,21 @@ Optimize Unsplash URLs for performance:
 
 ```typescript
 // ✅ GOOD - Optimized URL with size and quality
-'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80'
+'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80';
 
 // What each parameter does:
 // w=800     → Max width 800px (enough for most thumbnails)
 // q=80      → JPEG quality 80% (balances size vs quality)
 
 // ❌ AVOID - No parameters (full res, 5MB+ file size)
-'https://images.unsplash.com/photo-1552664730-d307ca884978'
+'https://images.unsplash.com/photo-1552664730-d307ca884978';
 
 // ❌ AVOID - Over-optimized (looks blurry)
-'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=40'
+'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=40';
 ```
 
 **Recommendation for segment cards:**
+
 - `w=800&q=80` → Good balance (visible at 2x density, ~150-200KB)
 - `w=400&q=80` → Mobile only (~80-100KB)
 
@@ -520,6 +532,7 @@ function SegmentCard({ segment, packages, onSelect }: SegmentCardProps) {
 ```
 
 **Key Points:**
+
 - **Fallback gradient:** Always rendered, shows if image fails
 - **onError handler:** Hide img, gradient becomes visible
 - **No white page:** User sees meaningful design even without image
@@ -749,7 +762,7 @@ const handleSelectSegment = (segmentId: string) => {
 ```typescript
 // ❌ WRONG - Matching by ID breaks when database changes
 const SEGMENT_PHOTOS: Record<string, string> = {
-  '123': 'https://...',  // This ID might change if tenant is deleted/recreated
+  '123': 'https://...', // This ID might change if tenant is deleted/recreated
   '456': 'https://...',
 };
 
@@ -785,11 +798,11 @@ const withPWA = require('next-pwa')({
 
 ```typescript
 // ❌ WRONG - No parameters or over-optimized
-'https://images.unsplash.com/photo-123'  // 5+ MB, slow load
-'https://images.unsplash.com/photo-123?w=200&q=40'  // Blurry
+'https://images.unsplash.com/photo-123'; // 5+ MB, slow load
+'https://images.unsplash.com/photo-123?w=200&q=40'; // Blurry
 
 // ✅ CORRECT - Balanced optimization
-'https://images.unsplash.com/photo-123?w=800&q=80'  // ~150KB, sharp
+'https://images.unsplash.com/photo-123?w=800&q=80'; // ~150KB, sharp
 ```
 
 ### Pitfall 6: Hash Format Ambiguity
@@ -844,6 +857,7 @@ See these documents for related patterns:
 ### Insight 1: Hash State Requires Two-Way Binding
 
 URL hash alone isn't enough—React state must stay in sync. This requires:
+
 1. Reading hash on mount (initial state)
 2. Listening for hash changes (external navigation)
 3. Pushing to history when state changes (internal navigation)
@@ -853,6 +867,7 @@ Without all three, you get inconsistencies between URL and UI.
 ### Insight 2: Service Worker Caching is Browser-Managed
 
 Service Workers persist across:
+
 - Dev server restarts
 - `.next` directory deletion
 - Browser page refreshes
@@ -863,6 +878,7 @@ They only clear via explicit unregistration. This is why `npm run dev:fresh` scr
 ### Insight 3: Stock Photos Need Smart Fallbacks
 
 Always have a fallback plan for images:
+
 1. Tenant hero image (best)
 2. Stock photo by keyword (good)
 3. CSS gradient (acceptable minimum)
@@ -872,6 +888,7 @@ Never leave a card without fallback styling.
 ### Insight 4: Slug-Based Matching Beats ID-Based
 
 Use `segment.slug` for keyword matching, not `segment.id`:
+
 - IDs change when data migrates
 - Slugs are stable and human-readable
 - Keywords in slug/name are predictable
@@ -887,6 +904,7 @@ This prevention strategy document covers three critical areas for segment-first 
 3. **Stock Photo Fallbacks:** Keyword matching with sensible fallbacks
 
 Each section includes:
+
 - **Root causes** of the original issues
 - **Prevention patterns** with code examples
 - **Test cases** to verify correctness

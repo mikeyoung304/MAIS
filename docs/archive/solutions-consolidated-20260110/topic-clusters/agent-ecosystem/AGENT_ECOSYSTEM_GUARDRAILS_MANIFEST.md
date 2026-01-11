@@ -23,6 +23,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 ## The 5 Patterns
 
 ### Pattern 1: Per-Session State Isolation
+
 **Problem:** Circuit breaker shared across all sessions
 
 **Impact:** One tenant's runaway agent consumes entire token budget, blocking all other tenants
@@ -30,6 +31,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 **Fix:** Map<sessionId, CircuitBreaker> instead of singleton
 
 **Files:**
+
 - `server/src/agent/orchestrator/base-orchestrator.ts` (lines 200-230)
 - `server/src/agent/orchestrator/circuit-breaker.ts` (complete implementation)
 
@@ -38,6 +40,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 ---
 
 ### Pattern 2: Required Security-Critical Fields
+
 **Problem:** `trustTier` optional on AgentTool interface
 
 **Impact:** Write tools (package creation, booking cancellation) default to T1 auto-confirm instead of safe T3, bypassing approval
@@ -45,6 +48,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 **Fix:** `trustTier: 'T1' | 'T2' | 'T3'` (required, not optional)
 
 **Files:**
+
 - `server/src/agent/tools/types.ts` (lines 61-87)
 
 **Key Insight:** Permission/approval/trust/role fields must be required with TypeScript enforcement + runtime validation
@@ -52,6 +56,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 ---
 
 ### Pattern 3: False Positive Testing for NLP Patterns
+
 **Problem:** Broad injection patterns match legitimate business data
 
 **Impact:** Business name "Disregard for Details Photography" becomes "[FILTERED] for Details Photography"
@@ -59,6 +64,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 **Fix:** Multi-word anchors: `/forget\s+(all|your|previous)/i` instead of `/forget/i`
 
 **Files:**
+
 - `server/src/agent/tools/types.ts` (lines 121-169)
 
 **Key Insight:** Prompt injection patterns must be context-specific (multi-word) with extensive testing against real business data
@@ -66,6 +72,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 ---
 
 ### Pattern 4: Public Endpoint Hardening
+
 **Problem:** `/v1/public/chat/message` has no IP rate limiting
 
 **Impact:** Attackers exhaust token budget, availability enumeration, DDoS
@@ -73,6 +80,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 **Fix:** Three-layer defense: IP rate limiting + request validation + response sanitization
 
 **Files:**
+
 - `server/src/routes/public-customer-chat.routes.ts` (lines 25-57)
 - `server/src/middleware/rateLimiter.ts` (lines 300-315)
 
@@ -81,6 +89,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 ---
 
 ### Pattern 5: Composite Database Indexes
+
 **Problem:** Queries like `WHERE tenantId AND status` use only one index
 
 **Impact:** Full table scans as data grows, 100x performance degradation
@@ -88,6 +97,7 @@ This manifest documents 5 critical prevention patterns discovered while implemen
 **Fix:** Composite indexes: `@@index([tenantId, status])`
 
 **Files:**
+
 - `server/prisma/schema.prisma` (throughout)
 
 **Key Insight:** Multi-column WHERE clauses require composite indexes optimized for query pattern
@@ -250,19 +260,20 @@ app.post('/v1/public/chat', publicLimiter, (req, res) => {
 
 ## Key Files Modified (Commit cb55639)
 
-| File | Lines | Pattern | Change |
-|------|-------|---------|--------|
-| `server/src/agent/orchestrator/circuit-breaker.ts` | 140 | 1 | New: Per-session circuit breaker |
-| `server/src/agent/orchestrator/base-orchestrator.ts` | +70, -21 | 1 | Per-session breaker map + cleanup |
-| `server/src/agent/tools/types.ts` | +20 | 2, 3 | Required trustTier + specific patterns |
-| `server/src/routes/public-customer-chat.routes.ts` | +15 | 4 | IP rate limiter middleware |
-| `server/prisma/schema.prisma` | +2 | 5 | Composite indexes (scattered) |
+| File                                                 | Lines    | Pattern | Change                                 |
+| ---------------------------------------------------- | -------- | ------- | -------------------------------------- |
+| `server/src/agent/orchestrator/circuit-breaker.ts`   | 140      | 1       | New: Per-session circuit breaker       |
+| `server/src/agent/orchestrator/base-orchestrator.ts` | +70, -21 | 1       | Per-session breaker map + cleanup      |
+| `server/src/agent/tools/types.ts`                    | +20      | 2, 3    | Required trustTier + specific patterns |
+| `server/src/routes/public-customer-chat.routes.ts`   | +15      | 4       | IP rate limiter middleware             |
+| `server/prisma/schema.prisma`                        | +2       | 5       | Composite indexes (scattered)          |
 
 ---
 
 ## Testing Coverage
 
 Each pattern has a complete testing guide with:
+
 - Unit tests (isolation, defaults, patterns)
 - Integration tests (concurrent access, query performance)
 - Fuzzing tests (random data, edge cases)
@@ -275,6 +286,7 @@ See: `AGENT_ECOSYSTEM_PREVENTION_STRATEGIES.md` → "Testing Checklist Template"
 ## Monitoring & Alerting
 
 ### Pattern 1: Circuit Breaker Trips
+
 ```
 Alert: circuitBreakerTripped event
 → Check: session token usage, turn count
@@ -282,6 +294,7 @@ Alert: circuitBreakerTripped event
 ```
 
 ### Pattern 2: Tool Registration Failures
+
 ```
 Alert: validateTool() rejects tool
 → Check: trustTier field present and valid
@@ -289,6 +302,7 @@ Alert: validateTool() rejects tool
 ```
 
 ### Pattern 3: Injection Pattern Matches
+
 ```
 Alert: [FILTERED] appears in logs (production)
 → Check: False positive rate on real business data
@@ -296,6 +310,7 @@ Alert: [FILTERED] appears in logs (production)
 ```
 
 ### Pattern 4: Rate Limit Hits
+
 ```
 Alert: 429 response codes spike
 → Check: IP addresses, request patterns
@@ -303,6 +318,7 @@ Alert: 429 response codes spike
 ```
 
 ### Pattern 5: Query Performance
+
 ```
 Alert: EXPLAIN shows Seq Scan on large table
 → Check: Query pattern, index design
@@ -325,6 +341,7 @@ Alert: EXPLAIN shows Seq Scan on large table
 
 **Q: Do I need to implement all 5 patterns?**
 A: Only the ones relevant to your feature:
+
 - Building shared state? → Pattern 1
 - Adding approval logic? → Pattern 2
 - Processing user input? → Pattern 3
@@ -350,9 +367,9 @@ A: No, they apply to any multi-tenant system. The agent context is just where we
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-01-01 | Initial manifest with 5 patterns from commit cb55639 |
+| Version | Date       | Changes                                              |
+| ------- | ---------- | ---------------------------------------------------- |
+| 1.0     | 2026-01-01 | Initial manifest with 5 patterns from commit cb55639 |
 
 ---
 

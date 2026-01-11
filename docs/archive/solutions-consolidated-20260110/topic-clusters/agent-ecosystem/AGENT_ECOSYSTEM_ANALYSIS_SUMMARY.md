@@ -9,11 +9,13 @@
 ## What We Analyzed
 
 The specification for a unified AI agent ecosystem supporting three agent types:
+
 1. **Onboarding Advisor** - Multi-day, conversational business setup
 2. **Customer Chatbot** - Quick booking assistance
 3. **Admin Assistant** - Internal operations
 
 With advanced features:
+
 - Event sourcing for audit trails
 - XState state machines for provable correctness
 - Trust tier enforcement (T1 auto, T2 soft-confirm, T3 hard-confirm)
@@ -27,12 +29,14 @@ With advanced features:
 ### 🚨 Critical Issues (P0 - Must Fix)
 
 **1. Session ID Mismatch (SECURITY BOUNDARY VIOLATION)**
+
 - Current code: `softConfirmPendingT2()` queries proposals without session filter
 - Risk: Proposal from session A executed in session B context
 - Fix: Add `sessionId` to proposal query (1 line change)
 - Severity: **CRITICAL** - Cross-session data leak possible
 
 **2. Soft-Confirm Window Not Context-Aware**
+
 - Current: Hard-coded 2 minutes for all agents
 - Problem: Onboarding users need 5-10 minutes to read/ponder, chatbot users need <30s
 - Risk: Users lose confirmation due to expired proposal
@@ -42,6 +46,7 @@ With advanced features:
 ### ⚠️ High-Priority Issues (P1 - Should Fix Soon)
 
 **3. Recursion Depth Starvation**
+
 - Current: Single global limit (5 calls total)
 - Problem: 5 T1 calls (read tools) block T2 call (write tool)
 - Risk: Booking can't complete after reading availability/pricing/customer history
@@ -49,6 +54,7 @@ With advanced features:
 - Impact: **HIGH** - Prevents complex bookings
 
 **4. Three Orchestrators, No Shared Code**
+
 - Current: AgentOrchestrator, CustomerOrchestrator, WeddingBookingOrchestrator
 - Problem: Bugs fixed in one, missed in others; inconsistent behavior
 - Risk: **MEDIUM** - Maintenance burden and inconsistency
@@ -67,9 +73,11 @@ With advanced features:
 ## Documents Delivered
 
 ### 1. **ENTERPRISE_AGENT_ECOSYSTEM_SPECFLOW_ANALYSIS.md** (Main Analysis)
+
 **45 pages | Comprehensive technical breakdown**
 
 Contents:
+
 - Executive summary of all issues
 - 7 critical ambiguities requiring clarification
 - 18 edge cases with examples
@@ -81,9 +89,11 @@ Contents:
 **Purpose**: Architects and senior engineers - understand what's broken and why
 
 ### 2. **AGENT_ECOSYSTEM_QUICK_REFERENCE.md** (One-Page Reference)
+
 **3 pages | Tactical guide for developers**
 
 Contents:
+
 - 22 critical ambiguities in table format
 - Priority matrix (P0-P3)
 - Must-fix checklist before production
@@ -96,9 +106,11 @@ Contents:
 **Purpose**: Developers - print this, pin it, reference daily during work
 
 ### 3. **AGENT_ECOSYSTEM_IMPLEMENTATION_ROADMAP.md** (Execution Plan)
+
 **25 pages | 32-day phased implementation**
 
 Contents:
+
 - **Phase 0** (5 days): Clarification & architectural decisions
 - **Phase 1** (7 days): Critical fixes (P0/P1 issues)
 - **Phase 2** (10 days): Integration testing & hardening
@@ -136,6 +148,7 @@ PRODUCTION READY (Day 22)
 ```
 
 **Optional extensions**:
+
 - Phase 3 (5d): Orchestrator unification (code quality)
 - Phase 4 (5d): Circuit breaker + dependencies (nice-to-have)
 
@@ -143,12 +156,12 @@ PRODUCTION READY (Day 22)
 
 ## Decisions Required from Architecture Team
 
-| # | Decision | Options | Timeline |
-|---|----------|---------|----------|
-| 1 | **Unified orchestrators?** | A) One base class + subclasses OR B) Keep separate | Phase 0 |
-| 2 | **Soft-confirm window per agent?** | A) Global 2min OR B) Per-agent (30s-10min) OR C) Per-phase | Phase 0 |
-| 3 | **Recursion budget strategy?** | A) Single depth (current) OR B) Separate per tier OR C) Weighted cost | Phase 0 |
-| 4 | **Session isolation scope?** | A) Proposal visibility per session OR B) Per agent-type OR C) Per tenant | Phase 0 |
+| #   | Decision                           | Options                                                                  | Timeline |
+| --- | ---------------------------------- | ------------------------------------------------------------------------ | -------- |
+| 1   | **Unified orchestrators?**         | A) One base class + subclasses OR B) Keep separate                       | Phase 0  |
+| 2   | **Soft-confirm window per agent?** | A) Global 2min OR B) Per-agent (30s-10min) OR C) Per-phase               | Phase 0  |
+| 3   | **Recursion budget strategy?**     | A) Single depth (current) OR B) Separate per tier OR C) Weighted cost    | Phase 0  |
+| 4   | **Session isolation scope?**       | A) Proposal visibility per session OR B) Per agent-type OR C) Per tenant | Phase 0  |
 
 **Impact if delayed**: Can't start Phase 1 (blocks 7-day fix sprint)
 
@@ -156,22 +169,23 @@ PRODUCTION READY (Day 22)
 
 ## Metrics: Before vs. After
 
-| Metric | Before | After (Target) | Phase |
-|--------|--------|----------------|-------|
-| Session ID leakage incidents | Possible | 0 | Phase 1 |
-| Onboarding completion rate | ~40% | 80% | Phase 1 |
-| Soft-confirm timeout rate | Unknown | <5% | Phase 1 |
-| Recursion starvation incidents | Likely | 0 | Phase 1 |
-| Code duplication (orchestrators) | 40% | 0% | Phase 3 |
-| Test coverage (critical paths) | 60% | 90% | Phase 2 |
-| Integration tests | 0 | 20+ | Phase 2 |
-| Mean response latency p95 | Unknown | <3s | Phase 2 |
+| Metric                           | Before   | After (Target) | Phase   |
+| -------------------------------- | -------- | -------------- | ------- |
+| Session ID leakage incidents     | Possible | 0              | Phase 1 |
+| Onboarding completion rate       | ~40%     | 80%            | Phase 1 |
+| Soft-confirm timeout rate        | Unknown  | <5%            | Phase 1 |
+| Recursion starvation incidents   | Likely   | 0              | Phase 1 |
+| Code duplication (orchestrators) | 40%      | 0%             | Phase 3 |
+| Test coverage (critical paths)   | 60%      | 90%            | Phase 2 |
+| Integration tests                | 0        | 20+            | Phase 2 |
+| Mean response latency p95        | Unknown  | <3s            | Phase 2 |
 
 ---
 
 ## What Stays the Same
 
 The specification is **fundamentally sound** - we're not redesigning:
+
 - ✅ Trust tier concept (T1/T2/T3)
 - ✅ Event sourcing for audit trail
 - ✅ XState state machines
@@ -186,6 +200,7 @@ We're **clarifying and hardening** the implementation, not changing direction.
 ## What's Already Working
 
 Current implementation has many strengths:
+
 - ✅ Event sourcing infrastructure (schema, models, queries)
 - ✅ Proposal service with TTL/status tracking
 - ✅ Industry benchmarks for market research fallback
@@ -200,12 +215,12 @@ Current implementation has many strengths:
 
 ## Risk If We Don't Fix P0 Issues
 
-| Scenario | Likelihood | Impact | Timeline |
-|----------|-----------|--------|----------|
-| Session A proposal executed in session B | Medium | CRITICAL | Production incidents |
-| Onboarding users lose confirmation | High | HIGH | <30 days |
-| Complex bookings fail (recursion limit) | High | MEDIUM | User reports |
-| Cross-tenant data leak | Low | CRITICAL | Regulatory issue |
+| Scenario                                 | Likelihood | Impact   | Timeline             |
+| ---------------------------------------- | ---------- | -------- | -------------------- |
+| Session A proposal executed in session B | Medium     | CRITICAL | Production incidents |
+| Onboarding users lose confirmation       | High       | HIGH     | <30 days             |
+| Complex bookings fail (recursion limit)  | High       | MEDIUM   | User reports         |
+| Cross-tenant data leak                   | Low        | CRITICAL | Regulatory issue     |
 
 **Recommendation**: Fix P0 issues before production deployment (or add feature flag to disable for now)
 
@@ -214,6 +229,7 @@ Current implementation has many strengths:
 ## Resource Estimate
 
 **To production-ready (Phase 0-2)**: **31 person-days**
+
 - Phase 0 (decisions): 6 days
 - Phase 1 (critical fixes): 10 days
 - Phase 2 (integration testing): 15 days
@@ -229,17 +245,20 @@ Current implementation has many strengths:
 ## Next Steps
 
 ### Immediate (This Week)
+
 1. [ ] Share all 3 documents with architecture team
 2. [ ] Schedule 30-min meeting to discuss 4 decisions
 3. [ ] Get sign-off on decision approach
 
 ### Week 1 of Phase 0
+
 1. [ ] Document 4 decisions
 2. [ ] Write detailed spec for Phase 1
 3. [ ] Design integration test suite
 4. [ ] Assign Phase 1 engineers
 
 ### Week 2 (Phase 1 Execution)
+
 1. [ ] Session isolation fix (1 day)
 2. [ ] Soft-confirm window config (2 days)
 3. [ ] Recursion budget separation (3 days)
@@ -269,6 +288,7 @@ A: No, mostly refactoring. Session isolation is 1 line. Soft-confirm window is c
 ## Success Looks Like
 
 **After Phase 1 (Week 2)**:
+
 - Zero session isolation incidents
 - Onboarding soft-confirm success >95%
 - Recursion budget working (no starvation)
@@ -276,6 +296,7 @@ A: No, mostly refactoring. Session isolation is 1 line. Soft-confirm window is c
 - Ready for Phase 2
 
 **After Phase 2 (Week 3)**:
+
 - 20 integration tests passing
 - 100 concurrent user load test passes
 - Monitoring dashboard live
@@ -283,6 +304,7 @@ A: No, mostly refactoring. Session isolation is 1 line. Soft-confirm window is c
 - Ready for production
 
 **After Phase 3 (Optional, Week 4)**:
+
 - BaseOrchestrator in place
 - Zero code duplication
 - All tests still pass
@@ -292,11 +314,11 @@ A: No, mostly refactoring. Session isolation is 1 line. Soft-confirm window is c
 
 ## Documents Summary
 
-| Document | Pages | Audience | Use Case |
-|----------|-------|----------|----------|
-| **SPECFLOW_ANALYSIS.md** | 45 | Architects, Sr. Engineers | Understand all issues & risks |
-| **QUICK_REFERENCE.md** | 3 | Developers | Daily reference during work |
-| **IMPLEMENTATION_ROADMAP.md** | 25 | Project Managers, Tech Leads | Execute phases in order |
+| Document                      | Pages | Audience                     | Use Case                      |
+| ----------------------------- | ----- | ---------------------------- | ----------------------------- |
+| **SPECFLOW_ANALYSIS.md**      | 45    | Architects, Sr. Engineers    | Understand all issues & risks |
+| **QUICK_REFERENCE.md**        | 3     | Developers                   | Daily reference during work   |
+| **IMPLEMENTATION_ROADMAP.md** | 25    | Project Managers, Tech Leads | Execute phases in order       |
 
 **All documents**: Stored in `/docs/solutions/`
 
@@ -307,12 +329,14 @@ A: No, mostly refactoring. Session isolation is 1 line. Soft-confirm window is c
 The enterprise agent ecosystem specification is **strategically sound** but **operationally incomplete**.
 
 The good news:
+
 - ✅ Vision is clear (multi-agent, event-sourced, secure)
 - ✅ Most code already works (70% functional)
 - ✅ Fixes are straightforward (mostly config & validation)
 - ✅ No major architectural rewrites needed
 
 The work:
+
 - ⚠️ 4 architectural decisions required (P0)
 - ⚠️ 5 critical bugs to fix (P0/P1)
 - ⚠️ 10+ edge cases to handle (P2)
@@ -328,5 +352,5 @@ The work:
 
 ---
 
-*Generated by Claude Code (Haiku 4.5) - SpecFlow Analysis Framework*
-*2025-12-31*
+_Generated by Claude Code (Haiku 4.5) - SpecFlow Analysis Framework_
+_2025-12-31_

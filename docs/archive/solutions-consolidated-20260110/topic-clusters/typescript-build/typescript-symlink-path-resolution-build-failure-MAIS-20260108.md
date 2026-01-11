@@ -111,7 +111,7 @@ Two changes to `server/tsconfig.json`:
     "test",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
-    "src/adapters/lib"  // ADD THIS: Exclude symlink target from compilation
+    "src/adapters/lib" // ADD THIS: Exclude symlink target from compilation
   ]
 }
 ```
@@ -129,7 +129,7 @@ Even with `preserveSymlinks: true`, TypeScript may still try to include `src/ada
     "preserveSymlinks": true,
     "target": "ES2022",
     "module": "ES2022",
-    "moduleResolution": "bundler",
+    "moduleResolution": "bundler"
     // ... rest of options
   },
   "include": ["src/**/*"],
@@ -233,7 +233,7 @@ grep "adapters/lib" server/tsconfig.json
 // WRONG - This excludes the real path, not the symlink
 {
   "exclude": [
-    "src/lib"  // Wrong! Should be src/adapters/lib
+    "src/lib" // Wrong! Should be src/adapters/lib
   ]
 }
 ```
@@ -257,12 +257,12 @@ import { PrismaClient } from '../generated/prisma/client';
 
 ## Related TypeScript Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `preserveSymlinks` | `false` | Don't resolve symlinks to real path |
-| `baseUrl` | `.` | Base directory for non-relative imports |
-| `paths` | `{}` | Path aliases for module resolution |
-| `rootDir` | Inferred | Root directory of source files |
+| Option             | Default  | Description                             |
+| ------------------ | -------- | --------------------------------------- |
+| `preserveSymlinks` | `false`  | Don't resolve symlinks to real path     |
+| `baseUrl`          | `.`      | Base directory for non-relative imports |
+| `paths`            | `{}`     | Path aliases for module resolution      |
+| `rootDir`          | Inferred | Root directory of source files          |
 
 ## When to Use This Pattern
 

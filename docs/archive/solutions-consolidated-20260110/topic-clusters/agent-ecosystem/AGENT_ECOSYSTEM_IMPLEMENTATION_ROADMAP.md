@@ -38,6 +38,7 @@
    - [ ] Test strategy for cross-session contamination
 
 **Success Criteria**:
+
 - [ ] All 4 decisions documented
 - [ ] Consensus from team (no veto)
 - [ ] Proposed implementation sketched for each
@@ -47,6 +48,7 @@
 **Goal**: Write detailed spec for unified orchestrator
 
 **Deliverables**:
+
 - [ ] Orchestrator interface (base class or common pattern)
 - [ ] Trust tier enforcement rules (decision tree)
 - [ ] Soft-confirm window algorithm (with config)
@@ -56,6 +58,7 @@
 - [ ] Proposal state machine (full diagram)
 
 **Success Criteria**:
+
 - [ ] 22 ambiguities reduced to 0 for Phase 1
 - [ ] New developers can read spec and implement correctly
 - [ ] No contradictions with existing code
@@ -65,6 +68,7 @@
 **Goal**: Define integration tests that will verify fixes
 
 **Deliverables**:
+
 - [ ] Test fixtures (multi-tenant, multi-session setup)
 - [ ] 8 critical integration tests outlined
 - [ ] Mock utilities for agent/proposal/session
@@ -72,6 +76,7 @@
 - [ ] Load test scenarios
 
 **Success Criteria**:
+
 - [ ] All P0/P1 tests designed
 - [ ] Can be implemented in parallel with code
 
@@ -86,6 +91,7 @@
 **Risk**: CRITICAL - Cross-session proposal execution
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/proposals/proposal.service.ts
 
@@ -110,6 +116,7 @@ async softConfirmPendingT2(tenantId, sessionId, userMessage) {
 ```
 
 **Checklist**:
+
 - [ ] Add sessionId filter to softConfirmPendingT2() query
 - [ ] Add unique constraint on active sessions (tenantId, sessionType, active=true)
 - [ ] Add test: concurrent session creation prevented
@@ -117,6 +124,7 @@ async softConfirmPendingT2(tenantId, sessionId, userMessage) {
 - [ ] Code review: all proposal queries check sessionId
 
 **Files Changed**:
+
 - `server/src/agent/proposals/proposal.service.ts` (5 lines)
 - `server/prisma/schema.prisma` (1 constraint added)
 - `server/test/agent/proposals/proposal-isolation.test.ts` (NEW - 3 tests)
@@ -132,6 +140,7 @@ async softConfirmPendingT2(tenantId, sessionId, userMessage) {
 **Risk**: HIGH - Onboarding users lose confirmation
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/orchestrator.ts
 
@@ -156,6 +165,7 @@ constructor(
 ```
 
 **Checklist**:
+
 - [ ] Make ProposalService accept window as parameter
 - [ ] Make OrchestratorConfig include softConfirmWindowMs
 - [ ] Update AgentOrchestrator to pass config
@@ -165,6 +175,7 @@ constructor(
 - [ ] Add test: chatbot respects 30-second window
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/orchestrator.ts` (5 lines)
 - `server/src/agent/proposals/proposal.service.ts` (3 lines)
 - `server/src/agent/customer/customer-orchestrator.ts` (2 lines)
@@ -181,6 +192,7 @@ constructor(
 **Risk**: HIGH - T1 tools block T2 execution
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/orchestrator.ts
 
@@ -220,6 +232,7 @@ async processResponse(
 ```
 
 **Checklist**:
+
 - [ ] Add RecursionBudget interface
 - [ ] Add tier tracking in processResponse()
 - [ ] Update depth checks to use per-tier budgets
@@ -230,6 +243,7 @@ async processResponse(
 - [ ] Performance test: average tier usage
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/orchestrator.ts` (20 lines)
 - `server/src/agent/customer/customer-orchestrator.ts` (5 lines)
 - `server/test/agent/orchestrator/recursion-budget.test.ts` (NEW - 6 tests)
@@ -245,6 +259,7 @@ async processResponse(
 **Risk**: MEDIUM - Tool side effects
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/orchestrator.ts
 
@@ -260,6 +275,7 @@ const toolContext: ToolContext = Object.freeze({
 ```
 
 **Checklist**:
+
 - [ ] Freeze toolContext in orchestrator
 - [ ] Freeze toolContext in customer-orchestrator
 - [ ] Add TypeScript readonly types to ToolContext interface
@@ -267,6 +283,7 @@ const toolContext: ToolContext = Object.freeze({
 - [ ] Review all tool implementations for mutations (should fail)
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/orchestrator.ts` (2 lines)
 - `server/src/agent/customer/customer-orchestrator.ts` (2 lines)
 - `server/src/agent/tools/types.ts` (1 line - add readonly)
@@ -283,6 +300,7 @@ const toolContext: ToolContext = Object.freeze({
 **Risk**: MEDIUM - Security vulnerability
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/orchestrator.ts
 
@@ -294,9 +312,9 @@ const systemPrompt = buildOnboardingSystemPrompt({
 // AFTER: Sanitize user input
 function sanitizeForPrompt(input: string): string {
   return input
-    .replace(/\n\n/g, ' ')  // Prevent prompt section breaks
+    .replace(/\n\n/g, ' ') // Prevent prompt section breaks
     .replace(/\\n/g, ' ')
-    .substring(0, 100);     // Limit length
+    .substring(0, 100); // Limit length
 }
 
 const systemPrompt = buildOnboardingSystemPrompt({
@@ -305,12 +323,14 @@ const systemPrompt = buildOnboardingSystemPrompt({
 ```
 
 **Checklist**:
+
 - [ ] Create sanitization utility
 - [ ] Apply to all user-provided data in prompts
 - [ ] Add fuzz test for injection attempts
 - [ ] Code review: all user fields in prompts sanitized
 
 **Files Changed**:
+
 - `server/src/lib/prompt-utils.ts` (NEW - sanitize function)
 - `server/src/agent/orchestrator/orchestrator.ts` (3 lines)
 - `server/test/agent/security/prompt-injection.test.ts` (NEW - 5 tests)
@@ -328,6 +348,7 @@ const systemPrompt = buildOnboardingSystemPrompt({
 ### 2.1 Integration Test Suite (4 days)
 
 **Tests to implement**:
+
 1. Multi-tenant isolation (3 tests)
 2. Proposal lifecycle (3 tests)
 3. Session concurrency (2 tests)
@@ -340,12 +361,14 @@ const systemPrompt = buildOnboardingSystemPrompt({
 **Total**: 20 integration tests
 
 **Checklist**:
+
 - [ ] Create test fixtures (tenant + session + proposal + tools)
 - [ ] Implement all 20 tests
 - [ ] All tests pass
 - [ ] Coverage report: 80%+ for critical paths
 
 **Files Changed**:
+
 - `server/test/integration/orchestrator/multi-tenant-isolation.test.ts` (NEW)
 - `server/test/integration/orchestrator/proposal-lifecycle.test.ts` (NEW)
 - `server/test/integration/orchestrator/session-concurrency.test.ts` (NEW)
@@ -363,6 +386,7 @@ const systemPrompt = buildOnboardingSystemPrompt({
 ### 2.2 Error Classification & Retry Logic (3 days)
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/error-classifier.ts (NEW)
 
@@ -393,6 +417,7 @@ async function executeWithRetry(
 ```
 
 **Checklist**:
+
 - [ ] Create error classifier
 - [ ] Implement retry logic with exponential backoff
 - [ ] Add tests: validation error doesn't retry
@@ -400,6 +425,7 @@ async function executeWithRetry(
 - [ ] Update orchestrator to use retry logic
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/error-classifier.ts` (NEW)
 - `server/src/agent/orchestrator/orchestrator.ts` (5 lines)
 - `server/test/agent/orchestrator/error-classification.test.ts` (NEW - 5 tests)
@@ -413,6 +439,7 @@ async function executeWithRetry(
 ### 2.3 Proposal State Machine Hardening (2 days)
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/proposals/proposal-state-machine.ts (NEW)
 
@@ -420,9 +447,9 @@ async function executeWithRetry(
 const VALID_TRANSITIONS = {
   PENDING: ['CONFIRMED', 'FAILED', 'EXPIRED'],
   CONFIRMED: ['EXECUTED', 'FAILED'],
-  EXECUTED: [],  // Terminal
-  FAILED: [],    // Terminal
-  EXPIRED: [],   // Terminal
+  EXECUTED: [], // Terminal
+  FAILED: [], // Terminal
+  EXPIRED: [], // Terminal
 };
 
 async function transitionProposal(
@@ -438,6 +465,7 @@ async function transitionProposal(
 ```
 
 **Checklist**:
+
 - [ ] Define complete state machine
 - [ ] Implement transition validation
 - [ ] Update all proposal operations to use state machine
@@ -445,6 +473,7 @@ async function transitionProposal(
 - [ ] Add tests: concurrent transitions handled
 
 **Files Changed**:
+
 - `server/src/agent/proposals/proposal-state-machine.ts` (NEW)
 - `server/src/agent/proposals/proposal.service.ts` (10 lines)
 - `server/test/agent/proposals/state-machine.test.ts` (NEW - 4 tests)
@@ -458,6 +487,7 @@ async function transitionProposal(
 ### 2.4 Monitoring & Observability (1 day)
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/metrics.ts (NEW)
 
@@ -476,12 +506,13 @@ export const metrics = {
   }),
   softConfirmWindowHits: new Counter({
     name: 'soft_confirm_window_hits',
-    labels: ['tier', 'result'],  // T1/T2/T3, success/expired
+    labels: ['tier', 'result'], // T1/T2/T3, success/expired
   }),
 };
 ```
 
 **Checklist**:
+
 - [ ] Create metrics collector
 - [ ] Add instrumentation to orchestrator
 - [ ] Add instrumentation to proposal service
@@ -489,6 +520,7 @@ export const metrics = {
 - [ ] Create Grafana dashboard
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/metrics.ts` (NEW)
 - `server/src/agent/orchestrator/orchestrator.ts` (5 lines)
 - `server/src/agent/proposals/proposal.service.ts` (3 lines)
@@ -508,6 +540,7 @@ export const metrics = {
 **Only proceed if Phase 0 decided: UNIFIED**
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/base-orchestrator.ts (NEW)
 
@@ -516,7 +549,10 @@ export abstract class BaseOrchestrator {
   protected proposalService: ProposalService;
   protected auditService: AuditService;
 
-  constructor(protected readonly prisma: PrismaClient, config: Partial<BaseOrchestratorConfig>) {
+  constructor(
+    protected readonly prisma: PrismaClient,
+    config: Partial<BaseOrchestratorConfig>
+  ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.proposalService = new ProposalService(prisma, this.config.softConfirmWindowMs);
     this.auditService = new AuditService(prisma);
@@ -552,6 +588,7 @@ export class CustomerOrchestrator extends BaseOrchestrator {
 ```
 
 **Checklist**:
+
 - [ ] Create BaseOrchestrator with shared logic
 - [ ] Refactor AgentOrchestrator to extend base class
 - [ ] Refactor CustomerOrchestrator to extend base class
@@ -560,6 +597,7 @@ export class CustomerOrchestrator extends BaseOrchestrator {
 - [ ] Code coverage maintained
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/base-orchestrator.ts` (NEW - 200 lines)
 - `server/src/agent/orchestrator/orchestrator.ts` (refactored - remove duplication)
 - `server/src/agent/customer/customer-orchestrator.ts` (refactored - extend base)
@@ -574,6 +612,7 @@ export class CustomerOrchestrator extends BaseOrchestrator {
 ### 3.2 Config Centralization (1 day)
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/orchestrator-config.ts (NEW)
 
@@ -595,29 +634,31 @@ export interface OrchestratorConfig {
 export const ORCHESTRATOR_PRESETS = {
   onboarding: {
     maxHistoryMessages: 30,
-    softConfirmWindowMs: 5 * 60 * 1000,  // 5 minutes
-    executorTimeoutMs: 10000,             // More time for complex operations
+    softConfirmWindowMs: 5 * 60 * 1000, // 5 minutes
+    executorTimeoutMs: 10000, // More time for complex operations
   },
   chatbot: {
     maxHistoryMessages: 10,
-    softConfirmWindowMs: 30 * 1000,       // 30 seconds
-    executorTimeoutMs: 5000,              // Fast execution
+    softConfirmWindowMs: 30 * 1000, // 30 seconds
+    executorTimeoutMs: 5000, // Fast execution
   },
   admin: {
     maxHistoryMessages: 20,
-    softConfirmWindowMs: 2 * 60 * 1000,   // 2 minutes
+    softConfirmWindowMs: 2 * 60 * 1000, // 2 minutes
     executorTimeoutMs: 5000,
   },
 };
 ```
 
 **Checklist**:
+
 - [ ] Create centralized config
 - [ ] Move preset configs
 - [ ] Remove hard-coded values from orchestrators
 - [ ] Test: config passed correctly
 
 **Files Changed**:
+
 - `server/src/agent/orchestrator/orchestrator-config.ts` (NEW)
 - `server/src/agent/orchestrator/base-orchestrator.ts` (5 lines)
 
@@ -630,6 +671,7 @@ export const ORCHESTRATOR_PRESETS = {
 ### 3.3 Migration of Legacy Orchestrators (1 day)
 
 **If WeddingBookingOrchestrator exists**:
+
 - [ ] Audit differences vs. base class
 - [ ] Migrate to extend BaseOrchestrator
 - [ ] Update tests
@@ -650,6 +692,7 @@ export const ORCHESTRATOR_PRESETS = {
 **Trigger**: 3+ consecutive tool failures in same session
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/circuit-breaker.ts (NEW)
 
@@ -658,7 +701,7 @@ export class CircuitBreaker {
   private failureCount = 0;
   private lastFailureTime?: Date;
   private readonly failureThreshold = 3;
-  private readonly resetTimeoutMs = 60000;  // 1 minute
+  private readonly resetTimeoutMs = 60000; // 1 minute
 
   recordFailure() {
     this.failureCount++;
@@ -682,6 +725,7 @@ export class CircuitBreaker {
 ```
 
 **Checklist**:
+
 - [ ] Implement circuit breaker
 - [ ] Add to orchestrator
 - [ ] Return clear error message when open
@@ -699,6 +743,7 @@ export class CircuitBreaker {
 **Use case**: Service design phase needs market research to complete
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/proposals/proposal.service.ts
 
@@ -725,6 +770,7 @@ async createProposal(input: CreateProposalInput): Promise<ProposalResult> {
 ```
 
 **Checklist**:
+
 - [ ] Add dependency tracking to proposal model
 - [ ] Validate dependencies on creation
 - [ ] Verify dependencies on soft-confirm
@@ -742,6 +788,7 @@ async createProposal(input: CreateProposalInput): Promise<ProposalResult> {
 **Use case**: Users can reference day 1 context on day 3
 
 **Changes**:
+
 ```typescript
 // File: server/src/agent/orchestrator/history-summarizer.ts (NEW)
 
@@ -758,7 +805,7 @@ async function summarizeOldMessages(
     model: 'claude-opus-4-5',
     max_tokens: 500,
     system: 'Summarize this conversation in 2-3 sentences.',
-    messages: oldMessages.map(m => ({
+    messages: oldMessages.map((m) => ({
       role: m.role,
       content: m.content,
     })),
@@ -769,6 +816,7 @@ async function summarizeOldMessages(
 ```
 
 **Checklist**:
+
 - [ ] Create summarizer utility
 - [ ] Add to orchestrator before buildHistoryMessages()
 - [ ] Include summary in system prompt
@@ -783,26 +831,28 @@ async function summarizeOldMessages(
 
 ## Timeline Summary
 
-| Phase | Duration | Start | End | Blocker |
-|-------|----------|-------|-----|---------|
-| Phase 0: Decisions | 5 days | 2026-01-01 | 2026-01-05 | None |
-| Phase 1: Critical Fixes | 7 days | 2026-01-06 | 2026-01-12 | Phase 0 |
-| Phase 2: Integration | 10 days | 2026-01-13 | 2026-01-22 | Phase 1 |
-| Phase 3: Unification | 5 days | 2026-01-23 | 2026-01-27 | Phase 0, Phase 2 |
-| Phase 4: Optional | 5 days | 2026-01-28 | 2026-02-01 | Phase 2 |
-| **TOTAL** | **32 days** | 2026-01-01 | 2026-02-01 | - |
+| Phase                   | Duration    | Start      | End        | Blocker          |
+| ----------------------- | ----------- | ---------- | ---------- | ---------------- |
+| Phase 0: Decisions      | 5 days      | 2026-01-01 | 2026-01-05 | None             |
+| Phase 1: Critical Fixes | 7 days      | 2026-01-06 | 2026-01-12 | Phase 0          |
+| Phase 2: Integration    | 10 days     | 2026-01-13 | 2026-01-22 | Phase 1          |
+| Phase 3: Unification    | 5 days      | 2026-01-23 | 2026-01-27 | Phase 0, Phase 2 |
+| Phase 4: Optional       | 5 days      | 2026-01-28 | 2026-02-01 | Phase 2          |
+| **TOTAL**               | **32 days** | 2026-01-01 | 2026-02-01 | -                |
 
 ---
 
 ## Success Criteria by Phase
 
 ### Phase 0
+
 - [ ] All 4 decisions documented
 - [ ] Team consensus on spec
 - [ ] Test plan approved
 - [ ] No ambiguities remain for Phase 1
 
 ### Phase 1
+
 - [ ] All P0/P1 bugs fixed
 - [ ] Session isolation verified
 - [ ] Soft-confirm window working per agent
@@ -811,6 +861,7 @@ async function summarizeOldMessages(
 - [ ] All unit tests pass
 
 ### Phase 2
+
 - [ ] 20 integration tests pass
 - [ ] Error classification working
 - [ ] Proposal state machine enforced
@@ -818,6 +869,7 @@ async function summarizeOldMessages(
 - [ ] Load tested with 100 concurrent users
 
 ### Phase 3
+
 - [ ] BaseOrchestrator in place
 - [ ] All orchestrators extend base
 - [ ] Zero code duplication
@@ -825,6 +877,7 @@ async function summarizeOldMessages(
 - [ ] No performance regression
 
 ### Phase 4
+
 - [ ] Circuit breaker working
 - [ ] Proposal dependencies tracked
 - [ ] Message history summarization working
@@ -834,34 +887,38 @@ async function summarizeOldMessages(
 
 ## Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|-----------|
-| Phase 0 decisions blocked | LOW | HIGH | Escalate to architect |
-| Phase 1 breaks existing code | MEDIUM | MEDIUM | Comprehensive testing |
-| Phase 2 test suite incomplete | MEDIUM | LOW | Allocate extra buffer |
-| Phase 3 refactoring takes longer | MEDIUM | MEDIUM | Implement 80% of base class |
-| Performance regression | LOW | MEDIUM | Benchmark before/after |
+| Risk                             | Likelihood | Impact | Mitigation                  |
+| -------------------------------- | ---------- | ------ | --------------------------- |
+| Phase 0 decisions blocked        | LOW        | HIGH   | Escalate to architect       |
+| Phase 1 breaks existing code     | MEDIUM     | MEDIUM | Comprehensive testing       |
+| Phase 2 test suite incomplete    | MEDIUM     | LOW    | Allocate extra buffer       |
+| Phase 3 refactoring takes longer | MEDIUM     | MEDIUM | Implement 80% of base class |
+| Performance regression           | LOW        | MEDIUM | Benchmark before/after      |
 
 ---
 
 ## Testing Strategy
 
 **Unit Tests** (Phase 1-2):
+
 - 50+ new unit tests
 - Focus on: session isolation, soft-confirm window, recursion budget
 - 90%+ coverage for critical paths
 
 **Integration Tests** (Phase 2):
+
 - 20+ integration tests
 - Focus on: multi-tenant, proposal lifecycle, concurrency
 - Using test database
 
 **Load Tests** (Phase 2):
+
 - 100 concurrent users
 - 1000 messages/second throughput
 - Monitor latency p95 < 3s
 
 **E2E Tests** (Phase 3):
+
 - Full user journeys per agent type
 - Onboarding: 4-step complete flow
 - Chatbot: book appointment with T3 confirm
@@ -872,6 +929,7 @@ async function summarizeOldMessages(
 ## Deployment Plan
 
 ### Pre-deployment
+
 - [ ] Code review: architecture decisions
 - [ ] Code review: all Phase 1 changes
 - [ ] Security audit: session isolation, prompt injection
@@ -879,12 +937,14 @@ async function summarizeOldMessages(
 - [ ] Staging test: full flow works
 
 ### Deployment
+
 - [ ] Feature flag: new orchestrator logic
 - [ ] Canary: 10% of traffic to Phase 1 changes
 - [ ] Monitoring: metrics dashboard live
 - [ ] Rollback plan: revert feature flag
 
 ### Post-deployment
+
 - [ ] Monitor error rates (target: <0.1%)
 - [ ] Monitor latency (target: p95 < 3s)
 - [ ] Gather user feedback
@@ -894,19 +954,20 @@ async function summarizeOldMessages(
 
 ## Resource Requirements
 
-| Role | Phase 0 | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Total |
-|------|---------|---------|---------|---------|---------|-------|
-| Architect | 3d | - | - | 2d | - | 5d |
-| Sr. Engineer | 2d | 3d | 5d | 3d | - | 13d |
-| Engineer | - | 5d | 7d | 2d | 3d | 17d |
-| QA/Test | 1d | 2d | 3d | 1d | 1d | 8d |
-| **Total** | **6d** | **10d** | **15d** | **8d** | **4d** | **43d** |
+| Role         | Phase 0 | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Total   |
+| ------------ | ------- | ------- | ------- | ------- | ------- | ------- |
+| Architect    | 3d      | -       | -       | 2d      | -       | 5d      |
+| Sr. Engineer | 2d      | 3d      | 5d      | 3d      | -       | 13d     |
+| Engineer     | -       | 5d      | 7d      | 2d      | 3d      | 17d     |
+| QA/Test      | 1d      | 2d      | 3d      | 1d      | 1d      | 8d      |
+| **Total**    | **6d**  | **10d** | **15d** | **8d**  | **4d**  | **43d** |
 
 ---
 
 ## Acceptance Sign-Off
 
 Phase completion requires:
+
 1. All acceptance criteria met
 2. Code review approved
 3. Tests passing

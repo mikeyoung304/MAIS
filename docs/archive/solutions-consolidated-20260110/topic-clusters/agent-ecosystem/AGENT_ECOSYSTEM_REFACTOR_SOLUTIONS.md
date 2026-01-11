@@ -499,7 +499,7 @@ test('accepts innocent "no" responses', async () => {
   const confirmedIds = await proposalService.softConfirmPendingT2(
     tenant.id,
     session.id,
-    'No, I don\'t have other questions',
+    "No, I don't have other questions",
     'admin'
   );
 
@@ -538,11 +538,13 @@ test('accepts innocent "no" responses', async () => {
 ## References
 
 **Related Solutions:**
+
 - `/Users/mikeyoung/CODING/MAIS/docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md` - Registry pattern for shared state
 - `/Users/mikeyoung/CODING/MAIS/docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md` - Proposal lifecycle
 - `/Users/mikeyoung/CODING/MAIS/docs/solutions/patterns/mais-critical-patterns.md` - Multi-tenant isolation patterns
 
 **Implementation Files:**
+
 - `server/src/agent/orchestrator/base-orchestrator.ts` - Circuit breaker implementation
 - `server/src/agent/tools/types.ts` - AgentTool interface
 - `server/src/agent/proposals/proposal.service.ts` - T2 rejection patterns

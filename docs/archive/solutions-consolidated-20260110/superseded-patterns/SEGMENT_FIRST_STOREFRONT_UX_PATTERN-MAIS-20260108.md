@@ -25,10 +25,12 @@ Multi-segment service businesses (e.g., photographers with "Corporate", "Elopeme
 ## Root Cause Analysis
 
 ### Problem 1: Confusing UX
+
 - **Root Cause**: The component treated segments and packages equally—showing all packages at once removed context about which category each package belonged to
 - **Symptom**: Customers saw 9 packages but didn't know which 3 were "Corporate Wellness", which 3 were "Weddings", etc.
 
 ### Problem 2: Broken Browser History
+
 - **Root Cause**: Component state (`selectedSegmentId`) was managed in React state only, not synchronized with browser history
 - **Symptom**: When user clicked back button, the address bar didn't change → React state out of sync with URL → component didn't re-render
 
@@ -98,6 +100,7 @@ useEffect(() => {
 ```
 
 **Key Points:**
+
 - `window.location.hash` is the source of truth
 - Component state (`selectedSegmentId`) is derived from hash
 - `hashchange` event fires when browser back/forward is used
@@ -122,6 +125,7 @@ const handleSelectSegment = useCallback(
 ```
 
 **Why `pushState` before state update:**
+
 - Updates the address bar immediately
 - Browser back button now has something to go back to
 - If we set state first, hash update might lag
@@ -168,12 +172,14 @@ const imageUrl = segment.heroImage || getSegmentStockPhoto(segment);
 ```
 
 **How It Works:**
+
 1. If segment has `heroImage`, use it
 2. Otherwise, search segment name/slug/description for keywords (case-insensitive)
 3. Return matching Unsplash URL
 4. Fall back to generic business photo if no match
 
 **Example Matches:**
+
 - Segment name "Elopements" → matches keyword `elopement` → wedding photo
 - Slug "corporate-wellness" → matches keywords `corporate` and `wellness` → picks first match
 - Generic "John's Services" → no matches → default photo
@@ -261,6 +267,7 @@ const segmentsWithPackages = segments
 ```
 
 **Features:**
+
 - Hero image (from segment or stock photo)
 - Segment name + optional subtitle
 - Price range (e.g., "From $500")
@@ -271,15 +278,11 @@ const segmentsWithPackages = segments
 ### Tier Cards (Within Segment)
 
 ```tsx
-<TierCard
-  pkg={pkg}
-  tierLabel={tierLabel}
-  bookHref={getBookHref(pkg.slug)}
-  isPopular={isPopular}
-/>
+<TierCard pkg={pkg} tierLabel={tierLabel} bookHref={getBookHref(pkg.slug)} isPopular={isPopular} />
 ```
 
 **Features:**
+
 - Package image or price focus
 - Exact price display
 - "Most Popular" badge (only if exactly 3 tiers and this is the middle tier)
@@ -320,19 +323,19 @@ This pattern works in all modern browsers:
 
 ## Edge Cases & Handling
 
-| Scenario                    | Behavior                                    |
-| --------------------------- | ------------------------------------------- |
-| 0 segments                  | Show empty state (no packages)               |
-| 1 segment                   | Skip to tier selection (no segment choice)  |
-| 2 segments                  | Show 2-column segment grid                  |
-| 3+ segments                 | Show 3-column grid (wraps on mobile)         |
-| Segment with no packages    | Filtered out (not shown in selection)        |
-| 1 tier in segment           | Single card centered                         |
-| 2 tiers                     | Two cards, no "Most Popular" badge           |
-| 3 tiers                     | Three cards, middle gets "Most Popular"      |
-| No segment image            | Use stock photo based on keyword matching    |
-| No matching keyword         | Use default business photo                   |
-| Browser back from tier view | Hash changes → state re-syncs → UI updates   |
+| Scenario                    | Behavior                                   |
+| --------------------------- | ------------------------------------------ |
+| 0 segments                  | Show empty state (no packages)             |
+| 1 segment                   | Skip to tier selection (no segment choice) |
+| 2 segments                  | Show 2-column segment grid                 |
+| 3+ segments                 | Show 3-column grid (wraps on mobile)       |
+| Segment with no packages    | Filtered out (not shown in selection)      |
+| 1 tier in segment           | Single card centered                       |
+| 2 tiers                     | Two cards, no "Most Popular" badge         |
+| 3 tiers                     | Three cards, middle gets "Most Popular"    |
+| No segment image            | Use stock photo based on keyword matching  |
+| No matching keyword         | Use default business photo                 |
+| Browser back from tier view | Hash changes → state re-syncs → UI updates |
 
 ---
 
@@ -363,18 +366,22 @@ const getBookHref = useCallback((packageSlug: string) => { ... }, [basePath, dom
 ## Accessibility (WCAG 2.1 AA)
 
 ✅ **Keyboard Navigation:**
+
 - All buttons have focus rings (`:focus-visible`)
 - Tab order follows visual flow: segments → back button → tiers → CTA
 
 ✅ **Screen Readers:**
+
 - Alt text on images: `alt={segment.name}`
 - Semantic HTML (buttons, links)
 - Section landmark: `<section id="packages">`
 
 ✅ **Motion:**
+
 - Animations reduced for `prefers-reduced-motion` (via Tailwind's default)
 
 ✅ **Color:**
+
 - Text contrast meets WCAG AA (sage on dark ≥4.5:1)
 - Don't rely on color alone (e.g., "Most Popular" badge has text)
 
@@ -529,12 +536,14 @@ test('stock photo loads for segment without image', async ({ page }) => {
 ## References
 
 **Related Files:**
+
 - `apps/web/src/components/tenant/SegmentPackagesSection.tsx` - Implementation
 - `apps/web/src/lib/packages.ts` - `TIER_ORDER` constant
 - `apps/web/src/lib/tenant.ts` - Data structures and types
 - `docs/design/BRAND_VOICE_GUIDE.md` - Design tokens and voice
 
 **Key Concepts:**
+
 - [MDN: Window.location.hash](https://developer.mozilla.org/en-US/docs/Web/API/Window/location)
 - [MDN: Window.history.pushState](https://developer.mozilla.org/en-US/docs/Web/API/History/pushState)
 - [MDN: hashchange Event](https://developer.mozilla.org/en-US/docs/Web/API/Window/hashchange_event)
@@ -555,13 +564,13 @@ test('stock photo loads for segment without image', async ({ page }) => {
 
 ### Trade-offs
 
-| Aspect       | Choice          | Why                                                    |
-| ------------ | --------------- | ------------------------------------------------------ |
-| URL Sync     | Hash (#)        | Simple, works without server-side routing              |
-| State        | React useState  | Derived from URL, not primary source                   |
-| Photos       | Unsplash API    | Free, high-quality, no API keys needed                 |
-| Grouping     | Map structure   | O(1) lookup, clear intent                              |
-| Animations   | Tailwind CSS    | Smooth without janky transitions                       |
+| Aspect     | Choice         | Why                                       |
+| ---------- | -------------- | ----------------------------------------- |
+| URL Sync   | Hash (#)       | Simple, works without server-side routing |
+| State      | React useState | Derived from URL, not primary source      |
+| Photos     | Unsplash API   | Free, high-quality, no API keys needed    |
+| Grouping   | Map structure  | O(1) lookup, clear intent                 |
+| Animations | Tailwind CSS   | Smooth without janky transitions          |
 
 ---
 
@@ -582,6 +591,7 @@ Removing one click for single-segment businesses significantly improves perceive
 ### 4. hash vs URL Path
 
 Hash routing (`#segment-slug`) is simpler than full path routing (`/segment/slug`) for this use case because:
+
 - Doesn't require Next.js route handlers
 - Works entirely on the client
 - Doesn't interfere with tenanted storefronts (`/t/{slug}`)
@@ -597,4 +607,3 @@ If you extend this pattern, consider:
 3. **Scroll Sync**: Scroll to top when transitioning between views
 4. **Persistent Favorites**: Remember customer's last viewed segment
 5. **Custom Stock Photo Selection**: Allow tenants to pick which photo matches their segment best
-

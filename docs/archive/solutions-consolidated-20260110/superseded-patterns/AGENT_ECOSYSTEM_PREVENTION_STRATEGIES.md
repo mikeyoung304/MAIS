@@ -22,6 +22,7 @@ Based on 5 critical fixes in the agent orchestrator (Commit cb55639):
 ### The Problem
 
 **Shared singleton pattern:**
+
 ```typescript
 // ❌ WRONG - One user's abuse affects all users
 class CircuitBreaker {
@@ -35,6 +36,7 @@ const sharedBreaker = new CircuitBreaker();
 ```
 
 **Impact:**
+
 - One tenant's runaway agent consumes all token budget
 - One user's circuit breaker trip blocks other users
 - Error states cascade across sessions
@@ -43,6 +45,7 @@ const sharedBreaker = new CircuitBreaker();
 ### The Solution
 
 **Per-session keyed state:**
+
 ```typescript
 // ✅ CORRECT - Each session has isolated state
 class BaseOrchestrator {
@@ -51,10 +54,7 @@ class BaseOrchestrator {
 
   private getCircuitBreaker(sessionId: string): CircuitBreaker {
     if (!this.circuitBreakers.has(sessionId)) {
-      this.circuitBreakers.set(
-        sessionId,
-        new CircuitBreaker(this.getConfig().circuitBreaker)
-      );
+      this.circuitBreakers.set(sessionId, new CircuitBreaker(this.getConfig().circuitBreaker));
     }
     return this.circuitBreakers.get(sessionId)!;
   }
@@ -88,6 +88,7 @@ class BaseOrchestrator {
   - [ ] Log cleanup for debugging
 - [ ] Document the scoping decision in comments
 - [ ] Test concurrent operations with different session IDs:
+
   ```typescript
   test('circuit breaker isolation', async () => {
     const session1 = 'sess_1';
@@ -127,6 +128,7 @@ class BaseOrchestrator {
 ### The Problem
 
 **Optional security fields:**
+
 ```typescript
 // ❌ WRONG - trustTier is optional
 interface AgentTool {
@@ -144,6 +146,7 @@ const proposal = await createProposal({
 ```
 
 **Impact:**
+
 - Developers forget to set trustTier on new tools
 - Tools default to auto-confirm (T1) instead of safe T3
 - Write operations (package creation, booking cancellation) execute without approval
@@ -152,6 +155,7 @@ const proposal = await createProposal({
 ### The Solution
 
 **Required field with TypeScript enforcement:**
+
 ```typescript
 // ✅ CORRECT - trustTier is required, documented
 interface AgentTool {
@@ -181,6 +185,7 @@ const tool: AgentTool = {
 ```
 
 **Runtime validation:**
+
 ```typescript
 function validateTool(tool: AgentTool): void {
   if (!tool.trustTier || !['T1', 'T2', 'T3'].includes(tool.trustTier)) {
@@ -189,7 +194,7 @@ function validateTool(tool: AgentTool): void {
 }
 
 // Call at tool registration time
-registerAllTools().forEach(tool => validateTool(tool));
+registerAllTools().forEach((tool) => validateTool(tool));
 ```
 
 ### Prevention Checklist
@@ -199,6 +204,7 @@ registerAllTools().forEach(tool => validateTool(tool));
 - [ ] Add detailed JSDoc comments explaining tiers/values
 - [ ] Add examples of correct usage for each value
 - [ ] Add runtime validation at initialization:
+
   ```typescript
   export function registerAllTools(): AgentTool[] {
     const tools = [
@@ -219,6 +225,7 @@ registerAllTools().forEach(tool => validateTool(tool));
     return tools;
   }
   ```
+
 - [ ] Test that missing field causes compilation error:
   ```typescript
   // This should NOT compile
@@ -226,19 +233,21 @@ registerAllTools().forEach(tool => validateTool(tool));
     name: 'test',
     description: 'test',
     inputSchema: {},
-    execute: async () => ({success: true}),
+    execute: async () => ({ success: true }),
     // Missing trustTier - should error
   };
   ```
 - [ ] Test that default values are rejected:
   ```typescript
   test('rejects missing trustTier', () => {
-    expect(() => validateTool({
-      name: 'test',
-      description: 'test',
-      inputSchema: {},
-      execute: async () => ({success: true}),
-    })).toThrow('missing trustTier');
+    expect(() =>
+      validateTool({
+        name: 'test',
+        description: 'test',
+        inputSchema: {},
+        execute: async () => ({ success: true }),
+      })
+    ).toThrow('missing trustTier');
   });
   ```
 
@@ -264,20 +273,22 @@ registerAllTools().forEach(tool => validateTool(tool));
 ### The Problem
 
 **Overly broad patterns:**
+
 ```typescript
 // ❌ WRONG - Too many false positives
 const INJECTION_PATTERNS = [
   /disregard/i, // Matches "Disregard for Details Photography"
-  /forget/i,    // Matches "Forget-Me-Not Wedding Planning"
-  /act as/i,    // Matches "We act as your planning partner"
+  /forget/i, // Matches "Forget-Me-Not Wedding Planning"
+  /act as/i, // Matches "We act as your planning partner"
 ];
 
 // Real business name gets filtered:
-const context = sanitizeForContext("Disregard for Details Photography");
+const context = sanitizeForContext('Disregard for Details Photography');
 // Result: "[FILTERED] for Details Photography" (broken)
 ```
 
 **Impact:**
+
 - Legitimate business names contain filtered words
 - Service descriptions get mangled mid-sentence
 - User-provided content disappears without warning
@@ -286,22 +297,23 @@ const context = sanitizeForContext("Disregard for Details Photography");
 ### The Solution
 
 **Specific, contextual patterns:**
-```typescript
+
+````typescript
 // ✅ CORRECT - Specific, multi-word patterns avoid false positives
 const INJECTION_PATTERNS = [
   // Original patterns - direct instruction override attempts (refined for specificity)
-  /ignore\s+(all\s+)?(your\s+)?instructions/i,         // Specific: "ignore all instructions"
-  /you are now\s+(a|an|my|the)/i,                       // Specific: "you are now a..."
-  /system:\s*\[/i,                                       // Specific: system prompt syntax
-  /admin mode\s*(on|enabled|activate)/i,                // Specific: "admin mode on"
-  /forget\s+(all\s+)?(your\s+)?previous/i,              // Specific: "forget previous context"
-  /new\s+instructions:/i,                               // Specific: "new instructions:"
+  /ignore\s+(all\s+)?(your\s+)?instructions/i, // Specific: "ignore all instructions"
+  /you are now\s+(a|an|my|the)/i, // Specific: "you are now a..."
+  /system:\s*\[/i, // Specific: system prompt syntax
+  /admin mode\s*(on|enabled|activate)/i, // Specific: "admin mode on"
+  /forget\s+(all\s+)?(your\s+)?previous/i, // Specific: "forget previous context"
+  /new\s+instructions:/i, // Specific: "new instructions:"
 
   // Additional system prompt override attempts
   /override\s+(system|previous|all)/i,
   /bypass\s+(safety|filters|restrictions)/i,
-  /act\s+as\s+(if|though)\s+you\s+(are|were)/i,         // Specific: "act as if you are..."
-  /pretend\s+(you\s+are|to\s+be)\s+(a|an)/i,            // Specific: "pretend you are..."
+  /act\s+as\s+(if|though)\s+you\s+(are|were)/i, // Specific: "act as if you are..."
+  /pretend\s+(you\s+are|to\s+be)\s+(a|an)/i, // Specific: "pretend you are..."
   /roleplay\s+as\s+(a|an)/i,
   /\[system\]/i,
   /<<\s*SYS\s*>>/i,
@@ -315,7 +327,7 @@ const INJECTION_PATTERNS = [
 
   // Common jailbreak phrases
   /jailbreak/i,
-  /\bdan\s+mode\b/i,                                    // Specific: "DAN mode"
+  /\bdan\s+mode\b/i, // Specific: "DAN mode"
   /developer\s+mode\s*(on|enabled)/i,
   /unrestricted\s+mode/i,
   /no\s+(filter|restrictions|limits)\s+mode/i,
@@ -346,11 +358,12 @@ function sanitizeForContext(text: string, maxLength = 100): string {
 
   return result.slice(0, maxLength);
 }
-```
+````
 
 ### Prevention Checklist
 
 - [ ] Document each pattern with example:
+
   ```typescript
   /**
    * @pattern /forget\s+(all\s+)?(your\s+)?previous/i
@@ -362,6 +375,7 @@ function sanitizeForContext(text: string, maxLength = 100): string {
   ```
 
 - [ ] Test against realistic business data:
+
   ```typescript
   const testCases = [
     // Real business names that should NOT be filtered
@@ -375,17 +389,18 @@ function sanitizeForContext(text: string, maxLength = 100): string {
     { input: 'new instructions: ignore previous', expect: '[FILTERED]: [FILTERED]' },
   ];
 
-  testCases.forEach(({input, expect}) => {
+  testCases.forEach(({ input, expect }) => {
     const result = sanitizeForContext(input);
     expect(result).toBe(expect);
   });
   ```
 
 - [ ] Run integration test with actual tenant data:
+
   ```typescript
   test('does not filter legitimate business names', async () => {
     const tenants = await db.tenant.findMany({
-      select: { name: true, description: true }
+      select: { name: true, description: true },
     });
 
     for (const tenant of tenants) {
@@ -397,6 +412,7 @@ function sanitizeForContext(text: string, maxLength = 100): string {
   ```
 
 - [ ] Add fuzzing test with random business data:
+
   ```typescript
   test('fuzzing: random legitimate text', () => {
     const phrases = [
@@ -406,7 +422,7 @@ function sanitizeForContext(text: string, maxLength = 100): string {
       'we pretend to be professionals',
     ];
 
-    phrases.forEach(phrase => {
+    phrases.forEach((phrase) => {
       const sanitized = sanitizeForContext(phrase);
       // Should not be empty (would indicate over-filtering)
       expect(sanitized.length).toBeGreaterThan(3);
@@ -415,6 +431,7 @@ function sanitizeForContext(text: string, maxLength = 100): string {
   ```
 
 - [ ] Document pattern exceptions:
+
   ```typescript
   /**
    * PATTERNS INTENTIONALLY OMITTED (high false positive rate):
@@ -462,6 +479,7 @@ function sanitizeForContext(text: string, maxLength = 100): string {
 ### The Problem
 
 **Unprotected public endpoints:**
+
 ```typescript
 // ❌ WRONG - No rate limiting on public endpoint
 app.post('/v1/public/chat/message', async (req, res) => {
@@ -474,6 +492,7 @@ app.post('/v1/public/chat/message', async (req, res) => {
 ```
 
 **Impact:**
+
 - Token budget exhaustion ($$$)
 - Availability slot enumeration (list all dates)
 - DDoS attacks on AI inference
@@ -484,11 +503,12 @@ app.post('/v1/public/chat/message', async (req, res) => {
 **Three-layer defense:**
 
 **Layer 1: IP Rate Limiting**
+
 ```typescript
 // ✅ IP-based rate limiter for public endpoints
 const publicChatRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 50,                    // 50 requests per IP
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // 50 requests per IP
   message: { error: 'Too many requests. Please wait.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -519,28 +539,27 @@ function normalizeIp(ip: string | undefined): string {
 ```
 
 **Layer 2: Request Validation**
+
 ```typescript
 const chatMessageSchema = z.object({
   message: z.string().min(1).max(1000), // Limit input size
   sessionId: z.string().optional(),
 });
 
-app.post('/v1/public/chat/message',
-  publicChatRateLimiter,
-  async (req: Request, res: Response) => {
-    // Validate before processing
-    const result = chatMessageSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ error: 'Invalid request' });
-    }
-
-    const { message } = result.data;
-    // Process validated input
+app.post('/v1/public/chat/message', publicChatRateLimiter, async (req: Request, res: Response) => {
+  // Validate before processing
+  const result = chatMessageSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: 'Invalid request' });
   }
-);
+
+  const { message } = result.data;
+  // Process validated input
+});
 ```
 
 **Layer 3: Output Sanitization**
+
 ```typescript
 interface ChatResponse {
   message: string;
@@ -625,6 +644,7 @@ app.post('/v1/public/chat/message', async (req, res) => {
   - [ ] Document rate limits in API docs
 
 - [ ] **Testing**
+
   ```typescript
   describe('Public endpoint hardening', () => {
     test('IP rate limiting', async () => {
@@ -676,6 +696,7 @@ app.post('/v1/public/chat/message', async (req, res) => {
 ### The Problem
 
 **Missing composite indexes:**
+
 ```prisma
 // ❌ WRONG - Two separate single-column indexes
 model AgentSession {
@@ -694,6 +715,7 @@ WHERE tenantId = 'xyz' AND status = 'ACTIVE';
 ```
 
 **Impact:**
+
 - N+M scans instead of O(1) lookup
 - Slow queries as data grows
 - Database CPU spike during scans
@@ -725,12 +747,14 @@ WHERE tenantId = 'xyz' AND status = 'ACTIVE';
 ### Index Design Pattern
 
 **For WHERE filters:**
+
 ```prisma
 // Pattern: Put WHERE columns in index order
 @@index([tenantId, status])  // For WHERE tenantId = ? AND status = ?
 ```
 
 **For WHERE + ORDER BY:**
+
 ```prisma
 // Pattern: Filter columns first, then sort column
 @@index([tenantId, createdAt])  // For WHERE tenantId AND ORDER BY createdAt
@@ -743,6 +767,7 @@ LIMIT 10;
 ```
 
 **For tenant-scoped tables:**
+
 ```prisma
 // Pattern: tenantId always first (enables per-tenant partitioning)
 @@index([tenantId, active])      // Query active resources per tenant
@@ -759,6 +784,7 @@ LIMIT 10;
   - [ ] Check query logs for slow queries
 
 - [ ] **Design Indexes**
+
   ```sql
   -- Analyze current index usage
   SELECT
@@ -783,6 +809,7 @@ LIMIT 10;
     ```
 
 - [ ] **Test Index Performance**
+
   ```sql
   -- Before index
   EXPLAIN ANALYZE SELECT * FROM agent_session
@@ -794,6 +821,7 @@ LIMIT 10;
   ```
 
 - [ ] **Document in Schema Comments**
+
   ```prisma
   model AgentSession {
     id        String   @id
@@ -860,13 +888,13 @@ model Service {
 
 ## Quick Reference: When to Use Each Pattern
 
-| Pattern | Signal | Action |
-|---------|--------|--------|
-| **Per-Session Isolation** | Shared state in long-running service | Create `Map<sessionId, State>` |
-| **Required Security Fields** | Optional security-related field | Make field required, add validation |
-| **Specific NLP Patterns** | False positives on real data | Refine pattern to multi-word anchor |
-| **Public Endpoint Hardening** | Unauthenticated API route | Add IP rate limit + validation + sanitization |
-| **Composite Indexes** | EXPLAIN shows "Seq Scan" | Add `@@index([col1, col2])` |
+| Pattern                       | Signal                               | Action                                        |
+| ----------------------------- | ------------------------------------ | --------------------------------------------- |
+| **Per-Session Isolation**     | Shared state in long-running service | Create `Map<sessionId, State>`                |
+| **Required Security Fields**  | Optional security-related field      | Make field required, add validation           |
+| **Specific NLP Patterns**     | False positives on real data         | Refine pattern to multi-word anchor           |
+| **Public Endpoint Hardening** | Unauthenticated API route            | Add IP rate limit + validation + sanitization |
+| **Composite Indexes**         | EXPLAIN shows "Seq Scan"             | Add `@@index([col1, col2])`                   |
 
 ---
 

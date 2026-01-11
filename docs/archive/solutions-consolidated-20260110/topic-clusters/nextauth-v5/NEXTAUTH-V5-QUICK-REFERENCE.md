@@ -74,7 +74,7 @@ START: You're using getBackendToken()
 ```typescript
 // apps/web/src/app/api/your-route/route.ts
 export async function GET(request: Request) {
-  const token = await getBackendToken(request);  // ✓ Pass request
+  const token = await getBackendToken(request); // ✓ Pass request
 
   if (!token) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -135,22 +135,27 @@ export function YourComponent() {
    - Production: Should see `__Secure-authjs.session-token` ✓
 
 2. **Check server logs**:
+
    ```
    DEBUG: No session cookie found
    availableCookies: ['__Secure-authjs.session-token', ...]
    ```
+
    → If you see `__Secure-` but code only checks `authjs.session-token`, that's the bug!
 
 3. **Verify you're on HTTPS** in production:
+
    ```
    Protocol: https://gethandled.ai ✓
    ```
+
    (Not `http://` - that forces the non-prefixed cookie name)
 
 4. **Check API route receives request**:
+
    ```typescript
    export function GET(request: Request) {
-     console.log('Request URL:', request.url);  // Should log URL
+     console.log('Request URL:', request.url); // Should log URL
      const token = await getBackendToken(request);
    }
    ```
@@ -172,12 +177,12 @@ export function YourComponent() {
 
 Use this when you need to know which name to check:
 
-| Environment      | Protocol | Cookie Name                 | Prefix? |
-| :--------------- | :------- | :-------------------------- | :------ |
-| Local dev        | HTTP     | `authjs.session-token`      | ❌      |
-| Staging          | HTTPS    | `__Secure-authjs.session-token` | ✓      |
-| Production       | HTTPS    | `__Secure-authjs.session-token` | ✓      |
-| NextAuth v4 (old) | HTTPS   | `__Secure-next-auth.session-token` | ✓ |
+| Environment       | Protocol | Cookie Name                        | Prefix? |
+| :---------------- | :------- | :--------------------------------- | :------ |
+| Local dev         | HTTP     | `authjs.session-token`             | ❌      |
+| Staging           | HTTPS    | `__Secure-authjs.session-token`    | ✓       |
+| Production        | HTTPS    | `__Secure-authjs.session-token`    | ✓       |
+| NextAuth v4 (old) | HTTPS    | `__Secure-next-auth.session-token` | ✓       |
 
 **Rule**: Check HTTPS variant first (most common after deployment).
 
@@ -193,13 +198,14 @@ const token = cookies.get('authjs.session-token')?.value;
 ```
 
 **Fix**:
+
 ```typescript
 // Correct - check multiple names
 const possibleNames = [
-  '__Secure-authjs.session-token',  // HTTPS first
-  'authjs.session-token',           // HTTP second
+  '__Secure-authjs.session-token', // HTTPS first
+  'authjs.session-token', // HTTP second
 ];
-const cookieName = possibleNames.find(name => cookies.get(name));
+const cookieName = possibleNames.find((name) => cookies.get(name));
 ```
 
 ### ❌ MISTAKE 2: Constructing request in API route
@@ -213,6 +219,7 @@ export function GET() {
 ```
 
 **Fix**:
+
 ```typescript
 // Correct - use actual request
 export function GET(request: Request) {
@@ -229,6 +236,7 @@ const data = await api.call({ token });
 ```
 
 **Fix**:
+
 ```typescript
 // Correct - check for null
 const token = await getBackendToken();
@@ -247,6 +255,7 @@ import { getBackendToken } from '@/lib/auth';
 ```
 
 **Fix**:
+
 ```typescript
 // Correct - use useSession on client
 'use client';
@@ -285,24 +294,28 @@ curl https://staging.gethandled.ai/api/tenant-admin/something
 ## Emergency Checklist (If Production is Down)
 
 1. **Stop. Check logs first.**
+
    ```
    Look for: "No session cookie found"
    Check: Which cookie names are actually present?
    ```
 
 2. **Is it HTTPS?**
+
    ```
    https://gethandled.ai ✓ (should use __Secure- prefix)
    http://gethandled.ai ❌ (wrong, should be HTTPS)
    ```
 
 3. **Do you check for `__Secure-` prefix?**
+
    ```
    In apps/web/src/lib/auth.ts:
    Should include: '__Secure-authjs.session-token'
    ```
 
 4. **Did you pass request in API routes?**
+
    ```
    export function GET(request: Request) {
      const token = await getBackendToken(request);
@@ -311,7 +324,7 @@ curl https://staging.gethandled.ai/api/tenant-admin/something
 
 5. **Rollback or apply fix**:
    - If new code: Rollback to last known good
-   - If old code: Update to check __Secure- prefix
+   - If old code: Update to check \_\_Secure- prefix
 
 ---
 

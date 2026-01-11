@@ -13,6 +13,7 @@
 **Problem:** Shared singleton → one user's abuse affects all
 
 **Solution:**
+
 ```typescript
 // ❌ WRONG
 class Service {
@@ -32,6 +33,7 @@ class Service {
 ```
 
 **Checklist:**
+
 - [ ] Map<key, value> pattern (not singletons)
 - [ ] Cleanup routine every N operations
 - [ ] Test concurrent sessions independently
@@ -46,6 +48,7 @@ class Service {
 **Problem:** Optional field → defaults to unsafe value
 
 **Solution:**
+
 ```typescript
 // ❌ WRONG
 interface AgentTool {
@@ -67,6 +70,7 @@ function validateTool(tool: AgentTool) {
 ```
 
 **Checklist:**
+
 - [ ] Required (non-optional) in TypeScript
 - [ ] Detailed JSDoc with examples
 - [ ] Runtime validation at init
@@ -81,6 +85,7 @@ function validateTool(tool: AgentTool) {
 **Problem:** Overly broad patterns → false positives on real data
 
 **Solution:**
+
 ```typescript
 // ❌ WRONG - Matches legitimate text
 /disregard/i  // "Disregard for Details Photography"
@@ -93,6 +98,7 @@ function validateTool(tool: AgentTool) {
 ```
 
 **Checklist:**
+
 - [ ] Multi-word anchors (avoid single-word patterns)
 - [ ] Test against real business names
 - [ ] Fuzzing test with legitimate text
@@ -100,6 +106,7 @@ function validateTool(tool: AgentTool) {
 - [ ] NFKC Unicode normalization
 
 **Test:**
+
 ```typescript
 const testCases = [
   { input: 'Disregard for Details', expect: 'Disregard for Details' }, // Pass through
@@ -116,6 +123,7 @@ const testCases = [
 **Problem:** No limits → token exhaustion, DDoS, enumeration
 
 **Solution:**
+
 ```typescript
 // Layer 1: IP rate limiting
 const limiter = rateLimit({
@@ -141,6 +149,7 @@ app.post('/v1/public/chat', limiter, (req, res) => {
 ```
 
 **Checklist:**
+
 - [ ] IP rate limiting (50/15min typical)
 - [ ] Input validation with size limits
 - [ ] Whitelisted response fields only
@@ -159,6 +168,7 @@ app.post('/v1/public/chat', limiter, (req, res) => {
 **Problem:** Single indexes → full table scan as data grows
 
 **Solution:**
+
 ```typescript
 // ❌ WRONG - Two separate indexes
 @@index([tenantId])
@@ -171,12 +181,14 @@ app.post('/v1/public/chat', limiter, (req, res) => {
 ```
 
 **Index Design:**
+
 1. Filter columns first (WHERE order)
 2. Sort column last (ORDER BY)
 3. tenantId always first (multi-tenant)
 4. Max 3-4 columns per index
 
 **Checklist:**
+
 - [ ] Run EXPLAIN ANALYZE on slow queries
 - [ ] Look for "Seq Scan" (bad)
 - [ ] Add composite index for WHERE + ORDER BY
@@ -185,6 +197,7 @@ app.post('/v1/public/chat', limiter, (req, res) => {
 - [ ] Check for unused indexes regularly
 
 **Example:**
+
 ```prisma
 model AgentSession {
   tenantId   String
@@ -200,31 +213,36 @@ model AgentSession {
 
 ## Prevention Matrix
 
-| Pattern | Signal | Key Test | Implementation Time |
-|---------|--------|----------|------------------|
-| Per-Session | Shared state in service | 2 sessions independent | 30 min |
-| Required Field | Optional security field | Compilation error | 15 min |
-| Specific Patterns | False positives on real data | Business names pass through | 45 min |
-| Public Endpoint | Unauthenticated route | 429 on 51st request | 30 min |
-| Composite Index | "Seq Scan" in EXPLAIN | Index used in plan | 20 min |
+| Pattern           | Signal                       | Key Test                    | Implementation Time |
+| ----------------- | ---------------------------- | --------------------------- | ------------------- |
+| Per-Session       | Shared state in service      | 2 sessions independent      | 30 min              |
+| Required Field    | Optional security field      | Compilation error           | 15 min              |
+| Specific Patterns | False positives on real data | Business names pass through | 45 min              |
+| Public Endpoint   | Unauthenticated route        | 429 on 51st request         | 30 min              |
+| Composite Index   | "Seq Scan" in EXPLAIN        | Index used in plan          | 20 min              |
 
 ---
 
 ## Minimal Implementation
 
 ### Session Isolation
+
 ```typescript
 const states = new Map();
 const get = (id) => states.has(id) || states.set(id, newState()), states.get(id);
 ```
 
 ### Required Field
+
 ```typescript
-interface Tool { trustTier: 'T1' | 'T2' | 'T3'; } // Non-optional
-if (!['T1','T2','T3'].includes(tool.trustTier)) throw new Error('Invalid trustTier');
+interface Tool {
+  trustTier: 'T1' | 'T2' | 'T3';
+} // Non-optional
+if (!['T1', 'T2', 'T3'].includes(tool.trustTier)) throw new Error('Invalid trustTier');
 ```
 
 ### Specific Patterns
+
 ```typescript
 // Multi-word only
 /forget\s+(all|your)\s+(previous|instructions)/i
@@ -232,12 +250,14 @@ if (!['T1','T2','T3'].includes(tool.trustTier)) throw new Error('Invalid trustTi
 ```
 
 ### Public Endpoint
+
 ```typescript
 const limiter = rateLimit({ windowMs: 15*60*1000, max: 50 });
 app.post('/v1/public/...', limiter, (req, res) => {...});
 ```
 
 ### Composite Index
+
 ```prisma
 @@index([tenantId, status])  // For: WHERE tenantId AND status
 ```

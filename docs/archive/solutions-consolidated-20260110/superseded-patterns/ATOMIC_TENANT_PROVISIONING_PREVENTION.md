@@ -34,6 +34,7 @@ Multi-tenant systems must guarantee data consistency when creating related entit
   - Are foreign keys optional (nullable) or required?
 
 - [ ] **Verify deletion cascades**
+
   ```prisma
   // Example: Package references Segment
   model Package {

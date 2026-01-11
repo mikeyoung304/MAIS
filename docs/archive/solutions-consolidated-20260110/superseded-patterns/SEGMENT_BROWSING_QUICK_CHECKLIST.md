@@ -74,11 +74,11 @@ async function clearAllCaches() {
 clearAllCaches();
 ```
 
-| Problem | Solution |
-|---------|----------|
-| Old stock photo displays | Run `clearAllCaches()` in console |
+| Problem                    | Solution                          |
+| -------------------------- | --------------------------------- |
+| Old stock photo displays   | Run `clearAllCaches()` in console |
 | Component says "undefined" | SW cache → run `clearAllCaches()` |
-| Hard refresh doesn't help | SW cache → unregister it manually |
+| Hard refresh doesn't help  | SW cache → unregister it manually |
 
 ---
 
@@ -122,15 +122,15 @@ const SEGMENT_STOCK_PHOTOS: Record<string, string> = {
 
 Run through these scenarios:
 
-| Scenario | Steps | Expected |
-|----------|-------|----------|
-| **Refresh with hash** | 1. Click segment 2. Refresh page | Segment displays (no flicker) |
-| **Browser back** | 1. Click segment 2. Click back button | Segment list displays |
-| **Browser forward** | 1. Back button 2. Forward button | Segment displays again |
-| **Back button in UI** | 1. Click segment 2. Click "← All Services" | Segment list displays |
-| **Stock photo loads** | 1. Load page with segment | Unsplash photo visible |
-| **Image breaks** | 1. Broken image URL | Gradient fallback visible |
-| **Mobile layout** | 1. Resize to 375x812 | Cards stack, tap-able |
+| Scenario              | Steps                                      | Expected                      |
+| --------------------- | ------------------------------------------ | ----------------------------- |
+| **Refresh with hash** | 1. Click segment 2. Refresh page           | Segment displays (no flicker) |
+| **Browser back**      | 1. Click segment 2. Click back button      | Segment list displays         |
+| **Browser forward**   | 1. Back button 2. Forward button           | Segment displays again        |
+| **Back button in UI** | 1. Click segment 2. Click "← All Services" | Segment list displays         |
+| **Stock photo loads** | 1. Load page with segment                  | Unsplash photo visible        |
+| **Image breaks**      | 1. Broken image URL                        | Gradient fallback visible     |
+| **Mobile layout**     | 1. Resize to 375x812                       | Cards stack, tap-able         |
 
 - [ ] All scenarios tested
 - [ ] No console errors
@@ -220,12 +220,12 @@ for (const [keyword, url] of Object.entries(SEGMENT_STOCK_PHOTOS)) {
 
 ## Performance Tips
 
-| Optimization | Benefit |
-|--------------|---------|
-| Use slug (not ID) for photo matching | Stable across database changes |
-| Image URL: `w=800&q=80` | ~150KB instead of 5MB |
-| Lazy-load images with `loading="lazy"` | Faster initial page load |
-| Add alt text to all images | SEO + accessibility |
+| Optimization                           | Benefit                        |
+| -------------------------------------- | ------------------------------ |
+| Use slug (not ID) for photo matching   | Stable across database changes |
+| Image URL: `w=800&q=80`                | ~150KB instead of 5MB          |
+| Lazy-load images with `loading="lazy"` | Faster initial page load       |
+| Add alt text to all images             | SEO + accessibility            |
 
 ---
 
@@ -257,12 +257,12 @@ clearAllCaches();
 
 ## Reference Files
 
-| File | Purpose |
-|------|---------|
-| `apps/web/src/components/tenant/SegmentPackagesSection.tsx` | Main component |
-| `apps/web/next.config.js` | PWA config (should have `disable: process.env.NODE_ENV === 'development'`) |
-| `apps/web/package.json` | Should have `"dev:fresh"` script |
-| `e2e/tests/storefront.spec.ts` | E2E tests (reference for patterns) |
+| File                                                        | Purpose                                                                    |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `apps/web/src/components/tenant/SegmentPackagesSection.tsx` | Main component                                                             |
+| `apps/web/next.config.js`                                   | PWA config (should have `disable: process.env.NODE_ENV === 'development'`) |
+| `apps/web/package.json`                                     | Should have `"dev:fresh"` script                                           |
+| `e2e/tests/storefront.spec.ts`                              | E2E tests (reference for patterns)                                         |
 
 ---
 

@@ -14,14 +14,9 @@ This directory contains problem-solution documentation, prevention strategies, a
 
 ### Authentication & Authorization
 
-| Document                                                               | Purpose                                    |
-| ---------------------------------------------------------------------- | ------------------------------------------ |
-| [CLIENT_AUTH_INDEX.md](./CLIENT_AUTH_INDEX.md)                         | Client authentication implementation guide |
-| [CLIENT_AUTH_QUICK_REFERENCE.md](./CLIENT_AUTH_QUICK_REFERENCE.md)     | Quick reference for auth patterns          |
-| [CLIENT_AUTH_BYPASS_PREVENTION.md](./CLIENT_AUTH_BYPASS_PREVENTION.md) | Prevent auth bypass vulnerabilities        |
-| [CLIENT_AUTH_IMPLEMENTATION.md](./CLIENT_AUTH_IMPLEMENTATION.md)       | Step-by-step auth implementation           |
-| [CLIENT_AUTH_TESTING.md](./CLIENT_AUTH_TESTING.md)                     | Testing auth flows                         |
-| [CLIENT_AUTH_VISUAL_OVERVIEW.md](./CLIENT_AUTH_VISUAL_OVERVIEW.md)     | Visual guide to auth architecture          |
+| Document                                       | Purpose                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| [CLIENT_AUTH_GUIDE.md](./CLIENT_AUTH_GUIDE.md) | Complete client authentication guide (consolidated from 6 docs) |
 
 **Subdirectory:** [authentication-issues/](./authentication-issues/)
 

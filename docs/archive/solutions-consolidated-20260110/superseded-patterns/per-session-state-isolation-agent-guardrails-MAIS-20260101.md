@@ -7,7 +7,7 @@ root_cause: Shared singleton state in long-running service caused cross-session 
 solution: Map-based per-session state with periodic cleanup
 created: 2026-01-01
 project: MAIS
-related_issues: ["#539", "#536"]
+related_issues: ['#539', '#536']
 ---
 
 # Per-Session State Isolation for Agent Guardrails

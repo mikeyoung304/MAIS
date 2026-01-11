@@ -69,9 +69,10 @@ The function only checked for `authjs.session-token` and `next-auth.session-toke
 
 ```typescript
 // BROKEN: Only checked non-prefixed names
-const cookieName = cookieStore.get('authjs.session-token')?.value !== undefined
-  ? 'authjs.session-token'
-  : 'next-auth.session-token';
+const cookieName =
+  cookieStore.get('authjs.session-token')?.value !== undefined
+    ? 'authjs.session-token'
+    : 'next-auth.session-token';
 ```
 
 On Vercel HTTPS, the actual cookie name is `__Secure-authjs.session-token`, so the lookup always failed.
@@ -97,15 +98,13 @@ This mock object worked differently than a real NextRequest, causing NextAuth's 
 ```typescript
 const possibleCookieNames = [
   '__Secure-authjs.session-token', // NextAuth v5 on HTTPS (production)
-  'authjs.session-token',           // NextAuth v5 on HTTP (development)
+  'authjs.session-token', // NextAuth v5 on HTTP (development)
   '__Secure-next-auth.session-token', // NextAuth v4 on HTTPS
-  'next-auth.session-token',        // NextAuth v4 on HTTP
+  'next-auth.session-token', // NextAuth v4 on HTTP
 ];
 
 // Find which cookie name is actually present
-const cookieName = possibleCookieNames.find(
-  (name) => cookieStore.get(name)?.value !== undefined
-);
+const cookieName = possibleCookieNames.find((name) => cookieStore.get(name)?.value !== undefined);
 ```
 
 ### Fix 2: Pass Real Request Object (Commit e31a599)
@@ -183,11 +182,11 @@ When reviewing code that uses `getToken()` or `getBackendToken()`:
 
 ### Quick Reference
 
-| Environment | Cookie Name |
-|-------------|-------------|
-| Development (HTTP) | `authjs.session-token` |
-| Production (HTTPS) | `__Secure-authjs.session-token` |
-| Legacy NextAuth v4 (HTTP) | `next-auth.session-token` |
+| Environment                | Cookie Name                        |
+| -------------------------- | ---------------------------------- |
+| Development (HTTP)         | `authjs.session-token`             |
+| Production (HTTPS)         | `__Secure-authjs.session-token`    |
+| Legacy NextAuth v4 (HTTP)  | `next-auth.session-token`          |
 | Legacy NextAuth v4 (HTTPS) | `__Secure-next-auth.session-token` |
 
 ### One-Liners
@@ -207,12 +206,12 @@ The fix was verified by:
 
 ## Files Modified
 
-| File | Change |
-|------|--------|
-| `apps/web/src/lib/auth.ts` | Added cookie name variations, optional request parameter |
-| `apps/web/src/app/api/tenant-admin/[...path]/route.ts` | Pass request to getBackendToken |
-| `apps/web/src/app/api/agent/[...path]/route.ts` | Pass request to getBackendToken |
-| `apps/web/src/app/api/tenant/landing-page/route.ts` | Pass request to getBackendToken |
+| File                                                   | Change                                                   |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| `apps/web/src/lib/auth.ts`                             | Added cookie name variations, optional request parameter |
+| `apps/web/src/app/api/tenant-admin/[...path]/route.ts` | Pass request to getBackendToken                          |
+| `apps/web/src/app/api/agent/[...path]/route.ts`        | Pass request to getBackendToken                          |
+| `apps/web/src/app/api/tenant/landing-page/route.ts`    | Pass request to getBackendToken                          |
 
 ## Related Documentation
 
