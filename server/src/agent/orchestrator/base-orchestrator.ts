@@ -622,9 +622,17 @@ export abstract class BaseOrchestrator {
     );
 
     // Execute soft-confirmed proposals
+    // P0-FIX (2026-01-10): Capture successful executions to include in response
+    // This allows frontend to know about soft-confirm executions and invalidate cache
     const failedProposals: Array<{ id: string; toolName: string; reason: string }> = [];
+    let softConfirmExecutions: Array<{ toolName: string; success: boolean; data?: unknown }> = [];
     if (softConfirmedIds.length > 0) {
-      await this.executeConfirmedProposals(tenantId, softConfirmedIds, failedProposals, config);
+      softConfirmExecutions = await this.executeConfirmedProposals(
+        tenantId,
+        softConfirmedIds,
+        failedProposals,
+        config
+      );
     }
 
     // Build context and system prompt
@@ -770,16 +778,26 @@ export abstract class BaseOrchestrator {
     // This persists the trace to the database without blocking the response
     tracer?.flush();
 
-    return {
-      message: finalMessage,
-      sessionId: session.sessionId,
-      proposals,
-      toolResults: toolResults?.map((r) => ({
+    // P0-FIX (2026-01-10): Merge soft-confirm executions with regular tool results
+    // This ensures frontend knows about ALL tool executions, not just new ones from this turn
+    // Frontend uses this to call invalidateDraftConfig() and refresh the preview
+    const allToolResults = [
+      // Soft-confirm executions (T2 proposals confirmed at start of this turn)
+      ...softConfirmExecutions,
+      // Regular tool results from this turn's tool calls
+      ...(toolResults?.map((r) => ({
         toolName: r.toolName,
         success: r.result.success,
         data: 'data' in r.result ? r.result.data : undefined,
         error: 'error' in r.result ? r.result.error : undefined,
-      })),
+      })) || []),
+    ];
+
+    return {
+      message: finalMessage,
+      sessionId: session.sessionId,
+      proposals,
+      toolResults: allToolResults.length > 0 ? allToolResults : undefined,
     };
   }
 
@@ -789,13 +807,19 @@ export abstract class BaseOrchestrator {
 
   /**
    * Execute confirmed proposals
+   *
+   * P0-FIX (2026-01-10): Now returns successfully executed proposals so they can be
+   * included in the chat response. This allows frontend to call invalidateDraftConfig()
+   * after soft-confirm executions, fixing the "changes don't appear in preview" bug.
+   *
+   * @returns Array of successfully executed tool results for inclusion in API response
    */
   protected async executeConfirmedProposals(
     tenantId: string,
     proposalIds: string[],
     failedProposals: Array<{ id: string; toolName: string; reason: string }>,
     config: OrchestratorConfig
-  ): Promise<void> {
+  ): Promise<Array<{ toolName: string; success: boolean; data?: unknown }>> {
     logger.info(
       { tenantId, count: proposalIds.length, proposalIds },
       'Executing soft-confirmed proposals'
@@ -862,6 +886,9 @@ export abstract class BaseOrchestrator {
       })
     );
 
+    // P0-FIX: Track successful executions to return to frontend
+    const successfulExecutions: Array<{ toolName: string; success: boolean; data?: unknown }> = [];
+
     // Execute valid proposals in parallel with timeout
     if (executionTasks.length > 0) {
       const results = await Promise.allSettled(
@@ -887,6 +914,12 @@ export abstract class BaseOrchestrator {
               { proposalId: task.proposalId, toolName: task.toolName },
               'Proposal executed successfully'
             );
+            // P0-FIX: Track successful execution for API response
+            successfulExecutions.push({
+              toolName: task.toolName,
+              success: true,
+              data: executionResult,
+            });
           } else {
             const errorMessage =
               settledResult.reason instanceof Error
@@ -906,6 +939,8 @@ export abstract class BaseOrchestrator {
         })
       );
     }
+
+    return successfulExecutions;
   }
 
   /**
@@ -1124,7 +1159,11 @@ export abstract class BaseOrchestrator {
                 const errorMsg = execError instanceof Error ? execError.message : 'Unknown error';
                 await this.proposalService.markFailed(result.proposalId, errorMsg);
                 logger.error(
-                  { proposalId: result.proposalId, toolName: toolUse.name, error: sanitizeError(execError) },
+                  {
+                    proposalId: result.proposalId,
+                    toolName: toolUse.name,
+                    error: sanitizeError(execError),
+                  },
                   'T1 proposal execution failed'
                 );
               }
