@@ -19,6 +19,14 @@ skip_patterns:
 consolidation_targets:
   - docs/solutions/          # Primary target
   - docs/                    # Check root docs too
+  - plans/                   # Archive executed plans
+
+# Plans-specific configuration
+plans:
+  archive_after_days: 45     # Archive plans older than this
+  max_active_plans: 30       # Alert if more than this in plans/
+  keep_recent: 10            # Keep N most recent plans, archive the rest
+  archive_path: docs/archive/plans/YYYY-MM/  # Archive location pattern
 
 # Weekly schedule (optional - for automation)
 schedule:
