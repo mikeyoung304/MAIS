@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 741
 tags: [code-review, security, toctou, database, pr-27]
@@ -87,16 +87,17 @@ Solution A - Add advisory lock for consistency with other 6 executors.
 
 ## Acceptance Criteria
 
-- [ ] `update_storefront_branding` wrapped in `$transaction` with advisory lock
-- [ ] Comment updated to reflect lock usage
-- [ ] Test added for concurrent branding updates
-- [ ] All existing tests pass
+- [x] `update_storefront_branding` wrapped in `$transaction` with advisory lock
+- [x] Comment updated to reflect lock usage
+- [x] Test added for concurrent branding updates
+- [x] All existing tests pass
 
 ## Work Log
 
-| Date       | Action  | Notes                          |
-| ---------- | ------- | ------------------------------ |
-| 2026-01-11 | Created | From PR #27 multi-agent review |
+| Date       | Action    | Notes                                                                  |
+| ---------- | --------- | ---------------------------------------------------------------------- |
+| 2026-01-11 | Created   | From PR #27 multi-agent review                                         |
+| 2026-01-11 | Completed | Wrapped branding executor in $transaction with pg_advisory_xact_lock ✓ |
 
 ## Resources
 

@@ -530,11 +530,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
   // ============================================================================
   // update_storefront_branding - Update brand colors, fonts, logo
-  // NOTE: Does NOT use advisory lock (unlike other write executors)
-  // Rationale: This executor writes ONLY to scalar columns (primaryColor,
-  // secondaryColor, etc.) and the branding JSON field, NOT to landingPageConfigDraft.
-  // PostgreSQL guarantees atomicity for individual column updates. No TOCTOU risk
-  // because we're not doing read-modify-write on complex JSON structures.
+  // P2-741 FIX: Now uses advisory lock (correcting previous rationale)
+  // The branding JSON field DOES require read-modify-write, creating TOCTOU risk.
   // ============================================================================
 
   registerProposalExecutor('update_storefront_branding', async (tenantId, payload) => {
@@ -549,60 +546,74 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     const { primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily, logoUrl } =
       validationResult.data;
 
-    // Build update data for direct tenant fields (colors)
-    const tenantUpdates: Record<string, string> = {};
-    if (primaryColor) tenantUpdates.primaryColor = primaryColor;
-    if (secondaryColor) tenantUpdates.secondaryColor = secondaryColor;
-    if (accentColor) tenantUpdates.accentColor = accentColor;
-    if (backgroundColor) tenantUpdates.backgroundColor = backgroundColor;
+    // P2-741 FIX: Wrap read-modify-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where concurrent branding updates could
+    // both read the same branding JSON, merge separately, and clobber each other
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Font and logo go in branding JSON field (#627 N+1 fix - combine queries)
-    // Get tenant once for both branding and slug
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { branding: true, slug: true },
-    });
+        // Build update data for direct tenant fields (colors)
+        const tenantUpdates: Record<string, string> = {};
+        if (primaryColor) tenantUpdates.primaryColor = primaryColor;
+        if (secondaryColor) tenantUpdates.secondaryColor = secondaryColor;
+        if (accentColor) tenantUpdates.accentColor = accentColor;
+        if (backgroundColor) tenantUpdates.backgroundColor = backgroundColor;
 
-    let brandingUpdates: Prisma.JsonObject | undefined;
-    if (fontFamily || logoUrl) {
-      brandingUpdates = {
-        ...((tenant?.branding as Record<string, unknown>) || {}),
-        ...(fontFamily && { fontFamily }),
-        ...(logoUrl && { logo: logoUrl }),
-      } as Prisma.JsonObject;
-    }
+        // Font and logo go in branding JSON field (#627 N+1 fix - combine queries)
+        // Get tenant once for both branding and slug within transaction
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: { branding: true, slug: true },
+        });
 
-    // Apply updates
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        ...tenantUpdates,
-        ...(brandingUpdates && { branding: brandingUpdates }),
+        let brandingUpdates: Prisma.JsonObject | undefined;
+        if (fontFamily || logoUrl) {
+          brandingUpdates = {
+            ...((tenant?.branding as Record<string, unknown>) || {}),
+            ...(fontFamily && { fontFamily }),
+            ...(logoUrl && { logo: logoUrl }),
+          } as Prisma.JsonObject;
+        }
+
+        // Apply updates within same transaction
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: {
+            ...tenantUpdates,
+            ...(brandingUpdates && { branding: brandingUpdates }),
+          },
+        });
+
+        const changes = [
+          ...Object.keys(tenantUpdates),
+          ...(fontFamily ? ['fontFamily'] : []),
+          ...(logoUrl ? ['logo'] : []),
+        ];
+
+        const slug = tenant?.slug;
+
+        logger.info({ tenantId, changes }, 'Storefront branding updated via Build Mode');
+
+        // Phase 1.4: Fetch and return current draft config for consistency
+        const { pages } = await getDraftConfigWithSlug(tx, tenantId);
+
+        return {
+          success: true,
+          updatedConfig: { pages } as LandingPageConfig,
+          message: 'Branding updated successfully',
+          action: 'updated',
+          changes,
+          previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
+        };
       },
-    });
-
-    const changes = [
-      ...Object.keys(tenantUpdates),
-      ...(fontFamily ? ['fontFamily'] : []),
-      ...(logoUrl ? ['logo'] : []),
-    ];
-
-    const slug = tenant?.slug;
-
-    logger.info({ tenantId, changes }, 'Storefront branding updated via Build Mode');
-
-    // Phase 1.4: Fetch and return current draft config for consistency
-    // (Branding updates don't modify draft, but frontend expects updatedConfig)
-    const { pages } = await getDraftConfigWithSlug(prisma, tenantId);
-
-    return {
-      success: true,
-      updatedConfig: { pages } as LandingPageConfig,
-      message: 'Branding updated successfully',
-      action: 'updated',
-      changes,
-      previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
-    };
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
+    );
   });
 
   // ============================================================================

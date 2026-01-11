@@ -11,7 +11,7 @@ import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
 import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
-import type { PageName } from '@macon/contracts';
+import type { PageName, LandingPageConfig, OnboardingPhase } from '@macon/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -30,6 +30,68 @@ const WELCOME_MESSAGES = {
 interface AgentPanelProps {
   /** Additional CSS classes */
   className?: string;
+}
+
+/**
+ * Tool result that includes an updated config from executor
+ * (Fix for #740: Remove `any` types in tool results)
+ */
+interface ToolResultWithConfig {
+  success: true;
+  data: {
+    updatedConfig: LandingPageConfig;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * OnboardingSection - Reusable onboarding progress and preview section
+ * (Fix for #747: Extract duplicate onboarding section)
+ */
+interface OnboardingSectionProps {
+  currentPhase: OnboardingPhase;
+  onSkip: () => Promise<void>;
+  isSkipping: boolean;
+  skipError: string | null;
+  tenantSlug: string | null | undefined;
+}
+
+function OnboardingSection({
+  currentPhase,
+  onSkip,
+  isSkipping,
+  skipError,
+  tenantSlug,
+}: OnboardingSectionProps) {
+  return (
+    <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
+      <OnboardingProgress
+        currentPhase={currentPhase}
+        onSkip={onSkip}
+        isSkipping={isSkipping}
+        skipError={skipError}
+      />
+
+      {/* Storefront Preview Link */}
+      {tenantSlug && (
+        <a
+          href={`/t/${tenantSlug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            'flex items-center gap-2 mt-3 px-3 py-2',
+            'bg-sage/10 hover:bg-sage/20 rounded-lg',
+            'text-sm text-sage transition-colors',
+            'focus:outline-none focus:ring-2 focus:ring-sage/30'
+          )}
+          aria-label="Preview your storefront in a new tab"
+        >
+          <ExternalLink className="w-4 h-4" />
+          <span>View your storefront</span>
+        </a>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -67,6 +129,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const announcerRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Fix for #743: Focus timer race condition - shared ref for cleanup
+  const focusTimerRef = useRef<number | null>(null);
 
   // Onboarding state
   const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
@@ -81,6 +145,46 @@ export function AgentPanel({ className }: AgentPanelProps) {
       announcerRef.current.textContent = message;
     }
   }, []);
+
+  // Fix for #743: Cleanup focus timer on unmount to prevent race conditions
+  useEffect(() => {
+    return () => {
+      if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+    };
+  }, []);
+
+  /**
+   * Fix for #739, #740, #742: Extract duplicate onToolComplete logic with proper types
+   * Phase 1.4: Optimistic updates with 100ms failsafe (increased from 50ms)
+   */
+  const handleToolComplete = useCallback(
+    (toolResults?: Array<{ success: boolean; data?: any }>) => {
+      // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
+      const resultWithConfig = toolResults?.find(
+        (r): r is ToolResultWithConfig =>
+          r.success && r.data != null && typeof r.data === 'object' && 'updatedConfig' in r.data
+      );
+
+      if (resultWithConfig?.data?.updatedConfig) {
+        // Optimistic update: Immediately set cached config from executor response
+        queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
+
+        // CRITICAL: 100ms failsafe for READ COMMITTED propagation (increased from 50ms)
+        // This is a database consistency pattern, not just optimization
+        // Prevents stale data if executor returns slightly outdated config
+        setTimeout(() => {
+          invalidateDraftConfig();
+        }, 100);
+      } else {
+        // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
+        // Use 100ms delay for extra safety margin
+        setTimeout(() => {
+          invalidateDraftConfig();
+        }, 100);
+      }
+    },
+    [queryClient]
+  );
 
   // Load persisted state from localStorage on mount
   useEffect(() => {
@@ -271,33 +375,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
           {/* Onboarding Progress (when in onboarding mode) */}
           {isOnboarding && (
-            <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-              <OnboardingProgress
-                currentPhase={currentPhase}
-                onSkip={handleSkip}
-                isSkipping={isSkipping}
-                skipError={skipError}
-              />
-
-              {/* Storefront Preview Link */}
-              {tenantSlug && (
-                <a
-                  href={`/t/${tenantSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    'flex items-center gap-2 mt-3 px-3 py-2',
-                    'bg-sage/10 hover:bg-sage/20 rounded-lg',
-                    'text-sm text-sage transition-colors',
-                    'focus:outline-none focus:ring-2 focus:ring-sage/30'
-                  )}
-                  aria-label="Preview your storefront in a new tab"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>View your storefront</span>
-                </a>
-              )}
-            </div>
+            <OnboardingSection
+              currentPhase={currentPhase}
+              onSkip={handleSkip}
+              isSkipping={isSkipping}
+              skipError={skipError}
+              tenantSlug={tenantSlug}
+            />
           )}
 
           {/* Chat content */}
@@ -306,31 +390,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
               welcomeMessage={getWelcomeMessage()}
               onFirstMessage={handleFirstMessage}
               onUIAction={handleUIAction}
-              onToolComplete={(toolResults) => {
-                // Phase 1.4: Optimistic updates with 50ms failsafe
-                // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
-                const resultWithConfig = toolResults?.find(
-                  (r: any) => r.success && r.data?.updatedConfig
-                );
-
-                if (resultWithConfig?.data?.updatedConfig) {
-                  // Optimistic update: Immediately set cached config from executor response
-                  queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
-
-                  // CRITICAL: 50ms failsafe for READ COMMITTED propagation
-                  // This is a database consistency pattern, not just optimization
-                  // Prevents stale data if executor returns slightly outdated config
-                  setTimeout(() => {
-                    invalidateDraftConfig();
-                  }, 50);
-                } else {
-                  // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
-                  // Use 100ms delay for extra safety margin
-                  setTimeout(() => {
-                    invalidateDraftConfig();
-                  }, 100);
-                }
-              }}
+              onToolComplete={handleToolComplete}
               className="h-full"
             />
           </div>
@@ -404,17 +464,21 @@ export function AgentPanel({ className }: AgentPanelProps) {
               'rounded-t-3xl bg-surface-alt shadow-xl'
             )}
             onOpenAutoFocus={(e) => {
-              // Focus input when drawer opens
+              // Focus input when drawer opens (Fix #743: Cancel previous timer to prevent race)
               e.preventDefault();
-              setTimeout(() => {
+              if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+              focusTimerRef.current = window.setTimeout(() => {
                 inputRef.current?.focus();
+                focusTimerRef.current = null;
               }, 100);
             }}
             onCloseAutoFocus={(e) => {
-              // Focus FAB when drawer closes
+              // Focus FAB when drawer closes (Fix #743: Cancel previous timer to prevent race)
               e.preventDefault();
-              setTimeout(() => {
+              if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+              focusTimerRef.current = window.setTimeout(() => {
                 fabRef.current?.focus();
+                focusTimerRef.current = null;
               }, 100);
             }}
           >
@@ -450,33 +514,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
             {/* Onboarding Progress (when in onboarding mode) */}
             {isOnboarding && (
-              <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-                <OnboardingProgress
-                  currentPhase={currentPhase}
-                  onSkip={handleSkip}
-                  isSkipping={isSkipping}
-                  skipError={skipError}
-                />
-
-                {/* Storefront Preview Link */}
-                {tenantSlug && (
-                  <a
-                    href={`/t/${tenantSlug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      'flex items-center gap-2 mt-3 px-3 py-2',
-                      'bg-sage/10 hover:bg-sage/20 rounded-lg',
-                      'text-sm text-sage transition-colors',
-                      'focus:outline-none focus:ring-2 focus:ring-sage/30'
-                    )}
-                    aria-label="Preview your storefront in a new tab"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>View your storefront</span>
-                  </a>
-                )}
-              </div>
+              <OnboardingSection
+                currentPhase={currentPhase}
+                onSkip={handleSkip}
+                isSkipping={isSkipping}
+                skipError={skipError}
+                tenantSlug={tenantSlug}
+              />
             )}
 
             {/* Chat content */}
@@ -485,31 +529,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
                 welcomeMessage={getWelcomeMessage()}
                 onFirstMessage={handleFirstMessage}
                 onUIAction={handleUIAction}
-                onToolComplete={(toolResults) => {
-                  // Phase 1.4: Optimistic updates with 50ms failsafe
-                  // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
-                  const resultWithConfig = toolResults?.find(
-                    (r: any) => r.success && r.data?.updatedConfig
-                  );
-
-                  if (resultWithConfig?.data?.updatedConfig) {
-                    // Optimistic update: Immediately set cached config from executor response
-                    queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
-
-                    // CRITICAL: 50ms failsafe for READ COMMITTED propagation
-                    // This is a database consistency pattern, not just optimization
-                    // Prevents stale data if executor returns slightly outdated config
-                    setTimeout(() => {
-                      invalidateDraftConfig();
-                    }, 50);
-                  } else {
-                    // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
-                    // Use 100ms delay for extra safety margin
-                    setTimeout(() => {
-                      invalidateDraftConfig();
-                    }, 100);
-                  }
-                }}
+                onToolComplete={handleToolComplete}
                 inputRef={inputRef}
                 messagesRole="log" // WCAG: Screen reader support for messages
                 className="h-full"

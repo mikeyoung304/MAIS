@@ -161,8 +161,14 @@ export function PanelAgentChat({
       }
     } else if (isIOS) {
       // iOS: Manual viewport monitoring with visualViewport API
+      // Fix for #745: Track RAF ID for proper cleanup
+      let rafId: number | null = null;
+
       const handleViewportChange = () => {
         if (!window.visualViewport) return;
+
+        // Cancel any pending RAF to prevent race conditions
+        if (rafId !== null) cancelAnimationFrame(rafId);
 
         const vh = window.visualViewport.height;
         const keyboardHeight = window.innerHeight - vh;
@@ -170,18 +176,23 @@ export function PanelAgentChat({
         if (keyboardHeight > 150) {
           // Keyboard open (threshold to distinguish from browser chrome)
           // Scroll input into view after layout settles
-          requestAnimationFrame(() => {
+          rafId = requestAnimationFrame(() => {
             inputRef.current?.scrollIntoView({
               behavior: 'smooth',
               block: 'nearest', // NOT 'center' - causes over-scroll (issue #216)
             });
+            rafId = null;
           });
         }
         // Note: No need to adjust drawer height - Vaul handles this automatically
       };
 
       window.visualViewport?.addEventListener('resize', handleViewportChange);
-      return () => window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleViewportChange);
+        // Fix for #745: Cancel pending RAF on cleanup
+        if (rafId !== null) cancelAnimationFrame(rafId);
+      };
     }
   }, [isMobile, isAndroid, isIOS, inputRef]);
 
@@ -344,6 +355,10 @@ export function PanelAgentChat({
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-neutral-700 bg-surface-alt">
+        {/* Fix for #746: Screen reader description for input */}
+        <span id="agent-input-description" className="sr-only">
+          Chat with AI assistant. Press Enter to send, Shift+Enter for new line.
+        </span>
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
@@ -353,6 +368,8 @@ export function PanelAgentChat({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
+            aria-label="Message input"
+            aria-describedby="agent-input-description"
             className={cn(
               'flex-1 resize-none rounded-xl border border-neutral-700 px-3 py-2 text-sm',
               'focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20',
@@ -369,6 +386,7 @@ export function PanelAgentChat({
             variant="sage"
             size="icon"
             className="h-10 w-10 shrink-0 rounded-xl"
+            aria-label="Send message"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

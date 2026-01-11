@@ -127,8 +127,25 @@ test.describe('Mobile Build Mode - Vaul Drawer', () => {
       el.scrollTop = 100;
     });
 
-    // Wait for touch delay (iOS)
-    await page.waitForTimeout(300);
+    // Fix #744: Wait for animations to complete instead of hardcoded timeout
+    // Wait for any pending scrollIntoView animations from iOS keyboard handler
+    await page.waitForFunction(
+      () => {
+        // Check if any scroll animations are in progress
+        const el = document.querySelector('[role="log"]');
+        if (!el) return true;
+        // If scrollTop hasn't changed in last frame, scroll is complete
+        const currentScroll = el.scrollTop;
+        return new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              resolve(el.scrollTop === currentScroll);
+            });
+          });
+        });
+      },
+      { timeout: 1000 }
+    );
 
     // Verify input is NOT focused
     const isFocused = await input.evaluate((el) => el === document.activeElement);
@@ -150,7 +167,26 @@ test.describe('Mobile Build Mode - Vaul Drawer', () => {
 
     // Focus input (simulates keyboard opening)
     await input.focus();
-    await page.waitForTimeout(500); // Wait for keyboard animation
+
+    // Fix #744: Wait for drawer to stabilize after keyboard animation
+    // Check that drawer position is stable (not animating)
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('[role="dialog"]');
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        return new Promise((resolve) => {
+          const initialY = rect.y;
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const currentRect = el.getBoundingClientRect();
+              resolve(Math.abs(currentRect.y - initialY) < 1);
+            });
+          });
+        });
+      },
+      { timeout: 2000 }
+    );
 
     // Get drawer position with keyboard open
     const positionWithKeyboard = await drawer.boundingBox();
@@ -158,7 +194,25 @@ test.describe('Mobile Build Mode - Vaul Drawer', () => {
 
     // Dismiss keyboard by clicking outside input
     await page.locator('body').click({ position: { x: 10, y: 10 } });
-    await page.waitForTimeout(500); // Wait for keyboard animation
+
+    // Fix #744: Wait for drawer to stabilize after keyboard dismissal
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('[role="dialog"]');
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        return new Promise((resolve) => {
+          const initialY = rect.y;
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const currentRect = el.getBoundingClientRect();
+              resolve(Math.abs(currentRect.y - initialY) < 1);
+            });
+          });
+        });
+      },
+      { timeout: 2000 }
+    );
 
     // Get drawer position after keyboard dismissed
     const positionAfterDismiss = await drawer.boundingBox();

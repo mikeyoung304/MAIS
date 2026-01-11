@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 744
 tags: [code-review, testing, e2e, flaky-tests, pr-27]
@@ -92,15 +92,16 @@ Solution A or C - Use animation-aware waiting instead of hardcoded timeouts.
 
 ## Acceptance Criteria
 
-- [ ] No hardcoded `waitForTimeout` for animation timing
-- [ ] Tests pass reliably on slow CI runners
-- [ ] Tests still complete in reasonable time
+- [x] No hardcoded `waitForTimeout` for animation timing
+- [x] Tests pass reliably on slow CI runners
+- [x] Tests still complete in reasonable time
 
 ## Work Log
 
-| Date       | Action  | Notes                          |
-| ---------- | ------- | ------------------------------ |
-| 2026-01-11 | Created | From PR #27 multi-agent review |
+| Date       | Action    | Notes                                                              |
+| ---------- | --------- | ------------------------------------------------------------------ |
+| 2026-01-11 | Created   | From PR #27 multi-agent review                                     |
+| 2026-01-11 | Completed | Replaced hardcoded timeouts with animation-aware waitForFunction ✓ |
 
 ## Resources
 

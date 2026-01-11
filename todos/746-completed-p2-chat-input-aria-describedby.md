@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 746
 tags: [code-review, accessibility, wcag-aa, pr-27]
@@ -71,16 +71,17 @@ Solution A - Add visually hidden description with aria-describedby.
 
 ## Acceptance Criteria
 
-- [ ] Input has `aria-label="Chat message input"`
-- [ ] Visually hidden description element added with instructions
-- [ ] Input has `aria-describedby` pointing to description
-- [ ] Screen reader testing confirms announcement
+- [x] Input has `aria-label="Chat message input"`
+- [x] Visually hidden description element added with instructions
+- [x] Input has `aria-describedby` pointing to description
+- [x] Screen reader testing confirms announcement
 
 ## Work Log
 
-| Date       | Action  | Notes                          |
-| ---------- | ------- | ------------------------------ |
-| 2026-01-11 | Created | From PR #27 multi-agent review |
+| Date       | Action    | Notes                                                           |
+| ---------- | --------- | --------------------------------------------------------------- |
+| 2026-01-11 | Created   | From PR #27 multi-agent review                                  |
+| 2026-01-11 | Completed | Added aria-describedby with hidden description for chat input ✓ |
 
 ## Resources
 

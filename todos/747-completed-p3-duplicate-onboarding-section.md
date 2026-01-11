@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p3
 issue_id: 747
 tags: [code-review, dry-violation, react, pr-27]
