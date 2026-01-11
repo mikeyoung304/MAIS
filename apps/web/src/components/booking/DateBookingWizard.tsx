@@ -35,7 +35,7 @@ import {
   checkDateAvailability,
   createDateBooking,
   type PackageData,
-} from '@/lib/tenant';
+} from '@/lib/tenant.client';
 import 'react-day-picker/style.css';
 
 // Zod schema for customer form validation

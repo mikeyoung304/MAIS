@@ -276,3 +276,124 @@ export interface TenantStorefrontData {
   packages: PackageData[];
   segments: SegmentData[];
 }
+
+// ============================================================================
+// CLIENT-SAFE API FUNCTIONS
+// ============================================================================
+// These functions are designed for use in 'use client' components.
+// They use NEXT_PUBLIC_API_URL directly instead of importing from config.ts
+// to avoid pulling server-only modules into the client bundle.
+
+/**
+ * Get the API URL for client-side calls
+ * Uses NEXT_PUBLIC_API_URL which is available in both server and client contexts
+ */
+function getClientApiUrl(): string {
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+}
+
+/**
+ * Fetch unavailable dates for booking (client-safe version)
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format
+ * @returns Array of unavailable date strings
+ */
+export async function getUnavailableDates(
+  apiKeyPublic: string,
+  startDate: string,
+  endDate: string
+): Promise<string[]> {
+  const url = `${getClientApiUrl()}/v1/availability/unavailable-dates?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    // Note: No 'next' options since this is client-safe
+  });
+
+  if (!response.ok) {
+    // Return empty array on error - booking flow can still continue
+    // and will validate date on submit
+    return [];
+  }
+
+  const data = await response.json();
+  return data.dates || [];
+}
+
+/**
+ * Check availability for a specific date (client-safe version)
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param date - Date in YYYY-MM-DD format
+ * @returns Whether the date is available
+ */
+export async function checkDateAvailability(apiKeyPublic: string, date: string): Promise<boolean> {
+  const url = `${getClientApiUrl()}/v1/availability?date=${encodeURIComponent(date)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    cache: 'no-store', // Always check fresh availability
+  });
+
+  if (!response.ok) {
+    // Fail closed - if we can't verify, assume unavailable
+    return false;
+  }
+
+  const data = await response.json();
+  return data.available === true;
+}
+
+/**
+ * Create a date booking and get checkout URL (client-safe version)
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param bookingData - Booking details
+ * @returns Checkout URL or error
+ */
+export async function createDateBooking(
+  apiKeyPublic: string,
+  bookingData: {
+    packageId: string;
+    date: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    notes?: string;
+  }
+): Promise<{ checkoutUrl: string } | { error: string; status: number }> {
+  const url = `${getClientApiUrl()}/v1/bookings/date`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    body: JSON.stringify(bookingData),
+    cache: 'no-store',
+  });
+
+  const data = await response.json();
+
+  if (response.status === 409) {
+    return { error: 'Date is already booked', status: 409 };
+  }
+
+  if (!response.ok) {
+    return { error: data.error || 'Failed to create booking', status: response.status };
+  }
+
+  return { checkoutUrl: data.checkoutUrl };
+}
