@@ -124,7 +124,7 @@ export function useDraftConfig(): UseDraftConfigResult {
         throw error;
       }
     },
-    staleTime: 30_000, // 30 seconds - draft doesn't change often except via agent
+    staleTime: 0, // Real-time updates: agent tools modify config, refetch immediately
     gcTime: 5 * 60_000, // 5 minutes garbage collection
     refetchOnWindowFocus: false, // Don't refetch on tab focus
     retry: 1, // Only retry once
@@ -271,7 +271,10 @@ export const setQueryClientRef = (client: QueryClient): void => {
  */
 export const invalidateDraftConfig = (): void => {
   if (queryClientRef) {
-    queryClientRef.invalidateQueries({ queryKey: DRAFT_CONFIG_QUERY_KEY });
+    queryClientRef.invalidateQueries({
+      queryKey: DRAFT_CONFIG_QUERY_KEY,
+      refetchType: 'active', // Force refetch even if query is inactive
+    });
     logger.debug('[useDraftConfig] Externally invalidated draft config');
   } else {
     logger.warn('[useDraftConfig] Cannot invalidate - query client not set');

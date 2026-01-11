@@ -281,7 +281,7 @@ Changes are saved to draft - user must publish to make live.`,
         previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
       };
 
-      return createProposal(context, 'update_page_section', operation, 'T2', payload, preview);
+      return createProposal(context, 'update_page_section', operation, 'T1', payload, preview);
     } catch (error) {
       return handleToolError(
         error,
@@ -404,7 +404,7 @@ Can be undone by discarding draft.`,
         note: 'Section will be removed. Discard draft to undo.',
       };
 
-      return createProposal(context, 'remove_page_section', operation, 'T2', payload, preview);
+      return createProposal(context, 'remove_page_section', operation, 'T1', payload, preview);
     } catch (error) {
       return handleToolError(
         error,
@@ -737,7 +737,7 @@ All colors should be hex format (e.g., "#1a365d").`,
         context,
         'update_storefront_branding',
         operation,
-        'T2',
+        'T1',
         payload,
         preview
       );
