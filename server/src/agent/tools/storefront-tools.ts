@@ -104,7 +104,7 @@ async function createProposal(
  */
 export const updatePageSectionTool: AgentTool = {
   name: 'update_page_section',
-  trustTier: 'T2',
+  trustTier: 'T1', // P0-FIX: Auto-execute for real-time updates (was T2)
   description: `Update or add a section on a tenant's landing page.
 
 Pages: home, about, services, faq, contact, gallery, testimonials
@@ -296,11 +296,11 @@ Changes are saved to draft - user must publish to make live.`,
 /**
  * remove_page_section - Remove a section from a landing page
  *
- * Trust Tier: T2 (soft confirm) - Destructive but reversible via discard
+ * Trust Tier: T1 (auto-execute) - Reversible via discard draft
  */
 export const removePageSectionTool: AgentTool = {
   name: 'remove_page_section',
-  trustTier: 'T2',
+  trustTier: 'T1', // P0-FIX: Auto-execute for real-time updates (was T2)
   description: `Remove a section from a landing page.
 
 PREFERRED: Use sectionId (e.g., "home-hero-main") to target specific section.
@@ -653,12 +653,12 @@ Auto-confirms since visibility toggles are low-risk.`,
 /**
  * update_storefront_branding - Update brand colors, fonts, logo
  *
- * Trust Tier: T2 (soft confirm) - Visual changes affect entire storefront
+ * Trust Tier: T1 (auto-execute) - Visual changes, real-time updates
  * NOTE: Branding changes are applied IMMEDIATELY (not part of draft system)
  */
 export const updateStorefrontBrandingTool: AgentTool = {
   name: 'update_storefront_branding',
-  trustTier: 'T2',
+  trustTier: 'T1', // P0-FIX: Auto-execute for real-time updates (was T2)
   description: `Update storefront branding (colors, fonts, logo).
 
 NOTE: Branding changes take effect immediately and are NOT part of the draft system.

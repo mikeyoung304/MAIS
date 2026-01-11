@@ -61,7 +61,7 @@ export const ONBOARDING_AGENT_CAPABILITIES: AgentCapabilityMap = {
       id: 'create-services',
       description: 'Create segments and packages based on market research',
       requiredTool: 'upsert_services',
-      trustTier: 'T2',
+      trustTier: 'T1', // P0-FIX: Changed to T1 for real-time updates
       promptKeywords: ['packages', 'tiers', 'services', 'pricing', 'segments', 'offerings'],
       category: 'catalog',
     },
@@ -73,7 +73,7 @@ export const ONBOARDING_AGENT_CAPABILITIES: AgentCapabilityMap = {
       id: 'configure-storefront',
       description: 'Update landing page headline, tagline, and brand settings',
       requiredTool: 'update_storefront',
-      trustTier: 'T2',
+      trustTier: 'T1', // P0-FIX: Changed to T1 for real-time updates
       promptKeywords: ['headline', 'tagline', 'brand', 'landing page', 'storefront', 'marketing'],
       category: 'marketing',
     },

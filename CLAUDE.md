@@ -906,6 +906,8 @@ export class BookingService {
 34. **UUID validation on CUID fields:** Zod `z.string().uuid()` fails on Prisma-generated CUIDs. Use `z.string()` or `z.string().cuid()` for database IDs.
 35. **Multi-path data format mismatch:** When AI executor and admin API both write to same field, verify format matches what read paths expect. Reader expected `{published: config}`, writer stored raw config - silent failure.
 36. **AI tool responses missing state guidance:** Tools returning draft/live content need `hasDraft` indicator AND `note` field with communication rules ("Say 'In your draft...'") to prevent AI from confusing states.
+37. **Deleting `.client.ts` files as "duplicates":** Files like `api.client.ts` and `tenant.client.ts` are NOT duplicates - they exist because the main file imports server-only modules (`cache()`, `cookies()`, `headers()`). Check for server imports before deleting.
+38. **Adding server imports without checking client usage:** Before adding `cache()`, `cookies()`, or `headers()` to a file, run `grep -r "from '@/lib/filename'" ... | xargs grep "'use client'"`. If matches found, split into `*.ts` (server) and `*.client.ts` (pure).
 
 ## Prevention Strategies (Read These!)
 
@@ -946,6 +948,8 @@ The following links prevent common mistakes from recurring:
   - Quick reference: [STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md](docs/solutions/patterns/STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - **[nextjs-server-client-boundary](docs/solutions/best-practices/nextjs-migration-audit-server-client-boundary-MAIS-20260108.md)** - Server/client import boundary pattern: files importing `next/headers` are "tainted" and cannot be imported by client components. Multi-reviewer audit methodology.
   - Quick reference: [NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md](docs/solutions/best-practices/NEXTJS_SERVER_CLIENT_BOUNDARY_QUICK_REFERENCE.md) - Print & pin (2 min read)
+- **[server-client-module-split](docs/solutions/patterns/SERVER_CLIENT_MODULE_SPLIT_PREVENTION_STRATEGIES.md)** - When to split modules into `*.ts` (server) and `*.client.ts` (pure functions). The `api.ts`/`api.client.ts` and `tenant.ts`/`tenant.client.ts` patterns are INTENTIONAL, not duplication.
+  - Quick reference: [SERVER_CLIENT_MODULE_SPLIT_QUICK_REFERENCE.md](docs/solutions/patterns/SERVER_CLIENT_MODULE_SPLIT_QUICK_REFERENCE.md) - Print & pin (2 min read)
 - **[onboarding-mode-orchestrator-system-prompt](docs/solutions/agent-issues/onboarding-mode-orchestrator-system-prompt-MAIS-20260108.md)** - Dual-mode orchestrator must check mode in ALL methods (getTools, buildSystemPrompt, getGreeting). If one checks but others don't, agent has right tools but wrong instructions.
 - **[agent-ui-phase-5-patterns](docs/solutions/patterns/AGENT_UI_PHASE_5_CODE_REVIEW_PATTERNS.md)** - 5 critical patterns: FIFO buffer for unbounded arrays, cancelPendingSave for debounce races, async dialog handling, capability registry hygiene, singleton documentation.
   - Quick reference: [AGENT_UI_PHASE_5_QUICK_REFERENCE.md](docs/solutions/patterns/AGENT_UI_PHASE_5_QUICK_REFERENCE.md) - Print & pin (2 min read)
@@ -967,6 +971,8 @@ The following links prevent common mistakes from recurring:
 **Key insight from Dual-Mode Orchestrator (Commit TBD):** When orchestrator has dual modes (onboarding vs admin), ALL methods must check mode consistently. Bug: `getTools()` checked `isOnboardingMode` but `buildSystemPrompt()` always returned admin template saying "connect Stripe first". Result: agent had onboarding tools but followed admin instructions, skipping discovery phase. Fix: Extract `isOnboardingActive()` method, call from getTools(), buildSystemPrompt(), AND getGreeting().
 
 **Key insight from Next.js Server/Client Boundary (Commit 09230b16):** Files that import server-only modules (`next/headers`, `cookies`) "taint" the entire file - client components cannot import ANYTHING from it, even functions that don't use the server import. This means apparent "duplicate" code (like `api.client.ts` duplicating functions from `api.ts`) is often INTENTIONAL. Before deleting "dead code", check if the original file has server-only imports. Multi-reviewer validation (DHH, TypeScript, Simplicity personas) catches different issues.
+
+**Key insight from Server/Client Module Split Pattern:** When adding `cache()` from React, `cookies()`, or `headers()` from `next/headers` to a file, first check if any client components import from it (`grep -r "from '@/lib/filename'" ... | xargs grep "'use client'"`). If yes, split into `*.ts` (server functions) and `*.client.ts` (pure utilities). The `tenant.ts`/`tenant.client.ts` split exists because `tenant.ts` uses React's `cache()` for request memoization, but `normalizeToPages()` and `isPageEnabled()` are pure functions needed by client editors. DO NOT delete `.client.ts` files as "duplicates" - they serve different contexts.
 
 **Key insight from Storefront Section IDs Code Review:** JSON field check-then-write patterns need transaction + advisory lock (TOCTOU). Extract shared resolution logic to `agent/utils/` - don't duplicate between tools. All related tools must support same parameters (sectionId preferred, sectionIndex fallback). Test cross-page errors and legacy data (sections without IDs).
 

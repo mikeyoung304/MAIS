@@ -401,14 +401,14 @@ Use phase: SKIPPED to skip onboarding entirely.`,
 /**
  * upsert_services - Create or update service packages during onboarding
  *
- * Trust Tier: T2 (soft confirm) - Creates real database records
+ * Trust Tier: T1 (auto-execute) - Real-time service configuration
  *
  * This tool creates segments and packages based on market research recommendations.
  * It handles the actual database writes for service configuration.
  */
 export const upsertServicesTool: AgentTool = {
   name: 'upsert_services',
-  trustTier: 'T2', // Creates real database records
+  trustTier: 'T1', // P0-FIX: Auto-execute for real-time updates (was T2)
   description: `Create or update service packages during onboarding.
 
 Use this after market research to create the recommended service tiers.
@@ -537,7 +537,7 @@ Example:
  */
 export const updateStorefrontTool: AgentTool = {
   name: 'update_storefront',
-  trustTier: 'T2', // Updates tenant configuration
+  trustTier: 'T1', // P0-FIX: Auto-execute for real-time updates (was T2)
   description: `Update storefront landing page content during onboarding.
 
 Use this after marketing phase to configure the tenant's landing page.

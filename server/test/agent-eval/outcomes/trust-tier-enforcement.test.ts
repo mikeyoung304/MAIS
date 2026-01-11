@@ -88,9 +88,9 @@ describe('Trust Tier Enforcement', () => {
 
       expect(t2Caps.length).toBeGreaterThan(0);
 
-      // T2 should include write operations
+      // T2 should include write operations that aren't real-time editing
+      // Note: upsert_services moved to T1 for real-time onboarding experience
       const t2ToolNames = t2Caps.map((c) => c.toolName);
-      expect(t2ToolNames).toContain('upsert_services');
       expect(t2ToolNames).toContain('upsert_package');
     });
 
@@ -226,14 +226,14 @@ describe('Trust Tier Enforcement', () => {
   });
 
   describe('Onboarding Agent Trust Tiers', () => {
-    it('should use T2 for service creation during onboarding', () => {
+    it('should use T1 for service creation during onboarding (real-time updates)', () => {
       const upsertCap = ONBOARDING_AGENT_CAPABILITIES.capabilities.find(
         (c) => c.requiredTool === 'upsert_services'
       );
 
-      // During onboarding, creating services is T2 (soft-confirm)
-      // because it's expected behavior in the flow
-      expect(upsertCap?.trustTier).toBe('T2');
+      // P0-FIX: Service creation is now T1 for real-time updates during onboarding
+      // Agent is the "paintbrush" - changes should appear immediately
+      expect(upsertCap?.trustTier).toBe('T1');
     });
 
     it('market research should be T1 (read-only)', () => {

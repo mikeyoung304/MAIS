@@ -151,7 +151,7 @@ describe('Storefront Build Mode Tools', () => {
   describe('update_page_section tool', () => {
     it('should have correct metadata', () => {
       expect(updatePageSectionTool.name).toBe('update_page_section');
-      expect(updatePageSectionTool.trustTier).toBe('T2');
+      expect(updatePageSectionTool.trustTier).toBe('T1'); // P0-FIX: Changed to T1 for real-time updates
       expect(updatePageSectionTool.description).toContain('landing page');
       expect(updatePageSectionTool.inputSchema.required).toContain('pageName');
       expect(updatePageSectionTool.inputSchema.required).toContain('sectionType');
@@ -198,7 +198,7 @@ describe('Storefront Build Mode Tools', () => {
   describe('remove_page_section tool', () => {
     it('should have correct metadata', () => {
       expect(removePageSectionTool.name).toBe('remove_page_section');
-      expect(removePageSectionTool.trustTier).toBe('T2');
+      expect(removePageSectionTool.trustTier).toBe('T1'); // P0-FIX: Changed to T1 for real-time updates
       expect(removePageSectionTool.inputSchema.required).toContain('pageName');
       // sectionIndex is no longer required - can use sectionId instead (PREFERRED)
       expect(removePageSectionTool.inputSchema.properties).toHaveProperty('sectionId');
@@ -383,7 +383,7 @@ describe('Storefront Build Mode Tools', () => {
   describe('update_storefront_branding tool', () => {
     it('should have correct metadata', () => {
       expect(updateStorefrontBrandingTool.name).toBe('update_storefront_branding');
-      expect(updateStorefrontBrandingTool.trustTier).toBe('T2');
+      expect(updateStorefrontBrandingTool.trustTier).toBe('T1'); // P0-FIX: Changed to T1 for real-time updates
     });
 
     it('should return error when no fields provided', async () => {
