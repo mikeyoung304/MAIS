@@ -168,6 +168,57 @@ switch (section.type) {
 - Instagram handles validated with regex pattern
 - Max length constraints prevent DoS via oversized content
 
+### AI Assistant Panel & Build Mode
+
+**Agent-First Admin Interface** for tenant configuration management:
+
+**Desktop (≥1024px):**
+
+- Fixed aside panel (400px width) at right edge
+- Always visible by default (collapsible)
+- Persistent localStorage state
+
+**Mobile (<768px):**
+
+- Vaul bottom sheet drawer (85vh height)
+- FAB (Floating Action Button) trigger at bottom-right
+- Gesture-based: drag-to-dismiss, snap points
+- Platform-specific keyboard handling:
+  - **iOS**: `visualViewport` API for keyboard detection
+  - **Android**: Natural viewport resize + padding
+
+**WCAG AA Accessibility (Phase 4 Implementation):**
+
+All 7 critical requirements implemented:
+
+1. ✅ **Dialog semantics**: `role="dialog"` + `aria-modal="true"` (WCAG 4.1.2)
+2. ✅ **Focus management**: `onOpenAutoFocus` / `onCloseAutoFocus` (WCAG 2.4.3)
+3. ✅ **Background inert**: Main content marked `inert` when drawer open (WCAG 2.4.3)
+4. ✅ **Screen reader announcements**: `aria-live="polite"` announcer (WCAG 4.1.3)
+5. ✅ **Touch target compliance**: 24px drag handle (WCAG 2.5.8 Level AA)
+6. ✅ **iOS keyboard fix**: `repositionInputs={false}` prevents scroll-trigger-focus bug
+7. ✅ **Focus trap**: `modal={true}` keeps Tab within drawer (WCAG 2.1.2)
+
+**Bundle Impact:**
+
+- Vaul: ~6.3 KB gzipped
+- Reuses existing `@radix-ui/react-dialog` dependency (no duplication)
+- Named imports enable tree-shaking
+
+**Key Files:**
+
+- `apps/web/src/components/agent/AgentPanel.tsx` - Responsive panel/drawer
+- `apps/web/src/components/agent/PanelAgentChat.tsx` - Chat UI with platform-specific keyboard handling
+- `e2e/tests/build-mode-mobile.spec.ts` - 10 mobile accessibility tests
+
+**Performance Optimizations (Phases 1-3):**
+
+- Phase 1: 60% latency reduction via optimistic updates + connection pooling
+- Phase 2: 85% test coverage for race conditions
+- Phase 3: Advisory locks for TOCTOU prevention (6/7 executors)
+
+**Reference:** See `docs/architecture/BUILD_MODE_VISION.md` and `docs/architecture/PHASE_4_5_BUNDLE_ANALYSIS.md`
+
 ### Dual Routing Pattern
 
 Tenant storefronts support two access methods: slug-based routes and custom domain routes.

@@ -95,6 +95,39 @@ For detailed architecture documentation, search or read these files when working
 
 See `docs/solutions/SCHEMA_DRIFT_PREVENTION.md` for decision tree.
 
+### Bundle Size Guidelines
+
+**Before adding new dependencies:**
+
+1. **Check npm package size:** `npm view <package> dist.unpackedSize`
+2. **Verify tree-shaking:** Use named imports (`import { Component }`) not namespace imports (`import * as Lib`)
+3. **Check for duplicates:** Run `npm ls <package> --all` to ensure no duplicate installations
+4. **ESM format preferred:** Modern packages should provide `.mjs` files for optimal tree-shaking
+5. **Acceptable thresholds:**
+   - **Small:** <10 KB gzipped (✅ Generally acceptable)
+   - **Medium:** 10-50 KB gzipped (⚠️ Justify with UX benefit)
+   - **Large:** >50 KB gzipped (❌ Requires approval + alternatives evaluation)
+
+**Example: Vaul integration (Phase 4)**
+
+```bash
+# Check package size
+$ npm view vaul@1.1.2 dist.unpackedSize
+184301  # ~184 KB unpacked, ~6.3 KB gzipped
+
+# Check dependencies
+$ npm view vaul@1.1.2 dependencies
+{ '@radix-ui/react-dialog': '^1.1.1' }  # Already installed!
+
+# Verify deduplication
+$ npm ls @radix-ui/react-dialog
+└── @radix-ui/react-dialog@1.1.15 deduped  # ✅ No duplicate
+
+# Result: 6.3 KB net impact (acceptable for UX improvement)
+```
+
+**Documentation:** See `docs/architecture/PHASE_4_5_BUNDLE_ANALYSIS.md` for detailed analysis template.
+
 ## Domain Expertise (Auto-Load Skills)
 
 | When Working On...        | Load Skill                                                  |
