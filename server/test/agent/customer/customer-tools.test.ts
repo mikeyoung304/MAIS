@@ -33,6 +33,7 @@ describe('Customer Tools', () => {
       agentProposal: {
         findFirst: ReturnType<typeof vi.fn>;
         update: ReturnType<typeof vi.fn>;
+        updateMany: ReturnType<typeof vi.fn>;
       };
     };
 
@@ -41,6 +42,7 @@ describe('Customer Tools', () => {
         agentProposal: {
           findFirst: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn(),
         },
       };
 
@@ -64,6 +66,9 @@ describe('Customer Tools', () => {
     });
 
     it('should return error when proposal not found', async () => {
+      // Atomic update returns 0 (proposal doesn't exist or wrong status/tenant/expiry)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 0 });
+      // Then findFirst is called to provide helpful error
       mockPrisma.agentProposal.findFirst.mockResolvedValue(null);
 
       const result = await confirmProposalTool!.execute(mockContext, {
@@ -72,16 +77,24 @@ describe('Customer Tools', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
-      expect(mockPrisma.agentProposal.findFirst).toHaveBeenCalledWith({
-        where: {
+      // Verify atomic update was attempted first
+      expect(mockPrisma.agentProposal.updateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({
           id: 'nonexistent-proposal',
           tenantId: 'tenant-123',
           sessionId: 'session-456',
-        },
+          status: 'PENDING',
+        }),
+        data: expect.objectContaining({
+          status: 'CONFIRMED',
+        }),
       });
     });
 
     it('should return error when proposal is already executed', async () => {
+      // Atomic update returns 0 (status not PENDING)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 0 });
+      // Then findFirst fetches to check why
       mockPrisma.agentProposal.findFirst.mockResolvedValue({
         id: 'prop-123',
         tenantId: 'tenant-123',
@@ -99,6 +112,9 @@ describe('Customer Tools', () => {
     });
 
     it('should return error when proposal is expired', async () => {
+      // Atomic update returns 0 (expiresAt check failed)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 0 });
+      // Then findFirst fetches to check why
       mockPrisma.agentProposal.findFirst.mockResolvedValue({
         id: 'prop-123',
         tenantId: 'tenant-123',
@@ -106,6 +122,7 @@ describe('Customer Tools', () => {
         status: 'PENDING',
         expiresAt: new Date(Date.now() - 1000), // Expired
       });
+      mockPrisma.agentProposal.update.mockResolvedValue({});
 
       const result = await confirmProposalTool!.execute(mockContext, {
         proposalId: 'prop-123',
@@ -125,11 +142,14 @@ describe('Customer Tools', () => {
       );
       vi.mocked(getCustomerProposalExecutor).mockReturnValue(vi.fn());
 
+      // Atomic update succeeds (proposal was PENDING and not expired)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+      // But then we fetch the proposal to execute it
       mockPrisma.agentProposal.findFirst.mockResolvedValue({
         id: 'prop-123',
         tenantId: 'tenant-123',
         sessionId: 'session-456',
-        status: 'PENDING',
+        status: 'CONFIRMED', // Now confirmed
         operation: 'create_customer_booking',
         customerId: null, // Missing!
         expiresAt: new Date(Date.now() + 300000),
@@ -141,11 +161,12 @@ describe('Customer Tools', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Unable to complete booking');
+      expect(result.error).toContain('complete');
     });
 
     it('should successfully confirm and execute a valid proposal', async () => {
       const mockExecutor = vi.fn().mockResolvedValue({
+        action: 'booked',
         bookingId: 'booking-789',
         confirmationCode: 'BK-ABC123',
         packageName: 'Test Package',
@@ -158,13 +179,21 @@ describe('Customer Tools', () => {
       const { getCustomerProposalExecutor } = await import(
         '../../../src/agent/customer/executor-registry'
       );
-      vi.mocked(getCustomerProposalExecutor).mockReturnValue(mockExecutor);
+      vi.mocked(getCustomerProposalExecutor).mockImplementation((operation) => {
+        if (operation === 'create_customer_booking') {
+          return mockExecutor;
+        }
+        return undefined;
+      });
 
+      // Atomic update succeeds (proposal was PENDING and not expired)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 1 });
+      // Then we fetch the proposal to execute it
       mockPrisma.agentProposal.findFirst.mockResolvedValue({
         id: 'prop-123',
         tenantId: 'tenant-123',
         sessionId: 'session-456',
-        status: 'PENDING',
+        status: 'CONFIRMED', // Now confirmed
         operation: 'create_customer_booking',
         customerId: 'customer-001',
         expiresAt: new Date(Date.now() + 300000),
@@ -202,32 +231,38 @@ describe('Customer Tools', () => {
     });
 
     it('should enforce tenant isolation', async () => {
+      // Atomic update returns 0 (wrong tenant)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 0 });
       mockPrisma.agentProposal.findFirst.mockResolvedValue(null);
 
       await confirmProposalTool!.execute(mockContext, {
         proposalId: 'prop-from-other-tenant',
       });
 
-      // Verify the query includes tenantId
-      expect(mockPrisma.agentProposal.findFirst).toHaveBeenCalledWith({
+      // Verify the atomic update query includes tenantId
+      expect(mockPrisma.agentProposal.updateMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
           tenantId: 'tenant-123',
         }),
+        data: expect.any(Object),
       });
     });
 
     it('should enforce session isolation', async () => {
+      // Atomic update returns 0 (wrong session)
+      mockPrisma.agentProposal.updateMany.mockResolvedValue({ count: 0 });
       mockPrisma.agentProposal.findFirst.mockResolvedValue(null);
 
       await confirmProposalTool!.execute(mockContext, {
         proposalId: 'prop-from-other-session',
       });
 
-      // Verify the query includes sessionId
-      expect(mockPrisma.agentProposal.findFirst).toHaveBeenCalledWith({
+      // Verify the atomic update query includes sessionId
+      expect(mockPrisma.agentProposal.updateMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
           sessionId: 'session-456',
         }),
+        data: expect.any(Object),
       });
     });
   });

@@ -490,62 +490,90 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
       const { proposalId } = params as { proposalId: string };
 
       try {
-        // Fetch the proposal with tenant isolation
-        const proposal = await prisma.agentProposal.findFirst({
+        // Atomic proposal confirmation with race condition prevention
+        // Uses updateMany with status check in WHERE clause for compare-and-swap semantics
+        const now = new Date();
+        const result = await prisma.agentProposal.updateMany({
           where: {
             id: proposalId,
             tenantId, // CRITICAL: Tenant isolation
             sessionId, // Must belong to this session
+            status: 'PENDING', // CRITICAL: Only update if still pending (prevents race condition)
+            expiresAt: { gt: now }, // Must not be expired
           },
+          data: {
+            status: 'CONFIRMED',
+            confirmedAt: now,
+          },
+        });
+
+        // If update failed, proposal was already processed, expired, or doesn't exist
+        if (result.count === 0) {
+          // Fetch proposal to provide helpful error message
+          const proposal = await prisma.agentProposal.findFirst({
+            where: { id: proposalId, tenantId, sessionId },
+          });
+
+          if (!proposal) {
+            return {
+              success: false,
+              error: 'Booking proposal not found. It may have expired or already been processed.',
+            };
+          }
+
+          // Proposal exists but wasn't updated - check why
+          if (proposal.status !== 'PENDING') {
+            const statusMessages: Record<string, string> = {
+              CONFIRMED: 'This booking is already being processed.',
+              EXECUTED: 'This booking has already been completed.',
+              REJECTED: 'This booking was cancelled.',
+              EXPIRED: 'This booking proposal has expired. Please start a new booking.',
+              FAILED: 'This booking encountered an error. Please try again.',
+            };
+            return {
+              success: false,
+              error: statusMessages[proposal.status] || 'This booking has already been processed.',
+            };
+          }
+
+          // Check expiration
+          if (now > proposal.expiresAt) {
+            // Mark as expired (this may also race, but it's idempotent)
+            await prisma.agentProposal.update({
+              where: { id: proposalId },
+              data: { status: 'EXPIRED' },
+            });
+            return {
+              success: false,
+              error: 'This booking proposal has expired. Please start a new booking.',
+            };
+          }
+
+          // Shouldn't reach here, but handle gracefully
+          return {
+            success: false,
+            error: 'Unable to confirm booking. Please try again.',
+          };
+        }
+
+        // Success - proposal was atomically confirmed
+        logger.info(
+          { tenantId, proposalId, sessionId },
+          'Customer proposal confirmed via conversation (atomic update)'
+        );
+
+        // Fetch the confirmed proposal to execute it
+        const proposal = await prisma.agentProposal.findFirst({
+          where: { id: proposalId, tenantId, sessionId },
         });
 
         if (!proposal) {
+          // Race condition: proposal was deleted between update and fetch
           return {
             success: false,
-            error: 'Booking proposal not found. It may have expired or already been processed.',
+            error: 'Booking proposal not found. Please try again.',
           };
         }
-
-        // Check if already processed
-        if (proposal.status !== 'PENDING') {
-          const statusMessages: Record<string, string> = {
-            CONFIRMED: 'This booking is already being processed.',
-            EXECUTED: 'This booking has already been completed.',
-            REJECTED: 'This booking was cancelled.',
-            EXPIRED: 'This booking proposal has expired. Please start a new booking.',
-            FAILED: 'This booking encountered an error. Please try again.',
-          };
-          return {
-            success: false,
-            error: statusMessages[proposal.status] || 'This booking has already been processed.',
-          };
-        }
-
-        // Check expiration
-        if (new Date() > proposal.expiresAt) {
-          await prisma.agentProposal.update({
-            where: { id: proposalId },
-            data: { status: 'EXPIRED' },
-          });
-          return {
-            success: false,
-            error: 'This booking proposal has expired. Please start a new booking.',
-          };
-        }
-
-        // Confirm the proposal
-        await prisma.agentProposal.update({
-          where: { id: proposalId },
-          data: {
-            status: 'CONFIRMED',
-            confirmedAt: new Date(),
-          },
-        });
-
-        logger.info(
-          { tenantId, proposalId, sessionId },
-          'Customer proposal confirmed via conversation'
-        );
 
         // Execute the proposal immediately
         const executor = getCustomerProposalExecutor(proposal.operation);

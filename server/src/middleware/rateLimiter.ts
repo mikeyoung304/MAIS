@@ -67,8 +67,8 @@ export const loginLimiter = rateLimit({
 
 export const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  // Allow more signups in test environment for testing
-  max: isTestEnvironment ? 100 : 5,
+  // Allow many more signups in test environment (E2E tests create 120+ test tenants)
+  max: isTestEnvironment ? 5000 : 5,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req: Request, res: Response) =>

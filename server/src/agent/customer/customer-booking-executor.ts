@@ -134,7 +134,12 @@ export function registerCustomerBookingExecutor(
         });
 
         if (!customer) {
-          throw new ResourceNotFoundError('customer', customerId, 'Please try booking again.');
+          // Security: Don't reveal customer ID (prevents cross-tenant enumeration)
+          throw new ResourceNotFoundError(
+            'customer',
+            'unknown',
+            'Invalid booking details. Please try again.'
+          );
         }
 
         // Generate unique confirmation code
