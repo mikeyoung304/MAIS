@@ -16,6 +16,13 @@ export interface ToolContext {
   sessionId: string;
   /** Prisma client for database access */
   prisma: PrismaClient;
+  /**
+   * Pre-fetched draft config (optional, populated for Build Mode tools)
+   * Eliminates N+1 query pattern - reduces 15+ queries to 3 per turn
+   * Gated by ENABLE_CONTEXT_CACHE feature flag
+   * CRITICAL: Must be invalidated after T1 writes to prevent stale data
+   */
+  draftConfig?: import('./utils').DraftConfigWithSlugResult;
 }
 
 /**

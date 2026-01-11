@@ -36,6 +36,7 @@ import {
   type LandingPageConfig,
   type PagesConfig,
   type PageConfig,
+  type WriteExecutorResult,
 } from '../proposals/executor-schemas';
 import {
   generateSectionId,
@@ -233,7 +234,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           'Page section modified via Build Mode'
         );
 
+        // Phase 1.4: Return updated config for optimistic frontend updates
         return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: `Section ${sectionIndex === -1 ? 'added' : 'updated'} successfully`,
           action: sectionIndex === -1 ? 'added' : 'updated',
           pageName,
           sectionIndex: resultIndex,
@@ -329,7 +334,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           'Page section removed via Build Mode'
         );
 
+        // Phase 1.4: Return updated config for optimistic frontend updates
         return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: 'Section removed successfully',
           action: 'removed',
           pageName,
           sectionIndex,
@@ -424,7 +433,11 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           'Page sections reordered via Build Mode'
         );
 
+        // Phase 1.4: Return updated config for optimistic frontend updates
         return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: 'Sections reordered successfully',
           action: 'reordered',
           pageName,
           fromIndex,
@@ -443,6 +456,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
   // ============================================================================
   // toggle_page_enabled - Enable or disable entire pages
+  // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
   // ============================================================================
 
   registerProposalExecutor('toggle_page_enabled', async (tenantId, payload) => {
@@ -461,42 +475,63 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       throw new ValidationError('Home page cannot be disabled.');
     }
 
-    // Get current draft config and slug in single query (#627 N+1 fix)
-    const { pages, slug } = await getDraftConfigWithSlug(prisma, tenantId);
+    // P1-659 FIX: Wrap read-validate-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where concurrent toggles could read stale state
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        // Lock is automatically released when transaction commits/aborts
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Validate page exists
-    const page = pages[pageName as keyof PagesConfig];
-    if (!page) {
-      throw new ValidationError(`Page "${pageName}" not found`);
-    }
+        // Get current draft config and slug within the transaction
+        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
 
-    // Update page enabled state
-    const updatedPage: PageConfig = {
-      ...page,
-      enabled,
-    };
+        // Validate page exists
+        const page = pages[pageName as keyof PagesConfig];
+        if (!page) {
+          throw new ValidationError(`Page "${pageName}" not found`);
+        }
 
-    // Update pages config
-    const updatedPages = {
-      ...pages,
-      [pageName]: updatedPage,
-    };
+        // Update page enabled state
+        const updatedPage: PageConfig = {
+          ...page,
+          enabled,
+        };
 
-    // Save to draft
-    await saveDraftConfig(prisma, tenantId, updatedPages as PagesConfig);
+        // Update pages config
+        const updatedPages = {
+          ...pages,
+          [pageName]: updatedPage,
+        };
 
-    logger.info({ tenantId, pageName, enabled }, 'Page visibility toggled via Build Mode');
+        // Save to draft within same transaction
+        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
 
-    return {
-      action: enabled ? 'enabled' : 'disabled',
-      pageName,
-      enabled,
-      previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
-    };
+        logger.info({ tenantId, pageName, enabled }, 'Page visibility toggled via Build Mode');
+
+        // Phase 1.4: Return updated config for optimistic frontend updates
+        return {
+          success: true,
+          updatedConfig: { pages: updatedPages } as LandingPageConfig,
+          message: `Page ${enabled ? 'enabled' : 'disabled'} successfully`,
+          action: enabled ? 'enabled' : 'disabled',
+          pageName,
+          enabled,
+          previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
+        };
+      },
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
+    );
   });
 
   // ============================================================================
   // update_storefront_branding - Update brand colors, fonts, logo
+  // P2-741 FIX: Now uses advisory lock (correcting previous rationale)
+  // The branding JSON field DOES require read-modify-write, creating TOCTOU risk.
   // ============================================================================
 
   registerProposalExecutor('update_storefront_branding', async (tenantId, payload) => {
@@ -511,57 +546,79 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
     const { primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily, logoUrl } =
       validationResult.data;
 
-    // Build update data for direct tenant fields (colors)
-    const tenantUpdates: Record<string, string> = {};
-    if (primaryColor) tenantUpdates.primaryColor = primaryColor;
-    if (secondaryColor) tenantUpdates.secondaryColor = secondaryColor;
-    if (accentColor) tenantUpdates.accentColor = accentColor;
-    if (backgroundColor) tenantUpdates.backgroundColor = backgroundColor;
+    // P2-741 FIX: Wrap read-modify-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where concurrent branding updates could
+    // both read the same branding JSON, merge separately, and clobber each other
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-    // Font and logo go in branding JSON field (#627 N+1 fix - combine queries)
-    // Get tenant once for both branding and slug
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { branding: true, slug: true },
-    });
+        // Build update data for direct tenant fields (colors)
+        const tenantUpdates: Record<string, string> = {};
+        if (primaryColor) tenantUpdates.primaryColor = primaryColor;
+        if (secondaryColor) tenantUpdates.secondaryColor = secondaryColor;
+        if (accentColor) tenantUpdates.accentColor = accentColor;
+        if (backgroundColor) tenantUpdates.backgroundColor = backgroundColor;
 
-    let brandingUpdates: Prisma.JsonObject | undefined;
-    if (fontFamily || logoUrl) {
-      brandingUpdates = {
-        ...((tenant?.branding as Record<string, unknown>) || {}),
-        ...(fontFamily && { fontFamily }),
-        ...(logoUrl && { logo: logoUrl }),
-      } as Prisma.JsonObject;
-    }
+        // Font and logo go in branding JSON field (#627 N+1 fix - combine queries)
+        // Get tenant once for both branding and slug within transaction
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: { branding: true, slug: true },
+        });
 
-    // Apply updates
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        ...tenantUpdates,
-        ...(brandingUpdates && { branding: brandingUpdates }),
+        let brandingUpdates: Prisma.JsonObject | undefined;
+        if (fontFamily || logoUrl) {
+          brandingUpdates = {
+            ...((tenant?.branding as Record<string, unknown>) || {}),
+            ...(fontFamily && { fontFamily }),
+            ...(logoUrl && { logo: logoUrl }),
+          } as Prisma.JsonObject;
+        }
+
+        // Apply updates within same transaction
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: {
+            ...tenantUpdates,
+            ...(brandingUpdates && { branding: brandingUpdates }),
+          },
+        });
+
+        const changes = [
+          ...Object.keys(tenantUpdates),
+          ...(fontFamily ? ['fontFamily'] : []),
+          ...(logoUrl ? ['logo'] : []),
+        ];
+
+        const slug = tenant?.slug;
+
+        logger.info({ tenantId, changes }, 'Storefront branding updated via Build Mode');
+
+        // Phase 1.4: Fetch and return current draft config for consistency
+        const { pages } = await getDraftConfigWithSlug(tx, tenantId);
+
+        return {
+          success: true,
+          updatedConfig: { pages } as LandingPageConfig,
+          message: 'Branding updated successfully',
+          action: 'updated',
+          changes,
+          previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
+        };
       },
-    });
-
-    const changes = [
-      ...Object.keys(tenantUpdates),
-      ...(fontFamily ? ['fontFamily'] : []),
-      ...(logoUrl ? ['logo'] : []),
-    ];
-
-    const slug = tenant?.slug;
-
-    logger.info({ tenantId, changes }, 'Storefront branding updated via Build Mode');
-
-    return {
-      action: 'updated',
-      changes,
-      previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
-    };
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
+    );
   });
 
   // ============================================================================
   // publish_draft - Publish draft changes to live storefront
+  // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
   // ============================================================================
 
   registerProposalExecutor('publish_draft', async (tenantId, payload) => {
@@ -573,61 +630,82 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       );
     }
 
-    // Get the current draft
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        landingPageConfigDraft: true,
-        slug: true,
+    // P1-659 FIX: Wrap read-validate-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where concurrent publishes could both succeed
+    // or publish could race with draft modifications
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        // Lock is automatically released when transaction commits/aborts
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+        // Get the current draft within transaction
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            landingPageConfigDraft: true,
+            slug: true,
+          },
+        });
+
+        if (!tenant) {
+          throw new ResourceNotFoundError('tenant', tenantId, 'Please contact support.');
+        }
+
+        if (!tenant.landingPageConfigDraft) {
+          throw new ValidationError('No draft changes to publish.');
+        }
+
+        // Count sections for audit log (shared utility from lib/landing-page-utils.ts)
+        const { totalSections, pageCount } = countSectionsInConfig(tenant.landingPageConfigDraft);
+
+        // Create wrapper format (shared utility from lib/landing-page-utils.ts)
+        // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
+        // See: #697 - Dual draft system publish mismatch fix, #725 - DRY refactor
+        const publishedWrapper = createPublishedWrapper(tenant.landingPageConfigDraft);
+
+        // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
+        // Cast wrapper for Prisma 7 JSON field type compatibility
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: {
+            landingPageConfig: publishedWrapper as unknown as Prisma.InputJsonValue,
+            landingPageConfigDraft: Prisma.DbNull, // Clear the draft (Prisma 7 pattern)
+          },
+        });
+
+        // Audit logging with publish details
+        logger.info(
+          {
+            tenantId,
+            action: 'PUBLISH',
+            pageCount,
+            totalSections,
+          },
+          'Draft published to live storefront via Build Mode'
+        );
+
+        // Phase 1.4: After publish, draft is cleared so return empty config
+        return {
+          success: true,
+          updatedConfig: { pages: {} } as unknown as LandingPageConfig,
+          message: 'Draft published successfully. Changes are now live.',
+          action: 'published',
+          previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
+          note: 'Changes are now live.',
+        };
       },
-    });
-
-    if (!tenant) {
-      throw new ResourceNotFoundError('tenant', tenantId, 'Please contact support.');
-    }
-
-    if (!tenant.landingPageConfigDraft) {
-      throw new ValidationError('No draft changes to publish.');
-    }
-
-    // Count sections for audit log (shared utility from lib/landing-page-utils.ts)
-    const { totalSections, pageCount } = countSectionsInConfig(tenant.landingPageConfigDraft);
-
-    // Create wrapper format (shared utility from lib/landing-page-utils.ts)
-    // The public API's extractPublishedLandingPage() looks for landingPageConfig.published
-    // See: #697 - Dual draft system publish mismatch fix, #725 - DRY refactor
-    const publishedWrapper = createPublishedWrapper(tenant.landingPageConfigDraft);
-
-    // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
-    // Cast wrapper for Prisma 7 JSON field type compatibility
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        landingPageConfig: publishedWrapper as unknown as Prisma.InputJsonValue,
-        landingPageConfigDraft: Prisma.DbNull, // Clear the draft (Prisma 7 pattern)
-      },
-    });
-
-    // Audit logging with publish details
-    logger.info(
       {
-        tenantId,
-        action: 'PUBLISH',
-        pageCount,
-        totalSections,
-      },
-      'Draft published to live storefront via Build Mode'
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
     );
-
-    return {
-      action: 'published',
-      previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
-      note: 'Changes are now live.',
-    };
   });
 
   // ============================================================================
   // discard_draft - Discard all draft changes
+  // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
   // ============================================================================
 
   registerProposalExecutor('discard_draft', async (tenantId, payload) => {
@@ -639,39 +717,59 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
       );
     }
 
-    // Get the current draft status
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        landingPageConfigDraft: true,
-        slug: true,
+    // P1-659 FIX: Wrap read-validate-write in transaction with advisory lock
+    // Prevents TOCTOU race condition where concurrent discards could both succeed
+    // or discard could race with draft modifications
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        // Lock is automatically released when transaction commits/aborts
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+        // Get the current draft status within transaction
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            landingPageConfigDraft: true,
+            slug: true,
+          },
+        });
+
+        if (!tenant) {
+          throw new ResourceNotFoundError('tenant', tenantId, 'Please contact support.');
+        }
+
+        if (!tenant.landingPageConfigDraft) {
+          throw new ValidationError('No draft changes to discard.');
+        }
+
+        // Clear the draft
+        // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: {
+            landingPageConfigDraft: Prisma.DbNull, // Prisma 7 pattern for clearing JSON field
+          },
+        });
+
+        logger.info({ tenantId }, 'Draft discarded via Build Mode');
+
+        // Phase 1.4: After discard, draft is cleared so return empty config
+        return {
+          success: true,
+          updatedConfig: { pages: {} } as unknown as LandingPageConfig,
+          message: 'Draft discarded successfully. Showing live version.',
+          action: 'discarded',
+          previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
+          note: 'Draft changes have been discarded. Showing live version.',
+        };
       },
-    });
-
-    if (!tenant) {
-      throw new ResourceNotFoundError('tenant', tenantId, 'Please contact support.');
-    }
-
-    if (!tenant.landingPageConfigDraft) {
-      throw new ValidationError('No draft changes to discard.');
-    }
-
-    // Clear the draft
-    // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        landingPageConfigDraft: Prisma.DbNull, // Prisma 7 pattern for clearing JSON field
-      },
-    });
-
-    logger.info({ tenantId }, 'Draft discarded via Build Mode');
-
-    return {
-      action: 'discarded',
-      previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
-      note: 'Draft changes have been discarded. Showing live version.',
-    };
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
+    );
   });
 
   logger.info('Storefront Build Mode executors registered');

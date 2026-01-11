@@ -52,7 +52,7 @@ interface PanelAgentChatProps {
   /** Callback when user sends their first message */
   onFirstMessage?: () => void;
   /** Callback when a message completes with successful tool results (config may have changed) */
-  onToolComplete?: () => void;
+  onToolComplete?: (toolResults?: Array<{ success: boolean; data?: any }>) => void;
   /** Callback when agent message contains section highlight instruction */
   onSectionHighlight?: (sectionId: string) => void;
   /** Callback when agent tool returns a UI action (preview, navigate, etc.) */
@@ -63,6 +63,10 @@ interface PanelAgentChatProps {
   onMessageConsumed?: () => void;
   /** Callback when quick replies status changes (true = agent provided quick replies) */
   onQuickRepliesChange?: (hasQuickReplies: boolean) => void;
+  /** Ref for the input textarea (for focus management from parent) */
+  inputRef?: React.RefObject<HTMLTextAreaElement>;
+  /** ARIA role for messages container (default "log" for screen readers) */
+  messagesRole?: 'log' | 'region';
   /** Additional CSS classes */
   className?: string;
 }
@@ -84,6 +88,8 @@ export function PanelAgentChat({
   initialMessage,
   onMessageConsumed,
   onQuickRepliesChange,
+  inputRef: externalInputRef,
+  messagesRole = 'log',
   className,
 }: PanelAgentChatProps) {
   // Use shared hook with panel-specific callbacks
@@ -102,15 +108,15 @@ export function PanelAgentChat({
     initializeChat,
     setInputValue,
     messagesEndRef,
-    inputRef,
+    inputRef: internalInputRef,
     handleKeyDown,
   } = useAgentChat({
     apiUrl: API_PROXY,
     fallbackGreeting: welcomeMessage,
     onFirstMessage,
     onToolComplete: (toolResults) => {
-      // Notify parent about tool completion
-      onToolComplete?.();
+      // Notify parent about tool completion (pass results for Phase 1.4 optimistic updates)
+      onToolComplete?.(toolResults);
 
       // Handle UI actions from tool results
       if (onUIAction) {
@@ -122,6 +128,73 @@ export function PanelAgentChat({
       }
     },
   });
+
+  // Use external ref if provided, otherwise use internal ref
+  const inputRef = externalInputRef || internalInputRef;
+
+  // Platform detection for keyboard handling
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [isAndroid, setIsAndroid] = React.useState(false);
+  const [isIOS, setIsIOS] = React.useState(false);
+
+  // Detect platform on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mobile = window.innerWidth < 768; // md breakpoint
+    const android = /Android/i.test(navigator.userAgent);
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    setIsMobile(mobile);
+    setIsAndroid(android);
+    setIsIOS(ios);
+  }, []);
+
+  // Platform-specific keyboard handling for mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    if (isAndroid) {
+      // Android: Viewport resizes naturally, add bottom padding to input
+      if (inputRef.current) {
+        inputRef.current.style.paddingBottom = '60px';
+      }
+    } else if (isIOS) {
+      // iOS: Manual viewport monitoring with visualViewport API
+      // Fix for #745: Track RAF ID for proper cleanup
+      let rafId: number | null = null;
+
+      const handleViewportChange = () => {
+        if (!window.visualViewport) return;
+
+        // Cancel any pending RAF to prevent race conditions
+        if (rafId !== null) cancelAnimationFrame(rafId);
+
+        const vh = window.visualViewport.height;
+        const keyboardHeight = window.innerHeight - vh;
+
+        if (keyboardHeight > 150) {
+          // Keyboard open (threshold to distinguish from browser chrome)
+          // Scroll input into view after layout settles
+          rafId = requestAnimationFrame(() => {
+            inputRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'nearest', // NOT 'center' - causes over-scroll (issue #216)
+            });
+            rafId = null;
+          });
+        }
+        // Note: No need to adjust drawer height - Vaul handles this automatically
+      };
+
+      window.visualViewport?.addEventListener('resize', handleViewportChange);
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleViewportChange);
+        // Fix for #745: Cancel pending RAF on cleanup
+        if (rafId !== null) cancelAnimationFrame(rafId);
+      };
+    }
+  }, [isMobile, isAndroid, isIOS, inputRef]);
 
   // Calculate whether the last assistant message has quick replies
   // Memoized to avoid recalculating on every render
@@ -190,7 +263,11 @@ export function PanelAgentChat({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth">
+      <div
+        role={messagesRole}
+        aria-label="Chat messages"
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth"
+      >
         {messages.map((message, index) => {
           // Check if this is the last assistant message
           const isLastAssistantMessage =
@@ -278,15 +355,21 @@ export function PanelAgentChat({
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-neutral-700 bg-surface-alt">
+        {/* Fix for #746: Screen reader description for input */}
+        <span id="agent-input-description" className="sr-only">
+          Chat with AI assistant. Press Enter to send, Shift+Enter for new line.
+        </span>
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
             data-growth-assistant-input
-            data-testid="agent-chat-input"
+            data-testid="agent-input"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
+            aria-label="Message input"
+            aria-describedby="agent-input-description"
             className={cn(
               'flex-1 resize-none rounded-xl border border-neutral-700 px-3 py-2 text-sm',
               'focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20',
@@ -303,6 +386,7 @@ export function PanelAgentChat({
             variant="sage"
             size="icon"
             className="h-10 w-10 shrink-0 rounded-xl"
+            aria-label="Send message"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
