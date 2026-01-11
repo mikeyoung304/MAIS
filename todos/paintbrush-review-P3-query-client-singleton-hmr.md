@@ -1,6 +1,7 @@
 # P3 MEDIUM: QueryClient Singleton Pattern Fragile with HMR
 
 **Priority:** P3 - MEDIUM
+**Status:** DEFERRED - Will circle back after higher priority work
 **Source:** Code Simplicity Review (agent a66feb4)
 **Date:** 2026-01-11
 

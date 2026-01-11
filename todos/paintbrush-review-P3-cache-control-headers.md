@@ -1,6 +1,7 @@
 # P3 MEDIUM: Missing Cache-Control Headers on Proxy Responses
 
 **Priority:** P3 - MEDIUM
+**Status:** DEFERRED - Will circle back after higher priority work
 **Source:** Performance Review (agent a6e02f2)
 **Date:** 2026-01-11
 

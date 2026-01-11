@@ -2550,7 +2550,11 @@ if (PROMPT_INJECTION_PATTERNS.some(p => p.test(userMessage))) {
 
 ---
 
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-11
+**Recent Additions (2026-01-11):**
+
+- **[Paintbrush Effect: Trust Tier Mismatch + Stale Cache](./agent-issues/paintbrush-effect-trust-tier-stale-cache-MAIS-20260111.md)** - Double-layered bug preventing agent changes from appearing in preview: (1) Trust tier mismatch - tools declared T1 but createProposal passed T2, preventing auto-execution; (2) TanStack Query staleTime=30s prevented refetch even if execution worked. **P1 fix** (trust tier alignment + staleTime=0) + **P2 fix** (100ms delay for PostgreSQL transaction visibility). Trace full flow: Tool → Proposal → Executor → DB → Cache → Refetch → UI.
+
 **Recent Additions (2026-01-09):**
 
 - **[Code Review #708-717 Prevention Strategies](./patterns/CODE_REVIEW_708_717_PREVENTION_STRATEGIES.md)** - Comprehensive prevention guide for 10 code review findings from parallel agent review (commit 02cde7e8). Covers: TOCTOU race conditions with advisory locks (#708), unsafe type assertions with type guards (#709), premature optimization decision trees (#710), component duplication with variant patterns (#711-712), service logic DRY extraction (#713), XSS sanitization gaps (#714), unused type exports (#715), callback memoization profiling (#716), quota increment races (#717), and React 19 ref type compatibility. **P1 fix** (TOCTOU) + **P2 fixes** (5 patterns) + **P3 deferred** (4 patterns).
