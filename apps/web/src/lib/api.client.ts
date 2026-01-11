@@ -23,18 +23,47 @@ import { initClient } from '@ts-rest/core';
 import { Contracts } from '@macon/contracts';
 
 /**
+ * Transform contract paths to Next.js proxy paths
+ *
+ * Contract paths use /v1/* but the Next.js proxy routes are at /api/*
+ * This function maps authenticated routes to their proxy equivalents:
+ *   /v1/tenant-admin/* → /api/tenant-admin/*
+ *   /v1/agent/*        → /api/agent/*
+ *   /v1/admin/*        → /api/admin/*
+ *
+ * Public endpoints (/v1/public/*) are not transformed as they go directly to backend.
+ */
+function transformToProxyPath(path: string): string {
+  // Routes that need to go through Next.js proxy (for auth injection)
+  if (path.startsWith('/v1/tenant-admin/')) {
+    return path.replace('/v1/tenant-admin/', '/api/tenant-admin/');
+  }
+  if (path.startsWith('/v1/agent/')) {
+    return path.replace('/v1/agent/', '/api/agent/');
+  }
+  if (path.startsWith('/v1/admin/')) {
+    return path.replace('/v1/admin/', '/api/admin/');
+  }
+  // Public routes go directly to backend (with NEXT_PUBLIC_API_URL)
+  return path;
+}
+
+/**
  * Client-side API client for use in Client Components
  *
- * WARNING: This client does NOT inject auth headers automatically.
- * For authenticated routes, use /api/* proxy routes which handle auth server-side.
+ * This client automatically routes authenticated endpoints through Next.js proxy
+ * routes which inject the auth token server-side. Public endpoints go directly
+ * to the backend.
  *
- * Only use this client for:
- * - Public/unauthenticated endpoints
- * - Routes where you manually handle auth via the proxy pattern
+ * Path transformation:
+ *   /v1/tenant-admin/* → /api/tenant-admin/* (proxied, auth injected)
+ *   /v1/agent/*        → /api/agent/*        (proxied, auth injected)
+ *   /v1/admin/*        → /api/admin/*        (proxied, auth injected)
+ *   /v1/public/*       → direct to backend   (no auth needed)
  */
 export function createClientApiClient() {
   return initClient(Contracts, {
-    baseUrl: '', // Empty = relative URLs, goes through Next.js proxy
+    baseUrl: '', // Empty = relative URLs for proxy routes
     baseHeaders: {},
     api: async ({ path, method, headers, body }) => {
       const requestHeaders: Record<string, string> = {
@@ -42,7 +71,10 @@ export function createClientApiClient() {
         ...headers,
       };
 
-      const response = await fetch(path, {
+      // Transform authenticated routes to proxy paths
+      const finalPath = transformToProxyPath(path);
+
+      const response = await fetch(finalPath, {
         method,
         headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
