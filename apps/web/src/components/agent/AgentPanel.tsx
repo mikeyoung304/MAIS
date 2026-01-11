@@ -258,7 +258,11 @@ export function AgentPanel({ className }: AgentPanelProps) {
             onToolComplete={() => {
               // P0-FIX: Invalidate draft config cache so preview shows updated content
               // Without this, agent tool updates write to DB but frontend shows stale data
-              invalidateDraftConfig();
+              // P2-FIX: Small delay ensures PostgreSQL transaction is visible before refetch
+              // (prevents race condition with connection pooling / ReadCommitted isolation)
+              setTimeout(() => {
+                invalidateDraftConfig();
+              }, 100);
             }}
             className="h-full"
           />
