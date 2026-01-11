@@ -262,7 +262,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(false)}
-              className="h-8 w-8 rounded-lg hover:bg-neutral-700"
+              className="rounded-lg hover:bg-neutral-700"
               aria-label="Collapse panel"
             >
               <ChevronRight className="w-4 h-4" />
@@ -440,7 +440,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-lg hover:bg-neutral-700"
+                  className="rounded-lg hover:bg-neutral-700"
                   aria-label="Close drawer"
                 >
                   <ChevronRight className="w-4 h-4 rotate-90" />
