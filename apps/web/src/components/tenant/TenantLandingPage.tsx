@@ -13,8 +13,8 @@
  */
 
 import { Button } from '@/components/ui/button';
-import type { TenantStorefrontData } from '@/lib/tenant';
-import { normalizeToPages } from '@/lib/tenant';
+import type { TenantStorefrontData } from '@/lib/tenant.client';
+import { normalizeToPages } from '@/lib/tenant.client';
 import { SectionRenderer } from './SectionRenderer';
 import { SegmentPackagesSection } from './SegmentPackagesSection';
 import type { Section, HeroSection, CTASection, LandingPageConfig } from '@macon/contracts';
