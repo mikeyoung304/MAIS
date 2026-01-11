@@ -372,7 +372,7 @@ export function PreviewPanel({
 
           <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700" />
 
-          {/* Publish/Discard buttons */}
+          {/* Save/Shred buttons - paintbrush metaphor */}
           {hasDraft && (
             <>
               <Button
@@ -388,7 +388,7 @@ export function PreviewPanel({
                 ) : (
                   <Trash2 className="h-4 w-4 mr-1.5" />
                 )}
-                Discard
+                Shred
               </Button>
               <Button
                 variant="sage"
@@ -402,7 +402,7 @@ export function PreviewPanel({
                 ) : (
                   <Upload className="h-4 w-4 mr-1.5" />
                 )}
-                Publish
+                Save
               </Button>
             </>
           )}
@@ -480,18 +480,18 @@ export function PreviewPanel({
       <ConfirmDialog
         open={showPublishDialog}
         onOpenChange={setShowPublishDialog}
-        title="Publish Changes"
-        description="This will make your draft changes live on your storefront. Your customers will see these changes immediately."
-        confirmLabel="Publish"
+        title="Save to Live Site"
+        description="This will push your changes to your customer-facing storefront. Your visitors will see these changes immediately."
+        confirmLabel="Save"
         onConfirm={handlePublish}
       />
 
       <ConfirmDialog
         open={showDiscardDialog}
         onOpenChange={setShowDiscardDialog}
-        title="Discard Changes"
-        description="This will permanently delete all your unpublished changes. This action cannot be undone."
-        confirmLabel="Discard"
+        title="Shred Changes"
+        description="This will permanently delete all your draft changes. This action cannot be undone."
+        confirmLabel="Shred"
         variant="destructive"
         onConfirm={handleDiscard}
       />
