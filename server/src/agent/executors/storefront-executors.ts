@@ -673,24 +673,50 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         // Get tenant once for both branding and slug within transaction
         const tenant = await tx.tenant.findUnique({
           where: { id: tenantId },
-          select: { branding: true, slug: true },
+          select: {
+            branding: true,
+            slug: true,
+            primaryColor: true,
+            secondaryColor: true,
+            accentColor: true,
+            backgroundColor: true,
+          },
         });
 
+        // P1-FIX: Store previous branding state for revert_branding tool
+        // Only store if we're actually changing something
+        const previousBranding = {
+          primaryColor: tenant?.primaryColor,
+          secondaryColor: tenant?.secondaryColor,
+          accentColor: tenant?.accentColor,
+          backgroundColor: tenant?.backgroundColor,
+          fontFamily: (tenant?.branding as Record<string, unknown>)?.fontFamily,
+          logoUrl: (tenant?.branding as Record<string, unknown>)?.logo,
+          timestamp: Date.now(),
+        };
+
         let brandingUpdates: Prisma.JsonObject | undefined;
-        if (fontFamily || logoUrl) {
-          brandingUpdates = {
-            ...((tenant?.branding as Record<string, unknown>) || {}),
-            ...(fontFamily && { fontFamily }),
-            ...(logoUrl && { logo: logoUrl }),
-          } as Prisma.JsonObject;
-        }
+        const existingBranding = (tenant?.branding as Record<string, unknown>) || {};
+
+        // Merge previous branding history with existing history (keep last 5)
+        const previousHistory = Array.isArray(existingBranding._previousBranding)
+          ? (existingBranding._previousBranding as unknown[]).slice(0, 4)
+          : [];
+
+        // Always update branding JSON to include _previousBranding
+        brandingUpdates = {
+          ...existingBranding,
+          ...(fontFamily && { fontFamily }),
+          ...(logoUrl && { logo: logoUrl }),
+          _previousBranding: [previousBranding, ...previousHistory],
+        } as Prisma.JsonObject;
 
         // Apply updates within same transaction
         await tx.tenant.update({
           where: { id: tenantId },
           data: {
             ...tenantUpdates,
-            ...(brandingUpdates && { branding: brandingUpdates }),
+            branding: brandingUpdates,
           },
         });
 
@@ -710,9 +736,105 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         return {
           success: true,
           updatedConfig: { pages } as LandingPageConfig,
-          message: 'Branding updated successfully',
+          message: 'Branding updated successfully. Say "undo" within 24h to revert.',
           action: 'updated',
           changes,
+          previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
+          canRevert: true,
+        };
+      },
+      {
+        timeout: STOREFRONT_TRANSACTION_TIMEOUT_MS,
+        isolationLevel: STOREFRONT_ISOLATION_LEVEL,
+      }
+    );
+  });
+
+  // ============================================================================
+  // revert_branding - Undo the last branding change (T1)
+  // P1-FIX: Provides undo capability for branding changes (24h window)
+  // ============================================================================
+
+  registerProposalExecutor('revert_branding', async (tenantId, _payload) => {
+    return await prisma.$transaction(
+      async (tx) => {
+        // Acquire advisory lock for this tenant's storefront edits
+        const lockId = hashTenantStorefront(tenantId);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
+
+        // Get current branding with history
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: { branding: true, slug: true },
+        });
+
+        const branding = (tenant?.branding as Record<string, unknown>) || {};
+        const history = branding._previousBranding as Array<{
+          primaryColor?: string;
+          secondaryColor?: string;
+          accentColor?: string;
+          backgroundColor?: string;
+          fontFamily?: string;
+          logoUrl?: string;
+          timestamp: number;
+        }>;
+
+        if (!history || history.length === 0) {
+          return {
+            success: false,
+            error: 'No previous branding to revert to. No changes have been made.',
+          };
+        }
+
+        const previous = history[0];
+        const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+        if (Date.now() - previous.timestamp > TWENTY_FOUR_HOURS_MS) {
+          return {
+            success: false,
+            error: 'Previous branding state has expired. Revert is only available for 24 hours.',
+          };
+        }
+
+        // Build updates from previous state
+        const tenantUpdates: Record<string, string | null> = {};
+        if (previous.primaryColor !== undefined)
+          tenantUpdates.primaryColor = previous.primaryColor ?? null;
+        if (previous.secondaryColor !== undefined)
+          tenantUpdates.secondaryColor = previous.secondaryColor ?? null;
+        if (previous.accentColor !== undefined)
+          tenantUpdates.accentColor = previous.accentColor ?? null;
+        if (previous.backgroundColor !== undefined)
+          tenantUpdates.backgroundColor = previous.backgroundColor ?? null;
+
+        // Update branding JSON (font and logo) and remove reverted entry from history
+        const brandingUpdates: Prisma.JsonObject = {
+          ...branding,
+          ...(previous.fontFamily !== undefined && { fontFamily: previous.fontFamily }),
+          ...(previous.logoUrl !== undefined && { logo: previous.logoUrl }),
+          _previousBranding: history.slice(1), // Remove the entry we're reverting to
+        };
+
+        // Apply updates
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: {
+            ...tenantUpdates,
+            branding: brandingUpdates,
+          },
+        });
+
+        const slug = tenant?.slug;
+        logger.info({ tenantId }, 'Storefront branding reverted via Build Mode');
+
+        // Fetch and return current draft config for consistency
+        const { pages } = await getDraftConfigWithSlug(tx, tenantId);
+
+        return {
+          success: true,
+          updatedConfig: { pages } as LandingPageConfig,
+          message: 'Branding reverted to previous state.',
+          action: 'reverted',
           previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
         };
       },

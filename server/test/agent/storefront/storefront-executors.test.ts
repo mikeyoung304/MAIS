@@ -79,8 +79,9 @@ describe('Storefront Executors', () => {
   });
 
   describe('Executor Registration', () => {
-    it('should register all 7 executors', () => {
-      expect(registeredExecutors.size).toBe(7);
+    it('should register all 8 executors', () => {
+      // 7 original + 1 revert_branding (P1 fix for branding undo)
+      expect(registeredExecutors.size).toBe(8);
     });
 
     it('should register expected executors', () => {
@@ -89,6 +90,7 @@ describe('Storefront Executors', () => {
       expect(registeredExecutors.has('reorder_page_sections')).toBe(true);
       expect(registeredExecutors.has('toggle_page_enabled')).toBe(true);
       expect(registeredExecutors.has('update_storefront_branding')).toBe(true);
+      expect(registeredExecutors.has('revert_branding')).toBe(true); // P1 fix
       expect(registeredExecutors.has('publish_draft')).toBe(true);
       expect(registeredExecutors.has('discard_draft')).toBe(true);
     });

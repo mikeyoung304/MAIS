@@ -239,6 +239,7 @@ ${phaseGuidance}
 
 Use section IDs (e.g., "home-hero-main"), not indices.
 Draft vs live: "In your draft..." vs "On your live site..."
+Branding: Goes live IMMEDIATELY (not draft). Tell them "undo within 24h if you don't like it."
 
 ---
 

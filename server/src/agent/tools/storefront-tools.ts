@@ -769,6 +769,62 @@ All colors should be hex format (e.g., "#1a365d").`,
 };
 
 /**
+ * revert_branding - Undo the last branding change
+ *
+ * Trust Tier: T1 (auto-execute) - Restores previous state, low risk
+ * Available for 24 hours after a branding change
+ */
+export const revertBrandingTool: AgentTool = {
+  name: 'revert_branding',
+  trustTier: 'T1', // Auto-execute - restores previous state
+  description: `Revert the last branding change (colors, fonts, logo).
+
+This restores the previous branding state from before the last update.
+Only available for 24 hours after a branding change was made.
+
+Use when the user wants to undo a branding change they just made.`,
+  inputSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  async execute(context: ToolContext, _params: Record<string, unknown>): Promise<AgentToolResult> {
+    const { tenantId, prisma } = context;
+
+    try {
+      // Get slug for preview URL
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      const slug = tenant?.slug;
+
+      const preview: Record<string, unknown> = {
+        action: 'revert_branding',
+        previewUrl: slug ? `/t/${slug}` : undefined,
+        note: 'Reverts to the previous branding state.',
+      };
+
+      return createProposal(
+        context,
+        'revert_branding',
+        'Revert branding to previous state',
+        'T1',
+        {},
+        preview
+      );
+    } catch (error) {
+      return handleToolError(
+        error,
+        'revert_branding',
+        tenantId,
+        'Failed to create branding revert proposal'
+      );
+    }
+  },
+};
+
+/**
  * publish_draft - Publish draft changes to live storefront
  *
  * Trust Tier: T3 (requires approval) - Makes changes live to visitors
@@ -1455,12 +1511,14 @@ export const storefrontTools: AgentTool[] = [
   listSectionIdsTool,
   getSectionByIdTool,
   getUnfilledPlaceholdersTool,
-  // Write tools (T1/T2)
+  // Write tools (T1)
   updatePageSectionTool,
   removePageSectionTool,
   reorderPageSectionsTool,
   togglePageEnabledTool,
   updateStorefrontBrandingTool,
+  revertBrandingTool, // P1-FIX: Undo capability for branding changes
+  // Critical actions (T3)
   publishDraftTool,
   discardDraftTool,
   getLandingPageDraftTool,

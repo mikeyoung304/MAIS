@@ -263,7 +263,7 @@ export const addonWriteLimiter = rateLimit({
 });
 
 /**
- * Rate limiter for AI agent chat endpoints
+ * Rate limiter for AI agent chat endpoints (per-tenant)
  * 30 messages per 5 minutes per tenant - balances UX with API cost protection
  * Prevents:
  * - Claude API token exhaustion (each message costs ~$0.01-0.10)
@@ -328,7 +328,13 @@ export const agentSessionLimiter = rateLimit({
   skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
   validate: false, // Disable validation - we handle IPv6 with normalizeIp()
   handler: (_req: Request, res: Response) => {
-    logger.warn({ tenantId: res.locals.tenantAuth?.tenantId }, 'Agent session rate limit exceeded');
+    logger.warn(
+      {
+        tenantId: res.locals.tenantAuth?.tenantId,
+        sessionId: (_req.body as { sessionId?: string })?.sessionId,
+      },
+      'Agent session rate limit exceeded'
+    );
     res.status(429).json({
       error: 'too_many_session_requests',
       message: 'Too many messages in this conversation. Please wait a moment.',

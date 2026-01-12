@@ -89,6 +89,7 @@ import {
   publicBookingActionsLimiter,
   publicBalancePaymentLimiter,
   agentChatLimiter,
+  agentSessionLimiter,
   customerChatLimiter,
 } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
@@ -705,9 +706,11 @@ export function createV1Router(
 
     // Register agent routes (for AI agent integration - legacy onboarding)
     // Requires tenant admin authentication - agent proposals are tied to tenant
-    // Rate limited to 30 messages per 5 minutes per tenant to protect Claude API costs
+    // Dual-layer rate limiting to protect Claude API costs:
+    // - agentChatLimiter: 30 messages per 5 minutes per tenant (overall quota)
+    // - agentSessionLimiter: 10 messages per minute per session (burst protection)
     const agentRoutes = createAgentRoutes(prismaClient);
-    app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentRoutes);
+    app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentSessionLimiter, agentRoutes);
     logger.info('✅ Agent routes mounted at /v1/agent (with rate limiting)');
 
     // Register Concierge agent routes (for Vertex AI agent integration)
