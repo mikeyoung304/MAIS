@@ -15,6 +15,7 @@
  * - All section ID uniqueness checks wrapped in transactions
  */
 
+import { z } from 'zod';
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
@@ -48,6 +49,30 @@ import {
   type SectionTypeName,
   SECTION_TYPES,
 } from '@macon/contracts';
+
+// ============================================================================
+// Zod Schemas for JSON Field Validation
+// ============================================================================
+
+/**
+ * Schema for a single previous branding entry in the history array.
+ * Runtime validation ensures JSON field data integrity before use.
+ */
+const PreviousBrandingEntrySchema = z.object({
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  accentColor: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  fontFamily: z.string().optional(),
+  logoUrl: z.string().optional(),
+  timestamp: z.number(),
+});
+
+/**
+ * Schema for the full branding history array (_previousBranding).
+ * Used by revert_branding executor to validate data before restoring.
+ */
+const PreviousBrandingHistorySchema = z.array(PreviousBrandingEntrySchema);
 
 // Transaction configuration for storefront edits
 const STOREFRONT_TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds
@@ -769,17 +794,24 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         });
 
         const branding = (tenant?.branding as Record<string, unknown>) || {};
-        const history = branding._previousBranding as Array<{
-          primaryColor?: string;
-          secondaryColor?: string;
-          accentColor?: string;
-          backgroundColor?: string;
-          fontFamily?: string;
-          logoUrl?: string;
-          timestamp: number;
-        }>;
 
-        if (!history || history.length === 0) {
+        // P0: Validate history data with Zod schema before use
+        // JSON fields can be corrupted or tampered with - never trust the structure
+        const historyResult = PreviousBrandingHistorySchema.safeParse(branding._previousBranding);
+        if (!historyResult.success) {
+          logger.warn(
+            { tenantId, errors: historyResult.error.errors },
+            'Branding history validation failed - data may be corrupted'
+          );
+          return {
+            success: false,
+            error: 'Branding history is corrupted. Cannot revert.',
+          };
+        }
+
+        const history = historyResult.data;
+
+        if (history.length === 0) {
           return {
             success: false,
             error: 'No previous branding to revert to. No changes have been made.',

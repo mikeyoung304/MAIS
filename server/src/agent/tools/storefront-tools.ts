@@ -792,17 +792,46 @@ Use when the user wants to undo a branding change they just made.`,
     const { tenantId, prisma } = context;
 
     try {
-      // Get slug for preview URL
+      // Get branding data including history for pre-check
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { slug: true },
+        select: { slug: true, branding: true },
       });
       const slug = tenant?.slug;
 
+      // Pre-check: Verify revert is possible before creating proposal
+      const branding = (tenant?.branding as Record<string, unknown>) || {};
+      const history = branding._previousBranding as Array<{
+        timestamp: number;
+      }>;
+
+      // Check if history exists
+      if (!history || history.length === 0) {
+        return {
+          success: false,
+          error: 'No previous branding to revert to. No changes have been made recently.',
+          canRevert: false,
+        };
+      }
+
+      // Check if TTL has expired (24-hour window)
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+      const previous = history[0];
+      if (Date.now() - previous.timestamp > TWENTY_FOUR_HOURS_MS) {
+        return {
+          success: false,
+          error:
+            'Previous branding state has expired. Revert is only available for 24 hours after a change.',
+          canRevert: false,
+        };
+      }
+
+      // Pre-check passed - proceed to create proposal
       const preview: Record<string, unknown> = {
         action: 'revert_branding',
         previewUrl: slug ? `/t/${slug}` : undefined,
         note: 'Reverts to the previous branding state.',
+        canRevert: true,
       };
 
       return createProposal(
