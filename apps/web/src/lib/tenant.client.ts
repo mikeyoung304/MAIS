@@ -60,6 +60,10 @@ export function isPageEnabled(
  * (with separate hero, about, gallery, testimonials, faq properties) to the
  * new PagesConfig format (with pages containing sections).
  *
+ * **Enhancement (2026-01-12):** Now merges existing page-based configs with
+ * defaults to fill gaps. Legacy tenants with partial `pages` configs get
+ * missing sections (About, Contact, etc.) from DEFAULT_PAGES_CONFIG.
+ *
  * @param config - Landing page configuration (may be undefined/null)
  * @returns Normalized PagesConfig with all pages populated
  *
@@ -69,20 +73,21 @@ export function isPageEnabled(
  * const galleryData = pages.gallery.sections[0] as GallerySection | undefined;
  */
 export function normalizeToPages(config: LandingPageConfig | null | undefined): PagesConfig {
-  // If already has pages config, return it
-  if (config?.pages) {
-    return config.pages;
-  }
-
   // Start with defaults (deep clone to avoid mutation)
   // Using structuredClone for better performance than JSON.parse/stringify
   const pages = structuredClone(DEFAULT_PAGES_CONFIG);
 
   if (!config) return pages;
 
+  // If already has pages config, merge with defaults to fill gaps
+  if (config.pages) {
+    return mergeWithDefaults(config.pages, pages);
+  }
+
   // Convert legacy hero to home page hero section
   if (config.hero) {
     const heroSection: Section = {
+      id: 'home-hero-main',
       type: 'hero',
       headline: config.hero.headline || 'Welcome',
       subheadline: config.hero.subheadline,
@@ -96,6 +101,7 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
   if (config.about?.content) {
     pages.about.sections = [
       {
+        id: 'about-text-main',
         type: 'text',
         headline: config.about.headline || 'About Us',
         content: config.about.content,
@@ -110,6 +116,7 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
   if (config.gallery?.images?.length) {
     pages.gallery.sections = [
       {
+        id: 'gallery-gallery-main',
         type: 'gallery',
         headline: config.gallery.headline || 'Our Work',
         images: config.gallery.images.map((img) => ({
@@ -126,6 +133,7 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
   if (config.testimonials?.items?.length) {
     pages.testimonials.sections = [
       {
+        id: 'testimonials-testimonials-main',
         type: 'testimonials',
         headline: config.testimonials.headline || 'What Clients Say',
         items: config.testimonials.items.map((item) => ({
@@ -144,6 +152,7 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
   if (config.faq?.items?.length) {
     pages.faq.sections = [
       {
+        id: 'faq-faq-main',
         type: 'faq',
         headline: config.faq.headline || 'FAQ',
         items: config.faq.items,
@@ -152,7 +161,124 @@ export function normalizeToPages(config: LandingPageConfig | null | undefined): 
     pages.faq.enabled = config.sections?.faq !== false;
   }
 
+  // Ensure section IDs are present for all home sections after legacy conversion
+  pages.home.sections = ensureSectionIds('home', pages.home.sections);
+
   return pages;
+}
+
+/**
+ * Merge existing page config with defaults to fill gaps.
+ * Preserves existing customizations while adding missing default sections.
+ *
+ * Strategy:
+ * - Existing pages override defaults entirely (page-level)
+ * - For home page, merge sections by ID to add missing ones
+ * - Ensure all sections have proper IDs
+ */
+function mergeWithDefaults(existing: PagesConfig, defaults: PagesConfig): PagesConfig {
+  const merged = { ...defaults };
+
+  // Copy over existing pages, but merge home specially
+  for (const [pageName, existingPage] of Object.entries(existing) as [
+    PageName,
+    typeof existing.home,
+  ][]) {
+    if (pageName === 'home') {
+      // Merge home sections: keep existing, add missing defaults by type/ID
+      merged.home = {
+        ...existingPage,
+        sections: mergeSections('home', existingPage.sections, defaults.home.sections),
+      };
+    } else {
+      // For other pages, just use existing if it exists
+      merged[pageName] = existingPage || defaults[pageName];
+    }
+  }
+
+  return merged;
+}
+
+/**
+ * Merge sections: keep existing, add missing defaults.
+ * Uses section ID and type to identify matches.
+ */
+function mergeSections(pageName: PageName, existing: Section[], defaults: Section[]): Section[] {
+  // Ensure all existing sections have IDs
+  const existingWithIds = ensureSectionIds(pageName, existing);
+
+  // Build lookup of existing section IDs and types
+  const existingIds = new Set(existingWithIds.map((s) => s.id).filter((id): id is string => !!id));
+  const existingTypes = new Set(existingWithIds.map((s) => s.type));
+
+  // Add missing default sections (by type, to avoid adding duplicate types)
+  const missingDefaults = defaults.filter((d) => {
+    // Don't add if we already have this exact ID
+    if (d.id && existingIds.has(d.id)) return false;
+    // Don't add if we already have a section of this type (e.g., don't add default hero if custom hero exists)
+    if (existingTypes.has(d.type)) return false;
+    return true;
+  });
+
+  // Ensure missing defaults also have proper IDs
+  const missingWithIds = ensureSectionIds(pageName, missingDefaults, existingIds);
+
+  return [...existingWithIds, ...missingWithIds];
+}
+
+/**
+ * Ensure all sections have proper IDs.
+ * Generates IDs in format: {page}-{type}-{qualifier}
+ *
+ * @param pageName - The page these sections belong to
+ * @param sections - Sections to process
+ * @param existingIds - Optional set of IDs already in use (for uniqueness)
+ */
+function ensureSectionIds(
+  pageName: PageName,
+  sections: Section[],
+  existingIds: Set<string> = new Set()
+): Section[] {
+  const usedIds = new Set(existingIds);
+
+  return sections.map((section) => {
+    // If section has a valid ID, keep it
+    if (section.id && !usedIds.has(section.id)) {
+      usedIds.add(section.id);
+      return section;
+    }
+
+    // Generate a new ID
+    const newId = generateSectionIdLocal(pageName, section.type, usedIds);
+    usedIds.add(newId);
+
+    return { ...section, id: newId };
+  });
+}
+
+/**
+ * Generate a unique section ID.
+ * Format: {page}-{type}-{qualifier}
+ * Qualifier is 'main' for first of type, then '2', '3', etc.
+ */
+function generateSectionIdLocal(
+  pageName: PageName,
+  sectionType: string,
+  existingIds: Set<string>
+): string {
+  const baseId = `${pageName}-${sectionType}-main`;
+
+  if (!existingIds.has(baseId)) {
+    return baseId;
+  }
+
+  // Find next available number
+  let counter = 2;
+  while (existingIds.has(`${pageName}-${sectionType}-${counter}`)) {
+    counter++;
+  }
+
+  return `${pageName}-${sectionType}-${counter}`;
 }
 
 /**

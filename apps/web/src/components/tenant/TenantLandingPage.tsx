@@ -36,8 +36,18 @@ interface TenantLandingPageProps {
  * - New page-based config (pages.home.sections)
  * - Legacy config (hero, about, testimonials, gallery, faq)
  *
+ * **Enhanced (2026-01-12):** Now uses normalizeToPages() for all configs,
+ * ensuring consistent behavior between preview and live. Section order is
+ * determined by config, not hard-coded ID lookups.
+ *
  * Returns sections split into pre-packages and post-packages groups
  * so packages can be rendered in between with special handling.
+ *
+ * Layout strategy:
+ * - Pre-packages: hero + about/text sections (build trust first)
+ * - Packages: injected by TenantLandingPage (SegmentPackagesSection)
+ * - Post-packages: testimonials, gallery, FAQ, contact (social proof after seeing offerings)
+ * - Final CTA: call-to-action at the bottom
  */
 function buildHomeSections(
   landingConfig: LandingPageConfig | undefined,
@@ -45,123 +55,46 @@ function buildHomeSections(
 ): { preSections: Section[]; postSections: Section[]; finalCta: CTASection | null } {
   // Default hero if nothing configured
   const defaultHero: HeroSection = {
+    id: 'home-hero-main',
     type: 'hero',
     headline: `Welcome to ${tenantName}`,
     subheadline: 'Book your session today.',
     ctaText: 'View Packages',
   };
 
-  // If we have new page-based config, use it directly
-  if (landingConfig?.pages?.home?.sections) {
-    const homeSections = landingConfig.pages.home.sections;
-
-    // Find hero (usually first) and CTA (usually last)
-    const heroSection = homeSections.find((s): s is HeroSection => s.type === 'hero');
-    const ctaSection = homeSections.find((s): s is CTASection => s.type === 'cta');
-    // Find "About" section by ID - more robust than finding first text section
-    // Default config creates this with id 'home-text-about'
-    const aboutSection = homeSections.find((s) => s.id === 'home-text-about');
-
-    // Pre-sections = hero + about (builds trust before showing packages)
-    const preSections: Section[] = heroSection ? [heroSection] : [defaultHero];
-    if (aboutSection) {
-      preSections.push(aboutSection);
-    }
-
-    // Post-sections = everything except hero, the about section (by ID), and cta
-    // These appear after packages: testimonials, FAQ, contact, gallery, and other text sections
-    const postSections = homeSections.filter(
-      (s) => s.type !== 'hero' && s.id !== 'home-text-about' && s.type !== 'cta'
-    );
-
-    return { preSections, postSections, finalCta: ctaSection || null };
-  }
-
-  // Legacy config handling
+  // Always normalize through normalizeToPages() for consistent behavior
+  // This handles: legacy configs, partial page-based configs, and merging with defaults
   const pages = normalizeToPages(landingConfig);
-  const preSections: Section[] = [];
-  const postSections: Section[] = [];
+  const homeSections = pages.home.sections;
 
-  // Hero from legacy config or normalized
-  if (landingConfig?.hero) {
-    preSections.push({
-      type: 'hero',
-      headline: landingConfig.hero.headline,
-      subheadline: landingConfig.hero.subheadline,
-      ctaText: landingConfig.hero.ctaText,
-      backgroundImageUrl: landingConfig.hero.backgroundImageUrl,
-    });
-  } else if (pages.home.sections.length > 0) {
-    const heroSection = pages.home.sections.find((s): s is HeroSection => s.type === 'hero');
-    if (heroSection) preSections.push(heroSection);
-    else preSections.push(defaultHero);
-  } else {
-    preSections.push(defaultHero);
-  }
+  // Find CTA section (usually rendered separately at the bottom)
+  const ctaSection = homeSections.find((s): s is CTASection => s.type === 'cta');
 
-  // Post-packages sections from legacy config
-  const legacySections = landingConfig?.sections;
+  // Find hero - first section of type 'hero'
+  const heroSection = homeSections.find((s): s is HeroSection => s.type === 'hero');
 
-  // About section
-  if (legacySections?.about && landingConfig?.about?.content) {
-    postSections.push({
-      type: 'text',
-      headline: landingConfig.about.headline,
-      content: landingConfig.about.content,
-      imageUrl: landingConfig.about.imageUrl,
-      imagePosition: landingConfig.about.imagePosition || 'left',
-    });
-  }
+  // Section types that go after packages (social proof after seeing offerings)
+  const postPackageTypes = new Set([
+    'testimonials',
+    'gallery',
+    'faq',
+    'contact',
+    'features',
+    'pricing',
+  ]);
 
-  // Testimonials section
-  if (legacySections?.testimonials && landingConfig?.testimonials?.items?.length) {
-    postSections.push({
-      type: 'testimonials',
-      headline: landingConfig.testimonials.headline,
-      items: landingConfig.testimonials.items.map((item) => ({
-        quote: item.quote,
-        authorName: item.author,
-        authorRole: item.role,
-        authorPhotoUrl: item.imageUrl,
-        rating: item.rating || 5,
-      })),
-    });
-  }
+  // Build pre-sections: hero + text sections (respecting config order)
+  const preSections: Section[] = heroSection ? [heroSection] : [defaultHero];
 
-  // Gallery section
-  if (legacySections?.gallery && landingConfig?.gallery?.images?.length) {
-    postSections.push({
-      type: 'gallery',
-      headline: landingConfig.gallery.headline,
-      images: landingConfig.gallery.images.map((img) => ({
-        url: img.url,
-        alt: img.alt || '',
-      })),
-      instagramHandle: landingConfig.gallery.instagramHandle,
-    });
-  }
+  // Add text sections that appear before packages (typically About)
+  const textSections = homeSections.filter((s) => s.type === 'text');
+  preSections.push(...textSections);
 
-  // FAQ section
-  if (legacySections?.faq && landingConfig?.faq?.items?.length) {
-    postSections.push({
-      type: 'faq',
-      headline: landingConfig.faq.headline,
-      items: landingConfig.faq.items,
-    });
-  }
+  // Build post-sections: everything else except hero, text, and CTA
+  // These render after packages in config order
+  const postSections = homeSections.filter((s) => postPackageTypes.has(s.type));
 
-  // Final CTA
-  let finalCta: CTASection | null = null;
-  if ((legacySections?.finalCta && landingConfig?.finalCta) || !legacySections) {
-    finalCta = {
-      type: 'cta',
-      headline: landingConfig?.finalCta?.headline || 'Ready to book?',
-      subheadline: landingConfig?.finalCta?.subheadline,
-      ctaText: landingConfig?.finalCta?.ctaText || 'Get Started Today',
-    };
-  }
-
-  return { preSections, postSections, finalCta };
+  return { preSections, postSections, finalCta: ctaSection || null };
 }
 
 /**

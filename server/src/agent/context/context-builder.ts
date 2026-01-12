@@ -21,6 +21,24 @@ import { sanitizeError } from '../../lib/core/error-sanitizer';
 export type OnboardingState = 'needs_stripe' | 'needs_packages' | 'needs_bookings' | 'ready';
 
 /**
+ * Storefront completion status for agent guidance
+ */
+export interface StorefrontCompletionStatus {
+  /** Overall completion percentage (0-100) */
+  percentComplete: number;
+  /** Number of fields still with placeholder content */
+  unfilledCount: number;
+  /** Whether tenant is using default template (no customization yet) */
+  isShowingDefaults: boolean;
+  /** Whether tenant has a draft in progress */
+  hasDraft: boolean;
+  /** Suggested next section to work on */
+  nextSuggestedSection: string | null;
+  /** Summary message for agent context */
+  summary: string;
+}
+
+/**
  * Agent session context
  */
 export interface AgentSessionContext {
@@ -36,7 +54,14 @@ export interface AgentSessionContext {
     totalBookings: number;
     revenueThisMonth: number;
   };
+  /** Storefront completion tracking for guided onboarding */
+  storefrontCompletion?: StorefrontCompletionStatus;
 }
+
+/**
+ * Placeholder regex pattern - matches [Text Like This]
+ */
+const PLACEHOLDER_REGEX = /\[[^\]]+\]/;
 
 /**
  * Build session context for agent initialization
@@ -54,6 +79,8 @@ export async function buildSessionContext(
         name: true,
         slug: true,
         stripeOnboarded: true,
+        landingPageConfig: true,
+        landingPageConfigDraft: true,
         // Explicitly exclude sensitive fields
         // passwordHash: false, etc. (handled by select)
       },
@@ -96,6 +123,12 @@ export async function buildSessionContext(
         }),
       ]);
 
+    // Build storefront completion status for guided onboarding
+    const storefrontCompletion = buildStorefrontCompletionStatus(
+      tenant.landingPageConfigDraft,
+      tenant.landingPageConfig
+    );
+
     // Build context prompt
     const contextPrompt = buildContextPrompt({
       businessName: sanitizeForContext(tenant.name, 100),
@@ -106,6 +139,7 @@ export async function buildSessionContext(
       totalBookings,
       revenueThisMonth: revenueThisMonth._sum?.totalPrice ?? 0,
       packages: activePackages,
+      storefrontCompletion,
     });
 
     return {
@@ -121,11 +155,136 @@ export async function buildSessionContext(
         totalBookings,
         revenueThisMonth: revenueThisMonth._sum?.totalPrice ?? 0,
       },
+      storefrontCompletion,
     };
   } catch (error) {
     logger.error({ error: sanitizeError(error), tenantId }, 'Error building session context');
     throw error;
   }
+}
+
+/**
+ * Build storefront completion status for agent guidance.
+ *
+ * This provides a quick overview of what sections need work,
+ * without the full detail of get_unfilled_placeholders tool.
+ * Agent can use this to guide users through setup.
+ */
+function buildStorefrontCompletionStatus(
+  draftConfig: unknown,
+  liveConfig: unknown
+): StorefrontCompletionStatus {
+  // Determine what config to analyze (draft > live > defaults)
+  const isShowingDefaults = !draftConfig && !liveConfig;
+  const hasDraft = !!draftConfig;
+  const workingConfig = draftConfig || liveConfig;
+
+  // Parse config safely
+  let pages: Record<
+    string,
+    { sections: Array<{ type: string; id?: string } & Record<string, unknown>> }
+  >;
+  try {
+    if (workingConfig && typeof workingConfig === 'object') {
+      const cfg = workingConfig as { pages?: unknown };
+      pages = (cfg.pages as typeof pages) || getDefaultPages();
+    } else {
+      pages = getDefaultPages();
+    }
+  } catch {
+    pages = getDefaultPages();
+  }
+
+  // Count total editable fields and filled fields
+  let totalFields = 0;
+  let filledFields = 0;
+  let firstUnfilledSection: string | null = null;
+
+  const editableKeys = [
+    'headline',
+    'subheadline',
+    'content',
+    'ctaText',
+    'email',
+    'phone',
+    'address',
+    'hours',
+  ];
+
+  for (const [pageName, pageConfig] of Object.entries(pages)) {
+    for (const section of pageConfig.sections || []) {
+      const sectionId = section.id || `${pageName}-${section.type}-main`;
+
+      for (const key of editableKeys) {
+        const value = section[key];
+        if (typeof value === 'string' && value.length > 0) {
+          totalFields++;
+          if (!PLACEHOLDER_REGEX.test(value)) {
+            filledFields++;
+          } else if (!firstUnfilledSection) {
+            firstUnfilledSection = sectionId;
+          }
+        }
+      }
+
+      // Also check array items (testimonials, FAQ)
+      const items = section['items'] as Array<Record<string, unknown>> | undefined;
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          for (const [key, value] of Object.entries(item)) {
+            if (typeof value === 'string' && value.length > 0) {
+              totalFields++;
+              if (!PLACEHOLDER_REGEX.test(value)) {
+                filledFields++;
+              } else if (!firstUnfilledSection) {
+                firstUnfilledSection = sectionId;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const percentComplete = totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 100;
+  const unfilledCount = totalFields - filledFields;
+
+  // Build summary
+  let summary: string;
+  if (isShowingDefaults) {
+    summary = `Default template. ${unfilledCount} fields to customize.`;
+  } else if (unfilledCount === 0) {
+    summary = 'All content filled! Ready to publish.';
+  } else {
+    summary = `${percentComplete}% complete. ${unfilledCount} fields remaining.`;
+  }
+
+  return {
+    percentComplete,
+    unfilledCount,
+    isShowingDefaults,
+    hasDraft,
+    nextSuggestedSection: firstUnfilledSection,
+    summary,
+  };
+}
+
+/**
+ * Get default pages structure for completion tracking
+ */
+function getDefaultPages(): Record<string, { sections: Array<{ type: string; id?: string }> }> {
+  return {
+    home: {
+      sections: [
+        { type: 'hero', id: 'home-hero-main' },
+        { type: 'text', id: 'home-text-about' },
+        { type: 'testimonials', id: 'home-testimonials-main' },
+        { type: 'faq', id: 'home-faq-main' },
+        { type: 'contact', id: 'home-contact-main' },
+        { type: 'cta', id: 'home-cta-main' },
+      ],
+    },
+  };
 }
 
 /**
@@ -140,6 +299,7 @@ function buildContextPrompt(data: {
   totalBookings: number;
   revenueThisMonth: number;
   packages: Array<{ name: string; slug: string; basePrice: number }>;
+  storefrontCompletion?: StorefrontCompletionStatus;
 }): string {
   const {
     businessName,
@@ -150,6 +310,7 @@ function buildContextPrompt(data: {
     totalBookings,
     revenueThisMonth,
     packages,
+    storefrontCompletion,
   } = data;
 
   // Format revenue
@@ -181,6 +342,16 @@ function buildContextPrompt(data: {
     onboardingHint = '\n**Next Step:** Help them share their booking link.';
   }
 
+  // Build storefront status section
+  let storefrontSection = '';
+  if (storefrontCompletion) {
+    storefrontSection = `
+**Storefront:**
+- ${storefrontCompletion.summary}
+- ${storefrontCompletion.hasDraft ? 'Draft in progress' : 'No draft changes'}
+${storefrontCompletion.nextSuggestedSection ? `- Next section: ${storefrontCompletion.nextSuggestedSection}` : ''}`;
+  }
+
   return `## Your Business Context
 
 You are helping **${businessName}** (${businessSlug}).
@@ -193,7 +364,7 @@ You are helping **${businessName}** (${businessSlug}).
 **Quick Stats:**
 - Total bookings: ${totalBookings}
 - This month: ${revenueFormatted}
-${packagesSection}${onboardingHint}
+${packagesSection}${storefrontSection}${onboardingHint}
 
 For current details, use your read tools.`;
 }
