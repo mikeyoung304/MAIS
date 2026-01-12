@@ -1,12 +1,4 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'HANDLED - Investor One-Pager',
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+'use client';
 
 export default function OnePagerPage() {
   return (
