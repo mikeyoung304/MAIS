@@ -45,7 +45,7 @@ export default function OnePagerPage() {
 
         .one-pager-page {
           min-height: 100vh;
-          padding: 48px 56px;
+          padding: 16px 24px;
           display: flex;
           flex-direction: column;
           max-width: 1400px;
@@ -57,21 +57,21 @@ export default function OnePagerPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 32px;
-          padding-bottom: 16px;
+          margin-bottom: 10px;
+          padding-bottom: 8px;
           border-bottom: 1px solid var(--border);
           flex-shrink: 0;
         }
 
         .one-pager-logo {
           font-family: 'Playfair Display', serif;
-          font-size: 28px;
+          font-size: 24px;
           font-weight: 700;
           letter-spacing: -0.5px;
         }
 
         .one-pager-tagline {
-          font-size: 13px;
+          font-size: 12px;
           color: var(--sage);
           font-weight: 500;
         }
@@ -88,17 +88,17 @@ export default function OnePagerPage() {
 
         .one-pager-content h2 {
           font-family: 'Playfair Display', serif;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 600;
-          margin-bottom: 16px;
+          margin-bottom: 8px;
           line-height: 1.2;
         }
 
         .one-pager-content h3 {
           font-family: 'Playfair Display', serif;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 600;
-          margin-bottom: 12px;
+          margin-bottom: 6px;
         }
 
         .one-pager-content h4 {
@@ -119,7 +119,7 @@ export default function OnePagerPage() {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 28px;
+          gap: 6px;
           min-height: 0;
         }
 
@@ -127,14 +127,14 @@ export default function OnePagerPage() {
         .one-pager-top-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 28px;
+          gap: 10px;
         }
 
         /* Problem Section */
         .one-pager-problem {
           background: var(--surface-alt);
-          border-radius: 20px;
-          padding: 20px;
+          border-radius: 14px;
+          padding: 10px 12px;
           border: 1px solid var(--border);
           box-shadow:
             0 10px 15px -3px rgba(0, 0, 0, 0.3),
@@ -164,9 +164,9 @@ export default function OnePagerPage() {
         /* Screenshot */
         .one-pager-screenshot {
           background: linear-gradient(135deg, var(--surface-alt) 0%, #1f1f23 100%);
-          border-radius: 20px;
+          border-radius: 14px;
           border: 1px solid var(--border);
-          padding: 18px;
+          padding: 12px;
           box-shadow:
             0 20px 25px -5px rgba(0, 0, 0, 0.3),
             0 10px 10px -5px rgba(0, 0, 0, 0.2);
@@ -246,20 +246,20 @@ export default function OnePagerPage() {
         .one-pager-solution-row {
           display: grid;
           grid-template-columns: 1fr 2fr;
-          gap: 28px;
+          gap: 10px;
           align-items: start;
         }
 
         .one-pager-solution-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
+          gap: 8px;
         }
 
         .one-pager-feature-card {
           background: var(--surface-alt);
           border-radius: 16px;
-          padding: 14px 16px;
+          padding: 10px 12px;
           border: 1px solid var(--border);
           box-shadow:
             0 4px 6px -1px rgba(0, 0, 0, 0.2),
@@ -280,11 +280,11 @@ export default function OnePagerPage() {
             rgba(69, 179, 127, 0.05) 100%
           );
           border: 1px solid rgba(69, 179, 127, 0.3);
-          border-radius: 20px;
-          padding: 20px 24px;
+          border-radius: 14px;
+          padding: 10px 14px;
           display: grid;
           grid-template-columns: 1fr 1.5fr;
-          gap: 28px;
+          gap: 12px;
           align-items: center;
           box-shadow:
             0 10px 15px -3px rgba(0, 0, 0, 0.2),
@@ -328,7 +328,7 @@ export default function OnePagerPage() {
         .one-pager-bottom-row {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 28px;
+          gap: 10px;
         }
 
         /* Pricing */
@@ -429,9 +429,9 @@ export default function OnePagerPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 20px;
+          padding-top: 10px;
           border-top: 1px solid var(--border);
-          margin-top: 24px;
+          margin-top: 8px;
           flex-shrink: 0;
         }
 
@@ -541,7 +541,7 @@ export default function OnePagerPage() {
 
         @page {
           size: letter landscape;
-          margin: 0.4in;
+          margin: 0;
         }
       `}</style>
 
