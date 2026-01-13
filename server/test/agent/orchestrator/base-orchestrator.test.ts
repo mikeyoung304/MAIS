@@ -225,8 +225,8 @@ describe('DEFAULT_ORCHESTRATOR_CONFIG', () => {
     expect(DEFAULT_ORCHESTRATOR_CONFIG).toHaveProperty('maxHistoryMessages');
   });
 
-  it('should use Claude Sonnet model', () => {
-    expect(DEFAULT_ORCHESTRATOR_CONFIG.model).toContain('claude');
+  it('should use Gemini Flash model', () => {
+    expect(DEFAULT_ORCHESTRATOR_CONFIG.model).toContain('gemini');
   });
 
   it('should have reasonable token limit', () => {

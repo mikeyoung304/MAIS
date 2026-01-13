@@ -7,7 +7,7 @@
  * - Tool execution with tenant isolation
  * - T2 soft-confirm proposal lifecycle
  *
- * Uses real Prisma with mocked Anthropic API.
+ * Uses real Prisma with mocked Gemini API.
  *
  * @see server/src/agent/orchestrator/admin-orchestrator.ts
  */
@@ -15,17 +15,21 @@
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
 import {
-  createMockAnthropicClient,
+  createMockGeminiClient,
   createTextResponse,
   createToolUseResponse,
-} from '../helpers/mock-anthropic';
+} from '../helpers/mock-gemini';
 
-// Mock the Anthropic SDK before imports
-const mockClient = createMockAnthropicClient([createTextResponse('Hello!')]);
+// Mock the LLM module's getVertexClient before imports
+const mockClient = createMockGeminiClient([createTextResponse('Hello!')]);
 
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn().mockImplementation(() => mockClient),
-}));
+vi.mock('../../src/llm', async () => {
+  const actual = await vi.importActual('../../src/llm');
+  return {
+    ...actual,
+    getVertexClient: vi.fn(() => mockClient),
+  };
+});
 
 // Mock logger to reduce noise
 vi.mock('../../src/lib/core/logger', () => ({
@@ -55,7 +59,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
     await ctx.tenants.tenantA.create();
 
     // Reset mock responses
-    mockClient.messages.create.mockClear();
+    mockClient.models.generateContent.mockClear();
   });
 
   afterEach(async () => {
@@ -75,7 +79,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Setup mock
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse('What should we knock out today?')
       );
 
@@ -96,11 +100,11 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // First message
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello!'));
+      mockClient.models.generateContent.mockResolvedValueOnce(createTextResponse('Hello!'));
       const response1 = await orchestrator.chat(tenantId, 'new-session', 'Hi there');
 
       // Second message
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse('I can help with packages.')
       );
       await orchestrator.chat(tenantId, response1.sessionId, 'Can you help with packages?');
@@ -121,11 +125,11 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       const tenantBId = ctx.tenants.tenantB.id;
 
       // Create session for tenant A
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello A!'));
+      mockClient.models.generateContent.mockResolvedValueOnce(createTextResponse('Hello A!'));
       const responseA = await orchestrator.chat(tenantAId, 'new-session', 'Hello');
 
       // Try to access from tenant B (should create new session)
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello B!'));
+      mockClient.models.generateContent.mockResolvedValueOnce(createTextResponse('Hello B!'));
       const responseB = await orchestrator.chat(tenantBId, responseA.sessionId, 'Hello');
 
       expect(responseB.sessionId).not.toBe(responseA.sessionId);
@@ -158,7 +162,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       });
 
       // Setup mock
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse("Let's get your business set up!")
       );
 
@@ -182,7 +186,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       });
 
       // Setup mock
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse('What should we knock out today?')
       );
 
@@ -203,22 +207,22 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // First call builds context
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello!'));
+      mockClient.models.generateContent.mockResolvedValueOnce(createTextResponse('Hello!'));
       const response1 = await orchestrator.chat(tenantId, 'new-session', 'Hello');
 
       // Second call should use cached context
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Sure!'));
+      mockClient.models.generateContent.mockResolvedValueOnce(createTextResponse('Sure!'));
       await orchestrator.chat(tenantId, response1.sessionId, 'Help me');
 
       // Both calls should succeed without error
-      expect(mockClient.messages.create).toHaveBeenCalledTimes(2);
+      expect(mockClient.models.generateContent).toHaveBeenCalledTimes(2);
     });
 
     it('should invalidate cache when write tools execute', async () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Setup: First call, then a write tool, then another call
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(createTextResponse('Hello!'))
         .mockResolvedValueOnce(createTextResponse('Done!'));
 
@@ -231,7 +235,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       // Second call should rebuild context
       await orchestrator.chat(tenantId, response1.sessionId, 'Thanks');
 
-      expect(mockClient.messages.create).toHaveBeenCalledTimes(2);
+      expect(mockClient.models.generateContent).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -255,7 +259,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       });
 
       // Mock tool call
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(
           createToolUseResponse('get_packages', {}, 'Let me check your packages.')
         )
@@ -280,7 +284,7 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Create session first
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello!'));
+      mockClient.models.generateContent.mockResolvedValueOnce(createTextResponse('Hello!'));
       const response = await orchestrator.chat(tenantId, 'new-session', 'Hi');
 
       // Get greeting
@@ -299,24 +303,30 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
     it('should respect tier budgets', async () => {
       const tenantId = ctx.tenants.tenantA.id;
 
-      // Mock response that triggers many T1 tools
+      // Mock response that triggers many T1 tools (Gemini format)
       const manyToolsResponse = {
-        id: 'msg_many',
-        type: 'message' as const,
-        role: 'assistant' as const,
-        content: Array.from({ length: 15 }, (_, i) => ({
-          type: 'tool_use' as const,
-          id: `tool_${i}`,
-          name: 'get_packages',
-          input: {},
-        })),
-        model: 'claude-sonnet-4-20250514',
-        stop_reason: 'tool_use' as const,
-        stop_sequence: null,
-        usage: { input_tokens: 100, output_tokens: 100 },
+        candidates: [
+          {
+            content: {
+              role: 'model' as const,
+              parts: Array.from({ length: 15 }, () => ({
+                functionCall: {
+                  name: 'get_packages',
+                  args: {},
+                },
+              })),
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 100,
+          candidatesTokenCount: 100,
+          totalTokenCount: 200,
+        },
       };
 
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(manyToolsResponse)
         .mockResolvedValueOnce(createTextResponse('Done!'));
 
@@ -353,8 +363,11 @@ describe.sequential('Admin Chat Flow - Integration Tests', () => {
     it('should handle API errors gracefully', async () => {
       const tenantId = ctx.tenants.tenantA.id;
 
+      // Reset mock to ensure clean state
+      mockClient.models.generateContent.mockReset();
+
       // Mock API error
-      mockClient.messages.create.mockRejectedValueOnce(new Error('API unavailable'));
+      mockClient.models.generateContent.mockRejectedValueOnce(new Error('API unavailable'));
 
       await expect(orchestrator.chat(tenantId, 'new-session', 'Hello')).rejects.toThrow(
         'Failed to communicate with AI assistant'

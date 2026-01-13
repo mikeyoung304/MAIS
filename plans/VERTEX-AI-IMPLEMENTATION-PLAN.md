@@ -1047,17 +1047,21 @@ export const DEFAULT_TRACER_CONFIG: TracerConfig = {
 
 ### Phase 1 Checklist
 
-- [ ] `server/src/llm/vertex-client.ts` created
-- [ ] `server/src/llm/message-adapter.ts` created
-- [ ] `server/src/llm/pricing.ts` created
-- [ ] `server/src/llm/index.ts` created (exports)
-- [ ] `base-orchestrator.ts` updated to use LLM module
-- [ ] `customer-chat-orchestrator.ts` updated
-- [ ] `onboarding-orchestrator.ts` updated
-- [ ] `admin-orchestrator.ts` updated
-- [ ] Model configuration updated to use GeminiModel type
-- [ ] Cost tracking updated with correct pricing
-- [ ] `npm run typecheck` passes
+- [x] `server/src/llm/vertex-client.ts` created
+- [x] `server/src/llm/message-adapter.ts` created
+- [x] `server/src/llm/pricing.ts` created
+- [x] `server/src/llm/index.ts` created (exports)
+- [x] `base-orchestrator.ts` updated to use LLM module
+- [x] `customer-chat-orchestrator.ts` updated (inherits from base)
+- [x] `onboarding-orchestrator.ts` updated (inherits from base)
+- [x] `admin-orchestrator.ts` updated (inherits from base)
+- [x] Model configuration updated to use GeminiModel type
+- [x] Cost tracking updated with correct pricing
+- [x] `npm run typecheck` passes
+- [x] Test mocks updated from Anthropic to Gemini format
+- [x] `evaluator.ts` updated to use Gemini
+
+**Phase 1 Completed**: 2026-01-13
 
 ---
 

@@ -125,11 +125,21 @@ export interface TraceMetrics {
 // Tracer Configuration Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Supported model IDs for cost calculation */
+/**
+ * Supported model IDs for cost calculation.
+ *
+ * Includes both legacy Anthropic models (for historical traces) and
+ * current Gemini models (post-migration).
+ */
 export type SupportedModel =
+  // Legacy Anthropic models (historical traces)
   | 'claude-sonnet-4-20250514'
   | 'claude-haiku-35-20241022'
-  | 'claude-opus-4-20250514';
+  | 'claude-opus-4-20250514'
+  // Gemini models (post-migration)
+  | 'gemini-3-flash-preview'
+  | 'gemini-2.5-flash'
+  | 'gemini-3-pro-preview';
 
 /**
  * Configuration for the conversation tracer.
@@ -149,7 +159,7 @@ export interface TracerConfig {
 export const DEFAULT_TRACER_CONFIG: TracerConfig = {
   autoFlagHighTurnCount: 8,
   autoFlagHighLatencyMs: 5000,
-  model: 'claude-sonnet-4-20250514',
+  model: 'gemini-3-flash-preview', // Updated to Gemini
   retentionDays: 90,
 };
 
@@ -158,10 +168,20 @@ export const DEFAULT_TRACER_CONFIG: TracerConfig = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Cost per 1K tokens for each model (Anthropic pricing as of 2025).
+ * Cost per 1K tokens for each model.
  * Used for estimating conversation costs.
+ *
+ * Includes:
+ * - Gemini pricing (current, from Vertex AI docs)
+ * - Legacy Anthropic pricing (for historical traces)
  */
 export const COST_PER_1K_TOKENS: Record<SupportedModel, { input: number; output: number }> = {
+  // Gemini models (current - from Vertex AI pricing)
+  'gemini-3-flash-preview': { input: 0.0005, output: 0.003 }, // $0.50/$3.00 per 1M
+  'gemini-2.5-flash': { input: 0.0003, output: 0.0025 }, // $0.30/$2.50 per 1M
+  'gemini-3-pro-preview': { input: 0.002, output: 0.012 }, // $2.00/$12.00 per 1M
+
+  // Legacy Anthropic models (for historical traces)
   'claude-sonnet-4-20250514': { input: 0.003, output: 0.015 },
   'claude-haiku-35-20241022': { input: 0.00025, output: 0.00125 },
   'claude-opus-4-20250514': { input: 0.015, output: 0.075 },

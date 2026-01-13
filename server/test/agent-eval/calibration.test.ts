@@ -280,18 +280,24 @@ describe('Calibration Set Validation', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Integration Tests (API calls - slow, requires ANTHROPIC_API_KEY)
+// Integration Tests (API calls - slow, requires GCP Application Default Credentials)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Calibration Integration Tests', () => {
   let evaluator: ConversationEvaluator;
-  let hasApiKey: boolean;
+  let hasCredentials: boolean;
 
   beforeAll(() => {
-    hasApiKey = !!process.env.ANTHROPIC_API_KEY;
-    if (hasApiKey) {
+    // Gemini uses Application Default Credentials (ADC)
+    // Check if we're in a GCP environment or have credentials set up
+    hasCredentials = !!(
+      process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+      process.env.GOOGLE_CLOUD_PROJECT ||
+      process.env.RUN_CALIBRATION_TESTS === 'true'
+    );
+    if (hasCredentials) {
       evaluator = createEvaluator({
-        model: 'claude-haiku-35-20241022',
+        model: 'gemini-2.5-flash', // Stable model for calibration tests
         temperature: 0.1,
         timeoutMs: 60000,
       });
@@ -489,29 +495,22 @@ describe('Calibration Integration Tests', () => {
 
 describe('Evaluator Smoke Tests', () => {
   it('should create evaluator without throwing', () => {
-    // Skip if no API key
-    if (!process.env.ANTHROPIC_API_KEY) {
-      expect(true).toBe(true);
-      return;
-    }
-
+    // Gemini uses ADC (Application Default Credentials), so it should
+    // always create successfully - actual auth happens at API call time
     const evaluator = createEvaluator();
     expect(evaluator).toBeInstanceOf(ConversationEvaluator);
   });
 
-  it('should throw if ANTHROPIC_API_KEY is missing and no client provided', () => {
-    const originalKey = process.env.ANTHROPIC_API_KEY;
-    delete process.env.ANTHROPIC_API_KEY;
-
-    try {
-      // Updated message after DI fix - now mentions that no client was provided
-      expect(() => createEvaluator()).toThrow(
-        'ANTHROPIC_API_KEY required when no Anthropic client provided'
-      );
-    } finally {
-      if (originalKey) {
-        process.env.ANTHROPIC_API_KEY = originalKey;
-      }
-    }
+  it('should create evaluator with custom config', () => {
+    // Verify config override works
+    const evaluator = createEvaluator(undefined, {
+      model: 'gemini-3-flash-preview',
+      temperature: 0.2,
+      maxTokens: 4096,
+    });
+    expect(evaluator).toBeInstanceOf(ConversationEvaluator);
+    expect(evaluator['config'].model).toBe('gemini-3-flash-preview');
+    expect(evaluator['config'].temperature).toBe(0.2);
+    expect(evaluator['config'].maxTokens).toBe(4096);
   });
 });

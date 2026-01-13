@@ -1,162 +1,122 @@
 /**
  * Evaluator DI Tests
  *
- * Tests for the ConversationEvaluator dependency injection fixes (P1-583).
+ * Tests for the ConversationEvaluator dependency injection.
  * Verifies that:
- * 1. Evaluator accepts injected Anthropic client
- * 2. Evaluator throws if no API key and no client provided
- * 3. Default config is applied correctly
- * 4. Config overrides work
+ * 1. Evaluator accepts injected Gemini client
+ * 2. Default config is applied correctly
+ * 3. Config overrides work
  *
  * @see plans/agent-eval-remediation-plan.md Phase 1.5
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mockDeep } from 'vitest-mock-extended';
-import Anthropic from '@anthropic-ai/sdk';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { GoogleGenAI } from '@google/genai';
 import { ConversationEvaluator, createEvaluator } from '../../src/agent/evals/evaluator';
+import { createMockGeminiClient, createTextResponse } from '../helpers/mock-gemini';
+import { GEMINI_MODELS } from '../../src/llm';
+
+// Mock the LLM module to prevent ADC initialization during tests
+vi.mock('../../src/llm', async () => {
+  const actual = await vi.importActual('../../src/llm');
+  return {
+    ...actual,
+    getVertexClient: vi.fn(() => createMockGeminiClient([createTextResponse('{}')])),
+  };
+});
 
 describe('ConversationEvaluator DI', () => {
-  const originalApiKey = process.env.ANTHROPIC_API_KEY;
-
   beforeEach(() => {
-    // Clear mocks between tests
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    // Restore env var
-    if (originalApiKey) {
-      process.env.ANTHROPIC_API_KEY = originalApiKey;
-    } else {
-      delete process.env.ANTHROPIC_API_KEY;
-    }
-  });
-
   describe('constructor', () => {
-    it('should accept injected Anthropic client', () => {
-      const mockAnthropic = mockDeep<Anthropic>();
-      const evaluator = new ConversationEvaluator(mockAnthropic);
+    it('should accept injected Gemini client', () => {
+      const mockGemini = createMockGeminiClient([createTextResponse('{}')]);
+      const evaluator = new ConversationEvaluator(mockGemini as unknown as GoogleGenAI);
 
       expect(evaluator).toBeDefined();
       // Verify the evaluator was created successfully with the mock client
-      expect(evaluator['anthropic']).toBe(mockAnthropic);
-    });
-
-    it('should throw if no API key and no client provided', () => {
-      delete process.env.ANTHROPIC_API_KEY;
-
-      expect(() => new ConversationEvaluator()).toThrow(
-        'ANTHROPIC_API_KEY required when no Anthropic client provided'
-      );
-    });
-
-    it('should create default client when API key is set', () => {
-      process.env.ANTHROPIC_API_KEY = 'test-api-key';
-
-      const evaluator = new ConversationEvaluator();
-
-      expect(evaluator).toBeDefined();
-      expect(evaluator['anthropic']).toBeInstanceOf(Anthropic);
+      expect(evaluator['gemini']).toBe(mockGemini);
     });
 
     it('should use default config when not provided', () => {
-      const mockAnthropic = mockDeep<Anthropic>();
-      const evaluator = new ConversationEvaluator(mockAnthropic);
+      const mockGemini = createMockGeminiClient([createTextResponse('{}')]);
+      const evaluator = new ConversationEvaluator(mockGemini as unknown as GoogleGenAI);
 
-      // Verify default config is applied
-      expect(evaluator['config'].model).toBe('claude-haiku-4-5');
+      // Verify default config is applied (using Gemini 2.5 Flash stable for evals)
+      expect(evaluator['config'].model).toBe(GEMINI_MODELS.FLASH_STABLE);
       expect(evaluator['config'].maxTokens).toBe(2048);
       expect(evaluator['config'].temperature).toBe(0.1);
       expect(evaluator['config'].timeoutMs).toBe(30000);
     });
 
     it('should allow config override', () => {
-      const mockAnthropic = mockDeep<Anthropic>();
-      const evaluator = new ConversationEvaluator(mockAnthropic, {
-        model: 'claude-sonnet-4-20250514',
+      const mockGemini = createMockGeminiClient([createTextResponse('{}')]);
+      const evaluator = new ConversationEvaluator(mockGemini as unknown as GoogleGenAI, {
+        model: GEMINI_MODELS.PRO,
         maxTokens: 4096,
         temperature: 0.2,
       });
 
-      expect(evaluator['config'].model).toBe('claude-sonnet-4-20250514');
+      expect(evaluator['config'].model).toBe(GEMINI_MODELS.PRO);
       expect(evaluator['config'].maxTokens).toBe(4096);
       expect(evaluator['config'].temperature).toBe(0.2);
       // Default for non-overridden values
       expect(evaluator['config'].timeoutMs).toBe(30000);
     });
 
-    it('should prioritize injected client over env var', () => {
-      process.env.ANTHROPIC_API_KEY = 'should-not-be-used';
-      const mockAnthropic = mockDeep<Anthropic>();
-
-      const evaluator = new ConversationEvaluator(mockAnthropic);
+    it('should prioritize injected client over default', () => {
+      const mockGemini = createMockGeminiClient([createTextResponse('{}')]);
+      const evaluator = new ConversationEvaluator(mockGemini as unknown as GoogleGenAI);
 
       // Should use the injected mock, not create a new client
-      expect(evaluator['anthropic']).toBe(mockAnthropic);
+      expect(evaluator['gemini']).toBe(mockGemini);
     });
   });
 
   describe('createEvaluator factory', () => {
     it('should create evaluator with injected client', () => {
-      const mockAnthropic = mockDeep<Anthropic>();
-      const evaluator = createEvaluator(mockAnthropic);
+      const mockGemini = createMockGeminiClient([createTextResponse('{}')]);
+      const evaluator = createEvaluator(mockGemini as unknown as GoogleGenAI);
 
       expect(evaluator).toBeInstanceOf(ConversationEvaluator);
-      expect(evaluator['anthropic']).toBe(mockAnthropic);
+      expect(evaluator['gemini']).toBe(mockGemini);
     });
 
     it('should create evaluator with config only', () => {
-      process.env.ANTHROPIC_API_KEY = 'test-key';
-
-      const evaluator = createEvaluator(undefined, { model: 'claude-sonnet-4-20250514' });
+      const evaluator = createEvaluator(undefined, { model: GEMINI_MODELS.PRO });
 
       expect(evaluator).toBeInstanceOf(ConversationEvaluator);
-      expect(evaluator['config'].model).toBe('claude-sonnet-4-20250514');
+      expect(evaluator['config'].model).toBe(GEMINI_MODELS.PRO);
     });
 
     it('should create evaluator with both client and config', () => {
-      const mockAnthropic = mockDeep<Anthropic>();
-      const evaluator = createEvaluator(mockAnthropic, { temperature: 0.5 });
+      const mockGemini = createMockGeminiClient([createTextResponse('{}')]);
+      const evaluator = createEvaluator(mockGemini as unknown as GoogleGenAI, { temperature: 0.5 });
 
-      expect(evaluator['anthropic']).toBe(mockAnthropic);
+      expect(evaluator['gemini']).toBe(mockGemini);
       expect(evaluator['config'].temperature).toBe(0.5);
     });
   });
 
   describe('evaluate with mock client', () => {
     it('should call mock client correctly', async () => {
-      const mockAnthropic = mockDeep<Anthropic>();
-
-      // Set up mock response
-      mockAnthropic.messages.create.mockResolvedValue({
-        id: 'msg_test',
-        type: 'message',
-        role: 'assistant',
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              dimensions: [
-                { dimension: 'effectiveness', score: 8, reasoning: 'Good', confidence: 0.9 },
-                { dimension: 'experience', score: 7, reasoning: 'Smooth', confidence: 0.85 },
-                { dimension: 'safety', score: 9, reasoning: 'Safe', confidence: 0.95 },
-              ],
-              overallScore: 8,
-              overallConfidence: 0.9,
-              summary: 'Good conversation',
-              flagged: false,
-              flagReason: null,
-            }),
-          },
+      const mockResponse = JSON.stringify({
+        dimensions: [
+          { dimension: 'effectiveness', score: 8, reasoning: 'Good', confidence: 0.9 },
+          { dimension: 'experience', score: 7, reasoning: 'Smooth', confidence: 0.85 },
+          { dimension: 'safety', score: 9, reasoning: 'Safe', confidence: 0.95 },
         ],
-        model: 'claude-haiku-4-5',
-        stop_reason: 'end_turn',
-        stop_sequence: null,
-        usage: { input_tokens: 100, output_tokens: 50 },
-      } as any);
+        overallScore: 8,
+        overallConfidence: 0.9,
+        summary: 'Good conversation',
+        flagged: false,
+        flagReason: null,
+      });
 
-      const evaluator = new ConversationEvaluator(mockAnthropic);
+      const mockGemini = createMockGeminiClient([createTextResponse(mockResponse)]);
+      const evaluator = new ConversationEvaluator(mockGemini as unknown as GoogleGenAI);
 
       const result = await evaluator.evaluate({
         traceId: 'trace-123',
@@ -168,7 +128,7 @@ describe('ConversationEvaluator DI', () => {
       });
 
       // Verify the mock was called
-      expect(mockAnthropic.messages.create).toHaveBeenCalledTimes(1);
+      expect(mockGemini.models.generateContent).toHaveBeenCalledTimes(1);
 
       // Verify result structure
       expect(result.overallScore).toBeGreaterThanOrEqual(0);
@@ -177,13 +137,11 @@ describe('ConversationEvaluator DI', () => {
     });
 
     it('should handle evaluation errors gracefully', async () => {
-      const mockAnthropic = mockDeep<Anthropic>();
+      const mockGemini = createMockGeminiClient([createTextResponse('invalid json')]);
+      // Make the mock reject
+      mockGemini.models.generateContent.mockRejectedValueOnce(new Error('Request failed'));
 
-      // Note: Using neutral error message without retryable keywords
-      // See: docs/solutions/patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md
-      mockAnthropic.messages.create.mockRejectedValue(new Error('Request failed'));
-
-      const evaluator = new ConversationEvaluator(mockAnthropic);
+      const evaluator = new ConversationEvaluator(mockGemini as unknown as GoogleGenAI);
 
       const result = await evaluator.evaluate({
         traceId: 'trace-123',

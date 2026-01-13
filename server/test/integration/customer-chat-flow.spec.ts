@@ -6,7 +6,7 @@
  * - Session management and tenant isolation
  * - Proposal lifecycle (create → confirm → execute)
  *
- * Uses real Prisma with mocked Anthropic API.
+ * Uses real Prisma with mocked Gemini API.
  *
  * @see server/src/agent/orchestrator/customer-chat-orchestrator.ts
  * @see server/src/agent/customer/customer-tools.ts
@@ -15,18 +15,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
 import {
-  createMockAnthropicClient,
+  createMockGeminiClient,
   createTextResponse,
   createToolUseResponse,
   MOCK_RESPONSES,
-} from '../helpers/mock-anthropic';
+} from '../helpers/mock-gemini';
 
-// Mock the Anthropic SDK before imports
-const mockClient = createMockAnthropicClient([MOCK_RESPONSES.greeting]);
+// Mock the LLM module's getVertexClient before imports
+const mockClient = createMockGeminiClient([MOCK_RESPONSES.greeting]);
 
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn().mockImplementation(() => mockClient),
-}));
+vi.mock('../../src/llm', async () => {
+  const actual = await vi.importActual('../../src/llm');
+  return {
+    ...actual,
+    getVertexClient: vi.fn(() => mockClient),
+  };
+});
 
 // Mock logger to reduce noise
 vi.mock('../../src/lib/core/logger', () => ({
@@ -73,7 +77,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
     testPackageId = createdPkg.id;
 
     // Reset mock responses
-    mockClient.messages.create.mockClear();
+    mockClient.models.generateContent.mockClear();
   });
 
   afterEach(async () => {
@@ -96,7 +100,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Setup mock to return simple greeting
-      mockClient.messages.create.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
+      mockClient.models.generateContent.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
 
       const response = await orchestrator.chat(tenantId, 'new-session', 'Hello');
 
@@ -117,11 +121,13 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // First chat creates session
-      mockClient.messages.create.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
+      mockClient.models.generateContent.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
       const response1 = await orchestrator.chat(tenantId, 'new-session', 'Hello');
 
       // Second chat reuses session
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('How can I help you?'));
+      mockClient.models.generateContent.mockResolvedValueOnce(
+        createTextResponse('How can I help you?')
+      );
       const response2 = await orchestrator.chat(tenantId, response1.sessionId, 'I need help');
 
       expect(response2.sessionId).toBe(response1.sessionId);
@@ -137,7 +143,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantAId = ctx.tenants.tenantA.id;
 
       // Create session for tenant A
-      mockClient.messages.create.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
+      mockClient.models.generateContent.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
       const response = await orchestrator.chat(tenantAId, 'new-session', 'Hello');
 
       // Try to access tenant A's session from different tenant context
@@ -145,7 +151,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantBId = ctx.tenants.tenantB.id;
 
       // Attempting to use tenant A's session ID for tenant B should create new session
-      mockClient.messages.create.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
+      mockClient.models.generateContent.mockResolvedValueOnce(MOCK_RESPONSES.greeting);
       const response2 = await orchestrator.chat(tenantBId, response.sessionId, 'Hello');
 
       // Should get a different session
@@ -168,7 +174,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Setup mock: First returns tool use, second returns text after tool result
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(MOCK_RESPONSES.getServices)
         .mockResolvedValueOnce(MOCK_RESPONSES.afterServices);
 
@@ -192,7 +198,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Setup mock
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(MOCK_RESPONSES.checkAvailability(testPackageId))
         .mockResolvedValueOnce(MOCK_RESPONSES.afterAvailability);
 
@@ -239,7 +245,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
         customerEmail: 'john@example.com',
       };
 
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(MOCK_RESPONSES.bookService(bookParams))
         .mockResolvedValueOnce(MOCK_RESPONSES.afterBookingProposal);
 
@@ -266,7 +272,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const dateStr = futureDate.toISOString().split('T')[0];
 
       // Create session first
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse("I'm ready to help with booking.")
       );
       const sessionResponse = await orchestrator.chat(tenantId, 'new-session', 'Hello');
@@ -309,7 +315,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       });
 
       // Now test confirm_proposal tool
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(MOCK_RESPONSES.confirmProposal(proposal.proposalId))
         .mockResolvedValueOnce(MOCK_RESPONSES.bookingConfirmed);
 
@@ -337,11 +343,15 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Create session 1
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello session 1'));
+      mockClient.models.generateContent.mockResolvedValueOnce(
+        createTextResponse('Hello session 1')
+      );
       const session1Response = await orchestrator.chat(tenantId, 'session-1', 'Hello');
 
       // Create session 2
-      mockClient.messages.create.mockResolvedValueOnce(createTextResponse('Hello session 2'));
+      mockClient.models.generateContent.mockResolvedValueOnce(
+        createTextResponse('Hello session 2')
+      );
       const session2Response = await orchestrator.chat(tenantId, 'session-2', 'Hello');
 
       // Create proposal for session 1
@@ -356,7 +366,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
       });
 
       // Try to confirm from session 2
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(MOCK_RESPONSES.confirmProposal(proposal.proposalId))
         .mockResolvedValueOnce(createTextResponse('Booking not found'));
 
@@ -392,7 +402,7 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
 
       for (const attempt of injectionAttempts) {
         // Reset mock for each attempt - should NOT be called for injection
-        mockClient.messages.create.mockClear();
+        mockClient.models.generateContent.mockClear();
 
         const response = await orchestrator.chat(tenantId, 'new-session', attempt);
 
@@ -440,24 +450,30 @@ describe.sequential('Customer Chat Flow - Integration Tests', () => {
     it('should respect rate limits', async () => {
       const tenantId = ctx.tenants.tenantA.id;
 
-      // Mock to return multiple tool calls
+      // Mock to return multiple tool calls (Gemini format)
       const multiToolResponse = {
-        id: 'msg_multi',
-        type: 'message' as const,
-        role: 'assistant' as const,
-        content: [
-          { type: 'tool_use' as const, id: 'tool1', name: 'get_services', input: {} },
-          { type: 'tool_use' as const, id: 'tool2', name: 'get_services', input: {} },
-          { type: 'tool_use' as const, id: 'tool3', name: 'get_services', input: {} },
-          { type: 'tool_use' as const, id: 'tool4', name: 'get_services', input: {} },
+        candidates: [
+          {
+            content: {
+              role: 'model' as const,
+              parts: [
+                { functionCall: { name: 'get_services', args: {} } },
+                { functionCall: { name: 'get_services', args: {} } },
+                { functionCall: { name: 'get_services', args: {} } },
+                { functionCall: { name: 'get_services', args: {} } },
+              ],
+            },
+            finishReason: 'STOP',
+          },
         ],
-        model: 'claude-sonnet-4-20250514',
-        stop_reason: 'tool_use' as const,
-        stop_sequence: null,
-        usage: { input_tokens: 100, output_tokens: 100 },
+        usageMetadata: {
+          promptTokenCount: 100,
+          candidatesTokenCount: 100,
+          totalTokenCount: 200,
+        },
       };
 
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(multiToolResponse)
         .mockResolvedValueOnce(MOCK_RESPONSES.afterServices);
 

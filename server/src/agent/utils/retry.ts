@@ -152,7 +152,12 @@ export async function withRetry<T>(
       // Don't retry if we've exhausted attempts
       if (attempt >= fullConfig.maxRetries) {
         logger.error(
-          { error: sanitizeError(error), operationName, attempt, maxRetries: fullConfig.maxRetries },
+          {
+            error: sanitizeError(error),
+            operationName,
+            attempt,
+            maxRetries: fullConfig.maxRetries,
+          },
           'All retry attempts exhausted'
         );
         throw error;
@@ -161,7 +166,13 @@ export async function withRetry<T>(
       // Calculate delay and wait before retrying
       const delay = calculateDelay(attempt, fullConfig);
       logger.warn(
-        { error: sanitizeError(error), operationName, attempt, nextAttempt: attempt + 1, delayMs: delay },
+        {
+          error: sanitizeError(error),
+          operationName,
+          attempt,
+          nextAttempt: attempt + 1,
+          delayMs: delay,
+        },
         'Retryable error encountered, scheduling retry'
       );
 
@@ -176,6 +187,7 @@ export async function withRetry<T>(
 /**
  * Configuration for Claude API retries
  * More conservative than default for rate limiting
+ * @deprecated Use GEMINI_API_RETRY_CONFIG after migration to Vertex AI
  */
 export const CLAUDE_API_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 3,
@@ -183,4 +195,20 @@ export const CLAUDE_API_RETRY_CONFIG: Partial<RetryConfig> = {
   maxDelayMs: 30000, // Up to 30s for severe rate limiting
   backoffMultiplier: 2,
   jitter: true,
+};
+
+/**
+ * Configuration for Gemini/Vertex AI API retries
+ *
+ * Tuned for Vertex AI's rate limiting and quota behavior.
+ * Google recommends exponential backoff starting at 1s.
+ *
+ * @see https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
+ */
+export const GEMINI_API_RETRY_CONFIG: Partial<RetryConfig> = {
+  maxRetries: 3,
+  initialDelayMs: 1000, // Google recommends starting at 1s
+  maxDelayMs: 30000, // Up to 30s for quota exhaustion
+  backoffMultiplier: 2,
+  jitter: true, // Prevent thundering herd on quota resets
 };

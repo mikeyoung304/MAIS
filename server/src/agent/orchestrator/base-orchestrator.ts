@@ -15,20 +15,34 @@
  * - getConfig(): Agent-specific configuration
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import type {
-  MessageParam,
-  ToolUseBlock,
-  ToolResultBlockParam,
-} from '@anthropic-ai/sdk/resources/messages';
+import type { GoogleGenAI, Content, GenerateContentResponse } from '@google/genai';
 import type { PrismaClient, Prisma } from '../../generated/prisma/client';
+import {
+  getVertexClient,
+  DEFAULT_MODEL,
+  DEFAULT_SAFETY_SETTINGS,
+  GEMINI_MODELS,
+  toGeminiContents,
+  toSystemInstruction,
+  toGeminiFunctionDeclarations,
+  toGeminiMultipleFunctionResponses,
+  extractText,
+  extractToolCalls,
+  hasToolCalls,
+  extractModelContent,
+  extractUsage,
+  logUsage,
+  type GeminiModel,
+  type ToolCall,
+  type ChatMessage,
+} from '../../llm';
 import type { ToolContext, AgentToolResult, AgentTool } from '../tools/types';
 import { INJECTION_PATTERNS } from '../tools/types';
 import { ProposalService } from '../proposals/proposal.service';
 import { AuditService } from '../audit/audit.service';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
-import { withRetry, CLAUDE_API_RETRY_CONFIG } from '../utils/retry';
+import { withRetry, GEMINI_API_RETRY_CONFIG } from '../utils/retry';
 import type { ContextCache } from '../context/context-cache';
 import { defaultContextCache } from '../context/context-cache';
 import type { AgentSessionContext } from '../context/context-builder';
@@ -98,7 +112,7 @@ function hasStorefrontTool(toolNames: string[]): boolean {
  */
 export interface OrchestratorConfig {
   readonly agentType: AgentType;
-  readonly model: string;
+  readonly model: GeminiModel;
   readonly maxTokens: number;
   readonly maxHistoryMessages: number;
   readonly temperature: number;
@@ -126,7 +140,7 @@ export interface OrchestratorConfig {
  * Default configuration values
  */
 export const DEFAULT_ORCHESTRATOR_CONFIG: Omit<OrchestratorConfig, 'agentType'> = {
-  model: 'claude-sonnet-4-20250514',
+  model: GEMINI_MODELS.FLASH, // Gemini 3 Flash Preview (cost-optimized)
   maxTokens: 4096,
   maxHistoryMessages: 20,
   temperature: 0.7,
@@ -140,18 +154,9 @@ export const DEFAULT_ORCHESTRATOR_CONFIG: Omit<OrchestratorConfig, 'agentType'> 
   enableTracing: true, // Evaluation: enabled by default
 };
 
-/**
- * Chat message for conversation history
- */
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  toolUses?: {
-    toolName: string;
-    input: Record<string, unknown>;
-    result: AgentToolResult;
-  }[];
-}
+// ChatMessage is imported from '../../llm' module
+// Re-export for backwards compatibility
+export type { ChatMessage } from '../../llm';
 
 /**
  * Tenant data loaded once per session to avoid N+1 queries.
@@ -298,7 +303,7 @@ export async function withTimeout<T>(
  * - getConfig(): Return agent configuration
  */
 export abstract class BaseOrchestrator {
-  protected readonly anthropic: Anthropic;
+  protected readonly gemini: GoogleGenAI;
   protected readonly proposalService: ProposalService;
   protected readonly auditService: AuditService;
   protected readonly rateLimiter: ToolRateLimiter;
@@ -328,16 +333,9 @@ export abstract class BaseOrchestrator {
     cache: ContextCache = defaultContextCache
   ) {
     this.cache = cache;
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY is required');
-    }
 
-    this.anthropic = new Anthropic({
-      apiKey,
-      timeout: 30 * 1000,
-      maxRetries: 2,
-    });
+    // Initialize Vertex AI client (uses ADC, no API key needed)
+    this.gemini = getVertexClient();
 
     this.proposalService = new ProposalService(prisma);
     this.auditService = new AuditService(prisma);
@@ -348,7 +346,7 @@ export abstract class BaseOrchestrator {
 
     logger.debug(
       { agentType: config.agentType, tierBudgets: config.tierBudgets },
-      'BaseOrchestrator initialized'
+      'BaseOrchestrator initialized with Gemini'
     );
   }
 
@@ -680,9 +678,12 @@ export abstract class BaseOrchestrator {
       systemPrompt += `\n\n---\n\n## Recent Action Failures\n\nSome actions failed:\n${failureContext}\n\nPlease acknowledge these failures and offer alternatives.`;
     }
 
-    // Build conversation history
+    // Build conversation history (Gemini format)
     const historyMessages = this.buildHistoryMessages(session.messages, config);
-    const messages: MessageParam[] = [...historyMessages, { role: 'user', content: userMessage }];
+    const messages: Content[] = [
+      ...historyMessages,
+      { role: 'user', parts: [{ text: userMessage }] },
+    ];
 
     // Build tools for API
     const tools = this.buildToolsForAPI();
@@ -691,37 +692,40 @@ export abstract class BaseOrchestrator {
     const estimatedUserTokens = Math.ceil(userMessage.length / 4);
     tracer?.recordUserMessage(userMessage, estimatedUserTokens);
 
-    // Call Claude API with retry logic
+    // Call Gemini API with retry logic
     const apiStartTime = Date.now();
-    let response: Anthropic.Messages.Message;
+    let response: GenerateContentResponse;
     try {
       response = await withRetry(
         () =>
-          this.anthropic.messages.create({
+          this.gemini.models.generateContent({
             model: config.model,
-            max_tokens: config.maxTokens,
-            temperature: config.temperature,
-            system: systemPrompt,
-            messages,
-            tools,
+            systemInstruction: toSystemInstruction(systemPrompt),
+            contents: messages,
+            config: {
+              maxOutputTokens: config.maxTokens,
+              temperature: config.temperature,
+              safetySettings: DEFAULT_SAFETY_SETTINGS,
+              tools: [{ functionDeclarations: tools }],
+            },
           }),
-        'claude-api-chat',
-        CLAUDE_API_RETRY_CONFIG
+        'gemini-api-chat',
+        GEMINI_API_RETRY_CONFIG
       );
     } catch (error) {
       // Trace: Record error
       tracer?.recordError({
-        message: error instanceof Error ? error.message : 'Claude API call failed',
+        message: error instanceof Error ? error.message : 'Gemini API call failed',
       });
       tracer?.flag('API error');
       tracer?.flush(); // Fire-and-forget write
 
       logger.error(
         { error: sanitizeError(error), tenantId, sessionId: session.sessionId },
-        'Claude API call failed'
+        'Gemini API call failed'
       );
       circuitBreaker.recordError();
-      recordApiError('claude_api_error', config.agentType);
+      recordApiError('gemini_api_error', config.agentType);
       throw new Error('Failed to communicate with AI assistant. Please try again.');
     }
 
@@ -740,11 +744,12 @@ export abstract class BaseOrchestrator {
       tracer // Pass tracer to record tool calls
     );
 
+    // Extract usage from Gemini response
+    const usage = extractUsage(response);
+
     // Record turn for circuit breaker
     const estimatedTokens = Math.ceil(
-      (userMessage.length + finalMessage.length) / 4 +
-        (response.usage?.input_tokens || 0) +
-        (response.usage?.output_tokens || 0)
+      (userMessage.length + finalMessage.length) / 4 + usage.totalTokens
     );
     circuitBreaker.recordTurn(estimatedTokens);
     circuitBreaker.recordSuccess();
@@ -756,7 +761,7 @@ export abstract class BaseOrchestrator {
 
     // Trace: Record assistant response
     const apiLatencyMs = Date.now() - apiStartTime;
-    const outputTokens = response.usage?.output_tokens || Math.ceil(finalMessage.length / 4);
+    const outputTokens = usage.outputTokens || Math.ceil(finalMessage.length / 4);
     tracer?.recordAssistantResponse(finalMessage, outputTokens, apiLatencyMs);
 
     recordTurnDuration(turnDurationSeconds, config.agentType, hadToolCalls);
@@ -776,10 +781,18 @@ export abstract class BaseOrchestrator {
         toolsExecuted: toolResults?.length || 0,
         proposalsCreated: proposals?.length || 0,
         hadToolCalls,
-        inputTokens: response.usage?.input_tokens || 0,
-        outputTokens: response.usage?.output_tokens || 0,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
       },
       'Agent turn completed'
+    );
+
+    // Log usage for cost tracking
+    logUsage(
+      { tenantId, sessionId: session.sessionId, operation: 'chat' },
+      config.model,
+      { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens },
+      apiLatencyMs
     );
 
     // Update session with new messages
@@ -975,37 +988,28 @@ export abstract class BaseOrchestrator {
   }
 
   /**
-   * Build history messages for API call
+   * Build history messages for Gemini API call.
+   * Converts ChatMessage[] to Gemini Content[] format.
    */
-  protected buildHistoryMessages(
-    messages: ChatMessage[],
-    config: OrchestratorConfig
-  ): MessageParam[] {
-    return messages.slice(-config.maxHistoryMessages).map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
+  protected buildHistoryMessages(messages: ChatMessage[], config: OrchestratorConfig): Content[] {
+    return toGeminiContents(messages.slice(-config.maxHistoryMessages));
   }
 
   /**
-   * Build tools in Anthropic API format
+   * Build tools in Gemini FunctionDeclaration format.
    */
-  protected buildToolsForAPI(): Anthropic.Messages.Tool[] {
-    return this.getTools().map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.inputSchema as Anthropic.Messages.Tool.InputSchema,
-    }));
+  protected buildToolsForAPI() {
+    return toGeminiFunctionDeclarations(this.getTools());
   }
 
   /**
-   * Process Claude response and execute tool calls
+   * Process Gemini response and execute tool calls
    */
   protected async processResponse(
-    response: Anthropic.Messages.Message,
+    response: GenerateContentResponse,
     tenantId: string,
     sessionId: string,
-    messages: MessageParam[],
+    messages: Content[],
     systemPrompt: string,
     depth: number,
     budgetTracker: BudgetTracker,
@@ -1036,17 +1040,12 @@ export abstract class BaseOrchestrator {
       };
     }
 
-    // Check for tool calls
-    const toolUseBlocks = response.content.filter(
-      (block): block is ToolUseBlock => block.type === 'tool_use'
-    );
+    // Check for tool calls using Gemini helper
+    const geminiToolCalls = extractToolCalls(response);
 
-    if (toolUseBlocks.length === 0) {
-      const textContent = response.content
-        .filter((block): block is Anthropic.Messages.TextBlock => block.type === 'text')
-        .map((block) => block.text)
-        .join('\n');
-      return { finalMessage: textContent };
+    if (geminiToolCalls.length === 0) {
+      // No tool calls - extract text response
+      return { finalMessage: extractText(response) };
     }
 
     // Execute tool calls
@@ -1062,12 +1061,12 @@ export abstract class BaseOrchestrator {
       trustTier: string;
       requiresApproval: boolean;
     }[] = [];
-    const toolResultBlocks: ToolResultBlockParam[] = [];
+    const functionResponses: Array<{ toolCall: ToolCall; result: AgentToolResult }> = [];
 
     // Pre-fetch draft config if any storefront tools are being called (Phase 1 optimization)
     // Eliminates N+1 query pattern: 15+ queries → 3 queries per turn
     // Gated by ENABLE_CONTEXT_CACHE feature flag for safe rollout
-    const toolNames = toolUseBlocks.map((t) => t.name);
+    const toolNames = geminiToolCalls.map((t) => t.name);
     const shouldCacheConfig = ENABLE_CONTEXT_CACHE && hasStorefrontTool(toolNames);
 
     const toolContext: ToolContext = {
@@ -1082,32 +1081,30 @@ export abstract class BaseOrchestrator {
 
     const availableTools = this.getTools();
 
-    for (const toolUse of toolUseBlocks) {
+    for (const toolCall of geminiToolCalls) {
       const startTime = Date.now();
-      const tool = availableTools.find((t) => t.name === toolUse.name);
+      const tool = availableTools.find((t) => t.name === toolCall.name);
 
       if (!tool) {
-        logger.warn({ toolName: toolUse.name }, 'Unknown tool requested');
-        toolResultBlocks.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify({ success: false, error: "I don't recognize that action." }),
+        logger.warn({ toolName: toolCall.name }, 'Unknown tool requested');
+        functionResponses.push({
+          toolCall,
+          result: { success: false, error: "I don't recognize that action." },
         });
         continue;
       }
 
       // Check rate limits
-      const rateLimitCheck = this.rateLimiter.canCall(toolUse.name);
+      const rateLimitCheck = this.rateLimiter.canCall(toolCall.name);
       if (!rateLimitCheck.allowed) {
-        logger.warn({ toolName: toolUse.name, reason: rateLimitCheck.reason }, 'Tool rate limited');
-        recordRateLimitHit(toolUse.name, config.agentType);
-        toolResultBlocks.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify({
-            success: false,
-            error: `Rate limit reached: ${rateLimitCheck.reason}`,
-          }),
+        logger.warn(
+          { toolName: toolCall.name, reason: rateLimitCheck.reason },
+          'Tool rate limited'
+        );
+        recordRateLimitHit(toolCall.name, config.agentType);
+        functionResponses.push({
+          toolCall,
+          result: { success: false, error: `Rate limit reached: ${rateLimitCheck.reason}` },
         });
         continue;
       }
@@ -1116,43 +1113,41 @@ export abstract class BaseOrchestrator {
       const toolTier = tool.trustTier;
       if (!budgetTracker.consume(toolTier as keyof TierBudgets)) {
         logger.warn(
-          { toolName: toolUse.name, tier: toolTier, remaining: budgetTracker.remaining },
+          { toolName: toolCall.name, tier: toolTier, remaining: budgetTracker.remaining },
           'Tier budget exhausted'
         );
         recordTierBudgetExhausted(toolTier, config.agentType);
-        toolResultBlocks.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify({
-            success: false,
-            error: `${toolTier} budget exhausted for this turn.`,
-          }),
+        functionResponses.push({
+          toolCall,
+          result: { success: false, error: `${toolTier} budget exhausted for this turn.` },
         });
         continue;
       }
 
       try {
         const toolStartTime = Date.now();
-        const result = await tool.execute(toolContext, toolUse.input as Record<string, unknown>);
+        const result = await tool.execute(toolContext, toolCall.input);
         const toolLatencyMs = Date.now() - toolStartTime;
-        this.rateLimiter.recordCall(toolUse.name);
+        this.rateLimiter.recordCall(toolCall.name);
 
         // Record successful tool call metric
-        recordToolCall(toolUse.name, toolTier, config.agentType, result.success);
+        recordToolCall(toolCall.name, toolTier, config.agentType, result.success);
 
         toolResults.push({
-          toolName: toolUse.name,
-          input: toolUse.input as Record<string, unknown>,
+          toolName: toolCall.name,
+          input: toolCall.input,
           result,
         });
+
+        functionResponses.push({ toolCall, result });
 
         // Trace: Record tool call
         const proposalId = 'proposalId' in result ? result.proposalId : null;
         const proposalStatus =
           'requiresApproval' in result && result.requiresApproval ? 'pending' : null;
         tracer?.recordToolCall({
-          toolName: toolUse.name,
-          input: toolUse.input as Record<string, unknown>,
+          toolName: toolCall.name,
+          input: toolCall.input,
           output: result,
           latencyMs: toolLatencyMs,
           trustTier: toolTier as TrustTier,
@@ -1171,7 +1166,7 @@ export abstract class BaseOrchestrator {
           // T1 proposals: Execute immediately (auto-confirm behavior)
           // T1 tools are low-risk operations that don't require user confirmation
           if (result.trustTier === 'T1' && !result.requiresApproval) {
-            const executor = getProposalExecutor(toolUse.name);
+            const executor = getProposalExecutor(toolCall.name);
             if (executor) {
               try {
                 // Get the proposal payload from the database
@@ -1181,7 +1176,7 @@ export abstract class BaseOrchestrator {
 
                 if (proposal && proposal.status === 'CONFIRMED') {
                   const payload = validateExecutorPayload(
-                    toolUse.name,
+                    toolCall.name,
                     (proposal.payload as Record<string, unknown>) || {}
                   );
                   const executionResult = await executor(tenantId, payload);
@@ -1190,7 +1185,7 @@ export abstract class BaseOrchestrator {
                     executionResult as Record<string, unknown>
                   );
                   logger.info(
-                    { proposalId: result.proposalId, toolName: toolUse.name },
+                    { proposalId: result.proposalId, toolName: toolCall.name },
                     'T1 proposal executed immediately'
                   );
 
@@ -1201,7 +1196,7 @@ export abstract class BaseOrchestrator {
                   if (toolContext.draftConfig) {
                     toolContext.draftConfig = undefined; // Force refetch for next tool
                     logger.debug(
-                      { toolName: toolUse.name, proposalId: result.proposalId },
+                      { toolName: toolCall.name, proposalId: result.proposalId },
                       'T1 execution complete - context invalidated for next tool'
                     );
                   }
@@ -1215,7 +1210,7 @@ export abstract class BaseOrchestrator {
                 logger.error(
                   {
                     proposalId: result.proposalId,
-                    toolName: toolUse.name,
+                    toolName: toolCall.name,
                     error: sanitizeError(execError),
                   },
                   'T1 proposal execution failed'
@@ -1223,7 +1218,7 @@ export abstract class BaseOrchestrator {
               }
             } else {
               logger.warn(
-                { toolName: toolUse.name, proposalId: result.proposalId },
+                { toolName: toolCall.name, proposalId: result.proposalId },
                 'No executor found for T1 tool - proposal will not execute'
               );
             }
@@ -1239,62 +1234,59 @@ export abstract class BaseOrchestrator {
           });
         }
 
-        toolResultBlocks.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify(result),
-        });
-
         // Audit and cache invalidation
         if (result.success) {
           if ('proposalId' in result) {
             await this.auditService.logProposalCreated(
               tenantId,
               sessionId,
-              toolUse.name,
+              toolCall.name,
               result.proposalId,
               result.trustTier as 'T1' | 'T2' | 'T3',
-              JSON.stringify(toolUse.input).slice(0, 500),
+              JSON.stringify(toolCall.input).slice(0, 500),
               Date.now() - startTime
             );
           } else {
             await this.auditService.logRead(
               tenantId,
               sessionId,
-              toolUse.name,
-              JSON.stringify(toolUse.input).slice(0, 500),
+              toolCall.name,
+              JSON.stringify(toolCall.input).slice(0, 500),
               JSON.stringify(result).slice(0, 500),
               Date.now() - startTime
             );
           }
 
           // Invalidate cache after write tools
-          if (WRITE_TOOLS.has(toolUse.name)) {
+          if (WRITE_TOOLS.has(toolCall.name)) {
             this.cache.invalidate(tenantId);
-            logger.debug({ tenantId, toolName: toolUse.name }, 'Context cache invalidated');
+            logger.debug({ tenantId, toolName: toolCall.name }, 'Context cache invalidated');
           }
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         const toolLatencyMs = Date.now() - startTime;
         logger.error(
-          { error: sanitizeError(error), toolName: toolUse.name },
+          { error: sanitizeError(error), toolName: toolCall.name },
           'Tool execution failed'
         );
 
         // Record failed tool call metric
-        recordToolCall(toolUse.name, toolTier, config.agentType, false);
+        recordToolCall(toolCall.name, toolTier, config.agentType, false);
 
+        const errorResult: AgentToolResult = { success: false, error: errorMessage };
         toolResults.push({
-          toolName: toolUse.name,
-          input: toolUse.input as Record<string, unknown>,
-          result: { success: false, error: errorMessage },
+          toolName: toolCall.name,
+          input: toolCall.input,
+          result: errorResult,
         });
+
+        functionResponses.push({ toolCall, result: errorResult });
 
         // Trace: Record failed tool call
         tracer?.recordToolCall({
-          toolName: toolUse.name,
-          input: toolUse.input as Record<string, unknown>,
+          toolName: toolCall.name,
+          input: toolCall.input,
           output: { success: false, error: errorMessage },
           latencyMs: toolLatencyMs,
           trustTier: toolTier as TrustTier,
@@ -1305,47 +1297,51 @@ export abstract class BaseOrchestrator {
           proposalStatus: null,
         });
 
-        toolResultBlocks.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify({ success: false, error: errorMessage }),
-        });
-
         await this.auditService.logError(
           tenantId,
           sessionId,
-          toolUse.name,
-          JSON.stringify(toolUse.input).slice(0, 500),
+          toolCall.name,
+          JSON.stringify(toolCall.input).slice(0, 500),
           errorMessage,
           Date.now() - startTime
         );
       }
     }
 
+    // Build function response content for Gemini
+    // Per Vertex AI docs: function responses use 'user' role
+    const functionResponseContent = toGeminiMultipleFunctionResponses(functionResponses);
+
+    // Get model's content from the response to include in history
+    const modelContent = extractModelContent(response);
+
     // Continue conversation with tool results
-    const continuedMessages: MessageParam[] = [
+    const continuedMessages: Content[] = [
       ...messages,
-      { role: 'assistant', content: response.content },
-      { role: 'user', content: toolResultBlocks },
+      ...(modelContent ? [modelContent] : []),
+      functionResponseContent,
     ];
 
     // Get final response with retry
     const finalResponse = await withRetry(
       () =>
-        this.anthropic.messages.create({
+        this.gemini.models.generateContent({
           model: config.model,
-          max_tokens: config.maxTokens,
-          temperature: config.temperature,
-          system: systemPrompt,
-          messages: continuedMessages,
-          tools: this.buildToolsForAPI(),
+          systemInstruction: toSystemInstruction(systemPrompt),
+          contents: continuedMessages,
+          config: {
+            maxOutputTokens: config.maxTokens,
+            temperature: config.temperature,
+            safetySettings: DEFAULT_SAFETY_SETTINGS,
+            tools: [{ functionDeclarations: this.buildToolsForAPI() }],
+          },
         }),
-      'claude-api-tool-continuation',
-      CLAUDE_API_RETRY_CONFIG
+      'gemini-api-tool-continuation',
+      GEMINI_API_RETRY_CONFIG
     );
 
     // Check for more tool calls (recursive)
-    if (finalResponse.content.some((block) => block.type === 'tool_use')) {
+    if (hasToolCalls(finalResponse)) {
       const recursiveResult = await this.processResponse(
         finalResponse,
         tenantId,
@@ -1363,11 +1359,8 @@ export abstract class BaseOrchestrator {
       };
     }
 
-    // Extract final text
-    const finalText = finalResponse.content
-      .filter((block): block is Anthropic.Messages.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('\n');
+    // Extract final text using Gemini helper
+    const finalText = extractText(finalResponse);
 
     return {
       finalMessage: finalText,

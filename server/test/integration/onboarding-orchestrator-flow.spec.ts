@@ -7,7 +7,7 @@
  * - T2 soft-confirm proposal lifecycle
  * - Event sourcing integration
  *
- * Uses real Prisma with mocked Anthropic API.
+ * Uses real Prisma with mocked Gemini API.
  *
  * @see server/src/agent/orchestrator/onboarding-orchestrator.ts
  * @see server/src/agent/onboarding/advisor-memory.service.ts
@@ -16,18 +16,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
 import {
-  createMockAnthropicClient,
+  createMockGeminiClient,
   createTextResponse,
   createToolUseResponse,
   MOCK_RESPONSES,
-} from '../helpers/mock-anthropic';
+} from '../helpers/mock-gemini';
 
-// Mock the Anthropic SDK before imports
-const mockClient = createMockAnthropicClient([createTextResponse('Hello!')]);
+// Mock the LLM module's getVertexClient before imports
+const mockClient = createMockGeminiClient([createTextResponse('Hello!')]);
 
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn().mockImplementation(() => mockClient),
-}));
+vi.mock('../../src/llm', async () => {
+  const actual = await vi.importActual('../../src/llm');
+  return {
+    ...actual,
+    getVertexClient: vi.fn(() => mockClient),
+  };
+});
 
 // Mock logger to reduce noise
 vi.mock('../../src/lib/core/logger', () => ({
@@ -72,7 +76,7 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
     });
 
     // Reset mock responses
-    mockClient.messages.create.mockClear();
+    mockClient.models.generateContent.mockClear();
   });
 
   afterEach(async () => {
@@ -96,7 +100,7 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Setup mock
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse("Welcome! Let's get your business set up.")
       );
 
@@ -117,13 +121,13 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // First chat
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse('Tell me about your business.')
       );
       const response1 = await orchestrator.chat(tenantId, 'new-session', 'Hi');
 
       // Second chat
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse("Great! Let's continue.")
       );
       const response2 = await orchestrator.chat(
@@ -179,7 +183,7 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
       });
 
       // Chat should reflect the new phase
-      mockClient.messages.create.mockResolvedValueOnce(
+      mockClient.models.generateContent.mockResolvedValueOnce(
         createTextResponse("Now let's research your market.")
       );
 
@@ -236,7 +240,7 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
       const tenantId = ctx.tenants.tenantA.id;
 
       // Mock tool call for update_onboarding_state
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(
           createToolUseResponse(
             'update_onboarding_state',
@@ -296,7 +300,7 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
       });
 
       // Mock market research tool call
-      mockClient.messages.create
+      mockClient.models.generateContent
         .mockResolvedValueOnce(
           createToolUseResponse(
             'get_market_research',
@@ -551,7 +555,7 @@ describe.sequential('Onboarding Orchestrator Flow - Integration Tests', () => {
     it('should handle API errors gracefully', async () => {
       const tenantId = ctx.tenants.tenantA.id;
 
-      mockClient.messages.create.mockRejectedValueOnce(new Error('API error'));
+      mockClient.models.generateContent.mockRejectedValueOnce(new Error('API error'));
 
       await expect(orchestrator.chat(tenantId, 'new-session', 'Hello')).rejects.toThrow(
         'Failed to communicate with AI assistant'

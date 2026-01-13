@@ -8,9 +8,16 @@
  * @see plans/agent-evaluation-system.md Phase 2.2
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import type { GoogleGenAI, GenerateContentResponse } from '@google/genai';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
+import {
+  getVertexClient,
+  GEMINI_MODELS,
+  toSystemInstruction,
+  extractText,
+  type GeminiModel,
+} from '../../llm';
 import {
   generateRubricPrompt,
   getAgentTypeContext,
@@ -42,8 +49,8 @@ export interface EvalInput {
  * Configuration for the evaluator
  */
 export interface EvaluatorConfig {
-  /** Model to use for evaluation (default: claude-haiku-4-5 for cost/speed) */
-  model: string;
+  /** Model to use for evaluation (default: Gemini 2.5 Flash for cost/speed) */
+  model: GeminiModel;
   /** Maximum tokens for evaluation response */
   maxTokens: number;
   /** Temperature for evaluation (low for consistency) */
@@ -54,11 +61,9 @@ export interface EvaluatorConfig {
 
 /**
  * Default evaluation model.
- * Can be overridden via EVAL_MODEL environment variable.
- *
- * @see plans/agent-eval-remediation-plan.md Phase 7.2
+ * Using Gemini 2.5 Flash (stable) for evaluations - good balance of cost/speed.
  */
-const DEFAULT_EVAL_MODEL = 'claude-haiku-4-5';
+const DEFAULT_EVAL_MODEL: GeminiModel = GEMINI_MODELS.FLASH_STABLE;
 
 /**
  * Get default evaluator configuration.
@@ -69,8 +74,10 @@ const DEFAULT_EVAL_MODEL = 'claude-haiku-4-5';
  * @see todos/614-pending-p2-env-var-load-time.md
  */
 function getDefaultConfig(): EvaluatorConfig {
+  // Allow environment override, but cast to GeminiModel (should be validated)
+  const envModel = process.env.EVAL_MODEL as GeminiModel | undefined;
   return {
-    model: process.env.EVAL_MODEL || DEFAULT_EVAL_MODEL, // Read at call time, not import time
+    model: envModel || DEFAULT_EVAL_MODEL,
     maxTokens: 2048,
     temperature: 0.1, // Low temperature for consistent scoring
     timeoutMs: 30000,
@@ -87,7 +94,7 @@ function getDefaultConfig(): EvaluatorConfig {
  * Usage:
  * ```typescript
  * // With injected client (for testing)
- * const mockClient = mockDeep<Anthropic>();
+ * const mockClient = getMockGeminiClient();
  * const evaluator = new ConversationEvaluator(mockClient);
  *
  * // With default client (production)
@@ -104,32 +111,23 @@ function getDefaultConfig(): EvaluatorConfig {
  * ```
  */
 export class ConversationEvaluator {
-  private readonly anthropic: Anthropic;
+  private readonly gemini: GoogleGenAI;
   private readonly config: EvaluatorConfig;
 
   /**
    * Create a new conversation evaluator.
    *
-   * @param anthropic - Optional Anthropic client for dependency injection (Kieran: dependencies first)
+   * @param gemini - Optional Gemini client for dependency injection (Kieran: dependencies first)
    * @param config - Optional configuration overrides
    */
   constructor(
-    anthropic?: Anthropic, // ✅ Dependencies first (Kieran review)
+    gemini?: GoogleGenAI, // ✅ Dependencies first (Kieran review)
     config: Partial<EvaluatorConfig> = {}
   ) {
     this.config = { ...getDefaultConfig(), ...config };
 
-    // ✅ Validate API key only when creating default client
-    if (!anthropic && !process.env.ANTHROPIC_API_KEY) {
-      throw new Error('ANTHROPIC_API_KEY required when no Anthropic client provided');
-    }
-
-    this.anthropic =
-      anthropic ??
-      new Anthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY!,
-        timeout: this.config.timeoutMs,
-      });
+    // Use injected client or create default via ADC
+    this.gemini = gemini ?? getVertexClient();
   }
 
   /**
@@ -146,22 +144,24 @@ export class ConversationEvaluator {
       const systemPrompt = this.buildSystemPrompt(input.agentType);
       const userPrompt = this.buildUserPrompt(input);
 
-      // Call LLM for evaluation
-      const response = await this.anthropic.messages.create({
+      // Call Gemini for evaluation
+      const response = await this.gemini.models.generateContent({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
-        temperature: this.config.temperature,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        systemInstruction: toSystemInstruction(systemPrompt),
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        config: {
+          maxOutputTokens: this.config.maxTokens,
+          temperature: this.config.temperature,
+        },
       });
 
-      // Extract JSON from response
-      const textContent = response.content.find((block) => block.type === 'text');
-      if (!textContent || textContent.type !== 'text') {
+      // Extract text from response using Gemini helper
+      const textContent = extractText(response);
+      if (!textContent) {
         throw new Error('No text content in evaluation response');
       }
 
-      const result = this.parseEvalResult(textContent.text, input);
+      const result = this.parseEvalResult(textContent, input);
 
       const durationMs = Date.now() - startTime;
       logger.info(
@@ -394,12 +394,12 @@ Return your evaluation as a valid JSON object following the format specified in 
 /**
  * Create a new conversation evaluator.
  *
- * @param anthropic - Optional Anthropic client for dependency injection
+ * @param gemini - Optional Gemini client for dependency injection
  * @param config - Optional configuration overrides
  */
 export function createEvaluator(
-  anthropic?: Anthropic,
+  gemini?: GoogleGenAI,
   config?: Partial<EvaluatorConfig>
 ): ConversationEvaluator {
-  return new ConversationEvaluator(anthropic, config);
+  return new ConversationEvaluator(gemini, config);
 }
