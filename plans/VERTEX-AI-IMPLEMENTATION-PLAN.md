@@ -1442,14 +1442,16 @@ VERTEX_LIVE_TEST=true npm test -- tool-calling-live --reporter=verbose
 
 ### Phase 2 Checklist
 
-- [ ] Onboarding system prompt updated for Gemini
-- [ ] Customer system prompt updated for Gemini
-- [ ] Admin system prompt updated for Gemini
-- [ ] Golden tests for tool calling created and passing (unit)
-- [ ] **Live integration test passing** (run with `VERTEX_LIVE_TEST=true`)
+- [x] Onboarding system prompt updated for Gemini
+- [x] Customer system prompt updated for Gemini
+- [x] Admin system prompt updated for Gemini (uses onboarding prompt)
+- [x] Golden tests for tool calling created and passing (unit) - 31 tests
+- [x] **Live integration test passing** (run with `VERTEX_LIVE_TEST=true`) - 4 tests
 - [ ] Manual testing of each orchestrator
 - [ ] Tool calling accuracy verified
 - [ ] Response length within bounds
+
+**Phase 2 Completed**: 2026-01-13
 
 ---
 
