@@ -12,6 +12,52 @@
 
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { logger } from '../lib/core/logger';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Service Account Setup (for Render/production)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Setup service account credentials from environment variable.
+ *
+ * On Render/Vercel, we can't use `gcloud auth`, so we accept the service
+ * account JSON directly via GOOGLE_SERVICE_ACCOUNT_JSON env var.
+ *
+ * This writes the JSON to a temp file and sets GOOGLE_APPLICATION_CREDENTIALS
+ * so the SDK can find it.
+ */
+function setupServiceAccountFromEnv(): void {
+  // Skip if already configured or if JSON env var not set
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return;
+  }
+
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountJson) {
+    // No service account JSON provided - will rely on ADC (local dev)
+    return;
+  }
+
+  try {
+    // Validate it's valid JSON
+    JSON.parse(serviceAccountJson);
+
+    // Write to temp file
+    const tempDir = os.tmpdir();
+    const credentialsPath = path.join(tempDir, 'gcp-service-account.json');
+    fs.writeFileSync(credentialsPath, serviceAccountJson, { mode: 0o600 });
+
+    // Set env var for SDK to find
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+    logger.info({ credentialsPath }, 'Service account credentials loaded from env');
+  } catch (error) {
+    logger.error({ error }, 'Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
+    throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_JSON - must be valid JSON');
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model Configuration
@@ -91,14 +137,17 @@ export interface VertexClientConfig {
 /**
  * Create Gemini client for Vertex AI.
  *
- * Uses Application Default Credentials (ADC) automatically.
- * No key files needed - ADC handles auth via:
- * - Local: `gcloud auth application-default login`
- * - Production: Workload Identity Federation
+ * Authentication priority:
+ * 1. GOOGLE_SERVICE_ACCOUNT_JSON env var (for Render/Vercel)
+ * 2. GOOGLE_APPLICATION_CREDENTIALS file path
+ * 3. Application Default Credentials (local dev via gcloud)
  */
 export function createVertexClient(config: VertexClientConfig = {}): GoogleGenAI {
+  // Setup service account from env if provided (for Render/production)
+  setupServiceAccountFromEnv();
+
   const project = config.project || process.env.GOOGLE_VERTEX_PROJECT;
-  const location = config.location || process.env.GOOGLE_VERTEX_LOCATION || 'global';
+  const location = config.location || process.env.GOOGLE_VERTEX_LOCATION || 'us-central1';
 
   if (!project) {
     throw new Error(
