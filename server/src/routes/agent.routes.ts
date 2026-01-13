@@ -241,8 +241,8 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
     try {
       const tenantId = getTenantId(res);
 
-      // Check 1: API key configured
-      const apiKeyConfigured = !!process.env.ANTHROPIC_API_KEY;
+      // Check 1: LLM API configured (Vertex AI via ADC)
+      const apiKeyConfigured = !!process.env.GOOGLE_VERTEX_PROJECT;
 
       // Check 2: Can we build context for this tenant?
       let contextAvailable = false;

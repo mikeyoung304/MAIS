@@ -1917,11 +1917,28 @@ npm run db:reset
 
 **Manual Smoke Test Results** (2026-01-13):
 
+_Customer Chatbot (public-facing):_
+
 - ✅ Customer greeting: AI responds naturally with Gemini
 - ✅ Service inquiry: Tool calling works (get_services returned correct data)
 - ✅ Availability check: Tool calling works (check_availability returned correct data)
+
+_Tenant Dashboard Agent (onboarding orchestrator):_
+
+- ✅ Agent greeting: "Welcome to Handled. I'll help you figure all this out..."
+- ✅ Multi-tool orchestration: 5 tools called (get_tenant, get_trial_status, get_landing_page_draft, get_unfilled_placeholders, show_preview)
+- ✅ Build Mode integration: AI automatically opened visual editor with live preview
+- ✅ Context-aware analysis: AI identified 48% completion, 12 placeholder sections
+
+_General:_
+
 - ✅ No browser console errors
 - ✅ All network requests returned 200 OK
+
+**Additional fixes required during testing:**
+
+- `server/src/routes/agent.routes.ts:245` - Changed ANTHROPIC_API_KEY → GOOGLE_VERTEX_PROJECT
+- `server/src/di.ts:97` - Changed ANTHROPIC_API_KEY → GOOGLE_VERTEX_PROJECT
 
 **Note**: The 10 test failures are in `landing-page-routes.spec.ts` and are pre-existing issues with landing page draft persistence, NOT related to the Vertex AI migration. These should be tracked separately.
 

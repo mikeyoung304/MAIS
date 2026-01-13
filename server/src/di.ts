@@ -88,14 +88,14 @@ interface EvaluationServices {
 
 /**
  * Build evaluation services for agent quality monitoring.
- * Requires ANTHROPIC_API_KEY to be set; returns undefined if not configured.
+ * Requires GOOGLE_VERTEX_PROJECT to be set; returns undefined if not configured.
  */
 function buildEvaluationServices(
   prisma: PrismaClient,
   mode: 'mock' | 'real'
 ): EvaluationServices | undefined {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    logger.info('⚠️  Agent evaluation services skipped (ANTHROPIC_API_KEY not set)');
+  if (!process.env.GOOGLE_VERTEX_PROJECT) {
+    logger.info('⚠️  Agent evaluation services skipped (GOOGLE_VERTEX_PROJECT not set)');
     return undefined;
   }
 
