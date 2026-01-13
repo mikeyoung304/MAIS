@@ -3,6 +3,13 @@
  *
  * Thin boundary between orchestrators and Google's Gen AI SDK.
  * All LLM interactions go through these modules.
+ *
+ * Module structure:
+ * - vertex-client: Client factory, model config, safety settings
+ * - message-adapter: Format conversion (ChatMessage <-> Content)
+ * - pricing: Cost calculation and usage logging
+ * - errors: Error classification for Vertex AI
+ * - retry: Intelligent retry with error classification
  */
 
 // Client
@@ -43,3 +50,27 @@ export {
   type UsageMetrics,
   type CostBreakdown,
 } from './pricing';
+
+// Error Classification (Phase 3)
+export {
+  GeminiErrorType,
+  classifyGeminiError,
+  requiresAlert,
+  isTemporaryFailure,
+  needsUserAction,
+  type ClassifiedGeminiError,
+} from './errors';
+
+// Retry Logic (Phase 3)
+export {
+  withGeminiRetry,
+  withGeminiRetryThrow,
+  GeminiApiError,
+  DEFAULT_GEMINI_RETRY_CONFIG,
+  AGGRESSIVE_RETRY_CONFIG,
+  PATIENT_RETRY_CONFIG,
+  QUICK_RETRY_CONFIG,
+  type GeminiRetryConfig,
+  type GeminiRetryResult,
+  type RetryContext,
+} from './retry';

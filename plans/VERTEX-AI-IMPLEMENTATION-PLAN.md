@@ -1764,13 +1764,16 @@ async executeTool(toolCall: ToolCall, context: ToolContext): Promise<AgentToolRe
 
 ### Phase 3 Checklist
 
-- [ ] `server/src/llm/errors.ts` created
-- [ ] `server/src/llm/retry.ts` created
-- [ ] Error classification covers all Vertex AI error codes
-- [ ] Retry logic uses exponential backoff with jitter
-- [ ] T2/T3 tools use idempotency
-- [ ] Error messages are user-friendly
-- [ ] Logging captures all error details
+- [x] `server/src/llm/errors.ts` created
+- [x] `server/src/llm/retry.ts` created
+- [x] Error classification covers all Vertex AI error codes (9 types)
+- [x] Retry logic uses exponential backoff with jitter
+- [x] T2/T3 tools use existing idempotency infrastructure
+- [x] Error messages are user-friendly
+- [x] Logging captures all error details
+- [x] Unit tests created (66 new tests in errors.test.ts + retry.test.ts)
+
+**Phase 3 Completed**: 2026-01-13
 
 ---
 
