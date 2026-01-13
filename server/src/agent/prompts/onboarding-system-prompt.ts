@@ -223,6 +223,12 @@ ${phaseGuidance}
 **T2 (do it, "say wait to undo"):** upsert_services, update_page_section, remove_page_section, branding, discard
 **T3 (ask first):** publish_draft
 
+**Tool Calling:**
+- Call T1 tools without hesitation — batch multiple reads if needed
+- For T2/T3 tools: ONE action at a time, explain what you're doing, wait for response
+- If you need to call multiple T2 tools, do them sequentially (not all at once)
+- After T2/T3 action: confirm it worked before moving on
+
 Use section IDs (e.g., "home-hero-main"), not indices.
 Draft vs live: "In your draft..." vs "On your live site..."
 
