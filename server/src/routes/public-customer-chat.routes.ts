@@ -76,8 +76,8 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Check if API key is configured
-      const apiKeyConfigured = !!process.env.ANTHROPIC_API_KEY;
+      // Check if LLM API is configured (Vertex AI via ADC)
+      const apiKeyConfigured = !!process.env.GOOGLE_VERTEX_PROJECT;
 
       // Check if tenant has chat enabled
       const tenant = await prisma.tenant.findUnique({

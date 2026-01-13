@@ -1912,10 +1912,20 @@ npm run db:reset
 - [x] `npm test` passes (2505 passed, 10 pre-existing failures unrelated to migration)
 - [x] `npm run test:integration` passes (included in npm test)
 - [x] `npm run test:e2e` passes (55 passed, 35 skipped, 0 failed)
-- [ ] Manual smoke tests pass (pending - see handoff prompt)
-- [ ] No console errors in browser (pending - part of manual testing)
+- [x] Manual smoke tests pass (completed 2026-01-13)
+- [x] No console errors in browser (verified 2026-01-13)
+
+**Manual Smoke Test Results** (2026-01-13):
+
+- ✅ Customer greeting: AI responds naturally with Gemini
+- ✅ Service inquiry: Tool calling works (get_services returned correct data)
+- ✅ Availability check: Tool calling works (check_availability returned correct data)
+- ✅ No browser console errors
+- ✅ All network requests returned 200 OK
 
 **Note**: The 10 test failures are in `landing-page-routes.spec.ts` and are pre-existing issues with landing page draft persistence, NOT related to the Vertex AI migration. These should be tracked separately.
+
+**Phase 4 Completed**: 2026-01-13
 
 ---
 
