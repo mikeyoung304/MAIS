@@ -47,8 +47,10 @@ services:
         sync: false  # Set manually in dashboard (optional)
       - key: POSTMARK_FROM_EMAIL
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false  # Required for agent evaluation
+      - key: GOOGLE_VERTEX_PROJECT
+        sync: false  # Required for Gemini AI - set from Google Cloud project
+      - key: GOOGLE_VERTEX_LOCATION
+        sync: false  # Required for Gemini AI - e.g., us-central1
 
   # Agent Evaluation Cron Job
   # Runs every 15 minutes to evaluate conversation traces
@@ -67,5 +69,7 @@ services:
         sync: false
       - key: DIRECT_URL
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
+      - key: GOOGLE_VERTEX_PROJECT
+        sync: false  # Required for Gemini AI
+      - key: GOOGLE_VERTEX_LOCATION
+        sync: false  # Required for Gemini AI
