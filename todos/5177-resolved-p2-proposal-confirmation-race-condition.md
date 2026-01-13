@@ -1,9 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5177'
 tags: [code-review, security, race-condition, agent-system, concurrency]
 dependencies: []
+resolved_date: '2026-01-12'
+resolved_by: master-architect-triage
+resolution: Code already fixed - uses atomic updateMany with status check in WHERE clause at line 496
 ---
 
 # Proposal Confirmation TOCTOU Race Condition

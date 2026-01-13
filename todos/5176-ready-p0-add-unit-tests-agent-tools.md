@@ -1,9 +1,14 @@
 ---
-status: pending
+status: ready
 priority: p0
 issue_id: '5176'
 tags: [code-review, testing, technical-debt, agent-system]
 dependencies: []
+triage_date: '2026-01-12'
+triage_by: master-architect-triage
+verified: true
+note: Large scope - recommend breaking into phases as described in Solution 1
+effort: 6-days-phased
 ---
 
 # Zero Unit Tests for Agent Tools (Critical Testing Gap)

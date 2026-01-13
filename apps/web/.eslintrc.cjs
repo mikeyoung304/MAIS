@@ -43,6 +43,8 @@ module.exports = {
         ],
       },
     ],
+    // Allow styled-jsx attributes (jsx, global) on style elements
+    'react/no-unknown-property': ['error', { ignore: ['jsx', 'global'] }],
   },
   ignorePatterns: ['node_modules', '.next', 'out'],
 };

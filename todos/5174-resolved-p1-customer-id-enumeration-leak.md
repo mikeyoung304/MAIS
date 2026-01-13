@@ -1,9 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5174'
 tags: [code-review, security, agent-system, information-disclosure]
 dependencies: []
+resolved_date: '2026-01-12'
+resolved_by: master-architect-triage
+resolution: Code already fixed - uses 'unknown' instead of customerId at line 138
 ---
 
 # Customer ID Enumeration via Error Messages

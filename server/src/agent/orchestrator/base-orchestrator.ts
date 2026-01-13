@@ -700,9 +700,9 @@ export abstract class BaseOrchestrator {
         () =>
           this.gemini.models.generateContent({
             model: config.model,
-            systemInstruction: toSystemInstruction(systemPrompt),
             contents: messages,
             config: {
+              systemInstruction: toSystemInstruction(systemPrompt),
               maxOutputTokens: config.maxTokens,
               temperature: config.temperature,
               safetySettings: DEFAULT_SAFETY_SETTINGS,
@@ -1327,9 +1327,9 @@ export abstract class BaseOrchestrator {
       () =>
         this.gemini.models.generateContent({
           model: config.model,
-          systemInstruction: toSystemInstruction(systemPrompt),
           contents: continuedMessages,
           config: {
+            systemInstruction: toSystemInstruction(systemPrompt),
             maxOutputTokens: config.maxTokens,
             temperature: config.temperature,
             safetySettings: DEFAULT_SAFETY_SETTINGS,

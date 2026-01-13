@@ -1,9 +1,12 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5180'
 tags: [code-review, e2e-tests, rate-limiting, quick-fix]
 dependencies: []
+resolved_date: '2026-01-12'
+resolved_by: master-architect-triage
+resolution: Code already fixed - signupLimiter has isTestEnvironment check at line 71
 ---
 
 # E2E Tests Blocked by Signup Rate Limiter (Quick Fix)

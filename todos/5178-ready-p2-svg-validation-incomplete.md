@@ -1,9 +1,13 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5178'
 tags: [code-review, security, xss, validation, file-upload]
 dependencies: []
+triage_date: '2026-01-12'
+triage_by: master-architect-triage
+verified: true
+effort: 15min
 ---
 
 # SVG File Validation Only Checks First 500 Bytes

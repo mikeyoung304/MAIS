@@ -147,9 +147,9 @@ export class ConversationEvaluator {
       // Call Gemini for evaluation
       const response = await this.gemini.models.generateContent({
         model: this.config.model,
-        systemInstruction: toSystemInstruction(systemPrompt),
         contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
         config: {
+          systemInstruction: toSystemInstruction(systemPrompt),
           maxOutputTokens: this.config.maxTokens,
           temperature: this.config.temperature,
         },

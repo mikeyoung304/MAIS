@@ -1,9 +1,14 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5179'
 tags: [code-review, performance, dos, rate-limiting, agent-system]
 dependencies: []
+triage_date: '2026-01-12'
+triage_by: master-architect-triage
+verified: true
+effort: 30min
+note: agentSessionLimiter exists but may need tenant-scoped HTTP-level limiter as well
 ---
 
 # Missing Rate Limiting for Agent Read Tools (DoS Risk)

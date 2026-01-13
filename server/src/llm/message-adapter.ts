@@ -229,7 +229,7 @@ export function extractToolCalls(response: GenerateContentResponse): ToolCall[] 
   const toolCalls: ToolCall[] = [];
 
   for (const part of parts) {
-    if ('functionCall' in part && part.functionCall) {
+    if ('functionCall' in part && part.functionCall && part.functionCall.name) {
       toolCalls.push({
         // Generate our own ID since Gemini doesn't provide one
         id: randomUUID(),
