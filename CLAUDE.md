@@ -240,6 +240,8 @@ server/src/
 
 Required: `JWT_SECRET`, `TENANT_SECRETS_ENCRYPTION_KEY`, `DATABASE_URL`
 
-Optional: `POSTMARK_SERVER_TOKEN`, `STRIPE_SECRET_KEY`, `ANTHROPIC_API_KEY`
+Optional: `POSTMARK_SERVER_TOKEN`, `STRIPE_SECRET_KEY`
+
+For AI features (agent chat, onboarding): `GOOGLE_VERTEX_PROJECT`, `GOOGLE_VERTEX_LOCATION` (uses Application Default Credentials via `gcloud auth application-default login`)
 
 Run `npm run doctor` to verify setup.
