@@ -147,7 +147,7 @@ export function createVertexClient(config: VertexClientConfig = {}): GoogleGenAI
   setupServiceAccountFromEnv();
 
   const project = config.project || process.env.GOOGLE_VERTEX_PROJECT;
-  const location = config.location || process.env.GOOGLE_VERTEX_LOCATION || 'us-central1';
+  const location = config.location || process.env.GOOGLE_VERTEX_LOCATION || 'global';
 
   if (!project) {
     throw new Error(
