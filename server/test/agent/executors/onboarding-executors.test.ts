@@ -64,9 +64,11 @@ type MockTransaction = {
   segment: {
     findFirst: MockFn;
     create: MockFn;
+    update: MockFn;
   };
   package: {
     create: MockFn;
+    deleteMany: MockFn;
   };
   tenant: {
     findUnique: MockFn;
@@ -80,9 +82,11 @@ type MockPrismaClient = {
   segment: {
     findFirst: MockFn;
     create: MockFn;
+    update: MockFn;
   };
   package: {
     create: MockFn;
+    deleteMany: MockFn;
   };
   tenant: {
     findUnique: MockFn;
@@ -104,9 +108,11 @@ describe('Onboarding Executors', () => {
       segment: {
         findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
       package: {
         create: vi.fn(),
+        deleteMany: vi.fn(),
       },
       tenant: {
         findUnique: vi.fn(),
@@ -121,9 +127,11 @@ describe('Onboarding Executors', () => {
       segment: {
         findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
       package: {
         create: vi.fn(),
+        deleteMany: vi.fn(),
       },
       tenant: {
         findUnique: vi.fn(),
@@ -216,21 +224,51 @@ describe('Onboarding Executors', () => {
         await expect(upsertServicesExecutor(tenantId, payload)).rejects.toThrow(MissingFieldError);
       });
 
-      it('should throw ValidationError when segment slug already exists', async () => {
+      it('should update existing segment and replace packages', async () => {
         mockTx.segment.findFirst.mockResolvedValue({
           id: 'existing-segment-id',
           slug: 'photography-sessions',
+          tenantId: 'test-tenant-123',
+          name: 'Photography Sessions',
         });
+        mockTx.segment.update.mockResolvedValue({
+          id: 'existing-segment-id',
+          name: 'Photography Sessions',
+          slug: 'photography-sessions',
+          heroTitle: 'Photography Sessions',
+          active: true,
+        });
+        mockTx.package.deleteMany.mockResolvedValue({ count: 2 }); // 2 old packages deleted
+        mockTx.package.create.mockResolvedValue({
+          id: 'new-package-id',
+          name: 'Basic Package',
+          slug: 'basic-package',
+          basePrice: 5000,
+        });
+        mockTx.tenant.findUnique.mockResolvedValue({ slug: 'test-business' });
 
         const payload = {
           segmentName: 'Photography Sessions',
           segmentSlug: 'photography-sessions',
-          packages: [{ name: 'Basic Package', priceCents: 5000, groupingOrder: 1 }],
+          packages: [
+            { name: 'Basic Package', slug: 'basic-package', priceCents: 5000, groupingOrder: 1 },
+          ],
         };
 
-        await expect(upsertServicesExecutor(tenantId, payload)).rejects.toThrow(ValidationError);
-        await expect(upsertServicesExecutor(tenantId, payload)).rejects.toMatchObject({
-          message: expect.stringContaining('already exists'),
+        const result = await upsertServicesExecutor(tenantId, payload);
+
+        expect(result.action).toBe('updated');
+        expect(result.segmentId).toBe('existing-segment-id');
+        expect(mockTx.segment.update).toHaveBeenCalledWith({
+          where: { id: 'existing-segment-id' },
+          data: {
+            name: 'Photography Sessions',
+            heroTitle: 'Photography Sessions',
+            active: true,
+          },
+        });
+        expect(mockTx.package.deleteMany).toHaveBeenCalledWith({
+          where: { segmentId: 'existing-segment-id', tenantId },
         });
       });
     });

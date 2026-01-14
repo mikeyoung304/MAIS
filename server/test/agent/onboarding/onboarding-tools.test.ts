@@ -22,14 +22,16 @@ import type { ToolContext } from '../../../src/agent/tools/types';
 // Mock the dependencies
 vi.mock('../../../src/agent/proposals/proposal.service', () => ({
   ProposalService: vi.fn().mockImplementation(() => ({
-    createProposal: vi.fn().mockResolvedValue({
-      proposalId: 'prop_test123',
-      operation: 'Test Operation',
-      preview: {},
-      trustTier: 'T2',
-      requiresApproval: false,
-      expiresAt: new Date(Date.now() + 300000).toISOString(),
-    }),
+    createProposal: vi.fn().mockImplementation((params: any) =>
+      Promise.resolve({
+        proposalId: 'prop_test123',
+        operation: params.operation, // Pass through the operation parameter
+        preview: params.preview || {},
+        trustTier: params.trustTier || 'T2',
+        requiresApproval: false,
+        expiresAt: new Date(Date.now() + 300000).toISOString(),
+      })
+    ),
   })),
 }));
 
@@ -147,11 +149,14 @@ describe('Onboarding Tools', () => {
       expect((result as any).duplicateName).toBe('basic package');
     });
 
-    it('should return error if segment already exists', async () => {
+    it('should create update proposal if segment already exists', async () => {
       mockPrisma.segment.findFirst.mockResolvedValue({
         id: 'existing-segment',
         slug: 'photography-sessions',
+        tenantId: 'test-tenant',
+        name: 'Photography Sessions',
       });
+      mockPrisma.tenant.findUnique.mockResolvedValue({ slug: 'test-business' });
 
       const result = await upsertServicesTool.execute(mockContext, {
         segmentName: 'Photography Sessions',
@@ -159,8 +164,8 @@ describe('Onboarding Tools', () => {
         packages: [{ name: 'Basic', slug: 'basic', priceCents: 20000, groupingOrder: 1 }],
       });
 
-      expect(result.success).toBe(false);
-      expect((result as any).existingSlug).toBe('photography-sessions');
+      expect(result.success).toBe(true);
+      expect((result as any).operation).toContain('Update segment');
     });
 
     it('should create proposal for valid input', async () => {

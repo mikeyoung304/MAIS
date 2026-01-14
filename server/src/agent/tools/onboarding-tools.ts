@@ -475,18 +475,10 @@ Example:
         } as AgentToolResult;
       }
 
-      // Check if segment with this slug already exists
+      // Check if segment with this slug already exists (for preview text)
       const existingSegment = await prisma.segment.findFirst({
         where: { tenantId, slug: segmentSlug },
       });
-
-      if (existingSegment) {
-        return {
-          success: false,
-          error: 'SEGMENT_EXISTS',
-          existingSlug: segmentSlug,
-        } as AgentToolResult;
-      }
 
       // Build preview
       const totalPackages = packages.length;
@@ -495,7 +487,8 @@ Example:
           ? `${formatPrice(Math.min(...packages.map((p) => p.priceCents)))} - ${formatPrice(Math.max(...packages.map((p) => p.priceCents)))}`
           : 'N/A';
 
-      const operation = `Create segment "${sanitizeForContext(segmentName, 50)}" with ${totalPackages} packages`;
+      const action = existingSegment ? 'Update' : 'Create';
+      const operation = `${action} segment "${sanitizeForContext(segmentName, 50)}" with ${totalPackages} packages`;
       const payload = {
         segmentName,
         segmentSlug,

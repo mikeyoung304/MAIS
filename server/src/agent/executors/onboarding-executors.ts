@@ -80,28 +80,48 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
         where: { tenantId, slug: segmentSlug },
       });
 
+      let segment;
+      let isUpdate = false;
+
       if (existingSegment) {
-        throw new ValidationError(
-          `Segment with slug "${segmentSlug}" already exists. Use a different slug.`
+        // Update existing segment
+        segment = await tx.segment.update({
+          where: { id: existingSegment.id },
+          data: {
+            name: segmentName,
+            heroTitle: segmentName, // Update hero title to match new name
+            active: true,
+          },
+        });
+
+        // Delete existing packages to replace with new ones
+        await tx.package.deleteMany({
+          where: { segmentId: segment.id, tenantId },
+        });
+
+        isUpdate = true;
+        logger.info(
+          { tenantId, segmentId: segment.id, slug: segmentSlug },
+          'Segment updated via onboarding (existing packages replaced)'
+        );
+      } else {
+        // Create new segment
+        segment = await tx.segment.create({
+          data: {
+            tenantId,
+            name: segmentName,
+            slug: segmentSlug,
+            heroTitle: segmentName, // Use name as default hero title
+            active: true,
+            sortOrder: 0,
+          },
+        });
+
+        logger.info(
+          { tenantId, segmentId: segment.id, slug: segmentSlug },
+          'Segment created via onboarding'
         );
       }
-
-      // Create segment
-      const segment = await tx.segment.create({
-        data: {
-          tenantId,
-          name: segmentName,
-          slug: segmentSlug,
-          heroTitle: segmentName, // Use name as default hero title
-          active: true,
-          sortOrder: 0,
-        },
-      });
-
-      logger.info(
-        { tenantId, segmentId: segment.id, slug: segmentSlug },
-        'Segment created via onboarding'
-      );
 
       // Create packages within segment
       const createdPackages: Array<{
@@ -158,7 +178,7 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
         : undefined;
 
       return {
-        action: 'created',
+        action: isUpdate ? 'updated' : 'created',
         segmentId: segment.id,
         segmentName: segment.name,
         segmentSlug: segment.slug,
