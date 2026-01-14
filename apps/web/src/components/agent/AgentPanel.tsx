@@ -45,6 +45,19 @@ interface ToolResultWithConfig {
 }
 
 /**
+ * Tool result that includes package updates from upsert_services executor
+ * Triggers iframe refresh since packages are server-rendered
+ */
+interface ToolResultWithPackages {
+  success: true;
+  data: {
+    packages?: Array<{ id: string; name: string; priceCents: number }>;
+    packageCount?: number;
+    [key: string]: unknown;
+  };
+}
+
+/**
  * OnboardingSection - Reusable onboarding progress and preview section
  * (Fix for #747: Extract duplicate onboarding section)
  */
@@ -156,6 +169,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
   /**
    * Fix for #739, #740, #742: Extract duplicate onToolComplete logic with proper types
    * Phase 1.4: Optimistic updates with 100ms failsafe (increased from 50ms)
+   *
+   * P0-FIX (2026-01-14): Also triggers iframe refresh when packages are updated
+   * Packages are server-rendered in the iframe and cannot be updated via PostMessage
    */
   const handleToolComplete = useCallback(
     (toolResults?: Array<{ success: boolean; data?: any }>) => {
@@ -163,6 +179,16 @@ export function AgentPanel({ className }: AgentPanelProps) {
       const resultWithConfig = toolResults?.find(
         (r): r is ToolResultWithConfig =>
           r.success && r.data != null && typeof r.data === 'object' && 'updatedConfig' in r.data
+      );
+
+      // Check if any tool result contains package updates (from upsert_services executor)
+      // Packages are server-rendered in iframe - need full iframe refresh
+      const resultWithPackages = toolResults?.find(
+        (r): r is ToolResultWithPackages =>
+          r.success &&
+          r.data != null &&
+          typeof r.data === 'object' &&
+          ('packages' in r.data || 'packageCount' in r.data)
       );
 
       if (resultWithConfig?.data?.updatedConfig) {
@@ -181,6 +207,15 @@ export function AgentPanel({ className }: AgentPanelProps) {
         setTimeout(() => {
           invalidateDraftConfig();
         }, 100);
+      }
+
+      // Trigger iframe refresh when packages are updated
+      // This ensures the preview shows correct prices/names immediately
+      if (resultWithPackages) {
+        // Small delay to ensure database transaction is committed
+        setTimeout(() => {
+          agentUIActions.refreshPreview();
+        }, 150);
       }
     },
     [queryClient]

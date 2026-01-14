@@ -19,7 +19,7 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-client';
-import { agentUIActions } from '@/stores/agent-ui-store';
+import { agentUIActions, useAgentUIStore, selectPreviewRefreshKey } from '@/stores/agent-ui-store';
 import { useDraftConfig } from '@/hooks/useDraftConfig';
 import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { Button } from '@/components/ui/button';
@@ -113,6 +113,9 @@ export function PreviewPanel({
   const [error, setError] = useState<string | null>(null);
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
 
+  // Subscribe to preview refresh key - triggers iframe reload when packages change
+  const previewRefreshKey = useAgentUIStore(selectPreviewRefreshKey);
+
   // T3 confirmation dialogs
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
@@ -140,6 +143,22 @@ export function PreviewPanel({
       }
     };
   }, []);
+
+  // Auto-refresh when previewRefreshKey changes (triggered by package updates)
+  // Skip initial value (0) to avoid unnecessary refresh on mount
+  const prevRefreshKeyRef = useRef(previewRefreshKey);
+  useEffect(() => {
+    if (previewRefreshKey > 0 && previewRefreshKey !== prevRefreshKeyRef.current) {
+      prevRefreshKeyRef.current = previewRefreshKey;
+      // Reset iframe state and reload to fetch fresh server-rendered content
+      setIsLoading(true);
+      setError(null);
+      setIsIframeReady(false);
+      if (iframeRef.current) {
+        iframeRef.current.src = iframeUrl;
+      }
+    }
+  }, [previewRefreshKey, iframeUrl]);
 
   // Send config to iframe
   const sendConfigToIframe = useCallback(() => {

@@ -190,16 +190,43 @@ describe('Onboarding Executors', () => {
         });
       });
 
-      it('should throw MissingFieldError when segmentSlug is missing', async () => {
+      it('should use "general" as default segmentSlug when not provided', async () => {
+        // Mock the segment lookup to return an existing "general" segment
+        mockTx.segment.findFirst.mockResolvedValue({
+          id: 'existing-general-segment',
+          name: 'General',
+          slug: 'general',
+        });
+        // Mock segment update (used when segment exists)
+        mockTx.segment.update.mockResolvedValue({
+          id: 'existing-general-segment',
+          name: 'Test Segment',
+          slug: 'general',
+        });
+        mockTx.package.deleteMany.mockResolvedValue({ count: 0 });
+        mockTx.package.create.mockResolvedValue({
+          id: 'pkg-1',
+          name: 'Package 1',
+          slug: 'package-1',
+          basePrice: 1000,
+          segmentId: 'existing-general-segment',
+        });
+
         const payload = {
           segmentName: 'Test Segment',
           packages: [{ name: 'Package 1', priceCents: 1000, groupingOrder: 1 }],
         };
 
-        await expect(upsertServicesExecutor(tenantId, payload)).rejects.toThrow(MissingFieldError);
-        await expect(upsertServicesExecutor(tenantId, payload)).rejects.toMatchObject({
-          message: expect.stringContaining('segmentSlug is required'),
-        });
+        const result = await upsertServicesExecutor(tenantId, payload);
+
+        // Should succeed with default segment
+        expect(result.action).toBe('updated');
+        expect(result.segmentSlug).toBe('general');
+        expect(mockTx.segment.findFirst).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { tenantId, slug: 'general' },
+          })
+        );
       });
 
       it('should throw MissingFieldError when packages is missing', async () => {
@@ -473,6 +500,7 @@ describe('Onboarding Executors', () => {
           ]),
           packageCount: 2,
           previewUrl: expect.stringContaining('/t/bella-weddings'),
+          hasDraft: true, // Indicates to frontend that draft content changed
         });
       });
 

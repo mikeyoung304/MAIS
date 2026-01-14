@@ -131,6 +131,10 @@ export interface AgentUIState {
   // Draft dirty state (has unpublished changes)
   isDirty: boolean;
 
+  // Preview refresh key - increment to force iframe reload
+  // Used when packages or other server-rendered data changes
+  previewRefreshKey: number;
+
   // Event log for audit/debugging/undo
   actionLog: AgentAction[];
 
@@ -181,6 +185,13 @@ export interface AgentUIState {
    * Set dirty state (has unpublished changes)
    */
   setDirty: (dirty: boolean) => void;
+
+  /**
+   * Force preview iframe to refresh
+   * Call after package updates or other server-side data changes
+   * that can't be updated via PostMessage
+   */
+  refreshPreview: () => void;
 
   /**
    * Set error state with optional recovery function
@@ -248,6 +259,7 @@ export const useAgentUIStore = create<AgentUIState>()(
         // Initial state
         view: { status: 'dashboard' },
         isDirty: false,
+        previewRefreshKey: 0,
         actionLog: [],
         tenantId: null,
 
@@ -391,6 +403,12 @@ export const useAgentUIStore = create<AgentUIState>()(
             state.isDirty = dirty;
           }),
 
+        // Force preview refresh
+        refreshPreview: () =>
+          set((state) => {
+            state.previewRefreshKey += 1;
+          }),
+
         // Set error
         setError: (error, recovery) =>
           set((state) => {
@@ -490,6 +508,8 @@ export const agentUIActions = {
 
   setDirty: (dirty: boolean) => useAgentUIStore.getState().setDirty(dirty),
 
+  refreshPreview: () => useAgentUIStore.getState().refreshPreview(),
+
   setError: (error: string, recovery?: () => void) =>
     useAgentUIStore.getState().setError(error, recovery),
 
@@ -524,6 +544,11 @@ export const selectIsPreviewActive = (state: AgentUIState) => state.view.status 
  * Select dirty state
  */
 export const selectIsDirty = (state: AgentUIState) => state.isDirty;
+
+/**
+ * Select preview refresh key (increment triggers iframe reload)
+ */
+export const selectPreviewRefreshKey = (state: AgentUIState) => state.previewRefreshKey;
 
 /**
  * Select current page in preview (or null)
