@@ -183,7 +183,7 @@ describe('Onboarding Tools', () => {
 
       expect(result.success).toBe(true);
       expect((result as any).proposalId).toBeDefined();
-      expect((result as any).trustTier).toBe('T2');
+      expect((result as any).trustTier).toBe('T1');
     });
   });
 
@@ -246,7 +246,7 @@ describe('Onboarding Tools', () => {
 
       expect(result.success).toBe(true);
       expect((result as any).proposalId).toBeDefined();
-      expect((result as any).trustTier).toBe('T2');
+      expect((result as any).trustTier).toBe('T1');
     });
   });
 

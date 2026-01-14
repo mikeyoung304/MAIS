@@ -504,7 +504,7 @@ Example:
         })),
       };
 
-      return createProposal(context, 'upsert_services', operation, 'T2', payload, preview);
+      return createProposal(context, 'upsert_services', operation, 'T1', payload, preview);
     } catch (error) {
       return handleToolError(
         error,
@@ -625,7 +625,7 @@ Example:
         })),
       };
 
-      return createProposal(context, 'update_storefront', operation, 'T2', payload, preview);
+      return createProposal(context, 'update_storefront', operation, 'T1', payload, preview);
     } catch (error) {
       return handleToolError(
         error,
