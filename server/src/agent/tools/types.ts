@@ -5,6 +5,32 @@
  */
 
 import type { AgentTrustTier, PrismaClient } from '../../generated/prisma/client';
+import type { LandingPageConfig, PagesConfig } from '@macon/contracts';
+
+/**
+ * Result from getDraftConfig
+ * Moved here to avoid circular dependency with utils.ts
+ */
+export interface DraftConfigResult {
+  pages: PagesConfig;
+  hasDraft: boolean;
+}
+
+/**
+ * Result from getDraftConfigWithSlug
+ * Combined result to avoid N+1 queries when both config and slug are needed
+ *
+ * Includes raw configs for discovery tools that need to compute:
+ * - existsInDraft / existsInLive flags (list_section_ids)
+ * - source field (get_section_by_id)
+ */
+export interface DraftConfigWithSlugResult extends DraftConfigResult {
+  slug: string | null;
+  /** Raw draft config (null if no draft exists) - use for existsInDraft checks */
+  rawDraftConfig: LandingPageConfig | null;
+  /** Raw live config (null if no live config exists) - use for existsInLive checks */
+  rawLiveConfig: LandingPageConfig | null;
+}
 
 /**
  * Context provided to each tool execution
@@ -22,7 +48,7 @@ export interface ToolContext {
    * Gated by ENABLE_CONTEXT_CACHE feature flag
    * CRITICAL: Must be invalidated after T1 writes to prevent stale data
    */
-  draftConfig?: import('./utils').DraftConfigWithSlugResult;
+  draftConfig?: DraftConfigWithSlugResult;
 }
 
 /**

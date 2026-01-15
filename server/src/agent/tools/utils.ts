@@ -16,7 +16,7 @@ import {
   DEFAULT_PAGES_CONFIG,
   LandingPageConfigSchema,
 } from '@macon/contracts';
-import type { ToolError } from './types';
+import type { ToolError, DraftConfigResult, DraftConfigWithSlugResult } from './types';
 
 /**
  * Handle tool errors consistently across all tools
@@ -139,33 +139,8 @@ export function validateAndExtractPages(
   };
 }
 
-/**
- * Result from getDraftConfig
- */
-export interface DraftConfigResult {
-  pages: PagesConfig;
-  hasDraft: boolean;
-}
-
-/**
- * Result from getDraftConfigWithSlug
- * Combined result to avoid N+1 queries when both config and slug are needed
- *
- * Includes raw configs for discovery tools that need to compute:
- * - existsInDraft / existsInLive flags (list_section_ids)
- * - isShowingDefaults flag (all discovery tools)
- *
- * TODO #718 FIX: Added rawDraftConfig and rawLiveConfig to eliminate
- * the N+1 query pattern where discovery tools called getDraftConfigWithSlug
- * then made a second query to fetch the same raw configs.
- */
-export interface DraftConfigWithSlugResult extends DraftConfigResult {
-  slug: string | null;
-  /** Raw draft config (null if no draft exists) - use for existsInDraft checks */
-  rawDraftConfig: LandingPageConfig | null;
-  /** Raw live config (null if no live config exists) - use for existsInLive checks */
-  rawLiveConfig: LandingPageConfig | null;
-}
+// Re-export types for backwards compatibility
+export type { DraftConfigResult, DraftConfigWithSlugResult } from './types';
 
 /**
  * Get or initialize draft config from tenant
