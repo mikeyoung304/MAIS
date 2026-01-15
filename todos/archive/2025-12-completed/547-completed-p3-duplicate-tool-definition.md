@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p3
-issue_id: "547"
+issue_id: '547'
 tags: [code-review, dry, cleanup]
 dependencies: []
-completed_at: "2026-01-01"
+completed_at: '2026-01-01'
 ---
 
 # Duplicate Tool Definition (getBlackoutsTool)
@@ -16,15 +16,18 @@ completed_at: "2026-01-01"
 ## Findings
 
 **Pattern Recognition Specialist:**
+
 > "`getBlackoutsTool` (line 532) and `getBlackoutDatesTool` (line 1399) are functionally identical. Comment on line 1472 acknowledges this (TODO #452)."
 
 **Evidence:**
+
 ```typescript
 // Lines 557-564 vs 1425-1432: Identical queries
 // Lines 568-572 vs 1435-1439: Identical formatting
 ```
 
 **Impact:**
+
 - DRY violation
 - Maintenance burden (changes need to be made twice)
 - Confusion about which tool to use
@@ -32,6 +35,7 @@ completed_at: "2026-01-01"
 ## Proposed Solutions
 
 ### Option A: Remove getBlackoutsTool (Recommended)
+
 Keep only `getBlackoutDatesTool` (more descriptive name).
 
 **Pros:** Simplest fix
@@ -40,6 +44,7 @@ Keep only `getBlackoutDatesTool` (more descriptive name).
 **Risk:** Low
 
 ### Option B: Create alias
+
 Export both names pointing to same implementation.
 
 **Pros:** Backwards compatible
@@ -54,6 +59,7 @@ Option A - Remove duplicate, keep getBlackoutDatesTool
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/agent/tools/read-tools.ts:532-580` - Remove getBlackoutsTool
 
 ## Acceptance Criteria
@@ -64,7 +70,7 @@ Option A - Remove duplicate, keep getBlackoutDatesTool
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2026-01-01 | Created from code review | Check for duplicates during review |
+| Date       | Action                                               | Learnings                                                        |
+| ---------- | ---------------------------------------------------- | ---------------------------------------------------------------- |
+| 2026-01-01 | Created from code review                             | Check for duplicates during review                               |
 | 2026-01-01 | Completed - removed getBlackoutsTool (lines 532-588) | getBlackoutDatesTool was already the only one in readTools array |

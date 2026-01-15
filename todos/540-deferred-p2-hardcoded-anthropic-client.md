@@ -1,7 +1,7 @@
 ---
 status: deferred
 priority: p2
-issue_id: "540"
+issue_id: '540'
 tags: [code-review, agent-ecosystem, testing, architecture]
 dependencies: []
 ---
@@ -15,6 +15,7 @@ The Anthropic client is created directly in the constructor, making it difficult
 ## Findings
 
 **Architecture Strategist:**
+
 > "Hard-coded Anthropic client creation makes testing difficult without mocking `Anthropic` constructor."
 
 **Location:** `base-orchestrator.ts` (lines 206-212)
@@ -30,6 +31,7 @@ this.anthropic = new Anthropic({
 ## Proposed Solutions
 
 Inject via constructor or factory:
+
 ```typescript
 constructor(
   protected readonly prisma: PrismaClient,

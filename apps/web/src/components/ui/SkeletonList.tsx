@@ -18,33 +18,16 @@ export interface SkeletonListProps extends React.HTMLAttributes<HTMLDivElement> 
 const SkeletonList = React.forwardRef<HTMLDivElement, SkeletonListProps>(
   ({ className, count = 3, animate = true, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={cn('space-y-4', className)}
-        aria-hidden="true"
-        {...props}
-      >
+      <div ref={ref} className={cn('space-y-4', className)} aria-hidden="true" {...props}>
         {Array.from({ length: count }).map((_, index) => (
           <div key={index} className="flex items-center gap-4">
             {/* Avatar circle */}
-            <Skeleton
-              rounded="full"
-              animate={animate}
-              className="h-10 w-10 flex-shrink-0"
-            />
+            <Skeleton rounded="full" animate={animate} className="h-10 w-10 flex-shrink-0" />
 
             {/* Text lines */}
             <div className="flex-1 space-y-2">
-              <Skeleton
-                rounded="default"
-                animate={animate}
-                className="h-4 w-3/4"
-              />
-              <Skeleton
-                rounded="default"
-                animate={animate}
-                className="h-3 w-1/2"
-              />
+              <Skeleton rounded="default" animate={animate} className="h-4 w-3/4" />
+              <Skeleton rounded="default" animate={animate} className="h-3 w-1/2" />
             </div>
           </div>
         ))}

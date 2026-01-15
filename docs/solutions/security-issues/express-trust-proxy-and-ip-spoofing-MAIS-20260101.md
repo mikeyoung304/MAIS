@@ -31,6 +31,7 @@ Two critical security issues discovered in code review:
 2. **P1 - IP Spoofing Vulnerability:** Rate limiter extracts the leftmost IP from `X-Forwarded-For` header, which is client-controlled and spoofable, allowing attackers to bypass rate limits entirely
 
 **Combined Impact:** Rate limiting provides zero security in production. Attackers can:
+
 - Rotate fake IPs to bypass signup/login rate limits
 - Brute-force booking tokens without detection
 - DDoS endpoints with different fake IPs per request
@@ -49,7 +50,11 @@ Express doesn't parse `X-Forwarded-For` headers without the `trust proxy` settin
 
 ```typescript
 // MISSING - trust proxy not set
-export function createApp(config: Config, container: Container, startTime: number): express.Application {
+export function createApp(
+  config: Config,
+  container: Container,
+  startTime: number
+): express.Application {
   const app = express();
 
   // ... middleware setup ...
@@ -60,6 +65,7 @@ export function createApp(config: Config, container: Container, startTime: numbe
 ### Attack Impact
 
 **Scenario:** Attacker on Vercel (production host)
+
 ```
 Attacker IP: 192.168.1.100 (home network)
   ↓
@@ -139,7 +145,7 @@ keyGenerator: (req: Request) => {
     return forwarded.split(',')[0].trim(); // ❌ WRONG - attacker controls this
   }
   return req.ip || 'unknown';
-}
+};
 ```
 
 ### Attack Vector
@@ -257,18 +263,21 @@ app.set('trust proxy', 1);
 Review all rate limiters to ensure they use `normalizeIp(req.ip)` pattern:
 
 **Files to check:**
+
 - `server/src/middleware/rateLimiter.ts` - All limiter configurations
 
 **Pattern (correct):**
+
 ```typescript
-keyGenerator: (req) => normalizeIp(req.ip) // ✅ Uses req.ip, not XFF header
+keyGenerator: (req) => normalizeIp(req.ip); // ✅ Uses req.ip, not XFF header
 ```
 
 **Pattern (vulnerable - if any exist):**
+
 ```typescript
 keyGenerator: (req) => {
-  return req.headers['x-forwarded-for']?.split(',')[0] // ❌ Direct XFF parsing
-}
+  return req.headers['x-forwarded-for']?.split(',')[0]; // ❌ Direct XFF parsing
+};
 ```
 
 ### Step 3: Testing
@@ -303,6 +312,7 @@ npm run test:e2e -- e2e/tests/auth-signup.spec.ts
 ### Scenario: Attack Without Both Fixes
 
 **With ONLY trust proxy (not rate limiter fix):**
+
 ```
 Attacker tries:
   GET /v1/booking/token/ABC123
@@ -319,6 +329,7 @@ Rate limit doesn't block token enumeration attack
 ### Scenario: Fixed (Both in Place)
 
 **With trust proxy + req.ip based limiters:**
+
 ```
 Attacker tries:
   GET /v1/booking/token/ABC123
@@ -362,7 +373,9 @@ export const newLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: isTestEnvironment ? 500 : 50, // Test bypass
   keyGenerator: (req) => normalizeIp(req.ip), // Uses req.ip, not headers
-  handler: (req, res) => { /* error handler */ },
+  handler: (req, res) => {
+    /* error handler */
+  },
 });
 
 // ❌ WRONG - Don't do this:
@@ -387,8 +400,8 @@ When reviewing proxy or auth code:
 test('should correctly extract IP from X-Forwarded-For', async () => {
   const req = createMockRequest({
     headers: {
-      'x-forwarded-for': '1.2.3.4, 192.168.1.100, 76.45.67.89'
-    }
+      'x-forwarded-for': '1.2.3.4, 192.168.1.100, 76.45.67.89',
+    },
   });
 
   // With trust proxy enabled, req.ip should be rightmost
@@ -411,12 +424,12 @@ test('should correctly extract IP from X-Forwarded-For', async () => {
 
 ## Implementation Status
 
-| Task | Status | Effort | Risk |
-|------|--------|--------|------|
-| Add `app.set('trust proxy', 1)` | READY | 5 min | Low |
-| Review rate limiter keyGenerators | READY | 10 min | Low |
-| Test on staging | READY | 30 min | Low |
-| Deploy to production | READY | 10 min | Low |
+| Task                              | Status | Effort | Risk |
+| --------------------------------- | ------ | ------ | ---- |
+| Add `app.set('trust proxy', 1)`   | READY  | 5 min  | Low  |
+| Review rate limiter keyGenerators | READY  | 10 min | Low  |
+| Test on staging                   | READY  | 30 min | Low  |
+| Deploy to production              | READY  | 10 min | Low  |
 
 ---
 

@@ -65,19 +65,19 @@ export const loginLimiter = rateLimit({
 
 ## Work Log
 
-| Date       | Action                              | Outcome                                |
-| ---------- | ----------------------------------- | -------------------------------------- |
-| 2026-01-09 | Fixed Playwright port config        | Still failing                          |
-| 2026-01-09 | Removed confirmPassword field       | Still failing                          |
-| 2026-01-09 | Fixed Prisma import path            | Still failing                          |
-| 2026-01-09 | Verified API works via curl         | Confirmed working                      |
-| 2026-01-09 | Verified CORS configuration         | Confirmed correct                      |
-| 2026-01-09 | Tests timeout on waitForResponse    | Needs deeper investigation             |
-| 2026-01-10 | **Triage: APPROVED**                | E2E tests are critical infrastructure  |
-| 2026-01-10 | Fixed loginLimiter E2E_TEST check   | Rate limiters now bypass in E2E        |
-| 2026-01-10 | Fixed 4 other rate limiters         | Consistent isTestEnvironment usage     |
-| 2026-01-10 | Improved auth fixture robustness    | Handles Next.js redirect patterns      |
-| 2026-01-10 | **COMPLETE**                        | All code changes applied, tests pass   |
+| Date       | Action                            | Outcome                               |
+| ---------- | --------------------------------- | ------------------------------------- |
+| 2026-01-09 | Fixed Playwright port config      | Still failing                         |
+| 2026-01-09 | Removed confirmPassword field     | Still failing                         |
+| 2026-01-09 | Fixed Prisma import path          | Still failing                         |
+| 2026-01-09 | Verified API works via curl       | Confirmed working                     |
+| 2026-01-09 | Verified CORS configuration       | Confirmed correct                     |
+| 2026-01-09 | Tests timeout on waitForResponse  | Needs deeper investigation            |
+| 2026-01-10 | **Triage: APPROVED**              | E2E tests are critical infrastructure |
+| 2026-01-10 | Fixed loginLimiter E2E_TEST check | Rate limiters now bypass in E2E       |
+| 2026-01-10 | Fixed 4 other rate limiters       | Consistent isTestEnvironment usage    |
+| 2026-01-10 | Improved auth fixture robustness  | Handles Next.js redirect patterns     |
+| 2026-01-10 | **COMPLETE**                      | All code changes applied, tests pass  |
 
 ## Resources
 

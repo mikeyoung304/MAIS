@@ -80,9 +80,7 @@ async function deriveEncryptionKey(tenantId: string): Promise<CryptoKey> {
   const keyMaterial = new TextEncoder().encode(`${seed}:${tenantId}`);
 
   // Import the seed as raw key material for PBKDF2
-  const baseKey = await crypto.subtle.importKey('raw', keyMaterial, 'PBKDF2', false, [
-    'deriveKey',
-  ]);
+  const baseKey = await crypto.subtle.importKey('raw', keyMaterial, 'PBKDF2', false, ['deriveKey']);
 
   // Derive AES-GCM key using PBKDF2
   // Salt is deterministic (tenant-based) since we need consistent decryption
@@ -521,9 +519,7 @@ export async function updatePendingBooking(
  * Remove a pending booking after successful sync.
  */
 export async function removePendingBooking(id: string): Promise<void> {
-  await withTransaction(STORES.PENDING_BOOKINGS, 'readwrite', (store) =>
-    store.delete(id)
-  );
+  await withTransaction(STORES.PENDING_BOOKINGS, 'readwrite', (store) => store.delete(id));
 
   logger.info('Removed pending booking', { id });
 }
@@ -577,18 +573,13 @@ export async function setCachedData<T>(
     createdAt: Date.now(),
   };
 
-  await withTransaction(STORES.CACHED_DATA, 'readwrite', (store) =>
-    store.put(record)
-  );
+  await withTransaction(STORES.CACHED_DATA, 'readwrite', (store) => store.put(record));
 }
 
 /**
  * Get cached data if not expired.
  */
-export async function getCachedData<T>(
-  key: string,
-  tenantId: string
-): Promise<T | null> {
+export async function getCachedData<T>(key: string, tenantId: string): Promise<T | null> {
   const fullKey = `${tenantId}:${key}`;
 
   const record = await withTransaction<CachedData<T> | undefined>(
@@ -610,9 +601,7 @@ export async function getCachedData<T>(
 export async function removeCachedData(key: string, tenantId: string): Promise<void> {
   const fullKey = `${tenantId}:${key}`;
 
-  await withTransaction(STORES.CACHED_DATA, 'readwrite', (store) =>
-    store.delete(fullKey)
-  );
+  await withTransaction(STORES.CACHED_DATA, 'readwrite', (store) => store.delete(fullKey));
 }
 
 /**
@@ -655,11 +644,7 @@ export async function clearExpiredCache(): Promise<number> {
 /**
  * Set a user preference.
  */
-export async function setPreference(
-  key: string,
-  tenantId: string,
-  value: unknown
-): Promise<void> {
+export async function setPreference(key: string, tenantId: string, value: unknown): Promise<void> {
   const record: UserPreference = {
     key: `${tenantId}:${key}`,
     tenantId,
@@ -667,18 +652,13 @@ export async function setPreference(
     updatedAt: Date.now(),
   };
 
-  await withTransaction(STORES.PREFERENCES, 'readwrite', (store) =>
-    store.put(record)
-  );
+  await withTransaction(STORES.PREFERENCES, 'readwrite', (store) => store.put(record));
 }
 
 /**
  * Get a user preference.
  */
-export async function getPreference<T>(
-  key: string,
-  tenantId: string
-): Promise<T | null> {
+export async function getPreference<T>(key: string, tenantId: string): Promise<T | null> {
   const fullKey = `${tenantId}:${key}`;
 
   const record = await withTransaction<UserPreference | undefined>(

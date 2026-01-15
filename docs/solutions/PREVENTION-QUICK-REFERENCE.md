@@ -161,6 +161,32 @@ const effectiveTitle = draft.title ?? live.title;
 const effectivePrice = draft.price ?? live.price;
 ```
 
+```typescript
+// ✅ IFRAME REFRESH: Reload iframe when server-rendered data changes
+// Server returns indicator in tool result
+return { packages: [...], packageCount: 3, hasDraft: true };
+
+// Frontend detects and refreshes with 150ms delay
+if (resultWithPackages) {
+  setTimeout(() => agentUIActions.refreshPreview(), 150);
+}
+
+// Iframe component watches key, skips initial 0 value
+useEffect(() => {
+  if (previewRefreshKey > 0 && previewRefreshKey !== prev.current) {
+    prev.current = previewRefreshKey;
+    iframeRef.current.src = iframeUrl;  // Full reload
+  }
+}, [previewRefreshKey, iframeUrl]);
+
+// ❌ NEVER try PostMessage for server-rendered data
+// PostMessage only updates dynamic draftConfig, not HTML
+iframeRef.current.contentWindow.postMessage({ packages: newData }, origin);
+// ^ Prices won't update - need full iframe reload instead
+
+// See: docs/solutions/patterns/IFRAME_REFRESH_PREVENTION_INDEX.md
+```
+
 ---
 
 ### Backend Logging Pattern

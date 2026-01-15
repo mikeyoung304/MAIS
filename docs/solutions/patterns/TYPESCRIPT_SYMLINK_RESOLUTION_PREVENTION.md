@@ -36,11 +36,13 @@ shared/
 ```
 
 When `Button.tsx` imports from `../shared/utils`:
+
 - TypeScript may resolve to `/src/shared/utils.ts` (via symlink)
 - Or to `/shared/utils.ts` (via real path)
 - These are treated as DIFFERENT modules
 
 **Result:**
+
 - Same file compiled twice
 - Type definitions don't match
 - `instanceof` checks fail
@@ -207,10 +209,11 @@ When reviewing PRs that add symlinks or modify path structure:
 
 ### Copy-Paste Review Comment
 
-```markdown
+````markdown
 **Symlink in Source Directory**
 
 This PR adds a symlink in the TypeScript source directory, which can cause:
+
 - Double compilation of the same files
 - "Duplicate identifier" errors
 - Inconsistent builds between machines
@@ -227,9 +230,11 @@ This PR adds a symlink in the TypeScript source directory, which can cause:
   }
 }
 ```
+````
 
 Then import as: `import { x } from '@shared/utils'`
-```
+
+````
 
 ---
 
@@ -244,7 +249,7 @@ npm run build
 
 # Check for duplicate outputs
 find dist -name "*.js" | xargs md5sum | sort | uniq -d -w32
-```
+````
 
 ### 2. Symlink Detection in CI
 
@@ -409,31 +414,35 @@ npm test
 
 ## Common Error Messages and Fixes
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| "Duplicate identifier 'X'" | Same file via two paths | Remove symlink, use path alias |
-| "Cannot find module 'X'" | Symlink target missing | Check symlink target exists |
-| "Module 'X' has no exported member 'Y'" | Different version via symlink | Use workspace package |
-| Build output differs between machines | Symlink resolved differently | Remove symlink, use path alias |
+| Error                                   | Cause                         | Fix                            |
+| --------------------------------------- | ----------------------------- | ------------------------------ |
+| "Duplicate identifier 'X'"              | Same file via two paths       | Remove symlink, use path alias |
+| "Cannot find module 'X'"                | Symlink target missing        | Check symlink target exists    |
+| "Module 'X' has no exported member 'Y'" | Different version via symlink | Use workspace package          |
+| Build output differs between machines   | Symlink resolved differently  | Remove symlink, use path alias |
 
 ---
 
 ## Platform-Specific Notes
 
 ### Windows
+
 - Symlinks require admin privileges or Developer Mode
 - May fail silently, creating empty files instead
 - Git may not preserve symlinks (depends on `core.symlinks` setting)
 
 ### macOS/Linux
+
 - Symlinks work as expected
 - Be careful with case sensitivity differences
 
 ### Docker
+
 - Symlinks may not work across volume mounts
 - Use path aliases instead for containerized builds
 
 ### CI/CD (GitHub Actions, etc.)
+
 - Symlinks may or may not be preserved in checkout
 - Always test build in CI, not just locally
 

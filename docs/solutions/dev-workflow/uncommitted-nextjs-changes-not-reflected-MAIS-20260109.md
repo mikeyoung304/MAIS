@@ -1,6 +1,6 @@
 ---
-title: "Next.js Redirect Changes Not Reflected Despite Code Edits"
-category: "dev-workflow"
+title: 'Next.js Redirect Changes Not Reflected Despite Code Edits'
+category: 'dev-workflow'
 tags:
   - nextjs
   - redirect
@@ -9,10 +9,10 @@ tags:
   - build
   - turbopack
   - uncommitted-changes
-severity: "P2"
-component: "apps/web (Next.js frontend, signup flow, ProtectedRoute)"
-date_discovered: "2026-01-09"
-commit_fix: "b87da8bb"
+severity: 'P2'
+component: 'apps/web (Next.js frontend, signup flow, ProtectedRoute)'
+date_discovered: '2026-01-09'
+commit_fix: 'b87da8bb'
 ---
 
 # Next.js Redirect Changes Not Reflected Despite Code Edits
@@ -22,6 +22,7 @@ commit_fix: "b87da8bb"
 After modifying auth redirects from `/tenant/dashboard` to `/tenant/build` in three files, the changes appeared in the working directory but the application continued redirecting to the old path.
 
 **Symptoms:**
+
 - Files modified and saved correctly
 - Code changes visible in `git diff`
 - No build errors or warnings
@@ -45,6 +46,7 @@ git show HEAD:apps/web/src/app/signup/page.tsx | grep "tenant/dashboard"
 ```
 
 **Why this happens:**
+
 1. Next.js dev server caches compiled modules in memory (Turbopack/SWC)
 2. HMR watches for file saves but may not fully invalidate on complex changes
 3. When the committed HEAD differs from working directory, the compiler can use stale references
@@ -75,18 +77,19 @@ cd apps/web && npm run dev
 ```
 
 **One-liner (add to package.json):**
+
 ```json
 "dev:fresh": "rm -rf .next .turbo && npm run dev"
 ```
 
 ## Files Changed
 
-| File | Line | Before | After |
-|------|------|--------|-------|
-| `apps/web/src/app/signup/page.tsx` | 111 | `router.push('/tenant/dashboard')` | `router.push('/tenant/build')` |
-| `apps/web/src/app/signup/page.tsx` | 196 | `router.push('/tenant/dashboard')` | `window.location.href = '/tenant/build'` |
-| `apps/web/src/app/login/page.tsx` | 43 | `'/tenant/dashboard'` | `'/tenant/build'` |
-| `apps/web/src/components/auth/ProtectedRoute.tsx` | 46 | `router.push('/tenant/dashboard')` | `router.push('/tenant/build')` |
+| File                                              | Line | Before                             | After                                    |
+| ------------------------------------------------- | ---- | ---------------------------------- | ---------------------------------------- |
+| `apps/web/src/app/signup/page.tsx`                | 111  | `router.push('/tenant/dashboard')` | `router.push('/tenant/build')`           |
+| `apps/web/src/app/signup/page.tsx`                | 196  | `router.push('/tenant/dashboard')` | `window.location.href = '/tenant/build'` |
+| `apps/web/src/app/login/page.tsx`                 | 43   | `'/tenant/dashboard'`              | `'/tenant/build'`                        |
+| `apps/web/src/components/auth/ProtectedRoute.tsx` | 46   | `router.push('/tenant/dashboard')` | `router.push('/tenant/build')`           |
 
 ## Diagnosis Commands
 
@@ -168,6 +171,7 @@ export PS1='%~ $(git branch 2>/dev/null | grep "*" | cut -d" " -f2)$(parse_git_d
 ## Key Insight
 
 > **When code changes don't take effect in Next.js:**
+>
 > 1. Check `git status` - are changes committed?
 > 2. Clear `.next` and `.turbo` directories
 > 3. Restart dev server

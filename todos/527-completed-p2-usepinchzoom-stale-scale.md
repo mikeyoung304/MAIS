@@ -27,6 +27,7 @@ Applied Solution 1 (Use Ref for Initial Scale):
 **Changes:**
 
 1. Added scaleRef and sync effect (lines 143-145):
+
 ```typescript
 const scaleRef = useRef(scale);
 useEffect(() => {
@@ -53,7 +54,7 @@ useEffect(() => {
 
 ## Work Log
 
-| Date       | Action                              | Learnings                  |
-| ---------- | ----------------------------------- | -------------------------- |
-| 2026-01-01 | Created from mobile UX code review | useEffect dependency array |
-| 2026-01-01 | Fixed with scaleRef pattern         | Ref pattern for event handlers |
+| Date       | Action                             | Learnings                      |
+| ---------- | ---------------------------------- | ------------------------------ |
+| 2026-01-01 | Created from mobile UX code review | useEffect dependency array     |
+| 2026-01-01 | Fixed with scaleRef pattern        | Ref pattern for event handlers |

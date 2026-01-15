@@ -73,6 +73,7 @@ Implemented **Option A: Server-Side Draft Preview with Token** as recommended.
 ### Tests
 
 Added comprehensive tests in `server/test/lib/preview-tokens.test.ts`:
+
 - Token generation with correct payload and expiry
 - Custom expiry times
 - Valid token validation
@@ -133,8 +134,8 @@ The system relied on PostMessage protocol to inject draft config client-side:
 | Date       | Action                                   | Learnings                              |
 | ---------- | ---------------------------------------- | -------------------------------------- |
 | 2026-01-10 | Code review discovered ignored parameter | PostMessage workaround has flash issue |
-| 2026-01-10 | **Approved during triage** | P1 - Critical for Build Mode UX |
-| 2026-01-10 | **Implemented Option A** | Token-based preview with full security |
+| 2026-01-10 | **Approved during triage**               | P1 - Critical for Build Mode UX        |
+| 2026-01-10 | **Implemented Option A**                 | Token-based preview with full security |
 
 ## Files Modified
 

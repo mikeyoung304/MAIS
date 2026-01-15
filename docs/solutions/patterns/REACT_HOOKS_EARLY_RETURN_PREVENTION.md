@@ -41,6 +41,7 @@ function TenantPage({ tenant }: Props) {
 ```
 
 **Why this happens:**
+
 1. Developer adds empty state handling to existing component
 2. Places early return at the "logical" place (before data processing)
 3. Doesn't realize hooks exist below the return
@@ -59,7 +60,7 @@ function TenantPage({ tenant }: Props) {
   // ALL hooks first - always called
   const [selected, setSelected] = useState(tenant.segments?.[0] ?? null);
   const filtered = useMemo(
-    () => tenant.segments ? filterSegments(tenant.segments) : [],
+    () => (tenant.segments ? filterSegments(tenant.segments) : []),
     [tenant.segments]
   );
 
@@ -79,7 +80,7 @@ function TenantPage({ tenant }: Props) {
 function TenantPage({ tenant }: Props) {
   const [selected, setSelected] = useState(tenant.segments?.[0] ?? null);
   const filtered = useMemo(
-    () => tenant.segments ? filterSegments(tenant.segments) : [],
+    () => (tenant.segments ? filterSegments(tenant.segments) : []),
     [tenant.segments]
   );
 
@@ -101,10 +102,7 @@ function TenantPage({ tenant }: Props) {
 // ✅ CORRECT - Custom hook always runs, component handles UI
 function useSegmentState(segments: Segment[] | undefined) {
   const [selected, setSelected] = useState(segments?.[0] ?? null);
-  const filtered = useMemo(
-    () => segments ? filterSegments(segments) : [],
-    [segments]
-  );
+  const filtered = useMemo(() => (segments ? filterSegments(segments) : []), [segments]);
   return { selected, setSelected, filtered, isEmpty: !segments?.length };
 }
 
@@ -173,20 +171,23 @@ When reviewing PRs that add early returns:
 
 ### Copy-Paste Review Comment
 
-```markdown
+````markdown
 **Rules of Hooks Violation**
 
 This early return is placed before hooks, which violates React's Rules of Hooks.
 Hooks must be called in the same order every render.
 
 **Fix:** Move all hooks above the early return, using optional chaining for initializers:
+
 ```tsx
 const [selected, setSelected] = useState(data?.[0] ?? null);
 // ... other hooks ...
 
 if (!data) return <EmptyState />;
 ```
-```
+````
+
+````
 
 ---
 
@@ -200,7 +201,7 @@ npm run build
 
 # Or specifically for Next.js
 cd apps/web && npm run build
-```
+````
 
 ### 2. ESLint CI Integration
 
@@ -254,10 +255,7 @@ function Page({ data, isLoading }) {
 
 // ✅ CORRECT
 function Page({ data, isLoading }) {
-  const processed = useMemo(
-    () => (data ? process(data) : null),
-    [data]
-  );
+  const processed = useMemo(() => (data ? process(data) : null), [data]);
 
   if (isLoading) return <Spinner />;
   return <Content data={processed} />;
@@ -292,7 +290,9 @@ function ProtectedPage({ user }) {
   if (!user) return <Redirect to="/login" />;
 
   const [data, setData] = useState(null); // Hook after return!
-  useEffect(() => { fetchData(user.id); }, [user.id]);
+  useEffect(() => {
+    fetchData(user.id);
+  }, [user.id]);
   return <Dashboard data={data} />;
 }
 
@@ -330,13 +330,13 @@ npx eslint apps/web/src --rule 'react-hooks/rules-of-hooks: error' --ext .tsx
 
 ## Why Local Build Passes But Vercel Fails
 
-| Factor | Local | Vercel |
-|--------|-------|--------|
-| ESLint version | May be older | Uses package.json version |
-| ESLint config | May have overrides | Strict mode |
-| Node.js version | May differ | Defined in engines |
-| Cache | May use cached results | Fresh build |
-| Build mode | Development | Production |
+| Factor          | Local                  | Vercel                    |
+| --------------- | ---------------------- | ------------------------- |
+| ESLint version  | May be older           | Uses package.json version |
+| ESLint config   | May have overrides     | Strict mode               |
+| Node.js version | May differ             | Defined in engines        |
+| Cache           | May use cached results | Fresh build               |
+| Build mode      | Development            | Production                |
 
 **Solution:** Always run `npm run build` locally before pushing, not just `npm run dev`.
 

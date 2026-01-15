@@ -74,7 +74,9 @@ export interface ScrollRestorationState {
  * }
  * ```
  */
-export function useScrollRestoration(options: ScrollRestorationOptions = {}): ScrollRestorationState {
+export function useScrollRestoration(
+  options: ScrollRestorationOptions = {}
+): ScrollRestorationState {
   const {
     keyPrefix = 'scroll-pos',
     storage = 'session',

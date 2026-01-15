@@ -66,10 +66,10 @@ Rationale: User trust issue - AI telling users "Your live site shows X" when X i
 
 ## Work Log
 
-| Date       | Action              | Learnings                                                         |
-| ---------- | ------------------- | ----------------------------------------------------------------- |
-| 2026-01-10 | **Triage: APPROVED** | User trust - AI miscommunicating draft vs live state breaks trust. |
-| 2026-01-10 | **IMPLEMENTED** | Added draft/live rules to both prompts: onboarding-system-prompt.ts and admin-orchestrator.ts |
+| Date       | Action               | Learnings                                                                                     |
+| ---------- | -------------------- | --------------------------------------------------------------------------------------------- |
+| 2026-01-10 | **Triage: APPROVED** | User trust - AI miscommunicating draft vs live state breaks trust.                            |
+| 2026-01-10 | **IMPLEMENTED**      | Added draft/live rules to both prompts: onboarding-system-prompt.ts and admin-orchestrator.ts |
 
 ## Resources
 

@@ -6,7 +6,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useNetworkStatus, useIsOnline, useSaveData, useIsSlowConnection, __resetCachedSnapshot } from '../useNetworkStatus';
+import {
+  useNetworkStatus,
+  useIsOnline,
+  useSaveData,
+  useIsSlowConnection,
+  __resetCachedSnapshot,
+} from '../useNetworkStatus';
 
 // Reset module cache between tests to clear cached snapshot
 beforeEach(() => {

@@ -31,6 +31,7 @@ private circuitBreakerCleanupCounter = 0;
 ```
 
 Cleanup logic (lines 1015-1046):
+
 ```typescript
 private cleanupOldCircuitBreakers(): void {
   let removed = 0;
@@ -82,13 +83,13 @@ CircuitBreaker object:
 
 ### Growth Pattern Analysis
 
-| Sessions | Memory (MB) | Notes |
-|----------|-----------|-------|
-| 100 | 0.01 | Negligible |
-| 1,000 | 0.13 | Still acceptable |
-| 5,000 | 0.65 | Starting to accumulate |
-| 10,000 | 1.3 | Getting concerning |
-| 1,000+ (sustained) | ~1.5 | Hard cap enforced |
+| Sessions           | Memory (MB) | Notes                  |
+| ------------------ | ----------- | ---------------------- |
+| 100                | 0.01        | Negligible             |
+| 1,000              | 0.13        | Still acceptable       |
+| 5,000              | 0.65        | Starting to accumulate |
+| 10,000             | 1.3         | Getting concerning     |
+| 1,000+ (sustained) | ~1.5        | Hard cap enforced      |
 
 ### Issues Found
 
@@ -100,6 +101,7 @@ CircuitBreaker object:
 - **Risk:** In steady-state with 100 concurrent sessions, you're storing ~13KB of circuit breaker state across instances
 
 **Test case:**
+
 ```
 Request pattern: 100 concurrent sessions × 3 messages each = 300 requests
 4 orchestrator instances (load balanced)
@@ -199,12 +201,14 @@ const existingSession = await this.prisma.agentSession.findFirst({
 ### Index Analysis
 
 **Current indexes:**
+
 1. `(tenantId, updatedAt)` - Line 852
 2. `(customerId, updatedAt)` - Line 854
 3. `(sessionType, updatedAt)` - Line 855
 4. `(tenantId, sessionType, updatedAt)` - Line 856 ✓ Newly added
 
 **Query analysis:**
+
 ```
 WHERE tenantId = ? AND sessionType = ? AND updatedAt > ?
 ORDER BY updatedAt DESC
@@ -221,11 +225,13 @@ Index usage: (tenantId, sessionType, updatedAt) ✓ PERFECT MATCH
 **Finding:** Index ordering is CORRECT.
 
 PostgreSQL can use `(tenantId, sessionType, updatedAt)` for:
+
 - Equality filter on tenantId (leftmost)
 - Equality filter on sessionType (middle)
 - Range filter + sort on updatedAt (rightmost)
 
 **Query plan would be:**
+
 ```
 Index Cond: (tenantId = 'xyz' AND sessionType = 'ADMIN' AND updatedAt > '2024-12-31T...')
 Sort Key: updatedAt DESC
@@ -261,20 +267,19 @@ const rejectionPatterns = [
 const shortRejection = /^(no|stop|wait|cancel|hold)\.?!?$/i;
 const isShortRejection = shortRejection.test(normalizedMessage.trim());
 
-const isRejection =
-  isShortRejection || rejectionPatterns.some((p) => p.test(normalizedMessage));
+const isRejection = isShortRejection || rejectionPatterns.some((p) => p.test(normalizedMessage));
 ```
 
 ### Performance Analysis
 
 **Call frequency:** ONCE per chat message (not per character)
 
-| Pattern | Compiled? | Eval Time |
-|---------|-----------|-----------|
-| Regex literals `/pattern/` | At module load | Cached |
-| `string.normalize('NFKC')` | Per call | ~0.1-0.5ms |
-| 6 regex tests | Cached patterns | ~0.2-0.5ms total |
-| **Total per message** | - | **~0.3-1.0ms** |
+| Pattern                    | Compiled?       | Eval Time        |
+| -------------------------- | --------------- | ---------------- |
+| Regex literals `/pattern/` | At module load  | Cached           |
+| `string.normalize('NFKC')` | Per call        | ~0.1-0.5ms       |
+| 6 regex tests              | Cached patterns | ~0.2-0.5ms total |
+| **Total per message**      | -               | **~0.3-1.0ms**   |
 
 ### Optimization Opportunity: Regex Precompilation
 
@@ -284,12 +289,14 @@ const isRejection =
 **Verdict: ACCEPTABLE**
 
 Reasons:
+
 1. Called only once per message (not hot path - `O(1)` per request)
 2. Regex patterns already compiled at module load (not per-call compilation)
 3. 6 regex tests + normalization = ~1ms total (negligible vs. API call overhead)
 4. Unicode normalization is CRITICAL for security (prevent character spoofing)
 
 **Benchmark context:**
+
 ```
 Single agent chat message: ~2000-5000ms (API call + processing)
 Regex/normalization overhead: ~0.5-1.0ms = 0.02-0.05% of total time
@@ -299,6 +306,7 @@ Result: NOT a bottleneck
 ### Minor Note: Pattern Duplication
 
 Small optimization possible (not critical):
+
 ```typescript
 // Current: Some patterns have overlapping rejection words
 /^(wait|stop|hold|cancel|no,?\s*(don'?t|cancel|stop|wait))/i,  // "wait", "stop", "cancel" here
@@ -361,18 +369,20 @@ export const customerChatLimiter = rateLimit({
 ### Storage Growth Analysis
 
 **Agent Chat Limiter (5-min window):**
+
 - Window: 5 minutes = 300 seconds
 - Cleanup: Automatic when window expires
 - Keys: Tenant IDs (or IPs if unauthenticated)
 
 | Active Tenants | Stored Keys | Memory (MB) |
-|---|---|---|
-| 10 | 10 | ~0.001 |
-| 100 | 100 | ~0.01 |
-| 1,000 | 1,000 | ~0.1 |
-| 10,000 | 10,000 | ~1.0 |
+| -------------- | ----------- | ----------- |
+| 10             | 10          | ~0.001      |
+| 100            | 100         | ~0.01       |
+| 1,000          | 1,000       | ~0.1        |
+| 10,000         | 10,000      | ~1.0        |
 
 **Customer Chat Limiter (1-min window):**
+
 - Window: 1 minute = 60 seconds
 - Keys: IP addresses (IPv6 normalized to /64 prefix)
 - Growth: Slower cleanup due to higher volume
@@ -380,6 +390,7 @@ export const customerChatLimiter = rateLimit({
 ### Memory Scaling
 
 Across ALL rate limiters:
+
 ```
 Admin limiter:              Max ~100 keys
 Public limiter:             Max ~1,000 keys (global rate limit)
@@ -396,11 +407,13 @@ Total estimated: 100,000+ keys = ~10-20 MB
 **Current:** In-memory `MemoryStore` (express-rate-limit default)
 
 **Concerns:**
+
 1. No cross-process sharing (if running multiple Node instances behind load balancer)
 2. Each instance maintains separate state
 3. Customer can hit IP rate limit on instance A, then instance B (different limit counters)
 
 **Recommendation for production:**
+
 ```typescript
 // Switch to Redis for distributed rate limiting
 import RedisStore from 'rate-limit-redis';
@@ -516,6 +529,7 @@ if (this.circuitBreakerCleanupCounter >= 100 ||
 ### Query Performance
 
 **getOrCreateSession latency (with index):**
+
 - Cold cache: ~2-5ms (index lookup)
 - Warm cache: <1ms
 - With 10,000 sessions: Still ~2-5ms (B-tree index scales logarithmically)
@@ -542,14 +556,15 @@ if (this.circuitBreakerCleanupCounter >= 100 ||
 
 ```typescript
 export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
-  maxTurnsPerSession: 20,           // 20 agent turns max per session
-  maxTokensPerSession: 100_000,     // ~$3 per session cost cap
-  maxTimePerSessionMs: 30 * 60 * 1000,  // 30-minute session timeout
-  maxConsecutiveErrors: 3,          // Trip after 3 errors
+  maxTurnsPerSession: 20, // 20 agent turns max per session
+  maxTokensPerSession: 100_000, // ~$3 per session cost cap
+  maxTimePerSessionMs: 30 * 60 * 1000, // 30-minute session timeout
+  maxConsecutiveErrors: 3, // Trip after 3 errors
 } as const;
 ```
 
 **Assessment:**
+
 - ✓ Conservative limits prevent runaway agents
 - ✓ $3 cap is reasonable (Sonnet ~$0.003/1K input tokens)
 - ✓ 30-minute timeout is sensible for onboarding agent
@@ -560,6 +575,7 @@ export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
 **Customer Chat:** 20 msg/1 min (restrictive but safe for public endpoint)
 
 **Assessment:**
+
 - ✓ Limits are appropriate for cost control
 - ✓ No false positives expected for normal usage
 
@@ -571,19 +587,26 @@ Add these metrics to your observability stack:
 
 ```typescript
 // 1. Circuit breaker state
-logger.info({
-  circuitBreakerCount: this.circuitBreakers.size,
-  tripped: Array.from(this.circuitBreakers.values()).filter(cb => cb.getState().isTripped).length,
-}, 'Circuit breaker metrics');
+logger.info(
+  {
+    circuitBreakerCount: this.circuitBreakers.size,
+    tripped: Array.from(this.circuitBreakers.values()).filter((cb) => cb.getState().isTripped)
+      .length,
+  },
+  'Circuit breaker metrics'
+);
 
 // 2. Rate limiter stats
 logger.info(this.rateLimiter.getStats(), 'Rate limiter stats');
 
 // 3. Memory pressure
-logger.info({
-  heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-  heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-}, 'Node.js memory usage');
+logger.info(
+  {
+    heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+  },
+  'Node.js memory usage'
+);
 ```
 
 ---
@@ -593,4 +616,3 @@ logger.info({
 The Agent Ecosystem implementation is **performant and secure**. The primary opportunity for improvement is predictable circuit breaker cleanup, which can be implemented as a minor enhancement. All other components (database indexes, regex patterns, rate limiting) are well-designed for production use.
 
 **Overall assessment:** PRODUCTION READY with recommended P1 enhancement.
-

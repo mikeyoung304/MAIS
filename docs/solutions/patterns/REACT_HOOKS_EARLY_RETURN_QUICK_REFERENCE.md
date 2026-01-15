@@ -42,15 +42,15 @@ Adding an early return to a component?
 ```tsx
 // ❌ WRONG - Return before hooks
 function Component({ data }) {
-  if (!data) return null;           // Early return
-  const [x, setX] = useState(0);    // Hook AFTER return = BROKEN
+  if (!data) return null; // Early return
+  const [x, setX] = useState(0); // Hook AFTER return = BROKEN
   return <div>{x}</div>;
 }
 
 // ✅ CORRECT - Hooks before returns
 function Component({ data }) {
-  const [x, setX] = useState(0);    // Hook FIRST
-  if (!data) return null;           // Return AFTER hooks
+  const [x, setX] = useState(0); // Hook FIRST
+  if (!data) return null; // Return AFTER hooks
   return <div>{x}</div>;
 }
 ```
@@ -60,11 +60,11 @@ function Component({ data }) {
 ```tsx
 // ✅ Use optional chaining and nullish coalescing
 const [selected, setSelected] = useState(data?.[0] ?? null);
-const filtered = useMemo(() => data?.filter(x => x.active) ?? [], [data]);
+const filtered = useMemo(() => data?.filter((x) => x.active) ?? [], [data]);
 
 // ✅ Guard in useEffect
 useEffect(() => {
-  if (!data) return;  // Guard inside, not before
+  if (!data) return; // Guard inside, not before
   processData(data);
 }, [data]);
 ```
@@ -81,12 +81,12 @@ If lint passes but build fails, you likely have a hooks violation.
 
 ## Quick Fixes
 
-| Scenario | Fix |
-|----------|-----|
-| Adding empty state | Move hooks up, add `?? null` to initializers |
-| Adding loading state | Move hooks up, guard inside useEffect |
-| Adding error handling | Move hooks up, conditional render in JSX |
-| Adding auth check | Move hooks up, early return after |
+| Scenario              | Fix                                          |
+| --------------------- | -------------------------------------------- |
+| Adding empty state    | Move hooks up, add `?? null` to initializers |
+| Adding loading state  | Move hooks up, guard inside useEffect        |
+| Adding error handling | Move hooks up, conditional render in JSX     |
+| Adding auth check     | Move hooks up, early return after            |
 
 ## ESLint Rule
 

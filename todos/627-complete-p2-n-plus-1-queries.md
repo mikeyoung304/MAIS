@@ -28,10 +28,10 @@ Every storefront tool and executor calls both `getDraftConfig()` AND `getTenantS
 **Current Pattern (3 queries per operation):**
 
 ```typescript
-const { pages, hasDraft } = await getDraftConfig(prisma, tenantId);  // Query 1
+const { pages, hasDraft } = await getDraftConfig(prisma, tenantId); // Query 1
 // ... modification logic ...
-await saveDraftConfig(prisma, tenantId, updatedPages);               // Query 2
-const slug = await getTenantSlug(prisma, tenantId);                  // Query 3
+await saveDraftConfig(prisma, tenantId, updatedPages); // Query 2
+const slug = await getTenantSlug(prisma, tenantId); // Query 3
 ```
 
 ## Proposed Solutions
@@ -50,7 +50,7 @@ export async function getDraftConfigWithSlug(
     select: {
       landingPageConfig: true,
       landingPageConfigDraft: true,
-      slug: true,  // Get slug in same query
+      slug: true, // Get slug in same query
     },
   });
   // ... derive pages and hasDraft
@@ -81,6 +81,6 @@ export async function getDraftConfigWithSlug(
 
 ## Work Log
 
-| Date       | Action                                 | Learnings                                 |
-| ---------- | -------------------------------------- | ----------------------------------------- |
-| 2026-01-05 | Created from multi-agent code review  | Fetch related data in single query        |
+| Date       | Action                               | Learnings                          |
+| ---------- | ------------------------------------ | ---------------------------------- |
+| 2026-01-05 | Created from multi-agent code review | Fetch related data in single query |

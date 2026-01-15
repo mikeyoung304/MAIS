@@ -153,8 +153,7 @@ export function useHapticFeedback(): HapticFeedback {
       if (prefersReducedMotion) return;
 
       // Get pattern value
-      const patternValue =
-        typeof pattern === 'string' ? VIBRATION_PATTERNS[pattern] : pattern;
+      const patternValue = typeof pattern === 'string' ? VIBRATION_PATTERNS[pattern] : pattern;
 
       try {
         navigator.vibrate(patternValue);
@@ -189,10 +188,7 @@ export function useHapticFeedback(): HapticFeedback {
   const selection = useCallback(() => vibrate('selection'), [vibrate]);
 
   // Legacy trigger API for backwards compatibility
-  const trigger = useCallback(
-    (pattern: HapticPattern) => vibrate(pattern),
-    [vibrate]
-  );
+  const trigger = useCallback((pattern: HapticPattern) => vibrate(pattern), [vibrate]);
 
   return useMemo(
     () => ({

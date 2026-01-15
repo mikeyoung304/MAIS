@@ -39,13 +39,13 @@ Comprehensive prevention strategies for building multi-tenant AI agent systems.
 
 ## The 5 Patterns
 
-| # | Pattern | File | Key Problem | Solution |
-|---|---------|------|-------------|----------|
-| 1 | **Per-Session Isolation** | `base-orchestrator.ts:200` | Shared singleton state → one user affects all | `Map<sessionId, State>` with cleanup |
-| 2 | **Required Security Fields** | `tools/types.ts:61` | Optional trustTier → defaults to unsafe T1 | Make field required, add validation |
-| 3 | **Specific NLP Patterns** | `tools/types.ts:121` | Broad patterns → false positives on real data | Multi-word anchors, test with business names |
-| 4 | **Public Endpoint Hardening** | `public-customer-chat.routes.ts:31` | No rate limiting → DDoS, token exhaustion | IP rate limit + validation + sanitization |
-| 5 | **Composite Indexes** | `schema.prisma:*` | Single indexes → N+M scans, slow growth | `@@index([col1, col2])` for query pattern |
+| #   | Pattern                       | File                                | Key Problem                                   | Solution                                     |
+| --- | ----------------------------- | ----------------------------------- | --------------------------------------------- | -------------------------------------------- |
+| 1   | **Per-Session Isolation**     | `base-orchestrator.ts:200`          | Shared singleton state → one user affects all | `Map<sessionId, State>` with cleanup         |
+| 2   | **Required Security Fields**  | `tools/types.ts:61`                 | Optional trustTier → defaults to unsafe T1    | Make field required, add validation          |
+| 3   | **Specific NLP Patterns**     | `tools/types.ts:121`                | Broad patterns → false positives on real data | Multi-word anchors, test with business names |
+| 4   | **Public Endpoint Hardening** | `public-customer-chat.routes.ts:31` | No rate limiting → DDoS, token exhaustion     | IP rate limit + validation + sanitization    |
+| 5   | **Composite Indexes**         | `schema.prisma:*`                   | Single indexes → N+M scans, slow growth       | `@@index([col1, col2])` for query pattern    |
 
 ---
 
@@ -53,47 +53,50 @@ Comprehensive prevention strategies for building multi-tenant AI agent systems.
 
 ### By Time Available
 
-| Time | Document | Why |
-|------|----------|-----|
-| **2 min** | QUICK_REFERENCE | Overview of all patterns |
-| **20 min** | PATTERNS_INDEX | Architecture & context |
-| **1 hour** | PREVENTION_STRATEGIES | Full guide + examples + tests |
-| **2 hour** | All three + GUARDRAILS_MANIFEST | Complete mastery |
+| Time       | Document                        | Why                           |
+| ---------- | ------------------------------- | ----------------------------- |
+| **2 min**  | QUICK_REFERENCE                 | Overview of all patterns      |
+| **20 min** | PATTERNS_INDEX                  | Architecture & context        |
+| **1 hour** | PREVENTION_STRATEGIES           | Full guide + examples + tests |
+| **2 hour** | All three + GUARDRAILS_MANIFEST | Complete mastery              |
 
 ### By Role
 
-| Role | Start With | Then Read | Finally |
-|------|-----------|-----------|---------|
-| **Developer** | QUICK_REFERENCE | PREVENTION_STRATEGIES | Test your pattern |
-| **Architect** | PATTERNS_INDEX | GUARDRAILS_MANIFEST | Review design |
-| **Security** | PREVENTION_STRATEGIES (Pattern 2, 3, 4) | Test section | Validation rules |
-| **DevOps** | GUARDRAILS_MANIFEST | Monitoring section | Index strategy |
+| Role          | Start With                              | Then Read             | Finally           |
+| ------------- | --------------------------------------- | --------------------- | ----------------- |
+| **Developer** | QUICK_REFERENCE                         | PREVENTION_STRATEGIES | Test your pattern |
+| **Architect** | PATTERNS_INDEX                          | GUARDRAILS_MANIFEST   | Review design     |
+| **Security**  | PREVENTION_STRATEGIES (Pattern 2, 3, 4) | Test section          | Validation rules  |
+| **DevOps**    | GUARDRAILS_MANIFEST                     | Monitoring section    | Index strategy    |
 
 ### By Task
 
-| Task | Document | Section |
-|------|----------|---------|
-| **Implementing a pattern** | PREVENTION_STRATEGIES | Your pattern's "Prevention Checklist" |
-| **Debugging guardrails** | PATTERNS_INDEX | "Attack Scenarios & Pattern Responses" |
-| **Code review** | QUICK_REFERENCE | "Red Flags" section |
-| **Monitoring** | GUARDRAILS_MANIFEST | "Monitoring & Alerting" |
-| **Adding new agent feature** | PATTERNS_INDEX | "Next Steps When Adding Agent Features" |
+| Task                         | Document              | Section                                 |
+| ---------------------------- | --------------------- | --------------------------------------- |
+| **Implementing a pattern**   | PREVENTION_STRATEGIES | Your pattern's "Prevention Checklist"   |
+| **Debugging guardrails**     | PATTERNS_INDEX        | "Attack Scenarios & Pattern Responses"  |
+| **Code review**              | QUICK_REFERENCE       | "Red Flags" section                     |
+| **Monitoring**               | GUARDRAILS_MANIFEST   | "Monitoring & Alerting"                 |
+| **Adding new agent feature** | PATTERNS_INDEX        | "Next Steps When Adding Agent Features" |
 
 ---
 
 ## Related Documentation
 
 ### Agent Ecosystem
+
 - `../AGENT_ECOSYSTEM_ANALYSIS_INDEX.md` - Analysis of agent infrastructure
 - `../AGENT_ECOSYSTEM_QUICK_REFERENCE.md` - Agent-specific quick ref
 - `../AGENT_ECOSYSTEM_IMPLEMENTATION_ROADMAP.md` - Full roadmap
 
 ### Other Prevention Patterns
+
 - `mais-critical-patterns.md` - 10 critical patterns for MAIS
 - `circular-dependency-executor-registry-MAIS-20251229.md` - Module isolation
 - `phase-5-testing-and-caching-prevention-MAIS-20251231.md` - Testing patterns
 
 ### Architecture & Design
+
 - `../AGENT-DESIGN-INDEX.md` - Agent design documentation
 - `../../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md` - Multi-tenant patterns
 - `../../reference/ARCHITECTURE.md` - System architecture
@@ -130,13 +133,13 @@ Use this when building a new feature:
 
 ## Key Files Modified
 
-| File | Pattern | Change |
-|------|---------|--------|
-| `server/src/agent/orchestrator/circuit-breaker.ts` | 1 | New: Per-session circuit breaker |
-| `server/src/agent/orchestrator/base-orchestrator.ts` | 1 | Per-session breaker map + cleanup |
-| `server/src/agent/tools/types.ts` | 2, 3 | Required trustTier + specific patterns |
-| `server/src/routes/public-customer-chat.routes.ts` | 4 | IP rate limiter middleware |
-| `server/prisma/schema.prisma` | 5 | Composite indexes |
+| File                                                 | Pattern | Change                                 |
+| ---------------------------------------------------- | ------- | -------------------------------------- |
+| `server/src/agent/orchestrator/circuit-breaker.ts`   | 1       | New: Per-session circuit breaker       |
+| `server/src/agent/orchestrator/base-orchestrator.ts` | 1       | Per-session breaker map + cleanup      |
+| `server/src/agent/tools/types.ts`                    | 2, 3    | Required trustTier + specific patterns |
+| `server/src/routes/public-customer-chat.routes.ts`   | 4       | IP rate limiter middleware             |
+| `server/prisma/schema.prisma`                        | 5       | Composite indexes                      |
 
 **Commit:** cb55639 - `feat(agent): add code-level guardrails for agent orchestrator`
 
@@ -164,6 +167,7 @@ A: Yes! They're generic patterns - apply Pattern 1 to any long-running service, 
 ## Testing & Validation
 
 Each pattern includes:
+
 - Unit test template
 - Integration test guide
 - Fuzzing/property-based tests
@@ -176,6 +180,7 @@ See: PREVENTION_STRATEGIES.md → "Testing Checklist Template"
 ## Monitoring & Alerting
 
 Each pattern has monitoring guidance:
+
 - **Pattern 1:** Circuit breaker trip alerts
 - **Pattern 2:** Tool registration failures
 - **Pattern 3:** Injection pattern match rate
@@ -188,9 +193,9 @@ See: GUARDRAILS_MANIFEST.md → "Monitoring & Alerting"
 
 ## Version History
 
-| Version | Date | Source | Patterns |
-|---------|------|--------|----------|
-| 1.0 | 2026-01-01 | Commit cb55639 | 5 patterns (Session Isolation, Required Fields, NLP Patterns, Public Hardening, Composite Indexes) |
+| Version | Date       | Source         | Patterns                                                                                           |
+| ------- | ---------- | -------------- | -------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-01-01 | Commit cb55639 | 5 patterns (Session Isolation, Required Fields, NLP Patterns, Public Hardening, Composite Indexes) |
 
 ---
 

@@ -81,11 +81,11 @@ If this returns anything, you have a problem.
 
 ## Quick Fixes
 
-| Want To | Wrong Way | Right Way |
-|---------|-----------|-----------|
-| Share utils | `ln -s ../shared src/shared` | `paths: {"@shared/*": [...]}` |
+| Want To        | Wrong Way                    | Right Way                        |
+| -------------- | ---------------------------- | -------------------------------- |
+| Share utils    | `ln -s ../shared src/shared` | `paths: {"@shared/*": [...]}`    |
 | Import package | `ln -s pkg node_modules/pkg` | Add to package.json dependencies |
-| Local dev link | `ln -s ../pkg packages/` | `npm link` or workspaces |
+| Local dev link | `ln -s ../pkg packages/`     | `npm link` or workspaces         |
 
 ## ESLint/TypeScript Config
 
@@ -159,11 +159,11 @@ Then import as: import { x } from '@shared/utils';
 
 ## Error Messages to Watch For
 
-| Error | Likely Cause |
-|-------|--------------|
-| "Duplicate identifier" | Symlink double compilation |
-| Same file, different behaviors | Symlink path ambiguity |
-| Module singleton not working | Same file = two instances |
+| Error                          | Likely Cause               |
+| ------------------------------ | -------------------------- |
+| "Duplicate identifier"         | Symlink double compilation |
+| Same file, different behaviors | Symlink path ambiguity     |
+| Module singleton not working   | Same file = two instances  |
 
 ## Pre-commit Hook
 

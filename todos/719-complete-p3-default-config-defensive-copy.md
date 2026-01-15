@@ -85,8 +85,8 @@ Rationale: Data integrity risk. While not currently exploited, mutation of share
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                                        |
-| ---------- | ------------------------ | ---------------------------------------------------------------- |
-| 2026-01-10 | Created from code review | Data integrity guardian identified this as defensive improvement |
-| 2026-01-10 | **Triage: APPROVED** | Data integrity risk - shared reference could corrupt all tenants. |
-| 2026-01-10 | **COMPLETE** | Replaced all 12 direct references to DEFAULT_PAGES_CONFIG with structuredClone(). Added unit tests verifying mutation isolation in server/test/agent/tools/utils.test.ts. Both getDraftConfig() and getDraftConfigWithSlug() now return independent copies. |
+| Date       | Action                   | Learnings                                                                                                                                                                                                                                                   |
+| ---------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-10 | Created from code review | Data integrity guardian identified this as defensive improvement                                                                                                                                                                                            |
+| 2026-01-10 | **Triage: APPROVED**     | Data integrity risk - shared reference could corrupt all tenants.                                                                                                                                                                                           |
+| 2026-01-10 | **COMPLETE**             | Replaced all 12 direct references to DEFAULT_PAGES_CONFIG with structuredClone(). Added unit tests verifying mutation isolation in server/test/agent/tools/utils.test.ts. Both getDraftConfig() and getDraftConfigWithSlug() now return independent copies. |

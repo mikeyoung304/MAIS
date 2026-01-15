@@ -26,14 +26,15 @@ Two files still import `@anthropic-ai/sdk` and cause test failures:
 
 Create the thin LLM abstraction layer (3 modules):
 
-| File | Purpose |
-|------|---------|
-| `server/src/llm/vertex-client.ts` | Auth (ADC), model selection, safety config |
+| File                                | Purpose                                    |
+| ----------------------------------- | ------------------------------------------ |
+| `server/src/llm/vertex-client.ts`   | Auth (ADC), model selection, safety config |
 | `server/src/llm/message-adapter.ts` | ChatMessage → Gemini Content, tool schemas |
-| `server/src/llm/pricing.ts` | Cost calculation, usage logging |
-| `server/src/llm/index.ts` | Module exports |
+| `server/src/llm/pricing.ts`         | Cost calculation, usage logging            |
+| `server/src/llm/index.ts`           | Module exports                             |
 
 Then update:
+
 - `base-orchestrator.ts` → Use LLM module instead of Anthropic
 - `evaluator.ts` → Use LLM module instead of Anthropic
 - `server/src/agent/orchestrator/types.ts` → Update model types
@@ -43,10 +44,10 @@ Then update:
 
 ```typescript
 GEMINI_MODELS = {
-  FLASH: 'gemini-3-flash-preview',      // Primary
-  FLASH_STABLE: 'gemini-2.5-flash',     // Fallback (GA)
-  PRO: 'gemini-3-pro-preview',          // Premium
-}
+  FLASH: 'gemini-3-flash-preview', // Primary
+  FLASH_STABLE: 'gemini-2.5-flash', // Fallback (GA)
+  PRO: 'gemini-3-pro-preview', // Premium
+};
 ```
 
 ## Key API Difference

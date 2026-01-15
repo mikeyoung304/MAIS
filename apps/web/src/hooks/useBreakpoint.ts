@@ -1,10 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  MEDIA_QUERIES,
-  type BreakpointKey,
-} from '@/types/responsive';
+import { MEDIA_QUERIES, type BreakpointKey } from '@/types/responsive';
 import { useMediaQuery } from './useMediaQuery';
 
 /**

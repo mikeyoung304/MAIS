@@ -90,10 +90,7 @@ export function BottomSheet({
   }, []);
 
   // Sort snap points in ascending order
-  const sortedSnapPoints = React.useMemo(
-    () => [...snapPoints].sort((a, b) => a - b),
-    [snapPoints]
-  );
+  const sortedSnapPoints = React.useMemo(() => [...snapPoints].sort((a, b) => a - b), [snapPoints]);
 
   // Calculate pixel heights from snap percentages
   const snapHeights = React.useMemo(
@@ -105,11 +102,7 @@ export function BottomSheet({
   const initialHeight = snapHeights[currentSnapIndex] || snapHeights[0];
 
   // Transform y motion value to backdrop opacity
-  const backdropOpacity = useTransform(
-    y,
-    [0, initialHeight],
-    [0.6, 0]
-  );
+  const backdropOpacity = useTransform(y, [0, initialHeight], [0.6, 0]);
 
   // Handle drag end - snap to nearest point or dismiss
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -238,14 +231,10 @@ export function BottomSheet({
                 )}
 
                 {/* Content area with scroll */}
-                <div className="flex-1 overflow-y-auto overscroll-contain">
-                  {children}
-                </div>
+                <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
 
                 {/* Hidden close button for keyboard navigation */}
-                <DialogPrimitive.Close className="sr-only">
-                  Close
-                </DialogPrimitive.Close>
+                <DialogPrimitive.Close className="sr-only">Close</DialogPrimitive.Close>
               </motion.div>
             </DialogPrimitive.Content>
           </DialogPrimitive.Portal>
@@ -260,7 +249,10 @@ BottomSheet.displayName = 'BottomSheet';
 /**
  * Convenience exports for common sheet patterns.
  */
-export const BottomSheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+export const BottomSheetHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('px-6 py-4', className)} {...props} />
 );
 BottomSheetHeader.displayName = 'BottomSheetHeader';
@@ -270,7 +262,10 @@ export const BottomSheetBody = ({ className, ...props }: React.HTMLAttributes<HT
 );
 BottomSheetBody.displayName = 'BottomSheetBody';
 
-export const BottomSheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+export const BottomSheetFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       'px-6 py-4 border-t border-neutral-100 dark:border-neutral-700 mt-auto',

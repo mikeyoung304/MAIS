@@ -16,16 +16,19 @@ Central index for all prevention strategies, best practices, and testing pattern
 ## Quick Navigation
 
 ### For First-Time Implementation
+
 1. **Start here:** [Agent Tools Quick Checklist](./agent-tools-quick-checklist-MAIS-20251231.md) - Single-page reference (print and pin)
 2. **Then read:** [Agent Implementation Prevention](./agent-implementation-prevention-phase-3-MAIS-20251231.md) - Full detailed patterns
 3. **For testing:** [Agent Testing Patterns](./agent-testing-patterns-MAIS-20251231.md) - Comprehensive test examples
 
 ### For Code Review
+
 1. Check [Prevention Checklist](./agent-implementation-prevention-phase-3-MAIS-20251231.md#integrated-prevention-checklist-for-agent-tools)
 2. Review [Code Review Red Flags](./agent-tools-quick-checklist-MAIS-20251231.md#code-review-red-flags)
 3. Verify against [Testing Recommendations](./agent-testing-patterns-MAIS-20251231.md#test-categories)
 
 ### For Debugging
+
 1. Check [Common Anti-Patterns](./agent-implementation-prevention-phase-3-MAIS-20251231.md#common-anti-patterns-to-avoid)
 2. Review [Debugging Tips](./agent-tools-quick-checklist-MAIS-20251231.md#debugging-tips)
 3. See [Error Path Testing](./agent-testing-patterns-MAIS-20251231.md#pattern-6-error-path-testing)
@@ -43,20 +46,23 @@ Central index for all prevention strategies, best practices, and testing pattern
 **Document:** [Unsafe Type Assertions](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-1-unsafe-type-assertions-on-jsonunknown-types)
 
 **Quick Pattern:**
+
 ```typescript
 // Before (UNSAFE)
-messages: (data.messages as unknown as ChatMessage[]) || []
+messages: (data.messages as unknown as ChatMessage[]) || [];
 
 // After (SAFE)
-messages: parseChatMessages(data.messages)
+messages: parseChatMessages(data.messages);
 
 // Pattern
 function parseChatMessages(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter((msg): msg is ChatMessage => {
     return (
-      typeof msg === 'object' && msg !== null &&
-      'role' in msg && 'content' in msg &&
+      typeof msg === 'object' &&
+      msg !== null &&
+      'role' in msg &&
+      'content' in msg &&
       typeof msg.content === 'string'
     );
   });
@@ -72,6 +78,7 @@ function parseChatMessages(raw: unknown): ChatMessage[] {
 **Document:** [Missing Null Checks](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-2-missing-null-checks-on-optional-fields)
 
 **Quick Pattern:**
+
 ```typescript
 // Before (UNSAFE)
 const city = data.location.city; // Crashes if location is null
@@ -89,6 +96,7 @@ const city = data.location?.city ?? 'Unknown';
 **Document:** [Error Swallowing](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-3-error-swallowing---generic-catch-all-handlers)
 
 **Quick Pattern:**
+
 ```typescript
 // Before (UNSAFE)
 catch (error) {
@@ -112,45 +120,45 @@ catch (error) {
 
 ### Type Safety
 
-| Document | Purpose | Use When |
-|----------|---------|----------|
+| Document                                                                                                                                  | Purpose                                           | Use When                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------- |
 | [Type Assertions Pattern](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-1-unsafe-type-assertions-on-jsonunknown-types) | How to safely convert Prisma JSON to typed values | Working with JsonValue fields |
-| [Quick Checklist - Type Safety](./agent-tools-quick-checklist-MAIS-20251231.md#type-safety-checklist) | 30-second type safety review | Before submitting PR |
-| [Testing - Type Safety](./agent-testing-patterns-MAIS-20251231.md#pattern-4-type-safety-testing) | How to test JSON parsing | Writing unit tests |
+| [Quick Checklist - Type Safety](./agent-tools-quick-checklist-MAIS-20251231.md#type-safety-checklist)                                     | 30-second type safety review                      | Before submitting PR          |
+| [Testing - Type Safety](./agent-testing-patterns-MAIS-20251231.md#pattern-4-type-safety-testing)                                          | How to test JSON parsing                          | Writing unit tests            |
 
 ### Null Safety
 
-| Document | Purpose | Use When |
-|----------|---------|----------|
+| Document                                                                                                                             | Purpose                          | Use When                         |
+| ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- | -------------------------------- |
 | [Optional Fields Pattern](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-2-missing-null-checks-on-optional-fields) | Defensive null checking patterns | Accessing optional Prisma fields |
-| [Quick Checklist - Null Safety](./agent-tools-quick-checklist-MAIS-20251231.md#null-safety-checklist) | 30-second null safety review | Before submitting PR |
-| [Testing - Optional Fields](./agent-testing-patterns-MAIS-20251231.md#pattern-3-optional-field-testing) | How to test optional fields | Writing unit tests |
+| [Quick Checklist - Null Safety](./agent-tools-quick-checklist-MAIS-20251231.md#null-safety-checklist)                                | 30-second null safety review     | Before submitting PR             |
+| [Testing - Optional Fields](./agent-testing-patterns-MAIS-20251231.md#pattern-3-optional-field-testing)                              | How to test optional fields      | Writing unit tests               |
 
 ### Error Handling
 
-| Document | Purpose | Use When |
-|----------|---------|----------|
-| [Error Handling Pattern](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-3-error-swallowing---generic-catch-all-handlers) | How to classify and handle errors properly | In try/catch blocks |
-| [Quick Checklist - Error Handling](./agent-tools-quick-checklist-MAIS-20251231.md#code-patterns-copy-paste-ready) | 30-second error handling review | Before submitting PR |
-| [Testing - Error Paths](./agent-testing-patterns-MAIS-20251231.md#pattern-6-error-path-testing) | How to test all error scenarios | Writing unit tests |
+| Document                                                                                                                                   | Purpose                                    | Use When             |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ | -------------------- |
+| [Error Handling Pattern](./agent-implementation-prevention-phase-3-MAIS-20251231.md#issue-3-error-swallowing---generic-catch-all-handlers) | How to classify and handle errors properly | In try/catch blocks  |
+| [Quick Checklist - Error Handling](./agent-tools-quick-checklist-MAIS-20251231.md#code-patterns-copy-paste-ready)                          | 30-second error handling review            | Before submitting PR |
+| [Testing - Error Paths](./agent-testing-patterns-MAIS-20251231.md#pattern-6-error-path-testing)                                            | How to test all error scenarios            | Writing unit tests   |
 
 ### Testing
 
-| Document | Purpose | Use When |
-|----------|---------|----------|
-| [Testing Patterns](./agent-testing-patterns-MAIS-20251231.md) | Comprehensive testing guide | Writing tests |
-| [Happy Path Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-1-happy-path-testing) | How to test normal operation | Every tool needs this |
-| [Validation Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-2-validation-error-testing) | How to test input validation | Every tool needs this |
-| [Tenant Isolation Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-5-tenant-isolation-testing) | How to test multi-tenancy | Every tool needs this |
-| [Integration Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-7-integration-testing) | How to test end-to-end flows | For complex tools |
+| Document                                                                                               | Purpose                      | Use When              |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------- | --------------------- |
+| [Testing Patterns](./agent-testing-patterns-MAIS-20251231.md)                                          | Comprehensive testing guide  | Writing tests         |
+| [Happy Path Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-1-happy-path-testing)             | How to test normal operation | Every tool needs this |
+| [Validation Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-2-validation-error-testing)       | How to test input validation | Every tool needs this |
+| [Tenant Isolation Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-5-tenant-isolation-testing) | How to test multi-tenancy    | Every tool needs this |
+| [Integration Tests](./agent-testing-patterns-MAIS-20251231.md#pattern-7-integration-testing)           | How to test end-to-end flows | For complex tools     |
 
 ### Tenant Isolation
 
-| Document | Purpose | Use When |
-|----------|---------|----------|
-| [Quick Checklist - Tenant Isolation](./agent-tools-quick-checklist-MAIS-20251231.md#tenant-isolation-checklist) | 30-second tenant check | Before submitting PR |
-| [Testing - Tenant Isolation](./agent-testing-patterns-MAIS-20251231.md#pattern-5-tenant-isolation-testing) | How to test isolation | Writing unit tests |
-| [CLAUDE.md - Multi-Tenant](../../CLAUDE.md#multi-tenant-data-isolation) | Foundational multi-tenancy pattern | Understanding the architecture |
+| Document                                                                                                        | Purpose                            | Use When                       |
+| --------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------ |
+| [Quick Checklist - Tenant Isolation](./agent-tools-quick-checklist-MAIS-20251231.md#tenant-isolation-checklist) | 30-second tenant check             | Before submitting PR           |
+| [Testing - Tenant Isolation](./agent-testing-patterns-MAIS-20251231.md#pattern-5-tenant-isolation-testing)      | How to test isolation              | Writing unit tests             |
+| [CLAUDE.md - Multi-Tenant](../../CLAUDE.md#multi-tenant-data-isolation)                                         | Foundational multi-tenancy pattern | Understanding the architecture |
 
 ---
 
@@ -266,6 +274,7 @@ The `ProposalService` in `server/src/agent/proposals/proposal.service.ts` demons
 **A:** Almost never. See [Any Types Quick Reference](./best-practices/any-types-quick-reference-MAIS-20251204.md).
 
 If you need to convert Prisma JSON:
+
 1. Create a type guard function (like `parseChatMessages`)
 2. Use it everywhere you access that JSON field
 3. Never directly assert with `as unknown as`
@@ -273,6 +282,7 @@ If you need to convert Prisma JSON:
 ### Q: What if I can't test the tool locally?
 
 **A:** Add integration tests that:
+
 - Set up test database
 - Create minimal test data
 - Execute tool
@@ -296,6 +306,7 @@ See [Tenant Isolation Testing](./agent-testing-patterns-MAIS-20251231.md#pattern
 ### Q: What's the difference between logging null vs not found?
 
 **A:**
+
 - **Not found** (404): Expected case, log at info level, return user-friendly message
 - **Null** (field is optional): Not an error, handle with `??` operator
 - **Unexpected error** (500): Log at error level with stack trace, re-throw
@@ -303,11 +314,13 @@ See [Tenant Isolation Testing](./agent-testing-patterns-MAIS-20251231.md#pattern
 ### Q: Should I add error details to the API response?
 
 **A:** Yes, but safely:
+
 - Include user-friendly error message
 - Do NOT expose database errors or internal details
 - Include operation identifier for debugging (not sensitive data)
 
 Example:
+
 ```typescript
 // GOOD
 { success: false, error: 'Package not found' }
@@ -334,6 +347,7 @@ Status: **Active - Use for Phase 3+ implementations**
 ### Future Updates
 
 When you discover new patterns or issues:
+
 1. Document in appropriate file
 2. Update this index
 3. Add real-world examples
@@ -348,6 +362,7 @@ For fastest reference during implementation:
 📌 **Print:** [Agent Tools Quick Checklist](./agent-tools-quick-checklist-MAIS-20251231.md)
 
 This single page contains:
+
 - Type safety checklist (3 questions)
 - Null safety checklist (3 questions)
 - Error handling checklist (4 questions)
@@ -379,10 +394,9 @@ This single page contains:
 
 ## Version History
 
-| Date | Changes |
-|------|---------|
+| Date       | Changes                                              |
+| ---------- | ---------------------------------------------------- |
 | 2025-12-31 | Initial creation - Phase 3 prevention strategy suite |
 
 **Created by:** Claude Code Agent
 **Status:** Production Ready - Use for all Phase 3+ agent work
-

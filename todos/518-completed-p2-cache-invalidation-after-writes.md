@@ -131,9 +131,9 @@ interface AgentToolResult {
 
 ## Work Log
 
-| Date       | Action                           | Learnings                    |
-| ---------- | -------------------------------- | ---------------------------- |
-| 2025-12-31 | Created from Phase 5 code review | Cache staleness after writes |
+| Date       | Action                                                           | Learnings                                   |
+| ---------- | ---------------------------------------------------------------- | ------------------------------------------- |
+| 2025-12-31 | Created from Phase 5 code review                                 | Cache staleness after writes                |
 | 2025-12-31 | Fixed: Added WRITE_TOOLS constant and invalidation after success | Solution 1 (minimal code, centralized list) |
 
 ## Resources

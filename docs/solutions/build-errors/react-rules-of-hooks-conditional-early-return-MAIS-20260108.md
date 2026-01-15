@@ -237,10 +237,10 @@ cd apps/web && npm run build
 
 ## Summary
 
-| Aspect | Details |
-|--------|---------|
-| **Error** | "React Hook useCallback is called conditionally" |
-| **Cause** | Early return placed before `useCallback` hooks |
-| **Fix** | Move ALL hooks before ANY conditional returns |
-| **Prevention** | Structure: Hooks → Derived State → Early Returns → Render |
-| **Verification** | `npm run build` locally before pushing |
+| Aspect           | Details                                                   |
+| ---------------- | --------------------------------------------------------- |
+| **Error**        | "React Hook useCallback is called conditionally"          |
+| **Cause**        | Early return placed before `useCallback` hooks            |
+| **Fix**          | Move ALL hooks before ANY conditional returns             |
+| **Prevention**   | Structure: Hooks → Derived State → Early Returns → Render |
+| **Verification** | `npm run build` locally before pushing                    |

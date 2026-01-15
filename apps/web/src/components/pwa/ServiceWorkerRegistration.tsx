@@ -27,9 +27,7 @@ export interface ServiceWorkerStatus {
  * Should be rendered once in the root layout.
  */
 export function ServiceWorkerRegistration() {
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(
-    null
-  );
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   const applyUpdate = useCallback(() => {
@@ -108,10 +106,7 @@ export function ServiceWorkerRegistration() {
 
     return () => {
       mounted = false;
-      navigator.serviceWorker.removeEventListener(
-        'controllerchange',
-        handleControllerChange
-      );
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
       window.removeEventListener('load', registerServiceWorker);
     };
   }, []);
@@ -127,9 +122,7 @@ export function ServiceWorkerRegistration() {
         <div className="flex items-center gap-4 rounded-2xl bg-sage p-4 text-white shadow-xl">
           <div className="flex-1">
             <p className="font-medium">Update available</p>
-            <p className="text-sm text-white/80">
-              Refresh to get the latest version
-            </p>
+            <p className="text-sm text-white/80">Refresh to get the latest version</p>
           </div>
           <button
             onClick={applyUpdate}

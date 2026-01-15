@@ -58,8 +58,7 @@ export function createMediaQuery(
   type: 'min-width' | 'max-width',
   breakpoint: BreakpointKey | number
 ): MediaQueryString {
-  const value =
-    typeof breakpoint === 'string' ? BREAKPOINTS[breakpoint] : breakpoint;
+  const value = typeof breakpoint === 'string' ? BREAKPOINTS[breakpoint] : breakpoint;
   return `(${type}: ${value}px)` as MediaQueryString;
 }
 
@@ -92,14 +91,10 @@ export const MEDIA_QUERIES = {
   isSmall: createMediaQuery('max-width', 'sm'),
 
   /** User prefers reduced motion */
-  prefersReducedMotion: createRawMediaQuery(
-    '(prefers-reduced-motion: reduce)'
-  ),
+  prefersReducedMotion: createRawMediaQuery('(prefers-reduced-motion: reduce)'),
 
   /** User prefers more contrast */
-  prefersHighContrast: createRawMediaQuery(
-    '(prefers-contrast: more)'
-  ),
+  prefersHighContrast: createRawMediaQuery('(prefers-contrast: more)'),
 
   /** Device supports hover (typically non-touch) */
   supportsHover: createRawMediaQuery('(hover: hover)'),
@@ -124,10 +119,7 @@ export const MEDIA_QUERIES = {
  * Type guard to check if a value is a valid breakpoint key.
  */
 export function isBreakpointKey(value: unknown): value is BreakpointKey {
-  return (
-    typeof value === 'string' &&
-    Object.keys(BREAKPOINTS).includes(value)
-  );
+  return typeof value === 'string' && Object.keys(BREAKPOINTS).includes(value);
 }
 
 /**

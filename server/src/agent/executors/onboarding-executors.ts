@@ -60,14 +60,13 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
 
   registerProposalExecutor('upsert_services', async (tenantId, payload) => {
     const typedPayload = payload as unknown as UpsertServicesPayload;
-    const { segmentName, segmentSlug, packages } = typedPayload;
+    const { segmentName, packages } = typedPayload;
+    // P0-FIX: Default to "general" segment to maintain single-segment model for most users
+    const segmentSlug = typedPayload.segmentSlug || 'general';
 
     // Validate required fields
     if (!segmentName) {
       throw new MissingFieldError('segmentName', 'upsert_services');
-    }
-    if (!segmentSlug) {
-      throw new MissingFieldError('segmentSlug', 'upsert_services');
     }
     if (!packages || packages.length === 0) {
       throw new MissingFieldError('packages', 'upsert_services');
@@ -185,6 +184,7 @@ export function registerOnboardingExecutors(prisma: PrismaClient): void {
         packages: createdPackages,
         packageCount: createdPackages.length,
         previewUrl,
+        hasDraft: true, // P0-FIX: Signal for frontend cache invalidation (Pitfall #26)
       };
     });
   });

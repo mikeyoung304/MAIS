@@ -27,6 +27,7 @@ impact:
 Code review of the Agent Ecosystem (Phases 1-5) identified 5 critical issues in guardrails, security, and database performance. All fixes applied in commit `cb55639`.
 
 **Key Wins:**
+
 - Circuit breaker state now per-session instead of singleton (fixes multi-tenant isolation)
 - `trustTier` now required on all tools (prevents silent approval bypasses)
 - Rejection patterns refined (eliminates false positives like "No, I don't have any other questions")
@@ -120,6 +121,7 @@ npm run test:e2e -- customer-chat-isolation.spec.ts
 ```
 
 **Key Files:**
+
 - `server/src/agent/orchestrator/base-orchestrator.ts` - Lines 202, 390-393, 1018-1044
 - `server/src/agent/orchestrator/circuit-breaker.ts` - State storage
 
@@ -193,6 +195,7 @@ const tool: AgentTool = {
 ```
 
 **Key Files:**
+
 - `server/src/agent/tools/types.ts` - Lines 61-87
 - All tool implementations (customer, onboarding, admin)
 
@@ -246,19 +249,18 @@ const rejectionPatterns = [
 const shortRejection = /^(no|stop|wait|cancel|hold)\.?!?$/i;
 const isShortRejection = shortRejection.test(normalizedMessage.trim());
 
-const isRejection =
-  isShortRejection || rejectionPatterns.some((p) => p.test(normalizedMessage));
+const isRejection = isShortRejection || rejectionPatterns.some((p) => p.test(normalizedMessage));
 ```
 
 ### Key Improvements
 
-| Scenario | Before | After | Reason |
-|----------|--------|-------|--------|
+| Scenario                               | Before      | After       | Reason                                |
+| -------------------------------------- | ----------- | ----------- | ------------------------------------- |
 | "No, I don't have any other questions" | ❌ Rejected | ✅ Approved | "no" alone in context isn't rejection |
-| "No wait, don't book that" | ❌ Rejected | ✅ Rejected | Explicit "don't" with action |
-| "Actually, let's proceed" | ❌ Rejected | ✅ Approved | "Actually" isn't rejection |
-| "Wait, can you check availability?" | ❌ Rejected | ✅ Approved | "Wait" as question, not rejection |
-| "Stop" (alone) | ❌ Rejected | ✅ Rejected | Short standalone rejection |
+| "No wait, don't book that"             | ❌ Rejected | ✅ Rejected | Explicit "don't" with action          |
+| "Actually, let's proceed"              | ❌ Rejected | ✅ Approved | "Actually" isn't rejection            |
+| "Wait, can you check availability?"    | ❌ Rejected | ✅ Approved | "Wait" as question, not rejection     |
+| "Stop" (alone)                         | ❌ Rejected | ✅ Rejected | Short standalone rejection            |
 
 ### Why This Matters
 
@@ -268,6 +270,7 @@ const isRejection =
 - **Trust**: Agent respects user's consent accurately
 
 **Key Files:**
+
 - `server/src/agent/proposals/proposal.service.ts` - Lines 249-266
 - `server/test/integration/proposal-soft-confirm.spec.ts` - Test cases
 
@@ -311,7 +314,7 @@ const publicChatRateLimiter = rateLimit({
   standardHeaders: false, // Don't return RateLimit-* headers
   skip: (req, _res) => {
     // Skip rate limiting for authenticated requests (admin)
-    return (req.locals?.tenantAuth?.tenantId) !== undefined;
+    return req.locals?.tenantAuth?.tenantId !== undefined;
   },
   handler: (_req, res) => {
     res.status(429).json({
@@ -322,20 +325,16 @@ const publicChatRateLimiter = rateLimit({
 });
 
 // Apply to public endpoint
-publicRouter.post(
-  '/v1/public/chat/message',
-  publicChatRateLimiter,
-  tsRestExpress(/* ... */)
-);
+publicRouter.post('/v1/public/chat/message', publicChatRateLimiter, tsRestExpress(/* ... */));
 ```
 
 ### Rate Limit Strategy
 
-| Scenario | Limit | Window | Rationale |
-|----------|-------|--------|-----------|
-| Public customer chat | 50 req/IP | 15 min | ~3 req/min sustainable conversation |
-| Authenticated endpoints | Unlimited | N/A | Trusted users can use freely |
-| Spike protection | Hard 429 | Immediate | Rejects excess, not queued |
+| Scenario                | Limit     | Window    | Rationale                           |
+| ----------------------- | --------- | --------- | ----------------------------------- |
+| Public customer chat    | 50 req/IP | 15 min    | ~3 req/min sustainable conversation |
+| Authenticated endpoints | Unlimited | N/A       | Trusted users can use freely        |
+| Spike protection        | Hard 429  | Immediate | Rejects excess, not queued          |
 
 ### Calculation
 
@@ -345,6 +344,7 @@ publicRouter.post(
 - Fair rate for legitimate customers, blocks bulk attacks
 
 **Key Files:**
+
 - `server/src/routes/public-customer-chat.routes.ts` - Lines 17, 31-43
 - `server/package.json` - dependency: `express-rate-limit`
 
@@ -428,6 +428,7 @@ WHERE tenantId = $1 AND sessionType = $2 AND updatedAt > $3
 ```
 
 **Key Files:**
+
 - `server/prisma/schema.prisma` - Lines 855-856 (AgentSession model)
 - `server/src/agent/orchestrator/base-orchestrator.ts` - Lines 1018-1044 (cleanup queries)
 

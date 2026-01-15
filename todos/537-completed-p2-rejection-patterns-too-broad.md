@@ -1,7 +1,7 @@
 ---
 status: completed
 priority: p2
-issue_id: "537"
+issue_id: '537'
 tags: [code-review, agent-ecosystem, agent-native]
 dependencies: []
 completed_at: 2026-01-01
@@ -16,6 +16,7 @@ Rejection patterns like "no", "wait", "actually" are too broad. A message like "
 ## Findings
 
 **Agent-Native Reviewer:**
+
 > "A message like 'No, I don't have any other questions' or 'Actually, that looks great!' would incorrectly reject pending proposals."
 
 **Location:** `proposal.service.ts` (lines 246-276)
@@ -27,12 +28,14 @@ Made rejection patterns more contextual to require explicit rejection intent, no
 ### Pattern Changes
 
 **Before (overly broad):**
+
 - `^wait|stop|hold|cancel` at start of message would reject
 - "Wait, I have a question first" incorrectly rejected
 - "Stop by anytime" incorrectly rejected
 - "Hold that thought" incorrectly rejected
 
 **After (contextual):**
+
 - `^no,?\s*(don't|cancel|stop|wait)` - "No" only with explicit cancellation verb
 - `^wait[,!]?\s*(don't|stop|cancel|no)` - "Wait" only with rejection context
 - `^stop[,!]?\s*(that|this|it|the|don't|now|i\s+(changed|don't|want))` - "Stop" only with object or "changed mind"

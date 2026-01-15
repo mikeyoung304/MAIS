@@ -61,11 +61,7 @@ export function useMediaQuery(query: MediaQueryString): MediaQueryState {
     return false;
   }, []);
 
-  const matches = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
+  const matches = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   // Check if we're on the client by testing if window exists
   // This is safe because useSyncExternalStore handles SSR correctly
@@ -85,9 +81,7 @@ export function useMediaQuery(query: MediaQueryString): MediaQueryState {
  * @param query - A branded MediaQueryString
  * @returns boolean | undefined
  */
-export function useMediaQueryValue(
-  query: MediaQueryString
-): boolean | undefined {
+export function useMediaQueryValue(query: MediaQueryString): boolean | undefined {
   const state = useMediaQuery(query);
   return state.status === 'resolved' ? state.matches : undefined;
 }
@@ -100,10 +94,7 @@ export function useMediaQueryValue(
  * @param fallback - Value to use during SSR/hydration
  * @returns boolean
  */
-export function useMediaQueryWithFallback(
-  query: MediaQueryString,
-  fallback: boolean
-): boolean {
+export function useMediaQueryWithFallback(query: MediaQueryString, fallback: boolean): boolean {
   const state = useMediaQuery(query);
   return state.status === 'resolved' ? state.matches : fallback;
 }

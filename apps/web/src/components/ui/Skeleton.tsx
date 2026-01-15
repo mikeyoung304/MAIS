@@ -4,28 +4,25 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const skeletonVariants = cva(
-  'bg-neutral-200 relative overflow-hidden',
-  {
-    variants: {
-      rounded: {
-        none: 'rounded-none',
-        default: 'rounded-lg',
-        full: 'rounded-full',
-        '3xl': 'rounded-3xl',
-        xl: 'rounded-xl',
-      },
-      animate: {
-        true: 'after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/40 after:to-transparent after:animate-shimmer motion-reduce:after:animate-none',
-        false: '',
-      },
+const skeletonVariants = cva('bg-neutral-200 relative overflow-hidden', {
+  variants: {
+    rounded: {
+      none: 'rounded-none',
+      default: 'rounded-lg',
+      full: 'rounded-full',
+      '3xl': 'rounded-3xl',
+      xl: 'rounded-xl',
     },
-    defaultVariants: {
-      rounded: 'default',
-      animate: true,
+    animate: {
+      true: 'after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/40 after:to-transparent after:animate-shimmer motion-reduce:after:animate-none',
+      false: '',
     },
-  }
-);
+  },
+  defaultVariants: {
+    rounded: 'default',
+    animate: true,
+  },
+});
 
 export interface SkeletonProps
   extends React.HTMLAttributes<HTMLDivElement>,

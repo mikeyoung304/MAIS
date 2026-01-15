@@ -22,11 +22,13 @@ The mobile experience hooks had low test coverage (2/12 hooks tested = 16.7%). K
 Added comprehensive test coverage for priority hooks:
 
 **Files created:**
+
 - `apps/web/src/hooks/__tests__/useLocalStorage.test.ts` (23 tests)
 - `apps/web/src/hooks/__tests__/usePWAInstall.test.ts` (21 tests)
 - `apps/web/src/hooks/__tests__/useBreakpoint.test.ts` (22 tests)
 
 **Coverage improvement:**
+
 - Before: 16.7% (2/12 hooks)
 - After: 33.3% (5/15 hooks)
 - 98 total tests pass across 5 hook test files
@@ -34,6 +36,7 @@ Added comprehensive test coverage for priority hooks:
 ### Test Coverage Details
 
 **useLocalStorage.test.ts:**
+
 - Initial state with default values
 - Stored value retrieval and JSON parsing
 - setValue with direct values and functional updates
@@ -45,6 +48,7 @@ Added comprehensive test coverage for priority hooks:
 - useLocalStorageBoolean helper with toggle and setValue
 
 **usePWAInstall.test.ts:**
+
 - Initial status detection
 - isInstalled detection via standalone mode
 - iOS device detection
@@ -56,6 +60,7 @@ Added comprehensive test coverage for priority hooks:
 - Install dismissal persistence helpers
 
 **useBreakpoint.test.ts:**
+
 - Breakpoint detection (xs, sm, md, lg, xl)
 - Boolean helpers (isMobile, isTablet, isDesktop, isLargeDesktop)
 - isAtLeast helper function
@@ -80,7 +85,7 @@ Discovered a limitation: `useLocalStorage` has issues with object/array default 
 
 ## Work Log
 
-| Date       | Action                              | Learnings         |
-| ---------- | ----------------------------------- | ----------------- |
-| 2026-01-01 | Created from mobile UX code review | Coverage gaps     |
+| Date       | Action                             | Learnings                                   |
+| ---------- | ---------------------------------- | ------------------------------------------- |
+| 2026-01-01 | Created from mobile UX code review | Coverage gaps                               |
 | 2026-01-01 | Added tests for 3 priority hooks   | useSyncExternalStore object reference issue |

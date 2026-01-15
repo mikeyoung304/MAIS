@@ -32,9 +32,9 @@ The `CACHE_URLS` message handler in the service worker accepts arbitrary URLs wi
 ```javascript
 self.addEventListener('message', (event) => {
   if (event.data.type === 'CACHE_URLS') {
-    const urls = event.data.urls;  // No validation
+    const urls = event.data.urls; // No validation
     caches.open(CACHE_NAME).then((cache) => {
-      cache.addAll(urls);  // Arbitrary URLs cached
+      cache.addAll(urls); // Arbitrary URLs cached
     });
   }
 });
@@ -94,10 +94,10 @@ async function cacheUrls(urls) {
 
 ## Work Log
 
-| Date       | Action                               | Learnings                  |
-| ---------- | ------------------------------------ | -------------------------- |
-| 2026-01-01 | Created from mobile UX code review  | Cache poisoning prevention |
-| 2026-01-01 | Implemented same-origin validation  | URL API handles edge cases |
+| Date       | Action                             | Learnings                  |
+| ---------- | ---------------------------------- | -------------------------- |
+| 2026-01-01 | Created from mobile UX code review | Cache poisoning prevention |
+| 2026-01-01 | Implemented same-origin validation | URL API handles edge cases |
 
 ## Resources
 

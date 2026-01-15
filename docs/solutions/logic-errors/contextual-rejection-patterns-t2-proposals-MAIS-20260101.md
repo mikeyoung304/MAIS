@@ -7,7 +7,7 @@ root_cause: Overly broad keyword matching rejected legitimate user messages
 solution: Contextual regex patterns with positional anchors
 created: 2026-01-01
 project: MAIS
-related_issues: ["#537"]
+related_issues: ['#537']
 ---
 
 # Contextual Rejection Patterns for T2 Proposals
@@ -19,12 +19,11 @@ T2 proposals use "soft confirm" - they auto-confirm when the user sends their ne
 ```typescript
 // BEFORE: Too broad
 const rejectionKeywords = ['wait', 'stop', 'no', 'actually', 'cancel', 'hold'];
-const isRejection = rejectionKeywords.some(kw =>
-  normalizedMessage.toLowerCase().includes(kw)
-);
+const isRejection = rejectionKeywords.some((kw) => normalizedMessage.toLowerCase().includes(kw));
 ```
 
 **Symptom:** Legitimate messages incorrectly rejected proposals:
+
 - "No, I don't have any other questions" → REJECTED (should confirm)
 - "Actually, that looks great!" → REJECTED (should confirm)
 - "Can you hold on to this info?" → REJECTED (should confirm)
@@ -58,8 +57,7 @@ const rejectionPatterns = [
 const shortRejection = /^(no|stop|wait|cancel|hold)\.?!?$/i;
 const isShortRejection = shortRejection.test(normalizedMessage.trim());
 
-const isRejection = isShortRejection ||
-  rejectionPatterns.some(p => p.test(normalizedMessage));
+const isRejection = isShortRejection || rejectionPatterns.some((p) => p.test(normalizedMessage));
 ```
 
 ### Key Design Decisions
@@ -81,31 +79,34 @@ describe('T2 soft-confirm rejection patterns', () => {
     'wait',
     'cancel',
     'No, cancel that',
-    'Wait, don\'t do that',
+    "Wait, don't do that",
     'Stop that please',
     'Cancel the booking',
     'Hold on',
-    'Don\'t proceed with that',
+    "Don't proceed with that",
   ];
 
   // Should NOT reject (legitimate messages)
   const shouldNotReject = [
-    'No, I don\'t have any other questions',
+    "No, I don't have any other questions",
     'Actually, that looks great!',
     'No problem, thanks!',
-    'I\'m actually excited about this',
+    "I'm actually excited about this",
     'Can you hold onto this information?',
     'Let me know if you need anything',
     'Sounds good',
     'Perfect, thanks!',
-    'That\'s not what I meant, but this works',
+    "That's not what I meant, but this works",
     'I have no concerns',
   ];
 
   for (const msg of shouldReject) {
     it(`should reject: "${msg}"`, async () => {
       const result = await proposalService.softConfirmPendingT2(
-        tenantId, sessionId, msg, 'customer'
+        tenantId,
+        sessionId,
+        msg,
+        'customer'
       );
       expect(result).toEqual([]); // Empty = rejected
     });
@@ -117,7 +118,10 @@ describe('T2 soft-confirm rejection patterns', () => {
       await createPendingT2Proposal();
 
       const result = await proposalService.softConfirmPendingT2(
-        tenantId, sessionId, msg, 'customer'
+        tenantId,
+        sessionId,
+        msg,
+        'customer'
       );
       expect(result.length).toBeGreaterThan(0); // Confirmed
     });
@@ -141,15 +145,21 @@ When implementing user message parsing:
 
 ```typescript
 // RED FLAG: Simple includes()
-if (message.includes('cancel')) { reject(); }
+if (message.includes('cancel')) {
+  reject();
+}
 
 // RED FLAG: Split and check
 const words = message.split(' ');
-if (words.includes('no')) { reject(); }
+if (words.includes('no')) {
+  reject();
+}
 
 // RED FLAG: No phrase context
 const keywords = ['wait', 'stop', 'no'];
-if (keywords.some(kw => message.includes(kw))) { reject(); }
+if (keywords.some((kw) => message.includes(kw))) {
+  reject();
+}
 ```
 
 ## Better Pattern: Layered Matching

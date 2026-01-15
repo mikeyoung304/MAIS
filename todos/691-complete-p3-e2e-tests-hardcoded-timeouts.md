@@ -66,11 +66,11 @@ All 9 runnable tests pass (2 skipped due to no draft state - expected):
 
 ## Work Log
 
-| Date       | Action                     | Outcome        |
-| ---------- | -------------------------- | -------------- |
-| 2026-01-09 | Created during code review | Initial filing |
-| 2026-01-10 | **Triage: APPROVED** | 19 hardcoded waits found. Flaky tests undermine CI reliability. |
-| 2026-01-10 | **RESOLVED** | Replaced 2 `waitForTimeout` calls with proper state assertions |
+| Date       | Action                     | Outcome                                                         |
+| ---------- | -------------------------- | --------------------------------------------------------------- |
+| 2026-01-09 | Created during code review | Initial filing                                                  |
+| 2026-01-10 | **Triage: APPROVED**       | 19 hardcoded waits found. Flaky tests undermine CI reliability. |
+| 2026-01-10 | **RESOLVED**               | Replaced 2 `waitForTimeout` calls with proper state assertions  |
 
 ## Resources
 

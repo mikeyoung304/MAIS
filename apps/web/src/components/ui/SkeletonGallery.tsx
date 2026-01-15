@@ -5,21 +5,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './Skeleton';
 
-const skeletonGalleryVariants = cva(
-  'grid gap-4',
-  {
-    variants: {
-      columns: {
-        2: 'grid-cols-1 sm:grid-cols-2',
-        3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-        4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-      },
+const skeletonGalleryVariants = cva('grid gap-4', {
+  variants: {
+    columns: {
+      2: 'grid-cols-1 sm:grid-cols-2',
+      3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+      4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
     },
-    defaultVariants: {
-      columns: 3,
-    },
-  }
-);
+  },
+  defaultVariants: {
+    columns: 3,
+  },
+});
 
 export interface SkeletonGalleryProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -44,12 +41,7 @@ const SkeletonGallery = React.forwardRef<HTMLDivElement, SkeletonGalleryProps>(
         {...props}
       >
         {Array.from({ length: count }).map((_, index) => (
-          <Skeleton
-            key={index}
-            rounded="xl"
-            animate={animate}
-            className="aspect-square w-full"
-          />
+          <Skeleton key={index} rounded="xl" animate={animate} className="aspect-square w-full" />
         ))}
       </div>
     );

@@ -7,7 +7,7 @@ root_cause: Express trust proxy not configured; custom IP extraction used spoofa
 solution: Add trust proxy setting; delete custom keyGenerator; use library defaults
 created: 2026-01-01
 project: MAIS
-related_issues: ["#542", "#543", "#546"]
+related_issues: ['#542', '#543', '#546']
 ---
 
 # Express Trust Proxy and Rate Limiting Behind Reverse Proxies
@@ -15,6 +15,7 @@ related_issues: ["#542", "#543", "#546"]
 ## Problem Statement
 
 Rate limiting was completely ineffective in production because:
+
 1. Express `trust proxy` was not configured
 2. Custom IP extraction used **leftmost** IP from `X-Forwarded-For` (spoofable)
 
@@ -28,11 +29,11 @@ Express doesn't parse `X-Forwarded-For` headers by default. Without `trust proxy
 
 ```typescript
 // WITHOUT trust proxy:
-req.ip // → "10.0.0.1" (Vercel's internal IP)
-req.headers['x-forwarded-for'] // → "203.0.113.50, 10.0.0.1"
+req.ip; // → "10.0.0.1" (Vercel's internal IP)
+req.headers['x-forwarded-for']; // → "203.0.113.50, 10.0.0.1"
 
 // WITH trust proxy:
-req.ip // → "203.0.113.50" (actual client IP)
+req.ip; // → "203.0.113.50" (actual client IP)
 ```
 
 ### Issue 2: Leftmost IP is Spoofable
@@ -47,10 +48,11 @@ keyGenerator: (req: Request) => {
     return forwarded.split(',')[0].trim(); // ← LEFTMOST = spoofable!
   }
   return req.ip || 'unknown';
-}
+};
 ```
 
 **Attack vector:**
+
 ```http
 POST /v1/public/chat/message
 X-Forwarded-For: 1.2.3.4, 5.6.7.8
@@ -88,31 +90,31 @@ const publicChatRateLimiter = rateLimit({
 
 This session used three specialized reviewers in parallel to triage 9 findings:
 
-| Reviewer | Focus | Criteria |
-|----------|-------|----------|
-| **DHH** | Simplicity, shipping | "Is this solving a real problem or an imaginary one?" |
-| **Kieran** | TypeScript, best practices | "Is this type-safe and idiomatic?" |
-| **Simplicity** | YAGNI, deletion | "Can we delete code instead of adding it?" |
+| Reviewer       | Focus                      | Criteria                                              |
+| -------------- | -------------------------- | ----------------------------------------------------- |
+| **DHH**        | Simplicity, shipping       | "Is this solving a real problem or an imaginary one?" |
+| **Kieran**     | TypeScript, best practices | "Is this type-safe and idiomatic?"                    |
+| **Simplicity** | YAGNI, deletion            | "Can we delete code instead of adding it?"            |
 
 ### Consensus Decision Matrix
 
-| Consensus | Action |
-|-----------|--------|
-| All 3 say "FIX" | ✅ Do immediately |
-| All 3 say "SKIP" | ❌ Don't do it |
-| Mixed opinions | ⏸️ Defer for production data |
+| Consensus        | Action                       |
+| ---------------- | ---------------------------- |
+| All 3 say "FIX"  | ✅ Do immediately            |
+| All 3 say "SKIP" | ❌ Don't do it               |
+| Mixed opinions   | ⏸️ Defer for production data |
 
 ### Triage Results
 
-| Finding | DHH | Kieran | Simplicity | Decision |
-|---------|-----|--------|------------|----------|
-| Trust proxy missing | FIX | FIX (P0) | FIX | ✅ **DO NOW** |
-| IP spoofing bypass | DELETE | FIX | DELETE | ✅ **DO NOW** |
-| DRY violation (patterns) | FIX | FIX | FIX | ✅ **DO SOON** |
-| Circuit breaker cleanup | SKIP | Document | SKIP | ❌ DEFER |
-| T2 rejection patterns | SKIP | Cautious | Measure | ⏸️ DEFER |
-| Error message constants | SKIP | P3 | SKIP | ❌ SKIP |
-| Type cast ceremony | SKIP | Guard | SKIP | ❌ SKIP |
+| Finding                  | DHH    | Kieran   | Simplicity | Decision       |
+| ------------------------ | ------ | -------- | ---------- | -------------- |
+| Trust proxy missing      | FIX    | FIX (P0) | FIX        | ✅ **DO NOW**  |
+| IP spoofing bypass       | DELETE | FIX      | DELETE     | ✅ **DO NOW**  |
+| DRY violation (patterns) | FIX    | FIX      | FIX        | ✅ **DO SOON** |
+| Circuit breaker cleanup  | SKIP   | Document | SKIP       | ❌ DEFER       |
+| T2 rejection patterns    | SKIP   | Cautious | Measure    | ⏸️ DEFER       |
+| Error message constants  | SKIP   | P3       | SKIP       | ❌ SKIP        |
+| Type cast ceremony       | SKIP   | Guard    | SKIP       | ❌ SKIP        |
 
 ### Key Quotes
 
@@ -151,7 +153,7 @@ This session used three specialized reviewers in parallel to triage 9 findings:
 
 ```typescript
 // RED FLAG: Custom IP extraction
-req.headers['x-forwarded-for'].split(',')[0] // Leftmost = spoofable!
+req.headers['x-forwarded-for'].split(',')[0]; // Leftmost = spoofable!
 
 // RED FLAG: Missing trust proxy
 const app = express(); // No trust proxy = broken behind CDN
@@ -161,7 +163,9 @@ const app = express(); // No trust proxy = broken behind CDN
 // File B: 8 patterns (subset) ← Weaker protection!
 
 // RED FLAG: Over-engineering without data
-if (turnCount === 0) { cleanup(); } // Does this ever happen?
+if (turnCount === 0) {
+  cleanup();
+} // Does this ever happen?
 ```
 
 ## File References

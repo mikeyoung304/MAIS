@@ -44,6 +44,7 @@ if (expectedSlug && payload.slug !== expectedSlug) {
 Original scenario: Tenant A tries to access `/t/tenant-b?preview=draft`
 
 **Now prevented because:**
+
 1. Tenant A can only generate preview tokens with their own `tenantId` and `slug`
 2. If Tenant A's token is used on `/t/tenant-b/preview`, validation fails with `tenant_mismatch`
 3. Without a valid token, the preview endpoint returns 401
@@ -75,9 +76,9 @@ If/when draft preview is implemented (see #698), there's no server-side verifica
 
 ## Work Log
 
-| Date       | Action              | Learnings                                                         |
-| ---------- | ------------------- | ----------------------------------------------------------------- |
-| 2026-01-10 | **Triage: APPROVED** | Security issue - must be implemented with #698 to prevent cross-tenant access. |
+| Date       | Action                | Learnings                                                                                                                                                                      |
+| ---------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-01-10 | **Triage: APPROVED**  | Security issue - must be implemented with #698 to prevent cross-tenant access.                                                                                                 |
 | 2026-01-10 | **Verified COMPLETE** | Ownership verification implemented via Option B (Scoped Preview Token) as part of #698. Token includes tenantId + slug, validated server-side before returning any draft data. |
 
 ## Files Implementing This Security

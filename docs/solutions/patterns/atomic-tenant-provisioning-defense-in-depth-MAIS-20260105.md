@@ -36,6 +36,7 @@ The admin API (`POST /api/v1/admin/tenants`) was creating tenant records without
 - Tenants were technically created but completely unusable
 
 **Root Cause:** Two separate code paths existed:
+
 1. **Signup flow** - Used `TenantOnboardingService` (correct, atomic)
 2. **Admin API** - Created tenant directly without segments/packages (broken)
 
@@ -101,6 +102,7 @@ export class TenantProvisioningService {
 ```
 
 **Key Guarantees:**
+
 - Either ALL entities created (tenant + segment + 3 packages) or NONE
 - No orphaned tenants possible
 - Single source of truth for provisioning logic
@@ -182,6 +184,7 @@ export type PackageTierKey = keyof typeof DEFAULT_PACKAGE_TIERS;
 ```
 
 **Benefits:**
+
 - Single source of truth for defaults
 - Changes propagate to all code paths
 - Type safety with `as const`
@@ -231,13 +234,13 @@ When reviewing multi-entity creation:
 
 ### Warning Signs
 
-| Red Flag | Risk | Fix |
-|----------|------|-----|
-| Duplicate creation logic in multiple routes | Inconsistent behavior | Extract to shared service |
-| Hard-coded default values in route files | Config drift | Move to `lib/tenant-defaults.ts` |
-| Direct Prisma calls in routes for multi-entity | Non-atomic creation | Use provisioning service |
-| Optional foreign keys without validation | Orphaned records | Add service-layer checks |
-| `new Service()` in route files | Multiple instances | Add to DI container |
+| Red Flag                                       | Risk                  | Fix                              |
+| ---------------------------------------------- | --------------------- | -------------------------------- |
+| Duplicate creation logic in multiple routes    | Inconsistent behavior | Extract to shared service        |
+| Hard-coded default values in route files       | Config drift          | Move to `lib/tenant-defaults.ts` |
+| Direct Prisma calls in routes for multi-entity | Non-atomic creation   | Use provisioning service         |
+| Optional foreign keys without validation       | Orphaned records      | Add service-layer checks         |
+| `new Service()` in route files                 | Multiple instances    | Add to DI container              |
 
 ### Testing Strategy
 
@@ -255,7 +258,7 @@ describe('Tenant Provisioning', () => {
 
     // Verify all linked correctly
     expect(result.segment.tenantId).toBe(result.tenant.id);
-    result.packages.forEach(pkg => {
+    result.packages.forEach((pkg) => {
       expect(pkg.tenantId).toBe(result.tenant.id);
       expect(pkg.segmentId).toBe(result.segment.id);
     });
@@ -315,11 +318,11 @@ WHERE s.id IS NULL AND p.active = true;
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `server/src/services/tenant-provisioning.service.ts` | NEW - Atomic provisioning |
-| `server/src/lib/tenant-defaults.ts` | NEW - Shared constants |
-| `server/src/di.ts` | Add service to container |
-| `server/src/routes/admin/tenants.routes.ts` | Use provisioning service |
-| `server/src/routes/index.ts` | Pass service from DI |
-| `server/src/services/tenant-onboarding.service.ts` | Import from shared constants |
+| File                                                 | Change                       |
+| ---------------------------------------------------- | ---------------------------- |
+| `server/src/services/tenant-provisioning.service.ts` | NEW - Atomic provisioning    |
+| `server/src/lib/tenant-defaults.ts`                  | NEW - Shared constants       |
+| `server/src/di.ts`                                   | Add service to container     |
+| `server/src/routes/admin/tenants.routes.ts`          | Use provisioning service     |
+| `server/src/routes/index.ts`                         | Pass service from DI         |
+| `server/src/services/tenant-onboarding.service.ts`   | Import from shared constants |

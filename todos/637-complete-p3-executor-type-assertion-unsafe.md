@@ -92,11 +92,11 @@ Rationale: Type safety gap. Type assertions bypass compile-time checks. If tool 
 
 ## Work Log
 
-| Date       | Action                          | Learnings                      |
-| ---------- | ------------------------------- | ------------------------------ |
-| 2026-01-05 | Created from multi-agent review | TypeScript reviewer flagged P2 |
-| 2026-01-10 | **Triage: APPROVED** | Type safety gap. Small fix prevents runtime errors. |
-| 2026-01-10 | **COMPLETED** | Added segmentId + groupingOrder to schema, replaced type assertion with Zod .parse() |
+| Date       | Action                          | Learnings                                                                            |
+| ---------- | ------------------------------- | ------------------------------------------------------------------------------------ |
+| 2026-01-05 | Created from multi-agent review | TypeScript reviewer flagged P2                                                       |
+| 2026-01-10 | **Triage: APPROVED**            | Type safety gap. Small fix prevents runtime errors.                                  |
+| 2026-01-10 | **COMPLETED**                   | Added segmentId + groupingOrder to schema, replaced type assertion with Zod .parse() |
 
 ## Resources
 

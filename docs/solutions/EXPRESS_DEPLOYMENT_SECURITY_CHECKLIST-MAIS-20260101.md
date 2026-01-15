@@ -21,6 +21,7 @@ Express running behind reverse proxies (Vercel, Cloudflare, AWS Load Balancer) r
 ## Current State (MAIS)
 
 ### What's Missing
+
 ```typescript
 // ❌ NO trust proxy configuration in app.ts
 const app = express();
@@ -28,26 +29,31 @@ const app = express();
 ```
 
 ### Partial Solutions (DRY Violation)
+
 Two separate IP extraction implementations:
 
 **File 1: `public-customer-chat.routes.ts` (Line 37-44)**
+
 ```typescript
 keyGenerator: (req: Request) => {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();  // ⚠️ Leftmost IP
+    return forwarded.split(',')[0].trim(); // ⚠️ Leftmost IP
   }
   return req.ip || 'unknown';
-}
+};
 ```
 
 **File 2: `public-date-booking.routes.ts` (Line 166)**
+
 ```typescript
-clientIp: req.ip || req.headers['x-forwarded-for']  // ⚠️ No normalization
+clientIp: req.ip || req.headers['x-forwarded-for']; // ⚠️ No normalization
 ```
 
 ### Centralized Solution Exists
+
 `middleware/rateLimiter.ts` has production-grade IP handling:
+
 ```typescript
 // ✅ Handles IPv6 /64 prefix properly
 function normalizeIp(ip: string | undefined): string {
@@ -62,7 +68,7 @@ function normalizeIp(ip: string | undefined): string {
 }
 
 // ✅ Used everywhere in the limiter
-keyGenerator: (req) => normalizeIp(req.ip)
+keyGenerator: (req) => normalizeIp(req.ip);
 ```
 
 **But:** This only works IF `app.set('trust proxy', ...)` is configured at Express level.
@@ -80,12 +86,13 @@ keyGenerator: (req) => normalizeIp(req.ip)
   - [ ] Decision documented in code comment (why that value was chosen)
 
 - [ ] **Environment-Specific Configuration**
+
   ```typescript
   // In app.ts, after app creation
   if (process.env.NODE_ENV === 'production') {
-    app.set('trust proxy', 1);  // Vercel, Cloudflare (single proxy)
+    app.set('trust proxy', 1); // Vercel, Cloudflare (single proxy)
   } else {
-    app.set('trust proxy', 'loopback');  // Dev/localhost
+    app.set('trust proxy', 'loopback'); // Dev/localhost
   }
   ```
 
@@ -134,7 +141,9 @@ keyGenerator: (req) => normalizeIp(req.ip)
 ## Implementation Steps
 
 ### Step 1: Configure Trust Proxy (app.ts)
+
 Add after `const app = express();`:
+
 ```typescript
 // Trust proxy for IP resolution in production
 // Vercel, Cloudflare, AWS ALB use single proxy layer
@@ -147,7 +156,9 @@ if (process.env.NODE_ENV === 'production') {
 ```
 
 ### Step 2: Remove Custom IP Parsing
+
 **In `public-customer-chat.routes.ts`:**
+
 ```diff
 - const publicChatRateLimiter = rateLimit({
 -   keyGenerator: (req: Request) => {
@@ -166,6 +177,7 @@ if (process.env.NODE_ENV === 'production') {
 ```
 
 **In `public-date-booking.routes.ts`:**
+
 ```diff
 - clientIp: req.ip || req.headers['x-forwarded-for'],
 
@@ -173,13 +185,12 @@ if (process.env.NODE_ENV === 'production') {
 ```
 
 ### Step 3: Add Test Coverage
+
 ```typescript
 // test/middleware/trust-proxy.spec.ts
 describe('Trust Proxy Configuration', () => {
   it('should resolve client IP from X-Forwarded-For when trust proxy enabled', async () => {
-    const res = await supertest(app)
-      .get('/health')
-      .set('X-Forwarded-For', '203.0.113.42');
+    const res = await supertest(app).get('/health').set('X-Forwarded-For', '203.0.113.42');
 
     // Verify rate limiter sees the correct IP (203.0.113.42, not proxy IP)
     expect(res.status).toBe(200);
@@ -194,6 +205,7 @@ describe('Trust Proxy Configuration', () => {
 ```
 
 ### Step 4: Verify No Regressions
+
 ```bash
 # Search for any remaining custom IP extraction
 grep -r "x-forwarded-for" src/
@@ -208,16 +220,19 @@ grep -r "headers\['x-" src/ | grep -v "x-tenant\|x-idempotency"
 ## Decision: Trust Proxy Value
 
 ### Vercel (Current Deployment)
+
 - Single proxy layer: Vercel → Your App
 - **Use:** `app.set('trust proxy', 1);`
 - Request flow: `client → Vercel → app`
 
 ### AWS Load Balancer + CloudFlare
+
 - Multiple layers: `client → CloudFlare → ALB → app`
 - **Use:** `app.set('trust proxy', 2);` (trust 2 hops)
 - Or: `app.set('trust proxy', 'uniqueips');` (let Express figure it out)
 
 ### Development (localhost)
+
 - No proxy
 - **Use:** `app.set('trust proxy', 'loopback');` (only trust localhost)
 
@@ -226,12 +241,14 @@ grep -r "headers\['x-" src/ | grep -v "x-tenant\|x-idempotency"
 ## Common Mistakes to Avoid
 
 ### ❌ Mistake 1: Parsing X-Forwarded-For Manually
+
 ```typescript
 // WRONG - ignores trust proxy, vulnerable to spoofing
 const ip = req.headers['x-forwarded-for']?.toString().split(',')[0];
 ```
 
 ### ❌ Mistake 2: Inconsistent IP Usage
+
 ```typescript
 // WRONG - req.ip in one place, X-Forwarded-For in another
 res.locals.clientIp = req.ip;
@@ -239,17 +256,19 @@ logger.info({ ip: req.headers['x-forwarded-for'] });
 ```
 
 ### ❌ Mistake 3: No IPv6 Normalization
+
 ```typescript
 // WRONG - different IPv6 addresses won't group together
-keyGenerator: (req) => req.ip
+keyGenerator: (req) => req.ip;
 // Result: Each IPv6 user gets their own rate limit bucket
 ```
 
 ### ✅ Correct Pattern
+
 ```typescript
 // CORRECT - Single source of truth
-app.set('trust proxy', 1);  // At startup
-keyGenerator: (req) => normalizeIp(req.ip);  // Everywhere else
+app.set('trust proxy', 1); // At startup
+keyGenerator: (req) => normalizeIp(req.ip); // Everywhere else
 // req.ip now correctly reflects client IP after proxy
 ```
 
@@ -258,6 +277,7 @@ keyGenerator: (req) => normalizeIp(req.ip);  // Everywhere else
 ## Testing Verification
 
 Run before deployment:
+
 ```bash
 # Rate limit tests
 npm test -- middleware/rateLimiter.spec.ts

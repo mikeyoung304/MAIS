@@ -86,8 +86,8 @@ Rationale: Fragile assumption. Current pattern will break when tenants add multi
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                 |
-| ---------- | ------------------------ | ----------------------------------------- |
-| 2026-01-10 | Created from code review | Simplicity reviewer noted this assumption |
-| 2026-01-10 | **Triage: APPROVED** | Fragile assumption will break with multiple text sections. Trivial fix. |
-| 2026-01-10 | **COMPLETE** | Changed `buildHomeSections()` to find about section by ID (`home-text-about`) instead of type. Updated post-sections filter to exclude by ID instead of type, allowing other text sections to appear after packages. |
+| Date       | Action                   | Learnings                                                                                                                                                                                                            |
+| ---------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-10 | Created from code review | Simplicity reviewer noted this assumption                                                                                                                                                                            |
+| 2026-01-10 | **Triage: APPROVED**     | Fragile assumption will break with multiple text sections. Trivial fix.                                                                                                                                              |
+| 2026-01-10 | **COMPLETE**             | Changed `buildHomeSections()` to find about section by ID (`home-text-about`) instead of type. Updated post-sections filter to exclude by ID instead of type, allowing other text sections to appear after packages. |

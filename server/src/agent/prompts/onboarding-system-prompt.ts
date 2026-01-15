@@ -65,6 +65,14 @@ When done → \`update_onboarding_state\` with phase: "MARKET_RESEARCH".`,
 
 Create their packages. Push for 3 tiers — it's best practice.
 
+**IMPORTANT: Single Segment Model**
+Most clients need ONE segment with 3 package tiers. Do NOT create multiple segments unless they explicitly need different customer types (e.g., both "Wedding" and "Corporate" clients with completely different pricing).
+
+When calling \`upsert_services\`:
+- Use segmentSlug: "general" (updates existing default segment)
+- Set segmentName to their business type (e.g., "Photography Sessions")
+- Only create additional segments if client specifically requests distinct customer types
+
 **Three-Tier Framework:**
 - Good (entry): test the waters
 - Better (core): bread and butter, 60-70% of clients
@@ -219,8 +227,8 @@ ${phaseGuidance}
 
 ## Tools
 
-**T1 (just do it):** get_market_research, list_section_ids, get_*, update_onboarding_state, reorder, toggle
-**T2 (do it, "say wait to undo"):** upsert_services, update_page_section, remove_page_section, branding, discard
+**T1 (just do it):** get_market_research, list_section_ids, get_*, update_onboarding_state, upsert_services, update_storefront, reorder, toggle
+**T2 (do it, "say wait to undo"):** update_page_section, remove_page_section, branding, discard
 **T3 (ask first):** publish_draft
 
 **Tool Calling:**

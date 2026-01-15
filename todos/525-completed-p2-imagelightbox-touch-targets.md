@@ -24,12 +24,14 @@ Applied Solution 1 (Padding Wrapper for Touch Area):
 **File modified:** `apps/web/src/components/gallery/ImageLightbox.tsx`
 
 **Changes:**
+
 - Wrapped visual dot (8px) inside button with `p-4 -m-2` classes
 - Creates 40x40px touch target (16px padding + 8px dot)
 - Negative margin maintains proper visual spacing
 - Changed parent container gap from `gap-1.5` to `gap-0` since button padding provides spacing
 
 **Before:**
+
 ```tsx
 <button
   className={cn('w-2 h-2 rounded-full', ...)}
@@ -38,6 +40,7 @@ Applied Solution 1 (Padding Wrapper for Touch Area):
 ```
 
 **After:**
+
 ```tsx
 <button
   className="p-4 -m-2"
@@ -58,5 +61,5 @@ Applied Solution 1 (Padding Wrapper for Touch Area):
 
 | Date       | Action                              | Learnings             |
 | ---------- | ----------------------------------- | --------------------- |
-| 2026-01-01 | Created from mobile UX code review | Touch target minimums |
+| 2026-01-01 | Created from mobile UX code review  | Touch target minimums |
 | 2026-01-01 | Fixed with padding wrapper approach | WCAG 2.5.5 compliance |

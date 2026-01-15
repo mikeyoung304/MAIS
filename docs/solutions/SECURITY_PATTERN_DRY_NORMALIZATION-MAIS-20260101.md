@@ -21,6 +21,7 @@ Result: Security logic can silently diverge when updates are made to one locatio
 ## Current Code State
 
 ### Location A: Correct Pattern (rateLimiter.ts)
+
 ```typescript
 /**
  * Helper to normalize IP addresses for rate limiting
@@ -44,12 +45,13 @@ function normalizeIp(ip: string | undefined): string {
 
 // Used in 12+ places across all rate limiters
 export const uploadLimiterIP = rateLimit({
-  keyGenerator: (req) => normalizeIp(req.ip),  // ✅ Correct
+  keyGenerator: (req) => normalizeIp(req.ip), // ✅ Correct
   validate: false,
 });
 ```
 
 ### Location B: Incorrect Pattern (public-customer-chat.routes.ts, Line 37-44)
+
 ```typescript
 // ❌ Manual X-Forwarded-For parsing (should not exist if trust proxy configured)
 // ❌ No IPv6 handling
@@ -66,6 +68,7 @@ const publicChatRateLimiter = rateLimit({
 ```
 
 ### Location C: Inconsistent Pattern (public-date-booking.routes.ts, Line 166)
+
 ```typescript
 // ❌ Logs IP without normalization
 // ❌ Falls back to raw header (not through normalizeIp)
@@ -77,6 +80,7 @@ clientIp: req.ip || req.headers['x-forwarded-for'],
 ## Why This Is A Security Problem
 
 ### Scenario 1: IPv6 Bypass
+
 ```
 User connects via IPv6: 2001:db8:1234:5678::1
 User connects via IPv6: 2001:db8:1234:5678::999
@@ -89,7 +93,9 @@ Location B (raw parsing):
 ```
 
 ### Scenario 2: Trust Proxy Changes
+
 If trust proxy configuration is added:
+
 ```
 Before: X-Forwarded-For manual parsing works (wrong, but works)
 After:  X-Forwarded-For parsing becomes WRONG (req.ip is now correct)
@@ -98,16 +104,18 @@ Result: Rate limiting silently breaks in public chat endpoints
 ```
 
 ### Scenario 3: Developer Confusion
+
 When adding new security-sensitive endpoint:
+
 ```typescript
 // New developer copies code from public-date-booking (has bug)
 const newEndpointLimiter = rateLimit({
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for']  // ❌ Copies bug
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'], // ❌ Copies bug
 });
 
 // Instead of copying from rateLimiter (has correct pattern)
 const newEndpointLimiter = rateLimit({
-  keyGenerator: (req) => normalizeIp(req.ip)  // ✅ Correct
+  keyGenerator: (req) => normalizeIp(req.ip), // ✅ Correct
 });
 ```
 
@@ -149,6 +157,7 @@ const newEndpointLimiter = rateLimit({
 ### Testing
 
 - [ ] **IPv6 Normalization Tests**
+
   ```typescript
   // Verify function behavior
   expect(normalizeIp('2001:db8:1234:5678::1')).toBe('2001:db8:1234:5678::');
@@ -158,6 +167,7 @@ const newEndpointLimiter = rateLimit({
   ```
 
 - [ ] **Rate Limiter Tests**
+
   ```typescript
   // Rate limiting should group IPv6 /64 prefix together
   const limiter = publicBookingActionsLimiter;
@@ -168,6 +178,7 @@ const newEndpointLimiter = rateLimit({
   ```
 
 - [ ] **No Regression Tests**
+
   ```typescript
   // Verify no custom X-Forwarded-For parsing
   describe('No custom IP extraction', () => {
@@ -188,6 +199,7 @@ const newEndpointLimiter = rateLimit({
 ## Migration Path
 
 ### Phase 1: Export normalizeIp (Non-Breaking)
+
 ```typescript
 // middleware/rateLimiter.ts
 export function normalizeIp(ip: string | undefined): string {
@@ -196,6 +208,7 @@ export function normalizeIp(ip: string | undefined): string {
 ```
 
 ### Phase 2: Update Imports (Safe)
+
 ```typescript
 // public-customer-chat.routes.ts (BEFORE)
 const publicChatRateLimiter = rateLimit({
@@ -218,6 +231,7 @@ const publicChatRateLimiter = rateLimit({
 ```
 
 ### Phase 3: Update Logging (Safe)
+
 ```typescript
 // public-date-booking.routes.ts (BEFORE)
 clientIp: req.ip || req.headers['x-forwarded-for'],
@@ -227,6 +241,7 @@ clientIp: normalizeIp(req.ip),
 ```
 
 ### Phase 4: Verify Removal (Gate)
+
 ```bash
 grep -r "x-forwarded-for" src/
 # Should return 0 matches (except in comments explaining why we don't use it)
@@ -240,6 +255,7 @@ grep -r "split.*','.*\[0\]" src/
 ## Common Patterns to Avoid
 
 ### ❌ Pattern 1: Copy-Paste from Logging
+
 ```typescript
 // This looks correct but is actually unsafe
 const clientIp = req.ip || req.headers['x-forwarded-for'];
@@ -248,13 +264,14 @@ const clientIp = req.ip || req.headers['x-forwarded-for'];
 **Problem:** If X-Forwarded-For is array, this breaks. If trust proxy not configured, gets proxy IP.
 
 ### ❌ Pattern 2: Inline Normalization
+
 ```typescript
 // Each limiter defines its own normalization
 const customLimiter = rateLimit({
   keyGenerator: (req) => {
     const ip = req.ip || 'unknown';
     if (ip.includes(':')) {
-      return ip.split(':').slice(0, 4).join(':') + '::';  // Duplication
+      return ip.split(':').slice(0, 4).join(':') + '::'; // Duplication
     }
     return ip;
   },
@@ -264,6 +281,7 @@ const customLimiter = rateLimit({
 **Problem:** If normalization logic needs to change (e.g., IPv6 changed to /48 prefix), must update in 5+ places.
 
 ### ❌ Pattern 3: Conditional Logic
+
 ```typescript
 // Different handlers use different logic
 const handler1 = (req) => normalizeIp(req.ip);
@@ -278,6 +296,7 @@ const handler3 = (req) => req.headers['x-forwarded-for'] || req.ip;
 ## ✅ Correct Pattern
 
 ### Single Location
+
 ```typescript
 // middleware/rateLimiter.ts - THE ONLY PLACE
 export function normalizeIp(ip: string | undefined): string {
@@ -293,6 +312,7 @@ export function normalizeIp(ip: string | undefined): string {
 ```
 
 ### Everywhere Else
+
 ```typescript
 // Import from single source
 import { normalizeIp } from '../middleware/rateLimiter';
@@ -338,16 +358,19 @@ logger.info({ ip: normalizeIp(req.ip) });
 ## Deployment Impact
 
 ### Risk: Low
+
 - No breaking changes to API
 - No database changes
 - No new dependencies
 - Behavior improvement (more correct rate limiting)
 
 ### Rollback: Easy
+
 - Simply revert IP extraction changes
 - No data cleanup needed
 
 ### Rollforward: Required
+
 - Rate limiting will be more accurate
 - Some clients may hit limits they didn't before (correct behavior)
 - Monitor rate limit logs for spike in 429 responses
@@ -357,11 +380,13 @@ logger.info({ ip: normalizeIp(req.ip) });
 ## Monitoring After Deployment
 
 ### Metrics to Watch
+
 - [ ] Rate limit 429 responses per endpoint
 - [ ] Distribution of IPs hitting rate limits (should not be single proxy IP)
 - [ ] IPv6 traffic patterns (should group by /64 prefix)
 
 ### Alert Thresholds
+
 - Spike in 429s: > 50% increase from baseline
 - Single IP source: All 429s from one IP (indicates trust proxy not working)
 - Auth failures: More than normal (indicates race condition in limits)

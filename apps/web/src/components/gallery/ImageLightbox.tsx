@@ -234,8 +234,7 @@ export function ImageLightbox({
       if (state.isHorizontal === true) {
         // Horizontal swipe
         const shouldNavigate =
-          Math.abs(deltaX) > SWIPE_THRESHOLD ||
-          velocityX > SWIPE_VELOCITY_THRESHOLD;
+          Math.abs(deltaX) > SWIPE_THRESHOLD || velocityX > SWIPE_VELOCITY_THRESHOLD;
 
         if (shouldNavigate && images.length > 1) {
           if (deltaX > 0) {
@@ -250,8 +249,7 @@ export function ImageLightbox({
       } else if (state.isHorizontal === false) {
         // Vertical swipe
         const shouldClose =
-          Math.abs(deltaY) > CLOSE_THRESHOLD ||
-          velocityY > SWIPE_VELOCITY_THRESHOLD;
+          Math.abs(deltaY) > CLOSE_THRESHOLD || velocityY > SWIPE_VELOCITY_THRESHOLD;
 
         if (shouldClose) {
           closeLightbox();
@@ -310,7 +308,8 @@ export function ImageLightbox({
         <DialogPrimitive.Overlay
           className={cn(
             'fixed inset-0 z-50 bg-black/95 backdrop-blur-sm',
-            !prefersReducedMotion && 'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
+            !prefersReducedMotion &&
+              'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
           )}
         />
         <DialogPrimitive.Content
@@ -435,9 +434,7 @@ export function ImageLightbox({
                   <span
                     className={cn(
                       'block w-2 h-2 rounded-full transition-all',
-                      index === currentIndex
-                        ? 'bg-white w-4'
-                        : 'bg-white/40 hover:bg-white/60'
+                      index === currentIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
                     )}
                   />
                 </button>
@@ -446,12 +443,10 @@ export function ImageLightbox({
           )}
 
           {/* Hidden title for accessibility */}
-          <DialogPrimitive.Title className="sr-only">
-            {currentImage.alt}
-          </DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">{currentImage.alt}</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
-            Image {currentIndex + 1} of {images.length}. Use arrow keys to navigate,
-            escape to close. Pinch to zoom on touch devices.
+            Image {currentIndex + 1} of {images.length}. Use arrow keys to navigate, escape to
+            close. Pinch to zoom on touch devices.
           </DialogPrimitive.Description>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

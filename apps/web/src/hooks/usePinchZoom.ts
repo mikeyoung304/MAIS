@@ -61,10 +61,7 @@ function getTouchDistance(touch1: Touch, touch2: Touch): number {
 /**
  * Calculate center point between two touches.
  */
-function getTouchCenter(
-  touch1: Touch,
-  touch2: Touch
-): { x: number; y: number } {
+function getTouchCenter(touch1: Touch, touch2: Touch): { x: number; y: number } {
   return {
     x: (touch1.clientX + touch2.clientX) / 2,
     y: (touch1.clientY + touch2.clientY) / 2,
@@ -133,7 +130,9 @@ export function usePinchZoom(
   // RAF ref for throttling state updates to prevent 60+ re-renders per second
   const rafRef = useRef<number | null>(null);
   // Pending state to batch updates
-  const pendingStateRef = useRef<{ scale: number; pinchCenter: { x: number; y: number } } | null>(null);
+  const pendingStateRef = useRef<{ scale: number; pinchCenter: { x: number; y: number } } | null>(
+    null
+  );
 
   const [scale, setScaleInternal] = useState(initialScale);
   const [isPinching, setIsPinching] = useState(false);
@@ -317,14 +316,7 @@ export function usePinchZoom(
       element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [
-    ref,
-    enabled,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    handleTouchCancel,
-  ]);
+  }, [ref, enabled, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel]);
 
   // Clean up any pending RAF on unmount
   useEffect(() => {
@@ -354,4 +346,3 @@ export function usePinchZoom(
     pinchCenter,
   };
 }
-

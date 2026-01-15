@@ -28,35 +28,17 @@ const SkeletonCard = React.forwardRef<HTMLDivElement, SkeletonCardProps>(
         {...props}
       >
         {/* Image area */}
-        {showImage && (
-          <Skeleton
-            rounded="none"
-            animate={animate}
-            className="aspect-video w-full"
-          />
-        )}
+        {showImage && <Skeleton rounded="none" animate={animate} className="aspect-video w-full" />}
 
         {/* Content area */}
         <div className="p-6 space-y-4">
           {/* Title line */}
-          <Skeleton
-            rounded="default"
-            animate={animate}
-            className="h-6 w-3/4"
-          />
+          <Skeleton rounded="default" animate={animate} className="h-6 w-3/4" />
 
           {/* Description lines */}
           <div className="space-y-2">
-            <Skeleton
-              rounded="default"
-              animate={animate}
-              className="h-4 w-full"
-            />
-            <Skeleton
-              rounded="default"
-              animate={animate}
-              className="h-4 w-2/3"
-            />
+            <Skeleton rounded="default" animate={animate} className="h-4 w-full" />
+            <Skeleton rounded="default" animate={animate} className="h-4 w-2/3" />
           </div>
         </div>
       </div>

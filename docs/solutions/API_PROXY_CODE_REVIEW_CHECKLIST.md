@@ -39,6 +39,7 @@ If **ANY** checkbox is true, use the full checklist below.
   - [ ] Token not stored in browser storage
 
 - [ ] **Authorization Header Correct**
+
   ```typescript
   const headers = { Authorization: `Bearer ${token}` };
   ```
@@ -80,6 +81,7 @@ If **ANY** checkbox is true, use the full checklist below.
   - Are methods the same as backend expects?
 
 - [ ] **Method Preserved**
+
   ```typescript
   const response = await fetch(backendUrl, { method: request.method });
   ```
@@ -105,6 +107,7 @@ If **ANY** checkbox is true, use the full checklist below.
   - Is body NOT parsed (keep as raw string)?
 
 - [ ] **Content-Type Preserved**
+
   ```typescript
   const contentType = request.headers.get('content-type');
   if (contentType) headers['Content-Type'] = contentType;
@@ -118,6 +121,7 @@ If **ANY** checkbox is true, use the full checklist below.
 ### Query String Handling
 
 - [ ] **Query String Forwarded**
+
   ```typescript
   const url = new URL(request.url);
   const queryString = url.search;
@@ -231,6 +235,7 @@ If **ANY** checkbox is true, use the full checklist below.
   - Status code preserved
 
 - [ ] **Proxy Errors Caught**
+
   ```typescript
   try {
     // Fetch logic
@@ -248,6 +253,7 @@ If **ANY** checkbox is true, use the full checklist below.
 ### Logging
 
 - [ ] **Debug Logging Safe**
+
   ```typescript
   logger.error('API proxy error', {
     error,
@@ -281,6 +287,7 @@ If **ANY** checkbox is true, use the full checklist below.
   - No copy-paste between proxies
 
 - [ ] **Comments/Documentation**
+
   ```typescript
   /**
    * Feature API Proxy Route

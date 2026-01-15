@@ -23,7 +23,7 @@ This document captures the 7 critical fixes implemented in Session 1 of the Agen
 // ✅ CORRECT - Dependencies first (constructor parameter)
 export class ConversationEvaluator {
   constructor(
-    anthropic?: Anthropic,  // ← Optional, allows DI for testing
+    anthropic?: Anthropic, // ← Optional, allows DI for testing
     config: Partial<EvaluatorConfig> = {}
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -72,7 +72,7 @@ const result = await evaluator.evaluate(input);
 export class EvalPipeline {
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly evaluator: ConversationEvaluator,  // ← Required (not optional)
+    private readonly evaluator: ConversationEvaluator, // ← Required (not optional)
     config: Partial<PipelineConfig> = {}
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -87,13 +87,14 @@ export function createEvalPipeline(
 ): EvalPipeline {
   return new EvalPipeline(
     prisma,
-    evaluator ?? createEvaluator(),  // Factory default
+    evaluator ?? createEvaluator(), // Factory default
     config
   );
 }
 ```
 
 **Key Pattern:** Kieran's DI review: make dependencies required in class constructor, optional in factory function. This enables:
+
 - Type-safe code (no undefined services)
 - Easy testing (inject mocks)
 - Clean production code (factory provides defaults)
@@ -248,6 +249,7 @@ private cleanupPendingEvaluations(): void {
 ```
 
 **Key Pattern:** Use `Promise.allSettled()` instead of trying to filter. It:
+
 - Waits for all promises regardless of success/failure
 - Doesn't throw on rejections (unlike `Promise.all()`)
 - Returns settled state array (which we ignore)
@@ -327,9 +329,7 @@ const evaluatedTraces = traces.filter(hasEvalScore);
 // TypeScript now knows evaluatedTraces[i].evalScore is number, not null
 
 // For review queue
-const flaggedForReview = traces.filter(
-  (t) => t.flagged && t.reviewStatus === 'pending'
-);
+const flaggedForReview = traces.filter((t) => t.flagged && t.reviewStatus === 'pending');
 ```
 
 **Key Pattern:** See [Prisma 7 JSON Type Casting](./database-issues/prisma-7-json-type-breaking-changes-MAIS-20260102.md). Use `as unknown as Type` for JSON field reads, never `as Type` directly.
@@ -357,8 +357,8 @@ export class TraceNotFoundError extends AppError {
     super(
       `Trace not found: ${traceId}`,
       'TRACE_NOT_FOUND',
-      404,  // ← HTTP 404
-      true  // ← Operational
+      404, // ← HTTP 404
+      true // ← Operational
     );
     this.name = 'TraceNotFoundError';
   }
@@ -372,8 +372,8 @@ export class TenantAccessDeniedError extends AppError {
     super(
       `Access denied to ${resource}`,
       'TENANT_ACCESS_DENIED',
-      403,  // ← HTTP 403
-      true  // ← Operational
+      403, // ← HTTP 403
+      true // ← Operational
     );
     this.name = 'TenantAccessDeniedError';
   }
@@ -391,8 +391,8 @@ export class EvaluationFailedError extends AppError {
     super(
       `Evaluation failed for trace ${traceId}: ${reason}`,
       'EVALUATION_FAILED',
-      500,  // ← HTTP 500
-      true  // ← Operational
+      500, // ← HTTP 500
+      true // ← Operational
     );
     this.name = 'EvaluationFailedError';
     if (originalError) {
@@ -666,9 +666,7 @@ it('should not leak data between tenants', async () => {
   const trace1 = await createTestTrace(tenant1.id);
 
   // Attempt to access from tenant2 (should fail)
-  await expect(
-    pipeline.submit(tenant2.id, trace1.id)
-  ).rejects.toThrow(TraceNotFoundError);
+  await expect(pipeline.submit(tenant2.id, trace1.id)).rejects.toThrow(TraceNotFoundError);
 });
 ```
 

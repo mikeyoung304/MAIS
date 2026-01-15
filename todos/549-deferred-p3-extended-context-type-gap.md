@@ -1,7 +1,7 @@
 ---
 status: deferred
 priority: p3
-issue_id: "549"
+issue_id: '549'
 tags: [code-review, typescript, type-safety]
 dependencies: []
 ---
@@ -15,9 +15,11 @@ dependencies: []
 ## Findings
 
 **Pattern Recognition Specialist:**
+
 > "`CustomerToolContext` is not part of `AgentTool` interface. `execute()` signature expects `ToolContext` but booking tool needs `proposalService`."
 
 **Evidence:**
+
 ```typescript
 // customer-tools.ts:20-23
 interface CustomerToolContext extends ToolContext {
@@ -29,6 +31,7 @@ const customerContext = context as CustomerToolContext;
 ```
 
 **Impact:**
+
 - Type safety gap
 - Runtime could fail if proposalService missing
 - Inconsistent with other customer tools (they don't cast)
@@ -36,6 +39,7 @@ const customerContext = context as CustomerToolContext;
 ## Proposed Solutions
 
 ### Option A: Add proposalService to base ToolContext
+
 All orchestrators provide proposalService in context.
 
 **Pros:** No casting needed, type-safe
@@ -44,6 +48,7 @@ All orchestrators provide proposalService in context.
 **Risk:** Low
 
 ### Option B: Pass proposalService as dependency injection
+
 Tools that need proposalService receive it at registration, not via context.
 
 **Pros:** Cleaner separation
@@ -52,6 +57,7 @@ Tools that need proposalService receive it at registration, not via context.
 **Risk:** Medium
 
 ### Option C: Document as acceptable
+
 Casting is safe because CustomerChatOrchestrator always provides proposalService.
 
 **Pros:** No code change
@@ -66,6 +72,7 @@ Option C for now (document), Option A for future cleanup
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/agent/customer/customer-tools.ts:20-23, 273`
 - `server/src/agent/tools/types.ts` - ToolContext definition
 
@@ -76,6 +83,6 @@ Option C for now (document), Option A for future cleanup
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
+| Date       | Action                   | Learnings                                     |
+| ---------- | ------------------------ | --------------------------------------------- |
 | 2026-01-01 | Created from code review | Context extension pattern needs documentation |

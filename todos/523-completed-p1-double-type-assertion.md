@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p1
-issue_id: "523"
+issue_id: '523'
 tags: [code-review, typescript, agent-ecosystem, type-safety]
 dependencies: []
-completed_at: "2026-01-01"
+completed_at: '2026-01-01'
 ---
 
 # Double Type Assertion Bypasses Type Checking
@@ -20,6 +20,7 @@ The `CustomerChatOrchestrator.getTools()` method uses a double type assertion (`
 ### Evidence
 
 **TypeScript Reviewer (CRITICAL):**
+
 > "Double assertion (`as unknown as`) is a TypeScript escape hatch that bypasses all type checking. If `CUSTOMER_TOOLS` doesn't actually conform to `AgentTool[]`, runtime errors will occur."
 
 **Location:** `server/src/agent/orchestrator/customer-chat-orchestrator.ts` (line 90)
@@ -34,12 +35,14 @@ protected getTools(): AgentTool[] {
 ## Proposed Solutions
 
 ### Option A: Fix CUSTOMER_TOOLS Typing (Recommended)
+
 **Pros:** Provides type safety, catches interface drift
 **Cons:** May require changes to customer-tools.ts
 **Effort:** Small
 **Risk:** Low
 
 Make CUSTOMER_TOOLS properly typed:
+
 ```typescript
 // In customer-tools.ts
 export const CUSTOMER_TOOLS: AgentTool[] = [
@@ -48,6 +51,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
 ```
 
 ### Option B: Use Type Guard
+
 **Pros:** Runtime safety if variance is intentional
 **Cons:** Slightly more code
 **Effort:** Small
@@ -67,6 +71,7 @@ return CUSTOMER_TOOLS.filter(isAgentTool);
 ## Technical Details
 
 **Affected Files:**
+
 - `server/src/agent/orchestrator/customer-chat-orchestrator.ts:90`
 - `server/src/agent/customer/customer-tools.ts`
 
@@ -79,10 +84,10 @@ return CUSTOMER_TOOLS.filter(isAgentTool);
 
 ## Work Log
 
-| Date | Action | Learnings |
-|------|--------|-----------|
-| 2026-01-01 | Created from code review | Double assertions mask type mismatches |
-| 2026-01-01 | Verified already fixed | CUSTOMER_TOOLS already typed as AgentTool[], no double assertion in orchestrator |
+| Date       | Action                   | Learnings                                                                        |
+| ---------- | ------------------------ | -------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from code review | Double assertions mask type mismatches                                           |
+| 2026-01-01 | Verified already fixed   | CUSTOMER_TOOLS already typed as AgentTool[], no double assertion in orchestrator |
 
 ## Resources
 

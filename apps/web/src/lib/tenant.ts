@@ -118,9 +118,10 @@ export const getTenantByDomain = cache(async (domain: string): Promise<TenantPub
  * Requires X-Tenant-Key header for multi-tenant context.
  *
  * @param apiKeyPublic - Tenant's public API key
+ * @param bypassCache - If true, skip ISR cache (for preview mode)
  * @returns Array of package DTOs
  */
-export async function getTenantPackages(apiKeyPublic: string) {
+export async function getTenantPackages(apiKeyPublic: string, bypassCache = false) {
   const url = `${API_URL}/v1/packages`;
 
   const response = await fetch(url, {
@@ -129,7 +130,8 @@ export async function getTenantPackages(apiKeyPublic: string) {
       Accept: 'application/json',
       'X-Tenant-Key': apiKeyPublic,
     },
-    next: { revalidate: 60 },
+    // P0-FIX: Preview mode needs fresh data to show agent-created packages immediately
+    ...(bypassCache ? { cache: 'no-store' as const } : { next: { revalidate: 60 } }),
   });
 
   if (!response.ok) {
@@ -147,9 +149,10 @@ export async function getTenantPackages(apiKeyPublic: string) {
  * Used for tier/package filtering on landing page.
  *
  * @param apiKeyPublic - Tenant's public API key
+ * @param bypassCache - If true, skip ISR cache (for preview mode)
  * @returns Array of segment DTOs
  */
-export async function getTenantSegments(apiKeyPublic: string) {
+export async function getTenantSegments(apiKeyPublic: string, bypassCache = false) {
   const url = `${API_URL}/v1/segments`;
 
   const response = await fetch(url, {
@@ -158,7 +161,8 @@ export async function getTenantSegments(apiKeyPublic: string) {
       Accept: 'application/json',
       'X-Tenant-Key': apiKeyPublic,
     },
-    next: { revalidate: 60 },
+    // P0-FIX: Preview mode needs fresh data to show agent-created segments immediately
+    ...(bypassCache ? { cache: 'no-store' as const } : { next: { revalidate: 60 } }),
   });
 
   if (!response.ok) {
@@ -265,10 +269,12 @@ export async function getTenantStorefrontDataWithPreview(
     // Preview mode: fetch draft data
     const tenant = await getTenantPreviewData(slug, previewToken);
 
-    // Fetch packages and segments in parallel
+    // P0-FIX: Bypass ISR cache in preview mode so agent-created packages/segments appear immediately
+    // Previously, this used cached functions which caused 60-second delays for showing new data.
+    // See: MAIS Investigation Report - "Onboarding Service Updates Not Persisting"
     const [packages, segments] = await Promise.all([
-      getTenantPackages(tenant.apiKeyPublic),
-      getTenantSegments(tenant.apiKeyPublic),
+      getTenantPackages(tenant.apiKeyPublic, true), // bypassCache=true for preview
+      getTenantSegments(tenant.apiKeyPublic, true), // bypassCache=true for preview
     ]);
 
     return { tenant, packages, segments };

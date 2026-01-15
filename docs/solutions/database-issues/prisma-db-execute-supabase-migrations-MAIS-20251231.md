@@ -96,13 +96,14 @@ npm test
 
 ## Why This Works
 
-| Command | Connection Method | IPv6 Support | Pooler Aware |
-|---------|-------------------|--------------|--------------|
-| `psql` | Direct to hostname | Requires IPv6 | No |
-| `prisma db execute` | Through Prisma engine | Uses configured URL | Yes |
-| `prisma migrate dev` | Through Prisma engine | Uses configured URL | Yes |
+| Command              | Connection Method     | IPv6 Support        | Pooler Aware |
+| -------------------- | --------------------- | ------------------- | ------------ |
+| `psql`               | Direct to hostname    | Requires IPv6       | No           |
+| `prisma db execute`  | Through Prisma engine | Uses configured URL | Yes          |
+| `prisma migrate dev` | Through Prisma engine | Uses configured URL | Yes          |
 
 `prisma db execute` reads your `DATABASE_URL` from `.env` and connects through Prisma's connection handling, which:
+
 1. Respects `?pgbouncer=true` parameter
 2. Uses the Session Pooler hostname (IPv4 + IPv6)
 3. Handles connection retries gracefully
@@ -168,10 +169,11 @@ The Pattern B documentation should be updated to use `prisma db execute`:
 
 ```markdown
 **Pattern B: Manual Raw SQL** (for enums, indexes, extensions, RLS)
+
 1. Edit server/prisma/schema.prisma
 2. Find next migration number: ls server/prisma/migrations/ | grep '^[0-9]' | tail -1
 3. Create: server/prisma/migrations/NN_name.sql (idempotent SQL)
-4. Apply: npx prisma db execute --file prisma/migrations/NN_name.sql  # Changed!
+4. Apply: npx prisma db execute --file prisma/migrations/NN_name.sql # Changed!
 5. npm exec prisma generate
 6. npm test to verify
 ```
@@ -188,12 +190,12 @@ prisma-migrate-sql prisma/migrations/20_add_feature.sql
 
 ## Quick Reference
 
-| Scenario | Command |
-|----------|---------|
-| Apply Pattern B migration | `npx prisma db execute --file migrations/NN_name.sql` |
-| Test SQL syntax (dry run) | `psql "$DATABASE_URL" -f migrations/NN_name.sql` (if IPv4 available) |
-| Check migration applied | `npx prisma db pull --print \| grep "TableName"` |
-| Verify enum exists | `npx prisma db execute --stdin <<< "SELECT typname FROM pg_type WHERE typname = 'MyEnum';"` |
+| Scenario                  | Command                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| Apply Pattern B migration | `npx prisma db execute --file migrations/NN_name.sql`                                       |
+| Test SQL syntax (dry run) | `psql "$DATABASE_URL" -f migrations/NN_name.sql` (if IPv4 available)                        |
+| Check migration applied   | `npx prisma db pull --print \| grep "TableName"`                                            |
+| Verify enum exists        | `npx prisma db execute --stdin <<< "SELECT typname FROM pg_type WHERE typname = 'MyEnum';"` |
 
 ## Related Documentation
 

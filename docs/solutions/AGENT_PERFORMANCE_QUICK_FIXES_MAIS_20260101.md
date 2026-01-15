@@ -70,6 +70,7 @@ npm test -- server/test/agent/orchestrator/circuit-breaker.test.ts
 ```
 
 Expected behavior:
+
 - Cleanup runs every 100 calls (as before)
 - Cleanup ALSO runs if 5 minutes have passed (new)
 - Circuit breaker map size stays under 1000 entries
@@ -79,6 +80,7 @@ Expected behavior:
 ## What This Changes
 
 ### Before (problematic):
+
 ```
 Time     Calls     CB Count    Cleanup?
 0:00     0         0           No
@@ -89,6 +91,7 @@ Time     Calls     CB Count    Cleanup?
 ```
 
 ### After (stable):
+
 ```
 Time     Calls     CB Count    Cleanup?
 0:00     0         0           No
@@ -149,12 +152,12 @@ A: Cleanup will run every 5 minutes regardless. This prevents stale breakers fro
 
 ## Performance Impact
 
-| Metric | Impact |
-|--------|--------|
-| Memory savings | +5-10% stability (predictable cleanup) |
-| CPU overhead | <0.1% (one time check per request) |
-| Cleanup frequency | More predictable (time-based) |
-| Monitoring | Easier to reason about cleanup cadence |
+| Metric            | Impact                                 |
+| ----------------- | -------------------------------------- |
+| Memory savings    | +5-10% stability (predictable cleanup) |
+| CPU overhead      | <0.1% (one time check per request)     |
+| Cleanup frequency | More predictable (time-based)          |
+| Monitoring        | Easier to reason about cleanup cadence |
 
 ---
 
@@ -167,4 +170,3 @@ A: Cleanup will run every 5 minutes regardless. This prevents stale breakers fro
 - [ ] Monitor circuit breaker logs for cleanup messages
 - [ ] Verify no memory regression over 24 hours
 - [ ] Deploy to production
-

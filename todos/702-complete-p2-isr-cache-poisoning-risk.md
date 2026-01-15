@@ -77,9 +77,9 @@ Rationale: Data integrity issue - cache poisoning would leak draft content to al
 
 ## Work Log
 
-| Date       | Action              | Learnings                                                         |
-| ---------- | ------------------- | ----------------------------------------------------------------- |
-| 2026-01-10 | **Triage: APPROVED** | Data integrity - cache poisoning could leak drafts to public users. |
+| Date       | Action                  | Learnings                                                                                               |
+| ---------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| 2026-01-10 | **Triage: APPROVED**    | Data integrity - cache poisoning could leak drafts to public users.                                     |
 | 2026-01-10 | **Verified & COMPLETE** | Resolved as part of #698 preview token implementation. Multi-layer cache poisoning prevention verified. |
 
 ## Implementation Details (Resolved with #698)

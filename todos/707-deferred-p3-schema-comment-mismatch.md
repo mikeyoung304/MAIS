@@ -44,8 +44,8 @@ Rationale: The comment should reflect the final behavior after consolidation. Up
 
 ## Work Log
 
-| Date       | Action              | Learnings                                                         |
-| ---------- | ------------------- | ----------------------------------------------------------------- |
+| Date       | Action               | Learnings                                                   |
+| ---------- | -------------------- | ----------------------------------------------------------- |
 | 2026-01-10 | **Triage: DEFERRED** | Comment depends on #697 determining final publish behavior. |
 
 ## Resources

@@ -13,14 +13,14 @@ The Agent Evaluation System underwent comprehensive review by 7 parallel agents 
 
 ### Key Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total Findings | 21 |
-| P1 Critical | 7 (all fixed) |
-| P2 Important | 9 (pending) |
-| P3 Minor | 5 (pending) |
-| Files Modified | 30+ |
-| Tests Passing | 99.7% |
+| Metric         | Value         |
+| -------------- | ------------- |
+| Total Findings | 21            |
+| P1 Critical    | 7 (all fixed) |
+| P2 Important   | 9 (pending)   |
+| P3 Minor       | 5 (pending)   |
+| Files Modified | 30+           |
+| Tests Passing  | 99.7%         |
 
 ---
 
@@ -46,6 +46,7 @@ This invokes 7 specialized reviewers in parallel:
 ### Review Output Format
 
 Each reviewer produces findings with:
+
 - **Severity:** P1/P2/P3
 - **Finding:** Problem statement + code reference
 - **Recommendation:** Specific fix + file location
@@ -187,20 +188,20 @@ if (isTraceNotFoundError(error)) {
 
 ### Where Reviewers Agreed (Unanimous)
 
-| Finding | All Reviewers |
-|---------|---------------|
-| Tenant scoping is P0 | ✅ |
-| DI violations block testing | ✅ |
-| Promise cleanup was broken | ✅ |
-| Missing database index | ✅ |
+| Finding                     | All Reviewers |
+| --------------------------- | ------------- |
+| Tenant scoping is P0        | ✅            |
+| DI violations block testing | ✅            |
+| Promise cleanup was broken  | ✅            |
+| Missing database index      | ✅            |
 
 ### Where Reviewers Diverged
 
-| Topic | DHH | Kieran | Resolution |
-|-------|-----|--------|------------|
-| Promise cleanup | "Settle and clear" | WeakSet tracking | Followed DHH (simpler) |
-| A/B testing | Defer to V2 | Implement now | Deferred (pragmatism) |
-| Error granularity | Generic is fine | Domain errors | Followed Kieran (type safety) |
+| Topic             | DHH                | Kieran           | Resolution                    |
+| ----------------- | ------------------ | ---------------- | ----------------------------- |
+| Promise cleanup   | "Settle and clear" | WeakSet tracking | Followed DHH (simpler)        |
+| A/B testing       | Defer to V2        | Implement now    | Deferred (pragmatism)         |
+| Error granularity | Generic is fine    | Domain errors    | Followed Kieran (type safety) |
 
 ---
 
@@ -209,27 +210,32 @@ if (isTraceNotFoundError(error)) {
 Use this checklist before merging agent-related code:
 
 ### Security
+
 - [ ] All queries include `tenantId` in WHERE clause
 - [ ] Cross-tenant access explicitly throws error
 - [ ] PII fields use encryption middleware
 - [ ] Error messages don't leak sensitive data
 
 ### DI & Testing
+
 - [ ] Dependencies are constructor parameters (optional in factory)
 - [ ] No `process.env` access in class constructors
 - [ ] Mock injection works without environment variables
 
 ### Type Safety
+
 - [ ] No `!` non-null assertions (use type guards)
 - [ ] JSON fields use `as unknown as Type` pattern
 - [ ] Domain errors have type predicates
 
 ### Performance
+
 - [ ] Queries have matching database indexes
 - [ ] No N+1 patterns (use batch loading)
 - [ ] Promise arrays use settle-and-clear
 
 ### Code Quality
+
 - [ ] Magic numbers extracted to named constants
 - [ ] No `console.log` (use logger)
 - [ ] Test mocks use `mockDeep<T>()` not `as any`
@@ -238,22 +244,22 @@ Use this checklist before merging agent-related code:
 
 ## Related Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [MAIS Critical Patterns](../patterns/mais-critical-patterns.md) | 10 essential patterns |
-| [Prisma 7 JSON Types](../database-issues/prisma-7-json-type-breaking-changes-MAIS-20260102.md) | JSON field casting |
-| [Phase 5 Testing Prevention](../patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md) | Test error patterns |
+| Document                                                                                           | Purpose                |
+| -------------------------------------------------------------------------------------------------- | ---------------------- |
+| [MAIS Critical Patterns](../patterns/mais-critical-patterns.md)                                    | 10 essential patterns  |
+| [Prisma 7 JSON Types](../database-issues/prisma-7-json-type-breaking-changes-MAIS-20260102.md)     | JSON field casting     |
+| [Phase 5 Testing Prevention](../patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md)  | Test error patterns    |
 | [Circular Dependency Registry](../patterns/circular-dependency-executor-registry-MAIS-20251229.md) | Breaking import cycles |
 
 ---
 
 ## Commits
 
-| Hash | Message | Date |
-|------|---------|------|
-| 458702e | feat(agent-eval): continue remediation with Prisma 7 fixes | 2026-01-02 |
+| Hash    | Message                                                     | Date       |
+| ------- | ----------------------------------------------------------- | ---------- |
+| 458702e | feat(agent-eval): continue remediation with Prisma 7 fixes  | 2026-01-02 |
 | 346ee79 | docs(plan): update remediation plan with session 1 progress | 2026-01-02 |
-| face869 | feat(agent-eval): implement remediation plan phases 1-4 | 2026-01-02 |
+| face869 | feat(agent-eval): implement remediation plan phases 1-4     | 2026-01-02 |
 
 ---
 
@@ -267,6 +273,7 @@ This documentation captures learnings that compound:
 4. **Knowledge compounds:** Team gets smarter
 
 The feedback loop:
+
 ```
 Review → Find Issue → Research → Fix → Document → Prevent → Deploy
     ↑                                                          ↓

@@ -261,13 +261,7 @@ export function useSwipeGesture(
       const isValidDirection = direction && directions.includes(direction);
       const shouldNotReduce = !prefersReducedMotion;
 
-      if (
-        direction &&
-        meetsThreshold &&
-        meetsVelocity &&
-        isValidDirection &&
-        shouldNotReduce
-      ) {
+      if (direction && meetsThreshold && meetsVelocity && isValidDirection && shouldNotReduce) {
         const swipeEvent: SwipeEvent = {
           direction,
           deltaX: lockedDeltaX,
@@ -297,15 +291,7 @@ export function useSwipeGesture(
       trackingRef.current = null;
       onSwipeEnd?.();
     },
-    [
-      enabled,
-      threshold,
-      velocityThreshold,
-      directions,
-      prefersReducedMotion,
-      onSwipe,
-      onSwipeEnd,
-    ]
+    [enabled, threshold, velocityThreshold, directions, prefersReducedMotion, onSwipe, onSwipeEnd]
   );
 
   const handleTouchCancel = useCallback(() => {
@@ -343,14 +329,7 @@ export function useSwipeGesture(
       element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [
-    ref,
-    enabled,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    handleTouchCancel,
-  ]);
+  }, [ref, enabled, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel]);
 
   // Clean up any pending RAF on unmount
   useEffect(() => {

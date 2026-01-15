@@ -50,7 +50,7 @@ const handleSelectSegment = (segmentId: string) => {
   const segment = segments.find((s) => s.id === segmentId);
   if (segment) {
     window.history.pushState(null, '', `#segment-${segment.slug}`); // ← FIRST
-    setSelectedSegmentId(segmentId);                                 // ← SECOND
+    setSelectedSegmentId(segmentId); // ← SECOND
   }
 };
 ```
@@ -101,14 +101,14 @@ Browser back doesn't work?
 
 ## Common Mistakes ❌ → Fixes ✅
 
-| Mistake                          | Fix                                      |
-| -------------------------------- | ---------------------------------------- |
-| Set state THEN push to history   | Push to history FIRST, then set state    |
-| Forget cleanup listener          | Add `return () => removeEventListener`   |
+| Mistake                            | Fix                                    |
+| ---------------------------------- | -------------------------------------- | --- | ----------------------------- |
+| Set state THEN push to history     | Push to history FIRST, then set state  |
+| Forget cleanup listener            | Add `return () => removeEventListener` |
 | Use `replaceState` not `pushState` | Use `pushState` for history entries    |
-| Search keywords in title only    | Include slug + description in search     |
-| No stock photo fallback          | Use `||` with `getSegmentStockPhoto()`   |
-| Forget to handle empty hash (`#`) | Check for `newHash === ''`               |
+| Search keywords in title only      | Include slug + description in search   |
+| No stock photo fallback            | Use `                                  |     | `with`getSegmentStockPhoto()` |
+| Forget to handle empty hash (`#`)  | Check for `newHash === ''`             |
 
 ---
 
@@ -129,12 +129,12 @@ Browser back doesn't work?
 
 ## File Locations
 
-| What             | Where                                                |
-| ---------------- | ---------------------------------------------------- |
-| Implementation   | `apps/web/src/components/tenant/SegmentPackagesSection.tsx` |
-| Stock photos     | `SEGMENT_STOCK_PHOTOS` constant in same file         |
-| Component tests  | `apps/web/src/components/tenant/__tests__/` (create if needed) |
-| E2E tests        | `apps/web/e2e/storefront.spec.ts` (if it exists)     |
+| What            | Where                                                          |
+| --------------- | -------------------------------------------------------------- |
+| Implementation  | `apps/web/src/components/tenant/SegmentPackagesSection.tsx`    |
+| Stock photos    | `SEGMENT_STOCK_PHOTOS` constant in same file                   |
+| Component tests | `apps/web/src/components/tenant/__tests__/` (create if needed) |
+| E2E tests       | `apps/web/e2e/storefront.spec.ts` (if it exists)               |
 
 ---
 
@@ -197,13 +197,13 @@ const handleSelectSegment = useCallback(
 
 ## Why URL Hash?
 
-| Aspect           | Hash (`#segment-x`)  | Path (`/segment/x`)    |
-| ---------------- | -------------------- | ---------------------- |
-| Server involved? | No                   | Yes (unless client app) |
-| Browser back?    | ✅ Yes               | ✅ Yes                 |
-| SEO impact?      | None                 | Yes                    |
-| Complexity       | Simple               | More (routing)         |
-| Works offline?   | ✅ Yes               | No                     |
+| Aspect           | Hash (`#segment-x`) | Path (`/segment/x`)     |
+| ---------------- | ------------------- | ----------------------- |
+| Server involved? | No                  | Yes (unless client app) |
+| Browser back?    | ✅ Yes              | ✅ Yes                  |
+| SEO impact?      | None                | Yes                     |
+| Complexity       | Simple              | More (routing)          |
+| Works offline?   | ✅ Yes              | No                      |
 
 **For storefronts: Hash is better** (client-side, no server load, simpler).
 
@@ -222,6 +222,7 @@ const handleSelectSegment = useCallback(
 Read the full solution: `SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md`
 
 **Key sections:**
+
 - Root Cause Analysis (why it was broken)
 - Stock Photo Fallback System (keyword matching)
 - Performance & Accessibility

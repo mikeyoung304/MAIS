@@ -48,8 +48,8 @@ Rationale: This is pure documentation that should be done AFTER the code is cons
 
 ## Work Log
 
-| Date       | Action              | Learnings                                                         |
-| ---------- | ------------------- | ----------------------------------------------------------------- |
+| Date       | Action               | Learnings                                                |
+| ---------- | -------------------- | -------------------------------------------------------- |
 | 2026-01-10 | **Triage: DEFERRED** | Documentation depends on #697 and #704 completing first. |
 
 ## Resources

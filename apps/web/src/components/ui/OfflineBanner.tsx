@@ -39,10 +39,7 @@ export interface OfflineBannerProps {
  * }
  * ```
  */
-export function OfflineBanner({
-  className,
-  reconnectMessageDuration = 3000,
-}: OfflineBannerProps) {
+export function OfflineBanner({ className, reconnectMessageDuration = 3000 }: OfflineBannerProps) {
   const network = useNetworkStatus();
   const prefersReducedMotion = usePrefersReducedMotion();
   const [dismissed, setDismissed] = React.useState(false);
@@ -80,9 +77,7 @@ export function OfflineBanner({
             'fixed top-0 left-0 right-0 z-[100]',
             'flex items-center justify-center gap-3',
             'px-4 py-3',
-            network.online
-              ? 'bg-success-500 text-white'
-              : 'bg-warning-500 text-white',
+            network.online ? 'bg-success-500 text-white' : 'bg-warning-500 text-white',
             className
           )}
           style={{
@@ -123,7 +118,9 @@ export function OfflineBanner({
               'ml-auto p-1.5 rounded-full',
               'hover:bg-white/20 motion-safe:transition-colors',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2',
-              network.online ? 'focus-visible:ring-offset-success-500' : 'focus-visible:ring-offset-warning-500'
+              network.online
+                ? 'focus-visible:ring-offset-success-500'
+                : 'focus-visible:ring-offset-warning-500'
             )}
             aria-label="Dismiss"
           >

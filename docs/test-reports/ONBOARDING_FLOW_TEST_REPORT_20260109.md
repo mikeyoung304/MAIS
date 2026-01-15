@@ -9,15 +9,15 @@
 
 ## Executive Summary
 
-| Category | Status | Score |
-|----------|--------|-------|
-| **Signup Flow** | ✅ Working | 9/10 |
-| **Build Mode Layout** | 🔴 Critical Issues | 3/10 |
-| **Agent Conversation** | ✅ Working | 8/10 |
-| **Tool Execution** | 🔴 BROKEN | 1/10 |
-| **Preview Sync** | 🔴 BROKEN | 0/10 |
-| **Onboarding Tour** | ❌ Missing | 0/10 |
-| **Overall** | 🔴 Not Production Ready | 35% |
+| Category               | Status                  | Score |
+| ---------------------- | ----------------------- | ----- |
+| **Signup Flow**        | ✅ Working              | 9/10  |
+| **Build Mode Layout**  | 🔴 Critical Issues      | 3/10  |
+| **Agent Conversation** | ✅ Working              | 8/10  |
+| **Tool Execution**     | 🔴 BROKEN               | 1/10  |
+| **Preview Sync**       | 🔴 BROKEN               | 0/10  |
+| **Onboarding Tour**    | ❌ Missing              | 0/10  |
+| **Overall**            | 🔴 Not Production Ready | 35%   |
 
 ---
 
@@ -28,6 +28,7 @@
 **Status:** Working
 
 **What Works:**
+
 - Dark theme signup form renders correctly
 - Form validation (email, password 8+ chars)
 - Password visibility toggle
@@ -36,6 +37,7 @@
 - Redirect to /tenant/build after signup
 
 **Minor Issues:**
+
 - None found
 
 **Screenshots:** `01-signup-page.png`
@@ -47,24 +49,28 @@
 **Status:** Critical UI/UX Issues
 
 #### Issue 2.1: Massive Dead Space (P0)
+
 - **Severity:** Critical
 - **Description:** ~40% of the screen is empty dark space when Build Mode Chat panel is collapsed
 - **Impact:** Unusable at common viewport sizes (1200-1440px)
 - **Root Cause:** Resizable panel has no minimum width, collapses to near-zero
 
 #### Issue 2.2: Two Confusing Chat Interfaces (P1)
+
 - **Severity:** High
 - **Description:** Both "Build Mode Assistant" (center) AND "Growth Assistant" (right sidebar) exist
 - **Impact:** Users don't know which chat to use
 - **Recommendation:** Consolidate into single chat or make purpose clearer
 
 #### Issue 2.3: Preview Clipping (P1)
+
 - **Severity:** High
 - **Description:** Hero text shows "[Hero H..." and "[Hero Subhea..." - content cut off
 - **Impact:** Cannot see full preview at smaller viewports
 - **Affected Viewports:** 1440x900 and below
 
 #### Issue 2.4: No Onboarding Tour (P1)
+
 - **Severity:** High
 - **Description:** No guided tour for new users
 - **Impact:** Users don't understand the interface
@@ -79,6 +85,7 @@
 **Status:** Working (with caveats)
 
 **What Works:**
+
 - Agent responds to messages
 - Discovery phase collects business info
 - Market research provides pricing data
@@ -105,6 +112,7 @@
 **Status:** CRITICAL - Tools Not Executing
 
 #### Issue 4.1: update_page_section Not Working (P0)
+
 - **Severity:** Critical
 - **Description:** Agent shows tool was called but content never updates
 - **Evidence:**
@@ -114,6 +122,7 @@
 - **Root Cause:** Unknown - executor may not be called, or draft not saving
 
 #### Issue 4.2: publish_draft Not Working (P0)
+
 - **Severity:** Critical
 - **Description:** Agent claims content is "live" but nothing changed
 - **Evidence:**
@@ -123,6 +132,7 @@
 - **Root Cause:** Tool may not be registered, or T3 flow bypassed incorrectly
 
 #### Issue 4.3: T3 Approval Flow Missing (P1)
+
 - **Severity:** High
 - **Description:** Publish should require explicit T3 approval but agent just announced it was done
 - **Expected:** Confirmation dialog or approval button
@@ -135,6 +145,7 @@
 **Status:** BROKEN
 
 #### Issue 5.1: Preview Never Updates (P0)
+
 - **Severity:** Critical
 - **Description:** Build Mode preview iframe never reflects draft changes
 - **Evidence:**
@@ -144,6 +155,7 @@
 - **Root Cause:** PostMessage sync broken, or draft not being saved
 
 #### Issue 5.2: No Preview Refresh Mechanism (P1)
+
 - **Severity:** High
 - **Description:** No way to manually refresh preview
 - **Expected:** Refresh button or auto-refresh on draft save
@@ -155,6 +167,7 @@
 **Status:** BROKEN
 
 #### Issue 6.1: Progress Stuck at 1/4 (P1)
+
 - **Severity:** High
 - **Description:** "Getting Started (1/4)" never advances despite completing phases
 - **Evidence:**
@@ -167,6 +180,7 @@
 ### 7. Missing Features
 
 #### 7.1: No Onboarding Tour (P1)
+
 - **Description:** First-time users get no guided tour
 - **Expected:** Interactive tour showing:
   - Build Mode Chat panel
@@ -176,10 +190,12 @@
   - How to switch pages
 
 #### 7.2: Section Highlighting Not Observed (P2)
+
 - **Description:** Agent system prompt mentions `[highlight section-id]` but not observed
 - **Expected:** Sections flash/highlight when agent references them
 
 #### 7.3: Quick Replies Not Dynamic (P2)
+
 - **Description:** Quick action chips are static, not contextual from agent
 - **Expected:** Agent provides dynamic quick reply options
 
@@ -187,18 +203,18 @@
 
 ## Test Flow Summary
 
-| Step | Action | Expected | Actual | Status |
-|------|--------|----------|--------|--------|
-| 1 | Navigate to /signup | Form renders | Form rendered | ✅ |
-| 2 | Fill form and submit | Create tenant, redirect | Created, redirected | ✅ |
-| 3 | Build Mode loads | Split panel layout | Layout broken | 🔴 |
-| 4 | Agent greets | Welcome message | Welcome received | ✅ |
-| 5 | Discovery conversation | Collect business info | Info collected | ✅ |
-| 6 | Market research | Pricing data shown | Data shown | ✅ |
-| 7 | Create packages | Packages created | Tool called (unverified) | ⚠️ |
-| 8 | Edit hero section | Preview updates | Preview unchanged | 🔴 |
-| 9 | Publish | Goes live | Still placeholders | 🔴 |
-| 10 | View public site | Shows content | Shows placeholders | 🔴 |
+| Step | Action                 | Expected                | Actual                   | Status |
+| ---- | ---------------------- | ----------------------- | ------------------------ | ------ |
+| 1    | Navigate to /signup    | Form renders            | Form rendered            | ✅     |
+| 2    | Fill form and submit   | Create tenant, redirect | Created, redirected      | ✅     |
+| 3    | Build Mode loads       | Split panel layout      | Layout broken            | 🔴     |
+| 4    | Agent greets           | Welcome message         | Welcome received         | ✅     |
+| 5    | Discovery conversation | Collect business info   | Info collected           | ✅     |
+| 6    | Market research        | Pricing data shown      | Data shown               | ✅     |
+| 7    | Create packages        | Packages created        | Tool called (unverified) | ⚠️     |
+| 8    | Edit hero section      | Preview updates         | Preview unchanged        | 🔴     |
+| 9    | Publish                | Goes live               | Still placeholders       | 🔴     |
+| 10   | View public site       | Shows content           | Shows placeholders       | 🔴     |
 
 ---
 
@@ -279,6 +295,7 @@
 The onboarding agent **conversation flow works well** - the AI provides helpful, contextual responses with good brand voice. However, the **tool execution is completely broken** - content edits and publish operations have no effect. Combined with significant UI/UX issues in the Build Mode layout and missing onboarding tour, the system is **not ready for production**.
 
 **Next Steps:**
+
 1. Debug tool execution pipeline (highest priority)
 2. Fix preview synchronization
 3. Address Build Mode layout issues
@@ -286,4 +303,4 @@ The onboarding agent **conversation flow works well** - the AI provides helpful,
 
 ---
 
-*Report generated by Playwright MCP automated testing*
+_Report generated by Playwright MCP automated testing_

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import {
   useBreakpoint,
   usePrefersReducedMotion,
@@ -97,11 +92,7 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
     [breakpoint, safeArea, keyboard, network, prefersReducedMotion, isTouch]
   );
 
-  return (
-    <ViewportContext.Provider value={value}>
-      {children}
-    </ViewportContext.Provider>
-  );
+  return <ViewportContext.Provider value={value}>{children}</ViewportContext.Provider>;
 }
 
 /**

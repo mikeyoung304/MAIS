@@ -52,16 +52,8 @@ interface NetworkInformation extends EventTarget {
   readonly downlink?: number;
   readonly rtt?: number;
   readonly saveData?: boolean;
-  addEventListener(
-    type: 'change',
-    listener: () => void,
-    options?: AddEventListenerOptions
-  ): void;
-  removeEventListener(
-    type: 'change',
-    listener: () => void,
-    options?: EventListenerOptions
-  ): void;
+  addEventListener(type: 'change', listener: () => void, options?: AddEventListenerOptions): void;
+  removeEventListener(type: 'change', listener: () => void, options?: EventListenerOptions): void;
 }
 
 interface NavigatorWithConnection extends Navigator {
@@ -193,11 +185,7 @@ export function useNetworkStatus(): NetworkStatus {
     };
   }, []);
 
-  return useSyncExternalStore(
-    subscribe,
-    getNetworkSnapshot,
-    getServerSnapshot
-  );
+  return useSyncExternalStore(subscribe, getNetworkSnapshot, getServerSnapshot);
 }
 
 /**
@@ -221,7 +209,5 @@ export function useSaveData(): boolean {
  */
 export function useIsSlowConnection(): boolean {
   const status = useNetworkStatus();
-  return (
-    status.effectiveType === 'slow-2g' || status.effectiveType === '2g'
-  );
+  return status.effectiveType === 'slow-2g' || status.effectiveType === '2g';
 }

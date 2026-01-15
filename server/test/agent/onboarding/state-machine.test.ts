@@ -14,7 +14,12 @@ import {
   getValidTransitions,
   isValidTransition,
 } from '../../../src/agent/onboarding/state-machine';
-import type { DiscoveryData, MarketResearchData, ServicesData, MarketingData } from '@macon/contracts';
+import type {
+  DiscoveryData,
+  MarketResearchData,
+  ServicesData,
+  MarketingData,
+} from '@macon/contracts';
 
 describe('Onboarding State Machine', () => {
   // Sample test data
@@ -220,8 +225,17 @@ describe('Onboarding State Machine', () => {
       it('should return valid next phases for each phase', () => {
         expect(getValidTransitions('NOT_STARTED')).toEqual(['DISCOVERY', 'SKIPPED']);
         expect(getValidTransitions('DISCOVERY')).toEqual(['MARKET_RESEARCH', 'SKIPPED']);
-        expect(getValidTransitions('MARKET_RESEARCH')).toEqual(['SERVICES', 'DISCOVERY', 'SKIPPED']);
-        expect(getValidTransitions('SERVICES')).toEqual(['MARKETING', 'MARKET_RESEARCH', 'COMPLETED', 'SKIPPED']);
+        expect(getValidTransitions('MARKET_RESEARCH')).toEqual([
+          'SERVICES',
+          'DISCOVERY',
+          'SKIPPED',
+        ]);
+        expect(getValidTransitions('SERVICES')).toEqual([
+          'MARKETING',
+          'MARKET_RESEARCH',
+          'COMPLETED',
+          'SKIPPED',
+        ]);
         expect(getValidTransitions('MARKETING')).toEqual(['COMPLETED', 'SERVICES', 'SKIPPED']);
         expect(getValidTransitions('COMPLETED')).toEqual([]);
         expect(getValidTransitions('SKIPPED')).toEqual([]);

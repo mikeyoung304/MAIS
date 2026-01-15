@@ -214,28 +214,85 @@ Use phase: SKIPPED to skip onboarding entirely.`,
           } as AgentToolResult;
         }
         validatedData = result.data;
-      } else if (targetPhase === 'SERVICES' && data) {
-        const result = ServicesDataSchema.safeParse(data);
-        if (!result.success) {
-          missingFields = result.error.issues.map((i) => i.path.join('.'));
+      } else if (targetPhase === 'SERVICES') {
+        // P0-FIX: Auto-fetch services data from database instead of requiring agent to provide it
+        // This fixes the data flow mismatch where upsert_services returns segmentId (singular)
+        // but update_onboarding_state expects createdSegmentIds (array)
+        const segments = await prisma.segment.findMany({
+          where: { tenantId, active: true },
+          include: { packages: { where: { active: true } } },
+        });
+
+        if (segments.length === 0) {
           return {
             success: false,
             error: 'INCOMPLETE_DATA',
-            missingFields,
+            missingFields: ['segments'],
+            message: 'No services configured. Use upsert_services first.',
           } as AgentToolResult;
         }
-        validatedData = result.data;
-      } else if (targetPhase === 'MARKETING' && data) {
-        const result = MarketingDataSchema.safeParse(data);
-        if (!result.success) {
-          missingFields = result.error.issues.map((i) => i.path.join('.'));
-          return {
-            success: false,
-            error: 'INCOMPLETE_DATA',
-            missingFields,
-          } as AgentToolResult;
+
+        // Build ServicesData from database state
+        validatedData = {
+          segments: segments.map((seg) => ({
+            segmentName: seg.name,
+            segmentSlug: seg.slug,
+            packages: seg.packages.map((pkg) => ({
+              name: pkg.name,
+              slug: pkg.slug,
+              description: pkg.description || undefined,
+              priceCents: pkg.basePrice,
+              groupingOrder: pkg.groupingOrder,
+            })),
+          })),
+          createdPackageIds: segments.flatMap((seg) => seg.packages.map((pkg) => pkg.id)),
+          createdSegmentIds: segments.map((seg) => seg.id),
+        };
+
+        logger.info(
+          {
+            tenantId,
+            segmentCount: segments.length,
+            packageCount: (validatedData as { createdPackageIds: string[] }).createdPackageIds
+              .length,
+          },
+          'Auto-fetched services data for SERVICES phase transition'
+        );
+      } else if (targetPhase === 'MARKETING') {
+        // P0-FIX: Marketing phase data is optional - fetch from tenant if not provided
+        if (data) {
+          const result = MarketingDataSchema.safeParse(data);
+          if (!result.success) {
+            missingFields = result.error.issues.map((i) => i.path.join('.'));
+            return {
+              success: false,
+              error: 'INCOMPLETE_DATA',
+              missingFields,
+            } as AgentToolResult;
+          }
+          validatedData = result.data;
+        } else {
+          // Fetch current marketing data from tenant's landing page config
+          // Note: brandVoice is stored in the branding JSON field, not as a top-level field
+          const tenantData = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { landingPageConfigDraft: true, primaryColor: true, branding: true },
+          });
+
+          const draftConfig = tenantData?.landingPageConfigDraft as {
+            headline?: string;
+            tagline?: string;
+          } | null;
+
+          const branding = tenantData?.branding as { voice?: string } | null;
+
+          validatedData = {
+            headline: draftConfig?.headline,
+            tagline: draftConfig?.tagline,
+            brandVoice: branding?.voice,
+            primaryColor: tenantData?.primaryColor,
+          };
         }
-        validatedData = result.data;
       }
 
       // Validate the transition is allowed using state machine rules
@@ -411,13 +468,16 @@ export const upsertServicesTool: AgentTool = {
   trustTier: 'T1', // P0-FIX: Auto-execute for real-time updates (was T2)
   description: `Create or update service packages during onboarding.
 
+IMPORTANT: Most clients only need ONE segment. Use segmentSlug: "general" to update the existing default segment.
+Only create additional segments if the client explicitly needs different customer types (e.g., both "Wedding" AND "Corporate" clients).
+
 Use this after market research to create the recommended service tiers.
 Provide segment name and packages with pricing based on market benchmarks.
 
-Example:
+Example (updating default segment - MOST COMMON):
 {
   "segmentName": "Photography Sessions",
-  "segmentSlug": "photography-sessions",
+  "segmentSlug": "general",
   "packages": [
     { "name": "Mini Session", "slug": "mini-session", "priceCents": 29900, "groupingOrder": 1 },
     { "name": "Full Session", "slug": "full-session", "priceCents": 49900, "groupingOrder": 2 },
@@ -433,19 +493,21 @@ Example:
       },
       segmentSlug: {
         type: 'string',
-        description: 'URL-safe identifier (e.g., "photography-sessions")',
+        description:
+          'URL-safe identifier. Use "general" to update the default segment (RECOMMENDED for most clients). Only use a different slug when creating additional segments for distinct customer types. Defaults to "general" if not provided.',
       },
       packages: {
         type: 'array',
         description: 'Array of packages to create within this segment',
       },
     },
-    required: ['segmentName', 'segmentSlug', 'packages'],
+    required: ['segmentName', 'packages'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const segmentName = params.segmentName as string;
-    const segmentSlug = params.segmentSlug as string;
+    // P0-FIX: Default to "general" segment to maintain single-segment model for most users
+    const segmentSlug = (params.segmentSlug as string) || 'general';
     const packages = params.packages as Array<{
       name: string;
       slug: string;

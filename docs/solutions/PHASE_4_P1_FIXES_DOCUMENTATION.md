@@ -17,6 +17,7 @@ Three critical P1 fixes were applied to Phase 4 onboarding to address type conso
 ### Problem
 
 The `OnboardingProgress` component had a local type definition for `OnboardingPhase` instead of using the canonical definition from `@macon/contracts`. This created:
+
 - Duplicate type definitions across the codebase
 - Risk of type divergence when contracts are updated
 - Maintenance burden tracking multiple definitions
@@ -40,10 +41,17 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 // Local type definition (duplicate!)
-type OnboardingPhase = 'NOT_STARTED' | 'DISCOVERY' | 'MARKET_RESEARCH' | 'SERVICES' | 'MARKETING' | 'COMPLETED' | 'SKIPPED';
+type OnboardingPhase =
+  | 'NOT_STARTED'
+  | 'DISCOVERY'
+  | 'MARKET_RESEARCH'
+  | 'SERVICES'
+  | 'MARKETING'
+  | 'COMPLETED'
+  | 'SKIPPED';
 
 // AFTER (lines 1-6)
-'use client';
+('use client');
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -70,6 +78,7 @@ import type { OnboardingPhase } from '@macon/contracts';
 ### Problem
 
 The `useOnboardingState` hook silently returned `null` when receiving a 401 (Unauthorized) response. This created ambiguity:
+
 - Consumer couldn't distinguish "user not logged in" from "loading" or "error"
 - Components couldn't properly render conditional UI based on auth state
 - Silent failures made debugging difficult
@@ -79,6 +88,7 @@ The `useOnboardingState` hook silently returned `null` when receiving a 401 (Una
 ### Solution
 
 Add an explicit `isAuthenticated` state with three-state logic:
+
 - `null` = initial/loading state
 - `true` = user authenticated, state loaded
 - `false` = user not authenticated (401 response)
@@ -102,14 +112,14 @@ const fetchState = useCallback(async () => {
     if (!response.ok) {
       if (response.status === 401) {
         // User is not authenticated - track this explicitly
-        setIsAuthenticated(false);  // Line 62: Set to false on 401
+        setIsAuthenticated(false); // Line 62: Set to false on 401
         setState(null);
         return;
       }
       throw new Error('Failed to fetch onboarding state');
     }
 
-    setIsAuthenticated(true);  // Line 69: Set to true on success
+    setIsAuthenticated(true); // Line 69: Set to true on success
     const data = await response.json();
     setState(data);
   } catch (err) {
@@ -124,7 +134,7 @@ const fetchState = useCallback(async () => {
 // Lines 134: Export isAuthenticated in return object
 return {
   // ... other state
-  isAuthenticated,  // Consumers can now check auth state explicitly
+  isAuthenticated, // Consumers can now check auth state explicitly
   // ...
 };
 ```
@@ -168,6 +178,7 @@ if (isAuthenticated === true && state) {
 ### Problem
 
 The `GrowthAssistantPanel` returned `null` during SSR, causing:
+
 - Hydration mismatch between server render (null) and client render (full panel)
 - Cumulative Layout Shift (CLS) when panel suddenly appears after hydration
 - Poor user experience with visible layout reflow
@@ -237,12 +248,14 @@ return (
 ### Skeleton Design
 
 **Layout Match:** Skeleton exactly replicates final panel structure:
+
 - Fixed right-side positioning
 - Same dimensions (400px width, full height)
 - Same color/border styling
 - Placeholder blocks for header icon, title, and chat area
 
 **Loading Indicators:**
+
 - `aria-busy="true"` for accessibility
 - `animate-pulse` on placeholder blocks for visual feedback
 - `bg-neutral-700` matching panel background
@@ -296,6 +309,7 @@ export function Component() {
 When applying similar fixes in future work:
 
 ### Type Consolidation
+
 - [ ] Identify local type duplicates in codebase
 - [ ] Locate canonical definition in `@macon/contracts`
 - [ ] Replace local type with `import type { Type } from '@macon/contracts'`
@@ -303,6 +317,7 @@ When applying similar fixes in future work:
 - [ ] Remove old type definitions
 
 ### Auth State Tracking
+
 - [ ] Add `isAuthenticated: boolean | null` state
 - [ ] Set to `false` on 401 responses
 - [ ] Set to `true` on successful authentication
@@ -311,6 +326,7 @@ When applying similar fixes in future work:
 - [ ] Update consumers to handle three-state logic
 
 ### Hydration Skeleton
+
 - [ ] Add `isMounted` state with `useState(false)`
 - [ ] Call `setIsMounted(true)` in `useEffect`
 - [ ] Return skeleton during `!isMounted`
@@ -324,6 +340,7 @@ When applying similar fixes in future work:
 ## Testing Recommendations
 
 ### Fix 1: Type Consolidation
+
 ```bash
 # Verify no local OnboardingPhase definitions remain
 grep -r "type OnboardingPhase" apps/web/src --include="*.tsx" --include="*.ts"
@@ -333,6 +350,7 @@ grep -r "type OnboardingPhase" apps/web/src --include="*.tsx" --include="*.ts"
 ```
 
 ### Fix 2: Auth State Tracking
+
 ```typescript
 // Test 401 handling
 test('should set isAuthenticated to false on 401', async () => {
@@ -358,6 +376,7 @@ test('should set isAuthenticated to true on success', async () => {
 ```
 
 ### Fix 3: Hydration Skeleton
+
 ```bash
 # Run E2E test to verify no hydration errors
 npm run test:e2e -- e2e/tests/onboarding-panel.spec.ts

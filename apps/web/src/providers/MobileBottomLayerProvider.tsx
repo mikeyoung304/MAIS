@@ -81,8 +81,7 @@ export const LAYER_PRIORITIES = {
   [LAYER_IDS.toast]: 30,
 } as const;
 
-const MobileBottomLayerContext =
-  createContext<MobileBottomLayerContextValue | null>(null);
+const MobileBottomLayerContext = createContext<MobileBottomLayerContextValue | null>(null);
 
 /**
  * Provider for coordinating bottom-of-screen layer stacking.
@@ -120,11 +119,7 @@ const MobileBottomLayerContext =
  * }
  * ```
  */
-export function MobileBottomLayerProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function MobileBottomLayerProvider({ children }: { children: ReactNode }) {
   const [layers, setLayers] = useState<BottomLayer[]>([]);
 
   const registerLayer = useCallback((layer: BottomLayer) => {
@@ -146,15 +141,11 @@ export function MobileBottomLayerProvider({
   }, []);
 
   const setLayerVisibility = useCallback((id: string, visible: boolean) => {
-    setLayers((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, visible } : l))
-    );
+    setLayers((prev) => prev.map((l) => (l.id === id ? { ...l, visible } : l)));
   }, []);
 
   const setLayerHeight = useCallback((id: string, height: number) => {
-    setLayers((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, height } : l))
-    );
+    setLayers((prev) => prev.map((l) => (l.id === id ? { ...l, height } : l)));
   }, []);
 
   const getOffsetFor = useCallback(
@@ -183,8 +174,7 @@ export function MobileBottomLayerProvider({
   }, []);
 
   const totalHeight = useMemo(
-    () =>
-      layers.filter((l) => l.visible).reduce((sum, l) => sum + l.height, 0),
+    () => layers.filter((l) => l.visible).reduce((sum, l) => sum + l.height, 0),
     [layers]
   );
 
@@ -212,9 +202,7 @@ export function MobileBottomLayerProvider({
   );
 
   return (
-    <MobileBottomLayerContext.Provider value={value}>
-      {children}
-    </MobileBottomLayerContext.Provider>
+    <MobileBottomLayerContext.Provider value={value}>{children}</MobileBottomLayerContext.Provider>
   );
 }
 
@@ -227,9 +215,7 @@ export function useMobileBottomLayer(): MobileBottomLayerContextValue {
   const context = useContext(MobileBottomLayerContext);
 
   if (context === null) {
-    throw new Error(
-      'useMobileBottomLayer must be used within a MobileBottomLayerProvider'
-    );
+    throw new Error('useMobileBottomLayer must be used within a MobileBottomLayerProvider');
   }
 
   return context;

@@ -1,7 +1,7 @@
 ---
 status: completed
 priority: p2
-issue_id: "530"
+issue_id: '530'
 tags: [code-review, agent-ecosystem, performance, database]
 dependencies: []
 ---
@@ -15,11 +15,13 @@ The `getOrCreateSession` method queries with `tenantId`, `sessionType`, and `upd
 ## Findings
 
 **Performance Oracle:**
+
 > "When querying with all three fields (`tenantId`, `sessionType`, `updatedAt`), PostgreSQL may not use the optimal index."
 
 ## Proposed Solutions
 
 Add to `schema.prisma`:
+
 ```prisma
 model AgentSession {
   // existing fields...

@@ -1,7 +1,7 @@
 ---
 status: deferred
 priority: p2
-issue_id: "536"
+issue_id: '536'
 tags: [code-review, agent-ecosystem, security]
 dependencies: []
 ---
@@ -15,6 +15,7 @@ Circuit breaker is created per-session. A malicious user could create new sessio
 ## Findings
 
 **Agent-Native Reviewer:**
+
 > "A malicious user could create new sessions to bypass the circuit breaker... The 'max turns per session' limit can be circumvented by creating new sessions."
 
 ## Proposed Solutions

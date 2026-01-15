@@ -1,10 +1,10 @@
 ---
 status: completed
 priority: p2
-issue_id: "539"
+issue_id: '539'
 tags: [code-review, agent-ecosystem, patterns, bugs]
 dependencies: []
-completed_date: "2026-01-01"
+completed_date: '2026-01-01'
 ---
 
 # Mutable Circuit Breaker State Shared Across Sessions
@@ -16,9 +16,11 @@ Circuit breaker is created once per orchestrator instance but orchestrators are 
 ## Findings
 
 **Pattern Recognition:**
+
 > "The orchestrator is instantiated once but holds per-session state. If the same orchestrator instance is used for multiple concurrent sessions... the circuit breaker state will be shared across all sessions."
 
 **Architecture Strategist:**
+
 > "Mutable circuit breaker state in base class... could cause issues if the same orchestrator instance is used across multiple concurrent sessions."
 
 **Location:** `base-orchestrator.ts` (lines 201-206, 389-401, 1015-1047)
@@ -28,6 +30,7 @@ Circuit breaker is created once per orchestrator instance but orchestrators are 
 Circuit breakers are now keyed by sessionId in a Map:
 
 1. **Per-session storage (lines 201-206):**
+
    ```typescript
    // Per-session circuit breakers (keyed by sessionId to prevent cross-session pollution)
    private readonly circuitBreakers = new Map<string, CircuitBreaker>();
@@ -35,6 +38,7 @@ Circuit breakers are now keyed by sessionId in a Map:
    ```
 
 2. **Get or create per-session (lines 389-394):**
+
    ```typescript
    let circuitBreaker = this.circuitBreakers.get(session.sessionId);
    if (!circuitBreaker) {

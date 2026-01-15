@@ -171,8 +171,8 @@ export function PinchZoom({
               const targetScale = 2;
 
               animate(scale, targetScale, springConfig);
-              animate(x, -tapX * (targetScale - 1) / targetScale, springConfig);
-              animate(y, -tapY * (targetScale - 1) / targetScale, springConfig);
+              animate(x, (-tapX * (targetScale - 1)) / targetScale, springConfig);
+              animate(y, (-tapY * (targetScale - 1)) / targetScale, springConfig);
             }
           }
           state.lastTap = 0; // Reset to prevent triple tap
@@ -206,10 +206,7 @@ export function PinchZoom({
 
         const currentDistance = getDistance(touches);
         const ratio = currentDistance / state.initialDistance;
-        const newScale = Math.max(
-          minScale,
-          Math.min(maxScale, state.initialScale * ratio)
-        );
+        const newScale = Math.max(minScale, Math.min(maxScale, state.initialScale * ratio));
 
         scale.set(newScale);
 
@@ -283,10 +280,7 @@ export function PinchZoom({
 
       const currentScale = scale.get();
       const delta = e.deltaY * -0.01;
-      const newScale = Math.max(
-        minScale,
-        Math.min(maxScale, currentScale + delta)
-      );
+      const newScale = Math.max(minScale, Math.min(maxScale, currentScale + delta));
 
       animate(scale, newScale, springConfig);
 
@@ -316,8 +310,8 @@ export function PinchZoom({
           const targetScale = 2;
 
           animate(scale, targetScale, springConfig);
-          animate(x, -clickX * (targetScale - 1) / targetScale, springConfig);
-          animate(y, -clickY * (targetScale - 1) / targetScale, springConfig);
+          animate(x, (-clickX * (targetScale - 1)) / targetScale, springConfig);
+          animate(y, (-clickY * (targetScale - 1)) / targetScale, springConfig);
         }
       }
     },

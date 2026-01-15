@@ -110,7 +110,9 @@ export function usePullToRefresh(
   // RAF ref for throttling state updates to prevent 60+ re-renders per second
   const rafRef = useRef<number | null>(null);
   // Pending state to batch updates
-  const pendingStateRef = useRef<{ pullDistance: number; status: PullToRefreshStatus } | null>(null);
+  const pendingStateRef = useRef<{ pullDistance: number; status: PullToRefreshStatus } | null>(
+    null
+  );
 
   const [status, setStatus] = useState<PullToRefreshStatus>('idle');
   const [pullDistance, setPullDistance] = useState(0);
@@ -288,14 +290,7 @@ export function usePullToRefresh(
       element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [
-    ref,
-    enabled,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    handleTouchCancel,
-  ]);
+  }, [ref, enabled, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel]);
 
   // Clean up any pending RAF on unmount
   useEffect(() => {
@@ -330,4 +325,3 @@ function applyResistance(distance: number, maxDistance: number): number {
   const factor = 1 - Math.min(distance / maxDistance, 1) * 0.7;
   return distance * factor;
 }
-

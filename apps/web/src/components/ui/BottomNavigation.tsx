@@ -76,12 +76,7 @@ export interface BottomNavigationProps
  * />
  * ```
  */
-export function BottomNavigation({
-  items,
-  variant,
-  className,
-  ...props
-}: BottomNavigationProps) {
+export function BottomNavigation({ items, variant, className, ...props }: BottomNavigationProps) {
   const pathname = usePathname();
   const haptics = useHapticFeedback();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -125,8 +120,8 @@ export function BottomNavigation({
           const content = (
             <>
               {/* Active indicator background */}
-              {isActive && (
-                prefersReducedMotion ? (
+              {isActive &&
+                (prefersReducedMotion ? (
                   <div className="absolute inset-0 bg-sage/10 rounded-xl" />
                 ) : (
                   <motion.div
@@ -138,8 +133,7 @@ export function BottomNavigation({
                       damping: 35,
                     }}
                   />
-                )
-              )}
+                ))}
 
               {/* Icon container */}
               <span className="relative flex items-center justify-center">
@@ -206,11 +200,7 @@ export function BottomNavigation({
 
           return (
             <li key={item.label} className="flex-1 flex justify-center">
-              <button
-                type="button"
-                onClick={handleClick}
-                className={sharedClasses}
-              >
+              <button type="button" onClick={handleClick} className={sharedClasses}>
                 {content}
               </button>
             </li>

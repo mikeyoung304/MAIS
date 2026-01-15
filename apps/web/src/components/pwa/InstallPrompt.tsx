@@ -4,11 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Download, Share, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  usePWAInstall,
-  hasUserDismissedInstall,
-  setInstallDismissed,
-} from '@/hooks/usePWAInstall';
+import { usePWAInstall, hasUserDismissedInstall, setInstallDismissed } from '@/hooks/usePWAInstall';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 
@@ -144,12 +140,8 @@ export function InstallPrompt({ className, forceShow = false }: InstallPromptPro
                     <Share className="h-5 w-5 text-sage" />
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">
-                      1. Tap the Share button
-                    </p>
-                    <p className="text-sm text-text-secondary">
-                      Find it at the bottom of Safari
-                    </p>
+                    <p className="font-medium text-text-primary">1. Tap the Share button</p>
+                    <p className="text-sm text-text-secondary">Find it at the bottom of Safari</p>
                   </div>
                 </div>
 
@@ -172,9 +164,7 @@ export function InstallPrompt({ className, forceShow = false }: InstallPromptPro
                     <Download className="h-5 w-5 text-sage" />
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">
-                      3. Tap &ldquo;Add&rdquo;
-                    </p>
+                    <p className="font-medium text-text-primary">3. Tap &ldquo;Add&rdquo;</p>
                     <p className="text-sm text-text-secondary">
                       The app will appear on your home screen
                     </p>
@@ -221,9 +211,7 @@ export function InstallPrompt({ className, forceShow = false }: InstallPromptPro
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="font-serif text-lg font-bold text-text-primary">
-              Install HANDLED
-            </h3>
+            <h3 className="font-serif text-lg font-bold text-text-primary">Install HANDLED</h3>
             <p className="text-sm text-text-secondary">
               {isIOS
                 ? 'Add to your home screen for quick access'
@@ -241,12 +229,7 @@ export function InstallPrompt({ className, forceShow = false }: InstallPromptPro
         </div>
 
         <div className="mt-4 flex gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDismiss}
-            className="flex-1"
-          >
+          <Button variant="ghost" size="sm" onClick={handleDismiss} className="flex-1">
             Not now
           </Button>
           <Button

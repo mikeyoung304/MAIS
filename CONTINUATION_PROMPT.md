@@ -16,6 +16,7 @@ We are implementing the Agent Evaluation System remediation plan. The plan addre
 ### Completed (Sessions 1-2)
 
 **Phase 1: DI & Testability** - COMPLETE
+
 - Container interface updated with evaluation services
 - ConversationEvaluator DI fixed (dependencies before config per Kieran)
 - EvalPipeline requires evaluator in constructor
@@ -23,18 +24,21 @@ We are implementing the Agent Evaluation System remediation plan. The plan addre
 - 11 DI unit tests in evaluator-di.test.ts
 
 **Phase 2: Security & Tenant Isolation** - PARTIAL
+
 - Tenant scoping added to EvalPipeline (submit, processBatch, getUnevaluatedTraces)
 - Domain error classes created (TraceNotFoundError, TenantAccessDeniedError)
 - Type guards replace unsafe type assertions in review-actions.ts
 - **PENDING:** tenant-isolation.test.ts integration tests
 
 **Phase 3: Memory & Performance** - COMPLETE
+
 - Promise cleanup uses settle-and-clear pattern (DHH)
 - drainPendingWrites()/drainCompleted() methods added
 - Database index added: @@index([tenantId, evalScore, startedAt])
 - **PENDING:** Run `prisma migrate dev` to apply index
 
 **Phase 4: Integration & Wiring** - PARTIAL
+
 - cleanupExpiredTraces() added to cleanup.ts
 - platform-admin-traces.routes.ts created
 - **PENDING:** Wire routes in routes/index.ts
@@ -53,6 +57,7 @@ We are implementing the Agent Evaluation System remediation plan. The plan addre
    The test setup has a Prisma client path resolution issue. Check `server/test/helpers/global-prisma.ts` import path.
 
 2. **Apply Database Migration:**
+
    ```bash
    cd server && npx prisma migrate dev --name add_eval_batch_index
    ```
@@ -83,11 +88,13 @@ We are implementing the Agent Evaluation System remediation plan. The plan addre
 ## Reviewer Feedback (Key Points)
 
 **DHH:**
+
 - Use settle-and-clear for promise cleanup (no WeakSet)
 - Replace in-process scheduler with CLI command + external cron
 - Add migration safety checks
 
 **Kieran:**
+
 - DI constructor order: dependencies before config
 - Use mockDeep<T>() instead of `as unknown as Type`
 - Make evaluator required in EvalPipeline constructor
@@ -96,6 +103,7 @@ We are implementing the Agent Evaluation System remediation plan. The plan addre
 ## Quality Gates
 
 Before considering complete:
+
 - [ ] All 21 todos marked complete
 - [ ] No new TypeScript errors (`npm run typecheck`)
 - [ ] All tests pass (`npm test`)
@@ -106,6 +114,7 @@ Before considering complete:
 ---
 
 **Start command:**
+
 ```
 Continue implementing the Agent Evaluation System remediation plan. Read plans/agent-eval-remediation-plan.md for full context and pick up from Phase 4.2 (wire platform admin routes).
 ```

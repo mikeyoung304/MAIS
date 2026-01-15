@@ -32,8 +32,8 @@ Customer email and phone are stored unencrypted in IndexedDB when offline bookin
 interface PendingBooking {
   id: string;
   tenantId: string;
-  customerEmail: string;    // PII - stored unencrypted
-  customerPhone?: string;   // PII - stored unencrypted
+  customerEmail: string; // PII - stored unencrypted
+  customerPhone?: string; // PII - stored unencrypted
   // ... other fields
 }
 ```
@@ -45,18 +45,17 @@ interface PendingBooking {
 **Description:** Encrypt sensitive fields using the Web Crypto API before storing in IndexedDB
 
 ```typescript
-const key = await crypto.subtle.generateKey(
-  { name: 'AES-GCM', length: 256 },
-  true,
-  ['encrypt', 'decrypt']
-);
+const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+  'encrypt',
+  'decrypt',
+]);
 
 // Store key in session storage (cleared on tab close)
 const encryptedEmail = await encryptField(customerEmail, key);
 
 const pendingBooking: PendingBooking = {
   ...booking,
-  customerEmail: encryptedEmail,  // Now encrypted
+  customerEmail: encryptedEmail, // Now encrypted
 };
 ```
 
@@ -114,9 +113,9 @@ const pendingBooking: PendingBooking = {
 
 ## Work Log
 
-| Date       | Action                              | Learnings              |
-| ---------- | ----------------------------------- | ---------------------- |
-| 2026-01-01 | Created from mobile UX code review | PII exposure in client |
+| Date       | Action                                | Learnings                                                                                                |
+| ---------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from mobile UX code review    | PII exposure in client                                                                                   |
 | 2026-01-01 | Implemented Web Crypto API encryption | Session-derived keys via PBKDF2 provide tenant isolation; legacy plaintext backward compatibility needed |
 
 ## Resources

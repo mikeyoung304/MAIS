@@ -134,9 +134,9 @@ const animationClass = prefersReducedMotion ? '' : 'transition-transform duratio
 
 ## Work Log
 
-| Date       | Action                              | Learnings                |
-| ---------- | ----------------------------------- | ------------------------ |
-| 2026-01-01 | Created from mobile UX code review | WCAG motion requirements |
+| Date       | Action                             | Learnings                                                                    |
+| ---------- | ---------------------------------- | ---------------------------------------------------------------------------- |
+| 2026-01-01 | Created from mobile UX code review | WCAG motion requirements                                                     |
 | 2026-01-01 | Implemented reduced motion support | Used existing usePrefersReducedMotion hook and motion-safe: Tailwind classes |
 
 ## Implementation Notes

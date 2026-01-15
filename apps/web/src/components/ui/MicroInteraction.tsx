@@ -229,7 +229,8 @@ export function MicroInteraction({
     return (
       <motion.div
         className={cn(
-          interactive && 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sage',
+          interactive &&
+            'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sage',
           className
         )}
         tabIndex={interactive ? 0 : undefined}
@@ -243,7 +244,8 @@ export function MicroInteraction({
   return (
     <MotionComponent
       className={cn(
-        interactive && 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sage',
+        interactive &&
+          'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sage',
         className
       )}
       tabIndex={interactive ? 0 : undefined}
@@ -260,7 +262,13 @@ MicroInteraction.displayName = 'MicroInteraction';
  * Preset components for common animations.
  */
 
-export function ScaleOnHover({ children, className }: { children: React.ReactNode; className?: string }) {
+export function ScaleOnHover({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <MicroInteraction type="scale" trigger="hover" className={className}>
       {children}
@@ -268,7 +276,13 @@ export function ScaleOnHover({ children, className }: { children: React.ReactNod
   );
 }
 
-export function BounceOnTap({ children, className }: { children: React.ReactNode; className?: string }) {
+export function BounceOnTap({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <MicroInteraction type="bounce" trigger="tap" className={className}>
       {children}
@@ -276,7 +290,15 @@ export function BounceOnTap({ children, className }: { children: React.ReactNode
   );
 }
 
-export function FadeIn({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+export function FadeIn({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   return (
     <MicroInteraction type="fade" trigger="mount" delay={delay} className={className}>
       {children}
@@ -284,7 +306,13 @@ export function FadeIn({ children, className, delay = 0 }: { children: React.Rea
   );
 }
 
-export function FloatingElement({ children, className }: { children: React.ReactNode; className?: string }) {
+export function FloatingElement({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <MicroInteraction type="float" trigger="mount" className={className}>
       {children}
@@ -292,7 +320,15 @@ export function FloatingElement({ children, className }: { children: React.React
   );
 }
 
-export function PulseAnimation({ children, className, repeat = -1 }: { children: React.ReactNode; className?: string; repeat?: number }) {
+export function PulseAnimation({
+  children,
+  className,
+  repeat = -1,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  repeat?: number;
+}) {
   return (
     <MicroInteraction type="pulse" trigger="mount" repeat={repeat} className={className}>
       {children}

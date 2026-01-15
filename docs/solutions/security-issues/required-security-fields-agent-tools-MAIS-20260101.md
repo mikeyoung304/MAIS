@@ -7,7 +7,7 @@ root_cause: Optional security-critical field allowed silent unsafe defaults
 solution: Make security fields required at type level
 created: 2026-01-01
 project: MAIS
-related_issues: ["#523", "#541"]
+related_issues: ['#523', '#541']
 ---
 
 # Required Security Fields on Agent Tools
@@ -49,16 +49,13 @@ const dangerousTool: AgentTool = {
 export interface AgentTool {
   name: string;
   description: string;
-  trustTier: 'T1' | 'T2' | 'T3';  // REQUIRED - TypeScript enforces
+  trustTier: 'T1' | 'T2' | 'T3'; // REQUIRED - TypeScript enforces
   inputSchema: {
     type: 'object';
     properties: Record<string, unknown>;
     required?: string[];
   };
-  execute: (
-    context: ToolContext,
-    input: Record<string, unknown>
-  ) => Promise<AgentToolResult>;
+  execute: (context: ToolContext, input: Record<string, unknown>) => Promise<AgentToolResult>;
 }
 
 // Now this fails at compile time!
@@ -67,17 +64,19 @@ const dangerousTool: AgentTool = {
   description: 'Deletes everything',
   // ERROR: Property 'trustTier' is missing
   inputSchema: { type: 'object', properties: {} },
-  execute: async () => { /* ... */ }
+  execute: async () => {
+    /* ... */
+  },
 };
 ```
 
 ### Trust Tier Guidelines
 
-| Tier | Use Case | Behavior | Examples |
-|------|----------|----------|----------|
-| T1 | Read-only, metadata | Auto-confirm | `get_services`, `check_availability` |
-| T2 | Low-risk writes | Soft-confirm (next message) | `upsert_services`, `update_storefront` |
-| T3 | High-risk writes | Hard-confirm (explicit) | `book_service`, `process_payment` |
+| Tier | Use Case            | Behavior                    | Examples                               |
+| ---- | ------------------- | --------------------------- | -------------------------------------- |
+| T1   | Read-only, metadata | Auto-confirm                | `get_services`, `check_availability`   |
+| T2   | Low-risk writes     | Soft-confirm (next message) | `upsert_services`, `update_storefront` |
+| T3   | High-risk writes    | Hard-confirm (explicit)     | `book_service`, `process_payment`      |
 
 ## Prevention Checklist
 
@@ -93,17 +92,17 @@ When defining interfaces with security implications:
 ```typescript
 // RED FLAG: Optional permission field
 interface Action {
-  permission?: 'read' | 'write' | 'admin';  // What if missing?
+  permission?: 'read' | 'write' | 'admin'; // What if missing?
 }
 
 // RED FLAG: Optional trust/role field
 interface Request {
-  role?: 'user' | 'admin';  // Defaults to...?
+  role?: 'user' | 'admin'; // Defaults to...?
 }
 
 // RED FLAG: Optional validation flag
 interface Input {
-  validated?: boolean;  // Assumes validated if missing?
+  validated?: boolean; // Assumes validated if missing?
 }
 ```
 
@@ -112,14 +111,14 @@ interface Input {
 ```typescript
 // GOOD: Force explicit declaration
 interface Action {
-  permission: 'read' | 'write' | 'admin';  // Must specify
+  permission: 'read' | 'write' | 'admin'; // Must specify
 }
 
 // GOOD: Default at definition site, not consumption
 const DEFAULT_PERMISSION = 'read' as const;
 function createAction(opts: { permission?: 'read' | 'write' }): Action {
   return {
-    permission: opts.permission ?? DEFAULT_PERMISSION  // Explicit default
+    permission: opts.permission ?? DEFAULT_PERMISSION, // Explicit default
   };
 }
 ```
@@ -141,7 +140,7 @@ if (!toolTier) {
 const AgentToolSchema = z.object({
   name: z.string(),
   description: z.string(),
-  trustTier: z.enum(['T1', 'T2', 'T3']),  // Required at runtime too
+  trustTier: z.enum(['T1', 'T2', 'T3']), // Required at runtime too
   // ...
 });
 ```
@@ -166,7 +165,7 @@ describe('AgentTool trustTier requirement', () => {
     const tools = getRegisteredTools();
 
     for (const toolName of writeTools) {
-      const tool = tools.find(t => t.name === toolName);
+      const tool = tools.find((t) => t.name === toolName);
       expect(tool?.trustTier).not.toBe('T1'); // Writes should require approval
     }
   });

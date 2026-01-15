@@ -85,6 +85,6 @@ describe('Landing Page Admin Routes', () => {
 
 ## Work Log
 
-| Date       | Action                                 | Learnings                                 |
-| ---------- | -------------------------------------- | ----------------------------------------- |
-| 2026-01-05 | Created from multi-agent code review  | Integration tests catch API contract bugs |
+| Date       | Action                               | Learnings                                 |
+| ---------- | ------------------------------------ | ----------------------------------------- |
+| 2026-01-05 | Created from multi-agent code review | Integration tests catch API contract bugs |

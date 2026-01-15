@@ -1,7 +1,7 @@
 ---
 status: completed
 priority: p2
-issue_id: "529"
+issue_id: '529'
 tags: [code-review, agent-ecosystem, security, rate-limiting]
 dependencies: []
 completed_date: 2026-01-01

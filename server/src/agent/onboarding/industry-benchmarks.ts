@@ -124,7 +124,12 @@ const BENCHMARK_DATA: Record<BusinessType, IndustryBenchmarks> = {
         suggestedPriceCents: 250000,
         priceRangeLowCents: 180000,
         priceRangeHighCents: 350000,
-        includedServices: ['6 hours coverage', '3-5 min highlight film', 'Licensed music', 'Digital delivery'],
+        includedServices: [
+          '6 hours coverage',
+          '3-5 min highlight film',
+          'Licensed music',
+          'Digital delivery',
+        ],
       },
       {
         name: 'Documentary Package',
@@ -1086,11 +1091,7 @@ const BENCHMARK_DATA: Record<BusinessType, IndustryBenchmarks> = {
         suggestedPriceCents: 15000,
         priceRangeLowCents: 10000,
         priceRangeHighCents: 25000,
-        includedServices: [
-          'Core service delivery',
-          'Basic support',
-          'Standard deliverables',
-        ],
+        includedServices: ['Core service delivery', 'Basic support', 'Standard deliverables'],
       },
       {
         name: 'Standard',
@@ -1147,9 +1148,7 @@ const BENCHMARK_DATA: Record<BusinessType, IndustryBenchmarks> = {
  * // 200000 ($2,000)
  * ```
  */
-export async function getIndustryBenchmarks(
-  businessType: string
-): Promise<IndustryBenchmarks> {
+export async function getIndustryBenchmarks(businessType: string): Promise<IndustryBenchmarks> {
   // Validate business type
   const validType = businessType as BusinessType;
   const benchmarks = BENCHMARK_DATA[validType] || BENCHMARK_DATA.other;
