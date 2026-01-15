@@ -11,9 +11,7 @@ import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import {
   LayoutDashboard,
-  Package,
   Calendar,
-  Palette,
   CreditCard,
   Settings,
   LogOut,
@@ -21,8 +19,7 @@ import {
   X,
   ChevronLeft,
   Building2,
-  Globe,
-  FileText,
+  Globe2, // Website tab icon
 } from 'lucide-react';
 
 interface NavItem {
@@ -32,6 +29,16 @@ interface NavItem {
   description?: string;
 }
 
+/**
+ * Tenant navigation - Consolidated 5-item sidebar
+ *
+ * Consolidation mapping (8 → 5):
+ * - Dashboard: unchanged
+ * - Website: merges Branding + Pages + Packages (visual editor + AI agent)
+ * - Scheduling: unchanged (appointments, availability, blackouts)
+ * - Revenue: merges Payments + Billing (all money-related)
+ * - Settings: includes Domains as advanced section
+ */
 const tenantNavItems: NavItem[] = [
   {
     href: '/tenant/dashboard',
@@ -40,10 +47,10 @@ const tenantNavItems: NavItem[] = [
     description: 'Overview and metrics',
   },
   {
-    href: '/tenant/packages',
-    label: 'Packages',
-    icon: <Package className="h-5 w-5" />,
-    description: 'Manage your offerings',
+    href: '/tenant/website',
+    label: 'Website',
+    icon: <Globe2 className="h-5 w-5" />,
+    description: 'Edit your site with AI',
   },
   {
     href: '/tenant/scheduling',
@@ -52,34 +59,16 @@ const tenantNavItems: NavItem[] = [
     description: 'Availability and appointments',
   },
   {
-    href: '/tenant/branding',
-    label: 'Branding',
-    icon: <Palette className="h-5 w-5" />,
-    description: 'Colors, logo, and style',
-  },
-  {
-    href: '/tenant/pages',
-    label: 'Pages',
-    icon: <FileText className="h-5 w-5" />,
-    description: 'Manage website pages',
-  },
-  {
-    href: '/tenant/payments',
-    label: 'Payments',
+    href: '/tenant/revenue',
+    label: 'Revenue',
     icon: <CreditCard className="h-5 w-5" />,
-    description: 'Stripe Connect setup',
-  },
-  {
-    href: '/tenant/domains',
-    label: 'Domains',
-    icon: <Globe className="h-5 w-5" />,
-    description: 'Custom domain setup',
+    description: 'Payments and billing',
   },
   {
     href: '/tenant/settings',
     label: 'Settings',
     icon: <Settings className="h-5 w-5" />,
-    description: 'Account settings',
+    description: 'Account and domains',
   },
 ];
 
