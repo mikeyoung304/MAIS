@@ -189,7 +189,7 @@ Changes are saved to draft - user must publish to make live.`,
     required: ['pageName', 'sectionType'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const pageName = params.pageName as PageName;
     const sectionId = params.sectionId as string | undefined;
     let sectionIndex = params.sectionIndex as number | undefined;
@@ -345,7 +345,7 @@ Can be undone by discarding draft.`,
     required: ['pageName'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const pageName = params.pageName as PageName;
     const sectionId = params.sectionId as string | undefined;
     let sectionIndex = params.sectionIndex as number | undefined;
@@ -475,7 +475,7 @@ Auto-confirms since order changes are low-risk and easily reversible.`,
     required: ['pageName', 'toIndex'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const pageName = params.pageName as PageName;
     const fromSectionId = params.fromSectionId as string | undefined;
     let fromIndex = params.fromIndex as number | undefined;
@@ -602,7 +602,7 @@ Auto-confirms since visibility toggles are low-risk.`,
     required: ['pageName', 'enabled'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const pageName = params.pageName as PageName;
     const enabled = params.enabled as boolean;
 
@@ -794,7 +794,7 @@ visible to all visitors.`,
     required: [],
   },
   async execute(context: ToolContext, _params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
 
     try {
       // Check if there's a draft to publish (#627 N+1 fix - single query)
@@ -844,7 +844,7 @@ Use this when the user wants to start over or abandon their changes.`,
     required: [],
   },
   async execute(context: ToolContext, _params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
 
     try {
       // Check if there's a draft to discard (#627 N+1 fix - single query)
@@ -907,7 +907,7 @@ Use this to understand the current editing state before making changes.`,
     required: [],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const pageName = params.pageName as string | undefined;
 
     try {
@@ -1106,7 +1106,7 @@ Filters:
     required: [],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const { pageName, sectionType, includeOnlyPlaceholders } = params as {
       pageName?: PageName;
       sectionType?: SectionTypeName;
@@ -1217,7 +1217,7 @@ Get IDs from list_section_ids first.`,
     required: ['sectionId'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
     const { sectionId } = params as { sectionId: string };
 
     try {
@@ -1313,7 +1313,7 @@ Use this to:
     required: [],
   },
   async execute(context: ToolContext): Promise<AgentToolResult> {
-    const { tenantId, prisma } = context;
+    const { tenantId } = context;
 
     try {
       // Get config using helper that falls back to defaults (fixes chatbot not seeing default frame)
@@ -1428,7 +1428,7 @@ Use this to:
  * Get value at a field path like "items[0].question"
  */
 function getFieldValue(section: Section, fieldPath: string): string {
-  const parts = fieldPath.split(/[\[\].]+/).filter(Boolean);
+  const parts = fieldPath.split(/[[.\]]+/).filter(Boolean);
   let value: unknown = section;
 
   for (const part of parts) {

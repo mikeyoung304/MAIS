@@ -22,11 +22,18 @@ export default defineConfig({
   },
 
   // Datasource configuration (moved from schema.prisma in Prisma 7)
+  // NOTE: Using process.env with fallback for prisma generate (no DB needed)
+  // env() throws when variable is missing, but generate doesn't need a real URL
   datasource: {
     // Main connection URL (used by migrations and CLI)
-    url: env('DATABASE_URL'),
+    // Falls back to placeholder for prisma generate (no actual DB connection needed)
+    url:
+      process.env.DATABASE_URL || 'postgresql://placeholder:placeholder@localhost:5432/placeholder',
     // Direct URL bypasses connection pooler for migrations
     // Made optional for prisma generate (only needed for migrations)
-    directUrl: process.env.DIRECT_URL || env('DATABASE_URL'),
+    directUrl:
+      process.env.DIRECT_URL ||
+      process.env.DATABASE_URL ||
+      'postgresql://placeholder:placeholder@localhost:5432/placeholder',
   },
 });

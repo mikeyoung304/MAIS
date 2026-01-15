@@ -52,7 +52,9 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
   useEffect(() => {
     if (refreshKey !== previousRefreshKeyRef.current && iframeRef.current) {
       setIsLoading(true);
-      iframeRef.current.src = iframeRef.current.src;
+      // Store src and reassign to force iframe reload (avoids no-self-assign lint)
+      const currentSrc = iframeRef.current.src;
+      iframeRef.current.src = currentSrc;
       previousRefreshKeyRef.current = refreshKey;
     }
   }, [refreshKey]);
@@ -65,7 +67,9 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
   const handleRefresh = () => {
     if (iframeRef.current) {
       setIsLoading(true);
-      iframeRef.current.src = iframeRef.current.src;
+      // Store src and reassign to force iframe reload (avoids no-self-assign lint)
+      const currentSrc = iframeRef.current.src;
+      iframeRef.current.src = currentSrc;
     }
   };
 
