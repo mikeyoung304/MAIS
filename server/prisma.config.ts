@@ -26,6 +26,7 @@ export default defineConfig({
     // Main connection URL (used by migrations and CLI)
     url: env('DATABASE_URL'),
     // Direct URL bypasses connection pooler for migrations
-    directUrl: env('DIRECT_URL'),
+    // Made optional for prisma generate (only needed for migrations)
+    directUrl: process.env.DIRECT_URL || env('DATABASE_URL'),
   },
 });
