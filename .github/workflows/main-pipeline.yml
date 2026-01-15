@@ -302,7 +302,9 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
 
       - name: Run Prisma migrations
-        run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
+        run: |
+          cd server
+          npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
@@ -479,7 +481,9 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
 
       - name: Run Prisma migrations
-        run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
+        run: |
+          cd server
+          npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_e2e_test

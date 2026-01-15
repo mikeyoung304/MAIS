@@ -73,9 +73,12 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
 
       - name: Run database migrations
-        run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
+        run: |
+          cd server
+          npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test
 
       - name: Run unit tests
         run: npm run test:unit
@@ -162,7 +165,9 @@ jobs:
           echo "Verify backups at: https://supabase.com/dashboard/project/${{ secrets.SUPABASE_PROJECT_ID }}/settings/backups"
 
       - name: Run database migrations
-        run: npx prisma migrate deploy --schema=./server/prisma/schema.prisma
+        run: |
+          cd server
+          npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
