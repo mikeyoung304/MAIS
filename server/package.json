@@ -47,6 +47,8 @@
     "db:diagnose": "tsx scripts/diagnose-database.ts"
   },
   "dependencies": {
+    "@google/adk": "^0.2.4",
+    "@google/adk-devtools": "^0.2.4",
     "@google/genai": "^1.35.0",
     "@macon/contracts": "*",
     "@macon/shared": "*",

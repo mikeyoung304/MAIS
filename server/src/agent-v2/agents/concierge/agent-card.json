@@ -1,0 +1,29 @@
+{
+  "name": "handled_concierge",
+  "version": "1.0.0",
+  "description": "Primary interface for HANDLED service professionals. Routes requests to specialist agents.",
+  "protocol": "a2a-v1",
+  "capabilities": [
+    "intent_classification",
+    "task_delegation",
+    "context_aggregation",
+    "preview_coordination"
+  ],
+  "delegates_to": [
+    "marketing_specialist",
+    "research_specialist",
+    "image_specialist",
+    "video_specialist",
+    "storefront_specialist"
+  ],
+  "model": {
+    "name": "gemini-2.5-pro",
+    "thinking_level": "high",
+    "temperature": 0.2
+  },
+  "trust_tier": {
+    "T1": ["read_operations", "delegate_operations"],
+    "T2": ["preview_mutations"],
+    "T3": ["publish_operations"]
+  }
+}

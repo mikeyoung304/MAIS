@@ -1,0 +1,31 @@
+{
+  "name": "image_specialist",
+  "version": "1.0.0",
+  "description": "Generates and enhances images using Imagen 3.",
+  "protocol": "a2a-v1",
+  "capabilities": [
+    "generate_image",
+    "enhance_photo",
+    "remove_background",
+    "inpaint_object",
+    "outpaint_extend"
+  ],
+  "accepts_from": ["handled_concierge"],
+  "model": {
+    "name": "gemini-2.5-flash",
+    "temperature": 0.5
+  },
+  "media_model": {
+    "name": "imagen-3",
+    "safety_filter_level": "block_some",
+    "person_generation": "allow_adult"
+  },
+  "cost_controls": {
+    "requires_estimate": true,
+    "warn_at_percent": 80,
+    "tier_limits": {
+      "handled": { "images_per_month": 20 },
+      "fully_handled": { "images_per_month": 100 }
+    }
+  }
+}

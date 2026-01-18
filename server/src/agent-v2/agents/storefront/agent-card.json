@@ -1,0 +1,25 @@
+{
+  "name": "storefront_specialist",
+  "version": "1.0.0",
+  "description": "Manages storefront structure, layout, sections, and branding.",
+  "protocol": "a2a-v1",
+  "capabilities": [
+    "get_page_structure",
+    "update_section",
+    "reorder_sections",
+    "add_section",
+    "remove_section",
+    "update_branding",
+    "preview_draft",
+    "discard_draft"
+  ],
+  "accepts_from": ["handled_concierge"],
+  "model": {
+    "name": "gemini-2.5-flash",
+    "temperature": 0.3
+  },
+  "mcp_tools": {
+    "prisma_database": true,
+    "tenant_context": true
+  }
+}

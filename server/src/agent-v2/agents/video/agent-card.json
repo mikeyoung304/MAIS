@@ -1,0 +1,29 @@
+{
+  "name": "video_specialist",
+  "version": "1.0.0",
+  "description": "Generates promotional videos using Veo 2.",
+  "protocol": "a2a-v1",
+  "capabilities": ["generate_promo_video", "image_to_video", "extend_video", "estimate_video_cost"],
+  "accepts_from": ["handled_concierge"],
+  "model": {
+    "name": "gemini-2.5-flash",
+    "temperature": 0.5
+  },
+  "media_model": {
+    "name": "veo-002",
+    "person_safety_setting": "allow_adult",
+    "max_duration_seconds": 8
+  },
+  "cost_controls": {
+    "requires_estimate": true,
+    "requires_explicit_confirm": true,
+    "tier_limits": {
+      "handled": { "videos_per_month": 5, "seconds_per_month": 40 },
+      "fully_handled": { "videos_per_month": 25, "seconds_per_month": 200 }
+    }
+  },
+  "async": {
+    "polling_interval_ms": 5000,
+    "max_wait_seconds": 300
+  }
+}

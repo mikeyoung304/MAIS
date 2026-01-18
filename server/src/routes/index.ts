@@ -61,6 +61,7 @@ import { createPlatformAdminTracesRouter } from './platform-admin-traces.routes'
 import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
 import { createInternalRoutes } from './internal.routes';
+import { createInternalAgentRoutes } from './internal-agent.routes';
 import { createAgentRoutes } from './agent.routes';
 import { registerAllExecutors } from '../agent/executors';
 import { validateExecutorRegistry } from '../agent/proposals/executor-registry';
@@ -738,4 +739,21 @@ export function createV1Router(
   });
   app.use('/v1/internal', internalRoutes);
   logger.info('✅ Internal routes mounted at /v1/internal');
+
+  // Register internal agent routes (for Vertex AI agent-to-backend communication)
+  // Secured with X-Internal-Secret header - agents call these to fetch tenant data
+  // Required services: catalog, booking, tenant repository
+  if (services) {
+    const tenantRepo = new PrismaTenantRepository(prismaClient);
+    const internalAgentRoutes = createInternalAgentRoutes({
+      internalApiSecret: config.INTERNAL_API_SECRET,
+      catalogService: services.catalog,
+      schedulingAvailabilityService: services.schedulingAvailability,
+      bookingService: services.booking,
+      tenantRepo,
+      serviceRepo: repositories?.service,
+    });
+    app.use('/v1/internal/agent', internalAgentRoutes);
+    logger.info('✅ Internal agent routes mounted at /v1/internal/agent');
+  }
 }

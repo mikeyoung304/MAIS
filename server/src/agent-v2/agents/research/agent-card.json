@@ -1,0 +1,26 @@
+{
+  "name": "research_specialist",
+  "version": "1.0.0",
+  "description": "Gathers market intelligence - competitor pricing, industry benchmarks, local market analysis.",
+  "protocol": "a2a-v1",
+  "capabilities": [
+    "search_local_competitors",
+    "extract_pricing_data",
+    "analyze_market_position",
+    "generate_swot_analysis",
+    "generate_pricing_recommendation"
+  ],
+  "accepts_from": ["handled_concierge"],
+  "model": {
+    "name": "gemini-2.5-flash",
+    "temperature": 0.3
+  },
+  "tools": {
+    "google_search": true,
+    "web_scraper": true
+  },
+  "rate_limits": {
+    "scrape_requests_per_hour": 100,
+    "search_requests_per_hour": 200
+  }
+}

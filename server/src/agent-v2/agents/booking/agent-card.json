@@ -1,0 +1,32 @@
+{
+  "name": "booking_agent",
+  "version": "1.0.0",
+  "description": "Customer-facing agent for service discovery and booking completion.",
+  "protocol": "a2a-v1",
+  "capabilities": [
+    "get_services",
+    "get_service_details",
+    "check_availability",
+    "get_business_info",
+    "answer_faq",
+    "recommend_package",
+    "create_booking"
+  ],
+  "model": {
+    "name": "gemini-2.5-flash",
+    "temperature": 0.5
+  },
+  "grounding": {
+    "rag_enabled": true,
+    "data_sources": ["tenant_services", "tenant_faqs"]
+  },
+  "security": {
+    "public_facing": true,
+    "rate_limit_per_ip": 60,
+    "prompt_injection_detection": true
+  },
+  "trust_tier": {
+    "T1": ["read_operations", "availability_check"],
+    "T3": ["create_booking"]
+  }
+}
