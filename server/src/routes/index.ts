@@ -49,6 +49,7 @@ import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminLandingPageRoutes } from './tenant-admin-landing-page.routes';
+import { createTenantAdminAgentRoutes } from './tenant-admin-agent.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -694,12 +695,24 @@ export function createV1Router(
     app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
     logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
 
-    // Register agent routes (for AI agent integration)
+    // Register agent routes (for AI agent integration - legacy onboarding)
     // Requires tenant admin authentication - agent proposals are tied to tenant
     // Rate limited to 30 messages per 5 minutes per tenant to protect Claude API costs
     const agentRoutes = createAgentRoutes(prismaClient);
     app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentRoutes);
     logger.info('✅ Agent routes mounted at /v1/agent (with rate limiting)');
+
+    // Register Concierge agent routes (for Vertex AI agent integration)
+    // Requires tenant admin authentication - chat with Concierge for dashboard actions
+    // Rate limited to 30 messages per 5 minutes per tenant to protect Vertex AI costs
+    const tenantAdminAgentRoutes = createTenantAdminAgentRoutes();
+    app.use(
+      '/v1/tenant-admin/agent',
+      tenantAuthMiddleware,
+      agentChatLimiter,
+      tenantAdminAgentRoutes
+    );
+    logger.info('✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent');
 
     // Register agent proposal executors and validate all are present
     registerAllExecutors(prismaClient);

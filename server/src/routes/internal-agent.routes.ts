@@ -2,14 +2,14 @@
  * Internal Agent Routes
  *
  * Protected endpoints for agent-to-backend communication.
- * Called by deployed Vertex AI agents (Booking Agent, etc.) to fetch tenant data.
+ * Called by deployed Vertex AI agents (Booking, Marketing, Storefront, Research) to fetch tenant data.
  *
  * Security:
  * - Secured with X-Internal-Secret header (shared secret)
  * - All endpoints require tenantId in request body
  * - All queries are tenant-scoped to prevent data leakage
  *
- * Endpoints:
+ * BOOKING AGENT Endpoints:
  * - POST /v1/internal/agent/services - Get all services for a tenant
  * - POST /v1/internal/agent/service-details - Get service details by ID
  * - POST /v1/internal/agent/availability - Check availability for a service
@@ -17,6 +17,23 @@
  * - POST /v1/internal/agent/faq - Answer FAQ question
  * - POST /v1/internal/agent/recommend - Recommend packages based on preferences
  * - POST /v1/internal/agent/create-booking - Create a booking (T3 action)
+ *
+ * STOREFRONT AGENT Endpoints:
+ * - POST /v1/internal/agent/storefront/structure - Get page structure with section IDs
+ * - POST /v1/internal/agent/storefront/section - Get section content by ID
+ * - POST /v1/internal/agent/storefront/update-section - Update section content
+ * - POST /v1/internal/agent/storefront/add-section - Add a new section
+ * - POST /v1/internal/agent/storefront/remove-section - Remove a section
+ * - POST /v1/internal/agent/storefront/reorder-sections - Move a section
+ * - POST /v1/internal/agent/storefront/toggle-page - Enable/disable a page
+ * - POST /v1/internal/agent/storefront/update-branding - Update branding colors/fonts
+ * - POST /v1/internal/agent/storefront/preview - Get preview URL
+ * - POST /v1/internal/agent/storefront/publish - Publish draft to live
+ * - POST /v1/internal/agent/storefront/discard - Discard draft changes
+ *
+ * RESEARCH AGENT Endpoints:
+ * - POST /v1/internal/agent/research/search-competitors - Search for competitors
+ * - POST /v1/internal/agent/research/scrape-competitor - Scrape competitor website
  */
 
 import type { Request, Response, NextFunction } from 'express';
@@ -71,6 +88,99 @@ const CreateBookingSchema = TenantIdSchema.extend({
   customerPhone: z.string().optional(),
   scheduledAt: z.string().min(1, 'scheduledAt is required'),
   notes: z.string().optional(),
+});
+
+// =============================================================================
+// Storefront Agent Schemas
+// =============================================================================
+
+const PAGE_NAMES = [
+  'home',
+  'about',
+  'services',
+  'faq',
+  'contact',
+  'gallery',
+  'testimonials',
+] as const;
+const SECTION_TYPES = [
+  'hero',
+  'text',
+  'gallery',
+  'testimonials',
+  'faq',
+  'contact',
+  'cta',
+  'pricing',
+  'features',
+] as const;
+
+const GetPageStructureSchema = TenantIdSchema.extend({
+  pageName: z.enum(PAGE_NAMES).optional(),
+  includeOnlyPlaceholders: z.boolean().optional(),
+});
+
+const GetSectionContentSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+});
+
+const UpdateSectionSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+  headline: z.string().optional(),
+  subheadline: z.string().optional(),
+  content: z.string().optional(),
+  ctaText: z.string().optional(),
+  backgroundImageUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
+
+const AddSectionSchema = TenantIdSchema.extend({
+  pageName: z.enum(PAGE_NAMES),
+  sectionType: z.enum(SECTION_TYPES),
+  headline: z.string().optional(),
+  subheadline: z.string().optional(),
+  content: z.string().optional(),
+  ctaText: z.string().optional(),
+  position: z.number().optional(),
+});
+
+const RemoveSectionSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+});
+
+const ReorderSectionsSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+  toPosition: z.number().min(0),
+});
+
+const TogglePageSchema = TenantIdSchema.extend({
+  pageName: z.enum(PAGE_NAMES),
+  enabled: z.boolean(),
+});
+
+const UpdateBrandingSchema = TenantIdSchema.extend({
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  accentColor: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  fontFamily: z.string().optional(),
+  logoUrl: z.string().optional(),
+});
+
+// =============================================================================
+// Research Agent Schemas
+// =============================================================================
+
+const SearchCompetitorsSchema = TenantIdSchema.extend({
+  location: z.string().min(1, 'location is required'),
+  industry: z.string().min(1, 'industry is required'),
+  maxResults: z.number().default(10),
+});
+
+const ScrapeCompetitorSchema = TenantIdSchema.extend({
+  url: z.string().url('Valid URL is required'),
+  extractPricing: z.boolean().default(true),
+  extractServices: z.boolean().default(true),
 });
 
 // =============================================================================
@@ -538,6 +648,641 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       });
     } catch (error) {
       handleError(res, error, '/create-booking');
+    }
+  });
+
+  // ===========================================================================
+  // STOREFRONT AGENT ROUTES
+  // ===========================================================================
+
+  // POST /storefront/structure - Get page structure with section IDs
+  router.post('/storefront/structure', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, pageName, includeOnlyPlaceholders } = GetPageStructureSchema.parse(
+        req.body
+      );
+
+      logger.info(
+        { tenantId, pageName, endpoint: '/storefront/structure' },
+        '[Agent] Getting page structure'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Get config from draft if exists, otherwise from live
+      const draftConfig = tenant.landingPageConfigDraft as Record<string, unknown> | null;
+      const liveConfig = tenant.landingPageConfig as Record<string, unknown> | null;
+      const hasDraft = !!draftConfig;
+
+      // Use draft if available, otherwise live
+      const workingConfig = draftConfig || liveConfig || { pages: {} };
+      const pages = (workingConfig as { pages?: Record<string, unknown> }).pages || {};
+
+      // Build section list
+      const sections: Array<{
+        id: string;
+        page: string;
+        type: string;
+        headline: string;
+        hasPlaceholder: boolean;
+      }> = [];
+
+      for (const [page, pageConfig] of Object.entries(pages)) {
+        if (pageName && page !== pageName) continue;
+
+        const pageSections =
+          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
+        for (let i = 0; i < pageSections.length; i++) {
+          const section = pageSections[i];
+          const sectionId = (section.id as string) || `${page}-${section.type}-${i}`;
+          const headline = (section.headline as string) || '';
+          const hasPlaceholder = /^\[[\w\s-]+\]$/.test(headline);
+
+          if (includeOnlyPlaceholders && !hasPlaceholder) continue;
+
+          sections.push({
+            id: sectionId,
+            page,
+            type: section.type as string,
+            headline,
+            hasPlaceholder,
+          });
+        }
+      }
+
+      res.json({
+        sections,
+        totalCount: sections.length,
+        hasDraft,
+        previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/structure');
+    }
+  });
+
+  // POST /storefront/section - Get section content by ID
+  router.post('/storefront/section', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sectionId } = GetSectionContentSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sectionId, endpoint: '/storefront/section' },
+        '[Agent] Getting section content'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const draftConfig = tenant.landingPageConfigDraft as Record<string, unknown> | null;
+      const liveConfig = tenant.landingPageConfig as Record<string, unknown> | null;
+      const workingConfig = draftConfig || liveConfig || { pages: {} };
+      const pages = (workingConfig as { pages?: Record<string, unknown> }).pages || {};
+
+      // Find section by ID
+      for (const [pageName, pageConfig] of Object.entries(pages)) {
+        const pageSections =
+          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
+        for (let i = 0; i < pageSections.length; i++) {
+          const section = pageSections[i];
+          const currentId = (section.id as string) || `${pageName}-${section.type}-${i}`;
+          if (currentId === sectionId) {
+            res.json({
+              section,
+              page: pageName,
+              index: i,
+              hasDraft: !!draftConfig,
+            });
+            return;
+          }
+        }
+      }
+
+      res.status(404).json({ error: `Section '${sectionId}' not found` });
+    } catch (error) {
+      handleError(res, error, '/storefront/section');
+    }
+  });
+
+  // POST /storefront/update-section - Update section content (saves to draft)
+  router.post('/storefront/update-section', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sectionId, ...updates } = UpdateSectionSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sectionId, endpoint: '/storefront/update-section' },
+        '[Agent] Updating section'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Get current config (draft or live)
+      const draftConfig = (tenant.landingPageConfigDraft ||
+        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      const pages = JSON.parse(
+        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+      );
+
+      // Find and update section
+      let found = false;
+      for (const [pageName, pageConfig] of Object.entries(pages)) {
+        const pageSections =
+          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
+        for (let i = 0; i < pageSections.length; i++) {
+          const section = pageSections[i];
+          const currentId = (section.id as string) || `${pageName}-${section.type}-${i}`;
+          if (currentId === sectionId) {
+            // Update the section with provided fields
+            Object.assign(section, updates);
+            // Ensure ID is preserved
+            section.id = sectionId;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+
+      if (!found) {
+        res.status(404).json({ error: `Section '${sectionId}' not found` });
+        return;
+      }
+
+      // Save to draft column
+      await tenantRepo.update(tenantId, {
+        landingPageConfigDraft: { ...draftConfig, pages },
+      });
+
+      res.json({
+        success: true,
+        sectionId,
+        hasDraft: true,
+        previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
+        note: 'Section updated in draft. Publish to make live.',
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/update-section');
+    }
+  });
+
+  // POST /storefront/add-section - Add a new section (saves to draft)
+  router.post('/storefront/add-section', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, pageName, sectionType, position, ...content } = AddSectionSchema.parse(
+        req.body
+      );
+
+      logger.info(
+        { tenantId, pageName, sectionType, endpoint: '/storefront/add-section' },
+        '[Agent] Adding section'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const draftConfig = (tenant.landingPageConfigDraft ||
+        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      const pages = JSON.parse(
+        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+      );
+
+      // Ensure page exists
+      if (!pages[pageName]) {
+        pages[pageName] = { enabled: true, sections: [] };
+      }
+
+      const pageSections = (pages[pageName] as { sections: Array<Record<string, unknown>> })
+        .sections;
+
+      // Create new section
+      const newSection: Record<string, unknown> = {
+        id: `${pageName}-${sectionType}-${Date.now()}`,
+        type: sectionType,
+        ...content,
+      };
+
+      // Insert at position or append
+      if (position !== undefined && position >= 0 && position < pageSections.length) {
+        pageSections.splice(position, 0, newSection);
+      } else {
+        pageSections.push(newSection);
+      }
+
+      await tenantRepo.update(tenantId, {
+        landingPageConfigDraft: { ...draftConfig, pages },
+      });
+
+      res.json({
+        success: true,
+        sectionId: newSection.id,
+        page: pageName,
+        hasDraft: true,
+        previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft&page=${pageName}` : undefined,
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/add-section');
+    }
+  });
+
+  // POST /storefront/remove-section - Remove a section (saves to draft)
+  router.post('/storefront/remove-section', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sectionId } = RemoveSectionSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sectionId, endpoint: '/storefront/remove-section' },
+        '[Agent] Removing section'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const draftConfig = (tenant.landingPageConfigDraft ||
+        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      const pages = JSON.parse(
+        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+      );
+
+      let found = false;
+      let removedFrom = '';
+      for (const [pageName, pageConfig] of Object.entries(pages)) {
+        const pageSections =
+          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
+        const index = pageSections.findIndex((s, i) => {
+          const id = (s.id as string) || `${pageName}-${s.type}-${i}`;
+          return id === sectionId;
+        });
+        if (index !== -1) {
+          pageSections.splice(index, 1);
+          found = true;
+          removedFrom = pageName;
+          break;
+        }
+      }
+
+      if (!found) {
+        res.status(404).json({ error: `Section '${sectionId}' not found` });
+        return;
+      }
+
+      await tenantRepo.update(tenantId, {
+        landingPageConfigDraft: { ...draftConfig, pages },
+      });
+
+      res.json({
+        success: true,
+        sectionId,
+        removedFrom,
+        hasDraft: true,
+        note: 'Section removed from draft. Discard to undo.',
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/remove-section');
+    }
+  });
+
+  // POST /storefront/reorder-sections - Move a section (saves to draft)
+  router.post('/storefront/reorder-sections', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sectionId, toPosition } = ReorderSectionsSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sectionId, toPosition, endpoint: '/storefront/reorder-sections' },
+        '[Agent] Reordering sections'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const draftConfig = (tenant.landingPageConfigDraft ||
+        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      const pages = JSON.parse(
+        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+      );
+
+      let found = false;
+      for (const [pageName, pageConfig] of Object.entries(pages)) {
+        const pageSections =
+          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
+        const index = pageSections.findIndex((s, i) => {
+          const id = (s.id as string) || `${pageName}-${s.type}-${i}`;
+          return id === sectionId;
+        });
+        if (index !== -1) {
+          const [section] = pageSections.splice(index, 1);
+          const newPos = Math.min(Math.max(0, toPosition), pageSections.length);
+          pageSections.splice(newPos, 0, section);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        res.status(404).json({ error: `Section '${sectionId}' not found` });
+        return;
+      }
+
+      await tenantRepo.update(tenantId, {
+        landingPageConfigDraft: { ...draftConfig, pages },
+      });
+
+      res.json({
+        success: true,
+        sectionId,
+        newPosition: toPosition,
+        hasDraft: true,
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/reorder-sections');
+    }
+  });
+
+  // POST /storefront/toggle-page - Enable/disable a page
+  router.post('/storefront/toggle-page', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, pageName, enabled } = TogglePageSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, pageName, enabled, endpoint: '/storefront/toggle-page' },
+        '[Agent] Toggling page'
+      );
+
+      if (pageName === 'home' && !enabled) {
+        res.status(400).json({ error: 'Home page cannot be disabled' });
+        return;
+      }
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const draftConfig = (tenant.landingPageConfigDraft ||
+        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      const pages = JSON.parse(
+        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+      );
+
+      if (!pages[pageName]) {
+        pages[pageName] = { enabled, sections: [] };
+      } else {
+        (pages[pageName] as { enabled: boolean }).enabled = enabled;
+      }
+
+      await tenantRepo.update(tenantId, {
+        landingPageConfigDraft: { ...draftConfig, pages },
+      });
+
+      res.json({
+        success: true,
+        pageName,
+        enabled,
+        hasDraft: true,
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/toggle-page');
+    }
+  });
+
+  // POST /storefront/update-branding - Update branding (immediate, not draft)
+  router.post('/storefront/update-branding', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, ...branding } = UpdateBrandingSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, endpoint: '/storefront/update-branding' },
+        '[Agent] Updating branding'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Branding is stored in tenant.branding JSON column
+      const currentBranding = (tenant.branding || {}) as Record<string, unknown>;
+      const updatedBranding = { ...currentBranding };
+
+      // Only update provided fields
+      if (branding.primaryColor) updatedBranding.primaryColor = branding.primaryColor;
+      if (branding.secondaryColor) updatedBranding.secondaryColor = branding.secondaryColor;
+      if (branding.accentColor) updatedBranding.accentColor = branding.accentColor;
+      if (branding.backgroundColor) updatedBranding.backgroundColor = branding.backgroundColor;
+      if (branding.fontFamily) updatedBranding.fontFamily = branding.fontFamily;
+      if (branding.logoUrl) updatedBranding.logoUrl = branding.logoUrl;
+
+      await tenantRepo.update(tenantId, {
+        branding: updatedBranding,
+      });
+
+      res.json({
+        success: true,
+        updated: Object.keys(branding).filter((k) => k !== 'tenantId'),
+        note: 'Branding changes take effect immediately.',
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/update-branding');
+    }
+  });
+
+  // POST /storefront/preview - Get preview URL
+  router.post('/storefront/preview', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const hasDraft = !!tenant.landingPageConfigDraft;
+
+      res.json({
+        hasDraft,
+        previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft` : null,
+        liveUrl: tenant.slug ? `/t/${tenant.slug}` : null,
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/preview');
+    }
+  });
+
+  // POST /storefront/publish - Publish draft to live
+  router.post('/storefront/publish', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      logger.info({ tenantId, endpoint: '/storefront/publish' }, '[Agent] Publishing draft');
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      if (!tenant.landingPageConfigDraft) {
+        res.status(400).json({ error: 'No draft to publish' });
+        return;
+      }
+
+      // Publish: copy draft to live (using wrapper format for compatibility)
+      const draftConfig = tenant.landingPageConfigDraft;
+      await tenantRepo.update(tenantId, {
+        landingPageConfig: { published: draftConfig },
+        landingPageConfigDraft: null,
+      });
+
+      res.json({
+        success: true,
+        action: 'published',
+        liveUrl: tenant.slug ? `/t/${tenant.slug}` : null,
+        note: 'Draft changes are now live.',
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/publish');
+    }
+  });
+
+  // POST /storefront/discard - Discard draft
+  router.post('/storefront/discard', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      logger.info({ tenantId, endpoint: '/storefront/discard' }, '[Agent] Discarding draft');
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      if (!tenant.landingPageConfigDraft) {
+        res.status(400).json({ error: 'No draft to discard' });
+        return;
+      }
+
+      await tenantRepo.update(tenantId, {
+        landingPageConfigDraft: null,
+      });
+
+      res.json({
+        success: true,
+        action: 'discarded',
+        note: 'Draft changes discarded. Reverted to live version.',
+      });
+    } catch (error) {
+      handleError(res, error, '/storefront/discard');
+    }
+  });
+
+  // ===========================================================================
+  // RESEARCH AGENT ROUTES
+  // ===========================================================================
+
+  // Prompt injection patterns for scraping security
+  const INJECTION_PATTERNS = [
+    /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
+    /disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
+    /forget\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
+    /new\s+instructions?:\s*/i,
+    /system\s*(?:prompt|message):\s*/i,
+    /you\s+are\s+now\s+(?:a|an)\s+/i,
+    /act\s+as\s+(?:a|an)?\s*/i,
+    /pretend\s+(?:to\s+be|you\s+are)\s*/i,
+    /dan\s+mode/i,
+    /developer\s+mode/i,
+    /<\/?(?:system|user|assistant|human|ai)>/i,
+  ];
+
+  function filterInjection(content: string): string {
+    let filtered = content;
+    for (const pattern of INJECTION_PATTERNS) {
+      filtered = filtered.replace(pattern, '[REDACTED]');
+    }
+    return filtered;
+  }
+
+  // POST /research/search-competitors - Search for competitors
+  router.post('/research/search-competitors', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, location, industry, maxResults } = SearchCompetitorsSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, location, industry, endpoint: '/research/search-competitors' },
+        '[Agent] Searching competitors'
+      );
+
+      // In production, this would call Google Search API or a search service
+      // For now, return a placeholder that indicates the feature needs integration
+      res.json({
+        results: [],
+        message: `Search for "${industry}" in "${location}" - Integration pending. Configure Google Search API.`,
+        maxResults,
+        note: 'This endpoint requires Google Search API integration. Results are simulated.',
+        integration: {
+          required: 'GOOGLE_SEARCH_API_KEY',
+          documentation: 'https://developers.google.com/custom-search/v1/overview',
+        },
+      });
+    } catch (error) {
+      handleError(res, error, '/research/search-competitors');
+    }
+  });
+
+  // POST /research/scrape-competitor - Scrape competitor website
+  router.post('/research/scrape-competitor', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, url, extractPricing, extractServices } = ScrapeCompetitorSchema.parse(
+        req.body
+      );
+
+      logger.info(
+        { tenantId, url, endpoint: '/research/scrape-competitor' },
+        '[Agent] Scraping competitor'
+      );
+
+      // In production, this would use a web scraping service (Puppeteer, Playwright, etc.)
+      // For now, return a placeholder that indicates the feature needs integration
+      res.json({
+        url,
+        success: false,
+        message: 'Web scraping integration pending. Configure scraping service.',
+        rawContent: null,
+        extractedData: {
+          pricing: extractPricing ? null : undefined,
+          services: extractServices ? null : undefined,
+        },
+        note: 'This endpoint requires web scraping integration. Content would be filtered for security.',
+        integration: {
+          options: ['Puppeteer', 'Playwright', 'Firecrawl', 'Browserless'],
+          securityNote: 'All scraped content is filtered for prompt injection attacks.',
+        },
+      });
+    } catch (error) {
+      handleError(res, error, '/research/scrape-competitor');
     }
   });
 

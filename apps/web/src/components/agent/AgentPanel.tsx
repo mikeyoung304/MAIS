@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
-import { PanelAgentChat, type AgentUIAction } from './PanelAgentChat';
+import { ConciergeChat, type ConciergeUIAction } from './ConciergeChat';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
 import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
-import type { PageName, LandingPageConfig, OnboardingPhase } from '@macon/contracts';
-import { useQueryClient } from '@tanstack/react-query';
+import type { PageName, OnboardingPhase } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 
@@ -20,41 +18,9 @@ import { useIsMobile } from '@/hooks/useBreakpoint';
 const PANEL_OPEN_KEY = 'agent-panel-open';
 const WELCOMED_KEY = 'agent-panel-welcomed';
 
-// Welcome messages based on onboarding state
-const WELCOME_MESSAGES = {
-  new: "Salutations! I'm here to help you set up your business. Instead of filling out forms, we'll just have a conversation and I'll handle the setup for you.\n\nSo — what kind of services do you offer?",
-  returning: 'Welcome back! Ready to continue where we left off?',
-  default: 'Salutations. Are you ready to get handled? Tell me a little about yourself.',
-};
-
 interface AgentPanelProps {
   /** Additional CSS classes */
   className?: string;
-}
-
-/**
- * Tool result that includes an updated config from executor
- * (Fix for #740: Remove `any` types in tool results)
- */
-interface ToolResultWithConfig {
-  success: true;
-  data: {
-    updatedConfig: LandingPageConfig;
-    [key: string]: unknown;
-  };
-}
-
-/**
- * Tool result that includes package updates from upsert_services executor
- * Triggers iframe refresh since packages are server-rendered
- */
-interface ToolResultWithPackages {
-  success: true;
-  data: {
-    packages?: Array<{ id: string; name: string; priceCents: number }>;
-    packageCount?: number;
-    [key: string]: unknown;
-  };
 }
 
 /**
@@ -123,7 +89,6 @@ function OnboardingSection({
  * - Uses personalized welcome messages for returning users
  */
 export function AgentPanel({ className }: AgentPanelProps) {
-  const router = useRouter();
   const { slug: tenantSlug } = useAuth();
 
   // Mobile/desktop detection
@@ -146,11 +111,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const focusTimerRef = useRef<number | null>(null);
 
   // Onboarding state
-  const { currentPhase, isOnboarding, isReturning, skipOnboarding, isSkipping, skipError } =
+  const { currentPhase, isOnboarding, skipOnboarding, isSkipping, skipError } =
     useOnboardingState();
-
-  // React Query client for optimistic updates (Phase 1.4)
-  const queryClient = useQueryClient();
 
   // WCAG 4.1.3: Screen reader announcement helper
   const announce = useCallback((message: string) => {
@@ -165,61 +127,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
       if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
     };
   }, []);
-
-  /**
-   * Fix for #739, #740, #742: Extract duplicate onToolComplete logic with proper types
-   * Phase 1.4: Optimistic updates with 100ms failsafe (increased from 50ms)
-   *
-   * P0-FIX (2026-01-14): Also triggers iframe refresh when packages are updated
-   * Packages are server-rendered in the iframe and cannot be updated via PostMessage
-   */
-  const handleToolComplete = useCallback(
-    (toolResults?: Array<{ success: boolean; data?: any }>) => {
-      // Check if any tool result contains updatedConfig (from Phase 1.4 executors)
-      const resultWithConfig = toolResults?.find(
-        (r): r is ToolResultWithConfig =>
-          r.success && r.data != null && typeof r.data === 'object' && 'updatedConfig' in r.data
-      );
-
-      // Check if any tool result contains package updates (from upsert_services executor)
-      // Packages are server-rendered in iframe - need full iframe refresh
-      const resultWithPackages = toolResults?.find(
-        (r): r is ToolResultWithPackages =>
-          r.success &&
-          r.data != null &&
-          typeof r.data === 'object' &&
-          ('packages' in r.data || 'packageCount' in r.data)
-      );
-
-      if (resultWithConfig?.data?.updatedConfig) {
-        // Optimistic update: Immediately set cached config from executor response
-        queryClient.setQueryData(['draft-config'], resultWithConfig.data.updatedConfig);
-
-        // CRITICAL: 100ms failsafe for READ COMMITTED propagation (increased from 50ms)
-        // This is a database consistency pattern, not just optimization
-        // Prevents stale data if executor returns slightly outdated config
-        setTimeout(() => {
-          invalidateDraftConfig();
-        }, 100);
-      } else {
-        // Fallback: If executor doesn't return updatedConfig (shouldn't happen with Phase 1.4)
-        // Use 100ms delay for extra safety margin
-        setTimeout(() => {
-          invalidateDraftConfig();
-        }, 100);
-      }
-
-      // Trigger iframe refresh when packages are updated
-      // This ensures the preview shows correct prices/names immediately
-      if (resultWithPackages) {
-        // Small delay to ensure database transaction is committed
-        setTimeout(() => {
-          agentUIActions.refreshPreview();
-        }, 150);
-      }
-    },
-    [queryClient]
-  );
 
   // Load persisted state from localStorage on mount
   useEffect(() => {
@@ -263,29 +170,63 @@ export function AgentPanel({ className }: AgentPanelProps) {
     };
   }, [isMobileOpen, isMobile]);
 
-  // Handle UI actions from agent tools
-  const handleUIAction = useCallback(
-    (action: AgentUIAction) => {
-      switch (action.type) {
-        case 'SHOW_PREVIEW':
-          agentUIActions.showPreview((action.page as PageName) || 'home');
-          break;
-        case 'SHOW_DASHBOARD':
-          agentUIActions.showDashboard();
-          break;
-        case 'HIGHLIGHT_SECTION':
-          if (action.sectionId) {
-            agentUIActions.highlightSection(action.sectionId);
-          }
-          break;
-        case 'NAVIGATE':
-          if (action.path) {
-            router.push(action.path);
-          }
-          break;
+  // Handle UI actions from Concierge agent tool calls
+  const handleConciergeUIAction = useCallback((action: ConciergeUIAction) => {
+    switch (action.type) {
+      case 'SHOW_PREVIEW':
+        agentUIActions.showPreview((action.page as PageName) || 'home');
+        break;
+      case 'SHOW_DASHBOARD':
+        agentUIActions.showDashboard();
+        break;
+      case 'HIGHLIGHT_SECTION':
+        if (action.sectionId) {
+          agentUIActions.highlightSection(action.sectionId);
+        }
+        break;
+      case 'REFRESH_PREVIEW':
+        agentUIActions.refreshPreview();
+        break;
+    }
+  }, []);
+
+  // Handle Concierge tool completion (triggers preview refresh for storefront changes)
+  const handleConciergeToolComplete = useCallback(
+    (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
+      // Check if any tool call modified storefront content
+      const modifiedStorefront = toolCalls.some(
+        (call) =>
+          call.name.includes('storefront') ||
+          call.name.includes('section') ||
+          call.name.includes('layout') ||
+          call.name.includes('branding')
+      );
+
+      if (modifiedStorefront) {
+        // Refresh preview to show updated content
+        setTimeout(() => {
+          invalidateDraftConfig();
+          agentUIActions.refreshPreview();
+        }, 150);
+      }
+
+      // Check if marketing content was generated (headlines, etc.)
+      const generatedMarketing = toolCalls.some(
+        (call) =>
+          call.name.includes('marketing') ||
+          call.name.includes('headline') ||
+          call.name.includes('copy')
+      );
+
+      if (generatedMarketing) {
+        // Show preview to display the generated content
+        agentUIActions.showPreview('home');
+        setTimeout(() => {
+          invalidateDraftConfig();
+        }, 100);
       }
     },
-    [router]
+    []
   );
 
   // Handle first message sent - mark user as welcomed
@@ -295,14 +236,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
       setIsFirstVisit(false);
     }
   }, [isFirstVisit]);
-
-  // Determine welcome message based on state
-  const getWelcomeMessage = () => {
-    if (isOnboarding) {
-      return isReturning ? WELCOME_MESSAGES.returning : WELCOME_MESSAGES.new;
-    }
-    return WELCOME_MESSAGES.default;
-  };
 
   // Handle skip onboarding
   const handleSkip = async () => {
@@ -419,13 +352,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
             />
           )}
 
-          {/* Chat content */}
+          {/* Chat content - TESTING: Always use ConciergeChat */}
           <div className="flex-1 overflow-hidden">
-            <PanelAgentChat
-              welcomeMessage={getWelcomeMessage()}
+            <ConciergeChat
+              welcomeMessage="Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?"
               onFirstMessage={handleFirstMessage}
-              onUIAction={handleUIAction}
-              onToolComplete={handleToolComplete}
+              onUIAction={handleConciergeUIAction}
+              onToolComplete={handleConciergeToolComplete}
               className="h-full"
             />
           </div>
@@ -558,15 +491,15 @@ export function AgentPanel({ className }: AgentPanelProps) {
               />
             )}
 
-            {/* Chat content */}
+            {/* Chat content - TESTING: Always use ConciergeChat */}
             <div className="flex-1 overflow-hidden">
-              <PanelAgentChat
-                welcomeMessage={getWelcomeMessage()}
+              <ConciergeChat
+                welcomeMessage="Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?"
                 onFirstMessage={handleFirstMessage}
-                onUIAction={handleUIAction}
-                onToolComplete={handleToolComplete}
+                onUIAction={handleConciergeUIAction}
+                onToolComplete={handleConciergeToolComplete}
                 inputRef={inputRef}
-                messagesRole="log" // WCAG: Screen reader support for messages
+                messagesRole="log"
                 className="h-full"
               />
             </div>
