@@ -228,6 +228,32 @@ export class VertexAgentService {
 
       if (!response.ok) {
         const errorText = await response.text();
+
+        // Handle 404 "Session not found" by creating a new ADK session and retrying
+        if (response.status === 404 && errorText.includes('Session not found')) {
+          logger.info(
+            { tenantId, sessionId },
+            '[VertexAgent] Session not found on ADK, creating new session and retrying'
+          );
+
+          // Create a new session on ADK
+          const newSessionId = await this.createADKSession(tenantId, userId);
+          if (newSessionId) {
+            // Update local session with new ADK session ID
+            session.sessionId = newSessionId;
+            sessions.delete(sessionId);
+            sessions.set(newSessionId, session);
+
+            // Move message history to new session
+            const history = sessionMessages.get(sessionId) || [];
+            sessionMessages.delete(sessionId);
+            sessionMessages.set(newSessionId, history);
+
+            // Retry the message with new session
+            return this.sendMessage(newSessionId, message);
+          }
+        }
+
         logger.error(
           { tenantId, sessionId, status: response.status, error: errorText },
           '[VertexAgent] Agent error'
@@ -320,6 +346,48 @@ export class VertexAgentService {
   // =============================================================================
   // PRIVATE HELPERS
   // =============================================================================
+
+  /**
+   * Create a new session on ADK Cloud Run.
+   * Returns the session ID if successful, null if failed.
+   */
+  private async createADKSession(tenantId: string, userId: string): Promise<string | null> {
+    try {
+      const token = await this.getIdentityToken();
+      const adkUserId = `${tenantId}:${userId}`;
+
+      const response = await fetch(
+        `${CONCIERGE_AGENT_URL}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({ state: { tenantId } }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(
+          { tenantId, userId, status: response.status, error: errorText },
+          '[VertexAgent] Failed to create ADK session in retry'
+        );
+        return null;
+      }
+
+      const adkSession = (await response.json()) as { id: string };
+      logger.info(
+        { tenantId, userId, adkSessionId: adkSession.id },
+        '[VertexAgent] ADK session created in retry'
+      );
+      return adkSession.id;
+    } catch (error) {
+      logger.error({ tenantId, userId, error }, '[VertexAgent] Error creating ADK session');
+      return null;
+    }
+  }
 
   /**
    * Get identity token for Cloud Run authentication.
