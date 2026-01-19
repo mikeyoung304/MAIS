@@ -1,0 +1,23 @@
+{
+  "name": "handled-marketing-agent",
+  "version": "1.0.0",
+  "description": "Standalone Marketing Specialist Agent for HANDLED - deployed to Vertex AI Agent Engine",
+  "main": "dist/agent.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "npx adk dev",
+    "deploy": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1} --service_name=marketing-agent",
+    "deploy:dry-run": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1} --service_name=marketing-agent --dry-run"
+  },
+  "dependencies": {
+    "@google/adk": "^0.2.4",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@google/adk-devtools": "^0.2.4",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

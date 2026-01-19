@@ -5,8 +5,8 @@
   "main": "dist/agent.js",
   "scripts": {
     "build": "tsc",
-    "deploy": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1}",
-    "deploy:dry-run": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1} --dry-run"
+    "deploy": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1} --service_name=booking-agent",
+    "deploy:dry-run": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1} --service_name=booking-agent --dry-run"
   },
   "dependencies": {
     "@google/adk": "^0.2.4",

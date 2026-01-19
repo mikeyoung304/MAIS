@@ -1233,7 +1233,13 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // ===========================================================================
 
   // Prompt injection patterns for scraping security
+  /**
+   * Prompt injection detection patterns
+   * IMPORTANT: Keep in sync with server/src/agent-v2/deploy/research/src/agent.ts
+   * TODO: Extract to shared package (see issue #5197)
+   */
   const INJECTION_PATTERNS = [
+    // Direct instruction attempts
     /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
     /disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
     /forget\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
@@ -1242,9 +1248,41 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     /you\s+are\s+now\s+(?:a|an)\s+/i,
     /act\s+as\s+(?:a|an)?\s*/i,
     /pretend\s+(?:to\s+be|you\s+are)\s*/i,
+    /roleplay\s+as\s*/i,
+
+    // Jailbreak attempts
     /dan\s+mode/i,
     /developer\s+mode/i,
+    /sudo\s+mode/i,
+    /admin\s+mode/i,
+    /\bDAN\b/,
+    /do\s+anything\s+now/i,
+
+    // Data extraction attempts
+    /reveal\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
+    /show\s+(?:me\s+)?(?:your|the)\s+(?:system|initial)\s+prompt/i,
+    /print\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
+    /output\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
+    /what\s+(?:is|are)\s+your\s+(?:system\s+)?instructions?/i,
+
+    // Delimiter escape attempts
     /<\/?(?:system|user|assistant|human|ai)>/i,
+    /```(?:system|user|assistant|human|ai)/i,
+    /\[INST\]/i,
+    /\[\/INST\]/i,
+    /<<SYS>>/i,
+    /<\/SYS>/i,
+
+    // Context manipulation
+    /end\s+of\s+(?:system|initial)\s+(?:prompt|message|instructions?)/i,
+    /beginning\s+of\s+(?:new|user)\s+(?:prompt|message|instructions?)/i,
+    /---+\s*(?:end|new)\s*---+/i,
+
+    // Tool/function abuse
+    /call\s+(?:the\s+)?function\s*/i,
+    /execute\s+(?:the\s+)?tool\s*/i,
+    /use\s+(?:the\s+)?(?:following\s+)?tool\s*/i,
+    /invoke\s+(?:the\s+)?(?:following\s+)?function\s*/i,
   ];
 
   function filterInjection(content: string): string {

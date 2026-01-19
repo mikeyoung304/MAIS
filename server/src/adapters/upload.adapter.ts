@@ -108,19 +108,46 @@ export class UploadAdapter implements StorageProvider {
     const detectedType = await fileType.fromBuffer(file.buffer);
 
     if (file.mimetype === 'image/svg+xml') {
-      const content = file.buffer.toString('utf8', 0, 500).trim();
+      // Check ENTIRE buffer for dangerous content (not just first 500 bytes)
+      const fullContent = file.buffer.toString('utf8').toLowerCase();
+
+      // Validate SVG structure
       const isSvg =
-        content.startsWith('<?xml') ||
-        content.startsWith('<svg') ||
-        content.toLowerCase().includes('<svg');
+        fullContent.startsWith('<?xml') ||
+        fullContent.startsWith('<svg') ||
+        fullContent.includes('<svg');
+
       if (!isSvg) {
-        logger.warn(
-          { declaredType: file.mimetype, filename: file.originalname },
-          'SECURITY: File claimed to be SVG but does not contain valid SVG content'
-        );
+        logger.warn({ filename: file.originalname }, 'Invalid SVG structure');
         throw new Error('File validation failed');
       }
-      return;
+
+      // Check for dangerous patterns - FULL file scan
+      const dangerousPatterns = [
+        '<script',
+        'javascript:',
+        'onerror=',
+        'onload=',
+        'onclick=',
+        'onmouseover=',
+        '<iframe',
+        '<object',
+        '<embed',
+        '<foreignobject',
+        'data:text/html',
+      ];
+
+      for (const pattern of dangerousPatterns) {
+        if (fullContent.includes(pattern)) {
+          logger.warn(
+            { filename: file.originalname, pattern },
+            'SECURITY: Malicious SVG detected - dangerous pattern found'
+          );
+          throw new Error('File validation failed');
+        }
+      }
+
+      return; // Safe to upload
     }
 
     if (!detectedType) {

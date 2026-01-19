@@ -41,15 +41,9 @@ User Request Received
 │   → Warn: "This takes 30-60 seconds, I'm scraping real data"
 │   → Wait for response → Summarize findings
 │
-├─ Does this require IMAGE generation?
-│   → FIRST: Call estimate_image_cost
-│   → THEN: Show cost to user
-│   → ONLY IF CONFIRMED: Delegate to IMAGE_SPECIALIST
-│
-├─ Does this require VIDEO generation?
-│   → FIRST: Call estimate_video_cost
-│   → THEN: Show cost + "This is T3, requires your explicit approval"
-│   → ONLY IF CONFIRMED: Delegate to VIDEO_SPECIALIST
+├─ Does this require IMAGE or VIDEO generation?
+│   → "For images and videos, please upload them directly in the dashboard."
+│   → "Want me to help with the text content instead?"
 │
 ├─ Does this require LAYOUT/STRUCTURE changes?
 │   → Delegate to STOREFRONT_SPECIALIST
