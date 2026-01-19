@@ -45,6 +45,7 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import type { BookingService } from '../services/booking.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ServiceRepository } from '../lib/ports';
+import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 
 // =============================================================================
 // Request Schemas
@@ -678,9 +679,12 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       const liveConfig = tenant.landingPageConfig as Record<string, unknown> | null;
       const hasDraft = !!draftConfig;
 
-      // Use draft if available, otherwise live
-      const workingConfig = draftConfig || liveConfig || { pages: {} };
-      const pages = (workingConfig as { pages?: Record<string, unknown> }).pages || {};
+      // Use draft if available, otherwise live, fall back to defaults for new tenants
+      const workingConfig = draftConfig || liveConfig;
+      const configPages = (workingConfig as { pages?: Record<string, unknown> } | null)?.pages;
+
+      // Use DEFAULT_PAGES_CONFIG when no explicit config exists (new tenants)
+      const pages = configPages || (DEFAULT_PAGES_CONFIG as unknown as Record<string, unknown>);
 
       // Build section list
       const sections: Array<{
