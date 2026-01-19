@@ -191,6 +191,31 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 30. Race condition on cache invalidation (add 100ms delay)
 31. Sage background with white text (fails WCAG AA - use teal/navy for backgrounds, sage for text only)
 
+### ADK/A2A Pitfalls (32-44)
+
+32. A2A camelCase required - Use `appName`, `userId`, `sessionId`, `newMessage` for A2A protocol (NOT snake_case - ADK rejects it silently)
+33. App name mismatch - Always verify app name with `/list-apps` after deploy; must match agent's `name` property
+34. Unsupported Zod types - ADK doesn't support `z.record()`, `z.tuple()`, `z.intersection()`, `z.lazy()`; use `z.any()` with `.describe()`
+35. A2A response format - Handle both `messages[]` and `content.parts[]` formats; fallback to JSON.stringify
+36. Identity token auth - Agent-to-Agent uses metadata service; Backend-to-Agent uses GoogleAuth; both need graceful local dev fallback
+37. LLM pattern-matching prompts - Never include example responses like `You: "On it!"` - LLMs copy them verbatim instead of calling tools; use action arrows like `→ Call tool_name()` instead
+38. Hardcoded Cloud Run URLs - Always use environment variables; URLs contain project numbers that change
+39. ADK response array format - ADK returns `[{ content: { role, parts }}]` array, not `{ messages: [...] }` object; iterate from end to find model response
+40. Session ID reuse across agents - Each specialist agent needs its OWN session; orchestrator session cannot be passed to specialists
+41. State Map-like API - Use `context.state?.get<T>('key')` not `context.state.key`; direct property access returns undefined
+42. Missing state defaults - Always provide defaults for optional state values: `state.get('tier') ?? 'free'`
+43. Zod enum vs string mismatch - Use `z.enum()` for constrained choices, `z.string()` for free-form; wrong type causes validation failures
+44. Missing Cloud Run env vars - Validate required env vars at startup; use `process.env.AGENT_URL || fallback` pattern
+
+### Agent-v2 Code Quality Pitfalls (45-50)
+
+45. Empty secret fallback - `INTERNAL_API_SECRET || ''` masks misconfiguration; use `requireEnv()` to fail-fast at startup
+46. No fetch timeouts - All `fetch()` calls need `AbortController` timeouts; 15s backend, 30s agents, 90s scraping
+47. Tools return instructions - FunctionTool.execute must return results, not `{instruction: "Generate..."}` for LLM
+48. Dead security functions - Writing `sanitizeScrapedContent()` but never calling it; verify security code is wired up
+49. T3 without confirmation param - Trust tier enforcement must be programmatic (`confirmationReceived: z.boolean()`), not prompt-only
+50. Module-level cache unbounded - `new Map()` at module level grows forever; add TTL (30 min) and max size (1000)
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -198,7 +223,11 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[PREVENTION-QUICK-REFERENCE.md](docs/solutions/PREVENTION-QUICK-REFERENCE.md)** - Print and pin cheat sheet
 - **[mais-critical-patterns.md](docs/solutions/patterns/mais-critical-patterns.md)** - 10 critical patterns
 - **[AGENT_TOOLS_PREVENTION_INDEX.md](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Agent tool patterns
+- **[ADK_A2A_PREVENTION_INDEX.md](docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md)** - ADK/A2A integration patterns
+- **[A2A_SESSION_STATE_PREVENTION.md](docs/solutions/patterns/A2A_SESSION_STATE_PREVENTION.md)** - Session isolation & state handling
+- **[ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md](docs/solutions/patterns/ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md)** - Agent dev checklist
 - **[ESLINT_PREVENTION_INDEX.md](docs/solutions/patterns/ESLINT_PREVENTION_INDEX.md)** - Dead code prevention
+- **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4
 
 When you hit an issue:
 
