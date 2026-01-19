@@ -747,8 +747,10 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
 
       const draftConfig = tenant.landingPageConfigDraft as Record<string, unknown> | null;
       const liveConfig = tenant.landingPageConfig as Record<string, unknown> | null;
-      const workingConfig = draftConfig || liveConfig || { pages: {} };
-      const pages = (workingConfig as { pages?: Record<string, unknown> }).pages || {};
+      const workingConfig = draftConfig || liveConfig;
+      const configPages = (workingConfig as { pages?: Record<string, unknown> } | null)?.pages;
+      // Use DEFAULT_PAGES_CONFIG when no explicit config exists (new tenants)
+      const pages = configPages || (DEFAULT_PAGES_CONFIG as unknown as Record<string, unknown>);
 
       // Find section by ID
       for (const [pageName, pageConfig] of Object.entries(pages)) {
@@ -791,11 +793,15 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      // Get current config (draft or live)
-      const draftConfig = (tenant.landingPageConfigDraft ||
-        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      // Get current config (draft or live), fall back to defaults for new tenants
+      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      const draftConfig = existingConfig
+        ? (existingConfig as Record<string, unknown>)
+        : { pages: DEFAULT_PAGES_CONFIG };
       const pages = JSON.parse(
-        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+        JSON.stringify(
+          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
+        )
       );
 
       // Find and update section
@@ -858,10 +864,15 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      const draftConfig = (tenant.landingPageConfigDraft ||
-        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      // Get current config, fall back to defaults for new tenants
+      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      const draftConfig = existingConfig
+        ? (existingConfig as Record<string, unknown>)
+        : { pages: DEFAULT_PAGES_CONFIG };
       const pages = JSON.parse(
-        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+        JSON.stringify(
+          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
+        )
       );
 
       // Ensure page exists
@@ -918,10 +929,15 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      const draftConfig = (tenant.landingPageConfigDraft ||
-        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      // Get current config, fall back to defaults for new tenants
+      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      const draftConfig = existingConfig
+        ? (existingConfig as Record<string, unknown>)
+        : { pages: DEFAULT_PAGES_CONFIG };
       const pages = JSON.parse(
-        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+        JSON.stringify(
+          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
+        )
       );
 
       let found = false;
@@ -978,10 +994,15 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      const draftConfig = (tenant.landingPageConfigDraft ||
-        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      // Get current config, fall back to defaults for new tenants
+      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      const draftConfig = existingConfig
+        ? (existingConfig as Record<string, unknown>)
+        : { pages: DEFAULT_PAGES_CONFIG };
       const pages = JSON.parse(
-        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+        JSON.stringify(
+          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
+        )
       );
 
       let found = false;
@@ -1042,10 +1063,15 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      const draftConfig = (tenant.landingPageConfigDraft ||
-        tenant.landingPageConfig || { pages: {} }) as Record<string, unknown>;
+      // Get current config, fall back to defaults for new tenants
+      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      const draftConfig = existingConfig
+        ? (existingConfig as Record<string, unknown>)
+        : { pages: DEFAULT_PAGES_CONFIG };
       const pages = JSON.parse(
-        JSON.stringify((draftConfig as { pages?: Record<string, unknown> }).pages || {})
+        JSON.stringify(
+          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
+        )
       );
 
       if (!pages[pageName]) {
