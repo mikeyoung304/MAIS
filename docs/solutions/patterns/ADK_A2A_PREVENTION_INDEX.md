@@ -824,7 +824,7 @@ const myTool = new FunctionTool({
   execute: async (
     // ✅ Correct property name
     { param }: { param: string }, // ✅ Explicit type annotation
-    _ctx: ToolContext // ✅ Underscore prefix if unused
+    _ctx: ToolContext | undefined // ✅ Context CAN be undefined - ADK passes undefined in some cases
   ) => {
     return { result: param };
   },
@@ -856,6 +856,7 @@ export const agent = new LlmAgent({
 
 - [ ] FunctionTool uses `parameters` (not `inputSchema`)
 - [ ] FunctionTool uses `execute` (not `func`)
+- [ ] Execute context typed as `ToolContext | undefined` (not just `ToolContext`)
 - [ ] LlmAgent uses `generateContentConfig` (not `config`)
 - [ ] Unused context params prefixed with underscore (`_ctx`)
 - [ ] Execute function params have explicit type annotations

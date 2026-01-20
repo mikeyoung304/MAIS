@@ -250,7 +250,7 @@ const getProjectStatus = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID to check status for'),
   }),
-  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext) => {
+  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext | undefined) => {
     try {
       const project = await callBackendAPI<Project>(`/project-hub/projects/${projectId}`, 'GET');
 
@@ -279,7 +279,7 @@ const getPrepChecklist = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext) => {
+  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext | undefined) => {
     try {
       const checklist = await callBackendAPI<{
         items: Array<{ text: string; completed: boolean }>;
@@ -307,7 +307,7 @@ const answerPrepQuestion = new FunctionTool({
   }),
   execute: async (
     { projectId, question }: { projectId: string; question: string },
-    _ctx: ToolContext
+    _ctx: ToolContext | undefined
   ) => {
     try {
       const answer = await callBackendAPI<{ answer: string; confidence: number; source: string }>(
@@ -365,7 +365,7 @@ const submitRequest = new FunctionTool({
       details,
       urgency,
     }: { projectId: string; requestType: string; details: string; urgency: string },
-    _ctx: ToolContext
+    _ctx: ToolContext | undefined
   ) => {
     try {
       // Calculate expiry (72 hours from now)
@@ -411,7 +411,7 @@ const getTimeline = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext) => {
+  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext | undefined) => {
     try {
       const events = await callBackendAPI<ProjectEvent[]>(
         `/project-hub/projects/${projectId}/events?visibleToCustomer=true`,
@@ -449,7 +449,10 @@ const getPendingRequests = new FunctionTool({
     tenantId: z.string().describe('The tenant ID'),
     limit: z.number().default(10).describe('Maximum number of requests to return'),
   }),
-  execute: async ({ tenantId, limit }: { tenantId: string; limit: number }, _ctx: ToolContext) => {
+  execute: async (
+    { tenantId, limit }: { tenantId: string; limit: number },
+    _ctx: ToolContext | undefined
+  ) => {
     try {
       const requests = await callBackendAPI<ProjectRequest[]>(
         `/project-hub/tenants/${tenantId}/pending-requests?limit=${limit}`,
@@ -483,7 +486,10 @@ const getCustomerActivity = new FunctionTool({
     tenantId: z.string().describe('The tenant ID'),
     days: z.number().default(7).describe('Number of days to look back'),
   }),
-  execute: async ({ tenantId, days }: { tenantId: string; days: number }, _ctx: ToolContext) => {
+  execute: async (
+    { tenantId, days }: { tenantId: string; days: number },
+    _ctx: ToolContext | undefined
+  ) => {
     try {
       const activity = await callBackendAPI<{
         totalProjects: number;
@@ -518,7 +524,7 @@ const approveRequest = new FunctionTool({
   }),
   execute: async (
     { requestId, response }: { requestId: string; response?: string },
-    _ctx: ToolContext
+    _ctx: ToolContext | undefined
   ) => {
     try {
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
@@ -550,7 +556,7 @@ const denyRequest = new FunctionTool({
   }),
   execute: async (
     { requestId, reason }: { requestId: string; reason: string },
-    _ctx: ToolContext
+    _ctx: ToolContext | undefined
   ) => {
     try {
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
@@ -587,7 +593,7 @@ const sendMessageToCustomer = new FunctionTool({
       message,
       notifyByEmail,
     }: { projectId: string; message: string; notifyByEmail: boolean },
-    _ctx: ToolContext
+    _ctx: ToolContext | undefined
   ) => {
     try {
       await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
@@ -627,7 +633,7 @@ const updateProjectStatus = new FunctionTool({
   }),
   execute: async (
     { projectId, status, reason }: { projectId: string; status: string; reason?: string },
-    _ctx: ToolContext
+    _ctx: ToolContext | undefined
   ) => {
     try {
       const result = await callBackendAPI<{ success: boolean; project: Project }>(
