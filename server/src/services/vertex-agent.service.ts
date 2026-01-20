@@ -15,7 +15,7 @@
  * - Session IDs include tenant ID for isolation
  */
 
-import { GoogleAuth } from 'google-auth-library';
+import { GoogleAuth, JWT } from 'google-auth-library';
 import { logger } from '../lib/core/logger';
 
 // =============================================================================
@@ -73,6 +73,7 @@ const sessionMessages = new Map<string, AgentMessage[]>();
 
 export class VertexAgentService {
   private auth: GoogleAuth;
+  private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
 
   constructor() {
     // Initialize Google Auth for Cloud Run authentication
@@ -82,6 +83,11 @@ export class VertexAgentService {
       try {
         const credentials = JSON.parse(serviceAccountJson);
         this.auth = new GoogleAuth({ credentials });
+        // Store credentials for JWT-based ID token generation
+        this.serviceAccountCredentials = {
+          client_email: credentials.client_email,
+          private_key: credentials.private_key,
+        };
         logger.info('[VertexAgent] Using service account from GOOGLE_SERVICE_ACCOUNT_JSON');
       } catch (e) {
         logger.error({ error: e }, '[VertexAgent] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
@@ -404,11 +410,32 @@ export class VertexAgentService {
 
   /**
    * Get identity token for Cloud Run authentication.
-   * Uses ADC (Application Default Credentials) when available.
-   * Falls back to gcloud CLI for local development.
+   * Priority: JWT (service account) > GoogleAuth (ADC) > gcloud CLI (local dev)
    */
   private async getIdentityToken(): Promise<string | null> {
-    // First try: GoogleAuth (works with service accounts and ADC)
+    // First try: JWT with service account credentials (most reliable for Render)
+    // This directly uses the private key to sign an ID token request
+    if (this.serviceAccountCredentials) {
+      try {
+        const jwtClient = new JWT({
+          email: this.serviceAccountCredentials.client_email,
+          key: this.serviceAccountCredentials.private_key,
+        });
+        const idToken = await jwtClient.fetchIdToken(CONCIERGE_AGENT_URL);
+        if (idToken) {
+          logger.info('[VertexAgent] Got identity token via JWT (service account)');
+          return idToken;
+        }
+        logger.warn('[VertexAgent] JWT.fetchIdToken returned empty token');
+      } catch (e) {
+        logger.warn(
+          { error: e instanceof Error ? e.message : String(e) },
+          '[VertexAgent] JWT fetchIdToken failed'
+        );
+      }
+    }
+
+    // Second try: GoogleAuth (works with ADC on GCP)
     try {
       const client = await this.auth.getIdTokenClient(CONCIERGE_AGENT_URL);
       const headers = await client.getRequestHeaders();
@@ -426,7 +453,7 @@ export class VertexAgentService {
       );
     }
 
-    // Second try: gcloud CLI (works with user credentials locally)
+    // Third try: gcloud CLI (works with user credentials locally)
     try {
       const { execSync } = await import('child_process');
       const token = execSync('gcloud auth print-identity-token', {
