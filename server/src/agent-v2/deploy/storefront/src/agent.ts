@@ -27,6 +27,18 @@ import { z } from 'zod';
 // =============================================================================
 
 /**
+ * INTENTIONAL DUPLICATION: This logger and fetchWithTimeout are duplicated
+ * across agent deployments (concierge, storefront) by design.
+ *
+ * Rationale: Each agent deploys as a standalone Cloud Run service with
+ * no shared dependencies. This keeps deployments simple and isolated.
+ *
+ * If you need to update this code, update it in ALL agent files:
+ * - concierge/src/agent.ts
+ * - storefront/src/agent.ts
+ */
+
+/**
  * Lightweight structured logger for Cloud Run agents
  * Outputs JSON for easy parsing in Cloud Logging
  */
@@ -268,6 +280,9 @@ const TIMEOUTS = {
 } as const;
 
 /**
+ * INTENTIONAL DUPLICATION: See comment above logger for rationale.
+ * If updating this function, update it in ALL agent files.
+ *
  * Fetch with timeout using AbortController
  */
 async function fetchWithTimeout(

@@ -217,6 +217,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 50. Module-level cache unbounded - `new Map()` at module level grows forever; add TTL (30 min) and max size (1000)
 51. FunctionTool API mismatch - ADK uses `parameters`/`execute` not `inputSchema`/`func`; LlmAgent uses `generateContentConfig` not `config`; execute context is `ToolContext | undefined` not `ToolContext`
 52. Tool confirmation-only response - Tools that modify state must return updated state, not just `{success: true}`; agent loses context and asks redundant questions
+53. Discovery facts dual-source - `/store-discovery-fact` stores directly in `tenant.branding.discoveryFacts` JSON, bypassing OnboardingEvent table (intentional tech debt for shipping speed); bootstrap merges both sources with branding taking precedence over event-sourced facts
 
 ## Prevention Strategies
 

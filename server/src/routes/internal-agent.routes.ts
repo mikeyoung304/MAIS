@@ -13,6 +13,7 @@
  * - POST /v1/internal/agent/bootstrap - Get session context (tenant, onboarding state, discovery data)
  * - POST /v1/internal/agent/complete-onboarding - Mark onboarding as complete
  * - POST /v1/internal/agent/store-discovery-fact - Store a fact learned during onboarding
+ * - POST /v1/internal/agent/get-discovery-facts - Get all stored discovery facts for a tenant
  *
  * BOOKING AGENT Endpoints:
  * - POST /v1/internal/agent/services - Get all services for a tenant
@@ -35,15 +36,12 @@
  * - POST /v1/internal/agent/storefront/preview - Get preview URL
  * - POST /v1/internal/agent/storefront/publish - Publish draft to live
  * - POST /v1/internal/agent/storefront/discard - Discard draft changes
- *
- * RESEARCH AGENT Endpoints:
- * - POST /v1/internal/agent/research/search-competitors - Search for competitors
- * - POST /v1/internal/agent/research/scrape-competitor - Scrape competitor website
  */
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import { z, ZodError } from 'zod';
+import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
 import type { CatalogService } from '../services/catalog.service';
 import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';
@@ -175,22 +173,6 @@ const UpdateBrandingSchema = TenantIdSchema.extend({
 });
 
 // =============================================================================
-// Research Agent Schemas
-// =============================================================================
-
-const SearchCompetitorsSchema = TenantIdSchema.extend({
-  location: z.string().min(1, 'location is required'),
-  industry: z.string().min(1, 'industry is required'),
-  maxResults: z.number().default(10),
-});
-
-const ScrapeCompetitorSchema = TenantIdSchema.extend({
-  url: z.string().url('Valid URL is required'),
-  extractPricing: z.boolean().default(true),
-  extractServices: z.boolean().default(true),
-});
-
-// =============================================================================
 // Route Factory
 // =============================================================================
 
@@ -260,24 +242,22 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   router.use(verifyInternalSecret);
 
   // ===========================================================================
-  // BOOTSTRAP CACHE - 30-minute TTL, 1000 max entries
+  // BOOTSTRAP CACHE - LRU with 30-minute TTL, 1000 max entries
   // ===========================================================================
 
-  interface CachedBootstrap {
-    data: {
-      tenantId: string;
-      businessName: string;
-      industry: string | null;
-      tier: string;
-      onboardingDone: boolean;
-      discoveryData: Record<string, unknown> | null;
-    };
-    expiresAt: number;
+  interface BootstrapData {
+    tenantId: string;
+    businessName: string;
+    industry: string | null;
+    tier: string;
+    onboardingDone: boolean;
+    discoveryData: Record<string, unknown> | null;
   }
 
-  const bootstrapCache = new Map<string, CachedBootstrap>();
-  const BOOTSTRAP_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-  const BOOTSTRAP_CACHE_MAX_SIZE = 1000;
+  const bootstrapCache = new LRUCache<string, BootstrapData>({
+    max: 1000,
+    ttl: 30 * 60 * 1000, // 30 minutes
+  });
 
   /**
    * Invalidate bootstrap cache for a tenant.
@@ -298,11 +278,11 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
 
       logger.info({ tenantId, endpoint: '/bootstrap' }, '[Agent] Bootstrap request');
 
-      // Check cache first
+      // Check cache first (LRU handles TTL automatically)
       const cached = bootstrapCache.get(tenantId);
-      if (cached && cached.expiresAt > Date.now()) {
+      if (cached) {
         logger.info({ tenantId, cached: true }, '[Agent] Bootstrap cache hit');
-        res.json(cached.data);
+        res.json(cached);
         return;
       }
 
@@ -364,18 +344,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         discoveryData: mergedDiscoveryData,
       };
 
-      // Cache with TTL (enforce max size)
-      if (bootstrapCache.size >= BOOTSTRAP_CACHE_MAX_SIZE) {
-        // Remove oldest entry (first key in Map iteration order)
-        const oldestKey = bootstrapCache.keys().next().value;
-        if (oldestKey) {
-          bootstrapCache.delete(oldestKey);
-        }
-      }
-      bootstrapCache.set(tenantId, {
-        data: bootstrapResponse,
-        expiresAt: Date.now() + BOOTSTRAP_CACHE_TTL_MS,
-      });
+      // Cache response (LRU handles max size and TTL automatically)
+      bootstrapCache.set(tenantId, bootstrapResponse);
 
       logger.info(
         { tenantId, onboardingDone: bootstrapResponse.onboardingDone, cached: false },
@@ -409,6 +379,28 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Completing onboarding'
       );
 
+      // Fetch tenant to check current state (optimistic locking)
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Check if already completed (idempotent response)
+      if (tenant.onboardingPhase === 'COMPLETED') {
+        logger.info(
+          { tenantId, endpoint: '/complete-onboarding' },
+          '[Agent] Onboarding already completed - returning idempotent response'
+        );
+        res.json({
+          success: true,
+          wasAlreadyComplete: true,
+          message: 'Onboarding was already completed',
+          completedAt: tenant.onboardingCompletedAt?.toISOString() || null,
+        });
+        return;
+      }
+
       // Validate prerequisites: at least one package must exist
       const packages = await catalogService.getAllPackages(tenantId);
       if (packages.length === 0) {
@@ -427,9 +419,10 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Update tenant onboarding phase
+      const completedAt = new Date();
       await tenantRepo.update(tenantId, {
         onboardingPhase: 'COMPLETED',
-        onboardingCompletedAt: new Date(),
+        onboardingCompletedAt: completedAt,
       });
 
       // Invalidate bootstrap cache so next request gets fresh data
@@ -437,10 +430,11 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
 
       res.json({
         success: true,
+        wasAlreadyComplete: false,
         message: publishedUrl
           ? `Onboarding complete! Live at ${publishedUrl}`
           : 'Onboarding marked as complete.',
-        completedAt: new Date().toISOString(),
+        completedAt: completedAt.toISOString(),
         ...(packagesCreated !== undefined && { packagesCreated }),
         ...(summary && { summary }),
       });
@@ -529,6 +523,44 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       });
     } catch (error) {
       handleError(res, error, '/store-discovery-fact');
+    }
+  });
+
+  // ===========================================================================
+  // POST /get-discovery-facts - Get all stored discovery facts for a tenant
+  // Called by Concierge to check what it knows without re-bootstrapping
+  // ===========================================================================
+
+  router.post('/get-discovery-facts', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, endpoint: '/get-discovery-facts' },
+        '[Agent] Fetching discovery facts'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Extract discovery facts from branding
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
+      const factKeys = Object.keys(discoveryFacts);
+
+      res.json({
+        success: true,
+        facts: discoveryFacts,
+        factCount: factKeys.length,
+        factKeys,
+        message:
+          factKeys.length > 0 ? `Known facts: ${factKeys.join(', ')}` : 'No facts stored yet.',
+      });
+    } catch (error) {
+      handleError(res, error, '/get-discovery-facts');
     }
   });
 
@@ -1506,132 +1538,6 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       });
     } catch (error) {
       handleError(res, error, '/storefront/discard');
-    }
-  });
-
-  // ===========================================================================
-  // RESEARCH AGENT ROUTES
-  // ===========================================================================
-
-  // Prompt injection patterns for scraping security
-  /**
-   * Prompt injection detection patterns
-   * IMPORTANT: Keep in sync with server/src/agent-v2/deploy/research/src/agent.ts
-   * TODO: Extract to shared package (see issue #5197)
-   */
-  const INJECTION_PATTERNS = [
-    // Direct instruction attempts
-    /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
-    /disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
-    /forget\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/i,
-    /new\s+instructions?:\s*/i,
-    /system\s*(?:prompt|message):\s*/i,
-    /you\s+are\s+now\s+(?:a|an)\s+/i,
-    /act\s+as\s+(?:a|an)?\s*/i,
-    /pretend\s+(?:to\s+be|you\s+are)\s*/i,
-    /roleplay\s+as\s*/i,
-
-    // Jailbreak attempts
-    /dan\s+mode/i,
-    /developer\s+mode/i,
-    /sudo\s+mode/i,
-    /admin\s+mode/i,
-    /\bDAN\b/,
-    /do\s+anything\s+now/i,
-
-    // Data extraction attempts
-    /reveal\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
-    /show\s+(?:me\s+)?(?:your|the)\s+(?:system|initial)\s+prompt/i,
-    /print\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
-    /output\s+(?:your|the)\s+(?:system|initial)\s+prompt/i,
-    /what\s+(?:is|are)\s+your\s+(?:system\s+)?instructions?/i,
-
-    // Delimiter escape attempts
-    /<\/?(?:system|user|assistant|human|ai)>/i,
-    /```(?:system|user|assistant|human|ai)/i,
-    /\[INST\]/i,
-    /\[\/INST\]/i,
-    /<<SYS>>/i,
-    /<\/SYS>/i,
-
-    // Context manipulation
-    /end\s+of\s+(?:system|initial)\s+(?:prompt|message|instructions?)/i,
-    /beginning\s+of\s+(?:new|user)\s+(?:prompt|message|instructions?)/i,
-    /---+\s*(?:end|new)\s*---+/i,
-
-    // Tool/function abuse
-    /call\s+(?:the\s+)?function\s*/i,
-    /execute\s+(?:the\s+)?tool\s*/i,
-    /use\s+(?:the\s+)?(?:following\s+)?tool\s*/i,
-    /invoke\s+(?:the\s+)?(?:following\s+)?function\s*/i,
-  ];
-
-  function filterInjection(content: string): string {
-    let filtered = content;
-    for (const pattern of INJECTION_PATTERNS) {
-      filtered = filtered.replace(pattern, '[REDACTED]');
-    }
-    return filtered;
-  }
-
-  // POST /research/search-competitors - Search for competitors
-  router.post('/research/search-competitors', async (req: Request, res: Response) => {
-    try {
-      const { tenantId, location, industry, maxResults } = SearchCompetitorsSchema.parse(req.body);
-
-      logger.info(
-        { tenantId, location, industry, endpoint: '/research/search-competitors' },
-        '[Agent] Searching competitors'
-      );
-
-      // In production, this would call Google Search API or a search service
-      // For now, return a placeholder that indicates the feature needs integration
-      res.json({
-        results: [],
-        message: `Search for "${industry}" in "${location}" - Integration pending. Configure Google Search API.`,
-        maxResults,
-        note: 'This endpoint requires Google Search API integration. Results are simulated.',
-        integration: {
-          required: 'GOOGLE_SEARCH_API_KEY',
-          documentation: 'https://developers.google.com/custom-search/v1/overview',
-        },
-      });
-    } catch (error) {
-      handleError(res, error, '/research/search-competitors');
-    }
-  });
-
-  // POST /research/scrape-competitor - Scrape competitor website
-  router.post('/research/scrape-competitor', async (req: Request, res: Response) => {
-    try {
-      const { tenantId, url, extractPricing, extractServices } = ScrapeCompetitorSchema.parse(
-        req.body
-      );
-
-      logger.info(
-        { tenantId, url, endpoint: '/research/scrape-competitor' },
-        '[Agent] Scraping competitor'
-      );
-
-      // In production, this would use a web scraping service (Puppeteer, Playwright, etc.)
-      // For now, return a placeholder that indicates the feature needs integration
-      res.json({
-        url,
-        success: false,
-        message: 'Web scraping integration pending. Configure scraping service.',
-        rawContent: null,
-        extractedData: {
-          pricing: extractPricing ? null : undefined,
-          services: extractServices ? null : undefined,
-        },
-        note: 'This endpoint requires web scraping integration. Content would be filtered for security.',
-        integration: {
-          options: ['Puppeteer', 'Playwright', 'Firecrawl', 'Browserless'],
-          securityNote: 'All scraped content is filtered for prompt injection attacks.',
-        },
-      });
-    } catch (error) {
-      handleError(res, error, '/research/scrape-competitor');
     }
   });
 

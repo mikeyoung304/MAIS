@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5210'
 tags: [code-review, session-bootstrap, performance, cache]
@@ -79,14 +79,15 @@ const bootstrapCache = new LRU<string, CachedBootstrap>({
 
 ## Acceptance Criteria
 
-- [ ] Cache uses LRU eviction OR FIFO behavior is documented and accepted
+- [x] Cache uses LRU eviction OR FIFO behavior is documented and accepted
 - [ ] Cache metrics added for monitoring (nice-to-have)
 
 ## Work Log
 
-| Date       | Action                         | Learnings                                |
-| ---------- | ------------------------------ | ---------------------------------------- |
-| 2026-01-20 | Created from /workflows:review | Multiple reviewers noted FIFO limitation |
+| Date       | Action                         | Learnings                                            |
+| ---------- | ------------------------------ | ---------------------------------------------------- |
+| 2026-01-20 | Created from /workflows:review | Multiple reviewers noted FIFO limitation             |
+| 2026-01-20 | Implemented Option B           | Replaced Map with lru-cache for proper LRU semantics |
 
 ## Resources
 

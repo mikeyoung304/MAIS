@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5213'
 tags: [code-review, session-bootstrap, dead-code, simplicity, concierge]

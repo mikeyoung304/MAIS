@@ -1309,6 +1309,58 @@ Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}`,
 });
 
 /**
+ * Get Known Facts Tool
+ *
+ * Read-only access to what you know. Call this to check what facts you've
+ * already stored before asking redundant questions.
+ */
+const getKnownFactsTool = new FunctionTool({
+  name: 'get_known_facts',
+  description: `Get the current list of known facts about the business. Use this to check what you already know before asking questions.
+
+Call this when:
+- Starting a conversation to see what you've learned before
+- Before asking about business details (you might already know)
+- To confirm what information you have stored
+
+Returns: All stored facts with their values, plus a summary of what you know.`,
+  parameters: z.object({}),
+  execute: async (_params, context) => {
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return { error: 'No tenant context available' };
+    }
+
+    logger.info({}, `[Concierge] get_known_facts for: ${tenantId}`);
+    const result = await callMaisApi('/get-discovery-facts', tenantId);
+
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.error,
+        suggestion: 'Could not retrieve facts. Continue the conversation normally.',
+      };
+    }
+
+    const responseData = result.data as {
+      success: boolean;
+      facts: Record<string, unknown>;
+      factCount: number;
+      factKeys: string[];
+      message: string;
+    };
+
+    return {
+      success: true,
+      facts: responseData.facts,
+      factCount: responseData.factCount,
+      factKeys: responseData.factKeys,
+      message: responseData.message,
+    };
+  },
+});
+
+/**
  * Complete Onboarding Tool
  *
  * Call this AFTER the user publishes their storefront to mark onboarding complete.
@@ -1404,6 +1456,7 @@ export const conciergeAgent = new LlmAgent({
     // Bootstrap & Onboarding (ALWAYS call bootstrap_session first)
     bootstrapSessionTool,
     storeDiscoveryFactTool,
+    getKnownFactsTool,
     completeOnboardingTool,
 
     // Context tools (T1)

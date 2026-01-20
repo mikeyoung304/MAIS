@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5214'
 tags: [code-review, session-bootstrap, agent-native, concierge, active-memory]
