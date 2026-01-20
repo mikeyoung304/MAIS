@@ -42,15 +42,16 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 ### Architecture & Patterns
 
-| Problem                                | Prevention Strategy                                                                                                                            | Audience                 |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Multi-segment storefront UX            | [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md)                          | Frontend developers      |
-| Segment storefront quick reference     | [SEGMENT_FIRST_QUICK_REFERENCE.md](patterns/SEGMENT_FIRST_QUICK_REFERENCE.md)                                                                  | Frontend developers      |
-| AI agent proposal execution missing    | [chatbot-proposal-execution-flow-MAIS-20251229.md](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)                              | Backend/Agent developers |
-| Circular dependencies in agent modules | [circular-dependency-executor-registry-MAIS-20251229.md](patterns/circular-dependency-executor-registry-MAIS-20251229.md)                      | Backend developers       |
-| Next.js App Router migration pitfalls  | [nextjs-migration-lessons-learned-MAIS-20251225.md](code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)                    | Frontend developers      |
-| Vercel deployment with npm workspaces  | [vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md](deployment-issues/vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md) | DevOps / Frontend        |
-| Critical patterns checklist            | [mais-critical-patterns.md](patterns/mais-critical-patterns.md)                                                                                | All developers           |
+| Problem                                 | Prevention Strategy                                                                                                                            | Audience                 |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Multi-segment storefront UX             | [SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md](patterns/SEGMENT_FIRST_STOREFRONT_UX_PATTERN-MAIS-20260108.md)                          | Frontend developers      |
+| Segment storefront quick reference      | [SEGMENT_FIRST_QUICK_REFERENCE.md](patterns/SEGMENT_FIRST_QUICK_REFERENCE.md)                                                                  | Frontend developers      |
+| ADK FunctionTool TypeScript type safety | [ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md](patterns/ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md)                                                | Backend/Agent developers |
+| AI agent proposal execution missing     | [chatbot-proposal-execution-flow-MAIS-20251229.md](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md)                              | Backend/Agent developers |
+| Circular dependencies in agent modules  | [circular-dependency-executor-registry-MAIS-20251229.md](patterns/circular-dependency-executor-registry-MAIS-20251229.md)                      | Backend developers       |
+| Next.js App Router migration pitfalls   | [nextjs-migration-lessons-learned-MAIS-20251225.md](code-review-patterns/nextjs-migration-lessons-learned-MAIS-20251225.md)                    | Frontend developers      |
+| Vercel deployment with npm workspaces   | [vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md](deployment-issues/vercel-nextjs-npm-workspaces-root-directory-MAIS-20251226.md) | DevOps / Frontend        |
+| Critical patterns checklist             | [mais-critical-patterns.md](patterns/mais-critical-patterns.md)                                                                                | All developers           |
 
 ---
 
@@ -88,6 +89,7 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 **Should Read:**
 
+- [ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md](patterns/ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md) - TypeScript safety in ADK agents
 - [circular-dependency-executor-registry-MAIS-20251229.md](patterns/circular-dependency-executor-registry-MAIS-20251229.md) - Registry pattern for agent modules
 - [database-client-mismatch-MAIS-20251204.md](database-issues/database-client-mismatch-MAIS-20251204.md) - DB/client version issues
 - [cascading-entity-type-errors-MAIS-20251204.md](logic-errors/cascading-entity-type-errors-MAIS-20251204.md) - Type safety
@@ -103,6 +105,7 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 **Should Have:**
 
+- [ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md](patterns/ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md) - Reviewing ADK agent code
 - [chatbot-proposal-execution-flow-MAIS-20251229.md](logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md) - Agent feature review
 - [any-types-quick-reference-MAIS-20251204.md](best-practices/any-types-quick-reference-MAIS-20251204.md) - TypeScript reviews
 - [auth-form-accessibility-checklist.md](patterns/auth-form-accessibility-checklist-MAIS-20251230.md) - Auth page reviews
@@ -348,10 +351,11 @@ These are reference docs, not prevention strategies. Prevention strategies teach
 
 ## Last Updated
 
-2026-01-05 - Added Six Critical Prevention Strategies (console.log stubs, prop mismatches, executor gaps, timeouts, dynamic Tailwind, incomplete shipping)
+2026-01-19 - Added ADK FunctionTool TypeScript Safety Prevention (context typing, state casting, property names)
 
 Previous updates:
 
+- 2026-01-05: Added Six Critical Prevention Strategies (console.log stubs, prop mismatches, executor gaps, timeouts, dynamic Tailwind, incomplete shipping)
 - 2026-01-05: Added Service Worker caching solution for stale JS bundles
 - 2025-12-30: Added Next.js Client API Proxy prevention strategies
 - 2025-12-29: Added agent execution & circular dependency patterns
