@@ -15,6 +15,8 @@
 
 import { LlmAgent, FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
+import { buildOnboardingPrompt } from './prompts/onboarding';
+import { needsOnboarding, buildOnboardingContext, type BootstrapResponse } from './onboarding-mode';
 
 // =============================================================================
 // STRUCTURED LOGGER
@@ -90,6 +92,29 @@ You are the HANDLED Concierge - a terse, cheeky, anti-corporate assistant who kn
 - **Confident**: You're good at this. Don't hedge. "Try this" not "Perhaps you might consider maybe trying this?"
 - **Moves Forward**: When something fails, fix it and move on. Don't dwell.
 
+## FIRST ACTION: Bootstrap Check
+
+ALWAYS call bootstrap_session FIRST in any new conversation. This tells you:
+- Who you're talking to (tenant, business name, tier)
+- Whether they need onboarding (isOnboarding flag)
+- What you already know about them (knownFacts, discoveryData)
+- A greeting if they're returning (resumeGreeting)
+- The full onboarding prompt if active (onboardingPrompt)
+
+If isOnboarding is TRUE → Follow the onboardingPrompt instructions carefully.
+If isOnboarding is FALSE → Proceed with normal routing below.
+
+### Onboarding Mode Behavior
+
+When isOnboarding is true, your mission changes:
+- **Goal**: Get them to a live storefront in 15-20 minutes
+- **Pattern**: "Generate, Then Ask" - draft complete content, ask "what feels off?"
+- **Memory**: Call store_discovery_fact when you learn business details
+- **Completion**: Call complete_onboarding AFTER they publish
+
+Do NOT ask checklist questions. Listen, extract facts as they talk, fill gaps naturally.
+Generate complete drafts using delegate_to_storefront, then refine based on feedback.
+
 ## Decision Tree (BEFORE ANY ACTION)
 
 \`\`\`
@@ -103,9 +128,14 @@ User Request Received
 │  → Use get_* tools directly
 │  → Do NOT delegate to specialists
 │
-├─ Does this require COPY/TEXT generation?
-│  → Delegate to MARKETING_SPECIALIST
-│  → Wait for response → Show in preview
+├─ Does user provide SPECIFIC TEXT to use? ("Change X to 'Y'", "Set headline to 'Z'")
+│  → Delegate to STOREFRONT_SPECIALIST (they're updating content, not generating)
+│  → Include the exact text they provided
+│  → Wait for response → Confirm the update
+│
+├─ Does this require COPY/TEXT generation? ("Write me...", "Suggest...", "Improve my...")
+│  → Delegate to MARKETING_SPECIALIST (generate NEW copy)
+│  → Wait for response → Show options in preview
 │
 ├─ Does this require MARKET RESEARCH?
 │  → Delegate to RESEARCH_SPECIALIST
@@ -116,7 +146,7 @@ User Request Received
 │  → "For images and videos, please upload them directly in the dashboard."
 │  → "Want me to help with the text content instead?"
 │
-├─ Does this require LAYOUT/STRUCTURE changes?
+├─ Does this require LAYOUT/STRUCTURE changes? (add section, remove, reorder)
 │  → Delegate to STOREFRONT_SPECIALIST
 │  → Wait for response → Show in preview
 │
@@ -124,6 +154,21 @@ User Request Received
    → Ask ONE clarifying question
    → Do NOT guess and delegate
 \`\`\`
+
+## CRITICAL: Content Update vs Content Generation
+
+**CONTENT UPDATE** (→ Storefront):
+- "Change the headline to 'Welcome to My Business'"  ← User provides exact text
+- "Set the tagline to 'Your trusted partner'"  ← User provides exact text
+- "Update the about section with: [text]"  ← User provides exact text
+
+**CONTENT GENERATION** (→ Marketing):
+- "Write me better headlines"  ← User wants suggestions
+- "Improve my tagline"  ← User wants new options
+- "Make the about section more engaging"  ← User wants rewrites
+
+When user gives you the EXACT TEXT they want → STOREFRONT (update)
+When user asks you to CREATE new text → MARKETING (generate)
 
 ## Delegation Protocol
 
@@ -180,6 +225,11 @@ Never acknowledge a request without actually executing it via tool call.
 ❌ Fabricate content without calling the appropriate tool
 
 ## Correct Behavior
+
+User: "Change the headline to 'Welcome to My Amazing Business'"
+→ Your FIRST action: Call delegate_to_storefront(task="update_section", pageName="home", content={headline: "Welcome to My Amazing Business"})
+→ Wait for tool result confirming the update
+→ Then respond: "Done. Check your preview - headline's updated."
 
 User: "Write me better headlines"
 → Your FIRST action: Call delegate_to_marketing(task="headline", context="homepage hero", tone="warm")
@@ -495,9 +545,9 @@ async function callSpecialistAgent(
     // CRITICAL: ADK uses camelCase for all A2A protocol parameters
     logger.info({}, `[Concierge] Sending message to ${agentName}, session: ${specialistSessionId}`);
 
-    // Use longer timeout for research agent (web scraping)
+    // Use longer timeout for research agent (web scraping) - check URL since all agents use appName='agent'
     const timeout =
-      agentName === 'research_specialist'
+      agentUrl === SPECIALIST_URLS.research
         ? TIMEOUTS.SPECIALIST_RESEARCH
         : TIMEOUTS.SPECIALIST_DEFAULT;
 
@@ -538,7 +588,7 @@ async function callSpecialistAgent(
         const newSessionId = await getOrCreateSpecialistSession(agentUrl, agentName, tenantId);
         if (newSessionId) {
           const retryTimeout =
-            agentName === 'research_specialist'
+            agentUrl === SPECIALIST_URLS.research
               ? TIMEOUTS.SPECIALIST_RESEARCH
               : TIMEOUTS.SPECIALIST_DEFAULT;
 
@@ -791,7 +841,7 @@ const delegateToMarketingTool = new FunctionTool({
 
     const result = await callSpecialistAgent(
       SPECIALIST_URLS.marketing,
-      'marketing_specialist',
+      'agent',
       message,
       tenantId,
       sessionId
@@ -805,7 +855,7 @@ const delegateToMarketingTool = new FunctionTool({
         const simpleMessage = `Generate a ${params.task} for ${params.context}. Keep it simple.`;
         const retryResult = await callSpecialistAgent(
           SPECIALIST_URLS.marketing,
-          'marketing_specialist',
+          'agent',
           simpleMessage,
           tenantId,
           sessionId
@@ -814,7 +864,7 @@ const delegateToMarketingTool = new FunctionTool({
           clearRetry(taskKey);
           return {
             success: true,
-            specialist: 'marketing',
+            specialist: 'agent',
             task: params.task,
             result: retryResult.response,
             note: 'Recovered with simplified request',
@@ -832,7 +882,7 @@ const delegateToMarketingTool = new FunctionTool({
     clearRetry(taskKey);
     return {
       success: true,
-      specialist: 'marketing',
+      specialist: 'agent',
       task: params.task,
       result: result.response,
     };
@@ -864,7 +914,7 @@ const delegateToStorefrontTool = new FunctionTool({
 
     const result = await callSpecialistAgent(
       SPECIALIST_URLS.storefront,
-      'storefront_specialist',
+      'agent',
       message,
       tenantId,
       sessionId
@@ -875,7 +925,7 @@ const delegateToStorefrontTool = new FunctionTool({
         logger.info({}, `[Concierge] Retrying storefront task: ${params.task}`);
         const retryResult = await callSpecialistAgent(
           SPECIALIST_URLS.storefront,
-          'storefront_specialist',
+          'agent',
           `Simple ${params.task} on ${params.pageName || 'home'} page`,
           tenantId,
           sessionId
@@ -884,7 +934,7 @@ const delegateToStorefrontTool = new FunctionTool({
           clearRetry(taskKey);
           return {
             success: true,
-            specialist: 'storefront',
+            specialist: 'agent',
             task: params.task,
             result: retryResult.response,
           };
@@ -901,7 +951,7 @@ const delegateToStorefrontTool = new FunctionTool({
     clearRetry(taskKey);
     return {
       success: true,
-      specialist: 'storefront',
+      specialist: 'agent',
       task: params.task,
       result: result.response,
     };
@@ -933,7 +983,7 @@ const delegateToResearchTool = new FunctionTool({
 
     const result = await callSpecialistAgent(
       SPECIALIST_URLS.research,
-      'research_specialist',
+      'agent',
       message,
       tenantId,
       sessionId
@@ -946,7 +996,7 @@ const delegateToResearchTool = new FunctionTool({
         const simpleMessage = `Research ${params.task} in ${params.industry || 'general'} ${params.location ? `in ${params.location}` : ''}`;
         const retryResult = await callSpecialistAgent(
           SPECIALIST_URLS.research,
-          'research_specialist',
+          'agent',
           simpleMessage,
           tenantId,
           sessionId
@@ -955,7 +1005,7 @@ const delegateToResearchTool = new FunctionTool({
           clearRetry(taskKey);
           return {
             success: true,
-            specialist: 'research',
+            specialist: 'agent',
             task: params.task,
             result: retryResult.response,
             note: 'Used simplified search',
@@ -973,7 +1023,7 @@ const delegateToResearchTool = new FunctionTool({
     clearRetry(taskKey);
     return {
       success: true,
-      specialist: 'research',
+      specialist: 'agent',
       task: params.task,
       result: result.response,
     };
@@ -1116,6 +1166,193 @@ const discardDraftTool = new FunctionTool({
 });
 
 // =============================================================================
+// ONBOARDING TOOLS
+// =============================================================================
+
+/**
+ * Bootstrap Session Tool
+ *
+ * ALWAYS call this FIRST in a new session to get tenant context and
+ * determine if onboarding mode is active.
+ *
+ * Returns:
+ * - tenantId, businessName, industry, tier
+ * - onboardingDone: boolean - if false, enter onboarding mode
+ * - discoveryData: facts already known about the business
+ * - isOnboarding: boolean shorthand
+ * - resumeGreeting: personalized greeting for returning users
+ */
+const bootstrapSessionTool = new FunctionTool({
+  name: 'bootstrap_session',
+  description: `Get session context and onboarding status. ALWAYS call this FIRST in a new conversation.
+
+Returns tenant context, onboarding state, and any known facts about the business.
+If onboardingDone is false, switch to onboarding mode - help them build their storefront.`,
+  parameters: z.object({}),
+  execute: async (_params, context) => {
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return { error: 'No tenant context available' };
+    }
+
+    logger.info({}, `[Concierge] bootstrap_session for: ${tenantId}`);
+    const result = await callMaisApi('/bootstrap', tenantId);
+
+    if (!result.ok) {
+      return {
+        error: result.error,
+        fallback: {
+          tenantId,
+          businessName: 'Unknown',
+          onboardingDone: true, // Assume done on error to avoid getting stuck
+          isOnboarding: false,
+        },
+      };
+    }
+
+    const bootstrap = result.data as BootstrapResponse;
+    const isOnboarding = needsOnboarding(bootstrap);
+    const onboardingContext = buildOnboardingContext(bootstrap);
+
+    return {
+      tenantId: bootstrap.tenantId,
+      businessName: bootstrap.businessName,
+      industry: bootstrap.industry,
+      tier: bootstrap.tier,
+      onboardingDone: bootstrap.onboardingDone,
+      isOnboarding,
+      discoveryData: bootstrap.discoveryData,
+      resumeGreeting: onboardingContext.resumeGreeting,
+      progressSummary: onboardingContext.progressSummary,
+      knownFacts: onboardingContext.knownFacts,
+      onboardingPrompt: isOnboarding
+        ? buildOnboardingPrompt(onboardingContext.resumeGreeting, onboardingContext.knownFacts)
+        : null,
+    };
+  },
+});
+
+/**
+ * Store Discovery Fact Tool
+ *
+ * Active memory management - call this when you learn something important
+ * about the business during conversation.
+ */
+const DISCOVERY_FACT_KEYS = [
+  'businessType',
+  'businessName',
+  'location',
+  'targetMarket',
+  'priceRange',
+  'yearsInBusiness',
+  'teamSize',
+  'uniqueValue',
+  'servicesOffered',
+] as const;
+
+const storeDiscoveryFactTool = new FunctionTool({
+  name: 'store_discovery_fact',
+  description: `Store a fact about the business. Call when you learn something important.
+
+Examples:
+- User says "I'm a wedding photographer" → store_discovery_fact(key: "businessType", value: "wedding photographer")
+- User says "I'm based in Austin" → store_discovery_fact(key: "location", value: {city: "Austin", state: "TX"})
+- User says "I've been doing this for 5 years" → store_discovery_fact(key: "yearsInBusiness", value: 5)
+
+Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}`,
+  parameters: z.object({
+    key: z.enum(DISCOVERY_FACT_KEYS).describe('The type of fact being stored'),
+    value: z.unknown().describe('The value to store'),
+  }),
+  execute: async (params, context) => {
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return { error: 'No tenant context available' };
+    }
+
+    logger.info({ key: params.key }, `[Concierge] store_discovery_fact for: ${tenantId}`);
+    const result = await callMaisApi('/store-discovery-fact', tenantId, {
+      key: params.key,
+      value: params.value,
+    });
+
+    if (!result.ok) {
+      return {
+        stored: false,
+        error: result.error,
+        suggestion: 'Fact not stored, but you can continue the conversation.',
+      };
+    }
+
+    return {
+      stored: true,
+      key: params.key,
+      message: `Got it! I'll remember that.`,
+    };
+  },
+});
+
+/**
+ * Complete Onboarding Tool
+ *
+ * Call this AFTER the user publishes their storefront to mark onboarding complete.
+ * This is a T3 action - requires user confirmation.
+ */
+const completeOnboardingTool = new FunctionTool({
+  name: 'complete_onboarding',
+  description: `Mark onboarding as complete. Call AFTER the user publishes their storefront.
+
+Requirements:
+1. User created at least one service package
+2. User published their storefront (not just previewed)
+3. You have a live URL to provide
+
+This is a T3 action - only call after user explicitly confirms they want to publish.`,
+  parameters: z.object({
+    publishedUrl: z.string().describe('The live storefront URL'),
+    packagesCreated: z.number().describe('Number of packages created'),
+    summary: z.string().describe('Brief summary of what was set up'),
+  }),
+  execute: async (params, context) => {
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return { error: 'No tenant context available' };
+    }
+
+    logger.info(
+      { publishedUrl: params.publishedUrl, packagesCreated: params.packagesCreated },
+      `[Concierge] complete_onboarding for: ${tenantId}`
+    );
+
+    const result = await callMaisApi('/complete-onboarding', tenantId, {
+      publishedUrl: params.publishedUrl,
+      packagesCreated: params.packagesCreated,
+      summary: params.summary,
+    });
+
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.error,
+        suggestion: 'Could not mark onboarding as complete. Try again in a moment.',
+      };
+    }
+
+    return {
+      success: true,
+      message: `Congratulations! Your storefront is live at ${params.publishedUrl}`,
+      packagesCreated: params.packagesCreated,
+      summary: params.summary,
+      nextSteps: [
+        'Share your link with clients',
+        'Ask me to help with marketing copy',
+        'Set up email notifications for bookings',
+      ],
+    };
+  },
+});
+
+// =============================================================================
 // CONCIERGE ORCHESTRATOR AGENT
 // =============================================================================
 
@@ -1124,6 +1361,10 @@ const discardDraftTool = new FunctionTool({
  *
  * The hub agent that routes requests to specialist agents.
  * Uses high thinking level for accurate intent classification and routing.
+ *
+ * Modes:
+ * - Normal mode: Routes to specialists, handles general queries
+ * - Onboarding mode: Goal-based flow to build storefront (detected via bootstrap_session)
  */
 export const conciergeAgent = new LlmAgent({
   name: 'concierge',
@@ -1144,6 +1385,11 @@ export const conciergeAgent = new LlmAgent({
 
   // All available tools
   tools: [
+    // Bootstrap & Onboarding (ALWAYS call bootstrap_session first)
+    bootstrapSessionTool,
+    storeDiscoveryFactTool,
+    completeOnboardingTool,
+
     // Context tools (T1)
     getTenantContextTool,
     getStorefrontStructureTool,

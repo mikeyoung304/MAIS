@@ -51,6 +51,16 @@ export interface UpdateTenantInput {
   tier?: 'FREE' | 'STARTER' | 'PRO';
   aiMessagesUsed?: number;
   aiMessagesResetAt?: Date;
+  // Onboarding state fields (Session Bootstrap Protocol)
+  onboardingPhase?:
+    | 'NOT_STARTED'
+    | 'DISCOVERY'
+    | 'MARKET_RESEARCH'
+    | 'SERVICES'
+    | 'MARKETING'
+    | 'COMPLETED'
+    | 'SKIPPED';
+  onboardingCompletedAt?: Date | null;
 }
 
 /**

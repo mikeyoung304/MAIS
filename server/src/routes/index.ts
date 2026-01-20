@@ -68,6 +68,8 @@ import { registerAllExecutors } from '../agent/executors';
 import { validateExecutorRegistry } from '../agent/proposals/executor-registry';
 import { createPublicCustomerChatRoutes } from './public-customer-chat.routes';
 import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
+import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
+import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
 import { startCleanupScheduler } from '../jobs/cleanup';
 import {
   createPublicBookingManagementRouter,
@@ -755,9 +757,13 @@ export function createV1Router(
 
   // Register internal agent routes (for Vertex AI agent-to-backend communication)
   // Secured with X-Internal-Secret header - agents call these to fetch tenant data
-  // Required services: catalog, booking, tenant repository
+  // Required services: catalog, booking, tenant repository, advisor memory
   if (services) {
     const tenantRepo = new PrismaTenantRepository(prismaClient);
+    // Create advisor memory service for bootstrap endpoint
+    const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prismaClient);
+    const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
+
     const internalAgentRoutes = createInternalAgentRoutes({
       internalApiSecret: config.INTERNAL_API_SECRET,
       catalogService: services.catalog,
@@ -765,6 +771,7 @@ export function createV1Router(
       bookingService: services.booking,
       tenantRepo,
       serviceRepo: repositories?.service,
+      advisorMemoryService,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');

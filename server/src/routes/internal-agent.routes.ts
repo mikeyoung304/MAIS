@@ -2,12 +2,17 @@
  * Internal Agent Routes
  *
  * Protected endpoints for agent-to-backend communication.
- * Called by deployed Vertex AI agents (Booking, Marketing, Storefront, Research) to fetch tenant data.
+ * Called by deployed Vertex AI agents (Booking, Marketing, Storefront, Research, Concierge) to fetch tenant data.
  *
  * Security:
  * - Secured with X-Internal-Secret header (shared secret)
  * - All endpoints require tenantId in request body
  * - All queries are tenant-scoped to prevent data leakage
+ *
+ * CONCIERGE/BOOTSTRAP Endpoints:
+ * - POST /v1/internal/agent/bootstrap - Get session context (tenant, onboarding state, discovery data)
+ * - POST /v1/internal/agent/complete-onboarding - Mark onboarding as complete
+ * - POST /v1/internal/agent/store-discovery-fact - Store a fact learned during onboarding
  *
  * BOOKING AGENT Endpoints:
  * - POST /v1/internal/agent/services - Get all services for a tenant
@@ -45,6 +50,7 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import type { BookingService } from '../services/booking.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ServiceRepository } from '../lib/ports';
+import type { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 
 // =============================================================================
@@ -195,6 +201,7 @@ interface InternalAgentRoutesDeps {
   bookingService: BookingService;
   tenantRepo: PrismaTenantRepository;
   serviceRepo?: ServiceRepository;
+  advisorMemoryService?: AdvisorMemoryService;
 }
 
 /**
@@ -213,6 +220,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     bookingService,
     tenantRepo,
     serviceRepo,
+    advisorMemoryService,
   } = deps;
 
   // ===========================================================================
@@ -250,6 +258,257 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
 
   // Apply auth to all routes
   router.use(verifyInternalSecret);
+
+  // ===========================================================================
+  // BOOTSTRAP CACHE - 30-minute TTL, 1000 max entries
+  // ===========================================================================
+
+  interface CachedBootstrap {
+    data: {
+      tenantId: string;
+      businessName: string;
+      industry: string | null;
+      tier: string;
+      onboardingDone: boolean;
+      discoveryData: Record<string, unknown> | null;
+    };
+    expiresAt: number;
+  }
+
+  const bootstrapCache = new Map<string, CachedBootstrap>();
+  const BOOTSTRAP_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  const BOOTSTRAP_CACHE_MAX_SIZE = 1000;
+
+  /**
+   * Invalidate bootstrap cache for a tenant.
+   * Called after onboarding completion or significant changes.
+   */
+  function invalidateBootstrapCache(tenantId: string): void {
+    bootstrapCache.delete(tenantId);
+  }
+
+  // ===========================================================================
+  // POST /bootstrap - Session context for Concierge agent
+  // Returns tenant context with onboarding state and discovery data
+  // ===========================================================================
+
+  router.post('/bootstrap', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      logger.info({ tenantId, endpoint: '/bootstrap' }, '[Agent] Bootstrap request');
+
+      // Check cache first
+      const cached = bootstrapCache.get(tenantId);
+      if (cached && cached.expiresAt > Date.now()) {
+        logger.info({ tenantId, cached: true }, '[Agent] Bootstrap cache hit');
+        res.json(cached.data);
+        return;
+      }
+
+      // Fetch tenant data
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Get discovery data from advisor memory (if service available)
+      let discoveryData: Record<string, unknown> | null = null;
+      if (advisorMemoryService) {
+        try {
+          const context = await advisorMemoryService.getOnboardingContext(tenantId);
+          if (context.memory?.discoveryData) {
+            // Convert to plain object for JSON serialization
+            discoveryData = {
+              businessType: context.memory.discoveryData.businessType,
+              businessName: context.memory.discoveryData.businessName,
+              location: context.memory.discoveryData.location,
+              targetMarket: context.memory.discoveryData.targetMarket,
+              yearsInBusiness: context.memory.discoveryData.yearsInBusiness,
+              servicesOffered: context.memory.discoveryData.servicesOffered,
+            };
+          }
+        } catch (error) {
+          // Graceful degradation - continue without discovery data
+          logger.warn(
+            { tenantId, error: error instanceof Error ? error.message : String(error) },
+            '[Agent] Failed to fetch advisor memory, continuing without discovery data'
+          );
+        }
+      }
+
+      // Extract branding and discovery facts
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const brandingDiscoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
+
+      // Merge discovery facts from branding into discoveryData (branding takes precedence as it's newer)
+      const mergedDiscoveryData =
+        discoveryData || (Object.keys(brandingDiscoveryFacts).length > 0 ? {} : null);
+      if (mergedDiscoveryData && Object.keys(brandingDiscoveryFacts).length > 0) {
+        Object.assign(mergedDiscoveryData, brandingDiscoveryFacts);
+      }
+
+      // Extract industry from discovery data or branding
+      const industry =
+        (mergedDiscoveryData?.businessType as string) || (branding.industry as string) || null;
+
+      // Build bootstrap response
+      const bootstrapResponse = {
+        tenantId: tenant.id,
+        businessName: tenant.name,
+        industry,
+        tier: tenant.tier || 'FREE',
+        onboardingDone:
+          tenant.onboardingPhase === 'COMPLETED' || tenant.onboardingPhase === 'SKIPPED',
+        discoveryData: mergedDiscoveryData,
+      };
+
+      // Cache with TTL (enforce max size)
+      if (bootstrapCache.size >= BOOTSTRAP_CACHE_MAX_SIZE) {
+        // Remove oldest entry (first key in Map iteration order)
+        const oldestKey = bootstrapCache.keys().next().value;
+        if (oldestKey) {
+          bootstrapCache.delete(oldestKey);
+        }
+      }
+      bootstrapCache.set(tenantId, {
+        data: bootstrapResponse,
+        expiresAt: Date.now() + BOOTSTRAP_CACHE_TTL_MS,
+      });
+
+      logger.info(
+        { tenantId, onboardingDone: bootstrapResponse.onboardingDone, cached: false },
+        '[Agent] Bootstrap response'
+      );
+      res.json(bootstrapResponse);
+    } catch (error) {
+      handleError(res, error, '/bootstrap');
+    }
+  });
+
+  // ===========================================================================
+  // POST /complete-onboarding - Mark onboarding as complete
+  // Called by Concierge when user publishes their storefront
+  // ===========================================================================
+
+  const CompleteOnboardingSchema = TenantIdSchema.extend({
+    publishedUrl: z.string().optional(),
+    packagesCreated: z.number().optional(),
+    summary: z.string().optional(),
+  });
+
+  router.post('/complete-onboarding', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, publishedUrl, packagesCreated, summary } = CompleteOnboardingSchema.parse(
+        req.body
+      );
+
+      logger.info(
+        { tenantId, publishedUrl, packagesCreated, endpoint: '/complete-onboarding' },
+        '[Agent] Completing onboarding'
+      );
+
+      // Update tenant onboarding phase
+      await tenantRepo.update(tenantId, {
+        onboardingPhase: 'COMPLETED',
+        onboardingCompletedAt: new Date(),
+      });
+
+      // Invalidate bootstrap cache so next request gets fresh data
+      invalidateBootstrapCache(tenantId);
+
+      res.json({
+        success: true,
+        message: publishedUrl
+          ? `Onboarding complete! Live at ${publishedUrl}`
+          : 'Onboarding marked as complete.',
+        completedAt: new Date().toISOString(),
+        ...(packagesCreated !== undefined && { packagesCreated }),
+        ...(summary && { summary }),
+      });
+    } catch (error) {
+      handleError(res, error, '/complete-onboarding');
+    }
+  });
+
+  // ===========================================================================
+  // POST /store-discovery-fact - Store a fact learned during onboarding
+  // Called by Concierge when it learns something about the business
+  // ===========================================================================
+
+  const DISCOVERY_FACT_KEYS = [
+    'businessType',
+    'businessName',
+    'location',
+    'targetMarket',
+    'priceRange',
+    'yearsInBusiness',
+    'teamSize',
+    'uniqueValue',
+    'servicesOffered',
+  ] as const;
+
+  const StoreDiscoveryFactSchema = TenantIdSchema.extend({
+    key: z.enum(DISCOVERY_FACT_KEYS),
+    value: z.unknown(),
+  });
+
+  router.post('/store-discovery-fact', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, key, value } = StoreDiscoveryFactSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, key, endpoint: '/store-discovery-fact' },
+        '[Agent] Storing discovery fact'
+      );
+
+      // Get current advisor memory context
+      if (!advisorMemoryService) {
+        res.status(503).json({
+          error: 'Advisor memory service not available',
+        });
+        return;
+      }
+
+      // For now, we store facts by emitting an event through the event sourcing system
+      // This will be picked up by the AdvisorMemoryRepository on next read
+      //
+      // Note: A more complete implementation would:
+      // 1. Create a DISCOVERY_FACT_UPDATED event type
+      // 2. Append it to the OnboardingEvent table
+      // 3. The projection would merge these facts into discoveryData
+      //
+      // For MVP, we'll update the tenant's branding JSON as a simple storage mechanism
+      // This allows the bootstrap endpoint to pick it up via the existing flow
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      // Store in branding.discoveryFacts for now (simple approach)
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
+      discoveryFacts[key] = value;
+
+      await tenantRepo.update(tenantId, {
+        branding: { ...branding, discoveryFacts },
+      });
+
+      // Invalidate bootstrap cache so next request gets updated facts
+      invalidateBootstrapCache(tenantId);
+
+      res.json({
+        stored: true,
+        key,
+        message: `Stored ${key} successfully`,
+      });
+    } catch (error) {
+      handleError(res, error, '/store-discovery-fact');
+    }
+  });
 
   // ===========================================================================
   // POST /services - Get all services for a tenant
