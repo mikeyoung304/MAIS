@@ -187,6 +187,7 @@ npm run deploy
 - Match @google/adk versions with @google/adk-devtools
 - Use tools for dynamic context (not template variables)
 - Test with `adk run` locally before deploying
+- **ALWAYS specify `--service_name={agent}-agent` in deploy scripts** (prevents multi-agent conflicts)
 
 ### DON'T
 
@@ -194,6 +195,23 @@ npm run deploy
 - Use ESM format (`"type": "module"`)
 - Use template variables in prompts (`{variable}`)
 - Mix ADK versions between packages
+- **NEVER omit `--service_name` from deploy commands** (causes agents to overwrite each other)
+
+### Service Naming (CRITICAL)
+
+Every agent MUST have a unique, explicit service name:
+
+```bash
+# CORRECT - explicit service name
+--service_name=booking-agent
+
+# WRONG - relies on default (will conflict!)
+# (no --service_name flag)
+```
+
+**Validation:** Run `bash server/src/agent-v2/scripts/validate-deploy-config.sh` before deploying.
+
+**Registry:** Check `server/src/agent-v2/deploy/SERVICE_REGISTRY.md` for existing names.
 
 ## Tenant Context
 
@@ -247,4 +265,6 @@ curl -X POST -H "Authorization: Bearer $TOKEN" \
 
 - [ADK Agent-Backend Integration Pattern](./adk-agent-backend-integration-pattern.md) - Backend endpoints for agent communication
 - [ADK Bundler Issue](../integration-issues/adk-cloud-run-bundler-transitive-imports.md) - Solving transitive import issues
+- [Service Name Prevention](../../../docs/solutions/patterns/ADK_CLOUD_RUN_SERVICE_NAME_PREVENTION.md) - Preventing multi-agent deployment conflicts
+- [Service Registry](../../../server/src/agent-v2/deploy/SERVICE_REGISTRY.md) - Track deployed services
 - `plans/VERTEX-AI-EXECUTION-PLAN.md`

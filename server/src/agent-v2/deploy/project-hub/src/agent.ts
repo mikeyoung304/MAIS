@@ -247,12 +247,10 @@ const getProjectStatus = new FunctionTool({
   name: 'get_project_status',
   description:
     'Get the current status of the customer project including booking details, timeline, and next steps.',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID to check status for'),
   }),
-  func: async ({ projectId }, ctx: ToolContext) => {
-    const { tenantId } = getContextFromSession(ctx);
-
+  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext) => {
     try {
       const project = await callBackendAPI<Project>(`/project-hub/projects/${projectId}`, 'GET');
 
@@ -278,10 +276,10 @@ const getPrepChecklist = new FunctionTool({
   name: 'get_prep_checklist',
   description:
     'Get the preparation checklist for the customer - what to bring, how to prepare, etc.',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  func: async ({ projectId }, ctx: ToolContext) => {
+  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext) => {
     try {
       const checklist = await callBackendAPI<{
         items: Array<{ text: string; completed: boolean }>;
@@ -303,11 +301,14 @@ const getPrepChecklist = new FunctionTool({
 const answerPrepQuestion = new FunctionTool({
   name: 'answer_prep_question',
   description: 'Answer a preparation-related question using the service details and FAQ.',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID'),
     question: z.string().describe('The customer question to answer'),
   }),
-  func: async ({ projectId, question }, ctx: ToolContext) => {
+  execute: async (
+    { projectId, question }: { projectId: string; question: string },
+    _ctx: ToolContext
+  ) => {
     try {
       const answer = await callBackendAPI<{ answer: string; confidence: number; source: string }>(
         `/project-hub/projects/${projectId}/answer`,
@@ -341,7 +342,7 @@ const submitRequest = new FunctionTool({
   name: 'submit_request',
   description:
     'Submit a customer request that requires tenant review (rescheduling, cancellation, refund, etc.)',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID'),
     requestType: z
       .enum([
@@ -357,7 +358,15 @@ const submitRequest = new FunctionTool({
     details: z.string().describe('Details of the request'),
     urgency: z.enum(['low', 'medium', 'high']).default('medium').describe('Request urgency'),
   }),
-  func: async ({ projectId, requestType, details, urgency }, ctx: ToolContext) => {
+  execute: async (
+    {
+      projectId,
+      requestType,
+      details,
+      urgency,
+    }: { projectId: string; requestType: string; details: string; urgency: string },
+    _ctx: ToolContext
+  ) => {
     try {
       // Calculate expiry (72 hours from now)
       const expiresAt = new Date();
@@ -399,10 +408,10 @@ const submitRequest = new FunctionTool({
 const getTimeline = new FunctionTool({
   name: 'get_timeline',
   description: 'Get the project timeline showing key milestones and upcoming events.',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  func: async ({ projectId }, ctx: ToolContext) => {
+  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext) => {
     try {
       const events = await callBackendAPI<ProjectEvent[]>(
         `/project-hub/projects/${projectId}/events?visibleToCustomer=true`,
@@ -436,11 +445,11 @@ const getTimeline = new FunctionTool({
 const getPendingRequests = new FunctionTool({
   name: 'get_pending_requests',
   description: 'Get all pending customer requests that need tenant attention.',
-  inputSchema: z.object({
+  parameters: z.object({
     tenantId: z.string().describe('The tenant ID'),
     limit: z.number().default(10).describe('Maximum number of requests to return'),
   }),
-  func: async ({ tenantId, limit }, ctx: ToolContext) => {
+  execute: async ({ tenantId, limit }: { tenantId: string; limit: number }, _ctx: ToolContext) => {
     try {
       const requests = await callBackendAPI<ProjectRequest[]>(
         `/project-hub/tenants/${tenantId}/pending-requests?limit=${limit}`,
@@ -470,11 +479,11 @@ const getPendingRequests = new FunctionTool({
 const getCustomerActivity = new FunctionTool({
   name: 'get_customer_activity',
   description: 'Get recent customer activity across all projects for the tenant.',
-  inputSchema: z.object({
+  parameters: z.object({
     tenantId: z.string().describe('The tenant ID'),
     days: z.number().default(7).describe('Number of days to look back'),
   }),
-  func: async ({ tenantId, days }, ctx: ToolContext) => {
+  execute: async ({ tenantId, days }: { tenantId: string; days: number }, _ctx: ToolContext) => {
     try {
       const activity = await callBackendAPI<{
         totalProjects: number;
@@ -503,11 +512,14 @@ const getCustomerActivity = new FunctionTool({
 const approveRequest = new FunctionTool({
   name: 'approve_request',
   description: 'Approve a pending customer request.',
-  inputSchema: z.object({
+  parameters: z.object({
     requestId: z.string().describe('The request ID to approve'),
     response: z.string().optional().describe('Optional response message to customer'),
   }),
-  func: async ({ requestId, response }, ctx: ToolContext) => {
+  execute: async (
+    { requestId, response }: { requestId: string; response?: string },
+    _ctx: ToolContext
+  ) => {
     try {
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/requests/${requestId}/approve`,
@@ -532,11 +544,14 @@ const approveRequest = new FunctionTool({
 const denyRequest = new FunctionTool({
   name: 'deny_request',
   description: 'Deny a pending customer request with a reason.',
-  inputSchema: z.object({
+  parameters: z.object({
     requestId: z.string().describe('The request ID to deny'),
     reason: z.string().describe('Reason for denial (will be shared with customer)'),
   }),
-  func: async ({ requestId, reason }, ctx: ToolContext) => {
+  execute: async (
+    { requestId, reason }: { requestId: string; reason: string },
+    _ctx: ToolContext
+  ) => {
     try {
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/requests/${requestId}/deny`,
@@ -561,12 +576,19 @@ const denyRequest = new FunctionTool({
 const sendMessageToCustomer = new FunctionTool({
   name: 'send_message_to_customer',
   description: 'Send a message directly to a customer about their project.',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID'),
     message: z.string().describe('Message to send to the customer'),
     notifyByEmail: z.boolean().default(true).describe('Whether to also send email notification'),
   }),
-  func: async ({ projectId, message, notifyByEmail }, ctx: ToolContext) => {
+  execute: async (
+    {
+      projectId,
+      message,
+      notifyByEmail,
+    }: { projectId: string; message: string; notifyByEmail: boolean },
+    _ctx: ToolContext
+  ) => {
     try {
       await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
         type: 'MESSAGE_FROM_TENANT',
@@ -598,12 +620,15 @@ const sendMessageToCustomer = new FunctionTool({
 const updateProjectStatus = new FunctionTool({
   name: 'update_project_status',
   description: 'Update the status of a project (e.g., mark as completed, on hold).',
-  inputSchema: z.object({
+  parameters: z.object({
     projectId: z.string().describe('The project ID'),
     status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'ON_HOLD']).describe('New status'),
     reason: z.string().optional().describe('Reason for status change'),
   }),
-  func: async ({ projectId, status, reason }, ctx: ToolContext) => {
+  execute: async (
+    { projectId, status, reason }: { projectId: string; status: string; reason?: string },
+    _ctx: ToolContext
+  ) => {
     try {
       const result = await callBackendAPI<{ success: boolean; project: Project }>(
         `/project-hub/projects/${projectId}/status`,
@@ -670,10 +695,8 @@ export const agent = new LlmAgent({
   description: 'Dual-faced Project Hub agent mediating customer-tenant communication post-booking',
   instruction: PROJECT_HUB_SYSTEM_PROMPT,
   tools: allTools,
-  config: {
+  generateContentConfig: {
     temperature: 0.4, // Balanced for helpful but consistent responses
-    thinkingConfig: {
-      thinkingBudget: 5000,
-    },
+    maxOutputTokens: 2048,
   },
 });

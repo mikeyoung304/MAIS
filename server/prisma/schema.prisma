@@ -67,14 +67,14 @@ model Tenant {
   stripeOnboarded Boolean @default(false) // Has completed Stripe onboarding
 
   // Trial & Subscription (Product-Led Growth)
-  trialEndsAt        DateTime?          // When 14-day trial expires (null = no trial started)
+  trialEndsAt        DateTime? // When 14-day trial expires (null = no trial started)
   subscriptionStatus SubscriptionStatus @default(NONE) // Current subscription state
   stripeCustomerId   String?            @unique // Stripe Customer ID for Checkout
 
   // Subscription Tier & AI Usage Limits
-  tier              SubscriptionTier @default(FREE)  // Current pricing tier
-  aiMessagesUsed    Int              @default(0)     // AI messages used this billing cycle
-  aiMessagesResetAt DateTime?                        // When AI message counter was last reset
+  tier              SubscriptionTier @default(FREE) // Current pricing tier
+  aiMessagesUsed    Int              @default(0) // AI messages used this billing cycle
+  aiMessagesResetAt DateTime? // When AI message counter was last reset
 
   // Encrypted Secrets Storage
   secrets Json @default("{}") // {stripe: {ciphertext, iv, authTag}}
@@ -93,7 +93,7 @@ model Tenant {
 
   // Deposit Settings (MVP Gaps Phase 4)
   depositPercent Decimal? @db.Decimal(5, 2) // null = full payment required
-  balanceDueDays Int      @default(30)       // Days before event balance is due
+  balanceDueDays Int      @default(30) // Days before event balance is due
 
   // Landing Page Configuration
   landingPageConfig      Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
@@ -116,34 +116,36 @@ model Tenant {
   // Onboarding State (Event Sourcing + XState)
   // Phase tracks current state, version enables optimistic locking, completedAt marks finish
   onboardingPhase       OnboardingPhase @default(NOT_STARTED)
-  onboardingCompletedAt DateTime?       // When onboarding was finished or skipped
+  onboardingCompletedAt DateTime? // When onboarding was finished or skipped
   onboardingVersion     Int             @default(0) // Optimistic locking version counter
 
   // Relations
-  users            User[] // Tenant admin users
-  customers        Customer[] // Tenant-scoped customers
-  venues           Venue[] // Tenant-scoped venues
-  segments         Segment[] // Tenant's business segments (e.g., "Wellness Retreat", "Micro-Wedding")
-  packages         Package[]
-  addOns           AddOn[]
-  bookings         Booking[]
-  payments         Payment[] // Tenant-scoped payments
-  blackoutDates    BlackoutDate[]
-  webhookEvents    WebhookEvent[]
+  users                User[] // Tenant admin users
+  customers            Customer[] // Tenant-scoped customers
+  venues               Venue[] // Tenant-scoped venues
+  segments             Segment[] // Tenant's business segments (e.g., "Wellness Retreat", "Micro-Wedding")
+  packages             Package[]
+  addOns               AddOn[]
+  bookings             Booking[]
+  payments             Payment[] // Tenant-scoped payments
+  blackoutDates        BlackoutDate[]
+  webhookEvents        WebhookEvent[]
   webhookSubscriptions WebhookSubscription[] // Custom webhook subscriptions (TODO-278)
-  configChangeLogs ConfigChangeLog[] // Audit trail for config changes
-  services         Service[] // Scheduling services (e.g., "30-Minute Consultation")
-  availabilityRules AvailabilityRule[] // Scheduling availability rules
-  domains          TenantDomain[] // Custom domains for tenant website
-  agentProposals   AgentProposal[] // AI agent write operation proposals
-  agentAuditLogs   AgentAuditLog[] // AI agent audit trail
-  agentSessions    AgentSession[] // AI agent chat sessions
-  onboardingEvents OnboardingEvent[] // Onboarding event sourcing audit trail
+  configChangeLogs     ConfigChangeLog[] // Audit trail for config changes
+  services             Service[] // Scheduling services (e.g., "30-Minute Consultation")
+  availabilityRules    AvailabilityRule[] // Scheduling availability rules
+  domains              TenantDomain[] // Custom domains for tenant website
+  agentProposals       AgentProposal[] // AI agent write operation proposals
+  agentAuditLogs       AgentAuditLog[] // AI agent audit trail
+  agentSessions        AgentSession[] // AI agent chat sessions
+  onboardingEvents     OnboardingEvent[] // Onboarding event sourcing audit trail
   // Agent Evaluation System relations
-  conversationTraces ConversationTrace[] // Agent conversation traces
-  agentUsages        AgentUsage[] // Agent token usage tracking
-  userFeedbacks      UserFeedback[] // User feedback on agent responses
-  reviewActions      ReviewAction[] // Human review actions on flagged traces
+  conversationTraces   ConversationTrace[] // Agent conversation traces
+  agentUsages          AgentUsage[] // Agent token usage tracking
+  userFeedbacks        UserFeedback[] // User feedback on agent responses
+  reviewActions        ReviewAction[] // Human review actions on flagged traces
+  // Project Hub relations (Phase 5)
+  projects             Project[] // Customer project tracking
 
   @@index([slug])
   @@index([apiKeyPublic])
@@ -155,16 +157,16 @@ model Tenant {
 // DNS verification via TXT record: mais-verify=<verificationToken>
 model TenantDomain {
   id                String    @id @default(cuid())
-  tenantId          String    // Tenant isolation
+  tenantId          String // Tenant isolation
   domain            String    @unique // e.g., "www.janephotography.com" (globally unique)
   verified          Boolean   @default(false) // Has passed DNS TXT verification
   isPrimary         Boolean   @default(false) // Is this the primary domain for the tenant
-  verificationToken String    // Token for DNS TXT verification (mais-verify=<token>)
+  verificationToken String // Token for DNS TXT verification (mais-verify=<token>)
   verifiedAt        DateTime? // When verification was completed
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([verified]) // Query verified domains
@@ -172,16 +174,16 @@ model TenantDomain {
 }
 
 model Customer {
-  id        String    @id @default(cuid())
-  tenantId  String // Tenant isolation - CRITICAL: prevents cross-tenant data leakage
-  email     String? // Optional: some customers may book without email
-  phone     String?
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  bookings  Booking[]
-  agentSessions  AgentSession[]  // Customer chat sessions
+  id             String          @id @default(cuid())
+  tenantId       String // Tenant isolation - CRITICAL: prevents cross-tenant data leakage
+  email          String? // Optional: some customers may book without email
+  phone          String?
+  name           String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
+  agentSessions  AgentSession[] // Customer chat sessions
   agentProposals AgentProposal[] // Proposals created by customer chat
 
   @@unique([tenantId, email]) // Composite unique: email unique per tenant, not globally
@@ -214,7 +216,7 @@ model Venue {
 // Examples: "Wellness Retreat", "Micro-Wedding", "Weekend Getaway" (Little Bit Farm)
 //           "Elopement", "Micro Wedding", "Full Wedding" (Traditional wedding venue)
 model Segment {
-  id String @id @default(cuid())
+  id       String @id @default(cuid())
   tenantId String // Tenant isolation
 
   // URL and Display
@@ -222,27 +224,27 @@ model Segment {
   name String // Display name (e.g., "Wellness Retreats", "Intimate Weddings")
 
   // Landing Page Content
-  heroTitle String // Hero section title (e.g., "Rejuvenate Your Mind & Body")
+  heroTitle    String // Hero section title (e.g., "Rejuvenate Your Mind & Body")
   heroSubtitle String? // Optional subtitle/tagline
-  heroImage String? // URL to segment-specific hero image
-  description String? @db.Text // Extended description for SEO and landing page
+  heroImage    String? // URL to segment-specific hero image
+  description  String? @db.Text // Extended description for SEO and landing page
 
   // SEO Metadata
-  metaTitle String? // Custom page title for SEO
+  metaTitle       String? // Custom page title for SEO
   metaDescription String? @db.Text // Meta description for search engines
 
   // Display & Status
-  sortOrder Int @default(0) // Order for displaying segments in navigation (lower = first)
-  active Boolean @default(true) // Whether segment is publicly visible
+  sortOrder Int     @default(0) // Order for displaying segments in navigation (lower = first)
+  active    Boolean @default(true) // Whether segment is publicly visible
 
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   packages Package[] // Packages within this segment
-  addOns AddOn[] // Segment-specific add-ons
+  addOns   AddOn[] // Segment-specific add-ons
   services Service[] // Segment-specific services (for scheduling)
 
   // Constraints & Indexes
@@ -268,7 +270,7 @@ model Package {
   // Examples: "Solo", "Couple", "Group" OR "Budget", "Premium", "Luxury"
   // Leave null for flat package structure
   grouping      String? // Optional tier/group label
-  groupingOrder Int?    // Order within grouping (lower = first)
+  groupingOrder Int? // Order within grouping (lower = first)
 
   // Photo Gallery - Array of photo objects
   // Structure: [{url: string, filename: string, size: number, order: number}]
@@ -280,7 +282,7 @@ model Package {
   draftTitle       String?
   draftDescription String?
   draftPriceCents  Int?
-  draftPhotos      Json?     // Same structure as photos: [{url, filename, size, order}]
+  draftPhotos      Json? // Same structure as photos: [{url, filename, size, order}]
   hasDraft         Boolean   @default(false)
   draftUpdatedAt   DateTime?
 
@@ -307,13 +309,13 @@ model Package {
 }
 
 model AddOn {
-  id          String         @id @default(cuid())
+  id          String  @id @default(cuid())
   tenantId    String // Tenant isolation
   slug        String
   name        String
   description String?
   price       Int
-  active      Boolean        @default(true)
+  active      Boolean @default(true)
 
   // Segment Scoping (nullable - null = available to all segments)
   segmentId String? // If set, add-on only available for packages in this segment
@@ -343,7 +345,7 @@ model PackageAddOn {
 }
 
 model Booking {
-  id         String        @id @default(cuid())
+  id         String  @id @default(cuid())
   tenantId   String // Tenant isolation
   customerId String
   packageId  String? // Optional for TIMESLOT bookings (which use serviceId instead)
@@ -353,15 +355,15 @@ model Booking {
   confirmationCode String? @unique
 
   // Scheduling fields - supports both date-only (legacy) and time-slot bookings
-  date       DateTime      @db.Date
-  startTime  DateTime?     // UTC - for time-slot bookings
-  endTime    DateTime?     // UTC - for time-slot bookings
+  date      DateTime  @db.Date
+  startTime DateTime? // UTC - for time-slot bookings
+  endTime   DateTime? // UTC - for time-slot bookings
 
   // Booking type: DATE for legacy wedding bookings, TIMESLOT for scheduling
   bookingType BookingType @default(DATE)
 
   // Service reference (for time-slot bookings)
-  serviceId  String?
+  serviceId String?
 
   // Client timezone for display purposes (e.g., "America/New_York")
   clientTimezone String?
@@ -371,7 +373,7 @@ model Booking {
   notes      String?
 
   // Payment tracking - when full payment was completed
-  paidAt     DateTime?
+  paidAt DateTime?
 
   // Platform Commission (multi-tenant)
   commissionAmount  Int     @default(0) // In cents (platform fee)
@@ -389,24 +391,24 @@ model Booking {
   cancelledAt DateTime? // When cancelled
 
   // Cancellation tracking (MVP Gaps Phase 1)
-  cancelledBy        CancelledBy?  // Who cancelled the booking
-  cancellationReason String?       // Reason for cancellation
+  cancelledBy        CancelledBy? // Who cancelled the booking
+  cancellationReason String? // Reason for cancellation
 
   // Refund tracking (MVP Gaps Phase 1)
-  refundStatus    RefundStatus @default(NONE)
-  refundAmount    Int?         // Amount refunded in cents
-  refundedAt      DateTime?    // When refund was processed
-  stripeRefundId  String?      // Stripe refund ID
+  refundStatus   RefundStatus @default(NONE)
+  refundAmount   Int? // Amount refunded in cents
+  refundedAt     DateTime? // When refund was processed
+  stripeRefundId String? // Stripe refund ID
 
   // Reminder tracking (MVP Gaps Phase 2)
-  reminderSentAt  DateTime?    // When reminder email was sent
-  reminderDueDate DateTime?    // When reminder should be sent (eventDate - 7 days)
+  reminderSentAt  DateTime? // When reminder email was sent
+  reminderDueDate DateTime? // When reminder should be sent (eventDate - 7 days)
 
   // Deposit tracking (MVP Gaps Phase 4)
-  depositPaidAmount Int?       // Amount paid as deposit in cents
-  balanceDueDate    DateTime?  // When balance payment is due
-  balancePaidAmount Int?       // Balance amount paid in cents
-  balancePaidAt     DateTime?  // When balance was paid
+  depositPaidAmount Int? // Amount paid as deposit in cents
+  balanceDueDate    DateTime? // When balance payment is due
+  balancePaidAmount Int? // Balance amount paid in cents
+  balancePaidAt     DateTime? // When balance was paid
 
   tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer       @relation(fields: [customerId], references: [id])
@@ -415,6 +417,10 @@ model Booking {
   service  Service?       @relation(fields: [serviceId], references: [id])
   addOns   BookingAddOn[]
   payments Payment[]
+  project  Project? // Project Hub: customer project tracking (Phase 5)
+  // Note: Partial index for reminder queries exists via manual migration 08
+  // CREATE INDEX idx_booking_reminder_due ON Booking (tenantId, reminderDueDate)
+  // WHERE reminderSentAt IS NULL AND status = 'CONFIRMED'
 
   // Unique constraints:
   // - For DATE bookings: one per tenant per date (legacy behavior)
@@ -436,10 +442,6 @@ model Booking {
   @@index([createdAt])
   @@index([tenantId, confirmedAt])
   @@index([tenantId, reminderDueDate, reminderSentAt, status]) // For reminder queries (TODO-153)
-  // Note: Partial index for reminder queries exists via manual migration 08
-  // CREATE INDEX idx_booking_reminder_due ON Booking (tenantId, reminderDueDate)
-  // WHERE reminderSentAt IS NULL AND status = 'CONFIRMED'
-
   // Performance indexes (TODO-275) - applied via manual migration 10
   @@index([tenantId, bookingType, startTime, endTime]) // Timeslot availability queries
   @@index([tenantId, serviceId, startTime]) // Service-specific queries
@@ -448,13 +450,13 @@ model Booking {
 }
 
 enum BookingStatus {
-  PENDING       // Initial state, awaiting payment
-  DEPOSIT_PAID  // Deposit received, balance due later
-  PAID          // Full payment received (deposit + balance or full upfront)
-  CONFIRMED     // Payment confirmed, booking finalized
-  CANCELED      // Booking cancelled
-  REFUNDED      // Full refund processed
-  FULFILLED     // Event completed
+  PENDING // Initial state, awaiting payment
+  DEPOSIT_PAID // Deposit received, balance due later
+  PAID // Full payment received (deposit + balance or full upfront)
+  CONFIRMED // Payment confirmed, booking finalized
+  CANCELED // Booking cancelled
+  REFUNDED // Full refund processed
+  FULFILLED // Event completed
 }
 
 /// Determines the booking flow and availability constraints for a package
@@ -474,20 +476,20 @@ enum BookingType {
 
 // MVP Gaps Phase 1: Cancellation tracking
 enum CancelledBy {
-  CUSTOMER  // Customer self-service cancellation
-  TENANT    // Tenant admin cancelled
-  ADMIN     // Platform admin cancelled
-  SYSTEM    // Automated system cancellation
+  CUSTOMER // Customer self-service cancellation
+  TENANT // Tenant admin cancelled
+  ADMIN // Platform admin cancelled
+  SYSTEM // Automated system cancellation
 }
 
 // MVP Gaps Phase 1: Refund tracking
 enum RefundStatus {
-  NONE       // No refund requested
-  PENDING    // Refund requested, not yet processed
+  NONE // No refund requested
+  PENDING // Refund requested, not yet processed
   PROCESSING // Refund in progress
-  COMPLETED  // Refund successfully completed
-  PARTIAL    // Partial refund completed
-  FAILED     // Refund failed
+  COMPLETED // Refund successfully completed
+  PARTIAL // Partial refund completed
+  FAILED // Refund failed
 }
 
 // ============================================================================
@@ -496,34 +498,34 @@ enum RefundStatus {
 
 // Service Model - Represents bookable services/appointment types
 model Service {
-  id               String   @id @default(cuid())
-  tenantId         String   // Tenant isolation
-  slug             String   // URL-safe identifier (e.g., "consultation", "haircut")
-  name             String   // Display name (e.g., "30-Minute Consultation")
-  description      String?  @db.Text
-  durationMinutes  Int      // Service duration (e.g., 30, 60, 90)
-  bufferMinutes    Int      @default(0) // Buffer time after service
-  priceCents       Int      // Service price in cents
-  timezone         String   @default("America/New_York") // Tenant's timezone for availability
-  active           Boolean  @default(true)
-  sortOrder        Int      @default(0)
+  id              String  @id @default(cuid())
+  tenantId        String // Tenant isolation
+  slug            String // URL-safe identifier (e.g., "consultation", "haircut")
+  name            String // Display name (e.g., "30-Minute Consultation")
+  description     String? @db.Text
+  durationMinutes Int // Service duration (e.g., 30, 60, 90)
+  bufferMinutes   Int     @default(0) // Buffer time after service
+  priceCents      Int // Service price in cents
+  timezone        String  @default("America/New_York") // Tenant's timezone for availability
+  active          Boolean @default(true)
+  sortOrder       Int     @default(0)
 
   // Booking Link Settings (Phase 1 - Calendly-style scheduling)
-  minNoticeMinutes Int      @default(120)  // Minimum advance notice required (default 2 hours)
-  maxAdvanceDays   Int      @default(60)   // How far in advance bookings can be made (default 60 days)
-  maxPerDay        Int?                    // Maximum bookings per day (null = unlimited)
+  minNoticeMinutes Int  @default(120) // Minimum advance notice required (default 2 hours)
+  maxAdvanceDays   Int  @default(60) // How far in advance bookings can be made (default 60 days)
+  maxPerDay        Int? // Maximum bookings per day (null = unlimited)
 
   // Optional segment association
-  segmentId        String?
+  segmentId String?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  segment          Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  segment           Segment?           @relation(fields: [segmentId], references: [id], onDelete: SetNull)
   availabilityRules AvailabilityRule[]
-  bookings         Booking[]
+  bookings          Booking[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, active])
@@ -534,20 +536,20 @@ model Service {
 // AvailabilityRule Model - Defines when services are available
 model AvailabilityRule {
   id            String    @id @default(cuid())
-  tenantId      String    // Tenant isolation
-  serviceId     String?   // NULL = applies to all services (default availability)
-  dayOfWeek     Int       // 0=Sunday, 1=Monday, ..., 6=Saturday
-  startTime     String    // "09:00" (in tenant timezone)
-  endTime       String    // "17:00" (in tenant timezone)
+  tenantId      String // Tenant isolation
+  serviceId     String? // NULL = applies to all services (default availability)
+  dayOfWeek     Int // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startTime     String // "09:00" (in tenant timezone)
+  endTime       String // "17:00" (in tenant timezone)
   effectiveFrom DateTime  @default(now())
   effectiveTo   DateTime? // NULL = indefinite
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  service       Service?  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, serviceId, dayOfWeek, startTime])
   @@index([tenantId, dayOfWeek])
@@ -578,8 +580,8 @@ model Payment {
   processorId String?
   createdAt   DateTime      @default(now())
 
-  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, processorId])
   @@index([tenantId])
@@ -599,17 +601,17 @@ enum PaymentStatus {
 
 /// Subscription status for tenant billing
 enum SubscriptionStatus {
-  NONE      // Signed up, no trial started
-  TRIALING  // In 14-day trial
-  ACTIVE    // Paid customer
-  EXPIRED   // Trial ended, didn't pay (soft lock)
+  NONE // Signed up, no trial started
+  TRIALING // In 14-day trial
+  ACTIVE // Paid customer
+  EXPIRED // Trial ended, didn't pay (soft lock)
 }
 
 /// Subscription tier for pricing/limits
 enum SubscriptionTier {
-  FREE      // Trial tier (14 days, 50 AI messages)
-  STARTER   // $49/month (500 AI messages)
-  PRO       // $150/month (5000 AI messages)
+  FREE // Trial tier (14 days, 50 AI messages)
+  STARTER // $49/month (500 AI messages)
+  PRO // $150/month (5000 AI messages)
 }
 
 model BlackoutDate {
@@ -664,7 +666,7 @@ model EarlyAccessRequest {
   id        String   @id @default(cuid())
   email     String   @unique // Prevent duplicate submissions
   status    String   @default("pending") // pending, contacted, converted, unsubscribed
-  source    String?  // Where they signed up from (e.g., "homepage", "blog", "referral")
+  source    String? // Where they signed up from (e.g., "homepage", "blog", "referral")
   notes     String?  @db.Text // Admin notes for follow-up
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -734,10 +736,10 @@ model IdempotencyKey {
 // Allows tenants to receive real-time notifications for appointment lifecycle events
 model WebhookSubscription {
   id        String   @id @default(cuid())
-  tenantId  String   // Tenant isolation
-  url       String   // Webhook endpoint URL
+  tenantId  String // Tenant isolation
+  url       String // Webhook endpoint URL
   events    String[] // Event types to subscribe to (e.g., ['appointment.created', 'appointment.canceled'])
-  secret    String   // HMAC signing secret for payload verification
+  secret    String // HMAC signing secret for payload verification
   active    Boolean  @default(true) // Whether subscription is enabled
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -752,18 +754,18 @@ model WebhookSubscription {
 
 // WebhookDelivery - Outbound webhook delivery tracking and retry logic
 model WebhookDelivery {
-  id             String   @id @default(cuid())
-  subscriptionId String   // Which subscription this delivery belongs to
-  event          String   // Event type (e.g., 'appointment.created')
-  payload        Json     // Event payload to deliver
-  status         String   @default("pending") // 'pending', 'delivered', 'failed'
-  attempts       Int      @default(0) // Number of delivery attempts
+  id             String    @id @default(cuid())
+  subscriptionId String // Which subscription this delivery belongs to
+  event          String // Event type (e.g., 'appointment.created')
+  payload        Json // Event payload to deliver
+  status         String    @default("pending") // 'pending', 'delivered', 'failed'
+  attempts       Int       @default(0) // Number of delivery attempts
   lastAttemptAt  DateTime? // When last delivery attempt was made
   deliveredAt    DateTime? // When successfully delivered
   lastError      String?   @db.Text // Last error message if delivery failed
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
-  subscription   WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId, status]) // Query pending/failed deliveries
   @@index([status, createdAt]) // Query deliveries by status chronologically
@@ -782,27 +784,27 @@ model WebhookDelivery {
 ///
 /// Security: Prevents prompt injection from bypassing approval - server enforces it
 model AgentProposal {
-  id              String             @id @default(cuid())
-  tenantId        String             // Tenant isolation - CRITICAL
-  sessionId       String             // Agent session identifier
-  customerId      String?            // CRITICAL: For customer proposals - enables ownership verification
-  toolName        String             // Tool that created the proposal (e.g., "upsert_package")
-  operation       String             // Human-readable operation description
-  trustTier       AgentTrustTier     // T1, T2, or T3
-  payload         Json               // The proposed change data
-  preview         Json               // What will change (for user display)
-  status          AgentProposalStatus @default(PENDING)
-  requiresApproval Boolean           @default(true)
-  expiresAt       DateTime           // 30 minutes from creation
-  confirmedAt     DateTime?          // When user confirmed
-  executedAt      DateTime?          // When proposal was executed
-  result          Json?              // Execution result (for completed proposals)
-  error           String?            // Error message if failed
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id               String              @id @default(cuid())
+  tenantId         String // Tenant isolation - CRITICAL
+  sessionId        String // Agent session identifier
+  customerId       String? // CRITICAL: For customer proposals - enables ownership verification
+  toolName         String // Tool that created the proposal (e.g., "upsert_package")
+  operation        String // Human-readable operation description
+  trustTier        AgentTrustTier // T1, T2, or T3
+  payload          Json // The proposed change data
+  preview          Json // What will change (for user display)
+  status           AgentProposalStatus @default(PENDING)
+  requiresApproval Boolean             @default(true)
+  expiresAt        DateTime // 30 minutes from creation
+  confirmedAt      DateTime? // When user confirmed
+  executedAt       DateTime? // When proposal was executed
+  result           Json? // Execution result (for completed proposals)
+  error            String? // Error message if failed
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
-  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer        Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, sessionId])
   @@index([tenantId, status])
@@ -814,38 +816,38 @@ model AgentProposal {
 }
 
 enum AgentTrustTier {
-  T1  // No confirm needed - blackouts, branding, visibility toggles
-  T2  // Soft confirm - package changes, landing page updates, pricing
-  T3  // Hard confirm - cancellations, refunds, deletes with existing bookings
+  T1 // No confirm needed - blackouts, branding, visibility toggles
+  T2 // Soft confirm - package changes, landing page updates, pricing
+  T3 // Hard confirm - cancellations, refunds, deletes with existing bookings
 }
 
 enum AgentProposalStatus {
-  PENDING    // Awaiting confirmation
-  CONFIRMED  // User confirmed, ready to execute
-  EXECUTED   // Successfully executed
-  EXPIRED    // TTL exceeded (30 minutes)
-  REJECTED   // User said "wait" or "no"
-  FAILED     // Execution failed
+  PENDING // Awaiting confirmation
+  CONFIRMED // User confirmed, ready to execute
+  EXECUTED // Successfully executed
+  EXPIRED // TTL exceeded (30 minutes)
+  REJECTED // User said "wait" or "no"
+  FAILED // Execution failed
 }
 
 /// AgentAuditLog - Audit trail for all agent tool calls
 /// Required for security compliance: 90 days minimum, 7 years for financial operations
 model AgentAuditLog {
-  id              String             @id @default(cuid())
-  tenantId        String             // Tenant isolation - CRITICAL
-  sessionId       String             // Agent session identifier
-  toolName        String             // Tool that was called
-  proposalId      String?            // Reference to proposal (if write operation)
-  inputSummary    String             @db.VarChar(500) // Sanitized input summary
-  outputSummary   String             @db.VarChar(500) // Sanitized output summary
-  trustTier       AgentTrustTier
-  approvalStatus  AgentApprovalStatus
-  durationMs      Int?               // Execution duration in milliseconds
-  success         Boolean            @default(true)
-  errorMessage    String?            @db.Text
-  createdAt       DateTime           @default(now())
+  id             String              @id @default(cuid())
+  tenantId       String // Tenant isolation - CRITICAL
+  sessionId      String // Agent session identifier
+  toolName       String // Tool that was called
+  proposalId     String? // Reference to proposal (if write operation)
+  inputSummary   String              @db.VarChar(500) // Sanitized input summary
+  outputSummary  String              @db.VarChar(500) // Sanitized output summary
+  trustTier      AgentTrustTier
+  approvalStatus AgentApprovalStatus
+  durationMs     Int? // Execution duration in milliseconds
+  success        Boolean             @default(true)
+  errorMessage   String?             @db.Text
+  createdAt      DateTime            @default(now())
 
-  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, sessionId])
   @@index([tenantId, createdAt])
@@ -855,10 +857,10 @@ model AgentAuditLog {
 }
 
 enum AgentApprovalStatus {
-  AUTO      // T1 - auto-approved
-  SOFT      // T2 - soft confirm (proceeds after next message)
-  EXPLICIT  // T3 - explicit user confirmation received
-  BYPASSED  // Security bypass attempt (should never happen, logged for audit)
+  AUTO // T1 - auto-approved
+  SOFT // T2 - soft confirm (proceeds after next message)
+  EXPLICIT // T3 - explicit user confirmation received
+  BYPASSED // Security bypass attempt (should never happen, logged for audit)
 }
 
 /// AgentSession - Conversation session for AI agent chat
@@ -866,15 +868,15 @@ enum AgentApprovalStatus {
 /// Supports both admin (tenant owner) and customer-facing sessions
 model AgentSession {
   id          String      @id @default(cuid())
-  tenantId    String      // Tenant isolation - CRITICAL
-  customerId  String?     // NULL for admin sessions, set for customer sessions
+  tenantId    String // Tenant isolation - CRITICAL
+  customerId  String? // NULL for admin sessions, set for customer sessions
   sessionType SessionType @default(ADMIN) // ADMIN or CUSTOMER
   messages    Json        @default("[]") // Array of ChatMessage objects
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer    Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, updatedAt]) // Find recent sessions for tenant
   @@index([tenantId])
@@ -885,7 +887,7 @@ model AgentSession {
 
 /// Session type for agent conversations
 enum SessionType {
-  ADMIN    // Tenant owner/admin using the business growth agent
+  ADMIN // Tenant owner/admin using the business growth agent
   CUSTOMER // Customer using the public booking chatbot
 }
 
@@ -908,13 +910,13 @@ enum SessionType {
 /// - ONBOARDING_SKIPPED: User chose to skip onboarding
 model OnboardingEvent {
   id        String   @id @default(cuid())
-  tenantId  String   // Tenant isolation - CRITICAL
-  eventType String   // Discriminated event type (e.g., "discovery_completed")
-  payload   Json     // Event-specific payload (validated by Zod)
+  tenantId  String // Tenant isolation - CRITICAL
+  eventType String // Discriminated event type (e.g., "discovery_completed")
+  payload   Json // Event-specific payload (validated by Zod)
   timestamp DateTime @default(now())
-  version   Int      // Sequential version for optimistic locking
+  version   Int // Sequential version for optimistic locking
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, timestamp])
   @@index([tenantId, version])
@@ -922,13 +924,13 @@ model OnboardingEvent {
 
 /// Onboarding phase enum for state machine
 enum OnboardingPhase {
-  NOT_STARTED      // Initial state - no onboarding interaction yet
-  DISCOVERY        // Collecting business info (type, location, target market)
-  MARKET_RESEARCH  // Analyzing market and generating pricing recommendations
-  SERVICES         // Creating service packages based on recommendations
-  MARKETING        // Configuring landing page and brand voice
-  COMPLETED        // Onboarding finished
-  SKIPPED          // User opted to skip onboarding
+  NOT_STARTED // Initial state - no onboarding interaction yet
+  DISCOVERY // Collecting business info (type, location, target market)
+  MARKET_RESEARCH // Analyzing market and generating pricing recommendations
+  SERVICES // Creating service packages based on recommendations
+  MARKETING // Configuring landing page and brand voice
+  COMPLETED // Onboarding finished
+  SKIPPED // User opted to skip onboarding
 }
 
 // ============================================================================
@@ -946,58 +948,58 @@ enum OnboardingPhase {
 /// - 90-day default retention via expiresAt column
 /// - Cleanup job removes expired traces
 model ConversationTrace {
-  id                 String    @id @default(cuid())
-  tenantId           String    // Tenant isolation - CRITICAL
-  sessionId          String    // Agent session identifier
-  agentType          String    // 'customer' | 'onboarding' | 'admin'
+  id        String @id @default(cuid())
+  tenantId  String // Tenant isolation - CRITICAL
+  sessionId String // Agent session identifier
+  agentType String // 'customer' | 'onboarding' | 'admin'
 
   // Timing
-  startedAt          DateTime
-  endedAt            DateTime?
+  startedAt DateTime
+  endedAt   DateTime?
 
   // Metrics
-  turnCount          Int       @default(0)
-  totalTokens        Int       @default(0)
-  inputTokens        Int       @default(0)
-  outputTokens       Int       @default(0)
-  totalLatencyMs     Int       @default(0)
-  estimatedCostCents Int       @default(0)
+  turnCount          Int @default(0)
+  totalTokens        Int @default(0)
+  inputTokens        Int @default(0)
+  outputTokens       Int @default(0)
+  totalLatencyMs     Int @default(0)
+  estimatedCostCents Int @default(0)
 
   // Content (JSON) - ENCRYPTED via Prisma middleware (contains PII)
-  messages           Json      // TracedMessage[] - encrypted
-  toolCalls          Json      // TracedToolCall[] - encrypted
-  errors             Json?     // Error objects
+  messages  Json // TracedMessage[] - encrypted
+  toolCalls Json // TracedToolCall[] - encrypted
+  errors    Json? // Error objects
 
   // Retention (90-day default)
-  expiresAt          DateTime? // Auto-cleanup after this date
+  expiresAt DateTime? // Auto-cleanup after this date
 
   // Context
-  promptVersion      String?   // For A/B tracking
-  cacheHit           Boolean   @default(false)
+  promptVersion String? // For A/B tracking
+  cacheHit      Boolean @default(false)
 
   // Outcome
-  taskCompleted      Boolean?
-  userSatisfaction   Int?      // 1-5 rating
+  taskCompleted    Boolean?
+  userSatisfaction Int? // 1-5 rating
 
   // Evaluation
-  evalScore          Float?    // 0-10 overall score
-  evalDimensions     Json?     // { effectiveness, experience, safety }
-  evalReasoning      String?   @db.Text // LLM's explanation
-  evalConfidence     Float?    // 0-1
-  evaluatedAt        DateTime?
+  evalScore      Float? // 0-10 overall score
+  evalDimensions Json? // { effectiveness, experience, safety }
+  evalReasoning  String?   @db.Text // LLM's explanation
+  evalConfidence Float? // 0-1
+  evaluatedAt    DateTime?
 
   // Review
-  flagged            Boolean   @default(false)
-  flagReason         String?
-  reviewStatus       String?   // 'pending' | 'reviewed' | 'actioned'
-  reviewedAt         DateTime?
-  reviewedBy         String?
-  reviewNotes        String?   @db.Text
+  flagged      Boolean   @default(false)
+  flagReason   String?
+  reviewStatus String? // 'pending' | 'reviewed' | 'actioned'
+  reviewedAt   DateTime?
+  reviewedBy   String?
+  reviewNotes  String?   @db.Text
 
   // Relations
-  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  reviewActions      ReviewAction[]
-  feedbacks          UserFeedback[]
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reviewActions ReviewAction[]
+  feedbacks     UserFeedback[]
 
   // CRITICAL: Tenant-scoped indexes only
   @@index([tenantId, startedAt])
@@ -1012,16 +1014,16 @@ model ConversationTrace {
 /// AgentUsage - Token usage and cost tracking per agent call
 /// Used for cost monitoring, budget alerts, and billing
 model AgentUsage {
-  id            String   @id @default(cuid())
-  tenantId      String   // Tenant isolation - CRITICAL
-  agentType     String   // 'customer' | 'onboarding' | 'admin'
-  model         String   // LLM model used (e.g., 'claude-sonnet-4-20250514')
-  inputTokens   Int
-  outputTokens  Int
-  cost          Float    // Cost in dollars
-  timestamp     DateTime @default(now())
+  id           String   @id @default(cuid())
+  tenantId     String // Tenant isolation - CRITICAL
+  agentType    String // 'customer' | 'onboarding' | 'admin'
+  model        String // LLM model used (e.g., 'claude-sonnet-4-20250514')
+  inputTokens  Int
+  outputTokens Int
+  cost         Float // Cost in dollars
+  timestamp    DateTime @default(now())
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, timestamp])
   @@index([tenantId, agentType, timestamp])
@@ -1030,18 +1032,18 @@ model AgentUsage {
 /// UserFeedback - Explicit user feedback on agent responses
 /// Collected via thumbs up/down or 1-5 star rating
 model UserFeedback {
-  id            String   @id @default(cuid())
-  tenantId      String   // Tenant isolation - CRITICAL
-  sessionId     String
-  traceId       String?  // Reference to ConversationTrace
-  rating        Int      // 1-5 star rating
-  comment       String?  @db.Text
-  messageId     String?  // Specific message being rated
-  deviceType    String?  // 'mobile' | 'desktop'
-  createdAt     DateTime @default(now())
+  id         String   @id @default(cuid())
+  tenantId   String // Tenant isolation - CRITICAL
+  sessionId  String
+  traceId    String? // Reference to ConversationTrace
+  rating     Int // 1-5 star rating
+  comment    String?  @db.Text
+  messageId  String? // Specific message being rated
+  deviceType String? // 'mobile' | 'desktop'
+  createdAt  DateTime @default(now())
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  trace         ConversationTrace? @relation(fields: [traceId], references: [id], onDelete: SetNull)
+  tenant Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trace  ConversationTrace? @relation(fields: [traceId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, sessionId])
   @@index([tenantId, createdAt])
@@ -1052,19 +1054,238 @@ model UserFeedback {
 /// ReviewAction - Human review actions on flagged conversations
 /// Tracks what action was taken on each reviewed trace
 model ReviewAction {
-  id              String   @id @default(cuid())
-  tenantId        String   // Tenant isolation - CRITICAL
-  traceId         String
-  action          String   // 'approve' | 'reject' | 'escalate' | 'retrain' | 'prompt_updated' | 'bug_filed'
-  notes           String?  @db.Text
-  correctedScore  Float?   // If reviewer disagrees with LLM eval
-  performedBy     String   // userId or 'system'
-  performedAt     DateTime @default(now())
+  id             String   @id @default(cuid())
+  tenantId       String // Tenant isolation - CRITICAL
+  traceId        String
+  action         String // 'approve' | 'reject' | 'escalate' | 'retrain' | 'prompt_updated' | 'bug_filed'
+  notes          String?  @db.Text
+  correctedScore Float? // If reviewer disagrees with LLM eval
+  performedBy    String // userId or 'system'
+  performedAt    DateTime @default(now())
 
-  trace           ConversationTrace @relation(fields: [traceId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trace  ConversationTrace @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, performedAt])
   @@index([traceId])
   @@index([tenantId, action])
+}
+
+// ============================================================================
+// PROJECT HUB MODELS (Phase 5)
+// Dual-faced customer-tenant communication system with AI mediation
+// Addresses Data Integrity Guardian findings from enterprise review
+// ============================================================================
+
+/// Project - Customer project tracking after booking confirmation
+/// Links to Booking and provides dual-faced view for customer/tenant
+model Project {
+  id         String        @id @default(cuid())
+  tenantId   String // CRITICAL: Multi-tenant isolation
+  bookingId  String        @unique
+  customerId String
+  status     ProjectStatus @default(ACTIVE)
+
+  // Optimistic locking for concurrent updates
+  version Int @default(1)
+
+  // Customer-visible preferences
+  customerPreferences Json?
+
+  // Tenant-only notes (never shown to customer)
+  tenantNotes Json?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  booking  Booking          @relation(fields: [bookingId], references: [id])
+  events   ProjectEvent[]
+  files    ProjectFile[]
+  requests ProjectRequest[]
+
+  // Indexes for performance
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([status])
+  @@index([tenantId, status]) // Compound for tenant dashboard queries
+}
+
+/// ProjectEvent - Event sourcing for project activity
+/// Tracks all communication and state changes with dual visibility
+model ProjectEvent {
+  id        String @id @default(cuid())
+  tenantId  String // CRITICAL: Was missing in original ERD
+  projectId String
+
+  // Event sourcing fields
+  version Int // Sequential version for ordering
+  type    ProjectEventType
+  actor   ProjectActor
+  payload Json
+
+  // Visibility controls (dual-faced)
+  visibleToCustomer Boolean @default(false)
+  visibleToTenant   Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // CRITICAL: Prevent duplicate events
+  @@unique([projectId, version])
+  // Indexes
+  @@index([tenantId])
+  @@index([projectId, createdAt])
+  @@index([projectId, visibleToCustomer]) // Customer view queries
+}
+
+/// ProjectFile - File uploads for projects
+/// Supports reference photos, contracts, deliverables
+model ProjectFile {
+  id        String @id @default(cuid())
+  tenantId  String // CRITICAL: Was missing in original ERD
+  projectId String
+
+  // Upload metadata
+  uploadedBy ProjectActor
+  filename   String
+  mimeType   String
+  sizeBytes  Int
+  storageUrl String
+
+  // Integrity verification
+  checksum String? // SHA-256 of file contents
+
+  // Categorization
+  category FileCategory @default(OTHER)
+
+  // Soft delete support
+  deletedAt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([tenantId])
+  @@index([projectId, deletedAt]) // Active files query
+  @@index([projectId, category])
+}
+
+/// ProjectRequest - Customer requests requiring mediation
+/// AI handles routine requests, escalates complex ones to tenant
+model ProjectRequest {
+  id        String @id @default(cuid())
+  tenantId  String // CRITICAL: Was missing in original ERD
+  projectId String
+
+  // Request details
+  type         RequestType
+  status       RequestStatus @default(PENDING)
+  requestData  Json
+  responseData Json?
+
+  // Resolution tracking
+  handledBy  RequestHandler?
+  resolvedAt DateTime?
+
+  // CRITICAL: 72-hour expiry for escalations
+  expiresAt       DateTime
+  autoRespondedAt DateTime? // Set if expired and auto-responded
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([tenantId])
+  @@index([projectId, status])
+  @@index([status, expiresAt]) // Expiry check job
+  @@index([tenantId, status]) // Tenant dashboard pending requests
+}
+
+// ============================================================================
+// PROJECT HUB ENUMS
+// ============================================================================
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum ProjectEventType {
+  // Lifecycle events
+  PROJECT_CREATED
+  STATUS_CHANGED
+
+  // Communication events
+  MESSAGE_FROM_CUSTOMER
+  MESSAGE_FROM_TENANT
+  MESSAGE_FROM_AGENT
+
+  // Request events
+  REQUEST_SUBMITTED
+  REQUEST_APPROVED
+  REQUEST_DENIED
+  REQUEST_AUTO_HANDLED
+  REQUEST_EXPIRED
+
+  // File events
+  FILE_UPLOADED
+  FILE_DELETED
+
+  // Milestone events
+  MILESTONE_COMPLETED
+  REMINDER_SENT
+}
+
+enum ProjectActor {
+  CUSTOMER
+  TENANT
+  AGENT
+  SYSTEM
+}
+
+enum FileCategory {
+  REFERENCE_PHOTO
+  INSPIRATION
+  CONTRACT
+  INVOICE
+  DELIVERABLE
+  OTHER
+}
+
+enum RequestType {
+  RESCHEDULE
+  ADD_ON
+  QUESTION
+  CHANGE_REQUEST
+  CANCELLATION
+  REFUND
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+  AUTO_HANDLED
+  EXPIRED
+}
+
+enum RequestHandler {
+  AGENT
+  TENANT
+  SYSTEM
 }

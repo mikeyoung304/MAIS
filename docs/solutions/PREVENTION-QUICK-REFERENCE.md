@@ -601,6 +601,82 @@ Is variable used ANYWHERE in function body?
 
 ---
 
+## 🤖 ADK/A2A Agent Development
+
+### A2A Protocol: camelCase Required
+
+```typescript
+// ✅ CORRECT - ADK uses camelCase
+{
+  appName: 'agent',
+  userId: 'tenant:user',
+  sessionId: 'session-123',
+  newMessage: { role: 'user', parts: [{ text: msg }] }
+}
+
+// ❌ WRONG - ADK silently rejects snake_case
+{
+  app_name: 'agent',  // Returns "Session not found"
+}
+```
+
+### Verify App Name After Deploy
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "$URL/list-apps"
+# Returns: ["agent"] ← Use THIS, not directory name
+```
+
+### Tool-First Prompts (CRITICAL)
+
+```markdown
+❌ WRONG - LLM copies this verbatim
+User: "Write headlines"
+You: "On it. Check the preview →"
+
+✅ CORRECT - Forces tool execution
+User: "Write headlines"
+→ FIRST: Call delegate_to_marketing(...)
+→ WAIT for result
+→ THEN respond with content
+```
+
+### Zod Schema Limitations
+
+| ❌ Don't Use | ✅ Use Instead       |
+| ------------ | -------------------- |
+| `z.record()` | `z.any().describe()` |
+| `z.tuple()`  | `z.array()`          |
+
+### Session Isolation (Orchestrator Agents)
+
+```typescript
+// Each agent = OWN session!
+// Concierge session != Marketing session
+
+// ❌ WRONG - Reusing orchestrator session
+callSpecialist(url, msg, tenantId, orchestratorSession);
+
+// ✅ CORRECT - Create per-specialist session
+const specialistSession = await createSpecialistSession(url, agentName, tenantId);
+callSpecialist(url, msg, tenantId, specialistSession);
+```
+
+### State Access
+
+```typescript
+// ✅ CORRECT - Map-like API
+const tenantId = context.state?.get<string>('tenantId');
+
+// ❌ WRONG - Returns undefined!
+const tenantId = context.state.tenantId;
+```
+
+**Full ADK reference:** [ADK_QUICK_REFERENCE_CARD.md](./patterns/ADK_QUICK_REFERENCE_CARD.md)
+**Session/State reference:** [A2A_SESSION_STATE_QUICK_REFERENCE.md](./patterns/A2A_SESSION_STATE_QUICK_REFERENCE.md)
+
+---
+
 ## 📞 When in Doubt
 
 1. Check similar code in codebase
@@ -623,4 +699,4 @@ Is variable used ANYWHERE in function body?
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2025-12-27
+**Last Updated:** 2026-01-18
