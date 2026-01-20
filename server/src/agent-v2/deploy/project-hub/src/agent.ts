@@ -225,7 +225,8 @@ function getContextFromSession(ctx: ToolContext): {
   customerId?: string;
   projectId?: string;
 } {
-  const state = ctx.state as Record<string, unknown>;
+  // Cast through unknown because ADK's State type doesn't have an index signature
+  const state = ctx.state as unknown as Record<string, unknown>;
   return {
     contextType: (state.contextType as 'customer' | 'tenant') || 'customer',
     tenantId: (state.tenantId as string) || '',
