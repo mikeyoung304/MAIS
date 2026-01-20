@@ -15,7 +15,7 @@ related:
 
 # ADK A2A Prevention Strategies
 
-Prevention strategies for the 7 common issues discovered during ADK agent development and A2A orchestration.
+Prevention strategies for the 8 common issues discovered during ADK agent development and A2A orchestration.
 
 ## Issue Summary
 
@@ -28,6 +28,7 @@ Prevention strategies for the 7 common issues discovered during ADK agent develo
 | 5   | Identity Token Auth        | Auth failures in production              | Manual test, integration test   |
 | 6   | LLM Tool Calling           | LLM echoes instead of calling tools      | Prompt review, integration test |
 | 7   | URL Discovery              | Hardcoded URLs break across environments | Code review, env validation     |
+| 8   | FunctionTool API Mismatch  | 41+ TypeScript errors, build failures    | TypeScript compilation          |
 
 ---
 
@@ -788,6 +789,92 @@ Add this section to PR templates for agent-related changes:
 1. Run `verify-app-name.sh`
 2. Test with actual identity token
 3. Verify URL is discoverable via gcloud
+
+---
+
+## Issue 8: FunctionTool API Mismatch
+
+### Problem
+
+The ADK `FunctionTool` class uses different property names than typical patterns. Using the wrong properties causes TypeScript errors that block builds.
+
+```typescript
+// WRONG - Old/incorrect API
+const myTool = new FunctionTool({
+  name: 'my_tool',
+  description: 'Does something',
+  inputSchema: z.object({
+    // ❌ Not a valid property
+    param: z.string(),
+  }),
+  func: async ({ param }, ctx) => {
+    // ❌ Not a valid property
+    return { result: param };
+  },
+});
+
+// CORRECT - ADK FunctionTool API
+const myTool = new FunctionTool({
+  name: 'my_tool',
+  description: 'Does something',
+  parameters: z.object({
+    // ✅ Correct property name
+    param: z.string(),
+  }),
+  execute: async (
+    // ✅ Correct property name
+    { param }: { param: string }, // ✅ Explicit type annotation
+    _ctx: ToolContext // ✅ Underscore prefix if unused
+  ) => {
+    return { result: param };
+  },
+});
+
+// WRONG - LlmAgent config
+export const agent = new LlmAgent({
+  name: 'agent',
+  model: 'gemini-2.0-flash',
+  config: {
+    // ❌ Not a valid property
+    temperature: 0.4,
+  },
+});
+
+// CORRECT - LlmAgent generateContentConfig
+export const agent = new LlmAgent({
+  name: 'agent',
+  model: 'gemini-2.0-flash',
+  generateContentConfig: {
+    // ✅ Correct property name
+    temperature: 0.4,
+    maxOutputTokens: 2048,
+  },
+});
+```
+
+### Prevention Checklist
+
+- [ ] FunctionTool uses `parameters` (not `inputSchema`)
+- [ ] FunctionTool uses `execute` (not `func`)
+- [ ] LlmAgent uses `generateContentConfig` (not `config`)
+- [ ] Unused context params prefixed with underscore (`_ctx`)
+- [ ] Execute function params have explicit type annotations
+
+### Test Case
+
+```typescript
+// Run typecheck before committing agent changes
+npm run typecheck
+
+// Grep for wrong patterns
+grep -rn "inputSchema:" server/src/agent-v2/deploy/
+grep -rn "func: async" server/src/agent-v2/deploy/
+grep -rn "config: {" server/src/agent-v2/deploy/*/src/agent.ts
+```
+
+### Code Review Guideline
+
+> When reviewing ADK agent code, verify FunctionTool definitions use `parameters` and `execute`. Check LlmAgent uses `generateContentConfig` not `config`. Run `npm run typecheck` to catch mismatches.
 
 ---
 

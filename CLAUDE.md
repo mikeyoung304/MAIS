@@ -207,7 +207,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 43. Zod enum vs string mismatch - Use `z.enum()` for constrained choices, `z.string()` for free-form; wrong type causes validation failures
 44. Missing Cloud Run env vars - Validate required env vars at startup; use `process.env.AGENT_URL || fallback` pattern
 
-### Agent-v2 Code Quality Pitfalls (45-50)
+### Agent-v2 Code Quality Pitfalls (45-51)
 
 45. Empty secret fallback - `INTERNAL_API_SECRET || ''` masks misconfiguration; use `requireEnv()` to fail-fast at startup
 46. No fetch timeouts - All `fetch()` calls need `AbortController` timeouts; 15s backend, 30s agents, 90s scraping
@@ -215,6 +215,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 48. Dead security functions - Writing `sanitizeScrapedContent()` but never calling it; verify security code is wired up
 49. T3 without confirmation param - Trust tier enforcement must be programmatic (`confirmationReceived: z.boolean()`), not prompt-only
 50. Module-level cache unbounded - `new Map()` at module level grows forever; add TTL (30 min) and max size (1000)
+51. FunctionTool API mismatch - ADK uses `parameters`/`execute` not `inputSchema`/`func`; LlmAgent uses `generateContentConfig` not `config`
 
 ## Prevention Strategies
 
