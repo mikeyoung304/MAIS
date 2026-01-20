@@ -103,9 +103,10 @@ export class VertexAgentService {
    *
    * @param tenantId - The tenant ID
    * @param userId - The user ID (usually tenant admin)
+   * @param requestId - Optional request ID for correlation
    * @returns Session ID
    */
-  async createSession(tenantId: string, userId: string): Promise<string> {
+  async createSession(tenantId: string, userId: string, requestId?: string): Promise<string> {
     // Create session on ADK first to get a valid session ID
     const adkUserId = `${tenantId}:${userId}`; // Combine tenant and user for ADK user_id
     let adkSessionId: string;
@@ -120,6 +121,7 @@ export class VertexAgentService {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),
+            ...(requestId && { 'X-Request-ID': requestId }),
           },
           // When using POST /apps/{appName}/users/{userId}/sessions (auto-generate ID),
           // ADK expects state wrapped: { state: { key: value } }
@@ -195,9 +197,14 @@ export class VertexAgentService {
    *
    * @param sessionId - The session ID
    * @param message - User message
+   * @param requestId - Optional request ID for correlation
    * @returns Agent response
    */
-  async sendMessage(sessionId: string, message: string): Promise<SendMessageResult> {
+  async sendMessage(
+    sessionId: string,
+    message: string,
+    requestId?: string
+  ): Promise<SendMessageResult> {
     const session = sessions.get(sessionId);
     if (!session) {
       throw new Error('Session not found');
@@ -230,6 +237,7 @@ export class VertexAgentService {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${token}` }),
+          ...(requestId && { 'X-Request-ID': requestId }),
         },
         // ADK uses camelCase for A2A protocol parameters
         // Note: App name is 'agent' (from /list-apps), not 'concierge'
@@ -256,7 +264,7 @@ export class VertexAgentService {
           );
 
           // Create a new session on ADK
-          const newSessionId = await this.createADKSession(tenantId, userId);
+          const newSessionId = await this.createADKSession(tenantId, userId, requestId);
           if (newSessionId) {
             // Update local session with new ADK session ID
             session.sessionId = newSessionId;
@@ -269,7 +277,7 @@ export class VertexAgentService {
             sessionMessages.set(newSessionId, history);
 
             // Retry the message with new session
-            return this.sendMessage(newSessionId, message);
+            return this.sendMessage(newSessionId, message, requestId);
           }
         }
 
@@ -369,8 +377,13 @@ export class VertexAgentService {
   /**
    * Create a new session on ADK Cloud Run.
    * Returns the session ID if successful, null if failed.
+   * @param requestId - Optional request ID for correlation
    */
-  private async createADKSession(tenantId: string, userId: string): Promise<string | null> {
+  private async createADKSession(
+    tenantId: string,
+    userId: string,
+    requestId?: string
+  ): Promise<string | null> {
     try {
       const token = await this.getIdentityToken();
       const adkUserId = `${tenantId}:${userId}`;
@@ -382,6 +395,7 @@ export class VertexAgentService {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),
+            ...(requestId && { 'X-Request-ID': requestId }),
           },
           body: JSON.stringify({ state: { tenantId } }),
         }

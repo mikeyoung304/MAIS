@@ -44,7 +44,8 @@
     "eval-batch": "tsx scripts/run-eval-batch.ts",
     "test:commission": "tsx scripts/test-commission.ts",
     "test:stripe-connect": "tsx scripts/test-stripe-connect.ts",
-    "db:diagnose": "tsx scripts/diagnose-database.ts"
+    "db:diagnose": "tsx scripts/diagnose-database.ts",
+    "validate:migrations": "tsx scripts/validate-migrations.ts"
   },
   "dependencies": {
     "@google/adk": "^0.2.4",

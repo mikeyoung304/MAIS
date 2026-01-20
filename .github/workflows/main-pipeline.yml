@@ -311,19 +311,26 @@ jobs:
 
       - name: Apply manual SQL migrations
         run: |
-          # Apply manual SQL migrations in order (01_ through 14_)
-          # SKIP 00_supabase_reset.sql - it's a destructive legacy migration that
-          # drops tables and recreates them with fewer columns than Prisma migrations
-          for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              if [ "$filename" = "00_supabase_reset.sql" ]; then
-                echo "Skipping destructive migration: $file"
-                continue
-              fi
-              echo "Applying: $file"
-              PGPASSWORD=postgres psql -h localhost -U postgres -d mais_test -f "$file"
+          # Apply manual SQL migrations in order (supports suffixes like 17b_)
+          # SKIP 00_supabase_reset.sql - destructive legacy migration
+          # SKIP rollback files - use forward migrations instead (see CLAUDE.md pitfall #59)
+          for file in $(ls server/prisma/migrations/[0-9][0-9]*.sql 2>/dev/null | sort -V); do
+            filename=$(basename "$file")
+
+            # Skip destructive reset
+            if [ "$filename" = "00_supabase_reset.sql" ]; then
+              echo "⏭️ Skipping: $filename (destructive)"
+              continue
             fi
+
+            # Skip rollback files
+            if [[ "$filename" == *"rollback"* ]]; then
+              echo "⏭️ Skipping: $filename (rollback)"
+              continue
+            fi
+
+            echo "📦 Applying: $filename"
+            PGPASSWORD=postgres psql -h localhost -U postgres -d mais_test -f "$file"
           done
 
       - name: Run integration tests with coverage
@@ -411,19 +418,26 @@ jobs:
 
       - name: Apply manual SQL migrations
         run: |
-          # Apply manual SQL migrations in order (01_ through 14_)
-          # SKIP 00_supabase_reset.sql - it's a destructive legacy migration that
-          # drops tables and recreates them with fewer columns than Prisma migrations
-          for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              if [ "$filename" = "00_supabase_reset.sql" ]; then
-                echo "Skipping destructive migration: $file"
-                continue
-              fi
-              echo "Applying: $file"
-              PGPASSWORD=postgres psql -h localhost -U postgres -d mais_migration_test -f "$file"
+          # Apply manual SQL migrations in order (supports suffixes like 17b_)
+          # SKIP 00_supabase_reset.sql - destructive legacy migration
+          # SKIP rollback files - use forward migrations instead (see CLAUDE.md pitfall #59)
+          for file in $(ls server/prisma/migrations/[0-9][0-9]*.sql 2>/dev/null | sort -V); do
+            filename=$(basename "$file")
+
+            # Skip destructive reset
+            if [ "$filename" = "00_supabase_reset.sql" ]; then
+              echo "⏭️ Skipping: $filename (destructive)"
+              continue
             fi
+
+            # Skip rollback files
+            if [[ "$filename" == *"rollback"* ]]; then
+              echo "⏭️ Skipping: $filename (rollback)"
+              continue
+            fi
+
+            echo "📦 Applying: $filename"
+            PGPASSWORD=postgres psql -h localhost -U postgres -d mais_migration_test -f "$file"
           done
 
       - name: Generate Prisma Client
@@ -490,19 +504,26 @@ jobs:
 
       - name: Apply manual SQL migrations
         run: |
-          # Apply manual SQL migrations in order (01_ through 14_)
-          # SKIP 00_supabase_reset.sql - it's a destructive legacy migration that
-          # drops tables and recreates them with fewer columns than Prisma migrations
-          for file in server/prisma/migrations/[0-9][0-9]_*.sql; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              if [ "$filename" = "00_supabase_reset.sql" ]; then
-                echo "Skipping destructive migration: $file"
-                continue
-              fi
-              echo "Applying: $file"
-              PGPASSWORD=postgres psql -h localhost -U postgres -d mais_e2e_test -f "$file"
+          # Apply manual SQL migrations in order (supports suffixes like 17b_)
+          # SKIP 00_supabase_reset.sql - destructive legacy migration
+          # SKIP rollback files - use forward migrations instead (see CLAUDE.md pitfall #59)
+          for file in $(ls server/prisma/migrations/[0-9][0-9]*.sql 2>/dev/null | sort -V); do
+            filename=$(basename "$file")
+
+            # Skip destructive reset
+            if [ "$filename" = "00_supabase_reset.sql" ]; then
+              echo "⏭️ Skipping: $filename (destructive)"
+              continue
             fi
+
+            # Skip rollback files
+            if [[ "$filename" == *"rollback"* ]]; then
+              echo "⏭️ Skipping: $filename (rollback)"
+              continue
+            fi
+
+            echo "📦 Applying: $filename"
+            PGPASSWORD=postgres psql -h localhost -U postgres -d mais_e2e_test -f "$file"
           done
 
       - name: Start API server in mock mode (background)

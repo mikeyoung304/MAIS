@@ -63,6 +63,7 @@ import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
 import { createInternalRoutes } from './internal.routes';
 import { createInternalAgentRoutes } from './internal-agent.routes';
+import { createInternalAgentHealthRoutes } from './internal-agent-health.routes';
 import { createAgentRoutes } from './agent.routes';
 import { registerAllExecutors } from '../agent/executors';
 import { validateExecutorRegistry } from '../agent/proposals/executor-registry';
@@ -776,4 +777,12 @@ export function createV1Router(
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');
   }
+
+  // Register internal agent health routes (for deployment verification)
+  // Secured with X-Internal-Secret header - CI calls to verify agents are healthy
+  const internalAgentHealthRoutes = createInternalAgentHealthRoutes({
+    internalApiSecret: config.INTERNAL_API_SECRET,
+  });
+  app.use('/v1/internal', internalAgentHealthRoutes);
+  logger.info('✅ Internal agent health routes mounted at /v1/internal/agents/health');
 }

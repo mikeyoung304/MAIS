@@ -176,29 +176,35 @@ jobs:
 
       - name: Verify deployment health
         run: |
+          echo "🔍 Verifying agent health..."
+
           SERVICE_URL=$(gcloud run services describe ${{ matrix.agent }}-agent \
             --region=${{ env.GOOGLE_CLOUD_REGION }} \
             --format='value(status.url)' 2>/dev/null)
 
           if [ -z "$SERVICE_URL" ]; then
-            echo "⚠️  Could not get service URL, skipping health check"
-            exit 0
+            echo "❌ Could not get service URL"
+            exit 1
           fi
 
-          echo "🏥 Checking health of ${{ matrix.agent }} agent..."
+          # Wait for Cloud Run to stabilize
+          sleep 15
 
-          # Wait for service to be ready
-          sleep 10
-
-          # Try to reach the service (agents may not have a health endpoint)
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL" || echo "000")
+          # Check agent health with timeout
+          HTTP_STATUS=$(curl -s -o /tmp/health.json -w "%{http_code}" \
+            --max-time 30 \
+            "$SERVICE_URL/health" || echo "000")
 
           if [ "$HTTP_STATUS" = "000" ]; then
-            echo "⚠️  Service unreachable - may need authentication"
-          elif [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 500 ]; then
-            echo "✅ Service responding with HTTP $HTTP_STATUS"
+            echo "❌ Agent unreachable after deployment"
+            exit 1
+          elif [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Agent healthy (HTTP $HTTP_STATUS)"
+            cat /tmp/health.json
           else
-            echo "⚠️  Service returned HTTP $HTTP_STATUS"
+            echo "❌ Agent unhealthy (HTTP $HTTP_STATUS)"
+            cat /tmp/health.json 2>/dev/null || true
+            exit 1
           fi
 
   # Job 3: Summary

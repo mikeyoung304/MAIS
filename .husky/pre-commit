@@ -8,6 +8,12 @@ if git diff --cached --name-only | grep -q "server/prisma/schema.prisma"; then
   # Note: generated client is gitignored, no need to stage it
 fi
 
+# Validate migrations if any migration files changed
+if git diff --cached --name-only | grep -q "server/prisma/migrations/"; then
+  echo "🔍 Validating migration files..."
+  npm run --workspace=server validate:migrations
+fi
+
 # Run lint-staged (auto-format staged files with prettier)
 echo "Formatting staged files..."
 npx lint-staged

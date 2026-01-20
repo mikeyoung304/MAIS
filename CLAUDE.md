@@ -229,6 +229,11 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 56. Incomplete landingPageConfig wrapper (WRITE) - When publishing storefront drafts, must use `createPublishedWrapper(draftConfig)` from `lib/landing-page-utils.ts`, NOT bare `{ published: draftConfig }` - missing `publishedAt` timestamp causes data not to round-trip through validation
 57. Wrapper format not extracted on READ - When reading `landingPageConfig` for editing, must extract from wrapper: `const config = liveConfig.published ?? liveConfig` - otherwise `config.pages` is undefined and falls back to defaults, losing all existing content
 
+### CI/CD Pitfalls (58-59)
+
+58. Silent CI failures via continue-on-error - Never use `continue-on-error: true` on test steps; code merges but doesn't deploy because tests "pass" while actually failing; use only for informational steps (coverage upload, notifications). See `docs/solutions/ci-cd/SILENT_CI_FAILURES_PREVENTION.md`
+59. Migration rollback file anti-pattern - Never create paired rollback files (`16_feature.sql` + `16_feature_rollback.sql`); rollback runs AFTER original alphabetically, undoing changes and causing schema drift between environments; use forward-only migrations with unique numbers. See `docs/solutions/database-issues/MIGRATION_ROLLBACK_ANTIPATTERN.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:

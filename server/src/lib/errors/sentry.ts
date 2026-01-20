@@ -23,15 +23,26 @@ export interface SentryConfig {
 
 /**
  * Initializes Sentry error tracking
- * DSN is optional - will gracefully degrade if not provided
+ *
+ * In production: SENTRY_DSN is REQUIRED - server will fail to start without it
+ * In development: DSN is optional - gracefully degrades if not provided
+ *
+ * @returns Object indicating if Sentry is enabled
  */
-export function initSentry(config?: SentryConfig): void {
+export function initSentry(config?: SentryConfig): { enabled: boolean } {
   const dsn = config?.dsn || process.env.SENTRY_DSN;
 
+  // Fail fast in production if Sentry not configured
+  if (process.env.NODE_ENV === 'production' && !dsn) {
+    throw new Error(
+      'SENTRY_DSN is required in production. ' +
+        'Set SENTRY_DSN environment variable or use NODE_ENV=development.'
+    );
+  }
+
   if (!dsn) {
-    logger.warn('⚠️  SENTRY_DSN not set - error tracking disabled');
-    logger.info('To enable Sentry, set SENTRY_DSN environment variable');
-    return;
+    logger.info('Sentry disabled (non-production, no SENTRY_DSN)');
+    return { enabled: false };
   }
 
   try {
@@ -84,8 +95,10 @@ export function initSentry(config?: SentryConfig): void {
 
     sentryInitialized = true;
     logger.info({ dsn: dsn.substring(0, 20) + '...' }, 'Sentry initialized');
+    return { enabled: true };
   } catch (error) {
     logger.error({ error }, 'Failed to initialize Sentry');
+    return { enabled: false };
   }
 }
 

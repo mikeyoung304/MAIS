@@ -163,7 +163,7 @@ jobs:
 
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
-        continue-on-error: true  # Integration tests may have flaky DB connections in CI
+        # Tests skip gracefully when DATABASE_URL not set (see CLAUDE.md pitfall #58)
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
@@ -181,7 +181,7 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
-        continue-on-error: true  # E2E tests need running servers - TODO: fix CI E2E setup
+        # Tests skip gracefully when infrastructure not ready (see CLAUDE.md pitfall #58)
         env:
           CI: true
           NODE_ENV: test
@@ -403,8 +403,8 @@ jobs:
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             ATTEMPT=$((ATTEMPT + 1))
 
-            if curl -f -s "${{ env.PRODUCTION_API_URL }}/health" > /dev/null; then
-              echo "✅ API is healthy (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+            if curl -f -s "${{ env.PRODUCTION_API_URL }}/health/ready" > /dev/null; then
+              echo "✅ API is healthy (database connected, attempt $ATTEMPT/$MAX_ATTEMPTS)"
               SUCCESS=true
               break
             fi
@@ -423,8 +423,8 @@ jobs:
         run: |
           echo "🧪 Running production smoke tests..."
 
-          # Test health endpoint
-          HEALTH_RESPONSE=$(curl -f -s "${{ env.PRODUCTION_API_URL }}/health")
+          # Test deep health endpoint (verifies database connectivity)
+          HEALTH_RESPONSE=$(curl -f -s "${{ env.PRODUCTION_API_URL }}/health/ready")
           echo "Health check response: $HEALTH_RESPONSE"
 
           # Test API versioning
@@ -571,7 +571,7 @@ jobs:
 
           ## Verification
 
-          - API health: ${{ env.PRODUCTION_API_URL }}/health
+          - API health: ${{ env.PRODUCTION_API_URL }}/health/ready
           - Client: ${{ env.PRODUCTION_CLIENT_URL }}
 
           ## Logs
