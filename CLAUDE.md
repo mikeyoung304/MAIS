@@ -194,7 +194,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 ### ADK/A2A Pitfalls (32-44)
 
 32. A2A camelCase required - Use `appName`, `userId`, `sessionId`, `newMessage` for A2A protocol (NOT snake_case - ADK rejects it silently)
-33. App name mismatch - Always verify app name with `/list-apps` after deploy; must match agent's `name` property
+33. App name mismatch - ADK uses DIRECTORY name for routing, NOT agent's `name` property; verify with `/list-apps` after deploy
 34. Unsupported Zod types - ADK doesn't support `z.record()`, `z.tuple()`, `z.intersection()`, `z.lazy()`; use `z.any()` with `.describe()`
 35. A2A response format - Handle both `messages[]` and `content.parts[]` formats; fallback to JSON.stringify
 36. Identity token auth - Agent-to-Agent uses metadata service; Backend-to-Agent uses GoogleAuth; both need graceful local dev fallback
@@ -216,6 +216,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 49. T3 without confirmation param - Trust tier enforcement must be programmatic (`confirmationReceived: z.boolean()`), not prompt-only
 50. Module-level cache unbounded - `new Map()` at module level grows forever; add TTL (30 min) and max size (1000)
 51. FunctionTool API mismatch - ADK uses `parameters`/`execute` not `inputSchema`/`func`; LlmAgent uses `generateContentConfig` not `config`; execute context is `ToolContext | undefined` not `ToolContext`
+52. Tool confirmation-only response - Tools that modify state must return updated state, not just `{success: true}`; agent loses context and asks redundant questions
 
 ## Prevention Strategies
 
@@ -224,6 +225,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[PREVENTION-QUICK-REFERENCE.md](docs/solutions/PREVENTION-QUICK-REFERENCE.md)** - Print and pin cheat sheet
 - **[mais-critical-patterns.md](docs/solutions/patterns/mais-critical-patterns.md)** - 10 critical patterns
 - **[AGENT_TOOLS_PREVENTION_INDEX.md](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Agent tool patterns
+- **[AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md](docs/solutions/patterns/AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md)** - Tool state return patterns
 - **[ADK_A2A_PREVENTION_INDEX.md](docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md)** - ADK/A2A integration patterns
 - **[A2A_SESSION_STATE_PREVENTION.md](docs/solutions/patterns/A2A_SESSION_STATE_PREVENTION.md)** - Session isolation & state handling
 - **[ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md](docs/solutions/patterns/ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md)** - Agent dev checklist

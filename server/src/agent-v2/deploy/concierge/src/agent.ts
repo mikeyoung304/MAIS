@@ -1204,9 +1204,12 @@ If onboardingDone is false, switch to onboarding mode - help them build their st
         fallback: {
           tenantId,
           businessName: 'Unknown',
-          onboardingDone: true, // Assume done on error to avoid getting stuck
-          isOnboarding: false,
+          onboardingDone: false, // Conservative: don't skip onboarding on error
+          isOnboarding: false, // Keep boolean type - don't enter onboarding on error
+          isBootstrapError: true, // Explicit error flag for LLM reasoning
+          errorMessage: result.error,
         },
+        retryGuidance: 'Bootstrap failed. Continue with basic greeting and retry in a moment.',
       };
     }
 
@@ -1284,10 +1287,23 @@ Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}`,
       };
     }
 
+    // Return updated facts list so agent knows what it knows mid-conversation
+    const responseData = result.data as {
+      stored: boolean;
+      key: string;
+      value: unknown;
+      totalFactsKnown: number;
+      knownFactKeys: string[];
+      message: string;
+    };
+
     return {
       stored: true,
       key: params.key,
-      message: `Got it! I'll remember that.`,
+      value: params.value,
+      totalFactsKnown: responseData.totalFactsKnown,
+      knownFactKeys: responseData.knownFactKeys,
+      message: `Got it! I now know: ${responseData.knownFactKeys.join(', ')}`,
     };
   },
 });

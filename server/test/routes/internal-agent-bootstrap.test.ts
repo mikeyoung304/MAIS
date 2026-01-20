@@ -6,12 +6,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Request, Response } from 'express';
 import express from 'express';
 import request from 'supertest';
 import { createInternalAgentRoutes } from '../../src/routes/internal-agent.routes';
 import type { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import type { AdvisorMemoryService } from '../../src/agent/onboarding/advisor-memory.service';
+import type { CatalogService } from '../../src/services/catalog.service';
 
 // Mock logger to prevent console output
 vi.mock('../../src/lib/core/logger', () => ({
@@ -57,7 +57,25 @@ describe('Internal Agent Bootstrap Endpoint', () => {
   // Mock dependencies
   let mockTenantRepo: Partial<PrismaTenantRepository>;
   let mockAdvisorMemoryService: Partial<AdvisorMemoryService>;
+  let mockCatalogService: Partial<CatalogService>;
   let app: express.Application;
+
+  // Helper to create fresh app (needed for cache isolation)
+  function createTestApp(): express.Application {
+    const testApp = express();
+    testApp.use(express.json());
+    testApp.use(
+      '/v1/internal/agent',
+      createInternalAgentRoutes({
+        internalApiSecret: INTERNAL_SECRET,
+        catalogService: mockCatalogService as CatalogService,
+        bookingService: {} as any,
+        tenantRepo: mockTenantRepo as PrismaTenantRepository,
+        advisorMemoryService: mockAdvisorMemoryService as AdvisorMemoryService,
+      })
+    );
+    return testApp;
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,19 +90,30 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       getOnboardingContext: vi.fn().mockResolvedValue(mockOnboardingContext),
     };
 
+    mockCatalogService = {
+      getAllPackages: vi
+        .fn()
+        .mockResolvedValue([
+          { id: 'pkg-1', title: 'Test Package', priceCents: 10000, active: true },
+        ]),
+      getPackageById: vi.fn().mockResolvedValue({
+        id: 'pkg-1',
+        slug: 'test-package',
+        title: 'Test Package',
+        priceCents: 10000,
+      }),
+      getPackageBySlug: vi.fn().mockResolvedValue({
+        id: 'pkg-1',
+        slug: 'test-package',
+        title: 'Test Package',
+        description: 'Test description',
+        priceCents: 10000,
+        addOns: [],
+      }),
+    };
+
     // Create app with routes
-    app = express();
-    app.use(express.json());
-    app.use(
-      '/v1/internal/agent',
-      createInternalAgentRoutes({
-        internalApiSecret: INTERNAL_SECRET,
-        catalogService: {} as any,
-        bookingService: {} as any,
-        tenantRepo: mockTenantRepo as PrismaTenantRepository,
-        advisorMemoryService: mockAdvisorMemoryService as AdvisorMemoryService,
-      })
-    );
+    app = createTestApp();
   });
 
   afterEach(() => {
@@ -317,6 +346,377 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         });
 
       expect(response.status).toBe(400);
+    });
+
+    it('should return updated known facts list (P1-2)', async () => {
+      // First store a fact
+      mockTenantRepo.findById = vi.fn().mockResolvedValue({
+        ...mockTenant,
+        branding: { discoveryFacts: { existingKey: 'value' } },
+      });
+
+      const response = await request(app)
+        .post('/v1/internal/agent/store-discovery-fact')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          key: 'businessType',
+          value: 'wedding photographer',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        stored: true,
+        key: 'businessType',
+        value: 'wedding photographer',
+        totalFactsKnown: 2,
+        knownFactKeys: expect.arrayContaining(['existingKey', 'businessType']),
+      });
+    });
+  });
+
+  describe('POST /complete-onboarding (P1-3)', () => {
+    it('should block completion without packages', async () => {
+      // No packages exist
+      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([]);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/complete-onboarding')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          publishedUrl: 'https://test.gethandled.ai',
+          packagesCreated: 0,
+          summary: 'Tried to complete',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('at least one package');
+      expect(response.body.prerequisite).toBe('packages');
+      expect(mockTenantRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow completion with packages', async () => {
+      // Packages exist
+      mockCatalogService.getAllPackages = vi
+        .fn()
+        .mockResolvedValue([{ id: 'pkg-1', title: 'Wedding Package' }]);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/complete-onboarding')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          publishedUrl: 'https://test.gethandled.ai',
+          packagesCreated: 1,
+          summary: 'Created wedding package',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(mockTenantRepo.update).toHaveBeenCalledWith('tenant-123', {
+        onboardingPhase: 'COMPLETED',
+        onboardingCompletedAt: expect.any(Date),
+      });
+    });
+  });
+
+  describe('Cache Behavior (P1-5)', () => {
+    it('should expire cache after TTL', async () => {
+      vi.useFakeTimers();
+
+      // Create fresh app for this test to avoid cache pollution
+      const testApp = createTestApp();
+
+      // First call - cache miss
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-ttl-test' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+
+      // Second call within TTL - cache hit
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-ttl-test' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+
+      // Advance time past TTL (31 minutes)
+      vi.advanceTimersByTime(31 * 60 * 1000);
+
+      // Third call - cache miss (expired)
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-ttl-test' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
+    });
+
+    it('should evict oldest entry when cache exceeds max size', async () => {
+      // Create fresh app
+      const testApp = createTestApp();
+
+      // Fill cache with 1001 entries (max is 1000)
+      for (let i = 0; i < 1001; i++) {
+        mockTenantRepo.findById = vi.fn().mockResolvedValue({
+          ...mockTenant,
+          id: `tenant-${i}`,
+          name: `Business ${i}`,
+        });
+
+        await request(testApp)
+          .post('/v1/internal/agent/bootstrap')
+          .set('X-Internal-Secret', INTERNAL_SECRET)
+          .send({ tenantId: `tenant-${i}` });
+      }
+
+      // Reset mock to track new calls
+      mockTenantRepo.findById = vi.fn().mockResolvedValue({
+        ...mockTenant,
+        id: 'tenant-0',
+        name: 'Business 0',
+      });
+
+      // Request for first tenant - should be evicted (cache miss)
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-0' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+    });
+
+    it('should invalidate cache after complete-onboarding', async () => {
+      const testApp = createTestApp();
+
+      // First bootstrap - cache miss
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+
+      // Complete onboarding - should invalidate cache
+      await request(testApp)
+        .post('/v1/internal/agent/complete-onboarding')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          publishedUrl: 'https://test.gethandled.ai',
+          packagesCreated: 1,
+        });
+
+      // Reset mock to track
+      vi.mocked(mockTenantRepo.findById).mockClear();
+
+      // Bootstrap again - should be cache miss (invalidated)
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+    });
+
+    it('should invalidate cache after store-discovery-fact', async () => {
+      const testApp = createTestApp();
+
+      // First bootstrap - cache miss
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+
+      // Store discovery fact - should invalidate cache
+      await request(testApp)
+        .post('/v1/internal/agent/store-discovery-fact')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          key: 'businessType',
+          value: 'photographer',
+        });
+
+      // Reset mock to track
+      vi.mocked(mockTenantRepo.findById).mockClear();
+
+      // Bootstrap again - should be cache miss (invalidated)
+      await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+
+      expect(mockTenantRepo.findById).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('POST /services (P1-4)', () => {
+    it('should return services for tenant', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/services')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.services).toBeDefined();
+      expect(Array.isArray(response.body.services)).toBe(true);
+      expect(mockCatalogService.getAllPackages).toHaveBeenCalledWith('tenant-123');
+    });
+
+    it('should filter inactive services by default', async () => {
+      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([
+        { id: 'pkg-1', title: 'Active', active: true, priceCents: 10000 },
+        { id: 'pkg-2', title: 'Inactive', active: false, priceCents: 5000 },
+      ]);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/services')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123', activeOnly: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.services).toHaveLength(1);
+      expect(response.body.services[0].name).toBe('Active');
+    });
+  });
+
+  describe('POST /service-details (P1-4)', () => {
+    it('should return service details', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/service-details')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123', serviceId: 'pkg-1' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        id: 'pkg-1',
+        slug: 'test-package',
+        name: 'Test Package',
+      });
+    });
+
+    it('should return 404 for missing service', async () => {
+      mockCatalogService.getPackageById = vi.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/service-details')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123', serviceId: 'nonexistent' });
+
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('POST /business-info (P1-4)', () => {
+    it('should return business information', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/business-info')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        name: 'Test Business',
+        slug: 'test-business',
+      });
+    });
+
+    it('should return 404 for missing tenant', async () => {
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/business-info')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'nonexistent' });
+
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('POST /faq (P1-4)', () => {
+    it('should return FAQ answer when matched', async () => {
+      mockTenantRepo.findById = vi.fn().mockResolvedValue({
+        ...mockTenant,
+        landingPageConfig: {
+          faqs: [
+            { question: 'What are your hours?', answer: 'We are open 9-5 M-F' },
+            { question: 'Do you offer refunds?', answer: 'Yes within 30 days' },
+          ],
+        },
+      });
+
+      const response = await request(app)
+        .post('/v1/internal/agent/faq')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123', question: 'What are your hours?' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.found).toBe(true);
+      expect(response.body.answer).toContain('9-5');
+    });
+
+    it('should return available FAQs when no match', async () => {
+      mockTenantRepo.findById = vi.fn().mockResolvedValue({
+        ...mockTenant,
+        landingPageConfig: {
+          faqs: [{ question: 'What are your hours?', answer: 'We are open 9-5' }],
+        },
+      });
+
+      const response = await request(app)
+        .post('/v1/internal/agent/faq')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123', question: 'Do you accept bitcoin?' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.found).toBe(false);
+      expect(response.body.availableFaqs).toBeDefined();
+    });
+  });
+
+  describe('POST /recommend (P1-4)', () => {
+    it('should return recommendations based on budget', async () => {
+      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([
+        { id: 'pkg-1', title: 'Basic', priceCents: 10000, active: true },
+        { id: 'pkg-2', title: 'Standard', priceCents: 25000, active: true },
+        { id: 'pkg-3', title: 'Premium', priceCents: 50000, active: true },
+      ]);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/recommend')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          preferences: { budget: 'low' },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.recommendations).toBeDefined();
+      expect(response.body.recommendations.length).toBeGreaterThan(0);
+    });
+
+    it('should handle no packages gracefully', async () => {
+      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([]);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/recommend')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          preferences: {},
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.recommendations).toHaveLength(0);
     });
   });
 });

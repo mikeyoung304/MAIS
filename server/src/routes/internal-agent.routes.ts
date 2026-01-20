@@ -409,6 +409,23 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Completing onboarding'
       );
 
+      // Validate prerequisites: at least one package must exist
+      const packages = await catalogService.getAllPackages(tenantId);
+      if (packages.length === 0) {
+        logger.warn(
+          { tenantId, endpoint: '/complete-onboarding' },
+          '[Agent] Blocked onboarding completion - no packages exist'
+        );
+        res.status(400).json({
+          error: 'Cannot complete onboarding without at least one package',
+          suggestion: 'Create a service package first using the storefront tools',
+          prerequisite: 'packages',
+          required: 1,
+          actual: 0,
+        });
+        return;
+      }
+
       // Update tenant onboarding phase
       await tenantRepo.update(tenantId, {
         onboardingPhase: 'COMPLETED',
@@ -500,10 +517,15 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       // Invalidate bootstrap cache so next request gets updated facts
       invalidateBootstrapCache(tenantId);
 
+      // Return updated facts list so agent knows what it knows
+      const knownFactKeys = Object.keys(discoveryFacts);
       res.json({
         stored: true,
         key,
-        message: `Stored ${key} successfully`,
+        value,
+        totalFactsKnown: knownFactKeys.length,
+        knownFactKeys,
+        message: `Stored ${key} successfully. Now know: ${knownFactKeys.join(', ')}`,
       });
     } catch (error) {
       handleError(res, error, '/store-discovery-fact');

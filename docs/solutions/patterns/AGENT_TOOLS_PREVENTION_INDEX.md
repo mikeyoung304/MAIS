@@ -441,6 +441,7 @@ Extract during implementation, not after. It's faster that way.
 - **PREVENTION-QUICK-REFERENCE.md:** Quick reference cards
 - **STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md:** TOCTOU on JSON fields, DRY tool logic, API consistency (Issues #659-666)
   - Quick reference: STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md
+- **AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md:** Tools must return updated state, not just confirmation (prevents agent amnesia)
 
 ### Implementation Files
 
@@ -453,7 +454,7 @@ Extract during implementation, not after. It's faster that way.
 
 ## Document Maintenance
 
-**Last updated:** 2026-01-08
+**Last updated:** 2026-01-20
 **Status:** Complete and ready for use
 **Applies to:** All new agent tool implementations
 
@@ -474,3 +475,4 @@ When implementing new tools, copy the checklists and adapt them to your specific
 | Pre-merge checklist   | AGENT_TOOLS_PREVENTION_INDEX.md                 | Checklist section        |
 | JSON field TOCTOU     | STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md | Prevention Strategy 1    |
 | Tool API consistency  | STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md | Prevention Strategy 3    |
+| Active memory pattern | AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md          | Full document            |
