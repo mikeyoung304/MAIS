@@ -5,6 +5,9 @@
  * Ensures that if any part of provisioning fails, the entire
  * transaction rolls back and no partial tenant exists.
  *
+ * NOTE: These are integration tests that require DATABASE_URL to be set.
+ * If DATABASE_URL is not set, tests are skipped (valid for CI without DB).
+ *
  * @see todos/632-pending-p2-stricter-signup-error-handling.md
  */
 
@@ -13,35 +16,46 @@ import { TenantProvisioningService } from '../../src/services/tenant-provisionin
 import { TenantProvisioningError } from '../../src/lib/errors';
 import { getTestPrisma } from '../helpers/global-prisma';
 
-const prisma = getTestPrisma();
+/**
+ * Skip entire test suite if DATABASE_URL is not configured.
+ * This check happens at module evaluation time, before getTestPrisma() is called.
+ *
+ * Note: Importing getTestPrisma at the top is fine - the error only occurs
+ * when getTestPrisma() is CALLED without DATABASE_URL being set.
+ */
+const hasDatabaseUrl = !!(process.env.DATABASE_URL || process.env.DATABASE_URL_TEST);
 
-// Track test emails for cleanup
-const testEmails: string[] = [];
+describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
+  // Call getTestPrisma inside describe.runIf to defer database initialization
+  // This prevents the "DATABASE_URL must be set" error in CI
+  const prisma = getTestPrisma();
 
-const generateTestEmail = () => {
-  const email = `provisioning-test-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
-  testEmails.push(email);
-  return email;
-};
+  // Track test emails for cleanup
+  const testEmails: string[] = [];
 
-afterAll(async () => {
-  // Cleanup test tenants
-  if (testEmails.length > 0) {
-    const tenants = await prisma.tenant.findMany({
-      where: { email: { in: testEmails } },
-      select: { id: true },
-    });
-    const tenantIds = tenants.map((t) => t.id);
+  const generateTestEmail = () => {
+    const email = `provisioning-test-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
+    testEmails.push(email);
+    return email;
+  };
 
-    if (tenantIds.length > 0) {
-      await prisma.package.deleteMany({ where: { tenantId: { in: tenantIds } } });
-      await prisma.segment.deleteMany({ where: { tenantId: { in: tenantIds } } });
-      await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
+  afterAll(async () => {
+    // Cleanup test tenants
+    if (testEmails.length > 0) {
+      const tenants = await prisma.tenant.findMany({
+        where: { email: { in: testEmails } },
+        select: { id: true },
+      });
+      const tenantIds = tenants.map((t) => t.id);
+
+      if (tenantIds.length > 0) {
+        await prisma.package.deleteMany({ where: { tenantId: { in: tenantIds } } });
+        await prisma.segment.deleteMany({ where: { tenantId: { in: tenantIds } } });
+        await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
+      }
     }
-  }
-});
+  });
 
-describe('TenantProvisioningService', () => {
   let service: TenantProvisioningService;
 
   beforeAll(() => {

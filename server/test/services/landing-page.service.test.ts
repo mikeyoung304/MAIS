@@ -5,6 +5,9 @@
  * 1. Visual Editor (wrapper format in landingPageConfig)
  * 2. Build Mode (separate landingPageConfigDraft column)
  *
+ * NOTE: These are integration tests that require DATABASE_URL to be set.
+ * If DATABASE_URL is not set, tests are skipped (valid for CI without DB).
+ *
  * @see todos/704-ready-p2-landing-page-service-abstraction.md
  */
 
@@ -14,7 +17,14 @@ import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.reposit
 import { getTestPrisma } from '../helpers/global-prisma';
 import type { PagesConfig } from '@macon/contracts';
 
-const prisma = getTestPrisma();
+/**
+ * Skip entire test suite if DATABASE_URL is not configured.
+ * This check happens at module evaluation time, before getTestPrisma() is called.
+ *
+ * Note: Importing getTestPrisma at the top is fine - the error only occurs
+ * when getTestPrisma() is CALLED without DATABASE_URL being set.
+ */
+const hasDatabaseUrl = !!(process.env.DATABASE_URL || process.env.DATABASE_URL_TEST);
 
 /**
  * VALID mock config for tests that need schema-compliant data.
@@ -45,25 +55,29 @@ const VALID_MOCK_PAGES_CONFIG: PagesConfig = {
   testimonials: { enabled: false, sections: [] },
 };
 
-// Track test slugs for cleanup
-const testSlugs: string[] = [];
+describe.runIf(hasDatabaseUrl)('LandingPageService', () => {
+  // Call getTestPrisma inside describe.runIf to defer database initialization
+  // This prevents the "DATABASE_URL must be set" error in CI
+  const prisma = getTestPrisma();
 
-const generateTestSlug = () => {
-  const slug = `lp-service-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-  testSlugs.push(slug);
-  return slug;
-};
+  // Track test slugs for cleanup
+  const testSlugs: string[] = [];
 
-afterAll(async () => {
-  // Cleanup test tenants
-  if (testSlugs.length > 0) {
-    await prisma.tenant.deleteMany({
-      where: { slug: { in: testSlugs } },
-    });
-  }
-});
+  const generateTestSlug = () => {
+    const slug = `lp-service-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    testSlugs.push(slug);
+    return slug;
+  };
 
-describe('LandingPageService', () => {
+  afterAll(async () => {
+    // Cleanup test tenants
+    if (testSlugs.length > 0) {
+      await prisma.tenant.deleteMany({
+        where: { slug: { in: testSlugs } },
+      });
+    }
+  });
+
   let service: LandingPageService;
   let tenantRepo: PrismaTenantRepository;
 
