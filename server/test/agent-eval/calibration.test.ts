@@ -493,7 +493,13 @@ describe('Calibration Integration Tests', () => {
 // Smoke Tests (Quick API validation)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('Evaluator Smoke Tests', () => {
+/**
+ * Skip smoke tests if GOOGLE_VERTEX_PROJECT is not configured.
+ * createEvaluator() requires Vertex AI credentials.
+ */
+const hasVertexProject = !!process.env.GOOGLE_VERTEX_PROJECT;
+
+describe.runIf(hasVertexProject)('Evaluator Smoke Tests', () => {
   it('should create evaluator without throwing', () => {
     // Gemini uses ADC (Application Default Credentials), so it should
     // always create successfully - actual auth happens at API call time

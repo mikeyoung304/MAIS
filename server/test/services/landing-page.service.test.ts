@@ -56,9 +56,11 @@ const VALID_MOCK_PAGES_CONFIG: PagesConfig = {
 };
 
 describe.runIf(hasDatabaseUrl)('LandingPageService', () => {
-  // Call getTestPrisma inside describe.runIf to defer database initialization
-  // This prevents the "DATABASE_URL must be set" error in CI
-  const prisma = getTestPrisma();
+  // getTestPrisma returns null when no DATABASE_URL - this is safe because
+  // describe.runIf will skip all tests anyway when hasDatabaseUrl is false.
+  // The non-null assertion (!) is safe here because if hasDatabaseUrl is true,
+  // getTestPrisma will return a valid PrismaClient.
+  const prisma = getTestPrisma()!;
 
   // Track test slugs for cleanup
   const testSlugs: string[] = [];

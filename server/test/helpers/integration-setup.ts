@@ -93,7 +93,11 @@ export interface CacheTestUtils {
  */
 export function setupIntegrationTest(): IntegrationTestContext {
   // Use global singleton to prevent connection pool exhaustion
-  const prisma = getTestPrisma();
+  // getTestPrisma returns null when no DATABASE_URL - this is safe because
+  // callers should use describe.runIf(hasDatabaseUrl) which skips tests when false.
+  // The non-null assertion (!) is safe here because this function should only
+  // be called inside describe.runIf blocks that check for DATABASE_URL.
+  const prisma = getTestPrisma()!;
 
   // Cleanup is a no-op - singleton manages its own lifecycle
   // Individual tests should NOT disconnect the shared client
