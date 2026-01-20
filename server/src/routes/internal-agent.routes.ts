@@ -50,6 +50,7 @@ import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repositor
 import type { ServiceRepository } from '../lib/ports';
 import type { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
+import { createPublishedWrapper } from '../lib/landing-page-utils';
 
 // =============================================================================
 // Request Schemas
@@ -1492,9 +1493,11 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Publish: copy draft to live (using wrapper format for compatibility)
+      // Must use createPublishedWrapper to include publishedAt timestamp
+      // See: docs/solutions/integration-issues/agent-deployment-ci-cd-gap.md
       const draftConfig = tenant.landingPageConfigDraft;
       await tenantRepo.update(tenantId, {
-        landingPageConfig: { published: draftConfig },
+        landingPageConfig: createPublishedWrapper(draftConfig),
         landingPageConfigDraft: null,
       });
 

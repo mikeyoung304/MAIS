@@ -1,0 +1,155 @@
+---
+# Bug Fix Compound Documentation Summary
+# Issue: #697 - Storefront Agent Publish Wrapper Fix
+# Date Documented: 2026-01-20
+
+incident:
+  id: "697"
+  title: "Storefront Agent Claimed Success But Changes Didn't Persist"
+  date_detected: "2026-01-19"
+  date_fixed: "2026-01-20"
+  severity: P1
+  status: resolved
+
+symptoms:
+  - agent_message: "Storefront ✓" (green checkmark)
+  - agent_claim: "Done. Check your preview - headline's updated."
+  - actual_result: Preview shows placeholder "[Your Transformation Headline]"
+  - packages_status: "Saving correctly (3 packages visible)"
+  - landing_page_status: "Not persisting (headlines, sections missing)"
+
+root_cause:
+  category: "Incomplete wrapper format"
+  description: |
+    The /storefront/publish endpoint was constructing the landingPageConfig wrapper
+    manually instead of using the createPublishedWrapper() helper. The manual construction
+    was missing the publishedAt timestamp field, causing downstream validation to fail silently.
+  broken_code: |
+    landingPageConfig: { published: draftConfig }  // Missing publishedAt!
+  fixed_code: |
+    landingPageConfig: createPublishedWrapper(draftConfig)  // Includes publishedAt
+
+impact:
+  affected_endpoint: "POST /v1/internal/agent/storefront/publish"
+  file: "server/src/routes/internal-agent.routes.ts"
+  lines: "1496-1500"
+  users: "Any user publishing storefront changes through the agent"
+  scope: "Landing page configuration only (not packages, not other features)"
+
+fix_details:
+  type: "Architecture consistency fix"
+  pattern: "Use helper function instead of manual object construction"
+  changes:
+    - file: "server/src/routes/internal-agent.routes.ts"
+      line: 53
+      change: "Added import for createPublishedWrapper"
+    - file: "server/src/routes/internal-agent.routes.ts"
+      lines: "1496-1500"
+      change: "Changed from manual wrapper construction to helper function"
+    - file: "CLAUDE.md"
+      change: "Added pitfall #56 to prevention guide"
+
+root_cause_analysis:
+  why_it_happened:
+    - "Helper function createPublishedWrapper() was extracted during DRY refactor (TODO #725)"
+    - "Endpoint was written before the utility was extracted"
+    - "Not updated to use new helper after extraction"
+    - "Silent failure: validation failed but didn't throw error"
+  why_it_wasnt_caught:
+    - "Packages saved correctly, masking the issue for landing page config"
+    - "Validation layer silently dropped invalid data instead of erroring"
+    - "UI showed placeholders instead of throwing obvious error"
+    - "Agent reported success because database write succeeded"
+
+prevention:
+  rule_id: "pitfall-56"
+  rule_text: |
+    Incomplete landingPageConfig wrapper - When publishing storefront drafts,
+    must use createPublishedWrapper(draftConfig) from lib/landing-page-utils.ts,
+    NOT bare { published: draftConfig } - missing publishedAt timestamp causes
+    data not to round-trip through validation
+  checklist:
+    - "Always use createPublishedWrapper() helper"
+    - "Never manually construct wrapper objects"
+    - "Verify all fields present: draft, draftUpdatedAt, published, publishedAt"
+    - "Use ISO 8601 format for timestamps (new Date().toISOString())"
+    - "Clear draft fields when publishing (set to null)"
+    - "Test round-trip: write → read → validate"
+
+architecture_context:
+  dual_draft_system: |
+    Tenant model maintains separate draft and published configs:
+    - landingPageConfigDraft: working copy (what agent edits)
+    - landingPageConfig: published version (what users see)
+      - draft: null when published
+      - draftUpdatedAt: null when published
+      - published: the actual content
+      - publishedAt: ISO timestamp of publication
+  consistency:
+    - Service layer: landing-page.service.ts - uses helper ✓
+    - Agent executors: storefront-executors.ts - uses helper ✓
+    - Agent routes: internal-agent.routes.ts - NOW uses helper ✓
+
+files_modified:
+  - path: "server/src/routes/internal-agent.routes.ts"
+    changes: 2
+    type: "API endpoint fix"
+  - path: "CLAUDE.md"
+    changes: 1
+    type: "Prevention documentation"
+
+documentation_created:
+  - path: "docs/solutions/STOREFRONT-AGENT-PUBLISH-WRAPPER-FIX.md"
+    type: "Full incident analysis"
+    length: "Detailed explanation, testing scenarios, architecture context"
+  - path: "docs/solutions/patterns/STOREFRONT-AGENT-WRAPPER-PREVENTION.md"
+    type: "Prevention checklist"
+    length: "Quick reference, code locations, testing guide"
+  - path: "docs/solutions/COMPOUND-SUMMARY-697-WRAPPER-FIX.yaml"
+    type: "This summary"
+    length: "Machine-readable YAML"
+
+testing:
+  manual_test: |
+    1. npm run dev:all
+    2. Use storefront agent to publish headline changes
+    3. Query /v1/internal/agent/storefront/preview
+    4. Verify publishedAt field is present (ISO timestamp)
+    5. Navigate to preview URL - headlines should appear (not placeholders)
+  verification: |
+    - Verify import is present: grep createPublishedWrapper server/src/routes/internal-agent.routes.ts
+    - Verify endpoint uses it: grep -A5 "storefront/publish" server/src/routes/internal-agent.routes.ts
+    - Run typecheck: npm run typecheck
+
+lessons_learned:
+  - "Single source of truth matters - when extracted to utility, ALL code paths must use it"
+  - "Silent failures are dangerous - validation failing without error masks bugs"
+  - "Complete round-trip testing is critical - don't just test write, test read too"
+  - "Timestamp fields aren't optional - they're used in validation and sorting"
+  - "DRY refactors must sweep all usages - check API endpoints too, not just services"
+
+related_issues:
+  - issue: 725
+    title: "Duplicate publish/discard logic in service vs executor"
+    note: "This fix was part of DRY refactor that extracted the helper"
+  - issue: 724
+    title: "Duplicate getBuildModeDraft implementation"
+    note: "Related DRY issue in same refactor phase"
+
+keywords:
+  - "wrapper format"
+  - "publishedAt timestamp"
+  - "dual draft system"
+  - "landing page config"
+  - "storefront agent"
+  - "data persistence"
+  - "validation"
+  - "agent integration"
+  - "silent failure"
+  - "DRY refactor"
+
+search_terms: |
+  storefront agent publish failed silent wrapper timestamp 697
+  landing page config not persisting agent says success
+  incomplete publishedwrapper createPublishedWrapper helper
+  dual draft system landing page config broken

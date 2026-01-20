@@ -15,13 +15,14 @@ Complete CI/CD pipeline for the MAIS multi-tenant business growth platform.
 
 ## Workflow Overview
 
-| Workflow                 | Trigger                             | Purpose                            | Duration   |
-| ------------------------ | ----------------------------------- | ---------------------------------- | ---------- |
-| **PR Validation**        | Pull requests to `main`/`develop`   | Comprehensive testing & validation | ~8-12 min  |
-| **Deploy Staging**       | Push to `develop`                   | Deploy to staging environment      | ~15-20 min |
-| **Deploy Production**    | Push to `main` or version tags      | Deploy to production               | ~20-30 min |
-| **Cache Warmup**         | Daily schedule / dependency changes | Pre-build dependencies             | ~10-15 min |
-| **Database Maintenance** | Manual trigger                      | Database operations & migrations   | Varies     |
+| Workflow                 | Trigger                               | Purpose                            | Duration   |
+| ------------------------ | ------------------------------------- | ---------------------------------- | ---------- |
+| **PR Validation**        | Pull requests to `main`/`develop`     | Comprehensive testing & validation | ~8-12 min  |
+| **Deploy Staging**       | Push to `develop`                     | Deploy to staging environment      | ~15-20 min |
+| **Deploy Production**    | Push to `main` or version tags        | Deploy to production               | ~20-30 min |
+| **Deploy AI Agents**     | Push to `main` (agent dirs) or manual | Deploy agents to Cloud Run         | ~5-15 min  |
+| **Cache Warmup**         | Daily schedule / dependency changes   | Pre-build dependencies             | ~10-15 min |
+| **Database Maintenance** | Manual trigger                        | Database operations & migrations   | Varies     |
 
 ## Quick Start
 
@@ -207,7 +208,58 @@ graph LR
 - Playwright browser binaries
 - Build artifacts for shared packages
 
-### 5. Database Maintenance (`database-maintenance.yml`)
+### 5. Deploy AI Agents (`deploy-agents.yml`)
+
+**Triggers:**
+
+- Push to `main` that changes agent directories
+- Manual workflow dispatch (select specific agent or all)
+
+**Monitored Paths:**
+
+```
+server/src/agent-v2/deploy/*/src/**
+server/src/agent-v2/deploy/*/package.json
+server/src/agent-v2/deploy/*/tsconfig.json
+```
+
+**Jobs:**
+
+1. **Detect Changes** - Identifies which agents have changes (2 min)
+2. **Deploy Agent** - Builds and deploys each changed agent in parallel (5-10 min each)
+3. **Deployment Summary** - Generates summary with service URLs
+
+**Manual Trigger Options:**
+
+- `agent`: Select specific agent (concierge, marketing, storefront, research, booking) or "all"
+- `force`: Force deployment even without detected changes
+
+**Features:**
+
+- Smart change detection - only deploys modified agents
+- Parallel deployment of multiple agents
+- Health verification after deployment
+- Deployment summary with service URLs
+
+**Required Secrets:**
+
+```bash
+# Google Cloud Workload Identity Federation
+GCP_WORKLOAD_IDENTITY_PROVIDER=projects/506923455711/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+GCP_SERVICE_ACCOUNT=github-actions-deploy@handled-484216.iam.gserviceaccount.com
+```
+
+**Service Registry:**
+
+| Agent      | Cloud Run Service | Purpose            |
+| ---------- | ----------------- | ------------------ |
+| concierge  | concierge-agent   | Main orchestrator  |
+| marketing  | marketing-agent   | Marketing research |
+| storefront | storefront-agent  | Content editing    |
+| research   | research-agent    | Industry analysis  |
+| booking    | booking-agent     | Booking management |
+
+### 6. Database Maintenance (`database-maintenance.yml`)
 
 **Trigger:** Manual workflow dispatch only
 

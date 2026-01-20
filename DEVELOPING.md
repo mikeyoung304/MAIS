@@ -140,6 +140,148 @@ npm run test:e2e                  # Playwright E2E tests
 npm run test:e2e:headed           # E2E with visible browser
 ```
 
+## AI Agent Development & Deployment
+
+The platform includes AI agents deployed to Google Cloud Run using the ADK (Agent Development Kit). These agents provide conversational AI capabilities for onboarding, marketing, storefront editing, and more.
+
+### Agent Architecture
+
+```
+server/src/agent-v2/deploy/
+├── concierge/        # Main orchestrator - routes to specialists
+├── marketing/        # Marketing research and competitive analysis
+├── storefront/       # Storefront content editing
+├── research/         # Industry research tools
+├── booking/          # Booking management
+└── project-hub/      # Multi-tenant agent registry
+```
+
+**Hub-and-Spoke Pattern:** The Concierge agent orchestrates all interactions, delegating to specialist agents (Marketing, Storefront, Research) as needed.
+
+### Local Agent Development
+
+```bash
+# Start agent in local development mode
+cd server/src/agent-v2/deploy/concierge
+npm install
+npm run dev    # Opens ADK DevTools at http://localhost:8080
+```
+
+**Testing Agent Changes:**
+
+1. Make code changes in `src/agent.ts`
+2. Test locally with `npm run dev`
+3. Verify tools work correctly in ADK DevTools
+4. Deploy to Cloud Run when ready
+
+### Manual Agent Deployment
+
+```bash
+# Deploy a single agent
+cd server/src/agent-v2/deploy/concierge
+npm install
+npm run deploy
+
+# Deploy with custom project/region
+GOOGLE_CLOUD_PROJECT=your-project \
+GOOGLE_CLOUD_LOCATION=us-central1 \
+npm run deploy
+
+# Dry run (preview without deploying)
+npm run deploy:dry-run
+```
+
+**Service URLs after deployment:**
+| Agent | URL |
+|-------|-----|
+| Concierge | https://concierge-agent-506923455711.us-central1.run.app |
+| Marketing | https://marketing-agent-506923455711.us-central1.run.app |
+| Storefront | https://storefront-agent-506923455711.us-central1.run.app |
+| Research | https://research-agent-506923455711.us-central1.run.app |
+| Booking | https://booking-agent-506923455711.us-central1.run.app |
+
+### Automated Agent Deployment (CI/CD)
+
+Agents are **automatically deployed** via GitHub Actions when changes are pushed to `main`:
+
+**Trigger paths:**
+
+- `server/src/agent-v2/deploy/*/src/**`
+- `server/src/agent-v2/deploy/*/package.json`
+
+**Workflow:** `.github/workflows/deploy-agents.yml`
+
+**Manual deployment via GitHub Actions:**
+
+1. Go to Actions tab → "Deploy AI Agents to Cloud Run"
+2. Click "Run workflow"
+3. Select agent to deploy (or "all")
+4. Click "Run workflow" button
+
+### GCP Authentication Setup
+
+**For local development:**
+
+```bash
+# Login with application default credentials
+gcloud auth application-default login
+
+# Set your project
+gcloud config set project handled-484216
+```
+
+**For CI/CD (GitHub Actions):**
+
+Requires these GitHub secrets:
+
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` - Workload Identity Federation provider
+- `GCP_SERVICE_ACCOUNT` - Service account email with Cloud Run deploy permissions
+
+**Setting up Workload Identity Federation:**
+
+```bash
+# 1. Create a service account for GitHub Actions
+gcloud iam service-accounts create github-actions-deploy \
+  --display-name="GitHub Actions Deploy"
+
+# 2. Grant Cloud Run deploy permissions
+gcloud projects add-iam-policy-binding handled-484216 \
+  --member="serviceAccount:github-actions-deploy@handled-484216.iam.gserviceaccount.com" \
+  --role="roles/run.developer"
+
+gcloud projects add-iam-policy-binding handled-484216 \
+  --member="serviceAccount:github-actions-deploy@handled-484216.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+# 3. Create Workload Identity Pool
+gcloud iam workload-identity-pools create "github-pool" \
+  --location="global" \
+  --display-name="GitHub Actions Pool"
+
+# 4. Create OIDC provider
+gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+  --location="global" \
+  --workload-identity-pool="github-pool" \
+  --display-name="GitHub Provider" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+  --issuer-uri="https://token.actions.githubusercontent.com"
+
+# 5. Allow GitHub repo to impersonate service account
+gcloud iam service-accounts add-iam-policy-binding \
+  github-actions-deploy@handled-484216.iam.gserviceaccount.com \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/projects/506923455711/locations/global/workloadIdentityPools/github-pool/attribute.repository/YOUR_ORG/YOUR_REPO"
+```
+
+### Agent Development Pitfalls
+
+See CLAUDE.md pitfalls #32-53 for comprehensive ADK/A2A issues. Key ones:
+
+- **#32** A2A requires camelCase (`appName`, `userId`, `sessionId`)
+- **#33** ADK uses directory name for routing, not agent's `name` property
+- **#39** ADK returns `[{ content: { role, parts }}]` array format
+- **#51** FunctionTool uses `parameters`/`execute`, not `inputSchema`/`func`
+
 ## Database Setup ✅ COMPLETE
 
 ### Prerequisites
