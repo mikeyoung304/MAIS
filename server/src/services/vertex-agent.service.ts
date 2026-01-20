@@ -76,7 +76,20 @@ export class VertexAgentService {
 
   constructor() {
     // Initialize Google Auth for Cloud Run authentication
-    this.auth = new GoogleAuth();
+    // Priority: GOOGLE_SERVICE_ACCOUNT_JSON (Render) > ADC (GCP/local)
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    if (serviceAccountJson) {
+      try {
+        const credentials = JSON.parse(serviceAccountJson);
+        this.auth = new GoogleAuth({ credentials });
+        logger.info('[VertexAgent] Using service account from GOOGLE_SERVICE_ACCOUNT_JSON');
+      } catch (e) {
+        logger.error({ error: e }, '[VertexAgent] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
+        this.auth = new GoogleAuth();
+      }
+    } else {
+      this.auth = new GoogleAuth();
+    }
   }
 
   /**
@@ -395,7 +408,7 @@ export class VertexAgentService {
    * Falls back to gcloud CLI for local development.
    */
   private async getIdentityToken(): Promise<string | null> {
-    // First try: GoogleAuth (works with service accounts on GCP)
+    // First try: GoogleAuth (works with service accounts and ADC)
     try {
       const client = await this.auth.getIdTokenClient(CONCIERGE_AGENT_URL);
       const headers = await client.getRequestHeaders();
@@ -403,10 +416,14 @@ export class VertexAgentService {
       const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';
       const token = authHeader.replace('Bearer ', '');
       if (token) {
+        logger.info('[VertexAgent] Got identity token via GoogleAuth');
         return token;
       }
-    } catch {
-      // GoogleAuth failed - try gcloud CLI fallback
+    } catch (e) {
+      logger.warn(
+        { error: e instanceof Error ? e.message : String(e) },
+        '[VertexAgent] GoogleAuth failed, trying fallback'
+      );
     }
 
     // Second try: gcloud CLI (works with user credentials locally)
@@ -417,14 +434,16 @@ export class VertexAgentService {
         timeout: 5000,
       }).trim();
       if (token) {
-        logger.debug('[VertexAgent] Using gcloud CLI identity token (local dev)');
+        logger.info('[VertexAgent] Using gcloud CLI identity token (local dev)');
         return token;
       }
     } catch {
-      // gcloud CLI not available or failed
+      // gcloud CLI not available or failed - this is expected on Render
     }
 
-    logger.debug('[VertexAgent] No identity token available');
+    logger.warn(
+      '[VertexAgent] No identity token available - Cloud Run calls will be unauthenticated'
+    );
     return null;
   }
 
