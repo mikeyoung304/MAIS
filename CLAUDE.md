@@ -224,9 +224,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 54. Dual deployment architecture - Backend (Render) and Frontend (Vercel) auto-deploy on push to `main`, but Agents (Cloud Run) deploy via separate GitHub Actions workflow; if workflow fails silently, agent features appear broken in production despite code being merged
 55. Agent deployment verification - After merging agent changes, verify deployment succeeded in GitHub Actions → "Deploy AI Agents to Cloud Run"; manual deploy: `cd server/src/agent-v2/deploy/[agent] && npm run deploy`
 
-### Data Format Pitfalls (56)
+### Data Format Pitfalls (56-57)
 
-56. Incomplete landingPageConfig wrapper - When publishing storefront drafts, must use `createPublishedWrapper(draftConfig)` from `lib/landing-page-utils.ts`, NOT bare `{ published: draftConfig }` - missing `publishedAt` timestamp causes data not to round-trip through validation
+56. Incomplete landingPageConfig wrapper (WRITE) - When publishing storefront drafts, must use `createPublishedWrapper(draftConfig)` from `lib/landing-page-utils.ts`, NOT bare `{ published: draftConfig }` - missing `publishedAt` timestamp causes data not to round-trip through validation
+57. Wrapper format not extracted on READ - When reading `landingPageConfig` for editing, must extract from wrapper: `const config = liveConfig.published ?? liveConfig` - otherwise `config.pages` is undefined and falls back to defaults, losing all existing content
 
 ## Prevention Strategies
 

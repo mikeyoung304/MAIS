@@ -1108,7 +1108,13 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get current config (draft or live), fall back to defaults for new tenants
-      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
+      let existingConfig = tenant.landingPageConfigDraft;
+      if (!existingConfig && tenant.landingPageConfig) {
+        // Extract from wrapper format if present, otherwise use directly
+        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
+        existingConfig = liveConfig.published ?? liveConfig;
+      }
       const draftConfig = existingConfig
         ? (existingConfig as Record<string, unknown>)
         : { pages: DEFAULT_PAGES_CONFIG };
@@ -1179,7 +1185,12 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get current config, fall back to defaults for new tenants
-      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
+      let existingConfig = tenant.landingPageConfigDraft;
+      if (!existingConfig && tenant.landingPageConfig) {
+        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
+        existingConfig = liveConfig.published ?? liveConfig;
+      }
       const draftConfig = existingConfig
         ? (existingConfig as Record<string, unknown>)
         : { pages: DEFAULT_PAGES_CONFIG };
@@ -1244,7 +1255,12 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get current config, fall back to defaults for new tenants
-      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
+      let existingConfig = tenant.landingPageConfigDraft;
+      if (!existingConfig && tenant.landingPageConfig) {
+        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
+        existingConfig = liveConfig.published ?? liveConfig;
+      }
       const draftConfig = existingConfig
         ? (existingConfig as Record<string, unknown>)
         : { pages: DEFAULT_PAGES_CONFIG };
@@ -1309,7 +1325,12 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get current config, fall back to defaults for new tenants
-      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
+      let existingConfig = tenant.landingPageConfigDraft;
+      if (!existingConfig && tenant.landingPageConfig) {
+        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
+        existingConfig = liveConfig.published ?? liveConfig;
+      }
       const draftConfig = existingConfig
         ? (existingConfig as Record<string, unknown>)
         : { pages: DEFAULT_PAGES_CONFIG };
@@ -1378,7 +1399,12 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get current config, fall back to defaults for new tenants
-      const existingConfig = tenant.landingPageConfigDraft || tenant.landingPageConfig;
+      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
+      let existingConfig = tenant.landingPageConfigDraft;
+      if (!existingConfig && tenant.landingPageConfig) {
+        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
+        existingConfig = liveConfig.published ?? liveConfig;
+      }
       const draftConfig = existingConfig
         ? (existingConfig as Record<string, unknown>)
         : { pages: DEFAULT_PAGES_CONFIG };
