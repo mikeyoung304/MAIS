@@ -81,6 +81,7 @@ export {
   InsufficientPermissionsError,
   WebhookValidationError,
   WebhookProcessingError,
+  ConcurrentModificationError,
 } from './business';
 
 // ============================================================================

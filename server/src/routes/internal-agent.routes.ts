@@ -2061,9 +2061,13 @@ Apply the feedback while maintaining the ${tone} tone.`;
         '[Agent] Getting pending requests'
       );
 
-      const requests = await projectHubService.getPendingRequests(tenantId);
+      const result = await projectHubService.getPendingRequests(tenantId);
 
-      res.json({ requests, count: requests.length });
+      res.json({
+        requests: result.requests,
+        count: result.requests.length,
+        hasMore: result.hasMore,
+      });
     } catch (error) {
       handleError(res, error, '/project-hub/pending-requests');
     }
@@ -2173,9 +2177,13 @@ Apply the feedback while maintaining the ${tone} tone.`;
         '[Agent] Listing projects'
       );
 
-      const projects = await projectHubService.listProjects(tenantId, status);
+      const result = await projectHubService.listProjects(tenantId, status);
 
-      res.json({ projects, count: projects.length });
+      res.json({
+        projects: result.projects,
+        count: result.projects.length,
+        nextCursor: result.nextCursor,
+      });
     } catch (error) {
       handleError(res, error, '/project-hub/list-projects');
     }

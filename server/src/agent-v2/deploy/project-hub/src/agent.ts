@@ -607,6 +607,65 @@ Use the returned greeting to start the conversation.`,
 // CUSTOMER CONTEXT TOOLS
 // =============================================================================
 
+// Reusable param schemas for tool validation
+const ProjectIdSchema = z.object({
+  projectId: z.string().min(1, 'Project ID required'),
+});
+
+const ProjectIdWithQuestionSchema = z.object({
+  projectId: z.string().min(1, 'Project ID required'),
+  question: z.string().min(1, 'Question required'),
+});
+
+const SubmitRequestSchema = z.object({
+  projectId: z.string().min(1, 'Project ID required'),
+  requestType: z.enum([
+    'RESCHEDULE',
+    'ADD_ON',
+    'QUESTION',
+    'CHANGE_REQUEST',
+    'CANCELLATION',
+    'REFUND',
+    'OTHER',
+  ]),
+  details: z.string().min(1, 'Details required'),
+  urgency: z.enum(['low', 'medium', 'high']).default('medium'),
+  confirmationReceived: z.boolean().optional(),
+});
+
+const LimitSchema = z.object({
+  limit: z.number().default(DEFAULTS.PENDING_REQUESTS_LIMIT),
+});
+
+const DaysSchema = z.object({
+  days: z.number().default(DEFAULTS.ACTIVITY_LOOKBACK_DAYS),
+});
+
+const ApproveRequestSchema = z.object({
+  requestId: z.string().min(1, 'Request ID required'),
+  expectedVersion: z.number().int().positive('Expected version required'),
+  response: z.string().optional(),
+});
+
+const DenyRequestSchema = z.object({
+  requestId: z.string().min(1, 'Request ID required'),
+  expectedVersion: z.number().int().positive('Expected version required'),
+  reason: z.string().min(1, 'Reason required'),
+  response: z.string().optional(),
+});
+
+const SendMessageSchema = z.object({
+  projectId: z.string().min(1, 'Project ID required'),
+  message: z.string().min(1, 'Message required'),
+  notifyByEmail: z.boolean().default(true),
+});
+
+const UpdateStatusSchema = z.object({
+  projectId: z.string().min(1, 'Project ID required'),
+  newStatus: z.enum(['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED']),
+  reason: z.string().optional(),
+});
+
 const getProjectStatus = new FunctionTool({
   name: 'get_project_status',
   description:
@@ -614,7 +673,14 @@ const getProjectStatus = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID to check status for'),
   }),
-  execute: async ({ projectId }: { projectId: string }, ctx: ToolContext | undefined) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = ProjectIdSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId } = parsed.data;
+
     // P1 Security: Context guard - customer tools only
     const contextError = requireContext(ctx, 'customer');
     if (contextError) return contextError;
@@ -656,7 +722,14 @@ const getPrepChecklist = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async ({ projectId }: { projectId: string }, ctx: ToolContext | undefined) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = ProjectIdSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId } = parsed.data;
+
     // P1 Security: Context guard - customer tools only
     const contextError = requireContext(ctx, 'customer');
     if (contextError) return contextError;
@@ -693,10 +766,14 @@ const answerPrepQuestion = new FunctionTool({
     projectId: z.string().describe('The project ID'),
     question: z.string().describe('The customer question to answer'),
   }),
-  execute: async (
-    { projectId, question }: { projectId: string; question: string },
-    ctx: ToolContext | undefined
-  ) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = ProjectIdWithQuestionSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId, question } = parsed.data;
+
     // P1 Security: Context guard - customer tools only
     const contextError = requireContext(ctx, 'customer');
     if (contextError) return contextError;
@@ -846,13 +923,13 @@ const submitRequest = new FunctionTool({
       ),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    const { projectId, requestType, details, urgency, confirmationReceived } = params as {
-      projectId: string;
-      requestType: string;
-      details: string;
-      urgency: string;
-      confirmationReceived?: boolean;
-    };
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = SubmitRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId, requestType, details, urgency, confirmationReceived } = parsed.data;
+
     // P1 Security: Context guard - customer tools only
     const contextError = requireContext(ctx, 'customer');
     if (contextError) return contextError;
@@ -948,7 +1025,14 @@ const getTimeline = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async ({ projectId }: { projectId: string }, ctx: ToolContext | undefined) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = ProjectIdSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId } = parsed.data;
+
     // P1 Security: Context guard - customer tools only
     const contextError = requireContext(ctx, 'customer');
     if (contextError) return contextError;
@@ -999,7 +1083,14 @@ const getPendingRequests = new FunctionTool({
       .default(DEFAULTS.PENDING_REQUESTS_LIMIT)
       .describe('Maximum number of requests to return'),
   }),
-  execute: async ({ limit }: { limit: number }, ctx: ToolContext | undefined) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = LimitSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { limit } = parsed.data;
+
     // P1 Security: Context guard - tenant tools only
     const contextError = requireContext(ctx, 'tenant');
     if (contextError) return contextError;
@@ -1045,7 +1136,14 @@ const getCustomerActivity = new FunctionTool({
       .default(DEFAULTS.ACTIVITY_LOOKBACK_DAYS)
       .describe('Number of days to look back'),
   }),
-  execute: async ({ days }: { days: number }, ctx: ToolContext | undefined) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = DaysSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { days } = parsed.data;
+
     // P1 Security: Context guard - tenant tools only
     const contextError = requireContext(ctx, 'tenant');
     if (contextError) return contextError;
@@ -1081,15 +1179,25 @@ const getCustomerActivity = new FunctionTool({
 
 const approveRequest = new FunctionTool({
   name: 'approve_request',
-  description: 'Approve a pending customer request. TENANT CONTEXT ONLY.',
+  description:
+    'Approve a pending customer request. TENANT CONTEXT ONLY. Requires expectedVersion for optimistic locking - get this from get_pending_requests first.',
   parameters: z.object({
     requestId: z.string().describe('The request ID to approve'),
+    expectedVersion: z
+      .number()
+      .int()
+      .positive()
+      .describe('Expected version from get_pending_requests (required for optimistic locking)'),
     response: z.string().optional().describe('Optional response message to customer'),
   }),
-  execute: async (
-    { requestId, response }: { requestId: string; response?: string },
-    ctx: ToolContext | undefined
-  ) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = ApproveRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { requestId, expectedVersion, response } = parsed.data;
+
     // P1 Security: Context guard - tenant tools only
     const contextError = requireContext(ctx, 'tenant');
     if (contextError) return contextError;
@@ -1099,14 +1207,13 @@ const approveRequest = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this request via tenantId header
-      // Include expectedVersion=1 for optimistic locking (fresh approval)
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/approve-request`,
         'POST',
         {
           tenantId: session.tenantId,
           requestId,
-          expectedVersion: 1, // Fresh request starts at v1
+          expectedVersion,
           response,
         }
       );
@@ -1130,15 +1237,26 @@ const approveRequest = new FunctionTool({
 
 const denyRequest = new FunctionTool({
   name: 'deny_request',
-  description: 'Deny a pending customer request with a reason. TENANT CONTEXT ONLY.',
+  description:
+    'Deny a pending customer request with a reason. TENANT CONTEXT ONLY. Requires expectedVersion for optimistic locking - get this from get_pending_requests first.',
   parameters: z.object({
     requestId: z.string().describe('The request ID to deny'),
+    expectedVersion: z
+      .number()
+      .int()
+      .positive()
+      .describe('Expected version from get_pending_requests (required for optimistic locking)'),
     reason: z.string().describe('Reason for denial (will be shared with customer)'),
+    response: z.string().optional().describe('Optional additional response message to customer'),
   }),
-  execute: async (
-    { requestId, reason }: { requestId: string; reason: string },
-    ctx: ToolContext | undefined
-  ) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = DenyRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { requestId, expectedVersion, reason, response } = parsed.data;
+
     // P1 Security: Context guard - tenant tools only
     const contextError = requireContext(ctx, 'tenant');
     if (contextError) return contextError;
@@ -1148,15 +1266,15 @@ const denyRequest = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this request via tenantId
-      // Include expectedVersion=1 for optimistic locking (fresh denial)
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/deny-request`,
         'POST',
         {
           tenantId: session.tenantId,
           requestId,
-          expectedVersion: 1, // Fresh request starts at v1
+          expectedVersion,
           reason,
+          response,
         }
       );
 
@@ -1185,14 +1303,14 @@ const sendMessageToCustomer = new FunctionTool({
     message: z.string().describe('Message to send to the customer'),
     notifyByEmail: z.boolean().default(true).describe('Whether to also send email notification'),
   }),
-  execute: async (
-    {
-      projectId,
-      message,
-      notifyByEmail,
-    }: { projectId: string; message: string; notifyByEmail: boolean },
-    ctx: ToolContext | undefined
-  ) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = SendMessageSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId, message, notifyByEmail } = parsed.data;
+
     // P1 Security: Context guard - tenant tools only
     const contextError = requireContext(ctx, 'tenant');
     if (contextError) return contextError;
@@ -1250,15 +1368,16 @@ const updateProjectStatus = new FunctionTool({
     'Update the status of a project (e.g., mark as completed, on hold). TENANT CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
-    status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'ON_HOLD']).describe('New status'),
+    newStatus: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'ON_HOLD']).describe('New status'),
     reason: z.string().optional().describe('Reason for status change'),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    const { projectId, status, reason } = params as {
-      projectId: string;
-      status: string;
-      reason?: string;
-    };
+    // P1 Security: Validate params FIRST (Pitfall #62)
+    const parsed = UpdateStatusSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
+    }
+    const { projectId, newStatus, reason } = parsed.data;
 
     // P1 Security: Context guard - tenant tools only
     const contextError = requireContext(ctx, 'tenant');
@@ -1273,7 +1392,7 @@ const updateProjectStatus = new FunctionTool({
       const result = await callBackendAPI<{ success: boolean; project: Project }>(
         `/project-hub/projects/${projectId}/status`,
         'PUT',
-        { status, reason, tenantId: session.tenantId }
+        { status: newStatus, reason, tenantId: session.tenantId }
       );
 
       // Fire-and-forget event logging (non-blocking for faster response)
@@ -1281,13 +1400,13 @@ const updateProjectStatus = new FunctionTool({
         type: 'STATUS_CHANGED',
         actor: session.tenantId,
         actorType: 'tenant',
-        payload: { oldStatus: 'ACTIVE', newStatus: status, reason },
-        visibleToCustomer: status === 'COMPLETED',
+        payload: { oldStatus: 'ACTIVE', newStatus, reason },
+        visibleToCustomer: newStatus === 'COMPLETED',
         visibleToTenant: true,
         tenantId: session.tenantId,
       }).catch((err) =>
         logger.error(
-          { err: err instanceof Error ? err.message : String(err), projectId, status },
+          { err: err instanceof Error ? err.message : String(err), projectId, newStatus },
           '[ProjectHub] Failed to log status change event'
         )
       );
@@ -1296,7 +1415,7 @@ const updateProjectStatus = new FunctionTool({
         success: true,
         project: result.project,
         // State indicators for agent context (Pitfall #52)
-        projectStatus: status,
+        projectStatus: newStatus,
         statusUpdatedAt: new Date().toISOString(),
       };
     } catch (error) {

@@ -304,6 +304,14 @@ const DelegateToProjectHubParams = z.object({
   requestId: z.string().optional().describe('Request ID for approve/deny actions'),
   reason: z.string().optional().describe('Reason for denial (required for deny_request)'),
   customerId: z.string().optional().describe('Customer name or email to filter by'),
+  expectedVersion: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      'Expected version for optimistic locking on approve/deny (REQUIRED for those actions)'
+    ),
 });
 
 // =============================================================================
@@ -1168,15 +1176,23 @@ async function handleProjectHubDirect(
       if (!params.requestId) {
         return { success: false, error: 'Request ID is required for approval' };
       }
+      if (!params.expectedVersion) {
+        return {
+          success: false,
+          error:
+            'Expected version is required for approval. Please get the request details first to obtain the current version.',
+        };
+      }
       const result = await callMaisApi('/project-hub/approve-request', tenantId, {
         requestId: params.requestId,
-        expectedVersion: 1, // Default version - should be provided by caller
+        expectedVersion: params.expectedVersion,
       });
       if (!result.ok) return { success: false, error: result.error };
       return {
         success: true,
         task: params.task,
         message: 'Request approved',
+        requestStatus: 'APPROVED',
         ...(result.data as Record<string, unknown>),
       };
     }
@@ -1185,9 +1201,16 @@ async function handleProjectHubDirect(
       if (!params.requestId || !params.reason) {
         return { success: false, error: 'Request ID and reason are required for denial' };
       }
+      if (!params.expectedVersion) {
+        return {
+          success: false,
+          error:
+            'Expected version is required for denial. Please get the request details first to obtain the current version.',
+        };
+      }
       const result = await callMaisApi('/project-hub/deny-request', tenantId, {
         requestId: params.requestId,
-        expectedVersion: 1,
+        expectedVersion: params.expectedVersion,
         reason: params.reason,
       });
       if (!result.ok) return { success: false, error: result.error };
@@ -1195,6 +1218,7 @@ async function handleProjectHubDirect(
         success: true,
         task: params.task,
         message: 'Request denied',
+        requestStatus: 'DENIED',
         ...(result.data as Record<string, unknown>),
       };
     }

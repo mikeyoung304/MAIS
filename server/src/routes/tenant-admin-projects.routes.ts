@@ -17,9 +17,20 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import type { ProjectHubService } from '../services/project-hub.service';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, ConcurrentModificationError } from '../lib/errors';
+
+// Rate limiter for tenant admin routes (higher limit than public routes)
+const tenantProjectRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // 500 requests per 15 min (higher for authenticated tenants)
+  message: { error: 'Too many requests. Please wait a moment and try again.' },
+  keyGenerator: (_req, res) => (res as Response).locals.tenantAuth?.tenantId || 'unknown',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ============================================================================
 // Request Schemas
@@ -51,6 +62,9 @@ const DenyRequestSchema = z.object({
 export function createTenantAdminProjectRoutes(projectHubService: ProjectHubService): Router {
   const router = Router();
 
+  // Apply rate limiting to all tenant admin project routes
+  router.use(tenantProjectRateLimiter);
+
   // ============================================================================
   // Bootstrap / Dashboard Summary
   // ============================================================================
@@ -81,7 +95,8 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
 
   /**
    * GET /
-   * List all projects for tenant
+   * List projects for tenant with pagination
+   * Query params: status, cursor, limit
    */
   router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -91,13 +106,20 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
         return;
       }
 
-      const { status } = req.query;
+      const { status, cursor, limit } = req.query;
       const statusFilter = status
         ? (status as 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ON_HOLD')
         : undefined;
+      const cursorParam = typeof cursor === 'string' ? cursor : undefined;
+      const limitParam = typeof limit === 'string' ? Math.min(parseInt(limit, 10), 100) : 50;
 
-      const projects = await projectHubService.listProjects(tenantId, statusFilter);
-      res.json({ projects });
+      const result = await projectHubService.listProjects(
+        tenantId,
+        statusFilter,
+        cursorParam,
+        limitParam
+      );
+      res.json(result);
     } catch (error) {
       logger.error({ error }, 'Tenant projects list error');
       next(error);
@@ -110,7 +132,8 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
 
   /**
    * GET /requests/pending
-   * Get all pending requests for tenant
+   * Get pending requests for tenant with limit
+   * Query params: limit
    */
   router.get('/requests/pending', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -120,8 +143,11 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
         return;
       }
 
-      const requests = await projectHubService.getPendingRequests(tenantId);
-      res.json({ requests });
+      const { limit } = req.query;
+      const limitParam = typeof limit === 'string' ? Math.min(parseInt(limit, 10), 100) : 50;
+
+      const result = await projectHubService.getPendingRequests(tenantId, limitParam);
+      res.json(result);
     } catch (error) {
       logger.error({ error }, 'Tenant pending requests error');
       next(error);

@@ -17,6 +17,7 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import { validateProjectAccessToken } from '../lib/project-tokens';
 
 // ============================================================================
 // Request Schemas
@@ -24,7 +25,12 @@ import { logger } from '../lib/core/logger';
 
 /** Access token query param schema */
 const AccessQuerySchema = z.object({
-  token: z.string().optional(),
+  token: z.string().min(1, 'Access token is required'),
+});
+
+/** Chat session request body schema */
+const ChatSessionSchema = z.object({
+  token: z.string().min(1, 'Access token is required'),
 });
 
 /** Chat message request body schema */
@@ -34,6 +40,7 @@ const ChatMessageSchema = z.object({
     .min(1, 'Message is required')
     .max(2000, 'Message too long (max 2000 characters)'),
   sessionId: z.string().optional(),
+  token: z.string().min(1, 'Access token is required'),
 });
 
 /**
@@ -68,16 +75,16 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
    * GET /:projectId
    *
    * Get project details for customer view.
-   * Access is verified via:
-   * 1. Tenant context (X-Tenant-Key header)
-   * 2. Customer email in query param (for magic link access)
-   * 3. Optional access token for additional security
+   * Access is verified via cryptographically signed JWT token:
+   * 1. Token must be present and valid
+   * 2. Token must match the projectId in URL
+   * 3. Token's tenantId must match request context
    */
   router.get('/:projectId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = req.tenantId ?? null;
       const { projectId } = req.params;
-      const { email } = req.query;
+      const { token } = req.query;
 
       if (!tenantId) {
         res.status(400).json({ error: 'Missing tenant context' });
@@ -86,6 +93,26 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
 
       if (!projectId) {
         res.status(400).json({ error: 'Project ID is required' });
+        return;
+      }
+
+      // Validate access token (REQUIRED - no fallback to email)
+      if (!token || typeof token !== 'string') {
+        res.status(401).json({ error: 'Access token required' });
+        return;
+      }
+
+      const tokenResult = validateProjectAccessToken(token, projectId, 'view');
+      if (!tokenResult.valid) {
+        // Map token errors to appropriate HTTP status codes
+        const statusCode = tokenResult.error === 'expired' ? 401 : 403;
+        res.status(statusCode).json({ error: tokenResult.message });
+        return;
+      }
+
+      // Verify token's tenant matches request context
+      if (tokenResult.payload.tenantId !== tenantId) {
+        res.status(403).json({ error: 'Access denied' });
         return;
       }
 
@@ -119,10 +146,9 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Verify access via email (simple magic link pattern)
-      // In production, this should use a signed token
-      const customerEmail = project.booking.customer?.email ?? project.booking.customerEmail;
-      if (email && email !== customerEmail) {
+      // Verify token's customer ID matches the project's customer
+      const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
+      if (tokenResult.payload.customerId !== projectCustomerId) {
         res.status(403).json({ error: 'Access denied' });
         return;
       }
@@ -173,25 +199,55 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
    * GET /:projectId/timeline
    *
    * Get project timeline events visible to customer.
+   * Requires valid access token.
    */
   router.get('/:projectId/timeline', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = req.tenantId ?? null;
       const { projectId } = req.params;
+      const { token } = req.query;
 
       if (!tenantId) {
         res.status(400).json({ error: 'Missing tenant context' });
         return;
       }
 
-      // Verify project belongs to tenant
+      // Validate access token
+      if (!token || typeof token !== 'string') {
+        res.status(401).json({ error: 'Access token required' });
+        return;
+      }
+
+      const tokenResult = validateProjectAccessToken(token, projectId, 'view');
+      if (!tokenResult.valid) {
+        const statusCode = tokenResult.error === 'expired' ? 401 : 403;
+        res.status(statusCode).json({ error: tokenResult.message });
+        return;
+      }
+
+      if (tokenResult.payload.tenantId !== tenantId) {
+        res.status(403).json({ error: 'Access denied' });
+        return;
+      }
+
+      // Verify project belongs to tenant (still needed for data integrity)
       const project = await prisma.project.findFirst({
         where: { id: projectId, tenantId },
-        select: { id: true },
+        select: {
+          id: true,
+          booking: { select: { customerId: true, customer: { select: { id: true } } } },
+        },
       });
 
       if (!project) {
         res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      // Verify customer ID matches token
+      const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
+      if (tokenResult.payload.customerId !== projectCustomerId) {
+        res.status(403).json({ error: 'Access denied' });
         return;
       }
 
@@ -230,6 +286,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
    *
    * Create a chat session for the Project Hub agent.
    * This bootstraps the agent with project context.
+   * Requires valid access token in request body.
    */
   router.post(
     '/:projectId/chat/session',
@@ -240,6 +297,29 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
 
         if (!tenantId) {
           res.status(400).json({ error: 'Missing tenant context' });
+          return;
+        }
+
+        // Validate request body (token required)
+        const parseResult = ChatSessionSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          const firstError = parseResult.error.errors[0];
+          res.status(400).json({ error: firstError?.message || 'Invalid request' });
+          return;
+        }
+
+        const { token } = parseResult.data;
+
+        // Validate access token
+        const tokenResult = validateProjectAccessToken(token, projectId, 'chat');
+        if (!tokenResult.valid) {
+          const statusCode = tokenResult.error === 'expired' ? 401 : 403;
+          res.status(statusCode).json({ error: tokenResult.message });
+          return;
+        }
+
+        if (tokenResult.payload.tenantId !== tenantId) {
+          res.status(403).json({ error: 'Access denied' });
           return;
         }
 
@@ -258,6 +338,13 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
 
         if (!project) {
           res.status(404).json({ error: 'Project not found' });
+          return;
+        }
+
+        // Verify customer ID matches token
+        const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
+        if (tokenResult.payload.customerId !== projectCustomerId) {
+          res.status(403).json({ error: 'Access denied' });
           return;
         }
 
@@ -294,6 +381,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
    *
    * Send a message to the Project Hub agent.
    * Routes to the Project Hub agent via internal API.
+   * Requires valid access token in request body.
    */
   router.post(
     '/:projectId/chat/message',
@@ -315,7 +403,20 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           return;
         }
 
-        const { message, sessionId } = parseResult.data;
+        const { message, sessionId, token } = parseResult.data;
+
+        // Validate access token
+        const tokenResult = validateProjectAccessToken(token, projectId, 'chat');
+        if (!tokenResult.valid) {
+          const statusCode = tokenResult.error === 'expired' ? 401 : 403;
+          res.status(statusCode).json({ error: tokenResult.message });
+          return;
+        }
+
+        if (tokenResult.payload.tenantId !== tenantId) {
+          res.status(403).json({ error: 'Access denied' });
+          return;
+        }
 
         // Verify project exists
         const project = await prisma.project.findFirst({
@@ -334,7 +435,14 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           return;
         }
 
-        const customerId = project.booking.customer?.id ?? project.booking.customerId;
+        // Verify customer ID matches token
+        const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
+        if (tokenResult.payload.customerId !== projectCustomerId) {
+          res.status(403).json({ error: 'Access denied' });
+          return;
+        }
+
+        const customerId = projectCustomerId;
 
         // Call Project Hub agent via internal API
         // The agent is deployed to Cloud Run

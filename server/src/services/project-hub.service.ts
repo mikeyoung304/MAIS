@@ -231,34 +231,34 @@ export class ProjectHubService {
   async bootstrapTenant(tenantId: string): Promise<TenantBootstrapResult> {
     logger.info({ tenantId }, '[ProjectHub] Bootstrapping tenant session');
 
-    // Get tenant name for greeting
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { name: true },
-    });
-
-    // Count active projects
-    const activeProjectCount = await this.prisma.project.count({
-      where: { tenantId, status: 'ACTIVE' },
-    });
-
-    // Count pending requests
-    const pendingRequestCount = await this.prisma.projectRequest.count({
-      where: { tenantId, status: 'PENDING' },
-    });
-
-    // Count recent activity (last 7 days)
+    // Calculate date threshold for recent activity (last 7 days)
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const recentActivityCount = await this.prisma.projectEvent.count({
-      where: {
-        tenantId,
-        createdAt: { gte: weekAgo },
-      },
-    });
-
-    const businessName = tenant?.name || 'there';
+    // Parallelize all independent queries for ~75% latency reduction
+    const [tenant, activeProjectCount, pendingRequestCount, recentActivityCount] =
+      await Promise.all([
+        // Get tenant name for greeting
+        this.prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { name: true },
+        }),
+        // Count active projects
+        this.prisma.project.count({
+          where: { tenantId, status: 'ACTIVE' },
+        }),
+        // Count pending requests
+        this.prisma.projectRequest.count({
+          where: { tenantId, status: 'PENDING' },
+        }),
+        // Count recent activity (last 7 days)
+        this.prisma.projectEvent.count({
+          where: {
+            tenantId,
+            createdAt: { gte: weekAgo },
+          },
+        }),
+      ]);
 
     return {
       activeProjectCount,
@@ -391,10 +391,14 @@ export class ProjectHubService {
    * Get pending requests for a tenant (dashboard view)
    *
    * @param tenantId - Tenant ID
-   * @returns Pending requests with project context
+   * @param limit - Maximum number of requests to return (default 50)
+   * @returns Pending requests with project context and hasMore flag
    */
-  async getPendingRequests(tenantId: string): Promise<ProjectRequestWithContext[]> {
-    logger.info({ tenantId }, '[ProjectHub] Getting pending requests');
+  async getPendingRequests(
+    tenantId: string,
+    limit: number = 50
+  ): Promise<{ requests: ProjectRequestWithContext[]; hasMore: boolean }> {
+    logger.info({ tenantId, limit }, '[ProjectHub] Getting pending requests');
 
     const requests = await this.prisma.projectRequest.findMany({
       where: {
@@ -414,29 +418,36 @@ export class ProjectHubService {
         },
       },
       orderBy: { createdAt: 'asc' }, // Oldest first (FIFO)
+      take: limit + 1, // Fetch one extra to check if more exist
     });
 
-    return requests.map((r) => ({
-      id: r.id,
-      type: r.type,
-      status: r.status,
-      requestData: r.requestData as Record<string, unknown>,
-      responseData: r.responseData as Record<string, unknown> | null,
-      expiresAt: r.expiresAt,
-      createdAt: r.createdAt,
-      version: r.version,
-      project: {
-        id: r.project.id,
-        booking: {
-          eventDate: r.project.booking.date ?? r.project.booking.startTime ?? new Date(),
-          customer: {
-            name: r.project.booking.customer?.name ?? r.project.booking.customerName ?? 'Unknown',
-            email: r.project.booking.customer?.email ?? r.project.booking.customerEmail,
+    const hasMore = requests.length > limit;
+    const items = hasMore ? requests.slice(0, limit) : requests;
+
+    return {
+      requests: items.map((r) => ({
+        id: r.id,
+        type: r.type,
+        status: r.status,
+        requestData: r.requestData as Record<string, unknown>,
+        responseData: r.responseData as Record<string, unknown> | null,
+        expiresAt: r.expiresAt,
+        createdAt: r.createdAt,
+        version: r.version,
+        project: {
+          id: r.project.id,
+          booking: {
+            eventDate: r.project.booking.date ?? r.project.booking.startTime ?? new Date(),
+            customer: {
+              name: r.project.booking.customer?.name ?? r.project.booking.customerName ?? 'Unknown',
+              email: r.project.booking.customer?.email ?? r.project.booking.customerEmail,
+            },
+            package: r.project.booking.package ? { title: r.project.booking.package.title } : null,
           },
-          package: r.project.booking.package ? { title: r.project.booking.package.title } : null,
         },
-      },
-    }));
+      })),
+      hasMore,
+    };
   }
 
   /**
@@ -705,14 +716,21 @@ export class ProjectHubService {
   // ==========================================================================
 
   /**
-   * List all projects for a tenant
+   * List projects for a tenant with pagination
    *
    * @param tenantId - Tenant ID
    * @param status - Optional status filter
-   * @returns Projects with booking summaries
+   * @param cursor - Cursor for pagination (last project ID)
+   * @param limit - Maximum number of projects to return (default 50)
+   * @returns Projects with booking summaries and pagination info
    */
-  async listProjects(tenantId: string, status?: ProjectStatus): Promise<Array<ProjectWithBooking>> {
-    logger.info({ tenantId, status }, '[ProjectHub] Listing projects');
+  async listProjects(
+    tenantId: string,
+    status?: ProjectStatus,
+    cursor?: string,
+    limit: number = 50
+  ): Promise<{ projects: Array<ProjectWithBooking>; nextCursor?: string }> {
+    logger.info({ tenantId, status, cursor, limit }, '[ProjectHub] Listing projects');
 
     const whereClause = status ? { tenantId, status } : { tenantId };
 
@@ -727,9 +745,16 @@ export class ProjectHubService {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: limit + 1, // Fetch one extra to check if more exist
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0, // Skip the cursor item itself
     });
 
-    return projects.map((p) => ({
+    const hasMore = projects.length > limit;
+    const items = hasMore ? projects.slice(0, limit) : projects;
+    const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
+
+    const mappedProjects = items.map((p) => ({
       id: p.id,
       tenantId: p.tenantId,
       status: p.status,
@@ -755,6 +780,8 @@ export class ProjectHubService {
         },
       },
     }));
+
+    return { projects: mappedProjects, nextCursor };
   }
 
   /**
