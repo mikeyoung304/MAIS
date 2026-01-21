@@ -19,6 +19,7 @@ import {
   type OrchestratorConfig,
   type PromptContext,
   type ChatResponse,
+  type SessionState,
   DEFAULT_ORCHESTRATOR_CONFIG,
 } from './base-orchestrator';
 import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../../config/tiers';
@@ -232,6 +233,45 @@ ${tenant.email || 'Contact information not available.'}
         limit,
         remaining: getRemainingMessages(tier, newUsed),
       },
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Session Isolation Override (ARCH-2)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Override to ALWAYS create new sessions for customer chat.
+   *
+   * SECURITY FIX: The base implementation reuses recent sessions within TTL,
+   * which could allow different customers to share sessions:
+   * 1. Customer A visits → gets session X
+   * 2. Customer B visits within TTL → would also get session X!
+   *
+   * For customer-facing chat, we MUST create isolated sessions per visitor.
+   * The client is responsible for storing and sending back its session ID;
+   * if it doesn't have one, it gets a brand new session.
+   */
+  async getOrCreateSession(tenantId: string): Promise<SessionState> {
+    const newSession = await this.prisma.agentSession.create({
+      data: {
+        tenant: { connect: { id: tenantId } },
+        sessionType: 'CUSTOMER',
+        messages: [],
+      },
+    });
+
+    logger.info(
+      { tenantId, sessionId: newSession.id, agentType: 'customer' },
+      'New isolated customer session created (ARCH-2 fix)'
+    );
+
+    return {
+      sessionId: newSession.id,
+      tenantId,
+      messages: [],
+      createdAt: newSession.createdAt,
+      updatedAt: newSession.updatedAt,
     };
   }
 }

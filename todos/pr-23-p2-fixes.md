@@ -1,6 +1,6 @@
-# PR #23 P2 Fixes - ALL CRITICAL ITEMS RESOLVED
+# PR #23 P2 Fixes - COMPLETE
 
-**Status:** 12/14 items resolved, 2 pending (low priority) as of 2026-01-21
+**Status:** 14/14 items resolved ✅ as of 2026-01-21
 
 ## Performance (High Priority)
 
@@ -43,11 +43,11 @@
 - **File:** `server/src/agent/customer/executor-registry.ts`
 - **Status:** Already fixed. Imports from `./executor-registry` not routes. See `docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md`.
 
-### ARCH-2: Session Isolation [PENDING]
+### ARCH-2: Session Isolation [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-orchestrator.ts:133-167`
+- **File:** `server/src/agent/orchestrator/customer-chat-orchestrator.ts`
 - **Issue:** Multiple customers could share sessions within TTL
-- **Fix:** Add client-side session UUID or always create new sessions
+- **Fix:** Overrode `getOrCreateSession()` in CustomerChatOrchestrator to always create new isolated sessions instead of reusing existing ones
 
 ## Code Quality
 
@@ -61,11 +61,11 @@
 - **Files:** `apps/web/src/hooks/useAgentChat.ts`, `server/src/routes/agent.routes.ts`
 - **Status:** Removed from external API contract (SessionContext interface and session response). Internal LLM context still uses it intentionally.
 
-### SIMP-5: Consider Shared Formatters [PENDING - LOW PRIORITY]
+### SIMP-5: Shared Formatters [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-tools.ts:27-42`
-- **Issue:** formatMoney/formatDate duplicated
-- **Options:** Extract to shared utils or accept for MVP
+- **Files:** `server/src/agent/tools/utils.ts`, `server/src/agent/customer/customer-tools.ts`
+- **Issue:** formatMoney/formatDate duplicated across files
+- **Fix:** Added `formatDateDisplay()` to utils.ts; updated customer-tools.ts to import `formatPrice` and `formatDateDisplay` from shared utils instead of local duplicates
 
 ## Type Safety
 

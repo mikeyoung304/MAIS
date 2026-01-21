@@ -18,6 +18,7 @@ import { getCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { ErrorMessages } from '../errors';
+import { formatPrice, formatDateDisplay } from '../tools/utils';
 
 // ============================================================================
 // Tool Parameter Schemas (TS-5: Typed parameter validators)
@@ -68,26 +69,6 @@ const GetBusinessInfoParamsSchema = z.object({
 export interface CustomerToolContext extends ToolContext {
   customerId?: string | null;
   proposalService: ProposalService;
-}
-
-/**
- * Format money from cents to display string
- */
-function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
-/**
- * Format date for display
- */
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 }
 
 /**
@@ -164,7 +145,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
             slug: pkg.slug,
             name: pkg.name,
             description: pkg.description,
-            price: formatMoney(pkg.basePrice),
+            price: formatPrice(pkg.basePrice),
             priceInCents: pkg.basePrice,
             bookingType: pkg.bookingType,
             category: pkg.segment?.name || null,
@@ -486,8 +467,8 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           },
           preview: {
             service: pkg.name,
-            date: formatDate(date),
-            price: formatMoney(pkg.basePrice),
+            date: formatDateDisplay(date),
+            price: formatPrice(pkg.basePrice),
             customerName,
             customerEmail,
           },
@@ -501,7 +482,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           trustTier: proposal.trustTier,
           requiresApproval: true,
           expiresAt: proposal.expiresAt,
-          message: `Ready to book ${pkg.name} on ${formatDate(date)} for ${formatMoney(pkg.basePrice)}. Say "yes, confirm" or "go ahead" to complete your booking.`,
+          message: `Ready to book ${pkg.name} on ${formatDateDisplay(date)} for ${formatPrice(pkg.basePrice)}. Say "yes, confirm" or "go ahead" to complete your booking.`,
         } as WriteToolProposal;
       } catch (error) {
         logger.error(

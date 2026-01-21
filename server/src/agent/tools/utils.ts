@@ -83,6 +83,22 @@ export function formatDateISO(date: Date): string {
 }
 
 /**
+ * Format a date string for human-readable display
+ *
+ * @param dateStr - Date string (ISO format or parseable by Date constructor)
+ * @returns Formatted date string (e.g., "Monday, January 15, 2024")
+ */
+export function formatDateDisplay(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+/**
  * Format price with locale-aware formatting
  *
  * @param cents - Price in cents
