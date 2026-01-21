@@ -1,87 +1,39 @@
-# PR #23 P1 Fixes (Required Before Merge)
+# PR #23 P1 Fixes - ALL RESOLVED
+
+**Status:** All items resolved as of 2026-01-20
 
 ## Security Issues
 
-### SEC-1: Missing Customer Ownership on Proposal Confirmation
+### SEC-1: Missing Customer Ownership on Proposal Confirmation [RESOLVED]
 
-- **File:** `server/src/routes/public-customer-chat.routes.ts:289-295`
-- **Issue:** Proposal confirmation only validates tenantId, not customer ownership
-- **Fix:** Add sessionId or customerId validation:
+- **File:** `server/src/routes/public-customer-chat.routes.ts:296-316`
+- **Status:** Already implemented. Code requires sessionId and includes it in the proposal query alongside tenantId.
 
-```typescript
-const proposal = await prisma.agentProposal.findFirst({
-  where: {
-    id: proposalId,
-    tenantId,
-    sessionId: actualSessionId, // Add session isolation
-  },
-});
-```
+### SEC-2: Session ID Not Validated at Route Level [RESOLVED]
 
-### SEC-2: Session ID Not Validated at Route Level
-
-- **File:** `server/src/routes/public-customer-chat.routes.ts:237-245`
-- **Issue:** sessionId from client not validated before passing to orchestrator
-- **Fix:** Add explicit session validation:
-
-```typescript
-if (sessionId) {
-  const session = await orchestrator.getSession(tenantId, sessionId);
-  if (!session) {
-    res.status(400).json({ error: 'Invalid or expired session' });
-    return;
-  }
-}
-```
+- **File:** `server/src/routes/public-customer-chat.routes.ts:238-250`
+- **Status:** Already implemented. Session validation occurs before orchestrator call with proper 400 error on invalid/expired sessions.
 
 ## Dead Code
 
-### SIMP-1: Unused addDays() Function
+### SIMP-1: Unused addDays() Function [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-tools.ts:47-51`
-- **Fix:** Delete lines 47-51
+- **File:** `server/src/agent/customer/customer-tools.ts`
+- **Status:** Function not present in codebase (already removed or never existed).
 
-### SIMP-2: Unused tenantSlug Prop
+### SIMP-2: Unused tenantSlug Prop [RESOLVED]
 
-- **File:** `apps/web/src/components/chat/CustomerChatWidget.tsx:53,74`
-- **Fix:** Remove from interface and function signature
-- **Also update:** `apps/web/src/components/chat/TenantChatWidget.tsx`
+- **Files:** `apps/web/src/components/chat/CustomerChatWidget.tsx`, `TenantChatWidget.tsx`
+- **Status:** Props already cleaned up. Neither file contains tenantSlug.
 
 ## Type Safety
 
-### TS-1: Missing Stable Key Prop
+### TS-1: Missing Stable Key Prop [RESOLVED]
 
-- **File:** `apps/web/src/components/chat/CustomerChatWidget.tsx:344`
-- **Issue:** Using array index as React key
-- **Fix:** Add UUID to ChatMessage interface:
+- **File:** `apps/web/src/components/chat/CustomerChatWidget.tsx`
+- **Status:** ChatMessage interface already has `id: string` and all message creations use `crypto.randomUUID()`.
 
-```typescript
-interface ChatMessage {
-  id: string; // Add this
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
+### TS-2: as any for tenantId [RESOLVED]
 
-// Generate when creating message
-const userMessage: ChatMessage = {
-  id: crypto.randomUUID(),
-  ...
-};
-```
-
-### TS-2: as any for tenantId
-
-- **File:** `server/src/routes/public-customer-chat.routes.ts:58`
-- **Fix:** Extend Express Request type:
-
-```typescript
-// In types/express.d.ts
-declare global {
-  namespace Express {
-    interface Request {
-      tenantId?: string;
-    }
-  }
-}
-```
+- **File:** `server/src/types/express.d.ts`
+- **Status:** Express Request type already extended with `tenantId?: string`.

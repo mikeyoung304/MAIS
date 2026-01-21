@@ -29,6 +29,8 @@ export interface CreateProposalInput {
   trustTier: AgentTrustTier;
   payload: Record<string, unknown>;
   preview: Record<string, unknown>;
+  /** Optional customer ID for ownership verification (customer chatbot proposals) */
+  customerId?: string;
 }
 
 /**
@@ -81,7 +83,8 @@ export class ProposalService {
    * For T2/T3, creates PENDING proposal awaiting confirmation.
    */
   async createProposal(input: CreateProposalInput): Promise<ProposalResult> {
-    const { tenantId, sessionId, toolName, operation, trustTier, payload, preview } = input;
+    const { tenantId, sessionId, toolName, operation, trustTier, payload, preview, customerId } =
+      input;
 
     // T1 operations are auto-confirmed
     const isAutoConfirm = trustTier === 'T1';
@@ -93,6 +96,7 @@ export class ProposalService {
       data: {
         tenantId,
         sessionId,
+        customerId, // Include upfront to prevent orphaned proposals on crash
         toolName,
         operation,
         trustTier,

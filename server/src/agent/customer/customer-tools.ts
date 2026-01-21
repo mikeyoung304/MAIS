@@ -415,10 +415,12 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
         }
 
         // Create proposal (T3 - requires explicit confirmation)
+        // customerId passed upfront to prevent orphaned proposals if crash occurs
         const proposalService = customerContext.proposalService;
         const proposal = await proposalService.createProposal({
           tenantId,
           sessionId,
+          customerId: customer.id, // For ownership verification
           toolName: 'book_service',
           operation: 'create_customer_booking',
           trustTier: 'T3', // Customer bookings require explicit confirmation
@@ -438,12 +440,6 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
             customerName,
             customerEmail,
           },
-        });
-
-        // Update proposal with customerId for ownership verification
-        await prisma.agentProposal.update({
-          where: { id: proposal.proposalId },
-          data: { customerId: customer.id },
         });
 
         return {

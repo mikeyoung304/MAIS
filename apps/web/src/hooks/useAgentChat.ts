@@ -67,7 +67,6 @@ export interface HealthCheckResponse {
  */
 export interface SessionContext {
   businessName: string;
-  businessSlug: string;
   quickStats: {
     stripeConnected: boolean;
     packageCount: number;

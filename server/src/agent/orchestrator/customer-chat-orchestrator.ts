@@ -174,25 +174,28 @@ ${tenant.email || 'Contact information not available.'}
    * 3. Increment counter AFTER success (atomic)
    *
    * Returns usage info in response for frontend to display upgrade prompts.
+   *
+   * PERF-2: Reuses tenant data loaded by loadTenantData() to avoid duplicate DB query.
+   * The parent's loadTenantData() is called again in super.chat(), but since we've
+   * already loaded the same fields (tier, aiMessagesUsed via getTenantSelectFields),
+   * we avoid the initial separate query that was here before.
    */
   async chat(
     tenantId: string,
     requestedSessionId: string,
     userMessage: string
   ): Promise<ChatResponse & { usage?: { used: number; limit: number; remaining: number } }> {
-    // 1. Get tenant with tier info
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { tier: true, aiMessagesUsed: true },
-    });
+    // 1. Get tenant with tier info (reuses getTenantSelectFields which includes tier/aiMessagesUsed)
+    // PERF-2: Uses loadTenantData instead of separate prisma query
+    const tenantData = await this.loadTenantData(tenantId);
 
-    if (!tenant) {
+    if (!tenantData) {
       throw new Error('Tenant not found');
     }
 
-    const tier = tenant.tier;
+    const tier = tenantData.tier as keyof typeof TIER_LIMITS;
     const limit = TIER_LIMITS[tier].aiMessages;
-    const used = tenant.aiMessagesUsed;
+    const used = tenantData.aiMessagesUsed as number;
 
     // 2. Check quota BEFORE processing
     if (isOverQuota(tier, used)) {

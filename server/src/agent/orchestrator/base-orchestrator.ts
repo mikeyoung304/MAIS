@@ -321,6 +321,18 @@ export abstract class BaseOrchestrator {
   private circuitBreakerCleanupCounter = 0;
 
   /**
+   * PERF-2: Short-lived tenant data cache to avoid duplicate DB queries within same request.
+   * TTL is 60 seconds - long enough to cover a single chat() call but short enough
+   * to reflect any changes made by other concurrent requests.
+   * Keyed by tenantId.
+   */
+  private readonly tenantDataCache = new Map<
+    string,
+    { data: TenantSessionData; timestamp: number }
+  >();
+  private static readonly TENANT_DATA_CACHE_TTL_MS = 60_000; // 60 seconds
+
+  /**
    * Create a new orchestrator instance.
    *
    * @param prisma - Prisma client for database access
@@ -422,10 +434,21 @@ export abstract class BaseOrchestrator {
    * Load tenant data once per chat request.
    * Called at the start of chat() to avoid N+1 queries.
    *
+   * PERF-2: Uses short-lived cache (60s TTL) to avoid duplicate queries within same request.
+   * This is especially useful when subclasses call loadTenantData() before super.chat(),
+   * which would otherwise result in 2 identical queries.
+   *
    * Uses getTenantSelectFields() to determine which fields to load.
    * Subclasses can override getTenantSelectFields() for custom data needs.
    */
   protected async loadTenantData(tenantId: string): Promise<TenantSessionData | null> {
+    // PERF-2: Check cache first
+    const cached = this.tenantDataCache.get(tenantId);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < BaseOrchestrator.TENANT_DATA_CACHE_TTL_MS) {
+      return cached.data;
+    }
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: this.getTenantSelectFields(),
@@ -436,7 +459,12 @@ export abstract class BaseOrchestrator {
     }
 
     // Cast to TenantSessionData (select fields match the interface)
-    return tenant as unknown as TenantSessionData;
+    const tenantData = tenant as unknown as TenantSessionData;
+
+    // PERF-2: Cache the result
+    this.tenantDataCache.set(tenantId, { data: tenantData, timestamp: now });
+
+    return tenantData;
   }
 
   /**
@@ -1495,10 +1523,25 @@ export abstract class BaseOrchestrator {
       }
     }
 
-    if (removed > 0) {
+    // PERF-2: Also clean up expired tenant data cache entries
+    let tenantCacheRemoved = 0;
+    for (const [tenantId, cached] of this.tenantDataCache) {
+      if (now - cached.timestamp > BaseOrchestrator.TENANT_DATA_CACHE_TTL_MS) {
+        this.tenantDataCache.delete(tenantId);
+        tenantCacheRemoved++;
+      }
+    }
+
+    if (removed > 0 || tenantCacheRemoved > 0) {
       logger.debug(
-        { removed, remaining: this.circuitBreakers.size, tracersRemaining: this.tracers.size },
-        'Cleaned up old circuit breakers and tracers'
+        {
+          removed,
+          remaining: this.circuitBreakers.size,
+          tracersRemaining: this.tracers.size,
+          tenantCacheRemoved,
+          tenantCacheRemaining: this.tenantDataCache.size,
+        },
+        'Cleaned up old circuit breakers, tracers, and tenant cache'
       );
     }
   }

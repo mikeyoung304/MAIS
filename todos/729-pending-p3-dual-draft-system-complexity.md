@@ -1,7 +1,8 @@
 ---
-status: pending
+status: deferred
 priority: p3
 issue_id: '729'
+deferred_reason: 'Acknowledged technical debt. Both draft systems work correctly. Unification deferred until post-MVP.'
 tags:
   - code-review
   - architecture

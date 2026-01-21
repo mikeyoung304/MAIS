@@ -44,6 +44,33 @@ const publicChatRateLimiter = rateLimit({
 });
 
 /**
+ * Middleware factory to require chat to be enabled for tenant.
+ * Returns 403 if chat is disabled or tenant not found.
+ */
+function createRequireChatEnabled(prisma: PrismaClient) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const tenantId = req.tenantId ?? null;
+
+    if (!tenantId) {
+      res.status(400).json({ error: 'Missing tenant context' });
+      return;
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { chatEnabled: true },
+    });
+
+    if (!tenant?.chatEnabled) {
+      res.status(403).json({ error: 'Chat is not enabled for this business' });
+      return;
+    }
+
+    next();
+  };
+}
+
+/**
  * Create public customer chat routes
  */
 export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
@@ -51,6 +78,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
   // CustomerChatOrchestrator includes guardrails (rate limiting, circuit breakers, tier budgets)
   // and prompt injection detection for public-facing endpoints
   const orchestrator = new CustomerChatOrchestrator(prisma);
+  const requireChatEnabled = createRequireChatEnabled(prisma);
 
   // Apply IP rate limiting to all routes
   router.use(publicChatRateLimiter);
@@ -156,45 +184,35 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    * POST /session
    * Create or get existing chat session
    */
-  router.post('/session', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = req.tenantId ?? null;
+  router.post(
+    '/session',
+    requireChatEnabled,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        // tenantId guaranteed by requireChatEnabled middleware
+        const tenantId = req.tenantId!;
 
-      if (!tenantId) {
-        res.status(400).json({ error: 'Missing tenant context' });
-        return;
+        const session = await orchestrator.getOrCreateSession(tenantId);
+        const greeting = await orchestrator.getGreeting(tenantId);
+
+        // Get business name from tenant (not stored in session)
+        const tenantInfo = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { name: true },
+        });
+
+        res.json({
+          sessionId: session.sessionId,
+          greeting,
+          businessName: tenantInfo?.name ?? null,
+          messageCount: session.messages.length,
+        });
+      } catch (error) {
+        logger.error({ error }, 'Customer chat session error');
+        next(error);
       }
-
-      // Check if chat is enabled
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { chatEnabled: true },
-      });
-      if (!tenant?.chatEnabled) {
-        res.status(403).json({ error: 'Chat is not enabled for this business' });
-        return;
-      }
-
-      const session = await orchestrator.getOrCreateSession(tenantId);
-      const greeting = await orchestrator.getGreeting(tenantId);
-
-      // Get business name from tenant (not stored in session)
-      const tenantInfo = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { name: true },
-      });
-
-      res.json({
-        sessionId: session.sessionId,
-        greeting,
-        businessName: tenantInfo?.name ?? null,
-        messageCount: session.messages.length,
-      });
-    } catch (error) {
-      logger.error({ error }, 'Customer chat session error');
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Chat Messages
@@ -204,76 +222,66 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
    * POST /message
    * Send a message to the chatbot
    */
-  router.post('/message', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantId = req.tenantId ?? null;
+  router.post(
+    '/message',
+    requireChatEnabled,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        // tenantId guaranteed by requireChatEnabled middleware
+        const tenantId = req.tenantId!;
 
-      if (!tenantId) {
-        res.status(400).json({ error: 'Missing tenant context' });
-        return;
-      }
+        const { message, sessionId } = req.body;
 
-      const { message, sessionId } = req.body;
-
-      if (!message || typeof message !== 'string') {
-        res.status(400).json({ error: 'Message is required' });
-        return;
-      }
-
-      if (message.length > 2000) {
-        res.status(400).json({ error: 'Message too long (max 2000 characters)' });
-        return;
-      }
-
-      // Check if chat is enabled
-      const tenantCheck = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { chatEnabled: true },
-      });
-      if (!tenantCheck?.chatEnabled) {
-        res.status(403).json({ error: 'Chat is not enabled for this business' });
-        return;
-      }
-
-      // Get or create session, validating ownership if sessionId provided
-      let actualSessionId = sessionId;
-      if (actualSessionId) {
-        // Validate that sessionId belongs to this tenant
-        const session = await orchestrator.getSession(tenantId, actualSessionId);
-        if (!session) {
-          res.status(400).json({ error: 'Invalid or expired session' });
+        if (!message || typeof message !== 'string') {
+          res.status(400).json({ error: 'Message is required' });
           return;
         }
-      } else {
-        const session = await orchestrator.getOrCreateSession(tenantId);
-        actualSessionId = session.sessionId;
+
+        if (message.length > 2000) {
+          res.status(400).json({ error: 'Message too long (max 2000 characters)' });
+          return;
+        }
+
+        // Get or create session, validating ownership if sessionId provided
+        let actualSessionId = sessionId;
+        if (actualSessionId) {
+          // Validate that sessionId belongs to this tenant
+          const session = await orchestrator.getSession(tenantId, actualSessionId);
+          if (!session) {
+            res.status(400).json({ error: 'Invalid or expired session' });
+            return;
+          }
+        } else {
+          const session = await orchestrator.getOrCreateSession(tenantId);
+          actualSessionId = session.sessionId;
+        }
+
+        // Send message to orchestrator
+        const response = await orchestrator.chat(tenantId, actualSessionId, message);
+
+        logger.info(
+          {
+            tenantId,
+            sessionId: actualSessionId,
+            messageLength: message.length,
+            responseLength: response.message.length,
+            hasProposals: !!response.proposals?.length,
+          },
+          'Customer chat message processed'
+        );
+
+        res.json({
+          message: response.message,
+          sessionId: response.sessionId,
+          proposals: response.proposals,
+          toolResults: response.toolResults,
+        });
+      } catch (error) {
+        logger.error({ error }, 'Customer chat message error');
+        next(error);
       }
-
-      // Send message to orchestrator
-      const response = await orchestrator.chat(tenantId, actualSessionId, message);
-
-      logger.info(
-        {
-          tenantId,
-          sessionId: actualSessionId,
-          messageLength: message.length,
-          responseLength: response.message.length,
-          hasProposals: !!response.proposals?.length,
-        },
-        'Customer chat message processed'
-      );
-
-      res.json({
-        message: response.message,
-        sessionId: response.sessionId,
-        proposals: response.proposals,
-        toolResults: response.toolResults,
-      });
-    } catch (error) {
-      logger.error({ error }, 'Customer chat message error');
-      next(error);
     }
-  });
+  );
 
   // ============================================================================
   // Proposal Confirmation

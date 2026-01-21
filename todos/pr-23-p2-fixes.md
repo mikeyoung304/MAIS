@@ -1,20 +1,20 @@
-# PR #23 P2 Fixes (Should Fix Soon)
+# PR #23 P2 Fixes - MOSTLY RESOLVED
+
+**Status:** 11/14 items resolved as of 2026-01-20
 
 ## Performance (High Priority)
 
-### PERF-1: Verify Rate Limiter Application
+### PERF-1: Verify Rate Limiter Application [RESOLVED]
 
-- **File:** `server/src/routes/index.ts`
-- **Issue:** Confirm `customerChatLimiter` is applied to routes
-- **Verify:** Check route mounting includes limiter middleware
+- **File:** `server/src/routes/index.ts:728-736`
+- **Status:** Verified. `customerChatLimiter` is properly imported and applied to `/v1/public/chat` routes.
 
-### PERF-2: Cache buildBusinessContext()
+### PERF-2: Cache buildBusinessContext() [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-orchestrator.ts:246,559`
-- **Issue:** Called multiple times per request (2-6 DB queries)
-- **Fix:** Cache result at start of `chat()` and pass through
+- **File:** `server/src/agent/orchestrator/base-orchestrator.ts`
+- **Status:** Implemented. Added 60-second TTL cache to `loadTenantData()` with periodic cleanup.
 
-### PERF-3: Add Missing Session Lookup Index
+### PERF-3: Add Missing Session Lookup Index [PENDING]
 
 - **File:** New migration needed
 - **Issue:** Queries use `(tenantId, sessionType, updatedAt)` but index doesn't exist
@@ -27,47 +27,29 @@ ON "AgentSession"("tenantId", "sessionType", "updatedAt" DESC);
 
 ## Data Integrity
 
-### SEC-3: Add Tenant Filter to Customer Lookup
+### SEC-3: Add Tenant Filter to Customer Lookup [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-booking-executor.ts:84-89`
-- **Issue:** `findUnique` by id doesn't include tenantId
-- **Fix:** Change to `findFirst` with tenantId:
+- **File:** `server/src/agent/customer/customer-booking-executor.ts:132-134`
+- **Status:** Already uses `findFirst` with `{ id: customerId, tenantId }`.
 
-```typescript
-const customer = await tx.customer.findFirst({
-  where: { id: customerId, tenantId },
-});
-```
+### DATA-1: Two-Step Proposal Creation [RESOLVED]
 
-### DATA-1: Two-Step Proposal Creation
+- **File:** `server/src/agent/customer/customer-tools.ts`, `server/src/agent/proposals/proposal.service.ts`
+- **Status:** Fixed. `createProposal` now accepts `customerId` directly, eliminating the separate update step.
 
-- **File:** `server/src/agent/customer/customer-tools.ts:356-384`
-- **Issue:** Proposal created, then updated with customerId (crash window)
-- **Fix:** Wrap in transaction or pass customerId to createProposal
+### DATA-2: Create Rollback Script [SKIPPED - ANTI-PATTERN]
 
-### DATA-2: Create Rollback Script
-
-- **File:** `server/prisma/migrations/16_add_customer_chat_support_rollback.sql`
-- **Content:**
-
-```sql
-ALTER TABLE "AgentSession" DROP COLUMN IF EXISTS "sessionType";
-ALTER TABLE "AgentSession" DROP COLUMN IF EXISTS "customerId";
-ALTER TABLE "AgentProposal" DROP COLUMN IF EXISTS "customerId";
-ALTER TABLE "Tenant" DROP COLUMN IF EXISTS "chatEnabled";
-DROP INDEX IF EXISTS "AgentSession_customerId_updatedAt_idx";
-DROP INDEX IF EXISTS "AgentProposal_customerId_idx";
-```
+- **Status:** SKIPPED per CLAUDE.md pitfall #59
+- **Reason:** Migration rollback files run AFTER the original alphabetically, undoing changes and causing schema drift. Use forward-only migrations instead.
 
 ## Architecture
 
-### ARCH-1: Fix Circular Dependency
+### ARCH-1: Fix Circular Dependency [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-booking-executor.ts:9`
-- **Issue:** Imports from routes creates circular dependency
-- **Fix:** Move executor registry to separate module
+- **File:** `server/src/agent/customer/executor-registry.ts`
+- **Status:** Already fixed. Imports from `./executor-registry` not routes. See `docs/solutions/patterns/circular-dependency-executor-registry-MAIS-20251229.md`.
 
-### ARCH-2: Session Isolation
+### ARCH-2: Session Isolation [PENDING]
 
 - **File:** `server/src/agent/customer/customer-orchestrator.ts:133-167`
 - **Issue:** Multiple customers could share sessions within TTL
@@ -75,18 +57,17 @@ DROP INDEX IF EXISTS "AgentProposal_customerId_idx";
 
 ## Code Quality
 
-### SIMP-3: Extract chatEnabled Check
+### SIMP-3: Extract chatEnabled Check [RESOLVED]
 
-- **File:** `server/src/routes/public-customer-chat.routes.ts:172,227`
-- **Issue:** Same check repeated 3 times
-- **Fix:** Create `requireChatEnabled` middleware
+- **File:** `server/src/routes/public-customer-chat.routes.ts:46-71`
+- **Status:** Created `createRequireChatEnabled` middleware factory and applied to `/session` and `/message` routes.
 
-### SIMP-4: Remove Unused businessSlug
+### SIMP-4: Remove Unused businessSlug [RESOLVED]
 
-- **File:** `server/src/agent/customer/customer-orchestrator.ts:58,83,163,186,223`
-- **Fix:** Remove from interfaces and all assignments
+- **Files:** `apps/web/src/hooks/useAgentChat.ts`, `server/src/routes/agent.routes.ts`
+- **Status:** Removed from external API contract (SessionContext interface and session response). Internal LLM context still uses it intentionally.
 
-### SIMP-5: Consider Shared Formatters
+### SIMP-5: Consider Shared Formatters [PENDING - LOW PRIORITY]
 
 - **File:** `server/src/agent/customer/customer-tools.ts:27-42`
 - **Issue:** formatMoney/formatDate duplicated
@@ -94,17 +75,17 @@ DROP INDEX IF EXISTS "AgentProposal_customerId_idx";
 
 ## Type Safety
 
-### TS-3: Type JSON Responses
+### TS-3: Type JSON Responses [PENDING]
 
 - **File:** `apps/web/src/components/chat/CustomerChatWidget.tsx`
 - **Fix:** Define response schemas with Zod
 
-### TS-4: Validate Request Body
+### TS-4: Validate Request Body [PENDING]
 
 - **File:** `server/src/routes/public-customer-chat.routes.ts:214`
 - **Fix:** Add Zod validation for message endpoint
 
-### TS-5: Type Tool Parameters
+### TS-5: Type Tool Parameters [PENDING]
 
 - **File:** `server/src/agent/customer/customer-tools.ts`
 - **Fix:** Create typed parameter validators

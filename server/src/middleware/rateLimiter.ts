@@ -290,6 +290,53 @@ export const agentChatLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for agent chat sessions - per-session burst protection
+ * 10 messages per minute per session - prevents rapid-fire abuse within a conversation
+ *
+ * SECURITY: Uses compound key (tenant:session) to prevent sessionId spoofing.
+ * Without tenant association, attackers could bypass by rotating sessionIds.
+ * The tenantId comes from authenticated JWT (res.locals.tenantAuth), not user input.
+ *
+ * Layered with agentChatLimiter for defense in depth:
+ * - agentChatLimiter: 30/5min per tenant (overall quota)
+ * - agentSessionLimiter: 10/min per session (burst protection)
+ */
+export const agentSessionLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 10, // 10 messages per minute per session
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req, res) => {
+    const sessionId = (req.body as { sessionId?: string })?.sessionId;
+    const tenantId = res.locals.tenantAuth?.tenantId;
+
+    // Validate sessionId format (should be CUID-like, < 100 chars)
+    // This prevents injection of excessively long keys into the rate limiter store
+    if (sessionId && typeof sessionId === 'string' && sessionId.length < 100) {
+      // Use compound key to ensure tenant association - prevents sessionId spoofing
+      // An attacker rotating sessionIds will still be bound to their tenantId
+      if (tenantId) {
+        return `tenant:${tenantId}:session:${sessionId}`;
+      }
+      // Fallback for unauthenticated (should not happen in practice for agent routes)
+      return `session:${sessionId}`;
+    }
+
+    // Fallback when no valid sessionId: use tenant or IP
+    return tenantId ? `tenant:${tenantId}` : normalizeIp(req.ip);
+  },
+  skip: (_req, res) => !res.locals.tenantAuth, // Only apply to authenticated requests
+  validate: false, // Disable validation - we handle IPv6 with normalizeIp()
+  handler: (_req: Request, res: Response) => {
+    logger.warn({ tenantId: res.locals.tenantAuth?.tenantId }, 'Agent session rate limit exceeded');
+    res.status(429).json({
+      error: 'too_many_session_requests',
+      message: 'Too many messages in this conversation. Please wait a moment.',
+    });
+  },
+});
+
+/**
  * Rate limiter for public customer chat endpoints
  * 20 messages per minute per IP - balances UX with API cost protection
  *

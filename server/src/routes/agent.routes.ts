@@ -412,7 +412,6 @@ export function createAgentRoutes(prisma: PrismaClient): Router {
         greeting,
         context: {
           businessName: session.context.businessName,
-          businessSlug: session.context.businessSlug,
           quickStats: session.context.quickStats,
         },
         createdAt: session.createdAt.toISOString(),

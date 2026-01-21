@@ -1,7 +1,8 @@
 ---
-status: pending
+status: deferred
 priority: p3
 issue_id: 748
+deferred_reason: 'Low priority DRY improvement - not blocking. Defer until next refactoring sprint.'
 tags: [code-review, dry-violation, database, pr-27]
 dependencies: []
 ---
