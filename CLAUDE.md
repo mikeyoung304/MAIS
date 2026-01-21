@@ -245,11 +245,21 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 63. Using `.parse()` without error handling - Always use `safeParse()` which returns a result object; `.parse()` throws exceptions that crash the agent
 64. UUID validation on CUID fields - MAIS uses CUIDs not UUIDs; use `z.string().min(1)` instead of `z.string().uuid()` for ID fields
 
+### Security & Performance Pitfalls (65-70)
+
+65. Email-based auth on sensitive routes - Never use email lookup alone for password reset, account changes, or billing; use signed tokens with expiration and timing-safe comparison. See `docs/solutions/security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md`
+66. Missing rate limiting on authenticated routes - ALL routes need rate limiting; authenticated routes use tenant-scoped limits (`keyGenerator: (req, res) => res.locals.tenantAuth?.tenantId`); see rateLimiter.ts for patterns
+67. Unbounded database queries - ALL `findMany` calls MUST have `take` parameter with enforced maximum; return `hasMore` indicator; never allow client-requested limit > MAX_PAGE_SIZE (100)
+68. Sequential queries that could be parallel - Use `Promise.all()` for independent queries; prefer Prisma `include` for related data; sequential-only when result of query A needed for query B
+69. Hardcoded optimistic lock versions - NEVER use `expectedVersion: 1`; always pass version from client state; API responses must include `version` field; mutations increment with `version: { increment: 1 }`
+70. Missing Zod safeParse in agent tools - Agent tool `execute()` MUST call `schema.safeParse(params)` as FIRST LINE; return `{ success: false, error }` on parse failure; never use `params as Type`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
 
 - **[PREVENTION-QUICK-REFERENCE.md](docs/solutions/PREVENTION-QUICK-REFERENCE.md)** - Print and pin cheat sheet
+- **[P1-SECURITY-PREVENTION-STRATEGIES.md](docs/solutions/security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md)** - 6 P1 security issues (auth, rate limiting, pagination, parallelization, validation, locking)
 - **[mais-critical-patterns.md](docs/solutions/patterns/mais-critical-patterns.md)** - 10 critical patterns
 - **[AGENT_TOOLS_PREVENTION_INDEX.md](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Agent tool patterns
 - **[ZOD_PARAMETER_VALIDATION_PREVENTION.md](docs/solutions/patterns/ZOD_PARAMETER_VALIDATION_PREVENTION.md)** - Zod validation patterns

@@ -709,6 +709,91 @@ const tenantId = context.state.tenantId;
 
 ---
 
+## 🔐 P1 Security Patterns
+
+### Auth: Use Signed Tokens, Not Email Lookup
+
+```typescript
+// ❌ WRONG - Email enumeration vulnerability
+const user = await userRepo.findByEmail(email);
+if (!user) return res.status(404).json({ error: 'User not found' });
+
+// ✅ CORRECT - Signed token with timing-safe comparison
+const hashedInput = crypto.createHash('sha256').update(token).digest('hex');
+const user = await userRepo.findByResetToken(hashedInput);
+if (!user) return res.status(400).json({ error: 'Invalid or expired token' });
+```
+
+### Rate Limiting: Tenant-Scoped for Auth Routes
+
+```typescript
+// ✅ ALL routes need rate limiting
+const myRouteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: process.env.NODE_ENV === 'test' ? 500 : 100,
+  keyGenerator: (_req, res) => res.locals.tenantAuth?.tenantId || normalizeIp(_req.ip),
+  skip: (_req, res) => !res.locals.tenantAuth,
+});
+
+router.post('/resource', tenantAuth, myRouteLimiter, handler);
+```
+
+### Pagination: Enforce Maximum Limits
+
+```typescript
+// ❌ WRONG - Unbounded query
+const items = await prisma.booking.findMany({ where: { tenantId } });
+
+// ✅ CORRECT - Paginated with enforced max
+const MAX_PAGE_SIZE = 100;
+const limit = Math.min(options.limit ?? 50, MAX_PAGE_SIZE);
+const items = await prisma.booking.findMany({
+  where: { tenantId },
+  take: limit + 1, // Fetch extra to detect hasMore
+  skip: offset,
+});
+const hasMore = items.length > limit;
+if (hasMore) items.pop();
+return { items, hasMore };
+```
+
+### Parallelization: Promise.all for Independent Queries
+
+```typescript
+// ❌ WRONG - Sequential (150ms with 3 queries)
+const packages = await getPackages(tenantId);
+const segments = await getSegments(tenantId);
+const settings = await getSettings(tenantId);
+
+// ✅ CORRECT - Parallel (50ms total)
+const [packages, segments, settings] = await Promise.all([
+  getPackages(tenantId),
+  getSegments(tenantId),
+  getSettings(tenantId),
+]);
+```
+
+### Optimistic Locking: Version from State, Never Hardcoded
+
+```typescript
+// ❌ WRONG - Hardcoded version fails on modified records
+await approveRequest({ requestId, expectedVersion: 1 });
+
+// ✅ CORRECT - Version from client state
+await approveRequest({ requestId, expectedVersion: request.version });
+
+// Server: Always increment
+data: {
+  version: {
+    increment: 1;
+  }
+}
+```
+
+**Full P1 Security Reference:** [P1-SECURITY-PREVENTION-STRATEGIES.md](./security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md)
+
+---
+
 ## 📞 When in Doubt
 
 1. Check similar code in codebase
@@ -721,6 +806,7 @@ const tenantId = context.state.tenantId;
 
 ## 🎓 Training Resources
 
+- [P1 Security Prevention Strategies](./security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md)
 - [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
 - [Multi-Tenant Implementation Guide](../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
@@ -731,4 +817,4 @@ const tenantId = context.state.tenantId;
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-01-21
