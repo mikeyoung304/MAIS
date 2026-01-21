@@ -7,12 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Timing-safe secret comparison**: Internal agent routes now use `crypto.timingSafeEqual` to prevent timing attacks (Pitfall #46)
+- **Fetch timeout**: Agent communication includes 30s AbortController timeout to prevent hanging requests (Pitfall #46)
+- **Bootstrap fallback**: Concierge agent returns `unknown` state instead of assuming onboarding complete on API errors
+
 ### Changed
 
+- **Pagination limits enforced**: `listProjects` max 100, `getPendingRequests` max 50 with `hasMore` indicators (Pitfall #67)
+- **Optimistic updates**: Tenant projects dashboard now uses optimistic updates for approve/deny actions instead of full refetch
 - **API Breaking Change**: Pagination default for `GET /v1/tenant-admin/appointments` changed from 100 to 50 items
   - Max limit remains 500
   - Clients relying on default behavior should explicitly pass `limit` parameter
   - Improves response times and reduces payload sizes by 50%
+
+### Refactored
+
+- **Chat widget DRY**: Extracted 6 reusable components from `ProjectHubChatWidget` (ChatHeader, TypingIndicator, ErrorDisplay, LoadingState, ChatMessages, ChatInput)
+- **Version logic extraction**: Extracted duplicate version calculation and optimistic locking into helper methods in `project-hub.service.ts`
+- **Database index**: Added compound index `[tenantId, customerId, status]` on Project table for customer bootstrap queries
+
+### Documentation
+
+- **30+ TODOs resolved**: Batch resolution of code review findings from PR #31 (security, performance, code quality)
 
 ### Security
 
