@@ -426,6 +426,110 @@ export async function createDateBooking(
 }
 
 /**
+ * Project data for customer view
+ */
+export interface ProjectViewData {
+  project: {
+    id: string;
+    status: string;
+    createdAt: string;
+  };
+  booking: {
+    eventDate: string;
+    serviceName: string;
+    customerName: string;
+  };
+  pendingRequests: Array<{
+    id: string;
+    type: string;
+    createdAt: string;
+  }>;
+  hasPendingRequests: boolean;
+  tenant: {
+    name: string;
+    branding: Record<string, unknown> | null;
+  };
+}
+
+/**
+ * Fetch project details for customer view
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param projectId - Project ID
+ * @param email - Optional customer email for verification
+ * @returns Project view data or null if not found
+ */
+export async function getProjectById(
+  apiKeyPublic: string,
+  projectId: string,
+  email?: string
+): Promise<ProjectViewData | null> {
+  const params = new URLSearchParams();
+  if (email) params.set('email', email);
+  const queryString = params.toString();
+  const url = `${API_URL}/v1/public/projects/${encodeURIComponent(projectId)}${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    cache: 'no-store', // Always fetch fresh project data
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json();
+}
+
+/**
+ * Project timeline event
+ */
+export interface ProjectTimelineEvent {
+  id: string;
+  type: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+/**
+ * Fetch project timeline for customer view
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param projectId - Project ID
+ * @returns Timeline events or empty array
+ */
+export async function getProjectTimeline(
+  apiKeyPublic: string,
+  projectId: string
+): Promise<ProjectTimelineEvent[]> {
+  const url = `${API_URL}/v1/public/projects/${encodeURIComponent(projectId)}/timeline`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const data = await response.json();
+  return data.events || [];
+}
+
+/**
  * Fetch booking details by ID
  *
  * @param apiKeyPublic - Tenant's public API key

@@ -26,6 +26,7 @@ import { ReminderService } from './services/reminder.service';
 import { LandingPageService } from './services/landing-page.service';
 import { HealthCheckService } from './services/health-check.service';
 import { WebhookDeliveryService } from './services/webhook-delivery.service';
+import { ProjectHubService } from './services/project-hub.service';
 import { UploadAdapter } from './adapters/upload.adapter';
 import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
 import { PackagesController } from './routes/packages.routes';
@@ -139,6 +140,7 @@ export interface Container {
     reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
     landingPage: LandingPageService; // Landing page visual editor (TODO-241)
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
+    projectHub?: ProjectHubService; // Project Hub dual-faced communication
     // Agent evaluation services (Phase 2 - agent-evaluation-system.md)
     evaluation?: {
       evaluator: ConversationEvaluator;
@@ -344,6 +346,9 @@ export function buildContainer(config: Config): Container {
     // In mock mode, these are optional - tests can inject mock evaluators
     const evaluation = buildEvaluationServices(mockPrisma, 'mock');
 
+    // Create ProjectHubService for dual-faced customer-tenant communication
+    const projectHubService = new ProjectHubService(mockPrisma);
+
     const services = {
       identity: identityService,
       stripeConnect: stripeConnectService,
@@ -360,6 +365,7 @@ export function buildContainer(config: Config): Container {
       packageDraft: packageDraftService,
       reminder: reminderService,
       landingPage: landingPageService,
+      projectHub: projectHubService,
       evaluation,
     };
 
@@ -776,6 +782,9 @@ export function buildContainer(config: Config): Container {
   // P1-583 FIX: Use factory functions for proper DI (dependencies before config)
   const evaluationServices = buildEvaluationServices(prisma, 'real');
 
+  // Create ProjectHubService for dual-faced customer-tenant communication
+  const projectHubService = new ProjectHubService(prisma);
+
   const services = {
     identity: identityService,
     stripeConnect: stripeConnectService,
@@ -793,6 +802,7 @@ export function buildContainer(config: Config): Container {
     reminder: reminderService,
     landingPage: landingPageService,
     webhookDelivery: webhookDeliveryService,
+    projectHub: projectHubService,
     evaluation: evaluationServices,
   };
 

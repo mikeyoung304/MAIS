@@ -36,6 +36,17 @@
  * - POST /v1/internal/agent/storefront/preview - Get preview URL
  * - POST /v1/internal/agent/storefront/publish - Publish draft to live
  * - POST /v1/internal/agent/storefront/discard - Discard draft changes
+ *
+ * PROJECT HUB AGENT Endpoints:
+ * - POST /v1/internal/agent/project-hub/bootstrap-customer - Initialize customer session
+ * - POST /v1/internal/agent/project-hub/bootstrap-tenant - Initialize tenant dashboard
+ * - POST /v1/internal/agent/project-hub/project-details - Get project with booking info
+ * - POST /v1/internal/agent/project-hub/timeline - Get project timeline events
+ * - POST /v1/internal/agent/project-hub/pending-requests - Get pending requests for tenant
+ * - POST /v1/internal/agent/project-hub/create-request - Create a customer request
+ * - POST /v1/internal/agent/project-hub/approve-request - Approve request (optimistic locking)
+ * - POST /v1/internal/agent/project-hub/deny-request - Deny request (optimistic locking)
+ * - POST /v1/internal/agent/project-hub/list-projects - List all projects for tenant
  */
 
 import type { Request, Response, NextFunction } from 'express';
@@ -49,8 +60,10 @@ import type { BookingService } from '../services/booking.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ServiceRepository } from '../lib/ports';
 import type { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
+import type { ProjectHubService } from '../services/project-hub.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 import { createPublishedWrapper } from '../lib/landing-page-utils';
+import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
 
 // =============================================================================
 // Request Schemas
@@ -185,6 +198,7 @@ interface InternalAgentRoutesDeps {
   tenantRepo: PrismaTenantRepository;
   serviceRepo?: ServiceRepository;
   advisorMemoryService?: AdvisorMemoryService;
+  projectHubService?: ProjectHubService;
 }
 
 /**
@@ -204,6 +218,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     tenantRepo,
     serviceRepo,
     advisorMemoryService,
+    projectHubService,
   } = deps;
 
   // ===========================================================================
@@ -1885,6 +1900,295 @@ Apply the feedback while maintaining the ${tone} tone.`;
     }
   });
 
+  // ===========================================================================
+  // PROJECT HUB AGENT ROUTES
+  // Dual-faced customer-tenant communication system
+  // ===========================================================================
+
+  // Project Hub request schemas
+  const ProjectHubBootstrapCustomerSchema = TenantIdSchema.extend({
+    customerId: z.string().min(1, 'customerId is required'),
+  });
+
+  const ProjectHubGetProjectSchema = TenantIdSchema.extend({
+    projectId: z.string().min(1, 'projectId is required'),
+  });
+
+  const ProjectHubGetTimelineSchema = TenantIdSchema.extend({
+    projectId: z.string().min(1, 'projectId is required'),
+    actor: z.enum(['customer', 'tenant']).default('customer'),
+  });
+
+  const PROJECT_REQUEST_TYPES = [
+    'RESCHEDULE',
+    'ADD_ON',
+    'QUESTION',
+    'CHANGE_REQUEST',
+    'CANCELLATION',
+    'REFUND',
+    'OTHER',
+  ] as const;
+
+  const ProjectHubCreateRequestSchema = TenantIdSchema.extend({
+    projectId: z.string().min(1, 'projectId is required'),
+    type: z.enum(PROJECT_REQUEST_TYPES),
+    requestData: z.record(z.unknown()),
+  });
+
+  const ProjectHubHandleRequestSchema = TenantIdSchema.extend({
+    requestId: z.string().min(1, 'requestId is required'),
+    expectedVersion: z.number().int().min(1),
+    response: z.string().optional(),
+  });
+
+  const ProjectHubDenyRequestSchema = ProjectHubHandleRequestSchema.extend({
+    reason: z.string().min(1, 'reason is required'),
+  });
+
+  const ProjectHubListProjectsSchema = TenantIdSchema.extend({
+    status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'ON_HOLD']).optional(),
+  });
+
+  const ProjectHubAddNoteSchema = TenantIdSchema.extend({
+    projectId: z.string().min(1, 'projectId is required'),
+    note: z.string().min(1, 'note is required'),
+  });
+
+  // POST /project-hub/bootstrap-customer - Initialize customer session
+  router.post('/project-hub/bootstrap-customer', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, customerId } = ProjectHubBootstrapCustomerSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, customerId, endpoint: '/project-hub/bootstrap-customer' },
+        '[Agent] Bootstrapping customer session'
+      );
+
+      const result = await projectHubService.bootstrapCustomer(tenantId, customerId);
+
+      res.json(result);
+    } catch (error) {
+      handleError(res, error, '/project-hub/bootstrap-customer');
+    }
+  });
+
+  // POST /project-hub/bootstrap-tenant - Initialize tenant session
+  router.post('/project-hub/bootstrap-tenant', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, endpoint: '/project-hub/bootstrap-tenant' },
+        '[Agent] Bootstrapping tenant session'
+      );
+
+      const result = await projectHubService.bootstrapTenant(tenantId);
+
+      res.json(result);
+    } catch (error) {
+      handleError(res, error, '/project-hub/bootstrap-tenant');
+    }
+  });
+
+  // POST /project-hub/project-details - Get project with booking info
+  router.post('/project-hub/project-details', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, projectId } = ProjectHubGetProjectSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, projectId, endpoint: '/project-hub/project-details' },
+        '[Agent] Getting project details'
+      );
+
+      const result = await projectHubService.getProjectDetails(tenantId, projectId);
+
+      res.json(result);
+    } catch (error) {
+      handleError(res, error, '/project-hub/project-details');
+    }
+  });
+
+  // POST /project-hub/timeline - Get project timeline events
+  router.post('/project-hub/timeline', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, projectId, actor } = ProjectHubGetTimelineSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, projectId, actor, endpoint: '/project-hub/timeline' },
+        '[Agent] Getting project timeline'
+      );
+
+      const events = await projectHubService.getTimeline(tenantId, projectId, actor);
+
+      res.json({ events, count: events.length });
+    } catch (error) {
+      handleError(res, error, '/project-hub/timeline');
+    }
+  });
+
+  // POST /project-hub/pending-requests - Get pending requests for tenant
+  router.post('/project-hub/pending-requests', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, endpoint: '/project-hub/pending-requests' },
+        '[Agent] Getting pending requests'
+      );
+
+      const result = await projectHubService.getPendingRequests(tenantId);
+
+      res.json({
+        requests: result.requests,
+        count: result.requests.length,
+        hasMore: result.hasMore,
+      });
+    } catch (error) {
+      handleError(res, error, '/project-hub/pending-requests');
+    }
+  });
+
+  // POST /project-hub/create-request - Create a customer request
+  router.post('/project-hub/create-request', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, projectId, type, requestData } = ProjectHubCreateRequestSchema.parse(
+        req.body
+      );
+
+      logger.info(
+        { tenantId, projectId, type, endpoint: '/project-hub/create-request' },
+        '[Agent] Creating request'
+      );
+
+      const request = await projectHubService.createRequest({
+        tenantId,
+        projectId,
+        type,
+        requestData,
+      });
+
+      res.json({ success: true, request, expiresAt: request.expiresAt });
+    } catch (error) {
+      handleError(res, error, '/project-hub/create-request');
+    }
+  });
+
+  // POST /project-hub/approve-request - Approve a pending request (with optimistic locking)
+  router.post('/project-hub/approve-request', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, requestId, expectedVersion, response } =
+        ProjectHubHandleRequestSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, requestId, expectedVersion, endpoint: '/project-hub/approve-request' },
+        '[Agent] Approving request'
+      );
+
+      const request = await projectHubService.approveRequest({
+        tenantId,
+        requestId,
+        expectedVersion,
+        response,
+      });
+
+      res.json({ success: true, request });
+    } catch (error) {
+      handleError(res, error, '/project-hub/approve-request');
+    }
+  });
+
+  // POST /project-hub/deny-request - Deny a pending request (with optimistic locking)
+  router.post('/project-hub/deny-request', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, requestId, expectedVersion, reason, response } =
+        ProjectHubDenyRequestSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, requestId, expectedVersion, endpoint: '/project-hub/deny-request' },
+        '[Agent] Denying request'
+      );
+
+      const request = await projectHubService.denyRequest({
+        tenantId,
+        requestId,
+        expectedVersion,
+        reason,
+        response,
+      });
+
+      res.json({ success: true, request });
+    } catch (error) {
+      handleError(res, error, '/project-hub/deny-request');
+    }
+  });
+
+  // POST /project-hub/list-projects - List all projects for tenant
+  router.post('/project-hub/list-projects', async (req: Request, res: Response) => {
+    try {
+      if (!projectHubService) {
+        res.status(503).json({ error: 'Project Hub service not available' });
+        return;
+      }
+
+      const { tenantId, status } = ProjectHubListProjectsSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, status, endpoint: '/project-hub/list-projects' },
+        '[Agent] Listing projects'
+      );
+
+      const result = await projectHubService.listProjects(tenantId, status);
+
+      res.json({
+        projects: result.projects,
+        count: result.projects.length,
+        nextCursor: result.nextCursor,
+      });
+    } catch (error) {
+      handleError(res, error, '/project-hub/list-projects');
+    }
+  });
+
   return router;
 }
 
@@ -1900,6 +2204,31 @@ function handleError(res: Response, error: unknown, endpoint: string): void {
     res.status(400).json({
       error: 'Validation error',
       details: error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+    });
+    return;
+  }
+
+  if (error instanceof NotFoundError) {
+    res.status(404).json({
+      error: 'NOT_FOUND',
+      message: error.message,
+    });
+    return;
+  }
+
+  if (error instanceof ValidationError) {
+    res.status(400).json({
+      error: 'VALIDATION_ERROR',
+      message: error.message,
+    });
+    return;
+  }
+
+  if (error instanceof ConcurrentModificationError) {
+    res.status(409).json({
+      error: 'CONCURRENT_MODIFICATION',
+      message: error.message,
+      currentVersion: error.currentVersion,
     });
     return;
   }

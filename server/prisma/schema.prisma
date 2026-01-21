@@ -1193,6 +1193,9 @@ model ProjectRequest {
   requestData  Json
   responseData Json?
 
+  // Optimistic locking for concurrent updates
+  version Int @default(1)
+
   // Resolution tracking
   handledBy  RequestHandler?
   resolvedAt DateTime?

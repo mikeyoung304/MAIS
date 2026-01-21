@@ -12,3 +12,6 @@ export * from './schemas/onboarding.schema';
 
 // Booking Link Agent Schemas
 export * from './schemas/booking-link.schema';
+
+// Project Hub Agent Schemas
+export * from './schemas/project-hub.schema';

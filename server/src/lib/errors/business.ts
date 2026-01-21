@@ -392,3 +392,36 @@ export class WebhookProcessingError extends AppError {
     this.name = 'WebhookProcessingError';
   }
 }
+
+// ============================================================================
+// Concurrent Modification Errors (Optimistic Locking)
+// ============================================================================
+
+/**
+ * Concurrent modification error - used for optimistic locking
+ * Thrown when a resource was modified by another user between read and write
+ *
+ * HTTP 409 Conflict is the standard status code for this scenario
+ *
+ * @example
+ * // In a service using optimistic locking
+ * if (request.version !== expectedVersion) {
+ *   throw new ConcurrentModificationError(request.version);
+ * }
+ */
+export class ConcurrentModificationError extends AppError {
+  constructor(
+    public readonly currentVersion?: number,
+    message = 'Resource was modified by another user. Please refresh and try again.'
+  ) {
+    super(message, 'CONCURRENT_MODIFICATION', 409, true);
+    this.name = 'ConcurrentModificationError';
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      currentVersion: this.currentVersion,
+    };
+  }
+}

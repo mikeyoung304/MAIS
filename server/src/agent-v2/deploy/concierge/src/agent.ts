@@ -72,6 +72,7 @@ const SPECIALIST_URLS = {
   marketing: requireEnv('MARKETING_AGENT_URL'),
   storefront: requireEnv('STOREFRONT_AGENT_URL'),
   research: requireEnv('RESEARCH_AGENT_URL'),
+  projectHub: process.env.PROJECT_HUB_AGENT_URL || '', // Optional until deployed
 };
 
 // =============================================================================
@@ -149,6 +150,11 @@ User Request Received
 ├─ Does this require LAYOUT/STRUCTURE changes? (add section, remove, reorder)
 │  → Delegate to STOREFRONT_SPECIALIST
 │  → Wait for response → Show in preview
+│
+├─ Does this involve CUSTOMER PROJECTS? (requests, bookings, project status)
+│  → Delegate to PROJECT_HUB_SPECIALIST
+│  → Use for: pending requests, approving/denying, viewing project details
+│  → Wait for response → Summarize action taken
 │
 └─ UNCLEAR what they want?
    → Ask ONE clarifying question
@@ -286,6 +292,26 @@ const DelegateToResearchParams = z.object({
   location: z.string().optional().describe('Geographic area for local research'),
   industry: z.string().optional().describe('Industry/niche to focus on'),
   competitorUrl: z.string().optional().describe('Specific competitor URL to analyze'),
+});
+
+const DelegateToProjectHubParams = z.object({
+  task: z
+    .string()
+    .describe(
+      'What action to take: "list_pending_requests", "approve_request", "deny_request", "view_project", "list_projects"'
+    ),
+  projectId: z.string().optional().describe('Project ID for project-specific actions'),
+  requestId: z.string().optional().describe('Request ID for approve/deny actions'),
+  reason: z.string().optional().describe('Reason for denial (required for deny_request)'),
+  customerId: z.string().optional().describe('Customer name or email to filter by'),
+  expectedVersion: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      'Expected version for optimistic locking on approve/deny (REQUIRED for those actions)'
+    ),
 });
 
 // =============================================================================
@@ -1069,6 +1095,156 @@ const delegateToResearchTool = new FunctionTool({
   },
 });
 
+// Delegate to Project Hub for customer project management
+const delegateToProjectHubTool = new FunctionTool({
+  name: 'delegate_to_project_hub',
+  description: `Delegate project management actions to the Project Hub Specialist.
+
+Use for:
+- list_pending_requests: View customer requests waiting for approval
+- approve_request: Approve a customer request (reschedule, add-on, etc.)
+- deny_request: Deny a request with a reason
+- view_project: Get details about a specific project
+- list_projects: View all customer projects
+
+Note: This requires the Project Hub agent to be deployed. If unavailable, use the direct API endpoints.`,
+  parameters: DelegateToProjectHubParams,
+  execute: async (params, context) => {
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return { error: 'No tenant context available' };
+    }
+
+    const taskKey = `project_hub:${tenantId}:${params.task}`;
+
+    // Check if Project Hub agent is available
+    if (!SPECIALIST_URLS.projectHub) {
+      logger.info({}, `[Concierge] Project Hub agent not configured, using direct API`);
+      // Fall back to direct API calls
+      return handleProjectHubDirect(tenantId, params);
+    }
+
+    const sessionId = context?.invocationId || `session-${Date.now()}`;
+    logger.info({}, `[Concierge] Delegating to Project Hub: ${params.task}`);
+
+    // Construct message for Project Hub agent
+    let message = `Task: ${params.task}`;
+    if (params.projectId) message += `\nProject ID: ${params.projectId}`;
+    if (params.requestId) message += `\nRequest ID: ${params.requestId}`;
+    if (params.reason) message += `\nReason: ${params.reason}`;
+    if (params.customerId) message += `\nCustomer: ${params.customerId}`;
+
+    const result = await callSpecialistAgent(
+      SPECIALIST_URLS.projectHub,
+      'agent',
+      message,
+      tenantId,
+      sessionId
+    );
+
+    if (!result.ok) {
+      // Fallback to direct API if agent fails
+      logger.warn({}, `[Concierge] Project Hub agent failed, falling back to direct API`);
+      return handleProjectHubDirect(tenantId, params);
+    }
+
+    clearRetry(taskKey);
+    return {
+      success: true,
+      specialist: 'project-hub',
+      task: params.task,
+      result: result.response,
+    };
+  },
+});
+
+/**
+ * Handle Project Hub requests directly via MAIS API when agent is unavailable
+ */
+async function handleProjectHubDirect(
+  tenantId: string,
+  params: z.infer<typeof DelegateToProjectHubParams>
+): Promise<Record<string, unknown>> {
+  switch (params.task) {
+    case 'list_pending_requests': {
+      const result = await callMaisApi('/project-hub/pending-requests', tenantId);
+      if (!result.ok) return { success: false, error: result.error };
+      return { success: true, task: params.task, ...(result.data as Record<string, unknown>) };
+    }
+
+    case 'approve_request': {
+      if (!params.requestId) {
+        return { success: false, error: 'Request ID is required for approval' };
+      }
+      if (!params.expectedVersion) {
+        return {
+          success: false,
+          error:
+            'Expected version is required for approval. Please get the request details first to obtain the current version.',
+        };
+      }
+      const result = await callMaisApi('/project-hub/approve-request', tenantId, {
+        requestId: params.requestId,
+        expectedVersion: params.expectedVersion,
+      });
+      if (!result.ok) return { success: false, error: result.error };
+      return {
+        success: true,
+        task: params.task,
+        message: 'Request approved',
+        requestStatus: 'APPROVED',
+        ...(result.data as Record<string, unknown>),
+      };
+    }
+
+    case 'deny_request': {
+      if (!params.requestId || !params.reason) {
+        return { success: false, error: 'Request ID and reason are required for denial' };
+      }
+      if (!params.expectedVersion) {
+        return {
+          success: false,
+          error:
+            'Expected version is required for denial. Please get the request details first to obtain the current version.',
+        };
+      }
+      const result = await callMaisApi('/project-hub/deny-request', tenantId, {
+        requestId: params.requestId,
+        expectedVersion: params.expectedVersion,
+        reason: params.reason,
+      });
+      if (!result.ok) return { success: false, error: result.error };
+      return {
+        success: true,
+        task: params.task,
+        message: 'Request denied',
+        requestStatus: 'DENIED',
+        ...(result.data as Record<string, unknown>),
+      };
+    }
+
+    case 'view_project': {
+      if (!params.projectId) {
+        return { success: false, error: 'Project ID is required' };
+      }
+      const result = await callMaisApi('/project-hub/project-details', tenantId, {
+        projectId: params.projectId,
+      });
+      if (!result.ok) return { success: false, error: result.error };
+      return { success: true, task: params.task, ...(result.data as Record<string, unknown>) };
+    }
+
+    case 'list_projects': {
+      const result = await callMaisApi('/project-hub/list-projects', tenantId);
+      if (!result.ok) return { success: false, error: result.error };
+      return { success: true, task: params.task, ...(result.data as Record<string, unknown>) };
+    }
+
+    default:
+      return { success: false, error: `Unknown task: ${params.task}` };
+  }
+}
+
 // Valid page names for storefront
 const PAGE_NAMES = [
   'home',
@@ -1507,6 +1683,7 @@ export const conciergeAgent = new LlmAgent({
     delegateToMarketingTool,
     delegateToStorefrontTool,
     delegateToResearchTool,
+    delegateToProjectHubTool,
 
     // Publishing tools (T2/T3)
     publishChangesTool,
