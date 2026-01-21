@@ -15,11 +15,30 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
 import type { PrismaClient, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { CustomerChatOrchestrator } from '../agent/orchestrator';
 import { getCustomerProposalExecutor } from '../agent/customer/executor-registry';
 import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
+
+// ============================================================================
+// Request Body Schemas (TS-4: Typed request validation)
+// ============================================================================
+
+/** Message endpoint request body schema */
+const MessageRequestSchema = z.object({
+  message: z
+    .string()
+    .min(1, 'Message is required')
+    .max(2000, 'Message too long (max 2000 characters)'),
+  sessionId: z.string().optional(),
+});
+
+/** Confirm endpoint request body schema */
+const ConfirmRequestSchema = z.object({
+  sessionId: z.string().min(1, 'Session ID is required to confirm booking'),
+});
 
 /**
  * IP-based rate limiter for public chat endpoints
@@ -230,17 +249,15 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         // tenantId guaranteed by requireChatEnabled middleware
         const tenantId = req.tenantId!;
 
-        const { message, sessionId } = req.body;
-
-        if (!message || typeof message !== 'string') {
-          res.status(400).json({ error: 'Message is required' });
+        // Validate request body with Zod
+        const parseResult = MessageRequestSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          const firstError = parseResult.error.errors[0];
+          res.status(400).json({ error: firstError?.message || 'Invalid request' });
           return;
         }
 
-        if (message.length > 2000) {
-          res.status(400).json({ error: 'Message too long (max 2000 characters)' });
-          return;
-        }
+        const { message, sessionId } = parseResult.data;
 
         // Get or create session, validating ownership if sessionId provided
         let actualSessionId = sessionId;
@@ -304,12 +321,14 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
 
       // SECURITY: sessionId is REQUIRED for ownership verification
       // Prevents proposal enumeration attacks (P1 fix from code review)
-      const { sessionId } = req.body as { sessionId?: string };
-
-      if (!sessionId) {
-        res.status(400).json({ error: 'Session ID is required to confirm booking' });
+      const parseResult = ConfirmRequestSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const firstError = parseResult.error.errors[0];
+        res.status(400).json({ error: firstError?.message || 'Session ID is required' });
         return;
       }
+
+      const { sessionId } = parseResult.data;
 
       // Build where clause with tenant isolation AND session ownership
       const whereClause: { id: string; tenantId: string; sessionId: string } = {

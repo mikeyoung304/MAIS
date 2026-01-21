@@ -2,8 +2,70 @@
 
 import * as React from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+// ============================================================================
+// API Response Schemas (TS-3: Type JSON responses with Zod validation)
+// ============================================================================
+
+/** Health check response schema */
+const HealthResponseSchema = z.object({
+  available: z.boolean(),
+  reason: z.string().optional(),
+  message: z.string().optional(),
+  businessName: z.string().optional(),
+});
+
+/** Chat session response schema */
+const SessionResponseSchema = z.object({
+  sessionId: z.string(),
+  greeting: z.string(),
+  businessName: z.string().nullable().optional(),
+  messageCount: z.number().optional(),
+});
+
+/** Booking proposal preview schema */
+const ProposalPreviewSchema = z.object({
+  service: z.string().optional(),
+  date: z.string().optional(),
+  price: z.string().optional(),
+  customerName: z.string().optional(),
+  customerEmail: z.string().optional(),
+});
+
+/** Booking proposal schema */
+const ProposalSchema = z.object({
+  proposalId: z.string(),
+  operation: z.string(),
+  preview: ProposalPreviewSchema,
+  trustTier: z.string(),
+  requiresApproval: z.boolean(),
+});
+
+/** Chat message response schema */
+const MessageResponseSchema = z.object({
+  message: z.string(),
+  sessionId: z.string(),
+  proposals: z.array(ProposalSchema).optional(),
+  toolResults: z.array(z.unknown()).optional(),
+  // Legacy single proposal support
+  proposal: ProposalSchema.optional(),
+});
+
+/** Booking confirmation response schema */
+const ConfirmResponseSchema = z.object({
+  id: z.string().optional(),
+  status: z.string().optional(),
+  result: z
+    .object({
+      message: z.string().optional(),
+      bookingId: z.string().optional(),
+    })
+    .optional(),
+  error: z.string().optional(),
+});
 import {
   Send,
   Loader2,
@@ -123,7 +185,8 @@ export function CustomerChatWidget({
         throw new Error('Chat is temporarily unavailable');
       }
 
-      const health = await healthResponse.json();
+      const healthData = await healthResponse.json();
+      const health = HealthResponseSchema.parse(healthData);
 
       if (!health.available) {
         setError(health.message || 'Chat is not available');
@@ -140,7 +203,8 @@ export function CustomerChatWidget({
         throw new Error('Failed to start chat session');
       }
 
-      const data = await sessionResponse.json();
+      const sessionData = await sessionResponse.json();
+      const data = SessionResponseSchema.parse(sessionData);
       setSessionId(data.sessionId);
 
       // Add greeting as first message
@@ -196,7 +260,11 @@ export function CustomerChatWidget({
         throw new Error(errorData.message || 'Failed to send message');
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
+      const data = MessageResponseSchema.parse(responseData);
+
+      // Get proposal from either proposals array or legacy single proposal
+      const proposal = data.proposals?.[0] ?? data.proposal;
 
       // Add assistant response
       const assistantMessage: ChatMessage = {
@@ -204,13 +272,13 @@ export function CustomerChatWidget({
         role: 'assistant',
         content: data.message,
         timestamp: new Date(),
-        proposal: data.proposal,
+        proposal,
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
       // Track pending proposal
-      if (data.proposal?.requiresApproval) {
-        setPendingProposal(data.proposal);
+      if (proposal?.requiresApproval) {
+        setPendingProposal(proposal);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -239,7 +307,8 @@ export function CustomerChatWidget({
         throw new Error(errorData.error || 'Failed to confirm booking');
       }
 
-      const result = await response.json();
+      const responseData = await response.json();
+      const result = ConfirmResponseSchema.parse(responseData);
 
       // Add confirmation message
       setMessages((prev) => [
@@ -253,7 +322,9 @@ export function CustomerChatWidget({
       ]);
 
       setPendingProposal(null);
-      onBookingConfirmed?.(result.result?.bookingId);
+      if (result.result?.bookingId) {
+        onBookingConfirmed?.(result.result.bookingId);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to confirm booking');
     } finally {

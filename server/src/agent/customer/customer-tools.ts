@@ -10,6 +10,7 @@
  * - get_business_info: Hours, policies, FAQ
  */
 
+import { z } from 'zod';
 import type { Prisma } from '../../generated/prisma/client';
 import type { AgentTool, ToolContext, AgentToolResult, WriteToolProposal } from '../tools/types';
 import type { ProposalService } from '../proposals/proposal.service';
@@ -17,6 +18,49 @@ import { getCustomerProposalExecutor } from './executor-registry';
 import { logger } from '../../lib/core/logger';
 import { sanitizeError } from '../../lib/core/error-sanitizer';
 import { ErrorMessages } from '../errors';
+
+// ============================================================================
+// Tool Parameter Schemas (TS-5: Typed parameter validators)
+// ============================================================================
+
+/** get_services parameter schema */
+const GetServicesParamsSchema = z.object({
+  category: z.string().optional(),
+});
+
+/** check_availability parameter schema */
+const CheckAvailabilityParamsSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)')
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)')
+    .optional(),
+});
+
+/** book_service parameter schema */
+const BookServiceParamsSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)'),
+  customerName: z.string().min(1, 'Customer name is required'),
+  customerEmail: z.string().email('Please provide a valid email address'),
+  notes: z.string().optional(),
+});
+
+/** confirm_proposal parameter schema */
+const ConfirmProposalParamsSchema = z.object({
+  proposalId: z.string().min(1, 'Proposal ID is required'),
+});
+
+/** get_business_info parameter schema */
+const GetBusinessInfoParamsSchema = z.object({
+  topic: z
+    .enum(['hours', 'cancellation', 'location', 'contact', 'faq', 'payment', 'all'])
+    .optional(),
+});
 
 /**
  * Extended context for customer tools
@@ -69,7 +113,16 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
     },
     async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
       const { tenantId, prisma } = context;
-      const { category } = params as { category?: string };
+
+      // Validate parameters
+      const parseResult = GetServicesParamsSchema.safeParse(params);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          error: parseResult.error.errors[0]?.message || 'Invalid parameters',
+        };
+      }
+      const { category } = parseResult.data;
 
       try {
         // Build where clause
@@ -207,15 +260,16 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
     },
     async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
       const { tenantId, prisma } = context;
-      const {
-        packageId,
-        startDate: startDateParam,
-        endDate: endDateParam,
-      } = params as {
-        packageId: string;
-        startDate?: string;
-        endDate?: string;
-      };
+
+      // Validate parameters
+      const parseResult = CheckAvailabilityParamsSchema.safeParse(params);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          error: parseResult.error.errors[0]?.message || 'Invalid parameters',
+        };
+      }
+      const { packageId, startDate: startDateParam, endDate: endDateParam } = parseResult.data;
 
       try {
         // Verify package exists and belongs to tenant
@@ -334,21 +388,18 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
     async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
       const customerContext = context as CustomerToolContext;
       const { tenantId, prisma, sessionId } = customerContext;
-      const { packageId, date, customerName, customerEmail, notes } = params as {
-        packageId: string;
-        date: string;
-        customerName: string;
-        customerEmail: string;
-        notes?: string;
-      };
+
+      // Validate parameters (includes email format validation)
+      const parseResult = BookServiceParamsSchema.safeParse(params);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          error: parseResult.error.errors[0]?.message || 'Invalid parameters',
+        };
+      }
+      const { packageId, date, customerName, customerEmail, notes } = parseResult.data;
 
       try {
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(customerEmail)) {
-          return { success: false, error: 'Please provide a valid email address' };
-        }
-
         // Verify package exists and is active
         const pkg = await prisma.package.findFirst({
           where: { id: packageId, tenantId, active: true },
@@ -483,7 +534,16 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
     async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
       const customerContext = context as CustomerToolContext;
       const { tenantId, prisma, sessionId } = customerContext;
-      const { proposalId } = params as { proposalId: string };
+
+      // Validate parameters
+      const parseResult = ConfirmProposalParamsSchema.safeParse(params);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          error: parseResult.error.errors[0]?.message || 'Invalid parameters',
+        };
+      }
+      const { proposalId } = parseResult.data;
 
       try {
         // Atomic proposal confirmation with race condition prevention
@@ -666,7 +726,16 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
     },
     async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
       const { tenantId, prisma } = context;
-      const { topic } = params as { topic?: string };
+
+      // Validate parameters
+      const parseResult = GetBusinessInfoParamsSchema.safeParse(params);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          error: parseResult.error.errors[0]?.message || 'Invalid parameters',
+        };
+      }
+      const { topic } = parseResult.data;
 
       try {
         const tenant = await prisma.tenant.findUnique({

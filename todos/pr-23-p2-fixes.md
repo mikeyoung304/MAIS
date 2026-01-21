@@ -1,6 +1,6 @@
-# PR #23 P2 Fixes - MOSTLY RESOLVED
+# PR #23 P2 Fixes - ALL CRITICAL ITEMS RESOLVED
 
-**Status:** 12/14 items resolved as of 2026-01-21
+**Status:** 12/14 items resolved, 2 pending (low priority) as of 2026-01-21
 
 ## Performance (High Priority)
 
@@ -69,17 +69,17 @@
 
 ## Type Safety
 
-### TS-3: Type JSON Responses [PENDING]
+### TS-3: Type JSON Responses [RESOLVED]
 
 - **File:** `apps/web/src/components/chat/CustomerChatWidget.tsx`
-- **Fix:** Define response schemas with Zod
+- **Status:** Added Zod schemas for health, session, message, and confirm endpoint responses
 
-### TS-4: Validate Request Body [PENDING]
+### TS-4: Validate Request Body [RESOLVED]
 
-- **File:** `server/src/routes/public-customer-chat.routes.ts:214`
-- **Fix:** Add Zod validation for message endpoint
+- **File:** `server/src/routes/public-customer-chat.routes.ts`
+- **Status:** Added `MessageRequestSchema` and `ConfirmRequestSchema` with Zod validation
 
-### TS-5: Type Tool Parameters [PENDING]
+### TS-5: Type Tool Parameters [RESOLVED]
 
 - **File:** `server/src/agent/customer/customer-tools.ts`
-- **Fix:** Create typed parameter validators
+- **Status:** Added typed parameter validators for all customer tools (get_services, check_availability, book_service, confirm_proposal, get_business_info)
