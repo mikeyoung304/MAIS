@@ -15,6 +15,7 @@
 
 import { LlmAgent, FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
+import { getTenantId } from '../../../shared/tenant-context';
 
 // =============================================================================
 // ENVIRONMENT CONFIGURATION
@@ -222,20 +223,54 @@ async function callBackendAPI<T>(
   return response.json() as Promise<T>;
 }
 
-function getContextFromSession(ctx: ToolContext): {
+/**
+ * Session context with proper typing
+ */
+interface SessionContext {
   contextType: 'customer' | 'tenant';
   tenantId: string;
   customerId?: string;
   projectId?: string;
-} {
+}
+
+/**
+ * Extract session context using 4-tier tenant ID pattern.
+ * @throws Error if tenant ID cannot be extracted (fail-fast)
+ */
+function getContextFromSession(ctx: ToolContext): SessionContext {
+  // Use 4-tier tenant ID extraction (handles all ADK scenarios)
+  const tenantId = getTenantId(ctx, { agentName: 'ProjectHub' });
+  if (!tenantId) {
+    throw new Error('No tenant context available - check session configuration');
+  }
+
   // Cast through unknown because ADK's State type doesn't have an index signature
   const state = ctx.state as unknown as Record<string, unknown>;
+
   return {
     contextType: (state.contextType as 'customer' | 'tenant') || 'customer',
-    tenantId: (state.tenantId as string) || '',
+    tenantId,
     customerId: state.customerId as string | undefined,
     projectId: state.projectId as string | undefined,
   };
+}
+
+/**
+ * Context guard - returns error if tool called from wrong context.
+ * Used for enforcing customer/tenant tool separation.
+ */
+function requireContext(
+  ctx: ToolContext | undefined,
+  required: 'customer' | 'tenant'
+): { error: string } | null {
+  if (!ctx) {
+    return { error: 'Tool context is required' };
+  }
+  const { contextType } = getContextFromSession(ctx);
+  if (contextType !== required) {
+    return { error: `This tool is only available in ${required} context` };
+  }
+  return null;
 }
 
 function shouldAlwaysEscalate(message: string): boolean {
@@ -250,11 +285,21 @@ function shouldAlwaysEscalate(message: string): boolean {
 const getProjectStatus = new FunctionTool({
   name: 'get_project_status',
   description:
-    'Get the current status of the customer project including booking details, timeline, and next steps.',
+    'Get the current status of the customer project including booking details, timeline, and next steps. CUSTOMER CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID to check status for'),
   }),
-  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext | undefined) => {
+  execute: async ({ projectId }: { projectId: string }, ctx: ToolContext | undefined) => {
+    // P1 Security: Context guard - customer tools only
+    const contextError = requireContext(ctx, 'customer');
+    if (contextError) return contextError;
+
+    // P1 Security: Ownership verification
+    const session = getContextFromSession(ctx!);
+    if (session.projectId && projectId !== session.projectId) {
+      return { error: 'Unauthorized: Project does not match your session' };
+    }
+
     try {
       const project = await callBackendAPI<Project>(`/project-hub/projects/${projectId}`, 'GET');
 
@@ -279,11 +324,21 @@ const getProjectStatus = new FunctionTool({
 const getPrepChecklist = new FunctionTool({
   name: 'get_prep_checklist',
   description:
-    'Get the preparation checklist for the customer - what to bring, how to prepare, etc.',
+    'Get the preparation checklist for the customer - what to bring, how to prepare, etc. CUSTOMER CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext | undefined) => {
+  execute: async ({ projectId }: { projectId: string }, ctx: ToolContext | undefined) => {
+    // P1 Security: Context guard - customer tools only
+    const contextError = requireContext(ctx, 'customer');
+    if (contextError) return contextError;
+
+    // P1 Security: Ownership verification
+    const session = getContextFromSession(ctx!);
+    if (session.projectId && projectId !== session.projectId) {
+      return { error: 'Unauthorized: Project does not match your session' };
+    }
+
     try {
       const checklist = await callBackendAPI<{
         items: Array<{ text: string; completed: boolean }>;
@@ -304,15 +359,26 @@ const getPrepChecklist = new FunctionTool({
 
 const answerPrepQuestion = new FunctionTool({
   name: 'answer_prep_question',
-  description: 'Answer a preparation-related question using the service details and FAQ.',
+  description:
+    'Answer a preparation-related question using the service details and FAQ. CUSTOMER CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
     question: z.string().describe('The customer question to answer'),
   }),
   execute: async (
     { projectId, question }: { projectId: string; question: string },
-    _ctx: ToolContext | undefined
+    ctx: ToolContext | undefined
   ) => {
+    // P1 Security: Context guard - customer tools only
+    const contextError = requireContext(ctx, 'customer');
+    if (contextError) return contextError;
+
+    // P1 Security: Ownership verification
+    const session = getContextFromSession(ctx!);
+    if (session.projectId && projectId !== session.projectId) {
+      return { error: 'Unauthorized: Project does not match your session' };
+    }
+
     try {
       const answer = await callBackendAPI<{ answer: string; confidence: number; source: string }>(
         `/project-hub/projects/${projectId}/answer`,
@@ -342,10 +408,13 @@ const answerPrepQuestion = new FunctionTool({
   },
 });
 
+// T3 request types requiring explicit customer confirmation
+const T3_REQUEST_TYPES = ['CANCELLATION', 'REFUND'] as const;
+
 const submitRequest = new FunctionTool({
   name: 'submit_request',
   description:
-    'Submit a customer request that requires tenant review (rescheduling, cancellation, refund, etc.)',
+    'Submit a customer request that requires tenant review (rescheduling, cancellation, refund, etc.). CUSTOMER CONTEXT ONLY. For CANCELLATION or REFUND, requires explicit customer confirmation.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
     requestType: z
@@ -361,16 +430,44 @@ const submitRequest = new FunctionTool({
       .describe('Type of request'),
     details: z.string().describe('Details of the request'),
     urgency: z.enum(['low', 'medium', 'high']).default('medium').describe('Request urgency'),
+    confirmationReceived: z
+      .boolean()
+      .optional()
+      .describe(
+        'Required for CANCELLATION/REFUND - must be true after customer explicitly confirms they want to proceed'
+      ),
   }),
-  execute: async (
-    {
-      projectId,
-      requestType,
-      details,
-      urgency,
-    }: { projectId: string; requestType: string; details: string; urgency: string },
-    _ctx: ToolContext | undefined
-  ) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    const { projectId, requestType, details, urgency, confirmationReceived } = params as {
+      projectId: string;
+      requestType: string;
+      details: string;
+      urgency: string;
+      confirmationReceived?: boolean;
+    };
+    // P1 Security: Context guard - customer tools only
+    const contextError = requireContext(ctx, 'customer');
+    if (contextError) return contextError;
+
+    // P1 Security: Ownership verification
+    const session = getContextFromSession(ctx!);
+    if (session.projectId && projectId !== session.projectId) {
+      return { error: 'Unauthorized: Project does not match your session' };
+    }
+
+    // P1 Security: T3 confirmation for high-risk actions
+    if (
+      T3_REQUEST_TYPES.includes(requestType as (typeof T3_REQUEST_TYPES)[number]) &&
+      !confirmationReceived
+    ) {
+      return {
+        requiresConfirmation: true,
+        confirmationType: 'T3_HIGH_RISK',
+        message: `A ${requestType.toLowerCase()} request is a significant action. Please confirm with the customer: "Are you sure you want to ${requestType.toLowerCase() === 'cancellation' ? 'cancel your booking' : 'request a refund'}? This will be submitted to the service provider for review."`,
+        nextStep: `After customer confirms, call this tool again with confirmationReceived: true`,
+      };
+    }
+
     try {
       // Calculate expiry (72 hours from now)
       const expiresAt = new Date();
@@ -411,11 +508,22 @@ const submitRequest = new FunctionTool({
 
 const getTimeline = new FunctionTool({
   name: 'get_timeline',
-  description: 'Get the project timeline showing key milestones and upcoming events.',
+  description:
+    'Get the project timeline showing key milestones and upcoming events. CUSTOMER CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async ({ projectId }: { projectId: string }, _ctx: ToolContext | undefined) => {
+  execute: async ({ projectId }: { projectId: string }, ctx: ToolContext | undefined) => {
+    // P1 Security: Context guard - customer tools only
+    const contextError = requireContext(ctx, 'customer');
+    if (contextError) return contextError;
+
+    // P1 Security: Ownership verification
+    const session = getContextFromSession(ctx!);
+    if (session.projectId && projectId !== session.projectId) {
+      return { error: 'Unauthorized: Project does not match your session' };
+    }
+
     try {
       const events = await callBackendAPI<ProjectEvent[]>(
         `/project-hub/projects/${projectId}/events?visibleToCustomer=true`,
@@ -448,15 +556,19 @@ const getTimeline = new FunctionTool({
 
 const getPendingRequests = new FunctionTool({
   name: 'get_pending_requests',
-  description: 'Get all pending customer requests that need tenant attention.',
+  description: 'Get all pending customer requests that need tenant attention. TENANT CONTEXT ONLY.',
   parameters: z.object({
-    tenantId: z.string().describe('The tenant ID'),
     limit: z.number().default(10).describe('Maximum number of requests to return'),
   }),
-  execute: async (
-    { tenantId, limit }: { tenantId: string; limit: number },
-    _ctx: ToolContext | undefined
-  ) => {
+  execute: async ({ limit }: { limit: number }, ctx: ToolContext | undefined) => {
+    // P1 Security: Context guard - tenant tools only
+    const contextError = requireContext(ctx, 'tenant');
+    if (contextError) return contextError;
+
+    // P1 Security: Use tenant ID from session, not parameter (prevent IDOR)
+    const session = getContextFromSession(ctx!);
+    const tenantId = session.tenantId;
+
     try {
       const requests = await callBackendAPI<ProjectRequest[]>(
         `/project-hub/tenants/${tenantId}/pending-requests?limit=${limit}`,
@@ -485,15 +597,20 @@ const getPendingRequests = new FunctionTool({
 
 const getCustomerActivity = new FunctionTool({
   name: 'get_customer_activity',
-  description: 'Get recent customer activity across all projects for the tenant.',
+  description:
+    'Get recent customer activity across all projects for the tenant. TENANT CONTEXT ONLY.',
   parameters: z.object({
-    tenantId: z.string().describe('The tenant ID'),
     days: z.number().default(7).describe('Number of days to look back'),
   }),
-  execute: async (
-    { tenantId, days }: { tenantId: string; days: number },
-    _ctx: ToolContext | undefined
-  ) => {
+  execute: async ({ days }: { days: number }, ctx: ToolContext | undefined) => {
+    // P1 Security: Context guard - tenant tools only
+    const contextError = requireContext(ctx, 'tenant');
+    if (contextError) return contextError;
+
+    // P1 Security: Use tenant ID from session, not parameter (prevent IDOR)
+    const session = getContextFromSession(ctx!);
+    const tenantId = session.tenantId;
+
     try {
       const activity = await callBackendAPI<{
         totalProjects: number;
@@ -521,20 +638,31 @@ const getCustomerActivity = new FunctionTool({
 
 const approveRequest = new FunctionTool({
   name: 'approve_request',
-  description: 'Approve a pending customer request.',
+  description: 'Approve a pending customer request. TENANT CONTEXT ONLY.',
   parameters: z.object({
     requestId: z.string().describe('The request ID to approve'),
     response: z.string().optional().describe('Optional response message to customer'),
   }),
   execute: async (
     { requestId, response }: { requestId: string; response?: string },
-    _ctx: ToolContext | undefined
+    ctx: ToolContext | undefined
   ) => {
+    // P1 Security: Context guard - tenant tools only
+    const contextError = requireContext(ctx, 'tenant');
+    if (contextError) return contextError;
+
+    // P1 Security: Get tenant ID from session for backend verification
+    const session = getContextFromSession(ctx!);
+
     try {
+      // Backend verifies tenant owns this request via tenantId header
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/requests/${requestId}/approve`,
         'POST',
-        { responseData: { message: response, approvedAt: new Date().toISOString() } }
+        {
+          responseData: { message: response, approvedAt: new Date().toISOString() },
+          tenantId: session.tenantId, // For backend ownership verification
+        }
       );
 
       return {
@@ -553,20 +681,31 @@ const approveRequest = new FunctionTool({
 
 const denyRequest = new FunctionTool({
   name: 'deny_request',
-  description: 'Deny a pending customer request with a reason.',
+  description: 'Deny a pending customer request with a reason. TENANT CONTEXT ONLY.',
   parameters: z.object({
     requestId: z.string().describe('The request ID to deny'),
     reason: z.string().describe('Reason for denial (will be shared with customer)'),
   }),
   execute: async (
     { requestId, reason }: { requestId: string; reason: string },
-    _ctx: ToolContext | undefined
+    ctx: ToolContext | undefined
   ) => {
+    // P1 Security: Context guard - tenant tools only
+    const contextError = requireContext(ctx, 'tenant');
+    if (contextError) return contextError;
+
+    // P1 Security: Get tenant ID from session for backend verification
+    const session = getContextFromSession(ctx!);
+
     try {
+      // Backend verifies tenant owns this request via tenantId
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/requests/${requestId}/deny`,
         'POST',
-        { responseData: { reason, deniedAt: new Date().toISOString() } }
+        {
+          responseData: { reason, deniedAt: new Date().toISOString() },
+          tenantId: session.tenantId, // For backend ownership verification
+        }
       );
 
       return {
@@ -585,7 +724,7 @@ const denyRequest = new FunctionTool({
 
 const sendMessageToCustomer = new FunctionTool({
   name: 'send_message_to_customer',
-  description: 'Send a message directly to a customer about their project.',
+  description: 'Send a message directly to a customer about their project. TENANT CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
     message: z.string().describe('Message to send to the customer'),
@@ -597,20 +736,30 @@ const sendMessageToCustomer = new FunctionTool({
       message,
       notifyByEmail,
     }: { projectId: string; message: string; notifyByEmail: boolean },
-    _ctx: ToolContext | undefined
+    ctx: ToolContext | undefined
   ) => {
+    // P1 Security: Context guard - tenant tools only
+    const contextError = requireContext(ctx, 'tenant');
+    if (contextError) return contextError;
+
+    // P1 Security: Get tenant ID from session for backend verification
+    const session = getContextFromSession(ctx!);
+
     try {
+      // Backend verifies tenant owns this project via tenantId
       await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
         type: 'MESSAGE_FROM_TENANT',
         payload: { message },
         visibleToCustomer: true,
         visibleToTenant: true,
+        tenantId: session.tenantId, // For backend ownership verification
       });
 
       if (notifyByEmail) {
         await callBackendAPI(`/project-hub/projects/${projectId}/notify`, 'POST', {
           type: 'message',
           message,
+          tenantId: session.tenantId,
         });
       }
 
@@ -629,21 +778,33 @@ const sendMessageToCustomer = new FunctionTool({
 
 const updateProjectStatus = new FunctionTool({
   name: 'update_project_status',
-  description: 'Update the status of a project (e.g., mark as completed, on hold).',
+  description:
+    'Update the status of a project (e.g., mark as completed, on hold). TENANT CONTEXT ONLY.',
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
     status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'ON_HOLD']).describe('New status'),
     reason: z.string().optional().describe('Reason for status change'),
   }),
-  execute: async (
-    { projectId, status, reason }: { projectId: string; status: string; reason?: string },
-    _ctx: ToolContext | undefined
-  ) => {
+  execute: async (params, ctx: ToolContext | undefined) => {
+    const { projectId, status, reason } = params as {
+      projectId: string;
+      status: string;
+      reason?: string;
+    };
+
+    // P1 Security: Context guard - tenant tools only
+    const contextError = requireContext(ctx, 'tenant');
+    if (contextError) return contextError;
+
+    // P1 Security: Get tenant ID from session for backend verification
+    const session = getContextFromSession(ctx!);
+
     try {
+      // Backend verifies tenant owns this project via tenantId
       const result = await callBackendAPI<{ success: boolean; project: Project }>(
         `/project-hub/projects/${projectId}/status`,
         'PUT',
-        { status, reason }
+        { status, reason, tenantId: session.tenantId }
       );
 
       // Log the status change
@@ -652,6 +813,7 @@ const updateProjectStatus = new FunctionTool({
         payload: { oldStatus: 'ACTIVE', newStatus: status, reason },
         visibleToCustomer: status === 'COMPLETED',
         visibleToTenant: true,
+        tenantId: session.tenantId,
       });
 
       return {
