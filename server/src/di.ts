@@ -164,6 +164,7 @@ export interface Container {
   eventEmitter?: InProcessEventEmitter; // Export event emitter for cleanup
   webhookQueue?: WebhookQueue; // Export webhook queue for shutdown
   stripeAdapter?: StripePaymentAdapter; // Export Stripe adapter for billing routes
+  tenantRepo?: PrismaTenantRepository; // Export tenant repo for routes that need it
   /**
    * Cleanup method to properly dispose of services and close connections
    * Call this during application shutdown to prevent memory leaks
@@ -418,6 +419,9 @@ export function buildContainer(config: Config): Container {
       eventEmitter,
       webhookQueue: undefined, // No queue in mock mode
       stripeAdapter: undefined, // No Stripe in mock mode
+      // Use in-memory mock tenant repo for HTTP tests (Phase 4.5 remediation)
+      // Cast to PrismaTenantRepository since it implements compatible methods
+      tenantRepo: adapters.tenantRepo as unknown as PrismaTenantRepository,
       cleanup,
     };
   }
@@ -858,6 +862,7 @@ export function buildContainer(config: Config): Container {
     eventEmitter,
     webhookQueue,
     stripeAdapter: paymentProvider, // For billing routes
+    tenantRepo, // For internal agent routes
     cleanup,
   };
 }

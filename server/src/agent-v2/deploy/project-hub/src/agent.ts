@@ -21,7 +21,10 @@ import { z } from 'zod';
 // =============================================================================
 
 const MAIS_API_URL = process.env.MAIS_API_URL || 'https://api.gethandled.ai';
-const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || '';
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
+if (!INTERNAL_API_SECRET) {
+  throw new Error('INTERNAL_API_SECRET environment variable is required');
+}
 const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 
 // Mediation thresholds

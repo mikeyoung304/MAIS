@@ -275,7 +275,8 @@ export function createApp(
     container.prisma,
     container.repositories,
     container.cacheAdapter, // TODO-329: Pass cache adapter for date booking idempotency
-    container.stripeAdapter // For tenant billing routes
+    container.stripeAdapter, // For tenant billing routes
+    container.tenantRepo // For internal agent routes (mock mode uses MockTenantRepository)
   );
 
   // Register Stripe Connect webhook route (only in real mode with secrets configured)

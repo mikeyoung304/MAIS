@@ -359,36 +359,20 @@ const generateHeadlineTool = new FunctionTool({
 
     logger.info({}, `[MarketingAgent] generate_headline called with context: ${params.context}`);
 
-    // Get business context for personalization
-    const bizResult = await callMaisApi('/business-info', tenantId);
-    const businessContext = bizResult.ok ? bizResult.data : {};
+    // Call backend endpoint to generate actual content
+    const result = await callMaisApi('/marketing/generate-headline', tenantId, {
+      context: params.context,
+      currentHeadline: params.currentHeadline,
+      tone: params.tone,
+      keywords: params.keywords,
+    });
 
-    // TODO(ARCHITECTURE): This tool should call a backend LLM endpoint to generate content
-    // For now, it returns structured context for the agent LLM to generate content directly
-    return {
-      action: 'generate_content',
-      type: 'headline',
-      context: {
-        businessName: (businessContext as any)?.name || 'the business',
-        industry: (businessContext as any)?.industry || 'service',
-        targetSection: params.context,
-        tone: params.tone,
-        currentHeadline: params.currentHeadline,
-        keywords: params.keywords,
-      },
-      // Explicit instruction for the agent LLM
-      generateInstructions: `Based on the context above, generate 3 headline options for ${params.context}.
-Tone: ${params.tone}
-${params.currentHeadline ? `Improve upon: "${params.currentHeadline}"` : ''}
-${params.keywords?.length ? `Incorporate keywords: ${params.keywords.join(', ')}` : ''}
+    if (!result.ok) {
+      return { error: result.error || 'Failed to generate headline' };
+    }
 
-Format your response as:
-**Primary:** [main headline]
-**Variants:**
-1. [variant 1]
-2. [variant 2]
-**Rationale:** [brief explanation]`,
-    };
+    // Return actual generated content
+    return result.data;
   },
 });
 
@@ -409,45 +393,22 @@ const generateServiceDescriptionTool = new FunctionTool({
       `[MarketingAgent] generate_service_description called for: ${params.serviceName}`
     );
 
-    // Get business context
-    const bizResult = await callMaisApi('/business-info', tenantId);
-    const businessContext = bizResult.ok ? bizResult.data : {};
+    // Call backend endpoint to generate actual content
+    const result = await callMaisApi('/marketing/generate-service-description', tenantId, {
+      serviceName: params.serviceName,
+      serviceType: params.serviceType,
+      priceRange: params.priceRange,
+      keyFeatures: params.keyFeatures,
+      targetAudience: params.targetAudience,
+      tone: params.tone,
+    });
 
-    // Get existing services for context
-    const servicesResult = await callMaisApi('/services', tenantId, { activeOnly: true });
-    const existingServices = servicesResult.ok ? servicesResult.data : { services: [] };
+    if (!result.ok) {
+      return { error: result.error || 'Failed to generate service description' };
+    }
 
-    // TODO(ARCHITECTURE): This tool should call a backend LLM endpoint to generate content
-    // For now, it returns structured context for the agent LLM to generate content directly
-    return {
-      action: 'generate_content',
-      type: 'service_description',
-      context: {
-        businessName: (businessContext as any)?.name || 'the business',
-        industry: (businessContext as any)?.industry || 'service',
-        serviceName: params.serviceName,
-        serviceType: params.serviceType,
-        priceRange: params.priceRange,
-        keyFeatures: params.keyFeatures,
-        targetAudience: params.targetAudience,
-        tone: params.tone,
-        existingServices: (existingServices as any)?.services || [],
-      },
-      // Explicit instruction for the agent LLM
-      generateInstructions: `Based on the context above, generate a service description for "${params.serviceName}" (${params.serviceType}).
-Tone: ${params.tone}
-${params.priceRange ? `Price positioning: ${params.priceRange}` : ''}
-${params.keyFeatures?.length ? `Key features to highlight: ${params.keyFeatures.join(', ')}` : ''}
-${params.targetAudience ? `Target audience: ${params.targetAudience}` : ''}
-Length: 50-150 words
-
-Format your response as:
-**Primary:** [main description 50-150 words]
-**Variants:**
-1. [shorter variant]
-2. [alternative angle]
-**Rationale:** [brief explanation]`,
-    };
+    // Return actual generated content
+    return result.data;
   },
 });
 
@@ -465,36 +426,19 @@ const generateTaglineTool = new FunctionTool({
 
     logger.info({}, '[MarketingAgent] generate_tagline called');
 
-    // Get business context
-    const bizResult = await callMaisApi('/business-info', tenantId);
-    const businessContext = bizResult.ok ? bizResult.data : {};
+    // Call backend endpoint to generate actual content
+    const result = await callMaisApi('/marketing/generate-tagline', tenantId, {
+      businessContext: params.businessContext,
+      existingTagline: params.existingTagline,
+      tone: params.tone,
+    });
 
-    // TODO(ARCHITECTURE): This tool should call a backend LLM endpoint to generate content
-    // For now, it returns structured context for the agent LLM to generate content directly
-    return {
-      action: 'generate_content',
-      type: 'tagline',
-      context: {
-        businessName: (businessContext as any)?.name || 'the business',
-        industry: (businessContext as any)?.industry || 'service',
-        businessContext: params.businessContext,
-        tone: params.tone,
-        existingTagline: params.existingTagline,
-      },
-      // Explicit instruction for the agent LLM
-      generateInstructions: `Based on the context above, generate a tagline for the business.
-Context: ${params.businessContext}
-Tone: ${params.tone}
-${params.existingTagline ? `Improve upon: "${params.existingTagline}"` : ''}
-MUST be under 7 words.
+    if (!result.ok) {
+      return { error: result.error || 'Failed to generate tagline' };
+    }
 
-Format your response as:
-**Primary:** [main tagline under 7 words]
-**Variants:**
-1. [variant 1]
-2. [variant 2]
-**Rationale:** [brief explanation]`,
-    };
+    // Return actual generated content
+    return result.data;
   },
 });
 
@@ -511,34 +455,19 @@ const refineCopyTool = new FunctionTool({
 
     logger.info({}, `[MarketingAgent] refine_copy called for ${params.copyType}`);
 
-    // Get business context
-    const bizResult = await callMaisApi('/business-info', tenantId);
-    const businessContext = bizResult.ok ? bizResult.data : {};
+    // Call backend endpoint to generate actual content
+    const result = await callMaisApi('/marketing/refine-copy', tenantId, {
+      originalCopy: params.originalCopy,
+      feedback: params.feedback,
+      copyType: params.copyType,
+    });
 
-    // TODO(ARCHITECTURE): This tool should call a backend LLM endpoint to generate content
-    // For now, it returns structured context for the agent LLM to generate content directly
-    return {
-      action: 'refine_content',
-      type: params.copyType,
-      context: {
-        businessName: (businessContext as any)?.name || 'the business',
-        industry: (businessContext as any)?.industry || 'service',
-        originalCopy: params.originalCopy,
-        feedback: params.feedback,
-        copyType: params.copyType,
-      },
-      // Explicit instruction for the agent LLM
-      generateInstructions: `Based on the context above, refine this ${params.copyType}:
-Original: "${params.originalCopy}"
-Feedback: ${params.feedback}
+    if (!result.ok) {
+      return { error: result.error || 'Failed to refine copy' };
+    }
 
-Format your response as:
-**Primary:** [refined copy]
-**Variants:**
-1. [variant 1]
-2. [variant 2]
-**Rationale:** [brief explanation of changes]`,
-    };
+    // Return actual generated content
+    return result.data;
   },
 });
 
