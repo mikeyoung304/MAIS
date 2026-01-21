@@ -1,10 +1,12 @@
 ---
-status: ready
+status: resolved
 priority: p2
 triage_date: '2026-01-12'
 triage_by: master-architect-triage
 verified: true
 effort: 10min
+resolved_date: '2026-01-20'
+resolved_commit: 886de0c7
 ---
 
 # P2: Session-Based Rate Limiter Key Spoofing
