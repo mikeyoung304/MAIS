@@ -150,7 +150,8 @@ export function createV1Router(
   prisma?: PrismaClient,
   repositories?: Repositories,
   cacheAdapter?: CacheServicePort,
-  stripeAdapter?: StripePaymentAdapter
+  stripeAdapter?: StripePaymentAdapter,
+  tenantRepo?: PrismaTenantRepository // For internal agent routes (mock mode uses MockTenantRepository)
 ): void {
   // Require PrismaClient from DI - fail fast if misconfigured
   if (!prisma) {
@@ -760,7 +761,8 @@ export function createV1Router(
   // Secured with X-Internal-Secret header - agents call these to fetch tenant data
   // Required services: catalog, booking, tenant repository, advisor memory
   if (services) {
-    const tenantRepo = new PrismaTenantRepository(prismaClient);
+    // Use tenantRepo from parameter if available (mock mode), otherwise create new (real mode fallback)
+    const internalTenantRepo = tenantRepo ?? new PrismaTenantRepository(prismaClient);
     // Create advisor memory service for bootstrap endpoint
     const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prismaClient);
     const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
@@ -770,7 +772,7 @@ export function createV1Router(
       catalogService: services.catalog,
       schedulingAvailabilityService: services.schedulingAvailability,
       bookingService: services.booking,
-      tenantRepo,
+      tenantRepo: internalTenantRepo,
       serviceRepo: repositories?.service,
       advisorMemoryService,
     });

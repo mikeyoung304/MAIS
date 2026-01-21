@@ -1570,6 +1570,321 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     }
   });
 
+  // ===========================================================================
+  // MARKETING CONTENT GENERATION ENDPOINTS
+  // These endpoints use Gemini to generate actual marketing content.
+  // Added as part of Phase 4.5 remediation (issue 5188)
+  // ===========================================================================
+
+  // Lazy import Vertex client to avoid startup issues if not configured
+  let vertexClientPromise: Promise<typeof import('../llm/vertex-client')> | null = null;
+  async function getVertexModule() {
+    if (!vertexClientPromise) {
+      vertexClientPromise = import('../llm/vertex-client');
+    }
+    return vertexClientPromise;
+  }
+
+  // Marketing generation schemas
+  const GenerateHeadlineSchema = TenantIdSchema.extend({
+    context: z.string().describe('What the headline is for (e.g., "homepage hero section")'),
+    currentHeadline: z.string().optional(),
+    tone: z.enum(['professional', 'warm', 'creative', 'luxury']).default('warm'),
+    keywords: z.array(z.string()).optional(),
+  });
+
+  const GenerateTaglineSchema = TenantIdSchema.extend({
+    businessContext: z.string().describe('Brief description of the business'),
+    existingTagline: z.string().optional(),
+    tone: z.enum(['professional', 'warm', 'creative', 'luxury']).default('warm'),
+  });
+
+  const GenerateServiceDescriptionSchema = TenantIdSchema.extend({
+    serviceName: z.string(),
+    serviceType: z.string(),
+    priceRange: z.string().optional(),
+    keyFeatures: z.array(z.string()).optional(),
+    targetAudience: z.string().optional(),
+    tone: z.enum(['professional', 'warm', 'creative', 'luxury']).default('warm'),
+  });
+
+  const RefineCopySchema = TenantIdSchema.extend({
+    originalCopy: z.string(),
+    feedback: z.string(),
+    copyType: z.enum(['headline', 'tagline', 'description', 'about']),
+  });
+
+  /**
+   * Build the marketing generation prompt with business context
+   */
+  function buildMarketingPrompt(
+    type: 'headline' | 'tagline' | 'service_description' | 'refine',
+    params: Record<string, unknown>,
+    businessContext: Record<string, unknown>
+  ): string {
+    const businessName = (businessContext.name as string) || 'the business';
+    const industry = (businessContext.industry as string) || 'service';
+    const tone = (params.tone as string) || 'warm';
+
+    const toneGuidelines: Record<string, string> = {
+      professional: 'Clean, authoritative, confident. Good for consultants, coaches, B2B services.',
+      warm: 'Friendly, approachable, personable. Good for family photographers, therapists, wellness.',
+      creative: 'Bold, distinctive, memorable. Good for artists, designers, unique brands.',
+      luxury: 'Elegant, exclusive, refined. Good for high-end weddings, premium services.',
+    };
+
+    const baseInstructions = `You are a marketing copywriter for ${businessName}, a ${industry} business.
+Tone: ${tone} - ${toneGuidelines[tone] || toneGuidelines.warm}
+
+IMPORTANT: Return ONLY valid JSON with this exact structure:
+{
+  "primary": "your main recommendation",
+  "variants": ["variant 1", "variant 2"],
+  "rationale": "brief explanation (1-2 sentences)"
+}
+
+Rules:
+- Never use clichés like "passion for excellence"
+- Avoid unsubstantiated superlatives ("best", "leading", "top")
+- Focus on benefits over features
+- Be specific to ${businessName}'s industry (${industry})`;
+
+    switch (type) {
+      case 'headline':
+        return `${baseInstructions}
+
+Generate 3 headline options for ${params.context}.
+${params.currentHeadline ? `Improve upon: "${params.currentHeadline}"` : ''}
+${(params.keywords as string[])?.length ? `Incorporate keywords: ${(params.keywords as string[]).join(', ')}` : ''}
+Headlines must be under 10 words.`;
+
+      case 'tagline':
+        return `${baseInstructions}
+
+Generate a tagline for the business.
+Context: ${params.businessContext}
+${params.existingTagline ? `Improve upon: "${params.existingTagline}"` : ''}
+Taglines MUST be under 7 words.`;
+
+      case 'service_description':
+        return `${baseInstructions}
+
+Generate a service description for "${params.serviceName}" (${params.serviceType}).
+${params.priceRange ? `Price positioning: ${params.priceRange}` : ''}
+${(params.keyFeatures as string[])?.length ? `Key features: ${(params.keyFeatures as string[]).join(', ')}` : ''}
+${params.targetAudience ? `Target audience: ${params.targetAudience}` : ''}
+Description should be 50-150 words.`;
+
+      case 'refine':
+        return `${baseInstructions}
+
+Refine this ${params.copyType}:
+Original: "${params.originalCopy}"
+User feedback: ${params.feedback}
+
+Apply the feedback while maintaining the ${tone} tone.`;
+
+      default:
+        return baseInstructions;
+    }
+  }
+
+  /**
+   * Generate marketing content using Gemini
+   */
+  async function generateMarketingContent(
+    type: 'headline' | 'tagline' | 'service_description' | 'refine',
+    params: Record<string, unknown>,
+    businessContext: Record<string, unknown>
+  ): Promise<{ primary: string; variants: string[]; rationale: string }> {
+    const vertexModule = await getVertexModule();
+    const client = vertexModule.getVertexClient();
+    const model = client.models.generateContent;
+
+    const prompt = buildMarketingPrompt(type, params, businessContext);
+
+    const response = await client.models.generateContent({
+      model: vertexModule.DEFAULT_MODEL,
+      contents: prompt,
+      config: {
+        temperature: 0.7, // Higher for creative content
+        maxOutputTokens: 1024,
+      },
+    });
+
+    // Extract text from response
+    const text = response.text || '';
+
+    // Parse JSON from response
+    try {
+      // Try to extract JSON from the response (may be wrapped in markdown code blocks)
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          primary: parsed.primary || '',
+          variants: Array.isArray(parsed.variants) ? parsed.variants : [],
+          rationale: parsed.rationale || '',
+        };
+      }
+    } catch (parseError) {
+      logger.warn({ parseError, text: text.substring(0, 200) }, '[Marketing] Failed to parse JSON');
+    }
+
+    // Fallback: return the raw text as primary
+    return {
+      primary: text.trim(),
+      variants: [],
+      rationale: 'Generated content (non-JSON format)',
+    };
+  }
+
+  // POST /marketing/generate-headline - Generate headlines
+  router.post('/marketing/generate-headline', async (req: Request, res: Response) => {
+    try {
+      const params = GenerateHeadlineSchema.parse(req.body);
+      const { tenantId } = params;
+
+      logger.info(
+        { tenantId, context: params.context, endpoint: '/marketing/generate-headline' },
+        '[Agent] Generating headline'
+      );
+
+      // Get business context
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const businessContext = {
+        name: tenant.name,
+        industry: (branding.businessType as string) || (branding.industry as string) || 'service',
+      };
+
+      const result = await generateMarketingContent('headline', params, businessContext);
+
+      res.json({
+        success: true,
+        type: 'headline',
+        ...result,
+      });
+    } catch (error) {
+      handleError(res, error, '/marketing/generate-headline');
+    }
+  });
+
+  // POST /marketing/generate-tagline - Generate taglines
+  router.post('/marketing/generate-tagline', async (req: Request, res: Response) => {
+    try {
+      const params = GenerateTaglineSchema.parse(req.body);
+      const { tenantId } = params;
+
+      logger.info(
+        { tenantId, endpoint: '/marketing/generate-tagline' },
+        '[Agent] Generating tagline'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const businessContext = {
+        name: tenant.name,
+        industry: (branding.businessType as string) || (branding.industry as string) || 'service',
+      };
+
+      const result = await generateMarketingContent('tagline', params, businessContext);
+
+      res.json({
+        success: true,
+        type: 'tagline',
+        ...result,
+      });
+    } catch (error) {
+      handleError(res, error, '/marketing/generate-tagline');
+    }
+  });
+
+  // POST /marketing/generate-service-description - Generate service descriptions
+  router.post('/marketing/generate-service-description', async (req: Request, res: Response) => {
+    try {
+      const params = GenerateServiceDescriptionSchema.parse(req.body);
+      const { tenantId } = params;
+
+      logger.info(
+        {
+          tenantId,
+          serviceName: params.serviceName,
+          endpoint: '/marketing/generate-service-description',
+        },
+        '[Agent] Generating service description'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const businessContext = {
+        name: tenant.name,
+        industry: (branding.businessType as string) || (branding.industry as string) || 'service',
+      };
+
+      const result = await generateMarketingContent('service_description', params, businessContext);
+
+      res.json({
+        success: true,
+        type: 'service_description',
+        ...result,
+      });
+    } catch (error) {
+      handleError(res, error, '/marketing/generate-service-description');
+    }
+  });
+
+  // POST /marketing/refine-copy - Refine existing copy
+  router.post('/marketing/refine-copy', async (req: Request, res: Response) => {
+    try {
+      const params = RefineCopySchema.parse(req.body);
+      const { tenantId } = params;
+
+      logger.info(
+        { tenantId, copyType: params.copyType, endpoint: '/marketing/refine-copy' },
+        '[Agent] Refining copy'
+      );
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const businessContext = {
+        name: tenant.name,
+        industry: (branding.businessType as string) || (branding.industry as string) || 'service',
+      };
+
+      const result = await generateMarketingContent('refine', params, businessContext);
+
+      res.json({
+        success: true,
+        type: 'refined',
+        originalCopyType: params.copyType,
+        ...result,
+      });
+    } catch (error) {
+      handleError(res, error, '/marketing/refine-copy');
+    }
+  });
+
   return router;
 }
 

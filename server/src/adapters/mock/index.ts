@@ -38,12 +38,76 @@ const webhookEvents = new Map<
 >();
 const earlyAccessRequests = new Map<string, EarlyAccessRequest>();
 
+// In-memory tenant storage for mock mode
+interface MockTenant {
+  id: string;
+  slug: string;
+  name: string;
+  email: string | null;
+  apiKeyPublic: string;
+  apiKeySecret: string;
+  commissionPercent: number;
+  branding: Record<string, unknown>;
+  stripeAccountId: string | null;
+  stripeOnboarded: boolean;
+  isActive: boolean;
+  isTestTenant: boolean;
+  tier: 'FREE' | 'STARTER' | 'PRO';
+  onboardingPhase: string;
+  landingPageConfig: unknown;
+  landingPageConfigDraft: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+const tenants = new Map<string, MockTenant>();
+
+// Seed default tenant for mock mode
+function seedTenants(): void {
+  if (tenants.size > 0) return; // Already seeded
+
+  // Default test tenant for mock mode
+  tenants.set(DEFAULT_TENANT, {
+    id: DEFAULT_TENANT,
+    slug: 'test-studio',
+    name: 'Test Photography Studio',
+    email: 'test@example.com',
+    apiKeyPublic: `pk_live_test-studio_mock123`,
+    apiKeySecret: `sk_live_test-studio_mock456`,
+    commissionPercent: 10,
+    branding: {
+      businessType: 'photography',
+      industry: 'creative services',
+      tagline: 'Capturing moments that last forever',
+      discoveryFacts: {
+        businessName: 'Test Photography Studio',
+        targetAudience: 'couples and families',
+        uniqueSellingPoint: 'personalized service',
+      },
+    },
+    stripeAccountId: null,
+    stripeOnboarded: false,
+    isActive: true,
+    isTestTenant: false,
+    tier: 'PRO',
+    onboardingPhase: 'COMPLETED',
+    landingPageConfig: null,
+    landingPageConfigDraft: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  logger.debug('Mock tenant seeded: test-studio');
+}
+
 // Seed data on module load
 // NOTE: Package slugs MUST match demo.ts seed slugs (starter, growth, enterprise)
 // to ensure booking links work correctly across mock and real modes.
 // See TODO #396 for context on this alignment requirement.
 function seedData(): void {
   if (packages.size > 0) return; // Already seeded
+
+  // Seed tenants first (for tenant isolation in mock mode)
+  seedTenants();
 
   // Packages - aligned with demo.ts seed slugs for consistency
   packages.set('pkg_starter', {
@@ -1125,6 +1189,98 @@ export class MockEarlyAccessRepository implements EarlyAccessRepository {
 // Export MockAdvisorMemoryRepository for onboarding agent testing
 export { MockAdvisorMemoryRepository } from './advisor-memory.repository';
 
+/**
+ * Mock Tenant Repository
+ *
+ * Provides in-memory tenant storage for unit tests without database access.
+ * Seeded with a default test tenant for immediate use.
+ *
+ * Note: Only implements methods needed for HTTP endpoint testing.
+ * Full PrismaTenantRepository has many more methods for landing page config, etc.
+ */
+export class MockTenantRepository {
+  async findById(id: string): Promise<MockTenant | null> {
+    return tenants.get(id) || null;
+  }
+
+  async findBySlug(slug: string): Promise<MockTenant | null> {
+    return Array.from(tenants.values()).find((t) => t.slug === slug) || null;
+  }
+
+  async findByApiKey(apiKey: string): Promise<MockTenant | null> {
+    return Array.from(tenants.values()).find((t) => t.apiKeyPublic === apiKey) || null;
+  }
+
+  async findByEmail(email: string): Promise<MockTenant | null> {
+    return (
+      Array.from(tenants.values()).find((t) => t.email?.toLowerCase() === email.toLowerCase()) ||
+      null
+    );
+  }
+
+  async create(data: {
+    id?: string;
+    slug: string;
+    name: string;
+    email?: string;
+    apiKeyPublic?: string;
+    apiKeySecret?: string;
+    commissionPercent?: number;
+    branding?: Record<string, unknown>;
+    tier?: 'FREE' | 'STARTER' | 'PRO';
+  }): Promise<MockTenant> {
+    const id = data.id || `tenant_${Date.now()}`;
+    const tenant: MockTenant = {
+      id,
+      slug: data.slug,
+      name: data.name,
+      email: data.email || null,
+      apiKeyPublic: data.apiKeyPublic || `pk_live_${data.slug}_${Date.now()}`,
+      apiKeySecret: data.apiKeySecret || `sk_live_${data.slug}_${Date.now()}`,
+      commissionPercent: data.commissionPercent ?? 10,
+      branding: data.branding || {},
+      stripeAccountId: null,
+      stripeOnboarded: false,
+      isActive: true,
+      isTestTenant: false,
+      tier: data.tier || 'FREE',
+      onboardingPhase: 'NOT_STARTED',
+      landingPageConfig: null,
+      landingPageConfigDraft: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    tenants.set(id, tenant);
+    logger.debug({ id, slug: data.slug }, 'Mock tenant created');
+    return tenant;
+  }
+
+  async update(id: string, data: Partial<MockTenant>): Promise<MockTenant> {
+    const tenant = tenants.get(id);
+    if (!tenant) {
+      throw new NotFoundError(`Tenant ${id} not found`);
+    }
+    const updated: MockTenant = {
+      ...tenant,
+      ...data,
+      updatedAt: new Date(),
+    };
+    tenants.set(id, updated);
+    return updated;
+  }
+
+  async list(): Promise<MockTenant[]> {
+    return Array.from(tenants.values());
+  }
+
+  /**
+   * Get the default mock tenant ID for testing
+   */
+  getDefaultTenantId(): string {
+    return DEFAULT_TENANT;
+  }
+}
+
 // Export builder function
 export function buildMockAdapters() {
   return {
@@ -1137,6 +1293,7 @@ export function buildMockAdapters() {
     userRepo: new MockUserRepository(),
     webhookRepo: new MockWebhookRepository(),
     earlyAccessRepo: new MockEarlyAccessRepository(),
+    tenantRepo: new MockTenantRepository(),
   };
 }
 

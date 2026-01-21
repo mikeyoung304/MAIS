@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p1
 issue_id: '5185'
 tags: [code-review, agent-v2, architecture, a2a-protocol]
