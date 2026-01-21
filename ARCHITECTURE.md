@@ -313,6 +313,90 @@ DTOs, money/date helpers, small types.
 - **Notifications** — email templates + sending (Postmark adapter in real mode).
 - **Identity** — admin login (bcrypt) + JWT.
 
+## AI Agent System
+
+MAIS uses **Google ADK (Agent Development Kit)** with a **hub-and-spoke architecture** for AI-powered features.
+
+### Architecture: Hub-and-Spoke
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                     AI AGENT ARCHITECTURE                         │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────┐                                                 │
+│  │   Tenant    │──────────────────┐                              │
+│  │  Dashboard  │                  │                              │
+│  └─────────────┘                  ▼                              │
+│                          ┌────────────────┐                      │
+│                          │   CONCIERGE    │  (Hub/Orchestrator)  │
+│                          │   Cloud Run    │                      │
+│                          └───────┬────────┘                      │
+│                                  │                               │
+│            ┌─────────────────────┼─────────────────────┐        │
+│            │           │         │         │           │        │
+│            ▼           ▼         ▼         ▼           ▼        │
+│       ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+│       │Marketing│ │Storefront│ │Research│ │Project │ │ Booking │
+│       │Specialist│ │Specialist│ │Specialist│ │Hub    │ │ Agent  │
+│       └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
+│            (via A2A)                            (direct entry)   │
+│                                                                   │
+│  ┌─────────────┐         ┌─────────────────────┐                │
+│  │  Customer   │────────►│  Project Hub Agent  │                │
+│  │   Portal    │         │  (contextType=customer)              │
+│  └─────────────┘         └─────────────────────┘                │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+### Deployed Agents
+
+| Agent           | Service Name        | Purpose                                  | Entry                                        |
+| --------------- | ------------------- | ---------------------------------------- | -------------------------------------------- |
+| **Concierge**   | `concierge-agent`   | Hub orchestrator, routes to specialists  | Tenant dashboard                             |
+| **Marketing**   | `marketing-agent`   | Brand strategy, content generation       | Via Concierge (A2A)                          |
+| **Storefront**  | `storefront-agent`  | Landing page editing, section management | Via Concierge (A2A)                          |
+| **Research**    | `research-agent`    | Industry research, best practices        | Via Concierge (A2A)                          |
+| **Project Hub** | `project-hub-agent` | Customer-tenant communication, requests  | Dual: Concierge (tenant) / Direct (customer) |
+| **Booking**     | `booking-agent`     | Booking flow conversation                | Direct entry                                 |
+
+### Key Patterns
+
+**A2A Protocol (Agent-to-Agent):**
+
+- Concierge calls specialists using standardized protocol
+- camelCase field names: `appName`, `userId`, `sessionId`, `newMessage`
+- Session caching per `{agentUrl}:{tenantId}` with 30-min TTL
+
+**Dual-Context Agents:**
+
+- Some agents serve both customers and tenants (e.g., Project Hub)
+- `contextType` parameter controls access
+- `requireContext()` guards as FIRST LINE in tool execute functions
+- Never trust user input for context determination
+
+**Trust Tiers:**
+
+- **T1 (Read-only):** View data, no confirmation needed
+- **T2 (Modify):** Create/update, preview before apply
+- **T3 (Publish/Delete):** Requires explicit confirmation parameter
+
+### Infrastructure
+
+- **Deployment:** Google Cloud Run (managed serverless)
+- **CI/CD:** GitHub Actions (`deploy-agents.yml`) auto-deploys on push to `main`
+- **Registry:** `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`
+- **Naming:** `{agent-name}-agent` (e.g., `concierge-agent`)
+
+### Key Files
+
+- Agents: `server/src/agent-v2/deploy/{agent}/src/agent.ts`
+- Patterns: `docs/solutions/patterns/ADK_*_PREVENTION_INDEX.md`
+- ADR: `docs/adrs/ADR-018-hub-and-spoke-agent-architecture.md`
+
+**See Also:** CLAUDE.md "ADK/A2A Pitfalls" section for common issues and prevention.
+
 ## Concurrency Control
 
 ### Double-Booking Prevention

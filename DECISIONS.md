@@ -39,6 +39,10 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-016: Field Naming Conventions](docs/adrs/ADR-016-field-naming-conventions.md) - Database vs API/Frontend field naming (title/name, priceCents/basePrice)
 - [ADR-017: Dark Theme Auth Pages](docs/adrs/ADR-017-dark-theme-auth-pages.md) - Dark graphite theme for signup/login vs light marketing site
 
+### AI Agent Architecture (ADR-018)
+
+- [ADR-018: Hub-and-Spoke Agent Architecture](docs/adrs/ADR-018-hub-and-spoke-agent-architecture.md) - Concierge orchestrator + specialist agents pattern for Project Hub
+
 ## Quick Reference by Category
 
 ### Architecture Patterns
@@ -49,6 +53,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - **Next.js App Router:** ADR-014
 - **API Proxy:** ADR-015
 - **Field Naming:** ADR-016
+- **Hub-and-Spoke Agents:** ADR-018
 
 ### Concurrency Control
 
@@ -86,6 +91,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 | ADR-015 | API Proxy Pattern              | Accepted   | P1       | Architecture  |
 | ADR-016 | Field Naming Conventions       | Accepted   | P2       | Architecture  |
 | ADR-017 | Dark Theme Auth Pages          | Accepted   | P2       | Frontend      |
+| ADR-018 | Hub-and-Spoke Agent Arch       | Accepted   | P1       | AI Agents     |
 
 ## Decision Process
 
