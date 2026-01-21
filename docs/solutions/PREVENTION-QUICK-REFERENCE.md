@@ -111,6 +111,38 @@ for (const pkg of packages) {
 
 ---
 
+### Zod Parameter Validation (CRITICAL for Agent Tools)
+
+```typescript
+// ✅ ALWAYS validate params with Zod safeParse FIRST
+const ParamsSchema = z.object({
+  packageId: z.string().min(1, 'Package ID required'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD'),
+});
+
+async execute(context: ToolContext, params: Record<string, unknown>) {
+  // FIRST LINE - validate before any logic
+  const result = ParamsSchema.safeParse(params);
+  if (!result.success) {
+    return { success: false, error: result.error.errors[0]?.message };
+  }
+  const { packageId, date } = result.data; // ← Now safe to use
+}
+
+// ❌ NEVER use type assertion without validation
+const { packageId } = params as { packageId: string }; // ← Runtime crash risk!
+
+// ❌ NEVER use .parse() (throws on error)
+const { packageId } = ParamsSchema.parse(params); // ← Crashes agent!
+
+// ❌ NEVER use .uuid() on CUID fields
+z.string().uuid() // ← MAIS uses CUIDs, not UUIDs
+```
+
+**Full reference:** [ZOD_PARAMETER_VALIDATION_PREVENTION.md](./patterns/ZOD_PARAMETER_VALIDATION_PREVENTION.md)
+
+---
+
 ### Logging & Debugging
 
 ```typescript

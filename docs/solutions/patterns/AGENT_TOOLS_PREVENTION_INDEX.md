@@ -443,6 +443,7 @@ Extract during implementation, not after. It's faster that way.
   - Quick reference: STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md
 - **AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md:** Tools must return updated state, not just confirmation (prevents agent amnesia)
 - **DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md:** Context guards for dual-context agents (prevents prompt injection privilege escalation)
+- **ZOD_PARAMETER_VALIDATION_PREVENTION.md:** Zod validation patterns for tool parameters (prevents type assertion crashes)
 
 ### Implementation Files
 
