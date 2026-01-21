@@ -1,6 +1,6 @@
 # PR #23 P2 Fixes - MOSTLY RESOLVED
 
-**Status:** 11/14 items resolved as of 2026-01-20
+**Status:** 12/14 items resolved as of 2026-01-21
 
 ## Performance (High Priority)
 
@@ -14,16 +14,10 @@
 - **File:** `server/src/agent/orchestrator/base-orchestrator.ts`
 - **Status:** Implemented. Added 60-second TTL cache to `loadTenantData()` with periodic cleanup.
 
-### PERF-3: Add Missing Session Lookup Index [PENDING]
+### PERF-3: Add Missing Session Lookup Index [RESOLVED]
 
-- **File:** New migration needed
-- **Issue:** Queries use `(tenantId, sessionType, updatedAt)` but index doesn't exist
-- **Fix:**
-
-```sql
-CREATE INDEX IF NOT EXISTS "AgentSession_tenantId_sessionType_updatedAt_idx"
-ON "AgentSession"("tenantId", "sessionType", "updatedAt" DESC);
-```
+- **File:** `server/prisma/schema.prisma:885`
+- **Status:** Index already exists: `@@index([tenantId, sessionType, updatedAt])` with comment `#530: getOrCreateSession queries all 3 fields`
 
 ## Data Integrity
 
