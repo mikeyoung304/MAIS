@@ -324,24 +324,63 @@ async function fetchWithTimeout(
 // HELPER FUNCTIONS
 // =============================================================================
 
+/**
+ * Extract tenant ID using 4-tier defensive pattern.
+ *
+ * This handles all ADK session state scenarios:
+ * 1. state.get<T>('key') - Map-like API (direct ADK calls)
+ * 2. state.tenantId - Plain object access (A2A protocol)
+ * 3. userId with colon - Format "tenantId:userId" (MAIS multi-tenant)
+ * 4. userId without colon - Direct tenant ID (fallback)
+ */
 function getTenantId(context: ToolContext | undefined): string | null {
   if (!context) return null;
 
-  // Try 1: Get from session state (preferred)
-  const fromState = context.state?.get<string>('tenantId');
-  if (fromState) return fromState;
+  // Tier 1: Get from session state using Map-like interface (direct ADK)
+  try {
+    const fromState = context.state?.get<string>('tenantId');
+    if (fromState) {
+      logger.info({}, `[Concierge] Got tenantId from state.get(): ${fromState}`);
+      return fromState;
+    }
+  } catch {
+    // state.get() might not be available or might throw
+    logger.info({}, `[Concierge] state.get() failed, trying alternatives`);
+  }
 
-  // Try 2: Extract from userId (format: "tenantId:userId")
-  // The backend passes userId as `${tenantId}:${userId}` for multi-tenant isolation
+  // Tier 2: Access state as plain object (A2A passes state as plain object)
+  try {
+    const stateObj = context.state as unknown as Record<string, unknown>;
+    if (stateObj && typeof stateObj === 'object' && 'tenantId' in stateObj) {
+      const tenantId = stateObj.tenantId as string;
+      if (tenantId) {
+        logger.info({}, `[Concierge] Got tenantId from state object: ${tenantId}`);
+        return tenantId;
+      }
+    }
+  } catch {
+    logger.info({}, `[Concierge] state object access failed`);
+  }
+
+  // Tier 3 & 4: Extract from userId
+  // The MAIS backend passes userId as `${tenantId}:${userId}` for multi-tenant isolation
   const userId = context.invocationContext?.session?.userId;
-  if (userId && userId.includes(':')) {
-    const [tenantId] = userId.split(':');
-    if (tenantId) {
-      logger.info({}, `[Concierge] Extracted tenantId from userId: ${tenantId}`);
-      return tenantId;
+  if (userId) {
+    if (userId.includes(':')) {
+      // Tier 3: Extract tenantId from "tenantId:userId" format
+      const [tenantId] = userId.split(':');
+      if (tenantId) {
+        logger.info({}, `[Concierge] Extracted tenantId from userId (colon format): ${tenantId}`);
+        return tenantId;
+      }
+    } else {
+      // Tier 4: userId might be the tenantId directly
+      logger.info({}, `[Concierge] Using userId as tenantId: ${userId}`);
+      return userId;
     }
   }
 
+  logger.warn({}, `[Concierge] Could not extract tenantId from context`);
   return null;
 }
 
