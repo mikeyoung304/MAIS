@@ -179,7 +179,7 @@ describe('Read Tools', () => {
 - [x] `customer-tools.test.ts` covers all 6 tools
 - [x] All tests pass
 - [x] No new lint errors
-- [ ] PR reviewed and merged
+- [x] Merged to main (322b0df1)
 
 ## What's NOT in Scope
 
