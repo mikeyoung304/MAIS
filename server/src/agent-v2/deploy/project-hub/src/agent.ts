@@ -18,6 +18,29 @@ import { z } from 'zod';
 import { getTenantId } from '../../../shared/tenant-context';
 
 // =============================================================================
+// STRUCTURED LOGGER
+// =============================================================================
+
+/**
+ * Lightweight structured logger for Cloud Run agents
+ * Outputs JSON for easy parsing in Cloud Logging
+ */
+const logger = {
+  info: (data: Record<string, unknown>, msg: string) =>
+    console.log(
+      JSON.stringify({ level: 'info', msg, ...data, timestamp: new Date().toISOString() })
+    ),
+  warn: (data: Record<string, unknown>, msg: string) =>
+    console.warn(
+      JSON.stringify({ level: 'warn', msg, ...data, timestamp: new Date().toISOString() })
+    ),
+  error: (data: Record<string, unknown>, msg: string) =>
+    console.error(
+      JSON.stringify({ level: 'error', msg, ...data, timestamp: new Date().toISOString() })
+    ),
+};
+
+// =============================================================================
 // ENVIRONMENT CONFIGURATION
 // =============================================================================
 
@@ -37,6 +60,38 @@ const ALWAYS_ESCALATE_KEYWORDS = ['refund', 'complaint', 'lawyer', 'legal', 'can
 const ESCALATION_EXPIRY_HOURS = 72;
 
 // =============================================================================
+// QUERY DEFAULTS
+// =============================================================================
+
+/**
+ * Default values for query parameters and display limits.
+ * Extracted from inline magic numbers for maintainability.
+ */
+const DEFAULTS = {
+  /** Maximum pending requests to return in a single query (reasonable page size) */
+  PENDING_REQUESTS_LIMIT: 10,
+  /** Number of days to look back for customer activity (one week window) */
+  ACTIVITY_LOOKBACK_DAYS: 7,
+  /** Maximum recent events to display in activity summary (avoids UI overwhelm) */
+  RECENT_EVENTS_DISPLAY_LIMIT: 10,
+} as const;
+
+// =============================================================================
+// LLM CONFIGURATION
+// =============================================================================
+
+/**
+ * LLM generation settings for consistent agent behavior.
+ * Temperature and token limits tuned for professional responses.
+ */
+const LLM_CONFIG = {
+  /** Lower temperature (0.4) for consistent, professional responses without being robotic */
+  TEMPERATURE: 0.4,
+  /** Sufficient tokens (2048) for detailed responses without excessive verbosity */
+  MAX_OUTPUT_TOKENS: 2048,
+} as const;
+
+// =============================================================================
 // SYSTEM PROMPT - Dual-Faced Customer-Tenant Communication
 // =============================================================================
 
@@ -45,6 +100,16 @@ const PROJECT_HUB_SYSTEM_PROMPT = `# HANDLED Project Hub - System Prompt
 ## Identity
 
 You are the HANDLED Project Hub assistant - a helpful, professional, and reassuring presence that bridges communication between customers and service providers after a booking is confirmed.
+
+## FIRST ACTION: Bootstrap Check
+
+ALWAYS call bootstrap_project_hub_session FIRST in any new conversation. This tells you:
+- Who you're talking to (customer vs tenant)
+- Current project status and context
+- Any pending requests or actions needed
+- A personalized greeting to use
+
+DO NOT skip this step. Even if the user's first message seems urgent, call bootstrap first.
 
 ## Your Role
 
@@ -56,7 +121,7 @@ You manage post-booking communication, ensuring:
 
 ## Context Detection
 
-IMPORTANT: Detect the context from the session state:
+After bootstrap, you'll know the context:
 - If 'contextType' is 'customer': You're talking to the customer who made the booking
 - If 'contextType' is 'tenant': You're talking to the service provider (business owner)
 
@@ -103,6 +168,45 @@ For customer requests, classify and act:
    - Anything involving money changes
    → Create request for tenant approval, inform customer of timeline
 
+## CRITICAL: Tool-First Protocol
+
+IMPORTANT: You MUST call the appropriate tool BEFORE responding with text.
+Never acknowledge a request without actually executing it via tool call.
+
+### For Project Status Requests
+1. IMMEDIATELY call get_project_status
+2. WAIT for tool result
+3. THEN respond with actual status
+
+### For Prep Questions
+1. IMMEDIATELY call answer_prep_question or get_prep_checklist
+2. WAIT for tool result
+3. THEN respond with actual information
+
+### For Requests/Escalations
+1. IMMEDIATELY call submit_request
+2. WAIT for tool result
+3. THEN confirm submission with details
+
+### For Tenant: Pending Requests
+1. IMMEDIATELY call get_pending_requests
+2. WAIT for tool result
+3. THEN show actual pending items
+
+### For Tenant: Request Actions
+1. IMMEDIATELY call approve_request or deny_request
+2. WAIT for tool result
+3. THEN confirm the action was taken
+
+## What You Must NEVER Do
+
+❌ Say "Let me check on that" without calling a tool
+❌ Acknowledge a request without executing the tool
+❌ Fabricate project information or status
+❌ Guess at prep instructions or booking details
+❌ Say "I'll submit that for you" without calling submit_request
+❌ Tell a tenant about requests without calling get_pending_requests
+
 ## Trust Tier Behaviors
 
 - **T1 (Auto)**: Read operations, prep info, timeline updates
@@ -120,19 +224,6 @@ For customer requests, classify and act:
 // =============================================================================
 // TYPE DEFINITIONS
 // =============================================================================
-
-interface TenantContext {
-  tenantId: string;
-  tenantSlug: string;
-  tier: string;
-}
-
-interface CustomerContext {
-  customerId: string;
-  customerName: string;
-  projectId: string;
-  bookingId: string;
-}
 
 interface Project {
   id: string;
@@ -165,9 +256,6 @@ interface ProjectRequest {
 
 const TIMEOUTS = {
   BACKEND_API: 15_000, // 15s for backend calls
-  SPECIALIST_DEFAULT: 30_000, // 30s for marketing/storefront
-  SPECIALIST_RESEARCH: 90_000, // 90s for research (web scraping)
-  METADATA_SERVICE: 5_000, // 5s for GCP metadata
 } as const;
 
 /**
@@ -202,25 +290,45 @@ async function callBackendAPI<T>(
 ): Promise<T> {
   const url = `${MAIS_API_URL}${AGENT_API_PATH}${endpoint}`;
 
-  const response = await fetchWithTimeout(
-    url,
-    {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Secret': INTERNAL_API_SECRET,
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Secret': INTERNAL_API_SECRET,
+        },
+        ...(body && { body: JSON.stringify(body) }),
       },
-      ...(body && { body: JSON.stringify(body) }),
-    },
-    TIMEOUTS.BACKEND_API
-  );
+      TIMEOUTS.BACKEND_API
+    );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Backend API error: ${response.status} - ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(
+        { endpoint, method, status: response.status, error: errorText },
+        '[ProjectHub] Backend API error'
+      );
+      throw new Error(`Backend API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.json() as Promise<T>;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logger.error({ endpoint, method, timeout: TIMEOUTS.BACKEND_API }, '[ProjectHub] API timeout');
+      throw new Error(`Backend API timeout after ${TIMEOUTS.BACKEND_API}ms`);
+    }
+    // Re-throw if already a handled error (from !response.ok block)
+    if (error instanceof Error && error.message.startsWith('Backend API error:')) {
+      throw error;
+    }
+    logger.error(
+      { endpoint, method, error: error instanceof Error ? error.message : String(error) },
+      '[ProjectHub] Network error'
+    );
+    throw error;
   }
-
-  return response.json() as Promise<T>;
 }
 
 /**
@@ -241,18 +349,26 @@ function getContextFromSession(ctx: ToolContext): SessionContext {
   // Use 4-tier tenant ID extraction (handles all ADK scenarios)
   const tenantId = getTenantId(ctx, { agentName: 'ProjectHub' });
   if (!tenantId) {
+    logger.error({}, '[ProjectHub] No tenant context available - check session configuration');
     throw new Error('No tenant context available - check session configuration');
   }
 
   // Cast through unknown because ADK's State type doesn't have an index signature
   const state = ctx.state as unknown as Record<string, unknown>;
 
-  return {
+  const sessionContext: SessionContext = {
     contextType: (state.contextType as 'customer' | 'tenant') || 'customer',
     tenantId,
     customerId: state.customerId as string | undefined,
     projectId: state.projectId as string | undefined,
   };
+
+  logger.info(
+    { tenantId, contextType: sessionContext.contextType, projectId: sessionContext.projectId },
+    '[ProjectHub] Extracted session context'
+  );
+
+  return sessionContext;
 }
 
 /**
@@ -277,6 +393,213 @@ function shouldAlwaysEscalate(message: string): boolean {
   const lowerMessage = message.toLowerCase();
   return ALWAYS_ESCALATE_KEYWORDS.some((keyword) => lowerMessage.includes(keyword));
 }
+
+// =============================================================================
+// BOOTSTRAP TYPES
+// =============================================================================
+
+/**
+ * Response type for customer bootstrap data
+ */
+interface CustomerBootstrapData {
+  project: {
+    id: string;
+    status: string;
+    bookingDate: string;
+    serviceName: string;
+  };
+  hasPendingRequests: boolean;
+  pendingRequestCount: number;
+}
+
+/**
+ * Response type for tenant bootstrap data
+ */
+interface TenantBootstrapData {
+  activeProjects: number;
+  pendingRequestCount: number;
+  recentActivityCount: number;
+}
+
+// =============================================================================
+// BOOTSTRAP TOOL (SHARED - BOTH CONTEXTS)
+// =============================================================================
+
+/**
+ * Bootstrap Project Hub Session Tool
+ *
+ * ALWAYS called FIRST in any new conversation.
+ * Returns context-appropriate data for personalized greetings and context awareness.
+ *
+ * For customers: Project status, upcoming booking, pending requests
+ * For tenants: Active projects, pending requests requiring attention
+ */
+const bootstrapProjectHubSession = new FunctionTool({
+  name: 'bootstrap_project_hub_session',
+  description: `Initialize session context. ALWAYS call this FIRST in any new conversation.
+
+Returns context about who you're talking to and their current state:
+- For customers: project status, booking date, pending requests
+- For tenants: active projects, requests needing attention
+
+Use the returned greeting to start the conversation.`,
+  parameters: z.object({}),
+  execute: async (_params, ctx: ToolContext | undefined) => {
+    // Handle missing context gracefully
+    if (!ctx) {
+      logger.warn({}, '[ProjectHub] Bootstrap called without context - returning minimal response');
+      return {
+        error: 'No session context available',
+        fallback: {
+          contextType: 'unknown' as const,
+          greeting: "Hi! I'm your Project Hub assistant. How can I help you today?",
+          isBootstrapError: true,
+        },
+        retryGuidance:
+          'Session context is missing. Ask the user to refresh or check their connection.',
+      };
+    }
+
+    // Extract session context - this may throw if tenantId is missing
+    let session: SessionContext;
+    try {
+      session = getContextFromSession(ctx);
+    } catch (error) {
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        '[ProjectHub] Failed to extract session context in bootstrap'
+      );
+      return {
+        error: 'Failed to extract session context',
+        fallback: {
+          contextType: 'unknown' as const,
+          greeting: "Hi! I'm your Project Hub assistant. How can I help you today?",
+          isBootstrapError: true,
+        },
+        retryGuidance: 'Check session configuration and tenant context.',
+      };
+    }
+
+    const { contextType, tenantId, projectId, customerId } = session;
+
+    logger.info(
+      { tenantId, contextType, projectId, customerId },
+      '[ProjectHub] Bootstrap session starting'
+    );
+
+    // Customer context: Get project-specific information
+    if (contextType === 'customer') {
+      if (!projectId) {
+        return {
+          contextType: 'customer' as const,
+          tenantId,
+          customerId,
+          hasProject: false,
+          greeting:
+            "Hi! I'm your Project Hub assistant. It looks like you don't have an active project yet. How can I help you?",
+        };
+      }
+
+      try {
+        const bootstrapData = await callBackendAPI<CustomerBootstrapData>(
+          `/project-hub/bootstrap/customer/${projectId}`,
+          'GET'
+        );
+
+        // Build personalized greeting based on project status and booking date
+        const bookingDate = new Date(bootstrapData.project.bookingDate);
+        const now = new Date();
+        const daysUntil = Math.ceil(
+          (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        let greeting: string;
+        if (daysUntil <= 0) {
+          greeting = `Welcome back! Your ${bootstrapData.project.serviceName} was scheduled for ${bookingDate.toLocaleDateString()}. How can I help you today?`;
+        } else if (daysUntil === 1) {
+          greeting = `Hi! Your ${bootstrapData.project.serviceName} is tomorrow. Exciting! Is there anything you'd like to know before the big day?`;
+        } else if (daysUntil <= 7) {
+          greeting = `Hi! Your ${bootstrapData.project.serviceName} is coming up in ${daysUntil} days. How can I help you prepare?`;
+        } else {
+          greeting = `Welcome to your Project Hub! Your ${bootstrapData.project.serviceName} is scheduled for ${bookingDate.toLocaleDateString()}. I'm here to help with any questions.`;
+        }
+
+        // Add pending request context
+        if (bootstrapData.hasPendingRequests) {
+          greeting += ` I see you have ${bootstrapData.pendingRequestCount} pending request${bootstrapData.pendingRequestCount > 1 ? 's' : ''} awaiting response.`;
+        }
+
+        return {
+          contextType: 'customer' as const,
+          tenantId,
+          customerId,
+          projectId,
+          hasProject: true,
+          project: bootstrapData.project,
+          hasPendingRequests: bootstrapData.hasPendingRequests,
+          pendingRequestCount: bootstrapData.pendingRequestCount,
+          daysUntilBooking: daysUntil,
+          greeting,
+        };
+      } catch (error) {
+        logger.error(
+          { error: error instanceof Error ? error.message : String(error), projectId },
+          '[ProjectHub] Failed to fetch customer bootstrap data'
+        );
+        return {
+          contextType: 'customer' as const,
+          tenantId,
+          customerId,
+          projectId,
+          hasProject: true,
+          isBootstrapError: true,
+          greeting: `Hi! I'm your Project Hub assistant. How can I help you with your upcoming service?`,
+          errorMessage: error instanceof Error ? error.message : 'Failed to load project details',
+        };
+      }
+    }
+
+    // Tenant context: Get business overview
+    try {
+      const bootstrapData = await callBackendAPI<TenantBootstrapData>(
+        `/project-hub/bootstrap/tenant/${tenantId}`,
+        'GET'
+      );
+
+      // Build personalized greeting based on activity
+      let greeting: string;
+      if (bootstrapData.pendingRequestCount > 0) {
+        greeting = `Welcome back! You have ${bootstrapData.pendingRequestCount} pending request${bootstrapData.pendingRequestCount > 1 ? 's' : ''} from customers that need${bootstrapData.pendingRequestCount > 1 ? '' : 's'} your attention.`;
+      } else if (bootstrapData.activeProjects > 0) {
+        greeting = `All caught up! You have ${bootstrapData.activeProjects} active project${bootstrapData.activeProjects > 1 ? 's' : ''} running smoothly.`;
+      } else {
+        greeting = `Welcome to your Project Hub! No active projects at the moment. Ready to help when your next booking comes in.`;
+      }
+
+      return {
+        contextType: 'tenant' as const,
+        tenantId,
+        activeProjects: bootstrapData.activeProjects,
+        pendingRequestCount: bootstrapData.pendingRequestCount,
+        recentActivityCount: bootstrapData.recentActivityCount,
+        hasPendingRequests: bootstrapData.pendingRequestCount > 0,
+        greeting,
+      };
+    } catch (error) {
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error), tenantId },
+        '[ProjectHub] Failed to fetch tenant bootstrap data'
+      );
+      return {
+        contextType: 'tenant' as const,
+        tenantId,
+        isBootstrapError: true,
+        greeting: `Welcome to your Project Hub! How can I help you manage your projects today?`,
+        errorMessage: error instanceof Error ? error.message : 'Failed to load dashboard data',
+      };
+    }
+  },
+});
 
 // =============================================================================
 // CUSTOMER CONTEXT TOOLS
@@ -379,6 +702,25 @@ const answerPrepQuestion = new FunctionTool({
       return { error: 'Unauthorized: Project does not match your session' };
     }
 
+    // Mediation: Check for escalation keywords BEFORE answering
+    // Keywords like 'refund', 'complaint', 'lawyer', 'legal', 'cancel', 'sue' require tenant review
+    if (shouldAlwaysEscalate(question)) {
+      const detectedKeywords = ALWAYS_ESCALATE_KEYWORDS.filter((kw) =>
+        question.toLowerCase().includes(kw)
+      );
+      logger.info(
+        { projectId, detectedKeywords },
+        '[ProjectHub] Escalation keywords detected in question'
+      );
+      return {
+        success: false,
+        requiresEscalation: true,
+        reason: 'This question contains keywords requiring tenant review',
+        suggestedAction: 'Use submit_request tool to escalate to tenant',
+        detectedKeywords,
+      };
+    }
+
     try {
       const answer = await callBackendAPI<{ answer: string; confidence: number; source: string }>(
         `/project-hub/projects/${projectId}/answer`,
@@ -386,13 +728,74 @@ const answerPrepQuestion = new FunctionTool({
         { question }
       );
 
-      // Log the interaction
-      await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
+      // Mediation: Check confidence thresholds
+      if (answer.confidence < ESCALATE_THRESHOLD) {
+        // Low confidence (<50%) - escalate to tenant
+        logger.info(
+          { projectId, confidence: answer.confidence },
+          '[ProjectHub] Low confidence answer - recommending escalation'
+        );
+        return {
+          success: true,
+          answer: answer.answer,
+          confidence: answer.confidence,
+          shouldEscalate: true,
+          escalationReason:
+            'Low confidence answer - consider escalating to tenant for accurate response',
+          suggestedAction: 'Use submit_request tool to get tenant input',
+        };
+      }
+
+      if (answer.confidence < AUTO_HANDLE_THRESHOLD) {
+        // Medium confidence (50-80%) - handle but flag for visibility
+        logger.info(
+          { projectId, confidence: answer.confidence },
+          '[ProjectHub] Medium confidence answer - flagging for tenant'
+        );
+        // Fire-and-forget event logging (non-blocking for faster response)
+        callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
+          type: 'MESSAGE_FROM_AGENT',
+          actor: 'agent',
+          actorType: 'agent',
+          payload: {
+            question,
+            answer: answer.answer,
+            flagged: true,
+            confidence: answer.confidence,
+          },
+          visibleToCustomer: true,
+          visibleToTenant: true,
+        }).catch((err) =>
+          logger.error(
+            { err: err instanceof Error ? err.message : String(err), projectId },
+            '[ProjectHub] Failed to log flagged answer event'
+          )
+        );
+
+        return {
+          success: true,
+          answer: answer.answer,
+          confidence: answer.confidence,
+          flaggedForTenant: true,
+          message: 'Answer provided but flagged for tenant visibility due to medium confidence',
+        };
+      }
+
+      // High confidence (>=80%) - auto-handle
+      // Fire-and-forget event logging (non-blocking for faster response)
+      callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
         type: 'MESSAGE_FROM_AGENT',
+        actor: 'agent',
+        actorType: 'agent',
         payload: { question, answer: answer.answer },
         visibleToCustomer: true,
         visibleToTenant: true,
-      });
+      }).catch((err) =>
+        logger.error(
+          { err: err instanceof Error ? err.message : String(err), projectId },
+          '[ProjectHub] Failed to log answer event'
+        )
+      );
 
       return {
         success: true,
@@ -468,6 +871,16 @@ const submitRequest = new FunctionTool({
       };
     }
 
+    // Mediation: Auto-escalate urgency for sensitive keywords in details
+    let effectiveUrgency = urgency;
+    if (shouldAlwaysEscalate(details) && urgency !== 'high') {
+      logger.info(
+        { projectId, originalUrgency: urgency },
+        '[ProjectHub] Auto-escalating urgency due to sensitive keywords in request details'
+      );
+      effectiveUrgency = 'high';
+    }
+
     try {
       // Calculate expiry (72 hours from now)
       const expiresAt = new Date();
@@ -478,24 +891,39 @@ const submitRequest = new FunctionTool({
         'POST',
         {
           type: requestType,
-          requestData: { details, urgency },
+          requestData: { details, urgency: effectiveUrgency },
           expiresAt: expiresAt.toISOString(),
         }
       );
 
-      // Log the event
-      await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
+      // Fire-and-forget event logging (non-blocking for faster response)
+      callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
         type: 'REQUEST_SUBMITTED',
+        actor: session.customerId || 'unknown-customer',
+        actorType: 'customer',
         payload: { requestId: request.id, type: requestType, details },
         visibleToCustomer: true,
         visibleToTenant: true,
-      });
+      }).catch((err) =>
+        logger.error(
+          {
+            err: err instanceof Error ? err.message : String(err),
+            projectId,
+            requestId: request.id,
+          },
+          '[ProjectHub] Failed to log request submission event'
+        )
+      );
 
       return {
         success: true,
         requestId: request.id,
         message: `Your ${requestType.toLowerCase().replace('_', ' ')} request has been submitted. The service provider typically responds within 24-48 hours.`,
         expiresAt: request.expiresAt,
+        // State indicators for agent context (Pitfall #52)
+        hasPendingRequest: true,
+        requestStatus: 'PENDING' as const,
+        projectStatus: 'awaiting_tenant_response',
       };
     } catch (error) {
       return {
@@ -558,7 +986,10 @@ const getPendingRequests = new FunctionTool({
   name: 'get_pending_requests',
   description: 'Get all pending customer requests that need tenant attention. TENANT CONTEXT ONLY.',
   parameters: z.object({
-    limit: z.number().default(10).describe('Maximum number of requests to return'),
+    limit: z
+      .number()
+      .default(DEFAULTS.PENDING_REQUESTS_LIMIT)
+      .describe('Maximum number of requests to return'),
   }),
   execute: async ({ limit }: { limit: number }, ctx: ToolContext | undefined) => {
     // P1 Security: Context guard - tenant tools only
@@ -600,7 +1031,10 @@ const getCustomerActivity = new FunctionTool({
   description:
     'Get recent customer activity across all projects for the tenant. TENANT CONTEXT ONLY.',
   parameters: z.object({
-    days: z.number().default(7).describe('Number of days to look back'),
+    days: z
+      .number()
+      .default(DEFAULTS.ACTIVITY_LOOKBACK_DAYS)
+      .describe('Number of days to look back'),
   }),
   execute: async ({ days }: { days: number }, ctx: ToolContext | undefined) => {
     // P1 Security: Context guard - tenant tools only
@@ -625,7 +1059,7 @@ const getCustomerActivity = new FunctionTool({
           activeProjects: activity.activeProjects,
           recentEventCount: activity.recentEvents.length,
         },
-        recentEvents: activity.recentEvents.slice(0, 10),
+        recentEvents: activity.recentEvents.slice(0, DEFAULTS.RECENT_EVENTS_DISPLAY_LIMIT),
       };
     } catch (error) {
       return {
@@ -669,6 +1103,9 @@ const approveRequest = new FunctionTool({
         success: true,
         message: 'Request approved successfully',
         request: result.request,
+        // State indicators for agent context (Pitfall #52)
+        requestStatus: 'APPROVED' as const,
+        projectStatus: 'active',
       };
     } catch (error) {
       return {
@@ -712,6 +1149,9 @@ const denyRequest = new FunctionTool({
         success: true,
         message: 'Request denied',
         request: result.request,
+        // State indicators for agent context (Pitfall #52)
+        requestStatus: 'DENIED' as const,
+        projectStatus: 'active',
       };
     } catch (error) {
       return {
@@ -747,25 +1187,38 @@ const sendMessageToCustomer = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this project via tenantId
+      // This is the critical operation - must await
       await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
         type: 'MESSAGE_FROM_TENANT',
+        actor: session.tenantId,
+        actorType: 'tenant',
         payload: { message },
         visibleToCustomer: true,
         visibleToTenant: true,
         tenantId: session.tenantId, // For backend ownership verification
       });
 
+      // Fire-and-forget email notification (non-blocking for faster response)
       if (notifyByEmail) {
-        await callBackendAPI(`/project-hub/projects/${projectId}/notify`, 'POST', {
+        callBackendAPI(`/project-hub/projects/${projectId}/notify`, 'POST', {
           type: 'message',
           message,
           tenantId: session.tenantId,
-        });
+        }).catch((err) =>
+          logger.error(
+            { err: err instanceof Error ? err.message : String(err), projectId },
+            '[ProjectHub] Failed to send email notification'
+          )
+        );
       }
 
       return {
         success: true,
         message: 'Message sent to customer',
+        // State indicators for agent context (Pitfall #52)
+        lastMessageAt: new Date().toISOString(),
+        messageSentToCustomer: true,
+        emailNotificationSent: notifyByEmail,
       };
     } catch (error) {
       return {
@@ -801,24 +1254,35 @@ const updateProjectStatus = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this project via tenantId
+      // This is the critical operation - must await
       const result = await callBackendAPI<{ success: boolean; project: Project }>(
         `/project-hub/projects/${projectId}/status`,
         'PUT',
         { status, reason, tenantId: session.tenantId }
       );
 
-      // Log the status change
-      await callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
+      // Fire-and-forget event logging (non-blocking for faster response)
+      callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
         type: 'STATUS_CHANGED',
+        actor: session.tenantId,
+        actorType: 'tenant',
         payload: { oldStatus: 'ACTIVE', newStatus: status, reason },
         visibleToCustomer: status === 'COMPLETED',
         visibleToTenant: true,
         tenantId: session.tenantId,
-      });
+      }).catch((err) =>
+        logger.error(
+          { err: err instanceof Error ? err.message : String(err), projectId, status },
+          '[ProjectHub] Failed to log status change event'
+        )
+      );
 
       return {
         success: true,
         project: result.project,
+        // State indicators for agent context (Pitfall #52)
+        projectStatus: status,
+        statusUpdatedAt: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -852,8 +1316,11 @@ const tenantTools = [
   updateProjectStatus,
 ];
 
+// Shared tools (available in both contexts)
+const sharedTools = [bootstrapProjectHubSession];
+
 // All tools (agent dynamically uses based on context)
-const allTools = [...customerTools, ...tenantTools];
+const allTools = [...sharedTools, ...customerTools, ...tenantTools];
 
 /**
  * Project Hub Agent
@@ -868,7 +1335,25 @@ export const agent = new LlmAgent({
   instruction: PROJECT_HUB_SYSTEM_PROMPT,
   tools: allTools,
   generateContentConfig: {
-    temperature: 0.4, // Balanced for helpful but consistent responses
-    maxOutputTokens: 2048,
+    temperature: LLM_CONFIG.TEMPERATURE,
+    maxOutputTokens: LLM_CONFIG.MAX_OUTPUT_TOKENS,
+  },
+
+  // Lifecycle callbacks for observability
+  beforeToolCallback: async ({ tool, args }) => {
+    logger.info(
+      { toolName: tool.name, args: JSON.stringify(args).substring(0, 200) },
+      '[ProjectHub] Calling tool'
+    );
+    return undefined;
+  },
+
+  afterToolCallback: async ({ tool, response }) => {
+    const preview =
+      typeof response === 'object'
+        ? JSON.stringify(response).substring(0, 200)
+        : String(response).substring(0, 200);
+    logger.info({ toolName: tool.name }, `[ProjectHub] Result: ${tool.name} → ${preview}...`);
+    return undefined;
   },
 });
