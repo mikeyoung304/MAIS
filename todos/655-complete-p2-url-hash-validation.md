@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 655
 tags: [code-review, security, validation]
 dependencies: []
+completed_at: 2026-01-21
 ---
 
 # URL Hash Validation is Minimal

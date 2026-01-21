@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5237'
 tags: [code-review, security, project-hub, cryptography]

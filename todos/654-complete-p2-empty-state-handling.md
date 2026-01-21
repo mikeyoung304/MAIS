@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 654
 tags: [code-review, ux, edge-cases]
 dependencies: []
+completed_at: 2026-01-21
 ---
 
 # Missing Empty State Handling

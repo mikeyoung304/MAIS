@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p3
 issue_id: 657
 tags: [code-review, accessibility, quick-win]
 dependencies: []
+completed_at: 2026-01-21
 ---
 
 # SVG Icons Missing aria-hidden
@@ -60,11 +61,12 @@ Option 1 - Add aria-hidden to decorative SVGs
 
 ## Acceptance Criteria
 
-- [ ] Both SVG icons have `aria-hidden="true"`
-- [ ] Screen readers skip icon announcements
+- [x] Both SVG icons have `aria-hidden="true"`
+- [x] Screen readers skip icon announcements
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                 |
-| ---------- | ------------------------ | ----------------------------------------- |
-| 2026-01-08 | Created from code review | Decorative icons should be hidden from AT |
+| Date       | Action                    | Learnings                                                                                            |
+| ---------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review  | Decorative icons should be hidden from AT                                                            |
+| 2026-01-21 | Verified already resolved | Both SVGs already have aria-hidden="true": Explore arrow (line 103) and back button arrow (line 458) |

@@ -139,10 +139,25 @@ export default function TenantProjectsPage() {
     fetchData();
   }, [fetchData, tenantId]);
 
-  // Handle request approval
+  // Handle request approval with optimistic updates
   const handleApprove = async (requestId: string, version: number) => {
     if (!isAuthenticated) return;
     setActionLoading(requestId);
+
+    // Store previous state for rollback
+    const previousRequests = pendingRequests;
+    const previousBootstrap = bootstrap;
+
+    // Optimistic update: remove request and decrement count
+    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    setBootstrap((prev) =>
+      prev
+        ? {
+            ...prev,
+            pendingRequestCount: Math.max(0, prev.pendingRequestCount - 1),
+          }
+        : null
+    );
 
     try {
       const response = await fetch('/api/tenant-admin/projects/requests/approve', {
@@ -159,26 +174,43 @@ export default function TenantProjectsPage() {
         throw new Error(data.error || 'Failed to approve request');
       }
 
-      // Refresh data
-      await fetchData();
+      // Success - UI already updated optimistically
     } catch (err) {
       logger.error('Request approval failed', err instanceof Error ? err : { error: String(err) });
+      // Rollback optimistic updates on failure
+      setPendingRequests(previousRequests);
+      setBootstrap(previousBootstrap);
       setError(getErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Handle request denial
+  // Handle request denial with optimistic updates
   const handleDeny = async (requestId: string, version: number) => {
     if (!isAuthenticated) return;
-    setActionLoading(requestId);
 
     const reason = prompt('Please provide a reason for denying this request:');
     if (!reason) {
-      setActionLoading(null);
       return;
     }
+
+    setActionLoading(requestId);
+
+    // Store previous state for rollback
+    const previousRequests = pendingRequests;
+    const previousBootstrap = bootstrap;
+
+    // Optimistic update: remove request and decrement count
+    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    setBootstrap((prev) =>
+      prev
+        ? {
+            ...prev,
+            pendingRequestCount: Math.max(0, prev.pendingRequestCount - 1),
+          }
+        : null
+    );
 
     try {
       const response = await fetch('/api/tenant-admin/projects/requests/deny', {
@@ -195,10 +227,12 @@ export default function TenantProjectsPage() {
         throw new Error(data.error || 'Failed to deny request');
       }
 
-      // Refresh data
-      await fetchData();
+      // Success - UI already updated optimistically
     } catch (err) {
       logger.error('Request denial failed', err instanceof Error ? err : { error: String(err) });
+      // Rollback optimistic updates on failure
+      setPendingRequests(previousRequests);
+      setBootstrap(previousBootstrap);
       setError(getErrorMessage(err));
     } finally {
       setActionLoading(null);

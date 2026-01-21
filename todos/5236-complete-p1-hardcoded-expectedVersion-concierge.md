@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5236'
 tags: [code-review, data-integrity, agent, concierge, optimistic-locking]

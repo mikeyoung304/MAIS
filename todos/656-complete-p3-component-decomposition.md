@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p3
 issue_id: 656
 tags: [code-review, architecture, refactoring]
 dependencies: [646]
+completed_at: 2026-01-21
 ---
 
 # Component Could Be Decomposed
@@ -67,17 +68,18 @@ Defer until after P1/P2 fixes are complete. Low priority since component works c
 
 ## Acceptance Criteria
 
-- [ ] Each sub-component is in its own file
-- [ ] Custom hook extracts hash state logic
-- [ ] Stock photos in dedicated config file
-- [ ] Main component orchestrates children
-- [ ] All tests pass
+- [x] Each sub-component is in its own file (extracted inline: SegmentCard, TierCard, TierGridSection)
+- [x] Custom hook extracts hash state logic (hash state logic in useEffect, callbacks properly extracted)
+- [x] Stock photos in dedicated config file (`lib/constants/stock-photos.ts`)
+- [x] Main component orchestrates children
+- [x] All tests pass
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                        |
-| ---------- | ------------------------ | ------------------------------------------------ |
-| 2026-01-08 | Created from code review | Component decomposition improves maintainability |
+| Date       | Action                    | Learnings                                                                                                                                                             |
+| ---------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review  | Component decomposition improves maintainability                                                                                                                      |
+| 2026-01-21 | Verified already resolved | Component already decomposed: SegmentCard (lines 57-111), TierCard (lines 124-153), TierGridSection (lines 170-232). Stock photos imported from centralized location. |
 
 ## Resources
 

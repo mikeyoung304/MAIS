@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 651
 tags: [code-review, agent-parity, tools, onboarding]
 dependencies: []
+completed_at: 2026-01-21
 ---
 
 # Agent Cannot Set Segment Hero Images

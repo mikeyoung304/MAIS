@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: 649
 tags: [code-review, performance, nextjs, images, lcp]

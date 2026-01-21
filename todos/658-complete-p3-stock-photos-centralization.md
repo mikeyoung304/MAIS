@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p3
 issue_id: 658
 tags: [code-review, architecture, config]
 dependencies: []
+completed_at: 2026-01-21
 ---
 
 # Stock Photos Hardcoded in Component
@@ -84,12 +85,13 @@ Option 1 for now - centralize in constants file. Consider Option 2 as future enh
 
 ## Acceptance Criteria
 
-- [ ] Stock photos moved to `lib/constants/stock-photos.ts`
-- [ ] Helper function exported
-- [ ] Component imports from new location
+- [x] Stock photos moved to `lib/constants/stock-photos.ts`
+- [x] Helper function exported (`getSegmentStockPhoto`)
+- [x] Component imports from new location (`import { getSegmentStockPhoto } from '@/lib/constants/stock-photos'`)
 
 ## Work Log
 
-| Date       | Action                   | Learnings                                |
-| ---------- | ------------------------ | ---------------------------------------- |
-| 2026-01-08 | Created from code review | Configuration belongs in dedicated files |
+| Date       | Action                    | Learnings                                                                                                                                                       |
+| ---------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-08 | Created from code review  | Configuration belongs in dedicated files                                                                                                                        |
+| 2026-01-21 | Verified already resolved | Stock photos already centralized in `/apps/web/src/lib/constants/stock-photos.ts` with SEGMENT_STOCK_PHOTOS constant and getSegmentStockPhoto() helper function |

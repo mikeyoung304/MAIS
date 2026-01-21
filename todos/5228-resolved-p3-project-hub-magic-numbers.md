@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: '5228'
 tags: [quality, agent-v2, project-hub, code-review, maintainability]
 dependencies: []
+resolved_at: '2026-01-21'
+resolution: 'Already fixed - DEFAULTS and LLM_CONFIG constants extracted with JSDoc comments'
 ---
 
 # Project Hub: Magic Numbers Not Extracted to Constants

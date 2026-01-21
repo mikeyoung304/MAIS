@@ -1,5 +1,5 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5235'
 tags: [code-review, security, agent, type-safety, adk]

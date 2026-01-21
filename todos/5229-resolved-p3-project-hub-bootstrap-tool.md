@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: '5229'
 tags: [agent-native, agent-v2, project-hub, code-review, ux]
 dependencies: []
+resolved_at: '2026-01-21'
+resolution: 'Already fixed - bootstrapProjectHubSession tool fully implemented with personalized greetings'
 ---
 
 # Project Hub: Missing Bootstrap Session Tool

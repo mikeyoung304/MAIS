@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: '5227'
 tags: [quality, agent-v2, project-hub, code-review, dead-code]
 dependencies: []
+resolved_at: '2026-01-21'
+resolution: 'Already fixed - unused interfaces and timeout constants were removed during initial implementation'
 ---
 
 # Project Hub: Unused Interfaces and Constants

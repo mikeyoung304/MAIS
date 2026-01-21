@@ -51,6 +51,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
+import { timingSafeEqual } from 'crypto';
 import { z, ZodError } from 'zod';
 import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
@@ -242,8 +243,16 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       return;
     }
 
-    // Verify secret matches
-    if (!secret || secret !== expectedSecret) {
+    // Verify secret matches using constant-time comparison to prevent timing attacks
+    // timingSafeEqual requires equal-length buffers, so we check length first
+    const secretStr = typeof secret === 'string' ? secret : '';
+    const secretBuffer = Buffer.from(secretStr);
+    const expectedBuffer = Buffer.from(expectedSecret);
+
+    if (
+      secretBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(secretBuffer, expectedBuffer)
+    ) {
       logger.warn({ ip: req.ip }, 'Invalid internal API secret from agent');
       res.status(403).json({
         error: 'Invalid API secret',
@@ -2183,6 +2192,7 @@ Apply the feedback while maintaining the ${tone} tone.`;
         projects: result.projects,
         count: result.projects.length,
         nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
       });
     } catch (error) {
       handleError(res, error, '/project-hub/list-projects');

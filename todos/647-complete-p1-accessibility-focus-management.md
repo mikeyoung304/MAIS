@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: 647
 tags: [code-review, accessibility, wcag, a11y]

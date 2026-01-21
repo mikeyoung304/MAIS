@@ -455,42 +455,62 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           return;
         }
 
-        // Forward to agent
-        const agentResponse = await fetch(`${agentUrl}/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message,
-            sessionId: sessionId ?? `project-${projectId}-${Date.now()}`,
-            contextType: 'customer',
-            tenantId,
-            customerId,
-            projectId,
-          }),
-        });
+        // Forward to agent with timeout (30s for agent communication per pitfall #46)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        if (!agentResponse.ok) {
-          const errorText = await agentResponse.text();
-          logger.error(
-            { status: agentResponse.status, error: errorText },
-            'Project Hub agent error'
-          );
-          res.status(502).json({ error: 'Unable to process message' });
-          return;
+        try {
+          const agentResponse = await fetch(`${agentUrl}/chat`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message,
+              sessionId: sessionId ?? `project-${projectId}-${Date.now()}`,
+              contextType: 'customer',
+              tenantId,
+              customerId,
+              projectId,
+            }),
+            signal: controller.signal,
+          });
+
+          if (!agentResponse.ok) {
+            const errorText = await agentResponse.text();
+            logger.error(
+              { status: agentResponse.status, error: errorText },
+              'Project Hub agent error'
+            );
+            res.status(502).json({ error: 'Unable to process message' });
+            return;
+          }
+
+          const agentData = (await agentResponse.json()) as {
+            message?: string;
+            response?: string;
+            sessionId?: string;
+            proposals?: unknown[];
+          };
+
+          res.json({
+            message:
+              agentData.message ??
+              agentData.response ??
+              'I apologize, I encountered an issue processing your request.',
+            sessionId: agentData.sessionId ?? sessionId,
+            proposals: agentData.proposals ?? [],
+          });
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            logger.warn({ projectId, tenantId }, 'Project Hub agent request timed out');
+            res.status(504).json({ error: 'Request timed out. Please try again.' });
+            return;
+          }
+          throw error;
+        } finally {
+          clearTimeout(timeoutId);
         }
-
-        const agentData = await agentResponse.json();
-
-        res.json({
-          message:
-            agentData.message ??
-            agentData.response ??
-            'I apologize, I encountered an issue processing your request.',
-          sessionId: agentData.sessionId ?? sessionId,
-          proposals: agentData.proposals ?? [],
-        });
       } catch (error) {
         logger.error({ error }, 'Project chat message error');
         next(error);

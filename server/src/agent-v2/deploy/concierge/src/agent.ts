@@ -1419,12 +1419,13 @@ If onboardingDone is false, switch to onboarding mode - help them build their st
         fallback: {
           tenantId,
           businessName: 'Unknown',
-          onboardingDone: false, // Conservative: don't skip onboarding on error
-          isOnboarding: false, // Keep boolean type - don't enter onboarding on error
+          onboardingDone: null, // Unknown - let agent decide based on context
+          isOnboarding: 'unknown' as const, // Unknown state - don't assume either way
           isBootstrapError: true, // Explicit error flag for LLM reasoning
-          errorMessage: result.error,
+          errorMessage: result.error || 'Failed to load tenant information',
         },
-        retryGuidance: 'Bootstrap failed. Continue with basic greeting and retry in a moment.',
+        retryGuidance:
+          'Bootstrap failed. Greet the user briefly and ask how you can help. If they seem new, gently explore if they need onboarding.',
       };
     }
 

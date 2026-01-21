@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p3
 issue_id: '5230'
 tags: [data-integrity, agent-v2, project-hub, code-review, audit]
 dependencies: []
+resolved_at: '2026-01-21'
+resolution: 'Already fixed - all event logging includes actor and actorType fields'
 ---
 
 # Project Hub: Event Logging Lacks Actor Identification

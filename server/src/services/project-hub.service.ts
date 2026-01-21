@@ -147,6 +147,25 @@ export interface HandleRequestInput {
   reason?: string; // Required for deny
 }
 
+/**
+ * Transaction client type for Prisma interactive transactions
+ */
+type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
+
+/**
+ * Internal type for request with project context from optimistic lock validation
+ */
+interface ValidatedRequest {
+  id: string;
+  type: RequestType;
+  status: RequestStatus;
+  projectId: string;
+  requestData: unknown;
+  expiresAt: Date;
+  createdAt: Date;
+  version: number;
+}
+
 // ============================================================================
 // Service
 // ============================================================================
@@ -159,6 +178,82 @@ export interface HandleRequestInput {
  */
 export class ProjectHubService {
   constructor(private readonly prisma: PrismaClient) {}
+
+  // ==========================================================================
+  // Private Helpers
+  // ==========================================================================
+
+  /**
+   * Get the next event version for a project
+   *
+   * Finds the highest existing event version and returns the next one.
+   * Returns 1 if no events exist yet.
+   *
+   * @param tx - Prisma transaction client
+   * @param projectId - Project ID
+   * @returns Next version number
+   */
+  private async getNextEventVersion(tx: TransactionClient, projectId: string): Promise<number> {
+    const lastEvent = await tx.projectEvent.findFirst({
+      where: { projectId },
+      orderBy: { version: 'desc' },
+      select: { version: true },
+    });
+    return (lastEvent?.version ?? 0) + 1;
+  }
+
+  /**
+   * Validate and lock a request for update using optimistic locking
+   *
+   * Performs tenant-scoped lookup, status validation, and version check.
+   *
+   * @param tx - Prisma transaction client
+   * @param tenantId - Tenant ID for isolation
+   * @param requestId - Request ID
+   * @param expectedVersion - Expected version for optimistic lock
+   * @returns Validated request with project context
+   * @throws NotFoundError if request not found
+   * @throws ValidationError if request already resolved
+   * @throws ConcurrentModificationError if version mismatch
+   */
+  private async validateAndLockRequest(
+    tx: TransactionClient,
+    tenantId: string,
+    requestId: string,
+    expectedVersion: number
+  ): Promise<ValidatedRequest> {
+    const existing = await tx.projectRequest.findFirst({
+      where: { id: requestId, tenantId }, // CRITICAL: tenant-scoped
+      include: { project: { select: { id: true } } },
+    });
+
+    if (!existing) {
+      throw new NotFoundError(`Request ${requestId} not found`);
+    }
+
+    if (existing.status !== 'PENDING') {
+      throw new ValidationError(`Request is already ${existing.status.toLowerCase()}`);
+    }
+
+    // Optimistic lock check
+    if (existing.version !== expectedVersion) {
+      throw new ConcurrentModificationError(
+        existing.version,
+        `Request was modified. Expected version ${expectedVersion}, found ${existing.version}`
+      );
+    }
+
+    return {
+      id: existing.id,
+      type: existing.type,
+      status: existing.status,
+      projectId: existing.projectId,
+      requestData: existing.requestData,
+      expiresAt: existing.expiresAt,
+      createdAt: existing.createdAt,
+      version: existing.version,
+    };
+  }
 
   // ==========================================================================
   // Bootstrap Operations
@@ -259,6 +354,11 @@ export class ProjectHubService {
           },
         }),
       ]);
+
+    // Verify tenant exists
+    if (!tenant) {
+      throw new NotFoundError(`Tenant ${tenantId} not found`);
+    }
 
     return {
       activeProjectCount,
@@ -391,14 +491,18 @@ export class ProjectHubService {
    * Get pending requests for a tenant (dashboard view)
    *
    * @param tenantId - Tenant ID
-   * @param limit - Maximum number of requests to return (default 50)
+   * @param limit - Maximum number of requests to return (default 25, max 50)
    * @returns Pending requests with project context and hasMore flag
    */
   async getPendingRequests(
     tenantId: string,
-    limit: number = 50
+    limit: number = 25
   ): Promise<{ requests: ProjectRequestWithContext[]; hasMore: boolean }> {
-    logger.info({ tenantId, limit }, '[ProjectHub] Getting pending requests');
+    // Enforce maximum limit to prevent unbounded queries (Pitfall #67)
+    const MAX_LIMIT = 50;
+    const effectiveLimit = Math.min(limit, MAX_LIMIT);
+
+    logger.info({ tenantId, limit: effectiveLimit }, '[ProjectHub] Getting pending requests');
 
     const requests = await this.prisma.projectRequest.findMany({
       where: {
@@ -418,11 +522,11 @@ export class ProjectHubService {
         },
       },
       orderBy: { createdAt: 'asc' }, // Oldest first (FIFO)
-      take: limit + 1, // Fetch one extra to check if more exist
+      take: effectiveLimit + 1, // Fetch one extra to check if more exist
     });
 
-    const hasMore = requests.length > limit;
-    const items = hasMore ? requests.slice(0, limit) : requests;
+    const hasMore = requests.length > effectiveLimit;
+    const items = hasMore ? requests.slice(0, effectiveLimit) : requests;
 
     return {
       requests: items.map((r) => ({
@@ -493,13 +597,8 @@ export class ProjectHubService {
         },
       });
 
-      // Get next event version
-      const lastEvent = await tx.projectEvent.findFirst({
-        where: { projectId },
-        orderBy: { version: 'desc' },
-        select: { version: true },
-      });
-      const nextVersion = (lastEvent?.version ?? 0) + 1;
+      // Get next event version using helper
+      const nextVersion = await this.getNextEventVersion(tx, projectId);
 
       // Record event
       await tx.projectEvent.create({
@@ -548,27 +647,8 @@ export class ProjectHubService {
 
     // Use transaction with optimistic locking
     const request = await this.prisma.$transaction(async (tx) => {
-      // Fetch request with version check
-      const existing = await tx.projectRequest.findFirst({
-        where: { id: requestId, tenantId }, // CRITICAL: tenant-scoped
-        include: { project: { select: { id: true } } },
-      });
-
-      if (!existing) {
-        throw new NotFoundError(`Request ${requestId} not found`);
-      }
-
-      if (existing.status !== 'PENDING') {
-        throw new ValidationError(`Request is already ${existing.status.toLowerCase()}`);
-      }
-
-      // Optimistic lock check
-      if (existing.version !== expectedVersion) {
-        throw new ConcurrentModificationError(
-          existing.version,
-          `Request was modified. Expected version ${expectedVersion}, found ${existing.version}`
-        );
-      }
+      // Validate request with optimistic lock using helper
+      const existing = await this.validateAndLockRequest(tx, tenantId, requestId, expectedVersion);
 
       // Update request
       const updated = await tx.projectRequest.update({
@@ -582,13 +662,8 @@ export class ProjectHubService {
         },
       });
 
-      // Get next event version
-      const lastEvent = await tx.projectEvent.findFirst({
-        where: { projectId: existing.projectId },
-        orderBy: { version: 'desc' },
-        select: { version: true },
-      });
-      const nextVersion = (lastEvent?.version ?? 0) + 1;
+      // Get next event version using helper
+      const nextVersion = await this.getNextEventVersion(tx, existing.projectId);
 
       // Record event
       await tx.projectEvent.create({
@@ -640,27 +715,8 @@ export class ProjectHubService {
     logger.info({ tenantId, requestId, expectedVersion }, '[ProjectHub] Denying request');
 
     const request = await this.prisma.$transaction(async (tx) => {
-      // Fetch request with version check
-      const existing = await tx.projectRequest.findFirst({
-        where: { id: requestId, tenantId }, // CRITICAL: tenant-scoped
-        include: { project: { select: { id: true } } },
-      });
-
-      if (!existing) {
-        throw new NotFoundError(`Request ${requestId} not found`);
-      }
-
-      if (existing.status !== 'PENDING') {
-        throw new ValidationError(`Request is already ${existing.status.toLowerCase()}`);
-      }
-
-      // Optimistic lock check
-      if (existing.version !== expectedVersion) {
-        throw new ConcurrentModificationError(
-          existing.version,
-          `Request was modified. Expected version ${expectedVersion}, found ${existing.version}`
-        );
-      }
+      // Validate request with optimistic lock using helper
+      const existing = await this.validateAndLockRequest(tx, tenantId, requestId, expectedVersion);
 
       // Update request
       const updated = await tx.projectRequest.update({
@@ -674,13 +730,8 @@ export class ProjectHubService {
         },
       });
 
-      // Get next event version
-      const lastEvent = await tx.projectEvent.findFirst({
-        where: { projectId: existing.projectId },
-        orderBy: { version: 'desc' },
-        select: { version: true },
-      });
-      const nextVersion = (lastEvent?.version ?? 0) + 1;
+      // Get next event version using helper
+      const nextVersion = await this.getNextEventVersion(tx, existing.projectId);
 
       // Record event
       await tx.projectEvent.create({
@@ -716,21 +767,28 @@ export class ProjectHubService {
   // ==========================================================================
 
   /**
-   * List projects for a tenant with pagination
+   * List projects for a tenant with cursor-based pagination
    *
    * @param tenantId - Tenant ID
    * @param status - Optional status filter
    * @param cursor - Cursor for pagination (last project ID)
-   * @param limit - Maximum number of projects to return (default 50)
-   * @returns Projects with booking summaries and pagination info
+   * @param limit - Maximum number of projects to return (default 50, max 100)
+   * @returns Projects with booking summaries, pagination cursor, and hasMore flag
    */
   async listProjects(
     tenantId: string,
     status?: ProjectStatus,
     cursor?: string,
     limit: number = 50
-  ): Promise<{ projects: Array<ProjectWithBooking>; nextCursor?: string }> {
-    logger.info({ tenantId, status, cursor, limit }, '[ProjectHub] Listing projects');
+  ): Promise<{ projects: Array<ProjectWithBooking>; nextCursor?: string; hasMore: boolean }> {
+    // Enforce maximum limit to prevent unbounded queries (Pitfall #67)
+    const MAX_LIMIT = 100;
+    const effectiveLimit = Math.min(limit, MAX_LIMIT);
+
+    logger.info(
+      { tenantId, status, cursor, limit: effectiveLimit },
+      '[ProjectHub] Listing projects'
+    );
 
     const whereClause = status ? { tenantId, status } : { tenantId };
 
@@ -745,13 +803,13 @@ export class ProjectHubService {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: limit + 1, // Fetch one extra to check if more exist
+      take: effectiveLimit + 1, // Fetch one extra to check if more exist
       cursor: cursor ? { id: cursor } : undefined,
       skip: cursor ? 1 : 0, // Skip the cursor item itself
     });
 
-    const hasMore = projects.length > limit;
-    const items = hasMore ? projects.slice(0, limit) : projects;
+    const hasMore = projects.length > effectiveLimit;
+    const items = hasMore ? projects.slice(0, effectiveLimit) : projects;
     const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
     const mappedProjects = items.map((p) => ({
@@ -781,7 +839,7 @@ export class ProjectHubService {
       },
     }));
 
-    return { projects: mappedProjects, nextCursor };
+    return { projects: mappedProjects, nextCursor, hasMore };
   }
 
   /**

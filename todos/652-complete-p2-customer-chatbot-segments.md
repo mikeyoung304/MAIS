@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: 652
 tags: [code-review, agent-parity, chatbot, customer-experience]
 dependencies: []
+completed_at: 2026-01-21
 ---
 
 # Customer Chatbot Cannot Browse Segments

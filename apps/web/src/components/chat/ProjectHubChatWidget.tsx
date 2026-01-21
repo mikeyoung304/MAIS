@@ -61,6 +61,230 @@ interface ProjectHubChatWidgetProps {
   inline?: boolean;
 }
 
+// ============================================================================
+// Shared Sub-Components (Extracted to eliminate duplication)
+// ============================================================================
+
+/**
+ * Chat header with business name and optional close button
+ */
+interface ChatHeaderProps {
+  businessName: string;
+  primaryColor: string;
+  onClose?: () => void;
+  showClose?: boolean;
+}
+
+const ChatHeader = React.memo(function ChatHeader({
+  businessName,
+  primaryColor,
+  onClose,
+  showClose = false,
+}: ChatHeaderProps) {
+  return (
+    <div
+      className={cn(
+        'flex items-center px-5 py-4 border-b border-neutral-100',
+        showClose ? 'justify-between' : 'gap-3'
+      )}
+      style={{ backgroundColor: `${primaryColor}10` }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: `${primaryColor}20` }}
+        >
+          <Bot className="w-5 h-5" style={{ color: primaryColor }} />
+        </div>
+        <div>
+          <h3 className="font-semibold text-neutral-900">{businessName}</h3>
+          <p className="text-xs text-neutral-500">Project Assistant</p>
+        </div>
+      </div>
+      {showClose && onClose && (
+        <button
+          onClick={onClose}
+          className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
+          aria-label="Close chat"
+        >
+          <X className="w-5 h-5 text-neutral-500" />
+        </button>
+      )}
+    </div>
+  );
+});
+
+/**
+ * Typing indicator with animated dots
+ */
+interface TypingIndicatorProps {
+  primaryColor: string;
+}
+
+const TypingIndicator = React.memo(function TypingIndicator({
+  primaryColor,
+}: TypingIndicatorProps) {
+  return (
+    <div className="flex gap-3">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+        style={{ backgroundColor: `${primaryColor}15` }}
+      >
+        <Bot className="w-4 h-4" style={{ color: primaryColor }} />
+      </div>
+      <div className="bg-white border border-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <div
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{ backgroundColor: primaryColor, opacity: 0.5 }}
+          />
+          <div
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{
+              backgroundColor: primaryColor,
+              opacity: 0.5,
+              animationDelay: '150ms',
+            }}
+          />
+          <div
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{
+              backgroundColor: primaryColor,
+              opacity: 0.5,
+              animationDelay: '300ms',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+/**
+ * Error display component
+ */
+interface ErrorDisplayProps {
+  error: string;
+}
+
+const ErrorDisplay = React.memo(function ErrorDisplay({ error }: ErrorDisplayProps) {
+  return (
+    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700">
+      <AlertTriangle className="w-4 h-4 shrink-0" />
+      <span className="text-sm">{error}</span>
+    </div>
+  );
+});
+
+/**
+ * Loading state for initializing chat
+ */
+const LoadingState = React.memo(function LoadingState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full">
+      <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+      <p className="text-sm text-neutral-500 mt-3">Starting chat...</p>
+    </div>
+  );
+});
+
+/**
+ * Chat messages container with typing indicator and error display
+ */
+interface ChatMessagesProps {
+  messages: ChatMessage[];
+  primaryColor: string;
+  isLoading: boolean;
+  isInitializing: boolean;
+  error: string | null;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
+}
+
+const ChatMessages = React.memo(function ChatMessages({
+  messages,
+  primaryColor,
+  isLoading,
+  isInitializing,
+  error,
+  messagesEndRef,
+}: ChatMessagesProps) {
+  return (
+    <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-neutral-50/50">
+      {isInitializing ? (
+        <LoadingState />
+      ) : (
+        <>
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} primaryColor={primaryColor} />
+          ))}
+
+          {isLoading && <TypingIndicator primaryColor={primaryColor} />}
+
+          {error && <ErrorDisplay error={error} />}
+
+          <div ref={messagesEndRef} />
+        </>
+      )}
+    </div>
+  );
+});
+
+/**
+ * Chat input with textarea and send button
+ */
+interface ChatInputProps {
+  inputValue: string;
+  onInputChange: (value: string) => void;
+  onSend: () => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  isLoading: boolean;
+  sessionId: string | null;
+  primaryColor: string;
+  inputRef: React.RefObject<HTMLTextAreaElement>;
+}
+
+const ChatInput = React.memo(function ChatInput({
+  inputValue,
+  onInputChange,
+  onSend,
+  onKeyDown,
+  isLoading,
+  sessionId,
+  primaryColor,
+  inputRef,
+}: ChatInputProps) {
+  return (
+    <div className="px-5 py-4 border-t border-neutral-100 bg-white">
+      <div className="flex gap-2">
+        <textarea
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder="Ask about your booking..."
+          className={cn(
+            'flex-1 resize-none rounded-2xl border border-neutral-200 px-4 py-3',
+            'focus:outline-none focus:border-neutral-400 focus:ring-2',
+            'placeholder:text-neutral-400 text-neutral-900 bg-white',
+            'min-h-[48px] max-h-[100px] text-sm'
+          )}
+          style={{ '--tw-ring-color': `${primaryColor}30` } as React.CSSProperties}
+          rows={1}
+          disabled={isLoading || !sessionId}
+        />
+        <Button
+          onClick={onSend}
+          disabled={!inputValue.trim() || isLoading || !sessionId}
+          className="h-12 w-12 shrink-0 rounded-full"
+          style={{ backgroundColor: primaryColor }}
+        >
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+        </Button>
+      </div>
+    </div>
+  );
+});
+
 /**
  * ProjectHubChatWidget - Chat widget for Project Hub agent interactions
  *
@@ -220,6 +444,27 @@ export function ProjectHubChatWidget({
     }
   };
 
+  // Shared props for chat sub-components
+  const chatMessagesProps = {
+    messages,
+    primaryColor,
+    isLoading,
+    isInitializing,
+    error,
+    messagesEndRef,
+  };
+
+  const chatInputProps = {
+    inputValue,
+    onInputChange: setInputValue,
+    onSend: sendMessage,
+    onKeyDown: handleKeyDown,
+    isLoading,
+    sessionId,
+    primaryColor,
+    inputRef,
+  };
+
   // Inline chat layout
   if (inline) {
     return (
@@ -229,117 +474,9 @@ export function ProjectHubChatWidget({
           'flex flex-col overflow-hidden'
         )}
       >
-        {/* Header */}
-        <div
-          className="flex items-center gap-3 px-5 py-4 border-b border-neutral-100"
-          style={{ backgroundColor: `${primaryColor}10` }}
-        >
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: `${primaryColor}20` }}
-          >
-            <Bot className="w-5 h-5" style={{ color: primaryColor }} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-neutral-900">{businessName}</h3>
-            <p className="text-xs text-neutral-500">Project Assistant</p>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-neutral-50/50">
-          {isInitializing ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
-              <p className="text-sm text-neutral-500 mt-3">Starting chat...</p>
-            </div>
-          ) : (
-            <>
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} primaryColor={primaryColor} />
-              ))}
-
-              {/* Typing indicator */}
-              {isLoading && (
-                <div className="flex gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${primaryColor}15` }}
-                  >
-                    <Bot className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-                  <div className="bg-white border border-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: primaryColor, opacity: 0.5 }}
-                      />
-                      <div
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{
-                          backgroundColor: primaryColor,
-                          opacity: 0.5,
-                          animationDelay: '150ms',
-                        }}
-                      />
-                      <div
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{
-                          backgroundColor: primaryColor,
-                          opacity: 0.5,
-                          animationDelay: '300ms',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {error && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span className="text-sm">{error}</span>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </>
-          )}
-        </div>
-
-        {/* Input */}
-        <div className="px-5 py-4 border-t border-neutral-100 bg-white">
-          <div className="flex gap-2">
-            <textarea
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about your booking..."
-              className={cn(
-                'flex-1 resize-none rounded-2xl border border-neutral-200 px-4 py-3',
-                'focus:outline-none focus:border-neutral-400 focus:ring-2',
-                'placeholder:text-neutral-400 text-neutral-900 bg-white',
-                'min-h-[48px] max-h-[100px] text-sm'
-              )}
-              style={{ '--tw-ring-color': `${primaryColor}30` } as React.CSSProperties}
-              rows={1}
-              disabled={isLoading || !sessionId}
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={!inputValue.trim() || isLoading || !sessionId}
-              className="h-12 w-12 shrink-0 rounded-full"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
-            </Button>
-          </div>
-        </div>
+        <ChatHeader businessName={businessName} primaryColor={primaryColor} />
+        <ChatMessages {...chatMessagesProps} />
+        <ChatInput {...chatInputProps} />
       </div>
     );
   }
@@ -380,126 +517,14 @@ export function ProjectHubChatWidget({
         'animate-in slide-in-from-bottom-4 duration-300'
       )}
     >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-5 py-4 border-b border-neutral-100"
-        style={{ backgroundColor: `${primaryColor}10` }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: `${primaryColor}20` }}
-          >
-            <Bot className="w-5 h-5" style={{ color: primaryColor }} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-neutral-900">{businessName}</h3>
-            <p className="text-xs text-neutral-500">Project Assistant</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsOpen(false)}
-          className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
-          aria-label="Close chat"
-        >
-          <X className="w-5 h-5 text-neutral-500" />
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-neutral-50/50">
-        {isInitializing ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
-            <p className="text-sm text-neutral-500 mt-3">Starting chat...</p>
-          </div>
-        ) : (
-          <>
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} primaryColor={primaryColor} />
-            ))}
-
-            {/* Typing indicator */}
-            {isLoading && (
-              <div className="flex gap-3">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${primaryColor}15` }}
-                >
-                  <Bot className="w-4 h-4" style={{ color: primaryColor }} />
-                </div>
-                <div className="bg-white border border-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: primaryColor, opacity: 0.5 }}
-                    />
-                    <div
-                      className="w-2 h-2 rounded-full animate-pulse"
-                      style={{
-                        backgroundColor: primaryColor,
-                        opacity: 0.5,
-                        animationDelay: '150ms',
-                      }}
-                    />
-                    <div
-                      className="w-2 h-2 rounded-full animate-pulse"
-                      style={{
-                        backgroundColor: primaryColor,
-                        opacity: 0.5,
-                        animationDelay: '300ms',
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="px-5 py-4 border-t border-neutral-100 bg-white">
-        <div className="flex gap-2">
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about your booking..."
-            className={cn(
-              'flex-1 resize-none rounded-2xl border border-neutral-200 px-4 py-3',
-              'focus:outline-none focus:border-neutral-400 focus:ring-2',
-              'placeholder:text-neutral-400 text-neutral-900 bg-white',
-              'min-h-[48px] max-h-[100px] text-sm'
-            )}
-            style={{ '--tw-ring-color': `${primaryColor}30` } as React.CSSProperties}
-            rows={1}
-            disabled={isLoading || !sessionId}
-          />
-          <Button
-            onClick={sendMessage}
-            disabled={!inputValue.trim() || isLoading || !sessionId}
-            className="h-12 w-12 shrink-0 rounded-full"
-            style={{ backgroundColor: primaryColor }}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </Button>
-        </div>
-      </div>
+      <ChatHeader
+        businessName={businessName}
+        primaryColor={primaryColor}
+        onClose={() => setIsOpen(false)}
+        showClose
+      />
+      <ChatMessages {...chatMessagesProps} />
+      <ChatInput {...chatInputProps} />
     </div>
   );
 }

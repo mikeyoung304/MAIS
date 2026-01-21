@@ -1,10 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5242'
 tags: [code-review, performance, frontend, ux]
 dependencies: []
 created_at: 2026-01-21
+resolved_at: 2026-01-21
 pr: 31
 ---
 
@@ -65,6 +66,23 @@ const handleApprove = async (requestId: string, version: number) => {
 
 **Effort:** Medium (1 hour)
 **Risk:** Low
+
+## Resolution
+
+Implemented optimistic updates for both `handleApprove` and `handleDeny` functions:
+
+1. **Store previous state** before making any changes for potential rollback
+2. **Optimistically update UI immediately** - remove the request from the pending list and decrement the count
+3. **Make API call** in the background
+4. **On success**: No action needed (UI already updated)
+5. **On failure**: Rollback to previous state and show error message
+
+Key improvements:
+
+- Eliminated 3 unnecessary API calls (bootstrap, projects, pending requests) per action
+- UI feels instant - request disappears immediately when clicking Approve/Deny
+- Error handling includes proper rollback to restore previous state
+- Used `Math.max(0, count - 1)` to prevent negative counts
 
 ## Resources
 
