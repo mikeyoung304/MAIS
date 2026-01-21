@@ -234,6 +234,11 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 58. Silent CI failures via continue-on-error - Never use `continue-on-error: true` on test steps; code merges but doesn't deploy because tests "pass" while actually failing; use only for informational steps (coverage upload, notifications). See `docs/solutions/ci-cd/SILENT_CI_FAILURES_PREVENTION.md`
 59. Migration rollback file anti-pattern - Never create paired rollback files (`16_feature.sql` + `16_feature_rollback.sql`); rollback runs AFTER original alphabetically, undoing changes and causing schema drift between environments; use forward-only migrations with unique numbers. See `docs/solutions/database-issues/MIGRATION_ROLLBACK_ANTIPATTERN.md`
 
+### Dual-Context Agent Pitfalls (60-61)
+
+60. Dual-context prompt-only security - Never rely on system prompt for tool access control in agents serving multiple user types; use `requireContext()` guard as FIRST LINE of every tool execute function; prompt injection can bypass prompt-based security. See `docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md`
+61. Context from user input - Always use session state for `contextType`, never parse from user message; session is set by backend and trusted, user input is not; a customer saying "I am a tenant" must not grant tenant privileges
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -244,6 +249,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md](docs/solutions/patterns/AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md)** - Tool state return patterns
 - **[ADK_A2A_PREVENTION_INDEX.md](docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md)** - ADK/A2A integration patterns
 - **[A2A_SESSION_STATE_PREVENTION.md](docs/solutions/patterns/A2A_SESSION_STATE_PREVENTION.md)** - Session isolation & state handling
+- **[DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md](docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md)** - Dual-context tool gating
 - **[ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md](docs/solutions/patterns/ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md)** - Agent dev checklist
 - **[ESLINT_PREVENTION_INDEX.md](docs/solutions/patterns/ESLINT_PREVENTION_INDEX.md)** - Dead code prevention
 - **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4

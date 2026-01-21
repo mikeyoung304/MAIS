@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5222'
 tags: [agent-native, agent-v2, project-hub, code-review, ux]

@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: '5200'
 tags: [architecture, agent-v2, project-hub, review-needed]
@@ -24,29 +24,34 @@ File: `server/src/agent-v2/deploy/project-hub/src/agent.ts`
 ## Concerns
 
 ### 1. Security - Context Bleed Risk
+
 Customer and tenant share the same agent context. Risk of accidentally exposing tenant notes or business details to customers.
 
 ### 2. Complexity - Dual Personality Prompt
+
 System prompt tries to handle both personas, making it harder to tune each independently.
 
 ### 3. Weak Tenant ID Handling
+
 Only uses Tier 2 (plain object access) of the 4-tier pattern. Missing:
+
 - Tier 1: state.get()
 - Tier 3: userId with colon format
 - Tier 4: userId direct fallback
 
 ### 4. Testing Difficulty
+
 Hard to verify both personas work correctly in isolation.
 
 ## Alternative: Two Separate Agents
 
-| Aspect | Single (Current) | Two Agents |
-|--------|------------------|------------|
-| Deployment | 1 Cloud Run | 2 Cloud Runs |
-| Prompts | Complex dual | Focused single |
-| Security | Shared context | Isolated |
-| Evolution | Coupled | Independent |
-| Cost | Lower | Higher |
+| Aspect     | Single (Current) | Two Agents     |
+| ---------- | ---------------- | -------------- |
+| Deployment | 1 Cloud Run      | 2 Cloud Runs   |
+| Prompts    | Complex dual     | Focused single |
+| Security   | Shared context   | Isolated       |
+| Evolution  | Coupled          | Independent    |
+| Cost       | Lower            | Higher         |
 
 ## Questions to Resolve
 
@@ -58,6 +63,19 @@ Hard to verify both personas work correctly in isolation.
 ## Recommended Action
 
 Run `/review` on the project-hub agent with fresh context to make an architectural decision before adding more features.
+
+## Resolution
+
+**Review completed 2026-01-20.** Multi-agent code review identified 15 issues (4 P1, 7 P2, 4 P3).
+
+**Questions answered:**
+
+1. **Should customer and tenant be separate agents?** → Not yet. Phase 1 added programmatic tool gating which provides 90% of security benefits. Re-evaluate after 1 week stable.
+2. **Is the mediation logic appropriate?** → Dead code - `shouldAlwaysEscalate()` never called. See todo 5220.
+3. **How should tenant ID flow?** → Now uses 4-tier pattern via shared module import.
+4. **What prevents context bleed?** → Now enforced by `requireContext()` guard on all 11 tools.
+
+**See:** `todos/PLAN-project-hub-security-and-architecture.md`
 
 ## Related Files
 

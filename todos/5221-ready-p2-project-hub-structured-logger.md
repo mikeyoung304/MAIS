@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5221'
 tags: [observability, agent-v2, project-hub, code-review, logging]

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5225'
 tags: [performance, agent-v2, project-hub, code-review]

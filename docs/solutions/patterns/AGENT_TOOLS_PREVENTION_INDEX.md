@@ -442,6 +442,7 @@ Extract during implementation, not after. It's faster that way.
 - **STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md:** TOCTOU on JSON fields, DRY tool logic, API consistency (Issues #659-666)
   - Quick reference: STOREFRONT_SECTION_IDS_QUICK_REFERENCE.md
 - **AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md:** Tools must return updated state, not just confirmation (prevents agent amnesia)
+- **DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md:** Context guards for dual-context agents (prevents prompt injection privilege escalation)
 
 ### Implementation Files
 
@@ -476,3 +477,4 @@ When implementing new tools, copy the checklists and adapt them to your specific
 | JSON field TOCTOU     | STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md | Prevention Strategy 1    |
 | Tool API consistency  | STOREFRONT_SECTION_IDS_PREVENTION_STRATEGIES.md | Prevention Strategy 3    |
 | Active memory pattern | AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md          | Full document            |
+| Dual-context security | DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md | Full document            |

@@ -887,3 +887,4 @@ grep -rn "config: {" server/src/agent-v2/deploy/*/src/agent.ts
 - [Service Name Prevention](./ADK_CLOUD_RUN_SERVICE_NAME_PREVENTION.md)
 - [Session & State Prevention](./A2A_SESSION_STATE_PREVENTION.md) - Session isolation, state access patterns
 - [Session & State Quick Reference](./A2A_SESSION_STATE_QUICK_REFERENCE.md) - One-page cheat sheet
+- [Dual-Context Tool Isolation](./DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md) - Context guards for multi-user agents
