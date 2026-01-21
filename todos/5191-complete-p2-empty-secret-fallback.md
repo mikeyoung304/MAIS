@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: '5191'
 tags: [code-review, agent-v2, security]
