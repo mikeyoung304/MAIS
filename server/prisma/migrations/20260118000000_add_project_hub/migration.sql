@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS "ProjectRequest" (
     "status" "RequestStatus" NOT NULL DEFAULT 'PENDING',
     "requestData" JSONB NOT NULL,
     "responseData" JSONB,
+    "version" INTEGER NOT NULL DEFAULT 1,
     "handledBy" "RequestHandler",
     "resolvedAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3) NOT NULL,

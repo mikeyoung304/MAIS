@@ -50,6 +50,7 @@ import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes'
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminLandingPageRoutes } from './tenant-admin-landing-page.routes';
 import { createTenantAdminAgentRoutes } from './tenant-admin-agent.routes';
+import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
 import { createSegmentsRouter } from './segments.routes';
@@ -81,6 +82,7 @@ import {
   PublicBalancePaymentController,
 } from './public-balance-payment.routes';
 import { createPublicDateBookingRoutes } from './public-date-booking.routes';
+import { createPublicProjectRoutes } from './public-project.routes';
 import {
   loginLimiter,
   publicTenantLookupLimiter,
@@ -99,6 +101,7 @@ import type { ReminderService } from '../services/reminder.service';
 import type { LandingPageService } from '../services/landing-page.service';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import type { AvailabilityService } from '../services/availability.service';
+import type { ProjectHubService } from '../services/project-hub.service';
 
 interface Controllers {
   packages: PackagesController;
@@ -126,6 +129,7 @@ interface Services {
   reminder?: ReminderService;
   landingPage?: LandingPageService;
   webhookDelivery?: WebhookDeliveryService;
+  projectHub?: ProjectHubService;
 }
 
 interface Repositories {
@@ -718,6 +722,14 @@ export function createV1Router(
     );
     logger.info('✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent');
 
+    // Register tenant admin project routes (for project management dashboard)
+    // Requires tenant admin authentication - manage projects, view/approve requests
+    if (services.projectHub) {
+      const tenantAdminProjectRoutes = createTenantAdminProjectRoutes(services.projectHub);
+      app.use('/v1/tenant-admin/projects', tenantAuthMiddleware, tenantAdminProjectRoutes);
+      logger.info('✅ Tenant admin project routes mounted at /v1/tenant-admin/projects');
+    }
+
     // Register agent proposal executors and validate all are present
     registerAllExecutors(prismaClient);
     validateExecutorRegistry(); // CRITICAL: Fail fast if any executor is missing
@@ -734,6 +746,13 @@ export function createV1Router(
       customerChatRoutes
     );
     logger.info('✅ Public customer chat routes mounted at /v1/public/chat (rate limited)');
+
+    // Register public project routes (for customer project view page)
+    // NO authentication required - uses tenant context from X-Tenant-Key header
+    // Provides project details and Project Hub agent chat integration
+    const publicProjectRoutes = createPublicProjectRoutes(prismaClient);
+    app.use('/v1/public/projects', tenantMiddleware, requireTenant, publicProjectRoutes);
+    logger.info('✅ Public project routes mounted at /v1/public/projects');
 
     // Register customer booking executor with mail provider and Stripe for booking notifications and payment
     registerCustomerBookingExecutor(prismaClient, mailProvider, stripeAdapter);
@@ -775,6 +794,7 @@ export function createV1Router(
       tenantRepo: internalTenantRepo,
       serviceRepo: repositories?.service,
       advisorMemoryService,
+      projectHubService: services.projectHub,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');

@@ -502,8 +502,9 @@ Use the returned greeting to start the conversation.`,
 
       try {
         const bootstrapData = await callBackendAPI<CustomerBootstrapData>(
-          `/project-hub/bootstrap/customer/${projectId}`,
-          'GET'
+          `/project-hub/bootstrap-customer`,
+          'POST',
+          { tenantId, customerId }
         );
 
         // Build personalized greeting based on project status and booking date
@@ -562,8 +563,9 @@ Use the returned greeting to start the conversation.`,
     // Tenant context: Get business overview
     try {
       const bootstrapData = await callBackendAPI<TenantBootstrapData>(
-        `/project-hub/bootstrap/tenant/${tenantId}`,
-        'GET'
+        `/project-hub/bootstrap-tenant`,
+        'POST',
+        { tenantId }
       );
 
       // Build personalized greeting based on activity
@@ -624,7 +626,10 @@ const getProjectStatus = new FunctionTool({
     }
 
     try {
-      const project = await callBackendAPI<Project>(`/project-hub/projects/${projectId}`, 'GET');
+      const project = await callBackendAPI<Project>(`/project-hub/project-details`, 'POST', {
+        tenantId: session.tenantId,
+        projectId,
+      });
 
       return {
         success: true,
@@ -886,15 +891,17 @@ const submitRequest = new FunctionTool({
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + ESCALATION_EXPIRY_HOURS);
 
-      const request = await callBackendAPI<ProjectRequest>(
-        `/project-hub/projects/${projectId}/requests`,
+      const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
+        `/project-hub/create-request`,
         'POST',
         {
+          tenantId: session.tenantId,
+          projectId,
           type: requestType,
           requestData: { details, urgency: effectiveUrgency },
-          expiresAt: expiresAt.toISOString(),
         }
       );
+      const request = result.request;
 
       // Fire-and-forget event logging (non-blocking for faster response)
       callBackendAPI(`/project-hub/projects/${projectId}/events`, 'POST', {
@@ -953,13 +960,14 @@ const getTimeline = new FunctionTool({
     }
 
     try {
-      const events = await callBackendAPI<ProjectEvent[]>(
-        `/project-hub/projects/${projectId}/events?visibleToCustomer=true`,
-        'GET'
+      const result = await callBackendAPI<{ events: ProjectEvent[]; count: number }>(
+        `/project-hub/timeline`,
+        'POST',
+        { tenantId: session.tenantId, projectId, actor: 'customer' }
       );
 
       // Filter and format for customer view
-      const timeline = events.map((e) => ({
+      const timeline = result.events.map((e) => ({
         date: e.createdAt,
         type: e.type,
         description: (e.payload as Record<string, string>).description || e.type,
@@ -1001,21 +1009,22 @@ const getPendingRequests = new FunctionTool({
     const tenantId = session.tenantId;
 
     try {
-      const requests = await callBackendAPI<ProjectRequest[]>(
-        `/project-hub/tenants/${tenantId}/pending-requests?limit=${limit}`,
-        'GET'
+      const result = await callBackendAPI<{ requests: ProjectRequest[]; count: number }>(
+        `/project-hub/pending-requests`,
+        'POST',
+        { tenantId }
       );
 
       return {
         success: true,
-        requests: requests.map((r) => ({
+        requests: result.requests.map((r) => ({
           id: r.id,
           type: r.type,
           status: r.status,
           data: r.requestData,
           expiresAt: r.expiresAt,
         })),
-        count: requests.length,
+        count: result.count,
       };
     } catch (error) {
       return {
@@ -1090,12 +1099,15 @@ const approveRequest = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this request via tenantId header
+      // Include expectedVersion=1 for optimistic locking (fresh approval)
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
-        `/project-hub/requests/${requestId}/approve`,
+        `/project-hub/approve-request`,
         'POST',
         {
-          responseData: { message: response, approvedAt: new Date().toISOString() },
-          tenantId: session.tenantId, // For backend ownership verification
+          tenantId: session.tenantId,
+          requestId,
+          expectedVersion: 1, // Fresh request starts at v1
+          response,
         }
       );
 
@@ -1136,12 +1148,15 @@ const denyRequest = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this request via tenantId
+      // Include expectedVersion=1 for optimistic locking (fresh denial)
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
-        `/project-hub/requests/${requestId}/deny`,
+        `/project-hub/deny-request`,
         'POST',
         {
-          responseData: { reason, deniedAt: new Date().toISOString() },
-          tenantId: session.tenantId, // For backend ownership verification
+          tenantId: session.tenantId,
+          requestId,
+          expectedVersion: 1, // Fresh request starts at v1
+          reason,
         }
       );
 

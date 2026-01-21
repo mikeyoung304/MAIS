@@ -1,8 +1,8 @@
 # Project Hub: Backend, Frontend & Deployment Completion
 
 **Created:** 2026-01-21
-**Updated:** 2026-01-21 (Architecture Confirmed + CI/CD Updates)
-**Status:** Ready for Implementation
+**Updated:** 2026-01-21 (Implementation Complete)
+**Status:** ✅ COMPLETE
 **Complexity:** MORE (5-day vertical slice approach)
 **ADR:** ADR-018-hub-and-spoke-agent-architecture (linked)
 
@@ -78,12 +78,12 @@ The Project Hub agent (11 tools, dual-context) is fully implemented but has no b
 - ✅ Agent code complete (`server/src/agent-v2/deploy/project-hub/src/agent.ts`)
 - ✅ Prisma models defined (Project, ProjectEvent, ProjectFile, ProjectRequest)
 - ✅ Security patterns established (context guards, T3 confirmation, ownership verification)
-- ❌ No backend endpoints (agent calls fail)
-- ❌ No customer/tenant UI (no visibility)
-- ❌ Not deployed to Cloud Run
-- ❌ Not in CI/CD workflow (`deploy-agents.yml`)
-- ❌ Not in SERVICE_REGISTRY.md
-- ❌ Concierge missing `delegate_to_project_hub` tool
+- ✅ Backend endpoints implemented (9 endpoints in internal-agent.routes.ts)
+- ✅ Customer UI created (`/t/_domain/project/[projectId]/page.tsx`)
+- ✅ Tenant UI created (`/tenant/projects/page.tsx`)
+- ✅ CI/CD workflow updated (`deploy-agents.yml` includes project-hub)
+- ✅ SERVICE_REGISTRY.md updated (project-hub-agent pending deployment)
+- ✅ Concierge has `delegate_to_project_hub` tool
 
 ---
 
