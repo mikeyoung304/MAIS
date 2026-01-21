@@ -17,22 +17,30 @@ After triage of 31 deferred todos, we identified:
 
 ---
 
-## Sprint 1: Data Integrity (Current Priority)
+## Sprint 1: Data Integrity ✅ COMPLETE
 
-### P1: #620 - Optimistic Locking for Drafts
+### P1: #620 - Optimistic Locking for Drafts ✅
 
-**File:** `todos/620-active-p1-optimistic-locking-drafts.md`
-**Effort:** 3-4 hours
-**Risk:** User data loss (silent overwrites in multi-tab editing)
+**Status:** Merged to main (51bb2323) on 2026-01-21
+**Effort:** ~3 hours actual
+**Risk Mitigated:** User data loss (silent overwrites in multi-tab editing)
 
-**Implementation:**
+**Implementation Completed:**
 
-1. Schema migration: Add `landingPageConfigDraftVersion Int @default(0)`
-2. Backend: Modify storefront executors with version checks
-3. Frontend: Add version to API calls + conflict resolution UI
-4. Tests: Concurrent edit detection scenarios
+1. ✅ Schema migration: `landingPageConfigDraftVersion Int @default(0)`
+2. ✅ Backend: 5 executors use `updateMany` with version check, 2 reset to 0
+3. ✅ Frontend: `useDraftConfig` tracks version, `ConflictDialog` for conflicts
+4. ✅ Tests: 4 new unit tests + 30 existing tests updated
 
-**Why P1:** All three reviewers agree - this is the ONLY scenario where users can lose their actual work.
+**Files Changed:**
+
+- `server/prisma/schema.prisma` - Version field
+- `server/src/agent/executors/storefront-executors.ts` - Version checking
+- `apps/web/src/components/build-mode/ConflictDialog.tsx` - Conflict UI
+- `apps/web/src/hooks/useDraftConfig.ts` - Version tracking
+- `packages/contracts/src/tenant-admin/landing-page.contract.ts` - API contract
+
+**Why P1:** All three reviewers agreed - this was the ONLY scenario where users could lose their actual work.
 
 ---
 

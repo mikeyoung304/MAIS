@@ -67,10 +67,18 @@ The tenant dashboard has **one primary display** in Build Mode that shows storef
 - User can test customer chatbot experience
 - Full booking flow accessible
 
-### 5. Future: Undo/Redo
+### 5. Optimistic Locking ✅ (Implemented 2026-01-21)
+
+- Version field tracks draft modifications
+- `ConflictDialog` shows when another tab modified draft
+- Users can "Refresh & Continue" or "Discard My Changes"
+- See: #620, commit 51bb2323
+
+### 6. Future: Undo/Redo
 
 - Track change history during session
 - Allow stepping back through changes
+- Could leverage version history for rollback
 - Implementation TBD
 
 ---
@@ -134,8 +142,20 @@ See: [BUILD_MODE_LEGACY_CLEANUP.md](./BUILD_MODE_LEGACY_CLEANUP.md)
 
 ---
 
+## Future Work / Potential Enhancements
+
+| Enhancement             | Description                                 | Priority |
+| ----------------------- | ------------------------------------------- | -------- |
+| Undo/Redo               | Track change history, allow stepping back   | P3       |
+| Real-time Collaboration | Show other users' cursors/changes           | P4       |
+| Conflict Auto-Merge     | Intelligently merge non-conflicting changes | P4       |
+| Version History         | View/restore previous draft versions        | P3       |
+
+---
+
 ## Change Log
 
-| Date       | Change                          |
-| ---------- | ------------------------------- |
-| 2026-01-10 | Initial vision document created |
+| Date       | Change                                                         |
+| ---------- | -------------------------------------------------------------- |
+| 2026-01-21 | Added optimistic locking (#620) - prevents multi-tab data loss |
+| 2026-01-10 | Initial vision document created                                |
