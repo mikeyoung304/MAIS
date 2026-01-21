@@ -1,11 +1,11 @@
 ---
-status: deferred
-priority: p2
+status: active
+priority: p1
 issue_id: '620'
-tags: [code-review, architecture, build-mode, concurrency]
+tags: [code-review, architecture, build-mode, concurrency, data-integrity]
 dependencies: []
-deferred_reason: 'Requires schema migration + frontend conflict UI - not blocking for build mode MVP'
-deferred_until: 'post-build-mode-merge'
+triage_date: '2026-01-21'
+triage_notes: 'UPGRADED P2→P1 by enterprise triage. All 3 reviewers agree this is the ONLY true P1 - user data loss risk.'
 ---
 
 # No Optimistic Locking for Concurrent Draft Edits

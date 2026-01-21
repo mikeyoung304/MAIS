@@ -1,11 +1,14 @@
 ---
 status: deferred
-priority: p1
+priority: p3
 issue_id: '567'
-tags: [code-review, agent-native, agent-ecosystem, quality-first-triage]
+tags: [code-review, agent-native, agent-ecosystem, feature-request]
 dependencies: []
 deferred_date: '2026-01-01'
 deferred_reason: 'Product decision: defer to post-MVP. Focus on booking flow first.'
+merged_from: ['535']
+triage_date: '2026-01-21'
+triage_notes: 'Downgraded P1→P3. This is a feature request, not tech debt. Ship when customers ask for it.'
 ---
 
 # P1: No Customer Self-Service Tools (Reschedule/Cancel)

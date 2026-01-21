@@ -1,9 +1,12 @@
 ---
 status: deferred
-priority: p1
+priority: p2
 issue_id: '525'
-tags: [code-review, agent-ecosystem, security, rate-limiting]
+tags: [code-review, agent-ecosystem, security, rate-limiting, horizontal-scaling]
 dependencies: []
+merged_from: ['574']
+triage_date: '2026-01-21'
+triage_notes: 'Downgraded P1→P2. Only relevant when scaling horizontally. Single instance is fine for current load. Merged with #574.'
 ---
 
 # Rate Limiter Session State Not Persisted
