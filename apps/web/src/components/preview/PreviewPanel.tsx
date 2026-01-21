@@ -24,6 +24,7 @@ import { useDraftConfig } from '@/hooks/useDraftConfig';
 import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/build-mode/ConfirmDialog';
+import { ConflictDialog } from '@/components/build-mode/ConflictDialog';
 import { parseChildMessage } from '@/lib/build-mode/protocol';
 import { BUILD_MODE_CONFIG } from '@/lib/build-mode/config';
 import type { BuildModeParentMessage } from '@/lib/build-mode/types';
@@ -119,6 +120,9 @@ export function PreviewPanel({
   // T3 confirmation dialogs
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+  // Conflict dialog for concurrent modification errors (#620)
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
 
   // Build iframe URL with preview token
   // Token is included to authenticate draft content access server-side
@@ -303,6 +307,15 @@ export function PreviewPanel({
       }
     } catch (err) {
       setError('Failed to discard changes');
+    }
+  };
+
+  // Handle conflict refresh - refetch draft and reload iframe (#620)
+  const handleConflictRefresh = async () => {
+    onConfigUpdate(); // Invalidate cache to refetch latest version
+    // Force iframe reload to show fresh content
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.location.reload();
     }
   };
 
@@ -513,6 +526,13 @@ export function PreviewPanel({
         confirmLabel="Shred"
         variant="destructive"
         onConfirm={handleDiscard}
+      />
+
+      {/* Conflict dialog for concurrent modification errors (#620) */}
+      <ConflictDialog
+        open={showConflictDialog}
+        onOpenChange={setShowConflictDialog}
+        onRefresh={handleConflictRefresh}
       />
     </div>
   );

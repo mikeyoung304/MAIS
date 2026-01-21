@@ -14,6 +14,7 @@ export {
   DateUnavailableError,
   InvalidStateError,
   ConfigurationError,
+  ConcurrentModificationError,
   toUserFriendlyError,
   ErrorMessages,
 } from './agent-error';

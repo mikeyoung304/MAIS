@@ -28,6 +28,8 @@ export const LandingPageDraftResponseSchema = z.object({
   published: LandingPageConfigSchema.nullable(),
   draftUpdatedAt: z.string().datetime().nullable(),
   publishedAt: z.string().datetime().nullable(),
+  /** Optimistic locking version - increments on each draft write (#620) */
+  version: z.number().int().min(0),
 });
 
 export type LandingPageDraftResponse = z.infer<typeof LandingPageDraftResponseSchema>;

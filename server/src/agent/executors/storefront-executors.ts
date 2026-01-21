@@ -18,7 +18,11 @@
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 import { registerProposalExecutor } from '../proposals/executor-registry';
 import { logger } from '../../lib/core/logger';
-import { ResourceNotFoundError, ValidationError } from '../errors/index';
+import {
+  ResourceNotFoundError,
+  ValidationError,
+  ConcurrentModificationError,
+} from '../errors/index';
 import { getDraftConfigWithSlug } from '../tools/utils';
 import { hashTenantStorefront } from '../../lib/advisory-locks';
 import { createPublishedWrapper, countSectionsInConfig } from '../../lib/landing-page-utils';
@@ -48,6 +52,18 @@ import {
 // Transaction configuration for storefront edits
 const STOREFRONT_TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds
 const STOREFRONT_ISOLATION_LEVEL = 'ReadCommitted' as const;
+
+// ============================================================================
+// Optimistic Locking Types (#620)
+// ============================================================================
+
+/**
+ * Result of version-checked draft save operation
+ * Used by all executors to handle concurrent modification conflicts
+ */
+type SaveDraftResult =
+  | { success: true; newVersion: number }
+  | { success: false; error: 'CONCURRENT_MODIFICATION'; currentVersion: number };
 
 // ============================================================================
 // Helper Functions
@@ -87,22 +103,58 @@ function isValidSectionType(type: string): type is SectionTypeName {
 type PrismaTransactionClient = Pick<PrismaClient, 'tenant' | '$executeRaw'>;
 
 /**
- * Save pages config to draft
- * P1-659 FIX: Accepts transaction client for atomic operations
+ * Save pages config to draft with optimistic locking (#620)
+ *
+ * Uses updateMany with version check to detect concurrent modifications.
+ * If another tab/session modified the draft, returns CONCURRENT_MODIFICATION error.
+ *
+ * Advisory locks (P1-659) protect against race conditions within a single request.
+ * Optimistic locking (#620) protects against conflicts across browser tabs/sessions.
+ * Both protections are complementary and should be used together.
+ *
+ * @param tx - Prisma transaction client
+ * @param tenantId - Tenant ID
+ * @param pages - Updated pages configuration
+ * @param expectedVersion - Version from getDraftConfigWithSlug (must match DB)
+ * @returns Success with new version, or CONCURRENT_MODIFICATION error
  */
-async function saveDraftConfig(
-  prisma: PrismaClient | PrismaTransactionClient,
+async function saveDraftConfigWithVersion(
+  tx: PrismaTransactionClient,
   tenantId: string,
-  pages: PagesConfig
-): Promise<void> {
+  pages: PagesConfig,
+  expectedVersion: number
+): Promise<SaveDraftResult> {
   const draftConfig: LandingPageConfig = { pages };
 
-  await prisma.tenant.update({
-    where: { id: tenantId },
+  // Atomic update: only succeeds if version matches expected
+  // This is the core of optimistic locking - if someone else modified
+  // the draft since we read it, this WHERE clause won't match
+  const result = await tx.tenant.updateMany({
+    where: {
+      id: tenantId,
+      landingPageConfigDraftVersion: expectedVersion,
+    },
     data: {
       landingPageConfigDraft: draftConfig as unknown as Prisma.JsonObject,
+      landingPageConfigDraftVersion: expectedVersion + 1,
     },
   });
+
+  // If no rows updated, version mismatch - concurrent modification detected
+  if (result.count === 0) {
+    // Fetch current version for error reporting
+    const current = await tx.tenant.findUnique({
+      where: { id: tenantId },
+      select: { landingPageConfigDraftVersion: true },
+    });
+    return {
+      success: false,
+      error: 'CONCURRENT_MODIFICATION',
+      currentVersion: current?.landingPageConfigDraftVersion ?? 0,
+    };
+  }
+
+  return { success: true, newVersion: expectedVersion + 1 };
 }
 
 // ============================================================================
@@ -117,6 +169,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
   // ============================================================================
   // update_page_section - Update or add a section on a landing page
   // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
+  // #620 FIX: Uses optimistic locking to detect cross-tab conflicts
   // ============================================================================
 
   registerProposalExecutor('update_page_section', async (tenantId, payload) => {
@@ -140,8 +193,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         const lockId = hashTenantStorefront(tenantId);
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Get current draft config and slug within the transaction
-        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
+        // Get current draft config, slug, and version within the transaction
+        const { pages, slug, version } = await getDraftConfigWithSlug(tx, tenantId);
 
         // Validate page exists
         const page = pages[pageName as keyof PagesConfig];
@@ -214,8 +267,18 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           [pageName]: updatedPage,
         };
 
-        // Save to draft within same transaction
-        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
+        // Save to draft with version check (#620 optimistic locking)
+        const saveResult = await saveDraftConfigWithVersion(
+          tx,
+          tenantId,
+          updatedPages as PagesConfig,
+          version
+        );
+
+        // Handle concurrent modification conflict
+        if (!saveResult.success) {
+          throw new ConcurrentModificationError(version, saveResult.currentVersion);
+        }
 
         const resultIndex = sectionIndex === -1 ? newSections.length - 1 : sectionIndex;
         const sectionId =
@@ -230,6 +293,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
             sectionType: sectionData.type,
             sectionId,
             action: sectionIndex === -1 ? 'CREATE' : 'UPDATE',
+            newVersion: saveResult.newVersion,
           },
           'Page section modified via Build Mode'
         );
@@ -245,6 +309,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           sectionType: sectionData.type,
           sectionId,
           previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+          version: saveResult.newVersion,
         };
       },
       {
@@ -256,6 +321,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
   // ============================================================================
   // remove_page_section - Remove a section from a landing page
+  // #620 FIX: Uses optimistic locking to detect cross-tab conflicts
   // ============================================================================
 
   registerProposalExecutor('remove_page_section', async (tenantId, payload) => {
@@ -279,8 +345,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         const lockId = hashTenantStorefront(tenantId);
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Get current draft config and slug within the transaction
-        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
+        // Get current draft config, slug, and version within the transaction
+        const { pages, slug, version } = await getDraftConfigWithSlug(tx, tenantId);
 
         // Validate page exists
         const page = pages[pageName as keyof PagesConfig];
@@ -318,8 +384,18 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           [pageName]: updatedPage,
         };
 
-        // Save to draft within same transaction
-        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
+        // Save to draft with version check (#620 optimistic locking)
+        const saveResult = await saveDraftConfigWithVersion(
+          tx,
+          tenantId,
+          updatedPages as PagesConfig,
+          version
+        );
+
+        // Handle concurrent modification conflict
+        if (!saveResult.success) {
+          throw new ConcurrentModificationError(version, saveResult.currentVersion);
+        }
 
         // Audit logging with section ID for traceability
         logger.info(
@@ -330,6 +406,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
             sectionType: removedType,
             sectionId: removedId,
             action: 'DELETE',
+            newVersion: saveResult.newVersion,
           },
           'Page section removed via Build Mode'
         );
@@ -346,6 +423,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           removedSectionId: removedId,
           remainingSections: newSections.length,
           previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+          version: saveResult.newVersion,
         };
       },
       {
@@ -357,6 +435,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
   // ============================================================================
   // reorder_page_sections - Move a section to a new position
+  // #620 FIX: Uses optimistic locking to detect cross-tab conflicts
   // ============================================================================
 
   registerProposalExecutor('reorder_page_sections', async (tenantId, payload) => {
@@ -379,8 +458,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         const lockId = hashTenantStorefront(tenantId);
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Get current draft config and slug within the transaction
-        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
+        // Get current draft config, slug, and version within the transaction
+        const { pages, slug, version } = await getDraftConfigWithSlug(tx, tenantId);
 
         // Validate page exists
         const page = pages[pageName as keyof PagesConfig];
@@ -415,8 +494,18 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           [pageName]: updatedPage,
         };
 
-        // Save to draft within same transaction
-        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
+        // Save to draft with version check (#620 optimistic locking)
+        const saveResult = await saveDraftConfigWithVersion(
+          tx,
+          tenantId,
+          updatedPages as PagesConfig,
+          version
+        );
+
+        // Handle concurrent modification conflict
+        if (!saveResult.success) {
+          throw new ConcurrentModificationError(version, saveResult.currentVersion);
+        }
 
         const movedSectionId =
           'id' in movedSection && typeof movedSection.id === 'string' ? movedSection.id : undefined;
@@ -429,6 +518,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
             toIndex,
             sectionType: movedSection.type,
             sectionId: movedSectionId,
+            newVersion: saveResult.newVersion,
           },
           'Page sections reordered via Build Mode'
         );
@@ -445,6 +535,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           movedSectionType: movedSection.type,
           movedSectionId,
           previewUrl: slug ? `/t/${slug}?preview=draft&page=${pageName}` : undefined,
+          version: saveResult.newVersion,
         };
       },
       {
@@ -457,6 +548,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
   // ============================================================================
   // toggle_page_enabled - Enable or disable entire pages
   // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
+  // #620 FIX: Uses optimistic locking to detect cross-tab conflicts
   // ============================================================================
 
   registerProposalExecutor('toggle_page_enabled', async (tenantId, payload) => {
@@ -484,8 +576,8 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
         const lockId = hashTenantStorefront(tenantId);
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 
-        // Get current draft config and slug within the transaction
-        const { pages, slug } = await getDraftConfigWithSlug(tx, tenantId);
+        // Get current draft config, slug, and version within the transaction
+        const { pages, slug, version } = await getDraftConfigWithSlug(tx, tenantId);
 
         // Validate page exists
         const page = pages[pageName as keyof PagesConfig];
@@ -505,10 +597,23 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           [pageName]: updatedPage,
         };
 
-        // Save to draft within same transaction
-        await saveDraftConfig(tx, tenantId, updatedPages as PagesConfig);
+        // Save to draft with version check (#620 optimistic locking)
+        const saveResult = await saveDraftConfigWithVersion(
+          tx,
+          tenantId,
+          updatedPages as PagesConfig,
+          version
+        );
 
-        logger.info({ tenantId, pageName, enabled }, 'Page visibility toggled via Build Mode');
+        // Handle concurrent modification conflict
+        if (!saveResult.success) {
+          throw new ConcurrentModificationError(version, saveResult.currentVersion);
+        }
+
+        logger.info(
+          { tenantId, pageName, enabled, newVersion: saveResult.newVersion },
+          'Page visibility toggled via Build Mode'
+        );
 
         // Phase 1.4: Return updated config for optimistic frontend updates
         return {
@@ -519,6 +624,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           pageName,
           enabled,
           previewUrl: slug ? `/t/${slug}?preview=draft` : undefined,
+          version: saveResult.newVersion,
         };
       },
       {
@@ -532,6 +638,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
   // update_storefront_branding - Update brand colors, fonts, logo
   // P2-741 FIX: Now uses advisory lock (correcting previous rationale)
   // The branding JSON field DOES require read-modify-write, creating TOCTOU risk.
+  // NOTE: Branding updates don't modify landingPageConfigDraft - no version check needed
   // ============================================================================
 
   registerProposalExecutor('update_storefront_branding', async (tenantId, payload) => {
@@ -619,6 +726,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
   // ============================================================================
   // publish_draft - Publish draft changes to live storefront
   // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
+  // #620 FIX: Resets version to 0 on publish (fresh start for next draft)
   // ============================================================================
 
   registerProposalExecutor('publish_draft', async (tenantId, payload) => {
@@ -667,11 +775,13 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
 
         // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
         // Cast wrapper for Prisma 7 JSON field type compatibility
+        // #620: Reset version to 0 on publish - next draft starts fresh
         await tx.tenant.update({
           where: { id: tenantId },
           data: {
             landingPageConfig: publishedWrapper as unknown as Prisma.InputJsonValue,
             landingPageConfigDraft: Prisma.DbNull, // Clear the draft (Prisma 7 pattern)
+            landingPageConfigDraftVersion: 0, // Reset version for next draft cycle
           },
         });
 
@@ -694,6 +804,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           action: 'published',
           previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
           note: 'Changes are now live.',
+          version: 0, // Fresh version for next draft cycle
         };
       },
       {
@@ -706,6 +817,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
   // ============================================================================
   // discard_draft - Discard all draft changes
   // P1-659 FIX: Uses advisory locks to prevent TOCTOU race conditions
+  // #620 FIX: Resets version to 0 on discard (fresh start for next draft)
   // ============================================================================
 
   registerProposalExecutor('discard_draft', async (tenantId, payload) => {
@@ -744,12 +856,14 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           throw new ValidationError('No draft changes to discard.');
         }
 
-        // Clear the draft
+        // Clear the draft and reset version
         // Note: Use Prisma.DbNull for explicit null in JSON fields (Prisma 7 breaking change)
+        // #620: Reset version to 0 on discard - next draft starts fresh
         await tx.tenant.update({
           where: { id: tenantId },
           data: {
             landingPageConfigDraft: Prisma.DbNull, // Prisma 7 pattern for clearing JSON field
+            landingPageConfigDraftVersion: 0, // Reset version for next draft cycle
           },
         });
 
@@ -763,6 +877,7 @@ export function registerStorefrontExecutors(prisma: PrismaClient): void {
           action: 'discarded',
           previewUrl: tenant.slug ? `/t/${tenant.slug}` : undefined,
           note: 'Draft changes have been discarded. Showing live version.',
+          version: 0, // Fresh version for next draft cycle
         };
       },
       {

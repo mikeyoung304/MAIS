@@ -31,6 +31,7 @@ describe('Storefront Executors', () => {
     tenant: {
       findUnique: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
+      updateMany: ReturnType<typeof vi.fn>;
     };
     $transaction: ReturnType<typeof vi.fn>;
   };
@@ -52,6 +53,7 @@ describe('Storefront Executors', () => {
       tenant: {
         findUnique: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }), // Version check success by default
       },
       // Mock $transaction to pass through the callback with a mock tx that uses same tenant mock
       $transaction: vi.fn().mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
@@ -113,13 +115,16 @@ describe('Storefront Executors', () => {
           id: 'tenant-123',
           landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
           landingPageConfigDraft: null,
+          landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+          slug: 'test-tenant',
         })
         .mockResolvedValueOnce({
           id: 'tenant-123',
           slug: 'test-tenant',
         });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await executor('tenant-123', {
         pageName: 'home',
@@ -132,7 +137,8 @@ describe('Storefront Executors', () => {
       });
 
       expect(result).toHaveProperty('action', 'added');
-      expect(mockPrisma.tenant.update).toHaveBeenCalled();
+      // Uses updateMany for optimistic locking version check (#620)
+      expect(mockPrisma.tenant.updateMany).toHaveBeenCalled();
     });
 
     it('should update existing section', async () => {
@@ -143,13 +149,16 @@ describe('Storefront Executors', () => {
           id: 'tenant-123',
           landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
           landingPageConfigDraft: null,
+          landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+          slug: 'test-tenant',
         })
         .mockResolvedValueOnce({
           id: 'tenant-123',
           slug: 'test-tenant',
         });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await executor('tenant-123', {
         pageName: 'home',
@@ -173,6 +182,8 @@ describe('Storefront Executors', () => {
         id: 'tenant-123',
         landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
         landingPageConfigDraft: null,
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+        slug: 'test-tenant',
       });
 
       await expect(
@@ -191,13 +202,16 @@ describe('Storefront Executors', () => {
           id: 'tenant-123',
           landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
           landingPageConfigDraft: null,
+          landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+          slug: 'test-tenant',
         })
         .mockResolvedValueOnce({
           id: 'tenant-123',
           slug: 'test-tenant',
         });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await executor('tenant-123', {
         pageName: 'home',
@@ -205,7 +219,8 @@ describe('Storefront Executors', () => {
       });
 
       expect(result).toHaveProperty('action', 'removed');
-      expect(mockPrisma.tenant.update).toHaveBeenCalled();
+      // Uses updateMany for optimistic locking version check (#620)
+      expect(mockPrisma.tenant.updateMany).toHaveBeenCalled();
     });
   });
 
@@ -217,6 +232,8 @@ describe('Storefront Executors', () => {
         id: 'tenant-123',
         landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
         landingPageConfigDraft: null,
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+        slug: 'test-tenant',
       });
 
       await expect(
@@ -300,13 +317,16 @@ describe('Storefront Executors', () => {
           id: 'tenant-123',
           landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
           landingPageConfigDraft: null,
+          landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+          slug: 'test-tenant',
         })
         .mockResolvedValueOnce({
           id: 'tenant-123',
           slug: 'test-tenant',
         });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await executor('tenant-123', {
         pageName: 'about',
@@ -732,13 +752,16 @@ describe('Storefront Executors', () => {
           id: 'tenant-123',
           landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
           landingPageConfigDraft: null,
+          landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
+          slug: 'test-tenant',
         })
         .mockResolvedValueOnce({
           id: 'tenant-123',
           slug: 'test-tenant',
         });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       await executor('tenant-123', {
         pageName: 'about',
@@ -751,9 +774,10 @@ describe('Storefront Executors', () => {
         })
       );
 
-      expect(mockPrisma.tenant.update).toHaveBeenCalledWith(
+      // Uses updateMany for optimistic locking version check (#620)
+      expect(mockPrisma.tenant.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'tenant-123' },
+          where: expect.objectContaining({ id: 'tenant-123' }),
         })
       );
     });
@@ -767,15 +791,17 @@ describe('Storefront Executors', () => {
     it('should acquire advisory lock for each concurrent update', async () => {
       const executor = registeredExecutors.get('update_page_section')!;
 
-      // Mock tenant data for all concurrent requests
+      // Mock tenant data for all concurrent requests - includes version for optimistic locking (#620)
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-123',
         slug: 'test-tenant',
         landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
         landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
       });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       // Execute 5 concurrent updates
       const promises = Array(5)
@@ -822,9 +848,11 @@ describe('Storefront Executors', () => {
         slug: 'test-tenant',
         landingPageConfig: mockConfig,
         landingPageConfigDraft: mockConfig,
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
       });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       // Try to add sections concurrently (append with index -1)
       const promises = Array(3)
@@ -843,8 +871,8 @@ describe('Storefront Executors', () => {
 
       await Promise.all(promises);
 
-      // All should succeed
-      expect(mockPrisma.tenant.update).toHaveBeenCalledTimes(3);
+      // All should succeed - uses updateMany for optimistic locking version check (#620)
+      expect(mockPrisma.tenant.updateMany).toHaveBeenCalledTimes(3);
 
       // Advisory locks should have prevented race conditions
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(3);
@@ -858,9 +886,11 @@ describe('Storefront Executors', () => {
         slug: 'test-tenant',
         landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
         landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
       });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       await executor('tenant-123', {
         pageName: 'home',
@@ -892,9 +922,11 @@ describe('Storefront Executors', () => {
         slug: 'test-tenant',
         landingPageConfig: mockConfig,
         landingPageConfigDraft: mockConfig,
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
       });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       // Reorder using indices (executor uses fromIndex/toIndex, not IDs)
       await executor('tenant-123', {
@@ -915,9 +947,11 @@ describe('Storefront Executors', () => {
         slug: 'test-tenant',
         landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
         landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
       });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       await executor('tenant-123', {
         pageName: 'about',
@@ -972,9 +1006,11 @@ describe('Storefront Executors', () => {
         slug: 'test-tenant',
         landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
         landingPageConfigDraft: { pages: DEFAULT_PAGES_CONFIG },
+        landingPageConfigDraftVersion: 0, // Version for optimistic locking (#620)
       });
 
-      mockPrisma.tenant.update.mockResolvedValue({});
+      // updateMany returns count: 1 to indicate successful version-checked update
+      mockPrisma.tenant.updateMany.mockResolvedValue({ count: 1 });
 
       // Update different pages concurrently
       const promises = [
@@ -997,9 +1033,9 @@ describe('Storefront Executors', () => {
 
       await Promise.all(promises);
 
-      // All should succeed with advisory locks
+      // All should succeed with advisory locks - uses updateMany for optimistic locking (#620)
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(3);
-      expect(mockPrisma.tenant.update).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.tenant.updateMany).toHaveBeenCalledTimes(3);
     });
   });
 });

@@ -30,6 +30,8 @@ export interface DraftConfigWithSlugResult extends DraftConfigResult {
   rawDraftConfig: LandingPageConfig | null;
   /** Raw live config (null if no live config exists) - use for existsInLive checks */
   rawLiveConfig: LandingPageConfig | null;
+  /** Optimistic locking version - must be passed to saveDraftConfigWithVersion */
+  version: number;
 }
 
 /**

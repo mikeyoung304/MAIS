@@ -43,6 +43,9 @@ export const AgentErrorCode = {
   ALREADY_REFUNDED: 'ALREADY_REFUNDED',
   INVALID_STATE: 'INVALID_STATE',
 
+  // Concurrency errors (6xx) - #620 Optimistic Locking
+  CONCURRENT_MODIFICATION: 'CONCURRENT_MODIFICATION',
+
   // System errors (5xx)
   TOOL_UNKNOWN: 'TOOL_UNKNOWN',
   API_ERROR: 'API_ERROR',
@@ -202,6 +205,45 @@ export class ConfigurationError extends AgentError {
 
     super(AgentErrorCode.CONFIGURATION_ERROR, message, { feature, ...details });
     this.name = 'ConfigurationError';
+  }
+}
+
+/**
+ * Error for concurrent modification conflicts (optimistic locking) - #620
+ *
+ * Thrown when a draft was modified by another session/tab since it was loaded.
+ * Frontend should show a ConflictDialog offering "Refresh & Continue" or "Discard".
+ *
+ * @property currentVersion - The actual current version in the database
+ * @property expectedVersion - The version the client expected (stale)
+ */
+export class ConcurrentModificationError extends AgentError {
+  public readonly currentVersion: number;
+  public readonly expectedVersion: number;
+
+  constructor(expectedVersion: number, currentVersion: number, details?: Record<string, unknown>) {
+    const message =
+      'This draft was modified in another session. Please refresh to get the latest version before making more changes.';
+
+    super(AgentErrorCode.CONCURRENT_MODIFICATION, message, {
+      expectedVersion,
+      currentVersion,
+      ...details,
+    });
+    this.name = 'ConcurrentModificationError';
+    this.currentVersion = currentVersion;
+    this.expectedVersion = expectedVersion;
+  }
+
+  /**
+   * Override toJSON to include version info for frontend handling
+   */
+  override toJSON(): Record<string, unknown> {
+    return {
+      ...super.toJSON(),
+      currentVersion: this.currentVersion,
+      expectedVersion: this.expectedVersion,
+    };
   }
 }
 

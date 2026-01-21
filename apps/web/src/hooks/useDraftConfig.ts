@@ -38,6 +38,8 @@ interface DraftConfigData {
   hasDraft: boolean;
   /** When the draft was last updated */
   draftUpdatedAt?: string;
+  /** Optimistic locking version - tracks concurrent modifications (#620) */
+  version: number;
 }
 
 /**
@@ -48,6 +50,8 @@ interface UseDraftConfigResult {
   config: PagesConfig;
   /** Whether there's an unpublished draft */
   hasDraft: boolean;
+  /** Optimistic locking version for concurrent modification detection (#620) */
+  version: number;
   /** Loading state */
   isLoading: boolean;
   /** Error state */
@@ -94,7 +98,7 @@ export function useDraftConfig(): UseDraftConfigResult {
 
         if (response.status === 200) {
           const body = response.body;
-          // API returns: { draft, published, draftUpdatedAt, publishedAt }
+          // API returns: { draft, published, draftUpdatedAt, publishedAt, version }
           // draft and published are LandingPageConfig objects with { pages, branding, ... }
           // Prefer draft over published, with fallback to defaults
           const hasDraft = body.draft !== null;
@@ -105,20 +109,21 @@ export function useDraftConfig(): UseDraftConfigResult {
             pages,
             hasDraft,
             draftUpdatedAt: body.draftUpdatedAt ?? undefined,
+            version: body.version,
           };
         }
 
         // 404 means tenant not found or no config
         if (response.status === 404) {
           logger.debug('[useDraftConfig] No config found, using defaults');
-          return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false };
+          return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false, version: 0 };
         }
 
         // Other errors - fallback to defaults
         logger.warn('[useDraftConfig] Unexpected response, using defaults', {
           status: response.status,
         });
-        return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false };
+        return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false, version: 0 };
       } catch (error) {
         logger.error('[useDraftConfig] Failed to fetch draft', { error });
         throw error;
@@ -205,6 +210,7 @@ export function useDraftConfig(): UseDraftConfigResult {
   return {
     config: query.data?.pages ?? DEFAULT_PAGES_CONFIG,
     hasDraft: query.data?.hasDraft ?? false,
+    version: query.data?.version ?? 0,
     isLoading: query.isLoading,
     error: query.error,
     refetch,

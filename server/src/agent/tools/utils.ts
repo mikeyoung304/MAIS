@@ -266,6 +266,7 @@ export async function getDraftConfigWithSlug(
     select: {
       landingPageConfig: true,
       landingPageConfigDraft: true,
+      landingPageConfigDraftVersion: true,
       slug: true,
     },
   });
@@ -278,6 +279,7 @@ export async function getDraftConfigWithSlug(
   // These are passed through unchanged so tools can compute existsInDraft/existsInLive
   const rawDraftConfig = tenant.landingPageConfigDraft as unknown as LandingPageConfig | null;
   const rawLiveConfig = tenant.landingPageConfig as unknown as LandingPageConfig | null;
+  const version = tenant.landingPageConfigDraftVersion;
 
   // If draft exists, validate and use it
   if (tenant.landingPageConfigDraft) {
@@ -288,6 +290,7 @@ export async function getDraftConfigWithSlug(
       slug: tenant.slug,
       rawDraftConfig,
       rawLiveConfig,
+      version,
     };
   }
 
@@ -300,6 +303,7 @@ export async function getDraftConfigWithSlug(
       slug: tenant.slug,
       rawDraftConfig,
       rawLiveConfig,
+      version,
     };
   }
 
@@ -309,6 +313,7 @@ export async function getDraftConfigWithSlug(
     slug: tenant.slug,
     rawDraftConfig,
     rawLiveConfig,
+    version,
   };
 }
 

@@ -982,6 +982,7 @@ export class PrismaTenantRepository {
       select: {
         landingPageConfig: true,
         landingPageConfigDraft: true,
+        landingPageConfigDraftVersion: true,
       },
     });
 
@@ -1022,6 +1023,7 @@ export class PrismaTenantRepository {
       published,
       draftUpdatedAt: null, // TODO: Add timestamp column if needed
       publishedAt: null, // TODO: Add timestamp column if needed
+      version: tenant.landingPageConfigDraftVersion,
     };
   }
 
@@ -1215,6 +1217,8 @@ export interface LandingPageDraftWrapper {
   published: LandingPageConfig | null;
   draftUpdatedAt: string | null;
   publishedAt: string | null;
+  /** Optimistic locking version - increments on each draft write (#620) */
+  version: number;
 }
 
 /**
