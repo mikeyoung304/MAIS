@@ -73,7 +73,7 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
    * GET /bootstrap
    * Get dashboard summary for tenant
    */
-  router.get('/bootstrap', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/bootstrap', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = res.locals.tenantAuth?.tenantId;
       if (!tenantId) {

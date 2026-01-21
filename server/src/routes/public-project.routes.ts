@@ -126,7 +126,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           booking: {
             include: {
               package: {
-                select: { id: true, title: true, priceCents: true },
+                select: { id: true, name: true, basePrice: true },
               },
               customer: {
                 select: { id: true, name: true, email: true },
@@ -170,9 +170,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         },
         booking: {
           eventDate: eventDate.toISOString(),
-          serviceName: project.booking.package?.title ?? 'Service',
-          customerName:
-            project.booking.customer?.name ?? project.booking.customerName ?? 'Customer',
+          serviceName: project.booking.package?.name ?? 'Service',
+          customerName: project.booking.customer?.name ?? 'Customer',
         },
         pendingRequests: project.requests.map((r) => ({
           id: r.id,
@@ -330,7 +329,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
             booking: {
               include: {
                 customer: { select: { id: true, name: true } },
-                package: { select: { title: true } },
+                package: { select: { name: true } },
               },
             },
           },
@@ -354,9 +353,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           select: { name: true },
         });
 
-        const customerName =
-          project.booking.customer?.name ?? project.booking.customerName ?? 'there';
-        const serviceName = project.booking.package?.title ?? 'your service';
+        const customerName = project.booking.customer?.name ?? 'there';
+        const serviceName = project.booking.package?.name ?? 'your service';
         const businessName = tenant?.name ?? 'us';
 
         // Generate session ID (could also store in DB for persistence)

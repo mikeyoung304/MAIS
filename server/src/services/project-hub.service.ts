@@ -18,7 +18,7 @@
  * @module services/project-hub
  */
 
-import type { PrismaClient } from '../generated/prisma/client';
+import type { PrismaClient, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, ConcurrentModificationError } from '../lib/errors';
 import type {
@@ -75,13 +75,13 @@ export interface ProjectWithBooking {
     eventDate: Date;
     package: {
       id: string;
-      title: string;
-      priceCents: number;
+      name: string;
+      basePrice: number;
     } | null;
     customer: {
       id: string;
       name: string;
-      email: string;
+      email: string | null;
     };
   };
 }
@@ -107,7 +107,7 @@ export interface ProjectRequestWithContext {
         email: string;
       };
       package: {
-        title: string;
+        name: string;
       } | null;
     };
   };
@@ -281,7 +281,7 @@ export class ProjectHubService {
         booking: {
           include: {
             package: {
-              select: { title: true },
+              select: { name: true },
             },
             customer: {
               select: { name: true },
@@ -301,7 +301,7 @@ export class ProjectHubService {
     }
 
     const customerName = project.booking.customer?.name || 'there';
-    const serviceName = project.booking.package?.title || 'your service';
+    const serviceName = project.booking.package?.name || 'your service';
     const bookingDate = project.booking.date ?? project.booking.startTime ?? new Date();
 
     return {
@@ -389,7 +389,7 @@ export class ProjectHubService {
         booking: {
           include: {
             package: {
-              select: { id: true, title: true, priceCents: true },
+              select: { id: true, name: true, basePrice: true },
             },
             customer: {
               select: { id: true, name: true, email: true },
@@ -421,14 +421,14 @@ export class ProjectHubService {
         package: project.booking.package
           ? {
               id: project.booking.package.id,
-              title: project.booking.package.title,
-              priceCents: project.booking.package.priceCents,
+              name: project.booking.package.name,
+              basePrice: project.booking.package.basePrice,
             }
           : null,
         customer: {
           id: project.booking.customer?.id ?? project.booking.customerId,
-          name: project.booking.customer?.name ?? project.booking.customerName ?? 'Unknown',
-          email: project.booking.customer?.email ?? project.booking.customerEmail,
+          name: project.booking.customer?.name ?? 'Unknown',
+          email: project.booking.customer?.email ?? null,
         },
       },
     };
@@ -515,7 +515,7 @@ export class ProjectHubService {
             booking: {
               include: {
                 customer: { select: { name: true, email: true } },
-                package: { select: { title: true } },
+                package: { select: { name: true } },
               },
             },
           },
@@ -543,10 +543,10 @@ export class ProjectHubService {
           booking: {
             eventDate: r.project.booking.date ?? r.project.booking.startTime ?? new Date(),
             customer: {
-              name: r.project.booking.customer?.name ?? r.project.booking.customerName ?? 'Unknown',
-              email: r.project.booking.customer?.email ?? r.project.booking.customerEmail,
+              name: r.project.booking.customer?.name ?? 'Unknown',
+              email: r.project.booking.customer?.email ?? '',
             },
-            package: r.project.booking.package ? { title: r.project.booking.package.title } : null,
+            package: r.project.booking.package ? { name: r.project.booking.package.name } : null,
           },
         },
       })),
@@ -591,7 +591,7 @@ export class ProjectHubService {
           projectId,
           type,
           status: 'PENDING',
-          requestData,
+          requestData: requestData as Prisma.InputJsonValue,
           expiresAt,
           version: 1,
         },
@@ -608,7 +608,11 @@ export class ProjectHubService {
           version: nextVersion,
           type: 'REQUEST_SUBMITTED',
           actor: 'CUSTOMER',
-          payload: { requestId: newRequest.id, type, requestData },
+          payload: {
+            requestId: newRequest.id,
+            type,
+            requestData,
+          } as Prisma.InputJsonValue,
           visibleToCustomer: true,
           visibleToTenant: true,
         },
@@ -797,7 +801,7 @@ export class ProjectHubService {
       include: {
         booking: {
           include: {
-            package: { select: { id: true, title: true, priceCents: true } },
+            package: { select: { id: true, name: true, basePrice: true } },
             customer: { select: { id: true, name: true, email: true } },
           },
         },
@@ -827,14 +831,14 @@ export class ProjectHubService {
         package: p.booking.package
           ? {
               id: p.booking.package.id,
-              title: p.booking.package.title,
-              priceCents: p.booking.package.priceCents,
+              name: p.booking.package.name,
+              basePrice: p.booking.package.basePrice,
             }
           : null,
         customer: {
           id: p.booking.customer?.id ?? p.booking.customerId,
-          name: p.booking.customer?.name ?? p.booking.customerName ?? 'Unknown',
-          email: p.booking.customer?.email ?? p.booking.customerEmail,
+          name: p.booking.customer?.name ?? 'Unknown',
+          email: p.booking.customer?.email ?? null,
         },
       },
     }));

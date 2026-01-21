@@ -867,6 +867,7 @@ export class PrismaTenantRepository {
         published: null,
         draftUpdatedAt: null,
         publishedAt: null,
+        version: 0,
       };
     }
 
@@ -875,6 +876,7 @@ export class PrismaTenantRepository {
       published: config.published ?? null,
       draftUpdatedAt: config.draftUpdatedAt ?? null,
       publishedAt: config.publishedAt ?? null,
+      version: config.version ?? 0,
     };
   }
 
@@ -1131,12 +1133,13 @@ export class PrismaTenantRepository {
 
       const now = new Date().toISOString();
 
-      // Atomically copy draft to published, clear draft
+      // Atomically copy draft to published, clear draft, reset version
       const newWrapper: LandingPageDraftWrapper = {
         draft: null,
         draftUpdatedAt: null,
         published: currentWrapper.draft,
         publishedAt: now,
+        version: 0, // Reset on publish (#620)
       };
 
       await tx.tenant.update({
@@ -1176,12 +1179,13 @@ export class PrismaTenantRepository {
 
       const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
 
-      // Clear draft, keep published
+      // Clear draft, keep published, reset version
       const newWrapper: LandingPageDraftWrapper = {
         draft: null,
         draftUpdatedAt: null,
         published: currentWrapper.published,
         publishedAt: currentWrapper.publishedAt,
+        version: 0, // Reset on discard (#620)
       };
 
       await tx.tenant.update({
