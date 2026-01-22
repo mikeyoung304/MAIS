@@ -28,6 +28,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 // API proxy URL - proxies to /v1/tenant-admin/agent/*
 const API_URL = '/api/tenant-admin/agent';
 
+// LocalStorage key for persisting session ID
+const SESSION_STORAGE_KEY = 'handled:concierge:sessionId';
+
 /**
  * Message in the chat history
  */
@@ -140,13 +143,70 @@ export function useConciergeChat({
   }, [messages, scrollToBottom]);
 
   /**
-   * Initialize a new session with the Concierge
+   * Initialize session with the Concierge
+   * Restores existing session from localStorage if available, otherwise creates new one
    */
   const initializeSession = useCallback(async () => {
     setIsInitializing(true);
     setError(null);
 
     try {
+      // Check localStorage for existing session
+      let existingSessionId: string | null = null;
+      try {
+        existingSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+      } catch {
+        // localStorage unavailable (private browsing) - continue without persistence
+      }
+
+      // If we have an existing session, try to restore it
+      if (existingSessionId) {
+        try {
+          // Verify session exists and get messages
+          const historyResponse = await fetch(`${API_URL}/session/${existingSessionId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (historyResponse.ok) {
+            const historyData = await historyResponse.json();
+            setSessionId(existingSessionId);
+            setIsAvailable(true);
+            onSessionStart?.(existingSessionId);
+
+            // Restore messages from history
+            if (historyData.messages && historyData.messages.length > 0) {
+              const restoredMessages: ConciergeMessage[] = historyData.messages.map(
+                (msg: { role: 'user' | 'assistant'; content: string; timestamp?: string }) => ({
+                  role: msg.role,
+                  content: msg.content,
+                  timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+                })
+              );
+              setMessages(restoredMessages);
+              setIsInitializing(false);
+              return; // Successfully restored session
+            }
+          }
+          // If history fetch failed or no messages, fall through to create new session
+          // Clear invalid session from localStorage
+          try {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+          } catch {
+            // Ignore localStorage errors
+          }
+        } catch {
+          // Session validation failed, create new session
+          try {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+          } catch {
+            // Ignore localStorage errors
+          }
+        }
+      }
+
       // Create a new session
       const response = await fetch(`${API_URL}/session`, {
         method: 'POST',
@@ -164,6 +224,13 @@ export function useConciergeChat({
       setSessionId(data.sessionId);
       setIsAvailable(true);
       onSessionStart?.(data.sessionId);
+
+      // Persist session ID to localStorage
+      try {
+        localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
+      } catch {
+        // localStorage unavailable - continue without persistence
+      }
 
       // Show initial greeting
       setMessages([

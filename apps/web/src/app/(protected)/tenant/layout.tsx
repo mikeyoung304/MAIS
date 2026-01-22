@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AdminSidebar } from '@/components/layouts/AdminSidebar';
@@ -13,6 +14,12 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-client';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useBuildModeRedirect } from '@/hooks/useBuildModeRedirect';
+
+/**
+ * Pages that support preview mode overlay
+ * All other pages should reset to dashboard view when navigated to
+ */
+const PREVIEW_ENABLED_PATHS = ['/tenant/dashboard', '/tenant/website', '/tenant/build'];
 
 /**
  * Create query client outside component to prevent recreation
@@ -42,13 +49,29 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const { tenantId } = useAuth();
   const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
   const localQueryClient = useQueryClient();
+  const pathname = usePathname();
 
-  // Agent UI store - preview mode detection
+  // Agent UI store - preview mode detection and control
   const isPreviewActive = useAgentUIStore(selectIsPreviewActive);
   const initialize = useAgentUIStore((state) => state.initialize);
+  const showDashboard = useAgentUIStore((state) => state.showDashboard);
 
   // Auto-redirect to Build Mode when reaching MARKETING phase
   useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
+
+  // Reset preview mode when navigating to pages that don't support it
+  // This prevents the "all links go to page builder" bug
+  useEffect(() => {
+    if (!pathname || !isPreviewActive) return;
+
+    // Check if current path supports preview mode
+    const supportsPreview = PREVIEW_ENABLED_PATHS.some((path) => pathname.startsWith(path));
+
+    if (!supportsPreview) {
+      // Reset to dashboard view when navigating to non-preview pages
+      showDashboard();
+    }
+  }, [pathname, isPreviewActive, showDashboard]);
 
   useEffect(() => {
     setIsMounted(true);
