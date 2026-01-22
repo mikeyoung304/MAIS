@@ -203,11 +203,10 @@ export function AgentPanel({ className }: AgentPanelProps) {
       );
 
       if (modifiedStorefront) {
-        // Refresh preview to show updated content
-        setTimeout(() => {
-          invalidateDraftConfig();
-          agentUIActions.refreshPreview();
-        }, 150);
+        // Invalidate draft config cache - the new config will flow automatically:
+        // TanStack Query refetch → ContentArea → PreviewPanel → sendConfigToIframe
+        // No need for refreshPreview() which caused race condition (sent OLD config before refetch completed)
+        invalidateDraftConfig();
       }
 
       // Check if marketing content was generated (headlines, etc.)
@@ -221,9 +220,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
       if (generatedMarketing) {
         // Show preview to display the generated content
         agentUIActions.showPreview('home');
-        setTimeout(() => {
-          invalidateDraftConfig();
-        }, 100);
+        // Invalidate immediately - no setTimeout needed, TanStack Query handles async
+        invalidateDraftConfig();
       }
     },
     []
