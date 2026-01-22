@@ -254,11 +254,21 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 69. Hardcoded optimistic lock versions - NEVER use `expectedVersion: 1`; always pass version from client state; API responses must include `version` field; mutations increment with `version: { increment: 1 }`
 70. Missing Zod safeParse in agent tools - Agent tool `execute()` MUST call `schema.safeParse(params)` as FIRST LINE; return `{ success: false, error }` on parse failure; never use `params as Type`
 
+### Over-Engineering Pitfalls (71-75)
+
+71. Over-engineering "enterprise" features - Check if npm package exists before custom implementation, verify feature is actually required (link to issue), prefer simple Map before LRU before Redis, use single safety mechanism per concern (not Serializable + advisory lock + optimistic versioning). See `docs/solutions/OVER_ENGINEERING_DETECTION_QUICK_REFERENCE.md`
+72. Custom LRU cache when lru-cache installed - Check `npm ls lru-cache` before writing cache code; existing package is battle-tested, custom 248-line implementation is not
+73. Dead audit/metrics modules - Modules with <20% export usage are YAGNI violations; use direct logger calls instead of 196-line wrapper modules
+74. Serializable + advisory locks - Pick ONE concurrency mechanism; Serializable isolation is expensive and redundant when advisory locks already serialize access
+75. Array.shift() in metrics/rolling windows - O(n) operation on every call; use ring buffer for O(1) latency recording
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
 
 - **[PREVENTION-QUICK-REFERENCE.md](docs/solutions/PREVENTION-QUICK-REFERENCE.md)** - Print and pin cheat sheet
+- **[OVER_ENGINEERING_DETECTION_QUICK_REFERENCE.md](docs/solutions/OVER_ENGINEERING_DETECTION_QUICK_REFERENCE.md)** - Detection heuristics and decision trees
+- **[MULTI_AGENT_CODE_REVIEW_PATTERNS.md](docs/solutions/code-review-patterns/MULTI_AGENT_CODE_REVIEW_PATTERNS.md)** - 6-agent parallel review process
 - **[P1-SECURITY-PREVENTION-STRATEGIES.md](docs/solutions/security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md)** - 6 P1 security issues (auth, rate limiting, pagination, parallelization, validation, locking)
 - **[mais-critical-patterns.md](docs/solutions/patterns/mais-critical-patterns.md)** - 10 critical patterns
 - **[AGENT_TOOLS_PREVENTION_INDEX.md](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Agent tool patterns

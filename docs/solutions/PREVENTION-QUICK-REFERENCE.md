@@ -794,7 +794,101 @@ data: {
 
 ---
 
-## 📞 When in Doubt
+## Over-Engineering Prevention
+
+### Before Writing "Enterprise" Code
+
+```
+1. Does npm package exist? → Use it (check: npm ls | grep keyword)
+2. Is it in requirements? → Skip if not (link to issue)
+3. What breaks without it? → Nothing = don't build
+4. Current scale need this? → <1000 users = probably not
+```
+
+### Red Flags (with Detection Commands)
+
+| Phrase                     | Translation             | Detection               |
+| -------------------------- | ----------------------- | ----------------------- |
+| "Might need later"         | YAGNI violation         | Audit function usage    |
+| "Enterprise-grade"         | Over-engineering        | Count lines vs features |
+| "Future-proof"             | Predicting requirements | Check if actually used  |
+| Custom impl of npm package | Not Invented Here       | `npm ls lru-cache`      |
+| >100 lines for cache/audit | Probably too much       | `wc -l module.ts`       |
+
+```bash
+# Detect custom implementations of existing deps
+npm ls lru-cache && grep -r "class.*Cache" server/src/
+
+# Detect dead code modules (exports > usages)
+grep -c "export function" module.ts  # Count exports
+grep -rn "functionName" . --include="*.ts" | grep -v "module.ts" | wc -l  # Count usages
+```
+
+### Simplicity Rules
+
+```typescript
+// DON'T: Custom LRU cache (248 lines in session.cache.ts)
+class LRUCache<K, V> { ... }
+
+// DO: Use installed package (10 lines)
+import { LRUCache } from 'lru-cache';
+const cache = new LRUCache({ max: 2000, ttl: 5 * 60 * 1000 });
+```
+
+```typescript
+// DON'T: Triple protection mechanisms
+await prisma.$transaction(
+  async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(...)`; // Lock #1
+    if (version !== expected) throw 'MISMATCH'; // Lock #2
+  },
+  { isolationLevel: 'Serializable' }
+); // Lock #3
+
+// DO: Pick ONE - advisory lock OR optimistic locking
+// Advisory lock prevents TOCTOU, use ReadCommitted isolation
+await prisma.$transaction(
+  async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(...)`;
+    // ... mutations
+  },
+  { isolationLevel: 'ReadCommitted' }
+);
+```
+
+```typescript
+// DON'T: O(n) in hot path (Array.shift with 1000 elements)
+this.latencies.push(ms);
+if (this.latencies.length > 1000) this.latencies.shift(); // O(n)!
+
+// DO: Ring buffer for O(1)
+this.latencies[this.index] = ms;
+this.index = (this.index + 1) % 1000;
+```
+
+### Lines of Code Budget
+
+| Feature       | Reasonable            | Smell   | Over-Engineered |
+| ------------- | --------------------- | ------- | --------------- |
+| LRU Cache     | 10-30                 | 50-100  | >100            |
+| Audit logging | 0 (use logger)        | 20-50   | >50             |
+| Metrics       | 0 (use observability) | 30-60   | >100            |
+| Service layer | 100-200               | 300-400 | >500            |
+
+### Module Usage Health Check
+
+```bash
+# Quick audit for dead code in a module
+grep -c "export function" server/src/services/session/session.audit.ts  # 7 exports
+grep -rn "audit" server/src/ --include="*.ts" | grep -v "session.audit.ts" | wc -l  # 1 usage = 85% dead!
+```
+
+**Full Reference:** [OVER_ENGINEERING_DETECTION_QUICK_REFERENCE.md](./OVER_ENGINEERING_DETECTION_QUICK_REFERENCE.md)
+**Multi-Agent Review Patterns:** [MULTI_AGENT_CODE_REVIEW_PATTERNS.md](./code-review-patterns/MULTI_AGENT_CODE_REVIEW_PATTERNS.md)
+
+---
+
+## When in Doubt
 
 1. Check similar code in codebase
 2. Search docs: `rg "pattern name" docs/`
@@ -807,6 +901,7 @@ data: {
 ## 🎓 Training Resources
 
 - [P1 Security Prevention Strategies](./security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md)
+- [Over-Engineering Prevention](./patterns/OVER_ENGINEERING_PREVENTION.md)
 - [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
 - [Multi-Tenant Implementation Guide](../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
@@ -817,4 +912,4 @@ data: {
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-01-22
