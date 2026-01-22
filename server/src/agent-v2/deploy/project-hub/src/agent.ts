@@ -15,7 +15,50 @@
 
 import { LlmAgent, FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { getTenantId } from '../../../shared/tenant-context';
+
+// =============================================================================
+// TENANT CONTEXT UTILITIES (inlined from shared/tenant-context.ts for deployment)
+// =============================================================================
+
+/**
+ * Extract tenant ID from ADK ToolContext using 4-tier defensive pattern.
+ * Handles: state.get(), state object, userId with colon, userId direct.
+ */
+function getTenantId(context: ToolContext | undefined): string | null {
+  if (!context) return null;
+
+  // Tier 1: Map-like API (direct ADK)
+  try {
+    const fromState = context.state?.get<string>('tenantId');
+    if (fromState) return fromState;
+  } catch {
+    // state.get() might not be available
+  }
+
+  // Tier 2: Plain object access (A2A protocol)
+  try {
+    const stateObj = context.state as unknown as Record<string, unknown>;
+    if (stateObj && typeof stateObj === 'object' && 'tenantId' in stateObj) {
+      const tenantId = stateObj.tenantId as string;
+      if (tenantId) return tenantId;
+    }
+  } catch {
+    // state object access failed
+  }
+
+  // Tier 3 & 4: Extract from userId (format: "tenantId:userId" or just tenantId)
+  const userId = context.invocationContext?.session?.userId;
+  if (userId) {
+    if (userId.includes(':')) {
+      const [tenantId] = userId.split(':');
+      if (tenantId) return tenantId;
+    } else {
+      return userId;
+    }
+  }
+
+  return null;
+}
 
 // =============================================================================
 // STRUCTURED LOGGER
@@ -45,10 +88,12 @@ const logger = {
 // =============================================================================
 
 const MAIS_API_URL = process.env.MAIS_API_URL || 'https://api.gethandled.ai';
-const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
-if (!INTERNAL_API_SECRET) {
+const _INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
+if (!_INTERNAL_API_SECRET) {
   throw new Error('INTERNAL_API_SECRET environment variable is required');
 }
+// TypeScript doesn't narrow module-level vars, so we create a typed constant
+const INTERNAL_API_SECRET: string = _INTERNAL_API_SECRET;
 const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 
 // Mediation thresholds
@@ -347,7 +392,7 @@ interface SessionContext {
  */
 function getContextFromSession(ctx: ToolContext): SessionContext {
   // Use 4-tier tenant ID extraction (handles all ADK scenarios)
-  const tenantId = getTenantId(ctx, { agentName: 'ProjectHub' });
+  const tenantId = getTenantId(ctx);
   if (!tenantId) {
     logger.error({}, '[ProjectHub] No tenant context available - check session configuration');
     throw new Error('No tenant context available - check session configuration');

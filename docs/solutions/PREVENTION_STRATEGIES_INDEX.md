@@ -39,6 +39,8 @@ Complete guide to preventing common issues in the MAIS codebase.
 | Quick decision tree for `any` types | [any-types-quick-reference-MAIS-20251204.md](best-practices/any-types-quick-reference-MAIS-20251204.md)                               | All developers (2-min read) |
 | Cascading entity type errors        | [cascading-entity-type-errors-MAIS-20251204.md](logic-errors/cascading-entity-type-errors-MAIS-20251204.md)                           | Backend developers          |
 | Unused variable build failures      | [typescript-unused-variables-build-failure-MAIS-20251227.md](build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md) | All developers              |
+| ADK agent TypeScript build errors   | [ADK_AGENT_TYPESCRIPT_BUILD_PREVENTION.md](patterns/ADK_AGENT_TYPESCRIPT_BUILD_PREVENTION.md)                                         | Backend/Agent developers    |
+| ADK agent rootDir deployment errors | [ADK_AGENT_DEPLOYMENT_ROOTDIR_ERRORS.md](build-errors/ADK_AGENT_DEPLOYMENT_ROOTDIR_ERRORS.md)                                         | Backend/Agent developers    |
 
 ### Architecture & Patterns
 
@@ -89,6 +91,7 @@ Complete guide to preventing common issues in the MAIS codebase.
 
 **Should Read:**
 
+- [ADK_AGENT_TYPESCRIPT_BUILD_PREVENTION.md](patterns/ADK_AGENT_TYPESCRIPT_BUILD_PREVENTION.md) - Build errors in ADK agents (import paths, env vars, inlining)
 - [ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md](patterns/ADK_FUNCTIONTOOL_TYPESAFETY_PREVENTION.md) - TypeScript safety in ADK agents
 - [circular-dependency-executor-registry-MAIS-20251229.md](patterns/circular-dependency-executor-registry-MAIS-20251229.md) - Registry pattern for agent modules
 - [database-client-mismatch-MAIS-20251204.md](database-issues/database-client-mismatch-MAIS-20251204.md) - DB/client version issues
@@ -320,7 +323,7 @@ These are reference docs, not prevention strategies. Prevention strategies teach
 
 ## Quick Stats
 
-**Total Prevention Strategies:** 18+ (12 original + 6 new critical patterns)
+**Total Prevention Strategies:** 19+ (12 original + 6 new critical patterns + 1 ADK TypeScript)
 
 **By Category:**
 
@@ -328,7 +331,7 @@ These are reference docs, not prevention strategies. Prevention strategies teach
 - Architecture & Patterns: 3
 - Client-Server Communication: 3
 - Database Issues: 3
-- Type Safety: 2
+- Type Safety: 3
 - Deployment: 1
 - Build Errors: 2
 - Accessibility: 1
@@ -351,6 +354,7 @@ These are reference docs, not prevention strategies. Prevention strategies teach
 
 ## Last Updated
 
+2026-01-21 - Added ADK Agent TypeScript Build Prevention (self-contained rule, env var narrowing, function inlining, pre-deploy checks)
 2026-01-19 - Added ADK FunctionTool TypeScript Safety Prevention (context typing, state casting, property names)
 
 Previous updates:
