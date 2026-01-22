@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useAgentUIStore, selectPreviewRefreshKey } from '@/stores/agent-ui-store';
+import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { Monitor, Tablet, Smartphone, RefreshCw, ExternalLink, Loader2 } from 'lucide-react';
 import type { PageName } from '@macon/contracts';
 
@@ -40,8 +41,23 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
   const refreshKey = useAgentUIStore(selectPreviewRefreshKey);
   const previousRefreshKeyRef = useRef(refreshKey);
 
-  // Build the preview URL with draft mode
-  const previewUrl = `/t/${tenantSlug}${currentPage !== 'home' ? `/${currentPage}` : ''}?draft=true`;
+  // Get preview token for authenticated draft access
+  // CRITICAL: Without a valid token, the storefront page won't show draft content
+  // See: apps/web/src/app/t/[slug]/(site)/page.tsx:79 - isPreviewMode = preview === 'draft' && !!token
+  const { token: previewToken } = usePreviewToken();
+
+  // Build the preview URL with draft mode and token
+  // FIXED: Was using ?draft=true but page.tsx expects ?preview=draft&token=...
+  // This bug caused the preview to show DEFAULT config instead of actual draft content
+  const previewUrl = useMemo(() => {
+    const basePath = `/t/${tenantSlug}${currentPage !== 'home' ? `/${currentPage}` : ''}`;
+    const params = new URLSearchParams();
+    params.set('preview', 'draft');
+    if (previewToken) {
+      params.set('token', previewToken);
+    }
+    return `${basePath}?${params.toString()}`;
+  }, [tenantSlug, currentPage, previewToken]);
 
   // Handle iframe load
   const handleLoad = () => {
@@ -113,7 +129,7 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </button>
           <a
-            href={previewUrl.replace('?draft=true', '')}
+            href={`/t/${tenantSlug}${currentPage !== 'home' ? `/${currentPage}` : ''}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm

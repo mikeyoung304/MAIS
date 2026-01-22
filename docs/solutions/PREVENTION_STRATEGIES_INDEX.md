@@ -37,6 +37,7 @@ Complete guide to preventing common issues in the MAIS codebase.
 | ----------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------- |
 | Preview shows DEFAULT config instead of actual draft (#72)  | [USEDRAFTCONFIG_SILENT_AUTH_FAILURE.md](ui-bugs/USEDRAFTCONFIG_SILENT_AUTH_FAILURE.md) | Frontend developers |
 | Preview iframe loses PostMessage connection on reload (#71) | [FLUID_CANVAS_PREVIEW_UPDATES.md](ui-bugs/FLUID_CANVAS_PREVIEW_UPDATES.md)             | Frontend developers |
+| Website preview uses wrong URL params for draft (#73)       | [LIVEPREVIEW_DRAFT_URL_MISMATCH.md](ui-bugs/LIVEPREVIEW_DRAFT_URL_MISMATCH.md)         | Frontend developers |
 
 ### Type Safety & TypeScript
 
