@@ -150,19 +150,22 @@ export function PreviewPanel({
 
   // Auto-refresh when previewRefreshKey changes (triggered by package updates)
   // Skip initial value (0) to avoid unnecessary refresh on mount
+  // Uses soft refresh via PostMessage for fluid canvas experience
   const prevRefreshKeyRef = useRef(previewRefreshKey);
   useEffect(() => {
     if (previewRefreshKey > 0 && previewRefreshKey !== prevRefreshKeyRef.current) {
       prevRefreshKeyRef.current = previewRefreshKey;
-      // Reset iframe state and reload to fetch fresh server-rendered content
-      setIsLoading(true);
-      setError(null);
-      setIsIframeReady(false);
-      if (iframeRef.current) {
-        iframeRef.current.src = iframeUrl;
+      // Soft refresh - re-send current config to iframe without full reload
+      // This preserves the PostMessage connection for smooth updates
+      if (isIframeReady && iframeRef.current?.contentWindow && draftConfig) {
+        const updateMessage: BuildModeParentMessage = {
+          type: 'BUILD_MODE_CONFIG_UPDATE',
+          data: { config: draftConfig },
+        };
+        iframeRef.current.contentWindow.postMessage(updateMessage, window.location.origin);
       }
     }
-  }, [previewRefreshKey, iframeUrl]);
+  }, [previewRefreshKey, isIframeReady, draftConfig]);
 
   // Send config to iframe
   const sendConfigToIframe = useCallback(() => {
@@ -285,10 +288,9 @@ export function PreviewPanel({
       onConfigUpdate();
       setShowPublishDialog(false);
 
-      // Force iframe reload to show fresh published content
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.location.reload();
-      }
+      // Don't reload iframe - let the config update flow through PostMessage
+      // for a smooth canvas experience. The useDraftConfig refetch will
+      // trigger sendConfigToIframe() automatically via useEffect.
     } catch (err) {
       setError('Failed to publish changes');
     }
@@ -301,22 +303,18 @@ export function PreviewPanel({
       onConfigUpdate();
       setShowDiscardDialog(false);
 
-      // Force iframe reload to show original content
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.location.reload();
-      }
+      // Don't reload iframe - let the config update flow through PostMessage
+      // for a smooth canvas experience. The useDraftConfig refetch will
+      // trigger sendConfigToIframe() automatically via useEffect.
     } catch (err) {
       setError('Failed to discard changes');
     }
   };
 
-  // Handle conflict refresh - refetch draft and reload iframe (#620)
+  // Handle conflict refresh - refetch draft and soft-refresh iframe (#620)
   const handleConflictRefresh = async () => {
     onConfigUpdate(); // Invalidate cache to refetch latest version
-    // Force iframe reload to show fresh content
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.location.reload();
-    }
+    // Config update will flow through PostMessage automatically
   };
 
   return (

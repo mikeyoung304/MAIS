@@ -55,7 +55,10 @@ export function SectionRenderer({
     <>
       {sections.map((section, index) => {
         const absoluteIndex = indexOffset + index;
-        const sectionKey = `${section.type}-${absoluteIndex}`;
+        // Use stable section ID when available to prevent React remounts on reorder
+        // This enables smooth transitions during AI agent updates
+        const sectionKey =
+          'id' in section && section.id ? section.id : `${section.type}-${absoluteIndex}`;
 
         // Render based on section type
         const sectionComponent = (() => {

@@ -62,6 +62,39 @@ interface UseBuildModeSyncResult {
 /** Timeout for PostMessage handshake in milliseconds */
 const HANDSHAKE_TIMEOUT_MS = 5000;
 
+/** Retry interval for re-sending BUILD_MODE_READY if no response */
+const HANDSHAKE_RETRY_MS = 1000;
+
+/** Max retries before giving up */
+const HANDSHAKE_MAX_RETRIES = 4;
+
+/**
+ * Add visual feedback during config updates for fluid canvas feel
+ */
+function addUpdateFeedback() {
+  if (typeof document === 'undefined') return;
+  document.querySelectorAll('[data-section-index]').forEach((el) => {
+    el.classList.add('section-updating');
+  });
+}
+
+/**
+ * Remove updating state and show brief highlight on changed sections
+ */
+function removeUpdateFeedback() {
+  if (typeof document === 'undefined') return;
+  document.querySelectorAll('[data-section-index]').forEach((el) => {
+    el.classList.remove('section-updating');
+    el.classList.add('section-updated');
+  });
+  // Remove the updated class after animation completes
+  setTimeout(() => {
+    document.querySelectorAll('[data-section-index]').forEach((el) => {
+      el.classList.remove('section-updated');
+    });
+  }, 600);
+}
+
 export function useBuildModeSync({
   enabled = true,
   initialConfig = null,
@@ -80,6 +113,7 @@ export function useBuildModeSync({
   }, [onConfigChange]);
 
   // Check if we're in an iframe with edit query param
+  // Implements retry logic for robust handshake with parent
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
 
@@ -89,10 +123,31 @@ export function useBuildModeSync({
 
     if (isInIframe && hasEditParam) {
       setIsEditMode(true);
-      // Send ready message to parent
-      sendToParent({ type: 'BUILD_MODE_READY' });
+
+      // Send ready message to parent with retry logic
+      // Parent may not be ready to receive immediately after iframe loads
+      let retryCount = 0;
+      const sendReady = () => {
+        if (isReady) return; // Stop retrying once connected
+        sendToParent({ type: 'BUILD_MODE_READY' });
+        retryCount++;
+      };
+
+      // Initial send
+      sendReady();
+
+      // Retry periodically until we get BUILD_MODE_INIT or max retries
+      const retryInterval = setInterval(() => {
+        if (isReady || retryCount >= HANDSHAKE_MAX_RETRIES) {
+          clearInterval(retryInterval);
+          return;
+        }
+        sendReady();
+      }, HANDSHAKE_RETRY_MS);
+
+      return () => clearInterval(retryInterval);
     }
-  }, [enabled]);
+  }, [enabled, isReady]);
 
   // Timeout for handshake - if we're in edit mode but not ready within timeout, show error
   useEffect(() => {
@@ -127,8 +182,16 @@ export function useBuildModeSync({
           break;
 
         case 'BUILD_MODE_CONFIG_UPDATE':
+          // Add visual feedback for fluid canvas feel
+          addUpdateFeedback();
           setDraftConfig(message.data.config);
           onConfigChangeRef.current?.(message.data.config);
+          // Remove feedback after React re-render settles
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              removeUpdateFeedback();
+            });
+          });
           break;
 
         case 'BUILD_MODE_HIGHLIGHT_SECTION': {
