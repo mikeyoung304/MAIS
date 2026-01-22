@@ -46,26 +46,64 @@ export async function cleanupExpiredTraces(prisma: PrismaClient): Promise<number
 }
 
 /**
- * Clean up expired customer chat sessions
+ * Clean up expired agent sessions (enterprise pattern)
  *
- * Customer sessions are typically short-lived and can be cleaned up
- * after 24 hours of inactivity.
+ * Uses two-phase cleanup for data safety:
+ * 1. Soft delete sessions inactive > maxAgeMs (default 30 days)
+ * 2. Hard delete sessions soft-deleted > 7 days ago
+ *
+ * This approach ensures:
+ * - Session data can be recovered within 7 days of soft deletion
+ * - Database doesn't grow unbounded
+ * - Both ADMIN and CUSTOMER sessions are cleaned up
  *
  * @param prisma - Prisma client for database operations
- * @returns Number of sessions deleted
+ * @param maxAgeDays - Maximum session age in days before soft delete (default: 30)
+ * @returns Number of sessions hard-deleted
+ *
+ * @see plans/feat-persistent-chat-session-storage.md Phase 5
  */
-export async function cleanupExpiredSessions(prisma: PrismaClient): Promise<number> {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+export async function cleanupExpiredSessions(
+  prisma: PrismaClient,
+  maxAgeDays: number = 30
+): Promise<number> {
+  const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+  const cutoff = new Date(Date.now() - maxAgeMs);
 
-  const result = await prisma.agentSession.deleteMany({
+  // Phase 1: Soft delete sessions inactive > maxAgeMs
+  const softDeleted = await prisma.agentSession.updateMany({
     where: {
-      sessionType: 'CUSTOMER',
-      updatedAt: { lt: cutoff },
+      lastActivityAt: { lt: cutoff },
+      deletedAt: null,
+    },
+    data: {
+      deletedAt: new Date(),
     },
   });
 
-  logger.info({ deletedCount: result.count, cutoff }, 'Cleaned up expired customer sessions');
-  return result.count;
+  if (softDeleted.count > 0) {
+    logger.info(
+      { softDeletedCount: softDeleted.count, cutoff, maxAgeDays },
+      'Soft-deleted expired sessions'
+    );
+  }
+
+  // Phase 2: Hard delete sessions that were soft-deleted > 7 days ago
+  const hardDeleteCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const hardDeleted = await prisma.agentSession.deleteMany({
+    where: {
+      deletedAt: { lt: hardDeleteCutoff },
+    },
+  });
+
+  if (hardDeleted.count > 0) {
+    logger.info(
+      { hardDeletedCount: hardDeleted.count, hardDeleteCutoff },
+      'Hard-deleted expired sessions after retention period'
+    );
+  }
+
+  return hardDeleted.count;
 }
 
 /**

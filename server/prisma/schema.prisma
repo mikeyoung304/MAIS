@@ -867,23 +867,84 @@ enum AgentApprovalStatus {
 /// AgentSession - Conversation session for AI agent chat
 /// Stores message history and session state for continuity
 /// Supports both admin (tenant owner) and customer-facing sessions
+///
+/// Enterprise Features:
+/// - Optimistic locking via version field for concurrent modification detection
+/// - Soft delete via deletedAt for retention compliance
+/// - Session activity tracking via lastActivityAt for TTL-based cleanup
+/// - Separate messages table for O(1) append and efficient pagination
 model AgentSession {
   id          String      @id @default(cuid())
   tenantId    String // Tenant isolation - CRITICAL
   customerId  String? // NULL for admin sessions, set for customer sessions
   sessionType SessionType @default(ADMIN) // ADMIN or CUSTOMER
-  messages    Json        @default("[]") // Array of ChatMessage objects
+  messages    Json        @default("[]") // Array of ChatMessage objects (legacy, kept for backward compat)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  // Enterprise: Optimistic locking for concurrent modification detection
+  version Int @default(0)
 
+  // Enterprise: Soft delete support for retention compliance
+  deletedAt DateTime?
+
+  // Enterprise: Session activity tracking for TTL-based cleanup
+  lastActivityAt DateTime @default(now())
+  userAgent      String?  @db.VarChar(500) // Client user agent for debugging
+
+  // Relations
+  tenant         Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer       Customer?             @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  sessionMessages AgentSessionMessage[] // Normalized messages (new enterprise pattern)
+
+  // Indexes for query patterns
   @@index([tenantId, updatedAt]) // Find recent sessions for tenant
   @@index([tenantId])
   @@index([customerId, updatedAt]) // Query customer sessions
   @@index([sessionType, updatedAt]) // Cleanup job queries
   @@index([tenantId, sessionType, updatedAt]) // #530: getOrCreateSession queries all 3 fields
+  @@index([tenantId, deletedAt]) // Query active (non-deleted) sessions
+  @@index([id, tenantId]) // CRITICAL: Lookup + tenant verification (prevents IDOR)
+  @@index([lastActivityAt]) // For session expiry cleanup job
+}
+
+/// AgentSessionMessage - Individual messages within an agent session
+/// Normalized from JSON array for O(1) append, efficient pagination, and indexing.
+///
+/// Security:
+/// - tenantId denormalized for direct tenant-scoped queries without join
+/// - content and toolCalls encrypted at rest via encryption service
+///
+/// Integrity:
+/// - idempotencyKey prevents duplicate message creation on retries
+model AgentSessionMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  tenantId  String // Denormalized for direct tenant-scoped queries
+
+  // Message content (encrypted at rest via application layer)
+  role    String @db.VarChar(20) // 'user' | 'assistant' | 'system'
+  content String @db.Text // Encrypted via SessionService
+
+  // Tool calls (encrypted, nullable)
+  toolCalls Json? // Encrypted array of ToolCall objects
+
+  // Metadata
+  createdAt DateTime @default(now())
+
+  // Idempotency key for message-level deduplication
+  idempotencyKey String? @db.VarChar(64)
+
+  // Relations
+  session AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([sessionId, createdAt]) // Messages in order for a session
+  @@index([tenantId, sessionId]) // Tenant-scoped message queries
+  @@index([idempotencyKey]) // Idempotency lookup
+
+  // Unique constraint for idempotency (prevents duplicate messages)
+  @@unique([sessionId, idempotencyKey])
 }
 
 /// Session type for agent conversations

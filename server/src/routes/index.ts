@@ -713,7 +713,8 @@ export function createV1Router(
     // Register Concierge agent routes (for Vertex AI agent integration)
     // Requires tenant admin authentication - chat with Concierge for dashboard actions
     // Rate limited to 30 messages per 5 minutes per tenant to protect Vertex AI costs
-    const tenantAdminAgentRoutes = createTenantAdminAgentRoutes();
+    // Now uses persistent session storage via PostgreSQL (#session-persistence)
+    const tenantAdminAgentRoutes = createTenantAdminAgentRoutes({ prisma: prismaClient });
     app.use(
       '/v1/tenant-admin/agent',
       tenantAuthMiddleware,

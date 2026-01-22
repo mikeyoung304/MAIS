@@ -9,11 +9,14 @@
  * - GET /api/agent/session/:id - Get session history
  * - POST /api/agent/session - Create a new session
  * - DELETE /api/agent/session/:id - Close a session
+ *
+ * @see plans/feat-persistent-chat-session-storage.md Phase 3
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { z, ZodError } from 'zod';
+import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { VertexAgentService, createVertexAgentService } from '../services/vertex-agent.service';
 
@@ -24,6 +27,7 @@ import { VertexAgentService, createVertexAgentService } from '../services/vertex
 const SendMessageSchema = z.object({
   message: z.string().min(1).max(10000),
   sessionId: z.string().optional(),
+  version: z.number().int().min(0).optional(), // Client-side version for optimistic locking
 });
 
 const SessionIdSchema = z.object({
@@ -36,19 +40,20 @@ const SessionIdSchema = z.object({
 
 interface TenantAdminAgentRoutesDeps {
   vertexAgentService?: VertexAgentService;
+  prisma: PrismaClient;
 }
 
 /**
  * Create tenant admin agent routes for dashboard chat integration.
  *
- * @param deps - Dependencies (optional, will create default if not provided)
+ * @param deps - Dependencies (prisma is required)
  * @returns Express router
  */
-export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps = {}): Router {
+export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): Router {
   const router = Router();
 
-  // Use provided service or create new instance
-  const agentService = deps.vertexAgentService || createVertexAgentService();
+  // Use provided service or create new instance with Prisma
+  const agentService = deps.vertexAgentService || createVertexAgentService(deps.prisma);
 
   // ===========================================================================
   // POST /chat - Send a message to the Concierge agent
@@ -56,7 +61,11 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps = 
 
   router.post('/chat', async (req: Request, res: Response) => {
     try {
-      const { message, sessionId: providedSessionId } = SendMessageSchema.parse(req.body);
+      const {
+        message,
+        sessionId: providedSessionId,
+        version: providedVersion,
+      } = SendMessageSchema.parse(req.body);
 
       // Get tenant context from auth middleware (res.locals.tenantAuth)
       const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string; slug: string } })
@@ -68,37 +77,54 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps = 
 
       const { tenantId, slug } = tenantAuth;
       const userId = slug; // Use tenant slug as user ID for simplicity
+      const userAgent = req.get('User-Agent');
 
       logger.info({ tenantId, messageLength: message.length }, '[AgentChat] Message received');
 
       // Get or create session
-      // If a sessionId was provided, verify it exists. If not, create a new session.
-      // This handles server restarts where the in-memory session store is cleared.
+      // Now restores sessions from PostgreSQL, surviving server restarts!
       let sessionId = providedSessionId;
+      let version = providedVersion ?? 0;
+
       if (sessionId) {
-        // Verify the session still exists (might be stale after server restart)
-        const existingSession = agentService.getSession(sessionId);
+        // Try to restore session from database
+        const existingSession = await agentService.getSession(sessionId, tenantId);
         if (!existingSession) {
           logger.info(
             { tenantId, staleSessionId: sessionId },
-            '[AgentChat] Stale session detected, creating new session'
+            '[AgentChat] Session not found, creating new session'
           );
           // Session doesn't exist anymore, create a new one
-          const newSession = await agentService.getOrCreateSession(tenantId, userId);
+          const newSession = await agentService.getOrCreateSession(
+            tenantId,
+            userId,
+            undefined,
+            userAgent
+          );
           sessionId = newSession.sessionId;
+          version = newSession.version;
+        } else {
+          version = existingSession.version;
         }
       } else {
-        const session = await agentService.getOrCreateSession(tenantId, userId);
+        const session = await agentService.getOrCreateSession(
+          tenantId,
+          userId,
+          undefined,
+          userAgent
+        );
         sessionId = session.sessionId;
+        version = session.version;
       }
 
-      // Send message and get response
-      const result = await agentService.sendMessage(sessionId, message);
+      // Send message and get response (now persisted to PostgreSQL)
+      const result = await agentService.sendMessage(sessionId, tenantId, message, version);
 
-      // Return response
+      // Return response with version for client-side tracking
       res.json({
         success: true,
         sessionId: result.sessionId,
+        version: result.version,
         response: result.response,
         toolCalls: result.toolCalls,
         error: result.error,
@@ -125,20 +151,16 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps = 
 
       const { tenantId } = tenantAuth;
 
-      // Verify session belongs to tenant
-      const session = agentService.getSession(sessionId);
+      // Get session (now fetched from PostgreSQL)
+      // Tenant scoping is enforced by SessionService - no need to verify separately
+      const session = await agentService.getSession(sessionId, tenantId);
       if (!session) {
         res.status(404).json({ error: 'Session not found' });
         return;
       }
 
-      if (session.tenantId !== tenantId) {
-        res.status(403).json({ error: 'Session does not belong to this tenant' });
-        return;
-      }
-
-      // Get session history
-      const messages = agentService.getSessionHistory(sessionId);
+      // Get session history (now fetched from PostgreSQL with pagination)
+      const history = await agentService.getSessionHistory(sessionId, tenantId);
 
       res.json({
         session: {
@@ -146,13 +168,16 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps = 
           createdAt: session.createdAt,
           lastMessageAt: session.lastMessageAt,
           messageCount: session.messageCount,
+          version: session.version,
         },
-        messages: messages.map((m) => ({
+        messages: history.messages.map((m) => ({
           role: m.role,
           content: m.content,
           timestamp: m.timestamp,
           toolCalls: m.toolCalls,
         })),
+        hasMore: history.hasMore,
+        total: history.total,
       });
     } catch (error) {
       handleError(res, error, '/session/:id');
@@ -207,20 +232,8 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps = 
 
       const { tenantId } = tenantAuth;
 
-      // Verify session belongs to tenant
-      const session = agentService.getSession(sessionId);
-      if (!session) {
-        res.status(404).json({ error: 'Session not found' });
-        return;
-      }
-
-      if (session.tenantId !== tenantId) {
-        res.status(403).json({ error: 'Session does not belong to this tenant' });
-        return;
-      }
-
-      // Close session
-      agentService.closeSession(sessionId);
+      // Close session (soft delete - now handled by SessionService with tenant scoping)
+      await agentService.closeSession(sessionId, tenantId);
 
       logger.info({ tenantId, sessionId }, '[AgentChat] Session closed');
 

@@ -8,15 +8,28 @@
  * - Creates sessions scoped to tenant + user
  * - Sends messages to Concierge via A2A protocol
  * - Receives responses and routes them to WebSocket clients
+ * - Persists sessions and messages to PostgreSQL via SessionService
  *
  * Security:
  * - All sessions are tenant-scoped
  * - Uses Google Cloud IAM for agent authentication
- * - Session IDs include tenant ID for isolation
+ * - Messages encrypted at rest via SessionService
+ * - Optimistic locking prevents concurrent modification
+ *
+ * @see plans/feat-persistent-chat-session-storage.md Phase 3
  */
 
 import { GoogleAuth, JWT } from 'google-auth-library';
+import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import {
+  createSessionService,
+  type SessionService,
+  type SessionWithMessages,
+  sessionMetrics,
+  auditSessionCreated,
+  auditMessageAppended,
+} from './session';
 
 // =============================================================================
 // CONFIGURATION
@@ -39,6 +52,7 @@ export interface AgentSession {
   createdAt: Date;
   lastMessageAt: Date;
   messageCount: number;
+  version: number; // For optimistic locking
 }
 
 export interface AgentMessage {
@@ -55,6 +69,7 @@ export interface AgentMessage {
 export interface SendMessageResult {
   response: string;
   sessionId: string;
+  version: number; // Return new version for client-side tracking
   toolCalls?: Array<{
     name: string;
     args: Record<string, unknown>;
@@ -63,10 +78,6 @@ export interface SendMessageResult {
   error?: string;
 }
 
-// In-memory session store (in production, use Redis or a database)
-const sessions = new Map<string, AgentSession>();
-const sessionMessages = new Map<string, AgentMessage[]>();
-
 // =============================================================================
 // VERTEX AGENT SERVICE
 // =============================================================================
@@ -74,8 +85,12 @@ const sessionMessages = new Map<string, AgentMessage[]>();
 export class VertexAgentService {
   private auth: GoogleAuth;
   private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
+  private sessionService: SessionService;
 
-  constructor() {
+  constructor(prisma: PrismaClient) {
+    // Initialize persistent session service
+    this.sessionService = createSessionService(prisma);
+
     // Initialize Google Auth for Cloud Run authentication
     // Priority: GOOGLE_SERVICE_ACCOUNT_JSON (Render) > ADC (GCP/local)
     const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -101,12 +116,20 @@ export class VertexAgentService {
   /**
    * Create a new agent session for a tenant user.
    *
+   * Now persists to PostgreSQL via SessionService for enterprise durability.
+   *
    * @param tenantId - The tenant ID
    * @param userId - The user ID (usually tenant admin)
    * @param requestId - Optional request ID for correlation
+   * @param userAgent - Optional user agent for debugging
    * @returns Session ID
    */
-  async createSession(tenantId: string, userId: string, requestId?: string): Promise<string> {
+  async createSession(
+    tenantId: string,
+    userId: string,
+    requestId?: string,
+    userAgent?: string
+  ): Promise<string> {
     // Create session on ADK first to get a valid session ID
     const adkUserId = `${tenantId}:${userId}`; // Combine tenant and user for ADK user_id
     let adkSessionId: string;
@@ -151,79 +174,144 @@ export class VertexAgentService {
       );
     }
 
-    const session: AgentSession = {
-      sessionId: adkSessionId,
+    // Persist session to PostgreSQL via SessionService
+    // The session ID from ADK becomes our database session ID
+    const dbSession = await this.sessionService.getOrCreateSession(
       tenantId,
-      userId,
-      createdAt: new Date(),
-      lastMessageAt: new Date(),
-      messageCount: 0,
-    };
+      adkSessionId, // Use ADK session ID as our session ID for correlation
+      'ADMIN', // Vertex agent sessions are admin sessions
+      undefined, // No customer ID for admin sessions
+      userAgent
+    );
 
-    sessions.set(adkSessionId, session);
-    sessionMessages.set(adkSessionId, []);
+    // Record metrics and audit
+    sessionMetrics.recordSessionCreated();
+    auditSessionCreated(dbSession.id, tenantId, 'ADMIN');
 
-    logger.info({ tenantId, userId, sessionId: adkSessionId }, '[VertexAgent] Session created');
+    logger.info(
+      { tenantId, userId, sessionId: dbSession.id, adkSessionId },
+      '[VertexAgent] Session created and persisted'
+    );
 
-    return adkSessionId;
+    return dbSession.id;
   }
 
   /**
    * Get an existing session or create a new one.
    *
+   * Now restores sessions from PostgreSQL, surviving server restarts.
+   *
    * @param tenantId - The tenant ID
    * @param userId - The user ID
+   * @param existingSessionId - Optional existing session ID to restore
+   * @param userAgent - Optional user agent for debugging
    * @returns Session details
    */
-  async getOrCreateSession(tenantId: string, userId: string): Promise<AgentSession> {
-    // Look for an active session for this tenant/user
-    for (const [sessionId, session] of sessions) {
-      if (session.tenantId === tenantId && session.userId === userId) {
+  async getOrCreateSession(
+    tenantId: string,
+    userId: string,
+    existingSessionId?: string,
+    userAgent?: string
+  ): Promise<AgentSession> {
+    // Try to restore existing session from database
+    if (existingSessionId) {
+      const dbSession = await this.sessionService.getSession(existingSessionId, tenantId);
+      if (dbSession) {
         // Check if session is still fresh (last activity within 30 minutes)
         const thirtyMinutes = 30 * 60 * 1000;
-        if (Date.now() - session.lastMessageAt.getTime() < thirtyMinutes) {
-          return session;
+        if (Date.now() - dbSession.lastActivityAt.getTime() < thirtyMinutes) {
+          sessionMetrics.recordSessionRestored();
+          return this.toAgentSession(dbSession, userId);
         }
       }
     }
 
     // Create new session
-    const sessionId = await this.createSession(tenantId, userId);
-    return sessions.get(sessionId)!;
+    const sessionId = await this.createSession(tenantId, userId, undefined, userAgent);
+    const newSession = await this.sessionService.getSession(sessionId, tenantId);
+    if (!newSession) {
+      throw new Error('Failed to create session');
+    }
+    return this.toAgentSession(newSession, userId);
+  }
+
+  /**
+   * Convert SessionWithMessages to AgentSession format
+   */
+  private toAgentSession(dbSession: SessionWithMessages, userId: string): AgentSession {
+    return {
+      sessionId: dbSession.id,
+      tenantId: dbSession.tenantId,
+      userId,
+      createdAt: dbSession.createdAt,
+      lastMessageAt: dbSession.lastActivityAt,
+      messageCount: dbSession.messages.length,
+      version: dbSession.version,
+    };
   }
 
   /**
    * Send a message to the Concierge agent and get a response.
    *
+   * Now persists both user and agent messages to PostgreSQL for durability.
+   *
    * @param sessionId - The session ID
+   * @param tenantId - The tenant ID
    * @param message - User message
+   * @param version - Session version for optimistic locking
    * @param requestId - Optional request ID for correlation
-   * @returns Agent response
+   * @returns Agent response with updated version
    */
   async sendMessage(
     sessionId: string,
+    tenantId: string,
     message: string,
+    version: number,
     requestId?: string
   ): Promise<SendMessageResult> {
-    const session = sessions.get(sessionId);
-    if (!session) {
+    // Get session to verify access and get userId
+    const dbSession = await this.sessionService.getSession(sessionId, tenantId);
+    if (!dbSession) {
       throw new Error('Session not found');
     }
 
-    const { tenantId, userId } = session;
+    // Extract userId from session (we'll need it for ADK calls)
+    const userId = dbSession.customerId || tenantId; // Admin sessions use tenantId
 
     logger.info(
       { tenantId, sessionId, messageLength: message.length },
       '[VertexAgent] Sending message'
     );
 
-    // Record user message
-    const userMessage: AgentMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-    sessionMessages.get(sessionId)?.push(userMessage);
+    // Persist user message to database first
+    let currentVersion = version;
+    const userMsgResult = await this.sessionService.appendMessage(
+      sessionId,
+      tenantId,
+      {
+        role: 'user',
+        content: message,
+      },
+      currentVersion
+    );
+
+    if (!userMsgResult.success) {
+      // Handle concurrent modification
+      if (userMsgResult.error === 'Concurrent modification detected') {
+        sessionMetrics.recordConcurrentModification();
+        return {
+          response: 'Session was modified. Please refresh and try again.',
+          sessionId,
+          version: userMsgResult.newVersion || currentVersion,
+          error: userMsgResult.error,
+        };
+      }
+      throw new Error(userMsgResult.error || 'Failed to save message');
+    }
+
+    currentVersion = userMsgResult.newVersion!;
+    sessionMetrics.recordMessageAppended();
+    auditMessageAppended(sessionId, tenantId, userMsgResult.message!.id, 'user');
 
     try {
       // Get identity token for Cloud Run authentication
@@ -263,21 +351,18 @@ export class VertexAgentService {
             '[VertexAgent] Session not found on ADK, creating new session and retrying'
           );
 
-          // Create a new session on ADK
-          const newSessionId = await this.createADKSession(tenantId, userId, requestId);
-          if (newSessionId) {
-            // Update local session with new ADK session ID
-            session.sessionId = newSessionId;
-            sessions.delete(sessionId);
-            sessions.set(newSessionId, session);
-
-            // Move message history to new session
-            const history = sessionMessages.get(sessionId) || [];
-            sessionMessages.delete(sessionId);
-            sessionMessages.set(newSessionId, history);
-
-            // Retry the message with new session
-            return this.sendMessage(newSessionId, message, requestId);
+          // Create a new session on ADK (we keep our DB session)
+          const newAdkSessionId = await this.createADKSession(tenantId, userId, requestId);
+          if (newAdkSessionId) {
+            // Retry with same DB session but new ADK session
+            // Note: we don't update currentVersion here since we already saved the user message
+            return this.sendMessageToADK(
+              sessionId,
+              tenantId,
+              newAdkSessionId,
+              message,
+              currentVersion
+            );
           }
         }
 
@@ -288,6 +373,7 @@ export class VertexAgentService {
         return {
           response: 'Sorry, I ran into an issue. Try again?',
           sessionId,
+          version: currentVersion,
           error: `Agent returned ${response.status}`,
         };
       }
@@ -299,18 +385,40 @@ export class VertexAgentService {
       const agentResponse = this.extractAgentResponse(data);
       const toolCalls = this.extractToolCalls(data);
 
-      // Record agent message
-      const modelMessage: AgentMessage = {
-        role: 'model',
-        content: agentResponse,
-        timestamp: new Date(),
-        toolCalls,
-      };
-      sessionMessages.get(sessionId)?.push(modelMessage);
+      // Persist agent response to database
+      // Transform toolCalls to schema format (with id and arguments)
+      const schemaToolCalls =
+        toolCalls.length > 0
+          ? toolCalls.map((tc, idx) => ({
+              id: `tc_${Date.now()}_${idx}`,
+              name: tc.name,
+              arguments: tc.args,
+              result: tc.result,
+            }))
+          : undefined;
 
-      // Update session
-      session.lastMessageAt = new Date();
-      session.messageCount += 1;
+      const agentMsgResult = await this.sessionService.appendMessage(
+        sessionId,
+        tenantId,
+        {
+          role: 'assistant',
+          content: agentResponse,
+          toolCalls: schemaToolCalls,
+        },
+        currentVersion
+      );
+
+      if (agentMsgResult.success) {
+        currentVersion = agentMsgResult.newVersion!;
+        sessionMetrics.recordMessageAppended();
+        auditMessageAppended(sessionId, tenantId, agentMsgResult.message!.id, 'assistant');
+      } else {
+        // Log but don't fail - user message was sent and response received
+        logger.warn(
+          { sessionId, tenantId, error: agentMsgResult.error },
+          '[VertexAgent] Failed to persist agent response'
+        );
+      }
 
       logger.info(
         { tenantId, sessionId, responseLength: agentResponse.length },
@@ -320,54 +428,167 @@ export class VertexAgentService {
       return {
         response: agentResponse,
         sessionId,
+        version: currentVersion,
         toolCalls,
       };
     } catch (error) {
       logger.error({ tenantId, sessionId, error }, '[VertexAgent] Failed to send message');
+      sessionMetrics.recordError();
 
       return {
         response: 'Connection issue. Try again in a moment.',
         sessionId,
+        version: currentVersion,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
 
   /**
-   * Get session history.
+   * Helper to send message to ADK when we need to use a different ADK session ID
+   */
+  private async sendMessageToADK(
+    dbSessionId: string,
+    tenantId: string,
+    adkSessionId: string,
+    message: string,
+    currentVersion: number
+  ): Promise<SendMessageResult> {
+    const userId = tenantId; // Admin sessions use tenantId
+    const adkUserId = `${tenantId}:${userId}`;
+
+    const token = await this.getIdentityToken();
+    const response = await fetch(`${CONCIERGE_AGENT_URL}/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({
+        appName: 'agent',
+        userId: adkUserId,
+        sessionId: adkSessionId,
+        newMessage: {
+          role: 'user',
+          parts: [{ text: message }],
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(
+        { tenantId, adkSessionId, status: response.status, error: errorText },
+        '[VertexAgent] ADK retry failed'
+      );
+      return {
+        response: 'Sorry, I ran into an issue. Try again?',
+        sessionId: dbSessionId,
+        version: currentVersion,
+        error: `Agent returned ${response.status}`,
+      };
+    }
+
+    const data = await response.json();
+    const agentResponse = this.extractAgentResponse(data);
+    const toolCalls = this.extractToolCalls(data);
+
+    // Transform toolCalls to schema format (with id and arguments)
+    const schemaToolCalls =
+      toolCalls.length > 0
+        ? toolCalls.map((tc, idx) => ({
+            id: `tc_${Date.now()}_${idx}`,
+            name: tc.name,
+            arguments: tc.args,
+            result: tc.result,
+          }))
+        : undefined;
+
+    // Persist agent response
+    const agentMsgResult = await this.sessionService.appendMessage(
+      dbSessionId,
+      tenantId,
+      {
+        role: 'assistant',
+        content: agentResponse,
+        toolCalls: schemaToolCalls,
+      },
+      currentVersion
+    );
+
+    const finalVersion = agentMsgResult.success ? agentMsgResult.newVersion! : currentVersion;
+
+    return {
+      response: agentResponse,
+      sessionId: dbSessionId,
+      version: finalVersion,
+      toolCalls,
+    };
+  }
+
+  /**
+   * Get session history from database.
    *
    * @param sessionId - The session ID
+   * @param tenantId - The tenant ID
+   * @param limit - Maximum messages to return (default 100)
+   * @param offset - Offset for pagination (default 0)
    * @returns Array of messages
    */
-  getSessionHistory(sessionId: string): AgentMessage[] {
-    return sessionMessages.get(sessionId) || [];
+  async getSessionHistory(
+    sessionId: string,
+    tenantId: string,
+    limit: number = 100,
+    offset: number = 0
+  ): Promise<{ messages: AgentMessage[]; total: number; hasMore: boolean }> {
+    const result = await this.sessionService.getSessionHistory(sessionId, tenantId, limit, offset);
+
+    // Transform to AgentMessage format
+    return {
+      messages: result.messages.map((m) => ({
+        role: m.role === 'assistant' ? 'model' : (m.role as 'user' | 'model'),
+        content: m.content,
+        timestamp: m.createdAt,
+        toolCalls: m.toolCalls?.map((tc) => ({
+          name: tc.name,
+          args: tc.arguments,
+          result: tc.result,
+        })),
+      })),
+      total: result.total,
+      hasMore: result.hasMore,
+    };
   }
 
   /**
-   * Get session details.
+   * Get session details from database.
    *
    * @param sessionId - The session ID
+   * @param tenantId - The tenant ID
    * @returns Session details or null
    */
-  getSession(sessionId: string): AgentSession | null {
-    return sessions.get(sessionId) || null;
+  async getSession(sessionId: string, tenantId: string): Promise<AgentSession | null> {
+    const dbSession = await this.sessionService.getSession(sessionId, tenantId);
+    if (!dbSession) {
+      return null;
+    }
+
+    const userId = dbSession.customerId || tenantId;
+    return this.toAgentSession(dbSession, userId);
   }
 
   /**
-   * Close a session.
+   * Close a session (soft delete).
    *
    * @param sessionId - The session ID
+   * @param tenantId - The tenant ID
    */
-  closeSession(sessionId: string): void {
-    const session = sessions.get(sessionId);
-    if (session) {
-      logger.info(
-        { tenantId: session.tenantId, sessionId, messageCount: session.messageCount },
-        '[VertexAgent] Session closed'
-      );
+  async closeSession(sessionId: string, tenantId: string): Promise<void> {
+    const deleted = await this.sessionService.deleteSession(sessionId, tenantId);
+    if (deleted) {
+      sessionMetrics.recordSessionDeleted();
+      logger.info({ tenantId, sessionId }, '[VertexAgent] Session closed');
     }
-    sessions.delete(sessionId);
-    sessionMessages.delete(sessionId);
   }
 
   // =============================================================================
@@ -619,8 +840,12 @@ export class VertexAgentService {
 
 /**
  * Create a new VertexAgentService instance.
+ *
+ * Requires PrismaClient for session persistence.
  * In production, this would be a singleton managed by DI.
+ *
+ * @param prisma - Prisma client for database operations
  */
-export function createVertexAgentService(): VertexAgentService {
-  return new VertexAgentService();
+export function createVertexAgentService(prisma: PrismaClient): VertexAgentService {
+  return new VertexAgentService(prisma);
 }
