@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5244'
 tags: [code-review, security, performance, pitfall-46]
 dependencies: []
+triage_batch: 2
+triage_decision: RESOLVE - Create fetchWithTimeout utility, apply to 4 locations
 ---
 
 # P1: Missing Fetch Timeouts on ADK Agent Calls

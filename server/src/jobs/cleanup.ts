@@ -46,16 +46,20 @@ export async function cleanupExpiredTraces(prisma: PrismaClient): Promise<number
 }
 
 /**
- * Clean up expired agent sessions (enterprise pattern)
+ * ADMIN ONLY: Cleanup expired sessions across ALL tenants.
+ *
+ * This is intentionally not tenant-scoped as it's a system maintenance operation.
+ * SECURITY: Never expose through user-facing API endpoints. Should only be
+ * invoked by scheduled cron jobs or admin CLI tools.
  *
  * Uses two-phase cleanup for data safety:
- * 1. Soft delete sessions inactive > maxAgeMs (default 30 days)
+ * 1. Soft delete sessions inactive > maxAgeDays (default 30 days)
  * 2. Hard delete sessions soft-deleted > 7 days ago
  *
  * This approach ensures:
  * - Session data can be recovered within 7 days of soft deletion
  * - Database doesn't grow unbounded
- * - Both ADMIN and CUSTOMER sessions are cleaned up
+ * - Both ADMIN and CUSTOMER sessions are cleaned up across all tenants
  *
  * @param prisma - Prisma client for database operations
  * @param maxAgeDays - Maximum session age in days before soft delete (default: 30)

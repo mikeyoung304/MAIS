@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5246'
 tags: [code-review, simplicity, yagni]
 dependencies: []
+triage_batch: 3
+triage_decision: RESOLVE - Replace with lru-cache npm package (238 lines → 10 lines)
 ---
 
 # P2: Custom LRU Cache Reinvents the Wheel

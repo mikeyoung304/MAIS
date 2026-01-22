@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5245'
 tags: [code-review, performance]
 dependencies: []
+triage_batch: 1
+triage_decision: RESOLVE_VIA_5248 - Deleting metrics module eliminates this issue
 ---
 
 # P1: Array.shift() in Metrics Collector is O(n) Operation

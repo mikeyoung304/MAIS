@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p1
 issue_id: '5243'
 tags: [code-review, performance, database]
 dependencies: []
+triage_batch: 2
+triage_decision: RESOLVE - One-line fix, high impact on production performance
 ---
 
 # P1: Serializable Isolation Level is Overkill

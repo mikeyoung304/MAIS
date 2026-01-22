@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5248'
 tags: [code-review, simplicity, dead-code]
 dependencies: ['5245']
+triage_batch: 1
+triage_decision: RESOLVE - Delete module, also fixes P1 5245 (293 lines removed)
 ---
 
 # P2: Metrics Module is Mostly Unused

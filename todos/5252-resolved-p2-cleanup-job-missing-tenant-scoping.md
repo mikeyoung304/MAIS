@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5252'
 tags: [code-review, security, multi-tenant, pitfall-1]
 dependencies: []
+triage_batch: 1
+triage_decision: RESOLVE - Add JSDoc comments only (intentional admin-only operation)
 ---
 
 # P2: Cleanup Job Missing Tenant Scoping

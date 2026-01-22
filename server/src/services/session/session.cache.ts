@@ -2,32 +2,27 @@
  * Session Cache (LRU with TTL)
  *
  * In-memory cache for active chat sessions to reduce database load.
- * Uses LRU eviction with TTL-based expiration.
+ * Uses battle-tested lru-cache package for LRU eviction with TTL-based expiration.
  *
  * Architecture:
  * - TTL: 5 minutes (context is refreshed via database anyway)
  * - Max entries: 2000 sessions (memory-safe)
- * - O(1) operations via Map insertion order
+ * - O(1) operations via lru-cache internals
  *
  * Security:
  * - Cache keys include tenantId to prevent cross-tenant access
  * - Cached data is encrypted (stored encrypted, not decrypted in cache)
  *
  * @see plans/feat-persistent-chat-session-storage.md Phase 2.2
- * @see server/src/agent/context/context-cache.ts (pattern reference)
  */
 
+import { LRUCache } from 'lru-cache';
 import { logger } from '../../lib/core/logger';
 import type { SessionWithMessages } from './session.schemas';
 
 // =============================================================================
 // TYPES
 // =============================================================================
-
-interface CacheEntry {
-  session: SessionWithMessages;
-  cachedAt: number;
-}
 
 export interface SessionCacheConfig {
   /** TTL in milliseconds (default: 5 minutes) */
@@ -50,23 +45,21 @@ const DEFAULT_CONFIG: SessionCacheConfig = {
 // =============================================================================
 
 /**
- * LRU cache for active sessions
+ * LRU cache for active sessions using lru-cache package
  *
- * Following pattern from context-cache.ts:
- * - TTL-based expiration
- * - Max entry limit with LRU eviction
- * - O(1) cache operations via Map insertion order
- *
- * PERFORMANCE: Map.keys().next() returns the first (oldest) key in O(1).
- * Combined with delete + set to move accessed entries to end, this provides
- * true LRU behavior without linked list overhead.
+ * Replaces custom 248-line implementation with battle-tested library.
+ * Same interface, same behavior, fewer bugs.
  */
 export class SessionCache {
-  private cache = new Map<string, CacheEntry>();
+  private cache: LRUCache<string, SessionWithMessages>;
   private config: SessionCacheConfig;
 
   constructor(config: Partial<SessionCacheConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this.cache = new LRUCache<string, SessionWithMessages>({
+      max: this.config.maxEntries,
+      ttl: this.config.ttlMs,
+    });
   }
 
   /**
@@ -86,26 +79,14 @@ export class SessionCache {
    */
   get(sessionId: string, tenantId: string): SessionWithMessages | null {
     const key = this.getCacheKey(sessionId, tenantId);
-    const entry = this.cache.get(key);
+    const session = this.cache.get(key);
 
-    if (!entry) {
+    if (!session) {
       return null;
     }
 
-    // Check TTL
-    const age = Date.now() - entry.cachedAt;
-    if (age > this.config.ttlMs) {
-      this.cache.delete(key);
-      logger.debug({ sessionId, tenantId, ageMs: age }, 'Session cache entry expired');
-      return null;
-    }
-
-    // LRU: Move to end by delete + re-insert (Map preserves insertion order)
-    this.cache.delete(key);
-    this.cache.set(key, entry);
-
-    logger.debug({ sessionId, tenantId, ageMs: age }, 'Session cache hit');
-    return entry.session;
+    logger.debug({ sessionId, tenantId }, 'Session cache hit');
+    return session;
   }
 
   /**
@@ -115,17 +96,7 @@ export class SessionCache {
    */
   set(sessionId: string, tenantId: string, session: SessionWithMessages): void {
     const key = this.getCacheKey(sessionId, tenantId);
-
-    // Evict oldest if at capacity and this is a new key
-    if (this.cache.size >= this.config.maxEntries && !this.cache.has(key)) {
-      this.evictOldest();
-    }
-
-    this.cache.set(key, {
-      session,
-      cachedAt: Date.now(),
-    });
-
+    this.cache.set(key, session);
     logger.debug({ sessionId, tenantId }, 'Session cached');
   }
 
@@ -148,7 +119,9 @@ export class SessionCache {
     const prefix = `session:${tenantId}:`;
     let count = 0;
 
-    for (const key of this.cache.keys()) {
+    // Convert to array to avoid iterator issues with TypeScript
+    const keys = Array.from(this.cache.keys());
+    for (const key of keys) {
       if (key.startsWith(prefix)) {
         this.cache.delete(key);
         count++;
@@ -181,34 +154,14 @@ export class SessionCache {
   }
 
   /**
-   * Evict oldest entry (true LRU - O(1) operation)
-   *
-   * PERFORMANCE: Map.keys().next() returns the first key (oldest/LRU)
-   * because we move accessed entries to the end via delete + set.
-   */
-  private evictOldest(): void {
-    const oldestKey = this.cache.keys().next().value;
-
-    if (oldestKey !== undefined) {
-      this.cache.delete(oldestKey);
-      logger.debug({ evictedKey: oldestKey }, 'Session cache evicted oldest entry');
-    }
-  }
-
-  /**
    * Cleanup expired entries
-   * Call periodically to free memory from expired entries that weren't accessed
+   * Note: lru-cache handles TTL expiration automatically on access,
+   * but this method can be called to proactively purge expired entries.
    */
   cleanup(): number {
-    const now = Date.now();
-    let evicted = 0;
-
-    for (const [key, entry] of this.cache) {
-      if (now - entry.cachedAt > this.config.ttlMs) {
-        this.cache.delete(key);
-        evicted++;
-      }
-    }
+    const sizeBefore = this.cache.size;
+    this.cache.purgeStale();
+    const evicted = sizeBefore - this.cache.size;
 
     if (evicted > 0) {
       logger.info({ evictedCount: evicted }, 'Session cache cleanup completed');

@@ -22,14 +22,29 @@
 import { GoogleAuth, JWT } from 'google-auth-library';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-import {
-  createSessionService,
-  type SessionService,
-  type SessionWithMessages,
-  sessionMetrics,
-  auditSessionCreated,
-  auditMessageAppended,
-} from './session';
+import { createSessionService, type SessionService, type SessionWithMessages } from './session';
+
+// =============================================================================
+// FETCH WITH TIMEOUT
+// =============================================================================
+
+/**
+ * Fetch with timeout for ADK agent calls.
+ * Per CLAUDE.md Pitfall #46: agent calls use 30s timeout.
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number = 30_000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // =============================================================================
 // CONFIGURATION
@@ -136,7 +151,7 @@ export class VertexAgentService {
 
     try {
       const token = await this.getIdentityToken();
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         // ADK app name is 'agent' (from /list-apps endpoint)
         `${CONCIERGE_AGENT_URL}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
@@ -166,6 +181,13 @@ export class VertexAgentService {
       adkSessionId = adkSession.id;
       logger.info({ tenantId, userId, adkSessionId }, '[VertexAgent] ADK session created');
     } catch (error) {
+      // Handle timeout errors specifically
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error(
+          { tenantId, userId },
+          '[VertexAgent] ADK session creation timed out after 30 seconds'
+        );
+      }
       // Fallback to local session ID if ADK is unreachable
       adkSessionId = `local:${tenantId}:${userId}:${Date.now()}`;
       logger.warn(
@@ -184,13 +206,16 @@ export class VertexAgentService {
       userAgent
     );
 
-    // Record metrics and audit
-    sessionMetrics.recordSessionCreated();
-    auditSessionCreated(dbSession.id, tenantId, 'ADMIN');
-
     logger.info(
-      { tenantId, userId, sessionId: dbSession.id, adkSessionId },
-      '[VertexAgent] Session created and persisted'
+      {
+        action: 'session.created',
+        sessionId: dbSession.id,
+        tenantId,
+        sessionType: 'ADMIN',
+        userId,
+        adkSessionId,
+      },
+      'Session audit: session.created'
     );
 
     return dbSession.id;
@@ -220,7 +245,6 @@ export class VertexAgentService {
         // Check if session is still fresh (last activity within 30 minutes)
         const thirtyMinutes = 30 * 60 * 1000;
         if (Date.now() - dbSession.lastActivityAt.getTime() < thirtyMinutes) {
-          sessionMetrics.recordSessionRestored();
           return this.toAgentSession(dbSession, userId);
         }
       }
@@ -298,7 +322,6 @@ export class VertexAgentService {
     if (!userMsgResult.success) {
       // Handle concurrent modification
       if (userMsgResult.error === 'Concurrent modification detected') {
-        sessionMetrics.recordConcurrentModification();
         return {
           response: 'Session was modified. Please refresh and try again.',
           sessionId,
@@ -310,8 +333,16 @@ export class VertexAgentService {
     }
 
     currentVersion = userMsgResult.newVersion!;
-    sessionMetrics.recordMessageAppended();
-    auditMessageAppended(sessionId, tenantId, userMsgResult.message!.id, 'user');
+    logger.debug(
+      {
+        action: 'session.message_appended',
+        sessionId,
+        tenantId,
+        messageId: userMsgResult.message!.id,
+        role: 'user',
+      },
+      'Session audit: session.message_appended'
+    );
 
     try {
       // Get identity token for Cloud Run authentication
@@ -320,7 +351,7 @@ export class VertexAgentService {
       // Send to Concierge agent via A2A protocol
       // user_id must match the format used in session creation
       const adkUserId = `${tenantId}:${userId}`;
-      const response = await fetch(`${CONCIERGE_AGENT_URL}/run`, {
+      const response = await fetchWithTimeout(`${CONCIERGE_AGENT_URL}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -410,8 +441,16 @@ export class VertexAgentService {
 
       if (agentMsgResult.success) {
         currentVersion = agentMsgResult.newVersion!;
-        sessionMetrics.recordMessageAppended();
-        auditMessageAppended(sessionId, tenantId, agentMsgResult.message!.id, 'assistant');
+        logger.debug(
+          {
+            action: 'session.message_appended',
+            sessionId,
+            tenantId,
+            messageId: agentMsgResult.message!.id,
+            role: 'assistant',
+          },
+          'Session audit: session.message_appended'
+        );
       } else {
         // Log but don't fail - user message was sent and response received
         logger.warn(
@@ -432,8 +471,21 @@ export class VertexAgentService {
         toolCalls,
       };
     } catch (error) {
+      // Handle timeout errors specifically
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error(
+          { tenantId, sessionId },
+          '[VertexAgent] ADK agent request timed out after 30 seconds'
+        );
+        return {
+          response: 'The request timed out. Please try again.',
+          sessionId,
+          version: currentVersion,
+          error: 'ADK agent request timed out after 30 seconds',
+        };
+      }
+
       logger.error({ tenantId, sessionId, error }, '[VertexAgent] Failed to send message');
-      sessionMetrics.recordError();
 
       return {
         response: 'Connection issue. Try again in a moment.',
@@ -457,23 +509,41 @@ export class VertexAgentService {
     const userId = tenantId; // Admin sessions use tenantId
     const adkUserId = `${tenantId}:${userId}`;
 
-    const token = await this.getIdentityToken();
-    const response = await fetch(`${CONCIERGE_AGENT_URL}/run`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify({
-        appName: 'agent',
-        userId: adkUserId,
-        sessionId: adkSessionId,
-        newMessage: {
-          role: 'user',
-          parts: [{ text: message }],
+    let response: Response;
+    try {
+      const token = await this.getIdentityToken();
+      response = await fetchWithTimeout(`${CONCIERGE_AGENT_URL}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
-      }),
-    });
+        body: JSON.stringify({
+          appName: 'agent',
+          userId: adkUserId,
+          sessionId: adkSessionId,
+          newMessage: {
+            role: 'user',
+            parts: [{ text: message }],
+          },
+        }),
+      });
+    } catch (error) {
+      // Handle timeout errors specifically
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error(
+          { tenantId, adkSessionId },
+          '[VertexAgent] ADK retry request timed out after 30 seconds'
+        );
+        return {
+          response: 'The request timed out. Please try again.',
+          sessionId: dbSessionId,
+          version: currentVersion,
+          error: 'ADK agent request timed out after 30 seconds',
+        };
+      }
+      throw error;
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -586,7 +656,6 @@ export class VertexAgentService {
   async closeSession(sessionId: string, tenantId: string): Promise<void> {
     const deleted = await this.sessionService.deleteSession(sessionId, tenantId);
     if (deleted) {
-      sessionMetrics.recordSessionDeleted();
       logger.info({ tenantId, sessionId }, '[VertexAgent] Session closed');
     }
   }
@@ -609,7 +678,7 @@ export class VertexAgentService {
       const token = await this.getIdentityToken();
       const adkUserId = `${tenantId}:${userId}`;
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${CONCIERGE_AGENT_URL}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
@@ -638,6 +707,14 @@ export class VertexAgentService {
       );
       return adkSession.id;
     } catch (error) {
+      // Handle timeout errors specifically
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error(
+          { tenantId, userId },
+          '[VertexAgent] ADK session creation timed out after 30 seconds'
+        );
+        return null;
+      }
       logger.error({ tenantId, userId, error }, '[VertexAgent] Error creating ADK session');
       return null;
     }

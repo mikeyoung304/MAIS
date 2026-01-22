@@ -75,31 +75,3 @@ export {
 // =============================================================================
 
 export { SessionService, createSessionService, type SessionServiceConfig } from './session.service';
-
-// =============================================================================
-// AUDIT
-// =============================================================================
-
-export {
-  SessionAuditAction,
-  logSessionAudit,
-  auditSessionCreated,
-  auditSessionAccessed,
-  auditSessionRestored,
-  auditMessageAppended,
-  auditSessionDeleted,
-  auditConcurrentModification,
-  auditAccessDenied,
-  type SessionAuditEntry,
-} from './session.audit';
-
-// =============================================================================
-// METRICS
-// =============================================================================
-
-export {
-  sessionMetrics,
-  timeGetOperation,
-  timeAppendOperation,
-  type SessionMetrics,
-} from './session.metrics';

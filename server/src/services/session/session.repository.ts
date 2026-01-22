@@ -84,6 +84,7 @@ export class SessionRepository {
     });
 
     if (!session) {
+      logger.warn({ sessionId, tenantId }, 'Session lookup failed - not found or access denied');
       return null;
     }
 
@@ -296,7 +297,8 @@ export class SessionRepository {
           };
         },
         {
-          isolationLevel: 'Serializable', // Strictest isolation
+          // ReadCommitted is sufficient - advisory locks (ADR-013) already prevent TOCTOU
+          isolationLevel: 'ReadCommitted',
           timeout: 10000, // 10 second timeout
         }
       );
@@ -395,11 +397,17 @@ export class SessionRepository {
   // ===========================================================================
 
   /**
-   * Cleanup expired sessions (for cron job)
+   * ADMIN ONLY: Cleanup expired sessions across ALL tenants.
+   *
+   * This is intentionally not tenant-scoped as it's a system maintenance operation.
+   * SECURITY: Never expose through user-facing API endpoints.
    *
    * Two-phase cleanup:
-   * 1. Soft delete sessions inactive > maxAgeMs
+   * 1. Soft delete sessions inactive > maxAgeMs (default 30 days)
    * 2. Hard delete sessions soft-deleted > 7 days ago
+   *
+   * @param maxAgeMs - Sessions inactive for this long are soft deleted (default: 30 days)
+   * @returns Number of sessions hard-deleted
    */
   async cleanupExpiredSessions(maxAgeMs: number = 30 * 24 * 60 * 60 * 1000): Promise<number> {
     const cutoff = new Date(Date.now() - maxAgeMs);

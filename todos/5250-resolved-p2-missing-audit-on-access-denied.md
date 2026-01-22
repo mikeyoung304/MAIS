@@ -1,9 +1,11 @@
 ---
-status: pending
+status: resolved
 priority: p2
 issue_id: '5250'
 tags: [code-review, security, audit]
 dependencies: []
+triage_batch: 1
+triage_decision: RESOLVE - Add logger.warn in repository (1 line fix, no audit module needed)
 ---
 
 # P2: Missing Audit on Session Lookup Failure (IDOR Detection Gap)
