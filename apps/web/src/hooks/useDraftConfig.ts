@@ -113,17 +113,29 @@ export function useDraftConfig(): UseDraftConfigResult {
           };
         }
 
-        // 404 means tenant not found or no config
+        // 404 means tenant not found or no config - use defaults (recoverable)
         if (response.status === 404) {
           logger.debug('[useDraftConfig] No config found, using defaults');
           return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false, version: 0 };
         }
 
-        // Other errors - fallback to defaults
-        logger.warn('[useDraftConfig] Unexpected response, using defaults', {
-          status: response.status,
-        });
-        return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false, version: 0 };
+        // Auth errors - throw to show error state (user needs to re-login)
+        // CRITICAL: Don't silently use defaults - this causes the "DEFAULT config in preview" bug
+        // where the preview shows [Your Transformation Headline] instead of actual content
+        if (response.status === 401 || response.status === 403) {
+          logger.error('[useDraftConfig] Authentication error', { status: response.status });
+          throw new Error('Session expired. Please refresh the page to log in again.');
+        }
+
+        // Server errors - throw to show error state
+        if (response.status >= 500) {
+          logger.error('[useDraftConfig] Server error', { status: response.status });
+          throw new Error(`Server error (${response.status}). Please try again later.`);
+        }
+
+        // Other unexpected errors - throw to surface the problem
+        logger.warn('[useDraftConfig] Unexpected response status', { status: response.status });
+        throw new Error(`Failed to load draft configuration (${response.status})`);
       } catch (error) {
         logger.error('[useDraftConfig] Failed to fetch draft', { error });
         throw error;

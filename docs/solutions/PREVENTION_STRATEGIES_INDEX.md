@@ -31,6 +31,13 @@ Complete guide to preventing common issues in the MAIS codebase.
 | Service Worker serving stale JS bundles after code changes | [service-worker-cache-stale-js-bundles-MAIS-20260105.md](dev-workflow/service-worker-cache-stale-js-bundles-MAIS-20260105.md)                             | Frontend developers |
 | App broken after running production build then dev server  | [turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md](build-errors/turbopack-hmr-cache-conflict-after-production-build-MAIS-20260102.md) | Frontend developers |
 
+### UI Bugs & Error Handling
+
+| Problem                                                     | Prevention Strategy                                                                    | Audience            |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------- |
+| Preview shows DEFAULT config instead of actual draft (#72)  | [USEDRAFTCONFIG_SILENT_AUTH_FAILURE.md](ui-bugs/USEDRAFTCONFIG_SILENT_AUTH_FAILURE.md) | Frontend developers |
+| Preview iframe loses PostMessage connection on reload (#71) | [FLUID_CANVAS_PREVIEW_UPDATES.md](ui-bugs/FLUID_CANVAS_PREVIEW_UPDATES.md)             | Frontend developers |
+
 ### Type Safety & TypeScript
 
 | Problem                             | Prevention Strategy                                                                                                                   | Audience                    |

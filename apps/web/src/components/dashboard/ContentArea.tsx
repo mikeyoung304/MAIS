@@ -121,7 +121,17 @@ interface ContentAreaProps {
  */
 export function ContentArea({ children, className }: ContentAreaProps) {
   const view = useAgentUIStore((state) => state.view);
-  const { config, hasDraft, invalidate, isLoading } = useDraftConfig();
+  const { config, hasDraft, invalidate, isLoading, error: draftError, refetch } = useDraftConfig();
+
+  // Check for draft config errors first (auth failures, server errors)
+  // This prevents the silent "DEFAULT config in preview" bug
+  if (draftError && view.status === 'preview') {
+    return (
+      <div className={cn('h-full', className)} data-testid="content-area-draft-error">
+        <ErrorView error={draftError.message} onRetry={refetch} />
+      </div>
+    );
+  }
 
   // Switch on discriminated union - TypeScript knows exactly what's available in each case
   switch (view.status) {
