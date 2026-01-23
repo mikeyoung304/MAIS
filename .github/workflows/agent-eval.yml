@@ -52,6 +52,11 @@ jobs:
       - name: Build contracts package
         run: npm run build --workspace=@macon/contracts
 
+      - name: Generate Prisma Client
+        run: npm run --workspace=server prisma:generate
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+
       - name: Run Agent Evaluation Tests
         run: npm run test:agent-eval --workspace=@macon/api
         env:
