@@ -31,7 +31,13 @@ interface TenantPageProps {
  * - Revalidated on tenant config changes via webhook
  */
 
-// Generate SEO metadata for the tenant page
+/**
+ * Generate SEO metadata for the tenant page.
+ *
+ * **Enhanced (2026-01-12):** Now correctly extracts hero content from both
+ * page-based configs (pages.home.sections[type=hero]) and legacy configs
+ * (hero.subheadline). Uses normalizeToPages() for consistent extraction.
+ */
 export async function generateMetadata({ params }: TenantPageProps): Promise<Metadata> {
   const { slug } = await params;
 
@@ -39,8 +45,9 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
     const data = await getTenantStorefrontData(slug);
     const { tenant } = data;
 
-    const metaDescription =
-      tenant.branding?.landingPage?.hero?.subheadline || `Book services with ${tenant.name}`;
+    // Extract hero content using consistent normalization
+    const heroContent = getHeroContent(tenant.branding?.landingPage);
+    const metaDescription = heroContent?.subheadline || `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,
@@ -68,6 +75,45 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
       },
     };
   }
+}
+
+/**
+ * Extract hero section content from landing page config.
+ * Handles both page-based and legacy config formats consistently.
+ */
+function getHeroContent(config: LandingPageConfig | undefined): {
+  headline?: string;
+  subheadline?: string;
+  ctaText?: string;
+  backgroundImageUrl?: string;
+} | null {
+  if (!config) return null;
+
+  // Try page-based config first (preferred)
+  const pages = normalizeToPages(config);
+  const heroSection = pages.home.sections.find((s) => s.type === 'hero');
+
+  // Type narrowing for hero section
+  if (heroSection && heroSection.type === 'hero') {
+    return {
+      headline: heroSection.headline,
+      subheadline: heroSection.subheadline,
+      ctaText: heroSection.ctaText,
+      backgroundImageUrl: heroSection.backgroundImageUrl,
+    };
+  }
+
+  // Fallback to legacy hero if present
+  if (config.hero) {
+    return {
+      headline: config.hero.headline,
+      subheadline: config.hero.subheadline,
+      ctaText: config.hero.ctaText,
+      backgroundImageUrl: config.hero.backgroundImageUrl,
+    };
+  }
+
+  return null;
 }
 
 export default async function TenantPage({ params, searchParams }: TenantPageProps) {

@@ -1472,6 +1472,7 @@ export abstract class BaseOrchestrator {
    */
   private cleanupOldCircuitBreakers(): void {
     let removed = 0;
+    let removedByIdle = 0;
     const now = Date.now();
 
     // Session TTL is 60 minutes; add buffer to avoid race conditions
@@ -1480,9 +1481,14 @@ export abstract class BaseOrchestrator {
     for (const [sessionId, circuitBreaker] of this.circuitBreakers) {
       const state = circuitBreaker.getState();
       const ageMs = now - state.startTime;
+      const idleMs = now - state.lastActivityTime;
 
       // Remove circuit breakers older than TTL (orphaned after session expiry)
-      if (ageMs > CIRCUIT_BREAKER_TTL_MS) {
+      // OR idle for longer than maxIdleTimeMs (memory leak prevention)
+      const isExpiredByAge = ageMs > CIRCUIT_BREAKER_TTL_MS;
+      const isExpiredByIdle = circuitBreaker.isIdle();
+
+      if (isExpiredByAge || isExpiredByIdle) {
         this.circuitBreakers.delete(sessionId);
         // Also clean up corresponding tracer and finalize it
         const tracer = this.tracers.get(sessionId);
@@ -1496,6 +1502,13 @@ export abstract class BaseOrchestrator {
           this.tracers.delete(sessionId);
         }
         removed++;
+        if (isExpiredByIdle && !isExpiredByAge) {
+          removedByIdle++;
+        }
+        logger.debug(
+          { sessionId, reason: isExpiredByIdle ? 'idle' : 'age', ageMs, idleMs },
+          'Session cleaned up'
+        );
       }
     }
 
@@ -1536,6 +1549,7 @@ export abstract class BaseOrchestrator {
       logger.debug(
         {
           removed,
+          removedByIdle,
           remaining: this.circuitBreakers.size,
           tracersRemaining: this.tracers.size,
           tenantCacheRemoved,

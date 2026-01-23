@@ -178,26 +178,32 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
   },
 
   // ===========================================
-  // EDITING (T2 - Soft-confirm)
+  // EDITING (T1 - Auto-execute for paintbrush effect)
   // ===========================================
 
   {
     id: 'update_page_section',
     name: 'Update Section',
-    description: 'Modify content in a specific section of your storefront',
+    description: 'Modify or add content in a specific section of your storefront',
     category: 'editing',
-    keywords: ['edit', 'update', 'change', 'modify', 'section', 'content', 'headline', 'text'],
-    trustTier: 'T2',
+    keywords: [
+      'edit',
+      'update',
+      'change',
+      'modify',
+      'section',
+      'content',
+      'headline',
+      'text',
+      'add',
+      'new',
+      'create',
+      'testimonials',
+      'faq',
+      'gallery',
+    ],
+    trustTier: 'T1', // Auto-execute for real-time updates (paintbrush effect)
     example: 'Update the headline on my homepage',
-  },
-  {
-    id: 'update_page_section',
-    name: 'Add Section',
-    description: 'Add or update a section on your storefront page',
-    category: 'editing',
-    keywords: ['add', 'new', 'create', 'section', 'testimonials', 'faq', 'gallery'],
-    trustTier: 'T2',
-    example: 'Add a testimonials section to my homepage',
   },
   {
     id: 'remove_page_section',
@@ -205,7 +211,7 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
     description: 'Remove a section from your storefront',
     category: 'editing',
     keywords: ['remove', 'delete', 'section'],
-    trustTier: 'T2',
+    trustTier: 'T1', // Auto-execute - reversible via discard draft
     example: 'Remove the FAQ section from my about page',
   },
   {
@@ -229,11 +235,20 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
   {
     id: 'update_storefront_branding',
     name: 'Update Branding',
-    description: 'Update brand colors, fonts, or logo',
+    description: 'Update brand colors, fonts, or logo (applies immediately)',
     category: 'editing',
     keywords: ['brand', 'colors', 'fonts', 'logo', 'style', 'theme'],
-    trustTier: 'T2',
+    trustTier: 'T1', // Auto-execute for real-time updates
     example: 'Change my primary color to sage green',
+  },
+  {
+    id: 'revert_branding',
+    name: 'Revert Branding',
+    description: 'Undo the last branding change (available for 24 hours)',
+    category: 'editing',
+    keywords: ['revert', 'undo', 'branding', 'restore', 'previous'],
+    trustTier: 'T1', // Auto-execute - restores previous state
+    example: 'Revert my branding changes',
   },
 
   // ===========================================
@@ -421,3 +436,24 @@ export const TRUST_TIER_COLORS: Record<TrustTier, string> = {
   T2: 'text-amber-600',
   T3: 'text-red-600',
 };
+
+// ============================================
+// COMPILE-TIME & RUNTIME VALIDATION
+// ============================================
+
+/**
+ * Verify no duplicate capability IDs exist
+ * Throws at module load time if duplicates are found
+ *
+ * This check runs once when the module is imported, catching
+ * duplicate IDs during development and CI rather than production.
+ */
+const capabilityIds = AGENT_CAPABILITIES.map((cap) => cap.id);
+const uniqueIds = new Set(capabilityIds);
+if (uniqueIds.size !== capabilityIds.length) {
+  const duplicates = capabilityIds.filter((id, index) => capabilityIds.indexOf(id) !== index);
+  throw new Error(
+    `Duplicate capability IDs detected in agent-capabilities.ts: ${[...new Set(duplicates)].join(', ')}. ` +
+      'Each capability must have a unique ID.'
+  );
+}

@@ -126,8 +126,9 @@ describe('Storefront Build Mode Tools', () => {
   });
 
   describe('storefrontTools list', () => {
-    it('should include all 11 storefront tools', () => {
-      expect(storefrontTools).toHaveLength(11);
+    it('should include all 12 storefront tools', () => {
+      // 11 original + 1 revert_branding (P1 fix for branding undo)
+      expect(storefrontTools).toHaveLength(12);
     });
 
     it('should include all expected tools', () => {
@@ -142,6 +143,7 @@ describe('Storefront Build Mode Tools', () => {
       expect(toolNames).toContain('reorder_page_sections');
       expect(toolNames).toContain('toggle_page_enabled');
       expect(toolNames).toContain('update_storefront_branding');
+      expect(toolNames).toContain('revert_branding'); // P1 fix
       expect(toolNames).toContain('publish_draft');
       expect(toolNames).toContain('discard_draft');
       expect(toolNames).toContain('get_landing_page_draft');

@@ -227,6 +227,11 @@ export function AgentPanel({ className }: AgentPanelProps) {
     []
   );
 
+  // P2-FIX: Handle section highlight from agent messages (via [[highlight:sectionId]] syntax)
+  const handleSectionHighlight = useCallback((sectionId: string) => {
+    agentUIActions.highlightSection(sectionId);
+  }, []);
+
   // Handle first message sent - mark user as welcomed
   const handleFirstMessage = useCallback(() => {
     if (isFirstVisit) {
@@ -357,6 +362,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
               onFirstMessage={handleFirstMessage}
               onUIAction={handleConciergeUIAction}
               onToolComplete={handleConciergeToolComplete}
+              onSectionHighlight={handleSectionHighlight}
               className="h-full"
             />
           </div>
@@ -496,6 +502,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
                 onFirstMessage={handleFirstMessage}
                 onUIAction={handleConciergeUIAction}
                 onToolComplete={handleConciergeToolComplete}
+                onSectionHighlight={handleSectionHighlight}
                 inputRef={inputRef}
                 messagesRole="log"
                 className="h-full"

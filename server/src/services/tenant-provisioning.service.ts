@@ -18,11 +18,12 @@
  * @see todos/630-pending-p1-admin-api-skips-tenant-onboarding.md
  */
 
-import type { PrismaClient, Tenant, Segment, Package } from '../generated/prisma/client';
+import type { PrismaClient, Tenant, Segment, Package, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
 import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';
 import { TenantProvisioningError } from '../lib/errors';
+import { DEFAULT_LANDING_PAGE_CONFIG } from '@macon/contracts';
 
 /**
  * Input for creating a new tenant via admin API
@@ -133,7 +134,9 @@ export class TenantProvisioningService {
     const keys = apiKeyService.generateKeyPair(slug);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // Create tenant
+      // Create tenant with default landing page config
+      // P4-FIX: Seed DEFAULT_PAGES_CONFIG on tenant provisioning
+      // This ensures new tenants have a complete landing page structure with placeholders
       const tenant = await tx.tenant.create({
         data: {
           slug,
@@ -142,6 +145,7 @@ export class TenantProvisioningService {
           apiKeySecret: keys.secretKeyHash,
           commissionPercent,
           branding: {},
+          landingPageConfig: DEFAULT_LANDING_PAGE_CONFIG as unknown as Prisma.JsonObject,
         },
       });
 
@@ -194,7 +198,9 @@ export class TenantProvisioningService {
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        // Create tenant with auth credentials
+        // Create tenant with auth credentials and default landing page config
+        // P4-FIX: Seed DEFAULT_PAGES_CONFIG on tenant provisioning
+        // This ensures new tenants have a complete landing page structure with placeholders
         const tenant = await tx.tenant.create({
           data: {
             slug,
@@ -205,6 +211,7 @@ export class TenantProvisioningService {
             apiKeySecret: secretKeyHash,
             commissionPercent: 10.0,
             emailVerified: false,
+            landingPageConfig: DEFAULT_LANDING_PAGE_CONFIG as unknown as Prisma.JsonObject,
           },
         });
 

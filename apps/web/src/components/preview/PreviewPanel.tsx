@@ -203,10 +203,27 @@ export function PreviewPanel({
           break;
 
         case 'BUILD_MODE_SECTION_SELECTED':
-          // User clicked a section in preview
-          // The message contains pageId and sectionIndex
-          // For now, we just log - full section ID highlighting requires
-          // the iframe to send section IDs in the future
+          // P2-FIX: User clicked a section in preview
+          // Extract section ID from message data and update the agent store
+          // This enables bidirectional highlighting: agent can highlight sections,
+          // and user can click sections to focus them
+          if (message.data && typeof message.data === 'object') {
+            const { sectionId, pageId, sectionIndex } = message.data as {
+              sectionId?: string;
+              pageId?: string;
+              sectionIndex?: number;
+            };
+
+            // Prefer section ID if available (Phase 5.1 adds IDs to legacy sections)
+            if (sectionId) {
+              agentUIActions.highlightSection(sectionId);
+            } else if (pageId !== undefined && sectionIndex !== undefined) {
+              // Fallback: construct section ID from page and index
+              // Format: {page}-section-{index} (generic format for legacy sections)
+              const constructedId = `${pageId}-section-${sectionIndex}`;
+              agentUIActions.highlightSection(constructedId);
+            }
+          }
           break;
 
         case 'BUILD_MODE_PAGE_CHANGE':

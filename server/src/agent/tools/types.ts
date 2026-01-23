@@ -83,6 +83,12 @@ export interface ToolError {
   success: false;
   error: string;
   code?: string;
+  /**
+   * State indicator for revert operations
+   * When false, indicates no revert is available (no history or expired TTL)
+   * Helps the agent understand system state without creating failed proposals
+   */
+  canRevert?: boolean;
 }
 
 /**

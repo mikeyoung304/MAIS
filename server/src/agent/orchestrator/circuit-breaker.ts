@@ -12,12 +12,15 @@ export interface CircuitBreakerConfig {
   readonly maxTokensPerSession: number;
   readonly maxTimePerSessionMs: number;
   readonly maxConsecutiveErrors: number;
+  /** Maximum idle time in ms before session cleanup (default: 30 minutes) */
+  readonly maxIdleTimeMs: number;
 }
 
 export interface CircuitBreakerState {
   readonly turns: number;
   readonly tokens: number;
   readonly startTime: number;
+  readonly lastActivityTime: number;
   readonly consecutiveErrors: number;
   readonly isTripped: boolean;
   readonly tripReason?: string;
@@ -34,6 +37,7 @@ export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
   maxTokensPerSession: 100_000, // ~$3 per session max
   maxTimePerSessionMs: 30 * 60 * 1000, // 30 min session limit
   maxConsecutiveErrors: 3, // Trip after 3 errors
+  maxIdleTimeMs: 30 * 60 * 1000, // 30 min idle timeout (memory leak prevention)
 } as const;
 
 /**
@@ -44,6 +48,7 @@ export class CircuitBreaker {
   private turns: number = 0;
   private tokens: number = 0;
   private readonly startTime: number = Date.now();
+  private lastActivityTime: number = Date.now();
   private consecutiveErrors: number = 0;
   private isTripped: boolean = false;
   private tripReason?: string;
@@ -68,9 +73,17 @@ export class CircuitBreaker {
       return { allowed: false, reason: this.tripReason };
     }
 
-    const elapsed = Date.now() - this.startTime;
+    const now = Date.now();
+    const elapsed = now - this.startTime;
     if (elapsed >= this.config.maxTimePerSessionMs) {
       this.trip(`Max session time (${this.config.maxTimePerSessionMs}ms) exceeded`);
+      return { allowed: false, reason: this.tripReason };
+    }
+
+    // Check idle timeout (memory leak prevention)
+    const idleTime = now - this.lastActivityTime;
+    if (idleTime >= this.config.maxIdleTimeMs) {
+      this.trip('Session expired due to inactivity. Please start a new conversation.');
       return { allowed: false, reason: this.tripReason };
     }
 
@@ -79,12 +92,22 @@ export class CircuitBreaker {
 
   /**
    * Record a completed turn with token count
+   * Also updates lastActivityTime to prevent idle timeout
    */
   recordTurn(tokensUsed: number): void {
     this.turns++;
     this.tokens += tokensUsed;
+    this.lastActivityTime = Date.now();
 
     logger.debug({ turns: this.turns, tokens: this.tokens }, 'Circuit breaker recorded turn');
+  }
+
+  /**
+   * Record activity without a turn (e.g., user is typing, heartbeat)
+   * Prevents idle timeout for active sessions
+   */
+  recordActivity(): void {
+    this.lastActivityTime = Date.now();
   }
 
   /**
@@ -132,9 +155,19 @@ export class CircuitBreaker {
       turns: this.turns,
       tokens: this.tokens,
       startTime: this.startTime,
+      lastActivityTime: this.lastActivityTime,
       consecutiveErrors: this.consecutiveErrors,
       isTripped: this.isTripped,
       tripReason: this.tripReason,
     });
+  }
+
+  /**
+   * Check if this session is idle (for external cleanup logic)
+   * @param maxIdleMs Optional override for idle threshold
+   */
+  isIdle(maxIdleMs?: number): boolean {
+    const threshold = maxIdleMs ?? this.config.maxIdleTimeMs;
+    return Date.now() - this.lastActivityTime >= threshold;
   }
 }
