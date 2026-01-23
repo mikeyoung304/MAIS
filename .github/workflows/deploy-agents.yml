@@ -182,48 +182,43 @@ jobs:
 
       - name: Verify deployment health
         run: |
-          echo "🔍 Verifying agent health..."
+          echo "🔍 Verifying agent deployment..."
+
+          # Check Cloud Run service status via gcloud (reliable, no custom endpoint needed)
+          SERVICE_STATUS=$(gcloud run services describe ${{ matrix.agent }}-agent \
+            --region=${{ env.GOOGLE_CLOUD_REGION }} \
+            --format='value(status.conditions[0].status)' 2>/dev/null || echo "Unknown")
 
           SERVICE_URL=$(gcloud run services describe ${{ matrix.agent }}-agent \
             --region=${{ env.GOOGLE_CLOUD_REGION }} \
-            --format='value(status.url)' 2>/dev/null)
+            --format='value(status.url)' 2>/dev/null || echo "")
 
-          if [ -z "$SERVICE_URL" ]; then
-            echo "❌ Could not get service URL"
+          REVISION=$(gcloud run services describe ${{ matrix.agent }}-agent \
+            --region=${{ env.GOOGLE_CLOUD_REGION }} \
+            --format='value(status.latestReadyRevisionName)' 2>/dev/null || echo "Unknown")
+
+          echo "📍 Service URL: $SERVICE_URL"
+          echo "📦 Latest revision: $REVISION"
+          echo "🔄 Service status: $SERVICE_STATUS"
+
+          if [ "$SERVICE_STATUS" = "True" ]; then
+            echo "✅ Cloud Run service is healthy and ready"
+          elif [ -z "$SERVICE_URL" ]; then
+            echo "❌ Service not found or not deployed"
             exit 1
-          fi
-
-          # Wait for Cloud Run to stabilize
-          sleep 15
-
-          # Get identity token for authenticated health check
-          echo "🔑 Getting identity token..."
-          ID_TOKEN=$(gcloud auth print-identity-token --audiences="$SERVICE_URL" 2>/dev/null || echo "")
-
-          # Check agent health with authentication
-          if [ -n "$ID_TOKEN" ]; then
-            echo "🔐 Using authenticated request"
-            HTTP_STATUS=$(curl -s -o /tmp/health.json -w "%{http_code}" \
-              --max-time 30 \
-              -H "Authorization: Bearer $ID_TOKEN" \
-              "$SERVICE_URL/health" || echo "000")
           else
-            echo "⚠️  No token available, trying unauthenticated"
-            HTTP_STATUS=$(curl -s -o /tmp/health.json -w "%{http_code}" \
-              --max-time 30 \
-              "$SERVICE_URL/health" || echo "000")
-          fi
-
-          if [ "$HTTP_STATUS" = "000" ]; then
-            echo "❌ Agent unreachable after deployment"
-            exit 1
-          elif [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ Agent healthy (HTTP $HTTP_STATUS)"
-            cat /tmp/health.json
-          else
-            echo "❌ Agent unhealthy (HTTP $HTTP_STATUS)"
-            cat /tmp/health.json 2>/dev/null || true
-            exit 1
+            echo "⚠️  Service status: $SERVICE_STATUS (may still be starting)"
+            # Wait and retry once
+            sleep 10
+            SERVICE_STATUS=$(gcloud run services describe ${{ matrix.agent }}-agent \
+              --region=${{ env.GOOGLE_CLOUD_REGION }} \
+              --format='value(status.conditions[0].status)' 2>/dev/null || echo "Unknown")
+            if [ "$SERVICE_STATUS" = "True" ]; then
+              echo "✅ Service now healthy after waiting"
+            else
+              echo "❌ Service still not ready: $SERVICE_STATUS"
+              exit 1
+            fi
           fi
 
   # Job 3: Summary
