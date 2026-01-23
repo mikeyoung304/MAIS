@@ -100,6 +100,7 @@ import {
   reorderPageSectionsTool,
   togglePageEnabledTool,
   updateStorefrontBrandingTool,
+  revertBrandingTool,
   publishDraftTool,
   discardDraftTool,
   getLandingPageDraftTool,
@@ -333,6 +334,7 @@ describe('Storefront Tools', () => {
         expectedTier: 'T1',
         name: 'update_storefront_branding',
       },
+      { tool: revertBrandingTool, expectedTier: 'T1', name: 'revert_branding' }, // P1 fix
       { tool: getLandingPageDraftTool, expectedTier: 'T1', name: 'get_landing_page_draft' },
       // Publish tools (T3 - requires explicit approval)
       { tool: publishDraftTool, expectedTier: 'T3', name: 'publish_draft' },
@@ -356,10 +358,12 @@ describe('Storefront Tools', () => {
     });
 
     it('storefrontTools array should export all tools', () => {
-      expect(storefrontTools).toHaveLength(11);
+      // 11 original + 1 revert_branding (P1 fix for branding undo)
+      expect(storefrontTools).toHaveLength(12);
       const toolNames = storefrontTools.map((t) => t.name);
       expect(toolNames).toContain('list_section_ids');
       expect(toolNames).toContain('update_page_section');
+      expect(toolNames).toContain('revert_branding'); // P1 fix
       expect(toolNames).toContain('publish_draft');
       expect(toolNames).toContain('discard_draft');
     });

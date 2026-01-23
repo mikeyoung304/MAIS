@@ -310,9 +310,12 @@ export const agentSessionLimiter = rateLimit({
     const sessionId = (req.body as { sessionId?: string })?.sessionId;
     const tenantId = res.locals.tenantAuth?.tenantId;
 
-    // Validate sessionId format (should be CUID-like, < 100 chars)
-    // This prevents injection of excessively long keys into the rate limiter store
-    if (sessionId && typeof sessionId === 'string' && sessionId.length < 100) {
+    // Validate sessionId format using CUID pattern (MAIS uses CUIDs for IDs)
+    // This prevents injection of special characters (colons, newlines, control chars)
+    // that could be interpreted by the underlying rate limiter store
+    // CUID format: 'c' followed by 24 lowercase alphanumeric characters
+    const CUID_PATTERN = /^c[a-z0-9]{24}$/;
+    if (sessionId && typeof sessionId === 'string' && CUID_PATTERN.test(sessionId)) {
       // Use compound key to ensure tenant association - prevents sessionId spoofing
       // An attacker rotating sessionIds will still be bound to their tenantId
       if (tenantId) {

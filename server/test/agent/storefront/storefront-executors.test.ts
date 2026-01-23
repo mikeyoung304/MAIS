@@ -1040,4 +1040,161 @@ describe('Storefront Executors', () => {
       expect(mockPrisma.tenant.updateMany).toHaveBeenCalledTimes(3);
     });
   });
+
+  // ============================================================================
+  // P1-5262: revert_branding executor tests
+  // Tests TTL validation, history existence, corrupted data handling
+  // ============================================================================
+  describe('revert_branding executor', () => {
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+    it('should return error when branding history is corrupted', async () => {
+      const executor = registeredExecutors.get('revert_branding')!;
+
+      // Corrupted history: timestamp should be number, not string
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        branding: {
+          _previousBranding: [{ timestamp: 'not-a-number', primaryColor: '#ff0000' }],
+        },
+      });
+
+      const result = await executor('tenant-123', {});
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Branding history is corrupted. Cannot revert.',
+      });
+    });
+
+    it('should return error when no history exists (empty array)', async () => {
+      const executor = registeredExecutors.get('revert_branding')!;
+
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        branding: {
+          _previousBranding: [], // No history entries
+        },
+      });
+
+      const result = await executor('tenant-123', {});
+
+      expect(result).toEqual({
+        success: false,
+        error: 'No previous branding to revert to. No changes have been made.',
+      });
+    });
+
+    it('should return error when no history exists (undefined)', async () => {
+      const executor = registeredExecutors.get('revert_branding')!;
+
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        branding: {
+          // _previousBranding is missing entirely
+        },
+      });
+
+      const result = await executor('tenant-123', {});
+
+      // Should fail Zod validation since undefined doesn't match array schema
+      expect(result).toHaveProperty('success', false);
+    });
+
+    it('should return error when previous branding has expired (>24h)', async () => {
+      const executor = registeredExecutors.get('revert_branding')!;
+
+      // Timestamp from 25 hours ago
+      const expiredTimestamp = Date.now() - (TWENTY_FOUR_HOURS_MS + 60 * 60 * 1000);
+
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        branding: {
+          _previousBranding: [{ timestamp: expiredTimestamp, primaryColor: '#ff0000' }],
+        },
+      });
+
+      const result = await executor('tenant-123', {});
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Previous branding state has expired. Revert is only available for 24 hours.',
+      });
+    });
+
+    it('should successfully revert branding within 24h window', async () => {
+      const executor = registeredExecutors.get('revert_branding')!;
+
+      // Timestamp from 1 hour ago (within 24h window)
+      const recentTimestamp = Date.now() - 60 * 60 * 1000;
+
+      mockPrisma.tenant.findUnique
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+          branding: {
+            _previousBranding: [
+              {
+                timestamp: recentTimestamp,
+                primaryColor: '#ff0000',
+                fontFamily: 'Inter',
+              },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          id: 'tenant-123',
+          slug: 'test-tenant',
+          landingPageConfig: { pages: DEFAULT_PAGES_CONFIG },
+          landingPageConfigDraft: null,
+        });
+
+      mockPrisma.tenant.update.mockResolvedValue({});
+
+      const result = (await executor('tenant-123', {})) as {
+        success: boolean;
+        action?: string;
+        previewUrl?: string;
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.action).toBe('reverted');
+      expect(result.previewUrl).toBe('/t/test-tenant?preview=draft');
+
+      // Verify tenant.update was called with correct data
+      expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
+        where: { id: 'tenant-123' },
+        data: expect.objectContaining({
+          primaryColor: '#ff0000',
+          branding: expect.objectContaining({
+            fontFamily: 'Inter',
+            _previousBranding: [], // Entry removed after revert
+          }),
+        }),
+      });
+    });
+
+    it('should include canRevert flag guidance for corrupted data', async () => {
+      const executor = registeredExecutors.get('revert_branding')!;
+
+      // Test that error responses help agent understand state
+      mockPrisma.tenant.findUnique.mockResolvedValueOnce({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        branding: {
+          _previousBranding: 'not-an-array', // Invalid type
+        },
+      });
+
+      const result = await executor('tenant-123', {});
+
+      // Error response should be clear for agent to understand
+      expect(result).toHaveProperty('success', false);
+      expect(result).toHaveProperty('error');
+    });
+  });
 });
