@@ -22,14 +22,15 @@ This directory contains problem-solution documentation, prevention strategies, a
 
 ### Database & Data Integrity
 
-| Document                                                                     | Purpose                          |
-| ---------------------------------------------------------------------------- | -------------------------------- |
-| [DATABASE-CLIENT-PREVENTION-INDEX.md](./DATABASE-CLIENT-PREVENTION-INDEX.md) | Database client usage patterns   |
-| [DATABASE-CLIENT-QUICK-REFERENCE.md](./DATABASE-CLIENT-QUICK-REFERENCE.md)   | Quick DB patterns reference      |
-| [DATABASE-SCHEMA-DRIFT-SOLUTION.md](./DATABASE-SCHEMA-DRIFT-SOLUTION.md)     | Fix schema drift issues          |
-| [DATABASE-VERIFICATION-FIX.md](./DATABASE-VERIFICATION-FIX.md)               | Database verification procedures |
-| [SCHEMA_DRIFT_PREVENTION.md](./SCHEMA_DRIFT_PREVENTION.md)                   | Prevent schema drift             |
-| [TENANT-SCOPED-QUERIES-CHECKLIST.md](./TENANT-SCOPED-QUERIES-CHECKLIST.md)   | Ensure tenant isolation          |
+| Document                                                                                                 | Purpose                                      |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| [database-issues/migration-system-consolidation.md](./database-issues/migration-system-consolidation.md) | **NEW:** Prisma-only migration consolidation |
+| [DATABASE-CLIENT-PREVENTION-INDEX.md](./DATABASE-CLIENT-PREVENTION-INDEX.md)                             | Database client usage patterns               |
+| [DATABASE-CLIENT-QUICK-REFERENCE.md](./DATABASE-CLIENT-QUICK-REFERENCE.md)                               | Quick DB patterns reference                  |
+| [DATABASE-SCHEMA-DRIFT-SOLUTION.md](./DATABASE-SCHEMA-DRIFT-SOLUTION.md)                                 | Fix schema drift issues                      |
+| [DATABASE-VERIFICATION-FIX.md](./DATABASE-VERIFICATION-FIX.md)                                           | Database verification procedures             |
+| [SCHEMA_DRIFT_PREVENTION.md](./SCHEMA_DRIFT_PREVENTION.md)                                               | ~~Prevent schema drift~~ (superseded)        |
+| [TENANT-SCOPED-QUERIES-CHECKLIST.md](./TENANT-SCOPED-QUERIES-CHECKLIST.md)                               | Ensure tenant isolation                      |
 
 **New:** Network & Connection Issues
 
@@ -195,6 +196,6 @@ Each solution document should include:
 
 ---
 
-**Last Updated:** 2025-12-23
+**Last Updated:** 2026-01-23
 **Maintainer:** Technical Lead
 **Purpose:** Problem-solution documentation following Diátaxis "How-to Guide" pattern

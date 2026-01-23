@@ -1,7 +1,14 @@
 # Schema Drift Prevention Strategy
 
+> **SUPERSEDED (2026-01-23):** This document describes the OLD hybrid migration system.
+> We have consolidated to **Prisma-only migrations**. See:
+>
+> - **[database-issues/migration-system-consolidation.md](./database-issues/migration-system-consolidation.md)** - The consolidation solution
+> - **[CLAUDE.md Database Migrations section](/CLAUDE.md#database-migrations)** - Current single-pattern docs
+
 **Date Created:** 2025-11-28
-**Severity:** Critical
+**Date Superseded:** 2026-01-23
+**Severity:** Critical (historical reference only)
 **Impact:** Database integrity, AI agent safety, production stability
 
 ---
