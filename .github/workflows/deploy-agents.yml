@@ -196,10 +196,23 @@ jobs:
           # Wait for Cloud Run to stabilize
           sleep 15
 
-          # Check agent health with timeout
-          HTTP_STATUS=$(curl -s -o /tmp/health.json -w "%{http_code}" \
-            --max-time 30 \
-            "$SERVICE_URL/health" || echo "000")
+          # Get identity token for authenticated health check
+          echo "🔑 Getting identity token..."
+          ID_TOKEN=$(gcloud auth print-identity-token --audiences="$SERVICE_URL" 2>/dev/null || echo "")
+
+          # Check agent health with authentication
+          if [ -n "$ID_TOKEN" ]; then
+            echo "🔐 Using authenticated request"
+            HTTP_STATUS=$(curl -s -o /tmp/health.json -w "%{http_code}" \
+              --max-time 30 \
+              -H "Authorization: Bearer $ID_TOKEN" \
+              "$SERVICE_URL/health" || echo "000")
+          else
+            echo "⚠️  No token available, trying unauthenticated"
+            HTTP_STATUS=$(curl -s -o /tmp/health.json -w "%{http_code}" \
+              --max-time 30 \
+              "$SERVICE_URL/health" || echo "000")
+          fi
 
           if [ "$HTTP_STATUS" = "000" ]; then
             echo "❌ Agent unreachable after deployment"
