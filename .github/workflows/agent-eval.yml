@@ -61,6 +61,7 @@ jobs:
         run: npm run test:agent-eval --workspace=@macon/api
         env:
           CI: true
+          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
 
       - name: Upload test results
         if: always()
