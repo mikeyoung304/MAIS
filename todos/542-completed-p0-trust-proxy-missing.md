@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p0
 issue_id: '542'
 tags: [code-review, security, rate-limiting, express]

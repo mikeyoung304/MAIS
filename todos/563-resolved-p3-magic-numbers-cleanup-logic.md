@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: '563'
 tags: [code-review, simplicity, agent-ecosystem]

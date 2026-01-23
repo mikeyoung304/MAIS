@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: 617
 tags: [code-review, security, booking-links, multi-tenant, must-fix-now]

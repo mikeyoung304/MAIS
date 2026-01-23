@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '5210'
 tags: [code-review, session-bootstrap, performance, cache]

@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '526'
 tags: [code-review, agent-ecosystem, refactoring, tech-debt]

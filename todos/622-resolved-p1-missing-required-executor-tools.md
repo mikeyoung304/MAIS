@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '622'
 tags: [code-review, security, build-mode, agent-tools]

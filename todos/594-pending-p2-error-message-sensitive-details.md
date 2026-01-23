@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p2
 issue_id: '594'
 tags: [code-review, security, error-handling, logging]

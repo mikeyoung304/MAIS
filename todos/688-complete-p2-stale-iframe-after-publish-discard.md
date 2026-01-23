@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '688'
 tags: [code-review, agent-first-architecture, data-integrity, iframe]

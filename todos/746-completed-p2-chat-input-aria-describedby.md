@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 746
 tags: [code-review, accessibility, wcag-aa, pr-27]

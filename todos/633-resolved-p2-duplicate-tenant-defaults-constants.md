@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '633'
 tags: [code-review, dry, tenant-provisioning, refactoring]

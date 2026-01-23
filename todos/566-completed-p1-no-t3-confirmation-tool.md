@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: '566'
 tags: [code-review, agent-native, agent-ecosystem, quality-first-triage]

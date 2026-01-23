@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '629'
 tags: [code-review, agent-tools, data-integrity, packages, segments]

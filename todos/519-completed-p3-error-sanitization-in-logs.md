@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p3
 issue_id: '519'
 completed_date: '2026-01-01'

@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '5239'
 tags: [code-review, quality, frontend, dry]

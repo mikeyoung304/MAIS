@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 740
 tags: [code-review, typescript, type-safety, pr-27]

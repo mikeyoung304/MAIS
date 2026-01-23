@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p2
 issue_id: '592'
 tags: [code-review, data-integrity, cleanup, database]

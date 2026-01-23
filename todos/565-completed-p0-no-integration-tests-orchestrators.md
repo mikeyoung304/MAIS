@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '565'
 tags: [code-review, testing, agent-ecosystem, quality-first-triage]

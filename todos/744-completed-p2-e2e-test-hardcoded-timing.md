@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 744
 tags: [code-review, testing, e2e, flaky-tests, pr-27]

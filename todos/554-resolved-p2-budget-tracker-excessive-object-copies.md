@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: '554'
 tags: [code-review, performance, agent-ecosystem, acceptable-tradeoff]

@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '544'
 tags: [code-review, performance, memory-management, circuit-breaker]

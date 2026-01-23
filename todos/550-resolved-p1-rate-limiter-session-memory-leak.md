@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: '550'
 tags: [code-review, performance, agent-ecosystem, invalidated]

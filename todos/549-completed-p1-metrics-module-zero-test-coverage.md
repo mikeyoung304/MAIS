@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: '549'
 tags: [code-review, testing, agent-ecosystem, observability]

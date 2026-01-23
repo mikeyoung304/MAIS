@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '530'
 tags: [code-review, agent-ecosystem, performance, database]

@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: 645
 tags: [code-review, architecture, typescript, dry-violation]

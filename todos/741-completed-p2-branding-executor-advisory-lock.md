@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 741
 tags: [code-review, security, toctou, database, pr-27]

@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '5203'
 tags: [code-review, session-bootstrap, agent-native, concierge]

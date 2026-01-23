@@ -1,5 +1,5 @@
 ---
-status: done
+status: complete
 priority: p2
 issue_id: 614
 tags: [code-review, architecture, agent-eval]

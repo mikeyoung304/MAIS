@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '679'
 tags: [code-review, agent-first-architecture, performance, bundle-size]

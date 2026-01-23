@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p1
 issue_id: '586'
 tags: [code-review, simplicity, dead-code, agent-eval]

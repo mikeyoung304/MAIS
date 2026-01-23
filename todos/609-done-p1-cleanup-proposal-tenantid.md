@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: 609
 tags: [code-review, security, agent-eval, defense-in-depth]

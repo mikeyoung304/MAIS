@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '5208'
 tags: [code-review, session-bootstrap, architecture, event-sourcing, tech-debt]

@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '641'
 tags: [code-review, accessibility, a11y, wcag]

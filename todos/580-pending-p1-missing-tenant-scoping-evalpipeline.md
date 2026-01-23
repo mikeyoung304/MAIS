@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p1
 issue_id: '580'
 tags: [code-review, security, agent-eval, tenant-isolation]

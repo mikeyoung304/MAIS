@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '5248'
 tags: [code-review, simplicity, dead-code]

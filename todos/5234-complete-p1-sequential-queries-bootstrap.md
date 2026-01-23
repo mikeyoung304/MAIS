@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '5234'
 tags: [code-review, performance, project-hub, database]

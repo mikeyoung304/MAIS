@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 745
 tags: [code-review, race-condition, ios, react, pr-27]

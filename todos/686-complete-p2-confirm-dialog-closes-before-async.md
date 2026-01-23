@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '686'
 tags: [code-review, agent-first-architecture, ux, async-handling]

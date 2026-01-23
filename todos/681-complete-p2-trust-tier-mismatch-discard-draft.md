@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '681'
 tags: [code-review, agent-first-architecture, trust-tiers, consistency]

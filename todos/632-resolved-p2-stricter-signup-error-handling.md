@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '632'
 tags: [code-review, tenant-onboarding, auth, error-handling]

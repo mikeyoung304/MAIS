@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: '690'
 tags: [code-review, agent-first-architecture, yagni, simplicity]

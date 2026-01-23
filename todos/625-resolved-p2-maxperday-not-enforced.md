@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: 625
 tags: [code-review, booking-links, phase-1, security]

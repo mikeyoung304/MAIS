@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '696'
 tags: [code-review, security, agent-orchestrator, quota]

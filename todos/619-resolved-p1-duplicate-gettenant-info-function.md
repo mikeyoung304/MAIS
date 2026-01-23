@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: 619
 tags: [code-review, architecture, booking-links, duplication, must-fix-now]

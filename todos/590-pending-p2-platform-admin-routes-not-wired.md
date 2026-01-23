@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p2
 issue_id: '590'
 tags: [code-review, security, routing, integration]

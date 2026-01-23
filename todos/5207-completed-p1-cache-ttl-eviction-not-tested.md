@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: '5207'
 tags: [code-review, session-bootstrap, testing, cache]

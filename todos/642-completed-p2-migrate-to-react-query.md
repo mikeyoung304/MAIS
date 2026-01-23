@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '642'
 tags: [code-review, performance, react-query, caching]

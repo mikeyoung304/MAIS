@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '634'
 tags: [code-review, dependency-injection, tenant-provisioning, architecture]

@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p3
 issue_id: '600'
 tags: [code-review, typescript, immutability, consistency]

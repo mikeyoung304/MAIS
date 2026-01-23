@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: 648
 tags: [code-review, accessibility, wcag, a11y, screen-reader]

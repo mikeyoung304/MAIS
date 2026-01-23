@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '553'
 tags: [code-review, security, agent-ecosystem, quality-first-triage]

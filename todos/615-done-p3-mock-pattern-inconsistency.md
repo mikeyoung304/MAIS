@@ -1,5 +1,5 @@
 ---
-status: done
+status: complete
 priority: p3
 issue_id: 615
 tags: [code-review, testing, agent-eval]

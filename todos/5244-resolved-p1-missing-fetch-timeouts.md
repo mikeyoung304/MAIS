@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '5244'
 tags: [code-review, security, performance, pitfall-46]

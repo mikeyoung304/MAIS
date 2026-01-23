@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p0
 issue_id: '551'
 tags: [code-review, architecture, agent-ecosystem, race-condition, quality-first-triage]

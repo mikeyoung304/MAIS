@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: 621
 tags: [code-review, architecture, booking-links, schema]

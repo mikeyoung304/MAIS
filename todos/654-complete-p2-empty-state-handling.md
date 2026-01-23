@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 654
 tags: [code-review, ux, edge-cases]

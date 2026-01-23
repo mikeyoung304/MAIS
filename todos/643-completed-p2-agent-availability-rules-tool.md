@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '643'
 tags: [code-review, agent-native, action-parity, tools]

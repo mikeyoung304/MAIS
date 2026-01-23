@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p1
 issue_id: '583'
 tags: [code-review, architecture, dependency-injection, testing]

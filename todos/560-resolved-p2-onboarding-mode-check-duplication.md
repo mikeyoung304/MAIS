@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '560'
 tags: [code-review, duplication, agent-ecosystem]

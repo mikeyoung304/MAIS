@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '562'
 tags: [code-review, simplicity, agent-ecosystem, dead-code, quality-first-triage]

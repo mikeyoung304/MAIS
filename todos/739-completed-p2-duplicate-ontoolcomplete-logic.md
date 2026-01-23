@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 739
 tags: [code-review, dry-violation, react, pr-27]

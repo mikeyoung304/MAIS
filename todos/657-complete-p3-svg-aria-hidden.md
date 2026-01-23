@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p3
 issue_id: 657
 tags: [code-review, accessibility, quick-win]

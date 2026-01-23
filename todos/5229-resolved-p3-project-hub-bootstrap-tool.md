@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: '5229'
 tags: [agent-native, agent-v2, project-hub, code-review, ux]

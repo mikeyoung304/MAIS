@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p3
 issue_id: '597'
 tags: [code-review, code-quality, error-handling, debugging]

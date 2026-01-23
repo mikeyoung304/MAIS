@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p1
 issue_id: '581'
 tags: [code-review, performance, agent-eval, memory-leak]

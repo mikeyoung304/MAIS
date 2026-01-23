@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '623'
 tags: [code-review, bug, build-mode, ui]

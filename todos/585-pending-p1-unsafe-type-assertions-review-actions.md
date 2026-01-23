@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p1
 issue_id: '585'
 tags: [code-review, typescript, type-safety, agent-eval]

@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: 742
 tags: [code-review, performance, race-condition, react-query, pr-27]

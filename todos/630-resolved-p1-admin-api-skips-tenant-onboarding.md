@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '630'
 tags: [code-review, tenant-onboarding, admin-api, data-integrity]

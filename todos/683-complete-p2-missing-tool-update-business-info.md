@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '683'
 tags: [code-review, agent-first-architecture, dead-code, capability-registry]

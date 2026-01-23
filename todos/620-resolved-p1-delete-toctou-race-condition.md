@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: 620
 tags: [code-review, data-integrity, booking-links, race-condition, must-fix-now]

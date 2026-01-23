@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '699'
 tags: [code-review, ai-tools, user-trust, messaging]

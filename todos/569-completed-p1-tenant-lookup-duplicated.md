@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: '569'
 tags: [code-review, simplicity, agent-ecosystem, quality-first-triage, performance]

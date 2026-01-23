@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '640'
 tags: [code-review, architecture, dry, contracts]

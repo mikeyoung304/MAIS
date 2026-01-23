@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p2
 issue_id: '587'
 tags: [code-review, architecture, dry, security]

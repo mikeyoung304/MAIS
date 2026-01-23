@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: 627
 tags: [code-review, booking-links, phase-1, incomplete-feature]

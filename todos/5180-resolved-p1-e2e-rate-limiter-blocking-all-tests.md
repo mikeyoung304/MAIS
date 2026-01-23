@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '5180'
 tags: [code-review, e2e-tests, rate-limiting, quick-fix]

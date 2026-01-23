@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p2
 issue_id: '541'
 tags: [code-review, agent-ecosystem, typescript, agent-native]

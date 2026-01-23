@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: '5230'
 tags: [data-integrity, agent-v2, project-hub, code-review, audit]

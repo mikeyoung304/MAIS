@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p3
 issue_id: 622
 tags: [code-review, booking-links, timezone, phase-1]

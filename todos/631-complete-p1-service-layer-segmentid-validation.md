@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: '631'
 tags: [code-review, data-integrity, packages, segments, validation, defense-in-depth]

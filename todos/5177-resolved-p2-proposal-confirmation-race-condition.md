@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '5177'
 tags: [code-review, security, race-condition, agent-system, concurrency]

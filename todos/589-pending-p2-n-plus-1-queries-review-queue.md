@@ -1,5 +1,5 @@
 ---
-status: open
+status: pending
 priority: p2
 issue_id: '589'
 tags: [code-review, performance, database, n-plus-1]

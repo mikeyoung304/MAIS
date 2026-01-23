@@ -1,5 +1,5 @@
 ---
-status: completed
+status: complete
 priority: p1
 issue_id: '543'
 tags: [code-review, security, rate-limiting, ip-spoofing]

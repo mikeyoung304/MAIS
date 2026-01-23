@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: '697'
 tags: [code-review, architecture, data-integrity, landing-page]

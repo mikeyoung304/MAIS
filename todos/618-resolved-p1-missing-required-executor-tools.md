@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p1
 issue_id: 618
 tags: [code-review, agent, booking-links, startup-validation, must-fix-now]

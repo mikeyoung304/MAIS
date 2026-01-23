@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 priority: p2
 issue_id: '687'
 tags: [code-review, agent-first-architecture, performance, zustand]
