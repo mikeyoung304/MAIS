@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '582'
 tags: [code-review, performance, database, indexing]

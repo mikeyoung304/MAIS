@@ -1,5 +1,5 @@
 ---
-status: pending
+status: deferred
 priority: p3
 issue_id: '599'
 tags: [code-review, security, testing, adversarial]

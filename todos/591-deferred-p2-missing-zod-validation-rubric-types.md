@@ -1,5 +1,5 @@
 ---
-status: pending
+status: deferred
 priority: p2
 issue_id: '591'
 tags: [code-review, typescript, zod, validation]

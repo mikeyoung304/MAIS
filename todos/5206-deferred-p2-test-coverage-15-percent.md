@@ -1,6 +1,6 @@
 ---
-status: pending
-priority: p1
+status: deferred
+priority: p2
 issue_id: '5206'
 tags: [code-review, session-bootstrap, testing, internal-agent-routes]
 dependencies: []

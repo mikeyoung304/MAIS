@@ -1,5 +1,5 @@
 ---
-status: pending
+status: deferred
 priority: p2
 issue_id: 610
 tags: [code-review, performance, database, agent-eval]

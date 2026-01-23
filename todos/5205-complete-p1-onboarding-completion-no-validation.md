@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '5205'
 tags: [code-review, session-bootstrap, security, architecture]

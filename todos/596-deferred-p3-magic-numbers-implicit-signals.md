@@ -1,5 +1,5 @@
 ---
-status: pending
+status: deferred
 priority: p3
 issue_id: '596'
 tags: [code-review, code-quality, maintainability, constants]

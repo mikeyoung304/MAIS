@@ -1,6 +1,6 @@
 ---
-status: pending
-priority: p1
+status: deferred
+priority: p2
 issue_id: '5207'
 tags: [code-review, session-bootstrap, testing, cache]
 dependencies: ['5206']

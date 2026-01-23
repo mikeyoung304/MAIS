@@ -1,5 +1,5 @@
 ---
-status: pending
+status: deferred
 priority: p2
 issue_id: '592'
 tags: [code-review, data-integrity, cleanup, database]
