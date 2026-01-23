@@ -1,5 +1,5 @@
 ---
-status: ready
+status: resolved
 priority: p2
 issue_id: '5198'
 tags: [code-review, agent-v2, security, trust-tiers]

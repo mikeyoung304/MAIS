@@ -20,9 +20,78 @@
  */
 
 import { GoogleAuth, JWT } from 'google-auth-library';
+import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
+
+// =============================================================================
+// ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
+// =============================================================================
+
+/**
+ * Schema for ADK session creation response.
+ * POST /apps/{appName}/users/{userId}/sessions returns { id: string }
+ */
+const AdkSessionResponseSchema = z.object({
+  id: z.string(),
+});
+
+/**
+ * Schema for a single part in an ADK message.
+ * Parts can contain text, function calls, or function responses.
+ */
+const AdkPartSchema = z.object({
+  text: z.string().optional(),
+  functionCall: z
+    .object({
+      name: z.string(),
+      args: z.record(z.unknown()),
+    })
+    .optional(),
+  functionResponse: z
+    .object({
+      name: z.string(),
+      response: z.unknown(),
+    })
+    .optional(),
+});
+
+/**
+ * Schema for ADK content structure.
+ */
+const AdkContentSchema = z.object({
+  role: z.string().optional(),
+  parts: z.array(AdkPartSchema).optional(),
+});
+
+/**
+ * Schema for a single ADK event in the response array.
+ */
+const AdkEventSchema = z.object({
+  content: AdkContentSchema.optional(),
+});
+
+/**
+ * Schema for ADK /run endpoint response.
+ * ADK returns an array of events: [{ content: { role, parts } }, ...]
+ * Also supports legacy format: { messages: [...] }
+ */
+const AdkRunResponseSchema = z.union([
+  // Modern ADK format: array of events
+  z.array(AdkEventSchema),
+  // Legacy format: object with messages array
+  z.object({
+    messages: z.array(
+      z.object({
+        role: z.string(),
+        parts: z.array(AdkPartSchema).optional(),
+      })
+    ),
+  }),
+]);
+
+type AdkRunResponse = z.infer<typeof AdkRunResponseSchema>;
 
 // =============================================================================
 // FETCH WITH TIMEOUT
@@ -177,8 +246,17 @@ export class VertexAgentService {
         throw new Error(`ADK session creation failed: ${response.status}`);
       }
 
-      const adkSession = (await response.json()) as { id: string };
-      adkSessionId = adkSession.id;
+      // Validate ADK response with Zod (Pitfall #62)
+      const rawResponse = await response.json();
+      const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
+      if (!parseResult.success) {
+        logger.error(
+          { tenantId, userId, error: parseResult.error.message, rawResponse },
+          '[VertexAgent] Invalid ADK session response format'
+        );
+        throw new Error(`Invalid ADK session response: ${parseResult.error.message}`);
+      }
+      adkSessionId = parseResult.data.id;
       logger.info({ tenantId, userId, adkSessionId }, '[VertexAgent] ADK session created');
     } catch (error) {
       // Handle timeout errors specifically
@@ -410,7 +488,22 @@ export class VertexAgentService {
       }
 
       // ADK returns an array of events, not an object
-      const data = (await response.json()) as unknown;
+      // Validate with Zod (Pitfall #62)
+      const rawData = await response.json();
+      const parseResult = AdkRunResponseSchema.safeParse(rawData);
+      if (!parseResult.success) {
+        logger.error(
+          { tenantId, sessionId, error: parseResult.error.message },
+          '[VertexAgent] Invalid ADK run response format'
+        );
+        return {
+          response: 'Sorry, I received an unexpected response format. Try again?',
+          sessionId,
+          version: currentVersion,
+          error: `Invalid ADK response format: ${parseResult.error.message}`,
+        };
+      }
+      const data = parseResult.data;
 
       // Extract response from A2A format
       const agentResponse = this.extractAgentResponse(data);
@@ -559,7 +652,22 @@ export class VertexAgentService {
       };
     }
 
-    const data = await response.json();
+    // Validate with Zod (Pitfall #62)
+    const rawData = await response.json();
+    const parseResult = AdkRunResponseSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      logger.error(
+        { tenantId, adkSessionId, error: parseResult.error.message },
+        '[VertexAgent] Invalid ADK retry response format'
+      );
+      return {
+        response: 'Sorry, I received an unexpected response format. Try again?',
+        sessionId: dbSessionId,
+        version: currentVersion,
+        error: `Invalid ADK response format: ${parseResult.error.message}`,
+      };
+    }
+    const data = parseResult.data;
     const agentResponse = this.extractAgentResponse(data);
     const toolCalls = this.extractToolCalls(data);
 
@@ -700,12 +808,21 @@ export class VertexAgentService {
         return null;
       }
 
-      const adkSession = (await response.json()) as { id: string };
+      // Validate ADK response with Zod (Pitfall #62)
+      const rawResponse = await response.json();
+      const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
+      if (!parseResult.success) {
+        logger.error(
+          { tenantId, userId, error: parseResult.error.message, rawResponse },
+          '[VertexAgent] Invalid ADK session response format in retry'
+        );
+        return null;
+      }
       logger.info(
-        { tenantId, userId, adkSessionId: adkSession.id },
+        { tenantId, userId, adkSessionId: parseResult.data.id },
         '[VertexAgent] ADK session created in retry'
       );
-      return adkSession.id;
+      return parseResult.data.id;
     } catch (error) {
       // Handle timeout errors specifically
       if (error instanceof Error && error.name === 'AbortError') {
@@ -789,15 +906,16 @@ export class VertexAgentService {
   /**
    * Extract the text response from A2A response format.
    * ADK returns an array of events: [{ content: { role, parts } }, ...]
+   * Data is pre-validated by AdkRunResponseSchema (Pitfall #62)
    */
-  private extractAgentResponse(data: unknown): string {
+  private extractAgentResponse(data: AdkRunResponse): string {
     // ADK format: [{ content: { role: 'model', parts: [{ text: '...' }] } }]
     // Also support legacy format: { messages: [...] }
 
     // Handle array format (ADK standard)
     if (Array.isArray(data)) {
       for (let i = data.length - 1; i >= 0; i--) {
-        const event = data[i] as { content?: { role?: string; parts?: Array<{ text?: string }> } };
+        const event = data[i];
         if (event.content?.role === 'model') {
           const textPart = event.content.parts?.find((p) => p.text);
           if (textPart?.text) {
@@ -805,16 +923,9 @@ export class VertexAgentService {
           }
         }
       }
-    }
-
-    // Handle object format with messages array (legacy)
-    const dataObj = data as Record<string, unknown>;
-    const messages = dataObj.messages as Array<{
-      role: string;
-      parts: Array<{ text?: string; functionCall?: unknown }>;
-    }>;
-
-    if (messages && Array.isArray(messages)) {
+    } else {
+      // Handle object format with messages array (legacy)
+      const messages = data.messages;
       for (let i = messages.length - 1; i >= 0; i--) {
         const msg = messages[i];
         if (msg.role === 'model') {
@@ -832,36 +943,28 @@ export class VertexAgentService {
   /**
    * Extract tool calls from A2A response format.
    * ADK returns an array of events: [{ content: { parts: [{ functionCall }] } }, ...]
+   * Data is pre-validated by AdkRunResponseSchema (Pitfall #62)
    */
   private extractToolCalls(
-    data: unknown
+    data: AdkRunResponse
   ): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
-    // Normalize to array of parts
-    type PartType = {
-      text?: string;
-      functionCall?: { name: string; args: Record<string, unknown> };
-      functionResponse?: { name: string; response: unknown };
-    };
+    // Use the inferred part type from our schema
+    type PartType = z.infer<typeof AdkPartSchema>;
 
     const allParts: PartType[] = [];
 
     // Handle array format (ADK standard)
     if (Array.isArray(data)) {
       for (const event of data) {
-        const content = (event as { content?: { parts?: PartType[] } }).content;
-        if (content?.parts) {
-          allParts.push(...content.parts);
+        if (event.content?.parts) {
+          allParts.push(...event.content.parts);
         }
       }
     } else {
       // Handle legacy format with messages array
-      const dataObj = data as Record<string, unknown>;
-      const messages = dataObj.messages as Array<{ parts?: PartType[] }>;
-      if (messages && Array.isArray(messages)) {
-        for (const msg of messages) {
-          if (msg.parts) {
-            allParts.push(...msg.parts);
-          }
+      for (const msg of data.messages) {
+        if (msg.parts) {
+          allParts.push(...msg.parts);
         }
       }
     }

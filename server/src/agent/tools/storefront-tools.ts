@@ -861,6 +861,10 @@ Use when the user wants to undo a branding change they just made.`,
  *
  * T3 because this action has REAL IMPACT on visitors - once published,
  * changes are immediately visible. User must explicitly approve.
+ *
+ * Security: Requires confirmationReceived=true for programmatic T3 enforcement.
+ * This prevents prompt injection from bypassing the confirmation requirement.
+ * See pitfall #49 and docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
  */
 export const publishDraftTool: AgentTool = {
   name: 'publish_draft',
@@ -872,14 +876,34 @@ The draft is cleared after publishing.
 Use this when the user is satisfied with their changes and wants them visible to visitors.
 
 IMPORTANT: This requires explicit user approval because changes will be immediately
-visible to all visitors.`,
+visible to all visitors. You MUST set confirmationReceived=true only after the user
+has explicitly confirmed they want to publish (e.g., "yes", "go ahead", "publish it").`,
   inputSchema: {
     type: 'object',
-    properties: {},
-    required: [],
+    properties: {
+      confirmationReceived: {
+        type: 'boolean',
+        description:
+          'REQUIRED for T3 tools. Set to true ONLY after user explicitly confirms the action. Do not assume confirmation.',
+      },
+    },
+    required: ['confirmationReceived'],
   },
-  async execute(context: ToolContext, _params: Record<string, unknown>): Promise<AgentToolResult> {
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId } = context;
+    const confirmationReceived = params.confirmationReceived as boolean;
+
+    // T3 programmatic enforcement: reject if confirmation not received
+    // This prevents prompt injection from bypassing confirmation requirement
+    if (!confirmationReceived) {
+      return {
+        success: false,
+        error:
+          'T3_CONFIRMATION_REQUIRED: This action requires explicit user confirmation before proceeding. Ask the user to confirm they want to publish their draft.',
+        requiresConfirmation: true,
+        action: 'publish_draft',
+      };
+    }
 
     try {
       // Check if there's a draft to publish (#627 N+1 fix - single query)
@@ -915,6 +939,10 @@ visible to all visitors.`,
  *
  * Trust Tier: T3 (user confirm) - Destructive and irreversible
  * Clears landingPageConfigDraft without affecting live config
+ *
+ * Security: Requires confirmationReceived=true for programmatic T3 enforcement.
+ * This prevents prompt injection from bypassing the confirmation requirement.
+ * See pitfall #49 and docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
  */
 export const discardDraftTool: AgentTool = {
   name: 'discard_draft',
@@ -922,14 +950,36 @@ export const discardDraftTool: AgentTool = {
   description: `Discard all draft changes and revert to the current live version.
 
 This clears the draft without affecting the live landing page.
-Use this when the user wants to start over or abandon their changes.`,
+Use this when the user wants to start over or abandon their changes.
+
+IMPORTANT: This is destructive and irreversible. You MUST set confirmationReceived=true
+only after the user has explicitly confirmed they want to discard their changes.`,
   inputSchema: {
     type: 'object',
-    properties: {},
-    required: [],
+    properties: {
+      confirmationReceived: {
+        type: 'boolean',
+        description:
+          'REQUIRED for T3 tools. Set to true ONLY after user explicitly confirms the action. Do not assume confirmation.',
+      },
+    },
+    required: ['confirmationReceived'],
   },
-  async execute(context: ToolContext, _params: Record<string, unknown>): Promise<AgentToolResult> {
+  async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId } = context;
+    const confirmationReceived = params.confirmationReceived as boolean;
+
+    // T3 programmatic enforcement: reject if confirmation not received
+    // This prevents prompt injection from bypassing confirmation requirement
+    if (!confirmationReceived) {
+      return {
+        success: false,
+        error:
+          'T3_CONFIRMATION_REQUIRED: This action requires explicit user confirmation before proceeding. Ask the user to confirm they want to discard their draft changes.',
+        requiresConfirmation: true,
+        action: 'discard_draft',
+      };
+    }
 
     try {
       // Check if there's a draft to discard (#627 N+1 fix - single query)

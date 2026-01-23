@@ -212,7 +212,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 45. Empty secret fallback - `INTERNAL_API_SECRET || ''` masks misconfiguration; use `requireEnv()` to fail-fast at startup
 46. No fetch timeouts - All `fetch()` calls need `AbortController` timeouts; 15s backend, 30s agents, 90s scraping
 47. Tools return instructions - FunctionTool.execute must return results, not `{instruction: "Generate..."}` for LLM
-48. Dead security functions - Writing `sanitizeScrapedContent()` but never calling it; verify security code is wired up
+48. Dead security functions - Writing security functions but never calling them; verify security code is actually wired up in the code path
 49. T3 without confirmation param - Trust tier enforcement must be programmatic (`confirmationReceived: z.boolean()`), not prompt-only
 50. Module-level cache unbounded - `new Map()` at module level grows forever; add TTL (30 min) and max size (1000)
 51. FunctionTool API mismatch - ADK uses `parameters`/`execute` not `inputSchema`/`func`; LlmAgent uses `generateContentConfig` not `config`; execute context is `ToolContext | undefined` not `ToolContext`

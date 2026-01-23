@@ -858,11 +858,18 @@ export const requestFileUploadTool: AgentTool = {
  * cancel_booking - Cancel and refund
  *
  * Trust Tier: T3 (hard confirm) - ALWAYS requires explicit confirmation
+ *
+ * Security: Requires confirmationReceived=true for programmatic T3 enforcement.
+ * This prevents prompt injection from bypassing the confirmation requirement.
+ * See pitfall #49 and docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
  */
 export const cancelBookingTool: AgentTool = {
   name: 'cancel_booking',
   trustTier: 'T3', // Hard confirm - always requires explicit confirmation
-  description: 'Cancel a booking and process refund. ALWAYS requires explicit confirmation.',
+  description: `Cancel a booking and process refund. ALWAYS requires explicit confirmation.
+
+IMPORTANT: You MUST set confirmationReceived=true only after the user has explicitly
+confirmed they want to cancel the booking and process the refund.`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -874,13 +881,30 @@ export const cancelBookingTool: AgentTool = {
         type: 'string',
         description: 'Cancellation reason',
       },
+      confirmationReceived: {
+        type: 'boolean',
+        description:
+          'REQUIRED for T3 tools. Set to true ONLY after user explicitly confirms the action. Do not assume confirmation.',
+      },
     },
-    required: ['bookingId'],
+    required: ['bookingId', 'confirmationReceived'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const bookingId = params.bookingId as string;
     const reason = params.reason as string | undefined;
+    const confirmationReceived = params.confirmationReceived as boolean;
+
+    // T3 programmatic enforcement: reject if confirmation not received
+    if (!confirmationReceived) {
+      return {
+        success: false,
+        error:
+          'T3_CONFIRMATION_REQUIRED: This action requires explicit user confirmation before proceeding. Ask the user to confirm they want to cancel this booking.',
+        requiresConfirmation: true,
+        action: 'cancel_booking',
+      };
+    }
 
     try {
       const booking = await prisma.booking.findFirst({
@@ -930,12 +954,18 @@ export const cancelBookingTool: AgentTool = {
  *
  * Trust Tier: T3 (hard confirm) - ALWAYS requires explicit confirmation
  * This is for phone orders, walk-ins, and manual booking entry
+ *
+ * Security: Requires confirmationReceived=true for programmatic T3 enforcement.
+ * This prevents prompt injection from bypassing the confirmation requirement.
+ * See pitfall #49 and docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
  */
 export const createBookingTool: AgentTool = {
   name: 'create_booking',
   trustTier: 'T3', // Hard confirm - always requires explicit confirmation
-  description:
-    'Create a manual booking (for phone orders, walk-ins). ALWAYS requires explicit confirmation. Checks availability before creating.',
+  description: `Create a manual booking (for phone orders, walk-ins). ALWAYS requires explicit confirmation. Checks availability before creating.
+
+IMPORTANT: You MUST set confirmationReceived=true only after the user has explicitly
+confirmed the booking details (customer, date, package, price).`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -967,8 +997,13 @@ export const createBookingTool: AgentTool = {
         type: 'number',
         description: 'Override price in cents (optional, defaults to package price)',
       },
+      confirmationReceived: {
+        type: 'boolean',
+        description:
+          'REQUIRED for T3 tools. Set to true ONLY after user explicitly confirms the action. Do not assume confirmation.',
+      },
     },
-    required: ['packageId', 'date', 'customerName', 'customerEmail'],
+    required: ['packageId', 'date', 'customerName', 'customerEmail', 'confirmationReceived'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
@@ -979,6 +1014,18 @@ export const createBookingTool: AgentTool = {
     const customerPhone = params.customerPhone as string | undefined;
     const notes = params.notes as string | undefined;
     const priceCentsOverride = params.priceCents as number | undefined;
+    const confirmationReceived = params.confirmationReceived as boolean;
+
+    // T3 programmatic enforcement: reject if confirmation not received
+    if (!confirmationReceived) {
+      return {
+        success: false,
+        error:
+          'T3_CONFIRMATION_REQUIRED: This action requires explicit user confirmation before proceeding. Ask the user to confirm the booking details.',
+        requiresConfirmation: true,
+        action: 'create_booking',
+      };
+    }
 
     try {
       // Validate package exists and belongs to tenant
@@ -1061,12 +1108,18 @@ export const createBookingTool: AgentTool = {
  *
  * Trust Tier: T3 (hard confirm) - ALWAYS requires explicit confirmation
  * This is for processing refunds independently of cancellation
+ *
+ * Security: Requires confirmationReceived=true for programmatic T3 enforcement.
+ * This prevents prompt injection from bypassing the confirmation requirement.
+ * See pitfall #49 and docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
  */
 export const processRefundTool: AgentTool = {
   name: 'process_refund',
   trustTier: 'T3', // Hard confirm - financial operation
-  description:
-    'Process a refund for a booking. Can do full or partial refund. ALWAYS requires explicit confirmation.',
+  description: `Process a refund for a booking. Can do full or partial refund. ALWAYS requires explicit confirmation.
+
+IMPORTANT: You MUST set confirmationReceived=true only after the user has explicitly
+confirmed they want to process the refund (amount, booking, reason).`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -1082,14 +1135,31 @@ export const processRefundTool: AgentTool = {
         type: 'string',
         description: 'Reason for the refund',
       },
+      confirmationReceived: {
+        type: 'boolean',
+        description:
+          'REQUIRED for T3 tools. Set to true ONLY after user explicitly confirms the action. Do not assume confirmation.',
+      },
     },
-    required: ['bookingId'],
+    required: ['bookingId', 'confirmationReceived'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const bookingId = params.bookingId as string;
     const amountCents = params.amountCents as number | undefined;
     const reason = params.reason as string | undefined;
+    const confirmationReceived = params.confirmationReceived as boolean;
+
+    // T3 programmatic enforcement: reject if confirmation not received
+    if (!confirmationReceived) {
+      return {
+        success: false,
+        error:
+          'T3_CONFIRMATION_REQUIRED: This action requires explicit user confirmation before proceeding. Ask the user to confirm the refund details.',
+        requiresConfirmation: true,
+        action: 'process_refund',
+      };
+    }
 
     try {
       const booking = await prisma.booking.findFirst({
@@ -1511,12 +1581,18 @@ export const updateBookingTool: AgentTool = {
  * update_deposit_settings - Configure deposit requirements
  *
  * Trust Tier: T3 (hard confirm) - financial configuration changes
+ *
+ * Security: Requires confirmationReceived=true for programmatic T3 enforcement.
+ * This prevents prompt injection from bypassing the confirmation requirement.
+ * See pitfall #49 and docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
  */
 export const updateDepositSettingsTool: AgentTool = {
   name: 'update_deposit_settings',
   trustTier: 'T3', // Hard confirm - financial configuration changes
-  description:
-    'Configure deposit requirements for bookings. Set percentage (0-100) or null for full payment.',
+  description: `Configure deposit requirements for bookings. Set percentage (0-100) or null for full payment.
+
+IMPORTANT: You MUST set confirmationReceived=true only after the user has explicitly
+confirmed they want to change their deposit settings.`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -1528,13 +1604,30 @@ export const updateDepositSettingsTool: AgentTool = {
         type: 'number',
         description: 'Days before event that balance is due',
       },
+      confirmationReceived: {
+        type: 'boolean',
+        description:
+          'REQUIRED for T3 tools. Set to true ONLY after user explicitly confirms the action. Do not assume confirmation.',
+      },
     },
-    required: [],
+    required: ['confirmationReceived'],
   },
   async execute(context: ToolContext, params: Record<string, unknown>): Promise<AgentToolResult> {
     const { tenantId, prisma } = context;
     const depositPercent = params.depositPercent as number | null | undefined;
     const balanceDueDays = params.balanceDueDays as number | undefined;
+    const confirmationReceived = params.confirmationReceived as boolean;
+
+    // T3 programmatic enforcement: reject if confirmation not received
+    if (!confirmationReceived) {
+      return {
+        success: false,
+        error:
+          'T3_CONFIRMATION_REQUIRED: This action requires explicit user confirmation before proceeding. Ask the user to confirm the deposit settings changes.',
+        requiresConfirmation: true,
+        action: 'update_deposit_settings',
+      };
+    }
 
     try {
       // Validate depositPercent if provided

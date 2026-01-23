@@ -89,6 +89,18 @@ export interface ToolError {
    * Helps the agent understand system state without creating failed proposals
    */
   canRevert?: boolean;
+  /**
+   * T3 confirmation enforcement indicator
+   * When true, indicates the tool requires explicit user confirmation before proceeding
+   * Used for programmatic T3 trust tier enforcement (pitfall #49)
+   * See docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md
+   */
+  requiresConfirmation?: boolean;
+  /**
+   * Action name for T3 confirmation errors
+   * Tells the agent which action is pending confirmation
+   */
+  action?: string;
 }
 
 /**

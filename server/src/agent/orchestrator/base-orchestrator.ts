@@ -331,6 +331,7 @@ export abstract class BaseOrchestrator {
     { data: TenantSessionData; timestamp: number }
   >();
   private static readonly TENANT_DATA_CACHE_TTL_MS = 60_000; // 60 seconds
+  private static readonly MAX_TENANT_DATA_CACHE = 1000; // Hard cap to prevent unbounded growth
 
   /**
    * Create a new orchestrator instance.
@@ -461,7 +462,12 @@ export abstract class BaseOrchestrator {
     // Cast to TenantSessionData (select fields match the interface)
     const tenantData = tenant as unknown as TenantSessionData;
 
-    // PERF-2: Cache the result
+    // PERF-2: Cache the result with hard cap eviction
+    if (this.tenantDataCache.size >= BaseOrchestrator.MAX_TENANT_DATA_CACHE) {
+      // Evict oldest entry (Map maintains insertion order)
+      const oldestKey = this.tenantDataCache.keys().next().value;
+      if (oldestKey) this.tenantDataCache.delete(oldestKey);
+    }
     this.tenantDataCache.set(tenantId, { data: tenantData, timestamp: now });
 
     return tenantData;

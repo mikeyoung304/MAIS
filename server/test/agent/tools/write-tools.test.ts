@@ -483,6 +483,18 @@ describe('Write Tools', () => {
       expect(cancelBookingTool.trustTier).toBe('T3');
     });
 
+    it('should require confirmationReceived for T3 enforcement', async () => {
+      const result = await cancelBookingTool.execute(mockContext, {
+        bookingId: 'book_123',
+        reason: 'Customer request',
+        confirmationReceived: false,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+      expect((result as any).requiresConfirmation).toBe(true);
+    });
+
     it('should verify booking belongs to tenant', async () => {
       mockPrisma.booking.findFirst.mockResolvedValue({
         id: 'book_123',
@@ -495,6 +507,7 @@ describe('Write Tools', () => {
       await cancelBookingTool.execute(mockContext, {
         bookingId: 'book_123',
         reason: 'Customer request',
+        confirmationReceived: true,
       });
 
       expect(mockPrisma.booking.findFirst).toHaveBeenCalledWith(
@@ -510,6 +523,7 @@ describe('Write Tools', () => {
       const result = await cancelBookingTool.execute(mockContext, {
         bookingId: 'book_nonexistent',
         reason: 'Test',
+        confirmationReceived: true,
       });
 
       expect(result.success).toBe(false);
@@ -529,6 +543,7 @@ describe('Write Tools', () => {
       await cancelBookingTool.execute(mockContext, {
         bookingId: 'book_123',
         reason: 'Customer request',
+        confirmationReceived: true,
       });
 
       expect(mockCreateProposal).toHaveBeenCalledWith(
@@ -550,6 +565,19 @@ describe('Write Tools', () => {
       expect(processRefundTool.trustTier).toBe('T3');
     });
 
+    it('should require confirmationReceived for T3 enforcement', async () => {
+      const result = await processRefundTool.execute(mockContext, {
+        bookingId: 'book_123',
+        amountCents: 50000,
+        reason: 'Partial refund',
+        confirmationReceived: false,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+      expect((result as any).requiresConfirmation).toBe(true);
+    });
+
     it('should verify booking belongs to tenant before refund', async () => {
       mockPrisma.booking.findFirst.mockResolvedValue({
         id: 'book_123',
@@ -568,6 +596,7 @@ describe('Write Tools', () => {
         bookingId: 'book_123',
         amountCents: 50000,
         reason: 'Partial refund',
+        confirmationReceived: true,
       });
 
       expect(mockPrisma.booking.findFirst).toHaveBeenCalledWith(
@@ -597,6 +626,7 @@ describe('Write Tools', () => {
         bookingId: 'book_123',
         amountCents: 50000,
         reason: 'Partial refund',
+        confirmationReceived: true,
       });
 
       expect(mockCreateProposal).toHaveBeenCalledWith(
@@ -619,6 +649,7 @@ describe('Write Tools', () => {
 
       const result = await processRefundTool.execute(mockContext, {
         bookingId: 'book_123',
+        confirmationReceived: true,
       });
 
       expect(result.success).toBe(false);
@@ -826,6 +857,17 @@ describe('Write Tools', () => {
       expect(updateDepositSettingsTool.trustTier).toBe('T3');
     });
 
+    it('should require confirmationReceived for T3 enforcement', async () => {
+      const result = await updateDepositSettingsTool.execute(mockContext, {
+        depositPercent: 50,
+        confirmationReceived: false,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+      expect((result as any).requiresConfirmation).toBe(true);
+    });
+
     it('should include tenantId in proposal', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'test-tenant-123',
@@ -835,6 +877,7 @@ describe('Write Tools', () => {
 
       await updateDepositSettingsTool.execute(mockContext, {
         depositPercent: 50,
+        confirmationReceived: true,
       });
 
       expect(mockCreateProposal).toHaveBeenCalledWith(
@@ -847,6 +890,7 @@ describe('Write Tools', () => {
     it('should validate deposit percent range', async () => {
       const result = await updateDepositSettingsTool.execute(mockContext, {
         depositPercent: 150, // Invalid - over 100
+        confirmationReceived: true,
       });
 
       expect(result.success).toBe(false);
@@ -860,7 +904,9 @@ describe('Write Tools', () => {
         balanceDueDays: null,
       });
 
-      const result = await updateDepositSettingsTool.execute(mockContext, {});
+      const result = await updateDepositSettingsTool.execute(mockContext, {
+        confirmationReceived: true,
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('No changes');

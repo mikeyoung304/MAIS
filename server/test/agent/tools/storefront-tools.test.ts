@@ -1026,12 +1026,25 @@ describe('Storefront Tools', () => {
         expect(publishDraftTool.trustTier).toBe('T3');
       });
 
+      it('should require confirmationReceived for T3 enforcement', async () => {
+        const mockConfig = createMockLandingPageConfig();
+        setContextDraftCache(mockContext, mockConfig, true);
+
+        const result = await publishDraftTool.execute(mockContext, {
+          confirmationReceived: false,
+        });
+
+        assertToolError(result);
+        expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+        expect((result as any).requiresConfirmation).toBe(true);
+      });
+
       it('should create T3 proposal when valid draft exists', async () => {
         // Use cached draftConfig to ensure hasDraft is true
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
 
-        await publishDraftTool.execute(mockContext, {});
+        await publishDraftTool.execute(mockContext, { confirmationReceived: true });
 
         expect(mockCreateProposal).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -1045,7 +1058,7 @@ describe('Storefront Tools', () => {
       it('should return error when no draft to publish', async () => {
         setupTenantMock();
 
-        const result = await publishDraftTool.execute(mockContext, {});
+        const result = await publishDraftTool.execute(mockContext, { confirmationReceived: true });
 
         assertToolError(result);
         expect(result.error).toContain('No draft changes');
@@ -1055,7 +1068,7 @@ describe('Storefront Tools', () => {
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
 
-        await publishDraftTool.execute(mockContext, {});
+        await publishDraftTool.execute(mockContext, { confirmationReceived: true });
 
         expect(mockCreateProposal).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -1070,7 +1083,7 @@ describe('Storefront Tools', () => {
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
 
-        await publishDraftTool.execute(mockContext, {});
+        await publishDraftTool.execute(mockContext, { confirmationReceived: true });
 
         expect(mockCreateProposal).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -1087,12 +1100,25 @@ describe('Storefront Tools', () => {
         expect(discardDraftTool.trustTier).toBe('T3');
       });
 
+      it('should require confirmationReceived for T3 enforcement', async () => {
+        const mockConfig = createMockLandingPageConfig();
+        setContextDraftCache(mockContext, mockConfig, true);
+
+        const result = await discardDraftTool.execute(mockContext, {
+          confirmationReceived: false,
+        });
+
+        assertToolError(result);
+        expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+        expect((result as any).requiresConfirmation).toBe(true);
+      });
+
       it('should create T3 proposal when valid draft exists', async () => {
         // Use cached draftConfig to ensure hasDraft is true
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
 
-        await discardDraftTool.execute(mockContext, {});
+        await discardDraftTool.execute(mockContext, { confirmationReceived: true });
 
         expect(mockCreateProposal).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -1106,7 +1132,7 @@ describe('Storefront Tools', () => {
       it('should return error when no draft to discard', async () => {
         setupTenantMock();
 
-        const result = await discardDraftTool.execute(mockContext, {});
+        const result = await discardDraftTool.execute(mockContext, { confirmationReceived: true });
 
         assertToolError(result);
         expect(result.error).toContain('No draft changes');
@@ -1116,7 +1142,7 @@ describe('Storefront Tools', () => {
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
 
-        await discardDraftTool.execute(mockContext, {});
+        await discardDraftTool.execute(mockContext, { confirmationReceived: true });
 
         expect(mockCreateProposal).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -1386,9 +1412,10 @@ describe('Storefront Tools', () => {
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
 
-        // Try to publish with trustTier override in params
+        // Try to publish with trustTier override in params (should be ignored)
         await publishDraftTool.execute(mockContext, {
           trustTier: 'T1', // Should be ignored - tool enforces T3
+          confirmationReceived: true,
         });
 
         expect(mockCreateProposal).toHaveBeenCalledWith(

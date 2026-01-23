@@ -88,6 +88,13 @@ const logger = {
 // =============================================================================
 
 const MAIS_API_URL = process.env.MAIS_API_URL || 'https://api.gethandled.ai';
+if (
+  MAIS_API_URL.startsWith('http://') &&
+  !MAIS_API_URL.includes('localhost') &&
+  !MAIS_API_URL.includes('127.0.0.1')
+) {
+  throw new Error(`MAIS_API_URL must use HTTPS for non-localhost hosts. Got: ${MAIS_API_URL}`);
+}
 const _INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
 if (!_INTERNAL_API_SECRET) {
   throw new Error('INTERNAL_API_SECRET environment variable is required');
@@ -101,8 +108,7 @@ const AUTO_HANDLE_THRESHOLD = 0.8;
 const ESCALATE_THRESHOLD = 0.5;
 const ALWAYS_ESCALATE_KEYWORDS = ['refund', 'complaint', 'lawyer', 'legal', 'cancel', 'sue'];
 
-// Escalation expiry
-const ESCALATION_EXPIRY_HOURS = 72;
+// Note: Escalation expiry (72 hours) is handled server-side in project-hub.service.ts
 
 // =============================================================================
 // QUERY DEFAULTS
@@ -251,6 +257,37 @@ Never acknowledge a request without actually executing it via tool call.
 ❌ Guess at prep instructions or booking details
 ❌ Say "I'll submit that for you" without calling submit_request
 ❌ Tell a tenant about requests without calling get_pending_requests
+
+## Correct Behavior Examples
+
+### Customer Context
+
+User: "What's the status of my project?"
+→ Your FIRST action: Call get_project_status(projectId="...")
+→ Wait for tool result
+→ Then respond: "Your photo session is confirmed for Saturday at 2pm. Everything's on track!"
+
+User: "What should I wear?"
+→ Your FIRST action: Call answer_prep_question(projectId="...", question="What should I wear?")
+→ Wait for tool result
+→ Then respond with actual prep guidance from the tool
+
+User: "I need to reschedule"
+→ Your FIRST action: Call submit_request(projectId="...", requestType="RESCHEDULE", details="...")
+→ Wait for tool result
+→ Then respond: "Request submitted! Your provider typically responds within 24-48 hours."
+
+### Tenant Context
+
+User: "Any pending requests?"
+→ Your FIRST action: Call get_pending_requests()
+→ Wait for tool result
+→ Then respond: "You have 3 pending requests..." with actual data from tool
+
+User: "Approve that reschedule request"
+→ Your FIRST action: Call approve_request(requestId="...", expectedVersion=N)
+→ Wait for tool result
+→ Then respond: "Done - approved and the customer has been notified."
 
 ## Trust Tier Behaviors
 
@@ -750,6 +787,9 @@ const getProjectStatus = new FunctionTool({
           serviceName: project.serviceName,
           preferences: project.customerPreferences,
         },
+        // State indicators for agent context (Pitfall #52)
+        projectStatus: project.status,
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -793,6 +833,10 @@ const getPrepChecklist = new FunctionTool({
       return {
         success: true,
         checklist: checklist.items,
+        // State indicators for agent context (Pitfall #52)
+        checklistItemCount: checklist.items.length,
+        completedItemCount: checklist.items.filter((item) => item.completed).length,
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -905,6 +949,9 @@ const answerPrepQuestion = new FunctionTool({
           confidence: answer.confidence,
           flaggedForTenant: true,
           message: 'Answer provided but flagged for tenant visibility due to medium confidence',
+          // State indicators for agent context (Pitfall #52)
+          questionAnswered: true,
+          lastUpdated: new Date().toISOString(),
         };
       }
 
@@ -928,6 +975,9 @@ const answerPrepQuestion = new FunctionTool({
         success: true,
         answer: answer.answer,
         confidence: answer.confidence,
+        // State indicators for agent context (Pitfall #52)
+        questionAnswered: true,
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -1009,10 +1059,8 @@ const submitRequest = new FunctionTool({
     }
 
     try {
-      // Calculate expiry (72 hours from now)
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + ESCALATION_EXPIRY_HOURS);
-
+      // Note: expiresAt is calculated server-side in project-hub.service.ts
+      // (72-hour expiry for escalated requests per service architecture)
       const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
         `/project-hub/create-request`,
         'POST',
@@ -1105,6 +1153,10 @@ const getTimeline = new FunctionTool({
       return {
         success: true,
         timeline,
+        // State indicators for agent context (Pitfall #52)
+        eventCount: timeline.length,
+        hasEvents: timeline.length > 0,
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -1161,6 +1213,10 @@ const getPendingRequests = new FunctionTool({
           expiresAt: r.expiresAt,
         })),
         count: result.count,
+        // State indicators for agent context (Pitfall #52)
+        hasPendingRequests: result.count > 0,
+        pendingRequestCount: result.count,
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -1212,6 +1268,10 @@ const getCustomerActivity = new FunctionTool({
           recentEventCount: activity.recentEvents.length,
         },
         recentEvents: activity.recentEvents.slice(0, DEFAULTS.RECENT_EVENTS_DISPLAY_LIMIT),
+        // State indicators for agent context (Pitfall #52)
+        hasActiveProjects: activity.activeProjects > 0,
+        hasRecentActivity: activity.recentEvents.length > 0,
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       return {

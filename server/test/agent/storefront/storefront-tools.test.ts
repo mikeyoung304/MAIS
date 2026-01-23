@@ -417,6 +417,22 @@ describe('Storefront Build Mode Tools', () => {
       expect(publishDraftTool.description).toContain('Publish');
     });
 
+    it('should require confirmationReceived for T3 enforcement', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: VALID_MOCK_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: VALID_MOCK_PAGES_CONFIG },
+      });
+
+      const result = await publishDraftTool.execute(mockContext, {
+        confirmationReceived: false,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+    });
+
     it('should return error when no draft exists', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-123',
@@ -425,7 +441,7 @@ describe('Storefront Build Mode Tools', () => {
         landingPageConfigDraft: null, // No draft
       });
 
-      const result = await publishDraftTool.execute(mockContext, {});
+      const result = await publishDraftTool.execute(mockContext, { confirmationReceived: true });
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('No draft');
@@ -442,7 +458,7 @@ describe('Storefront Build Mode Tools', () => {
         landingPageConfigDraft: { pages: VALID_MOCK_PAGES_CONFIG }, // Has draft
       });
 
-      const result = await publishDraftTool.execute(mockContext, {});
+      const result = await publishDraftTool.execute(mockContext, { confirmationReceived: true });
 
       expect(result.success).toBe(true);
       expect(result.proposalId).toBe('prop-123');
@@ -457,6 +473,22 @@ describe('Storefront Build Mode Tools', () => {
       expect(discardDraftTool.description).toContain('Discard');
     });
 
+    it('should require confirmationReceived for T3 enforcement', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: 'tenant-123',
+        slug: 'test-tenant',
+        landingPageConfig: { pages: VALID_MOCK_PAGES_CONFIG },
+        landingPageConfigDraft: { pages: VALID_MOCK_PAGES_CONFIG },
+      });
+
+      const result = await discardDraftTool.execute(mockContext, {
+        confirmationReceived: false,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+    });
+
     it('should return error when no draft exists', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-123',
@@ -465,7 +497,7 @@ describe('Storefront Build Mode Tools', () => {
         landingPageConfigDraft: null, // No draft
       });
 
-      const result = await discardDraftTool.execute(mockContext, {});
+      const result = await discardDraftTool.execute(mockContext, { confirmationReceived: true });
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('No draft');

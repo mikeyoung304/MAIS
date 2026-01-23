@@ -84,7 +84,7 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
       // Get or create session
       // Now restores sessions from PostgreSQL, surviving server restarts!
       let sessionId = providedSessionId;
-      let version = providedVersion ?? 0;
+      let version: number;
 
       if (sessionId) {
         // Try to restore session from database
@@ -104,7 +104,15 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
           sessionId = newSession.sessionId;
           version = newSession.version;
         } else {
-          version = existingSession.version;
+          // Existing session: require version for optimistic locking (Pitfall #69)
+          if (providedVersion === undefined) {
+            res.status(400).json({
+              error: 'Version required for existing session',
+              currentVersion: existingSession.version,
+            });
+            return;
+          }
+          version = providedVersion;
         }
       } else {
         const session = await agentService.getOrCreateSession(

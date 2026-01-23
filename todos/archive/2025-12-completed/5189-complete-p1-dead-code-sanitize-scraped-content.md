@@ -1,9 +1,10 @@
 ---
-status: ready
+status: complete
 priority: p1
 issue_id: '5189'
 tags: [code-review, agent-v2, dead-code, security]
 dependencies: []
+completed_at: '2026-01-23'
 ---
 
 # Dead Code: sanitizeScrapedContent Function Never Called

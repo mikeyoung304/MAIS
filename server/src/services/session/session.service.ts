@@ -2,14 +2,18 @@
  * Session Service
  *
  * Business logic layer that orchestrates:
- * - Caching (LRU with TTL)
- * - Encryption (AES-256-GCM at rest)
+ * - Caching (LRU with TTL, stores decrypted data for CPU efficiency)
+ * - Encryption (AES-256-GCM at rest in database)
  * - Repository (PostgreSQL with advisory locks)
  *
  * Layered architecture:
- * 1. Cache layer - Check cache first, store encrypted data
- * 2. Encryption layer - Encrypt before write, decrypt after read
+ * 1. Cache layer - Check cache first, store decrypted data (in-memory only)
+ * 2. Encryption layer - Encrypt before DB write, decrypt after DB read
  * 3. Repository layer - PostgreSQL with advisory locks
+ *
+ * Security note: Cache stores decrypted data to avoid decrypt-on-every-hit
+ * CPU overhead. This is safe because the cache is in-memory only and
+ * decrypted data never leaves the process boundary.
  *
  * @see plans/feat-persistent-chat-session-storage.md Phase 2.3
  */
@@ -70,8 +74,13 @@ export class SessionService {
   private readonly cache: SessionCache;
   private readonly config: SessionServiceConfig;
 
-  constructor(prisma: PrismaClient, cache?: SessionCache, config?: Partial<SessionServiceConfig>) {
-    this.repository = createSessionRepository(prisma);
+  constructor(
+    prisma: PrismaClient,
+    repository?: SessionRepository,
+    cache?: SessionCache,
+    config?: Partial<SessionServiceConfig>
+  ) {
+    this.repository = repository ?? createSessionRepository(prisma);
     this.cache = cache ?? defaultCache;
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -122,14 +131,17 @@ export class SessionService {
 
   /**
    * Get session by ID with caching
+   *
+   * Cache stores decrypted data to avoid CPU overhead on every hit.
+   * Security note: Cache is in-memory only (not Redis), so decrypted
+   * data never leaves the process boundary.
    */
   async getSession(sessionId: string, tenantId: string): Promise<SessionWithMessages | null> {
-    // Check cache first
+    // Check cache first - returns already-decrypted data
     if (this.config.cacheEnabled) {
       const cached = this.cache.get(sessionId, tenantId);
       if (cached) {
-        // Decrypt cached data before returning
-        return this.decryptSession(cached);
+        return cached; // Already decrypted, no CPU overhead
       }
     }
 
@@ -139,12 +151,12 @@ export class SessionService {
       return null;
     }
 
-    // Decrypt messages
+    // Decrypt messages BEFORE caching
     const decrypted = this.decryptSession(session);
 
-    // Cache for future requests (store encrypted version)
+    // Cache decrypted version for future requests
     if (this.config.cacheEnabled) {
-      this.cache.set(sessionId, tenantId, session); // Store as-is (encrypted in DB)
+      this.cache.set(sessionId, tenantId, decrypted);
     }
 
     return decrypted;
@@ -399,12 +411,17 @@ export class SessionService {
  *
  * // For testing - custom cache and config
  * const testCache = createSessionCache({ ttlMs: 100 });
- * const service = createSessionService(prisma, testCache, { encryptMessages: false });
+ * const service = createSessionService(prisma, undefined, testCache, { encryptMessages: false });
+ *
+ * // With injected repository (for testing or custom implementations)
+ * const mockRepo = createSessionRepository(prisma);
+ * const service = createSessionService(prisma, mockRepo);
  */
 export function createSessionService(
   prisma: PrismaClient,
+  repository?: SessionRepository,
   cache?: SessionCache,
   config?: Partial<SessionServiceConfig>
 ): SessionService {
-  return new SessionService(prisma, cache, config);
+  return new SessionService(prisma, repository, cache, config);
 }

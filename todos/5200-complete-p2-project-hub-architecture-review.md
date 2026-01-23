@@ -71,7 +71,7 @@ Run `/review` on the project-hub agent with fresh context to make an architectur
 **Questions answered:**
 
 1. **Should customer and tenant be separate agents?** → Not yet. Phase 1 added programmatic tool gating which provides 90% of security benefits. Re-evaluate after 1 week stable.
-2. **Is the mediation logic appropriate?** → Dead code - `shouldAlwaysEscalate()` never called. See todo 5220.
+2. **Is the mediation logic appropriate?** → Yes, now fully wired up. `shouldAlwaysEscalate()` called in `answerPrepQuestion` and `submitRequest` tools. See todo 5220 (resolved).
 3. **How should tenant ID flow?** → Now uses 4-tier pattern via shared module import.
 4. **What prevents context bleed?** → Now enforced by `requireContext()` guard on all 11 tools.
 

@@ -446,43 +446,133 @@ async function callMaisApi(
   }
 }
 
-// Session cache with TTL and size limits
-const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const MAX_SESSION_CACHE_SIZE = 1000;
+// =============================================================================
+// TTL CACHE UTILITIES
+// =============================================================================
 
-interface CachedSession {
-  sessionId: string;
+/**
+ * TTL Cache with size limits and periodic cleanup
+ *
+ * Addresses pitfall #50: Module-level cache unbounded - adds TTL and max size.
+ * Entries are evicted:
+ * 1. On access if expired (passive cleanup)
+ * 2. When size limit reached (LRU-style: oldest entry evicted)
+ * 3. Periodically via cleanup interval (active cleanup)
+ */
+interface CacheEntry<T> {
+  value: T;
   createdAt: number;
 }
 
-const specialistSessions = new Map<string, CachedSession>();
+class TTLCache<T> {
+  private cache = new Map<string, CacheEntry<T>>();
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
-function getSpecialistSession(key: string): string | undefined {
-  const entry = specialistSessions.get(key);
-  if (!entry) return undefined;
+  constructor(
+    private readonly ttlMs: number,
+    private readonly maxSize: number,
+    private readonly name: string
+  ) {
+    // Run cleanup every 5 minutes to remove expired entries
+    // This prevents memory bloat from expired but unaccessed entries
+    this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
 
-  // Check TTL
-  if (Date.now() - entry.createdAt > SESSION_TTL_MS) {
-    specialistSessions.delete(key);
-    return undefined;
-  }
-
-  return entry.sessionId;
-}
-
-function setSpecialistSession(key: string, sessionId: string): void {
-  // Enforce size limit - remove oldest entries if at capacity
-  if (specialistSessions.size >= MAX_SESSION_CACHE_SIZE) {
-    const oldestKey = specialistSessions.keys().next().value;
-    if (oldestKey) {
-      specialistSessions.delete(oldestKey);
+    // Ensure cleanup interval doesn't prevent process exit
+    if (this.cleanupInterval.unref) {
+      this.cleanupInterval.unref();
     }
   }
 
-  specialistSessions.set(key, {
-    sessionId,
-    createdAt: Date.now(),
-  });
+  get(key: string): T | undefined {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
+
+    // Check TTL (passive cleanup)
+    if (Date.now() - entry.createdAt > this.ttlMs) {
+      this.cache.delete(key);
+      return undefined;
+    }
+
+    return entry.value;
+  }
+
+  set(key: string, value: T): void {
+    // Enforce size limit - remove oldest entry if at capacity (LRU-style)
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+        logger.info({ cache: this.name }, `[TTLCache] Evicted oldest entry due to size limit`);
+      }
+    }
+
+    this.cache.set(key, {
+      value,
+      createdAt: Date.now(),
+    });
+  }
+
+  delete(key: string): boolean {
+    return this.cache.delete(key);
+  }
+
+  get size(): number {
+    return this.cache.size;
+  }
+
+  /**
+   * Active cleanup - removes all expired entries
+   * Called periodically to prevent memory bloat
+   */
+  private cleanup(): void {
+    const now = Date.now();
+    let expiredCount = 0;
+
+    for (const [key, entry] of this.cache) {
+      if (now - entry.createdAt > this.ttlMs) {
+        this.cache.delete(key);
+        expiredCount++;
+      }
+    }
+
+    if (expiredCount > 0) {
+      logger.info(
+        { cache: this.name, expiredCount, remaining: this.cache.size },
+        `[TTLCache] Cleanup removed expired entries`
+      );
+    }
+  }
+
+  /**
+   * Stop the cleanup interval (for testing or shutdown)
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+  }
+}
+
+// =============================================================================
+// SESSION CACHE
+// =============================================================================
+
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const MAX_SESSION_CACHE_SIZE = 1000;
+
+const specialistSessionsCache = new TTLCache<string>(
+  SESSION_TTL_MS,
+  MAX_SESSION_CACHE_SIZE,
+  'specialist-sessions'
+);
+
+function getSpecialistSession(key: string): string | undefined {
+  return specialistSessionsCache.get(key);
+}
+
+function setSpecialistSession(key: string, sessionId: string): void {
+  specialistSessionsCache.set(key, sessionId);
 }
 
 /**
@@ -647,7 +737,7 @@ async function callSpecialistAgent(
           {},
           `[Concierge] Session expired on ${agentName}, clearing cache and retrying...`
         );
-        specialistSessions.delete(`${agentUrl}:${tenantId}`);
+        specialistSessionsCache.delete(`${agentUrl}:${tenantId}`);
 
         // Retry with a new session
         const newSessionId = await getOrCreateSpecialistSession(agentUrl, agentName, tenantId);
@@ -803,49 +893,53 @@ async function withRetry<T>(
   throw lastError;
 }
 
-// Retry state with TTL for per-request retry tracking
+// =============================================================================
+// RETRY STATE CACHE
+// =============================================================================
+
 const RETRY_TTL_MS = 5 * 60 * 1000; // 5 minutes - covers single conversation
 const MAX_RETRY_CACHE_SIZE = 1000;
 
-interface RetryEntry {
-  count: number;
-  createdAt: number;
+// Retry state uses TTLCache for consistency
+// Value is the retry count for the task
+const retryStateCache = new TTLCache<number>(RETRY_TTL_MS, MAX_RETRY_CACHE_SIZE, 'retry-state');
+
+/**
+ * Get the backoff delay for a retry attempt.
+ *
+ * Returns the delay in milliseconds to wait before retrying, or null if
+ * max retries have been exhausted.
+ *
+ * Uses exponential backoff with jitter:
+ * - First retry: ~500ms (+ 0-30% jitter)
+ * - Second retry: ~1000ms (+ 0-30% jitter)
+ *
+ * This prevents thundering herd during overload situations.
+ */
+function getRetryDelay(taskKey: string): number | null {
+  const count = retryStateCache.get(taskKey) ?? 0;
+
+  if (count >= MAX_RETRIES) {
+    retryStateCache.delete(taskKey);
+    return null; // Max retries exhausted
+  }
+
+  retryStateCache.set(taskKey, count + 1);
+
+  // Return exponential backoff delay for this attempt
+  return getBackoffDelay(count);
 }
 
-const retryState = new Map<string, RetryEntry>();
-
+/**
+ * @deprecated Use getRetryDelay() to get the delay value and apply backoff.
+ * Kept for backward compatibility but does NOT apply backoff delay.
+ */
 function shouldRetry(taskKey: string): boolean {
-  const entry = retryState.get(taskKey);
-
-  // Check TTL and clean up if expired
-  if (entry && Date.now() - entry.createdAt > RETRY_TTL_MS) {
-    retryState.delete(taskKey);
-    return true; // Expired, allow retry
-  }
-
-  const count = entry?.count || 0;
-  if (count >= MAX_RETRIES) {
-    retryState.delete(taskKey);
-    return false;
-  }
-
-  // Enforce size limit
-  if (retryState.size >= MAX_RETRY_CACHE_SIZE) {
-    const oldestKey = retryState.keys().next().value;
-    if (oldestKey) {
-      retryState.delete(oldestKey);
-    }
-  }
-
-  retryState.set(taskKey, {
-    count: count + 1,
-    createdAt: entry?.createdAt || Date.now(),
-  });
-  return true;
+  return getRetryDelay(taskKey) !== null;
 }
 
 function clearRetry(taskKey: string): void {
-  retryState.delete(taskKey);
+  retryStateCache.delete(taskKey);
 }
 
 // =============================================================================
@@ -913,9 +1007,14 @@ const delegateToMarketingTool = new FunctionTool({
     );
 
     if (!result.ok) {
-      // ReflectAndRetry logic
-      if (shouldRetry(taskKey)) {
-        logger.info({}, `[Concierge] Retrying marketing task: ${params.task}`);
+      // ReflectAndRetry logic with exponential backoff
+      const retryDelay = getRetryDelay(taskKey);
+      if (retryDelay !== null) {
+        logger.info(
+          {},
+          `[Concierge] Retrying marketing task: ${params.task} after ${Math.round(retryDelay)}ms backoff`
+        );
+        await sleep(retryDelay);
         // Simplify the request for retry
         const simpleMessage = `Generate a ${params.task} for ${params.context}. Keep it simple.`;
         const retryResult = await callSpecialistAgent(
@@ -986,8 +1085,14 @@ const delegateToStorefrontTool = new FunctionTool({
     );
 
     if (!result.ok) {
-      if (shouldRetry(taskKey)) {
-        logger.info({}, `[Concierge] Retrying storefront task: ${params.task}`);
+      // ReflectAndRetry logic with exponential backoff
+      const retryDelay = getRetryDelay(taskKey);
+      if (retryDelay !== null) {
+        logger.info(
+          {},
+          `[Concierge] Retrying storefront task: ${params.task} after ${Math.round(retryDelay)}ms backoff`
+        );
+        await sleep(retryDelay);
         const retryResult = await callSpecialistAgent(
           SPECIALIST_URLS.storefront,
           'agent',
@@ -1055,8 +1160,14 @@ const delegateToResearchTool = new FunctionTool({
     );
 
     if (!result.ok) {
-      if (shouldRetry(taskKey)) {
-        logger.info({}, `[Concierge] Retrying research task: ${params.task}`);
+      // ReflectAndRetry logic with exponential backoff
+      const retryDelay = getRetryDelay(taskKey);
+      if (retryDelay !== null) {
+        logger.info(
+          {},
+          `[Concierge] Retrying research task: ${params.task} after ${Math.round(retryDelay)}ms backoff`
+        );
+        await sleep(retryDelay);
         // For research, try without the competitor URL if that was the issue
         const simpleMessage = `Research ${params.task} in ${params.industry || 'general'} ${params.location ? `in ${params.location}` : ''}`;
         const retryResult = await callSpecialistAgent(

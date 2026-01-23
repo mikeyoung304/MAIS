@@ -27,6 +27,7 @@ export {
   type ToolCall,
   type SessionMessage,
   type CreateMessageInput,
+  type CreateMessageOutput,
   type SessionType,
   type SessionMetadata,
   type SessionWithMessages,
