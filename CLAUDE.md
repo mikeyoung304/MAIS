@@ -90,10 +90,17 @@ For detailed architecture documentation, search or read these files when working
 
 ### Database Migrations
 
-**Pattern A (Prisma):** Tables/columns → `prisma migrate dev --name name`
-**Pattern B (Raw SQL):** Enums/indexes → Create `migrations/NN_name.sql`, run with `prisma db execute`
+All migrations use Prisma:
 
-See `docs/solutions/SCHEMA_DRIFT_PREVENTION.md` for decision tree.
+```bash
+# Standard migration
+npx prisma migrate dev --name descriptive_name
+
+# Custom SQL (enums, RLS, indexes)
+npx prisma migrate dev --create-only --name descriptive_name
+# Edit the migration.sql, then:
+npx prisma migrate dev
+```
 
 ### Bundle Size Guidelines
 

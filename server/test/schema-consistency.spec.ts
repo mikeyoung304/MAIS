@@ -61,13 +61,12 @@ describe('Schema Consistency Checks', () => {
       expect(prismaFormats.length).toBeGreaterThan(0);
     });
 
-    it('should have numbered manual SQL migrations', () => {
+    it('should use Prisma-only migrations (no numbered SQL files)', () => {
       const files = fs.readdirSync(migrationsPath);
-      const sqlFiles = files.filter((f) => f.endsWith('.sql'));
-      const numericFiles = sqlFiles.filter((f) => /^\d+_/.test(f));
+      const numericSqlFiles = files.filter((f) => /^\d+_.*\.sql$/.test(f));
 
-      // We have hybrid system: 01_, 02_, etc. for manual, plus 20[date] for Prisma
-      expect(files.length).toBeGreaterThan(2);
+      // We consolidated to Prisma-only migrations - numbered SQL files should not exist
+      expect(numericSqlFiles.length).toBe(0);
     });
 
     it('should not have empty migration files', () => {
