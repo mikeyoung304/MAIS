@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5261'
 tags: [code-review, security, agent-tools, pr-28]

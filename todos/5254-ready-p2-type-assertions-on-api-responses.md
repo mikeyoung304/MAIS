@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5254'
 tags: [code-review, typescript, pitfall-62]

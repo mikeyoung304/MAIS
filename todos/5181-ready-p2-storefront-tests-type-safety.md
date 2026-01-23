@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5181'
 tags: [code-review, testing, typescript, quality]

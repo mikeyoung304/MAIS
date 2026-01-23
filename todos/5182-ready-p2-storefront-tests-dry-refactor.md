@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p2
 issue_id: '5182'
 tags: [code-review, testing, quality, dry]
