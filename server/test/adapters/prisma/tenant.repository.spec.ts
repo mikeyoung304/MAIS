@@ -29,8 +29,19 @@ describe('PrismaTenantRepository', () => {
       // Act
       const result = await repository.findById('tenant_123');
 
-      // Assert
-      expect(result).toEqual(tenant);
+      // Assert - returns TenantEntity (mapped from Prisma Tenant)
+      expect(result).toEqual({
+        id: tenant.id,
+        slug: tenant.slug,
+        name: tenant.name,
+        apiKeyPublic: tenant.apiKeyPublic,
+        stripeAccountId: tenant.stripeAccountId,
+        stripeOnboarded: tenant.stripeOnboarded,
+        commissionPercent: Number(tenant.commissionPercent),
+        depositPercent: tenant.depositPercent ? Number(tenant.depositPercent) : null,
+        balanceDueDays: tenant.balanceDueDays,
+        isActive: tenant.isActive,
+      });
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
         where: { id: 'tenant_123' },
       });
@@ -62,9 +73,9 @@ describe('PrismaTenantRepository', () => {
       // Act
       const result = await repository.findBySlug('bella-weddings');
 
-      // Assert
-      expect(result).toEqual(tenant);
+      // Assert - returns TenantEntity (mapped from Prisma Tenant)
       expect(result?.slug).toBe('bella-weddings');
+      expect(result?.commissionPercent).toBe(Number(tenant.commissionPercent));
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
         where: { slug: 'bella-weddings' },
       });
