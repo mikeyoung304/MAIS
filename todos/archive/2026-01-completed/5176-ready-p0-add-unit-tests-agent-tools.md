@@ -1,5 +1,5 @@
 ---
-status: ready
+status: completed
 priority: p0
 issue_id: '5176'
 tags: [code-review, testing, technical-debt, agent-system]
@@ -9,6 +9,14 @@ triage_by: master-architect-triage
 verified: true
 note: Large scope - recommend breaking into phases as described in Solution 1
 effort: 6-days-phased
+completed_date: '2026-01-23'
+completion_note: |
+  Tests already implemented - 284 tests across 5 files (4,345 LOC):
+  - write-tools.test.ts (915 LOC) - Trust tier enforcement, tenant isolation
+  - storefront-tools.test.ts (1,709 LOC) - Section ID, page switching
+  - read-tools.test.ts (1,097 LOC) - Query construction, filtering
+  - booking-link-tools.test.ts (313 LOC) - Booking link tools
+  - utils.test.ts (311 LOC) - Defensive copy tests
 ---
 
 # Zero Unit Tests for Agent Tools (Critical Testing Gap)
