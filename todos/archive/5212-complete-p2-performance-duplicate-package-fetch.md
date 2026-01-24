@@ -1,5 +1,5 @@
 ---
-status: deferred
+status: complete
 priority: p2
 issue_id: '5212'
 tags: [code-review, performance, booking, database]

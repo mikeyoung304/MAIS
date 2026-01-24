@@ -4,6 +4,7 @@
  */
 
 import type { PrismaClient, Tenant, Prisma } from '../../generated/prisma/client';
+import type { ITenantRepository, TenantEntity } from '../../lib/ports';
 import {
   TenantPublicDtoSchema,
   SafeImageUrlSchema,
@@ -67,7 +68,7 @@ export interface UpdateTenantInput {
  * Tenant repository for CRUD operations
  * Handles multi-tenant isolation and API key lookups
  */
-export class PrismaTenantRepository {
+export class PrismaTenantRepository implements ITenantRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**

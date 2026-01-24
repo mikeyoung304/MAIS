@@ -1,5 +1,5 @@
 ---
-status: deferred
+status: complete
 priority: p1
 issue_id: '5209'
 tags: [code-review, testing, booking, stripe]

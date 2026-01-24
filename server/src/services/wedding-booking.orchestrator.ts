@@ -58,15 +58,17 @@ export class WeddingBookingOrchestrator {
    *
    * @param tenantId - Tenant ID for data isolation
    * @param input - Booking creation data (packageId as slug, eventDate, email, coupleName, addOnIds)
+   * @param prefetchedPackage - Optional pre-fetched package to avoid duplicate DB query
    * @returns Object containing the Stripe checkout URL
    * @throws {NotFoundError} If package doesn't exist
    */
   async createCheckout(
     tenantId: string,
-    input: CreateBookingInput
+    input: CreateBookingInput,
+    prefetchedPackage?: { id: string; slug: string; priceCents: number }
   ): Promise<{ checkoutUrl: string }> {
-    // Validate package exists for this tenant
-    const pkg = await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
+    // Use pre-fetched package if provided, otherwise fetch (avoids duplicate query)
+    const pkg = prefetchedPackage ?? await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
     if (!pkg) {
       logger.warn({ tenantId, packageSlug: input.packageId }, 'Package not found in checkout');
       throw new NotFoundError('The requested resource was not found');
@@ -153,15 +155,19 @@ export class WeddingBookingOrchestrator {
       throw new BookingConflictError(input.date, reason);
     }
 
-    // Delegate to createCheckout
-    return this.createCheckout(tenantId, {
-      packageId: pkg.slug,
-      eventDate: input.date,
-      email: input.customerEmail,
-      coupleName: input.customerName,
-      addOnIds: input.addOnIds,
-      bookingType: 'DATE',
-    });
+    // Delegate to createCheckout - pass pre-fetched package to avoid duplicate DB query
+    return this.createCheckout(
+      tenantId,
+      {
+        packageId: pkg.slug,
+        eventDate: input.date,
+        email: input.customerEmail,
+        coupleName: input.customerName,
+        addOnIds: input.addOnIds,
+        bookingType: 'DATE',
+      },
+      pkg // Pass pre-fetched package
+    );
   }
 
   /**

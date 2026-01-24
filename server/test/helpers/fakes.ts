@@ -68,6 +68,63 @@ export class FakeBookingRepository implements BookingRepository {
     return rest;
   }
 
+  /**
+   * Update booking fields (refund status, reschedule, cancel, etc.)
+   * Used by RefundProcessingService and BookingLifecycleService
+   */
+  async update(
+    tenantId: string,
+    bookingId: string,
+    data: Partial<Booking>
+  ): Promise<Booking> {
+    const index = this.bookings.findIndex(
+      (b) => b.tenantId === tenantId && b.id === bookingId
+    );
+    if (index === -1) {
+      throw new Error(`Booking ${bookingId} not found`);
+    }
+    const updated = { ...this.bookings[index], ...data };
+    this.bookings[index] = updated;
+    return this.stripTenantId(updated);
+  }
+
+  /**
+   * Complete balance payment atomically
+   * For fake implementation: updates booking with balance payment and returns it
+   * Returns null if balance was already paid (idempotent behavior)
+   */
+  async completeBalancePayment(
+    tenantId: string,
+    bookingId: string,
+    balanceAmountCents: number
+  ): Promise<Booking | null> {
+    const index = this.bookings.findIndex(
+      (b) => b.tenantId === tenantId && b.id === bookingId
+    );
+
+    if (index === -1) {
+      return null;
+    }
+
+    const booking = this.bookings[index];
+
+    // Idempotent: if balance already paid, return null
+    if (booking.balancePaidAmount || booking.balancePaidAt) {
+      return null;
+    }
+
+    // Update booking with balance payment
+    const updated: Booking & { tenantId: string } = {
+      ...booking,
+      balancePaidAmount: balanceAmountCents,
+      balancePaidAt: new Date().toISOString(),
+      status: 'PAID',
+    };
+
+    this.bookings[index] = updated;
+    return this.stripTenantId(updated);
+  }
+
   // Test helper - now requires tenantId for proper isolation
   addBooking(booking: Booking, tenantId: string = 'test-tenant'): void {
     this.bookings.push({ ...booking, tenantId });
@@ -277,6 +334,10 @@ export class FakeCalendarProvider implements CalendarProvider {
 }
 
 export class FakePaymentProvider implements PaymentProvider {
+  // Control refund behavior for testing
+  private refundShouldFail = false;
+  private refundError: Error | null = null;
+
   async createCheckoutSession(input: {
     amountCents: number;
     email: string;
@@ -304,6 +365,41 @@ export class FakePaymentProvider implements PaymentProvider {
 
   async verifyWebhook(payload: string, signature: string): Promise<unknown> {
     return { verified: true };
+  }
+
+  /**
+   * Process a refund
+   * Returns refund details including refundId, status, and amount
+   */
+  async refund(input: {
+    paymentIntentId: string;
+    amountCents?: number;
+    reason?: string;
+    idempotencyKey?: string;
+  }): Promise<{
+    refundId: string;
+    status: string;
+    amountCents: number;
+  }> {
+    if (this.refundShouldFail && this.refundError) {
+      throw this.refundError;
+    }
+    return {
+      refundId: `re_${Date.now()}`,
+      status: 'succeeded',
+      amountCents: input.amountCents ?? 10000,
+    };
+  }
+
+  // Test helpers
+  setRefundShouldFail(shouldFail: boolean, error?: Error): void {
+    this.refundShouldFail = shouldFail;
+    this.refundError = error ?? new Error('Stripe refund failed');
+  }
+
+  clear(): void {
+    this.refundShouldFail = false;
+    this.refundError = null;
   }
 }
 
