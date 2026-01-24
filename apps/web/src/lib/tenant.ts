@@ -571,6 +571,44 @@ export async function getProjectByBookingId(
 }
 
 /**
+ * Fetch project ID by Stripe session ID
+ *
+ * Used by success page to link customers to their Project Hub.
+ * Stripe redirects with session_id, not booking_id, so we need this lookup.
+ * Chains: sessionId → Payment.processorId → Booking → Project
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param sessionId - Stripe checkout session ID (cs_test_xxx or cs_live_xxx)
+ * @returns Project data with access token, or null if not found (webhook pending)
+ */
+export async function getProjectBySessionId(
+  apiKeyPublic: string,
+  sessionId: string
+): Promise<{ projectId: string; status: string; createdAt: string; accessToken: string } | null> {
+  const url = `${API_URL}/v1/public/projects/by-session/${encodeURIComponent(sessionId)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    cache: 'no-store', // Always fetch fresh - webhook may have just processed
+  });
+
+  if (response.status === 404) {
+    // Payment/project not found - webhook may still be processing
+    return null;
+  }
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json();
+}
+
+/**
  * Fetch booking details by ID
  *
  * @param apiKeyPublic - Tenant's public API key

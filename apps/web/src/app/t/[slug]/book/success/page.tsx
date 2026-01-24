@@ -15,7 +15,7 @@ import {
   getTenantBySlug,
   getBookingById,
   getTenantPackageBySlug,
-  getProjectByBookingId,
+  getProjectBySessionId,
   TenantNotFoundError,
 } from '@/lib/tenant';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -31,9 +31,11 @@ interface SuccessPageProps {
  * Booking Success Page
  *
  * Displays booking confirmation after successful payment.
- * Uses booking_id from query params to fetch and display booking details.
+ * Uses session_id from Stripe redirect to look up the project.
  *
- * Route: /t/[slug]/book/success?booking_id=xxx
+ * Route: /t/[slug]/book/success?session_id=xxx
+ *
+ * Flow: session_id → Payment.processorId → Booking → Project → accessToken
  */
 
 export async function generateMetadata({ params }: SuccessPageProps): Promise<Metadata> {
@@ -57,7 +59,7 @@ export async function generateMetadata({ params }: SuccessPageProps): Promise<Me
 
 export default async function SuccessPage({ params, searchParams }: SuccessPageProps) {
   const { slug } = await params;
-  const { booking_id: bookingId } = await searchParams;
+  const { booking_id: bookingId, session_id: sessionId } = await searchParams;
 
   // Fetch tenant
   let tenant;
@@ -75,20 +77,21 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
   let packageData = null;
   let projectData = null;
 
-  if (bookingId) {
-    // Fetch booking and project data in parallel
-    const [bookingResult, projectResult] = await Promise.all([
-      getBookingById(tenant.apiKeyPublic, bookingId),
-      getProjectByBookingId(tenant.apiKeyPublic, bookingId),
-    ]);
+  // Stripe redirects with session_id, but we also support booking_id for backward compatibility
+  if (sessionId || bookingId) {
+    // Fetch project using session_id (from Stripe redirect)
+    // Note: Booking details require booking_id which comes from metadata
+    if (sessionId) {
+      projectData = await getProjectBySessionId(tenant.apiKeyPublic, sessionId);
+    }
 
-    booking = bookingResult;
-    projectData = projectResult;
-
-    if (booking) {
-      // Fetch package details to display title
-      const packages = await getTenantPackageBySlug(tenant.apiKeyPublic, booking.packageId);
-      packageData = packages;
+    // Fetch booking details if we have booking_id
+    if (bookingId) {
+      booking = await getBookingById(tenant.apiKeyPublic, bookingId);
+      if (booking) {
+        // Fetch package details to display title
+        packageData = await getTenantPackageBySlug(tenant.apiKeyPublic, booking.packageId);
+      }
     }
   }
 

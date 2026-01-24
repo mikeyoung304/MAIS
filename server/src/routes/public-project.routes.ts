@@ -135,6 +135,94 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
     }
   });
 
+  /**
+   * GET /by-session/:sessionId
+   *
+   * Lookup project by Stripe session ID.
+   * Used by success page since Stripe redirects with session_id, not booking_id.
+   * Chains: sessionId → Payment.processorId → Booking → Project
+   */
+  router.get('/by-session/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = req.tenantId ?? null;
+      const { sessionId } = req.params;
+
+      if (!tenantId) {
+        res.status(400).json({ error: 'Missing tenant context' });
+        return;
+      }
+
+      if (!sessionId) {
+        res.status(400).json({ error: 'Session ID is required' });
+        return;
+      }
+
+      // Find payment by Stripe session ID (tenant-scoped)
+      // Payment.processorId stores the Stripe checkout session ID
+      const payment = await prisma.payment.findFirst({
+        where: {
+          processorId: sessionId,
+          tenantId, // CRITICAL: tenant-scoped
+        },
+        select: {
+          bookingId: true,
+        },
+      });
+
+      if (!payment) {
+        // Payment not found - webhook may not have processed yet
+        // Return 404 so client can retry with polling
+        res.status(404).json({
+          error: 'Payment not found for this session',
+          retryable: true,
+        });
+        return;
+      }
+
+      // Find project by booking ID
+      const project = await prisma.project.findFirst({
+        where: {
+          bookingId: payment.bookingId,
+          tenantId, // CRITICAL: tenant-scoped
+        },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          customerId: true,
+        },
+      });
+
+      if (!project) {
+        // Booking exists but project doesn't - creation may be pending
+        res.status(404).json({
+          error: 'Project not found for this session',
+          retryable: true,
+        });
+        return;
+      }
+
+      // Generate access token for Project Hub
+      const accessToken = generateProjectAccessToken(
+        project.id,
+        tenantId,
+        project.customerId,
+        'view',
+        30 // 30-day validity
+      );
+
+      res.json({
+        projectId: project.id,
+        status: project.status,
+        createdAt: project.createdAt.toISOString(),
+        accessToken,
+      });
+    } catch (error) {
+      logger.error({ error, sessionId: req.params.sessionId }, 'Project lookup by session error');
+      next(error);
+    }
+  });
+
   // ============================================================================
   // Project Details
   // ============================================================================
