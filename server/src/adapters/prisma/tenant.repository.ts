@@ -4,7 +4,6 @@
  */
 
 import type { PrismaClient, Tenant, Prisma } from '../../generated/prisma/client';
-import type { ITenantRepository, TenantEntity } from '../../lib/ports';
 import {
   TenantPublicDtoSchema,
   SafeImageUrlSchema,
@@ -67,66 +66,48 @@ export interface UpdateTenantInput {
 /**
  * Tenant repository for CRUD operations
  * Handles multi-tenant isolation and API key lookups
+ *
+ * Note: ITenantRepository interface exists in ports.ts for test mocking,
+ * but this class returns full Prisma Tenant for compatibility with existing code.
  */
-export class PrismaTenantRepository implements ITenantRepository {
+export class PrismaTenantRepository {
   constructor(private readonly prisma: PrismaClient) {}
-
-  /**
-   * Maps Prisma Tenant to TenantEntity (converts Decimal to number)
-   */
-  private toEntity(tenant: Tenant): TenantEntity {
-    return {
-      id: tenant.id,
-      slug: tenant.slug,
-      name: tenant.name,
-      apiKeyPublic: tenant.apiKeyPublic,
-      stripeAccountId: tenant.stripeAccountId,
-      stripeOnboarded: tenant.stripeOnboarded,
-      commissionPercent: Number(tenant.commissionPercent),
-      depositPercent: tenant.depositPercent ? Number(tenant.depositPercent) : null,
-      balanceDueDays: tenant.balanceDueDays,
-      isActive: tenant.isActive,
-    };
-  }
 
   /**
    * Find tenant by public API key
    * Used for API authentication and tenant identification
    *
    * @param apiKey - Public API key (pk_live_*)
-   * @returns TenantEntity or null if not found
+   * @returns Tenant or null if not found
    */
-  async findByApiKey(apiKey: string): Promise<TenantEntity | null> {
-    const tenant = await this.prisma.tenant.findUnique({
+  async findByApiKey(apiKey: string): Promise<Tenant | null> {
+    return await this.prisma.tenant.findUnique({
       where: { apiKeyPublic: apiKey },
     });
-    return tenant ? this.toEntity(tenant) : null;
   }
 
   /**
    * Find tenant by ID
    *
    * @param id - Tenant ID (CUID)
-   * @returns TenantEntity or null if not found
+   * @returns Tenant or null if not found
    */
-  async findById(id: string): Promise<TenantEntity | null> {
-    const tenant = await this.prisma.tenant.findUnique({
+  async findById(id: string): Promise<Tenant | null> {
+    return await this.prisma.tenant.findUnique({
       where: { id },
     });
-    return tenant ? this.toEntity(tenant) : null;
   }
 
   /**
    * Find tenant by slug
    *
    * @param slug - URL-safe tenant identifier
-   * @returns TenantEntity or null if not found
+   * @returns Tenant or null if not found
    */
-  async findBySlug(slug: string): Promise<TenantEntity | null> {
-    const tenant = await this.prisma.tenant.findUnique({
+  async findBySlug(slug: string): Promise<Tenant | null> {
+    return await this.prisma.tenant.findUnique({
       where: { slug },
     });
-    return tenant ? this.toEntity(tenant) : null;
   }
 
   /**
