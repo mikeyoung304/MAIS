@@ -141,6 +141,10 @@ export interface AgentUIState {
   // Tenant scope (security - all actions require this)
   tenantId: string | null;
 
+  // Conflict dialog state (#620 - optimistic locking)
+  // True when agent tool returns CONCURRENT_MODIFICATION error
+  showConflictDialog: boolean;
+
   // ========== Actions ==========
 
   /**
@@ -203,6 +207,12 @@ export interface AgentUIState {
    */
   clearError: () => void;
 
+  /**
+   * Show/hide conflict dialog (#620 - optimistic locking)
+   * Called when agent tool returns CONCURRENT_MODIFICATION error
+   */
+  setShowConflictDialog: (show: boolean) => void;
+
   // ========== Event Sourcing ==========
 
   /**
@@ -262,6 +272,7 @@ export const useAgentUIStore = create<AgentUIState>()(
         previewRefreshKey: 0,
         actionLog: [],
         tenantId: null,
+        showConflictDialog: false,
 
         // Initialize with tenant
         initialize: (tenantId) =>
@@ -437,6 +448,12 @@ export const useAgentUIStore = create<AgentUIState>()(
             state.view = { status: 'dashboard' };
           }),
 
+        // Show/hide conflict dialog (#620 - optimistic locking)
+        setShowConflictDialog: (show) =>
+          set((state) => {
+            state.showConflictDialog = show;
+          }),
+
         // Get action log
         getActionLog: () => get().actionLog,
 
@@ -515,6 +532,8 @@ export const agentUIActions = {
 
   clearError: () => useAgentUIStore.getState().clearError(),
 
+  setShowConflictDialog: (show: boolean) => useAgentUIStore.getState().setShowConflictDialog(show),
+
   getActionLog: () => useAgentUIStore.getState().getActionLog(),
 
   undoLastAction: () => useAgentUIStore.getState().undoLastAction(),
@@ -572,6 +591,11 @@ export const selectError = (state: AgentUIState) =>
  * Select whether store is initialized
  */
 export const selectIsInitialized = (state: AgentUIState) => state.tenantId !== null;
+
+/**
+ * Select conflict dialog visibility (#620 - optimistic locking)
+ */
+export const selectShowConflictDialog = (state: AgentUIState) => state.showConflictDialog;
 
 // ============================================
 // E2E TEST SUPPORT - Expose on window for Playwright

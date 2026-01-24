@@ -19,7 +19,12 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-client';
-import { agentUIActions, useAgentUIStore, selectPreviewRefreshKey } from '@/stores/agent-ui-store';
+import {
+  agentUIActions,
+  useAgentUIStore,
+  selectPreviewRefreshKey,
+  selectShowConflictDialog,
+} from '@/stores/agent-ui-store';
 import { useDraftConfig } from '@/hooks/useDraftConfig';
 import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { Button } from '@/components/ui/button';
@@ -117,12 +122,13 @@ export function PreviewPanel({
   // Subscribe to preview refresh key - triggers iframe reload when packages change
   const previewRefreshKey = useAgentUIStore(selectPreviewRefreshKey);
 
+  // Subscribe to conflict dialog state (#620 - optimistic locking)
+  // Set by agent tool handlers when CONCURRENT_MODIFICATION error occurs
+  const showConflictDialog = useAgentUIStore(selectShowConflictDialog);
+
   // T3 confirmation dialogs
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-
-  // Conflict dialog for concurrent modification errors (#620)
-  const [showConflictDialog, setShowConflictDialog] = useState(false);
 
   // Build iframe URL with preview token
   // Token is included to authenticate draft content access server-side
@@ -546,7 +552,7 @@ export function PreviewPanel({
       {/* Conflict dialog for concurrent modification errors (#620) */}
       <ConflictDialog
         open={showConflictDialog}
-        onOpenChange={setShowConflictDialog}
+        onOpenChange={agentUIActions.setShowConflictDialog}
         onRefresh={handleConflictRefresh}
       />
     </div>

@@ -10,6 +10,7 @@ import { parseHighlights } from '@/lib/parseHighlights';
 import { QuickReplyChips } from './QuickReplyChips';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { ChatMessage } from '@/components/chat/ChatMessage';
+import { agentUIActions } from '@/stores/agent-ui-store';
 
 // Use Next.js API proxy to handle authentication
 // The proxy at /api/agent/* adds the backend token from the session
@@ -124,6 +125,15 @@ export function PanelAgentChat({
           if (result.success && hasUIAction(result.data)) {
             onUIAction(result.data.uiAction);
           }
+        }
+      }
+
+      // Detect CONCURRENT_MODIFICATION errors (#620 - optimistic locking)
+      // Show conflict dialog when another tab modified the draft
+      for (const result of toolResults) {
+        if (!result.success && result.error === 'CONCURRENT_MODIFICATION') {
+          agentUIActions.setShowConflictDialog(true);
+          break;
         }
       }
     },

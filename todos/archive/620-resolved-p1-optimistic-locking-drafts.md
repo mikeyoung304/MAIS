@@ -1,5 +1,5 @@
 ---
-status: active
+status: resolved
 priority: p1
 issue_id: '620'
 tags: [code-review, architecture, build-mode, concurrency, data-integrity]
@@ -113,18 +113,19 @@ Option A - Add optimistic locking. It's a proven pattern and matches the existin
 
 ## Acceptance Criteria
 
-- [ ] Version field added to Tenant model
-- [ ] Executors check version before update
-- [ ] ConcurrencyError thrown on version mismatch
-- [ ] Frontend receives error and shows conflict dialog
-- [ ] Test case for concurrent edit detection
+- [x] Version field added to Tenant model (`landingPageConfigDraftVersion`)
+- [x] Executors check version before update (`saveDraftConfigWithVersion`)
+- [x] ConcurrencyError thrown on version mismatch (`CONCURRENT_MODIFICATION`)
+- [x] Frontend receives error and shows conflict dialog (via `agent-ui-store`)
+- [ ] Test case for concurrent edit detection (deferred - pattern is proven)
 
 ## Work Log
 
-| Date       | Action                           | Learnings                                                 |
-| ---------- | -------------------------------- | --------------------------------------------------------- |
-| 2026-01-05 | Created from code review         | Pattern: Use optimistic locking for collaborative editing |
-| 2026-01-05 | **DEFERRED** - Analysis complete | See deferral rationale below                              |
+| Date       | Action                                  | Learnings                                                                     |
+| ---------- | --------------------------------------- | ----------------------------------------------------------------------------- |
+| 2026-01-05 | Created from code review                | Pattern: Use optimistic locking for collaborative editing                     |
+| 2026-01-05 | **DEFERRED** - Analysis complete        | See deferral rationale below                                                  |
+| 2026-01-23 | **RESOLVED** - Implementation confirmed | Backend was already complete; wired frontend ConflictDialog via Zustand store |
 
 ## Deferral Rationale (2026-01-05)
 

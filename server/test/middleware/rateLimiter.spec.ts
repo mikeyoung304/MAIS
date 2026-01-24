@@ -345,18 +345,21 @@ describe('Rate Limiter Middleware', () => {
       app.use(createPublicLimiter());
       app.get('/test', (_req, res) => res.json({ success: true }));
 
-      // Exceed limit
-      for (let i = 0; i < 300; i++) {
-        await request(app).get('/test');
+      // Exceed limit using batched requests (same pattern as line 96-117)
+      const batchSize = 50;
+      for (let batch = 0; batch < 6; batch++) {
+        const requests = Array.from({ length: batchSize }, () => request(app).get('/test'));
+        await Promise.all(requests);
       }
 
+      // 301st request should be rate limited
       const response = await request(app).get('/test');
 
       expect(response.status).toBe(429);
       expect(response.headers['content-type']).toMatch(/application\/json/);
       expect(response.body).toHaveProperty('error');
       expect(response.body).toHaveProperty('message');
-    });
+    }, 30000); // Extended timeout for 300 requests
 
     it('should use consistent error format across limiters', async () => {
       const publicApp = express();
@@ -367,12 +370,20 @@ describe('Rate Limiter Middleware', () => {
       adminApp.use(createAdminLimiter());
       adminApp.get('/test', (_req, res) => res.json({ success: true }));
 
-      // Exceed both limits
-      for (let i = 0; i < 300; i++) {
-        await request(publicApp).get('/test');
+      // Exceed public limit using batched requests
+      const batchSize = 50;
+      for (let batch = 0; batch < 6; batch++) {
+        const requests = Array.from({ length: batchSize }, () => request(publicApp).get('/test'));
+        await Promise.all(requests);
       }
-      for (let i = 0; i < 120; i++) {
-        await request(adminApp).get('/test');
+
+      // Exceed admin limit using batched requests
+      const adminBatchSize = 40;
+      for (let batch = 0; batch < 3; batch++) {
+        const requests = Array.from({ length: adminBatchSize }, () =>
+          request(adminApp).get('/test')
+        );
+        await Promise.all(requests);
       }
 
       const publicResponse = await request(publicApp).get('/test');
@@ -383,7 +394,7 @@ describe('Rate Limiter Middleware', () => {
       expect(publicResponse.body).toHaveProperty('message');
       expect(adminResponse.body).toHaveProperty('error');
       expect(adminResponse.body).toHaveProperty('message');
-    });
+    }, 30000); // Extended timeout for many requests
   });
 
   describe('Configuration Validation', () => {
