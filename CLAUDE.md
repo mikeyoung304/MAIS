@@ -270,6 +270,8 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 75. Array.shift() in metrics/rolling windows - O(n) operation on every call; use ring buffer for O(1) latency recording
 76. Static config for tenant-specific URLs - Never use `config.SUCCESS_URL` or `process.env.CALLBACK_URL` for URLs that route customers back to tenant storefronts; build URLs dynamically with `${baseUrl}/t/${tenant.slug}/...` at request time and include `tenantSlug` in external service metadata for webhook routing. See `docs/solutions/patterns/STATIC_CONFIG_MULTI_TENANT_PREVENTION.md`
 77. Environment variable URL missing protocol - `CORS_ORIGIN=www.example.com` creates malformed URLs when concatenated; must include protocol: `CORS_ORIGIN=https://www.example.com`; verify in logs after deployment
+78. Invalid API keys causing mysterious 404s - Stripe/external API 401 errors can manifest as 404 NOT_FOUND in client; validate API keys on server startup with connectivity test; check server logs for real error chain. See `docs/solutions/integration-issues/booking-flow-404-invalid-stripe-key-stale-cache.md`
+79. Stale Next.js build cache after env changes - `.next/` directory serves cached JavaScript even after environment variable changes; always `rm -rf apps/web/.next` when debugging mysterious runtime behavior; consider auto-clearing cache when .env changes
 
 ## Prevention Strategies
 
@@ -289,6 +291,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md](docs/solutions/patterns/ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md)** - Agent dev checklist
 - **[ESLINT_PREVENTION_INDEX.md](docs/solutions/patterns/ESLINT_PREVENTION_INDEX.md)** - Dead code prevention
 - **[STATIC_CONFIG_MULTI_TENANT_PREVENTION.md](docs/solutions/patterns/STATIC_CONFIG_MULTI_TENANT_PREVENTION.md)** - Static config anti-pattern for multi-tenant URLs
+- **[booking-flow-404-invalid-stripe-key-stale-cache.md](docs/solutions/integration-issues/booking-flow-404-invalid-stripe-key-stale-cache.md)** - API key validation and build cache debugging
 - **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4
 
 When you hit an issue:
