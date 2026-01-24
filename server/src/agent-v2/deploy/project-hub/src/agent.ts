@@ -1312,16 +1312,16 @@ const approveRequest = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this request via tenantId header
-      const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
-        `/project-hub/approve-request`,
-        'POST',
-        {
-          tenantId: session.tenantId,
-          requestId,
-          expectedVersion,
-          response,
-        }
-      );
+      const result = await callBackendAPI<{
+        success: boolean;
+        request: ProjectRequest;
+        remainingPendingCount?: number;
+      }>(`/project-hub/approve-request`, 'POST', {
+        tenantId: session.tenantId,
+        requestId,
+        expectedVersion,
+        response,
+      });
 
       return {
         success: true,
@@ -1330,6 +1330,9 @@ const approveRequest = new FunctionTool({
         // State indicators for agent context (Pitfall #52)
         requestStatus: 'APPROVED' as const,
         projectStatus: 'active',
+        hasPendingRequests:
+          result.remainingPendingCount !== undefined ? result.remainingPendingCount > 0 : undefined,
+        remainingPendingCount: result.remainingPendingCount,
       };
     } catch (error) {
       return {
@@ -1371,17 +1374,17 @@ const denyRequest = new FunctionTool({
 
     try {
       // Backend verifies tenant owns this request via tenantId
-      const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
-        `/project-hub/deny-request`,
-        'POST',
-        {
-          tenantId: session.tenantId,
-          requestId,
-          expectedVersion,
-          reason,
-          response,
-        }
-      );
+      const result = await callBackendAPI<{
+        success: boolean;
+        request: ProjectRequest;
+        remainingPendingCount?: number;
+      }>(`/project-hub/deny-request`, 'POST', {
+        tenantId: session.tenantId,
+        requestId,
+        expectedVersion,
+        reason,
+        response,
+      });
 
       return {
         success: true,
@@ -1390,6 +1393,9 @@ const denyRequest = new FunctionTool({
         // State indicators for agent context (Pitfall #52)
         requestStatus: 'DENIED' as const,
         projectStatus: 'active',
+        hasPendingRequests:
+          result.remainingPendingCount !== undefined ? result.remainingPendingCount > 0 : undefined,
+        remainingPendingCount: result.remainingPendingCount,
       };
     } catch (error) {
       return {

@@ -906,7 +906,7 @@ model AgentSession {
   @@index([tenantId, deletedAt]) // Query active (non-deleted) sessions
   @@index([id, tenantId]) // CRITICAL: Lookup + tenant verification (prevents IDOR)
   @@index([lastActivityAt]) // For session expiry cleanup job
-  @@index([lastActivityAt, deletedAt], name: "idx_session_cleanup") // TODO-5255: Composite index for cleanupExpiredSessions query
+  @@index([deletedAt, lastActivityAt], name: "idx_session_cleanup") // Cleanup job: WHERE deletedAt IS NULL AND lastActivityAt < cutoff
 }
 
 /// AgentSessionMessage - Individual messages within an agent session

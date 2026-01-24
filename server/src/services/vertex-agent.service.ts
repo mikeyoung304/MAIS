@@ -119,10 +119,28 @@ async function fetchWithTimeout(
 // CONFIGURATION
 // =============================================================================
 
-const CONCIERGE_AGENT_URL =
-  process.env.CONCIERGE_AGENT_URL || 'https://concierge-agent-506923455711.us-central1.run.app';
+/**
+ * Get required environment variable, throwing clear error if missing.
+ * Validation deferred to first access to avoid breaking test imports (CLAUDE.md pitfall #38, #45).
+ */
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}. Set this in your .env file.`);
+  }
+  return value;
+}
 
-const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT || 'handled-484216';
+// Agent URLs - no hardcoded fallbacks with project numbers
+// Validation happens at first use, not at import time (to allow test imports)
+function getConciergeAgentUrl(): string {
+  return getRequiredEnv('CONCIERGE_AGENT_URL');
+}
+
+function getGoogleCloudProject(): string {
+  return getRequiredEnv('GOOGLE_CLOUD_PROJECT');
+}
+
 const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
 // =============================================================================
@@ -222,7 +240,7 @@ export class VertexAgentService {
       const token = await this.getIdentityToken();
       const response = await fetchWithTimeout(
         // ADK app name is 'agent' (from /list-apps endpoint)
-        `${CONCIERGE_AGENT_URL}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        `${getConciergeAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
           headers: {
@@ -429,7 +447,7 @@ export class VertexAgentService {
       // Send to Concierge agent via A2A protocol
       // user_id must match the format used in session creation
       const adkUserId = `${tenantId}:${userId}`;
-      const response = await fetchWithTimeout(`${CONCIERGE_AGENT_URL}/run`, {
+      const response = await fetchWithTimeout(`${getConciergeAgentUrl()}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -605,7 +623,7 @@ export class VertexAgentService {
     let response: Response;
     try {
       const token = await this.getIdentityToken();
-      response = await fetchWithTimeout(`${CONCIERGE_AGENT_URL}/run`, {
+      response = await fetchWithTimeout(`${getConciergeAgentUrl()}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -787,7 +805,7 @@ export class VertexAgentService {
       const adkUserId = `${tenantId}:${userId}`;
 
       const response = await fetchWithTimeout(
-        `${CONCIERGE_AGENT_URL}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        `${getConciergeAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
           headers: {
@@ -850,7 +868,7 @@ export class VertexAgentService {
           email: this.serviceAccountCredentials.client_email,
           key: this.serviceAccountCredentials.private_key,
         });
-        const idToken = await jwtClient.fetchIdToken(CONCIERGE_AGENT_URL);
+        const idToken = await jwtClient.fetchIdToken(getConciergeAgentUrl());
         if (idToken) {
           logger.info('[VertexAgent] Got identity token via JWT (service account)');
           return idToken;
@@ -866,7 +884,7 @@ export class VertexAgentService {
 
     // Second try: GoogleAuth (works with ADC on GCP)
     try {
-      const client = await this.auth.getIdTokenClient(CONCIERGE_AGENT_URL);
+      const client = await this.auth.getIdTokenClient(getConciergeAgentUrl());
       const headers = await client.getRequestHeaders();
       // getRequestHeaders returns { Authorization: 'Bearer ...' } or empty object
       const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';

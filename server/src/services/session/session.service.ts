@@ -75,12 +75,11 @@ export class SessionService {
   private readonly config: SessionServiceConfig;
 
   constructor(
-    prisma: PrismaClient,
-    repository?: SessionRepository,
+    repository: SessionRepository,
     cache?: SessionCache,
     config?: Partial<SessionServiceConfig>
   ) {
-    this.repository = repository ?? createSessionRepository(prisma);
+    this.repository = repository;
     this.cache = cache ?? defaultCache;
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -414,7 +413,7 @@ export class SessionService {
  * const service = createSessionService(prisma, undefined, testCache, { encryptMessages: false });
  *
  * // With injected repository (for testing or custom implementations)
- * const mockRepo = createSessionRepository(prisma);
+ * const mockRepo = createMockSessionRepository(); // Your mock implementation
  * const service = createSessionService(prisma, mockRepo);
  */
 export function createSessionService(
@@ -423,5 +422,5 @@ export function createSessionService(
   cache?: SessionCache,
   config?: Partial<SessionServiceConfig>
 ): SessionService {
-  return new SessionService(prisma, repository, cache, config);
+  return new SessionService(repository ?? createSessionRepository(prisma), cache, config);
 }

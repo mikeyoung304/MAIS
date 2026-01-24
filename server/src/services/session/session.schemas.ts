@@ -170,10 +170,13 @@ export type SessionHistoryResponse = z.infer<typeof SessionHistoryResponseSchema
 
 /**
  * Validate message input with detailed error
+ *
+ * Returns CreateMessageOutput (not CreateMessageInput) because the schema's
+ * .transform() ensures idempotencyKey is always present after validation.
  */
 export function validateMessageInput(
   input: unknown
-): { success: true; data: CreateMessageInput } | { success: false; error: string } {
+): { success: true; data: CreateMessageOutput } | { success: false; error: string } {
   const result = CreateMessageInputSchema.safeParse(input);
   if (result.success) {
     return { success: true, data: result.data };

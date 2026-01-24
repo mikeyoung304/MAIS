@@ -707,7 +707,7 @@ export function createV1Router(
     // Register agent routes (for AI agent integration - legacy onboarding)
     // Requires tenant admin authentication - agent proposals are tied to tenant
     // Dual-layer rate limiting to protect Claude API costs:
-    // - agentChatLimiter: 30 messages per 5 minutes per tenant (overall quota)
+    // - agentChatLimiter: 30 messages per minute per tenant (overall quota)
     // - agentSessionLimiter: 10 messages per minute per session (burst protection)
     const agentRoutes = createAgentRoutes(prismaClient);
     app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentSessionLimiter, agentRoutes);
@@ -715,16 +715,21 @@ export function createV1Router(
 
     // Register Concierge agent routes (for Vertex AI agent integration)
     // Requires tenant admin authentication - chat with Concierge for dashboard actions
-    // Rate limited to 30 messages per 5 minutes per tenant to protect Vertex AI costs
+    // Dual-layer rate limiting to protect Vertex AI costs:
+    // - agentChatLimiter: 30 messages per minute per tenant (overall quota)
+    // - agentSessionLimiter: 10 messages per minute per session (burst protection)
     // Now uses persistent session storage via PostgreSQL (#session-persistence)
     const tenantAdminAgentRoutes = createTenantAdminAgentRoutes({ prisma: prismaClient });
     app.use(
       '/v1/tenant-admin/agent',
       tenantAuthMiddleware,
       agentChatLimiter,
+      agentSessionLimiter,
       tenantAdminAgentRoutes
     );
-    logger.info('✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent');
+    logger.info(
+      '✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent (with rate limiting)'
+    );
 
     // Register tenant admin project routes (for project management dashboard)
     // Requires tenant admin authentication - manage projects, view/approve requests
