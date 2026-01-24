@@ -1,7 +1,7 @@
 # Project Hub Agent - Performance Baseline
 
 **Date Established:** 2026-01-24 (Phase 2)
-**Status:** Instrumentation Deployed
+**Status:** Phase 3 Complete - Monitoring & Alerting Deployed
 
 ---
 
@@ -150,21 +150,53 @@ Based on Phase 1 deployment characteristics:
 
 **SLO Target:** p95 < 3000ms for all tools
 
-## Monitoring Alerts (Phase 3)
+## Monitoring Alerts (Phase 3 - Implemented)
 
-To be implemented in Phase 3:
+### Log-Based Metrics
 
-1. **High Latency Alert:** p95 > 3000ms for any tool over 5 minute window
-2. **Error Rate Alert:** > 5% error rate for any tool over 5 minute window
-3. **Slow Bucket Alert:** > 10% of calls in "very_slow" bucket over 15 minute window
+Created via `gcloud logging metrics`:
+
+| Metric Name               | Description             | Filter                                                                 |
+| ------------------------- | ----------------------- | ---------------------------------------------------------------------- |
+| `project_hub_tool_errors` | Tool execution failures | `jsonPayload.metric="tool_latency" AND jsonPayload.success=false`      |
+| `project_hub_slow_calls`  | Very slow calls (>2s)   | `jsonPayload.metric="tool_latency" AND jsonPayload.bucket="very_slow"` |
+
+### Alert Policies
+
+| Alert Name                          | Condition                | Threshold | Window |
+| ----------------------------------- | ------------------------ | --------- | ------ |
+| Project Hub Agent - Tool Errors     | Tool error count > 0     | 0         | 60s    |
+| Project Hub Agent - Slow Tool Calls | Very slow call count > 0 | 0         | 60s    |
+
+### Viewing Metrics
+
+```bash
+# List log-based metrics
+gcloud logging metrics list --project=handled-484216 --filter="name~project_hub"
+
+# List alert policies
+gcloud beta monitoring policies list --project=handled-484216 --filter="displayName:Project Hub"
+
+# View recent alerts
+gcloud beta monitoring incidents list --project=handled-484216 --filter="policy.displayName:Project Hub"
+```
+
+### Future Enhancements
+
+Consider adding in future iterations:
+
+1. **Error Rate Alert:** > 5% error rate for any tool over 5 minute window (requires ratio metric)
+2. **P95 Latency Alert:** p95 > 3000ms (requires Log Analytics upgrade)
+3. **Notification Channels:** Configure email/Slack/PagerDuty notifications
 
 ## Baseline Collection Process
 
 1. Deploy instrumentation (Phase 2 - Complete)
-2. Wait for production traffic (1 week recommended)
-3. Run queries above to establish actual baseline
-4. Update this document with measured values
-5. Set alerts based on baseline + margin
+2. Deploy monitoring alerts (Phase 3 - Complete)
+3. Wait for production traffic (1 week recommended)
+4. Run queries above to establish actual baseline
+5. Update this document with measured values
+6. Tune alert thresholds based on baseline + margin
 
 ## Related Documentation
 
@@ -185,5 +217,5 @@ _Baseline will be recorded here after 1 week of production traffic._
 
 ---
 
-**Last Updated:** 2026-01-24
+**Last Updated:** 2026-01-24 (Phase 3 monitoring deployed)
 **Author:** Claude Opus 4.5
