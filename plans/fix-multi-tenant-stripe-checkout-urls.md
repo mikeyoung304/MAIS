@@ -284,15 +284,23 @@ This plan was reviewed by 3 agents (DHH, Kieran, Simplicity) who converged on:
 
 ## Implementation Complete ✅
 
-**Commit:** `be35d466` - `fix(booking): enable tenant-specific Stripe checkout redirect URLs`
+**Commits:**
 
-**Files Changed (18 total):**
+| Commit     | Description                                                        |
+| ---------- | ------------------------------------------------------------------ |
+| `be35d466` | fix(booking): enable tenant-specific Stripe checkout redirect URLs |
+| `2e2ba606` | fix(agent): add missing maxIdleTimeMs to CircuitBreakerConfig      |
+| `32b90a1d` | fix(agent): add tenant-specific URLs to chatbot booking checkout   |
 
-| Category | Files | Description                                    |
-| -------- | ----- | ---------------------------------------------- |
-| Core     | 6     | Interface, adapter, factory, DI, mock, service |
-| Tests    | 11    | Updated to use `buildMockConfig()` helper      |
-| Docs     | 1     | This plan document                             |
+**Files Changed (21 total):**
+
+| Category      | Files | Description                                           |
+| ------------- | ----- | ----------------------------------------------------- |
+| Core          | 6     | Interface, adapter, factory, DI, mock, service        |
+| Tests         | 11    | Updated to use `buildMockConfig()` helper             |
+| Orchestrators | 2     | Added missing `maxIdleTimeMs` to CircuitBreakerConfig |
+| Agent         | 1     | customer-booking-executor.ts with tenant URLs         |
+| Docs          | 1     | This plan document                                    |
 
 **Key Implementation Details:**
 
@@ -300,12 +308,29 @@ This plan was reviewed by 3 agents (DHH, Kieran, Simplicity) who converged on:
 2. Added `buildMockConfig()` test helper to avoid repetitive config setup
 3. Tenant slug added to Stripe metadata for webhook routing
 4. Success page already has graceful fallback for pre-webhook scenarios
+5. `customer-booking-executor.ts` updated to build tenant-specific URLs for chatbot bookings
+
+**Deployment Fixes (discovered during production push):**
+
+1. **CircuitBreakerConfig TypeScript errors** - `maxIdleTimeMs` was required but missing in:
+   - `customer-chat-orchestrator.ts` (set to 30 min)
+   - `onboarding-orchestrator.ts` (set to 1 hour)
+
+2. **Customer booking executor** - Missing `successUrl`/`cancelUrl` params after interface change:
+   - Added URL building using `_storefrontBaseUrl` + `tenant.slug`
+   - Added `tenantSlug` to Stripe metadata for webhook routing
+
+3. **CORS_ORIGIN environment variable** - Was `www.gethandled.ai` (missing protocol):
+   - Fixed via Render MCP to `https://www.gethandled.ai`
+   - Required for proper URL concatenation in checkout flow
 
 **Lessons Learned:**
 
 - When adding required dependencies to services, all test files that instantiate that service need updating
 - Multi-agent review caught over-engineering (280 lines → 100 lines)
 - Direct query approach was simpler than new endpoint + cache + polling
+- Interface changes propagate to ALL consumers - grep for method names to find all call sites
+- Environment variables used in URL building need protocol prefix (`https://`)
 
 ---
 

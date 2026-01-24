@@ -329,6 +329,49 @@ When reviewing any configuration-driven feature:
 
 ---
 
+---
+
+## 8. Deployment Verification Checklist
+
+When deploying multi-tenant URL fixes to production, verify:
+
+### Environment Variables
+
+```bash
+# Must include protocol prefix for URL concatenation
+CORS_ORIGIN=https://www.gethandled.ai  # ✅ Correct
+CORS_ORIGIN=www.gethandled.ai          # ❌ Wrong - creates malformed URLs
+```
+
+### Interface Change Propagation
+
+When updating shared interfaces (like `PaymentProvider`):
+
+```bash
+# Find ALL consumers of the interface
+rg "createCheckoutSession|createConnectCheckoutSession" server/src/ --type ts
+
+# Common locations that may need updates:
+# - Checkout factories
+# - Customer booking executors
+# - Agent tools
+# - Test mocks
+```
+
+### Production Verification
+
+```bash
+# After deployment, verify URLs in logs:
+# Look for: 🔒 CORS_ORIGIN: https://...
+# NOT: 🔒 CORS_ORIGIN: www... (missing protocol)
+```
+
+---
+
 **Last Updated:** 2026-01-24
 **Related Fix:** `plans/fix-multi-tenant-stripe-checkout-urls.md`
-**Commit:** `be35d466` - fix(booking): enable tenant-specific Stripe checkout redirect URLs
+**Commits:**
+
+- `be35d466` - fix(booking): enable tenant-specific Stripe checkout redirect URLs
+- `2e2ba606` - fix(agent): add missing maxIdleTimeMs to CircuitBreakerConfig
+- `32b90a1d` - fix(agent): add tenant-specific URLs to chatbot booking checkout
