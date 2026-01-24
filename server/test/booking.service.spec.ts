@@ -13,6 +13,7 @@ import {
   buildPackage,
   buildAddOn,
   buildBooking,
+  buildMockConfig,
 } from './helpers/fakes';
 import { NotFoundError } from '../src/lib/errors';
 import { BookingConflictError } from '../src/lib/errors';
@@ -71,6 +72,7 @@ describe('BookingService', () => {
       commissionService,
       tenantRepo,
       idempotencyService,
+      config: buildMockConfig(),
     });
   });
 

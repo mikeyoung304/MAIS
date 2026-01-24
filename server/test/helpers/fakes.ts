@@ -592,3 +592,32 @@ export class FakeTenantOnboardingService {
     this.createdSegment = null;
   }
 }
+
+// --- Mock Config ---
+
+import type { Config } from '../../src/lib/core/config';
+
+/**
+ * Build a mock Config object for tests
+ *
+ * Provides sensible defaults for all required config values.
+ * Pass overrides to customize specific values.
+ */
+export function buildMockConfig(overrides?: Partial<Config>): Config {
+  return {
+    ADAPTERS_PRESET: 'mock',
+    API_PORT: 3001,
+    API_BASE_URL: 'http://localhost:3001',
+    CORS_ORIGIN: 'http://localhost:3000',
+    ALLOWED_ORIGINS: [],
+    JWT_SECRET: 'test-jwt-secret-at-least-32-chars-long',
+    BOOKING_TOKEN_SECRET: 'test-booking-token-secret-at-least-32-chars',
+    DATABASE_POOL_SIZE: 5,
+    DATABASE_POOL_TIMEOUT: 10,
+    DATABASE_CONNECTION_LIMIT: 1,
+    STRIPE_SUCCESS_URL: 'http://localhost:3000/success',
+    STRIPE_CANCEL_URL: 'http://localhost:3000/cancel',
+    SHUTDOWN_TIMEOUT_MS: 30000,
+    ...overrides,
+  };
+}

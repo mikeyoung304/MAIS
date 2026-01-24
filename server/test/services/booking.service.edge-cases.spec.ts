@@ -15,6 +15,7 @@ import {
   FakeEventEmitter,
   FakePaymentProvider,
   buildPackage,
+  buildMockConfig,
 } from '../helpers/fakes';
 import { NotFoundError } from '../../src/lib/errors';
 
@@ -69,6 +70,7 @@ describe('BookingService - Edge Cases', () => {
       commissionService,
       tenantRepo,
       idempotencyService,
+      config: buildMockConfig(),
     });
   });
 

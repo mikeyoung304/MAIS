@@ -13,6 +13,7 @@ import {
   FakeEventEmitter,
   FakePaymentProvider,
   buildPackage,
+  buildMockConfig,
 } from '../helpers/fakes';
 import {
   NotFoundError,
@@ -97,6 +98,7 @@ describe('BookingService.createDateBooking', () => {
       tenantRepo: tenantRepo as any,
       idempotencyService: idempotencyService as any,
       availabilityService: availabilityService as any,
+      config: buildMockConfig(),
     });
   });
 
@@ -289,6 +291,7 @@ describe('BookingService.createDateBooking', () => {
         commissionService: commissionService as any,
         tenantRepo: tenantRepo as any,
         idempotencyService: idempotencyService as any,
+        config: buildMockConfig(),
         // availabilityService not provided - should be skipped
       });
 

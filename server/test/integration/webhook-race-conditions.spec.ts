@@ -12,7 +12,7 @@ import { WebhooksController } from '../../src/routes/webhooks.routes';
 import { BookingService } from '../../src/services/booking.service';
 import { PrismaBookingRepository } from '../../src/adapters/prisma/booking.repository';
 import { PrismaCatalogRepository } from '../../src/adapters/prisma/catalog.repository';
-import { FakeEventEmitter, FakePaymentProvider } from '../helpers/fakes';
+import { FakeEventEmitter, FakePaymentProvider, buildMockConfig } from '../helpers/fakes';
 import { CommissionService } from '../../src/services/commission.service';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import type Stripe from 'stripe';
@@ -63,6 +63,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
         getStoredResponse: async () => null,
         updateResponse: async () => {},
       } as any,
+      config: buildMockConfig(),
     });
 
     webhooksController = new WebhooksController(paymentProvider, bookingService, webhookRepo);

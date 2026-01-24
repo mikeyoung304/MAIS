@@ -10,6 +10,7 @@ import type { EventEmitter } from '../../src/lib/core/events';
 import { BookingEvents } from '../../src/lib/core/events';
 import { NotFoundError } from '../../src/lib/errors';
 import type { Booking } from '../../src/lib/entities';
+import { buildMockConfig } from '../helpers/fakes';
 
 describe('BookingService.markPaymentFailed', () => {
   let bookingService: BookingService;
@@ -40,6 +41,7 @@ describe('BookingService.markPaymentFailed', () => {
       commissionService: {} as any,
       tenantRepo: {} as any,
       idempotencyService: {} as any,
+      config: buildMockConfig(),
     });
   });
 

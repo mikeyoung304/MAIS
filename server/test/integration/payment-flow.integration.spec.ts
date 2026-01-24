@@ -22,7 +22,7 @@ import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.reposit
 import { PrismaWebhookRepository } from '../../src/adapters/prisma/webhook.repository';
 import { WebhooksController } from '../../src/routes/webhooks.routes';
 import { BookingEvents } from '../../src/lib/core/events';
-import { FakeEventEmitter } from '../helpers/fakes';
+import { FakeEventEmitter, buildMockConfig } from '../helpers/fakes';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
 import {
   createCheckoutSessionCompletedEvent,
@@ -135,6 +135,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
       commissionService,
       tenantRepo,
       idempotencyService,
+      config: buildMockConfig(),
     });
 
     // Initialize webhook controller

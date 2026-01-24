@@ -281,6 +281,7 @@ export function buildContainer(config: Config): Container {
       commissionService,
       tenantRepo: mockTenantRepo,
       idempotencyService,
+      config,
       // Optional dependencies now properly passed (not undefined placeholders)
       schedulingAvailabilityService,
       serviceRepo,
@@ -502,8 +503,6 @@ export function buildContainer(config: Config): Container {
   const paymentProvider = new StripePaymentAdapter({
     secretKey: config.STRIPE_SECRET_KEY,
     webhookSecret: config.STRIPE_WEBHOOK_SECRET,
-    successUrl: config.STRIPE_SUCCESS_URL || 'http://localhost:5173/success',
-    cancelUrl: config.STRIPE_CANCEL_URL || 'http://localhost:5173',
   });
 
   // Build Postmark mail adapter (with file-sink fallback when no token)
@@ -632,6 +631,7 @@ export function buildContainer(config: Config): Container {
     commissionService,
     tenantRepo,
     idempotencyService,
+    config,
     availabilityService,
     // TODO-708: Now includes all scheduling dependencies for appointment booking
     schedulingAvailabilityService,

@@ -994,6 +994,8 @@ export class MockPaymentProvider implements PaymentProvider {
     email: string;
     metadata: Record<string, string>;
     idempotencyKey?: string;
+    successUrl: string;
+    cancelUrl: string;
   }): Promise<CheckoutSession> {
     // Check idempotency cache first (simulates real Stripe behavior)
     if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
@@ -1001,8 +1003,8 @@ export class MockPaymentProvider implements PaymentProvider {
     }
 
     const sessionId = `mock_session_${Date.now()}`;
-    const successUrl = input.metadata.successUrl || 'http://localhost:5173/success';
-    const checkoutUrl = `${successUrl}?session_id=${sessionId}&mock=1`;
+    // Replace Stripe's {CHECKOUT_SESSION_ID} placeholder with the session ID
+    const checkoutUrl = input.successUrl.replace('{CHECKOUT_SESSION_ID}', sessionId);
 
     const session: CheckoutSession = {
       url: checkoutUrl,
@@ -1024,6 +1026,8 @@ export class MockPaymentProvider implements PaymentProvider {
     stripeAccountId: string;
     applicationFeeAmount: number;
     idempotencyKey?: string;
+    successUrl: string;
+    cancelUrl: string;
   }): Promise<CheckoutSession> {
     // Check idempotency cache first (simulates real Stripe behavior)
     if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
@@ -1031,8 +1035,8 @@ export class MockPaymentProvider implements PaymentProvider {
     }
 
     const sessionId = `mock_connect_session_${Date.now()}`;
-    const successUrl = input.metadata.successUrl || 'http://localhost:5173/success';
-    const checkoutUrl = `${successUrl}?session_id=${sessionId}&mock=1&connect=1`;
+    // Replace Stripe's {CHECKOUT_SESSION_ID} placeholder with the session ID
+    const checkoutUrl = input.successUrl.replace('{CHECKOUT_SESSION_ID}', sessionId);
 
     const session: CheckoutSession = {
       url: checkoutUrl,

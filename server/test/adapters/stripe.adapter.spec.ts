@@ -48,8 +48,6 @@ describe('StripePaymentAdapter', () => {
     adapter = new StripePaymentAdapter({
       secretKey: 'sk_test_fake',
       webhookSecret: 'whsec_test_fake',
-      successUrl: 'https://example.com/success',
-      cancelUrl: 'https://example.com/cancel',
     });
 
     // Use the mock Stripe instance
@@ -73,6 +71,8 @@ describe('StripePaymentAdapter', () => {
           tenantId: 'tenant_123',
           packageId: 'pkg_intimate',
         },
+        successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: 'https://example.com/cancel',
       });
 
       // Assert
@@ -124,6 +124,8 @@ describe('StripePaymentAdapter', () => {
         email: 'customer@example.com',
         metadata: { tenantId: 'tenant_123' },
         idempotencyKey: 'idem_checkout_unique_123',
+        successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: 'https://example.com/cancel',
       });
 
       // Assert - verify idempotency key is passed in options
@@ -152,6 +154,8 @@ describe('StripePaymentAdapter', () => {
         },
         stripeAccountId: 'acct_connected_123',
         applicationFeeAmount: 24000, // 12% fee
+        successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: 'https://example.com/cancel',
       });
 
       // Assert
@@ -189,6 +193,8 @@ describe('StripePaymentAdapter', () => {
           metadata: { tenantId: 'tenant_123' },
           stripeAccountId: 'acct_connected_123',
           applicationFeeAmount: tooLowFee,
+          successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+          cancelUrl: 'https://example.com/cancel',
         })
       ).rejects.toThrow(/Application fee.*below Stripe minimum.*0.5%/);
 
@@ -209,6 +215,8 @@ describe('StripePaymentAdapter', () => {
           metadata: { tenantId: 'tenant_123' },
           stripeAccountId: 'acct_connected_123',
           applicationFeeAmount: tooHighFee,
+          successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+          cancelUrl: 'https://example.com/cancel',
         })
       ).rejects.toThrow(/Application fee.*exceeds Stripe maximum.*50%/);
 
@@ -234,6 +242,8 @@ describe('StripePaymentAdapter', () => {
         metadata: { tenantId: 'tenant_123' },
         stripeAccountId: 'acct_connected_123',
         applicationFeeAmount: validFee,
+        successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
+        cancelUrl: 'https://example.com/cancel',
       });
 
       // Assert

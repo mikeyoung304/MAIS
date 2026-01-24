@@ -8,15 +8,11 @@ import type { PaymentProvider, CheckoutSession } from '../lib/ports';
 export interface StripeAdapterOptions {
   secretKey: string;
   webhookSecret: string;
-  successUrl: string;
-  cancelUrl: string;
 }
 
 export class StripePaymentAdapter implements PaymentProvider {
   private readonly stripe: Stripe;
   private readonly webhookSecret: string;
-  private readonly successUrl: string;
-  private readonly cancelUrl: string;
 
   constructor(options: StripeAdapterOptions) {
     this.stripe = new Stripe(options.secretKey, {
@@ -24,8 +20,6 @@ export class StripePaymentAdapter implements PaymentProvider {
       typescript: true,
     });
     this.webhookSecret = options.webhookSecret;
-    this.successUrl = options.successUrl;
-    this.cancelUrl = options.cancelUrl;
   }
 
   async createCheckoutSession(input: {
@@ -33,6 +27,8 @@ export class StripePaymentAdapter implements PaymentProvider {
     email: string;
     metadata: Record<string, string>;
     idempotencyKey?: string;
+    successUrl: string;
+    cancelUrl: string;
   }): Promise<CheckoutSession> {
     // Create Stripe checkout session with idempotency key
     const options: Stripe.RequestOptions = {};
@@ -58,8 +54,8 @@ export class StripePaymentAdapter implements PaymentProvider {
             quantity: 1,
           },
         ],
-        success_url: `${this.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: this.cancelUrl,
+        success_url: input.successUrl,
+        cancel_url: input.cancelUrl,
         metadata: input.metadata,
       },
       options
@@ -92,6 +88,8 @@ export class StripePaymentAdapter implements PaymentProvider {
     stripeAccountId: string;
     applicationFeeAmount: number;
     idempotencyKey?: string;
+    successUrl: string;
+    cancelUrl: string;
   }): Promise<CheckoutSession> {
     // Validate application fee (Stripe requires 0.5% - 50%)
     const minFee = Math.ceil(input.amountCents * 0.005); // 0.5%
@@ -139,8 +137,8 @@ export class StripePaymentAdapter implements PaymentProvider {
             destination: input.stripeAccountId,
           },
         },
-        success_url: `${this.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: this.cancelUrl,
+        success_url: input.successUrl,
+        cancel_url: input.cancelUrl,
         metadata: input.metadata,
       },
       options

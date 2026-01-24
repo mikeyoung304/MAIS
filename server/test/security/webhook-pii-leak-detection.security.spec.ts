@@ -24,6 +24,7 @@ import {
   FakeEventEmitter,
   FakeWebhookRepository,
   buildPackage,
+  buildMockConfig,
 } from '../helpers/fakes';
 import { BookingService } from '../../src/services/booking.service';
 import { WebhookValidationError } from '../../src/lib/errors';
@@ -83,6 +84,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
         getStoredResponse: async () => null,
         updateResponse: async () => {},
       } as any,
+      config: buildMockConfig(),
     });
     controller = new WebhooksController(paymentProvider, bookingService, webhookRepo);
   });

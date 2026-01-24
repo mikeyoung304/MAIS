@@ -30,6 +30,7 @@ import type { SchedulingAvailabilityService } from './scheduling-availability.se
 import type { AvailabilityService } from './availability.service';
 import { logger } from '../lib/core/logger';
 import type { PrismaClient } from '../generated/prisma/client';
+import type { Config } from '../lib/core/config';
 
 // Import decomposed services
 import { BookingQueryService, type GetAppointmentsFilters } from './booking-query.service';
@@ -65,6 +66,7 @@ export interface BookingServiceOptions {
   commissionService: CommissionService;
   tenantRepo: PrismaTenantRepository;
   idempotencyService: IdempotencyService;
+  config: Config;
 
   // Optional dependencies (omit rather than pass undefined)
   /** Scheduling availability service for TIMESLOT bookings */
@@ -111,7 +113,8 @@ export class BookingService {
     this.checkoutFactory = new CheckoutSessionFactory(
       options.paymentProvider,
       options.tenantRepo,
-      options.idempotencyService
+      options.idempotencyService,
+      options.config
     );
 
     // Initialize WeddingDepositService

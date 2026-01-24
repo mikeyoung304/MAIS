@@ -634,6 +634,8 @@ export interface PaymentProvider {
     metadata: Record<string, string>;
     applicationFeeAmount?: number; // Platform commission in cents
     idempotencyKey?: string; // Idempotency key to prevent duplicate charges
+    successUrl: string; // Tenant-specific success URL
+    cancelUrl: string; // Tenant-specific cancel URL
   }): Promise<CheckoutSession>;
   createConnectCheckoutSession(input: {
     amountCents: number;
@@ -642,6 +644,8 @@ export interface PaymentProvider {
     stripeAccountId: string; // Connected account ID
     applicationFeeAmount: number; // Platform commission in cents (required for Connect)
     idempotencyKey?: string; // Idempotency key to prevent duplicate charges
+    successUrl: string; // Tenant-specific success URL
+    cancelUrl: string; // Tenant-specific cancel URL
   }): Promise<CheckoutSession>;
   verifyWebhook(payload: string, signature: string): Promise<Stripe.Event>;
   refund(input: {

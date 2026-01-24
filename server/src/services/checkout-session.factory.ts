@@ -12,6 +12,7 @@
 import type { PaymentProvider } from '../lib/ports';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { IdempotencyService } from './idempotency.service';
+import type { Config } from '../lib/core/config';
 import { NotFoundError } from '../lib/errors';
 import { logger } from '../lib/core/logger';
 
@@ -42,13 +43,20 @@ export interface CheckoutSessionResult {
  * - Race condition handling with retry logic
  * - Stripe Connect vs Standard checkout routing
  * - Response caching for duplicate requests
+ * - Tenant-specific success/cancel URL generation
  */
 export class CheckoutSessionFactory {
+  private readonly frontendBaseUrl: string;
+
   constructor(
     private readonly paymentProvider: PaymentProvider,
     private readonly tenantRepo: PrismaTenantRepository,
-    private readonly idempotencyService: IdempotencyService
-  ) {}
+    private readonly idempotencyService: IdempotencyService,
+    config: Config
+  ) {
+    // Use CORS_ORIGIN as frontend base URL (e.g., https://gethandled.ai in production)
+    this.frontendBaseUrl = config.CORS_ORIGIN;
+  }
 
   /**
    * Create a Stripe checkout session with idempotency protection
@@ -97,6 +105,18 @@ export class CheckoutSessionFactory {
       // If still no response, proceed anyway (edge case)
     }
 
+    // Build tenant-specific success/cancel URLs
+    // URL pattern: /t/{slug}/book/success?session_id={CHECKOUT_SESSION_ID}
+    const encodedSlug = encodeURIComponent(tenant.slug);
+    const successUrl = `${this.frontendBaseUrl}/t/${encodedSlug}/book/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${this.frontendBaseUrl}/t/${encodedSlug}/book`;
+
+    // Add tenant slug to metadata for webhook routing
+    const enrichedMetadata = {
+      ...metadata,
+      tenantSlug: tenant.slug,
+    };
+
     // Create Stripe checkout session
     let session;
 
@@ -105,19 +125,23 @@ export class CheckoutSessionFactory {
       session = await this.paymentProvider.createConnectCheckoutSession({
         amountCents,
         email,
-        metadata,
+        metadata: enrichedMetadata,
         stripeAccountId: tenant.stripeAccountId,
         applicationFeeAmount,
         idempotencyKey,
+        successUrl,
+        cancelUrl,
       });
     } else {
       // Standard Stripe checkout - payment goes to platform account
       session = await this.paymentProvider.createCheckoutSession({
         amountCents,
         email,
-        metadata,
+        metadata: enrichedMetadata,
         applicationFeeAmount,
         idempotencyKey,
+        successUrl,
+        cancelUrl,
       });
     }
 

@@ -13,6 +13,7 @@ import {
   FakeEventEmitter,
   FakeWebhookRepository,
   buildPackage,
+  buildMockConfig,
 } from '../helpers/fakes';
 import { BookingService } from '../../src/services/booking.service';
 import { WebhookDuplicateError, WebhookValidationError } from '../../src/lib/errors';
@@ -75,6 +76,7 @@ describe('WebhooksController', () => {
         getStoredResponse: async () => null,
         updateResponse: async () => {},
       } as any,
+      config: buildMockConfig(),
     });
     controller = new WebhooksController(paymentProvider, bookingService, webhookRepo);
   });

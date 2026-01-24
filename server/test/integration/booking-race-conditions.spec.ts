@@ -12,7 +12,7 @@ import { PrismaBookingRepository } from '../../src/adapters/prisma/booking.repos
 import { PrismaCatalogRepository } from '../../src/adapters/prisma/catalog.repository';
 import { BookingEvents } from '../../src/lib/core/events';
 import { BookingConflictError, BookingLockTimeoutError } from '../../src/lib/errors';
-import { FakeEventEmitter, FakePaymentProvider } from '../helpers/fakes';
+import { FakeEventEmitter, FakePaymentProvider, buildMockConfig } from '../helpers/fakes';
 import type { Booking } from '../../src/lib/entities';
 import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
 import {
@@ -79,6 +79,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         getStoredResponse: async () => null,
         updateResponse: async () => {},
       } as any,
+      config: buildMockConfig(),
     });
 
     // Create test package using catalog repository
