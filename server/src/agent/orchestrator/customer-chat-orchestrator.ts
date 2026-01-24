@@ -51,6 +51,7 @@ const CUSTOMER_CONFIG: OrchestratorConfig = {
     maxTokensPerSession: 50_000, // Cost control
     maxTimePerSessionMs: 15 * 60 * 1000, // 15 minutes
     maxConsecutiveErrors: 3,
+    maxIdleTimeMs: 30 * 60 * 1000, // 30 minutes idle timeout
   },
   // T1(5) + T2(2) + T3(1) + buffer(5) = 13
   maxRecursionDepth: 13,

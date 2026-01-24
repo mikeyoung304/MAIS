@@ -57,6 +57,7 @@ const ONBOARDING_CONFIG: OrchestratorConfig = {
     maxTokensPerSession: 200_000, // More tokens for detailed discussions
     maxTimePerSessionMs: 60 * 60 * 1000, // 1 hour
     maxConsecutiveErrors: 5,
+    maxIdleTimeMs: 60 * 60 * 1000, // 1 hour idle timeout (matches session time)
   },
   // T1(10) + T2(5) + T3(1) + buffer(5) = 21
   maxRecursionDepth: 21,
