@@ -114,7 +114,7 @@ execute: async ({ projectId }, ctx) => {
 - [x] 1.3 Add T3 confirmation for CANCELLATION/REFUND ✅ (commit b10aed9e)
 - [x] 1.4 Add ownership verification to all tools ✅ (commit b10aed9e)
 - [x] Run typecheck and tests ✅ (passed)
-- [ ] Deploy to staging and verify (pending push to Cloud Run)
+- [x] Deploy to staging and verify ✅ (deployed to Cloud Run 2026-01-24, revision project-hub-agent-00003-2tj)
 
 ---
 
