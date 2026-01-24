@@ -456,16 +456,17 @@ export interface ProjectViewData {
  *
  * @param apiKeyPublic - Tenant's public API key
  * @param projectId - Project ID
- * @param email - Optional customer email for verification
+ * @param auth - Authentication: either email (legacy) or access token (preferred)
  * @returns Project view data or null if not found
  */
 export async function getProjectById(
   apiKeyPublic: string,
   projectId: string,
-  email?: string
+  auth?: { email?: string; token?: string }
 ): Promise<ProjectViewData | null> {
   const params = new URLSearchParams();
-  if (email) params.set('email', email);
+  if (auth?.email) params.set('email', auth.email);
+  if (auth?.token) params.set('token', auth.token);
   const queryString = params.toString();
   const url = `${API_URL}/v1/public/projects/${encodeURIComponent(projectId)}${queryString ? `?${queryString}` : ''}`;
 
@@ -504,13 +505,18 @@ export interface ProjectTimelineEvent {
  *
  * @param apiKeyPublic - Tenant's public API key
  * @param projectId - Project ID
+ * @param token - Access token for authentication
  * @returns Timeline events or empty array
  */
 export async function getProjectTimeline(
   apiKeyPublic: string,
-  projectId: string
+  projectId: string,
+  token?: string
 ): Promise<ProjectTimelineEvent[]> {
-  const url = `${API_URL}/v1/public/projects/${encodeURIComponent(projectId)}/timeline`;
+  const params = new URLSearchParams();
+  if (token) params.set('token', token);
+  const queryString = params.toString();
+  const url = `${API_URL}/v1/public/projects/${encodeURIComponent(projectId)}/timeline${queryString ? `?${queryString}` : ''}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -527,6 +533,41 @@ export async function getProjectTimeline(
 
   const data = await response.json();
   return data.events || [];
+}
+
+/**
+ * Fetch project ID by booking ID
+ *
+ * Used by success page to link customers to their Project Hub.
+ *
+ * @param apiKeyPublic - Tenant's public API key
+ * @param bookingId - Booking ID (from Stripe session metadata)
+ * @returns Project data or null if not found
+ */
+export async function getProjectByBookingId(
+  apiKeyPublic: string,
+  bookingId: string
+): Promise<{ projectId: string; status: string; createdAt: string; accessToken: string } | null> {
+  const url = `${API_URL}/v1/public/projects/by-booking/${encodeURIComponent(bookingId)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Tenant-Key': apiKeyPublic,
+    },
+    cache: 'no-store', // Always fetch fresh - project may have just been created
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json();
 }
 
 /**

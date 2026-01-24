@@ -17,7 +17,7 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-import { validateProjectAccessToken } from '../lib/project-tokens';
+import { validateProjectAccessToken, generateProjectAccessToken } from '../lib/project-tokens';
 import { projectHubSessionLimiter } from '../middleware/rateLimiter';
 
 // ============================================================================
@@ -67,6 +67,73 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
 
   // Apply rate limiting to all routes
   router.use(publicProjectRateLimiter);
+
+  // ============================================================================
+  // Project Lookup by Booking (for success page)
+  // ============================================================================
+
+  /**
+   * GET /by-booking/:bookingId
+   *
+   * Simple lookup to get projectId from bookingId.
+   * Used by success page to link to Project Hub after payment.
+   * No token required - just returns projectId (no sensitive data).
+   */
+  router.get('/by-booking/:bookingId', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = req.tenantId ?? null;
+      const { bookingId } = req.params;
+
+      if (!tenantId) {
+        res.status(400).json({ error: 'Missing tenant context' });
+        return;
+      }
+
+      if (!bookingId) {
+        res.status(400).json({ error: 'Booking ID is required' });
+        return;
+      }
+
+      // Find project by booking ID (tenant-scoped)
+      const project = await prisma.project.findFirst({
+        where: {
+          bookingId,
+          tenantId, // CRITICAL: tenant-scoped
+        },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          customerId: true,
+        },
+      });
+
+      if (!project) {
+        res.status(404).json({ error: 'Project not found for this booking' });
+        return;
+      }
+
+      // Generate a fresh access token for immediate Project Hub access
+      // This token allows the customer to access their project right after payment
+      const accessToken = generateProjectAccessToken(
+        project.id,
+        tenantId,
+        project.customerId,
+        'view', // View permission (also allows chat)
+        30 // 30-day validity
+      );
+
+      res.json({
+        projectId: project.id,
+        status: project.status,
+        createdAt: project.createdAt.toISOString(),
+        accessToken, // Token for Project Hub access
+      });
+    } catch (error) {
+      logger.error({ error }, 'Project lookup by booking error');
+      next(error);
+    }
+  });
 
   // ============================================================================
   // Project Details

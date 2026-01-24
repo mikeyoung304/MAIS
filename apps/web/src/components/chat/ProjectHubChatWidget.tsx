@@ -68,6 +68,8 @@ interface ProjectHubChatWidgetProps {
   contextType?: AgentContextType;
   /** Whether to show the context indicator badge */
   showContextIndicator?: boolean;
+  /** JWT access token for authentication (required for public routes) */
+  accessToken?: string;
 }
 
 // ============================================================================
@@ -355,6 +357,7 @@ export function ProjectHubChatWidget({
   inline = false,
   contextType = 'customer', // Default to customer context
   showContextIndicator = false, // Off by default, enable for debugging/testing
+  accessToken, // JWT access token for public route authentication
 }: ProjectHubChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(inline);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -398,9 +401,10 @@ export function ProjectHubChatWidget({
 
     try {
       // Create session with project context
+      // Token is required for authentication on public routes
       const sessionResponse = await fetch(
         `${API_URL}/v1/public/projects/${projectId}/chat/session`,
-        fetchOptions('POST')
+        fetchOptions('POST', { token: accessToken })
       );
 
       if (!sessionResponse.ok) {
@@ -425,7 +429,7 @@ export function ProjectHubChatWidget({
     } finally {
       setIsInitializing(false);
     }
-  }, [projectId, sessionId, isInitializing, fetchOptions]);
+  }, [projectId, sessionId, isInitializing, fetchOptions, accessToken]);
 
   // Open widget and initialize
   const openWidget = useCallback(() => {
@@ -463,7 +467,7 @@ export function ProjectHubChatWidget({
     try {
       const response = await fetch(
         `${API_URL}/v1/public/projects/${projectId}/chat/message`,
-        fetchOptions('POST', { message, sessionId })
+        fetchOptions('POST', { message, sessionId, token: accessToken })
       );
 
       if (!response.ok) {

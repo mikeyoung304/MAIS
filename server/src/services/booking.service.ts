@@ -101,11 +101,13 @@ export class BookingService {
   private readonly catalogRepo: CatalogRepository;
   private readonly _eventEmitter: EventEmitter;
   private readonly tenantRepo: PrismaTenantRepository;
+  private readonly prisma?: PrismaClient;
 
   constructor(options: BookingServiceOptions) {
     // Store original dependencies for onPaymentCompleted
     this.bookingRepo = options.bookingRepo;
     this.catalogRepo = options.catalogRepo;
+    this.prisma = options.prisma;
     this._eventEmitter = options.eventEmitter;
     this.tenantRepo = options.tenantRepo;
 
@@ -517,6 +519,54 @@ export class BookingService {
       processor: 'stripe',
       processorId: input.sessionId,
     });
+
+    // Create Project for post-booking customer portal (Project Hub)
+    // This enables customer self-service via the Project Hub agent
+    if (this.prisma) {
+      try {
+        const project = await this.prisma.project.create({
+          data: {
+            tenantId,
+            bookingId: created.id,
+            customerId: created.email, // Use email as customer identifier
+            status: 'ACTIVE',
+          },
+        });
+
+        // Record initial PROJECT_CREATED event for timeline
+        await this.prisma.projectEvent.create({
+          data: {
+            tenantId,
+            projectId: project.id,
+            version: 1,
+            type: 'PROJECT_CREATED',
+            actor: 'SYSTEM',
+            payload: {
+              bookingId: created.id,
+              packageTitle: pkg.title,
+              eventDate: created.eventDate,
+            },
+            visibleToCustomer: true,
+            visibleToTenant: true,
+          },
+        });
+
+        logger.info(
+          { tenantId, bookingId: created.id, projectId: project.id },
+          'Project Hub created for booking'
+        );
+      } catch (projectError) {
+        // Log but don't fail booking - Project Hub is enhancement, not critical path
+        logger.error(
+          {
+            tenantId,
+            bookingId: created.id,
+            error: projectError instanceof Error ? projectError.message : String(projectError),
+          },
+          'Failed to create Project Hub for booking'
+        );
+      }
+    }
 
     // Emit BookingPaid event for notifications with enriched data
     await this._eventEmitter.emit(BookingEvents.PAID, {

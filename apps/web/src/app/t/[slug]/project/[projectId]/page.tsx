@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import {
   Calendar,
   Clock,
@@ -10,7 +10,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import {
-  getTenantByDomain,
+  getTenantBySlug,
   getProjectById,
   getProjectTimeline,
   TenantNotFoundError,
@@ -22,35 +22,34 @@ import ProjectHubChatWidget from '@/components/chat/ProjectHubChatWidget';
 
 interface ProjectPageProps {
   params: Promise<{
+    slug: string;
     projectId: string;
   }>;
   searchParams: Promise<{
-    domain?: string;
-    email?: string;
+    token?: string;
   }>;
 }
 
 /**
- * Customer Project View Page
+ * Customer Project View Page (Slug-based)
  *
  * Displays project status, booking details, and provides chat access
  * to the Project Hub agent for customer self-service.
  *
- * Route: /t/_domain/project/[projectId]?domain=xxx
+ * Route: /t/[slug]/project/[projectId]?token=xxx
+ *
+ * Security: Uses JWT access token for authentication.
+ * Token is validated server-side and contains:
+ * - projectId: Must match URL
+ * - tenantId: Must match tenant context
+ * - customerId: For customer isolation
  */
 
-export async function generateMetadata({ searchParams }: ProjectPageProps): Promise<Metadata> {
-  const { domain } = await searchParams;
-
-  if (!domain) {
-    return {
-      title: 'Your Project',
-      robots: { index: false, follow: false },
-    };
-  }
+export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
+  const { slug } = await params;
 
   try {
-    const tenant = await getTenantByDomain(domain);
+    const tenant = await getTenantBySlug(slug);
     return {
       title: `Your Project | ${tenant.name}`,
       description: `View and manage your project with ${tenant.name}`,
@@ -65,16 +64,17 @@ export async function generateMetadata({ searchParams }: ProjectPageProps): Prom
 }
 
 export default async function CustomerProjectPage({ params, searchParams }: ProjectPageProps) {
-  const { domain, email } = await searchParams;
-  const { projectId } = await params;
+  const { slug, projectId } = await params;
+  const { token } = await searchParams;
 
-  if (!domain) {
-    notFound();
+  // Token is required for authentication
+  if (!token) {
+    redirect(`/t/${slug}?error=missing_token`);
   }
 
   let tenant;
   try {
-    tenant = await getTenantByDomain(domain);
+    tenant = await getTenantBySlug(slug);
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
       notFound();
@@ -82,14 +82,15 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
     throw error;
   }
 
-  // Fetch project data
-  const project = await getProjectById(tenant.apiKeyPublic, projectId, { email });
+  // Fetch project data with token authentication
+  const project = await getProjectById(tenant.apiKeyPublic, projectId, { token });
   if (!project) {
-    notFound();
+    // Token invalid, expired, or project not found
+    redirect(`/t/${slug}?error=invalid_token`);
   }
 
   // Fetch timeline
-  const timeline = await getProjectTimeline(tenant.apiKeyPublic, projectId);
+  const timeline = await getProjectTimeline(tenant.apiKeyPublic, projectId, token);
 
   // Extract branding colors
   const branding = tenant.branding as { primaryColor?: string } | null;
@@ -106,7 +107,7 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold text-neutral-900">{tenant.name}</h1>
-              <p className="text-sm text-neutral-500">Project Portal</p>
+              <p className="text-sm text-neutral-500">Project Hub</p>
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={project.project.status} />
@@ -248,6 +249,7 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
                     businessName={tenant.name}
                     customerName={project.booking.customerName}
                     primaryColor={primaryColor}
+                    accessToken={token}
                     inline
                   />
                 </CardContent>

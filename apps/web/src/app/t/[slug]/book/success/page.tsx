@@ -1,11 +1,21 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, Calendar, Mail, Users, Package as PackageIcon, Home } from 'lucide-react';
+import {
+  CheckCircle,
+  Calendar,
+  Mail,
+  Users,
+  Package as PackageIcon,
+  Home,
+  ArrowRight,
+  MessageCircle,
+} from 'lucide-react';
 import {
   getTenantBySlug,
   getBookingById,
   getTenantPackageBySlug,
+  getProjectByBookingId,
   TenantNotFoundError,
 } from '@/lib/tenant';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -63,9 +73,18 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
   // Fetch booking details if we have an ID
   let booking = null;
   let packageData = null;
+  let projectData = null;
 
   if (bookingId) {
-    booking = await getBookingById(tenant.apiKeyPublic, bookingId);
+    // Fetch booking and project data in parallel
+    const [bookingResult, projectResult] = await Promise.all([
+      getBookingById(tenant.apiKeyPublic, bookingId),
+      getProjectByBookingId(tenant.apiKeyPublic, bookingId),
+    ]);
+
+    booking = bookingResult;
+    projectData = projectResult;
+
     if (booking) {
       // Fetch package details to display title
       const packages = await getTenantPackageBySlug(tenant.apiKeyPublic, booking.packageId);
@@ -189,9 +208,35 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
             )}
           </CardContent>
 
-          {/* Footer with Action Button */}
-          <CardFooter className="justify-center pt-6">
-            <Button asChild variant="sage" size="xl">
+          {/* Footer with Action Buttons */}
+          <CardFooter className="flex-col gap-4 pt-6">
+            {/* Primary CTA: Project Hub (if project exists) */}
+            {projectData && (
+              <div className="w-full text-center space-y-3">
+                <p className="text-white/80 text-sm">
+                  Your Project Hub is ready! Chat with our AI assistant, track progress, and manage
+                  your booking.
+                </p>
+                <Button asChild variant="sage" size="xl" className="w-full sm:w-auto">
+                  <Link
+                    href={`/t/${slug}/project/${projectData.projectId}?token=${projectData.accessToken}`}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Go to Your Project Hub
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {/* Secondary: Back to homepage */}
+            <Button
+              asChild
+              variant={projectData ? 'ghost' : 'sage'}
+              size={projectData ? 'lg' : 'xl'}
+              className={projectData ? 'text-white/70 hover:text-white' : ''}
+            >
               <Link href={`/t/${slug}`} className="flex items-center gap-2">
                 <Home className="w-5 h-5" />
                 Back to {tenant.name}
