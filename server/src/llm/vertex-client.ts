@@ -92,9 +92,10 @@ export type GeminiModel = (typeof GEMINI_MODELS)[keyof typeof GEMINI_MODELS];
 
 /**
  * Default model for most agent operations.
- * Use Gemini 3 Flash Preview for best price/performance.
+ * Use Gemini 2.5 Flash (stable, GA) for reliability.
+ * FUTURE: Switch to Gemini 3 Flash once universally available in all regions.
  */
-export const DEFAULT_MODEL: GeminiModel = GEMINI_MODELS.FLASH;
+export const DEFAULT_MODEL: GeminiModel = GEMINI_MODELS.FLASH_STABLE;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Safety Configuration
