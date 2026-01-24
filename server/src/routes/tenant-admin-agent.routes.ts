@@ -128,6 +128,17 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
       // Send message and get response (now persisted to PostgreSQL)
       const result = await agentService.sendMessage(sessionId, tenantId, message, version);
 
+      // Handle concurrent modification (Pitfall #69: Optimistic locking enforcement)
+      if (result.error === 'Concurrent modification detected') {
+        res.status(409).json({
+          success: false,
+          error: 'CONCURRENT_MODIFICATION',
+          message: result.response,
+          currentVersion: result.version,
+        });
+        return;
+      }
+
       // Return response with version for client-side tracking
       res.json({
         success: true,
@@ -135,7 +146,6 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
         version: result.version,
         response: result.response,
         toolCalls: result.toolCalls,
-        error: result.error,
       });
     } catch (error) {
       handleError(res, error, '/chat');
