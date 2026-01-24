@@ -39,9 +39,10 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-016: Field Naming Conventions](docs/adrs/ADR-016-field-naming-conventions.md) - Database vs API/Frontend field naming (title/name, priceCents/basePrice)
 - [ADR-017: Dark Theme Auth Pages](docs/adrs/ADR-017-dark-theme-auth-pages.md) - Dark graphite theme for signup/login vs light marketing site
 
-### AI Agent Architecture (ADR-018)
+### AI Agent Architecture (ADR-018, ADR-019)
 
 - [ADR-018: Hub-and-Spoke Agent Architecture](docs/adrs/ADR-018-hub-and-spoke-agent-architecture.md) - Concierge orchestrator + specialist agents pattern for Project Hub
+- [ADR-019: Single Agent Dual-Context Pattern](docs/adrs/ADR-019-single-agent-dual-context-pattern.md) - Programmatic context enforcement vs. physical agent separation
 
 ## Quick Reference by Category
 
@@ -54,6 +55,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - **API Proxy:** ADR-015
 - **Field Naming:** ADR-016
 - **Hub-and-Spoke Agents:** ADR-018
+- **Dual-Context Single Agent:** ADR-019
 
 ### Concurrency Control
 
@@ -92,6 +94,7 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 | ADR-016 | Field Naming Conventions       | Accepted   | P2       | Architecture  |
 | ADR-017 | Dark Theme Auth Pages          | Accepted   | P2       | Frontend      |
 | ADR-018 | Hub-and-Spoke Agent Arch       | Accepted   | P1       | AI Agents     |
+| ADR-019 | Single Agent Dual-Context      | Accepted   | P1       | AI Agents     |
 
 ## Decision Process
 

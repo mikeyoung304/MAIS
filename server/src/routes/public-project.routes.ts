@@ -18,6 +18,7 @@ import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { validateProjectAccessToken } from '../lib/project-tokens';
+import { projectHubSessionLimiter } from '../middleware/rateLimiter';
 
 // ============================================================================
 // Request Schemas
@@ -380,9 +381,14 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
    * Send a message to the Project Hub agent.
    * Routes to the Project Hub agent via internal API.
    * Requires valid access token in request body.
+   *
+   * Rate limiting (Phase 2 enhancement):
+   * - publicProjectRateLimiter: 100/15min per IP (applied at router level)
+   * - projectHubSessionLimiter: 15/min per session (per-session burst protection)
    */
   router.post(
     '/:projectId/chat/message',
+    projectHubSessionLimiter, // Phase 2: Per-session rate limiting
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantId = req.tenantId ?? null;

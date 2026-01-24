@@ -44,6 +44,11 @@ interface ChatMessage {
 }
 
 /**
+ * Context type for the agent session
+ */
+type AgentContextType = 'customer' | 'tenant';
+
+/**
  * Props for ProjectHubChatWidget
  */
 interface ProjectHubChatWidgetProps {
@@ -59,6 +64,10 @@ interface ProjectHubChatWidgetProps {
   primaryColor?: string;
   /** Whether to show as inline chat (vs floating) */
   inline?: boolean;
+  /** Context type for display purposes (customer or tenant/provider) */
+  contextType?: AgentContextType;
+  /** Whether to show the context indicator badge */
+  showContextIndicator?: boolean;
 }
 
 // ============================================================================
@@ -73,14 +82,41 @@ interface ChatHeaderProps {
   primaryColor: string;
   onClose?: () => void;
   showClose?: boolean;
+  contextType?: AgentContextType;
+  showContextIndicator?: boolean;
 }
+
+/**
+ * Context indicator configuration
+ */
+const CONTEXT_CONFIG: Record<
+  AgentContextType,
+  { label: string; bgColor: string; textColor: string; icon: string }
+> = {
+  customer: {
+    label: 'Customer View',
+    bgColor: 'bg-blue-100',
+    textColor: 'text-blue-700',
+    icon: '👤',
+  },
+  tenant: {
+    label: 'Provider View',
+    bgColor: 'bg-emerald-100',
+    textColor: 'text-emerald-700',
+    icon: '🏢',
+  },
+};
 
 const ChatHeader = React.memo(function ChatHeader({
   businessName,
   primaryColor,
   onClose,
   showClose = false,
+  contextType,
+  showContextIndicator = false,
 }: ChatHeaderProps) {
+  const contextConfig = contextType ? CONTEXT_CONFIG[contextType] : null;
+
   return (
     <div
       className={cn(
@@ -97,7 +133,23 @@ const ChatHeader = React.memo(function ChatHeader({
           <Bot className="w-5 h-5" style={{ color: primaryColor }} />
         </div>
         <div>
-          <h3 className="font-semibold text-neutral-900">{businessName}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-neutral-900">{businessName}</h3>
+            {/* Context visibility indicator - Phase 2 enhancement */}
+            {showContextIndicator && contextConfig && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium',
+                  contextConfig.bgColor,
+                  contextConfig.textColor
+                )}
+                title={`You are interacting as a ${contextType}`}
+              >
+                <span className="text-[8px]">{contextConfig.icon}</span>
+                {contextConfig.label}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-neutral-500">Project Assistant</p>
         </div>
       </div>
@@ -301,6 +353,8 @@ export function ProjectHubChatWidget({
   // customerName reserved for future personalization features
   primaryColor = '#8B9E86', // Default HANDLED sage
   inline = false,
+  contextType = 'customer', // Default to customer context
+  showContextIndicator = false, // Off by default, enable for debugging/testing
 }: ProjectHubChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(inline);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -474,7 +528,12 @@ export function ProjectHubChatWidget({
           'flex flex-col overflow-hidden'
         )}
       >
-        <ChatHeader businessName={businessName} primaryColor={primaryColor} />
+        <ChatHeader
+          businessName={businessName}
+          primaryColor={primaryColor}
+          contextType={contextType}
+          showContextIndicator={showContextIndicator}
+        />
         <ChatMessages {...chatMessagesProps} />
         <ChatInput {...chatInputProps} />
       </div>
@@ -522,6 +581,8 @@ export function ProjectHubChatWidget({
         primaryColor={primaryColor}
         onClose={() => setIsOpen(false)}
         showClose
+        contextType={contextType}
+        showContextIndicator={showContextIndicator}
       />
       <ChatMessages {...chatMessagesProps} />
       <ChatInput {...chatInputProps} />

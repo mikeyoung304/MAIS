@@ -1539,6 +1539,48 @@ const updateProjectStatus = new FunctionTool({
 });
 
 // =============================================================================
+// PERFORMANCE INSTRUMENTATION
+// =============================================================================
+
+/**
+ * Performance tracking for tool calls
+ * Used to measure p50/p95 latency for Phase 2 baseline
+ */
+const toolTimings = new Map<string, number>();
+
+/**
+ * Log tool latency metrics in structured format for Cloud Logging
+ * Enables querying for p50/p95 in Log Analytics
+ */
+function logToolMetrics(
+  toolName: string,
+  durationMs: number,
+  success: boolean,
+  errorType?: string
+): void {
+  // Structured log format for Cloud Logging metrics
+  logger.info(
+    {
+      metric: 'tool_latency',
+      toolName,
+      durationMs,
+      success,
+      errorType,
+      // Performance buckets for quick filtering
+      bucket:
+        durationMs < 100
+          ? 'fast'
+          : durationMs < 500
+            ? 'normal'
+            : durationMs < 2000
+              ? 'slow'
+              : 'very_slow',
+    },
+    `[ProjectHub] Tool ${toolName} completed in ${durationMs}ms`
+  );
+}
+
+// =============================================================================
 // AGENT DEFINITION
 // =============================================================================
 
@@ -1584,8 +1626,11 @@ export const agent = new LlmAgent({
     maxOutputTokens: LLM_CONFIG.MAX_OUTPUT_TOKENS,
   },
 
-  // Lifecycle callbacks for observability
+  // Lifecycle callbacks for observability and performance tracking
   beforeToolCallback: async ({ tool, args }) => {
+    // Record start time for latency calculation
+    toolTimings.set(tool.name, Date.now());
+
     logger.info(
       { toolName: tool.name, args: JSON.stringify(args).substring(0, 200) },
       '[ProjectHub] Calling tool'
@@ -1594,6 +1639,25 @@ export const agent = new LlmAgent({
   },
 
   afterToolCallback: async ({ tool, response }) => {
+    // Calculate and log latency
+    const startTime = toolTimings.get(tool.name);
+    if (startTime) {
+      const durationMs = Date.now() - startTime;
+      toolTimings.delete(tool.name); // Clean up
+
+      // Determine success/error from response
+      const isError =
+        typeof response === 'object' &&
+        response !== null &&
+        ('error' in response || ('success' in response && response.success === false));
+      const errorType = isError
+        ? ((response as { error?: string }).error?.substring(0, 50) ?? 'unknown_error')
+        : undefined;
+
+      // Log structured metrics for Cloud Logging analysis
+      logToolMetrics(tool.name, durationMs, !isError, errorType);
+    }
+
     const preview =
       typeof response === 'object'
         ? JSON.stringify(response).substring(0, 200)

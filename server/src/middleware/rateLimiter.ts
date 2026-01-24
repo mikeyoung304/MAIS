@@ -372,6 +372,72 @@ export const customerChatLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for Project Hub chat sessions (per-session burst protection)
+ * 15 messages per minute per session - prevents rapid-fire abuse within a project conversation
+ *
+ * Phase 2 Enhancement: Layered rate limiting for Project Hub agent.
+ *
+ * Uses compound key (project:session) to prevent session rotation attacks.
+ * The projectId comes from URL params, sessionId from request body.
+ *
+ * Layered protection:
+ * - publicProjectRateLimiter: 100/15min per IP (overall project endpoint protection)
+ * - projectHubSessionLimiter: 15/min per session (burst protection within conversation)
+ *
+ * Higher limit than agentSessionLimiter (10/min) because:
+ * - Project Hub conversations may require multiple back-and-forth messages
+ * - Users managing bookings need responsive experience
+ * - Still protected by per-IP limits on the route level
+ */
+export const projectHubSessionLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 15, // 15 messages per minute per session
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Extract sessionId from request body
+    const sessionId = (req.body as { sessionId?: string })?.sessionId;
+    // Extract projectId from URL params
+    const projectId = req.params?.projectId;
+
+    // Validate sessionId format (project session format: project-{id}-{timestamp})
+    // or CUID format for compatibility
+    const PROJECT_SESSION_PATTERN = /^project-[a-z0-9]+-\d+$/;
+    const CUID_PATTERN = /^c[a-z0-9]{24}$/;
+    const isValidSessionId =
+      sessionId &&
+      typeof sessionId === 'string' &&
+      (PROJECT_SESSION_PATTERN.test(sessionId) || CUID_PATTERN.test(sessionId));
+
+    if (isValidSessionId && projectId) {
+      // Use compound key: project + session
+      return `project:${projectId}:session:${sessionId}`;
+    }
+
+    // Fallback: just projectId if available
+    if (projectId) {
+      return `project:${projectId}`;
+    }
+
+    // Final fallback: IP address
+    return normalizeIp(req.ip);
+  },
+  validate: false, // Disable validation - we handle custom key generation
+  handler: (_req: Request, res: Response) => {
+    const projectId = _req.params?.projectId;
+    const sessionId = (_req.body as { sessionId?: string })?.sessionId;
+    logger.warn(
+      { projectId, sessionId: sessionId?.substring(0, 30) },
+      'Project Hub session rate limit exceeded'
+    );
+    res.status(429).json({
+      error: 'too_many_session_messages',
+      message: 'Too many messages in this conversation. Please wait a moment.',
+    });
+  },
+});
+
+/**
  * Rate limiter for Stripe webhook endpoint
  * 100 requests per minute - prevents DoS attacks on webhook processing
  *

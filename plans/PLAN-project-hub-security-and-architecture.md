@@ -118,22 +118,35 @@ execute: async ({ projectId }, ctx) => {
 
 ---
 
-## Phase 2: Architecture Decision
+## Phase 2: Architecture Implementation ✅ COMPLETE
 
-**After Phase 1 is complete**, evaluate the split architecture:
+**Decision:** Keep single agent with dual-context pattern (Option A)
+**Date:** 2026-01-24
+**Documentation:** ADR-019, PROJECT_HUB_ARCHITECTURE.md
 
-### Option A: Keep Single Agent (Enhanced)
+### Completed Tasks
+
+| Task                      | Description                                                      | Status  |
+| ------------------------- | ---------------------------------------------------------------- | ------- |
+| Architecture Docs         | Created `docs/architecture/PROJECT_HUB_ARCHITECTURE.md`          | ✅ Done |
+| ADR                       | Created `docs/adrs/ADR-019-single-agent-dual-context-pattern.md` | ✅ Done |
+| Context Visibility        | Added context indicator to `ProjectHubChatWidget`                | ✅ Done |
+| Performance Baseline      | Added tool latency instrumentation to agent                      | ✅ Done |
+| Per-Session Rate Limiting | Added `projectHubSessionLimiter` (15/min/session)                | ✅ Done |
+
+### Option A: Single Agent Dual-Context (CHOSEN)
 
 With Phase 1 fixes in place:
 
 - Tool gating provides programmatic separation
 - Single deployment is simpler
 - Context bleed prevented by guards
+- Performance instrumentation enables monitoring
 
 **Pros:** Simpler ops, lower cost, tools already separated logically
 **Cons:** Shared LLM context, coupled evolution, complex prompt
 
-### Option B: Split into Two Agents
+### Option B: Split into Two Agents (REJECTED)
 
 Create `CustomerHubAgent` and `TenantHubAgent`:
 
@@ -145,28 +158,17 @@ project-hub/
     └── src/agent.ts    # Tenant-focused tools only
 ```
 
-**Pros:**
-
-- Complete isolation (no context bleed possible)
-- Focused prompts (easier to tune)
-- Independent evolution
-- Clearer testing
-
-**Cons:**
-
-- Two Cloud Run deployments
-- More infrastructure to manage
-- Need to coordinate shared logic
+**Why rejected:** Phase 1 security hardening proved that programmatic enforcement via `requireContext()` guards provides equivalent security to physical separation, without the operational complexity.
 
 ### Recommendation
 
-**Start with Option A** (keep single agent with Phase 1 fixes). The tool gating provides 90% of the security benefits of splitting. If we later find:
+**Keep Option A** (single agent with Phase 1 fixes + Phase 2 enhancements). The tool gating provides 100% of the security benefits of splitting. If we later find:
 
 - Prompts are getting too complex
 - We need different LLM models per context
 - Testing is still difficult
 
-Then split in Phase 3.
+Then consider splitting in a future phase.
 
 ---
 
