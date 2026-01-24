@@ -163,15 +163,16 @@ jobs:
 
       - name: Run integration tests with coverage
         run: npm run test:integration -- --coverage
-        # Tests skip gracefully when DATABASE_URL not set (see CLAUDE.md pitfall #58)
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test
+          DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
           TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
