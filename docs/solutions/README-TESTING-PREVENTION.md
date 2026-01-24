@@ -51,7 +51,7 @@ Start here: **[TESTING-STRATEGIES-INDEX.md](./TESTING-STRATEGIES-INDEX.md)** (13
 
 ### The Problem
 
-The codebase had **771 passing tests** but:
+The codebase had **771 passing tests** (now **856+ with payment services**) but:
 
 - Zero tests for critical seed functions (database initialization)
 - No E2E tests for the new storefront refactoring
@@ -64,8 +64,9 @@ The codebase had **771 passing tests** but:
 Created comprehensive testing prevention strategies including:
 
 - 66 unit tests for seed functions
+- **85 unit tests for payment services** (NEW - refund, deposit, checkout, booking)
 - 6+ E2E test files for critical UI flows
-- 4 prevention strategy documents
+- 4 prevention strategy documents + Payment Testing Quick Reference
 - 5 testing patterns for team reuse
 - Pre-commit hooks to catch gaps early
 - CI pipeline enhancements
@@ -276,8 +277,14 @@ Service Changes:
 
 - `server/test/seeds/seed-orchestrator.test.ts` - Environment variable testing
 - `server/test/seeds/platform-seed.test.ts` - Security guard testing
+- `server/test/services/refund-processing.service.test.ts` - Payment refund testing (21 tests)
+- `server/test/services/wedding-deposit.service.test.ts` - Deposit calculation testing (24 tests)
+- `server/test/services/checkout-session.factory.test.ts` - Stripe checkout testing (18 tests)
+- `server/test/services/appointment-booking.service.test.ts` - Booking service testing (22 tests)
 - `e2e/tests/storefront.spec.ts` - Navigation and responsive testing
 - `e2e/tests/tenant-signup.spec.ts` - Form submission testing
+
+**See also:** [testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](./testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md) for payment service testing patterns.
 
 ### Configuration Files
 

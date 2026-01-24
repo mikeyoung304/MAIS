@@ -44,10 +44,11 @@ Quick navigation to prevention guides. Each guide is a consolidated, single-sour
 
 ### Testing
 
-| Topic                 | Guide                                                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Test isolation        | [TEST_ISOLATION_GUIDE.md](./TEST_ISOLATION_GUIDE.md)                                                               |
-| E2E Next.js migration | [patterns/E2E_NEXTJS_MIGRATION_PREVENTION_STRATEGIES.md](./patterns/E2E_NEXTJS_MIGRATION_PREVENTION_STRATEGIES.md) |
+| Topic                       | Guide                                                                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Test isolation              | [TEST_ISOLATION_GUIDE.md](./TEST_ISOLATION_GUIDE.md)                                                                         |
+| E2E Next.js migration       | [patterns/E2E_NEXTJS_MIGRATION_PREVENTION_STRATEGIES.md](./patterns/E2E_NEXTJS_MIGRATION_PREVENTION_STRATEGIES.md)           |
+| **Payment service testing** | [testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](./testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md) |
 
 ### React & Frontend
 

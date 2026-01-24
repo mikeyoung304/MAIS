@@ -108,6 +108,14 @@ This directory contains problem-solution documentation, prevention strategies, a
 
 **Subdirectory:** [test-failures/](./test-failures/)
 
+### Payment Service Testing
+
+| Document                                                                                                                     | Purpose                          |
+| ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| [testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](./testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md) | Payment service testing patterns |
+
+**Subdirectory:** [testing-patterns/](./testing-patterns/)
+
 ### Advanced Features & Patterns
 
 | Document                                                                     | Purpose                           |
@@ -148,6 +156,7 @@ Solutions are also organized by problem type:
 - **[security-issues/](./security-issues/)** - Security vulnerabilities and fixes
 - **[test-failures/](./test-failures/)** - Test failure investigations
 - **[testing-gaps/](./testing-gaps/)** - Missing test coverage
+- **[testing-patterns/](./testing-patterns/)** - Testing patterns for specific domains
 - **[ui-bugs/](./ui-bugs/)** - Frontend and UI issues
 
 ## How to Use This Directory
@@ -189,13 +198,13 @@ Each solution document should include:
 
 ## Statistics
 
-- **Total Solution Documents:** 89 markdown files
-- **Total Categories:** 11 subdirectories
+- **Total Solution Documents:** 90 markdown files
+- **Total Categories:** 12 subdirectories
 - **Index Files:** 37 navigation indexes
 - **Quick References:** 17 cheat sheets
 
 ---
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-01-24
 **Maintainer:** Technical Lead
 **Purpose:** Problem-solution documentation following Diátaxis "How-to Guide" pattern

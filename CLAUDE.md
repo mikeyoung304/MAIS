@@ -68,6 +68,7 @@ For detailed architecture documentation, search or read these files when working
 | Subsystem                      | Reference                                                 |
 | ------------------------------ | --------------------------------------------------------- |
 | Layered architecture           | `server/src/di.ts`, `server/src/lib/ports.ts`             |
+| Port interfaces                | `ITenantRepository`, `BookingRepository` in `ports.ts`    |
 | Type-safe API contracts        | `packages/contracts/`, ts-rest + Zod                      |
 | Customer chatbot               | `server/src/agent/customer/`, T3 trust tier proposals     |
 | Business advisor (onboarding)  | `server/src/agent/onboarding/`, XState v5, event sourcing |
@@ -273,6 +274,12 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 78. Invalid API keys causing mysterious 404s - Stripe/external API 401 errors can manifest as 404 NOT_FOUND in client; validate API keys on server startup with connectivity test; check server logs for real error chain. See `docs/solutions/integration-issues/booking-flow-404-invalid-stripe-key-stale-cache.md`
 79. Stale Next.js build cache after env changes - `.next/` directory serves cached JavaScript even after environment variable changes; always `rm -rf apps/web/.next` when debugging mysterious runtime behavior; consider auto-clearing cache when .env changes
 
+### Port Interface & Testing Pitfalls (80-82)
+
+80. Repository without port interface - Concrete repository classes (e.g., `PrismaTenantRepository`) should implement a port interface (e.g., `ITenantRepository`) for testability; without it, unit tests require full database setup or complex mocking
+81. Duplicate queries across service chain - When method A fetches data then calls method B which fetches the same data, pass pre-fetched data as optional parameter: `methodB(input, prefetchedData?)`. Example: `createCheckout(input, prefetchedPackage?)` avoids re-fetching package. See `wedding-booking.orchestrator.ts`
+82. Missing payment service tests - Payment-related services (RefundProcessingService, WeddingDepositService, CheckoutSessionFactory, AppointmentBookingService) handle real money; require comprehensive test coverage including error paths, idempotency, and multi-tenant isolation
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -292,6 +299,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[ESLINT_PREVENTION_INDEX.md](docs/solutions/patterns/ESLINT_PREVENTION_INDEX.md)** - Dead code prevention
 - **[STATIC_CONFIG_MULTI_TENANT_PREVENTION.md](docs/solutions/patterns/STATIC_CONFIG_MULTI_TENANT_PREVENTION.md)** - Static config anti-pattern for multi-tenant URLs
 - **[booking-flow-404-invalid-stripe-key-stale-cache.md](docs/solutions/integration-issues/booking-flow-404-invalid-stripe-key-stale-cache.md)** - API key validation and build cache debugging
+- **[PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](docs/solutions/testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md)** - Payment service test patterns (85 tests)
 - **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4
 
 When you hit an issue:
