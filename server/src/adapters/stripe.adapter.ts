@@ -18,6 +18,7 @@ export class StripePaymentAdapter implements PaymentProvider {
     this.stripe = new Stripe(options.secretKey, {
       apiVersion: '2025-10-29.clover',
       typescript: true,
+      maxNetworkRetries: 3, // Retry on transient network failures (safe with idempotency keys)
     });
     this.webhookSecret = options.webhookSecret;
   }
@@ -26,6 +27,7 @@ export class StripePaymentAdapter implements PaymentProvider {
     amountCents: number;
     email: string;
     metadata: Record<string, string>;
+    applicationFeeAmount?: number; // Unused for standard checkout, included for interface compatibility
     idempotencyKey?: string;
     successUrl: string;
     cancelUrl: string;
