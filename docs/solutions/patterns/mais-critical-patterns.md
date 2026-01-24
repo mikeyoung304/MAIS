@@ -1,16 +1,17 @@
 ---
 module: MAIS
-date: 2025-12-27
+date: 2026-01-24
 problem_type: required_reading
 component: all
 symptoms:
   - Critical patterns all agents must know before code generation
   - Cross-tenant data leakage prevention
   - Type safety and build stability
+  - Static config anti-patterns in multi-tenant systems
 root_cause: institutional_knowledge
 resolution_type: reference_doc
 severity: P0
-tags: [required-reading, critical-patterns, multi-tenant, security, typescript]
+tags: [required-reading, critical-patterns, multi-tenant, security, typescript, configuration]
 ---
 
 # MAIS Critical Patterns (Required Reading)
@@ -229,6 +230,31 @@ await prisma.$transaction(async (tx) => {
 
 ---
 
+## Pattern 11: Tenant-Specific URLs (Not Static Config)
+
+**Impact:** P1 - Customer redirected to wrong tenant, lost context, abandoned bookings
+
+```typescript
+// WRONG - Static URL from env var (same for ALL tenants)
+const session = await stripe.createSession({
+  success_url: config.STRIPE_SUCCESS_URL, // Breaks multi-tenant!
+});
+
+// CORRECT - Build URL with tenant context at request time
+const tenant = await tenantRepo.findById(tenantId);
+const successUrl = `${config.CORS_ORIGIN}/t/${tenant.slug}/book/success`;
+const session = await stripe.createSession({
+  success_url: successUrl,
+  metadata: { tenantSlug: tenant.slug }, // For webhook routing
+});
+```
+
+**Rule:** Customer-facing URLs MUST include tenant context. Build at request time, not construction.
+
+**Reference:** [STATIC_CONFIG_MULTI_TENANT_PREVENTION.md](./STATIC_CONFIG_MULTI_TENANT_PREVENTION.md)
+
+---
+
 ## Quick Checklist
 
 Before generating code, verify:
@@ -243,6 +269,7 @@ Before generating code, verify:
 - [ ] Using logger, not console.log
 - [ ] JSON fields use proper Prisma types
 - [ ] Race-prone operations use advisory locks
+- [ ] Customer-facing URLs include tenant slug (not static config)
 
 ---
 
@@ -254,5 +281,5 @@ Before generating code, verify:
 
 ---
 
-**Last Updated:** 2025-12-27
+**Last Updated:** 2026-01-24
 **Maintainer:** Auto-generated from compound-engineering workflow

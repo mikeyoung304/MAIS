@@ -282,6 +282,34 @@ This plan was reviewed by 3 agents (DHH, Kieran, Simplicity) who converged on:
 
 ---
 
+## Implementation Complete ✅
+
+**Commit:** `be35d466` - `fix(booking): enable tenant-specific Stripe checkout redirect URLs`
+
+**Files Changed (18 total):**
+
+| Category | Files | Description                                    |
+| -------- | ----- | ---------------------------------------------- |
+| Core     | 6     | Interface, adapter, factory, DI, mock, service |
+| Tests    | 11    | Updated to use `buildMockConfig()` helper      |
+| Docs     | 1     | This plan document                             |
+
+**Key Implementation Details:**
+
+1. `CheckoutSessionFactory` now builds URLs using `config.CORS_ORIGIN` + tenant slug
+2. Added `buildMockConfig()` test helper to avoid repetitive config setup
+3. Tenant slug added to Stripe metadata for webhook routing
+4. Success page already has graceful fallback for pre-webhook scenarios
+
+**Lessons Learned:**
+
+- When adding required dependencies to services, all test files that instantiate that service need updating
+- Multi-agent review caught over-engineering (280 lines → 100 lines)
+- Direct query approach was simpler than new endpoint + cache + polling
+
+---
+
 _Plan created: 2026-01-24_
 _Revised: 2026-01-24 after multi-agent review_
+_Implemented: 2026-01-24_
 _Author: Claude Code with /workflows:plan_

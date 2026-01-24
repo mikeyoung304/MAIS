@@ -888,6 +888,45 @@ grep -rn "audit" server/src/ --include="*.ts" | grep -v "session.audit.ts" | wc 
 
 ---
 
+## Multi-Tenant Configuration URLs
+
+### Static Config Anti-Pattern (CRITICAL)
+
+```typescript
+// WRONG - Static URL from env var (same for ALL tenants)
+const session = await stripe.createSession({
+  success_url: config.STRIPE_SUCCESS_URL, // Breaks multi-tenant!
+});
+
+// CORRECT - Build URL with tenant context at request time
+const successUrl = `${config.CORS_ORIGIN}/t/${tenant.slug}/book/success`;
+const session = await stripe.createSession({
+  success_url: successUrl,
+  metadata: { tenantSlug: tenant.slug }, // For webhook routing
+});
+```
+
+### Quick Detection
+
+```bash
+# Find potential static URL patterns
+rg "config\.\w+_URL|process\.env\.\w+_URL" server/src/services/ --type ts
+rg "successUrl|cancelUrl|callbackUrl" server/src/ --type ts -A 3
+```
+
+### Decision Tree
+
+```
+Is URL customer-facing (redirects, callbacks)?
+├── YES → MUST include tenant context (slug or ID)
+│   └── Build at request time: `${baseUrl}/t/${tenant.slug}/...`
+└── NO (internal API, admin) → Static config may be OK
+```
+
+**Full Reference:** [STATIC_CONFIG_MULTI_TENANT_PREVENTION.md](./patterns/STATIC_CONFIG_MULTI_TENANT_PREVENTION.md)
+
+---
+
 ## When in Doubt
 
 1. Check similar code in codebase
@@ -904,6 +943,7 @@ grep -rn "audit" server/src/ --include="*.ts" | grep -v "session.audit.ts" | wc 
 - [Over-Engineering Prevention](./patterns/OVER_ENGINEERING_PREVENTION.md)
 - [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
 - [Multi-Tenant Implementation Guide](../multi-tenant/MULTI_TENANT_IMPLEMENTATION_GUIDE.md)
+- [Static Config Multi-Tenant Prevention](./patterns/STATIC_CONFIG_MULTI_TENANT_PREVENTION.md)
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 - [TypeScript Unused Variables Prevention](./build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)
 - [CLAUDE.md](../../CLAUDE.md)
@@ -912,4 +952,4 @@ grep -rn "audit" server/src/ --include="*.ts" | grep -v "session.audit.ts" | wc 
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-01-24
