@@ -124,21 +124,23 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       await service.saveDraft(tenant.id, initialConfig);
 
       // Modify and save again
-      const modifiedPages = {
+      // NOTE: Cannot disable home page (schema enforces home.enabled: z.literal(true))
+      // Instead, modify the about page which CAN be toggled
+      const modifiedPages: PagesConfig = {
         ...VALID_MOCK_PAGES_CONFIG,
-        home: {
-          ...VALID_MOCK_PAGES_CONFIG.home,
+        about: {
+          ...VALID_MOCK_PAGES_CONFIG.about,
           enabled: false,
         },
       };
       const modifiedConfig: LandingPageConfig = {
-        pages: modifiedPages as PagesConfig,
+        pages: modifiedPages,
       };
       await service.saveDraft(tenant.id, modifiedConfig);
 
       // Verify draft was updated
       const result = await service.getDraft(tenant.id);
-      expect(result.draft?.pages?.home?.enabled).toBe(false);
+      expect(result.draft?.pages?.about?.enabled).toBe(false);
     });
 
     it('should throw NotFoundError for non-existent tenant', async () => {

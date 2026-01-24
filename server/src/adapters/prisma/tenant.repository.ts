@@ -992,8 +992,15 @@ export class PrismaTenantRepository {
       throw new NotFoundError('Tenant not found');
     }
 
-    // Parse draft from separate column (what AI tools write to)
+    // DUAL DRAFT SYSTEM: Check both sources for draft
+    // 1. Build Mode (AI tools): uses separate landingPageConfigDraft column
+    // 2. Visual Editor: uses wrapper format in landingPageConfig.draft
+    //
+    // Priority: Build Mode column takes precedence if present
     let draft: LandingPageConfig | null = null;
+    let draftUpdatedAt: string | null = null;
+
+    // First, try Build Mode column (landingPageConfigDraft)
     if (tenant.landingPageConfigDraft) {
       const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
       if (draftResult.success) {
@@ -1001,30 +1008,53 @@ export class PrismaTenantRepository {
       } else {
         logger.warn(
           { tenantId, errors: draftResult.error.issues },
-          'Invalid draft config in getLandingPageDraft'
+          'Invalid draft config in landingPageConfigDraft column'
         );
       }
     }
 
-    // Parse published from main column
+    // Parse wrapper format from landingPageConfig
+    const wrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+
+    // If no Build Mode draft, check Visual Editor draft in wrapper
+    if (!draft && wrapper.draft) {
+      const draftResult = LandingPageConfigSchema.safeParse(wrapper.draft);
+      if (draftResult.success) {
+        draft = draftResult.data;
+        draftUpdatedAt = wrapper.draftUpdatedAt ?? null;
+      } else {
+        logger.warn(
+          { tenantId, errors: draftResult.error.issues },
+          'Invalid draft config in wrapper format'
+        );
+      }
+    }
+
+    // Parse published from wrapper (may also have published field)
     let published: LandingPageConfig | null = null;
-    if (tenant.landingPageConfig) {
-      const publishedResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+    if (wrapper.published) {
+      const publishedResult = LandingPageConfigSchema.safeParse(wrapper.published);
       if (publishedResult.success) {
         published = publishedResult.data;
       } else {
         logger.warn(
           { tenantId, errors: publishedResult.error.issues },
-          'Invalid published config in getLandingPageDraft'
+          'Invalid published config in wrapper format'
         );
+      }
+    } else if (tenant.landingPageConfig && !wrapper.draft && !wrapper.published) {
+      // Legacy format: landingPageConfig IS the config (not a wrapper)
+      const legacyResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
+      if (legacyResult.success) {
+        published = legacyResult.data;
       }
     }
 
     return {
       draft,
       published,
-      draftUpdatedAt: null, // TODO: Add timestamp column if needed
-      publishedAt: null, // TODO: Add timestamp column if needed
+      draftUpdatedAt,
+      publishedAt: wrapper.publishedAt ?? null,
       version: tenant.landingPageConfigDraftVersion,
     };
   }
