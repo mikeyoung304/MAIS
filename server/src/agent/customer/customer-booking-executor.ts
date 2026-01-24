@@ -194,8 +194,13 @@ export function registerCustomerBookingExecutor(
 
       // Create Stripe checkout session for payment
       let checkoutSession: CheckoutSession | null = null;
-      if (paymentProvider && totalPrice > 0) {
+      if (paymentProvider && totalPrice > 0 && tenant?.slug) {
         try {
+          // Build tenant-specific success/cancel URLs
+          const encodedSlug = encodeURIComponent(tenant.slug);
+          const successUrl = `${_storefrontBaseUrl}/t/${encodedSlug}/book/success?session_id={CHECKOUT_SESSION_ID}`;
+          const cancelUrl = `${_storefrontBaseUrl}/t/${encodedSlug}/book`;
+
           checkoutSession = await paymentProvider.createCheckoutSession({
             amountCents: totalPrice,
             email: customerEmail,
@@ -208,8 +213,11 @@ export function registerCustomerBookingExecutor(
               coupleName: customerName,
               source: 'customer_chatbot', // Identify chatbot bookings
               confirmationCode,
+              tenantSlug: tenant.slug, // For webhook routing
             },
             idempotencyKey: `chatbot-booking-${booking.id}`,
+            successUrl,
+            cancelUrl,
           });
 
           logger.info(
