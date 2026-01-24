@@ -431,7 +431,7 @@ export async function getUnavailableDates(
   startDate: string,
   endDate: string
 ): Promise<string[]> {
-  const url = `${getClientApiUrl()}/v1/availability/unavailable-dates?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+  const url = `${getClientApiUrl()}/v1/availability/unavailable?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -498,7 +498,7 @@ export async function createDateBooking(
     notes?: string;
   }
 ): Promise<{ checkoutUrl: string } | { error: string; status: number }> {
-  const url = `${getClientApiUrl()}/v1/bookings/date`;
+  const url = `${getClientApiUrl()}/v1/public/bookings/date`;
 
   const response = await fetch(url, {
     method: 'POST',
