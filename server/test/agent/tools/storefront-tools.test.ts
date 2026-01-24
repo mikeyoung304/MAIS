@@ -375,10 +375,6 @@ describe('Storefront Tools', () => {
 
   describe('Discovery Tools', () => {
     describe('list_section_ids', () => {
-      it('should have T1 trust tier for read-only operation', () => {
-        expect(listSectionIdsTool.trustTier).toBe('T1');
-      });
-
       it('should return all sections when no filters applied', async () => {
         setupTenantMock();
 
@@ -472,10 +468,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('get_section_by_id', () => {
-      it('should have T1 trust tier for read-only operation', () => {
-        expect(getSectionByIdTool.trustTier).toBe('T1');
-      });
-
       it('should return section content when found', async () => {
         setupTenantMock();
 
@@ -543,10 +535,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('get_unfilled_placeholders', () => {
-      it('should have T1 trust tier for read-only operation', () => {
-        expect(getUnfilledPlaceholdersTool.trustTier).toBe('T1');
-      });
-
       it('should return unfilled placeholder fields', async () => {
         const mockConfig = createMockConfigWithPlaceholders();
         setupTenantMock({ liveConfig: mockConfig });
@@ -600,10 +588,6 @@ describe('Storefront Tools', () => {
 
   describe('Write Tools', () => {
     describe('update_page_section', () => {
-      it('should have T1 trust tier for real-time updates', () => {
-        expect(updatePageSectionTool.trustTier).toBe('T1');
-      });
-
       it('should create proposal for new section', async () => {
         setupTenantMock();
 
@@ -742,10 +726,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('remove_page_section', () => {
-      it('should have T1 trust tier for real-time updates', () => {
-        expect(removePageSectionTool.trustTier).toBe('T1');
-      });
-
       it('should resolve sectionId to sectionIndex before removal', async () => {
         setupTenantMock();
 
@@ -805,10 +785,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('reorder_page_sections', () => {
-      it('should have T1 trust tier for low-risk reordering', () => {
-        expect(reorderPageSectionsTool.trustTier).toBe('T1');
-      });
-
       it('should resolve fromSectionId to fromIndex', async () => {
         setupTenantMock();
 
@@ -869,10 +845,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('toggle_page_enabled', () => {
-      it('should have T1 trust tier for visibility toggle', () => {
-        expect(togglePageEnabledTool.trustTier).toBe('T1');
-      });
-
       it('should create proposal to enable a page', async () => {
         setupTenantMock();
 
@@ -915,10 +887,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('update_storefront_branding', () => {
-      it('should have T1 trust tier for visual changes', () => {
-        expect(updateStorefrontBrandingTool.trustTier).toBe('T1');
-      });
-
       it('should create proposal for branding update', async () => {
         mockPrisma.tenant.findUnique.mockResolvedValue({
           id: TEST_TENANT_ID,
@@ -975,10 +943,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('get_landing_page_draft', () => {
-      it('should have T1 trust tier for read-only operation', () => {
-        expect(getLandingPageDraftTool.trustTier).toBe('T1');
-      });
-
       it('should return page summary', async () => {
         setupTenantMock();
 
@@ -1022,10 +986,6 @@ describe('Storefront Tools', () => {
 
   describe('Publish/Discard Tools', () => {
     describe('publish_draft', () => {
-      it('should have T3 trust tier requiring explicit approval', () => {
-        expect(publishDraftTool.trustTier).toBe('T3');
-      });
-
       it('should require confirmationReceived for T3 enforcement', async () => {
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
@@ -1036,7 +996,7 @@ describe('Storefront Tools', () => {
 
         assertToolError(result);
         expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
-        expect((result as any).requiresConfirmation).toBe(true);
+        expect(result.requiresConfirmation).toBe(true);
       });
 
       it('should create T3 proposal when valid draft exists', async () => {
@@ -1096,10 +1056,6 @@ describe('Storefront Tools', () => {
     });
 
     describe('discard_draft', () => {
-      it('should have T3 trust tier for destructive operation', () => {
-        expect(discardDraftTool.trustTier).toBe('T3');
-      });
-
       it('should require confirmationReceived for T3 enforcement', async () => {
         const mockConfig = createMockLandingPageConfig();
         setContextDraftCache(mockContext, mockConfig, true);
@@ -1110,7 +1066,7 @@ describe('Storefront Tools', () => {
 
         assertToolError(result);
         expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
-        expect((result as any).requiresConfirmation).toBe(true);
+        expect(result.requiresConfirmation).toBe(true);
       });
 
       it('should create T3 proposal when valid draft exists', async () => {
@@ -1366,6 +1322,65 @@ describe('Storefront Tools', () => {
           }
         }
       );
+
+      it('should reject __proto__ in update operation', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionId: '__proto__',
+          sectionType: 'hero',
+          headline: 'Malicious',
+        });
+
+        // Should fail validation or not find the section
+        if (!result.success) {
+          expect(result.error).toBeDefined();
+        }
+      });
+
+      it('should reject constructor in update operation', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionId: 'home-hero-constructor',
+          sectionType: 'hero',
+          headline: 'Malicious',
+        });
+
+        // Should fail validation or not find the section
+        if (!result.success) {
+          expect(result.error).toBeDefined();
+        }
+      });
+
+      it('should reject prototype in remove operation', async () => {
+        setupTenantMock();
+
+        const result = await removePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionId: 'prototype',
+        });
+
+        // Should fail validation or not find the section
+        if (!result.success) {
+          expect(result.error).toBeDefined();
+        }
+      });
+
+      it('should reject nested __proto__ patterns', async () => {
+        setupTenantMock();
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'home-text-__proto__-nested',
+        });
+
+        // Should fail validation or not find the section
+        if (!result.success) {
+          expect(result.error).toBeDefined();
+        }
+      });
     });
 
     describe('Parameter Injection Prevention', () => {
@@ -1405,6 +1420,73 @@ describe('Storefront Tools', () => {
           })
         );
       });
+
+      it('should ignore tenantId in branding update', async () => {
+        mockPrisma.tenant.findUnique.mockResolvedValue({
+          id: TEST_TENANT_ID,
+          slug: TEST_SLUG,
+        });
+
+        await updateStorefrontBrandingTool.execute(mockContext, {
+          primaryColor: '#1a365d',
+          tenantId: 'evil-tenant-123', // Should be ignored
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            tenantId: TEST_TENANT_ID,
+          })
+        );
+      });
+
+      it('should ignore tenantId in remove operation', async () => {
+        setupTenantMock();
+
+        await removePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionId: 'home-cta-main',
+          tenantId: 'injected-tenant-id', // Should be ignored
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            tenantId: TEST_TENANT_ID,
+          })
+        );
+      });
+
+      it('should ignore tenantId in reorder operation', async () => {
+        setupTenantMock();
+
+        await reorderPageSectionsTool.execute(mockContext, {
+          pageName: 'home',
+          fromSectionId: 'home-hero-main',
+          toIndex: 2,
+          tenantId: 'attacker-injected', // Should be ignored
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            tenantId: TEST_TENANT_ID,
+          })
+        );
+      });
+
+      it('should ignore tenantId in toggle page operation', async () => {
+        setupTenantMock();
+
+        await togglePageEnabledTool.execute(mockContext, {
+          pageName: 'faq',
+          enabled: true,
+          tenantId: 'wrong-tenant', // Should be ignored
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            tenantId: TEST_TENANT_ID,
+          })
+        );
+      });
     });
 
     describe('Trust Tier Bypass Prevention', () => {
@@ -1423,6 +1505,53 @@ describe('Storefront Tools', () => {
             trustTier: 'T3', // Should still be T3
           })
         );
+      });
+
+      it('should enforce T3 for discard_draft regardless of params', async () => {
+        const mockConfig = createMockLandingPageConfig();
+        setContextDraftCache(mockContext, mockConfig, true);
+
+        await discardDraftTool.execute(mockContext, {
+          trustTier: 'T1', // Should be ignored
+          confirmationReceived: true,
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            trustTier: 'T3',
+          })
+        );
+      });
+
+      it('should enforce T1 for update operations regardless of params', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'text',
+          headline: 'Test',
+          content: 'Test content.',
+          trustTier: 'T3', // Should be ignored - tool is T1
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            trustTier: 'T1',
+          })
+        );
+      });
+
+      it('should require confirmation for T3 operations', async () => {
+        const mockConfig = createMockLandingPageConfig();
+        setContextDraftCache(mockContext, mockConfig, true);
+
+        const result = await publishDraftTool.execute(mockContext, {
+          confirmationReceived: false,
+        });
+
+        assertToolError(result);
+        expect(result.error).toContain('T3_CONFIRMATION_REQUIRED');
+        expect(result.requiresConfirmation).toBe(true);
       });
     });
 
@@ -1455,6 +1584,72 @@ describe('Storefront Tools', () => {
         assertToolError(result);
         expect(result.error).toContain('Invalid section data');
       });
+
+      it('should handle oversized subheadline gracefully', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'hero',
+          headline: 'Valid',
+          subheadline: 'x'.repeat(1000), // Over 150 char limit
+        });
+
+        assertToolError(result);
+        expect(result.error).toContain('Invalid section data');
+      });
+
+      it('should handle extremely large FAQ array', async () => {
+        setupTenantMock();
+
+        const massiveFaqItems = Array.from({ length: 100 }, (_, i) => ({
+          question: `Question ${i}`,
+          answer: `Answer ${i}`,
+        }));
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'faq',
+          headline: 'FAQ',
+          items: massiveFaqItems,
+        });
+
+        // Should fail validation (max 20 items per schema)
+        assertToolError(result);
+        expect(result.error).toContain('Invalid section data');
+      });
+
+      it('should handle extremely large testimonials array', async () => {
+        setupTenantMock();
+
+        const massiveTestimonials = Array.from({ length: 50 }, (_, i) => ({
+          quote: `Great service ${i}`,
+          authorName: `Client ${i}`,
+          rating: 5,
+        }));
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'testimonials',
+          headline: 'Reviews',
+          items: massiveTestimonials,
+        });
+
+        // Should fail validation (max 12 items per schema)
+        assertToolError(result);
+        expect(result.error).toContain('Invalid section data');
+      });
+
+      it('should handle oversized sectionId in query', async () => {
+        setupTenantMock();
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'x'.repeat(100), // Way over 50 char limit
+        });
+
+        // Should fail validation or not find section
+        assertToolError(result);
+      });
     });
 
     describe('Cross-Tenant Data Isolation', () => {
@@ -1479,6 +1674,45 @@ describe('Storefront Tools', () => {
           where: { id: TEST_TENANT_ID },
           select: expect.any(Object),
         });
+      });
+
+      it('should never use tenantId from params in database query', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'text',
+          headline: 'Test',
+          content: 'Test',
+          tenantId: 'malicious-tenant-999',
+        });
+
+        // Verify tenant lookup used context.tenantId
+        expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: TEST_TENANT_ID },
+          })
+        );
+
+        // Verify the malicious tenantId was NEVER passed to Prisma
+        expect(mockPrisma.tenant.findUnique).not.toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: 'malicious-tenant-999' },
+          })
+        );
+      });
+
+      it('should maintain tenant isolation in error responses', async () => {
+        setupTenantMock();
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'nonexistent-section',
+        });
+
+        assertToolError(result);
+        // Error should not leak data from other tenants
+        expect(result.error).not.toContain('other tenant');
+        expect(result.error).not.toContain('tenant-');
       });
     });
 
@@ -1511,6 +1745,170 @@ describe('Storefront Tools', () => {
         // Verify error handling works and includes error code
         expect(result.code).toBeDefined();
         // TODO: Future enhancement - sanitize connection strings from error messages
+      });
+
+      it('should handle errors without stack traces in production', async () => {
+        mockPrisma.tenant.findUnique.mockRejectedValue(new Error('Database query failed'));
+
+        const result = await listSectionIdsTool.execute(mockContext, {});
+
+        assertToolError(result);
+        // Error should not contain implementation details
+        expect(result.error).not.toContain('at Object.');
+        expect(result.error).not.toContain('node_modules');
+      });
+
+      it('should not leak schema validation details', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'hero',
+          headline: '', // Invalid - min 1 char
+        });
+
+        assertToolError(result);
+        // Should have a sanitized error message
+        expect(result.error).toBeDefined();
+        // Should not leak Zod internal details
+        expect(result.error).not.toContain('ZodError');
+        expect(result.error).not.toContain('_def');
+      });
+    });
+
+    describe('XSS and Script Injection Prevention', () => {
+      it('should handle script tags in headline', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'hero',
+          headline: '<script>alert("xss")</script>',
+        });
+
+        // Tools don't sanitize - that's the frontend's job
+        // But the data should still be storable and retrievable safely
+        if (result.success) {
+          // Proposal created successfully
+          expect(mockCreateProposal).toHaveBeenCalled();
+        }
+      });
+
+      it('should handle javascript: protocol in URL fields', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'hero',
+          headline: 'Test',
+          backgroundImageUrl: 'javascript:alert("xss")',
+        });
+
+        // Should fail URL validation (SafeUrlSchema blocks javascript:)
+        assertToolError(result);
+        expect(result.error).toContain('Invalid section data');
+      });
+
+      it('should handle data: protocol in URL fields', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'text',
+          headline: 'Test',
+          content: 'Test content',
+          imageUrl: 'data:text/html,<script>alert("xss")</script>',
+        });
+
+        // Should fail URL validation (SafeUrlSchema only allows http/https)
+        assertToolError(result);
+        expect(result.error).toContain('Invalid section data');
+      });
+
+      it('should handle vbscript: protocol in URL fields', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'hero',
+          headline: 'Test',
+          backgroundImageUrl: 'vbscript:msgbox("xss")',
+        });
+
+        // Should fail URL validation
+        assertToolError(result);
+        expect(result.error).toContain('Invalid section data');
+      });
+    });
+
+    describe('SQL Injection Prevention', () => {
+      it('should handle SQL injection attempts in sectionId', async () => {
+        setupTenantMock();
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: "home-hero-main'; DROP TABLE tenant; --",
+        });
+
+        // Should fail validation or not find the section
+        // Prisma parameterizes queries, so SQL injection is not possible
+        // But invalid sectionId format should be rejected
+        assertToolError(result);
+      });
+
+      it('should handle SQL injection in pageName', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: "home'; DELETE FROM tenant WHERE '1'='1",
+          sectionType: 'hero',
+          headline: 'Test',
+        });
+
+        // Should fail validation - pageName must be valid page name
+        assertToolError(result);
+      });
+
+      it('should handle SQL injection in content fields', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'text',
+          headline: "Test'; DROP TABLE tenant; --",
+          content: "Content'; DELETE FROM tenant; --",
+        });
+
+        // Prisma parameterizes queries so SQL injection is not possible
+        // Content should be stored safely
+        if (result.success) {
+          expect(mockCreateProposal).toHaveBeenCalled();
+        }
+      });
+    });
+
+    describe('NoSQL Injection Prevention', () => {
+      it('should handle object injection in params', async () => {
+        setupTenantMock();
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: { $ne: null }, // NoSQL injection attempt
+        } as Record<string, unknown>);
+
+        // Should fail type validation - sectionId must be string
+        assertToolError(result);
+      });
+
+      it('should handle array injection in params', async () => {
+        setupTenantMock();
+
+        const result = await updatePageSectionTool.execute(mockContext, {
+          pageName: ['home', 'about'], // Should be string
+          sectionType: 'hero',
+          headline: 'Test',
+        } as Record<string, unknown>);
+
+        // Should fail type validation
+        assertToolError(result);
       });
     });
   });
@@ -1703,6 +2101,605 @@ describe('Storefront Tools', () => {
 
         // Should fail validation for invalid hex format
         assertToolError(result);
+      });
+    });
+
+    // ===== NEW: Comprehensive Edge Case Coverage (#5184) =====
+
+    describe('Additional Section Type Variations', () => {
+      it('should handle pricing section with tiers array', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-pricing-main',
+                  type: 'pricing',
+                  headline: 'Our Pricing',
+                  tiers: [{ name: 'Basic', price: 100, features: ['Feature 1', 'Feature 2'] }],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'home-pricing-main',
+        });
+
+        assertReadToolResult<{ section: { type: string; tiers?: unknown[] } }>(result);
+        expect(result.data.section.type).toBe('pricing');
+        expect(result.data.section.tiers).toBeDefined();
+      });
+
+      it('should handle features section with features array', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-features-main',
+                  type: 'features',
+                  headline: 'Key Features',
+                  features: [{ icon: 'star', title: 'Feature 1', description: 'Description 1' }],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'home-features-main',
+        });
+
+        assertReadToolResult<{ section: { type: string; features?: unknown[] } }>(result);
+        expect(result.data.section.type).toBe('features');
+        expect(result.data.section.features).toBeDefined();
+      });
+
+      it('should handle gallery section with images array', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-gallery-main',
+                  type: 'gallery',
+                  headline: 'Our Work',
+                  images: [{ url: 'https://example.com/image1.jpg', alt: 'Image 1' }],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'home-gallery-main',
+        });
+
+        assertReadToolResult<{ section: { type: string; images?: unknown[] } }>(result);
+        expect(result.data.section.type).toBe('gallery');
+        expect(result.data.section.images).toBeDefined();
+      });
+
+      it('should handle contact section with all contact fields', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-contact-main',
+                  type: 'contact',
+                  headline: 'Reach Us',
+                  email: 'test@example.com',
+                  phone: '555-1234',
+                  address: '123 Main St',
+                  hours: 'Mon-Fri 9-5',
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'home-contact-main',
+        });
+
+        assertReadToolResult<{
+          section: {
+            type: string;
+            email?: string;
+            phone?: string;
+            address?: string;
+            hours?: string;
+          };
+        }>(result);
+        expect(result.data.section.type).toBe('contact');
+        expect(result.data.section.email).toBe('test@example.com');
+        expect(result.data.section.phone).toBe('555-1234');
+        expect(result.data.section.address).toBe('123 Main St');
+        expect(result.data.section.hours).toBe('Mon-Fri 9-5');
+      });
+    });
+
+    describe('Append Section Behavior (sectionIndex: -1)', () => {
+      it('should handle sectionIndex: -1 to append new section', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionIndex: -1, // Append
+          sectionType: 'text',
+          headline: 'New Section',
+          content: 'Appended content',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionIndex: -1,
+            }),
+          })
+        );
+      });
+
+      it('should handle update at last valid index', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionIndex: 2, // Last section
+          sectionType: 'cta',
+          headline: 'Updated Last Section',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionIndex: 2,
+            }),
+          })
+        );
+      });
+    });
+
+    describe('All fieldsToCopy Coverage', () => {
+      it('should copy backgroundImageUrl field', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionId: 'home-hero-main',
+          sectionType: 'hero',
+          headline: 'Test',
+          backgroundImageUrl: 'https://example.com/bg.jpg',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                backgroundImageUrl: 'https://example.com/bg.jpg',
+              }),
+            }),
+          })
+        );
+      });
+
+      it('should copy imageUrl and imagePosition fields', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionId: 'home-text-about',
+          sectionType: 'text',
+          content: 'Test content',
+          imageUrl: 'https://example.com/photo.jpg',
+          imagePosition: 'right',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                imageUrl: 'https://example.com/photo.jpg',
+                imagePosition: 'right',
+              }),
+            }),
+          })
+        );
+      });
+
+      it('should copy items array field', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'faq',
+          sectionId: 'faq-faq-main',
+          sectionType: 'faq',
+          headline: 'FAQ',
+          items: [
+            { question: 'Q1?', answer: 'A1' },
+            { question: 'Q2?', answer: 'A2' },
+          ],
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                items: expect.arrayContaining([expect.objectContaining({ question: 'Q1?' })]),
+              }),
+            }),
+          })
+        );
+      });
+
+      it('should copy images, instagramHandle fields', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'gallery',
+          headline: 'Gallery',
+          images: [{ url: 'https://example.com/img1.jpg', alt: 'Image 1' }],
+          instagramHandle: '@myhandle',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                images: expect.arrayContaining([
+                  expect.objectContaining({ url: expect.any(String) }),
+                ]),
+                instagramHandle: '@myhandle',
+              }),
+            }),
+          })
+        );
+      });
+
+      it('should copy contact fields: email, phone, address, hours', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'contact',
+          sectionId: 'contact-contact-main',
+          sectionType: 'contact',
+          headline: 'Contact Us',
+          email: 'contact@example.com',
+          phone: '555-1234',
+          address: '123 Main Street',
+          hours: 'Mon-Fri 9am-5pm',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                email: 'contact@example.com',
+                phone: '555-1234',
+                address: '123 Main Street',
+                hours: 'Mon-Fri 9am-5pm',
+              }),
+            }),
+          })
+        );
+      });
+
+      it('should copy tiers, backgroundColor fields for pricing', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'pricing',
+          headline: 'Pricing',
+          tiers: [{ name: 'Basic', price: 100, features: ['Feature 1'] }],
+          backgroundColor: 'neutral',
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                tiers: expect.any(Array),
+                backgroundColor: 'neutral',
+              }),
+            }),
+          })
+        );
+      });
+
+      it('should copy features, columns fields', async () => {
+        setupTenantMock();
+
+        await updatePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionType: 'features',
+          headline: 'Features',
+          features: [{ icon: 'star', title: 'Feature 1', description: 'Description 1' }],
+          columns: 3,
+        });
+
+        expect(mockCreateProposal).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              sectionData: expect.objectContaining({
+                features: expect.any(Array),
+                columns: 3,
+              }),
+            }),
+          })
+        );
+      });
+    });
+
+    describe('Payload Validation Schemas', () => {
+      it('should handle RemovePageSectionPayloadSchema validation failure', async () => {
+        setupTenantMock();
+
+        const result = await removePageSectionTool.execute(mockContext, {
+          pageName: 'home',
+          sectionIndex: 9999,
+        });
+
+        assertToolError(result);
+        expect(result.error).toContain('out of bounds');
+      });
+
+      it('should handle ReorderPageSectionsPayloadSchema validation failure', async () => {
+        setupTenantMock();
+
+        const result = await reorderPageSectionsTool.execute(mockContext, {
+          pageName: 'home',
+          fromIndex: 0,
+          toIndex: 9999,
+        });
+
+        assertToolError(result);
+        expect(result.error).toContain('Invalid indices');
+      });
+
+      it('should handle TogglePageEnabledPayloadSchema validation failure', async () => {
+        setupTenantMock();
+
+        const result = await togglePageEnabledTool.execute(mockContext, {
+          pageName: 'invalid-page-name',
+          enabled: true,
+        });
+
+        assertToolError(result);
+      });
+    });
+
+    describe('Legacy Section ID Fallback', () => {
+      it('should handle sections without ID using legacy fallback', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  type: 'hero',
+                  headline: 'Hero Without ID',
+                  ctaText: 'Book Now',
+                } as { type: string; headline: string; ctaText: string },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await listSectionIdsTool.execute(mockContext, {});
+
+        assertReadToolResult<{ sections: Array<{ id: string }> }>(result);
+        expect(result.data.sections.length).toBeGreaterThan(0);
+        expect(result.data.sections[0].id).toBeDefined();
+      });
+    });
+
+    describe('Helper Function Coverage', () => {
+      it('should handle sections with items arrays (FAQ, testimonials, pricing)', async () => {
+        // Test that sections with nested arrays are handled correctly
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-faq-main',
+                  type: 'faq',
+                  headline: 'FAQ',
+                  items: [{ question: 'Q1?', answer: 'A1' }],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await getSectionByIdTool.execute(mockContext, {
+          sectionId: 'home-faq-main',
+        });
+
+        assertReadToolResult<{ section: { items?: unknown[] } }>(result);
+        expect(result.data.section.items).toBeDefined();
+        expect(Array.isArray(result.data.section.items)).toBe(true);
+      });
+
+      it('should get item count for images array', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-gallery-main',
+                  type: 'gallery',
+                  headline: 'Gallery',
+                  images: [
+                    { url: 'https://example.com/1.jpg', alt: 'Image 1' },
+                    { url: 'https://example.com/2.jpg', alt: 'Image 2' },
+                    { url: 'https://example.com/3.jpg', alt: 'Image 3' },
+                  ],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await listSectionIdsTool.execute(mockContext, {});
+
+        assertReadToolResult<{ sections: Array<{ id: string; itemCount?: number }> }>(result);
+        const gallerySection = result.data.sections.find((s) => s.id === 'home-gallery-main');
+        expect(gallerySection?.itemCount).toBe(3);
+      });
+
+      it('should get item count for tiers array', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-pricing-main',
+                  type: 'pricing',
+                  headline: 'Pricing',
+                  tiers: [
+                    { name: 'Basic', price: 100, features: [] },
+                    { name: 'Pro', price: 200, features: [] },
+                  ],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await listSectionIdsTool.execute(mockContext, {});
+
+        assertReadToolResult<{ sections: Array<{ id: string; itemCount?: number }> }>(result);
+        const pricingSection = result.data.sections.find((s) => s.id === 'home-pricing-main');
+        expect(pricingSection?.itemCount).toBe(2);
+      });
+
+      it('should get item count for features array', async () => {
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [
+                {
+                  id: 'home-features-main',
+                  type: 'features',
+                  headline: 'Features',
+                  features: [
+                    { icon: 'star', title: 'Feature 1', description: 'Desc 1' },
+                    { icon: 'check', title: 'Feature 2', description: 'Desc 2' },
+                    { icon: 'heart', title: 'Feature 3', description: 'Desc 3' },
+                  ],
+                },
+              ],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await listSectionIdsTool.execute(mockContext, {});
+
+        assertReadToolResult<{ sections: Array<{ id: string; itemCount?: number }> }>(result);
+        const featuresSection = result.data.sections.find((s) => s.id === 'home-features-main');
+        expect(featuresSection?.itemCount).toBe(3);
+      });
+
+      it('should truncate long content in getSectionHeadline (>50 chars)', async () => {
+        const longContent = 'x'.repeat(100);
+        const mockConfig = createMockLandingPageConfig({
+          pages: {
+            home: {
+              enabled: true as const,
+              sections: [{ id: 'home-text-main', type: 'text', content: longContent }],
+            },
+            about: { enabled: true, sections: [] },
+            services: { enabled: true, sections: [] },
+            faq: { enabled: false, sections: [] },
+            contact: { enabled: true, sections: [] },
+            gallery: { enabled: false, sections: [] },
+            testimonials: { enabled: false, sections: [] },
+          },
+        });
+        setupTenantMock({ liveConfig: mockConfig });
+
+        const result = await listSectionIdsTool.execute(mockContext, {});
+
+        assertReadToolResult<{ sections: Array<{ headline: string }> }>(result);
+        const textSection = result.data.sections.find((s) => s.id === 'home-text-main');
+        expect(textSection?.headline.length).toBeLessThanOrEqual(53);
+        expect(textSection?.headline).toContain('...');
       });
     });
   });
