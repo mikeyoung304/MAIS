@@ -888,6 +888,63 @@ grep -rn "audit" server/src/ --include="*.ts" | grep -v "session.audit.ts" | wc 
 
 ---
 
+## Token-Based Authentication (CRITICAL)
+
+### Generation/Validation Identifier Mismatch
+
+```typescript
+// WRONG - Different identifiers for generation vs validation
+// Generation (booking.service.ts):
+const project = await prisma.project.create({
+  data: { customerId: customer.email }, // Stores EMAIL
+});
+const token = generateToken({ customerId: project.customerId }); // Email in token
+
+// Validation (public-project.routes.ts):
+if (token.customerId !== project.booking.customer?.id) {
+  // Compares to CUID!
+  return 403; // ALWAYS fails - email !== CUID
+}
+
+// CORRECT - Same identifier for both
+// Generation:
+const token = generateToken({ customerId: project.customerId }); // Email
+
+// Validation:
+// Note: project.customerId stores email, not CUID
+if (token.customerId !== project.customerId) {
+  // Both are email
+  return 403;
+}
+```
+
+### Token Auth Checklist
+
+```markdown
+Before implementing token-based auth:
+
+- [ ] Document field type (email vs CUID vs UUID) in code comments
+- [ ] Verify SAME field used for generation AND validation
+- [ ] Add inline comments at validation points explaining comparison
+- [ ] Write integration test exercising full flow (generate -> use -> validate)
+```
+
+### Quick Detection
+
+```bash
+# Find token generation points
+rg "generateToken|generateProjectAccessToken|jwt.sign" --type ts
+
+# Find token validation points
+rg "validateToken|validateProjectAccessToken|jwt.verify" --type ts -A 10
+
+# Cross-reference: Are they using the same field?
+```
+
+**Full Reference:** [project-hub-token-validation-customerid-mismatch.md](./authentication-issues/project-hub-token-validation-customerid-mismatch.md)
+
+---
+
 ## Multi-Tenant Configuration URLs
 
 ### Static Config Anti-Pattern (CRITICAL)
@@ -952,4 +1009,4 @@ Is URL customer-facing (redirects, callbacks)?
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2026-01-24
+**Last Updated:** 2025-01-25

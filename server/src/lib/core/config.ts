@@ -10,6 +10,12 @@ dotenv.config();
 
 const ConfigSchema = z.object({
   ADAPTERS_PRESET: z.enum(['mock', 'real']).default('mock'),
+  // Auto-confirm bookings after payment (skip PAID status, go directly to CONFIRMED)
+  // Useful for testing/demo purposes where manual confirmation is not needed
+  AUTO_CONFIRM_BOOKINGS: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
   API_PORT: z.coerce.number().int().positive().default(3001),
   API_BASE_URL: z.string().url().optional().default('http://localhost:5000'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),

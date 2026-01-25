@@ -280,6 +280,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 81. Duplicate queries across service chain - When method A fetches data then calls method B which fetches the same data, pass pre-fetched data as optional parameter: `methodB(input, prefetchedData?)`. Example: `createCheckout(input, prefetchedPackage?)` avoids re-fetching package. See `wedding-booking.orchestrator.ts`
 82. Missing payment service tests - Payment-related services (RefundProcessingService, WeddingDepositService, CheckoutSessionFactory, AppointmentBookingService) handle real money; require comprehensive test coverage including error paths, idempotency, and multi-tenant isolation
 
+### Token-Based Auth Pitfalls (83)
+
+83. Token generation/validation identifier mismatch - When generating JWT tokens, ensure the SAME field is used for both generation AND validation; `project.customerId` (email) vs `project.booking.customer?.id` (CUID) caused 403 errors; document field types in comments (email vs CUID vs UUID). See `docs/solutions/authentication-issues/project-hub-token-validation-customerid-mismatch.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:

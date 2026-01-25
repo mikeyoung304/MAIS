@@ -102,6 +102,7 @@ export class BookingService {
   private readonly _eventEmitter: EventEmitter;
   private readonly tenantRepo: PrismaTenantRepository;
   private readonly prisma?: PrismaClient;
+  private readonly config: Config;
 
   constructor(options: BookingServiceOptions) {
     // Store original dependencies for onPaymentCompleted
@@ -110,6 +111,7 @@ export class BookingService {
     this.prisma = options.prisma;
     this._eventEmitter = options.eventEmitter;
     this.tenantRepo = options.tenantRepo;
+    this.config = options.config;
 
     // Initialize CheckoutSessionFactory
     this.checkoutFactory = new CheckoutSessionFactory(
@@ -217,17 +219,33 @@ export class BookingService {
   /**
    * Handles balance payment completion
    * @delegate WeddingDepositService.completeBalancePayment
+   *
+   * When AUTO_CONFIRM_BOOKINGS is enabled, the booking is additionally
+   * updated to CONFIRMED status after balance payment.
    */
   async onBalancePaymentCompleted(
     tenantId: string,
     bookingId: string,
     balanceAmountCents: number
   ): Promise<Booking> {
-    return this.weddingDepositService.completeBalancePayment(
+    let booking = await this.weddingDepositService.completeBalancePayment(
       tenantId,
       bookingId,
       balanceAmountCents
     );
+
+    // AUTO_CONFIRM_BOOKINGS: When enabled, upgrade from PAID to CONFIRMED
+    if (this.config.AUTO_CONFIRM_BOOKINGS && booking.status === 'PAID') {
+      logger.info(
+        { tenantId, bookingId, email: booking.email },
+        'Auto-confirming booking after balance payment (AUTO_CONFIRM_BOOKINGS enabled)'
+      );
+      booking = await this.bookingRepo.update(tenantId, bookingId, {
+        status: 'CONFIRMED',
+      });
+    }
+
+    return booking;
   }
 
   /**
@@ -480,12 +498,15 @@ export class BookingService {
         : undefined;
 
     // Handle deposit vs full payment
+    // AUTO_CONFIRM_BOOKINGS: When enabled, bookings go directly to CONFIRMED status
+    // This is useful for testing/demo purposes where manual confirmation is not needed
     let depositPaidAmount: number | undefined;
     let balanceDueDate: string | undefined;
-    let bookingStatus: Booking['status'] = 'PAID';
+    let bookingStatus: Booking['status'] = this.config.AUTO_CONFIRM_BOOKINGS ? 'CONFIRMED' : 'PAID';
 
     if (input.isDeposit && input.depositPercent) {
       depositPaidAmount = input.totalCents;
+      // Deposit bookings remain DEPOSIT_PAID even with auto-confirm, as balance is still owed
       bookingStatus = 'DEPOSIT_PAID';
 
       const tenant = await this.tenantRepo.findById(tenantId);
@@ -495,6 +516,13 @@ export class BookingService {
           .toISOString()
           .split('T')[0];
       }
+    }
+
+    if (this.config.AUTO_CONFIRM_BOOKINGS && !input.isDeposit) {
+      logger.info(
+        { tenantId, packageId: input.packageId, email: input.email },
+        'Auto-confirming booking (AUTO_CONFIRM_BOOKINGS enabled)'
+      );
     }
 
     // Create booking with commission data and reminder
