@@ -302,9 +302,10 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Verify token's customer ID matches the project's customer
-      const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
-      if (tokenResult.payload.customerId !== projectCustomerId) {
+      // Verify token's customer ID matches the project's customerId
+      // Note: project.customerId stores the email (set in booking.service.ts during project creation)
+      // Token is generated with project.customerId, so we must validate against the same field
+      if (tokenResult.payload.customerId !== project.customerId) {
         res.status(403).json({ error: 'Access denied' });
         return;
       }
@@ -390,6 +391,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         where: { id: projectId, tenantId },
         select: {
           id: true,
+          customerId: true, // Used for token validation
           booking: { select: { customerId: true, customer: { select: { id: true } } } },
         },
       });
@@ -399,9 +401,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Verify customer ID matches token
-      const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
-      if (tokenResult.payload.customerId !== projectCustomerId) {
+      // Verify customer ID matches token (uses project.customerId which is the email)
+      if (tokenResult.payload.customerId !== project.customerId) {
         res.status(403).json({ error: 'Access denied' });
         return;
       }
@@ -496,9 +497,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           return;
         }
 
-        // Verify customer ID matches token
-        const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
-        if (tokenResult.payload.customerId !== projectCustomerId) {
+        // Verify customer ID matches token (uses project.customerId which is the email)
+        if (tokenResult.payload.customerId !== project.customerId) {
           res.status(403).json({ error: 'Access denied' });
           return;
         }
@@ -519,7 +519,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         res.json({
           sessionId,
           projectId,
-          customerId: project.booking.customer?.id ?? project.booking.customerId,
+          customerId: project.customerId,
           greeting: `Hi ${customerName}! I'm here to help you with your ${serviceName} booking with ${businessName}. How can I assist you today?`,
           businessName,
         });
@@ -594,14 +594,13 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           return;
         }
 
-        // Verify customer ID matches token
-        const projectCustomerId = project.booking.customer?.id ?? project.booking.customerId;
-        if (tokenResult.payload.customerId !== projectCustomerId) {
+        // Verify customer ID matches token (uses project.customerId which is the email)
+        if (tokenResult.payload.customerId !== project.customerId) {
           res.status(403).json({ error: 'Access denied' });
           return;
         }
 
-        const customerId = projectCustomerId;
+        const customerId = project.customerId;
 
         // Call Project Hub agent via internal API
         // The agent is deployed to Cloud Run
