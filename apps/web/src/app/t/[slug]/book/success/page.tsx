@@ -1,16 +1,7 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import {
-  CheckCircle,
-  Calendar,
-  Mail,
-  Users,
-  Package as PackageIcon,
-  Home,
-  ArrowRight,
-  MessageCircle,
-} from 'lucide-react';
+import { CheckCircle, Calendar, Mail, Users, Package as PackageIcon, Home } from 'lucide-react';
 import {
   getTenantBySlug,
   getBookingById,
@@ -83,6 +74,11 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
     // Note: Booking details require booking_id which comes from metadata
     if (sessionId) {
       projectData = await getProjectBySessionId(tenant.apiKeyPublic, sessionId);
+
+      // If project exists, redirect directly to Project Hub
+      if (projectData) {
+        redirect(`/t/${slug}/project/${projectData.projectId}?token=${projectData.accessToken}`);
+      }
     }
 
     // Fetch booking details if we have booking_id
@@ -213,33 +209,8 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
 
           {/* Footer with Action Buttons */}
           <CardFooter className="flex-col gap-4 pt-6">
-            {/* Primary CTA: Project Hub (if project exists) */}
-            {projectData && (
-              <div className="w-full text-center space-y-3">
-                <p className="text-white/80 text-sm">
-                  Your Project Hub is ready! Chat with our AI assistant, track progress, and manage
-                  your booking.
-                </p>
-                <Button asChild variant="sage" size="xl" className="w-full sm:w-auto">
-                  <Link
-                    href={`/t/${slug}/project/${projectData.projectId}?token=${projectData.accessToken}`}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    Go to Your Project Hub
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-
-            {/* Secondary: Back to homepage */}
-            <Button
-              asChild
-              variant={projectData ? 'ghost' : 'sage'}
-              size={projectData ? 'lg' : 'xl'}
-              className={projectData ? 'text-white/70 hover:text-white' : ''}
-            >
+            {/* Back to homepage - shown while waiting for project creation */}
+            <Button asChild variant="sage" size="xl">
               <Link href={`/t/${slug}`} className="flex items-center gap-2">
                 <Home className="w-5 h-5" />
                 Back to {tenant.name}
