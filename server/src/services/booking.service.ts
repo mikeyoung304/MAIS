@@ -451,10 +451,13 @@ export class BookingService {
     }
   ): Promise<Booking> {
     // PERFORMANCE FIX: Fetch package with add-ons in single query (eliminates N+1)
-    const packageSlug = input.packageId;
-    const pkg = await this.catalogRepo.getPackageBySlugWithAddOns(tenantId, packageSlug);
+    // FIX: Use getPackageByIdWithAddOns since input.packageId is a CUID, not a slug
+    const pkg = await this.catalogRepo.getPackageByIdWithAddOns(tenantId, input.packageId);
     if (!pkg) {
-      logger.warn({ tenantId, packageSlug }, 'Package not found in payment completion flow');
+      logger.warn(
+        { tenantId, packageId: input.packageId },
+        'Package not found in payment completion flow'
+      );
       throw new NotFoundError('The requested resource was not found');
     }
 

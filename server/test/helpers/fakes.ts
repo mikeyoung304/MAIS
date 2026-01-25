@@ -72,14 +72,8 @@ export class FakeBookingRepository implements BookingRepository {
    * Update booking fields (refund status, reschedule, cancel, etc.)
    * Used by RefundProcessingService and BookingLifecycleService
    */
-  async update(
-    tenantId: string,
-    bookingId: string,
-    data: Partial<Booking>
-  ): Promise<Booking> {
-    const index = this.bookings.findIndex(
-      (b) => b.tenantId === tenantId && b.id === bookingId
-    );
+  async update(tenantId: string, bookingId: string, data: Partial<Booking>): Promise<Booking> {
+    const index = this.bookings.findIndex((b) => b.tenantId === tenantId && b.id === bookingId);
     if (index === -1) {
       throw new Error(`Booking ${bookingId} not found`);
     }
@@ -98,9 +92,7 @@ export class FakeBookingRepository implements BookingRepository {
     bookingId: string,
     balanceAmountCents: number
   ): Promise<Booking | null> {
-    const index = this.bookings.findIndex(
-      (b) => b.tenantId === tenantId && b.id === bookingId
-    );
+    const index = this.bookings.findIndex((b) => b.tenantId === tenantId && b.id === bookingId);
 
     if (index === -1) {
       return null;
@@ -170,6 +162,20 @@ export class FakeCatalogRepository implements CatalogRepository {
 
   async getPackageById(tenantId: string, id: string): Promise<Package | null> {
     return this.packages.find((p) => p.id === id) || null;
+  }
+
+  async getPackageByIdWithAddOns(
+    tenantId: string,
+    id: string
+  ): Promise<(Package & { addOns: AddOn[] }) | null> {
+    const pkg = this.packages.find((p) => p.id === id);
+    if (!pkg) {
+      return null;
+    }
+    return {
+      ...pkg,
+      addOns: this.addOns.filter((a) => a.packageId === pkg.id),
+    };
   }
 
   async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]> {

@@ -160,7 +160,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_123', {
-        packageId: 'basic',
+        packageId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -206,7 +206,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_123', {
-        packageId: 'basic',
+        packageId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -244,7 +244,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_connect', {
-        packageId: 'premium',
+        packageId: 'pkg_1', // Use package ID, not slug
         coupleName: 'Jane & Bob',
         email: 'couple@example.com',
         eventDate: '2025-08-15',
@@ -285,7 +285,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_standard', {
-        packageId: 'basic',
+        packageId: 'pkg_1', // Use package ID, not slug
         coupleName: 'Alice & Charlie',
         email: 'couple@example.com',
         eventDate: '2025-09-20',

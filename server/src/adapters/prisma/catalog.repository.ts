@@ -115,6 +115,43 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return pkg ? this.toDomainPackage(pkg) : null;
   }
 
+  /**
+   * Get package by ID with add-ons in a single query.
+   * Used by onPaymentCompleted when we have package ID from Stripe metadata.
+   */
+  async getPackageByIdWithAddOns(
+    tenantId: string,
+    id: string
+  ): Promise<(Package & { addOns: AddOn[] }) | null> {
+    const pkg = await this.prisma.package.findFirst({
+      where: { tenantId, id },
+      include: {
+        addOns: {
+          include: {
+            addOn: true,
+          },
+        },
+      },
+    });
+
+    if (!pkg) {
+      return null;
+    }
+
+    return {
+      ...this.toDomainPackage(pkg),
+      addOns: pkg.addOns.map((pa) =>
+        this.toDomainAddOn({
+          id: pa.addOn.id,
+          name: pa.addOn.name,
+          description: pa.addOn.description,
+          price: pa.addOn.price,
+          packages: [{ packageId: pkg.id }],
+        })
+      ),
+    };
+  }
+
   async getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]> {
     const packages = await this.prisma.package.findMany({
       where: { tenantId, id: { in: ids } },

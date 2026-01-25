@@ -68,9 +68,11 @@ export class WeddingBookingOrchestrator {
     prefetchedPackage?: { id: string; slug: string; priceCents: number }
   ): Promise<{ checkoutUrl: string }> {
     // Use pre-fetched package if provided, otherwise fetch (avoids duplicate query)
-    const pkg = prefetchedPackage ?? await this.catalogRepo.getPackageBySlug(tenantId, input.packageId);
+    // FIX: Use getPackageById since input.packageId is a CUID, not a slug
+    const pkg =
+      prefetchedPackage ?? (await this.catalogRepo.getPackageById(tenantId, input.packageId));
     if (!pkg) {
-      logger.warn({ tenantId, packageSlug: input.packageId }, 'Package not found in checkout');
+      logger.warn({ tenantId, packageId: input.packageId }, 'Package not found in checkout');
       throw new NotFoundError('The requested resource was not found');
     }
 

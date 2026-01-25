@@ -251,6 +251,19 @@ export class MockCatalogRepository implements CatalogRepository {
     return packages.get(id) || null;
   }
 
+  async getPackageByIdWithAddOns(
+    _tenantId: string,
+    id: string
+  ): Promise<(Package & { addOns: AddOn[] }) | null> {
+    // Mock mode: Ignore tenantId
+    const pkg = packages.get(id);
+    if (!pkg) return null;
+    return {
+      ...pkg,
+      addOns: Array.from(addOns.values()).filter((a) => a.packageId === pkg.id),
+    };
+  }
+
   async getPackagesByIds(_tenantId: string, ids: string[]): Promise<Package[]> {
     // Mock mode: Ignore tenantId
     return ids.map((id) => packages.get(id)).filter((pkg): pkg is Package => pkg !== undefined);

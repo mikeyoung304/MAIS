@@ -84,7 +84,7 @@ describe('BookingService', () => {
 
       // Act
       const result = await service.createCheckout('test-tenant', {
-        packageId: 'basic',
+        packageId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -103,7 +103,7 @@ describe('BookingService', () => {
 
       // Act
       const result = await service.createCheckout('test-tenant', {
-        packageId: 'basic',
+        packageId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',

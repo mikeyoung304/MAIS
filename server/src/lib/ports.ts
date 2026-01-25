@@ -22,6 +22,10 @@ export interface CatalogRepository {
     slug: string
   ): Promise<(Package & { addOns: AddOn[] }) | null>;
   getPackageById(tenantId: string, id: string): Promise<Package | null>;
+  getPackageByIdWithAddOns(
+    tenantId: string,
+    id: string
+  ): Promise<(Package & { addOns: AddOn[] }) | null>;
   getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>;
   getAllAddOns(tenantId: string): Promise<AddOn[]>;
   getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]>;
