@@ -491,6 +491,73 @@ export async function getProjectById(
 }
 
 /**
+ * Fetch project details for authenticated tenant view
+ *
+ * Used when a tenant is logged in and viewing their own project.
+ * Requires backend authentication token from session.
+ *
+ * @param backendToken - JWT token from authenticated tenant session
+ * @param projectId - Project ID
+ * @returns Project view data or null if not found/not authorized
+ */
+export async function getProjectByIdForTenant(
+  backendToken: string,
+  projectId: string
+): Promise<ProjectViewData | null> {
+  const url = `${API_URL}/v1/tenant-admin/projects/${encodeURIComponent(projectId)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${backendToken}`,
+    },
+    cache: 'no-store', // Always fetch fresh project data
+  });
+
+  if (response.status === 404 || response.status === 401) {
+    return null;
+  }
+
+  if (!response.ok) {
+    return null;
+  }
+
+  // The tenant-admin endpoint returns more detailed data
+  // Map it to ProjectViewData format for consistency
+  const data = await response.json();
+
+  // The tenant-admin endpoint returns a different structure
+  // Normalize to ProjectViewData format
+  return {
+    project: {
+      id: data.id,
+      status: data.status,
+      createdAt: data.createdAt,
+    },
+    booking: {
+      eventDate: data.booking?.date || data.booking?.startTime || data.createdAt,
+      serviceName: data.booking?.package?.name || 'Service',
+      customerName: data.booking?.customer?.name || data.customerName || 'Customer',
+    },
+    pendingRequests: (data.requests || [])
+      .filter((r: { status: string }) => r.status === 'PENDING')
+      .map((r: { id: string; type: string; createdAt: string }) => ({
+        id: r.id,
+        type: r.type,
+        createdAt: r.createdAt,
+      })),
+    hasPendingRequests: (data.requests || []).some(
+      (r: { status: string }) => r.status === 'PENDING'
+    ),
+    tenant: {
+      name: data.tenant?.name || '',
+      branding: data.tenant?.branding || null,
+    },
+  };
+}
+
+/**
  * Project timeline event
  */
 export interface ProjectTimelineEvent {

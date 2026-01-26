@@ -215,17 +215,71 @@ const TypingIndicator = React.memo(function TypingIndicator({
 });
 
 /**
- * Error display component
+ * Error types returned from the backend
+ */
+type ErrorType = 'agent_unavailable' | 'agent_timeout' | 'session_expired' | 'agent_error' | string;
+
+/**
+ * Error display component with retry support
  */
 interface ErrorDisplayProps {
   error: string;
+  errorType?: ErrorType;
+  onRetry?: () => void;
+  onRefresh?: () => void;
 }
 
-const ErrorDisplay = React.memo(function ErrorDisplay({ error }: ErrorDisplayProps) {
+const ErrorDisplay = React.memo(function ErrorDisplay({
+  error,
+  errorType,
+  onRetry,
+  onRefresh,
+}: ErrorDisplayProps) {
+  // User-friendly messages based on error type
+  const getMessage = () => {
+    switch (errorType) {
+      case 'agent_unavailable':
+        return 'The chat service is temporarily unavailable. Please try again in a moment.';
+      case 'agent_timeout':
+        return 'The request took too long. Please try again.';
+      case 'session_expired':
+        return 'Your chat session has expired. Please refresh to continue.';
+      case 'agent_error':
+        return 'Something went wrong. Please try again.';
+      default:
+        return error;
+    }
+  };
+
+  const canRetry = errorType === 'agent_timeout' || errorType === 'agent_error';
+  const needsRefresh = errorType === 'session_expired';
+
   return (
-    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700">
-      <AlertTriangle className="w-4 h-4 shrink-0" />
-      <span className="text-sm">{error}</span>
+    <div className="flex flex-col gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+      <div className="flex items-center gap-2 text-red-700">
+        <AlertTriangle className="w-4 h-4 shrink-0" />
+        <span className="text-sm">{getMessage()}</span>
+      </div>
+      {(canRetry || needsRefresh) && (
+        <div className="flex gap-2 mt-1">
+          {canRetry && onRetry && (
+            <button
+              onClick={onRetry}
+              className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+            >
+              Try Again
+            </button>
+          )}
+          {needsRefresh && onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+            >
+              Refresh Chat
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 });
@@ -251,7 +305,10 @@ interface ChatMessagesProps {
   isLoading: boolean;
   isInitializing: boolean;
   error: string | null;
+  errorType?: ErrorType;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  onRetry?: () => void;
+  onRefresh?: () => void;
 }
 
 const ChatMessages = React.memo(function ChatMessages({
@@ -260,7 +317,10 @@ const ChatMessages = React.memo(function ChatMessages({
   isLoading,
   isInitializing,
   error,
+  errorType,
   messagesEndRef,
+  onRetry,
+  onRefresh,
 }: ChatMessagesProps) {
   return (
     <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-neutral-50/50">
@@ -274,7 +334,14 @@ const ChatMessages = React.memo(function ChatMessages({
 
           {isLoading && <TypingIndicator primaryColor={primaryColor} />}
 
-          {error && <ErrorDisplay error={error} />}
+          {error && (
+            <ErrorDisplay
+              error={error}
+              errorType={errorType}
+              onRetry={onRetry}
+              onRefresh={onRefresh}
+            />
+          )}
 
           <div ref={messagesEndRef} />
         </>
@@ -365,7 +432,9 @@ export function ProjectHubChatWidget({
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<ErrorType | undefined>(undefined);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [lastMessage, setLastMessage] = useState<string | null>(null); // For retry functionality
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -447,22 +516,26 @@ export function ProjectHubChatWidget({
   }, [inline, sessionId, isInitializing, initializeChat]);
 
   // Send message to Project Hub agent
-  const sendMessage = async () => {
-    const message = inputValue.trim();
+  const sendMessage = async (messageOverride?: string) => {
+    const message = messageOverride || inputValue.trim();
     if (!message || isLoading || !sessionId) return;
 
     setInputValue('');
     setError(null);
+    setErrorType(undefined);
     setIsLoading(true);
+    setLastMessage(message); // Store for retry
 
-    // Add user message immediately
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
+    // Add user message immediately (only if not a retry)
+    if (!messageOverride) {
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: message,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+    }
 
     try {
       const response = await fetch(
@@ -471,12 +544,30 @@ export function ProjectHubChatWidget({
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.error || 'Failed to send message');
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          errorType?: ErrorType;
+          message?: string;
+        };
+
+        // Capture error type for UI handling
+        setErrorType(errorData.errorType);
+
+        // Handle session expiration specially
+        if (response.status === 410 || errorData.errorType === 'session_expired') {
+          setSessionId(null); // Reset session so refresh creates a new one
+        }
+
+        throw new Error(errorData.error || errorData.message || 'Failed to send message');
       }
 
       const responseData = await response.json();
       const data = MessageResponseSchema.parse(responseData);
+
+      // Update session ID if it changed (happens on first message when session was created server-side)
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+      }
 
       // Add assistant response
       const assistantMessage: ChatMessage = {
@@ -486,6 +577,7 @@ export function ProjectHubChatWidget({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+      setLastMessage(null); // Clear on success
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
@@ -493,6 +585,23 @@ export function ProjectHubChatWidget({
       inputRef.current?.focus();
     }
   };
+
+  // Retry last failed message
+  const retryLastMessage = useCallback(() => {
+    if (lastMessage) {
+      sendMessage(lastMessage);
+    }
+  }, [lastMessage]);
+
+  // Refresh chat session (used after session expiration)
+  const refreshChat = useCallback(() => {
+    setSessionId(null);
+    setError(null);
+    setErrorType(undefined);
+    setLastMessage(null);
+    // Keep messages but re-initialize session
+    initializeChat();
+  }, [initializeChat]);
 
   // Handle enter key
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -509,7 +618,10 @@ export function ProjectHubChatWidget({
     isLoading,
     isInitializing,
     error,
+    errorType,
     messagesEndRef,
+    onRetry: retryLastMessage,
+    onRefresh: refreshChat,
   };
 
   const chatInputProps = {

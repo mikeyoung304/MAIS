@@ -12,13 +12,22 @@ import {
 import {
   getTenantBySlug,
   getProjectById,
+  getProjectByIdForTenant,
   getProjectTimeline,
   TenantNotFoundError,
   type ProjectTimelineEvent,
 } from '@/lib/tenant';
+import { auth, getBackendToken } from '@/lib/auth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
 import ProjectHubChatWidget from '@/components/chat/ProjectHubChatWidget';
+
+/**
+ * Role type for Project Hub view
+ * - customer: Accessing via token link (public access)
+ * - tenant: Logged in tenant viewing their own project (authenticated)
+ */
+type ProjectHubRole = 'customer' | 'tenant';
 
 interface ProjectPageProps {
   params: Promise<{
@@ -67,11 +76,7 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
   const { slug, projectId } = await params;
   const { token } = await searchParams;
 
-  // Token is required for authentication
-  if (!token) {
-    redirect(`/t/${slug}?error=missing_token`);
-  }
-
+  // Get tenant first (needed for both auth paths)
   let tenant;
   try {
     tenant = await getTenantBySlug(slug);
@@ -82,15 +87,54 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
     throw error;
   }
 
-  // Fetch project data with token authentication
-  const project = await getProjectById(tenant.apiKeyPublic, projectId, { token });
-  if (!project) {
-    // Token invalid, expired, or project not found
-    redirect(`/t/${slug}?error=invalid_token`);
-  }
+  // Role detection priority: token > session
+  // This allows tenants to use customer links for support viewing
+  let role: ProjectHubRole;
+  let project;
+  let timeline: ProjectTimelineEvent[] = [];
 
-  // Fetch timeline
-  const timeline = await getProjectTimeline(tenant.apiKeyPublic, projectId, token);
+  if (token) {
+    // Token present: Customer view (or tenant using customer link for support)
+    role = 'customer';
+    project = await getProjectById(tenant.apiKeyPublic, projectId, { token });
+
+    if (!project) {
+      // Token invalid, expired, or project not found
+      redirect(`/t/${slug}?error=invalid_token`);
+    }
+
+    // Fetch timeline with token auth
+    timeline = await getProjectTimeline(tenant.apiKeyPublic, projectId, token);
+  } else {
+    // No token: Check for authenticated tenant session
+    const session = await auth();
+
+    if (session?.user?.tenantId === tenant.id) {
+      // Tenant is logged in and owns this tenant - use session auth
+      role = 'tenant';
+
+      // Get backend token for API call
+      const backendToken = await getBackendToken();
+      if (!backendToken) {
+        // Session exists but token missing - shouldn't happen, redirect to login
+        redirect(`/login?callbackUrl=/t/${slug}/project/${projectId}`);
+      }
+
+      project = await getProjectByIdForTenant(backendToken, projectId);
+
+      if (!project) {
+        // Project not found or not owned by this tenant
+        redirect(`/t/${slug}?error=project_not_found`);
+      }
+
+      // For tenant view, timeline can also be fetched via the admin endpoint
+      // For now, we'll skip timeline for tenant view (they have dashboard access)
+      timeline = [];
+    } else {
+      // No token and no valid session - access denied
+      redirect(`/t/${slug}?error=access_required`);
+    }
+  }
 
   // Extract branding colors
   const branding = tenant.branding as { primaryColor?: string } | null;
@@ -250,6 +294,8 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
                     customerName={project.booking.customerName}
                     primaryColor={primaryColor}
                     accessToken={token}
+                    contextType={role}
+                    showContextIndicator={role === 'tenant'}
                     inline
                   />
                 </CardContent>
