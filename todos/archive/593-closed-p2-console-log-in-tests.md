@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '593'
 tags: [code-review, code-quality, logging, testing]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: Console.log statements removed from calibration tests. Test output now silent in CI.'
+closed_at: '2026-01-26'
 ---
 
 # P2: Console.log Used in Integration Tests

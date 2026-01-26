@@ -1,11 +1,11 @@
 ---
-status: deferred
+status: closed
 priority: p3
 issue_id: '573'
 tags: [code-review, security, database, multi-tenant, rls]
 dependencies: []
-deferred_date: '2026-01-01'
-deferred_reason: 'Defense-in-depth improvement, not blocking. Application layer enforces tenant isolation.'
+triage_notes: 'OBSOLETE: Database migrations were reset. RLS was re-evaluated as unnecessary since application layer tenant isolation is enforced in all queries and Prisma middleware.'
+closed_at: '2026-01-26'
 ---
 
 # P1: Row-Level Security (RLS) Missing on Newer Tables

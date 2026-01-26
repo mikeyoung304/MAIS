@@ -1,13 +1,14 @@
 ---
-status: deferred
+status: closed
 priority: p3
 issue_id: '729'
-deferred_reason: 'Acknowledged technical debt. Both draft systems work correctly. Unification deferred until post-MVP.'
 tags:
   - code-review
   - architecture
   - technical-debt
 dependencies: []
+triage_notes: "WON'T FIX: Intentional technical decision. Both draft systems are documented in LandingPageService header. Unification is not worth the risk and effort for minimal gain."
+closed_at: '2026-01-26'
 ---
 
 # P3: Two Draft Systems Add Architectural Complexity

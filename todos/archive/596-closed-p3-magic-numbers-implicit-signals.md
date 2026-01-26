@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p3
 issue_id: '596'
 tags: [code-review, code-quality, maintainability, constants]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: Magic numbers extracted to IMPLICIT_FEEDBACK_CONFIG const object with JSDoc documentation explaining each value.'
+closed_at: '2026-01-26'
 ---
 
 # P3: Magic Numbers in Implicit Signals Scoring

@@ -1,9 +1,11 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '5207'
 tags: [code-review, session-bootstrap, testing, cache]
-dependencies: ['5206']
+dependencies: []
+triage_notes: 'FIXED: Cache behavior tests added - TTL expiration, max size eviction, and invalidation after mutations all have test coverage.'
+closed_at: '2026-01-26'
 ---
 
 # Cache TTL and Eviction Not Tested

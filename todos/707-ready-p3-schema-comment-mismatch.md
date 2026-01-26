@@ -1,11 +1,11 @@
 ---
-status: deferred
+status: ready
 priority: p3
 issue_id: '707'
-deferred_reason: Schema comment depends on #697 determining final publish behavior
-deferred_until: After #697 is completed
 tags: [code-review, documentation, prisma]
-dependencies: ['697']
+dependencies: []
+triage_notes: 'Dependency #697 complete. Ready for schema comment update.'
+triaged_at: '2026-01-26'
 ---
 
 # Schema Comment Mismatch for landingPageConfigDraft

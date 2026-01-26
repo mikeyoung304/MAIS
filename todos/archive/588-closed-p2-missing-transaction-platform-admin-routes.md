@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '588'
 tags: [code-review, data-integrity, transactions, database]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: Platform admin trace routes now wrapped in $transaction for atomic ReviewAction create + ConversationTrace update.'
+closed_at: '2026-01-26'
 ---
 
 # P2: Missing Transaction in Platform Admin Trace Routes

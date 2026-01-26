@@ -1,6 +1,16 @@
+---
+status: closed
+priority: p2
+issue_id: '606'
+tags: [code-review, code-quality, cli, yagni]
+dependencies: []
+triage_notes: "WON'T FIX: YAGNI - Manual arg parsing works fine for 4 flags. Adding util.parseArgs adds no user value and risks breaking working code."
+closed_at: '2026-01-26'
+---
+
 # P2: Manual Argument Parsing in CLI Script
 
-**Status:** open
+**Status:** CLOSED - YAGNI
 **Priority:** P2 (Important)
 **Category:** Code Simplicity
 **File:** `server/scripts/run-eval-batch.ts`

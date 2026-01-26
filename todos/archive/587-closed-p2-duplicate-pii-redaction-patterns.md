@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '587'
 tags: [code-review, architecture, dry, security]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: PII redaction extracted to shared module at server/src/lib/pii-redactor.ts. Both pipeline.ts and review-queue.ts now import from shared module.'
+closed_at: '2026-01-26'
 ---
 
 # P2: Duplicate PII Redaction Logic Across Modules

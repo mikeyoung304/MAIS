@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: 610
 tags: [code-review, performance, database, agent-eval]
 dependencies: []
 created: 2026-01-02
+triage_notes: 'FIXED: Composite index @@index([traceId, createdAt]) added to UserFeedback model in schema.prisma.'
+closed_at: '2026-01-26'
 ---
 
 # Missing Index for Orphaned Feedback Cleanup Query

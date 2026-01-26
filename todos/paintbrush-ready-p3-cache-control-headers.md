@@ -1,7 +1,17 @@
+---
+status: ready
+priority: p3
+issue_id: paintbrush-cache-control
+tags: [code-review, performance, caching, proxy]
+dependencies: []
+triage_notes: 'Quick win - ~10 lines of code. No dependencies. Ready for implementation.'
+triaged_at: '2026-01-26'
+---
+
 # P3 MEDIUM: Missing Cache-Control Headers on Proxy Responses
 
 **Priority:** P3 - MEDIUM
-**Status:** DEFERRED - Will circle back after higher priority work
+**Status:** READY - Quick win, ready for implementation
 **Source:** Performance Review (agent a6e02f2)
 **Date:** 2026-01-11
 

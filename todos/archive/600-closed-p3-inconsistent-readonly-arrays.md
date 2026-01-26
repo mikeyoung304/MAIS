@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p3
 issue_id: '600'
 tags: [code-review, typescript, immutability, consistency]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: Constant arrays now use "as const" pattern consistently across the codebase for compile-time immutability.'
+closed_at: '2026-01-26'
 ---
 
 # P3: Inconsistent Use of Readonly for Constant Arrays

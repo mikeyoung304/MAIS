@@ -1,7 +1,17 @@
+---
+status: closed
+priority: p3
+issue_id: paintbrush-query-singleton
+tags: [code-review, react, react-query, hmr]
+dependencies: []
+triage_notes: "WON'T FIX: Documented as intentional pattern in docs/solutions/react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md. The fallback behavior is acceptable for this use case."
+closed_at: '2026-01-26'
+---
+
 # P3 MEDIUM: QueryClient Singleton Pattern Fragile with HMR
 
 **Priority:** P3 - MEDIUM
-**Status:** DEFERRED - Will circle back after higher priority work
+**Status:** CLOSED - Documented intentional pattern
 **Source:** Code Simplicity Review (agent a66feb4)
 **Date:** 2026-01-11
 

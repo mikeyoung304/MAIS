@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '592'
 tags: [code-review, data-integrity, cleanup, database]
-dependencies: ['584']
+dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: cleanupOrphanedFeedback job added in server/src/jobs/cleanup.ts to delete orphaned UserFeedback records older than 90 days.'
+closed_at: '2026-01-26'
 ---
 
 # P2: UserFeedback Records Orphaned After Trace Deletion

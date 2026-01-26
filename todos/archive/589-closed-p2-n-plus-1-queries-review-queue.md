@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '589'
 tags: [code-review, performance, database, n-plus-1]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: submitReview now uses single $transaction with updateMany that includes tenant validation in WHERE clause.'
+closed_at: '2026-01-26'
 ---
 
 # P2: N+1 Query Pattern in Review Queue submitReview

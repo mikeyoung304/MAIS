@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p3
 issue_id: '598'
 tags: [code-review, code-quality, configuration, flexibility]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: Evaluator now uses process.env.EVAL_MODEL with fallback to default model. Documented in .env.example.'
+closed_at: '2026-01-26'
 ---
 
 # P3: Hardcoded Evaluation Model - Not Configurable

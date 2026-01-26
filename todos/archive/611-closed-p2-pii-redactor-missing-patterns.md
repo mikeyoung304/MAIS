@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: 611
 tags: [code-review, security, pii, agent-eval]
 dependencies: []
 created: 2026-01-02
+triage_notes: 'FIXED: IP address, E.164 international phone, and DOB patterns added to pii-redactor.ts.'
+closed_at: '2026-01-26'
 ---
 
 # Incomplete PII Pattern Coverage in pii-redactor.ts

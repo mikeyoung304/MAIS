@@ -1,9 +1,11 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '527'
 tags: [code-review, agent-ecosystem, security]
 dependencies: []
+triage_notes: 'FIXED: Prompt injection detection now in BaseOrchestrator.chat() - all orchestrators inherit it.'
+closed_at: '2026-01-26'
 ---
 
 # Prompt Injection Detection Only in CustomerChatOrchestrator

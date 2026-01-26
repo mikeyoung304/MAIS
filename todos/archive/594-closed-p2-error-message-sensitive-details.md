@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '594'
 tags: [code-review, security, error-handling, logging]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: flagReason now uses generic message "Evaluation failed - see logs for details". Sensitive error details logged separately.'
+closed_at: '2026-01-26'
 ---
 
 # P2: Error Message in flagReason May Leak Sensitive Details

@@ -1,10 +1,12 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '590'
 tags: [code-review, security, routing, integration]
 dependencies: []
 created_at: 2026-01-02
+triage_notes: 'FIXED: Platform admin routes now mounted in routes/index.ts with proper platformAdminAuthMiddleware protection.'
+closed_at: '2026-01-26'
 ---
 
 # P2: Platform Admin Traces Routes Not Wired - Authentication Risk

@@ -1,9 +1,11 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '5206'
 tags: [code-review, session-bootstrap, testing, internal-agent-routes]
 dependencies: []
+triage_notes: 'FIXED: Test coverage now >50% for internal-agent.routes.ts. All T3 actions (create-booking, publish, discard) have test coverage.'
+closed_at: '2026-01-26'
 ---
 
 # Test Coverage Only 15% - 17 Endpoints Untested

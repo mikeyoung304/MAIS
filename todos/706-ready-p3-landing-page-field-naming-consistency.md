@@ -1,11 +1,11 @@
 ---
-status: deferred
+status: ready
 priority: p3
 issue_id: '706'
-deferred_reason: Documentation-only change that depends on #697 and #704 completing first
-deferred_until: After #704 (LandingPageService) is completed
 tags: [code-review, documentation, naming, tech-debt]
-dependencies: ['697', '704']
+dependencies: []
+triage_notes: 'Dependencies #697 and #704 complete. Ready for documentation work.'
+triaged_at: '2026-01-26'
 ---
 
 # Inconsistent Field Naming for Landing Page Config

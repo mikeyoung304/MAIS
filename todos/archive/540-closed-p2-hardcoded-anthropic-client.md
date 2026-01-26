@@ -1,9 +1,11 @@
 ---
-status: deferred
+status: closed
 priority: p2
 issue_id: '540'
 tags: [code-review, agent-ecosystem, testing, architecture]
 dependencies: []
+triage_notes: 'OBSOLETE: System migrated from Anthropic to Google Vertex AI (Gemini). LLM client now uses factory pattern in vertex-client.ts.'
+closed_at: '2026-01-26'
 ---
 
 # Hard-coded Anthropic Client Makes Testing Difficult

@@ -1,6 +1,16 @@
+---
+status: closed
+priority: p2
+issue_id: '604'
+tags: [code-review, performance, cli, yagni]
+dependencies: []
+triage_notes: "WON'T FIX: YAGNI - Current sequential processing handles 100 tenants in ~17 min which is acceptable for daily batch jobs. Parallelization adds complexity for minimal gain."
+closed_at: '2026-01-26'
+---
+
 # P2: Sequential Tenant Processing in CLI Batch
 
-**Status:** open
+**Status:** CLOSED - YAGNI
 **Priority:** P2 (Important)
 **Category:** Performance
 **File:** `server/scripts/run-eval-batch.ts`
