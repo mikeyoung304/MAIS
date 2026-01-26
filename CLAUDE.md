@@ -289,6 +289,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 84. Orphan service pattern - Creating a service class but never importing/calling it in routes; verify with `grep -rn "import.*ServiceName" server/src/`; ESLint doesn't catch unused exports across files; detect via log prefix mismatch (old `"error"` vs new `'[Service] error'`). See `docs/solutions/patterns/SERVICE_WIRING_AND_FAKE_SESSION_PREVENTION.md`
 85. Fake session ID pattern - Generating local IDs like `project-${id}-${Date.now()}` instead of calling ADK `createSession()`; E2E test must send 2+ messages to catch this; fake sessions fail on second message with "Session not found"; use `LOCAL:` prefix if fallback is intentional. See `docs/solutions/patterns/SERVICE_WIRING_AND_FAKE_SESSION_PREVENTION.md`
 
+### React Query Pitfalls (86)
+
+86. Module-level QueryClient singleton - Using `let queryClientRef: QueryClient | null = null` set via useEffect, then calling from external code; fails because: (1) React effects run in unpredictable order, (2) HMR resets module state but not the ref, (3) SSR hydration mismatches. Use `useQueryClient()` hook or create QueryClient at module scope in `lib/query-client.ts` and import that instance. See `docs/solutions/react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -311,6 +315,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[booking-flow-404-invalid-stripe-key-stale-cache.md](docs/solutions/integration-issues/booking-flow-404-invalid-stripe-key-stale-cache.md)** - API key validation and build cache debugging
 - **[PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](docs/solutions/testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md)** - Payment service test patterns (85 tests)
 - **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4
+- **[MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md](docs/solutions/react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md)** - React Query singleton anti-pattern
 
 When you hit an issue:
 

@@ -277,6 +277,7 @@ Copy-paste this into your PR description:
 - [ ] Derived values wrapped in useMemo()
 - [ ] Event handlers wrapped in useCallback()
 - [ ] WCAG focus indicators (focus-visible:ring-2)
+- [ ] No module-level QueryClient/Router refs (use hooks or global instance)
 
 ## Backend Logging
 
@@ -984,6 +985,63 @@ Is URL customer-facing (redirects, callbacks)?
 
 ---
 
+## React Query / TanStack Query
+
+### Module-Level QueryClient Singleton (CRITICAL)
+
+```typescript
+// WRONG - Module-level ref set via useEffect
+let queryClientRef: QueryClient | null = null;
+
+export const setQueryClientRef = (client: QueryClient): void => {
+  queryClientRef = client;  // Fragile! Effect order unpredictable
+};
+
+export const invalidateCache = (): void => {
+  queryClientRef?.invalidateQueries({ queryKey: ['data'] });
+  // Fails silently if called before setQueryClientRef
+  // Stale after HMR replaces QueryClient
+};
+
+// CORRECT Option 1: Use hook (for React components)
+const queryClient = useQueryClient();
+queryClient.invalidateQueries({ queryKey: ['data'] });
+
+// CORRECT Option 2: Global instance (for external code like agent handlers)
+// lib/query-client.ts
+export const queryClient = new QueryClient({...});
+
+// app/providers.tsx
+<QueryClientProvider client={queryClient}>
+
+// Anywhere in app
+import { queryClient } from '@/lib/query-client';
+queryClient.invalidateQueries({ queryKey: ['data'] });
+```
+
+### When Module-Level IS vs IS NOT Acceptable
+
+| Acceptable                    | Not Acceptable          |
+| ----------------------------- | ----------------------- |
+| Read-only config              | Set from React effect   |
+| Pure utilities                | Needs React context     |
+| SDK clients init at app start | HMR-sensitive state     |
+| Idempotent initialization     | Server/client different |
+
+### Quick Detection
+
+```bash
+# Find module-level QueryClient refs
+rg "let.*QueryClient.*=.*null" apps/web/src/ --type ts
+
+# Find setQueryClientRef patterns
+rg "setQueryClientRef|queryClientRef\s*=" apps/web/src/ --type ts
+```
+
+**Full Reference:** [MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md](./react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md)
+
+---
+
 ## When in Doubt
 
 1. Check similar code in codebase
@@ -1003,10 +1061,11 @@ Is URL customer-facing (redirects, callbacks)?
 - [Static Config Multi-Tenant Prevention](./patterns/STATIC_CONFIG_MULTI_TENANT_PREVENTION.md)
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 - [TypeScript Unused Variables Prevention](./build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)
+- [Module-Level QueryClient Singleton Prevention](./react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md)
 - [CLAUDE.md](../../CLAUDE.md)
 
 ---
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2025-01-25
+**Last Updated:** 2026-01-26
