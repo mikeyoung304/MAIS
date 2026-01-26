@@ -92,6 +92,8 @@ Comprehensive prevention strategies for building multi-tenant AI agent systems.
 ### Other Prevention Patterns
 
 - `mais-critical-patterns.md` - 10 critical patterns for MAIS
+- `SERVICE_WIRING_AND_FAKE_SESSION_PREVENTION.md` - Orphan service + fake session patterns (Pitfalls 84-85)
+- `SERVICE_WIRING_QUICK_REFERENCE.md` - Quick reference card for service wiring issues
 - `circular-dependency-executor-registry-MAIS-20251229.md` - Module isolation
 - `phase-5-testing-and-caching-prevention-MAIS-20251231.md` - Testing patterns
 
