@@ -8,14 +8,14 @@ This document tracks all deployed ADK agent services to prevent naming conflicts
 
 ## Active Services
 
-| Agent Name  | Service Name        | Cloud Run URL                                              | Status  | Last Deploy |
-| ----------- | ------------------- | ---------------------------------------------------------- | ------- | ----------- |
-| booking     | `booking-agent`     | https://booking-agent-506923455711.us-central1.run.app     | Active  | 2026-01-18  |
-| marketing   | `marketing-agent`   | https://marketing-agent-506923455711.us-central1.run.app   | Active  | 2026-01-18  |
-| storefront  | `storefront-agent`  | https://storefront-agent-506923455711.us-central1.run.app  | Active  | 2026-01-18  |
-| research    | `research-agent`    | https://research-agent-506923455711.us-central1.run.app    | Active  | 2026-01-18  |
-| concierge   | `concierge-agent`   | https://concierge-agent-506923455711.us-central1.run.app   | Active  | 2026-01-18  |
-| project-hub | `project-hub-agent` | https://project-hub-agent-506923455711.us-central1.run.app | Pending | -           |
+| Agent Name  | Service Name        | Cloud Run URL                                              | Status | Last Deploy |
+| ----------- | ------------------- | ---------------------------------------------------------- | ------ | ----------- |
+| booking     | `booking-agent`     | https://booking-agent-506923455711.us-central1.run.app     | Active | 2026-01-18  |
+| marketing   | `marketing-agent`   | https://marketing-agent-506923455711.us-central1.run.app   | Active | 2026-01-18  |
+| storefront  | `storefront-agent`  | https://storefront-agent-506923455711.us-central1.run.app  | Active | 2026-01-18  |
+| research    | `research-agent`    | https://research-agent-506923455711.us-central1.run.app    | Active | 2026-01-18  |
+| concierge   | `concierge-agent`   | https://concierge-agent-506923455711.us-central1.run.app   | Active | 2026-01-18  |
+| project-hub | `project-hub-agent` | https://project-hub-agent-506923455711.us-central1.run.app | Active | 2026-01-25  |
 
 ---
 
@@ -123,4 +123,4 @@ curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 ---
 
-**Last Updated:** 2026-01-21 (Project Hub agent added - pending deployment)
+**Last Updated:** 2026-01-26 (Project Hub agent deployed, all 6 agents active)

@@ -17,6 +17,7 @@
 | **Phase 3a** | ✅ Complete | Deleted `PanelAgentChat.tsx`, `useAgentChat.ts`, API proxy route                                            |
 | **Phase 3b** | ✅ Complete | Removed imports & executor registration from `routes/index.ts`, deleted `evals/`, `feedback/`               |
 | **Phase 3c** | ✅ Complete | Deleted `agent.routes.ts`, `customer/`, `orchestrator/`, `proposals/`, `context/`, and orphaned directories |
+| **Phase 4**  | ✅ Complete | Enabled Cloud Trace, verified monitoring alerts (2 policies), created evaluation docs                       |
 | **Phase 5**  | ✅ Complete | Updated CLAUDE.md, archived 4 todos, added legacy notices to historical docs                                |
 
 ---
@@ -25,12 +26,16 @@
 
 **✅ MIGRATION COMPLETE (2026-01-26)**
 
-All phases complete. Legacy agent orchestrators deleted, documentation updated.
+All phases complete. Legacy agent orchestrators deleted, Vertex AI observability configured, documentation updated.
 
 ```
 This plan is now an ARCHIVE. The migration was completed successfully:
 - Phases 0-3: Legacy code deleted (committed ce120592)
+- Phase 4: Vertex AI observability configured (Cloud Trace enabled, monitoring alerts verified)
 - Phase 5: Documentation updated (CLAUDE.md, todos archived, legacy notices added)
+
+New documentation created:
+- docs/architecture/VERTEX_AI_NATIVE_EVALUATION.md - Evaluation & observability guide
 ```
 
 **Key decisions already made:**
