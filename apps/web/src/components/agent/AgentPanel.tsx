@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
@@ -9,7 +10,7 @@ import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
-import { invalidateDraftConfig } from '@/hooks/useDraftConfig';
+import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -90,6 +91,8 @@ function OnboardingSection({
  */
 export function AgentPanel({ className }: AgentPanelProps) {
   const { slug: tenantSlug } = useAuth();
+  // Use React Query client directly instead of module singleton (fixes race condition)
+  const queryClient = useQueryClient();
 
   // Mobile/desktop detection
   const isMobileQuery = useIsMobile();
@@ -203,10 +206,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
       );
 
       if (modifiedStorefront) {
-        // Invalidate draft config cache - the new config will flow automatically:
-        // TanStack Query refetch → ContentArea → PreviewPanel → sendConfigToIframe
-        // No need for refreshPreview() which caused race condition (sent OLD config before refetch completed)
-        invalidateDraftConfig();
+        // Invalidate draft config cache using queryClient directly (not module singleton)
+        // This fixes the race condition where queryClientRef could be null
+        // Flow: TanStack Query refetch → ContentArea → PreviewPanel → sendConfigToIframe
+        queryClient.invalidateQueries({
+          queryKey: getDraftConfigQueryKey(),
+          refetchType: 'active',
+        });
       }
 
       // Check if marketing content was generated (headlines, etc.)
@@ -220,11 +226,14 @@ export function AgentPanel({ className }: AgentPanelProps) {
       if (generatedMarketing) {
         // Show preview to display the generated content
         agentUIActions.showPreview('home');
-        // Invalidate immediately - no setTimeout needed, TanStack Query handles async
-        invalidateDraftConfig();
+        // Invalidate using queryClient directly (not module singleton)
+        queryClient.invalidateQueries({
+          queryKey: getDraftConfigQueryKey(),
+          refetchType: 'active',
+        });
       }
     },
-    []
+    [queryClient]
   );
 
   // Handle first message sent - mark user as welcomed
