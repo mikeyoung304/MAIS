@@ -372,6 +372,42 @@ export const customerChatLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for Project Hub chat - per-project quota
+ * 30 messages per minute per project - prevents abuse while allowing active conversations
+ *
+ * Layered protection (Phase 1 - Security Review):
+ * - publicProjectRateLimiter: 100/15min per IP (overall project endpoint protection)
+ * - projectHubChatLimiter: 30/min per project (project-level quota)
+ * - projectHubSessionLimiter: 15/min per session (burst protection within conversation)
+ *
+ * This limiter ensures a single project can't exhaust API quotas,
+ * regardless of how many sessions or IPs are accessing it.
+ */
+export const projectHubChatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isTestEnvironment ? 500 : 30, // 30 messages per minute per project
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const projectId = req.params?.projectId;
+    if (projectId) {
+      return `project-hub:${projectId}`;
+    }
+    // Fallback to IP if projectId not available
+    return `project-hub:ip:${normalizeIp(req.ip)}`;
+  },
+  validate: false,
+  handler: (_req: Request, res: Response) => {
+    const projectId = _req.params?.projectId;
+    logger.warn({ projectId }, 'Project Hub chat rate limit exceeded');
+    res.status(429).json({
+      error: 'too_many_project_messages',
+      message: 'This project has reached its message limit. Please wait a moment.',
+    });
+  },
+});
+
+/**
  * Rate limiter for Project Hub chat sessions (per-session burst protection)
  * 15 messages per minute per session - prevents rapid-fire abuse within a project conversation
  *
@@ -382,6 +418,7 @@ export const customerChatLimiter = rateLimit({
  *
  * Layered protection:
  * - publicProjectRateLimiter: 100/15min per IP (overall project endpoint protection)
+ * - projectHubChatLimiter: 30/min per project (project-level quota)
  * - projectHubSessionLimiter: 15/min per session (burst protection within conversation)
  *
  * Higher limit than agentSessionLimiter (10/min) because:

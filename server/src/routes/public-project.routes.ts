@@ -18,7 +18,11 @@ import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { validateProjectAccessToken, generateProjectAccessToken } from '../lib/project-tokens';
-import { projectHubSessionLimiter } from '../middleware/rateLimiter';
+import { projectHubSessionLimiter, projectHubChatLimiter } from '../middleware/rateLimiter';
+import {
+  createProjectHubAgentService,
+  type ContextType,
+} from '../services/project-hub-agent.service';
 
 // ============================================================================
 // Request Schemas
@@ -534,17 +538,25 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
    * POST /:projectId/chat/message
    *
    * Send a message to the Project Hub agent.
-   * Routes to the Project Hub agent via internal API.
+   * Uses ProjectHubAgentService for proper Identity Token auth to Cloud Run.
    * Requires valid access token in request body.
    *
-   * Rate limiting (Phase 2 enhancement):
+   * Rate limiting (layered protection):
    * - publicProjectRateLimiter: 100/15min per IP (applied at router level)
+   * - projectHubChatLimiter: 30/min per project (project-level quota)
    * - projectHubSessionLimiter: 15/min per session (per-session burst protection)
+   *
+   * SECURITY: contextType is determined by backend from verified token,
+   * never from request body (prevents context escalation attacks).
    */
   router.post(
     '/:projectId/chat/message',
-    projectHubSessionLimiter, // Phase 2: Per-session rate limiting
+    projectHubChatLimiter, // 30/min per project
+    projectHubSessionLimiter, // 15/min per session
     async (req: Request, res: Response, next: NextFunction) => {
+      // Generate request ID for correlation
+      const requestId = `prj-msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
       try {
         const tenantId = req.tenantId ?? null;
         const { projectId } = req.params;
@@ -564,7 +576,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
 
         const { message, sessionId, token } = parseResult.data;
 
-        // Validate access token
+        // SECURITY: Re-verify role from token (never trust request body contextType)
+        // This is the authoritative source for determining user context
         const tokenResult = validateProjectAccessToken(token, projectId, 'chat');
         if (!tokenResult.valid) {
           const statusCode = tokenResult.error === 'expired' ? 401 : 403;
@@ -577,15 +590,12 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
           return;
         }
 
-        // Verify project exists
+        // Verify project exists and get customer info
         const project = await prisma.project.findFirst({
           where: { id: projectId, tenantId },
-          include: {
-            booking: {
-              include: {
-                customer: { select: { id: true } },
-              },
-            },
+          select: {
+            id: true,
+            customerId: true,
           },
         });
 
@@ -602,75 +612,92 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
 
         const customerId = project.customerId;
 
-        // Call Project Hub agent via internal API
-        // The agent is deployed to Cloud Run
-        const agentUrl = process.env.PROJECT_HUB_AGENT_URL;
-        if (!agentUrl) {
-          logger.warn('PROJECT_HUB_AGENT_URL not configured');
-          res.status(503).json({
-            error: 'Chat service temporarily unavailable',
+        // SECURITY: contextType is 'customer' because token auth = customer access
+        // Tenant access would come through authenticated session (Phase 1b)
+        const contextType: ContextType = 'customer';
+
+        // Use ProjectHubAgentService for proper Cloud Run authentication
+        const agentService = createProjectHubAgentService();
+
+        // Create session if needed, or use existing
+        let activeSessionId = sessionId;
+        if (!activeSessionId) {
+          try {
+            activeSessionId = await agentService.createSession(
+              tenantId,
+              customerId,
+              projectId,
+              contextType,
+              requestId
+            );
+            logger.info(
+              { requestId, projectId, sessionId: activeSessionId, contextType },
+              '[ProjectHubChat] New session created'
+            );
+          } catch (sessionError) {
+            logger.error(
+              { requestId, projectId, error: sessionError },
+              '[ProjectHubChat] Failed to create session'
+            );
+            res.status(503).json({
+              error: 'Chat service temporarily unavailable',
+              errorType: 'agent_unavailable',
+            });
+            return;
+          }
+        }
+
+        // Send message to agent
+        const agentResult = await agentService.sendMessage(
+          activeSessionId,
+          tenantId,
+          customerId,
+          message,
+          requestId
+        );
+
+        // Handle agent errors
+        if (agentResult.error) {
+          logger.warn(
+            { requestId, projectId, error: agentResult.error },
+            '[ProjectHubChat] Agent returned error'
+          );
+
+          // Map error types to HTTP status codes
+          if (agentResult.error === 'timeout') {
+            res.status(504).json({
+              error: 'Request timed out. Please try again.',
+              errorType: 'agent_timeout',
+              sessionId: activeSessionId,
+            });
+            return;
+          }
+
+          if (agentResult.error === 'session_not_found') {
+            res.status(410).json({
+              error: 'Session expired. Please refresh.',
+              errorType: 'session_expired',
+            });
+            return;
+          }
+
+          // Default to 502 for other agent errors
+          res.status(502).json({
+            error: 'Unable to process message',
+            errorType: 'agent_error',
+            sessionId: activeSessionId,
           });
           return;
         }
 
-        // Forward to agent with timeout (30s for agent communication per pitfall #46)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        try {
-          const agentResponse = await fetch(`${agentUrl}/chat`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message,
-              sessionId: sessionId ?? `project-${projectId}-${Date.now()}`,
-              contextType: 'customer',
-              tenantId,
-              customerId,
-              projectId,
-            }),
-            signal: controller.signal,
-          });
-
-          if (!agentResponse.ok) {
-            const errorText = await agentResponse.text();
-            logger.error(
-              { status: agentResponse.status, error: errorText },
-              'Project Hub agent error'
-            );
-            res.status(502).json({ error: 'Unable to process message' });
-            return;
-          }
-
-          const agentData = (await agentResponse.json()) as {
-            message?: string;
-            response?: string;
-            sessionId?: string;
-            proposals?: unknown[];
-          };
-
-          res.json({
-            message:
-              agentData.message ??
-              agentData.response ??
-              'I apologize, I encountered an issue processing your request.',
-            sessionId: agentData.sessionId ?? sessionId,
-            proposals: agentData.proposals ?? [],
-          });
-        } catch (error) {
-          if (error instanceof Error && error.name === 'AbortError') {
-            logger.warn({ projectId, tenantId }, 'Project Hub agent request timed out');
-            res.status(504).json({ error: 'Request timed out. Please try again.' });
-            return;
-          }
-          throw error;
-        } finally {
-          clearTimeout(timeoutId);
-        }
+        // Success response
+        res.json({
+          message: agentResult.response,
+          sessionId: agentResult.sessionId,
+          toolCalls: agentResult.toolCalls,
+        });
       } catch (error) {
-        logger.error({ error }, 'Project chat message error');
+        logger.error({ requestId, error }, '[ProjectHubChat] Unexpected error');
         next(error);
       }
     }
