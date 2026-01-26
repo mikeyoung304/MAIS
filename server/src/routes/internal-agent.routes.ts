@@ -1917,6 +1917,9 @@ Apply the feedback while maintaining the ${tone} tone.`;
   // Project Hub request schemas
   const ProjectHubBootstrapCustomerSchema = TenantIdSchema.extend({
     customerId: z.string().min(1, 'customerId is required'),
+    // projectId is optional for backwards compatibility - when provided, looks up specific project
+    // When omitted, falls back to finding any active project for the customer (legacy behavior)
+    projectId: z.string().optional(),
   });
 
   const ProjectHubGetProjectSchema = TenantIdSchema.extend({
@@ -1971,14 +1974,14 @@ Apply the feedback while maintaining the ${tone} tone.`;
         return;
       }
 
-      const { tenantId, customerId } = ProjectHubBootstrapCustomerSchema.parse(req.body);
+      const { tenantId, customerId, projectId } = ProjectHubBootstrapCustomerSchema.parse(req.body);
 
       logger.info(
-        { tenantId, customerId, endpoint: '/project-hub/bootstrap-customer' },
+        { tenantId, customerId, projectId, endpoint: '/project-hub/bootstrap-customer' },
         '[Agent] Bootstrapping customer session'
       );
 
-      const result = await projectHubService.bootstrapCustomer(tenantId, customerId);
+      const result = await projectHubService.bootstrapCustomer(tenantId, customerId, projectId);
 
       res.json(result);
     } catch (error) {

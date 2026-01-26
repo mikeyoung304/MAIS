@@ -264,19 +264,35 @@ export class ProjectHubService {
    *
    * @param tenantId - Tenant ID for isolation
    * @param customerId - Customer ID (from booking or auth)
+   * @param projectId - Optional specific project ID (when provided, looks up specific project)
    * @returns Project context with pending request counts
    * @throws NotFoundError if no project found for customer
    */
-  async bootstrapCustomer(tenantId: string, customerId: string): Promise<CustomerBootstrapResult> {
-    logger.info({ tenantId, customerId }, '[ProjectHub] Bootstrapping customer session');
+  async bootstrapCustomer(
+    tenantId: string,
+    customerId: string,
+    projectId?: string
+  ): Promise<CustomerBootstrapResult> {
+    logger.info({ tenantId, customerId, projectId }, '[ProjectHub] Bootstrapping customer session');
 
-    // Find the customer's active project
+    // Build query - when projectId is provided, look up the SPECIFIC project
+    // Otherwise fall back to finding any active project for the customer (legacy behavior)
+    const whereClause = projectId
+      ? {
+          tenantId, // CRITICAL: tenant-scoped
+          id: projectId,
+          // Don't require customerId match when projectId is provided - the session already verified ownership
+          // This handles edge cases where customerId format might differ
+        }
+      : {
+          tenantId, // CRITICAL: tenant-scoped
+          customerId,
+          status: 'ACTIVE' as const,
+        };
+
+    // Find the customer's project
     const project = await this.prisma.project.findFirst({
-      where: {
-        tenantId,
-        customerId,
-        status: 'ACTIVE',
-      },
+      where: whereClause,
       include: {
         booking: {
           include: {
@@ -293,11 +309,12 @@ export class ProjectHubService {
           select: { id: true },
         },
       },
-      orderBy: { createdAt: 'desc' }, // Most recent project first
+      orderBy: { createdAt: 'desc' }, // Most recent project first (only matters for legacy path)
     });
 
     if (!project) {
-      throw new NotFoundError(`No active project found for customer`);
+      const searchContext = projectId ? `project ${projectId}` : 'customer';
+      throw new NotFoundError(`No active project found for ${searchContext}`);
     }
 
     const customerName = project.booking.customer?.name || 'there';

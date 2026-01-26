@@ -583,10 +583,13 @@ Use the returned greeting to start the conversation.`,
       }
 
       try {
+        // CRITICAL: Pass projectId to backend so it looks up the SPECIFIC project
+        // Without projectId, backend falls back to finding "any active project" by customerId
+        // which may return the wrong project or fail if customer has multiple projects
         const bootstrapData = await callBackendAPI<CustomerBootstrapData>(
           `/project-hub/bootstrap-customer`,
           'POST',
-          { tenantId, customerId }
+          { tenantId, customerId, projectId }
         );
 
         // Build personalized greeting based on project status and booking date
