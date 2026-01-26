@@ -16,7 +16,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ChatMessage } from '@/hooks/useAgentChat';
+import type { ChatMessageType as ChatMessage } from '@/components/chat/ChatMessage';
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours (matches backend)
 

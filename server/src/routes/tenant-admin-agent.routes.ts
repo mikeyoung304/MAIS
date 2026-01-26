@@ -5,12 +5,14 @@
  * These are tenant-authenticated routes for the admin dashboard.
  *
  * Endpoints:
- * - POST /api/agent/chat - Send a message and get a response
- * - GET /api/agent/session/:id - Get session history
- * - POST /api/agent/session - Create a new session
- * - DELETE /api/agent/session/:id - Close a session
+ * - POST /chat - Send a message and get a response
+ * - GET /session/:id - Get session history
+ * - POST /session - Create a new session
+ * - DELETE /session/:id - Close a session
+ * - GET /onboarding-state - Get onboarding phase and context
+ * - POST /skip-onboarding - Skip the onboarding flow
  *
- * @see plans/feat-persistent-chat-session-storage.md Phase 3
+ * @see plans/LEGACY_AGENT_MIGRATION_PLAN.md
  */
 
 import type { Request, Response } from 'express';
@@ -19,6 +21,10 @@ import { z, ZodError } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { VertexAgentService, createVertexAgentService } from '../services/vertex-agent.service';
+import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
+import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
+import { appendEvent } from '../agent/onboarding/event-sourcing';
+import { parseOnboardingPhase } from '@macon/contracts';
 
 // =============================================================================
 // REQUEST SCHEMAS
@@ -51,9 +57,14 @@ interface TenantAdminAgentRoutesDeps {
  */
 export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): Router {
   const router = Router();
+  const prisma = deps.prisma;
 
   // Use provided service or create new instance with Prisma
-  const agentService = deps.vertexAgentService || createVertexAgentService(deps.prisma);
+  const agentService = deps.vertexAgentService || createVertexAgentService(prisma);
+
+  // Initialize advisor memory service for onboarding state
+  const advisorMemoryRepository = new PrismaAdvisorMemoryRepository(prisma);
+  const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepository);
 
   // ===========================================================================
   // POST /chat - Send a message to the Concierge agent
@@ -261,6 +272,132 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
       });
     } catch (error) {
       handleError(res, error, '/session/:id');
+    }
+  });
+
+  // ===========================================================================
+  // GET /onboarding-state - Get current onboarding phase and context
+  // ===========================================================================
+
+  router.get('/onboarding-state', async (_req: Request, res: Response) => {
+    try {
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId } = tenantAuth;
+      const context = await advisorMemoryService.getOnboardingContext(tenantId);
+      const resumeMessage = context.isReturning
+        ? await advisorMemoryService.getResumeSummary(tenantId)
+        : null;
+
+      logger.info(
+        { tenantId, phase: context.currentPhase, isReturning: context.isReturning },
+        '[Onboarding] State retrieved'
+      );
+
+      res.json({
+        phase: context.currentPhase,
+        isComplete: context.currentPhase === 'COMPLETED' || context.currentPhase === 'SKIPPED',
+        isReturning: context.isReturning,
+        lastActiveAt: context.lastActiveAt?.toISOString() ?? null,
+        summaries: {
+          discovery: context.summaries.discovery || null,
+          marketContext: context.summaries.marketContext || null,
+          preferences: context.summaries.preferences || null,
+          decisions: context.summaries.decisions || null,
+          pendingQuestions: context.summaries.pendingQuestions || null,
+        },
+        resumeMessage,
+        memory: context.memory
+          ? {
+              currentPhase: context.memory.currentPhase,
+              discoveryData: context.memory.discoveryData ?? null,
+              marketResearchData: context.memory.marketResearchData ?? null,
+              servicesData: context.memory.servicesData ?? null,
+              marketingData: context.memory.marketingData ?? null,
+              lastEventVersion: context.memory.lastEventVersion,
+            }
+          : null,
+      });
+    } catch (error) {
+      handleError(res, error, '/onboarding-state');
+    }
+  });
+
+  // ===========================================================================
+  // POST /skip-onboarding - Skip the onboarding process
+  // ===========================================================================
+
+  router.post('/skip-onboarding', async (req: Request, res: Response) => {
+    try {
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId } = tenantAuth;
+      const { reason } = req.body as { reason?: string };
+
+      // Get current tenant state
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          onboardingPhase: true,
+          onboardingVersion: true,
+        },
+      });
+
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const currentPhase = parseOnboardingPhase(tenant.onboardingPhase);
+      const currentVersion = tenant.onboardingVersion || 0;
+
+      // Check if already completed or skipped
+      if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
+        res.status(409).json({
+          error: 'Onboarding already finished',
+          phase: currentPhase,
+        });
+        return;
+      }
+
+      // Append ONBOARDING_SKIPPED event
+      const result = await appendEvent(
+        prisma,
+        tenantId,
+        'ONBOARDING_SKIPPED',
+        {
+          skippedAt: new Date().toISOString(),
+          lastPhase: currentPhase,
+          reason: reason || undefined,
+        },
+        currentVersion
+      );
+
+      if (!result.success) {
+        if (result.error === 'CONCURRENT_MODIFICATION') {
+          res.status(409).json({ error: 'State changed, please try again' });
+          return;
+        }
+        throw new Error(result.error || 'Failed to skip onboarding');
+      }
+
+      logger.info({ tenantId, phase: currentPhase }, '[Onboarding] Skipped');
+
+      res.json({
+        success: true,
+        phase: 'SKIPPED',
+        message: 'Onboarding skipped. You can set up your business manually.',
+      });
+    } catch (error) {
+      handleError(res, error, '/skip-onboarding');
     }
   });
 

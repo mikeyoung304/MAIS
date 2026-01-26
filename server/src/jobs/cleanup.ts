@@ -1,19 +1,20 @@
 /**
  * Cleanup Jobs
  *
- * Background jobs for cleaning up expired data and recovering stuck proposals:
- * - Customer chat sessions (older than 24 hours)
+ * Background jobs for cleaning up expired data:
+ * - Conversation traces (older than retention period)
+ * - Chat sessions (older than 30 days)
  * - Expired proposals (older than 7 days)
- * - Orphaned CONFIRMED proposals (stuck due to server crash)
+ * - Orphaned feedback records
  *
  * These jobs should be run periodically (e.g., daily via cron)
- * to prevent database bloat and recover from crashes.
+ * to prevent database bloat.
+ *
+ * @see plans/LEGACY_AGENT_MIGRATION_PLAN.md - removed proposal recovery
  */
 
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-import { getProposalExecutor } from '../agent/proposals/executor-registry';
-import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
 
 /**
  * Clean up expired conversation traces (P1-584)
@@ -26,8 +27,6 @@ import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
  *
  * @param prisma - Prisma client for database operations
  * @returns Number of traces deleted
- *
- * @see plans/agent-eval-remediation-plan.md Phase 4.1
  */
 export async function cleanupExpiredTraces(prisma: PrismaClient): Promise<number> {
   const now = new Date();
@@ -56,16 +55,9 @@ export async function cleanupExpiredTraces(prisma: PrismaClient): Promise<number
  * 1. Soft delete sessions inactive > maxAgeDays (default 30 days)
  * 2. Hard delete sessions soft-deleted > 7 days ago
  *
- * This approach ensures:
- * - Session data can be recovered within 7 days of soft deletion
- * - Database doesn't grow unbounded
- * - Both ADMIN and CUSTOMER sessions are cleaned up across all tenants
- *
  * @param prisma - Prisma client for database operations
  * @param maxAgeDays - Maximum session age in days before soft delete (default: 30)
  * @returns Number of sessions hard-deleted
- *
- * @see plans/feat-persistent-chat-session-storage.md Phase 5
  */
 export async function cleanupExpiredSessions(
   prisma: PrismaClient,
@@ -135,10 +127,11 @@ export async function cleanupOrphanedFeedback(prisma: PrismaClient): Promise<num
 }
 
 /**
- * Clean up expired and rejected proposals
+ * Clean up expired and rejected proposals (legacy)
  *
- * Proposals that have expired or been rejected can be deleted after 7 days.
- * This keeps the proposal table lean while retaining recent data for debugging.
+ * Note: Proposals are a legacy feature from the old agent architecture.
+ * The new Booking Agent creates bookings directly via Stripe checkout.
+ * This cleanup function remains to clear out historical data.
  *
  * @param prisma - Prisma client for database operations
  * @returns Number of proposals deleted
@@ -148,7 +141,7 @@ export async function cleanupExpiredProposals(prisma: PrismaClient): Promise<num
 
   const result = await prisma.agentProposal.deleteMany({
     where: {
-      status: { in: ['EXPIRED', 'REJECTED'] },
+      status: { in: ['EXPIRED', 'REJECTED', 'FAILED'] },
       expiresAt: { lt: cutoff },
     },
   });
@@ -158,160 +151,18 @@ export async function cleanupExpiredProposals(prisma: PrismaClient): Promise<num
 }
 
 /**
- * Recover orphaned CONFIRMED proposals
- *
- * If the server crashes after a proposal is marked CONFIRMED but before
- * execution completes, the proposal will be stuck forever. This function
- * finds such orphaned proposals and either retries execution or marks them
- * as FAILED.
- *
- * Orphan detection criteria:
- * - Status is CONFIRMED (not yet executed)
- * - updatedAt is older than 5 minutes (gives time for normal execution)
- *
- * @param prisma - Prisma client for database operations
- * @returns Object with counts of recovered and failed proposals
- */
-export async function recoverOrphanedProposals(
-  prisma: PrismaClient
-): Promise<{ retried: number; failed: number }> {
-  const orphanCutoff = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes ago
-
-  // Find CONFIRMED proposals that are older than 5 minutes
-  // These are likely stuck due to server crash or timeout
-  // Limit to 100 per batch to avoid memory exhaustion after crashes
-  const orphaned = await prisma.agentProposal.findMany({
-    where: {
-      status: 'CONFIRMED',
-      updatedAt: { lt: orphanCutoff },
-    },
-    take: 100, // Process in batches to avoid memory exhaustion
-    orderBy: { updatedAt: 'asc' }, // Oldest first for fairness
-  });
-
-  if (orphaned.length === 0) {
-    return { retried: 0, failed: 0 };
-  }
-
-  logger.warn(
-    { count: orphaned.length },
-    'Found orphaned CONFIRMED proposals - attempting recovery'
-  );
-
-  let retried = 0;
-  let failed = 0;
-
-  for (const proposal of orphaned) {
-    const { id: proposalId, toolName, tenantId, payload } = proposal;
-
-    try {
-      const executor = getProposalExecutor(toolName);
-
-      if (!executor) {
-        // No executor registered for this tool - mark as failed
-        logger.error(
-          { proposalId, toolName },
-          'Orphaned proposal recovery failed: no executor registered'
-        );
-
-        await prisma.agentProposal.update({
-          where: { id: proposalId, tenantId },
-          data: {
-            status: 'FAILED',
-            error: `Orphaned - no executor registered for tool "${toolName}"`,
-          },
-        });
-
-        failed++;
-        continue;
-      }
-
-      // Validate payload before execution to prevent runtime errors
-      const payloadObj = (payload as Record<string, unknown>) || {};
-      let validatedPayload: Record<string, unknown>;
-      try {
-        validatedPayload = validateExecutorPayload(toolName, payloadObj);
-      } catch (validationError) {
-        const validationMessage =
-          validationError instanceof Error ? validationError.message : String(validationError);
-        logger.error(
-          { proposalId, toolName, error: validationMessage },
-          'Orphaned proposal recovery failed: payload validation error'
-        );
-
-        await prisma.agentProposal.update({
-          where: { id: proposalId, tenantId },
-          data: {
-            status: 'FAILED',
-            error: `Orphaned - payload validation failed: ${validationMessage}`,
-          },
-        });
-
-        failed++;
-        continue;
-      }
-
-      // Attempt to execute the proposal
-      logger.info(
-        { proposalId, toolName, tenantId },
-        'Recovering orphaned proposal - attempting execution'
-      );
-
-      const result = await executor(tenantId, validatedPayload);
-
-      // Mark as executed
-      await prisma.agentProposal.update({
-        where: { id: proposalId, tenantId },
-        data: {
-          status: 'EXECUTED',
-          executedAt: new Date(),
-          result: result as any,
-        },
-      });
-
-      logger.info({ proposalId, toolName, tenantId }, 'Orphaned proposal recovered successfully');
-
-      retried++;
-    } catch (error) {
-      // Execution failed - mark as failed
-      const errorMessage = error instanceof Error ? error.message : String(error);
-
-      logger.error(
-        { proposalId, toolName, tenantId, error: errorMessage },
-        'Orphaned proposal recovery execution failed'
-      );
-
-      await prisma.agentProposal.update({
-        where: { id: proposalId, tenantId },
-        data: {
-          status: 'FAILED',
-          error: `Orphaned recovery failed: ${errorMessage}`,
-        },
-      });
-
-      failed++;
-    }
-  }
-
-  logger.info({ total: orphaned.length, retried, failed }, 'Orphaned proposal recovery completed');
-
-  return { retried, failed };
-}
-
-/**
  * Run all cleanup jobs
  *
  * Convenience function to run all cleanup jobs in sequence.
  *
  * @param prisma - Prisma client for database operations
- * @returns Object with counts of deleted and recovered items
+ * @returns Object with counts of deleted items
  */
 export async function runAllCleanupJobs(prisma: PrismaClient): Promise<{
   traces: number;
   sessions: number;
   proposals: number;
   feedback: number;
-  orphansRecovered: { retried: number; failed: number };
 }> {
   logger.info('Starting cleanup jobs');
 
@@ -319,49 +170,10 @@ export async function runAllCleanupJobs(prisma: PrismaClient): Promise<{
   const sessions = await cleanupExpiredSessions(prisma);
   const proposals = await cleanupExpiredProposals(prisma);
   const feedback = await cleanupOrphanedFeedback(prisma);
-  const orphansRecovered = await recoverOrphanedProposals(prisma);
 
-  logger.info(
-    { traces, sessions, proposals, feedback, orphansRecovered },
-    'Cleanup jobs completed'
-  );
+  logger.info({ traces, sessions, proposals, feedback }, 'Cleanup jobs completed');
 
-  return { traces, sessions, proposals, feedback, orphansRecovered };
-}
-
-/**
- * Recover orphaned proposals on server startup
- *
- * This should be called AFTER executor registration but BEFORE the server
- * starts accepting traffic. It ensures any proposals stuck from a previous
- * crash are recovered immediately.
- *
- * @param prisma - Prisma client for database operations
- * @returns Object with counts of recovered and failed proposals
- */
-export async function recoverOrphanedProposalsOnStartup(
-  prisma: PrismaClient
-): Promise<{ retried: number; failed: number }> {
-  logger.info('Running startup orphan recovery check');
-
-  try {
-    const result = await recoverOrphanedProposals(prisma);
-
-    if (result.retried > 0 || result.failed > 0) {
-      logger.info(
-        { retried: result.retried, failed: result.failed },
-        'Startup orphan recovery completed'
-      );
-    } else {
-      logger.info('No orphaned proposals found during startup');
-    }
-
-    return result;
-  } catch (error) {
-    // Log but don't throw - we don't want orphan recovery failure to prevent startup
-    logger.error({ error }, 'Startup orphan recovery failed (non-fatal)');
-    return { retried: 0, failed: 0 };
-  }
+  return { traces, sessions, proposals, feedback };
 }
 
 /**

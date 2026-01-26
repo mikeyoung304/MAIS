@@ -84,14 +84,6 @@ export {
 // Subscription & Billing
 export { useSubscription, type SubscriptionTier } from './useSubscription';
 
-// Agent Chat
-export {
-  useAgentChat,
-  type ChatMessage,
-  type Proposal,
-  type ToolResult,
-  type HealthCheckResponse,
-  type SessionContext,
-  type UseAgentChatOptions,
-  type UseAgentChatReturn,
-} from './useAgentChat';
+// Agent Chat - Legacy exports removed (migrated to Vertex AI)
+// Use useConciergeChat from '@/hooks/useConciergeChat' for new implementations
+// Types available from '@/components/chat/ChatMessage' for backwards compatibility

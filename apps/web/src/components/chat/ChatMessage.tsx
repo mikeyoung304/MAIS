@@ -3,8 +3,30 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle, XCircle, Bot, User } from 'lucide-react';
-import type { ChatMessage as ChatMessageType } from '@/hooks/useAgentChat';
 import { ProposalCard } from './ProposalCard';
+
+/**
+ * Chat message type for the ChatMessage component
+ * Simplified from the legacy useAgentChat - now supports Vertex AI messages
+ */
+export interface ChatMessageType {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  /** Tool results (legacy - optional for backwards compatibility) */
+  toolResults?: Array<{
+    toolName: string;
+    success: boolean;
+  }>;
+  /** Proposals requiring confirmation (legacy - optional) */
+  proposals?: Array<{
+    proposalId: string;
+    operation: string;
+    requiresApproval: boolean;
+    trustTier: string;
+    preview: Record<string, unknown>;
+  }>;
+}
 
 /**
  * Variant configuration for ChatMessage styling

@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { OnboardingPhase } from '@macon/contracts';
 import { queryKeys } from '@/lib/query-client';
 
-const API_PROXY = '/api/agent';
+// Migrated to tenant-admin-agent endpoints (Legacy agent migration Phase 3)
+const API_PROXY = '/api/tenant-admin/agent';
 
 /**
  * Onboarding state response from API

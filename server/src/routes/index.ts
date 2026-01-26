@@ -65,11 +65,7 @@ import { DomainVerificationService } from '../services/domain-verification.servi
 import { createInternalRoutes } from './internal.routes';
 import { createInternalAgentRoutes } from './internal-agent.routes';
 import { createInternalAgentHealthRoutes } from './internal-agent-health.routes';
-import { createAgentRoutes } from './agent.routes';
-import { registerAllExecutors } from '../agent/executors';
-import { validateExecutorRegistry } from '../agent/proposals/executor-registry';
 import { createPublicCustomerChatRoutes } from './public-customer-chat.routes';
-import { registerCustomerBookingExecutor } from '../agent/customer/customer-booking-executor';
 import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
 import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
 import { startCleanupScheduler } from '../jobs/cleanup';
@@ -704,15 +700,6 @@ export function createV1Router(
     app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
     logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
 
-    // Register agent routes (for AI agent integration - legacy onboarding)
-    // Requires tenant admin authentication - agent proposals are tied to tenant
-    // Dual-layer rate limiting to protect Claude API costs:
-    // - agentChatLimiter: 30 messages per minute per tenant (overall quota)
-    // - agentSessionLimiter: 10 messages per minute per session (burst protection)
-    const agentRoutes = createAgentRoutes(prismaClient);
-    app.use('/v1/agent', tenantAuthMiddleware, agentChatLimiter, agentSessionLimiter, agentRoutes);
-    logger.info('✅ Agent routes mounted at /v1/agent (with rate limiting)');
-
     // Register Concierge agent routes (for Vertex AI agent integration)
     // Requires tenant admin authentication - chat with Concierge for dashboard actions
     // Dual-layer rate limiting to protect Vertex AI costs:
@@ -739,10 +726,6 @@ export function createV1Router(
       logger.info('✅ Tenant admin project routes mounted at /v1/tenant-admin/projects');
     }
 
-    // Register agent proposal executors and validate all are present
-    registerAllExecutors(prismaClient);
-    validateExecutorRegistry(); // CRITICAL: Fail fast if any executor is missing
-
     // Register public customer chat routes (for customer-facing chatbot)
     // NO authentication required - uses tenant context from X-Tenant-Key header
     // Rate limited to 20 messages per minute per IP to protect Claude API costs
@@ -762,9 +745,6 @@ export function createV1Router(
     const publicProjectRoutes = createPublicProjectRoutes(prismaClient);
     app.use('/v1/public/projects', tenantMiddleware, requireTenant, publicProjectRoutes);
     logger.info('✅ Public project routes mounted at /v1/public/projects');
-
-    // Register customer booking executor with mail provider and Stripe for booking notifications and payment
-    registerCustomerBookingExecutor(prismaClient, mailProvider, stripeAdapter);
 
     // Start cleanup scheduler for customer sessions (runs every 24h)
     const stopCleanup = startCleanupScheduler(prismaClient);

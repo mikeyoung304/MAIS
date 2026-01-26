@@ -4,8 +4,19 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Proposal } from '@/hooks/useAgentChat';
 import type { ChatMessageVariant } from './ChatMessage';
+
+/**
+ * Proposal type for T3 trust tier confirmations
+ * Simplified from the legacy useAgentChat - now defined locally
+ */
+export interface Proposal {
+  proposalId: string;
+  operation: string;
+  requiresApproval: boolean;
+  trustTier: string;
+  preview: Record<string, unknown>;
+}
 
 interface ProposalCardProps {
   /** The proposal to display */

@@ -4,23 +4,26 @@
  * Public endpoints for customer-facing chatbot.
  * NO authentication required - uses tenant context from X-Tenant-Key header.
  *
+ * Routes customer chat directly to the Booking Agent on Cloud Run.
+ * Bookings are completed via Stripe checkout (no proposal confirmation step).
+ *
  * Endpoints:
  * - GET  /v1/public/chat/health    - Check if chatbot is available
  * - POST /v1/public/chat/session   - Create or get chat session
- * - POST /v1/public/chat/message   - Send message to chatbot
- * - POST /v1/public/chat/confirm   - Confirm a booking proposal
+ * - POST /v1/public/chat/message   - Send message to Booking Agent
+ * - POST /v1/public/chat/confirm   - DEPRECATED (bookings via Stripe checkout)
  * - GET  /v1/public/chat/greeting  - Get initial greeting message
+ *
+ * @see plans/LEGACY_AGENT_MIGRATION_PLAN.md Phase 1
  */
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import type { PrismaClient, Prisma } from '../generated/prisma/client';
+import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-import { CustomerChatOrchestrator } from '../agent/orchestrator';
-import { getCustomerProposalExecutor } from '../agent/customer/executor-registry';
-import { validateExecutorPayload } from '../agent/proposals/executor-schemas';
+import { CustomerAgentService } from '../services/customer-agent.service';
 
 // ============================================================================
 // Request Body Schemas (TS-4: Typed request validation)
@@ -33,11 +36,6 @@ const MessageRequestSchema = z.object({
     .min(1, 'Message is required')
     .max(2000, 'Message too long (max 2000 characters)'),
   sessionId: z.string().optional(),
-});
-
-/** Confirm endpoint request body schema */
-const ConfirmRequestSchema = z.object({
-  sessionId: z.string().min(1, 'Session ID is required to confirm booking'),
 });
 
 /**
@@ -94,9 +92,9 @@ function createRequireChatEnabled(prisma: PrismaClient) {
  */
 export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
   const router = Router();
-  // CustomerChatOrchestrator includes guardrails (rate limiting, circuit breakers, tier budgets)
-  // and prompt injection detection for public-facing endpoints
-  const orchestrator = new CustomerChatOrchestrator(prisma);
+  // CustomerAgentService routes chat to Booking Agent on Cloud Run
+  // Guardrails are handled by the Booking Agent and AI quota limits
+  const agentService = new CustomerAgentService(prisma);
   const requireChatEnabled = createRequireChatEnabled(prisma);
 
   // Apply IP rate limiting to all routes
@@ -186,7 +184,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      const greeting = await orchestrator.getGreeting(tenantId);
+      const greeting = await agentService.getGreeting(tenantId);
 
       res.json({ greeting });
     } catch (error) {
@@ -211,8 +209,8 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         // tenantId guaranteed by requireChatEnabled middleware
         const tenantId = req.tenantId!;
 
-        const session = await orchestrator.getOrCreateSession(tenantId);
-        const greeting = await orchestrator.getGreeting(tenantId);
+        const session = await agentService.getOrCreateSession(tenantId);
+        const greeting = await agentService.getGreeting(tenantId);
 
         // Get business name from tenant (not stored in session)
         const tenantInfo = await prisma.tenant.findUnique({
@@ -224,7 +222,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
           sessionId: session.sessionId,
           greeting,
           businessName: tenantInfo?.name ?? null,
-          messageCount: session.messages.length,
+          messageCount: session.messageCount,
         });
       } catch (error) {
         logger.error({ error }, 'Customer chat session error');
@@ -263,18 +261,18 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         let actualSessionId = sessionId;
         if (actualSessionId) {
           // Validate that sessionId belongs to this tenant
-          const session = await orchestrator.getSession(tenantId, actualSessionId);
+          const session = await agentService.getSession(tenantId, actualSessionId);
           if (!session) {
             res.status(400).json({ error: 'Invalid or expired session' });
             return;
           }
         } else {
-          const session = await orchestrator.getOrCreateSession(tenantId);
+          const session = await agentService.getOrCreateSession(tenantId);
           actualSessionId = session.sessionId;
         }
 
-        // Send message to orchestrator
-        const response = await orchestrator.chat(tenantId, actualSessionId, message);
+        // Send message to Booking Agent
+        const response = await agentService.chat(tenantId, actualSessionId, message);
 
         logger.info(
           {
@@ -282,7 +280,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
             sessionId: actualSessionId,
             messageLength: message.length,
             responseLength: response.message.length,
-            hasProposals: !!response.proposals?.length,
+            hasToolResults: !!response.toolResults?.length,
           },
           'Customer chat message processed'
         );
@@ -290,8 +288,8 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         res.json({
           message: response.message,
           sessionId: response.sessionId,
-          proposals: response.proposals,
           toolResults: response.toolResults,
+          usage: response.usage,
         });
       } catch (error) {
         logger.error({ error }, 'Customer chat message error');
@@ -301,12 +299,16 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
   );
 
   // ============================================================================
-  // Proposal Confirmation
+  // Booking Confirmation (DEPRECATED)
   // ============================================================================
 
   /**
    * POST /confirm/:proposalId
-   * Confirm and execute a booking proposal
+   * DEPRECATED: The new Booking Agent flow creates bookings directly via Stripe checkout.
+   * Customers confirm payment on Stripe's hosted checkout page, not via this endpoint.
+   *
+   * This endpoint is kept for backwards compatibility but returns a deprecation notice.
+   * The Booking Agent's create_booking tool returns a checkoutUrl for payment completion.
    */
   router.post('/confirm/:proposalId', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -317,183 +319,18 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      const { proposalId } = req.params;
+      logger.warn(
+        { tenantId, proposalId: req.params.proposalId },
+        'Deprecated /confirm endpoint called - new flow uses Stripe checkout directly'
+      );
 
-      // SECURITY: sessionId is REQUIRED for ownership verification
-      // Prevents proposal enumeration attacks (P1 fix from code review)
-      const parseResult = ConfirmRequestSchema.safeParse(req.body);
-      if (!parseResult.success) {
-        const firstError = parseResult.error.errors[0];
-        res.status(400).json({ error: firstError?.message || 'Session ID is required' });
-        return;
-      }
-
-      const { sessionId } = parseResult.data;
-
-      // Build where clause with tenant isolation AND session ownership
-      const whereClause: { id: string; tenantId: string; sessionId: string } = {
-        id: proposalId,
-        tenantId, // CRITICAL: Tenant isolation
-        sessionId, // CRITICAL: Session ownership (P1 fix)
-      };
-
-      // Fetch proposal with tenant + session isolation
-      const proposal = await prisma.agentProposal.findFirst({
-        where: whereClause,
+      // Return helpful deprecation message
+      res.status(410).json({
+        error: 'This booking flow has been updated.',
+        message:
+          'Bookings are now confirmed via Stripe checkout. Please complete your booking using the checkout link provided in the chat.',
+        deprecated: true,
       });
-
-      if (!proposal) {
-        res.status(404).json({ error: 'Booking not found' });
-        return;
-      }
-
-      // Check expiration
-      if (new Date() > proposal.expiresAt) {
-        await prisma.agentProposal.update({
-          where: { id: proposalId },
-          data: { status: 'EXPIRED' },
-        });
-        res.status(410).json({ error: 'This booking has expired. Please try again.' });
-        return;
-      }
-
-      // Check status
-      if (proposal.status !== 'PENDING') {
-        res.status(409).json({
-          error:
-            proposal.status === 'EXECUTED'
-              ? 'This booking has already been confirmed.'
-              : `Booking cannot be confirmed (status: ${proposal.status})`,
-        });
-        return;
-      }
-
-      // Get executor for this operation
-      const executor = getCustomerProposalExecutor(proposal.operation);
-
-      if (!executor) {
-        logger.warn(
-          { tenantId, proposalId, operation: proposal.operation },
-          'No executor for customer proposal'
-        );
-        res.status(500).json({ error: 'Unable to process booking. Please try again.' });
-        return;
-      }
-
-      const startTime = Date.now();
-
-      // Validate payload schema before execution (prevents malformed/malicious payloads)
-      const rawPayload = (proposal.payload as Record<string, unknown>) || {};
-      let validatedPayload: Record<string, unknown>;
-      try {
-        validatedPayload = validateExecutorPayload(proposal.operation, rawPayload);
-      } catch (validationError) {
-        const errorMessage =
-          validationError instanceof Error ? validationError.message : String(validationError);
-        logger.error(
-          { tenantId, proposalId, operation: proposal.operation, error: errorMessage },
-          'Customer proposal payload validation failed'
-        );
-        res.status(400).json({ error: 'Invalid booking data. Please try again.' });
-        return;
-      }
-
-      // Execute OUTSIDE of a wrapping transaction.
-      // Executors manage their own transactions (with advisory locks for booking operations).
-      // Wrapping them in an outer transaction causes nested transaction issues in PostgreSQL.
-      // See: docs/solutions/logic-errors/chatbot-proposal-execution-flow-MAIS-20251229.md
-      try {
-        // Step 1: Verify customer exists and belongs to tenant (before executor)
-        const customerId = proposal.customerId;
-        if (!customerId) {
-          throw new Error('Customer ID not found on proposal');
-        }
-
-        // Verify customer belongs to this tenant (multi-tenant security)
-        const customer = await prisma.customer.findFirst({
-          where: { id: customerId, tenantId },
-        });
-        if (!customer) {
-          throw new Error('Customer not found or access denied');
-        }
-
-        // Step 2: Execute the booking (executor handles its own transaction if needed)
-        const executorResult = await executor(tenantId, customerId, validatedPayload);
-
-        // Step 3: Update proposal status after successful execution
-        await prisma.agentProposal.update({
-          where: { id: proposalId },
-          data: {
-            status: 'EXECUTED',
-            confirmedAt: new Date(),
-            executedAt: new Date(),
-            result: executorResult as Prisma.JsonObject,
-          },
-        });
-
-        // Step 4: Log audit entry
-        await prisma.agentAuditLog.create({
-          data: {
-            tenantId,
-            sessionId: proposal.sessionId,
-            toolName: proposal.toolName,
-            proposalId,
-            inputSummary: `Confirm customer booking: ${proposal.operation}`.slice(0, 500),
-            outputSummary: JSON.stringify(executorResult).slice(0, 500),
-            trustTier: proposal.trustTier,
-            approvalStatus: 'EXPLICIT',
-            durationMs: Date.now() - startTime,
-            success: true,
-          },
-        });
-
-        logger.info(
-          { tenantId, proposalId, customerId: proposal.customerId },
-          'Customer booking confirmed'
-        );
-
-        res.json({
-          id: proposalId,
-          status: 'EXECUTED',
-          result: executorResult,
-        });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-        // Update proposal as failed
-        await prisma.agentProposal.update({
-          where: { id: proposalId },
-          data: {
-            status: 'FAILED',
-            error: errorMessage,
-            executedAt: new Date(),
-          },
-        });
-
-        // Audit log
-        await prisma.agentAuditLog.create({
-          data: {
-            tenantId,
-            sessionId: proposal.sessionId,
-            toolName: proposal.toolName,
-            proposalId,
-            inputSummary: `Confirm customer booking: ${proposal.operation}`.slice(0, 500),
-            outputSummary: `Failed: ${errorMessage}`.slice(0, 500),
-            trustTier: proposal.trustTier,
-            approvalStatus: 'EXPLICIT',
-            durationMs: Date.now() - startTime,
-            success: false,
-            errorMessage,
-          },
-        });
-
-        logger.error({ error, tenantId, proposalId }, 'Customer booking failed');
-        res.status(500).json({
-          id: proposalId,
-          status: 'FAILED',
-          error: 'Booking failed. Please try again.',
-        });
-      }
     } catch (error) {
       next(error);
     }

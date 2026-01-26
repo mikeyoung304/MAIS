@@ -9,13 +9,12 @@
  * Endpoints:
  * - GET /metrics - Prometheus text format (for Prometheus scraping)
  * - GET /metrics/json - JSON format (for debugging and Datadog)
- * - GET /metrics/agent - Agent-specific metrics in Prometheus format
+ * - GET /metrics/agent - Agent-specific metrics (deprecated - agents now on Cloud Run)
  */
 
 import type { Express, Request, Response, NextFunction } from 'express';
 import { register, collectDefaultMetrics, Counter, Gauge } from 'prom-client';
 import { logger } from '../lib/core/logger';
-import { getAgentMetrics, getAgentMetricsContentType } from '../agent/orchestrator/metrics';
 
 /**
  * Metrics authentication middleware
@@ -141,23 +140,18 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
   /**
    * GET /metrics
    * Returns all metrics in Prometheus text format
-   * Combines default Node.js metrics with agent-specific metrics
    *
    * Protected by bearer token when METRICS_BEARER_TOKEN is configured.
+   *
+   * Note: Agent-specific metrics now live in Cloud Run (Vertex AI observability).
    */
   app.get('/metrics', metricsAuthMiddleware, async (_req: Request, res: Response) => {
     try {
       // Get default registry metrics (Node.js, HTTP, uptime)
       const defaultMetrics = await register.metrics();
 
-      // Get agent-specific metrics
-      const agentMetricsText = await getAgentMetrics();
-
-      // Combine both metric sets
-      const allMetrics = defaultMetrics + '\n' + agentMetricsText;
-
       res.set('Content-Type', register.contentType);
-      res.status(200).send(allMetrics);
+      res.status(200).send(defaultMetrics);
     } catch (error) {
       logger.error({ error }, 'Failed to collect Prometheus metrics');
       res.status(500).send('# Error collecting metrics');
@@ -203,20 +197,20 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
 
   /**
    * GET /metrics/agent
-   * Returns only agent-specific metrics in Prometheus format
-   * Useful for targeted monitoring of AI agent behavior
+   * Agent-specific metrics endpoint (deprecated)
    *
-   * Protected by bearer token when METRICS_BEARER_TOKEN is configured.
+   * Agent metrics have moved to Vertex AI Cloud Run observability.
+   * This endpoint is preserved for backwards compatibility.
    */
-  app.get('/metrics/agent', metricsAuthMiddleware, async (_req: Request, res: Response) => {
-    try {
-      const agentMetricsText = await getAgentMetrics();
-      res.set('Content-Type', getAgentMetricsContentType());
-      res.status(200).send(agentMetricsText);
-    } catch (error) {
-      logger.error({ error }, 'Failed to collect agent metrics');
-      res.status(500).send('# Error collecting agent metrics');
-    }
+  app.get('/metrics/agent', metricsAuthMiddleware, (_req: Request, res: Response) => {
+    res.set('Content-Type', register.contentType);
+    res
+      .status(200)
+      .send(
+        '# HELP agent_metrics_deprecated Agent metrics have moved to Vertex AI Cloud Run\n' +
+          '# TYPE agent_metrics_deprecated gauge\n' +
+          'agent_metrics_deprecated 1\n'
+      );
   });
 }
 

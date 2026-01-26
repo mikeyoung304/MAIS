@@ -60,54 +60,12 @@ import {
 } from './adapters/prisma';
 import { PrismaAdvisorMemoryRepository } from './adapters/prisma/advisor-memory.repository';
 import type { AdvisorMemoryRepository } from './lib/ports';
-import { createEvaluator } from './agent/evals/evaluator';
-import { createEvalPipeline } from './agent/evals/pipeline';
-import { createReviewQueue } from './agent/feedback/review-queue';
-import { createReviewActionService } from './agent/feedback/review-actions';
-import type { ConversationEvaluator } from './agent/evals/evaluator';
-import type { EvalPipeline } from './agent/evals/pipeline';
-import type { ReviewQueue } from './agent/feedback/review-queue';
-import type { ReviewActionService } from './agent/feedback/review-actions';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
 import { getSupabaseClient } from './config/database';
 import { logger } from './lib/core/logger';
 import path from 'path';
-
-// ============================================================================
-// Evaluation Services DI Helper (Issue 605)
-// ============================================================================
-// Extracted helper to avoid duplication between mock and real mode
-
-interface EvaluationServices {
-  evaluator: ConversationEvaluator;
-  pipeline: EvalPipeline;
-  reviewQueue: ReviewQueue;
-  reviewActions: ReviewActionService;
-}
-
-/**
- * Build evaluation services for agent quality monitoring.
- * Requires GOOGLE_VERTEX_PROJECT to be set; returns undefined if not configured.
- */
-function buildEvaluationServices(
-  prisma: PrismaClient,
-  mode: 'mock' | 'real'
-): EvaluationServices | undefined {
-  if (!process.env.GOOGLE_VERTEX_PROJECT) {
-    logger.info('⚠️  Agent evaluation services skipped (GOOGLE_VERTEX_PROJECT not set)');
-    return undefined;
-  }
-
-  const evaluator = createEvaluator();
-  const pipeline = createEvalPipeline(prisma, evaluator);
-  const reviewQueue = createReviewQueue(prisma);
-  const reviewActions = createReviewActionService(prisma);
-
-  logger.info(`${mode === 'mock' ? '🧪' : '🤖'} Agent evaluation services initialized`);
-  return { evaluator, pipeline, reviewQueue, reviewActions };
-}
 
 export interface Container {
   controllers: {
@@ -141,13 +99,6 @@ export interface Container {
     landingPage: LandingPageService; // Landing page visual editor (TODO-241)
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
     projectHub?: ProjectHubService; // Project Hub dual-faced communication
-    // Agent evaluation services (Phase 2 - agent-evaluation-system.md)
-    evaluation?: {
-      evaluator: ConversationEvaluator;
-      pipeline: EvalPipeline;
-      reviewQueue: ReviewQueue;
-      reviewActions: ReviewActionService;
-    };
   };
   repositories?: {
     service?: PrismaServiceRepository;
@@ -343,10 +294,6 @@ export function buildContainer(config: Config): Container {
       eventEmitter
     );
 
-    // Agent evaluation services (uses extracted helper to avoid duplication)
-    // In mock mode, these are optional - tests can inject mock evaluators
-    const evaluation = buildEvaluationServices(mockPrisma, 'mock');
-
     // Create ProjectHubService for dual-faced customer-tenant communication
     const projectHubService = new ProjectHubService(mockPrisma);
 
@@ -367,7 +314,6 @@ export function buildContainer(config: Config): Container {
       reminder: reminderService,
       landingPage: landingPageService,
       projectHub: projectHubService,
-      evaluation,
     };
 
     // Create AdvisorMemoryRepository for onboarding agent
@@ -778,10 +724,6 @@ export function buildContainer(config: Config): Container {
     // No dev controller in real mode
   };
 
-  // Agent evaluation services (uses extracted helper to avoid duplication)
-  // P1-583 FIX: Use factory functions for proper DI (dependencies before config)
-  const evaluationServices = buildEvaluationServices(prisma, 'real');
-
   // Create ProjectHubService for dual-faced customer-tenant communication
   const projectHubService = new ProjectHubService(prisma);
 
@@ -803,7 +745,6 @@ export function buildContainer(config: Config): Container {
     landingPage: landingPageService,
     webhookDelivery: webhookDeliveryService,
     projectHub: projectHubService,
-    evaluation: evaluationServices,
   };
 
   // Create EarlyAccessRepository for early access request persistence
