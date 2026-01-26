@@ -28,8 +28,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 // API proxy URL - proxies to /v1/tenant-admin/agent/*
 const API_URL = '/api/tenant-admin/agent';
 
-// LocalStorage key for persisting session ID
+// LocalStorage keys for persisting session state
 const SESSION_STORAGE_KEY = 'handled:concierge:sessionId';
+const VERSION_STORAGE_KEY = 'handled:concierge:version';
 
 /**
  * Message in the chat history
@@ -119,6 +120,7 @@ export function useConciergeChat({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [version, setVersion] = useState<number>(0); // Optimistic locking version (Pitfall #69)
   const [error, setError] = useState<string | null>(null);
   const [lastToolCalls, setLastToolCalls] = useState<ConciergeToolCall[]>([]);
 
@@ -153,8 +155,11 @@ export function useConciergeChat({
     try {
       // Check localStorage for existing session
       let existingSessionId: string | null = null;
+      let existingVersion: number | null = null;
       try {
         existingSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+        const storedVersion = localStorage.getItem(VERSION_STORAGE_KEY);
+        existingVersion = storedVersion ? parseInt(storedVersion, 10) : null;
       } catch {
         // localStorage unavailable (private browsing) - continue without persistence
       }
@@ -173,6 +178,9 @@ export function useConciergeChat({
           if (historyResponse.ok) {
             const historyData = await historyResponse.json();
             setSessionId(existingSessionId);
+            // Get version from response or fall back to localStorage value
+            const restoredVersion = historyData.session?.version ?? existingVersion ?? 0;
+            setVersion(restoredVersion);
             setIsAvailable(true);
             onSessionStart?.(existingSessionId);
 
@@ -194,6 +202,7 @@ export function useConciergeChat({
           // Clear invalid session from localStorage
           try {
             localStorage.removeItem(SESSION_STORAGE_KEY);
+            localStorage.removeItem(VERSION_STORAGE_KEY);
           } catch {
             // Ignore localStorage errors
           }
@@ -201,6 +210,7 @@ export function useConciergeChat({
           // Session validation failed, create new session
           try {
             localStorage.removeItem(SESSION_STORAGE_KEY);
+            localStorage.removeItem(VERSION_STORAGE_KEY);
           } catch {
             // Ignore localStorage errors
           }
@@ -222,12 +232,15 @@ export function useConciergeChat({
 
       const data = await response.json();
       setSessionId(data.sessionId);
+      // New sessions start at version 0
+      setVersion(data.version ?? 0);
       setIsAvailable(true);
       onSessionStart?.(data.sessionId);
 
-      // Persist session ID to localStorage
+      // Persist session state to localStorage
       try {
         localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
+        localStorage.setItem(VERSION_STORAGE_KEY, String(data.version ?? 0));
       } catch {
         // localStorage unavailable - continue without persistence
       }
@@ -287,6 +300,7 @@ export function useConciergeChat({
         body: JSON.stringify({
           message,
           sessionId,
+          version, // Required for optimistic locking (Pitfall #69)
         }),
       });
 
@@ -296,6 +310,16 @@ export function useConciergeChat({
       }
 
       const data = await response.json();
+
+      // Update version for optimistic locking (Pitfall #69)
+      if (data.version !== undefined) {
+        setVersion(data.version);
+        try {
+          localStorage.setItem(VERSION_STORAGE_KEY, String(data.version));
+        } catch {
+          // Ignore localStorage errors
+        }
+      }
 
       // Extract tool calls if present
       const toolCalls: ConciergeToolCall[] = data.toolCalls || [];
@@ -320,7 +344,15 @@ export function useConciergeChat({
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [inputValue, isLoading, sessionId, hasSentFirstMessage, onFirstMessage, onToolComplete]);
+  }, [
+    inputValue,
+    isLoading,
+    sessionId,
+    version,
+    hasSentFirstMessage,
+    onFirstMessage,
+    onToolComplete,
+  ]);
 
   // Handle textarea enter key
   const handleKeyDown = useCallback(
