@@ -517,13 +517,41 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         const serviceName = project.booking.package?.name ?? 'your service';
         const businessName = tenant?.name ?? 'us';
 
-        // Generate session ID (could also store in DB for persistence)
-        const sessionId = `project-${projectId}-${Date.now()}`;
+        // SECURITY: contextType is 'customer' because token auth = customer access
+        const contextType: ContextType = 'customer';
+        const customerId = project.customerId;
+
+        // Create REAL ADK session (not just a local ID)
+        const agentService = createProjectHubAgentService();
+        let sessionId: string;
+
+        try {
+          sessionId = await agentService.createSession(
+            tenantId,
+            customerId,
+            projectId,
+            contextType
+          );
+          logger.info(
+            { projectId, sessionId, contextType },
+            '[ProjectHubChat] ADK session created'
+          );
+        } catch (sessionError) {
+          logger.error(
+            { projectId, error: sessionError },
+            '[ProjectHubChat] Failed to create ADK session'
+          );
+          res.status(503).json({
+            error: 'Chat service temporarily unavailable',
+            errorType: 'agent_unavailable',
+          });
+          return;
+        }
 
         res.json({
           sessionId,
           projectId,
-          customerId: project.customerId,
+          customerId,
           greeting: `Hi ${customerName}! I'm here to help you with your ${serviceName} booking with ${businessName}. How can I assist you today?`,
           businessName,
         });
