@@ -1,7 +1,9 @@
 # Dual-Mode Orchestrator Prevention Strategy
 
+> **⚠️ LEGACY NOTICE (2026-01-26):** This document describes the **AdminOrchestrator** which was **deleted** during the Vertex AI Cloud Run migration. The pattern lessons (mode-checking consistency) remain valuable for any dual-mode component design. Actual implementation is now in Cloud Run agents (`server/src/agent-v2/`).
+
 **Issue ID:** #667
-**Category:** Orchestrator pattern, agent architecture
+**Category:** Orchestrator pattern, agent architecture (LEGACY)
 **Severity:** P1 (affects core onboarding flow)
 **Prevention Goal:** Ensure all methods in dual-mode orchestrators check mode consistently
 

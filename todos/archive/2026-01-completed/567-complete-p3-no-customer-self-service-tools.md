@@ -1,5 +1,5 @@
 ---
-status: deferred
+status: complete
 priority: p3
 issue_id: '567'
 tags: [code-review, agent-native, agent-ecosystem, feature-request]
@@ -9,6 +9,8 @@ deferred_reason: 'Product decision: defer to post-MVP. Focus on booking flow fir
 merged_from: ['535']
 triage_date: '2026-01-21'
 triage_notes: 'Downgraded P1→P3. This is a feature request, not tech debt. Ship when customers ask for it.'
+completed_at: '2026-01-26'
+resolution: 'N/A - Legacy customer chatbot (server/src/agent/customer/) deleted in migration. Customer self-service would be implemented in Booking Agent on Cloud Run if needed in future.'
 ---
 
 # P1: No Customer Self-Service Tools (Reschedule/Cancel)

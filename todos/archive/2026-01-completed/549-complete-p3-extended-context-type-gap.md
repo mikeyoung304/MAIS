@@ -1,9 +1,11 @@
 ---
-status: deferred
+status: complete
 priority: p3
 issue_id: '549'
 tags: [code-review, typescript, type-safety]
 dependencies: []
+completed_at: '2026-01-26'
+resolution: 'N/A - CustomerToolContext and all legacy agent customer tools deleted in migration to Vertex AI Cloud Run architecture. Customer chatbot now uses Booking Agent on Cloud Run.'
 ---
 
 # Extended Context Type Gap (CustomerToolContext)

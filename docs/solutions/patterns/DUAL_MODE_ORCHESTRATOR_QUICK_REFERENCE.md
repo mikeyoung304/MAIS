@@ -1,5 +1,7 @@
 # Dual-Mode Orchestrator: Quick Reference
 
+> **⚠️ LEGACY (2026-01-26):** This references `AdminOrchestrator` which was deleted. Pattern lessons still valuable.
+
 **Print & Pin This** — 2 min read
 
 ---

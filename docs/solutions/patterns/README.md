@@ -4,7 +4,11 @@ This directory contains structured prevention strategies and operational pattern
 
 ---
 
-## Agent Ecosystem Guardrails (Latest)
+> **⚠️ LEGACY NOTICE (2026-01-26):** The "Agent Ecosystem Guardrails" section below documents patterns for the **legacy agent orchestrators** (`server/src/agent/orchestrator/`, `server/src/agent/customer/`) which were **deleted** during the Vertex AI Cloud Run migration. These patterns are preserved for historical reference. For current agent patterns, see `docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md` and `server/src/agent-v2/`.
+
+---
+
+## Agent Ecosystem Guardrails (LEGACY)
 
 **Status:** Production-ready (Commit cb55639)
 

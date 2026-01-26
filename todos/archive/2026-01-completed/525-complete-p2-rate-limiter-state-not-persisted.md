@@ -1,5 +1,5 @@
 ---
-status: deferred
+status: complete
 priority: p2
 issue_id: '525'
 tags: [code-review, agent-ecosystem, security, rate-limiting, horizontal-scaling]
@@ -7,6 +7,8 @@ dependencies: []
 merged_from: ['574']
 triage_date: '2026-01-21'
 triage_notes: 'Downgraded P1→P2. Only relevant when scaling horizontally. Single instance is fine for current load. Merged with #574.'
+completed_at: '2026-01-26'
+resolution: 'N/A - Legacy agent orchestrators deleted in migration to Vertex AI Cloud Run architecture. ToolRateLimiter and all related code removed. Rate limiting now handled by ADK agents natively.'
 ---
 
 # Rate Limiter Session State Not Persisted

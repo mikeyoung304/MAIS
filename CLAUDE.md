@@ -65,18 +65,18 @@ const packages = await prisma.package.findMany({
 
 For detailed architecture documentation, search or read these files when working on specific subsystems:
 
-| Subsystem                      | Reference                                                 |
-| ------------------------------ | --------------------------------------------------------- |
-| Layered architecture           | `server/src/di.ts`, `server/src/lib/ports.ts`             |
-| Port interfaces                | `ITenantRepository`, `BookingRepository` in `ports.ts`    |
-| Type-safe API contracts        | `packages/contracts/`, ts-rest + Zod                      |
-| Customer chatbot               | `server/src/agent/customer/`, T3 trust tier proposals     |
-| Business advisor (onboarding)  | `server/src/agent/onboarding/`, XState v5, event sourcing |
-| Build mode (storefront editor) | `docs/architecture/BUILD_MODE_VISION.md`                  |
-| Agent evaluation               | `server/src/agent/evals/`                                 |
-| Landing page config            | `apps/web/src/lib/tenant.ts`, `normalizeToPages()`        |
-| Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`             |
-| Webhook idempotency            | `webhookEvent` table, ADR-002                             |
+| Subsystem                      | Reference                                              |
+| ------------------------------ | ------------------------------------------------------ |
+| Layered architecture           | `server/src/di.ts`, `server/src/lib/ports.ts`          |
+| Port interfaces                | `ITenantRepository`, `BookingRepository` in `ports.ts` |
+| Type-safe API contracts        | `packages/contracts/`, ts-rest + Zod                   |
+| AI Agents (Vertex AI)          | `server/src/agent-v2/`, ADR-018 hub-and-spoke          |
+| Agent deployment               | `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`       |
+| Business advisor (onboarding)  | `server/src/agent/onboarding/`, AdvisorMemoryService   |
+| Build mode (storefront editor) | `docs/architecture/BUILD_MODE_VISION.md`               |
+| Landing page config            | `apps/web/src/lib/tenant.ts`, `normalizeToPages()`     |
+| Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`          |
+| Webhook idempotency            | `webhookEvent` table, ADR-002                          |
 
 ### Landing Page Config Terminology
 
@@ -196,15 +196,15 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 9. Duplicate data fetching (wrap with React `cache()`)
 10. Wrong underscore prefix for "unused" vars that ARE used
 11. Circular dependencies in agent modules (check with `npx madge --circular`)
-12. T2 proposal confirms but never executes (ensure executor registered)
+12. _Retired: Legacy orchestrator pitfall removed in migration_
 13. Field name mismatches in DTOs (use canonical names from contracts)
 14. Singleton caches preventing DI (export class + factory)
 15. Missing cache invalidation after writes
 16. Early return before hooks (violates Rules of Hooks)
 17. Symlinks in TypeScript src directories (causes double compilation)
 18. TOCTOU on JSON field validation (wrap in `$transaction` + advisory lock)
-19. Duplicated tool logic (extract to `agent/utils/`)
-20. Dual-mode orchestrator method inconsistency (if one checks mode, ALL must)
+19. Duplicated tool logic (extract to shared utilities in `agent-v2/deploy/*/src/tools/`)
+20. _Retired: Legacy orchestrator pitfall removed in migration_
 21. E2E rate limiter misses (ALL need `isTestEnvironment` check)
 22. Form hydration race (add 500ms wait after `waitForSelector`)
 23. Session leak in E2E (use `browser.newContext()`)

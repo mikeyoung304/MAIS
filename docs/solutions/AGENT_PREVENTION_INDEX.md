@@ -5,9 +5,16 @@ problem_type: prevention_strategy_index
 component: server/src/agent
 phase: Phase 3+ AI Agent Implementation
 severity: P1
+status: LEGACY
 ---
 
 # Agent Prevention Strategy Index
+
+> **⚠️ LEGACY NOTICE (2026-01-26):** This index documents patterns for the **legacy agent orchestrators** which were **deleted** during the Vertex AI Cloud Run migration. Preserved for historical reference. For current agent patterns, see:
+>
+> - `docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md`
+> - `docs/solutions/patterns/ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md`
+> - `server/src/agent-v2/`
 
 Central index for all prevention strategies, best practices, and testing patterns related to Phase 3+ AI agent implementations.
 

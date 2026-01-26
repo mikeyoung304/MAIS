@@ -1,11 +1,13 @@
 ---
-status: deferred
+status: complete
 priority: p3
 issue_id: '561'
 deferred_reason: Pure refactoring with no functional impact - invest in security/data issues first
 deferred_until: When adding major agent features that would benefit from the split
 tags: [code-review, simplicity, agent-ecosystem, refactoring, quality-first-triage]
 dependencies: ['548']
+completed_at: '2026-01-26'
+resolution: 'N/A - base-orchestrator.ts and entire server/src/agent/orchestrator/ directory deleted in migration to Vertex AI Cloud Run architecture. Orchestration now handled by Concierge agent on Cloud Run.'
 ---
 
 # P1: base-orchestrator.ts (1100 lines) Should Be Split

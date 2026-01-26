@@ -17,17 +17,20 @@
 | **Phase 3a** | ✅ Complete | Deleted `PanelAgentChat.tsx`, `useAgentChat.ts`, API proxy route                                            |
 | **Phase 3b** | ✅ Complete | Removed imports & executor registration from `routes/index.ts`, deleted `evals/`, `feedback/`               |
 | **Phase 3c** | ✅ Complete | Deleted `agent.routes.ts`, `customer/`, `orchestrator/`, `proposals/`, `context/`, and orphaned directories |
-| **Phase 5**  | 🔄 Next     | **RESUME HERE** - Update documentation (CLAUDE.md, ARCHITECTURE.md, etc.)                                   |
+| **Phase 5**  | ✅ Complete | Updated CLAUDE.md, archived 4 todos, added legacy notices to historical docs                                |
 
 ---
 
 ## 🚀 Quick Start (For Fresh Context Window)
 
-**Run this command to continue the migration:**
+**✅ MIGRATION COMPLETE (2026-01-26)**
+
+All phases complete. Legacy agent orchestrators deleted, documentation updated.
 
 ```
-Read plans/LEGACY_AGENT_MIGRATION_PLAN.md and continue from Phase 5 (documentation updates).
-All legacy code deleted. TypeScript compiles clean. Ready for documentation cleanup.
+This plan is now an ARCHIVE. The migration was completed successfully:
+- Phases 0-3: Legacy code deleted (committed ce120592)
+- Phase 5: Documentation updated (CLAUDE.md, todos archived, legacy notices added)
 ```
 
 **Key decisions already made:**
