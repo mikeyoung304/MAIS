@@ -218,16 +218,6 @@ export type EvalDimensionName = (typeof EVAL_DIMENSIONS)[number]['name'];
 // Evaluation Result Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Score for a single dimension
- */
-export interface DimensionScore {
-  dimension: string;
-  score: number; // 0-10
-  reasoning: string;
-  confidence: number; // 0-1
-}
-
 /** Zod schema for dimension score validation */
 export const DimensionScoreSchema = z.object({
   dimension: z.string(),
@@ -237,16 +227,10 @@ export const DimensionScoreSchema = z.object({
 });
 
 /**
- * Complete evaluation result
+ * Score for a single dimension
+ * Type derived from schema to ensure validation constraints are always in sync
  */
-export interface EvalResult {
-  dimensions: DimensionScore[];
-  overallScore: number; // Weighted average
-  overallConfidence: number; // Average confidence
-  summary: string;
-  flagged: boolean;
-  flagReason: string | null;
-}
+export type DimensionScore = z.infer<typeof DimensionScoreSchema>;
 
 /** Zod schema for eval result validation */
 export const EvalResultSchema = z.object({
@@ -257,6 +241,12 @@ export const EvalResultSchema = z.object({
   flagged: z.boolean(),
   flagReason: z.string().nullable(),
 });
+
+/**
+ * Complete evaluation result
+ * Type derived from schema to ensure validation constraints are always in sync
+ */
+export type EvalResult = z.infer<typeof EvalResultSchema>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Rubric Prompt Generation

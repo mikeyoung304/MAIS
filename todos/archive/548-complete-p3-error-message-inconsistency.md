@@ -1,9 +1,11 @@
 ---
-status: deferred
+status: complete
 priority: p3
 issue_id: '548'
 tags: [code-review, consistency, cleanup]
 dependencies: []
+created_at: 2026-01-01
+completed_at: 2026-01-26
 ---
 
 # Error Message Inconsistency
@@ -72,6 +74,7 @@ Option A - Standardize to constants
 
 ## Work Log
 
-| Date       | Action                   | Learnings                        |
-| ---------- | ------------------------ | -------------------------------- |
-| 2026-01-01 | Created from code review | Consistency aids maintainability |
+| Date       | Action                      | Learnings                                                                                                                                                                                         |
+| ---------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-01 | Created from code review    | Consistency aids maintainability                                                                                                                                                                  |
+| 2026-01-26 | Standardized error messages | Added BUSINESS_PROFILE constant to ErrorMessages. Replaced 8 inline error strings (6 in read-tools.ts, 2 in customer-tools.ts) with constants. All tools now use ErrorMessages. Typecheck passes. |

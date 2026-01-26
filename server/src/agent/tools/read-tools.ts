@@ -17,6 +17,7 @@ import { sanitizeError } from '../../lib/core/error-sanitizer';
 import type { Prisma } from '../../generated/prisma/client';
 import { BookingStatus } from '../../generated/prisma/client';
 import { handleToolError, buildDateRangeFilter, formatPrice, formatDateISO } from './utils';
+import { ErrorMessages } from '../errors/agent-error';
 
 /**
  * Type guard for BookingStatus enum
@@ -65,7 +66,7 @@ export const getTenantTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Unable to access business profile. Please try again.' };
+        return { success: false, error: ErrorMessages.BUSINESS_PROFILE };
       }
 
       return {
@@ -550,7 +551,7 @@ export const getLandingPageTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Unable to access business profile. Please try again.' };
+        return { success: false, error: ErrorMessages.BUSINESS_PROFILE };
       }
 
       return {
@@ -593,7 +594,7 @@ export const getStripeStatusTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Unable to access business profile. Please try again.' };
+        return { success: false, error: ErrorMessages.BUSINESS_PROFILE };
       }
 
       return {
@@ -1125,7 +1126,7 @@ export const getTrialStatusTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Unable to access business profile. Please try again.' };
+        return { success: false, error: ErrorMessages.BUSINESS_PROFILE };
       }
 
       const now = new Date();
@@ -1190,7 +1191,7 @@ export const getBookingLinkTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Unable to access business profile. Please try again.' };
+        return { success: false, error: ErrorMessages.BUSINESS_PROFILE };
       }
 
       // Determine the base URL
@@ -1270,7 +1271,7 @@ export const refreshContextTool: AgentTool = {
       });
 
       if (!tenant) {
-        return { success: false, error: 'Unable to access business profile. Please try again.' };
+        return { success: false, error: ErrorMessages.BUSINESS_PROFILE };
       }
 
       // Calculate date ranges

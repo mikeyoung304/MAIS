@@ -290,6 +290,7 @@ export const ErrorMessages = {
 
   // Business info
   BUSINESS_INFO: 'Unable to load business information. Please try again.',
+  BUSINESS_PROFILE: 'Unable to access business profile. Please try again.',
 
   // General
   TRY_AGAIN: 'Something went wrong. Please try again.',

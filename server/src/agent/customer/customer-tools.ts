@@ -208,7 +208,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           { error: sanitizeError(error), tenantId },
           'Failed to browse service categories'
         );
-        return { success: false, error: 'Unable to load service categories. Please try again.' };
+        return { success: false, error: ErrorMessages.LOAD_SERVICES };
       }
     },
   },
@@ -489,7 +489,7 @@ export const CUSTOMER_TOOLS: AgentTool[] = [
           { error: sanitizeError(error), tenantId, packageId },
           'Failed to create booking proposal'
         );
-        return { success: false, error: 'Failed to create booking. Please try again.' };
+        return { success: false, error: ErrorMessages.CREATE_BOOKING };
       }
     },
   },

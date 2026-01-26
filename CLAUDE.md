@@ -8,7 +8,7 @@ HANDLED (gethandled.ai) is a membership platform for service professionals — p
 
 **Tech Stack:** Express 4, TypeScript 5.9.3 (strict), Prisma 7, PostgreSQL | React 18, Next.js 14 App Router, TailwindCSS | ts-rest + Zod | Vitest, Playwright
 
-**Status:** Production-ready on `main`. Next.js migration complete. Agent-powered onboarding complete.
+**Status:** Production-ready on `main`. Next.js migration complete. Agent-powered onboarding complete. Recent: Type safety improvements (2026-01-26).
 
 ## Quick Start
 

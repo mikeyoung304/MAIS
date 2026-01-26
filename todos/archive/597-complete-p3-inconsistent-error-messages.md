@@ -1,10 +1,11 @@
 ---
-status: deferred
+status: complete
 priority: p3
 issue_id: '597'
 tags: [code-review, code-quality, error-handling, debugging]
 dependencies: []
 created_at: 2026-01-02
+completed_at: 2026-01-26
 ---
 
 # P3: Inconsistent Error Messages - Same Message for Different Failures
@@ -79,6 +80,7 @@ if (trace.tenantId !== tenantId) {
 
 ## Work Log
 
-| Date       | Action                         | Learnings                                        |
-| ---------- | ------------------------------ | ------------------------------------------------ |
-| 2026-01-02 | Created from /workflows:review | Code Quality reviewer identified debugging issue |
+| Date       | Action                         | Learnings                                                                                                                                                                              |
+| ---------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-02 | Created from /workflows:review | Code Quality reviewer identified debugging issue                                                                                                                                       |
+| 2026-01-26 | Fixed review-queue.ts          | Added TraceNotFoundError import and replaced generic Error. review-actions.ts already fixed. Preserved updateMany performance optimization pattern (atomic ownership+existence check). |

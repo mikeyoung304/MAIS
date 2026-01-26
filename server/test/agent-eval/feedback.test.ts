@@ -492,7 +492,7 @@ describe('ReviewQueue', () => {
           notes: 'Test',
           actionTaken: 'none',
         })
-      ).rejects.toThrow('Trace not found or access denied');
+      ).rejects.toThrow('Trace not found: trace-999');
     });
 
     it('should not create action if actionTaken is none', async () => {

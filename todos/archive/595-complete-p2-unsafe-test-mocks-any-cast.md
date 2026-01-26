@@ -1,10 +1,11 @@
 ---
-status: deferred
+status: complete
 priority: p2
 issue_id: '595'
 tags: [code-review, code-quality, typescript, testing]
 dependencies: []
 created_at: 2026-01-02
+completed_at: 2026-01-26
 ---
 
 # P2: Unsafe Type Casting in Test Mocks
@@ -71,6 +72,7 @@ export function createMockPrisma(): DeepMockProxy<PrismaClient> {
 
 ## Work Log
 
-| Date       | Action                         | Learnings                                    |
-| ---------- | ------------------------------ | -------------------------------------------- |
-| 2026-01-02 | Created from /workflows:review | Code Quality reviewer identified unsafe cast |
+| Date       | Action                         | Learnings                                                                                                                                                                                             |
+| ---------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-02 | Created from /workflows:review | Code Quality reviewer identified unsafe cast                                                                                                                                                          |
+| 2026-01-26 | Closed as already fixed        | Fix implemented in commit 0ce7eac1 (2026-01-02) - test/helpers/mock-prisma.ts created with DeepMockProxy. Subagent investigation confirmed no `as any` casts remain. Todo not updated at time of fix. |

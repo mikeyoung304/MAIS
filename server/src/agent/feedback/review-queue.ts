@@ -16,6 +16,7 @@ import { z } from 'zod';
 import type { PrismaClient } from '../../generated/prisma/client';
 import type { TracedMessage } from '../tracing';
 import { redactMessagesForPreview } from '../../lib/pii-redactor';
+import { TraceNotFoundError } from '../../lib/errors/agent-eval-errors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -245,8 +246,10 @@ export class ReviewQueue {
       });
 
       // Verify ownership and existence in one step
+      // Note: Cannot distinguish between "not found" and "wrong tenant" without
+      // additional query. Using TraceNotFoundError for both cases (performance trade-off).
       if (updated.count === 0) {
-        throw new Error('Trace not found or access denied');
+        throw new TraceNotFoundError(traceId);
       }
 
       // Log action if taken

@@ -1,5 +1,5 @@
 ---
-status: deferred
+status: complete
 priority: p3
 issue_id: '676'
 tags:
@@ -7,10 +7,13 @@ tags:
   - build-mode
   - deferred
   - batch
+  - legacy
 dependencies:
   - '673'
   - '674'
   - '675'
+created_at: 2026-01-09
+completed_at: 2026-01-26
 ---
 
 # Build Mode UX Enhancements - Deferred P3 Items
@@ -139,6 +142,7 @@ The effect-only component pattern (renders null) could be simplified to inline u
 
 ## Work Log
 
-| Date       | Action                         | Learnings                    |
-| ---------- | ------------------------------ | ---------------------------- |
-| 2026-01-09 | Created as batch deferred todo | From code review of f1645a82 |
+| Date       | Action                         | Learnings                                                                                                                                                                                                                                                                                       |
+| ---------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-09 | Created as batch deferred todo | From code review of f1645a82                                                                                                                                                                                                                                                                    |
+| 2026-01-26 | Closed as legacy/obsolete      | Subagent investigation found BuildModeChat.tsx no longer exists in codebase. File appears to have been removed or refactored. Build mode still exists but specific file referenced in all 8 items is gone. Coverage reports show it existed previously but current codebase doesn't include it. |

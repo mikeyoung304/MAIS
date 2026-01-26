@@ -1,10 +1,11 @@
 ---
-status: deferred
+status: complete
 priority: p2
 issue_id: '591'
 tags: [code-review, typescript, zod, validation]
 dependencies: []
 created_at: 2026-01-02
+completed_at: 2026-01-26
 ---
 
 # P2: Missing Type Inference from Zod Schemas in Rubrics
@@ -81,6 +82,7 @@ export type EvalResult = z.infer<typeof EvalResultSchema>;
 
 ## Work Log
 
-| Date       | Action                         | Learnings                                        |
-| ---------- | ------------------------------ | ------------------------------------------------ |
-| 2026-01-02 | Created from /workflows:review | TypeScript reviewer identified schema/type drift |
+| Date       | Action                         | Learnings                                                                                                                                    |
+| ---------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-02 | Created from /workflows:review | TypeScript reviewer identified schema/type drift                                                                                             |
+| 2026-01-26 | Converted to z.infer<>         | Replaced manual interfaces with type derivation for both DimensionScore and EvalResult. Schema now single source of truth. Typecheck passes. |
