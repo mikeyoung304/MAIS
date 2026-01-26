@@ -1070,11 +1070,44 @@ const delegateToStorefrontTool = new FunctionTool({
 
     logger.info({}, `[Concierge] Delegating to Storefront: ${params.task}`);
 
-    // Construct message for Storefront agent
-    let message = `Task: ${params.task}`;
-    if (params.pageName) message += `\nPage: ${params.pageName}`;
-    if (params.sectionId) message += `\nSection ID: ${params.sectionId}`;
-    if (params.content) message += `\nContent: ${JSON.stringify(params.content)}`;
+    // Construct NATURAL LANGUAGE message for Storefront agent
+    // CRITICAL: Do NOT use structured "Task:" format - the Storefront LLM
+    // interprets that as "already done" instead of "needs to be done"
+    // The Storefront agent must call get_page_structure first, then update_section
+    let message = '';
+
+    switch (params.task) {
+      case 'update_section':
+        if (params.content && typeof params.content === 'object') {
+          const contentObj = params.content as Record<string, string>;
+          const contentParts = Object.entries(contentObj)
+            .map(([key, value]) => `${key} to "${value}"`)
+            .join(' and ');
+          message = `Update the ${params.pageName || 'home'} page: set the ${contentParts}`;
+        } else {
+          message = `Update the ${params.pageName || 'home'} page with the provided changes`;
+        }
+        break;
+      case 'add_section':
+        message = `Add a new section to the ${params.pageName || 'home'} page`;
+        if (params.content) message += ` with content: ${JSON.stringify(params.content)}`;
+        break;
+      case 'remove_section':
+        message = `Remove section ${params.sectionId} from the ${params.pageName || 'home'} page`;
+        break;
+      case 'get_structure':
+        message = `Show me the current structure of the ${params.pageName || 'all'} page(s)`;
+        break;
+      case 'preview':
+        message = `Get the preview URL for the current draft`;
+        break;
+      case 'publish':
+        message = `Publish the current draft to make it live`;
+        break;
+      default:
+        message = `${params.task} on the ${params.pageName || 'home'} page`;
+        if (params.content) message += `: ${JSON.stringify(params.content)}`;
+    }
 
     const result = await callSpecialistAgent(
       SPECIALIST_URLS.storefront,
