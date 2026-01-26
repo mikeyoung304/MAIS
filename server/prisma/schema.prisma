@@ -137,7 +137,6 @@ model Tenant {
   availabilityRules    AvailabilityRule[] // Scheduling availability rules
   domains              TenantDomain[] // Custom domains for tenant website
   agentProposals       AgentProposal[] // AI agent write operation proposals
-  agentAuditLogs       AgentAuditLog[] // AI agent audit trail
   agentSessions        AgentSession[] // AI agent chat sessions
   onboardingEvents     OnboardingEvent[] // Onboarding event sourcing audit trail
   // Agent Evaluation System relations
@@ -829,39 +828,6 @@ enum AgentProposalStatus {
   EXPIRED // TTL exceeded (30 minutes)
   REJECTED // User said "wait" or "no"
   FAILED // Execution failed
-}
-
-/// AgentAuditLog - Audit trail for all agent tool calls
-/// Required for security compliance: 90 days minimum, 7 years for financial operations
-model AgentAuditLog {
-  id             String              @id @default(cuid())
-  tenantId       String // Tenant isolation - CRITICAL
-  sessionId      String // Agent session identifier
-  toolName       String // Tool that was called
-  proposalId     String? // Reference to proposal (if write operation)
-  inputSummary   String              @db.VarChar(500) // Sanitized input summary
-  outputSummary  String              @db.VarChar(500) // Sanitized output summary
-  trustTier      AgentTrustTier
-  approvalStatus AgentApprovalStatus
-  durationMs     Int? // Execution duration in milliseconds
-  success        Boolean             @default(true)
-  errorMessage   String?             @db.Text
-  createdAt      DateTime            @default(now())
-
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId, sessionId])
-  @@index([tenantId, createdAt])
-  @@index([tenantId, toolName])
-  @@index([createdAt]) // For retention cleanup
-  @@index([tenantId])
-}
-
-enum AgentApprovalStatus {
-  AUTO // T1 - auto-approved
-  SOFT // T2 - soft confirm (proceeds after next message)
-  EXPLICIT // T3 - explicit user confirmation received
-  BYPASSED // Security bypass attempt (should never happen, logged for audit)
 }
 
 /// AgentSession - Conversation session for AI agent chat
