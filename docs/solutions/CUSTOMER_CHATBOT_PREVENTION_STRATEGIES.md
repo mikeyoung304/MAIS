@@ -9,6 +9,8 @@ related_issues: 5 critical gaps identified in Phase 0
 
 # Customer Chatbot Prevention Strategies
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 ## Overview
 
 This document captures prevention strategies for 5 critical issues discovered in Customer Chatbot Phase 0 implementation. Each issue includes:

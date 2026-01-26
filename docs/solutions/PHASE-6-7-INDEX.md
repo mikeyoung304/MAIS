@@ -7,6 +7,8 @@ tags: [agent-eval, phase-6-7, index, navigation, solutions]
 
 # Phase 6-7 Agent Evaluation Remediation - Complete Index
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 **Date:** 2026-01-02
 **Status:** Complete (Phase 1-4 + Phase 7 remediation)
 **Scope:** 15 solutions extracted and documented

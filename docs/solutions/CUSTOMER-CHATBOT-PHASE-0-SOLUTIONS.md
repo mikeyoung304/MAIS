@@ -1,5 +1,7 @@
 # Customer Chatbot Phase 0 - Solutions Extracted
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 **Date:** December 2025
 **Reference:** Commits 66b512f through 88f6c80
 **Status:** Documented from PR #23 (P1/P2 fixes applied)

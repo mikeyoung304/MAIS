@@ -1,5 +1,7 @@
 # Agent Evaluation System Remediation - Session 1
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 **Date:** 2026-01-02
 **Status:** COMPLETE (Phases 1-4 implemented)
 **Reference:** [Agent Evaluation System Plan](/plans/agent-evaluation-system.md)

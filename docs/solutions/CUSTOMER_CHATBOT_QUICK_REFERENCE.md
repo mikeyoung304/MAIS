@@ -8,6 +8,8 @@ format: 1-page-checklist
 
 # Customer Chatbot Prevention Strategies - Quick Reference
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 **For full documentation, see:** `CUSTOMER_CHATBOT_PREVENTION_STRATEGIES.md`
 
 ---

@@ -4,6 +4,8 @@ date: 2026-01-02
 scope: Build & Deployment Fixes
 ---
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 ## Session Overview
 
 Fixed two critical production issues preventing the MAIS agent evaluation system from running on Render:

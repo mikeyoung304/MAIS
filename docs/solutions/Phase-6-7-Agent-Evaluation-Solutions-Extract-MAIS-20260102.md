@@ -7,6 +7,8 @@ tags: [agent-eval, phase-6-7, solutions, compound, code-quality, performance, se
 
 # Phase 6-7 Agent Evaluation Remediation - Solutions Extract
 
+> **LEGACY NOTICE (2026-01-26):** This document references code that was deleted during the Legacy Agent Migration. See `server/src/agent-v2/` for the current agent system. Archive branches: `archive/legacy-agent-orchestrators`, `archive/legacy-evals-feedback`.
+
 **Date:** 2026-01-02
 **Scope:** Complete Phase 6-7 code quality and P2 security remediation
 **Commits:** fcf6004c, 39d9695f, 458702e7, face8697

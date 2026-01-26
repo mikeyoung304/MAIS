@@ -107,6 +107,134 @@ threshold: p95 > 10000ms (10 seconds)
 severity: Warning
 ```
 
+### Alert Policy Setup Guide
+
+**Current Coverage:**
+
+| Agent             | Error Rate Alert | Latency Alert | Status           |
+| ----------------- | ---------------- | ------------- | ---------------- |
+| project-hub-agent | ✅               | ✅            | Monitored        |
+| concierge-agent   | ❌               | ❌            | **Needs alerts** |
+| booking-agent     | ❌               | ❌            | **Needs alerts** |
+| marketing-agent   | ❌               | ❌            | **Needs alerts** |
+| storefront-agent  | ❌               | ❌            | **Needs alerts** |
+| research-agent    | ❌               | ❌            | **Needs alerts** |
+
+**Recommended Thresholds:**
+
+- **Error Rate:** Alert if error rate exceeds 1% over a 5-minute window
+- **Latency:** Alert if p95 latency exceeds 5 seconds
+
+#### Step 1: Create Error Rate Alert
+
+1. Navigate to [Cloud Monitoring Alerting](https://console.cloud.google.com/monitoring/alerting?project=handled-484216)
+2. Click **+ CREATE POLICY**
+3. Click **Select a metric**
+4. In the metric selector:
+   - Resource type: `Cloud Run Revision`
+   - Metric: `Request count` (`run.googleapis.com/request_count`)
+5. Click **Apply**
+6. Add a filter:
+   - Click **Add filter**
+   - Field: `service_name`
+   - Value: `concierge-agent` (or the agent you're configuring)
+7. Add another filter:
+   - Field: `response_code_class`
+   - Value: `5xx`
+8. Configure the threshold:
+   - Rolling window: `5 min`
+   - Rolling window function: `rate`
+   - Condition: `Is above`
+   - Threshold: `0.01` (1%)
+9. Click **Next**
+10. Configure notifications:
+    - Add your notification channel (email, Slack, etc.)
+11. Name the alert: `[Agent Name] - Error Rate > 1%`
+    - Example: `Concierge Agent - Error Rate > 1%`
+12. Click **CREATE POLICY**
+
+#### Step 2: Create Latency Alert
+
+1. Navigate to [Cloud Monitoring Alerting](https://console.cloud.google.com/monitoring/alerting?project=handled-484216)
+2. Click **+ CREATE POLICY**
+3. Click **Select a metric**
+4. In the metric selector:
+   - Resource type: `Cloud Run Revision`
+   - Metric: `Request latencies` (`run.googleapis.com/request_latencies`)
+5. Click **Apply**
+6. Add a filter:
+   - Click **Add filter**
+   - Field: `service_name`
+   - Value: `concierge-agent` (or the agent you're configuring)
+7. Configure the aggregation:
+   - Aggregation: `95th percentile`
+8. Configure the threshold:
+   - Rolling window: `5 min`
+   - Condition: `Is above`
+   - Threshold: `5000` (5 seconds in milliseconds)
+9. Click **Next**
+10. Configure notifications:
+    - Add your notification channel (email, Slack, etc.)
+11. Name the alert: `[Agent Name] - P95 Latency > 5s`
+    - Example: `Concierge Agent - P95 Latency > 5s`
+12. Click **CREATE POLICY**
+
+#### Agents Requiring Alert Setup
+
+Create both alert types (error rate + latency) for each of these agents:
+
+1. **concierge-agent** - Orchestrator for tenant dashboard
+2. **booking-agent** - Customer booking flow (high priority - handles payments)
+3. **marketing-agent** - Marketing content generation
+4. **storefront-agent** - Storefront configuration
+5. **research-agent** - Business research tools
+
+**Total alerts to create:** 10 (2 per agent × 5 agents)
+
+#### Alert Naming Convention
+
+Use consistent naming for easy filtering:
+
+```
+[Agent Display Name] - [Metric Type] [Condition]
+```
+
+Examples:
+
+- `Concierge Agent - Error Rate > 1%`
+- `Concierge Agent - P95 Latency > 5s`
+- `Booking Agent - Error Rate > 1%`
+- `Booking Agent - P95 Latency > 5s`
+
+#### MQL Queries (Advanced)
+
+For users who prefer MQL (Monitoring Query Language):
+
+**Error Rate Alert:**
+
+```
+fetch cloud_run_revision
+| metric 'run.googleapis.com/request_count'
+| filter resource.service_name == 'concierge-agent'
+| filter metric.response_code_class == '5xx'
+| align rate(5m)
+| every 1m
+| condition val() > 0.01
+```
+
+**Latency Alert:**
+
+```
+fetch cloud_run_revision
+| metric 'run.googleapis.com/request_latencies'
+| filter resource.service_name == 'concierge-agent'
+| align p95(5m)
+| every 1m
+| condition val() > 5000
+```
+
+---
+
 ### 3. Cloud Logging (Structured Logs)
 
 **Access:** [Logs Explorer](https://console.cloud.google.com/logs/query?project=handled-484216)
@@ -246,6 +374,10 @@ evaluation_config = {
 
 ## Changelog
 
+- **2026-01-26:** Added Alert Policy Setup Guide
+  - Step-by-step instructions for creating error rate and latency alerts
+  - Listed 5 agents needing alerts (concierge, booking, marketing, storefront, research)
+  - Added MQL query examples for advanced users
 - **2026-01-26:** Initial setup
   - Enabled Cloud Trace storage
   - Verified existing monitoring alerts
