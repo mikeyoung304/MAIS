@@ -1,11 +1,13 @@
 ---
-status: ready
+status: complete
 priority: p3
 issue_id: paintbrush-cache-control
 tags: [code-review, performance, caching, proxy]
 dependencies: []
 triage_notes: 'Quick win - ~10 lines of code. No dependencies. Ready for implementation.'
 triaged_at: '2026-01-26'
+completed_at: '2026-01-26'
+completion_notes: 'Added Cache-Control: no-store, no-cache, must-revalidate to both tenant-admin and agent proxy routes.'
 ---
 
 # P3 MEDIUM: Missing Cache-Control Headers on Proxy Responses

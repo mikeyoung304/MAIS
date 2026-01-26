@@ -97,7 +97,7 @@ model Tenant {
 
   // Landing Page Configuration
   landingPageConfig             Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
-  landingPageConfigDraft        Json? // Draft version for Build Mode editing (published via copy to landingPageConfig)
+  landingPageConfigDraft        Json? // Draft version for Build Mode/AI editing. Published by wrapping in {published: draft, publishedAt} format in landingPageConfig column.
   landingPageConfigDraftVersion Int   @default(0) // Optimistic locking: increments on each draft write, reset on publish/discard
 
   // Tier Display Names - Tenant customization for tier labels

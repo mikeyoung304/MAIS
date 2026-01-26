@@ -78,6 +78,24 @@ For detailed architecture documentation, search or read these files when working
 | Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`             |
 | Webhook idempotency            | `webhookEvent` table, ADR-002                             |
 
+### Landing Page Config Terminology
+
+The codebase has two draft systems for landing page configuration (documented technical debt):
+
+| Term                          | Storage Location                           | Used By                  | Description                                                        |
+| ----------------------------- | ------------------------------------------ | ------------------------ | ------------------------------------------------------------------ |
+| `landingPageConfig.draft`     | JSON wrapper in `landingPageConfig` column | Visual Editor (REST API) | Unpublished changes stored as `{ draft: {...}, published: {...} }` |
+| `landingPageConfig.published` | JSON wrapper in `landingPageConfig` column | Visual Editor (REST API) | Live content wrapped in `{ published: {...} }` format              |
+| `landingPageConfigDraft`      | Separate Prisma column                     | Build Mode (AI tools)    | AI-edited draft stored in dedicated column                         |
+| `live`                        | -                                          | AI tool responses        | What the AI considers "currently live" (reads from published)      |
+
+**Key behaviors:**
+
+- **Visual Editor publishes** by calling `createPublishedWrapper(draft)` → writes `{ published: draft, publishedAt }` to `landingPageConfig`
+- **Build Mode publishes** by copying `landingPageConfigDraft` → `landingPageConfig` with wrapper format
+- **Reading live config**: Always extract from wrapper: `config.published ?? config`
+- **Single source of truth**: `LandingPageService` in `server/src/services/landing-page.service.ts`
+
 **Use `repo-research-analyst` agent** for codebase exploration when context is unclear.
 
 ## Development Workflow

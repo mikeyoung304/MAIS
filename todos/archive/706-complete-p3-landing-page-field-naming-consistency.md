@@ -1,11 +1,13 @@
 ---
-status: ready
+status: complete
 priority: p3
 issue_id: '706'
 tags: [code-review, documentation, naming, tech-debt]
 dependencies: []
 triage_notes: 'Dependencies #697 and #704 complete. Ready for documentation work.'
 triaged_at: '2026-01-26'
+completed_at: '2026-01-26'
+completion_notes: 'Added "Landing Page Config Terminology" section to CLAUDE.md with table of terms, storage locations, and key behaviors.'
 ---
 
 # Inconsistent Field Naming for Landing Page Config

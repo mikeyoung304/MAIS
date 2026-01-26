@@ -1,11 +1,13 @@
 ---
-status: ready
+status: complete
 priority: p3
 issue_id: '707'
 tags: [code-review, documentation, prisma]
 dependencies: []
 triage_notes: 'Dependency #697 complete. Ready for schema comment update.'
 triaged_at: '2026-01-26'
+completed_at: '2026-01-26'
+completion_notes: 'Updated landingPageConfigDraft comment in schema.prisma to reflect wrapper format {published: draft, publishedAt}.'
 ---
 
 # Schema Comment Mismatch for landingPageConfigDraft

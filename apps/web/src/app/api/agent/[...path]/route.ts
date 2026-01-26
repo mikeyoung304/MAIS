@@ -84,11 +84,17 @@ async function handleRequest(
         status: response.status,
         headers: {
           'Content-Type': response.headers.get('Content-Type') || 'text/plain',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
       });
     }
 
-    return NextResponse.json(responseData, { status: response.status });
+    return NextResponse.json(responseData, {
+      status: response.status,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     logger.error('Agent API proxy error', {
       error,
