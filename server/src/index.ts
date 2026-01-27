@@ -12,7 +12,7 @@ import { validateEnv } from './config/env.schema';
 import { closeSupabaseConnections } from './config/database';
 import { initializeScheduler } from './scheduler';
 import { initializeWebhookQueue } from './jobs/webhook-queue';
-import { startCleanupScheduler, recoverOrphanedProposalsOnStartup } from './jobs/cleanup';
+import { startCleanupScheduler } from './jobs/cleanup';
 import type { PrismaClient } from './generated/prisma/client';
 
 /**
@@ -84,11 +84,6 @@ async function main(): Promise<void> {
       const cronSchedule = process.env.REMINDER_CRON_SCHEDULE || '0 9 * * *';
       initializeScheduler(container, cronSchedule);
       logger.info('⏰ Scheduled tasks initialized');
-
-      // Recover orphaned proposals from previous crashes
-      // This runs AFTER executor registration (in createApp) but BEFORE accepting traffic
-      await recoverOrphanedProposalsOnStartup(container.prisma);
-      logger.info('🔄 Orphan proposal recovery completed');
 
       // Start cleanup scheduler for expired customer chat sessions/proposals
       startCleanupScheduler(container.prisma);
