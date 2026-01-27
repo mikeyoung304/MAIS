@@ -1054,6 +1054,7 @@ rg "setQueryClientRef|queryClientRef\s*=" apps/web/src/ --type ts
 
 ## 🎓 Training Resources
 
+- [Agent-v2 Safety Tests Implementation Pattern](./testing-patterns/AGENT_V2_SAFETY_TESTS_IMPLEMENTATION_PATTERN.md)
 - [P1 Security Prevention Strategies](./security-issues/P1-SECURITY-PREVENTION-STRATEGIES.md)
 - [Over-Engineering Prevention](./patterns/OVER_ENGINEERING_PREVENTION.md)
 - [Comprehensive Prevention Strategies](./COMPREHENSIVE-PREVENTION-STRATEGIES.md)
