@@ -311,6 +311,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 86. Module-level QueryClient singleton - Using `let queryClientRef: QueryClient | null = null` set via useEffect, then calling from external code; fails because: (1) React effects run in unpredictable order, (2) HMR resets module state but not the ref, (3) SSR hydration mismatches. Use `useQueryClient()` hook or create QueryClient at module scope in `lib/query-client.ts` and import that instance. See `docs/solutions/react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md`
 
+### Build & Refactoring Pitfalls (87)
+
+87. Orphan imports after large deletions - Deleted file/function but forgot to update importers; incremental TypeScript build passes locally (unchanged files skipped), clean CI build fails with "cannot find module"; ALWAYS run `rm -rf server/dist packages/*/dist && npm run typecheck` before committing deletions. Archive branches provide rollback but NOT prevention. See `docs/solutions/build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -334,6 +338,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](docs/solutions/testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md)** - Payment service test patterns (85 tests)
 - **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4
 - **[MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md](docs/solutions/react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md)** - React Query singleton anti-pattern
+- **[ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md](docs/solutions/build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md)** - Clean build before committing deletions
 
 When you hit an issue:
 

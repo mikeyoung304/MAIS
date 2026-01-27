@@ -889,6 +889,52 @@ grep -rn "audit" server/src/ --include="*.ts" | grep -v "session.audit.ts" | wc 
 
 ---
 
+## Large Deletions / Refactoring (CRITICAL)
+
+### Orphan Import Prevention
+
+```bash
+# BEFORE deleting any export:
+# 1. Find ALL usages first
+rg "import.*{.*FunctionName" --type ts
+rg "from.*'./path/to/file'" --type ts
+
+# 2. Update ALL importers FIRST
+# 3. THEN delete the source
+
+# 4. ALWAYS run clean typecheck before commit
+rm -rf server/dist packages/*/dist apps/web/.next
+npm run typecheck
+```
+
+### Why Incremental Builds Miss This
+
+```
+Local: Unchanged file B imports deleted file A
+       → B not recompiled (incremental skips unchanged)
+       → Build passes locally
+
+CI:    Clean build recompiles ALL files
+       → B now compiled
+       → "Cannot find module A"
+       → BUILD FAILS
+```
+
+### Deletion Workflow Checklist
+
+```markdown
+- [ ] Run `rg "import.*FunctionName" --type ts` BEFORE deletion
+- [ ] Update ALL importing files FIRST
+- [ ] Delete the source file/function
+- [ ] Run `rm -rf server/dist && npm run typecheck`
+- [ ] Only commit if clean typecheck passes
+- [ ] (Optional) Create archive branch for rollback insurance
+```
+
+**Full Reference:** [ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md](./build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md)
+
+---
+
 ## Token-Based Authentication (CRITICAL)
 
 ### Generation/Validation Identifier Mismatch
@@ -1063,10 +1109,11 @@ rg "setQueryClientRef|queryClientRef\s*=" apps/web/src/ --type ts
 - [Email Case-Sensitivity Prevention](./security-issues/PREVENTION-STRATEGY-EMAIL-CASE-SENSITIVITY.md)
 - [TypeScript Unused Variables Prevention](./build-errors/typescript-unused-variables-build-failure-MAIS-20251227.md)
 - [Module-Level QueryClient Singleton Prevention](./react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md)
+- [Orphan Imports After Large Deletions](./build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md)
 - [CLAUDE.md](../../CLAUDE.md)
 
 ---
 
 **Keep this handy! Print it out!**
 
-**Last Updated:** 2026-01-26
+**Last Updated:** 2026-01-27
