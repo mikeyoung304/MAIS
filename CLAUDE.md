@@ -319,6 +319,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 88. Fact-to-Storefront bridge missing - Agent stores discovery facts via `store_discovery_fact` but fails to apply them via `delegate_to_storefront`; user says "my about section should mention X" and agent stores the fact but never updates the storefront; Cloud Run logs show `storefront-agent` at 0 req/sec confirming no delegation; when user provides SECTION + CONTENT, agent MUST call BOTH `store_discovery_fact` AND `delegate_to_storefront` in the same turn. See `docs/solutions/agent-issues/FACT_TO_STOREFRONT_BRIDGE_PREVENTION.md`
 
+### CI/CD Agent Deployment Pitfalls (89)
+
+89. ADK deployment without .env in CI - ADK `deploy cloud_run` reads `.env` file to know what runtime env vars to set on Cloud Run; in CI environments where `.env` is gitignored, ADK logs "injecting env (0)" and deployment silently fails with "Missing required environment variable" but reports SUCCESS because error isn't propagated; ALWAYS create `.env` from GitHub Secrets before ADK deploy AND use `set -e` to fail-fast. See `docs/solutions/agent-issues/AGENT_FAILURES.md` (Root Cause section).
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:

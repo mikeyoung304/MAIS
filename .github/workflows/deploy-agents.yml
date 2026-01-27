@@ -156,20 +156,68 @@ jobs:
           npm run build
           echo "✅ Build complete for ${{ matrix.agent }}"
 
-      - name: Deploy agent to Cloud Run
-        id: deploy
+      # Create .env file from GitHub Secrets for ADK deployment
+      # ADK reads .env to know what runtime env vars to set on Cloud Run
+      # See Pitfall #89: ADK deployment without .env in CI
+      - name: Create .env for ADK deployment
         run: |
           cd server/src/agent-v2/deploy/${{ matrix.agent }}
 
+          # Base env vars needed by all agents
+          cat > .env << 'EOF'
+          INTERNAL_API_SECRET=${{ secrets.INTERNAL_API_SECRET }}
+          MAIS_API_URL=https://mais-5bwx.onrender.com
+          EOF
+
+          # Concierge needs specialist agent URLs for delegation
+          if [ "${{ matrix.agent }}" = "concierge" ]; then
+            cat >> .env << 'EOF'
+          MARKETING_AGENT_URL=https://marketing-agent-506923455711.us-central1.run.app
+          STOREFRONT_AGENT_URL=https://storefront-agent-506923455711.us-central1.run.app
+          RESEARCH_AGENT_URL=https://research-agent-506923455711.us-central1.run.app
+          EOF
+          fi
+
+          # Verify .env was created with content
+          ENV_LINES=$(wc -l < .env)
+          echo "📝 Created .env with $ENV_LINES lines for ${{ matrix.agent }}"
+
+      - name: Deploy agent to Cloud Run
+        id: deploy
+        run: |
+          set -e  # Exit immediately on any error (Pitfall #58 prevention)
+
+          cd server/src/agent-v2/deploy/${{ matrix.agent }}
+
+          # Capture revision before deploy
+          REVISION_BEFORE=$(gcloud run services describe ${{ matrix.agent }}-agent \
+            --region=${{ env.GOOGLE_CLOUD_REGION }} \
+            --format='value(status.latestReadyRevisionName)' 2>/dev/null || echo "none")
+          echo "📦 Revision before: $REVISION_BEFORE"
+
           echo "🚀 Deploying ${{ matrix.agent }} agent to Cloud Run..."
 
-          # Use ADK to deploy
+          # Use ADK to deploy - will fail if .env is missing required vars
           npx adk deploy cloud_run \
             --project=${{ env.GOOGLE_CLOUD_PROJECT }} \
             --region=${{ env.GOOGLE_CLOUD_REGION }} \
             --service_name=${{ matrix.agent }}-agent
 
-          echo "✅ Deployment complete for ${{ matrix.agent }}"
+          # Verify a new revision was created
+          sleep 5  # Give Cloud Run a moment to update
+          REVISION_AFTER=$(gcloud run services describe ${{ matrix.agent }}-agent \
+            --region=${{ env.GOOGLE_CLOUD_REGION }} \
+            --format='value(status.latestReadyRevisionName)' 2>/dev/null || echo "none")
+          echo "📦 Revision after: $REVISION_AFTER"
+
+          if [ "$REVISION_BEFORE" = "$REVISION_AFTER" ]; then
+            echo "❌ ERROR: No new revision created! Deployment may have failed silently."
+            echo "   Before: $REVISION_BEFORE"
+            echo "   After:  $REVISION_AFTER"
+            exit 1
+          fi
+
+          echo "✅ Deployment complete for ${{ matrix.agent }} (new revision: $REVISION_AFTER)"
 
       - name: Get deployment URL
         run: |
