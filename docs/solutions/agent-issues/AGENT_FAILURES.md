@@ -377,6 +377,51 @@ This works because the local `.env` file exists.
 
 > ADK `deploy cloud_run` reads `.env` file for runtime env vars to set on Cloud Run. In CI environments where `.env` is gitignored, deployment silently fails with "Missing required environment variable" but reports success. Always create `.env` from GitHub Secrets before ADK deploy.
 
+### Verification Results (2026-01-27 19:54 UTC)
+
+**✅ .env Fix Confirmed Working:**
+
+```
+Line 36: 📝 Created .env with 5 lines for concierge
+Line 51: [dotenv@17.2.3] injecting env (5) from .env
+```
+
+Previously showed `(0)` - now shows `(5)` env vars injected!
+
+**✅ Revision Verification Working:**
+
+The new revision check correctly caught a deployment failure:
+
+```
+📦 Revision after: concierge-agent-00015-pvb
+❌ ERROR: No new revision created! Deployment may have failed silently.
+Error: Process completed with exit code 1.
+```
+
+**❌ NEW ISSUE DISCOVERED: GCP IAM Permission Denied**
+
+```
+ERROR: (gcloud.run.deploy) PERMISSION_DENIED: The caller does not have permission
+```
+
+The service account configured in `GCP_SERVICE_ACCOUNT` secret lacks the `Cloud Run Admin` role.
+
+**Fix Required:**
+
+```bash
+# Grant Cloud Run Admin role to the service account
+gcloud projects add-iam-policy-binding handled-484216 \
+  --member="serviceAccount:SERVICE_ACCOUNT_EMAIL" \
+  --role="roles/run.admin"
+
+# Also needs Storage Admin for container images
+gcloud projects add-iam-policy-binding handled-484216 \
+  --member="serviceAccount:SERVICE_ACCOUNT_EMAIL" \
+  --role="roles/storage.admin"
+```
+
+Replace `SERVICE_ACCOUNT_EMAIL` with the email from the `GCP_SERVICE_ACCOUNT` secret.
+
 ### Related Documentation
 
 - [FACT_TO_STOREFRONT_BRIDGE_PREVENTION.md](./FACT_TO_STOREFRONT_BRIDGE_PREVENTION.md)
