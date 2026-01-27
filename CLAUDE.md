@@ -315,6 +315,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 87. Orphan imports after large deletions - Deleted file/function but forgot to update importers; incremental TypeScript build passes locally (unchanged files skipped), clean CI build fails with "cannot find module"; ALWAYS run `rm -rf server/dist packages/*/dist && npm run typecheck` before committing deletions. Archive branches provide rollback but NOT prevention. See `docs/solutions/build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md`
 
+### Agent Onboarding Pitfalls (88)
+
+88. Fact-to-Storefront bridge missing - Agent stores discovery facts via `store_discovery_fact` but fails to apply them via `delegate_to_storefront`; user says "my about section should mention X" and agent stores the fact but never updates the storefront; Cloud Run logs show `storefront-agent` at 0 req/sec confirming no delegation; when user provides SECTION + CONTENT, agent MUST call BOTH `store_discovery_fact` AND `delegate_to_storefront` in the same turn. See `docs/solutions/agent-issues/FACT_TO_STOREFRONT_BRIDGE_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
