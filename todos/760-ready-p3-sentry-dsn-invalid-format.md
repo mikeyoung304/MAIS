@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p3
 issue_id: '760'
 tags: [monitoring, sentry, production]
@@ -94,3 +94,20 @@ sentry.io/4510745357516800
 
 Source: `/workflows:review` session on 2026-01-27
 Priority: P3 because monitoring gap, not user-facing
+
+### 2026-01-27 - Marked Ready for Manual Fix
+
+**By:** Claude Code
+**Actions:**
+
+- This requires manual Vercel dashboard access (not code change)
+- Steps documented above in "Proposed Solutions"
+
+**Manual Steps Required:**
+
+1. Log in to Vercel dashboard
+2. Navigate to MAIS project → Settings → Environment Variables
+3. Find `NEXT_PUBLIC_SENTRY_DSN`
+4. Current value ends with: `sentry.io4510745357516800`
+5. Change to: `sentry.io/4510745357516800` (add `/` before project ID)
+6. Redeploy production

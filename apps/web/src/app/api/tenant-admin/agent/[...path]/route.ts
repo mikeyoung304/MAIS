@@ -17,6 +17,8 @@
  *   - GET /session/:id - Get session history
  *   - POST /session - Create new session
  *   - DELETE /session/:id - Close session
+ *   - GET /onboarding-state - Get onboarding phase and context
+ *   - POST /skip-onboarding - Skip the onboarding flow
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -92,6 +94,16 @@ async function handleRequest(
         headers: {
           'Content-Type': response.headers.get('Content-Type') || 'text/plain',
         },
+      });
+    }
+
+    // Log 404 responses to help diagnose routing issues (TODO-758)
+    if (response.status === 404) {
+      logger.warn('Tenant admin agent API returned 404', {
+        backendUrl,
+        method,
+        path: pathString,
+        responseData,
       });
     }
 

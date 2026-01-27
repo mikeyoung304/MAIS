@@ -1,5 +1,5 @@
 ---
-status: pending
+status: ready
 priority: p1
 issue_id: '758'
 tags: [agent-v2, api, onboarding, enterprise-ai]
@@ -118,6 +118,40 @@ const state = await fetchOnboardingState().catch(() => ({ isComplete: false }));
 
 - Production API availability must be verified after deploy
 - Agent features depend on multiple backend endpoints
+
+### 2026-01-27 - Code Investigation & Improvements
+
+**By:** Claude Code
+**Actions:**
+
+- Traced full request path from Next.js proxy to Express backend
+- Verified routes ARE correctly defined and registered:
+  - Backend route: `tenant-admin-agent.routes.ts` line 282 defines `/onboarding-state`
+  - Route registration: `routes/index.ts` line 709-716 mounts at `/v1/tenant-admin/agent`
+  - Next.js proxy: `[...path]/route.ts` correctly forwards to backend
+- Added 404 debugging logs to both proxy routes (`/api/tenant-admin/agent/[...path]` and `/api/tenant-admin/[...path]`)
+- Improved error messages in `useOnboardingState.ts` to include status code and response body
+- Updated proxy documentation to list all 6 endpoints (was missing onboarding-state and skip-onboarding)
+
+**Root Cause Hypothesis:**
+
+Based on code review, the routes are correctly defined. The 404 is most likely due to:
+
+1. **Deployment gap**: Code merged to `main` but backend not yet deployed to Render
+2. **Environment variable mismatch**: `NEXT_PUBLIC_API_URL` not set correctly in Vercel production
+
+**Next Steps:**
+
+1. Verify backend deployment status on Render
+2. Check `NEXT_PUBLIC_API_URL` in Vercel production environment
+3. Test directly: `curl https://api.gethandled.ai/v1/tenant-admin/agent/onboarding-state -H "Authorization: Bearer <token>"`
+4. If still failing after deploy, check Render logs for the 404 response message which will indicate if route exists
+
+**Files Modified:**
+
+- `apps/web/src/app/api/tenant-admin/agent/[...path]/route.ts` - Added 404 logging, updated docs
+- `apps/web/src/app/api/tenant-admin/[...path]/route.ts` - Added 404 logging
+- `apps/web/src/hooks/useOnboardingState.ts` - Improved error message with status code
 
 ## Resources
 

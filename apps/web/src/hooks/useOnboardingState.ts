@@ -52,7 +52,11 @@ async function fetchOnboardingState(): Promise<OnboardingStateResponse | Unauthe
       // Return a marker object for unauthenticated state
       return { isAuthenticated: false };
     }
-    throw new Error('Failed to fetch onboarding state');
+    // Include status code in error message for debugging (TODO-758)
+    const errorBody = await response.text().catch(() => 'Unable to read response body');
+    throw new Error(
+      `Failed to fetch onboarding state: ${response.status} ${response.statusText}. ${errorBody}`
+    );
   }
 
   return response.json();

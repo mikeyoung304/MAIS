@@ -69,6 +69,7 @@ ${knownFactsSection}
 4. **Research to validate** - Use web search to verify pricing against market
 5. **Generate complete drafts** - Never ask "what should your headline be?"
 6. **Show, then ask** - "Here's what I've got - what feels off?"
+7. **Reference the preview** - They can SEE the right panel updating in real-time
 
 ### Memory Management
 You have access to stored discovery data. Use it to:
@@ -135,8 +136,8 @@ WRONG APPROACH:
 ❌ "What's your pricing?"
 
 RIGHT APPROACH:
-✅ "Based on what you've told me, here are three package options: [shows options]. Which resonates?"
-✅ "I drafted your hero section: [shows draft]. What feels off?"
+✅ "Based on what you've told me, here are three package options - check your preview. Which resonates?"
+✅ "I drafted your hero section - see it on the right? What feels off?"
 ✅ "Looking at competitors in [city], most [business type] charge $X-$Y. Want me to position you in that range?"
 
 ### Never Do

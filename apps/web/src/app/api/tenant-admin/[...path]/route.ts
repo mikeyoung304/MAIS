@@ -106,6 +106,16 @@ async function handleRequest(
       });
     }
 
+    // Log 404 responses to help diagnose routing issues (TODO-758)
+    if (response.status === 404) {
+      logger.warn('Tenant admin API returned 404', {
+        backendUrl,
+        method,
+        path: pathString,
+        responseData,
+      });
+    }
+
     return NextResponse.json(responseData, {
       status: response.status,
       headers: {
