@@ -1,75 +1,81 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { Check, X, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, X, Globe, Calendar, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
-import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
-import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 
 // Revalidate homepage every 60 seconds
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'Handled — The storefront for service work',
+  title: 'Handled — The operations layer that keeps bookings moving',
   description:
-    "Bookings, coordination, changes, and follow-ups — all in one calm system that doesn't let things slip. Built for humans and AI agents.",
+    "Client communication, booking, and follow-up — handled in one calm system that doesn't rely on memory anymore.",
   openGraph: {
-    title: 'Handled — The storefront for service work',
+    title: 'Handled — The operations layer that keeps bookings moving',
     description:
-      "Bookings, coordination, changes, and follow-ups — all in one calm system that doesn't let things slip.",
+      "Client communication, booking, and follow-up — handled in one calm system that doesn't rely on memory anymore.",
     type: 'website',
   },
 };
 
-// Simplified pricing - outcome-focused
+// Pricing tiers
 const tiers = [
   {
-    id: 'foundation',
-    name: 'The Foundation',
-    price: '$49',
+    id: 'handled',
+    name: 'Handled',
+    price: '$39',
     priceSubtext: '/month',
-    outcome: 'Professional presence. Zero tech headaches.',
+    description: 'Core operations coverage',
     features: [
-      'Done-for-you storefront',
-      'Online booking & payments',
-      'Project spaces for every client',
-      'Monthly strategy calls',
+      'Optimized storefront',
+      'Booking and payments',
+      'Centralized client communication',
+      "Clear visibility into what's happening and what's next",
     ],
-    ctaText: 'Get Handled',
+    targetAudience: 'For professionals who want fewer dropped balls and cleaner bookings.',
+    ctaText: 'Get Started',
     ctaHref: '/signup',
     isPopular: false,
   },
   {
-    id: 'system',
-    name: 'The System',
-    price: '$149',
+    id: 'fully-handled',
+    name: 'Fully Handled',
+    price: '$99',
     priceSubtext: '/month',
-    outcome: 'One extra booking per month pays for itself.',
+    description: 'Your complete operations layer',
     features: [
-      'Everything in Foundation',
-      'AI coordinator (answers, routes, escalates)',
-      'Smart reminders that reduce no-shows',
-      'Priority support',
+      'Everything in Handled',
+      'Deeper coordination support',
+      'Smarter follow-ups and continuity',
+      'Priority handling as your business grows',
     ],
-    ctaText: 'Get Handled',
+    valueStatement:
+      'If Handled does nothing else, it must generate booking revenue and remove operational drag. This is the level where that really happens.',
+    ctaText: 'Get Started',
     ctaHref: '/signup',
     isPopular: true,
   },
+];
+
+// FAQ items
+const faqItems = [
   {
-    id: 'partnership',
-    name: 'The Partnership',
-    price: "Let's talk",
-    priceSubtext: '',
-    outcome: 'We build it. You book clients.',
-    features: [
-      'Everything in The System',
-      'Custom automations',
-      '1-on-1 strategy sessions',
-      'Dedicated account manager',
-    ],
-    ctaText: 'Get Handled',
-    ctaHref: '/signup',
-    isPopular: false,
+    question: 'Is this just another booking tool?',
+    answer:
+      'No. Booking is the entry point. Handled is what keeps everything after the booking from fragmenting.',
+  },
+  {
+    question: 'Do I need to be "good at tech" to use this?',
+    answer: "No. The point is that you don't have to become someone you're not.",
+  },
+  {
+    question: 'Is this all AI-driven?',
+    answer: "Handled uses intelligence where it helps and stays out of the way where it doesn't.",
+  },
+  {
+    question: 'Can I cancel anytime?',
+    answer: 'Yes. No contracts. No friction.',
   },
 ];
 
@@ -79,7 +85,7 @@ export default function HomePage() {
     '@type': 'Organization',
     name: 'Handled',
     url: 'https://gethandled.ai',
-    description: 'The storefront for service work — built for humans and AI agents.',
+    description: 'The operations layer that keeps bookings moving.',
   };
 
   return (
@@ -93,7 +99,7 @@ export default function HomePage() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-b border-neutral-800">
           <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="font-serif text-2xl font-bold text-text-primary">
-              Handled
+              HANDLED
             </Link>
             <div className="hidden md:flex items-center gap-8">
               <Link
@@ -125,229 +131,357 @@ export default function HomePage() {
         <main>
           {/* ============================================
               HERO
-              Split layout: Copy left, Storefront visual right
               ============================================ */}
-          <section className="relative pt-28 pb-12 md:pt-32 md:pb-20 px-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                {/* Left: Copy */}
-                <div className="text-center lg:text-left">
-                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.08] tracking-tight">
-                    The storefront for service work
-                    <span className="block text-sage mt-2">— built for humans and AI agents.</span>
-                  </h1>
+          <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 px-6">
+            <div className="max-w-4xl mx-auto text-center">
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight">
+                The operations layer that keeps bookings moving.
+              </h1>
 
-                  <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
-                    Bookings, coordination, changes, and follow-ups — all in one calm system that
-                    doesn&apos;t let things slip.
-                  </p>
+              <p className="mt-8 text-xl md:text-2xl text-text-muted leading-relaxed max-w-3xl mx-auto">
+                Client communication, booking, and follow-up — handled in one calm system that
+                doesn&apos;t rely on memory anymore.
+              </p>
 
-                  <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
-                    <Button
-                      asChild
-                      variant="teal"
-                      className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <Link href="/signup">Get Handled</Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
-                    >
-                      <Link href="#how-it-works" className="flex items-center gap-2">
-                        See how it works
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
+              <p className="mt-6 text-lg text-text-muted leading-relaxed max-w-3xl mx-auto">
+                Handled replaces scattered websites, emails, texts, and mental load with a single
+                storefront and source of truth — so nothing drops, clients stay confident, and
+                revenue keeps flowing.
+              </p>
 
-                {/* Right: Storefront Visual */}
-                <div className="hidden lg:block">
-                  <DemoStorefrontFrame />
-                </div>
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button
+                  asChild
+                  variant="teal"
+                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Link href="/signup">Get Handled</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
+                >
+                  <Link href="#how-it-works">See how it works</Link>
+                </Button>
               </div>
             </div>
           </section>
 
           {/* ============================================
-              WHAT THIS REPLACES
-              Name the enemy. The fragile chain.
+              PROBLEM SECTION
               ============================================ */}
           <section className="py-20 md:py-28 px-6 bg-surface-alt">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-16">
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
-                  You know this chain.
-                </h2>
-                <p className="mt-4 text-lg text-text-muted">
-                  Interest → Booking → Coordination → Execution → Follow-up → Repeat
-                </p>
-              </div>
-
-              {/* The fragile chain visual */}
-              <div className="grid md:grid-cols-2 gap-8 mb-16">
-                {/* Currently held together by... */}
-                <div className="bg-neutral-800/40 rounded-2xl p-8 border border-neutral-700">
-                  <p className="text-sm text-neutral-400 uppercase tracking-wide mb-6">
-                    Currently held together by
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    {[
-                      'Email',
-                      'Texts',
-                      'DMs',
-                      'Notes',
-                      'Memory',
-                      '"I\'ll remember"',
-                      '"Did you see that?"',
-                    ].map((item) => (
-                      <span
-                        key={item}
-                        className="inline-flex items-center gap-2 bg-neutral-700/50 text-neutral-300 px-4 py-2 rounded-full text-sm"
-                      >
-                        <X className="w-3 h-3 text-neutral-500" />
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Handled replaces it with... */}
-                <div className="bg-sage/[0.08] rounded-2xl p-8 border border-sage/20">
-                  <p className="text-sm text-sage uppercase tracking-wide mb-6">
-                    Handled replaces it with
-                  </p>
-                  <p className="text-2xl md:text-3xl font-serif text-text-primary leading-snug">
-                    One shared reality.
-                  </p>
-                  <p className="mt-4 text-text-muted">
-                    The entire chain — from first click to repeat booking — runs through one system.
-                    Nothing slips. Nothing duplicates. Nothing gets lost.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ============================================
-              THE 4 PRIMITIVES
-              Not features. Inevitabilities.
-              ============================================ */}
-          <section id="how-it-works" className="py-20 md:py-28 px-6 scroll-mt-20">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-16">
-                <p className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
-                  How it works
-                </p>
-                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
-                  Four things that just work.
-                </h2>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Primitive 1: Storefront */}
-                <div className="bg-surface-alt rounded-2xl p-8 lg:p-10 border border-neutral-800">
-                  <div className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
-                    01 — Entry
-                  </div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-4">
-                    A Storefront That Works Without You
-                  </h3>
-                  <p className="text-text-muted leading-relaxed">
-                    Services, pricing, availability, and policies — structured so clients and AI
-                    agents can act without back-and-forth.
-                  </p>
-                </div>
-
-                {/* Primitive 2: Project Space */}
-                <div className="bg-surface-alt rounded-2xl p-8 lg:p-10 border border-neutral-800">
-                  <div className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
-                    02 — Continuity
-                  </div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-4">
-                    A Project Space That Becomes Truth
-                  </h3>
-                  <p className="text-text-muted leading-relaxed">
-                    One place for messages, changes, files, and decisions — so nothing gets lost and
-                    no one has to ask twice.
-                  </p>
-                </div>
-
-                {/* Primitive 3: Coordinator */}
-                <div className="bg-surface-alt rounded-2xl p-8 lg:p-10 border border-neutral-800">
-                  <div className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
-                    03 — Intelligence
-                  </div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-4">
-                    A Coordinator That Knows When to Escalate
-                  </h3>
-                  <p className="text-text-muted leading-relaxed">
-                    Handles the routine, flags the important, and never commits without approval.
-                    The calm layer between chaos and execution.
-                  </p>
-                </div>
-
-                {/* Primitive 4: Flywheel */}
-                <div className="bg-surface-alt rounded-2xl p-8 lg:p-10 border border-neutral-800">
-                  <div className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
-                    04 — Retention
-                  </div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-4">
-                    A System That Turns One Job Into the Next
-                  </h3>
-                  <p className="text-text-muted leading-relaxed">
-                    Follow-ups, reviews, and re-booking happen naturally, in context — without
-                    feeling salesy.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ============================================
-              PROJECT HUB WEDGE
-              Visual proof of Primitives 2 & 3 working together
-              ============================================ */}
-          <ProjectHubWedge />
-
-          {/* ============================================
-              A2A COMMERCE
-              Calm. Confident. Short.
-              ============================================ */}
-          <section className="py-20 md:py-28 px-6 bg-surface">
-            <div className="max-w-3xl mx-auto text-center">
-              <p className="text-text-muted text-lg mb-6">
-                The next buyers won&apos;t always be people.
-                <br />
-                They&apos;ll be agents acting for people.
-              </p>
-              <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary leading-tight">
-                Handled is built so your business can be discovered, booked, and coordinated —
-                whether the request comes from a human or an AI.
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center">
+                You&apos;re great at what you do.
               </h2>
+              <p className="mt-4 text-xl md:text-2xl text-text-muted text-center">
+                Running the business part shouldn&apos;t feel this hard.
+              </p>
+
+              <div className="mt-12 text-lg text-text-muted leading-relaxed">
+                <p>
+                  You didn&apos;t become a photographer, planner, coach, or consultant because you
+                  love designing websites, writing copy, or chasing messages across five places.
+                </p>
+                <p className="mt-6">But right now, your business probably lives in:</p>
+
+                <ul className="mt-6 space-y-3">
+                  {[
+                    'one website that never quite feels right',
+                    "booking tools that don't talk to each other",
+                    'emails, texts, DMs, and phone calls scattered everywhere',
+                    "follow-ups you're holding in your head",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-10 space-y-2 text-text-primary font-medium">
+                  <p>That&apos;s how opportunities slip by.</p>
+                  <p>That&apos;s how deposits don&apos;t get collected.</p>
+                  <p>
+                    That&apos;s how really good professionals end up feeling disorganized — even
+                    when they&apos;re not.
+                  </p>
+                </div>
+
+                <p className="mt-10 text-xl text-text-primary font-medium">
+                  Handled exists so client communication and coordination don&apos;t rely on memory
+                  or vigilance anymore.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              SOLUTION INTRO
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
+                Handled is the operations layer beneath your business.
+              </h2>
+
+              <div className="mt-8 space-y-2 text-lg text-text-muted">
+                <p>Not another tool to manage.</p>
+                <p>Not software you babysit.</p>
+                <p>Not another inbox.</p>
+              </div>
+
+              <p className="mt-8 text-xl text-text-muted leading-relaxed">
+                Handled sits underneath your service business and quietly holds everything together
+                — before, during, and after the booking.
+              </p>
+            </div>
+          </section>
+
+          {/* ============================================
+              FEATURES - What that means
+              ============================================ */}
+          <section id="how-it-works" className="py-20 md:py-28 px-6 bg-surface-alt scroll-mt-20">
+            <div className="max-w-5xl mx-auto">
+              <p className="text-sage text-sm font-medium tracking-wide uppercase text-center mb-4">
+                What that means
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-8 mt-12">
+                {/* Feature 1 */}
+                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
+                    <Globe className="w-6 h-6 text-sage" />
+                  </div>
+                  <h3 className="font-serif text-2xl font-bold text-text-primary mb-4">
+                    An Optimized Storefront
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Your public front door — services, pricing, availability, booking, and payments
+                    — structured so clients can move forward without friction.
+                  </p>
+                  <p className="mt-4 text-text-primary font-medium">
+                    It&apos;s clear. It&apos;s professional. And it&apos;s something you&apos;re
+                    actually proud to send people to.
+                  </p>
+                </div>
+
+                {/* Feature 2 */}
+                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
+                    <Calendar className="w-6 h-6 text-sage" />
+                  </div>
+                  <h3 className="font-serif text-2xl font-bold text-text-primary mb-4">
+                    A Single Source of Truth
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Every booking becomes a shared space where messages, changes, files, and
+                    decisions live — instead of being scattered across email, text, and notes.
+                  </p>
+                  <p className="mt-4 text-text-primary font-medium">
+                    No more digging. No more &quot;did we already cover this?&quot;
+                  </p>
+                </div>
+
+                {/* Feature 3 */}
+                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
+                    <Users className="w-6 h-6 text-sage" />
+                  </div>
+                  <h3 className="font-serif text-2xl font-bold text-text-primary mb-4">
+                    Built-In Coordination
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Routine questions get handled, context stays intact, and important moments
+                    surface when attention is actually required — not constantly.
+                  </p>
+                  <p className="mt-4 text-text-primary font-medium">
+                    Your business keeps moving, even when you&apos;re not actively managing it.
+                  </p>
+                </div>
+
+                {/* Feature 4 */}
+                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                  <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
+                    <Sparkles className="w-6 h-6 text-sage" />
+                  </div>
+                  <h3 className="font-serif text-2xl font-bold text-text-primary mb-4">
+                    Revenue Continuity
+                  </h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Follow-ups, reviews, repeat bookings, and next steps happen naturally, in
+                    context — instead of as forgotten to-dos.
+                  </p>
+                  <p className="mt-4 text-text-primary font-medium">
+                    Handled doesn&apos;t just reduce stress.
+                    <br />
+                    It protects revenue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
+              USER JOURNEY - What it feels like
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center">
+                What it feels like to use Handled
+              </h2>
+              <p className="mt-6 text-xl text-text-muted text-center">
+                Most people expect setup.
+                <br />
+                They&apos;re surprised by how fast things click.
+              </p>
+
+              <div className="mt-16 space-y-12">
+                {/* Day one */}
+                <div className="border-l-2 border-sage/30 pl-8">
+                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
+                    Day one
+                  </p>
+                  <p className="text-lg text-text-muted leading-relaxed">
+                    You have a short conversation to set up your website, services, and
+                    availability.
+                  </p>
+                  <p className="mt-4 text-lg text-text-primary font-medium">
+                    Five minutes later, you have a site that looks right — and feels like you.
+                  </p>
+                </div>
+
+                {/* Week one */}
+                <div className="border-l-2 border-sage/30 pl-8">
+                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
+                    Week one
+                  </p>
+                  <p className="text-lg text-text-muted leading-relaxed">
+                    Handled looks at your local market and helps you define clear services and
+                    pricing that make sense for where you live and who you serve.
+                  </p>
+                  <p className="mt-4 text-lg text-text-primary font-medium">
+                    No guessing. No undercharging &quot;just to be safe.&quot;
+                  </p>
+                </div>
+
+                {/* One quiet night */}
+                <div className="border-l-2 border-sage/30 pl-8">
+                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
+                    One quiet night
+                  </p>
+                  <p className="text-lg text-text-muted leading-relaxed">
+                    While you&apos;re asleep, a client books.
+                  </p>
+                  <p className="mt-4 text-lg text-text-muted leading-relaxed">
+                    Handled checks your calendar.
+                    <br />
+                    Answers their questions.
+                    <br />
+                    Collects a deposit.
+                  </p>
+                  <p className="mt-4 text-lg text-text-primary font-medium">
+                    You wake up to a notification that money came in — without a single
+                    back-and-forth.
+                  </p>
+                </div>
+
+                {/* The job */}
+                <div className="border-l-2 border-sage/30 pl-8">
+                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
+                    The job
+                  </p>
+                  <p className="text-lg text-text-muted leading-relaxed">
+                    Everything you need to know about that client lives in one place.
+                  </p>
+                  <p className="mt-4 text-lg text-text-primary font-medium">
+                    The work goes off without friction.
+                    <br />
+                    The client feels taken care of.
+                  </p>
+                </div>
+
+                {/* After */}
+                <div className="border-l-2 border-sage/30 pl-8">
+                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
+                    After
+                  </p>
+                  <p className="text-lg text-text-muted leading-relaxed">
+                    The client leaves a review.
+                    <br />
+                    The project stays alive.
+                    <br />
+                    Rebooking is easy — not a restart.
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-16 text-xl md:text-2xl text-text-primary font-medium text-center leading-relaxed">
+                Handled doesn&apos;t make you better at your craft.
+                <br />
+                It makes everything around your craft stop getting in the way.
+              </p>
+            </div>
+          </section>
+
+          {/* ============================================
+              AGENT READABILITY
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
+                Designed for how buying is changing
+              </h2>
+
+              <p className="mt-8 text-lg text-text-muted leading-relaxed">
+                Clients are starting to rely on personal assistants and intelligent systems to
+                research, schedule, and coordinate services.
+              </p>
+
+              <p className="mt-6 text-lg text-text-muted leading-relaxed">
+                Handled is structured so your business can be clearly understood and correctly
+                engaged — whether the request comes from a person or an assistant acting on their
+                behalf.
+              </p>
+
+              <p className="mt-8 text-lg text-text-primary font-medium">
+                You don&apos;t need to manage this shift.
+                <br />
+                Handled already accounts for it.
+              </p>
+
+              <p className="mt-10 text-xl md:text-2xl text-sage font-medium">
+                Humans now.
+                <br />
+                Agent-readable next.
+                <br />
+                Same calm system underneath.
+              </p>
             </div>
           </section>
 
           {/* ============================================
               WHO IT'S FOR / NOT FOR
-              Builds trust. Repels wrong fit.
               ============================================ */}
           <section className="py-20 md:py-28 px-6">
             <div className="max-w-4xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid md:grid-cols-2 gap-12">
                 {/* For */}
                 <div>
-                  <h3 className="font-serif text-2xl font-bold text-text-primary mb-6">
-                    Handled is for service businesses where:
+                  <h3 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-6">
+                    Who Handled is for
                   </h3>
+                  <p className="text-text-muted mb-6">
+                    Handled is for service professionals where:
+                  </p>
                   <ul className="space-y-4">
                     {[
-                      'Work is custom',
-                      'Details matter',
-                      'Changes happen',
-                      'Trust is everything',
+                      'work is custom',
+                      'details matter',
+                      'client communication continues after the booking',
+                      'dropped balls cost real money',
                     ].map((item) => (
                       <li key={item} className="flex items-center gap-3">
                         <div className="w-6 h-6 rounded-full bg-sage/15 flex items-center justify-center flex-shrink-0">
@@ -357,18 +491,24 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
+                  <p className="mt-8 text-lg text-text-muted">
+                    Photographers. Wedding planners. Chefs. Coaches. Consultants.
+                  </p>
+                  <p className="mt-4 text-lg text-text-primary font-medium">
+                    If you sell expertise and trust, this is your operations layer.
+                  </p>
                 </div>
 
                 {/* Not for */}
                 <div>
-                  <h3 className="font-serif text-2xl font-bold text-text-primary mb-6">
-                    It&apos;s not for:
+                  <h3 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-6">
+                    Handled is not for:
                   </h3>
-                  <ul className="space-y-4">
+                  <ul className="space-y-4 mt-12">
                     {[
-                      'Commodity gigs',
-                      'One-click deliveries',
-                      'High-volume, low-context work',
+                      'physical product sellers',
+                      'one-click, low-context transactions',
+                      'businesses built on volume over clarity',
                     ].map((item) => (
                       <li key={item} className="flex items-center gap-3">
                         <div className="w-6 h-6 rounded-full bg-neutral-700/50 flex items-center justify-center flex-shrink-0">
@@ -385,39 +525,37 @@ export default function HomePage() {
 
           {/* ============================================
               PRICING
-              Simple. Clear. No feature overload.
               ============================================ */}
           <section id="pricing" className="py-20 md:py-28 px-6 bg-surface-alt scroll-mt-20">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                  Simple pricing.
+                  Choose your level of handling
                 </h2>
                 <p className="text-xl text-text-muted">No contracts. Cancel anytime.</p>
               </div>
 
-              {/* 3-Tier Grid */}
-              <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto items-stretch pt-4">
+              {/* 2-Tier Grid */}
+              <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto items-stretch pt-4">
                 {tiers.map((tier) => (
                   <div
                     key={tier.id}
                     className={`relative bg-surface rounded-2xl p-8 border transition-all duration-300 flex flex-col ${
                       tier.isPopular
-                        ? 'border-2 border-sage shadow-xl shadow-sage/10 md:-mt-2 md:scale-[1.02] z-10'
+                        ? 'border-2 border-sage shadow-xl shadow-sage/10'
                         : 'border-neutral-800 hover:border-sage/40'
                     }`}
                   >
                     {tier.isPopular && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
                         <span className="inline-flex items-center gap-1.5 bg-sage text-white text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg">
-                          <Sparkles className="w-4 h-4" />
-                          Most Popular
+                          Most choose this
                         </span>
                       </div>
                     )}
 
                     <h3
-                      className={`font-serif text-xl font-bold text-text-primary ${tier.isPopular ? 'mt-2' : ''}`}
+                      className={`font-serif text-2xl font-bold text-text-primary ${tier.isPopular ? 'mt-2' : ''}`}
                     >
                       {tier.name}
                     </h3>
@@ -429,7 +567,7 @@ export default function HomePage() {
                           <span className="text-text-muted">{tier.priceSubtext}</span>
                         )}
                       </div>
-                      <p className="mt-2 text-text-muted text-sm">{tier.outcome}</p>
+                      <p className="mt-2 text-text-muted">{tier.description}</p>
                     </div>
 
                     <ul className="mt-6 space-y-3 flex-1">
@@ -440,6 +578,14 @@ export default function HomePage() {
                         </li>
                       ))}
                     </ul>
+
+                    <p className="mt-6 text-sm text-text-muted">{tier.targetAudience}</p>
+
+                    {tier.valueStatement && (
+                      <p className="mt-4 text-sm text-text-primary font-medium leading-relaxed">
+                        {tier.valueStatement}
+                      </p>
+                    )}
 
                     <Button
                       asChild
@@ -455,24 +601,66 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
 
-              <p className="text-center text-text-muted text-sm mt-10">
-                14-day free trial. No credit card required.
+          {/* ============================================
+              FOUNDER STORY
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
+                Built by someone who lived the problem
+              </h2>
+
+              <p className="mt-8 text-lg text-text-muted leading-relaxed">
+                Handled was built by a private chef and photographer who spent two decades juggling
+                clients, messages, websites, and multiple businesses — not because he lacked
+                discipline, but because the systems never existed.
+              </p>
+
+              <p className="mt-6 text-lg text-text-primary font-medium">
+                Handled is the system he needed then — and the one service professionals need now.
               </p>
             </div>
           </section>
 
           {/* ============================================
+              FAQ
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight text-center mb-12">
+                Common questions
+              </h2>
+
+              <div className="space-y-6">
+                {faqItems.map((item) => (
+                  <div
+                    key={item.question}
+                    className="bg-surface rounded-2xl p-6 border border-neutral-800"
+                  >
+                    <h3 className="font-serif text-lg font-bold text-text-primary">
+                      {item.question}
+                    </h3>
+                    <p className="mt-3 text-text-muted leading-relaxed">{item.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ============================================
               FINAL CTA
-              Emotional close. One action.
               ============================================ */}
           <section className="py-24 md:py-32 px-6">
             <div className="max-w-2xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
-                Stop juggling tools.
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
+                Stop running your business on memory.
               </h2>
               <p className="text-xl md:text-2xl text-text-muted leading-relaxed mb-10">
-                Start running work in one place.
+                Install the operations layer that keeps bookings moving — and lets you focus on the
+                work only you can do.
               </p>
               <Button
                 asChild
@@ -489,7 +677,7 @@ export default function HomePage() {
         <footer className="py-10 px-6 bg-neutral-900 border-t border-neutral-800">
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="font-serif text-lg font-bold text-text-primary">Handled</div>
+              <div className="font-serif text-lg font-bold text-text-primary">HANDLED</div>
               <div className="flex items-center gap-6 text-xs text-text-muted">
                 <Link href="/terms" className="hover:text-text-primary transition-colors">
                   Terms
