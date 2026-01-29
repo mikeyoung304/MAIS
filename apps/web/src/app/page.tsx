@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
 import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 import { JourneyShowcase } from '@/components/home/JourneyShowcase';
-import { HeroWithVerticals } from '@/components/home/HeroWithVerticals';
+import { Hero } from '@/components/home/Hero';
 
 // Revalidate homepage every 60 seconds
 export const revalidate = 60;
@@ -133,9 +133,9 @@ export default function HomePage() {
 
         <main>
           {/* ============================================
-              HERO - 4-Vertical Selector with Package-First Visual
+              HERO - Simplified full-width centered design
               ============================================ */}
-          <HeroWithVerticals />
+          <Hero />
 
           {/* ============================================
               PROBLEM SECTION

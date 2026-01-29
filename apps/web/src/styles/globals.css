@@ -243,3 +243,17 @@ input:-webkit-autofill:focus {
 .build-mode-active {
   scroll-padding-top: 3rem;
 }
+
+/* ============================================================================
+   Scrollbar Hide Utility
+   ============================================================================
+   Cross-browser scrollbar hiding for horizontal carousels and similar UI.
+   Used by JourneyShowcase carousel for clean swipe experience.
+   ============================================================================ */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}

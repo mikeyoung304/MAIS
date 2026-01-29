@@ -8,8 +8,8 @@ import {
   ArrowRight,
   Users,
   GraduationCap,
+  type LucideIcon,
 } from 'lucide-react';
-import type { Vertical } from './HeroWithVerticals';
 
 /**
  * DemoStorefrontShowcase - Dynamic vertical landing page preview
@@ -22,6 +22,37 @@ import type { Vertical } from './HeroWithVerticals';
  *
  * Middle tier (tiers[1]) always gets the "Popular" badge by convention.
  */
+
+// Types for vertical data (self-contained after HeroWithVerticals removal)
+interface Tier {
+  name: string;
+  description: string;
+  price: number;
+  priceDisplay: string;
+  perSession?: string;
+  savings?: string;
+  features: string[];
+}
+
+interface TrustItem {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+}
+
+interface Vertical {
+  id: string;
+  label: string;
+  persona: {
+    name: string;
+    business: string;
+    initials: string;
+    headline: string;
+    subheadline: string;
+  };
+  tiers: [Tier, Tier, Tier];
+  trust: [TrustItem, TrustItem, TrustItem];
+}
 
 // Default data for backwards compatibility (DemoStorefrontFrame)
 const defaultVertical: Vertical = {
