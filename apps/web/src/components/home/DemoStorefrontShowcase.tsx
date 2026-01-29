@@ -1,74 +1,81 @@
 'use client';
 
-import { Check, Clock, MessageSquare, Star, Sparkles, ArrowRight, Users } from 'lucide-react';
+import {
+  Check,
+  MessageSquare,
+  Star,
+  Sparkles,
+  ArrowRight,
+  Users,
+  GraduationCap,
+} from 'lucide-react';
 
 /**
- * DemoStorefrontShowcase - Generic template storefront for any service professional
+ * DemoStorefrontShowcase - Alex Chen's tutoring landing page preview
  *
- * Psychology-optimized three-tier pricing display implementing:
- * - Anchoring effect (premium tier sets high reference point)
- * - Decoy effect (middle tier appears optimal)
- * - Social proof ("Most Popular" badge)
- * - Outcome-focused naming (benefits over features)
- * - Visual hierarchy (elevated popular tier)
- *
- * Designed to be industry-agnostic so visitors can picture their own business.
+ * Shows a realistic example of what a service professional's
+ * Handled storefront looks like:
+ * - Hero section with headline and value prop
+ * - 3-tier pricing with psychology-optimized display
+ * - Social proof elements
  */
 
-// Generic template data - applicable to any service professional
-const demoTenant = {
-  name: 'Your Business',
-  tagline: 'Your services, your way',
-  description: 'Professional services tailored to your clients',
-  initials: 'YB',
+// Alex Chen's tutoring business
+const alexChen = {
+  name: 'Alex Chen',
+  business: 'Math & Science Tutoring',
+  headline: 'Math finally makes sense.',
+  subheadline: 'Personalized tutoring for students who want to actually understand—not just pass.',
+  initials: 'AC',
+  heroImage: '/images/alex-chen-hero.jpg', // We'll use a gradient fallback
 };
 
-// Generic tier structure that works for any service business
+// Alex's tutoring packages
 const tiers = [
   {
-    id: 'basic',
-    name: 'Starter',
-    description: 'Single session',
-    price: 75,
-    priceDisplay: '$75',
+    id: 'single',
+    name: 'Single Session',
+    description: 'Try it out',
+    price: 85,
+    priceDisplay: '$85',
     priceSubtext: '',
-    features: ['1 session', 'Summary notes'],
+    features: ['1-hour session', 'Homework help', 'Session notes'],
     ctaText: 'Book',
     isPopular: false,
   },
   {
-    id: 'standard',
-    name: 'Essential',
+    id: 'grade-boost',
+    name: 'Grade Boost',
     description: '4 sessions',
-    price: 275,
-    priceDisplay: '$275',
+    price: 320,
+    priceDisplay: '$320',
     priceSubtext: '',
-    perSession: '$69/ea',
+    perSession: '$80/ea',
     savings: '',
-    features: ['Custom plan', 'Priority booking', 'Direct messaging'],
+    features: ['Custom study plan', 'Text support', 'Progress tracking', 'Parent updates'],
     ctaText: 'Book',
     isPopular: true,
   },
   {
-    id: 'premium',
-    name: 'Complete',
-    description: '8 sessions',
-    price: 495,
-    priceDisplay: '$495',
+    id: 'semester',
+    name: 'Semester Success',
+    description: '12 sessions',
+    price: 900,
+    priceDisplay: '$900',
     priceSubtext: '',
-    perSession: '$62/ea',
+    perSession: '$75/ea',
     savings: 'Best value',
-    features: ['Full support', 'Flexible scheduling', 'Unlimited chat'],
+    features: ['Everything in Grade Boost', 'Flexible scheduling', 'Exam prep', '24/7 chat'],
     ctaText: 'Book',
     isPopular: false,
   },
 ];
 
-// Generic social proof stats
+// Alex's social proof
 const proofStats = [
-  { icon: Star, value: '5.0', label: 'rating' },
-  { icon: Users, value: '150+', label: 'clients' },
-  { icon: Clock, value: '3+ yrs', label: 'experience' },
+  { icon: Star, value: '4.9', label: 'rating' },
+  { icon: Users, value: '200+', label: 'students' },
+  { icon: GraduationCap, value: '6 yrs', label: 'teaching' },
 ];
 
 interface DemoStorefrontShowcaseProps {
@@ -79,46 +86,80 @@ interface DemoStorefrontShowcaseProps {
 export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowcaseProps) {
   return (
     <div className="h-full bg-surface overflow-hidden flex flex-col">
-      {/* Hero Section - Compact but impactful */}
+      {/* ============================================
+          HERO SECTION - Alex Chen's landing page top
+          ============================================ */}
       <div
-        className={`bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.12)_0%,transparent_70%)] bg-surface px-4 ${compact ? 'py-2.5' : 'py-4'} text-center border-b border-neutral-800`}
+        className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ${compact ? 'py-4 px-4' : 'py-6 px-5'} overflow-hidden`}
       >
-        <div className="flex items-center justify-center gap-3 mb-1.5">
-          {/* Professional initials avatar instead of emoji */}
-          <div
-            className={`${compact ? 'w-7 h-7' : 'w-9 h-9'} rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center`}
-          >
-            <span className={`text-sage font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
-              {demoTenant.initials}
-            </span>
-          </div>
-          <div className="text-left">
-            <h2
-              className={`font-serif ${compact ? 'text-sm' : 'text-base'} font-bold text-text-primary`}
-            >
-              {demoTenant.name}
-            </h2>
-            <p className="text-[11px] text-sage font-medium">{demoTenant.tagline}</p>
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-sage/30 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl" />
+          {/* Math symbols decoration */}
+          <div className="absolute top-2 right-3 text-white/10 font-mono text-lg">∑ π √</div>
+          <div className="absolute bottom-2 left-3 text-white/10 font-mono text-sm">
+            x² + y² = r²
           </div>
         </div>
-        <p className="text-[11px] text-text-muted max-w-xs mx-auto leading-snug">
-          {demoTenant.description}
-        </p>
 
-        {/* Social proof bar */}
-        <div className={`flex items-center justify-center gap-4 ${compact ? 'mt-2' : 'mt-3'}`}>
-          {proofStats.map((stat) => (
-            <div key={stat.label} className="flex items-center gap-1">
-              <stat.icon className="w-3 h-3 text-sage" />
-              <span className="text-[10px] font-semibold text-text-primary">{stat.value}</span>
-              <span className="text-[9px] text-text-muted">{stat.label}</span>
+        <div className="relative">
+          {/* Profile badge */}
+          <div className="flex items-center gap-2 mb-3">
+            <div
+              className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center shadow-lg`}
+            >
+              <span className={`text-white font-bold ${compact ? 'text-xs' : 'text-sm'}`}>
+                {alexChen.initials}
+              </span>
             </div>
-          ))}
+            <div>
+              <p className={`text-white font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
+                {alexChen.name}
+              </p>
+              <p className={`text-slate-400 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
+                {alexChen.business}
+              </p>
+            </div>
+          </div>
+
+          {/* Headline */}
+          <h2
+            className={`font-serif font-bold text-white leading-tight ${compact ? 'text-lg' : 'text-xl'}`}
+          >
+            {alexChen.headline}
+          </h2>
+
+          {/* Subheadline */}
+          <p
+            className={`mt-1.5 text-slate-300 leading-snug ${compact ? 'text-[10px]' : 'text-xs'}`}
+          >
+            {alexChen.subheadline}
+          </p>
+
+          {/* Social proof */}
+          <div className={`flex items-center gap-3 ${compact ? 'mt-3' : 'mt-4'}`}>
+            {proofStats.map((stat) => (
+              <div key={stat.label} className="flex items-center gap-1">
+                <stat.icon className={`text-sage ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
+                <span
+                  className={`font-semibold text-white ${compact ? 'text-[9px]' : 'text-[10px]'}`}
+                >
+                  {stat.value}
+                </span>
+                <span className={`text-slate-400 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Tier Cards Section */}
-      <div className={`px-3 ${compact ? 'py-2' : 'py-4'} bg-surface-alt`}>
+      {/* ============================================
+          PACKAGES SECTION - 3-tier pricing
+          ============================================ */}
+      <div className={`px-3 ${compact ? 'py-2.5' : 'py-4'} bg-surface-alt flex-1`}>
         <h3
           className={`font-serif text-center ${compact ? 'text-[10px]' : 'text-xs'} font-medium text-text-muted ${compact ? 'mb-2' : 'mb-3'}`}
         >
@@ -215,7 +256,7 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
                   )}
                 </ul>
 
-                {/* CTA Button - improved touch target and focus states */}
+                {/* CTA Button */}
                 <button
                   className={`w-full ${compact ? 'py-1.5' : 'py-2'} rounded-full ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold transition-all duration-200 flex items-center justify-center gap-1
                     focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-1 focus:ring-offset-surface
@@ -259,26 +300,26 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
 
 /**
  * Standalone demo component for use in marketing pages
- * Shows the full storefront in a browser-style frame
+ * Shows Alex Chen's full landing page in a browser-style frame
  */
 export function DemoStorefrontFrame() {
   return (
-    <div className="bg-surface-alt rounded-2xl border border-neutral-800 overflow-hidden">
+    <div className="bg-surface-alt rounded-2xl border border-neutral-800 overflow-hidden shadow-2xl">
       {/* Browser-like header */}
       <div className="flex items-center gap-2 px-4 py-3 bg-neutral-800/50 border-b border-neutral-800">
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-neutral-700" />
-          <div className="w-3 h-3 rounded-full bg-neutral-700" />
-          <div className="w-3 h-3 rounded-full bg-neutral-700" />
+          <div className="w-3 h-3 rounded-full bg-red-500/60" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+          <div className="w-3 h-3 rounded-full bg-green-500/60" />
         </div>
         <div className="flex-1 mx-4">
           <div className="bg-neutral-800 rounded-md px-3 py-1 text-xs text-text-muted max-w-xs mx-auto text-center">
-            yourbusiness.gethandled.ai
+            alexchen.gethandled.ai
           </div>
         </div>
       </div>
 
-      {/* Storefront content - responsive height optimized for hero placement */}
+      {/* Landing page content */}
       <div className="h-[420px] sm:h-[460px] lg:h-auto lg:aspect-[4/5]">
         <DemoStorefrontShowcase />
       </div>

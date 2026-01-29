@@ -41,17 +41,17 @@ function BookingMockup() {
       <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.12)_0%,transparent_70%)] px-4 py-3 border-b border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
-              <span className="text-sage font-semibold text-[10px]">SW</span>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center">
+              <span className="text-white font-semibold text-[10px]">AC</span>
             </div>
             <div>
               <p className="text-[10px] text-text-muted">Booking with</p>
-              <p className="text-xs font-medium text-text-primary">Sarah Williams</p>
+              <p className="text-xs font-medium text-text-primary">Alex Chen</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-sage font-medium">Full Day Coverage</p>
-            <p className="text-xs font-bold text-text-primary">$3,200</p>
+            <p className="text-[10px] text-sage font-medium">Grade Boost</p>
+            <p className="text-xs font-bold text-text-primary">$320</p>
           </div>
         </div>
       </div>
@@ -167,14 +167,14 @@ function ClientHubMockup() {
       <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-4 py-2.5 border-b border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-sage/20 border border-sage/30 flex items-center justify-center">
-              <span className="text-sage font-semibold text-xs">SW</span>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center">
+              <span className="text-white font-semibold text-xs">AC</span>
             </div>
             <div>
               <h3 className="font-serif text-xs font-semibold text-text-primary">
-                Your Wedding Photos
+                Your Tutoring Sessions
               </h3>
-              <p className="text-[9px] text-text-muted">Sarah Williams Photography</p>
+              <p className="text-[9px] text-text-muted">Alex Chen • Math &amp; Science</p>
             </div>
           </div>
           <div className="px-2 py-1 bg-sage/15 border border-sage/30 rounded-full">
@@ -198,8 +198,8 @@ function ClientHubMockup() {
             </h4>
             <div className="bg-surface rounded-xl p-2.5 border border-neutral-800">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[11px] font-semibold text-text-primary">Wedding Day</p>
-                <span className="text-[9px] text-sage font-medium">In 2 weeks</span>
+                <p className="text-[11px] font-semibold text-text-primary">First Session</p>
+                <span className="text-[9px] text-sage font-medium">In 5 days</span>
               </div>
               <div className="flex items-center gap-3 text-[10px] text-text-muted">
                 <span className="flex items-center gap-1">
@@ -208,11 +208,10 @@ function ClientHubMockup() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  9:00 AM
+                  4:00 PM
                 </span>
                 <span className="flex items-center gap-1">
-                  <Package className="w-3 h-3" />
-                  Full Day
+                  <Package className="w-3 h-3" />1 of 4
                 </span>
               </div>
             </div>
@@ -231,9 +230,9 @@ function ClientHubMockup() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-medium text-text-primary truncate">
-                    Shot list preferences
+                    Learning goals questionnaire
                   </p>
-                  <p className="text-[8px] text-amber-500">3 min • Share your vision</p>
+                  <p className="text-[8px] text-amber-500">3 min • Helps Alex prepare</p>
                 </div>
                 <ChevronRight className="w-3 h-3 text-amber-500" />
               </div>
@@ -244,9 +243,9 @@ function ClientHubMockup() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-medium text-text-primary truncate line-through">
-                    Deposit paid
+                    Payment completed
                   </p>
-                  <p className="text-[8px] text-text-muted">$1,600 • Mar 1</p>
+                  <p className="text-[8px] text-text-muted">$320 • Mar 10</p>
                 </div>
               </div>
             </div>
@@ -272,12 +271,12 @@ function ClientHubMockup() {
 
           <div className="flex-1 px-2.5 py-2 overflow-auto space-y-2">
             <div className="flex gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-sage text-[8px] font-semibold">SW</span>
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-[8px] font-semibold">AC</span>
               </div>
               <div className="bg-sage/10 rounded-xl rounded-tl-sm px-2.5 py-1.5 max-w-[90%]">
                 <p className="text-[9px] text-text-primary leading-relaxed">
-                  Hi! Questions about the day? Need to add something? I&apos;m here anytime.
+                  Hi! Questions about the session? Need to reschedule? I&apos;m here anytime.
                 </p>
               </div>
             </div>
