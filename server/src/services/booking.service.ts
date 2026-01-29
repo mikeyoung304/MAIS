@@ -344,6 +344,140 @@ export class BookingService {
     return this.queryService.getAppointments(tenantId, filters);
   }
 
+  /**
+   * Retrieves all bookings across ALL tenants (for platform admin dashboard)
+   *
+   * Issue #7 Fix: Platform admin dashboard was showing "0 of 0 bookings" because
+   * the old implementation used `getAllBookings(DEFAULT_TENANT)` which only queried
+   * a legacy tenant that doesn't exist.
+   *
+   * This method:
+   * - Queries ALL bookings from real (non-test) tenants
+   * - Includes tenant name/slug for display
+   * - Includes package name for display
+   * - Enforces pagination (Pitfall #67: unbounded queries)
+   * - Returns hasMore indicator for infinite scroll
+   *
+   * SECURITY: This method is only for PLATFORM_ADMIN role - authorization
+   * must be enforced by the calling route.
+   *
+   * @param options.cursor - Pagination cursor (booking ID to start after)
+   * @param options.limit - Max bookings per page (default 50, max 100)
+   * @returns Paginated bookings with tenant info
+   */
+  async getAllPlatformBookings(options?: { cursor?: string; limit?: number }): Promise<{
+    bookings: Array<{
+      id: string;
+      packageId: string | null;
+      coupleName: string;
+      email: string;
+      phone?: string;
+      eventDate: string;
+      addOnIds: string[];
+      totalCents: number;
+      status:
+        | 'PENDING'
+        | 'DEPOSIT_PAID'
+        | 'PAID'
+        | 'CONFIRMED'
+        | 'CANCELED'
+        | 'REFUNDED'
+        | 'FULFILLED';
+      createdAt: string;
+      tenantName: string;
+      tenantSlug: string;
+      packageName?: string;
+    }>;
+    hasMore: boolean;
+    nextCursor?: string;
+  }> {
+    if (!this.prisma) {
+      throw new Error('Prisma client required for platform-wide booking queries');
+    }
+
+    // Enforce pagination limits (Pitfall #67)
+    const MAX_LIMIT = 100;
+    const DEFAULT_LIMIT = 50;
+    const limit = Math.min(options?.limit || DEFAULT_LIMIT, MAX_LIMIT);
+
+    // Build cursor condition
+    const cursorCondition = options?.cursor
+      ? { id: { lt: options.cursor } } // Cursor-based pagination (newer first)
+      : {};
+
+    // Query bookings with tenant, customer, package, and add-ons
+    // Exclude test tenants (same filter used by platform stats)
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        ...cursorCondition,
+        tenant: {
+          isTestTenant: false,
+        },
+      },
+      include: {
+        tenant: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
+        customer: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        package: {
+          select: {
+            name: true,
+          },
+        },
+        addOns: {
+          select: {
+            addOnId: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1, // Fetch one extra to detect hasMore
+    });
+
+    // Determine if there are more results
+    const hasMore = bookings.length > limit;
+    const resultBookings = hasMore ? bookings.slice(0, limit) : bookings;
+    const nextCursor = hasMore ? resultBookings[resultBookings.length - 1]?.id : undefined;
+
+    // Transform Prisma model to DTO format
+    // Map Prisma field names to DTO field names (see CLAUDE.md Pitfall #13)
+    return {
+      bookings: resultBookings.map((b) => ({
+        id: b.id,
+        packageId: b.packageId,
+        coupleName: b.customer.name ?? '', // Customer name as "coupleName" for wedding context
+        email: b.customer.email ?? '', // Customer email (nullable in Prisma, required in DTO)
+        phone: b.customer.phone ?? undefined,
+        eventDate: b.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD
+        addOnIds: b.addOns.map((a) => a.addOnId),
+        totalCents: b.totalPrice, // Prisma uses totalPrice, DTO uses totalCents
+        status: b.status as
+          | 'PENDING'
+          | 'DEPOSIT_PAID'
+          | 'PAID'
+          | 'CONFIRMED'
+          | 'CANCELED'
+          | 'REFUNDED'
+          | 'FULFILLED', // Cast Prisma enum to DTO union type
+        createdAt: b.createdAt.toISOString(),
+        tenantName: b.tenant.name,
+        tenantSlug: b.tenant.slug,
+        packageName: b.package?.name ?? undefined,
+      })),
+      hasMore,
+      nextCursor,
+    };
+  }
+
   // ============================================================================
   // Booking Lifecycle (Delegated to BookingLifecycleService)
   // ============================================================================

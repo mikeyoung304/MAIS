@@ -1,40 +1,19 @@
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { ContactPageContent } from '@/components/tenant';
-import {
-  generateTenantPageMetadata,
-  checkPageAccessible,
-  type TenantIdentifier,
-} from '@/lib/tenant-page-utils';
+import { permanentRedirect } from 'next/navigation';
 
 interface ContactPageProps {
   params: Promise<{ slug: string }>;
 }
 
 /**
- * Contact Page - Server component for SSR and metadata
+ * Contact Page - Redirects to landing page #contact section
  *
- * Displays contact information and a contact form.
- * Returns 404 if page is disabled in tenant configuration.
+ * Issue #6 Fix: Single scrolling landing page is MVP.
+ * Multi-page routes are deferred to future work.
+ *
+ * Uses 301 (permanent) redirect for SEO - tells search engines
+ * this content has moved permanently to the single-page anchor.
  */
-
-export async function generateMetadata({ params }: ContactPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const identifier: TenantIdentifier = { type: 'slug', slug };
-  return generateTenantPageMetadata(identifier, 'contact');
-}
-
 export default async function ContactPage({ params }: ContactPageProps) {
   const { slug } = await params;
-  const identifier: TenantIdentifier = { type: 'slug', slug };
-  const context = await checkPageAccessible(identifier, 'contact');
-
-  if (!context) {
-    notFound();
-  }
-
-  return <ContactPageContent tenant={context.tenant} basePath={context.basePath} />;
+  permanentRedirect(`/t/${slug}#contact`);
 }
-
-// ISR: Revalidate every 60 seconds
-export const revalidate = 60;

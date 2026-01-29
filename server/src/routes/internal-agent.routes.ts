@@ -293,21 +293,71 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   }
 
   // ===========================================================================
+  // GREETING STATE CACHE - Issue #5 Fix: Prevents infinite "Welcome back" loop
+  //
+  // ADK context.state.set() does NOT persist between turns, so we track
+  // greeting state in the backend using compound key: tenantId:sessionId
+  // ===========================================================================
+
+  /**
+   * Cache of greeted sessions to prevent duplicate greetings
+   * Key format: `${tenantId}:${sessionId}`
+   * Value: timestamp when greeted
+   */
+  const greetedSessionsCache = new LRUCache<string, number>({
+    max: 5000, // More sessions than tenants (many sessions per tenant)
+    ttl: 60 * 60 * 1000, // 1 hour TTL - sessions rarely last longer
+  });
+
+  /**
+   * Build compound key for greeting state
+   */
+  function buildGreetingKey(tenantId: string, sessionId: string): string {
+    return `${tenantId}:${sessionId}`;
+  }
+
+  /**
+   * Check if a session has been greeted
+   */
+  function hasSessionBeenGreeted(tenantId: string, sessionId: string): boolean {
+    return greetedSessionsCache.has(buildGreetingKey(tenantId, sessionId));
+  }
+
+  /**
+   * Mark a session as greeted
+   */
+  function markSessionGreeted(tenantId: string, sessionId: string): void {
+    greetedSessionsCache.set(buildGreetingKey(tenantId, sessionId), Date.now());
+  }
+
+  // ===========================================================================
   // POST /bootstrap - Session context for Concierge agent
   // Returns tenant context with onboarding state and discovery data
   // ===========================================================================
 
+  // Extended schema for bootstrap - now includes optional sessionId for greeting tracking
+  const BootstrapRequestSchema = TenantIdSchema.extend({
+    sessionId: z.string().optional(), // Issue #5 Fix: Track greeting state per session
+  });
+
   router.post('/bootstrap', async (req: Request, res: Response) => {
     try {
-      const { tenantId } = TenantIdSchema.parse(req.body);
+      const { tenantId, sessionId } = BootstrapRequestSchema.parse(req.body);
 
-      logger.info({ tenantId, endpoint: '/bootstrap' }, '[Agent] Bootstrap request');
+      logger.info({ tenantId, sessionId, endpoint: '/bootstrap' }, '[Agent] Bootstrap request');
+
+      // Check if session has been greeted (Issue #5 Fix)
+      const hasBeenGreeted = sessionId ? hasSessionBeenGreeted(tenantId, sessionId) : false;
 
       // Check cache first (LRU handles TTL automatically)
       const cached = bootstrapCache.get(tenantId);
       if (cached) {
-        logger.info({ tenantId, cached: true }, '[Agent] Bootstrap cache hit');
-        res.json(cached);
+        logger.info(
+          { tenantId, sessionId, cached: true, hasBeenGreeted },
+          '[Agent] Bootstrap cache hit'
+        );
+        // Return cached data + session-specific greeting state
+        res.json({ ...cached, hasBeenGreeted });
         return;
       }
 
@@ -373,12 +423,46 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       bootstrapCache.set(tenantId, bootstrapResponse);
 
       logger.info(
-        { tenantId, onboardingDone: bootstrapResponse.onboardingDone, cached: false },
+        {
+          tenantId,
+          sessionId,
+          onboardingDone: bootstrapResponse.onboardingDone,
+          hasBeenGreeted,
+          cached: false,
+        },
         '[Agent] Bootstrap response'
       );
-      res.json(bootstrapResponse);
+      // Return cached tenant data + session-specific greeting state
+      res.json({ ...bootstrapResponse, hasBeenGreeted });
     } catch (error) {
       handleError(res, error, '/bootstrap');
+    }
+  });
+
+  // ===========================================================================
+  // POST /mark-greeted - Issue #5 Fix: Mark session as greeted
+  // Called by Concierge agent AFTER sending greeting to prevent repeat greetings
+  // ===========================================================================
+
+  const MarkGreetedSchema = TenantIdSchema.extend({
+    sessionId: z.string().min(1),
+  });
+
+  router.post('/mark-greeted', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sessionId } = MarkGreetedSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sessionId, endpoint: '/mark-greeted' },
+        '[Agent] Mark greeted request'
+      );
+
+      // Mark this session as greeted
+      markSessionGreeted(tenantId, sessionId);
+
+      res.json({ success: true, message: 'Session marked as greeted' });
+    } catch (error) {
+      handleError(res, error, '/mark-greeted');
     }
   });
 

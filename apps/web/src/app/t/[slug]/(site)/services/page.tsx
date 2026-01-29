@@ -1,50 +1,19 @@
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { ServicesPageContent } from '@/components/tenant';
-import {
-  generateTenantPageMetadata,
-  checkPageAccessibleWithStorefront,
-  type TenantIdentifier,
-} from '@/lib/tenant-page-utils';
+import { permanentRedirect } from 'next/navigation';
 
 interface ServicesPageProps {
   params: Promise<{ slug: string }>;
 }
 
 /**
- * Services Page - Full package listing with details
+ * Services Page - Redirects to landing page #services section
  *
- * Displays all active packages grouped by segment (if segments exist).
- * Shows package details including add-ons and pricing.
- * Returns 404 if page is disabled in tenant configuration.
+ * Issue #6 Fix: Single scrolling landing page is MVP.
+ * Multi-page routes are deferred to future work.
+ *
+ * Uses 301 (permanent) redirect for SEO - tells search engines
+ * this content has moved permanently to the single-page anchor.
  */
-
-export async function generateMetadata({ params }: ServicesPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const identifier: TenantIdentifier = { type: 'slug', slug };
-  return generateTenantPageMetadata(identifier, 'services');
-}
-
 export default async function ServicesPage({ params }: ServicesPageProps) {
   const { slug } = await params;
-  const identifier: TenantIdentifier = { type: 'slug', slug };
-  const context = await checkPageAccessibleWithStorefront(identifier, 'services');
-
-  if (!context) {
-    notFound();
-  }
-
-  return (
-    <ServicesPageContent
-      data={{
-        tenant: context.tenant,
-        packages: context.packages,
-        segments: context.segments,
-      }}
-      basePath={context.basePath}
-    />
-  );
+  permanentRedirect(`/t/${slug}#services`);
 }
-
-// ISR: Revalidate every 60 seconds
-export const revalidate = 60;

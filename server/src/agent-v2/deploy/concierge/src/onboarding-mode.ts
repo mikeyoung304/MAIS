@@ -21,6 +21,8 @@ export interface BootstrapResponse {
   tier: string;
   onboardingDone: boolean;
   discoveryData: DiscoveryData | null;
+  /** Issue #5 Fix: Whether this session has already been greeted */
+  hasBeenGreeted: boolean;
 }
 
 /**

@@ -1,13 +1,13 @@
 /**
  * Admin HTTP controller
+ *
+ * Handles platform-wide admin operations.
+ * SECURITY: All endpoints require PLATFORM_ADMIN authentication (enforced by route middleware).
  */
 
 import type { IdentityService } from '../services/identity.service';
 import type { BookingService } from '../services/booking.service';
-import type { AdminLoginDto, BookingDto } from '@macon/contracts';
-
-// Default tenant for admin operations (legacy single-tenant mode)
-const DEFAULT_TENANT = 'tenant_default_legacy';
+import type { AdminLoginDto, PlatformBookingsResponse } from '@macon/contracts';
 
 export class AdminController {
   constructor(
@@ -19,19 +19,22 @@ export class AdminController {
     return this.identityService.login(input.email, input.password);
   }
 
-  async getBookings(): Promise<BookingDto[]> {
-    const bookings = await this.bookingService.getAllBookings(DEFAULT_TENANT);
-    return bookings.map((booking) => ({
-      id: booking.id,
-      packageId: booking.packageId,
-      coupleName: booking.coupleName,
-      email: booking.email,
-      phone: booking.phone,
-      eventDate: booking.eventDate,
-      addOnIds: booking.addOnIds,
-      totalCents: booking.totalCents,
-      status: booking.status,
-      createdAt: booking.createdAt,
-    }));
+  /**
+   * Get all bookings across ALL tenants (platform admin view)
+   *
+   * Issue #7 Fix: Previously used `getAllBookings(DEFAULT_TENANT)` which only
+   * queried a non-existent legacy tenant, resulting in "0 of 0 bookings" display.
+   *
+   * Now uses `getAllPlatformBookings()` which:
+   * - Queries ALL bookings from real (non-test) tenants
+   * - Includes tenant name/slug for display
+   * - Includes package name for display
+   * - Enforces pagination (Pitfall #67)
+   *
+   * @param cursor - Optional pagination cursor (booking ID)
+   * @returns Paginated bookings with tenant info
+   */
+  async getBookings(cursor?: string): Promise<PlatformBookingsResponse> {
+    return this.bookingService.getAllPlatformBookings({ cursor });
   }
 }

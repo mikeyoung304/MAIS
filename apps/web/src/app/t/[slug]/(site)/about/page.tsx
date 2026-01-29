@@ -1,41 +1,19 @@
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { AboutPageContent } from '@/components/tenant';
-import {
-  generateTenantPageMetadata,
-  checkPageAccessible,
-  type TenantIdentifier,
-} from '@/lib/tenant-page-utils';
+import { permanentRedirect } from 'next/navigation';
 
 interface AboutPageProps {
   params: Promise<{ slug: string }>;
 }
 
 /**
- * About Page - Tenant story and mission
+ * About Page - Redirects to landing page #about section
  *
- * Displays the tenant's about content with optional image.
- * Falls back to default content when not configured.
- * Returns 404 if page is disabled in tenant configuration.
+ * Issue #6 Fix: Single scrolling landing page is MVP.
+ * Multi-page routes are deferred to future work.
+ *
+ * Uses 301 (permanent) redirect for SEO - tells search engines
+ * this content has moved permanently to the single-page anchor.
  */
-
-export async function generateMetadata({ params }: AboutPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const identifier: TenantIdentifier = { type: 'slug', slug };
-  return generateTenantPageMetadata(identifier, 'about');
-}
-
 export default async function AboutPage({ params }: AboutPageProps) {
   const { slug } = await params;
-  const identifier: TenantIdentifier = { type: 'slug', slug };
-  const context = await checkPageAccessible(identifier, 'about');
-
-  if (!context) {
-    notFound();
-  }
-
-  return <AboutPageContent tenant={context.tenant} basePath={context.basePath} />;
+  permanentRedirect(`/t/${slug}#about`);
 }
-
-// ISR: Revalidate every 60 seconds
-export const revalidate = 60;

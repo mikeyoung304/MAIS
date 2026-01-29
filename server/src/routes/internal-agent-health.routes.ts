@@ -1,14 +1,18 @@
 /**
  * Internal Agent Health Routes
  *
- * Health check endpoint for all deployed agents.
+ * Health check endpoint for all deployed ADK agents on Cloud Run.
  * Called by GitHub Actions after deployment to verify agents are responding.
+ *
+ * Issue #3 Fix:
+ * - Uses /list-apps endpoint (ADK's built-in endpoint) instead of /health
+ * - ADK agents don't serve /health, they serve /list-apps, /run, /apps, etc.
  *
  * Security:
  * - Secured with X-Internal-Secret header (shared secret)
  *
  * Endpoints:
- * - GET /v1/internal/agents/health - Check all agent health
+ * - GET /v1/internal/agents/health - Check all agent health via /list-apps
  */
 
 import type { Request, Response, NextFunction } from 'express';
@@ -42,6 +46,7 @@ const AGENT_URLS = {
   storefront: process.env.STOREFRONT_AGENT_URL,
   research: process.env.RESEARCH_AGENT_URL,
   concierge: process.env.CONCIERGE_AGENT_URL,
+  'project-hub': process.env.PROJECT_HUB_AGENT_URL, // Issue #3 Fix: Add project-hub agent
 } as const;
 
 // =============================================================================
@@ -126,7 +131,9 @@ export function createInternalAgentHealthRoutes(deps: InternalAgentHealthRoutesD
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
 
-        const response = await fetch(`${url}/health`, {
+        // Issue #3 Fix: ADK agents use /list-apps endpoint, not /health
+        // /list-apps returns 200 if agent is responsive, no auth required
+        const response = await fetch(`${url}/list-apps`, {
           signal: controller.signal,
           headers: { 'X-Health-Check': 'true' },
         });

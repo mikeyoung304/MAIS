@@ -17,6 +17,7 @@ import {
   EarlyAccessRequestDtoSchema,
   EarlyAccessResponseDtoSchema,
   BookingDtoSchema,
+  PlatformBookingsResponseSchema,
   CreatePackageDtoSchema,
   UpdatePackageDtoSchema,
   PackageResponseDtoSchema,
@@ -768,13 +769,18 @@ export const Contracts = c.router({
   adminGetBookings: {
     method: 'GET',
     path: '/v1/admin/bookings',
+    query: z
+      .object({
+        cursor: z.string().optional(), // Pagination cursor (booking ID)
+      })
+      .optional(),
     responses: {
-      200: z.array(BookingDtoSchema),
+      200: PlatformBookingsResponseSchema, // Updated: now returns paginated response with tenant info
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get all bookings (requires authentication)',
+    summary: 'Get all bookings across all tenants (requires platform admin authentication)',
   },
 
   adminGetBlackouts: {
