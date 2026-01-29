@@ -1,0 +1,262 @@
+{
+  "landingPage": {
+    "metadata": {
+      "version": "Final - Ready to Ship",
+      "brand": "HANDLED",
+      "positioning": "The operations layer that keeps bookings moving"
+    },
+    "sections": [
+      {
+        "sectionId": "hero",
+        "sectionType": "hero",
+        "position": 1,
+        "content": {
+          "brand": "HANDLED",
+          "headline": "The operations layer that keeps bookings moving.",
+          "subheadline": "Client communication, booking, and follow-up — handled in one calm system that doesn't rely on memory anymore.",
+          "bodyText": "Handled replaces scattered websites, emails, texts, and mental load with a single storefront and source of truth — so nothing drops, clients stay confident, and revenue keeps flowing.",
+          "ctaPrimary": "Get Handled",
+          "ctaSecondary": "See how it works"
+        },
+        "imageDescription": "Hero section - clean, calm visual that conveys organization and flow"
+      },
+      {
+        "sectionId": "problem",
+        "sectionType": "text",
+        "position": 2,
+        "content": {
+          "headline": "You're great at what you do.",
+          "subheadline": "Running the business part shouldn't feel this hard.",
+          "bodyParagraphs": [
+            "You didn't become a photographer, planner, coach, or consultant because you love designing websites, writing copy, or chasing messages across five places.",
+            "But right now, your business probably lives in:"
+          ],
+          "bulletPoints": [
+            "one website that never quite feels right",
+            "booking tools that don't talk to each other",
+            "emails, texts, DMs, and phone calls scattered everywhere",
+            "follow-ups you're holding in your head"
+          ],
+          "consequences": [
+            "That's how opportunities slip by.",
+            "That's how deposits don't get collected.",
+            "That's how really good professionals end up feeling disorganized — even when they're not."
+          ],
+          "closingStatement": "Handled exists so client communication and coordination don't rely on memory or vigilance anymore."
+        },
+        "imageDescription": "No image - text-focused section showing the scattered nature of current tools"
+      },
+      {
+        "sectionId": "solution-intro",
+        "sectionType": "text",
+        "position": 3,
+        "content": {
+          "headline": "Handled is the operations layer beneath your business.",
+          "clarifications": [
+            "Not another tool to manage.",
+            "Not software you babysit.",
+            "Not another inbox."
+          ],
+          "bodyText": "Handled sits underneath your service business and quietly holds everything together — before, during, and after the booking.",
+          "transitionText": "What that means:"
+        },
+        "imageDescription": "Minimal visual - possibly a simple diagram showing Handled as a foundation layer"
+      },
+      {
+        "sectionId": "features",
+        "sectionType": "features",
+        "position": 4,
+        "content": {
+          "features": [
+            {
+              "title": "An Optimized Storefront",
+              "description": "Your public front door — services, pricing, availability, booking, and payments — structured so clients can move forward without friction.",
+              "elaboration": "It's clear. It's professional. And it's something you're actually proud to send people to."
+            },
+            {
+              "title": "A Single Source of Truth",
+              "description": "Every booking becomes a shared space where messages, changes, files, and decisions live — instead of being scattered across email, text, and notes.",
+              "elaboration": "No more digging. No more \"did we already cover this?\""
+            },
+            {
+              "title": "Built-In Coordination",
+              "description": "Routine questions get handled, context stays intact, and important moments surface when attention is actually required — not constantly.",
+              "elaboration": "Your business keeps moving, even when you're not actively managing it."
+            },
+            {
+              "title": "Revenue Continuity",
+              "description": "Follow-ups, reviews, repeat bookings, and next steps happen naturally, in context — instead of as forgotten to-dos.",
+              "elaboration": "Handled doesn't just reduce stress.\nIt protects revenue."
+            }
+          ]
+        },
+        "imageDescription": "Feature cards or icons - simple, professional iconography for each feature"
+      },
+      {
+        "sectionId": "user-journey",
+        "sectionType": "timeline",
+        "position": 5,
+        "content": {
+          "headline": "What it feels like to use Handled",
+          "intro": "Most people expect setup.\nThey're surprised by how fast things click.",
+          "milestones": [
+            {
+              "label": "Day one",
+              "description": "You have a short conversation to set up your website, services, and availability.\n\nFive minutes later, you have a site that looks right — and feels like you."
+            },
+            {
+              "label": "Week one",
+              "description": "Handled looks at your local market and helps you define clear services and pricing that make sense for where you live and who you serve.\n\nNo guessing. No undercharging \"just to be safe.\""
+            },
+            {
+              "label": "One quiet night",
+              "description": "While you're asleep, a client books.\n\nHandled checks your calendar.\nAnswers their questions.\nCollects a deposit.\n\nYou wake up to a notification that money came in — without a single back-and-forth."
+            },
+            {
+              "label": "The job",
+              "description": "Everything you need to know about that client lives in one place.\n\nThe work goes off without friction.\nThe client feels taken care of."
+            },
+            {
+              "label": "After",
+              "description": "The client leaves a review.\nThe project stays alive.\nRebooking is easy — not a restart."
+            }
+          ],
+          "closingStatement": "Handled doesn't make you better at your craft.\nIt makes everything around your craft stop getting in the way."
+        },
+        "imageDescription": "Timeline or journey visualization - could be vertical steps or horizontal flow"
+      },
+      {
+        "sectionId": "agent-readability",
+        "sectionType": "text",
+        "position": 6,
+        "content": {
+          "headline": "Designed for how buying is changing",
+          "bodyText": "Clients are starting to rely on personal assistants and intelligent systems to research, schedule, and coordinate services.\n\nHandled is structured so your business can be clearly understood and correctly engaged — whether the request comes from a person or an assistant acting on their behalf.",
+          "reassurance": "You don't need to manage this shift.\nHandled already accounts for it.",
+          "tagline": "Humans now.\nAgent-readable next.\nSame calm system underneath."
+        },
+        "imageDescription": "Abstract visual showing human and AI interaction converging on the same system"
+      },
+      {
+        "sectionId": "audience",
+        "sectionType": "audience",
+        "position": 7,
+        "content": {
+          "headline": "Who Handled is for",
+          "intro": "Handled is for service professionals where:",
+          "forCriteria": [
+            "work is custom",
+            "details matter",
+            "client communication continues after the booking",
+            "dropped balls cost real money"
+          ],
+          "examples": "Photographers. Wedding planners. Chefs. Coaches. Consultants.",
+          "valueStatement": "If you sell expertise and trust, this is your operations layer.",
+          "notForHeadline": "Handled is not for:",
+          "notForCriteria": [
+            "physical product sellers",
+            "one-click, low-context transactions",
+            "businesses built on volume over clarity"
+          ]
+        },
+        "imageDescription": "No images - clean text layout with clear distinction between for/not for"
+      },
+      {
+        "sectionId": "pricing",
+        "sectionType": "pricing",
+        "position": 8,
+        "content": {
+          "headline": "Choose your level of handling",
+          "subheadline": "No contracts. Cancel anytime.",
+          "tiers": [
+            {
+              "name": "Handled",
+              "price": "$39",
+              "priceSubtext": "/month",
+              "description": "Core operations coverage",
+              "features": [
+                "Optimized storefront",
+                "Booking and payments",
+                "Centralized client communication",
+                "Clear visibility into what's happening and what's next"
+              ],
+              "targetAudience": "For professionals who want fewer dropped balls and cleaner bookings.",
+              "isPopular": false
+            },
+            {
+              "name": "Fully Handled",
+              "price": "$99",
+              "priceSubtext": "/month",
+              "description": "Your complete operations layer",
+              "badge": "Most choose this",
+              "features": [
+                "Everything in Handled",
+                "Deeper coordination support",
+                "Smarter follow-ups and continuity",
+                "Priority handling as your business grows"
+              ],
+              "valueStatement": "If Handled does nothing else, it must generate booking revenue and remove operational drag.\n\nThis is the level where that really happens.",
+              "isPopular": true
+            }
+          ]
+        },
+        "imageDescription": "Two pricing cards side by side - clean, professional, with clear visual hierarchy favoring Fully Handled"
+      },
+      {
+        "sectionId": "founder-story",
+        "sectionType": "text",
+        "position": 9,
+        "content": {
+          "headline": "Built by someone who lived the problem",
+          "bodyText": "Handled was built by a private chef and photographer who spent two decades juggling clients, messages, websites, and multiple businesses — not because he lacked discipline, but because the systems never existed.\n\nHandled is the system he needed then — and the one service professionals need now."
+        },
+        "imageDescription": "Optional founder photo or keep text-only for authenticity"
+      },
+      {
+        "sectionId": "faq",
+        "sectionType": "faq",
+        "position": 10,
+        "content": {
+          "headline": "Common questions",
+          "items": [
+            {
+              "question": "Is this just another booking tool?",
+              "answer": "No. Booking is the entry point. Handled is what keeps everything after the booking from fragmenting."
+            },
+            {
+              "question": "Do I need to be \"good at tech\" to use this?",
+              "answer": "No. The point is that you don't have to become someone you're not."
+            },
+            {
+              "question": "Is this all AI-driven?",
+              "answer": "Handled uses intelligence where it helps and stays out of the way where it doesn't."
+            },
+            {
+              "question": "Can I cancel anytime?",
+              "answer": "Yes. No contracts. No friction."
+            }
+          ]
+        },
+        "imageDescription": "Accordion-style FAQ layout, no decorative images"
+      },
+      {
+        "sectionId": "final-cta",
+        "sectionType": "cta",
+        "position": 11,
+        "content": {
+          "headline": "Stop running your business on memory.",
+          "bodyText": "Install the operations layer that keeps bookings moving — and lets you focus on the work only you can do.",
+          "ctaText": "Get Handled"
+        },
+        "imageDescription": "Clean CTA section - brand color background, single focused button"
+      }
+    ],
+    "copyStats": {
+      "totalSections": 11,
+      "pricingTiers": 2,
+      "faqCount": 4,
+      "featureCount": 4,
+      "journeyMilestones": 5
+    }
+  }
+}
