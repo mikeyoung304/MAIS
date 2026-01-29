@@ -9,85 +9,82 @@ import {
   Users,
   GraduationCap,
 } from 'lucide-react';
+import type { Vertical } from './HeroWithVerticals';
 
 /**
- * DemoStorefrontShowcase - Alex Chen's tutoring landing page preview
+ * DemoStorefrontShowcase - Dynamic vertical landing page preview
  *
  * Shows a realistic example of what a service professional's
  * Handled storefront looks like:
  * - Hero section with headline and value prop
  * - 3-tier pricing with psychology-optimized display
  * - Social proof elements
+ *
+ * Middle tier (tiers[1]) always gets the "Popular" badge by convention.
  */
 
-// Alex Chen's tutoring business
-const alexChen = {
-  name: 'Alex Chen',
-  business: 'Math & Science Tutoring',
-  headline: 'Math finally makes sense.',
-  subheadline: 'Personalized tutoring for students who want to actually understand—not just pass.',
-  initials: 'AC',
-  heroImage: '/images/alex-chen-hero.jpg', // We'll use a gradient fallback
+// Default data for backwards compatibility (DemoStorefrontFrame)
+const defaultVertical: Vertical = {
+  id: 'tutor',
+  label: 'Tutor',
+  persona: {
+    name: 'Alex Chen',
+    business: 'Math & Science Tutoring',
+    initials: 'AC',
+    headline: 'Math finally makes sense.',
+    subheadline:
+      'Personalized tutoring for students who want to actually understand—not just pass.',
+  },
+  tiers: [
+    {
+      name: 'Single Session',
+      description: 'Try it out',
+      price: 85,
+      priceDisplay: '$85',
+      features: ['1-hour session', 'Homework help', 'Session notes'],
+    },
+    {
+      name: 'Grade Boost',
+      description: '4 sessions',
+      price: 320,
+      priceDisplay: '$320',
+      perSession: '$80/ea',
+      features: ['Custom study plan', 'Text support', 'Progress tracking', 'Parent updates'],
+    },
+    {
+      name: 'Semester Success',
+      description: '12 sessions',
+      price: 900,
+      priceDisplay: '$900',
+      perSession: '$75/ea',
+      savings: 'Best value',
+      features: ['Everything in Grade Boost', 'Flexible scheduling', 'Exam prep', '24/7 chat'],
+    },
+  ],
+  trust: [
+    { icon: Star, value: '4.9', label: 'rating' },
+    { icon: Users, value: '200+', label: 'students' },
+    { icon: GraduationCap, value: '6 yrs', label: 'teaching' },
+  ],
 };
 
-// Alex's tutoring packages
-const tiers = [
-  {
-    id: 'single',
-    name: 'Single Session',
-    description: 'Try it out',
-    price: 85,
-    priceDisplay: '$85',
-    priceSubtext: '',
-    features: ['1-hour session', 'Homework help', 'Session notes'],
-    ctaText: 'Book',
-    isPopular: false,
-  },
-  {
-    id: 'grade-boost',
-    name: 'Grade Boost',
-    description: '4 sessions',
-    price: 320,
-    priceDisplay: '$320',
-    priceSubtext: '',
-    perSession: '$80/ea',
-    savings: '',
-    features: ['Custom study plan', 'Text support', 'Progress tracking', 'Parent updates'],
-    ctaText: 'Book',
-    isPopular: true,
-  },
-  {
-    id: 'semester',
-    name: 'Semester Success',
-    description: '12 sessions',
-    price: 900,
-    priceDisplay: '$900',
-    priceSubtext: '',
-    perSession: '$75/ea',
-    savings: 'Best value',
-    features: ['Everything in Grade Boost', 'Flexible scheduling', 'Exam prep', '24/7 chat'],
-    ctaText: 'Book',
-    isPopular: false,
-  },
-];
-
-// Alex's social proof
-const proofStats = [
-  { icon: Star, value: '4.9', label: 'rating' },
-  { icon: Users, value: '200+', label: 'students' },
-  { icon: GraduationCap, value: '6 yrs', label: 'teaching' },
-];
-
 interface DemoStorefrontShowcaseProps {
+  /** The vertical data to display */
+  vertical?: Vertical;
   /** Compact mode for smaller displays */
   compact?: boolean;
 }
 
-export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowcaseProps) {
+export function DemoStorefrontShowcase({
+  vertical = defaultVertical,
+  compact = false,
+}: DemoStorefrontShowcaseProps) {
+  const { persona, tiers, trust } = vertical;
+
   return (
-    <div className="h-full bg-surface overflow-hidden flex flex-col">
+    <div className="h-full bg-surface overflow-hidden flex flex-col rounded-2xl border border-neutral-800 shadow-2xl">
       {/* ============================================
-          HERO SECTION - Alex Chen's landing page top
+          HERO SECTION - Vertical landing page top
           ============================================ */}
       <div
         className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ${compact ? 'py-4 px-4' : 'py-6 px-5'} overflow-hidden`}
@@ -96,11 +93,6 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 right-0 w-32 h-32 bg-sage/30 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl" />
-          {/* Math symbols decoration */}
-          <div className="absolute top-2 right-3 text-white/10 font-mono text-lg">∑ π √</div>
-          <div className="absolute bottom-2 left-3 text-white/10 font-mono text-sm">
-            x² + y² = r²
-          </div>
         </div>
 
         <div className="relative">
@@ -110,15 +102,15 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
               className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center shadow-lg`}
             >
               <span className={`text-white font-bold ${compact ? 'text-xs' : 'text-sm'}`}>
-                {alexChen.initials}
+                {persona.initials}
               </span>
             </div>
             <div>
               <p className={`text-white font-semibold ${compact ? 'text-xs' : 'text-sm'}`}>
-                {alexChen.name}
+                {persona.name}
               </p>
               <p className={`text-slate-400 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
-                {alexChen.business}
+                {persona.business}
               </p>
             </div>
           </div>
@@ -127,29 +119,31 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
           <h2
             className={`font-serif font-bold text-white leading-tight ${compact ? 'text-lg' : 'text-xl'}`}
           >
-            {alexChen.headline}
+            {persona.headline}
           </h2>
 
           {/* Subheadline */}
           <p
             className={`mt-1.5 text-slate-300 leading-snug ${compact ? 'text-[10px]' : 'text-xs'}`}
           >
-            {alexChen.subheadline}
+            {persona.subheadline}
           </p>
 
           {/* Social proof */}
           <div className={`flex items-center gap-3 ${compact ? 'mt-3' : 'mt-4'}`}>
-            {proofStats.map((stat) => (
-              <div key={stat.label} className="flex items-center gap-1">
+            {trust.map((stat) => (
+              <div key={`${stat.value}-${stat.label}`} className="flex items-center gap-1">
                 <stat.icon className={`text-sage ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
                 <span
                   className={`font-semibold text-white ${compact ? 'text-[9px]' : 'text-[10px]'}`}
                 >
                   {stat.value}
                 </span>
-                <span className={`text-slate-400 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>
-                  {stat.label}
-                </span>
+                {stat.label && (
+                  <span className={`text-slate-400 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>
+                    {stat.label}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -158,6 +152,7 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
 
       {/* ============================================
           PACKAGES SECTION - 3-tier pricing
+          Middle tier (tiers[1]) always gets "Popular" badge
           ============================================ */}
       <div className={`px-3 ${compact ? 'py-2.5' : 'py-4'} bg-surface-alt flex-1`}>
         <h3
@@ -167,12 +162,13 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
         </h3>
 
         <div className={`grid grid-cols-3 ${compact ? 'gap-1.5' : 'gap-2'}`}>
-          {tiers.map((tier) => {
-            const isPopular = tier.isPopular;
+          {tiers.map((tier, index) => {
+            // Middle tier (index 1) is always "Popular" by convention
+            const isPopular = index === 1;
 
             return (
               <div
-                key={tier.id}
+                key={tier.name}
                 className={`relative rounded-2xl ${compact ? 'p-2' : 'p-2.5'} transition-all duration-300 ${
                   isPopular
                     ? `bg-surface border-2 border-sage shadow-xl shadow-sage/20 ${compact ? '-mt-1 mb-0.5 scale-[1.03]' : '-mt-2 mb-1 scale-105'} z-10 ring-1 ring-sage/20`
@@ -216,9 +212,6 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
                       className={`font-bold text-text-primary ${compact ? (isPopular ? 'text-base' : 'text-sm') : isPopular ? 'text-lg' : 'text-base'}`}
                     >
                       {tier.priceDisplay}
-                    </span>
-                    <span className={`${compact ? 'text-[9px]' : 'text-[10px]'} text-text-muted`}>
-                      {tier.priceSubtext}
                     </span>
                   </div>
                   {tier.perSession && (
@@ -266,7 +259,7 @@ export function DemoStorefrontShowcase({ compact = false }: DemoStorefrontShowca
                         : 'bg-neutral-800 text-text-primary hover:bg-neutral-700'
                     }`}
                 >
-                  {tier.ctaText}
+                  Book
                   {isPopular && <ArrowRight className={compact ? 'w-2 h-2' : 'w-2.5 h-2.5'} />}
                 </button>
               </div>
@@ -319,7 +312,7 @@ export function DemoStorefrontFrame() {
         </div>
       </div>
 
-      {/* Landing page content */}
+      {/* Landing page content - uses default vertical (Alex Chen) */}
       <div className="h-[420px] sm:h-[460px] lg:h-auto lg:aspect-[4/5]">
         <DemoStorefrontShowcase />
       </div>

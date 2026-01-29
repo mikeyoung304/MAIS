@@ -3,9 +3,9 @@ import { Metadata } from 'next';
 import { Check, X, Globe, Calendar, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
-import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
 import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 import { JourneyShowcase } from '@/components/home/JourneyShowcase';
+import { HeroWithVerticals } from '@/components/home/HeroWithVerticals';
 
 // Revalidate homepage every 60 seconds
 export const revalidate = 60;
@@ -133,58 +133,14 @@ export default function HomePage() {
 
         <main>
           {/* ============================================
-              HERO - Split layout with storefront visual
+              HERO - 4-Vertical Selector with Package-First Visual
               ============================================ */}
-          <section className="relative pt-28 pb-12 md:pt-32 md:pb-20 px-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                {/* Left: Copy */}
-                <div className="text-center lg:text-left">
-                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.08] tracking-tight">
-                    The operations layer that keeps bookings moving.
-                  </h1>
-
-                  <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
-                    Client communication, booking, and follow-up — handled in one calm system that
-                    doesn&apos;t rely on memory anymore.
-                  </p>
-
-                  <p className="mt-4 text-base text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
-                    Handled replaces scattered websites, emails, texts, and mental load with a
-                    single storefront and source of truth — so nothing drops, clients stay
-                    confident, and revenue keeps flowing.
-                  </p>
-
-                  <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
-                    <Button
-                      asChild
-                      variant="teal"
-                      className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <Link href="/signup">Get Handled</Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
-                    >
-                      <Link href="#how-it-works">See how it works</Link>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Right: Storefront Visual */}
-                <div className="hidden lg:block">
-                  <DemoStorefrontFrame />
-                </div>
-              </div>
-            </div>
-          </section>
+          <HeroWithVerticals />
 
           {/* ============================================
               PROBLEM SECTION
               ============================================ */}
-          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center">
                 You&apos;re great at what you do.
@@ -234,7 +190,7 @@ export default function HomePage() {
           {/* ============================================
               SOLUTION INTRO
               ============================================ */}
-          <section className="py-20 md:py-28 px-6">
+          <section className="py-32 md:py-40 px-6">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
                 Handled is the operations layer beneath your business.
@@ -256,15 +212,15 @@ export default function HomePage() {
           {/* ============================================
               FEATURES - What that means (with icons)
               ============================================ */}
-          <section id="how-it-works" className="py-20 md:py-28 px-6 bg-surface-alt scroll-mt-20">
+          <section id="how-it-works" className="py-32 md:py-40 px-6 bg-surface-alt scroll-mt-20">
             <div className="max-w-5xl mx-auto">
               <p className="text-sage text-sm font-medium tracking-wide uppercase text-center mb-4">
                 What that means
               </p>
 
-              <div className="grid md:grid-cols-2 gap-8 mt-12">
+              <div className="grid md:grid-cols-2 gap-10 mt-12">
                 {/* Feature 1 */}
-                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                <div className="bg-surface rounded-3xl p-8 lg:p-10 border border-neutral-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sage/40">
                   <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
                     <Globe className="w-6 h-6 text-sage" />
                   </div>
@@ -282,7 +238,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Feature 2 */}
-                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                <div className="bg-surface rounded-3xl p-8 lg:p-10 border border-neutral-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sage/40">
                   <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
                     <Calendar className="w-6 h-6 text-sage" />
                   </div>
@@ -299,7 +255,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Feature 3 */}
-                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                <div className="bg-surface rounded-3xl p-8 lg:p-10 border border-neutral-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sage/40">
                   <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
                     <Users className="w-6 h-6 text-sage" />
                   </div>
@@ -316,7 +272,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Feature 4 */}
-                <div className="bg-surface rounded-2xl p-8 lg:p-10 border border-neutral-800">
+                <div className="bg-surface rounded-3xl p-8 lg:p-10 border border-neutral-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-sage/40">
                   <div className="w-12 h-12 rounded-full bg-sage/15 flex items-center justify-center mb-6">
                     <Sparkles className="w-6 h-6 text-sage" />
                   </div>
@@ -343,119 +299,48 @@ export default function HomePage() {
           <ProjectHubWedge />
 
           {/* ============================================
-              USER JOURNEY - What it feels like (Timeline)
+              MID-PAGE CTA - Capture momentum after "aha" moment
               ============================================ */}
-          <section className="py-20 md:py-28 px-6">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center">
-                What it feels like to use Handled
-              </h2>
-              <p className="mt-6 text-xl text-text-muted text-center">
-                Most people expect setup.
-                <br />
-                They&apos;re surprised by how fast things click.
+          <section className="py-16 md:py-20 px-6">
+            <div className="max-w-2xl mx-auto text-center">
+              <p className="text-lg text-text-muted mb-6">
+                Ready to see your projects organized like this?
               </p>
-
-              <div className="mt-16 space-y-12">
-                {/* Day one */}
-                <div className="border-l-2 border-sage/30 pl-8">
-                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
-                    Day one
-                  </p>
-                  <p className="text-lg text-text-muted leading-relaxed">
-                    You have a short conversation to set up your website, services, and
-                    availability.
-                  </p>
-                  <p className="mt-4 text-lg text-text-primary font-medium">
-                    Five minutes later, you have a site that looks right — and feels like you.
-                  </p>
-                </div>
-
-                {/* Week one */}
-                <div className="border-l-2 border-sage/30 pl-8">
-                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
-                    Week one
-                  </p>
-                  <p className="text-lg text-text-muted leading-relaxed">
-                    Handled looks at your local market and helps you define clear services and
-                    pricing that make sense for where you live and who you serve.
-                  </p>
-                  <p className="mt-4 text-lg text-text-primary font-medium">
-                    No guessing. No undercharging &quot;just to be safe.&quot;
-                  </p>
-                </div>
-
-                {/* One quiet night */}
-                <div className="border-l-2 border-sage/30 pl-8">
-                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
-                    One quiet night
-                  </p>
-                  <p className="text-lg text-text-muted leading-relaxed">
-                    While you&apos;re asleep, a client books.
-                  </p>
-                  <p className="mt-4 text-lg text-text-muted leading-relaxed">
-                    Handled checks your calendar.
-                    <br />
-                    Answers their questions.
-                    <br />
-                    Collects a deposit.
-                  </p>
-                  <p className="mt-4 text-lg text-text-primary font-medium">
-                    You wake up to a notification that money came in — without a single
-                    back-and-forth.
-                  </p>
-                </div>
-
-                {/* The job */}
-                <div className="border-l-2 border-sage/30 pl-8">
-                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
-                    The job
-                  </p>
-                  <p className="text-lg text-text-muted leading-relaxed">
-                    Everything you need to know about that client lives in one place.
-                  </p>
-                  <p className="mt-4 text-lg text-text-primary font-medium">
-                    The work goes off without friction.
-                    <br />
-                    The client feels taken care of.
-                  </p>
-                </div>
-
-                {/* After */}
-                <div className="border-l-2 border-sage/30 pl-8">
-                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-2">
-                    After
-                  </p>
-                  <p className="text-lg text-text-muted leading-relaxed">
-                    The client leaves a review.
-                    <br />
-                    The project stays alive.
-                    <br />
-                    Rebooking is easy — not a restart.
-                  </p>
-                </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button
+                  asChild
+                  variant="teal"
+                  className="rounded-full px-8 py-5 text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Link href="/signup">Get Handled</Link>
+                </Button>
+                <Link
+                  href="#pricing"
+                  className="text-text-muted hover:text-sage transition-colors text-sm"
+                >
+                  See pricing →
+                </Link>
               </div>
-
-              <p className="mt-16 text-xl md:text-2xl text-text-primary font-medium text-center leading-relaxed">
-                Handled doesn&apos;t make you better at your craft.
-                <br />
-                It makes everything around your craft stop getting in the way.
-              </p>
             </div>
           </section>
 
           {/* ============================================
               JOURNEY SHOWCASE - Visual demonstration
               ============================================ */}
-          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <p className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
                   See it in action
                 </p>
-                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
                   The complete client journey
                 </h2>
+                <p className="mt-6 text-xl text-text-muted max-w-2xl mx-auto">
+                  Handled doesn&apos;t make you better at your craft.
+                  <br />
+                  It makes everything around your craft stop getting in the way.
+                </p>
               </div>
               <JourneyShowcase />
             </div>
@@ -464,43 +349,102 @@ export default function HomePage() {
           {/* ============================================
               AGENT READABILITY
               ============================================ */}
-          <section className="py-20 md:py-28 px-6">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
-                Designed for how buying is changing
-              </h2>
+          <section className="py-32 md:py-40 px-6">
+            <div className="max-w-5xl mx-auto">
+              <div className="grid lg:grid-cols-2 gap-16 items-center">
+                {/* Left: Text content */}
+                <div className="text-center lg:text-left">
+                  <p className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
+                    Future-ready
+                  </p>
+                  <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
+                    Designed for how buying is changing
+                  </h2>
 
-              <p className="mt-8 text-lg text-text-muted leading-relaxed">
-                Clients are starting to rely on personal assistants and intelligent systems to
-                research, schedule, and coordinate services.
-              </p>
+                  <p className="mt-8 text-lg text-text-muted leading-relaxed">
+                    Clients are starting to rely on personal assistants and intelligent systems to
+                    research, schedule, and coordinate services.
+                  </p>
 
-              <p className="mt-6 text-lg text-text-muted leading-relaxed">
-                Handled is structured so your business can be clearly understood and correctly
-                engaged — whether the request comes from a person or an assistant acting on their
-                behalf.
-              </p>
+                  <p className="mt-6 text-lg text-text-muted leading-relaxed">
+                    Handled is structured so your business can be clearly understood and correctly
+                    engaged — whether the request comes from a person or an assistant acting on
+                    their behalf.
+                  </p>
 
-              <p className="mt-8 text-lg text-text-primary font-medium">
-                You don&apos;t need to manage this shift.
-                <br />
-                Handled already accounts for it.
-              </p>
+                  <p className="mt-8 text-xl md:text-2xl text-sage font-medium">
+                    Humans now. Agent-readable next.
+                    <br />
+                    Same calm system underneath.
+                  </p>
+                </div>
 
-              <p className="mt-10 text-xl md:text-2xl text-sage font-medium">
-                Humans now.
-                <br />
-                Agent-readable next.
-                <br />
-                Same calm system underneath.
-              </p>
+                {/* Right: Visual representation */}
+                <div className="relative">
+                  {/* Decorative background gradient */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.12)_0%,transparent_70%)]" />
+
+                  <div className="relative space-y-4">
+                    {/* Human Request */}
+                    <div className="bg-surface-alt rounded-2xl p-5 border border-neutral-800">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <Users className="w-4 h-4 text-blue-400" />
+                        </div>
+                        <span className="text-sm font-medium text-text-muted">Client</span>
+                      </div>
+                      <p className="text-text-primary text-sm">
+                        &quot;I need a photographer for my wedding on March 15th&quot;
+                      </p>
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="flex justify-center">
+                      <div className="w-px h-6 bg-sage/30" />
+                    </div>
+
+                    {/* AI Agent Request */}
+                    <div className="bg-surface-alt rounded-2xl p-5 border border-neutral-800">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <span className="text-sm font-medium text-text-muted">AI Assistant</span>
+                      </div>
+                      <p className="text-text-primary text-sm">
+                        &quot;Find available photographers near Austin for a wedding on 3/15&quot;
+                      </p>
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="flex justify-center">
+                      <div className="w-px h-6 bg-sage/30" />
+                    </div>
+
+                    {/* Handled Response */}
+                    <div className="bg-surface rounded-2xl p-5 border-2 border-sage/50 shadow-lg shadow-sage/10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-sage" />
+                        </div>
+                        <span className="text-sm font-semibold text-sage">Handled</span>
+                      </div>
+                      <p className="text-text-primary text-sm">
+                        Available: March 15 at 2pm
+                        <br />
+                        <span className="text-text-muted">Full Day Package · $2,400</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
           {/* ============================================
               WHO IT'S FOR / NOT FOR
               ============================================ */}
-          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
             <div className="max-w-4xl mx-auto">
               <div className="grid md:grid-cols-2 gap-12">
                 {/* For */}
@@ -561,8 +505,13 @@ export default function HomePage() {
           {/* ============================================
               PRICING
               ============================================ */}
-          <section id="pricing" className="py-20 md:py-28 px-6 scroll-mt-20">
-            <div className="max-w-4xl mx-auto">
+          <section
+            id="pricing"
+            className="relative py-32 md:py-40 px-6 scroll-mt-20 overflow-hidden"
+          >
+            {/* Subtle gradient glow to signal "arrival" */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(69,179,127,0.08)_0%,transparent_60%)]" />
+            <div className="relative max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
                   Choose your level of handling
@@ -575,10 +524,10 @@ export default function HomePage() {
                 {tiers.map((tier) => (
                   <div
                     key={tier.id}
-                    className={`relative bg-surface rounded-2xl p-8 border transition-all duration-300 flex flex-col ${
+                    className={`relative bg-surface rounded-3xl p-8 border transition-all duration-300 flex flex-col hover:-translate-y-1 ${
                       tier.isPopular
-                        ? 'border-2 border-sage shadow-xl shadow-sage/10'
-                        : 'border-neutral-800 hover:border-sage/40'
+                        ? 'border-2 border-sage shadow-xl shadow-sage/10 hover:shadow-2xl'
+                        : 'border-neutral-800 hover:border-sage/40 hover:shadow-xl'
                     }`}
                   >
                     {tier.isPopular && (
@@ -642,7 +591,7 @@ export default function HomePage() {
           {/* ============================================
               FOUNDER STORY
               ============================================ */}
-          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+          <section className="py-32 md:py-40 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
                 Built by someone who lived the problem
@@ -663,7 +612,7 @@ export default function HomePage() {
           {/* ============================================
               FAQ
               ============================================ */}
-          <section className="py-20 md:py-28 px-6">
+          <section className="py-32 md:py-40 px-6">
             <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight text-center mb-12">
                 Common questions
@@ -673,7 +622,7 @@ export default function HomePage() {
                 {faqItems.map((item) => (
                   <div
                     key={item.question}
-                    className="bg-surface rounded-2xl p-6 border border-neutral-800"
+                    className="bg-surface rounded-3xl p-6 border border-neutral-800 transition-all duration-300 hover:border-sage/40"
                   >
                     <h3 className="font-serif text-lg font-bold text-text-primary">
                       {item.question}
@@ -688,19 +637,18 @@ export default function HomePage() {
           {/* ============================================
               FINAL CTA
               ============================================ */}
-          <section className="py-24 md:py-32 px-6 bg-surface-alt">
+          <section className="py-32 md:py-48 px-6 bg-sage">
             <div className="max-w-2xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-6">
                 Stop running your business on memory.
               </h2>
-              <p className="text-xl md:text-2xl text-text-muted leading-relaxed mb-10">
+              <p className="text-xl md:text-2xl text-white/90 leading-relaxed mb-10">
                 Install the operations layer that keeps bookings moving — and lets you focus on the
                 work only you can do.
               </p>
               <Button
                 asChild
-                variant="teal"
-                className="rounded-full px-12 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                className="bg-white text-sage hover:bg-neutral-100 rounded-full px-12 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Link href="/signup">Get Handled</Link>
               </Button>
