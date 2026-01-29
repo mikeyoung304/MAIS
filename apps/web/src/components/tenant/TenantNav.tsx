@@ -7,14 +7,17 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
-import { getNavigationItems, buildNavHref } from './navigation';
+import { getAnchorNavigationItems, buildAnchorNavHref } from './navigation';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 interface TenantNavProps {
   tenant: TenantPublicDto;
   /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
   basePath?: string;
-  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  /**
+   * Domain query parameter for custom domain routes (e.g., '?domain=example.com')
+   * @deprecated Not used for anchor-based navigation (Issue #6). Kept for API compatibility.
+   */
   domainParam?: string;
 }
 
@@ -34,7 +37,7 @@ interface NavItemWithHref {
  * - Route change closes mobile menu
  * - Respects prefers-reduced-motion
  */
-export function TenantNav({ tenant, basePath: basePathProp, domainParam }: TenantNavProps) {
+export function TenantNav({ tenant, basePath: basePathProp }: TenantNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -47,14 +50,15 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
   // Get landing page config for dynamic navigation
   const landingPageConfig = tenant.branding?.landingPage as LandingPageConfig | undefined;
 
-  // Memoize navItems - now uses dynamic navigation based on enabled pages
+  // Memoize navItems - Issue #6 Fix: Use anchor navigation for single-page MVP
+  // Multi-page routes are deferred; all navigation now uses #section anchors
   const navItems = useMemo<NavItemWithHref[]>(
     () =>
-      getNavigationItems(landingPageConfig).map((item) => ({
+      getAnchorNavigationItems(landingPageConfig).map((item) => ({
         label: item.label,
-        href: buildNavHref(basePath, item, domainParam),
+        href: buildAnchorNavHref(basePath, item),
       })),
-    [basePath, domainParam, landingPageConfig]
+    [basePath, landingPageConfig]
   );
 
   // Close menu on route change
@@ -148,25 +152,28 @@ export function TenantNav({ tenant, basePath: basePathProp, domainParam }: Tenan
   /**
    * Determines if a navigation link is active based on current pathname.
    *
-   * - Home link: exact match only (prevents home from being "active" on subpages)
-   * - Other links: prefix match (allows /services to match /services/foo)
+   * Issue #6 Fix: For single-page mode with anchor links, "Home" is always active
+   * since all content is on the same page. Hash-based highlighting would require
+   * scroll position tracking which is deferred to multi-page implementation.
    *
    * @param href - The navigation link href to check
    * @returns true if the link should be styled as active
    */
   const isActiveLink = useCallback(
     (href: string) => {
-      // For domain routes, extract the path from href (strip query params)
-      const hrefPath = href.split('?')[0] || '/';
-      const homeHref = domainParam ? '/' : basePath;
-
-      if (hrefPath === homeHref || hrefPath === '') {
-        // Exact match for home page
-        return pathname === homeHref || pathname === '/';
+      // For anchor links (#section), only mark Home as active on the landing page
+      // All other anchor links are not marked active (hash tracking is complex)
+      if (href.includes('#')) {
+        return false; // Don't highlight anchor links as "active"
       }
-      return pathname.startsWith(hrefPath);
+
+      // For home link (no anchor), check if we're on the landing page
+      const hrefPath = href.split('?')[0] || '/';
+      const homeHref = basePath || '/';
+
+      return pathname === hrefPath || pathname === homeHref || pathname === '/';
     },
-    [basePath, domainParam, pathname]
+    [basePath, pathname]
   );
 
   return (

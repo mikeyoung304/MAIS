@@ -11,6 +11,24 @@ import {
   FeaturesSection,
 } from './sections';
 
+/**
+ * Map section types to anchor IDs for single-page navigation
+ *
+ * Issue #6 Fix: These IDs enable #about, #services, etc. anchor links
+ * to scroll to the correct section on the landing page.
+ */
+const SECTION_TYPE_TO_ANCHOR_ID: Record<string, string> = {
+  hero: 'hero',
+  text: 'about', // Text section is typically used for "About" content
+  gallery: 'gallery',
+  testimonials: 'testimonials',
+  faq: 'faq',
+  contact: 'contact',
+  pricing: 'pricing',
+  features: 'services', // Features section maps to "Services" nav
+  cta: 'cta',
+};
+
 interface SectionRendererProps {
   /** Array of sections to render */
   sections: Section[];
@@ -88,11 +106,15 @@ export function SectionRenderer({
           }
         })();
 
+        // Get anchor ID for this section type (Issue #6: single-page navigation)
+        const anchorId = SECTION_TYPE_TO_ANCHOR_ID[section.type];
+
         // Wrap in a div with data attributes for Build Mode selection and highlighting
         if (isEditMode) {
           return (
             <div
               key={sectionKey}
+              id={anchorId} // Issue #6: Anchor ID for single-page navigation (#about, #gallery, etc.)
               data-section-index={absoluteIndex}
               data-section-type={section.type}
               // Add section ID for ID-based highlighting (preferred over index-based)
@@ -103,8 +125,12 @@ export function SectionRenderer({
           );
         }
 
-        // Normal mode - no wrapper needed
-        return <div key={sectionKey}>{sectionComponent}</div>;
+        // Normal mode - include anchor ID for single-page navigation
+        return (
+          <div key={sectionKey} id={anchorId}>
+            {sectionComponent}
+          </div>
+        );
       })}
     </>
   );

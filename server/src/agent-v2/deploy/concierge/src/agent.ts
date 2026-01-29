@@ -120,6 +120,25 @@ ALWAYS call bootstrap_session FIRST in any new conversation. This tells you:
 - What you already know about them (knownFacts, discoveryData)
 - A greeting if they're returning (resumeGreeting)
 - The full onboarding prompt if active (onboardingPrompt)
+- **hasBeenGreeted**: TRUE if you already greeted this session - DO NOT greet again!
+
+### GREETING PROTOCOL (Issue #5 Fix - CRITICAL)
+
+1. Check hasBeenGreeted from bootstrap_session response
+2. If hasBeenGreeted is TRUE → Skip greeting entirely, respond directly to user's message
+3. If hasBeenGreeted is FALSE → Send your greeting, then call mark_session_greeted
+
+**NEVER greet twice in the same session. Check hasBeenGreeted EVERY time.**
+
+**Example flow for new session:**
+- bootstrap_session returns hasBeenGreeted: false
+- You send: "Hey! I'm looking at your preview. What do you want to work on?"
+- Call mark_session_greeted (prevents duplicate greeting if user refreshes)
+
+**Example flow for returning session:**
+- bootstrap_session returns hasBeenGreeted: true
+- User says "Update my headline"
+- You skip greeting entirely, just respond to their request
 
 If isOnboarding is TRUE → Follow the onboardingPrompt instructions carefully.
 If isOnboarding is FALSE → Proceed with normal routing below.
@@ -152,6 +171,61 @@ When user says ANYTHING like:
 - "headline should be [X]" → store fact + update hero headline
 - "my bio is [X]" → store fact + update about section
 - "services should include [X]" → store fact + add service
+
+### ⚡ LOCATION TRIGGERS (Issue #2 Fix)
+
+**Problem this solves:** User provides location but agent ignores it or doesn't store it.
+
+**THE RULE:** When user mentions location in ANY format, ALWAYS store it immediately:
+
+**Location Signal Phrases:**
+- "I'm based in [city/state]" → store_discovery_fact(key: "location", value: {city, state})
+- "I'm located in [place]" → store_discovery_fact(key: "location", value: parsed)
+- "my business is in [place]" → store_discovery_fact(key: "location", value: parsed)
+- "I serve [area]" → store_discovery_fact(key: "location", value: parsed)
+- "we're in [city], [state]" → store_discovery_fact(key: "location", value: {city, state})
+- "[City], [State]" (bare mention) → store_discovery_fact(key: "location", value: {city, state})
+
+**ALWAYS parse location into structured format when possible:**
+- "Austin" → {city: "Austin"}
+- "Austin, TX" → {city: "Austin", state: "TX"}
+- "Austin, Texas" → {city: "Austin", state: "TX"}
+- "Denver metro area" → {city: "Denver", state: "CO", note: "metro area"}
+
+**If user mentions location + storefront content:**
+1. Store the location fact
+2. Update relevant storefront section (contact, about, hero)
+3. Both calls in same turn
+
+**Example:**
+User: "I'm a photographer based in Austin, TX"
+→ store_discovery_fact(key: "businessType", value: "photographer")
+→ store_discovery_fact(key: "location", value: {city: "Austin", state: "TX"})
+
+### ⚡ WEB SEARCH TRIGGERS (Issue #2 Fix)
+
+**Problem this solves:** User wants competitor/market info but agent doesn't call research.
+
+**AUTOMATIC RESEARCH TRIGGERS (call delegate_to_research immediately):**
+- "what are my competitors charging" → research(task: "pricing", industry: known)
+- "what should I charge" → research(task: "pricing", industry: known)
+- "how much do others charge" → research(task: "pricing", industry: known)
+- "research my competitors" → research(task: "competitors", industry: known)
+- "what are other [business type] doing" → research(task: "competitors")
+- "market research" → research(task: "market_analysis")
+- "competitor analysis" → research(task: "competitors")
+- "pricing research" → research(task: "pricing")
+- "check [competitor URL]" → research(task: "competitors", competitorUrl: URL)
+- "look at [competitor website]" → research(task: "competitors", competitorUrl: URL)
+
+**ALWAYS include known context in research:**
+- If location known: Include location parameter
+- If industry known: Include industry parameter
+- If user mentioned competitor URL: Include competitorUrl parameter
+
+**Example:**
+User: "What are other wedding photographers in Austin charging?"
+→ delegate_to_research(task: "pricing", industry: "wedding photography", location: "Austin, TX")
 
 **Correct Example:**
 User: "My about section should mention that I was valedictorian and I value calm execution"
@@ -1089,6 +1163,64 @@ function clearRetry(taskKey: string): void {
 }
 
 // =============================================================================
+// TOOL CALL CIRCUIT BREAKER (Issue #4 Fix - Stuck in Loop Prevention)
+// =============================================================================
+
+/**
+ * Issue #4 Fix: Prevent agents from getting stuck in tool call loops.
+ *
+ * Problem: Agent can repeatedly call the same tool with slightly different params,
+ * creating infinite loops that waste tokens and confuse users.
+ *
+ * Solution: Track tool calls per session and fail-fast if threshold exceeded.
+ *
+ * Configuration:
+ * - MAX_TOOL_CALLS_PER_SESSION: Maximum calls per tool type per session
+ * - CIRCUIT_BREAKER_TTL_MS: How long to track calls (reset after TTL)
+ */
+const MAX_TOOL_CALLS_PER_SESSION = 10; // Max calls per tool type per conversation
+const CIRCUIT_BREAKER_TTL_MS = 10 * 60 * 1000; // 10 minutes - covers one conversation
+const CIRCUIT_BREAKER_CACHE_SIZE = 500;
+
+// Cache: `{sessionId}:{toolName}` -> call count
+const toolCallCircuitBreaker = new TTLCache<number>(
+  CIRCUIT_BREAKER_TTL_MS,
+  CIRCUIT_BREAKER_CACHE_SIZE,
+  'tool-circuit-breaker'
+);
+
+/**
+ * Check if a tool call is allowed. Returns error message if circuit breaker tripped.
+ *
+ * @param sessionId - The session making the call
+ * @param toolName - The tool being called
+ * @returns null if allowed, error message if blocked
+ */
+function checkToolCallCircuitBreaker(sessionId: string, toolName: string): string | null {
+  const key = `${sessionId}:${toolName}`;
+  const count = toolCallCircuitBreaker.get(key) ?? 0;
+
+  if (count >= MAX_TOOL_CALLS_PER_SESSION) {
+    logger.warn(
+      { sessionId, toolName, callCount: count },
+      '[Concierge] Circuit breaker tripped - too many tool calls'
+    );
+    return `Circuit breaker: ${toolName} has been called ${count} times this session. Please try a different approach or ask the user for clarification.`;
+  }
+
+  // Increment counter
+  toolCallCircuitBreaker.set(key, count + 1);
+  return null;
+}
+
+/**
+ * Reset circuit breaker for a session (e.g., after successful completion)
+ */
+function resetToolCallCircuitBreaker(sessionId: string, toolName: string): void {
+  toolCallCircuitBreaker.delete(`${sessionId}:${toolName}`);
+}
+
+// =============================================================================
 // TOOL IMPLEMENTATIONS
 // =============================================================================
 
@@ -1132,6 +1264,15 @@ const delegateToMarketingTool = new FunctionTool({
 
     const sessionId = context?.invocationId || `session-${Date.now()}`;
     const taskKey = `marketing:${tenantId}:${params.task}`;
+
+    // Issue #4 Fix: Circuit breaker to prevent stuck-in-loop
+    const circuitBreakerError = checkToolCallCircuitBreaker(sessionId, 'delegate_to_marketing');
+    if (circuitBreakerError) {
+      return {
+        error: circuitBreakerError,
+        suggestion: 'Consider asking the user what they want to change.',
+      };
+    }
 
     logger.info({}, `[Concierge] Delegating to Marketing: ${params.task}`);
 
@@ -1213,6 +1354,15 @@ const delegateToStorefrontTool = new FunctionTool({
 
     const sessionId = context?.invocationId || `session-${Date.now()}`;
     const taskKey = `storefront:${tenantId}:${params.task}`;
+
+    // Issue #4 Fix: Circuit breaker to prevent stuck-in-loop
+    const circuitBreakerError = checkToolCallCircuitBreaker(sessionId, 'delegate_to_storefront');
+    if (circuitBreakerError) {
+      return {
+        error: circuitBreakerError,
+        suggestion: 'Consider asking the user for specific section to update.',
+      };
+    }
 
     logger.info({}, `[Concierge] Delegating to Storefront: ${params.task}`);
 
@@ -1350,6 +1500,16 @@ const delegateToResearchTool = new FunctionTool({
     const sessionId = context?.invocationId || `session-${Date.now()}`;
     const taskKey = `research:${tenantId}:${params.task}`;
 
+    // Issue #4 Fix: Circuit breaker to prevent stuck-in-loop
+    const circuitBreakerError = checkToolCallCircuitBreaker(sessionId, 'delegate_to_research');
+    if (circuitBreakerError) {
+      return {
+        error: circuitBreakerError,
+        suggestion:
+          'Research tasks can be slow. Consider sharing what you already know with the user.',
+      };
+    }
+
     logger.info({}, `[Concierge] Delegating to Research: ${params.task}`);
 
     // Construct message for Research agent
@@ -1433,7 +1593,17 @@ Note: This requires the Project Hub agent to be deployed. If unavailable, use th
       return { error: 'No tenant context available' };
     }
 
+    const sessionId = context?.invocationId || `session-${Date.now()}`;
     const taskKey = `project_hub:${tenantId}:${params.task}`;
+
+    // Issue #4 Fix: Circuit breaker to prevent stuck-in-loop
+    const circuitBreakerError = checkToolCallCircuitBreaker(sessionId, 'delegate_to_project_hub');
+    if (circuitBreakerError) {
+      return {
+        error: circuitBreakerError,
+        suggestion: 'Consider asking the user which project or request they want to work on.',
+      };
+    }
 
     // Check if Project Hub agent is available
     if (!SPECIALIST_URLS.projectHub) {
@@ -1719,8 +1889,13 @@ const bootstrapSessionTool = new FunctionTool({
   name: 'bootstrap_session',
   description: `Get session context and onboarding status. ALWAYS call this FIRST in a new conversation.
 
-Returns tenant context, onboarding state, and any known facts about the business.
-If onboardingDone is false, switch to onboarding mode - help them build their storefront.`,
+Returns:
+- Tenant context (businessName, industry, tier)
+- Onboarding state (onboardingDone, isOnboarding)
+- Known facts about the business (discoveryData, knownFacts)
+- hasBeenGreeted: TRUE if this session has already been greeted - DO NOT greet again!
+
+IMPORTANT: Check hasBeenGreeted before greeting. If true, skip the greeting and get straight to helping.`,
   parameters: z.object({}),
   execute: async (_params, context) => {
     const tenantId = getTenantId(context);
@@ -1728,8 +1903,11 @@ If onboardingDone is false, switch to onboarding mode - help them build their st
       return { error: 'No tenant context available' };
     }
 
-    logger.info({}, `[Concierge] bootstrap_session for: ${tenantId}`);
-    const result = await callMaisApi('/bootstrap', tenantId);
+    // Issue #5 Fix: Get session ID to track greeting state
+    const sessionId = context?.invocationId || `session-${Date.now()}`;
+
+    logger.info({ sessionId }, `[Concierge] bootstrap_session for: ${tenantId}`);
+    const result = await callMaisApi('/bootstrap', tenantId, { sessionId });
 
     if (!result.ok) {
       return {
@@ -1765,6 +1943,51 @@ If onboardingDone is false, switch to onboarding mode - help them build their st
       onboardingPrompt: isOnboarding
         ? buildOnboardingPrompt(onboardingContext.resumeGreeting, onboardingContext.knownFacts)
         : null,
+      // Issue #5 Fix: Greeting state to prevent infinite welcome loop
+      hasBeenGreeted: bootstrap.hasBeenGreeted,
+    };
+  },
+});
+
+/**
+ * Mark Session Greeted Tool
+ *
+ * Issue #5 Fix: Call this AFTER you greet the user for the first time.
+ * This prevents the infinite welcome loop by marking the session as greeted.
+ */
+const markSessionGreetedTool = new FunctionTool({
+  name: 'mark_session_greeted',
+  description: `Mark this session as greeted. Call this AFTER you send your initial greeting to the user.
+
+IMPORTANT: This prevents the infinite welcome loop. After you greet the user, call this tool.
+
+Example flow:
+1. Call bootstrap_session → check hasBeenGreeted
+2. If hasBeenGreeted is false, send greeting message
+3. Call mark_session_greeted to prevent repeating the greeting`,
+  parameters: z.object({}),
+  execute: async (_params, context) => {
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return { error: 'No tenant context available' };
+    }
+
+    // Get session ID from context
+    const sessionId = context?.invocationId || `session-${Date.now()}`;
+
+    logger.info({ sessionId }, `[Concierge] mark_session_greeted for: ${tenantId}`);
+    const result = await callMaisApi('/mark-greeted', tenantId, { sessionId });
+
+    if (!result.ok) {
+      // Non-critical - log but don't fail the conversation
+      logger.warn({ error: result.error }, '[Concierge] Failed to mark session greeted');
+      return { success: true, note: 'Greeting state may not be persisted' };
+    }
+
+    return {
+      success: true,
+      message:
+        'Session marked as greeted. Future bootstrap_session calls will return hasBeenGreeted: true.',
     };
   },
 });
@@ -1989,6 +2212,7 @@ export const conciergeAgent = new LlmAgent({
   tools: [
     // Bootstrap & Onboarding (ALWAYS call bootstrap_session first)
     bootstrapSessionTool,
+    markSessionGreetedTool, // Issue #5 Fix: Prevents infinite welcome loop
     storeDiscoveryFactTool,
     getKnownFactsTool,
     completeOnboardingTool,

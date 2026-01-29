@@ -349,9 +349,10 @@ export function createV1Router(
         return { status: 200 as const, body: data };
       },
 
-      adminGetBookings: async () => {
+      adminGetBookings: async ({ query }: { query?: { cursor?: string } }) => {
         // Auth middleware applied via app.use('/v1/admin/bookings', authMiddleware)
-        const data = await controllers.admin.getBookings();
+        // Issue #7 Fix: Now returns paginated bookings across ALL tenants
+        const data = await controllers.admin.getBookings(query?.cursor);
         return { status: 200 as const, body: data };
       },
 

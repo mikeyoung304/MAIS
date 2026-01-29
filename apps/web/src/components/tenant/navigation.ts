@@ -48,7 +48,7 @@ const PAGE_LABELS: Record<PageName, string> = {
 };
 
 /**
- * URL paths for each page
+ * URL paths for multi-page navigation
  */
 const PAGE_PATHS: Record<PageName, string> = {
   home: '',
@@ -58,6 +58,23 @@ const PAGE_PATHS: Record<PageName, string> = {
   testimonials: '/testimonials',
   faq: '/faq',
   contact: '/contact',
+};
+
+/**
+ * Anchor IDs for single-page navigation
+ * Maps page names to section IDs on the landing page
+ *
+ * Issue #6 Fix: Single landing page uses anchor links (#section) instead of
+ * separate page routes (/about, /services, etc.)
+ */
+const PAGE_ANCHORS: Record<PageName, string> = {
+  home: '', // Top of page, no anchor
+  about: '#about',
+  services: '#services',
+  gallery: '#gallery',
+  testimonials: '#testimonials',
+  faq: '#faq',
+  contact: '#contact',
 };
 
 /**
@@ -150,4 +167,67 @@ export function buildNavHref(basePath: string, item: NavItem, domainParam?: stri
   }
 
   return fullPath;
+}
+
+/**
+ * Get anchor-based navigation items for single landing page mode
+ *
+ * Issue #6 Fix: Single scrolling landing page MVP - multi-page routes are deferred.
+ * This function returns anchor links (#about, #services, etc.) instead of
+ * separate page paths (/about, /services, etc.).
+ *
+ * @param config - Landing page configuration (may include pages config)
+ * @returns Array of navigation items with anchor-based paths
+ *
+ * @example
+ * ```ts
+ * const navItems = getAnchorNavigationItems(tenant.branding?.landingPage);
+ * // Returns: [{ label: 'Home', path: '' }, { label: 'About', path: '#about' }, ...]
+ * ```
+ */
+export function getAnchorNavigationItems(config?: LandingPageConfig | null): NavItem[] {
+  // If new pages config exists, use it to determine which sections are enabled
+  if (config?.pages) {
+    return PAGE_ORDER.filter((page) => {
+      const pageConfig = config.pages![page];
+      return pageConfig?.enabled !== false;
+    }).map((page) => ({
+      label: PAGE_LABELS[page],
+      path: PAGE_ANCHORS[page],
+    }));
+  }
+
+  // Fall back to legacy static navigation with anchors
+  return [
+    { label: 'Home', path: '' },
+    { label: 'Services', path: '#services' },
+    { label: 'About', path: '#about' },
+    { label: 'FAQ', path: '#faq' },
+    { label: 'Contact', path: '#contact' },
+  ];
+}
+
+/**
+ * Build full href from basePath and anchor item
+ *
+ * For single-page mode with anchor navigation. Handles the base path
+ * combined with anchor fragments.
+ *
+ * @param basePath - Base path for the tenant (e.g., '/t/jane-photography')
+ * @param item - Navigation item with anchor path (e.g., '#about')
+ * @returns Full href for the anchor navigation link
+ *
+ * @example
+ * // Anchor-based navigation
+ * buildAnchorNavHref('/t/jane', { label: 'About', path: '#about' })
+ * // Returns: '/t/jane#about'
+ */
+export function buildAnchorNavHref(basePath: string, item: NavItem): string {
+  // For home/top of page (empty path)
+  if (item.path === '') {
+    return basePath || '/';
+  }
+
+  // For anchor links
+  return `${basePath || ''}${item.path}`;
 }

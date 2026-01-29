@@ -211,6 +211,25 @@ export const BookingDtoSchema = z.object({
 
 export type BookingDto = z.infer<typeof BookingDtoSchema>;
 
+// Platform Booking DTO (extends BookingDto with tenant info for platform admin view)
+// Issue #7: Platform admin needs to see bookings across ALL tenants, not just legacy
+export const PlatformBookingDtoSchema = BookingDtoSchema.extend({
+  tenantName: z.string(),
+  tenantSlug: z.string(),
+  packageName: z.string().optional(), // Package name for display
+});
+
+export type PlatformBookingDto = z.infer<typeof PlatformBookingDtoSchema>;
+
+// Paginated response for platform bookings (Pitfall #67: unbounded queries)
+export const PlatformBookingsResponseSchema = z.object({
+  bookings: z.array(PlatformBookingDtoSchema),
+  hasMore: z.boolean(),
+  nextCursor: z.string().optional(),
+});
+
+export type PlatformBookingsResponse = z.infer<typeof PlatformBookingsResponseSchema>;
+
 // Create Checkout DTO (request body)
 export const CreateCheckoutDtoSchema = z.object({
   packageId: z.string(),
