@@ -1612,7 +1612,6 @@ Note: This requires the Project Hub agent to be deployed. If unavailable, use th
       return handleProjectHubDirect(tenantId, params);
     }
 
-    const sessionId = context?.invocationId || `session-${Date.now()}`;
     logger.info({}, `[Concierge] Delegating to Project Hub: ${params.task}`);
 
     // Construct message for Project Hub agent
