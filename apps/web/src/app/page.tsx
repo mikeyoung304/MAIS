@@ -3,9 +3,9 @@ import { Metadata } from 'next';
 import { Check, X, Globe, Calendar, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
-import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
 import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 import { JourneyShowcase } from '@/components/home/JourneyShowcase';
+import { HeroWithVerticals } from '@/components/home/HeroWithVerticals';
 
 // Revalidate homepage every 60 seconds
 export const revalidate = 60;
@@ -133,53 +133,9 @@ export default function HomePage() {
 
         <main>
           {/* ============================================
-              HERO - Split layout with storefront visual
+              HERO - 4-Vertical Selector with Package-First Visual
               ============================================ */}
-          <section className="relative pt-28 pb-12 md:pt-32 md:pb-20 px-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                {/* Left: Copy */}
-                <div className="text-center lg:text-left">
-                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.08] tracking-tight">
-                    The operations layer that keeps bookings moving.
-                  </h1>
-
-                  <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
-                    Client communication, booking, and follow-up — handled in one calm system that
-                    doesn&apos;t rely on memory anymore.
-                  </p>
-
-                  <p className="mt-4 text-base text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
-                    Handled replaces scattered websites, emails, texts, and mental load with a
-                    single storefront and source of truth — so nothing drops, clients stay
-                    confident, and revenue keeps flowing.
-                  </p>
-
-                  <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
-                    <Button
-                      asChild
-                      variant="teal"
-                      className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <Link href="/signup">Get Handled</Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
-                    >
-                      <Link href="#how-it-works">See how it works</Link>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Right: Storefront Visual */}
-                <div className="hidden lg:block">
-                  <DemoStorefrontFrame />
-                </div>
-              </div>
-            </div>
-          </section>
+          <HeroWithVerticals />
 
           {/* ============================================
               PROBLEM SECTION
