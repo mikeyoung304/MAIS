@@ -3,6 +3,9 @@ import { Metadata } from 'next';
 import { Check, X, Globe, Calendar, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/home/MobileNav';
+import { DemoStorefrontFrame } from '@/components/home/DemoStorefrontShowcase';
+import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
+import { JourneyShowcase } from '@/components/home/JourneyShowcase';
 
 // Revalidate homepage every 60 seconds
 export const revalidate = 60;
@@ -130,40 +133,50 @@ export default function HomePage() {
 
         <main>
           {/* ============================================
-              HERO
+              HERO - Split layout with storefront visual
               ============================================ */}
-          <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 px-6">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight">
-                The operations layer that keeps bookings moving.
-              </h1>
+          <section className="relative pt-28 pb-12 md:pt-32 md:pb-20 px-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                {/* Left: Copy */}
+                <div className="text-center lg:text-left">
+                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.08] tracking-tight">
+                    The operations layer that keeps bookings moving.
+                  </h1>
 
-              <p className="mt-8 text-xl md:text-2xl text-text-muted leading-relaxed max-w-3xl mx-auto">
-                Client communication, booking, and follow-up — handled in one calm system that
-                doesn&apos;t rely on memory anymore.
-              </p>
+                  <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
+                    Client communication, booking, and follow-up — handled in one calm system that
+                    doesn&apos;t rely on memory anymore.
+                  </p>
 
-              <p className="mt-6 text-lg text-text-muted leading-relaxed max-w-3xl mx-auto">
-                Handled replaces scattered websites, emails, texts, and mental load with a single
-                storefront and source of truth — so nothing drops, clients stay confident, and
-                revenue keeps flowing.
-              </p>
+                  <p className="mt-4 text-base text-text-muted leading-relaxed max-w-lg mx-auto lg:mx-0">
+                    Handled replaces scattered websites, emails, texts, and mental load with a
+                    single storefront and source of truth — so nothing drops, clients stay
+                    confident, and revenue keeps flowing.
+                  </p>
 
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button
-                  asChild
-                  variant="teal"
-                  className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Link href="/signup">Get Handled</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
-                >
-                  <Link href="#how-it-works">See how it works</Link>
-                </Button>
+                  <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
+                    <Button
+                      asChild
+                      variant="teal"
+                      className="rounded-full px-10 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Link href="/signup">Get Handled</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
+                    >
+                      <Link href="#how-it-works">See how it works</Link>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Right: Storefront Visual */}
+                <div className="hidden lg:block">
+                  <DemoStorefrontFrame />
+                </div>
               </div>
             </div>
           </section>
@@ -241,7 +254,7 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              FEATURES - What that means
+              FEATURES - What that means (with icons)
               ============================================ */}
           <section id="how-it-works" className="py-20 md:py-28 px-6 bg-surface-alt scroll-mt-20">
             <div className="max-w-5xl mx-auto">
@@ -325,7 +338,12 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              USER JOURNEY - What it feels like
+              PROJECT HUB WEDGE - Single Source of Truth Visual
+              ============================================ */}
+          <ProjectHubWedge />
+
+          {/* ============================================
+              USER JOURNEY - What it feels like (Timeline)
               ============================================ */}
           <section className="py-20 md:py-28 px-6">
             <div className="max-w-3xl mx-auto">
@@ -427,9 +445,26 @@ export default function HomePage() {
           </section>
 
           {/* ============================================
-              AGENT READABILITY
+              JOURNEY SHOWCASE - Visual demonstration
               ============================================ */}
           <section className="py-20 md:py-28 px-6 bg-surface-alt">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-16">
+                <p className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
+                  See it in action
+                </p>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
+                  The complete client journey
+                </h2>
+              </div>
+              <JourneyShowcase />
+            </div>
+          </section>
+
+          {/* ============================================
+              AGENT READABILITY
+              ============================================ */}
+          <section className="py-20 md:py-28 px-6">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
                 Designed for how buying is changing
@@ -465,7 +500,7 @@ export default function HomePage() {
           {/* ============================================
               WHO IT'S FOR / NOT FOR
               ============================================ */}
-          <section className="py-20 md:py-28 px-6">
+          <section className="py-20 md:py-28 px-6 bg-surface-alt">
             <div className="max-w-4xl mx-auto">
               <div className="grid md:grid-cols-2 gap-12">
                 {/* For */}
@@ -526,7 +561,7 @@ export default function HomePage() {
           {/* ============================================
               PRICING
               ============================================ */}
-          <section id="pricing" className="py-20 md:py-28 px-6 bg-surface-alt scroll-mt-20">
+          <section id="pricing" className="py-20 md:py-28 px-6 scroll-mt-20">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
@@ -607,7 +642,7 @@ export default function HomePage() {
           {/* ============================================
               FOUNDER STORY
               ============================================ */}
-          <section className="py-20 md:py-28 px-6">
+          <section className="py-20 md:py-28 px-6 bg-surface-alt">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
                 Built by someone who lived the problem
@@ -628,7 +663,7 @@ export default function HomePage() {
           {/* ============================================
               FAQ
               ============================================ */}
-          <section className="py-20 md:py-28 px-6 bg-surface-alt">
+          <section className="py-20 md:py-28 px-6">
             <div className="max-w-3xl mx-auto">
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-text-primary leading-tight text-center mb-12">
                 Common questions
@@ -653,7 +688,7 @@ export default function HomePage() {
           {/* ============================================
               FINAL CTA
               ============================================ */}
-          <section className="py-24 md:py-32 px-6">
+          <section className="py-24 md:py-32 px-6 bg-surface-alt">
             <div className="max-w-2xl mx-auto text-center">
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-6">
                 Stop running your business on memory.
