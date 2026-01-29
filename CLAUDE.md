@@ -156,12 +156,12 @@ $ npm ls @radix-ui/react-dialog
 
 ## Domain Expertise (Auto-Load Skills)
 
-| When Working On...        | Load Skill                                                  |
-| ------------------------- | ----------------------------------------------------------- |
-| UI/components/pages       | `frontend-design` + read `docs/design/BRAND_VOICE_GUIDE.md` |
-| AI/agent features         | `agent-native-architecture`                                 |
-| Creating skills/workflows | `create-agent-skills`                                       |
-| Fixed non-trivial bug     | Run `/workflows:compound`                                   |
+| When Working On...        | Load Skill                                                      |
+| ------------------------- | --------------------------------------------------------------- |
+| UI/components/pages       | `frontend-design` + read `docs/design/VOICE_QUICK_REFERENCE.md` |
+| AI/agent features         | `agent-native-architecture`                                     |
+| Creating skills/workflows | `create-agent-skills`                                           |
+| Fixed non-trivial bug     | Run `/workflows:compound`                                       |
 
 ### Compound Engineering Workflows
 
@@ -177,9 +177,11 @@ $ npm ls @radix-ui/react-dialog
 - `DEVELOPING.md` - Full development workflow, all commands
 - `ARCHITECTURE.md` - System design overview
 - `DECISIONS.md` - Architectural Decision Records index
-- `docs/design/BRAND_VOICE_GUIDE.md` - UI/UX, voice, Apple-quality standards
+- `docs/design/VOICE_QUICK_REFERENCE.md` - Brand voice rules (print and pin!)
+- `docs/design/BRAND_VOICE_GUIDE.md` - Extended UI/UX, Apple-quality standards
 - `docs/solutions/PREVENTION-QUICK-REFERENCE.md` - Prevention patterns cheat sheet
 - `docs/architecture/BUILD_MODE_VISION.md` - Agent-first storefront editor
+- `server/src/agent-v2/shared/voice.ts` - Shared voice module for all agents
 
 ## Common Pitfalls
 
@@ -355,9 +357,16 @@ When you hit an issue:
 
 ## UI/UX Standards
 
-**Before any UI work:** Load `frontend-design` skill + read `docs/design/BRAND_VOICE_GUIDE.md`
+**Before any UI work:** Load `frontend-design` skill + read `docs/design/VOICE_QUICK_REFERENCE.md`
 
 Quick reference: Generous whitespace (`py-32`), 80% neutral / 20% sage accent, serif headlines, `rounded-3xl shadow-lg` cards, always include hover states.
+
+**Voice rules (print and pin):**
+
+- Confirmations: `got it | done | on it | heard` (tenant) / `all set | confirmed | noted` (customer)
+- Forbidden: `Great! | Absolutely! | Perfect! | I'd be happy to...`
+- No hype words: revolutionary, game-changing, cutting-edge, leverage, synergy
+- No punching down: overwhelmed, struggling, stressed, drowning
 
 ## Project Structure
 
