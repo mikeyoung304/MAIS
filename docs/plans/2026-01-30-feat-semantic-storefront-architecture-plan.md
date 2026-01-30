@@ -702,10 +702,12 @@ async function seedVocabulary() {
 
 **Before proceeding to Phase 2:**
 
-- [ ] Vocabulary embeddings seeded (~40 phrases)
-- [ ] Similarity search returns correct results
-- [ ] Test: "update my life story" → ABOUT (confidence >0.8)
-- [ ] Test: "fix the hero banner" → HERO (confidence >0.8)
+- [x] Vocabulary embeddings seeded (~40 phrases)
+- [x] Similarity search returns correct results
+- [x] Test: "update my life story" → ABOUT (confidence >0.8)
+- [x] Test: "fix the hero banner" → HERO (confidence >0.8)
+
+**Completed 2026-01-30**: Phase 1 validation gate passed. All 19 vocabulary service tests passing. Seed script created with 120+ canonical phrases across all 10 block types.
 
 ---
 
