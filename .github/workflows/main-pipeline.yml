@@ -479,7 +479,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           API_PORT: 3001
-          CORS_ORIGIN: http://localhost:5173
+          CORS_ORIGIN: http://localhost:3000
 
       - name: Wait for API server
         run: npx wait-on http://localhost:3001/health --timeout 60000

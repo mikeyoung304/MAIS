@@ -178,9 +178,9 @@ describe('RefundProcessingService', () => {
       bookingRepo.addBooking(booking, tenantId);
 
       // Act & Assert
-      await expect(
-        service.processRefund(tenantId, bookingId, paymentIntentId)
-      ).rejects.toThrow(`Booking ${bookingId} does not need a refund`);
+      await expect(service.processRefund(tenantId, bookingId, paymentIntentId)).rejects.toThrow(
+        `Booking ${bookingId} does not need a refund`
+      );
     });
 
     it('throws Error for cancelled booking with non-PENDING refund status', async () => {
@@ -194,9 +194,9 @@ describe('RefundProcessingService', () => {
       bookingRepo.addBooking(booking, tenantId);
 
       // Act & Assert
-      await expect(
-        service.processRefund(tenantId, bookingId, paymentIntentId)
-      ).rejects.toThrow(`Booking ${bookingId} does not need a refund`);
+      await expect(service.processRefund(tenantId, bookingId, paymentIntentId)).rejects.toThrow(
+        `Booking ${bookingId} does not need a refund`
+      );
     });
 
     it('throws Error for REFUNDED status booking', async () => {
@@ -210,9 +210,9 @@ describe('RefundProcessingService', () => {
       bookingRepo.addBooking(booking, tenantId);
 
       // Act & Assert
-      await expect(
-        service.processRefund(tenantId, bookingId, paymentIntentId)
-      ).rejects.toThrow(`Booking ${bookingId} does not need a refund`);
+      await expect(service.processRefund(tenantId, bookingId, paymentIntentId)).rejects.toThrow(
+        `Booking ${bookingId} does not need a refund`
+      );
     });
   });
 
@@ -273,9 +273,9 @@ describe('RefundProcessingService', () => {
       bookingRepo.addBooking(booking, tenantId);
 
       // Act & Assert
-      await expect(
-        service.processRefund(tenantId, bookingId, paymentIntentId)
-      ).rejects.toThrow(`No refundable amount remaining for booking ${bookingId}`);
+      await expect(service.processRefund(tenantId, bookingId, paymentIntentId)).rejects.toThrow(
+        `No refundable amount remaining for booking ${bookingId}`
+      );
     });
 
     it('throws Error when refund amount is zero', async () => {
@@ -292,9 +292,9 @@ describe('RefundProcessingService', () => {
       bookingRepo.addBooking(booking, tenantId);
 
       // Act & Assert
-      await expect(
-        service.processRefund(tenantId, bookingId, paymentIntentId)
-      ).rejects.toThrow(`No refundable amount remaining for booking ${bookingId}`);
+      await expect(service.processRefund(tenantId, bookingId, paymentIntentId)).rejects.toThrow(
+        `No refundable amount remaining for booking ${bookingId}`
+      );
     });
   });
 
@@ -313,9 +313,9 @@ describe('RefundProcessingService', () => {
       paymentProvider.setRefundShouldFail(true, new Error('Stripe API error'));
 
       // Act & Assert
-      await expect(
-        service.processRefund(tenantId, bookingId, paymentIntentId)
-      ).rejects.toThrow('Stripe API error');
+      await expect(service.processRefund(tenantId, bookingId, paymentIntentId)).rejects.toThrow(
+        'Stripe API error'
+      );
 
       // Verify booking status was updated to FAILED
       const updatedBooking = await bookingRepo.findById(tenantId, bookingId);
@@ -453,9 +453,9 @@ describe('RefundProcessingService', () => {
       bookingRepo.addBooking(booking, 'tenant-A');
 
       // Act & Assert - try to access with different tenant
-      await expect(
-        service.processRefund('tenant-B', bookingId, paymentIntentId)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.processRefund('tenant-B', bookingId, paymentIntentId)).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('processes refund for correct tenant only', async () => {

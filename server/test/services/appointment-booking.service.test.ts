@@ -51,7 +51,9 @@ function buildService(overrides?: Partial<Service>): Service {
   };
 }
 
-function buildCreateAppointmentInput(overrides?: Partial<CreateAppointmentInput>): CreateAppointmentInput {
+function buildCreateAppointmentInput(
+  overrides?: Partial<CreateAppointmentInput>
+): CreateAppointmentInput {
   return {
     serviceId: TEST_SERVICE_ID,
     startTime: new Date('2025-06-15T14:00:00Z'),
@@ -98,7 +100,9 @@ function createMockServiceRepo() {
   } satisfies ServiceRepository;
 }
 
-function createMockBookingRepo(): BookingRepository & { countTimeslotBookingsForServiceOnDate: Mock } {
+function createMockBookingRepo(): BookingRepository & {
+  countTimeslotBookingsForServiceOnDate: Mock;
+} {
   return {
     create: vi.fn(),
     findById: vi.fn(),
@@ -266,9 +270,9 @@ describe('AppointmentBookingService', () => {
       const input = buildCreateAppointmentInput({ serviceId: 'nonexistent_service' });
 
       // Act & Assert
-      await expect(
-        service.createAppointmentCheckout(TEST_TENANT_ID, input)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.createAppointmentCheckout(TEST_TENANT_ID, input)).rejects.toThrow(
+        NotFoundError
+      );
 
       expect(serviceRepo.getById).toHaveBeenCalledWith(TEST_TENANT_ID, 'nonexistent_service');
       expect(schedulingAvailabilityService.isSlotAvailable).not.toHaveBeenCalled();
@@ -283,9 +287,9 @@ describe('AppointmentBookingService', () => {
       const input = buildCreateAppointmentInput();
 
       // Act & Assert
-      await expect(
-        service.createAppointmentCheckout(TEST_TENANT_ID, input)
-      ).rejects.toThrow(/not available/);
+      await expect(service.createAppointmentCheckout(TEST_TENANT_ID, input)).rejects.toThrow(
+        /not available/
+      );
 
       expect(schedulingAvailabilityService.isSlotAvailable).toHaveBeenCalled();
       expect(checkoutSessionFactory.createCheckoutSession).not.toHaveBeenCalled();
@@ -301,9 +305,9 @@ describe('AppointmentBookingService', () => {
       const input = buildCreateAppointmentInput();
 
       // Act & Assert
-      await expect(
-        service.createAppointmentCheckout(TEST_TENANT_ID, input)
-      ).rejects.toThrow(MaxBookingsPerDayExceededError);
+      await expect(service.createAppointmentCheckout(TEST_TENANT_ID, input)).rejects.toThrow(
+        MaxBookingsPerDayExceededError
+      );
 
       expect(bookingRepo.countTimeslotBookingsForServiceOnDate).toHaveBeenCalledWith(
         TEST_TENANT_ID,
@@ -477,9 +481,9 @@ describe('AppointmentBookingService', () => {
       const input = buildPaymentCompletedInput();
 
       // Act & Assert
-      await expect(
-        service.onAppointmentPaymentCompleted(TEST_TENANT_ID, input)
-      ).rejects.toThrow(MaxBookingsPerDayExceededError);
+      await expect(service.onAppointmentPaymentCompleted(TEST_TENANT_ID, input)).rejects.toThrow(
+        MaxBookingsPerDayExceededError
+      );
 
       // Event should NOT be emitted on failure
       expect(eventEmitter.emittedEvents).toHaveLength(0);
@@ -507,9 +511,9 @@ describe('AppointmentBookingService', () => {
       const input = buildPaymentCompletedInput({ serviceId: 'nonexistent' });
 
       // Act & Assert
-      await expect(
-        service.onAppointmentPaymentCompleted(TEST_TENANT_ID, input)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.onAppointmentPaymentCompleted(TEST_TENANT_ID, input)).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     it('handles optional fields gracefully', async () => {
@@ -551,9 +555,9 @@ describe('AppointmentBookingService', () => {
       const input = buildCreateAppointmentInput();
 
       // Act & Assert - Should throw NotFoundError for wrong tenant
-      await expect(
-        service.createAppointmentCheckout(OTHER_TENANT_ID, input)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.createAppointmentCheckout(OTHER_TENANT_ID, input)).rejects.toThrow(
+        NotFoundError
+      );
 
       // Verify correct tenant was used in query
       expect(serviceRepo.getById).toHaveBeenCalledWith(OTHER_TENANT_ID, TEST_SERVICE_ID);
@@ -571,9 +575,9 @@ describe('AppointmentBookingService', () => {
       const input = buildPaymentCompletedInput();
 
       // Act & Assert - Should throw NotFoundError for wrong tenant
-      await expect(
-        service.onAppointmentPaymentCompleted(OTHER_TENANT_ID, input)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.onAppointmentPaymentCompleted(OTHER_TENANT_ID, input)).rejects.toThrow(
+        NotFoundError
+      );
 
       // Event should NOT be emitted
       expect(eventEmitter.emittedEvents).toHaveLength(0);
@@ -655,9 +659,9 @@ describe('AppointmentBookingService', () => {
       const input = buildCreateAppointmentInput();
 
       // Act & Assert - Even with 0 existing bookings, maxPerDay=0 should block
-      await expect(
-        service.createAppointmentCheckout(TEST_TENANT_ID, input)
-      ).rejects.toThrow(MaxBookingsPerDayExceededError);
+      await expect(service.createAppointmentCheckout(TEST_TENANT_ID, input)).rejects.toThrow(
+        MaxBookingsPerDayExceededError
+      );
     });
 
     it('handles maxPerDay of 1 (exactly one booking allowed)', async () => {

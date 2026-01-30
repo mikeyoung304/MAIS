@@ -32,10 +32,7 @@ describe('WeddingDepositService', () => {
    * Creates a mock tenant repository
    * @param overrides - Optional tenant property overrides
    */
-  function createMockTenantRepo(overrides?: {
-    depositPercent?: number | null;
-    exists?: boolean;
-  }) {
+  function createMockTenantRepo(overrides?: { depositPercent?: number | null; exists?: boolean }) {
     const defaultTenant = {
       id: tenantId,
       slug: 'test-tenant',
@@ -249,9 +246,9 @@ describe('WeddingDepositService', () => {
         );
 
         // Act & Assert
-        await expect(
-          service.calculateDeposit('nonexistent_tenant', 100000)
-        ).rejects.toThrow(NotFoundError);
+        await expect(service.calculateDeposit('nonexistent_tenant', 100000)).rejects.toThrow(
+          NotFoundError
+        );
       });
     });
 
@@ -275,11 +272,10 @@ describe('WeddingDepositService', () => {
         const result = await service.calculateDeposit(tenantId, 100000, ['addon_1', 'addon_2']);
 
         // Assert
-        expect(commissionService.calculateBookingTotal).toHaveBeenCalledWith(
-          tenantId,
-          100000,
-          ['addon_1', 'addon_2']
-        );
+        expect(commissionService.calculateBookingTotal).toHaveBeenCalledWith(tenantId, 100000, [
+          'addon_1',
+          'addon_2',
+        ]);
         expect(result.subtotal).toBe(150000);
         expect(result.amountToCharge).toBe(75000); // 50% of 150000
       });

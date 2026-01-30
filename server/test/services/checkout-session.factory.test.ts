@@ -18,7 +18,10 @@ import {
 } from '../../src/services/checkout-session.factory';
 import type { PaymentProvider, CheckoutSession } from '../../src/lib/ports';
 import type { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
-import type { IdempotencyService, IdempotencyResponse } from '../../src/services/idempotency.service';
+import type {
+  IdempotencyService,
+  IdempotencyResponse,
+} from '../../src/services/idempotency.service';
 import { NotFoundError } from '../../src/lib/errors';
 import { buildMockConfig } from '../helpers/fakes';
 
@@ -157,7 +160,8 @@ class MockIdempotencyService {
   ): string {
     this.generateCheckoutKeyCalls.push([tenantId, email, packageId, eventDate, timestamp]);
     const keyParts = `${tenantId}|${email}|${packageId}|${eventDate}`;
-    const generatedKey = this.generatedKeys.get(keyParts) ?? `checkout_${keyParts.replace(/\|/g, '_')}`;
+    const generatedKey =
+      this.generatedKeys.get(keyParts) ?? `checkout_${keyParts.replace(/\|/g, '_')}`;
     return generatedKey;
   }
 
@@ -213,7 +217,9 @@ function buildMockTenant(overrides?: Partial<MockTenant>): MockTenant {
   };
 }
 
-function buildCheckoutInput(overrides?: Partial<CreateCheckoutSessionInput>): CreateCheckoutSessionInput {
+function buildCheckoutInput(
+  overrides?: Partial<CreateCheckoutSessionInput>
+): CreateCheckoutSessionInput {
   return {
     tenantId: 'tenant_123',
     amountCents: 100000, // $1000
@@ -224,7 +230,13 @@ function buildCheckoutInput(overrides?: Partial<CreateCheckoutSessionInput>): Cr
       coupleName: 'John & Jane',
     },
     applicationFeeAmount: 10000, // $100 (10%)
-    idempotencyKeyParts: ['tenant_123', 'customer@example.com', 'pkg_123', '2025-06-15', Date.now()],
+    idempotencyKeyParts: [
+      'tenant_123',
+      'customer@example.com',
+      'pkg_123',
+      '2025-06-15',
+      Date.now(),
+    ],
     ...overrides,
   };
 }
@@ -454,7 +466,13 @@ describe('CheckoutSessionFactory', () => {
 
     it('generates idempotency key from input parts', async () => {
       const input = buildCheckoutInput({
-        idempotencyKeyParts: ['tenant_abc', 'test@test.com', 'pkg_xyz', '2025-12-25', 1703520000000],
+        idempotencyKeyParts: [
+          'tenant_abc',
+          'test@test.com',
+          'pkg_xyz',
+          '2025-12-25',
+          1703520000000,
+        ],
       });
 
       await factory.createCheckoutSession(input);
@@ -554,7 +572,13 @@ describe('CheckoutSessionFactory', () => {
           packageId: 'pkg_connect',
           eventDate: '2025-07-20',
         },
-        idempotencyKeyParts: ['tenant_connect', 'connect@example.com', 'pkg_connect', '2025-07-20', Date.now()],
+        idempotencyKeyParts: [
+          'tenant_connect',
+          'connect@example.com',
+          'pkg_connect',
+          '2025-07-20',
+          Date.now(),
+        ],
       });
 
       await factory.createCheckoutSession(input);
