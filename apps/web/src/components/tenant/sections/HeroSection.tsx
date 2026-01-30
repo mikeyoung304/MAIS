@@ -28,7 +28,7 @@ export function HeroSection({
 
   return (
     <section
-      className="relative py-32 md:py-40 overflow-hidden"
+      className="relative py-24 md:py-32 overflow-hidden"
       aria-label={`Welcome to ${tenant.name}`}
     >
       {hasBackground && (
