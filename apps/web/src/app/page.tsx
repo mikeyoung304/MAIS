@@ -60,6 +60,26 @@ const tiers = [
     ctaHref: '/signup',
     isPopular: true,
   },
+  {
+    id: 'custom',
+    name: 'Custom',
+    price: "Let's talk",
+    priceSubtext: '',
+    description: 'We build it. You book clients.',
+    features: [
+      'Everything in Fully Handled',
+      'Custom workflow automations',
+      'Voice agents and AI assistants',
+      '1-on-1 strategy sessions',
+      'We build it for you',
+      'Dedicated account manager',
+    ],
+    targetAudience:
+      'For businesses that need bespoke solutions — custom integrations, voice agents, and hands-on support.',
+    ctaText: 'Book a Call',
+    ctaHref: '/contact',
+    isPopular: false,
+  },
 ];
 
 // FAQ items
@@ -447,7 +467,7 @@ export default function HomePage() {
           >
             {/* Subtle gradient glow to signal "arrival" */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(69,179,127,0.08)_0%,transparent_60%)]" />
-            <div className="relative max-w-4xl mx-auto">
+            <div className="relative max-w-5xl mx-auto">
               <div className="text-center mb-16">
                 <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-4">
                   Choose your level of handling
@@ -455,8 +475,8 @@ export default function HomePage() {
                 <p className="text-xl text-text-muted">No contracts. Cancel anytime.</p>
               </div>
 
-              {/* 2-Tier Grid */}
-              <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto items-stretch pt-4">
+              {/* 3-Tier Grid */}
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch pt-4">
                 {tiers.map((tier) => (
                   <div
                     key={tier.id}
