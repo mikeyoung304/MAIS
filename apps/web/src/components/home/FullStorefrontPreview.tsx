@@ -1,30 +1,21 @@
 'use client';
 
-import {
-  Check,
-  Star,
-  Users,
-  GraduationCap,
-  Quote,
-  ChevronDown,
-  type LucideIcon,
-} from 'lucide-react';
+import { Check, Star, Users, GraduationCap, MessageCircle, type LucideIcon } from 'lucide-react';
 
 /**
- * FullStorefrontPreview - Complete scrollable Alex Chen website for Journey Showcase
+ * FullStorefrontPreview - Simplified Alex Chen storefront for Journey Showcase
  *
- * Shows a miniature but complete version of a real tenant storefront:
- * Hero → About (with portrait) → Packages → Testimonials → FAQ → CTA
+ * Shows only the essential above-the-fold experience:
+ * - Hero (profile badge, headline, trust indicators)
+ * - Packages (3-tier pricing)
+ * - Floating chat button (teases AI assistant)
  *
- * This is self-contained with hardcoded Alex Chen data to demonstrate
- * what a professional's Handled storefront looks like when fully built out.
- *
- * The component is designed to be scrollable within the browser frame mockup,
- * allowing users to explore the full site structure.
+ * Deliberately minimal to convey "this looks professional" at a glance.
+ * The chat button connects visually to Panel 2 where the chatbot is open.
  */
 
 // ============================================
-// ALEX CHEN DATA - Full website content
+// ALEX CHEN DATA - Simplified for preview
 // ============================================
 
 interface Tier {
@@ -32,7 +23,6 @@ interface Tier {
   description: string;
   price: string;
   perSession?: string;
-  savings?: string;
   features: string[];
 }
 
@@ -42,19 +32,7 @@ interface TrustItem {
   label: string;
 }
 
-interface Testimonial {
-  quote: string;
-  author: string;
-  role: string;
-}
-
-interface FAQItem {
-  question: string;
-  answer: string;
-}
-
 const ALEX_CHEN = {
-  // Hero Section
   hero: {
     name: 'Alex Chen',
     business: 'SAT Prep Specialist',
@@ -63,25 +41,12 @@ const ALEX_CHEN = {
     subheadline: 'Strategic SAT prep that turns test anxiety into test confidence.',
   },
 
-  // Trust indicators
   trust: [
     { icon: Star, value: '4.9', label: 'rating' },
     { icon: Users, value: '300+', label: 'students' },
     { icon: GraduationCap, value: '150pt', label: 'avg. gain' },
   ] as TrustItem[],
 
-  // About Section
-  about: {
-    headline: 'Meet Alex',
-    content: `I scored in the 99th percentile on my SAT. More importantly, I've helped 300+ students do the same.
-
-The SAT isn't about being "smart." It's a skill—and skills can be learned. I teach the patterns, shortcuts, and strategies that the test-makers don't want you to know.
-
-My students average a 150-point improvement. Some gain 200+.`,
-    image: '/demo/alex-chen.png',
-  },
-
-  // Packages Section
   tiers: [
     {
       name: 'Strategy Session',
@@ -101,7 +66,6 @@ My students average a 150-point improvement. Some gain 200+.`,
       description: '16 sessions',
       price: '$1,760',
       perSession: '$110/ea',
-      savings: 'Best value',
       features: [
         'Complete curriculum',
         'Unlimited practice tests',
@@ -110,43 +74,6 @@ My students average a 150-point improvement. Some gain 200+.`,
       ],
     },
   ] as Tier[],
-
-  // Testimonials Section
-  testimonials: [
-    {
-      quote:
-        "Went from 1280 to 1480. Alex taught me it's not about working harder—it's about working smarter.",
-      author: 'Maya R.',
-      role: 'Now at UCLA',
-    },
-    {
-      quote:
-        'My daughter was so anxious about the SAT. Alex gave her confidence and a 200-point improvement.',
-      author: 'Jennifer L.',
-      role: 'Parent',
-    },
-  ] as Testimonial[],
-
-  // FAQ Section
-  faq: [
-    {
-      question: 'How much can I really improve?',
-      answer:
-        'Most students improve 100-200 points with dedicated prep. Your diagnostic session will give us a realistic target.',
-    },
-    {
-      question: 'How far in advance should I start?',
-      answer:
-        "Ideally 3-4 months before your test date. That said, I've helped students see gains in as little as 6 weeks.",
-    },
-  ] as FAQItem[],
-
-  // CTA Section
-  cta: {
-    headline: 'Ready to beat the test?',
-    subheadline: 'Book your diagnostic session. See exactly where you stand—and where you can go.',
-    buttonText: 'Start Here',
-  },
 };
 
 // ============================================
@@ -154,10 +81,10 @@ My students average a 150-point improvement. Some gain 200+.`,
 // ============================================
 
 export function FullStorefrontPreview() {
-  const { hero, trust, about, tiers, testimonials, faq, cta } = ALEX_CHEN;
+  const { hero, trust, tiers } = ALEX_CHEN;
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden bg-surface scrollbar-hide">
+    <div className="relative h-full bg-surface overflow-hidden">
       {/* ===== HERO SECTION ===== */}
       <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-5 px-4 overflow-hidden">
         {/* Decorative background */}
@@ -191,42 +118,6 @@ export function FullStorefrontPreview() {
                 <span className="text-slate-400 text-[8px]">{stat.label}</span>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="flex justify-center mt-4">
-          <ChevronDown className="w-4 h-4 text-slate-500 animate-bounce" />
-        </div>
-      </section>
-
-      {/* ===== ABOUT SECTION ===== */}
-      <section className="py-4 px-4 bg-surface-alt">
-        <h2 className="font-serif text-sm font-bold text-text-primary mb-3">{about.headline}</h2>
-
-        <div className="flex gap-3">
-          {/* Portrait - placeholder circle if image not available */}
-          <div className="flex-shrink-0">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-sage/20 to-emerald-500/20 border border-sage/30 flex items-center justify-center overflow-hidden">
-              <img
-                src={about.image}
-                alt={hero.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to initials if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  target.parentElement!.innerHTML = `<span class="text-sage font-bold text-xl">${hero.initials}</span>`;
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Bio text */}
-          <div className="flex-1">
-            <p className="text-[10px] text-text-muted leading-relaxed whitespace-pre-line">
-              {about.content}
-            </p>
           </div>
         </div>
       </section>
@@ -302,61 +193,19 @@ export function FullStorefrontPreview() {
         </div>
       </section>
 
-      {/* ===== TESTIMONIALS SECTION ===== */}
-      <section className="py-4 px-4 bg-surface-alt">
-        <h2 className="font-serif text-xs font-medium text-text-muted text-center mb-3">
-          What Students Say
-        </h2>
-
-        <div className="space-y-2">
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className="bg-surface rounded-lg p-2.5 border border-neutral-800">
-              <Quote className="w-3 h-3 text-sage/50 mb-1" />
-              <p className="text-[9px] text-text-primary leading-relaxed italic">
-                "{testimonial.quote}"
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center">
-                  <span className="text-sage text-[7px] font-semibold">
-                    {testimonial.author.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[8px] font-semibold text-text-primary">{testimonial.author}</p>
-                  <p className="text-[7px] text-text-muted">{testimonial.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* ===== FLOATING CHAT BUTTON ===== */}
+      <div className="absolute bottom-4 right-4">
+        <div className="relative">
+          {/* Pulse animation */}
+          <div className="absolute inset-0 w-10 h-10 rounded-full bg-sage animate-ping opacity-20" />
+          {/* Button */}
+          <div className="relative w-10 h-10 rounded-full bg-sage flex items-center justify-center shadow-lg shadow-sage/30 cursor-pointer hover:scale-105 transition-transform">
+            <MessageCircle className="w-5 h-5 text-white" />
+          </div>
+          {/* Online indicator */}
+          <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-surface" />
         </div>
-      </section>
-
-      {/* ===== FAQ SECTION ===== */}
-      <section className="py-4 px-4 bg-surface">
-        <h2 className="font-serif text-xs font-medium text-text-muted text-center mb-3">
-          Common Questions
-        </h2>
-
-        <div className="space-y-2">
-          {faq.map((item, index) => (
-            <div key={index} className="bg-surface-alt rounded-lg p-2.5 border border-neutral-800">
-              <p className="text-[9px] font-semibold text-text-primary">{item.question}</p>
-              <p className="text-[8px] text-text-muted mt-1 leading-relaxed">{item.answer}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ===== CTA SECTION ===== */}
-      <section className="py-5 px-4 bg-sage">
-        <div className="text-center">
-          <h2 className="font-serif text-sm font-bold text-white">{cta.headline}</h2>
-          <p className="text-[10px] text-white/80 mt-1">{cta.subheadline}</p>
-          <button className="mt-3 px-4 py-1.5 bg-white text-sage rounded-full text-[10px] font-semibold shadow-lg">
-            {cta.buttonText}
-          </button>
-        </div>
-      </section>
+      </div>
     </div>
   );
 }
