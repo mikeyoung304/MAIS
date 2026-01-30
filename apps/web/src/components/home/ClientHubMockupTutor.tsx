@@ -11,35 +11,35 @@ import {
 } from 'lucide-react';
 
 /**
- * ClientHubMockupTutor - Alex Chen themed client hub mockup
+ * ClientHubMockupTutor - Alex Chen SAT Prep themed client hub mockup
  *
  * Shows what clients see after booking: upcoming sessions, tasks, messaging.
- * Themed for Alex Chen tutoring to maintain visual consistency across
+ * Themed for Alex Chen SAT prep to maintain visual consistency across
  * all 3 carousel slides (storefront → booking → hub).
  *
  * Note: There's also a wedding-themed ClientHubMockup for Sarah Williams,
- * but this component specifically shows the tutoring use case.
+ * but this component specifically shows the SAT prep use case.
  */
 export function ClientHubMockupTutor() {
   return (
     <div className="h-full bg-surface overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-4 py-2.5 border-b border-neutral-800">
+      {/* Compact Header */}
+      <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-3 py-2 border-b border-neutral-800">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center">
-              <span className="text-white font-semibold text-xs">AC</span>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sage to-emerald-600 flex items-center justify-center">
+              <span className="text-white font-semibold text-[10px]">AC</span>
             </div>
             <div>
-              <h3 className="font-serif text-xs font-semibold text-text-primary">
-                Your Tutoring Sessions
+              <h3 className="font-serif text-[11px] font-semibold text-text-primary">
+                Your SAT Prep
               </h3>
-              <p className="text-[9px] text-text-muted">Alex Chen • Math &amp; Science</p>
+              <p className="text-[8px] text-text-muted">Alex Chen • SAT Specialist</p>
             </div>
           </div>
-          <div className="px-2 py-1 bg-sage/15 border border-sage/30 rounded-full">
-            <span className="text-[9px] text-sage font-semibold flex items-center gap-1">
-              <Check className="w-2.5 h-2.5" />
+          <div className="px-1.5 py-0.5 bg-sage/15 border border-sage/30 rounded-full">
+            <span className="text-[8px] text-sage font-semibold flex items-center gap-0.5">
+              <Check className="w-2 h-2" />
               Confirmed
             </span>
           </div>
@@ -58,8 +58,8 @@ export function ClientHubMockupTutor() {
             </h4>
             <div className="bg-surface rounded-xl p-2.5 border border-neutral-800">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[11px] font-semibold text-text-primary">First Session</p>
-                <span className="text-[9px] text-sage font-medium">In 5 days</span>
+                <p className="text-[11px] font-semibold text-text-primary">Diagnostic Session</p>
+                <span className="text-[9px] text-sage font-medium">In 3 days</span>
               </div>
               <div className="flex items-center gap-3 text-[10px] text-text-muted">
                 <span className="flex items-center gap-1">
@@ -71,7 +71,7 @@ export function ClientHubMockupTutor() {
                   4:00 PM
                 </span>
                 <span className="flex items-center gap-1">
-                  <Package className="w-3 h-3" />1 of 4
+                  <Package className="w-3 h-3" />1 of 8
                 </span>
               </div>
             </div>
@@ -90,9 +90,9 @@ export function ClientHubMockupTutor() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-medium text-text-primary truncate">
-                    Learning goals questionnaire
+                    Take practice SAT
                   </p>
-                  <p className="text-[8px] text-amber-500">3 min • Helps Alex prepare</p>
+                  <p className="text-[8px] text-amber-500">Before session • Sets baseline</p>
                 </div>
                 <ChevronRight className="w-3 h-3 text-amber-500" />
               </div>
@@ -105,15 +105,15 @@ export function ClientHubMockupTutor() {
                   <p className="text-[10px] font-medium text-text-primary truncate line-through">
                     Payment completed
                   </p>
-                  <p className="text-[8px] text-text-muted">$320 • Mar 10</p>
+                  <p className="text-[8px] text-text-muted">$960 • Mar 10</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right column: Assistant */}
-        <div className="w-[45%] flex flex-col bg-surface">
+        {/* Right column: Assistant - slightly narrower for better left column space */}
+        <div className="w-[40%] flex flex-col bg-surface">
           <div className="px-3 py-2 border-b border-neutral-800 bg-sage/5">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -136,7 +136,7 @@ export function ClientHubMockupTutor() {
               </div>
               <div className="bg-sage/10 rounded-xl rounded-tl-sm px-2.5 py-1.5 max-w-[90%]">
                 <p className="text-[9px] text-text-primary leading-relaxed">
-                  Hi! Questions about the session? Need to reschedule? I&apos;m here anytime.
+                  Ready to crush the SAT! Questions before your diagnostic? I&apos;m here.
                 </p>
               </div>
             </div>

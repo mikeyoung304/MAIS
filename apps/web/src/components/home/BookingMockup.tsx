@@ -6,7 +6,7 @@ import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
  * BookingMockup - Booking flow mockup for journey carousel
  *
  * Shows the booking experience: package selection → date picking → payment.
- * Hardcoded to Alex Chen "Grade Boost" package for consistency with hero.
+ * Hardcoded to Alex Chen "Score Boost" SAT prep package for consistency with storefront.
  *
  * Extracted from JourneyShowcase for reusability and cleaner code organization.
  */
@@ -34,8 +34,8 @@ export function BookingMockup() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-sage font-medium">Grade Boost</p>
-            <p className="text-xs font-bold text-text-primary">$320</p>
+            <p className="text-[10px] text-sage font-medium">Score Boost</p>
+            <p className="text-xs font-bold text-text-primary">$960</p>
           </div>
         </div>
       </div>

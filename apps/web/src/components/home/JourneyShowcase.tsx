@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { DemoStorefrontShowcase } from './DemoStorefrontShowcase';
+import { FullStorefrontPreview } from './FullStorefrontPreview';
 import { BookingMockup } from './BookingMockup';
 import { ClientHubMockupTutor } from './ClientHubMockupTutor';
 
@@ -61,59 +61,54 @@ export function JourneyShowcase() {
     setActiveIndex(newIndex);
   }, []);
 
-  // Navigate to specific slide
+  // Navigate to specific slide with infinite loop support
+  // STAGES is a module-level constant, so no dependencies needed
   const goToSlide = useCallback((index: number) => {
     if (!scrollRef.current) return;
+
+    // Wrap around for infinite loop (handles both directions)
+    const wrappedIndex = ((index % STAGES.length) + STAGES.length) % STAGES.length;
+
     const { clientWidth } = scrollRef.current;
     isScrollingProgrammatically.current = true;
-    scrollRef.current.scrollTo({ left: index * clientWidth, behavior: 'smooth' });
-    setActiveIndex(index); // Set immediately for responsive UI
+    scrollRef.current.scrollTo({ left: wrappedIndex * clientWidth, behavior: 'smooth' });
+    setActiveIndex(wrappedIndex); // Set immediately for responsive UI
     // Reset flag after scroll animation completes
     setTimeout(() => {
       isScrollingProgrammatically.current = false;
     }, 400);
   }, []);
 
-  // FIX: Keyboard navigation with functional updates to avoid stale closures
+  // Keyboard navigation with infinite loop support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
-        setActiveIndex((prev) => {
-          const next = Math.max(0, prev - 1);
-          goToSlide(next);
-          return next;
-        });
+        // Infinite loop: wrapping handled by goToSlide
+        goToSlide(activeIndex - 1);
       }
       if (e.key === 'ArrowRight') {
-        setActiveIndex((prev) => {
-          const next = Math.min(STAGES.length - 1, prev + 1);
-          goToSlide(next);
-          return next;
-        });
+        // Infinite loop: wrapping handled by goToSlide
+        goToSlide(activeIndex + 1);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToSlide]); // goToSlide is stable via useCallback
+  }, [activeIndex, goToSlide]);
 
   return (
     <div className="relative">
-      {/* FIX: Hide arrows on mobile (hidden md:flex), show only dots + swipe */}
+      {/* Infinite loop arrows - hidden on mobile (use dots + swipe), shown on desktop */}
       <button
-        onClick={() => goToSlide(Math.max(0, activeIndex - 1))}
-        disabled={activeIndex === 0}
-        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-surface/80 backdrop-blur border border-neutral-800 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all items-center justify-center"
+        onClick={() => goToSlide(activeIndex - 1)}
+        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-surface/80 backdrop-blur border border-neutral-800 text-text-muted hover:text-text-primary hover:border-sage/50 transition-all items-center justify-center"
         aria-label="Previous slide"
-        aria-disabled={activeIndex === 0}
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
       <button
-        onClick={() => goToSlide(Math.min(STAGES.length - 1, activeIndex + 1))}
-        disabled={activeIndex === STAGES.length - 1}
-        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-surface/80 backdrop-blur border border-neutral-800 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all items-center justify-center"
+        onClick={() => goToSlide(activeIndex + 1)}
+        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-surface/80 backdrop-blur border border-neutral-800 text-text-muted hover:text-text-primary hover:border-sage/50 transition-all items-center justify-center"
         aria-label="Next slide"
-        aria-disabled={activeIndex === STAGES.length - 1}
       >
         <ChevronRight className="w-6 h-6" />
       </button>
@@ -139,8 +134,8 @@ export function JourneyShowcase() {
               <p className="text-text-muted max-w-md mx-auto">{stage.description}</p>
             </div>
 
-            {/* Browser frame with mockup */}
-            <div className="bg-surface-alt rounded-2xl border border-neutral-800 overflow-hidden max-w-lg mx-auto">
+            {/* Browser frame with mockup - increased height for better content visibility */}
+            <div className="bg-surface-alt rounded-2xl border border-neutral-800 overflow-hidden max-w-xl mx-auto shadow-2xl">
               <div className="flex items-center gap-2 px-4 py-3 bg-neutral-800/50 border-b border-neutral-800">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-neutral-700" />
@@ -153,8 +148,9 @@ export function JourneyShowcase() {
                   </div>
                 </div>
               </div>
-              <div className="aspect-[4/5]">
-                {index === 0 && <DemoStorefrontShowcase compact />}
+              {/* Fixed height with responsive sizing - enables scrollable content */}
+              <div className="h-[380px] md:h-[480px]">
+                {index === 0 && <FullStorefrontPreview />}
                 {index === 1 && <BookingMockup />}
                 {index === 2 && <ClientHubMockupTutor />}
               </div>

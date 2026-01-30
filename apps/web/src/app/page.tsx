@@ -261,10 +261,11 @@ export default function HomePage() {
 
           {/* ============================================
               JOURNEY SHOWCASE - Visual demonstration
+              Reduced padding to maximize content display area
               ============================================ */}
-          <section className="py-32 md:py-40 px-6 bg-surface-alt">
+          <section className="py-20 md:py-28 px-6 bg-surface-alt">
             <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-16">
+              <div className="text-center mb-8 md:mb-12">
                 <p className="text-sage text-sm font-medium tracking-wide uppercase mb-4">
                   See it in action
                 </p>
