@@ -2,14 +2,77 @@
 title: Semantic Storefront Architecture
 type: feat
 date: 2026-01-30
-status: draft
+status: in_progress
 risk: medium
 estimated_effort: 5-6 weeks (revised after plan review)
 reviewers: DHH, Kieran, Simplicity Reviewer
 review_date: 2026-01-30
+branch: feat/semantic-storefront
 ---
 
 # Semantic Storefront Architecture Implementation Plan
+
+## Implementation Progress
+
+| Phase    | Status         | Commits    | Description                                                            |
+| -------- | -------------- | ---------- | ---------------------------------------------------------------------- |
+| Phase 0  | ✅ Complete    | `d2941c8a` | Database schema foundation (Tier, SectionContent, VocabularyEmbedding) |
+| Phase 1  | ✅ Complete    | `972f2939` | Vocabulary Embedding Service with pgvector semantic search             |
+| Phase 2a | 🔲 Not Started | -          | Tenant Agent Foundation                                                |
+| Phase 2b | 🔲 Not Started | -          | Migrate Onboarding capabilities                                        |
+| Phase 2c | 🔲 Not Started | -          | Migrate Build Mode (storefront editing)                                |
+| Phase 2d | 🔲 Not Started | -          | Retire legacy agents                                                   |
+| Phase 3  | 🔲 Not Started | -          | Unified Customer Agent                                                 |
+| Phase 4  | 🔲 Not Started | -          | Cleanup & Polish                                                       |
+
+### What's Been Built
+
+**Phase 0 - Database Schema Foundation:**
+
+- `Tier` model with `TierLevel` enum (GOOD/BETTER/BEST) for 3-tier pricing
+- `SectionContent` model with `BlockType` enum for unified content storage
+- `VocabularyEmbedding` model with pgvector (768 dimensions) for semantic phrase mapping
+- Zod contracts: `TierFeaturesSchema`, `SectionContentSchema`, `VersionHistorySchema`
+- Extended tenant provisioning to create tiers and section content atomically
+- **68 tests** (63 schema + 5 provisioning)
+
+**Phase 1 - Vocabulary Embedding Service:**
+
+- `VocabularyEmbeddingService` using Vertex AI `text-embedding-005` model
+- `resolveBlockType()` maps user phrases to BlockTypes with confidence scores
+- `findSimilarPhrases()` for debugging and analytics
+- Seed script with 120+ canonical phrases across all 10 block types
+- Cosine similarity search via pgvector `<=>` operator
+- **19 tests** validating embedding generation and similarity search
+
+### Files Created/Modified
+
+```
+# New files
+packages/contracts/src/schemas/tier.schema.ts
+packages/contracts/src/schemas/section-content.schema.ts
+packages/contracts/src/schemas/version-history.schema.ts
+server/src/services/vocabulary-embedding.service.ts
+server/scripts/seed-vocabulary.ts
+server/test/schemas/tier.schema.test.ts
+server/test/schemas/section-content.schema.test.ts
+server/test/schemas/version-history.schema.test.ts
+server/test/services/vocabulary-embedding.service.test.ts
+server/prisma/migrations/20260130210304_semantic_storefront_foundation/
+server/prisma/migrations/20260130210423_add_vocabulary_embedding_ivfflat_index/
+
+# Modified files
+server/prisma/schema.prisma
+server/src/lib/tenant-defaults.ts
+server/src/services/tenant-provisioning.service.ts
+packages/contracts/src/index.ts
+```
+
+### Next Steps
+
+To continue implementation, run `/workflows:work` on this plan and proceed with **Phase 2a: Tenant Agent Foundation**.
+
+---
 
 ## Overview
 
