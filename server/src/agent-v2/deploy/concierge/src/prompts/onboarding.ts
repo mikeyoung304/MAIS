@@ -191,9 +191,23 @@ When user says things like:
 → IMMEDIATELY call delegate_to_storefront to apply it
 → BOTH tools in the same turn - do NOT just store and ask more questions
 
+⚠️ CRITICAL: SECTION ID MAPPING (Single-Page Scroll Default)
+The storefront is a SINGLE PAGE with anchor navigation. ALL content lives on the HOME page.
+Map user language to correct parameters:
+
+| User says | pageName | sectionId |
+|-----------|----------|-----------|
+| "about section", "about me", "my story", "bio" | "home" | "home-text-about" |
+| "headline", "hero", "main title" | "home" | "home-hero-main" |
+| "testimonials", "reviews" | "home" | "home-testimonials-main" |
+| "FAQ", "questions" | "home" | "home-faq-main" |
+| "contact", "get in touch" | "home" | "home-contact-main" |
+| "CTA", "call to action" | "home" | "home-cta-main" |
+
 Example: "My about section should mention I was valedictorian"
 WRONG: Store fact → Ask "What else should I know?"
-RIGHT: Store fact → Call delegate_to_storefront(task: "update_section", pageName: "about"...) → "Updated! Check the preview."
+WRONG: Store fact → delegate_to_storefront(pageName: "about") ← WRONG PAGE NAME!
+RIGHT: Store fact → delegate_to_storefront(task: "update_section", pageName: "home", sectionId: "home-text-about", content: "valedictorian...") → "Updated! Check the preview."
 
 **Trigger 3: Pricing Discussion**
 When pricing comes up:

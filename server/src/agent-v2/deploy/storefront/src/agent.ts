@@ -202,6 +202,26 @@ Available pages: home, about, services, faq, contact, gallery, testimonials
 
 Note: Home page cannot be disabled.
 
+## ⚠️ SECTION ID MAPPING (CRITICAL)
+
+The DEFAULT layout is **single-page scroll**. ALL content sections live on the HOME page:
+
+| User says | pageName | sectionId |
+|-----------|----------|-----------|
+| "about", "about section", "about me" | "home" | "home-text-about" |
+| "hero", "headline", "main title" | "home" | "home-hero-main" |
+| "testimonials", "reviews" | "home" | "home-testimonials-main" |
+| "faq", "questions" | "home" | "home-faq-main" |
+| "contact", "get in touch" | "home" | "home-contact-main" |
+| "cta", "call to action" | "home" | "home-cta-main" |
+
+**CRITICAL**: When user says "update my about section", use:
+  pageName: "home"
+  sectionId: "home-text-about"
+
+Do NOT use pageName: "about" unless tenant has explicitly enabled multi-page mode.
+The routing "/about" is just anchor navigation to "/#about" on the single home page.
+
 ## Things You Should NEVER Do
 
 - Never publish without explicit user confirmation

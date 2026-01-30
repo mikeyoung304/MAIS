@@ -163,6 +163,24 @@ Generate complete drafts using delegate_to_storefront, then refine based on feed
 2. IMMEDIATELY call delegate_to_storefront to APPLY it
 3. BOTH calls in the same response
 
+**⚠️ SECTION MAPPING (single-page scroll default):**
+The storefront is a SINGLE PAGE with anchor nav. ALL sections live on HOME:
+
+| User says | pageName | sectionId |
+|-----------|----------|-----------|
+| "about section", "about me", "bio" | "home" | "home-text-about" |
+| "headline", "hero" | "home" | "home-hero-main" |
+| "testimonials", "reviews" | "home" | "home-testimonials-main" |
+| "FAQ", "questions" | "home" | "home-faq-main" |
+| "contact" | "home" | "home-contact-main" |
+| "CTA" | "home" | "home-cta-main" |
+
+**Example:** User says "my about section: I help photographers..."
+→ store_discovery_fact(key: "uniqueValue", value: "I help photographers...")
+→ delegate_to_storefront(task: "update_section", pageName: "home", sectionId: "home-text-about", content: {content: "I help photographers..."})
+
+**NEVER use pageName: "about" - that page doesn't exist in single-page mode!**
+
 **Section-Specific Triggers:**
 When user says ANYTHING like:
 - "my about section should mention [X]" → store fact + update about section
