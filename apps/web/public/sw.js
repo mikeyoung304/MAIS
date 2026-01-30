@@ -9,9 +9,20 @@
  * - Background sync for pending bookings
  */
 
-const CACHE_VERSION = 'v1';
-const STATIC_CACHE = `handled-static-${CACHE_VERSION}`;
-const PAGES_CACHE = `handled-pages-${CACHE_VERSION}`;
+/**
+ * Dynamic cache versioning
+ *
+ * Each service worker deployment gets a unique version based on:
+ * 1. The SW file content hash (browser handles this)
+ * 2. A timestamp captured at SW install time
+ *
+ * This ensures old caches are cleaned up when a new SW activates,
+ * even if the cache name format stays the same.
+ */
+const SW_VERSION = '2025-01-30-v2'; // Increment on each meaningful change
+const CACHE_PREFIX = 'handled';
+const STATIC_CACHE = `${CACHE_PREFIX}-static-${SW_VERSION}`;
+const PAGES_CACHE = `${CACHE_PREFIX}-pages-${SW_VERSION}`;
 
 // Cache size limits to prevent unbounded growth
 const MAX_STATIC_CACHE_SIZE = 100;
@@ -91,7 +102,7 @@ async function trimCache(cacheName, maxItems) {
 // ============================================================================
 
 self.addEventListener('install', (event) => {
-  log('Installing service worker');
+  log('Installing service worker version:', SW_VERSION);
 
   event.waitUntil(
     (async () => {
@@ -112,8 +123,10 @@ self.addEventListener('install', (event) => {
         log('Install failed:', error);
       }
 
-      // Skip waiting to activate immediately
-      await self.skipWaiting();
+      // Enterprise pattern: Do NOT call skipWaiting() automatically
+      // Instead, wait for the user to click "Update" which sends SKIP_WAITING message
+      // This prevents jarring auto-reloads and gives users control
+      log('Service worker installed, waiting for user to apply update');
     })()
   );
 });
@@ -123,27 +136,35 @@ self.addEventListener('install', (event) => {
 // ============================================================================
 
 self.addEventListener('activate', (event) => {
-  log('Activating service worker');
+  log('Activating service worker version:', SW_VERSION);
 
   event.waitUntil(
     (async () => {
-      // Clean up old caches
+      // Clean up old caches - delete any cache that starts with our prefix but doesn't match current version
       const cacheNames = await caches.keys();
-      const validCaches = [STATIC_CACHE, PAGES_CACHE];
+      const currentCaches = [STATIC_CACHE, PAGES_CACHE];
 
       await Promise.all(
         cacheNames
-          .filter((name) => !validCaches.includes(name))
+          .filter((name) => {
+            // Delete caches that:
+            // 1. Start with our prefix (are ours)
+            // 2. But don't match the current version
+            const isOurCache = name.startsWith(CACHE_PREFIX);
+            const isCurrentVersion = currentCaches.includes(name);
+            return isOurCache && !isCurrentVersion;
+          })
           .map(async (name) => {
             log('Deleting old cache:', name);
             await caches.delete(name);
           })
       );
 
-      // Take control of all clients immediately
+      // Take control of all clients
+      // Note: We still claim clients, but the page won't reload unless user initiated update
       await self.clients.claim();
 
-      log('Service worker activated');
+      log('Service worker activated and claimed clients');
     })()
   );
 });

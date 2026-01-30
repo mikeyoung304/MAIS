@@ -33,6 +33,9 @@ export function ServiceWorkerRegistration() {
   const applyUpdate = useCallback(() => {
     if (!registration?.waiting) return;
 
+    // Mark this as a user-initiated update so we reload after controller change
+    (window as Window & { __swUserInitiatedUpdate?: () => void }).__swUserInitiatedUpdate?.();
+
     // Tell the waiting service worker to skip waiting
     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
   }, [registration]);
@@ -90,9 +93,24 @@ export function ServiceWorkerRegistration() {
     };
 
     // Listen for controller change (update applied)
+    // Enterprise pattern: Only reload if the update was user-initiated
+    // This prevents jarring auto-reloads during deployments
+    let userInitiatedUpdate = false;
+
     const handleControllerChange = () => {
-      logger.info('Service worker controller changed, reloading...');
-      window.location.reload();
+      if (userInitiatedUpdate) {
+        logger.info('Service worker updated (user-initiated), reloading...');
+        window.location.reload();
+      } else {
+        // New SW took control but user didn't request it
+        // This can happen on first visit or if SW calls skipWaiting internally
+        logger.info('Service worker controller changed (background)');
+      }
+    };
+
+    // Store the flag setter so applyUpdate can use it
+    (window as Window & { __swUserInitiatedUpdate?: () => void }).__swUserInitiatedUpdate = () => {
+      userInitiatedUpdate = true;
     };
 
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
@@ -108,6 +126,8 @@ export function ServiceWorkerRegistration() {
       mounted = false;
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
       window.removeEventListener('load', registerServiceWorker);
+      // Clean up the window property
+      delete (window as Window & { __swUserInitiatedUpdate?: () => void }).__swUserInitiatedUpdate;
     };
   }, []);
 

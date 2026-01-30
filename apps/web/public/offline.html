@@ -201,21 +201,21 @@
     }
 
     // Check for online status changes
+    // Enterprise pattern: Don't auto-reload on reconnect - let user control the action
+    // This prevents jarring reloads on flaky mobile connections
     window.addEventListener('online', () => {
-      showStatus('Connection restored! Redirecting...', true);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      showStatus('Connection restored! Tap "Try Again" to continue.', true);
+      // Don't auto-reload - user may be in the middle of reading the page
+      // or the connection might be unstable (common on mobile)
     });
 
     window.addEventListener('offline', () => {
       showStatus('Connection lost.', false);
     });
 
-    // Initial check
+    // Initial check - if we're online, show a helpful message but don't auto-redirect
     if (navigator.onLine) {
-      // We might be online but the page was cached
-      tryReconnect();
+      showStatus('You appear to be online. Tap "Try Again" to continue.', true);
     }
   </script>
 </body>

@@ -10,6 +10,42 @@ const nextConfig = {
     return [];
   },
 
+  // Security headers for service worker and PWA
+  // See: https://github.com/vercel/next.js/blob/canary/docs/01-app/02-guides/progressive-web-apps.mdx
+  async headers() {
+    return [
+      {
+        // Service worker should never be cached by the browser
+        // This ensures users always get the latest SW on each navigation
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self'",
+          },
+        ],
+      },
+      {
+        // Manifest should be fresh too
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
+
   // Redirect old domain to new domain
   async redirects() {
     return [
