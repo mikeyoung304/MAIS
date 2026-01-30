@@ -1397,9 +1397,20 @@ const delegateToStorefrontTool = new FunctionTool({
           const contentParts = Object.entries(contentObj)
             .map(([key, value]) => `${key} to "${value}"`)
             .join(' and ');
-          message = `Update the ${params.pageName || 'home'} page: set the ${contentParts}`;
+          // CRITICAL: Include sectionId when provided to ensure storefront updates the correct section
+          // Without this, storefront-agent guesses which section to update and often picks wrong
+          if (params.sectionId) {
+            message = `Update section "${params.sectionId}" on the ${params.pageName || 'home'} page: set the ${contentParts}`;
+          } else {
+            message = `Update the ${params.pageName || 'home'} page: set the ${contentParts}`;
+          }
         } else {
-          message = `Update the ${params.pageName || 'home'} page with the provided changes`;
+          // Include sectionId even without structured content
+          if (params.sectionId) {
+            message = `Update section "${params.sectionId}" on the ${params.pageName || 'home'} page with the provided changes`;
+          } else {
+            message = `Update the ${params.pageName || 'home'} page with the provided changes`;
+          }
         }
         break;
       case 'add_section':
