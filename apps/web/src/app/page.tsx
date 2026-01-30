@@ -6,18 +6,19 @@ import { MobileNav } from '@/components/home/MobileNav';
 import { ProjectHubWedge } from '@/components/home/ProjectHubWedge';
 import { JourneyShowcase } from '@/components/home/JourneyShowcase';
 import { Hero } from '@/components/home/Hero';
+import { BeforeAfterComparison } from '@/components/home/BeforeAfterComparison';
 
 // Revalidate homepage every 60 seconds
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'Handled — The operations layer that keeps bookings moving',
+  title: "Handled — You're great at what you do. The rest should be Handled.",
   description:
-    "Client communication, booking, and follow-up — handled in one calm system that doesn't rely on memory anymore.",
+    'Handled builds and runs your website, booking, and client communication — so you stop missing leads, stop juggling tools, and stop carrying your business around in your head.',
   openGraph: {
-    title: 'Handled — The operations layer that keeps bookings moving',
+    title: "Handled — You're great at what you do. The rest should be Handled.",
     description:
-      "Client communication, booking, and follow-up — handled in one calm system that doesn't rely on memory anymore.",
+      'Handled builds and runs your website, booking, and client communication — so you stop missing leads, stop juggling tools, and stop carrying your business around in your head.',
     type: 'website',
   },
 };
@@ -88,7 +89,8 @@ export default function HomePage() {
     '@type': 'Organization',
     name: 'Handled',
     url: 'https://gethandled.ai',
-    description: 'The operations layer that keeps bookings moving.',
+    description:
+      'Handled builds and runs your website, booking, and client communication for service professionals.',
   };
 
   return (
@@ -138,76 +140,9 @@ export default function HomePage() {
           <Hero />
 
           {/* ============================================
-              PROBLEM SECTION
+              BEFORE/AFTER COMPARISON
               ============================================ */}
-          <section className="py-32 md:py-40 px-6 bg-surface-alt">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight text-center">
-                You&apos;re great at what you do.
-              </h2>
-              <p className="mt-4 text-xl md:text-2xl text-text-muted text-center">
-                Running the business part shouldn&apos;t feel this hard.
-              </p>
-
-              <div className="mt-12 text-lg text-text-muted leading-relaxed">
-                <p>
-                  You didn&apos;t become a photographer, planner, coach, or consultant because you
-                  love designing websites, writing copy, or chasing messages across five places.
-                </p>
-                <p className="mt-6">But right now, your business probably lives in:</p>
-
-                <ul className="mt-6 space-y-3">
-                  {[
-                    'one website that never quite feels right',
-                    "booking tools that don't talk to each other",
-                    'emails, texts, DMs, and phone calls scattered everywhere',
-                    "follow-ups you're holding in your head",
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <X className="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-10 space-y-2 text-text-primary font-medium">
-                  <p>That&apos;s how opportunities slip by.</p>
-                  <p>That&apos;s how deposits don&apos;t get collected.</p>
-                  <p>
-                    That&apos;s how really good professionals end up feeling disorganized — even
-                    when they&apos;re not.
-                  </p>
-                </div>
-
-                <p className="mt-10 text-xl text-text-primary font-medium">
-                  Handled exists so client communication and coordination don&apos;t rely on memory
-                  or vigilance anymore.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* ============================================
-              SOLUTION INTRO
-              ============================================ */}
-          <section className="py-32 md:py-40 px-6">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-tight">
-                Handled is the operations layer beneath your business.
-              </h2>
-
-              <div className="mt-8 space-y-2 text-lg text-text-muted">
-                <p>Not another tool to manage.</p>
-                <p>Not software you babysit.</p>
-                <p>Not another inbox.</p>
-              </div>
-
-              <p className="mt-8 text-xl text-text-muted leading-relaxed">
-                Handled sits underneath your service business and quietly holds everything together
-                — before, during, and after the booking.
-              </p>
-            </div>
-          </section>
+          <BeforeAfterComparison />
 
           {/* ============================================
               FEATURES - What that means (with icons)

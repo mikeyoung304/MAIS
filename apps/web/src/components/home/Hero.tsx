@@ -5,17 +5,13 @@ import { Button } from '@/components/ui/button';
 import { StorefrontPreview } from './StorefrontPreview';
 
 /**
- * Hero - Simplified full-width centered hero section
- *
- * Replaces the 4-vertical selector (HeroWithVerticals) with a cleaner,
- * more focused design. Single Alex Chen mockup communicates value faster
- * without decision fatigue.
+ * Hero - Full-width centered hero with empathy-first messaging
  *
  * Design decisions:
- * - Full-width centered layout for maximum visual impact
- * - Ambient glow effects for depth without distraction
+ * - Two-part headline: validation ("You're great") + promise ("Handled")
+ * - Subheadline lists concrete problems solved (leads, tools, mental load)
+ * - Micro-copy below CTA reduces friction (5-min, no tech skills)
  * - Copy follows brand voice: no punching down, no filler words
- * - "Nothing slips" instead of "rely on memory" per review fix
  */
 export function Hero() {
   return (
@@ -25,18 +21,21 @@ export function Hero() {
       <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-sage/3 rounded-full blur-3xl" />
 
       <div className="relative max-w-5xl mx-auto text-center">
-        {/* Headline - outcome-first, under 15 words */}
+        {/* Headline - validation + promise, two-part structure */}
         <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.08] tracking-tight">
-          The operations layer that keeps bookings moving.
+          You're great at what you do.
+          <br />
+          <span className="text-sage">The rest should be Handled.</span>
         </h1>
 
-        {/* Subheadline - no punching down, uses approved words */}
+        {/* Subheadline - concrete problems solved */}
         <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
-          Communication, booking, and follow-up in one calm system. Nothing slips.
+          Handled builds and runs your website, booking, and client communication — so you stop
+          missing leads, stop juggling tools, and stop carrying your business around in your head.
         </p>
 
-        {/* CTAs */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        {/* CTA + Micro-copy */}
+        <div className="mt-8 flex flex-col items-center gap-4">
           <Button
             asChild
             variant="teal"
@@ -44,13 +43,9 @@ export function Hero() {
           >
             <Link href="/signup">Get Handled</Link>
           </Button>
-          <Button
-            asChild
-            variant="ghost"
-            className="rounded-full px-8 py-6 text-lg text-text-muted hover:text-text-primary"
-          >
-            <Link href="#how-it-works">How it works</Link>
-          </Button>
+          <p className="text-sm text-text-muted">
+            5-minute setup · No tech skills · Built for service professionals
+          </p>
         </div>
 
         {/* Full-width Browser Mockup */}
