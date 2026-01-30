@@ -51,6 +51,16 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       const tenantIds = tenants.map((t) => t.id);
 
       if (tenantIds.length > 0) {
+        // Get segment IDs for tier cleanup
+        const segments = await prisma.segment.findMany({
+          where: { tenantId: { in: tenantIds } },
+          select: { id: true },
+        });
+        const segmentIds = segments.map((s) => s.id);
+
+        // Delete in correct order (respecting foreign keys)
+        await prisma.tier.deleteMany({ where: { segmentId: { in: segmentIds } } });
+        await prisma.sectionContent.deleteMany({ where: { tenantId: { in: tenantIds } } });
         await prisma.package.deleteMany({ where: { tenantId: { in: tenantIds } } });
         await prisma.segment.deleteMany({ where: { tenantId: { in: tenantIds } } });
         await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
@@ -65,7 +75,7 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
   });
 
   describe('createFromSignup', () => {
-    it('should create tenant with segment and packages atomically', async () => {
+    it('should create tenant with segment, packages, tiers, and sections atomically', async () => {
       const email = generateTestEmail();
       const result = await service.createFromSignup({
         slug: `test-biz-${Date.now()}`,
@@ -88,6 +98,27 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       expect(result.packages).toHaveLength(3);
       expect(result.packages.every((p) => p.tenantId === result.tenant.id)).toBe(true);
       expect(result.packages.every((p) => p.segmentId === result.segment.id)).toBe(true);
+
+      // Verify tiers created (GOOD, BETTER, BEST)
+      expect(result.tiers).toHaveLength(3);
+      expect(result.tiers.map((t) => t.level).sort()).toEqual(['BEST', 'BETTER', 'GOOD']);
+      expect(result.tiers.every((t) => t.segmentId === result.segment.id)).toBe(true);
+
+      // Verify tier features are arrays (JSON was saved correctly)
+      expect(result.tiers.every((t) => Array.isArray(t.features))).toBe(true);
+
+      // Verify section content created (all 10 block types)
+      expect(result.sectionContent).toHaveLength(10);
+      expect(result.sectionContent.every((s) => s.tenantId === result.tenant.id)).toBe(true);
+      expect(result.sectionContent.every((s) => s.segmentId === null)).toBe(true); // Tenant-level
+
+      // Verify specific sections exist
+      const blockTypes = result.sectionContent.map((s) => s.blockType);
+      expect(blockTypes).toContain('HERO');
+      expect(blockTypes).toContain('ABOUT');
+      expect(blockTypes).toContain('SERVICES');
+      expect(blockTypes).toContain('PRICING');
+      expect(blockTypes).toContain('CONTACT');
     });
 
     it('should throw TenantProvisioningError on failure', async () => {

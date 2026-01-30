@@ -18,10 +18,25 @@
  * @see todos/630-pending-p1-admin-api-skips-tenant-onboarding.md
  */
 
-import type { PrismaClient, Tenant, Segment, Package, Prisma } from '../generated/prisma/client';
+import type {
+  PrismaClient,
+  Tenant,
+  Segment,
+  Package,
+  Tier,
+  SectionContent,
+  Prisma,
+  TierLevel,
+  BlockType,
+} from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
-import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';
+import {
+  DEFAULT_SEGMENT,
+  DEFAULT_PACKAGE_TIERS,
+  DEFAULT_TIER_CONFIGS,
+  DEFAULT_SECTION_CONTENT,
+} from '../lib/tenant-defaults';
 import { TenantProvisioningError } from '../lib/errors';
 import { DEFAULT_LANDING_PAGE_CONFIG } from '@macon/contracts';
 
@@ -51,6 +66,10 @@ export interface ProvisionedTenantResult {
   tenant: Tenant;
   segment: Segment;
   packages: Package[];
+  /** Pricing tiers (GOOD/BETTER/BEST) created for the segment */
+  tiers: Tier[];
+  /** Section content created for the tenant's storefront */
+  sectionContent: SectionContent[];
   /** Secret key - returned only once, must be shown to admin */
   secretKey?: string;
 }
@@ -70,20 +89,27 @@ export class TenantProvisioningService {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**
-   * Create default segment and packages for a tenant
+   * Create default segment, packages, tiers, and section content for a tenant
    *
-   * This is the single source of truth for the 1×3 setup:
+   * This is the single source of truth for the semantic storefront setup:
    * - 1 "General" segment
    * - 3 packages (Basic, Standard, Premium) linked to that segment
+   * - 3 tiers (GOOD, BETTER, BEST) linked to that segment
+   * - Default section content for all block types
    *
    * @param tx - Prisma transaction client
    * @param tenantId - ID of the tenant to create defaults for
-   * @returns Created segment and packages
+   * @returns Created segment, packages, tiers, and section content
    */
   private async createDefaultSegmentAndPackages(
     tx: PrismaTransactionClient,
     tenantId: string
-  ): Promise<{ segment: Segment; packages: Package[] }> {
+  ): Promise<{
+    segment: Segment;
+    packages: Package[];
+    tiers: Tier[];
+    sectionContent: SectionContent[];
+  }> {
     // Create default segment
     const segment = await tx.segment.create({
       data: {
@@ -113,9 +139,48 @@ export class TenantProvisioningService {
       })
     );
 
-    const packages = await Promise.all(packagePromises);
+    // Create default tiers (GOOD, BETTER, BEST) for the segment
+    const tierLevels: TierLevel[] = ['GOOD', 'BETTER', 'BEST'];
+    const tierPromises = tierLevels.map((level) => {
+      const config = DEFAULT_TIER_CONFIGS[level];
+      return tx.tier.create({
+        data: {
+          segmentId: segment.id,
+          level,
+          name: config.name,
+          description: config.description,
+          price: config.price,
+          currency: 'USD',
+          features: config.features as unknown as Prisma.InputJsonValue,
+        },
+      });
+    });
 
-    return { segment, packages };
+    // Create default section content for tenant-level sections (segmentId = null)
+    const blockTypes = Object.keys(DEFAULT_SECTION_CONTENT) as BlockType[];
+    const sectionPromises = blockTypes.map((blockType) => {
+      const config = DEFAULT_SECTION_CONTENT[blockType];
+      return tx.sectionContent.create({
+        data: {
+          tenantId,
+          segmentId: null, // Tenant-level (shared across segments)
+          blockType,
+          content: config.content as unknown as Prisma.InputJsonValue,
+          order: config.order,
+          isDraft: false, // Start as published
+          publishedAt: new Date(),
+        },
+      });
+    });
+
+    // Execute all creates in parallel
+    const [packages, tiers, sectionContent] = await Promise.all([
+      Promise.all(packagePromises),
+      Promise.all(tierPromises),
+      Promise.all(sectionPromises),
+    ]);
+
+    return { segment, packages, tiers, sectionContent };
   }
 
   /**
@@ -149,8 +214,9 @@ export class TenantProvisioningService {
         },
       });
 
-      // Create default segment and packages using shared method
-      const { segment, packages } = await this.createDefaultSegmentAndPackages(tx, tenant.id);
+      // Create default segment, packages, tiers, and section content
+      const { segment, packages, tiers, sectionContent } =
+        await this.createDefaultSegmentAndPackages(tx, tenant.id);
 
       logger.info(
         {
@@ -158,11 +224,13 @@ export class TenantProvisioningService {
           slug: tenant.slug,
           segmentId: segment.id,
           packagesCreated: packages.length,
+          tiersCreated: tiers.length,
+          sectionsCreated: sectionContent.length,
         },
         'Fully provisioned new tenant via admin API'
       );
 
-      return { tenant, segment, packages };
+      return { tenant, segment, packages, tiers, sectionContent };
     });
 
     // Return secret key outside transaction (not stored in DB)
@@ -215,8 +283,9 @@ export class TenantProvisioningService {
           },
         });
 
-        // Create default segment and packages using shared method
-        const { segment, packages } = await this.createDefaultSegmentAndPackages(tx, tenant.id);
+        // Create default segment, packages, tiers, and section content
+        const { segment, packages, tiers, sectionContent } =
+          await this.createDefaultSegmentAndPackages(tx, tenant.id);
 
         logger.info(
           {
@@ -225,11 +294,13 @@ export class TenantProvisioningService {
             email: tenant.email,
             segmentId: segment.id,
             packagesCreated: packages.length,
+            tiersCreated: tiers.length,
+            sectionsCreated: sectionContent.length,
           },
           'Fully provisioned new tenant via signup'
         );
 
-        return { tenant, segment, packages };
+        return { tenant, segment, packages, tiers, sectionContent };
       });
 
       return result;

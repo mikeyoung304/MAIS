@@ -534,10 +534,12 @@ async createTenant(data: CreateTenantInput) {
 
 **Before proceeding to Phase 1:**
 
-- [ ] pgvector extension installed
-- [ ] New schema applied successfully
-- [ ] Default segment creation works
-- [ ] All 3 tiers created per segment (constraint enforced)
+- [x] pgvector extension installed
+- [x] New schema applied successfully
+- [x] Default segment creation works
+- [x] All 3 tiers created per segment (constraint enforced)
+
+**Completed 2026-01-30**: Phase 0 validation gate passed. All schema tests (63 tests) and provisioning tests (5 tests) passing.
 
 ---
 

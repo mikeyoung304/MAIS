@@ -146,6 +146,8 @@ model Tenant {
   reviewActions        ReviewAction[] // Human review actions on flagged traces
   // Project Hub relations (Phase 5)
   projects             Project[] // Customer project tracking
+  // Semantic Storefront relations
+  sectionContent       SectionContent[] // Unified section content storage
 
   @@index([slug])
   @@index([apiKeyPublic])
@@ -242,16 +244,112 @@ model Segment {
   updatedAt DateTime @updatedAt
 
   // Relations
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  packages Package[] // Packages within this segment
-  addOns   AddOn[] // Segment-specific add-ons
-  services Service[] // Segment-specific services (for scheduling)
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  packages       Package[] // Packages within this segment
+  addOns         AddOn[] // Segment-specific add-ons
+  services       Service[] // Segment-specific services (for scheduling)
+  tiers          Tier[] // Pricing tiers (GOOD/BETTER/BEST) within this segment
+  sectionContent SectionContent[] // Segment-specific content sections
 
   // Constraints & Indexes
   @@unique([tenantId, slug]) // Each tenant has unique segment slugs
   @@index([tenantId, active]) // Query active segments for tenant
   @@index([tenantId, sortOrder]) // Query segments in display order
   @@index([tenantId])
+}
+
+// ============================================
+// TIER: Pricing tier (exactly 3 per segment: GOOD/BETTER/BEST)
+// Implements the 3×3 ontology from semantic storefront architecture
+// ============================================
+model Tier {
+  id        String  @id @default(cuid())
+  segmentId String
+  segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  level       TierLevel // GOOD, BETTER, BEST (enforced - exactly one of each per segment)
+  name        String // Display name: "Essential", "Professional", "Premium"
+  description String?   @db.Text
+  price       Decimal   @db.Decimal(10, 2)
+  currency    String    @default("USD")
+  features    Json // Array of TierFeature objects (validated by TierFeaturesSchema)
+
+  // Booking integration
+  durationMinutes Int? // Service duration for time-based tiers
+  depositPercent  Int? @default(0) // Deposit percentage (0-100)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([segmentId, level]) // Exactly one of each level per segment
+  @@index([segmentId])
+}
+
+enum TierLevel {
+  GOOD
+  BETTER
+  BEST
+}
+
+// ============================================
+// SECTION CONTENT: Unified content storage for storefront sections
+// Replaces the dual draft system (landingPageConfig + landingPageConfigDraft)
+// ============================================
+model SectionContent {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  segmentId String? // null = shared across all segments (e.g., global ABOUT section)
+  segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  blockType BlockType
+  content   Json // Block-specific content structure (validated by SectionContentSchema)
+  order     Int       @default(0) // Display order within page
+
+  // Draft/publish workflow
+  isDraft     Boolean   @default(true)
+  publishedAt DateTime?
+
+  // Version history for undo (last 5 versions)
+  versions Json? // Array of VersionEntry objects (validated by VersionHistorySchema)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, segmentId, blockType]) // One of each block type per tenant/segment combo
+  @@index([tenantId, blockType])
+  @@index([tenantId, segmentId])
+  @@index([tenantId, isDraft]) // Query draft vs published content
+}
+
+enum BlockType {
+  HERO
+  ABOUT
+  SERVICES
+  PRICING
+  TESTIMONIALS
+  FAQ
+  CONTACT
+  CTA
+  GALLERY
+  CUSTOM
+}
+
+// ============================================
+// VOCABULARY EMBEDDING: pgvector for semantic phrase matching
+// Maps natural language phrases to BlockType (e.g., "my bio" → ABOUT)
+// ============================================
+model VocabularyEmbedding {
+  id          String                     @id @default(cuid())
+  phrase      String                     @unique // "my bio", "about section", "hero banner"
+  blockType   BlockType
+  embedding   Unsupported("vector(768)") // Gemini text-embedding-004 dimensions
+  isCanonical Boolean                    @default(false) // True for seed vocabulary
+
+  createdAt DateTime @default(now())
+
+  @@index([blockType])
 }
 
 model Package {
@@ -859,8 +957,8 @@ model AgentSession {
   userAgent      String?  @db.VarChar(500) // Client user agent for debugging
 
   // Relations
-  tenant         Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer       Customer?             @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  tenant          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer        Customer?             @relation(fields: [customerId], references: [id], onDelete: SetNull)
   sessionMessages AgentSessionMessage[] // Normalized messages (new enterprise pattern)
 
   // Indexes for query patterns
@@ -885,7 +983,7 @@ model AgentSession {
 /// Integrity:
 /// - idempotencyKey prevents duplicate message creation on retries
 model AgentSessionMessage {
-  id        String   @id @default(cuid())
+  id        String @id @default(cuid())
   sessionId String
   tenantId  String // Denormalized for direct tenant-scoped queries
 
@@ -905,13 +1003,12 @@ model AgentSessionMessage {
   // Relations
   session AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  // Unique constraint for idempotency (prevents duplicate messages)
+  @@unique([sessionId, idempotencyKey])
   // Indexes
   @@index([sessionId, createdAt]) // Messages in order for a session
   @@index([tenantId, sessionId]) // Tenant-scoped message queries
   @@index([idempotencyKey]) // Idempotency lookup
-
-  // Unique constraint for idempotency (prevents duplicate messages)
-  @@unique([sessionId, idempotencyKey])
 }
 
 /// Session type for agent conversations
