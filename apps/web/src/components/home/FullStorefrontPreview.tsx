@@ -84,7 +84,7 @@ export function FullStorefrontPreview() {
   const { hero, trust, tiers } = ALEX_CHEN;
 
   return (
-    <div className="relative h-full bg-surface overflow-hidden">
+    <div className="relative h-full bg-surface overflow-y-auto">
       {/* ===== HERO SECTION ===== */}
       <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-5 px-4 overflow-hidden">
         {/* Decorative background */}

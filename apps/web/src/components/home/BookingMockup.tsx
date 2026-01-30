@@ -21,7 +21,7 @@ export function BookingMockup() {
   ];
 
   return (
-    <div className="h-full bg-surface overflow-hidden flex flex-col">
+    <div className="h-full bg-surface overflow-y-auto flex flex-col">
       {/* Header with selected package */}
       <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.12)_0%,transparent_70%)] px-4 py-2.5 border-b border-neutral-800">
         <div className="flex items-center justify-between">

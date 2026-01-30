@@ -24,7 +24,7 @@ import {
  */
 export function ClientHubMockupTutor() {
   return (
-    <div className="h-full bg-surface overflow-hidden flex flex-col">
+    <div className="h-full bg-surface overflow-y-auto flex flex-col">
       {/* Compact Header */}
       <div className="bg-[radial-gradient(ellipse_at_center,rgba(69,179,127,0.15)_0%,transparent_70%)] px-3 py-2 border-b border-neutral-800">
         <div className="flex items-center justify-between">
