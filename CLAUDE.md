@@ -357,6 +357,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 89. ADK deployment without .env in CI - ADK `deploy cloud_run` reads `.env` file to know what runtime env vars to set on Cloud Run; in CI environments where `.env` is gitignored, ADK logs "injecting env (0)" and deployment silently fails with "Missing required environment variable" but reports SUCCESS because error isn't propagated; ALWAYS create `.env` from GitHub Secrets before ADK deploy AND use `set -e` to fail-fast. See `docs/solutions/agent-issues/AGENT_FAILURES.md` (Root Cause section).
 
+### Agent-Frontend Integration Pitfalls (90)
+
+90. dashboardAction not extracted from tool results - Agent tools return `dashboardAction` objects in their results (e.g., `{type: 'NAVIGATE', section: 'website'}`), but frontend only checked tool NAMES for heuristics; must extract `call.result?.dashboardAction` and process action types (NAVIGATE, SCROLL_TO_SECTION, SHOW_PREVIEW, REFRESH); symptom: agent says "Take a look" but nothing happens in UI. See `apps/web/src/components/agent/AgentPanel.tsx` `handleConciergeToolComplete` for correct pattern.
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:

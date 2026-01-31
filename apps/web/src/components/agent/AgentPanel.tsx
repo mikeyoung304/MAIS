@@ -196,13 +196,57 @@ export function AgentPanel({ className }: AgentPanelProps) {
   // Handle Concierge tool completion (triggers preview refresh for storefront changes)
   const handleConciergeToolComplete = useCallback(
     (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
+      // Process dashboardAction from tool results (navigation, scroll, preview commands)
+      // Agent tools return dashboardAction objects that control the UI
+      for (const call of toolCalls) {
+        const result = call.result as Record<string, unknown> | undefined;
+        const dashboardAction = result?.dashboardAction as
+          | {
+              type: string;
+              section?: string;
+              blockType?: string;
+              highlight?: boolean;
+              fullScreen?: boolean;
+            }
+          | undefined;
+
+        if (dashboardAction) {
+          switch (dashboardAction.type) {
+            case 'NAVIGATE':
+              // Navigate to a dashboard section - "website" means show preview
+              if (dashboardAction.section === 'website') {
+                agentUIActions.showPreview('home');
+              }
+              // Other sections could be handled here (bookings, projects, settings, analytics)
+              break;
+            case 'SCROLL_TO_SECTION':
+              // Scroll to and highlight a specific website section
+              if (dashboardAction.blockType) {
+                // Convert HERO → home-HERO-primary format for highlightSection
+                const sectionId = `home-${dashboardAction.blockType}-primary`;
+                agentUIActions.highlightSection(sectionId);
+              }
+              break;
+            case 'SHOW_PREVIEW':
+              agentUIActions.showPreview('home');
+              agentUIActions.refreshPreview();
+              break;
+            case 'REFRESH':
+              agentUIActions.refreshPreview();
+              break;
+          }
+        }
+      }
+
       // Check if any tool call modified storefront content
       const modifiedStorefront = toolCalls.some(
         (call) =>
           call.name.includes('storefront') ||
           call.name.includes('section') ||
           call.name.includes('layout') ||
-          call.name.includes('branding')
+          call.name.includes('branding') ||
+          call.name.includes('update_section') ||
+          call.name.includes('add_section')
       );
 
       if (modifiedStorefront) {
