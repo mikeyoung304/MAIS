@@ -21,7 +21,7 @@ branch: feat/semantic-storefront
 | Phase 2a | ✅ Complete    | `9d337c1d` | Tenant Agent Foundation (deployed to Cloud Run)                        |
 | Phase 2b | ✅ Complete    | `84aa6635` | Migrate storefront editing tools (11 tools)                            |
 | Phase 2c | ✅ Complete    | -          | Migrate marketing copy generation (2 tools)                            |
-| Phase 2d | ✅ Complete    | -          | Retire legacy agents (storefront, marketing)                           |
+| Phase 2d | ✅ Complete    | -          | Retire legacy agents (storefront, marketing, concierge)                |
 | Phase 3  | 🔲 Not Started | -          | Unified Customer Agent                                                 |
 | Phase 4  | 🔲 Not Started | -          | Cleanup & Polish                                                       |
 
@@ -85,9 +85,10 @@ branch: feat/semantic-storefront
 
 - Archived `storefront-agent` to `server/src/agent-v2/archive/storefront/`
 - Archived `marketing-agent` to `server/src/agent-v2/archive/marketing/`
-- Deleted Cloud Run services: `storefront-agent`, `marketing-agent`
+- Archived `concierge-agent` to `server/src/agent-v2/archive/concierge/`
+- Deleted Cloud Run services: `storefront-agent`, `marketing-agent`, `concierge-agent`
 - Updated SERVICE_REGISTRY.md with archived status
-- Kept `concierge-agent` running (frontend may still use old chat path)
+- Cloud Run services reduced from 7 to 4
 - Archive kept for 30-day rollback safety
 
 ### Files Created/Modified
@@ -146,6 +147,7 @@ server/src/agent-v2/deploy/tenant/src/prompts/system.ts (modified - marketing in
 server/src/agent-v2/archive/ (NEW directory)
 server/src/agent-v2/archive/storefront/ (moved from deploy/)
 server/src/agent-v2/archive/marketing/ (moved from deploy/)
+server/src/agent-v2/archive/concierge/ (moved from deploy/)
 server/src/agent-v2/deploy/SERVICE_REGISTRY.md (modified - archived status)
 ```
 
@@ -165,13 +167,12 @@ server/src/agent-v2/deploy/SERVICE_REGISTRY.md (modified - archived status)
 - [x] Phase 2c: Migrate marketing copy generation (2 tools)
 - [x] Phase 2d: Retire legacy agents (storefront, marketing)
 
-**Current Cloud Run Services:**
+**Current Cloud Run Services (4 total):**
 
 - ✅ `tenant-agent` - 17 tools (unified tenant experience)
-- ✅ `booking-agent` - Customer booking flow
-- ✅ `research-agent` - Web research
-- ✅ `project-hub-agent` - Project management (to be migrated in future)
-- ⚠️ `concierge-agent` - Still running for legacy frontend compatibility
+- ✅ `booking-agent` - Customer booking flow (to be migrated in Phase 3)
+- ✅ `research-agent` - Web research (unchanged)
+- ✅ `project-hub-agent` - Project management (to be migrated in Phase 3)
 
 Ready for **Phase 3: Unified Customer Agent**
 
