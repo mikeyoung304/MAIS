@@ -2,7 +2,7 @@
 title: Semantic Storefront Architecture
 type: feat
 date: 2026-01-30
-status: in_progress
+status: complete
 risk: medium
 estimated_effort: 5-6 weeks (revised after plan review)
 reviewers: DHH, Kieran, Simplicity Reviewer
@@ -242,6 +242,17 @@ Phase 4 accomplished:
 - [x] Verified E2E tests exist (`customer-chatbot-mcp.spec.ts`, `build-mode.spec.ts`)
 - [x] TypeScript type check passes
 - [x] 2051/2068 unit tests passing (pre-existing failures unrelated to Phase 4)
+
+**Production Deployment (2026-01-31):**
+
+- [x] Verified Cloud Run agents healthy (`customer-agent`, `tenant-agent` responding on `/list-apps`)
+- [x] Updated Render environment variables:
+  - `CUSTOMER_AGENT_URL=https://customer-agent-506923455711.us-central1.run.app`
+  - `TENANT_AGENT_URL=https://tenant-agent-506923455711.us-central1.run.app`
+- [x] Render deployment `dep-d5v13anfte5s73cct9fg` completed successfully
+- [x] MAIS API health checks passing (database 51ms, status ready)
+- [x] Agent services initialized with Google service account credentials
+- [ ] Optional: Delete old Cloud Run services (keeping for 2-week rollback window)
 
 ---
 
