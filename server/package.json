@@ -53,6 +53,7 @@
     "@google/genai": "^1.35.0",
     "@macon/contracts": "*",
     "@macon/shared": "*",
+    "@paralleldrive/cuid2": "^2.3.1",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@sentry/node": "^10.35.0",
