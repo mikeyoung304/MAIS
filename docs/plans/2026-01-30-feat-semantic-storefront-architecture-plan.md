@@ -1489,6 +1489,92 @@ packages/contracts/test/
 
 ---
 
+## Future Enhancement: Vertex AI Agent Engine Migration
+
+**Status:** Evaluated 2026-01-30 | **Decision:** Defer to post-Phase 3
+
+### Current State (Verified via Google Cloud Console)
+
+| Platform                   | Status                         |
+| -------------------------- | ------------------------------ |
+| **Vertex AI Agent Engine** | 0 instances (never used)       |
+| **Cloud Run**              | 7 agents deployed, all healthy |
+
+All MAIS agents use `adk deploy cloud_run`. Agent Engine was discussed in early plans but never implemented.
+
+### Why Consider Agent Engine?
+
+Agent Engine provides managed infrastructure specifically for AI agents:
+
+| Feature                  | Cloud Run (Current) | Agent Engine                        |
+| ------------------------ | ------------------- | ----------------------------------- |
+| **Session Management**   | DIY via database    | Built-in, automatic                 |
+| **Memory Bank**          | ❌ Not available    | ✅ Long-term memory across sessions |
+| **Conversation History** | DIY via database    | Built-in persistence                |
+| **Observability**        | DIY logging/metrics | Built-in tracing                    |
+| **Code Execution**       | ❌                  | ✅ Sandbox available                |
+
+**Memory Bank** is the key benefit — it would replace our manual `discoveryFacts` pattern with automatic long-term memory:
+
+```
+Session 1: "I'm a wedding photographer in Austin"
+[Agent stores in Memory Bank]
+
+Session 2 (days later): "Update my pricing"
+Agent: "I remember you're a wedding photographer in Austin..."
+```
+
+### Cost Comparison
+
+| Usage Level                | Cloud Run    | Agent Engine |
+| -------------------------- | ------------ | ------------ |
+| Light (100 sessions/day)   | ~$5-15/mo    | ~$10-20/mo   |
+| Medium (1000 sessions/day) | ~$30-50/mo   | ~$50-100/mo  |
+| Heavy (10K sessions/day)   | ~$100-200/mo | ~$200-400/mo |
+
+Agent Engine costs ~1.5-2x more but includes Memory Bank and managed sessions.
+
+### Migration Path
+
+**When:** After Phase 3 consolidation (3 agents instead of 7)
+
+**How:**
+
+1. Deploy `tenant-agent` to Agent Engine: `adk deploy agent_engine`
+2. Enable Memory Bank for cross-session memory
+3. Remove manual `discoveryFacts` code
+4. Migrate `customer-agent` and `concierge-agent`
+5. Decommission Cloud Run services
+
+**Proposed Phase 5:**
+
+| Task                                       | Effort     |
+| ------------------------------------------ | ---------- |
+| Deploy tenant-agent to Agent Engine        | 1 day      |
+| Enable Memory Bank, migrate discoveryFacts | 2 days     |
+| Deploy customer-agent to Agent Engine      | 1 day      |
+| Deploy concierge-agent to Agent Engine     | 1 day      |
+| Update CI/CD workflows                     | 1 day      |
+| E2E testing + cleanup                      | 2 days     |
+| **Total**                                  | ~1.5 weeks |
+
+### Decision Rationale
+
+**Stay with Cloud Run for now** because:
+
+1. Phase 2 is about consolidation — changing platforms mid-consolidation adds risk
+2. Current `discoveryFacts` pattern works (not as elegant, but ships)
+3. 7 agents running successfully on Cloud Run — the infrastructure is battle-tested
+4. After consolidation (3 agents), migration is simpler
+
+**Revisit after Phase 3** when:
+
+- Agent count reduced from 7 → 3
+- Semantic vocabulary layer stable
+- Tool interfaces finalized
+
+---
+
 ## References
 
 - **Brainstorm:** `docs/brainstorms/2026-01-30-semantic-storefront-architecture-brainstorm.md`
