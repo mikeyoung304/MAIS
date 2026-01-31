@@ -1,8 +1,10 @@
 # Phase 2b Handoff - Migrate Storefront Editing to Tenant Agent
 
 **Date:** 2026-01-30
+**Status:** ✅ COMPLETE
 **Previous Context:** Phase 2a Complete (Tenant Agent Foundation)
 **Branch:** `feat/semantic-storefront`
+**Commit:** `84aa6635 feat(tenant-agent): migrate storefront editing tools (Phase 2b)`
 
 ---
 
@@ -122,8 +124,39 @@ server/src/agent-v2/deploy/tenant/src/tools/
 - [x] Update `prompts/system.ts` to include storefront editing instructions
 - [x] Redeploy tenant-agent to Cloud Run
 - [x] E2E test: Agent calls get_page_structure (verified via Cloud Run direct call)
-- [ ] Update plan document with Phase 2b progress
-- [ ] Commit with: `feat(tenant-agent): migrate storefront editing tools (Phase 2b)`
+- [x] Update plan document with Phase 2b progress
+- [x] Commit with: `feat(tenant-agent): migrate storefront editing tools (Phase 2b)`
+
+---
+
+## Phase 2b Completion Summary
+
+All 11 storefront editing tools successfully migrated from `storefront-agent` to `tenant-agent`:
+
+| Tool                | File                | Status |
+| ------------------- | ------------------- | ------ |
+| get_page_structure  | storefront-read.ts  | ✅     |
+| get_section_content | storefront-read.ts  | ✅     |
+| update_section      | storefront-write.ts | ✅     |
+| add_section         | storefront-write.ts | ✅     |
+| remove_section      | storefront-write.ts | ✅     |
+| reorder_sections    | storefront-write.ts | ✅     |
+| toggle_page         | toggle-page.ts      | ✅     |
+| update_branding     | branding.ts         | ✅     |
+| preview_draft       | draft.ts            | ✅     |
+| publish_draft       | draft.ts            | ✅     |
+| discard_draft       | draft.ts            | ✅     |
+
+**Deployment:** Cloud Run revision `tenant-agent-00003-c5d`
+
+---
+
+## Next: Phase 2c - Marketing Copy Tools
+
+To be migrated from `marketing-agent`:
+
+- generate_copy
+- improve_section_copy
 
 ---
 
