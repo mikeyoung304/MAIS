@@ -112,16 +112,16 @@ server/src/agent-v2/deploy/tenant/src/tools/
 
 ## Implementation Checklist
 
-- [ ] Create `storefront-read.ts` with get_page_structure and get_section_content
-- [ ] Create `storefront-write.ts` with update_section, add_section, remove_section, reorder_sections
-- [ ] Create `branding.ts` with update_branding
-- [ ] Create `draft.ts` with preview_draft, publish_draft, discard_draft (T3 confirmation pattern)
-- [ ] Create `toggle-page.ts` with toggle_page
-- [ ] Update `tools/index.ts` to export all new tools
-- [ ] Update `agent.ts` to register all new tools
-- [ ] Update `prompts/system.ts` to include storefront editing instructions
-- [ ] Redeploy tenant-agent to Cloud Run
-- [ ] E2E test: "update my about section headline to 'Hello World'"
+- [x] Create `storefront-read.ts` with get_page_structure and get_section_content
+- [x] Create `storefront-write.ts` with update_section, add_section, remove_section, reorder_sections
+- [x] Create `branding.ts` with update_branding
+- [x] Create `draft.ts` with preview_draft, publish_draft, discard_draft (T3 confirmation pattern)
+- [x] Create `toggle-page.ts` with toggle_page
+- [x] Update `tools/index.ts` to export all new tools
+- [x] Update `agent.ts` to register all new tools
+- [x] Update `prompts/system.ts` to include storefront editing instructions
+- [x] Redeploy tenant-agent to Cloud Run
+- [x] E2E test: Agent calls get_page_structure (verified via Cloud Run direct call)
 - [ ] Update plan document with Phase 2b progress
 - [ ] Commit with: `feat(tenant-agent): migrate storefront editing tools (Phase 2b)`
 

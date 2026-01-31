@@ -12,7 +12,10 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-// Navigation tools (T1)
+// ─────────────────────────────────────────────────────────────────────────────
+// Navigation Tools (T1)
+// ─────────────────────────────────────────────────────────────────────────────
+
 export {
   navigateToDashboardSectionTool,
   scrollToWebsiteSectionTool,
@@ -20,24 +23,56 @@ export {
   type DashboardAction,
 } from './navigate.js';
 
-// Vocabulary resolution (T1)
+// ─────────────────────────────────────────────────────────────────────────────
+// Vocabulary Resolution (T1)
+// ─────────────────────────────────────────────────────────────────────────────
+
 export { resolveVocabularyTool } from './vocabulary.js';
 
-// TODO: Phase 2b will add:
-// - update_section (T2)
-// - update_branding (T2)
-// - reorder_sections (T1)
-// - add_section (T2)
-// - remove_section (T2)
-// - preview_website (T1)
-// - publish_website (T3)
-// - discard_draft (T3)
+// ─────────────────────────────────────────────────────────────────────────────
+// Storefront Read Tools (T1) - Phase 2b
+// ─────────────────────────────────────────────────────────────────────────────
 
-// TODO: Phase 2c will add:
+export { getPageStructureTool, getSectionContentTool } from './storefront-read.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Storefront Write Tools (T2) - Phase 2b
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  updateSectionTool,
+  addSectionTool,
+  removeSectionTool,
+  reorderSectionsTool,
+} from './storefront-write.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Branding Tool (T2) - Phase 2b
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { updateBrandingTool } from './branding.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Draft Management Tools (T1/T3) - Phase 2b
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { previewDraftTool, publishDraftTool, discardDraftTool } from './draft.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page Management Tool (T1) - Phase 2b
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { togglePageTool } from './toggle-page.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TODO: Phase 2c - Marketing Copy Tools
+// ─────────────────────────────────────────────────────────────────────────────
 // - generate_copy (T1)
 // - improve_section_copy (T2)
 
-// TODO: Phase 2d will add:
+// ─────────────────────────────────────────────────────────────────────────────
+// TODO: Phase 2d - Project Management Tools
+// ─────────────────────────────────────────────────────────────────────────────
 // - get_project_details (T1)
 // - send_project_message (T2)
 // - update_project_status (T2)

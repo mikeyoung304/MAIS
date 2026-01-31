@@ -28,10 +28,34 @@ import { LlmAgent } from '@google/adk';
 import { logger } from './utils.js';
 import { TENANT_AGENT_SYSTEM_PROMPT } from './prompts/system.js';
 import {
+  // Navigation (T1)
   navigateToDashboardSectionTool,
   scrollToWebsiteSectionTool,
   showPreviewTool,
+
+  // Vocabulary Resolution (T1)
   resolveVocabularyTool,
+
+  // Storefront Read (T1) - Phase 2b
+  getPageStructureTool,
+  getSectionContentTool,
+
+  // Storefront Write (T2) - Phase 2b
+  updateSectionTool,
+  addSectionTool,
+  removeSectionTool,
+  reorderSectionsTool,
+
+  // Branding (T2) - Phase 2b
+  updateBrandingTool,
+
+  // Draft Management (T1/T3) - Phase 2b
+  previewDraftTool,
+  publishDraftTool,
+  discardDraftTool,
+
+  // Page Management (T1) - Phase 2b
+  togglePageTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,12 +69,15 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 2a (Foundation)
+ * Current Phase: 2b (Storefront Editing)
  * - Navigation tools
  * - Vocabulary resolution
+ * - Storefront read/write tools
+ * - Branding updates
+ * - Draft management (preview, publish, discard)
+ * - Page toggle
  *
  * Upcoming Phases:
- * - 2b: Storefront editing tools
  * - 2c: Marketing copy tools
  * - 2d: Project management tools
  */
@@ -69,17 +96,50 @@ export const tenantAgent = new LlmAgent({
   // System prompt with personality and routing logic
   instruction: TENANT_AGENT_SYSTEM_PROMPT,
 
-  // Phase 2a tools - Navigation and Vocabulary
+  // All tools registered by trust tier
   tools: [
-    // Navigation (T1)
+    // ─────────────────────────────────────────────────────────────────────────
+    // T1: Execute immediately (read operations, navigation)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Navigation
     navigateToDashboardSectionTool,
     scrollToWebsiteSectionTool,
     showPreviewTool,
 
-    // Vocabulary Resolution (T1)
+    // Vocabulary Resolution
     resolveVocabularyTool,
 
-    // TODO: Phase 2b will add storefront editing tools
+    // Storefront Read
+    getPageStructureTool,
+    getSectionContentTool,
+
+    // Page Management
+    togglePageTool,
+
+    // Draft Preview
+    previewDraftTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // T2: Execute + show preview (content updates, settings)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Storefront Write
+    updateSectionTool,
+    addSectionTool,
+    removeSectionTool,
+    reorderSectionsTool,
+
+    // Branding
+    updateBrandingTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // T3: Require explicit confirmation (publish, delete)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    publishDraftTool,
+    discardDraftTool,
+
     // TODO: Phase 2c will add marketing copy tools
     // TODO: Phase 2d will add project management tools
   ],
