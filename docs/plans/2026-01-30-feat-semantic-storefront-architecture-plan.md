@@ -18,7 +18,7 @@ branch: feat/semantic-storefront
 | -------- | -------------- | ---------- | ---------------------------------------------------------------------- |
 | Phase 0  | ✅ Complete    | `d2941c8a` | Database schema foundation (Tier, SectionContent, VocabularyEmbedding) |
 | Phase 1  | ✅ Complete    | `972f2939` | Vocabulary Embedding Service with pgvector semantic search             |
-| Phase 2a | 🔄 In Progress | -          | Tenant Agent Foundation                                                |
+| Phase 2a | ✅ Complete    | -          | Tenant Agent Foundation (deployed to Cloud Run)                        |
 | Phase 2b | 🔲 Not Started | -          | Migrate storefront editing capabilities                                |
 | Phase 2c | 🔲 Not Started | -          | Migrate marketing copy generation                                      |
 | Phase 2d | 🔲 Not Started | -          | Retire legacy agents                                                   |
@@ -86,19 +86,26 @@ server/src/agent-v2/deploy/tenant/src/prompts/system.ts
 server/src/agent-v2/deploy/tenant/src/tools/index.ts
 server/src/agent-v2/deploy/tenant/src/tools/navigate.ts
 server/src/agent-v2/deploy/tenant/src/tools/vocabulary.ts
+server/src/agent-v2/deploy/tenant/.env
 server/src/routes/internal-agent.routes.ts (modified - added vocabulary endpoint)
-server/src/routes/index.ts (modified - wired VocabularyEmbeddingService)
+server/src/routes/index.ts (modified - wired VocabularyEmbeddingService + Tenant Agent routes)
+server/src/routes/tenant-admin-tenant-agent.routes.ts (NEW - /chat/tenant endpoint)
 ```
+
+### Deployments
+
+- ✅ `tenant-agent` deployed to Cloud Run: `https://tenant-agent-506923455711.us-central1.run.app`
+- ✅ `/v1/tenant-admin/agent/tenant/chat` route handler added
 
 ### Next Steps
 
-**Phase 2a remaining:**
+**Phase 2a completed!** ✅
 
-- Deploy tenant-agent to Cloud Run
-- Add `/chat/tenant` route handler
-- E2E: verify navigation tools work
+- [x] Deploy tenant-agent to Cloud Run
+- [x] Add `/chat/tenant` route handler
+- [x] E2E: verify navigation tools work (resolve_vocabulary correctly calls backend)
 
-Then proceed with **Phase 2b: Migrate Storefront Editing** capabilities.
+Ready for **Phase 2b: Migrate Storefront Editing** capabilities.
 
 ---
 

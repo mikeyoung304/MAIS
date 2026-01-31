@@ -50,6 +50,7 @@ import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes'
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminLandingPageRoutes } from './tenant-admin-landing-page.routes';
 import { createTenantAdminAgentRoutes } from './tenant-admin-agent.routes';
+import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
 import { createUnifiedAuthRoutes } from './auth.routes';
@@ -719,6 +720,22 @@ export function createV1Router(
     logger.info(
       '✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent (with rate limiting)'
     );
+
+    // Register Tenant Agent routes (Phase 2a - Semantic Storefront Architecture)
+    // The Tenant Agent consolidates: Concierge, Storefront, Marketing, Project Hub
+    // This runs alongside the existing Concierge routes during migration
+    // @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
+    const tenantAdminTenantAgentRoutes = createTenantAdminTenantAgentRoutes({
+      prisma: prismaClient,
+    });
+    app.use(
+      '/v1/tenant-admin/agent/tenant',
+      tenantAuthMiddleware,
+      agentChatLimiter,
+      agentSessionLimiter,
+      tenantAdminTenantAgentRoutes
+    );
+    logger.info('✅ Tenant Agent routes mounted at /v1/tenant-admin/agent/tenant (Phase 2a)');
 
     // Register tenant admin project routes (for project management dashboard)
     // Requires tenant admin authentication - manage projects, view/approve requests
