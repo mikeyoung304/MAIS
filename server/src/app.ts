@@ -184,10 +184,16 @@ export function createApp(
   // Request ID + logging middleware (for non-webhook routes)
   app.use(requestLogger);
 
-  // Apply input sanitization globally (except webhooks which need raw body)
+  // Apply input sanitization globally (except webhooks and internal agent routes)
   app.use((req, res, next) => {
     // Skip sanitization for webhook endpoints (need raw body)
     if (req.path.startsWith('/v1/webhooks')) {
+      return next();
+    }
+    // Skip sanitization for internal agent routes (authenticated via API secret,
+    // content should be stored as-is without HTML escaping - XSS protection
+    // happens on frontend during render, not during storage)
+    if (req.path.startsWith('/v1/internal/agent')) {
       return next();
     }
     sanitizeInput()(req, res, next);
