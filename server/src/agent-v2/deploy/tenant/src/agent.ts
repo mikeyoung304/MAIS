@@ -60,6 +60,15 @@ import {
   // Marketing Copy (T1/T2) - Phase 2c
   generateCopyTool,
   improveSectionCopyTool,
+
+  // Project Management (T1/T2) - Phase 3
+  getPendingRequestsTool,
+  getCustomerActivityTool,
+  getProjectDetailsTool,
+  approveRequestTool,
+  denyRequestTool,
+  sendMessageToCustomerTool,
+  updateProjectStatusTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,17 +82,16 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 2c (Marketing Copy)
- * - Navigation tools
- * - Vocabulary resolution
- * - Storefront read/write tools
- * - Branding updates
- * - Draft management (preview, publish, discard)
- * - Page toggle
- * - Marketing copy generation and improvement
- *
- * Upcoming Phases:
- * - 2d: Project management tools
+ * Current Phase: 3 (Customer Agent Consolidation)
+ * Tool count: 24
+ * - Navigation tools (3)
+ * - Vocabulary resolution (1)
+ * - Storefront read/write tools (6)
+ * - Branding updates (1)
+ * - Draft management (3)
+ * - Page toggle (1)
+ * - Marketing copy generation (2)
+ * - Project management (7)
  */
 export const tenantAgent = new LlmAgent({
   name: 'tenant',
@@ -154,7 +162,20 @@ export const tenantAgent = new LlmAgent({
     // Copy Improvement
     improveSectionCopyTool,
 
-    // TODO: Phase 2d will add project management tools
+    // ─────────────────────────────────────────────────────────────────────────
+    // Project Management (T1/T2) - Phase 3
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // T1: Read operations
+    getPendingRequestsTool,
+    getCustomerActivityTool,
+    getProjectDetailsTool,
+
+    // T2: Write operations
+    approveRequestTool,
+    denyRequestTool,
+    sendMessageToCustomerTool,
+    updateProjectStatusTool,
   ],
 
   // Lifecycle callbacks for observability

@@ -8,24 +8,28 @@ This document tracks all deployed ADK agent services to prevent naming conflicts
 
 ## Active Services
 
-| Agent Name  | Service Name        | Cloud Run URL                                              | Status | Last Deploy |
-| ----------- | ------------------- | ---------------------------------------------------------- | ------ | ----------- |
-| booking     | `booking-agent`     | https://booking-agent-506923455711.us-central1.run.app     | Active | 2026-01-18  |
-| research    | `research-agent`    | https://research-agent-506923455711.us-central1.run.app    | Active | 2026-01-18  |
-| project-hub | `project-hub-agent` | https://project-hub-agent-506923455711.us-central1.run.app | Active | 2026-01-25  |
-| tenant      | `tenant-agent`      | https://tenant-agent-506923455711.us-central1.run.app      | Active | 2026-01-30  |
+| Agent Name | Service Name     | Cloud Run URL                                           | Status | Last Deploy |
+| ---------- | ---------------- | ------------------------------------------------------- | ------ | ----------- |
+| customer   | `customer-agent` | https://customer-agent-506923455711.us-central1.run.app | Active | 2026-01-31  |
+| research   | `research-agent` | https://research-agent-506923455711.us-central1.run.app | Active | 2026-01-18  |
+| tenant     | `tenant-agent`   | https://tenant-agent-506923455711.us-central1.run.app   | Active | 2026-01-31  |
 
 ## Archived Services (Retired)
 
-| Agent Name | Former Service Name | Retired Date | Reason                                  |
-| ---------- | ------------------- | ------------ | --------------------------------------- |
-| storefront | `storefront-agent`  | 2026-01-30   | Tools migrated to tenant-agent (2b)     |
-| marketing  | `marketing-agent`   | 2026-01-30   | Tools migrated to tenant-agent (2c)     |
-| concierge  | `concierge-agent`   | 2026-01-30   | Routing absorbed into tenant-agent (2d) |
+| Agent Name  | Former Service Name | Retired Date | Reason                                            |
+| ----------- | ------------------- | ------------ | ------------------------------------------------- |
+| storefront  | `storefront-agent`  | 2026-01-30   | Tools migrated to tenant-agent (Phase 2b)         |
+| marketing   | `marketing-agent`   | 2026-01-30   | Tools migrated to tenant-agent (Phase 2c)         |
+| concierge   | `concierge-agent`   | 2026-01-30   | Routing absorbed into tenant-agent (Phase 2d)     |
+| booking     | `booking-agent`     | 2026-01-31   | Tools migrated to customer-agent (Phase 3)        |
+| project-hub | `project-hub-agent` | 2026-01-31   | Tools migrated to customer+tenant-agent (Phase 3) |
 
-> **Note:** `tenant-agent` consolidates concierge, storefront, marketing, and project-hub agents.
-> See `docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md` for migration plan.
-> Archived code is in `server/src/agent-v2/archive/` for 30-day rollback safety.
+> **Note:** After Phase 3 migration:
+>
+> - `tenant-agent` handles all tenant-facing tasks (storefront, marketing, project management)
+> - `customer-agent` handles all customer-facing tasks (booking, project hub)
+> - See `docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md` for migration plan.
+> - Archived code is in `server/src/agent-v2/archive/` for 30-day rollback safety.
 
 ---
 

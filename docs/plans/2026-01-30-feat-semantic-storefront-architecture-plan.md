@@ -22,7 +22,7 @@ branch: feat/semantic-storefront
 | Phase 2b | ✅ Complete    | `84aa6635` | Migrate storefront editing tools (11 tools)                            |
 | Phase 2c | ✅ Complete    | -          | Migrate marketing copy generation (2 tools)                            |
 | Phase 2d | ✅ Complete    | -          | Retire legacy agents (storefront, marketing, concierge)                |
-| Phase 3  | 🔲 Not Started | -          | Unified Customer Agent                                                 |
+| Phase 3  | ✅ Complete    | -          | Unified Customer Agent (13 tools + 7 tenant tools)                     |
 | Phase 4  | 🔲 Not Started | -          | Cleanup & Polish                                                       |
 
 ### What's Been Built
@@ -91,6 +91,31 @@ branch: feat/semantic-storefront
 - Cloud Run services reduced from 7 to 4
 - Archive kept for 30-day rollback safety
 
+**Phase 3 - Unified Customer Agent (COMPLETE):**
+
+- Created `customer-agent` standalone deployment package
+  - Consolidated `booking-agent` + `project-hub-agent` (customer view)
+  - 13 tools total covering full customer journey
+- Customer Agent Tools:
+  - Bootstrap: `bootstrap_customer_session` - context-aware greeting
+  - Booking (7 tools from booking-agent):
+    - `get_services`, `get_service_details`, `check_availability` (T1)
+    - `get_business_info`, `answer_faq`, `recommend_package` (T1)
+    - `create_booking` (T3 - requires confirmation)
+  - Project (6 tools from project-hub customer view):
+    - `get_project_status`, `get_prep_checklist`, `get_timeline` (T1)
+    - `answer_prep_question` with mediation logic (T1)
+    - `submit_request` with T2/T3 based on request type
+- Added Project Management Tools to Tenant Agent:
+  - `get_pending_requests`, `get_customer_activity`, `get_project_details` (T1)
+  - `approve_request`, `deny_request`, `send_message_to_customer`, `update_project_status` (T2)
+  - Tenant Agent now has 24 tools total
+- Archived legacy agents:
+  - `booking-agent` → `server/src/agent-v2/archive/booking/`
+  - `project-hub-agent` → `server/src/agent-v2/archive/project-hub/`
+- Updated SERVICE_REGISTRY.md
+- Cloud Run services reduced from 4 to 3 (customer, tenant, research)
+
 ### Files Created/Modified
 
 ```
@@ -149,37 +174,67 @@ server/src/agent-v2/archive/storefront/ (moved from deploy/)
 server/src/agent-v2/archive/marketing/ (moved from deploy/)
 server/src/agent-v2/archive/concierge/ (moved from deploy/)
 server/src/agent-v2/deploy/SERVICE_REGISTRY.md (modified - archived status)
+
+# Phase 3 files (Unified Customer Agent)
+server/src/agent-v2/deploy/customer/package.json (NEW)
+server/src/agent-v2/deploy/customer/tsconfig.json (NEW)
+server/src/agent-v2/deploy/customer/.env.example (NEW)
+server/src/agent-v2/deploy/customer/src/agent.ts (NEW - 13 tools)
+server/src/agent-v2/deploy/customer/src/utils.ts (NEW)
+server/src/agent-v2/deploy/customer/src/prompts/system.ts (NEW)
+server/src/agent-v2/deploy/customer/src/tools/index.ts (NEW)
+server/src/agent-v2/deploy/customer/src/tools/booking.ts (NEW - 7 tools from booking-agent)
+server/src/agent-v2/deploy/customer/src/tools/project.ts (NEW - 6 tools from project-hub customer view)
+server/src/agent-v2/deploy/tenant/src/tools/project-management.ts (NEW - 7 tools from project-hub tenant view)
+server/src/agent-v2/deploy/tenant/src/utils.ts (modified - added callBackendAPI)
+server/src/agent-v2/deploy/tenant/src/tools/index.ts (modified - export project management tools)
+server/src/agent-v2/deploy/tenant/src/agent.ts (modified - register 24 tools)
+server/src/agent-v2/deploy/tenant/src/prompts/system.ts (modified - project management instructions)
+server/src/agent-v2/archive/booking/ (moved from deploy/)
+server/src/agent-v2/archive/project-hub/ (moved from deploy/)
+server/src/agent-v2/deploy/SERVICE_REGISTRY.md (modified - updated registry)
 ```
 
 ### Deployments
 
 - ✅ `tenant-agent` deployed to Cloud Run: `https://tenant-agent-506923455711.us-central1.run.app`
-- ✅ `/v1/tenant-admin/agent/tenant/chat` route handler added
-- ✅ Revision `tenant-agent-00003-c5d` with all 15 tools (Phase 2b)
-- ✅ Revision `tenant-agent-00004-dfz` with all 17 tools (Phase 2c)
+  - Revision `tenant-agent-00005-qr8` with all 24 tools (Phase 3)
+- ✅ `customer-agent` deployed to Cloud Run: `https://customer-agent-506923455711.us-central1.run.app`
+  - Revision `customer-agent-00002-xvq` with all 13 tools (Phase 3)
+- ✅ `research-agent` unchanged: `https://research-agent-506923455711.us-central1.run.app`
 
 ### Next Steps
 
-**Phase 2 completed!** ✅
+**Phase 3 completed!** ✅
 
 - [x] Phase 2a: Tenant Agent Foundation
 - [x] Phase 2b: Migrate storefront editing tools (11 tools)
 - [x] Phase 2c: Migrate marketing copy generation (2 tools)
-- [x] Phase 2d: Retire legacy agents (storefront, marketing)
+- [x] Phase 2d: Retire legacy agents (storefront, marketing, concierge)
+- [x] Phase 3: Unified Customer Agent (booking + project-hub → customer-agent)
 
-**Current Cloud Run Services (4 total):**
+**Current Cloud Run Services (3 total):**
 
-- ✅ `tenant-agent` - 17 tools (unified tenant experience)
-- ✅ `booking-agent` - Customer booking flow (to be migrated in Phase 3)
+- ✅ `customer-agent` - 13 tools (service discovery, booking, project hub customer view)
+- ✅ `tenant-agent` - 24 tools (storefront, marketing, project management tenant view)
 - ✅ `research-agent` - Web research (unchanged)
-- ✅ `project-hub-agent` - Project management (to be migrated in Phase 3)
 
-Ready for **Phase 3: Unified Customer Agent**
+**Archived Agents (5 total):**
 
-Phase 3 will consolidate:
+- `storefront-agent` → `server/src/agent-v2/archive/storefront/`
+- `marketing-agent` → `server/src/agent-v2/archive/marketing/`
+- `concierge-agent` → `server/src/agent-v2/archive/concierge/`
+- `booking-agent` → `server/src/agent-v2/archive/booking/`
+- `project-hub-agent` → `server/src/agent-v2/archive/project-hub/`
 
-- `booking-agent` → `customer-agent`
-- `project-hub-agent` (customer view) → `customer-agent`
+Ready for **Phase 4: Cleanup & Polish**
+
+Phase 4 will:
+
+- Update backend route handlers to use new agent URLs
+- Add E2E tests for customer-agent and updated tenant-agent
+- Update CLAUDE.md with new architecture
+- Final documentation and cleanup
 
 ---
 

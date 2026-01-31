@@ -71,8 +71,15 @@ export { togglePageTool } from './toggle-page.js';
 export { generateCopyTool, improveSectionCopyTool } from './marketing.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TODO: Phase 2d - Project Management Tools
+// Project Management Tools (T1/T2) - Phase 3
 // ─────────────────────────────────────────────────────────────────────────────
-// - get_project_details (T1)
-// - send_project_message (T2)
-// - update_project_status (T2)
+
+export {
+  getPendingRequestsTool,
+  getCustomerActivityTool,
+  getProjectDetailsTool,
+  approveRequestTool,
+  denyRequestTool,
+  sendMessageToCustomerTool,
+  updateProjectStatusTool,
+} from './project-management.js';

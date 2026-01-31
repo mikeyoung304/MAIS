@@ -160,6 +160,66 @@ export async function callMaisApi(
   }
 }
 
+/**
+ * Call the MAIS backend API with full HTTP method support and typed response.
+ *
+ * @param endpoint - API endpoint path (e.g., '/project-hub/pending-requests')
+ * @param method - HTTP method (GET, POST, PUT, DELETE)
+ * @param body - Request body (for POST/PUT)
+ * @returns Typed response data
+ * @throws Error on failure
+ */
+export async function callBackendAPI<T>(
+  endpoint: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  body?: Record<string, unknown>
+): Promise<T> {
+  const url = `${MAIS_API_URL}${AGENT_API_PATH}${endpoint}`;
+
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Secret': INTERNAL_API_SECRET,
+        },
+        ...(body && { body: JSON.stringify(body) }),
+      },
+      TIMEOUTS.BACKEND_API
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(
+        { endpoint, method, status: response.status, error: errorText },
+        '[TenantAgent] Backend API error'
+      );
+      throw new Error(`Backend API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.json() as Promise<T>;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logger.error(
+        { endpoint, method, timeout: TIMEOUTS.BACKEND_API },
+        '[TenantAgent] API timeout'
+      );
+      throw new Error(`Backend API timeout after ${TIMEOUTS.BACKEND_API}ms`);
+    }
+    // Re-throw if already a handled error
+    if (error instanceof Error && error.message.startsWith('Backend API error:')) {
+      throw error;
+    }
+    logger.error(
+      { endpoint, method, error: error instanceof Error ? error.message : String(error) },
+      '[TenantAgent] Network error'
+    );
+    throw error;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tenant ID Extraction
 // ─────────────────────────────────────────────────────────────────────────────
