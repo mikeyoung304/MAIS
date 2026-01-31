@@ -18,8 +18,8 @@ branch: feat/semantic-storefront
 | -------- | -------------- | ---------- | ---------------------------------------------------------------------- |
 | Phase 0  | ✅ Complete    | `d2941c8a` | Database schema foundation (Tier, SectionContent, VocabularyEmbedding) |
 | Phase 1  | ✅ Complete    | `972f2939` | Vocabulary Embedding Service with pgvector semantic search             |
-| Phase 2a | ✅ Complete    | -          | Tenant Agent Foundation (deployed to Cloud Run)                        |
-| Phase 2b | 🔲 Not Started | -          | Migrate storefront editing capabilities                                |
+| Phase 2a | ✅ Complete    | `9d337c1d` | Tenant Agent Foundation (deployed to Cloud Run)                        |
+| Phase 2b | ✅ Complete    | `84aa6635` | Migrate storefront editing tools (11 tools)                            |
 | Phase 2c | 🔲 Not Started | -          | Migrate marketing copy generation                                      |
 | Phase 2d | 🔲 Not Started | -          | Retire legacy agents                                                   |
 | Phase 3  | 🔲 Not Started | -          | Unified Customer Agent                                                 |
@@ -45,7 +45,7 @@ branch: feat/semantic-storefront
 - Cosine similarity search via pgvector `<=>` operator
 - **19 tests** validating embedding generation and similarity search
 
-**Phase 2a - Tenant Agent Foundation (In Progress):**
+**Phase 2a - Tenant Agent Foundation:**
 
 - Standalone `tenant-agent` deployment package with ADK LlmAgent
 - `TenantAgentContext` builder with parallel API fetching
@@ -54,6 +54,19 @@ branch: feat/semantic-storefront
 - Comprehensive system prompt with Trust Tier routing (T1/T2/T3)
 - DashboardAction types for frontend integration
 - `/v1/internal/agent/vocabulary/resolve` backend endpoint
+
+**Phase 2b - Storefront Editing Tools:**
+
+- Migrated 11 tools from `storefront-agent` to `tenant-agent`
+- Modular tool files organized by concern:
+  - `storefront-read.ts`: get_page_structure, get_section_content (T1)
+  - `storefront-write.ts`: update_section, add_section, remove_section, reorder_sections (T2)
+  - `branding.ts`: update_branding (T2)
+  - `draft.ts`: preview_draft (T1), publish_draft (T3), discard_draft (T3)
+  - `toggle-page.ts`: toggle_page (T1)
+- T3 tools enforce `confirmationReceived` parameter (pitfall #49)
+- Tools return `hasDraft` state for proper LLM communication (pitfall #52)
+- E2E verified: Agent correctly calls get_page_structure tool
 
 ### Files Created/Modified
 
@@ -90,22 +103,40 @@ server/src/agent-v2/deploy/tenant/.env
 server/src/routes/internal-agent.routes.ts (modified - added vocabulary endpoint)
 server/src/routes/index.ts (modified - wired VocabularyEmbeddingService + Tenant Agent routes)
 server/src/routes/tenant-admin-tenant-agent.routes.ts (NEW - /chat/tenant endpoint)
+
+# Phase 2b files (Storefront Editing Tools)
+server/src/agent-v2/deploy/tenant/src/tools/storefront-read.ts (NEW)
+server/src/agent-v2/deploy/tenant/src/tools/storefront-write.ts (NEW)
+server/src/agent-v2/deploy/tenant/src/tools/branding.ts (NEW)
+server/src/agent-v2/deploy/tenant/src/tools/draft.ts (NEW)
+server/src/agent-v2/deploy/tenant/src/tools/toggle-page.ts (NEW)
+server/src/agent-v2/deploy/tenant/src/tools/index.ts (modified - export all tools)
+server/src/agent-v2/deploy/tenant/src/agent.ts (modified - register 15 tools)
+server/src/agent-v2/deploy/tenant/src/prompts/system.ts (modified - storefront instructions)
 ```
 
 ### Deployments
 
 - ✅ `tenant-agent` deployed to Cloud Run: `https://tenant-agent-506923455711.us-central1.run.app`
 - ✅ `/v1/tenant-admin/agent/tenant/chat` route handler added
+- ✅ Revision `tenant-agent-00003-c5d` with all 15 tools (Phase 2b)
 
 ### Next Steps
 
-**Phase 2a completed!** ✅
+**Phase 2b completed!** ✅
 
 - [x] Deploy tenant-agent to Cloud Run
 - [x] Add `/chat/tenant` route handler
 - [x] E2E: verify navigation tools work (resolve_vocabulary correctly calls backend)
+- [x] Migrate 11 storefront editing tools from storefront-agent
+- [x] E2E: verify get_page_structure tool call via Cloud Run
 
-Ready for **Phase 2b: Migrate Storefront Editing** capabilities.
+Ready for **Phase 2c: Migrate Marketing Copy Generation** capabilities.
+
+Tools to migrate from `marketing-agent`:
+
+- `generate_copy` - Generate marketing copy for sections
+- `improve_section_copy` - Improve existing section content
 
 ---
 
