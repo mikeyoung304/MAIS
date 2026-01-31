@@ -20,8 +20,8 @@ branch: feat/semantic-storefront
 | Phase 1  | ✅ Complete    | `972f2939` | Vocabulary Embedding Service with pgvector semantic search             |
 | Phase 2a | ✅ Complete    | `9d337c1d` | Tenant Agent Foundation (deployed to Cloud Run)                        |
 | Phase 2b | ✅ Complete    | `84aa6635` | Migrate storefront editing tools (11 tools)                            |
-| Phase 2c | 🔲 Not Started | -          | Migrate marketing copy generation                                      |
-| Phase 2d | 🔲 Not Started | -          | Retire legacy agents                                                   |
+| Phase 2c | ✅ Complete    | -          | Migrate marketing copy generation (2 tools)                            |
+| Phase 2d | ✅ Complete    | -          | Retire legacy agents (storefront, marketing)                           |
 | Phase 3  | 🔲 Not Started | -          | Unified Customer Agent                                                 |
 | Phase 4  | 🔲 Not Started | -          | Cleanup & Polish                                                       |
 
@@ -68,6 +68,28 @@ branch: feat/semantic-storefront
 - Tools return `hasDraft` state for proper LLM communication (pitfall #52)
 - E2E verified: Agent correctly calls get_page_structure tool
 
+**Phase 2c - Marketing Copy Tools (COMPLETE):**
+
+- Created `marketing.ts` with 2 new tools:
+  - `generate_copy` (T1): Generate marketing copy
+    - copyType: headline, description, tagline, about
+    - tone: professional, warm, creative, luxury
+    - Returns the best option for the context
+  - `improve_section_copy` (T2): Improve existing section content
+    - Reads current content, generates improvement, applies to draft
+    - Common: "make it more engaging", "add urgency", "shorten it"
+- Updated system prompt with marketing copy decision flow
+- Agent now has 17 tools total (15 from Phase 2b + 2 from Phase 2c)
+
+**Phase 2d - Retire Legacy Agents (COMPLETE):**
+
+- Archived `storefront-agent` to `server/src/agent-v2/archive/storefront/`
+- Archived `marketing-agent` to `server/src/agent-v2/archive/marketing/`
+- Deleted Cloud Run services: `storefront-agent`, `marketing-agent`
+- Updated SERVICE_REGISTRY.md with archived status
+- Kept `concierge-agent` running (frontend may still use old chat path)
+- Archive kept for 30-day rollback safety
+
 ### Files Created/Modified
 
 ```
@@ -113,6 +135,18 @@ server/src/agent-v2/deploy/tenant/src/tools/toggle-page.ts (NEW)
 server/src/agent-v2/deploy/tenant/src/tools/index.ts (modified - export all tools)
 server/src/agent-v2/deploy/tenant/src/agent.ts (modified - register 15 tools)
 server/src/agent-v2/deploy/tenant/src/prompts/system.ts (modified - storefront instructions)
+
+# Phase 2c files (Marketing Copy Tools)
+server/src/agent-v2/deploy/tenant/src/tools/marketing.ts (NEW)
+server/src/agent-v2/deploy/tenant/src/tools/index.ts (modified - export marketing tools)
+server/src/agent-v2/deploy/tenant/src/agent.ts (modified - register 17 tools)
+server/src/agent-v2/deploy/tenant/src/prompts/system.ts (modified - marketing instructions)
+
+# Phase 2d files (Retire Legacy Agents)
+server/src/agent-v2/archive/ (NEW directory)
+server/src/agent-v2/archive/storefront/ (moved from deploy/)
+server/src/agent-v2/archive/marketing/ (moved from deploy/)
+server/src/agent-v2/deploy/SERVICE_REGISTRY.md (modified - archived status)
 ```
 
 ### Deployments
@@ -120,23 +154,31 @@ server/src/agent-v2/deploy/tenant/src/prompts/system.ts (modified - storefront i
 - ✅ `tenant-agent` deployed to Cloud Run: `https://tenant-agent-506923455711.us-central1.run.app`
 - ✅ `/v1/tenant-admin/agent/tenant/chat` route handler added
 - ✅ Revision `tenant-agent-00003-c5d` with all 15 tools (Phase 2b)
+- ✅ Revision `tenant-agent-00004-dfz` with all 17 tools (Phase 2c)
 
 ### Next Steps
 
-**Phase 2b completed!** ✅
+**Phase 2 completed!** ✅
 
-- [x] Deploy tenant-agent to Cloud Run
-- [x] Add `/chat/tenant` route handler
-- [x] E2E: verify navigation tools work (resolve_vocabulary correctly calls backend)
-- [x] Migrate 11 storefront editing tools from storefront-agent
-- [x] E2E: verify get_page_structure tool call via Cloud Run
+- [x] Phase 2a: Tenant Agent Foundation
+- [x] Phase 2b: Migrate storefront editing tools (11 tools)
+- [x] Phase 2c: Migrate marketing copy generation (2 tools)
+- [x] Phase 2d: Retire legacy agents (storefront, marketing)
 
-Ready for **Phase 2c: Migrate Marketing Copy Generation** capabilities.
+**Current Cloud Run Services:**
 
-Tools to migrate from `marketing-agent`:
+- ✅ `tenant-agent` - 17 tools (unified tenant experience)
+- ✅ `booking-agent` - Customer booking flow
+- ✅ `research-agent` - Web research
+- ✅ `project-hub-agent` - Project management (to be migrated in future)
+- ⚠️ `concierge-agent` - Still running for legacy frontend compatibility
 
-- `generate_copy` - Generate marketing copy for sections
-- `improve_section_copy` - Improve existing section content
+Ready for **Phase 3: Unified Customer Agent**
+
+Phase 3 will consolidate:
+
+- `booking-agent` → `customer-agent`
+- `project-hub-agent` (customer view) → `customer-agent`
 
 ---
 

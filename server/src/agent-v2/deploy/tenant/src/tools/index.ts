@@ -65,10 +65,10 @@ export { previewDraftTool, publishDraftTool, discardDraftTool } from './draft.js
 export { togglePageTool } from './toggle-page.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TODO: Phase 2c - Marketing Copy Tools
+// Marketing Copy Tools (T1/T2) - Phase 2c
 // ─────────────────────────────────────────────────────────────────────────────
-// - generate_copy (T1)
-// - improve_section_copy (T2)
+
+export { generateCopyTool, improveSectionCopyTool } from './marketing.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TODO: Phase 2d - Project Management Tools

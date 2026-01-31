@@ -56,6 +56,10 @@ import {
 
   // Page Management (T1) - Phase 2b
   togglePageTool,
+
+  // Marketing Copy (T1/T2) - Phase 2c
+  generateCopyTool,
+  improveSectionCopyTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,16 +73,16 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 2b (Storefront Editing)
+ * Current Phase: 2c (Marketing Copy)
  * - Navigation tools
  * - Vocabulary resolution
  * - Storefront read/write tools
  * - Branding updates
  * - Draft management (preview, publish, discard)
  * - Page toggle
+ * - Marketing copy generation and improvement
  *
  * Upcoming Phases:
- * - 2c: Marketing copy tools
  * - 2d: Project management tools
  */
 export const tenantAgent = new LlmAgent({
@@ -140,7 +144,16 @@ export const tenantAgent = new LlmAgent({
     publishDraftTool,
     discardDraftTool,
 
-    // TODO: Phase 2c will add marketing copy tools
+    // ─────────────────────────────────────────────────────────────────────────
+    // Marketing Copy (T1/T2) - Phase 2c
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Copy Generation
+    generateCopyTool,
+
+    // Copy Improvement
+    improveSectionCopyTool,
+
     // TODO: Phase 2d will add project management tools
   ],
 
