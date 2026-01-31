@@ -569,6 +569,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // Called by Concierge when it learns something about the business
   // ===========================================================================
 
+  // NOTE: Keep in sync with server/src/agent-v2/deploy/tenant/src/tools/discovery.ts
   const DISCOVERY_FACT_KEYS = [
     'businessType',
     'businessName',
@@ -579,6 +580,12 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     'teamSize',
     'uniqueValue',
     'servicesOffered',
+    'specialization',
+    'approach',
+    'dreamClient',
+    'testimonial',
+    'faq',
+    'contactInfo',
   ] as const;
 
   const StoreDiscoveryFactSchema = TenantIdSchema.extend({
