@@ -40,13 +40,14 @@ interface HealthResponse {
 // Configuration
 // =============================================================================
 
+// Phase 4 Update (2026-01-31): Consolidated to 3 agents
+// - customer-agent: booking + project-hub (customer view)
+// - tenant-agent: concierge + storefront + marketing + project-hub (tenant view)
+// - research-agent: unchanged
 const AGENT_URLS = {
-  booking: process.env.BOOKING_AGENT_URL,
-  marketing: process.env.MARKETING_AGENT_URL,
-  storefront: process.env.STOREFRONT_AGENT_URL,
+  customer: process.env.CUSTOMER_AGENT_URL,
+  tenant: process.env.TENANT_AGENT_URL,
   research: process.env.RESEARCH_AGENT_URL,
-  concierge: process.env.CONCIERGE_AGENT_URL,
-  'project-hub': process.env.PROJECT_HUB_AGENT_URL, // Issue #3 Fix: Add project-hub agent
 } as const;
 
 // =============================================================================

@@ -1,12 +1,12 @@
 /**
  * Customer Agent Service
  *
- * Handles communication between customer chatbot and the Booking Agent.
- * Routes customer chat directly to the Booking Agent (not through Concierge).
+ * Handles communication between customer chatbot and the unified Customer Agent.
+ * Routes customer chat directly to the Customer Agent on Cloud Run.
  *
  * Architecture:
  * - Creates sessions scoped to tenant + customer
- * - Sends messages to Booking Agent via A2A protocol
+ * - Sends messages to Customer Agent via A2A protocol
  * - Persists sessions and messages to PostgreSQL via SessionService
  *
  * Security:
@@ -14,7 +14,12 @@
  * - Each customer gets isolated sessions
  * - Uses Google Cloud IAM for agent authentication
  *
- * @see plans/LEGACY_AGENT_MIGRATION_PLAN.md Phase 1
+ * Phase 4 Update (2026-01-31):
+ * - Migrated from booking-agent to unified customer-agent
+ * - Customer Agent now handles: booking, project-hub (customer view)
+ * - Uses CUSTOMER_AGENT_URL instead of BOOKING_AGENT_URL
+ *
+ * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
 import { GoogleAuth, JWT } from 'google-auth-library';
@@ -101,8 +106,21 @@ function getRequiredEnv(name: string): string {
   return value;
 }
 
-function getBookingAgentUrl(): string {
-  return getRequiredEnv('BOOKING_AGENT_URL');
+// Phase 4 Update: Renamed from getCustomerAgentUrl() to getCustomerAgentUrl()
+// Now points to unified customer-agent (booking + project-hub customer view)
+function getCustomerAgentUrl(): string {
+  // Support both new and legacy env var names for backward compatibility during rollout
+  const newUrl = process.env.CUSTOMER_AGENT_URL;
+  if (newUrl) return newUrl;
+
+  // Fallback to legacy variable (deprecated - remove after migration complete)
+  const legacyUrl = process.env.BOOKING_AGENT_URL;
+  if (legacyUrl) return legacyUrl;
+
+  throw new Error(
+    'Missing required environment variable: CUSTOMER_AGENT_URL. ' +
+      'Set this in your .env file or Render dashboard.'
+  );
 }
 
 // =============================================================================
@@ -196,7 +214,7 @@ export class CustomerAgentService {
     try {
       const token = await this.getIdentityToken();
       const response = await fetchWithTimeout(
-        `${getBookingAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        `${getCustomerAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
           headers: {
@@ -346,7 +364,7 @@ export class CustomerAgentService {
         ? `${tenantId}:customer:${dbSession.customerId}`
         : `${tenantId}:anonymous`;
 
-      const response = await fetchWithTimeout(`${getBookingAgentUrl()}/run`, {
+      const response = await fetchWithTimeout(`${getCustomerAgentUrl()}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -500,7 +518,7 @@ export class CustomerAgentService {
     try {
       const token = await this.getIdentityToken();
       const response = await fetchWithTimeout(
-        `${getBookingAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        `${getCustomerAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
           headers: {
@@ -531,7 +549,7 @@ export class CustomerAgentService {
 
     // Retry with new session
     const token = await this.getIdentityToken();
-    const response = await fetchWithTimeout(`${getBookingAgentUrl()}/run`, {
+    const response = await fetchWithTimeout(`${getCustomerAgentUrl()}/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -601,7 +619,7 @@ export class CustomerAgentService {
           email: this.serviceAccountCredentials.client_email,
           key: this.serviceAccountCredentials.private_key,
         });
-        const idToken = await jwtClient.fetchIdToken(getBookingAgentUrl());
+        const idToken = await jwtClient.fetchIdToken(getCustomerAgentUrl());
         if (idToken) {
           return idToken;
         }
@@ -612,7 +630,7 @@ export class CustomerAgentService {
 
     // GoogleAuth (ADC)
     try {
-      const client = await this.auth.getIdTokenClient(getBookingAgentUrl());
+      const client = await this.auth.getIdTokenClient(getCustomerAgentUrl());
       const headers = await client.getRequestHeaders();
       const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';
       const token = authHeader.replace('Bearer ', '');

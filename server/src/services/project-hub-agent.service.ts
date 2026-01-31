@@ -1,11 +1,17 @@
 /**
  * Project Hub Agent Service
  *
- * Handles communication between MAIS backend and the Project Hub agent on Cloud Run.
- * Similar to VertexAgentService but tailored for Project Hub's dual-context architecture.
+ * Handles communication between MAIS backend and the Customer Agent on Cloud Run
+ * for project hub functionality.
  *
- * Key differences from VertexAgentService:
- * - Uses PROJECT_HUB_AGENT_URL (separate deployment)
+ * Phase 4 Update (2026-01-31):
+ * - Migrated from project-hub-agent to unified customer-agent
+ * - Customer Agent now handles: booking + project-hub (customer view)
+ * - Uses CUSTOMER_AGENT_URL instead of PROJECT_HUB_AGENT_URL
+ * - Tenant view of project-hub is now handled by tenant-agent
+ *
+ * Key features:
+ * - Uses CUSTOMER_AGENT_URL (unified customer-agent deployment)
  * - Sets contextType in session state at creation (security-critical)
  * - Simpler session model (no persistent storage needed)
  *
@@ -14,7 +20,7 @@
  * - Uses Google Cloud IAM Identity Token for Cloud Run authentication
  * - All operations are tenant-scoped
  *
- * @see docs/plans/2026-01-25-feat-project-hub-phase-1-chat-fix-plan.md
+ * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
 import { GoogleAuth, JWT } from 'google-auth-library';
@@ -111,18 +117,26 @@ async function fetchWithTimeout(
 // =============================================================================
 
 /**
- * Get Project Hub agent URL from environment.
+ * Get Customer Agent URL from environment.
+ * Phase 4 Update: Now uses CUSTOMER_AGENT_URL (unified customer-agent).
  * Throws clear error if not configured (Pitfall #45: fail-fast on missing config).
  */
-function getProjectHubAgentUrl(): string {
-  const url = process.env.PROJECT_HUB_AGENT_URL;
-  if (!url) {
-    throw new Error(
-      'Missing required environment variable: PROJECT_HUB_AGENT_URL. ' +
-        'Set this in Render dashboard or .env file.'
-    );
-  }
-  return url;
+function getCustomerAgentUrl(): string {
+  // Primary: new unified customer-agent URL
+  const newUrl = process.env.CUSTOMER_AGENT_URL;
+  if (newUrl) return newUrl;
+
+  // Fallback: legacy variable names (deprecated - remove after migration complete)
+  const legacyProjectHubUrl = process.env.PROJECT_HUB_AGENT_URL;
+  if (legacyProjectHubUrl) return legacyProjectHubUrl;
+
+  const legacyBookingUrl = process.env.BOOKING_AGENT_URL;
+  if (legacyBookingUrl) return legacyBookingUrl;
+
+  throw new Error(
+    'Missing required environment variable: CUSTOMER_AGENT_URL. ' +
+      'Set this in Render dashboard or .env file.'
+  );
 }
 
 // =============================================================================
@@ -198,7 +212,7 @@ export class ProjectHubAgentService {
 
     try {
       const token = await this.getIdentityToken();
-      const agentUrl = getProjectHubAgentUrl();
+      const agentUrl = getCustomerAgentUrl();
 
       const response = await fetchWithTimeout(
         `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
@@ -303,7 +317,7 @@ export class ProjectHubAgentService {
 
     try {
       const token = await this.getIdentityToken();
-      const agentUrl = getProjectHubAgentUrl();
+      const agentUrl = getCustomerAgentUrl();
       const fullUrl = `${agentUrl}/run`;
 
       logger.info(
@@ -422,7 +436,7 @@ export class ProjectHubAgentService {
    * Priority: JWT (service account) > GoogleAuth (ADC) > gcloud CLI (local dev)
    */
   private async getIdentityToken(): Promise<string | null> {
-    const targetUrl = getProjectHubAgentUrl();
+    const targetUrl = getCustomerAgentUrl();
 
     // First try: JWT with service account credentials (most reliable for Render)
     if (this.serviceAccountCredentials) {

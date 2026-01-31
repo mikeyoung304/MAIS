@@ -70,8 +70,9 @@ For detailed architecture documentation, search or read these files when working
 | Layered architecture           | `server/src/di.ts`, `server/src/lib/ports.ts`          |
 | Port interfaces                | `ITenantRepository`, `BookingRepository` in `ports.ts` |
 | Type-safe API contracts        | `packages/contracts/`, ts-rest + Zod                   |
-| AI Agents (Vertex AI)          | `server/src/agent-v2/`, ADR-018 hub-and-spoke          |
+| AI Agents (Vertex AI + ADK)    | `server/src/agent-v2/`, 3-agent architecture           |
 | Agent deployment               | `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`       |
+| Agent architecture (Phase 4)   | customer-agent, tenant-agent, research-agent           |
 | Business advisor (onboarding)  | `server/src/agent/onboarding/`, AdvisorMemoryService   |
 | Build mode (storefront editor) | `docs/architecture/BUILD_MODE_VISION.md`               |
 | Landing page config            | `apps/web/src/lib/tenant.ts`, `normalizeToPages()`     |
@@ -97,6 +98,37 @@ The codebase has two draft systems for landing page configuration (documented te
 - **Single source of truth**: `LandingPageService` in `server/src/services/landing-page.service.ts`
 
 **Use `repo-research-analyst` agent** for codebase exploration when context is unclear.
+
+### Agent Architecture (Phase 4 - January 2026)
+
+MAIS uses 3 consolidated AI agents deployed to Cloud Run:
+
+| Agent          | Cloud Run Service | Tools | Purpose                                                         |
+| -------------- | ----------------- | ----- | --------------------------------------------------------------- |
+| customer-agent | `customer-agent`  | 13    | Service discovery, booking, project hub (customer view)         |
+| tenant-agent   | `tenant-agent`    | 24    | Storefront editing, marketing, project management (tenant view) |
+| research-agent | `research-agent`  | —     | Web research (unchanged)                                        |
+
+**Environment Variables:**
+
+- `CUSTOMER_AGENT_URL` - Unified customer-facing agent (booking + project-hub customer)
+- `TENANT_AGENT_URL` - Unified tenant-facing agent (storefront + marketing + project-hub tenant)
+- `RESEARCH_AGENT_URL` - Web research agent
+
+**Archived Agents** (5 total, in `server/src/agent-v2/archive/`):
+
+- `booking-agent` → migrated to customer-agent
+- `project-hub-agent` → split between customer-agent and tenant-agent
+- `storefront-agent` → migrated to tenant-agent
+- `marketing-agent` → migrated to tenant-agent
+- `concierge-agent` → migrated to tenant-agent
+
+**Key Files:**
+
+- Service registry: `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`
+- Customer agent: `server/src/agent-v2/deploy/customer/`
+- Tenant agent: `server/src/agent-v2/deploy/tenant/`
+- Migration plan: `docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md`
 
 ## Development Workflow
 

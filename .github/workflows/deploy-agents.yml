@@ -17,12 +17,9 @@ on:
         type: choice
         options:
           - all
-          - concierge
-          - marketing
-          - storefront
+          - customer
+          - tenant
           - research
-          - booking
-          - project-hub
       force:
         description: 'Force deployment even without changes'
         required: false
@@ -64,7 +61,8 @@ jobs:
           # If manual trigger with specific agent
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ github.event.inputs.agent }}" = "all" ]; then
-              AGENTS='["concierge","marketing","storefront","research","booking","project-hub"]'
+              # Phase 4 Update: Only 3 active agents (customer, tenant, research)
+              AGENTS='["customer","tenant","research"]'
             else
               AGENTS='["${{ github.event.inputs.agent }}"]'
             fi
@@ -78,7 +76,8 @@ jobs:
           CHANGED_AGENTS=""
 
           # Check each agent directory for changes
-          for AGENT in concierge marketing storefront research booking project-hub; do
+          # Phase 4 Update: Only 3 active agents (customer, tenant, research)
+          for AGENT in customer tenant research; do
             if git diff --name-only HEAD~1 HEAD | grep -q "server/src/agent-v2/deploy/$AGENT/"; then
               if [ -z "$CHANGED_AGENTS" ]; then
                 CHANGED_AGENTS="\"$AGENT\""
@@ -307,12 +306,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Agent | Cloud Run URL |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|---------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| concierge | https://concierge-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
-          echo "| marketing | https://marketing-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
-          echo "| storefront | https://storefront-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
+          echo "| customer | https://customer-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
+          echo "| tenant | https://tenant-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
           echo "| research | https://research-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
-          echo "| booking | https://booking-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
-          echo "| project-hub | https://project-hub-agent-506923455711.us-central1.run.app |" >> $GITHUB_STEP_SUMMARY
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY

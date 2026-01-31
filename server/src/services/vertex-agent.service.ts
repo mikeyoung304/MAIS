@@ -1,12 +1,12 @@
 /**
  * Vertex Agent Service
  *
- * Handles communication between MAIS dashboard and the Concierge agent.
+ * Handles communication between MAIS dashboard and the Tenant Agent.
  * Manages agent sessions, message sending, and response streaming.
  *
  * Architecture:
  * - Creates sessions scoped to tenant + user
- * - Sends messages to Concierge via A2A protocol
+ * - Sends messages to Tenant Agent via A2A protocol
  * - Receives responses and routes them to WebSocket clients
  * - Persists sessions and messages to PostgreSQL via SessionService
  *
@@ -16,7 +16,12 @@
  * - Messages encrypted at rest via SessionService
  * - Optimistic locking prevents concurrent modification
  *
- * @see plans/feat-persistent-chat-session-storage.md Phase 3
+ * Phase 4 Update (2026-01-31):
+ * - Migrated from concierge-agent to unified tenant-agent
+ * - Tenant Agent now handles: storefront, marketing, project management (tenant view)
+ * - Uses TENANT_AGENT_URL instead of CONCIERGE_AGENT_URL
+ *
+ * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
 import { GoogleAuth, JWT } from 'google-auth-library';
@@ -133,8 +138,20 @@ function getRequiredEnv(name: string): string {
 
 // Agent URLs - no hardcoded fallbacks with project numbers
 // Validation happens at first use, not at import time (to allow test imports)
-function getConciergeAgentUrl(): string {
-  return getRequiredEnv('CONCIERGE_AGENT_URL');
+// Phase 4 Update: Renamed from getTenantAgentUrl() to getTenantAgentUrl()
+function getTenantAgentUrl(): string {
+  // Primary: new unified tenant-agent URL
+  const newUrl = process.env.TENANT_AGENT_URL;
+  if (newUrl) return newUrl;
+
+  // Fallback: legacy variable (deprecated - remove after migration complete)
+  const legacyUrl = process.env.CONCIERGE_AGENT_URL;
+  if (legacyUrl) return legacyUrl;
+
+  throw new Error(
+    'Missing required environment variable: TENANT_AGENT_URL. ' +
+      'Set this in your .env file or Render dashboard.'
+  );
 }
 
 function getGoogleCloudProject(): string {
@@ -240,7 +257,7 @@ export class VertexAgentService {
       const token = await this.getIdentityToken();
       const response = await fetchWithTimeout(
         // ADK app name is 'agent' (from /list-apps endpoint)
-        `${getConciergeAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        `${getTenantAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
           headers: {
@@ -447,7 +464,7 @@ export class VertexAgentService {
       // Send to Concierge agent via A2A protocol
       // user_id must match the format used in session creation
       const adkUserId = `${tenantId}:${userId}`;
-      const response = await fetchWithTimeout(`${getConciergeAgentUrl()}/run`, {
+      const response = await fetchWithTimeout(`${getTenantAgentUrl()}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -623,7 +640,7 @@ export class VertexAgentService {
     let response: Response;
     try {
       const token = await this.getIdentityToken();
-      response = await fetchWithTimeout(`${getConciergeAgentUrl()}/run`, {
+      response = await fetchWithTimeout(`${getTenantAgentUrl()}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -805,7 +822,7 @@ export class VertexAgentService {
       const adkUserId = `${tenantId}:${userId}`;
 
       const response = await fetchWithTimeout(
-        `${getConciergeAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+        `${getTenantAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
           method: 'POST',
           headers: {
@@ -868,7 +885,7 @@ export class VertexAgentService {
           email: this.serviceAccountCredentials.client_email,
           key: this.serviceAccountCredentials.private_key,
         });
-        const idToken = await jwtClient.fetchIdToken(getConciergeAgentUrl());
+        const idToken = await jwtClient.fetchIdToken(getTenantAgentUrl());
         if (idToken) {
           logger.info('[VertexAgent] Got identity token via JWT (service account)');
           return idToken;
@@ -884,7 +901,7 @@ export class VertexAgentService {
 
     // Second try: GoogleAuth (works with ADC on GCP)
     try {
-      const client = await this.auth.getIdTokenClient(getConciergeAgentUrl());
+      const client = await this.auth.getIdTokenClient(getTenantAgentUrl());
       const headers = await client.getRequestHeaders();
       // getRequestHeaders returns { Authorization: 'Bearer ...' } or empty object
       const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';
