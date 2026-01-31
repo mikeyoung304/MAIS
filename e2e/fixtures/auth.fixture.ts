@@ -86,47 +86,69 @@ export const test = base.extend<{
       { timeout: 5000 }
     );
 
-    // Set up response listener BEFORE clicking
-    // Note: Signup uses window.location.href redirect, which may cause the response
-    // to be received after navigation starts. We use Promise.race to handle both cases.
-    const responsePromise = page.waitForResponse(
-      (response) => response.url().includes('/v1/auth/signup'),
-      { timeout: 30000 }
-    );
+    // P0-FIX: Capture actual slug from API response using route interception
+    // The server generates slugs as `${baseSlug}-${Date.now()}` which differs
+    // from the fixture's predicted slug. Tests need the actual slug to navigate
+    // to the storefront correctly.
+    let capturedSlug: string | null = null;
+    let signupError: string | null = null;
+
+    // Intercept the signup response to capture the actual slug
+    await page.route('**/v1/auth/signup', async (route) => {
+      const response = await route.fetch();
+
+      if (response.status() === 429) {
+        signupError = 'Rate limited - run tests with lower parallelism or wait';
+      } else if (response.status() !== 201) {
+        const text = await response.text();
+        signupError = `Signup failed with status ${response.status()}: ${text}`;
+        await route.fulfill({ response });
+        return;
+      }
+
+      const body = await response.json();
+      if (body.slug) {
+        capturedSlug = body.slug;
+      }
+
+      // Fulfill with the original response body
+      await route.fulfill({
+        status: response.status(),
+        headers: response.headers(),
+        body: JSON.stringify(body),
+      });
+    });
 
     // Click submit button
     await page.click('button[type="submit"]');
 
-    // Wait for API response first to check for errors
-    // The signup page shows loading state while waiting for response
+    // Wait for navigation to complete (signup redirects to /tenant/build then /tenant/dashboard)
     try {
-      const response = await Promise.race([
-        responsePromise,
-        // Also create a timeout promise that rejects after navigation
-        page.waitForURL(/\/tenant\//, { timeout: 30000 }).then(() => null),
-      ]);
-
-      // If we got a response (not null from navigation), check it
-      if (response) {
-        if (response.status() === 429) {
-          throw new Error('Rate limited - run tests with lower parallelism or wait');
-        }
-        if (response.status() !== 201) {
-          const body = await response.text();
-          throw new Error(`Signup failed with status ${response.status()}: ${body}`);
-        }
-      }
+      await page.waitForURL(/\/tenant\//, { timeout: 30000 });
     } catch (error) {
-      // If the error is from navigation timeout, that's expected behavior
-      // because signup might redirect before we can capture the response
-      if (error instanceof Error && error.message.includes('Rate limited')) {
-        throw error;
+      // Check if we captured an error from the signup response
+      if (signupError) {
+        throw new Error(signupError);
       }
-      if (error instanceof Error && error.message.includes('Signup failed')) {
-        throw error;
+      // Check if navigation timed out
+      if (error instanceof Error && error.message.includes('timeout')) {
+        throw new Error('Signup redirect timed out - check API server');
       }
-      // Otherwise continue - navigation might have already happened
+      throw error;
     }
+
+    // Check for signup errors that didn't prevent navigation
+    if (signupError) {
+      throw new Error(signupError);
+    }
+
+    // Update testTenant with actual slug if captured
+    if (capturedSlug) {
+      testTenant.slug = capturedSlug;
+    }
+
+    // Remove the route handler to avoid affecting other requests
+    await page.unroute('**/v1/auth/signup');
 
     // Wait for redirect to Dashboard (Build Mode redirects to dashboard with preview)
     // /tenant/build → /tenant/dashboard?showPreview=true
