@@ -18,9 +18,9 @@ branch: feat/semantic-storefront
 | -------- | -------------- | ---------- | ---------------------------------------------------------------------- |
 | Phase 0  | ✅ Complete    | `d2941c8a` | Database schema foundation (Tier, SectionContent, VocabularyEmbedding) |
 | Phase 1  | ✅ Complete    | `972f2939` | Vocabulary Embedding Service with pgvector semantic search             |
-| Phase 2a | 🔲 Not Started | -          | Tenant Agent Foundation                                                |
-| Phase 2b | 🔲 Not Started | -          | Migrate Onboarding capabilities                                        |
-| Phase 2c | 🔲 Not Started | -          | Migrate Build Mode (storefront editing)                                |
+| Phase 2a | 🔄 In Progress | -          | Tenant Agent Foundation                                                |
+| Phase 2b | 🔲 Not Started | -          | Migrate storefront editing capabilities                                |
+| Phase 2c | 🔲 Not Started | -          | Migrate marketing copy generation                                      |
 | Phase 2d | 🔲 Not Started | -          | Retire legacy agents                                                   |
 | Phase 3  | 🔲 Not Started | -          | Unified Customer Agent                                                 |
 | Phase 4  | 🔲 Not Started | -          | Cleanup & Polish                                                       |
@@ -45,10 +45,20 @@ branch: feat/semantic-storefront
 - Cosine similarity search via pgvector `<=>` operator
 - **19 tests** validating embedding generation and similarity search
 
+**Phase 2a - Tenant Agent Foundation (In Progress):**
+
+- Standalone `tenant-agent` deployment package with ADK LlmAgent
+- `TenantAgentContext` builder with parallel API fetching
+- Navigation tools (T1): `navigate_to_section`, `scroll_to_website_section`, `show_preview`
+- `resolve_vocabulary` tool calling backend vocabulary resolution endpoint
+- Comprehensive system prompt with Trust Tier routing (T1/T2/T3)
+- DashboardAction types for frontend integration
+- `/v1/internal/agent/vocabulary/resolve` backend endpoint
+
 ### Files Created/Modified
 
 ```
-# New files
+# Phase 0-1 files
 packages/contracts/src/schemas/tier.schema.ts
 packages/contracts/src/schemas/section-content.schema.ts
 packages/contracts/src/schemas/version-history.schema.ts
@@ -60,17 +70,35 @@ server/test/schemas/version-history.schema.test.ts
 server/test/services/vocabulary-embedding.service.test.ts
 server/prisma/migrations/20260130210304_semantic_storefront_foundation/
 server/prisma/migrations/20260130210423_add_vocabulary_embedding_ivfflat_index/
+server/prisma/schema.prisma (modified)
+server/src/lib/tenant-defaults.ts (modified)
+server/src/services/tenant-provisioning.service.ts (modified)
+packages/contracts/src/index.ts (modified)
 
-# Modified files
-server/prisma/schema.prisma
-server/src/lib/tenant-defaults.ts
-server/src/services/tenant-provisioning.service.ts
-packages/contracts/src/index.ts
+# Phase 2a files (Tenant Agent)
+server/src/agent-v2/deploy/tenant/package.json
+server/src/agent-v2/deploy/tenant/tsconfig.json
+server/src/agent-v2/deploy/tenant/.env.example
+server/src/agent-v2/deploy/tenant/src/agent.ts
+server/src/agent-v2/deploy/tenant/src/context-builder.ts
+server/src/agent-v2/deploy/tenant/src/utils.ts
+server/src/agent-v2/deploy/tenant/src/prompts/system.ts
+server/src/agent-v2/deploy/tenant/src/tools/index.ts
+server/src/agent-v2/deploy/tenant/src/tools/navigate.ts
+server/src/agent-v2/deploy/tenant/src/tools/vocabulary.ts
+server/src/routes/internal-agent.routes.ts (modified - added vocabulary endpoint)
+server/src/routes/index.ts (modified - wired VocabularyEmbeddingService)
 ```
 
 ### Next Steps
 
-To continue implementation, run `/workflows:work` on this plan and proceed with **Phase 2a: Tenant Agent Foundation**.
+**Phase 2a remaining:**
+
+- Deploy tenant-agent to Cloud Run
+- Add `/chat/tenant` route handler
+- E2E: verify navigation tools work
+
+Then proceed with **Phase 2b: Migrate Storefront Editing** capabilities.
 
 ---
 
@@ -798,6 +826,13 @@ server/src/agent-v2/deploy/tenant/
 
 **Deliverables:**
 
+- [x] Create tenant-agent deployment package structure
+- [x] Create TenantAgentContext builder with parallel fetching
+- [x] Create navigation tools (T1): navigate_to_section, scroll_to_website_section, show_preview
+- [x] Create resolve_vocabulary tool using backend API
+- [x] Create system prompt with Trust Tier routing
+- [x] Create main tenant LlmAgent definition
+- [x] Add /vocabulary/resolve backend endpoint
 - [ ] Deploy tenant-agent to Cloud Run (empty shell)
 - [ ] Route `/chat/tenant` to new agent
 - [ ] Verify context injection works

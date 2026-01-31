@@ -47,6 +47,9 @@
  * - POST /v1/internal/agent/project-hub/approve-request - Approve request (optimistic locking)
  * - POST /v1/internal/agent/project-hub/deny-request - Deny request (optimistic locking)
  * - POST /v1/internal/agent/project-hub/list-projects - List all projects for tenant
+ *
+ * VOCABULARY (for Tenant Agent):
+ * - POST /v1/internal/agent/vocabulary/resolve - Resolve phrase to BlockType using semantic search
  */
 
 import type { Request, Response, NextFunction } from 'express';
@@ -62,6 +65,7 @@ import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repositor
 import type { ServiceRepository } from '../lib/ports';
 import type { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
 import type { ProjectHubService } from '../services/project-hub.service';
+import type { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 import { createPublishedWrapper } from '../lib/landing-page-utils';
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
@@ -91,6 +95,12 @@ const CheckAvailabilitySchema = TenantIdSchema.extend({
 
 const AnswerFaqSchema = TenantIdSchema.extend({
   question: z.string().min(1, 'question is required'),
+});
+
+// Vocabulary Resolution (for Tenant Agent)
+const ResolveVocabularySchema = z.object({
+  phrase: z.string().min(1).max(200, 'phrase must be 200 characters or less'),
+  tenantId: z.string().optional(), // Optional for logging/analytics
 });
 
 const RecommendPackageSchema = TenantIdSchema.extend({
@@ -200,6 +210,7 @@ interface InternalAgentRoutesDeps {
   serviceRepo?: ServiceRepository;
   advisorMemoryService?: AdvisorMemoryService;
   projectHubService?: ProjectHubService;
+  vocabularyEmbeddingService?: VocabularyEmbeddingService;
 }
 
 /**
@@ -220,6 +231,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     serviceRepo,
     advisorMemoryService,
     projectHubService,
+    vocabularyEmbeddingService,
   } = deps;
 
   // ===========================================================================
@@ -2283,6 +2295,49 @@ Apply the feedback while maintaining the ${tone} tone.`;
       });
     } catch (error) {
       handleError(res, error, '/project-hub/list-projects');
+    }
+  });
+
+  // ===========================================================================
+  // VOCABULARY RESOLUTION Endpoints (for Tenant Agent)
+  // ===========================================================================
+
+  /**
+   * POST /vocabulary/resolve - Resolve natural language phrase to BlockType
+   *
+   * Uses VocabularyEmbeddingService to semantically match user phrases like
+   * "my bio" → ABOUT, "reviews" → TESTIMONIALS, "header" → HERO
+   *
+   * Called by: Tenant Agent's resolve_vocabulary tool
+   */
+  router.post('/vocabulary/resolve', async (req: Request, res: Response) => {
+    try {
+      if (!vocabularyEmbeddingService) {
+        res.status(503).json({
+          error: 'Vocabulary embedding service not available',
+          blockType: null,
+          confidence: 0,
+          matchedPhrase: null,
+        });
+        return;
+      }
+
+      const { phrase, tenantId } = ResolveVocabularySchema.parse(req.body);
+
+      logger.info(
+        { phrase, tenantId, endpoint: '/vocabulary/resolve' },
+        '[Agent] Resolving vocabulary phrase'
+      );
+
+      const result = await vocabularyEmbeddingService.resolveBlockType(phrase);
+
+      res.json({
+        blockType: result.blockType,
+        confidence: result.confidence,
+        matchedPhrase: result.matchedPhrase,
+      });
+    } catch (error) {
+      handleError(res, error, '/vocabulary/resolve');
     }
   });
 

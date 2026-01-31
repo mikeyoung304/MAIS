@@ -99,6 +99,7 @@ import type { LandingPageService } from '../services/landing-page.service';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import type { AvailabilityService } from '../services/availability.service';
 import type { ProjectHubService } from '../services/project-hub.service';
+import { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 
 interface Controllers {
   packages: PackagesController;
@@ -775,6 +776,8 @@ export function createV1Router(
     // Create advisor memory service for bootstrap endpoint
     const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prismaClient);
     const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
+    // Create vocabulary embedding service for semantic section resolution
+    const vocabularyEmbeddingService = new VocabularyEmbeddingService(prismaClient);
 
     const internalAgentRoutes = createInternalAgentRoutes({
       internalApiSecret: config.INTERNAL_API_SECRET,
@@ -785,6 +788,7 @@ export function createV1Router(
       serviceRepo: repositories?.service,
       advisorMemoryService,
       projectHubService: services.projectHub,
+      vocabularyEmbeddingService,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');
