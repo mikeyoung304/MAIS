@@ -53,6 +53,18 @@ export interface ConciergeToolCall {
 }
 
 /**
+ * Dashboard action from agent navigation tools
+ * These control UI navigation, scrolling, and preview updates
+ */
+export interface DashboardAction {
+  type: 'NAVIGATE' | 'SCROLL_TO_SECTION' | 'SHOW_PREVIEW' | 'REFRESH';
+  section?: string;
+  blockType?: string;
+  highlight?: boolean;
+  fullScreen?: boolean;
+}
+
+/**
  * Configuration options for useConciergeChat
  */
 export interface UseConciergeChatchatOptions {
@@ -62,6 +74,8 @@ export interface UseConciergeChatchatOptions {
   onSessionStart?: (sessionId: string) => void;
   /** Callback when a tool completes */
   onToolComplete?: (toolCalls: ConciergeToolCall[]) => void;
+  /** Callback when dashboard actions are received (navigation, scroll, preview) */
+  onDashboardActions?: (actions: DashboardAction[]) => void;
   /** Callback when user sends first message */
   onFirstMessage?: () => void;
 }
@@ -113,6 +127,7 @@ export function useConciergeChat({
   initialGreeting = "Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?",
   onSessionStart,
   onToolComplete,
+  onDashboardActions,
   onFirstMessage,
 }: UseConciergeChatchatOptions = {}): UseConciergeChatchatReturn {
   // Core state
@@ -325,6 +340,9 @@ export function useConciergeChat({
       const toolCalls: ConciergeToolCall[] = data.toolCalls || [];
       setLastToolCalls(toolCalls);
 
+      // Extract dashboard actions (navigation, scroll, preview commands)
+      const dashboardActions: DashboardAction[] = data.dashboardActions || [];
+
       // Add assistant message
       const assistantMessage: ConciergeMessage = {
         role: 'assistant',
@@ -337,6 +355,11 @@ export function useConciergeChat({
       // Notify about tool completion
       if (toolCalls.length > 0) {
         onToolComplete?.(toolCalls);
+      }
+
+      // Process dashboard actions (UI navigation commands from agent)
+      if (dashboardActions.length > 0) {
+        onDashboardActions?.(dashboardActions);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -352,6 +375,7 @@ export function useConciergeChat({
     hasSentFirstMessage,
     onFirstMessage,
     onToolComplete,
+    onDashboardActions,
   ]);
 
   // Handle textarea enter key

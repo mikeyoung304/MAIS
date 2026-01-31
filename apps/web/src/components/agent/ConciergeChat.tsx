@@ -4,7 +4,11 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Send, Loader2, Bot, AlertTriangle, Sparkles, Zap } from 'lucide-react';
-import { useConciergeChat, type ConciergeToolCall } from '@/hooks/useConciergeChat';
+import {
+  useConciergeChat,
+  type ConciergeToolCall,
+  type DashboardAction,
+} from '@/hooks/useConciergeChat';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 
 /**
@@ -26,6 +30,8 @@ interface ConciergeChatProps {
   onToolComplete?: (toolCalls: ConciergeToolCall[]) => void;
   /** Callback for UI actions derived from tool calls */
   onUIAction?: (action: ConciergeUIAction) => void;
+  /** Callback when dashboard actions are received from agent (navigation, scroll, preview) */
+  onDashboardActions?: (actions: DashboardAction[]) => void;
   /** Ref for the input textarea (for focus management from parent) */
   inputRef?: React.RefObject<HTMLTextAreaElement>;
   /** ARIA role for messages container */
@@ -52,6 +58,7 @@ export function ConciergeChat({
   onFirstMessage,
   onToolComplete,
   onUIAction,
+  onDashboardActions,
   inputRef: externalInputRef,
   messagesRole = 'log',
   className,
@@ -74,6 +81,7 @@ export function ConciergeChat({
   } = useConciergeChat({
     initialGreeting: welcomeMessage,
     onFirstMessage,
+    onDashboardActions,
     onToolComplete: (toolCalls) => {
       onToolComplete?.(toolCalls);
 

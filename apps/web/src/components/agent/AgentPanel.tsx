@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
 import { ConciergeChat, type ConciergeUIAction } from './ConciergeChat';
+import type { DashboardAction } from '@/hooks/useConciergeChat';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
@@ -173,7 +174,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
     };
   }, [isMobileOpen, isMobile]);
 
-  // Handle UI actions from Concierge agent tool calls
+  // Handle UI actions from Concierge agent tool calls (legacy - from tool name matching)
   const handleConciergeUIAction = useCallback((action: ConciergeUIAction) => {
     switch (action.type) {
       case 'SHOW_PREVIEW':
@@ -193,51 +194,40 @@ export function AgentPanel({ className }: AgentPanelProps) {
     }
   }, []);
 
+  // Handle dashboard actions from agent navigation tools (new - from backend extraction)
+  const handleDashboardActions = useCallback((actions: DashboardAction[]) => {
+    for (const action of actions) {
+      switch (action.type) {
+        case 'NAVIGATE':
+          // Navigate to a dashboard section - "website" means show preview
+          if (action.section === 'website') {
+            agentUIActions.showPreview('home');
+          }
+          // Other sections could be handled here (bookings, projects, settings, analytics)
+          break;
+        case 'SCROLL_TO_SECTION':
+          // Scroll to and highlight a specific website section
+          if (action.blockType) {
+            // Convert HERO → home-HERO-primary format for highlightSection
+            const sectionId = `home-${action.blockType}-primary`;
+            agentUIActions.highlightSection(sectionId);
+          }
+          break;
+        case 'SHOW_PREVIEW':
+          agentUIActions.showPreview('home');
+          agentUIActions.refreshPreview();
+          break;
+        case 'REFRESH':
+          agentUIActions.refreshPreview();
+          break;
+      }
+    }
+  }, []);
+
   // Handle Concierge tool completion (triggers preview refresh for storefront changes)
+  // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
   const handleConciergeToolComplete = useCallback(
     (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
-      // Process dashboardAction from tool results (navigation, scroll, preview commands)
-      // Agent tools return dashboardAction objects that control the UI
-      for (const call of toolCalls) {
-        const result = call.result as Record<string, unknown> | undefined;
-        const dashboardAction = result?.dashboardAction as
-          | {
-              type: string;
-              section?: string;
-              blockType?: string;
-              highlight?: boolean;
-              fullScreen?: boolean;
-            }
-          | undefined;
-
-        if (dashboardAction) {
-          switch (dashboardAction.type) {
-            case 'NAVIGATE':
-              // Navigate to a dashboard section - "website" means show preview
-              if (dashboardAction.section === 'website') {
-                agentUIActions.showPreview('home');
-              }
-              // Other sections could be handled here (bookings, projects, settings, analytics)
-              break;
-            case 'SCROLL_TO_SECTION':
-              // Scroll to and highlight a specific website section
-              if (dashboardAction.blockType) {
-                // Convert HERO → home-HERO-primary format for highlightSection
-                const sectionId = `home-${dashboardAction.blockType}-primary`;
-                agentUIActions.highlightSection(sectionId);
-              }
-              break;
-            case 'SHOW_PREVIEW':
-              agentUIActions.showPreview('home');
-              agentUIActions.refreshPreview();
-              break;
-            case 'REFRESH':
-              agentUIActions.refreshPreview();
-              break;
-          }
-        }
-      }
-
       // Check if any tool call modified storefront content
       const modifiedStorefront = toolCalls.some(
         (call) =>
@@ -410,6 +400,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
               onFirstMessage={handleFirstMessage}
               onUIAction={handleConciergeUIAction}
               onToolComplete={handleConciergeToolComplete}
+              onDashboardActions={handleDashboardActions}
               className="h-full"
             />
           </div>
@@ -549,6 +540,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
                 onFirstMessage={handleFirstMessage}
                 onUIAction={handleConciergeUIAction}
                 onToolComplete={handleConciergeToolComplete}
+                onDashboardActions={handleDashboardActions}
                 inputRef={inputRef}
                 messagesRole="log"
                 className="h-full"
