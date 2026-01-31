@@ -305,6 +305,33 @@ User: "Write me a tagline"
 
 ## Resolution Details (2026-01-31)
 
+### Round 2: Onboarding Mode (2026-01-31 afternoon)
+
+**Problem:** Agent had no concept of onboarding. When user said "build my site", agent asked "What would you like to do?" and mentioned multi-page setup. Agent was passive and reactive.
+
+**Root Cause:** The archived concierge agent had a complete onboarding system in `server/src/agent-v2/archive/concierge/src/prompts/onboarding.ts` that never got migrated to the tenant-agent.
+
+**Fix Applied:**
+
+1. Added comprehensive "ONBOARDING MODE" section to tenant-agent system prompt
+2. Added "Generate, Then Ask" pattern - agent drafts content, asks "what feels off?"
+3. Added discovery questions (bar order → brand voice, anti-client, etc.)
+4. Clarified MVP = single landing page (no multi-page references)
+5. Added "Never Dead-End" rules - every response must have next action
+6. Updated decision flow to detect onboarding state from placeholders
+
+**Test Results (Post-Fix):**
+| Test | Status | Notes |
+|------|--------|-------|
+| "Help me build my site" | ✅ PASS | "Let's build this together. First - what do you do?" |
+| Section-to-section flow | ✅ PASS | "Done! Now let's tackle your Testimonials section..." |
+| No multi-page mention | ✅ PASS | Agent doesn't offer to "enable pages" |
+| Generate, Then Ask | ✅ PASS | Generates tagline, asks "How's that sound?" |
+
+---
+
+### Round 1: Marketing Tools & HTML Encoding
+
 ### Changes Made
 
 1. **Rewrote `marketing.ts`** - Agent-native copy generation
