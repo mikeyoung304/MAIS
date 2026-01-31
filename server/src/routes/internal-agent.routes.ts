@@ -2,20 +2,20 @@
  * Internal Agent Routes
  *
  * Protected endpoints for agent-to-backend communication.
- * Called by deployed Vertex AI agents (Booking, Marketing, Storefront, Research, Concierge) to fetch tenant data.
+ * Called by deployed Vertex AI agents (tenant-agent, customer-agent, research-agent) to fetch tenant data.
  *
  * Security:
  * - Secured with X-Internal-Secret header (shared secret)
  * - All endpoints require tenantId in request body
  * - All queries are tenant-scoped to prevent data leakage
  *
- * CONCIERGE/BOOTSTRAP Endpoints:
+ * TENANT AGENT Endpoints (Bootstrap/Discovery):
  * - POST /v1/internal/agent/bootstrap - Get session context (tenant, onboarding state, discovery data)
  * - POST /v1/internal/agent/complete-onboarding - Mark onboarding as complete
  * - POST /v1/internal/agent/store-discovery-fact - Store a fact learned during onboarding
  * - POST /v1/internal/agent/get-discovery-facts - Get all stored discovery facts for a tenant
  *
- * BOOKING AGENT Endpoints:
+ * CUSTOMER AGENT Endpoints (Booking):
  * - POST /v1/internal/agent/services - Get all services for a tenant
  * - POST /v1/internal/agent/service-details - Get service details by ID
  * - POST /v1/internal/agent/availability - Check availability for a service
@@ -24,7 +24,7 @@
  * - POST /v1/internal/agent/recommend - Recommend packages based on preferences
  * - POST /v1/internal/agent/create-booking - Create a booking (T3 action)
  *
- * STOREFRONT AGENT Endpoints:
+ * TENANT AGENT Endpoints (Storefront):
  * - POST /v1/internal/agent/storefront/structure - Get page structure with section IDs
  * - POST /v1/internal/agent/storefront/section - Get section content by ID
  * - POST /v1/internal/agent/storefront/update-section - Update section content
@@ -37,7 +37,7 @@
  * - POST /v1/internal/agent/storefront/publish - Publish draft to live
  * - POST /v1/internal/agent/storefront/discard - Discard draft changes
  *
- * PROJECT HUB AGENT Endpoints:
+ * PROJECT HUB Endpoints (used by both tenant-agent and customer-agent):
  * - POST /v1/internal/agent/project-hub/bootstrap-customer - Initialize customer session
  * - POST /v1/internal/agent/project-hub/bootstrap-tenant - Initialize tenant dashboard
  * - POST /v1/internal/agent/project-hub/project-details - Get project with booking info
@@ -48,7 +48,7 @@
  * - POST /v1/internal/agent/project-hub/deny-request - Deny request (optimistic locking)
  * - POST /v1/internal/agent/project-hub/list-projects - List all projects for tenant
  *
- * VOCABULARY (for Tenant Agent):
+ * TENANT AGENT Endpoints (Vocabulary):
  * - POST /v1/internal/agent/vocabulary/resolve - Resolve phrase to BlockType using semantic search
  */
 

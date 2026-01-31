@@ -17,9 +17,9 @@
  * - Optimistic locking prevents concurrent modification
  *
  * Phase 4 Update (2026-01-31):
- * - Migrated from concierge-agent to unified tenant-agent
- * - Tenant Agent now handles: storefront, marketing, project management (tenant view)
- * - Uses TENANT_AGENT_URL instead of CONCIERGE_AGENT_URL
+ * - Uses unified tenant-agent for all tenant-facing operations
+ * - Tenant Agent handles: storefront, marketing, project management (tenant view)
+ * - Customer Agent handles: booking, project hub (customer view)
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
@@ -138,15 +138,9 @@ function getRequiredEnv(name: string): string {
 
 // Agent URLs - no hardcoded fallbacks with project numbers
 // Validation happens at first use, not at import time (to allow test imports)
-// Phase 4 Update: Renamed from getTenantAgentUrl() to getTenantAgentUrl()
 function getTenantAgentUrl(): string {
-  // Primary: new unified tenant-agent URL
-  const newUrl = process.env.TENANT_AGENT_URL;
-  if (newUrl) return newUrl;
-
-  // Fallback: legacy variable (deprecated - remove after migration complete)
-  const legacyUrl = process.env.CONCIERGE_AGENT_URL;
-  if (legacyUrl) return legacyUrl;
+  const url = process.env.TENANT_AGENT_URL;
+  if (url) return url;
 
   throw new Error(
     'Missing required environment variable: TENANT_AGENT_URL. ' +

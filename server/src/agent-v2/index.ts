@@ -1,14 +1,16 @@
 /**
  * Agent V2 - Vertex AI Agent System
  *
- * This is the main entry point for the new agent system built on
+ * This is the main entry point for the agent system built on
  * Google Vertex AI Agent Builder with the ADK (Agent Developer Kit).
  *
- * Architecture: Hub-and-Spoke (Concierge + Specialists)
- * - Concierge: Primary interface, routes requests to specialists
- * - Specialists: Marketing, Research, Image, Video, Storefront
- * - Booking Agent: Customer-facing, handles service discovery and booking
- * - Project Hub Agent: Dual-faced, mediates customer-tenant communication
+ * Architecture (Phase 4 - January 2026):
+ * - tenant-agent: Unified tenant-facing agent (storefront, marketing, project management)
+ * - customer-agent: Unified customer-facing agent (booking, project hub)
+ * - research-agent: Web research capabilities
+ *
+ * Deployed agents are in: deploy/tenant-agent/, deploy/customer-agent/
+ * Legacy agents archived in: archive/
  */
 
 // Configuration
@@ -27,31 +29,11 @@ export { IsolatedMemoryBank, createIsolatedMemoryBank } from './memory/isolated-
 // Plugins
 export { ReflectAndRetryPlugin, createReflectAndRetryPlugin } from './plugins/reflect-retry.js';
 
-// Agents
-export * from './agents/booking/index.js';
-
-// Concierge system prompt
-export { CONCIERGE_SYSTEM_PROMPT } from './agents/concierge/system-prompt.js';
-
 /**
- * Agent V2 Status
+ * Agent V2 Status - Phase 4 Complete (2026-01-31)
  *
- * This module is under active development. Current status:
- *
- * Phase 1 (Foundation): IN PROGRESS
- * - [x] Directory structure created
- * - [x] Configuration module
- * - [x] Agent cards (all 8)
- * - [x] Memory bank wrapper
- * - [x] ReflectAndRetry plugin
- * - [ ] GCP project setup
- * - [ ] Service accounts
- * - [ ] Storage buckets
- *
- * Phase 2 (Booking Agent): NOT STARTED
- * Phase 3 (Specialists): NOT STARTED
- * Phase 4 (Concierge + Integration): NOT STARTED
- * Phase 5 (Project Hub): NOT STARTED
- * Phase 6 (Media Generation): NOT STARTED
- * Phase 7 (Polish): NOT STARTED
+ * - [x] 3-agent architecture deployed (tenant-agent, customer-agent, research-agent)
+ * - [x] Legacy agents archived (concierge, booking, marketing, storefront, project-hub)
+ * - [x] Cloud Run deployment via GitHub Actions
+ * - [x] IAM permissions configured for Render → Cloud Run
  */

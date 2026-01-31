@@ -49,8 +49,8 @@ export function getVertexConfig() {
 
 // Agent model configurations
 export const AGENT_MODELS = {
-  // Orchestrator uses Gemini 3 Pro with thinking for quality routing
-  CONCIERGE: {
+  // Primary agents (tenant-agent, customer-agent) use Pro with thinking
+  PRIMARY: {
     model: 'gemini-2.5-pro',
     temperature: 0.2,
     thinkingLevel: 'high' as const,
