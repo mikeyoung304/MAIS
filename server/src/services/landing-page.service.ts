@@ -26,7 +26,7 @@
  * The repository handles data persistence and transaction management.
  */
 
-import type { LandingPageConfig, LandingPageSections } from '@macon/contracts';
+import type { LandingPageConfig } from '@macon/contracts';
 import { LandingPageConfigSchema } from '@macon/contracts';
 import type {
   PrismaTenantRepository,
@@ -108,36 +108,9 @@ export class LandingPageService {
     return this.tenantRepo.getLandingPageDraft(tenantId);
   }
 
-  /**
-   * Save draft landing page configuration (auto-save target)
-   *
-   * Called by the visual editor with 2s debounce.
-   * Applies sanitization to prevent XSS attacks.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param config - Draft configuration to save
-   * @returns Save result with timestamp
-   */
-  async saveDraft(tenantId: string, config: LandingPageConfig): Promise<SaveDraftResult> {
-    // Sanitize all text fields (XSS prevention)
-    // Note: URL fields are preserved as-is (validated by SafeUrlSchema in contracts)
-    const sanitizedConfig = sanitizeObject(config, { allowHtml: [] });
-
-    // Repository handles:
-    // - Image URL validation (protocol check - defense in depth)
-    // - Transaction management (ACID guarantees)
-    const result = await this.tenantRepo.saveLandingPageDraft(tenantId, sanitizedConfig);
-
-    logger.info(
-      {
-        action: 'landing_page_draft_saved',
-        tenantId,
-      },
-      'Landing page draft saved'
-    );
-
-    return result;
-  }
+  // NOTE: saveDraft() method deleted - Visual Editor autosave is deprecated.
+  // All storefront editing now happens through AI agent chatbot (Build Mode).
+  // See: 2026-02-01 realtime preview plan.
 
   /**
    * Publish draft to live landing page
@@ -198,62 +171,9 @@ export class LandingPageService {
     return this.tenantRepo.getLandingPageConfig(tenantId);
   }
 
-  /**
-   * Update landing page configuration (legacy method)
-   *
-   * Full configuration update (replaces entire config).
-   * Used by non-draft update endpoint.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param config - Landing page configuration
-   * @returns Updated configuration
-   */
-  async updateConfig(tenantId: string, config: LandingPageConfig): Promise<any> {
-    // Sanitize all text fields (XSS prevention)
-    const sanitizedConfig = sanitizeObject(config, { allowHtml: [] });
-
-    const result = await this.tenantRepo.updateLandingPageConfig(tenantId, sanitizedConfig);
-
-    logger.info(
-      {
-        action: 'landing_page_config_updated',
-        tenantId,
-      },
-      'Landing page configuration updated'
-    );
-
-    return result;
-  }
-
-  /**
-   * Toggle a specific section in landing page configuration
-   *
-   * Partial update - only affects the specified section's enabled state.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param section - Section name to toggle (must be a valid section key)
-   * @param enabled - Whether section should be enabled
-   * @returns Updated configuration
-   */
-  async toggleSection(
-    tenantId: string,
-    section: keyof LandingPageSections,
-    enabled: boolean
-  ): Promise<LandingPageConfig> {
-    const result = await this.tenantRepo.toggleLandingPageSection(tenantId, section, enabled);
-
-    logger.info(
-      {
-        action: 'landing_page_section_toggled',
-        tenantId,
-        section,
-        enabled,
-      },
-      `Landing page section ${section} toggled to ${enabled}`
-    );
-
-    return result;
-  }
+  // NOTE: updateConfig() and toggleSection() methods deleted - Visual Editor is deprecated.
+  // All storefront editing now happens through AI agent chatbot (Build Mode).
+  // See: 2026-02-01 realtime preview plan.
 
   // ============================================================================
   // Build Mode Methods (AI Tools / Separate Column System)

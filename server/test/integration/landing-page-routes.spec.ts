@@ -1,13 +1,16 @@
 /**
  * Integration tests for Landing Page Admin Routes
  *
- * Tests the draft system endpoints used by Build Mode:
+ * Tests the Build Mode draft system:
  * - GET /draft - Fetch draft config
- * - PUT /draft - Save draft (autosave)
  * - POST /publish - Publish draft to live
  * - DELETE /draft - Discard draft
  *
- * @see todos/628-pending-p2-missing-integration-tests.md
+ * NOTE: Visual Editor routes (PUT /draft, PUT /, PATCH /sections) were deleted.
+ * All storefront editing now happens through AI agent chatbot (Build Mode).
+ * saveBuildModeDraft() is the canonical method for writing drafts.
+ *
+ * @see docs/plans/2026-02-01-realtime-preview-handoff.md
  */
 
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
@@ -16,10 +19,7 @@ import { LandingPageService } from '../../src/services/landing-page.service';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import type { LandingPageConfig, PagesConfig } from '@macon/contracts';
-import {
-  VALID_MOCK_PAGES_CONFIG,
-  VALID_MOCK_LANDING_PAGE_CONFIG,
-} from '../helpers/mock-landing-page-config';
+import { VALID_MOCK_PAGES_CONFIG } from '../helpers/mock-landing-page-config';
 
 describe.sequential('Landing Page Admin Routes Integration Tests', () => {
   const ctx = setupCompleteIntegrationTest('landing-page-routes');
@@ -59,17 +59,18 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
     it('should return draft when tenant has draft config', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
-      // Save a draft first
+      // Save a draft first (Build Mode writes to separate column)
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       const result = await service.getDraft(tenant.id);
 
       expect(result.draft).not.toBeNull();
       expect(result.draft?.pages).toEqual(VALID_MOCK_PAGES_CONFIG);
-      expect(result.draftUpdatedAt).not.toBeNull();
+      // NOTE: Build Mode doesn't set draftUpdatedAt (only Visual Editor did)
+      // The timestamp is tracked differently in the separate column system
     });
 
     it('should throw NotFoundError for non-existent tenant', async () => {
@@ -78,22 +79,26 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
   });
 
   // ============================================================================
-  // PUT /draft - Save Draft Configuration
+  // Build Mode Draft (saveBuildModeDraft) - AI Tools Write Path
   // ============================================================================
+  // NOTE: Visual Editor's PUT /draft route was deleted.
+  // All draft writes now use saveBuildModeDraft (via AI agent tools).
 
-  describe('saveDraft (PUT /draft)', () => {
-    it('should save valid draft config', async () => {
+  describe('saveBuildModeDraft (Build Mode)', () => {
+    it('should save valid draft config to landingPageConfigDraft column', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
 
-      const result = await service.saveDraft(tenant.id, draftConfig);
+      // saveBuildModeDraft returns void (fire-and-forget pattern for AI tools)
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
-      expect(result.success).toBe(true);
-      expect(result.draftUpdatedAt).toBeDefined();
-      expect(new Date(result.draftUpdatedAt).getTime()).toBeLessThanOrEqual(Date.now());
+      // Verify draft was saved by reading it back
+      const result = await service.getDraft(tenant.id);
+      expect(result.draft).not.toBeNull();
+      expect(result.draft?.pages).toEqual(VALID_MOCK_PAGES_CONFIG);
     });
 
     it('should create draft if none exists', async () => {
@@ -107,7 +112,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Verify draft now exists
       const after = await service.getDraft(tenant.id);
@@ -121,7 +126,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const initialConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, initialConfig);
+      await service.saveBuildModeDraft(tenant.id, initialConfig);
 
       // Modify and save again
       // NOTE: Cannot disable home page (schema enforces home.enabled: z.literal(true))
@@ -136,21 +141,24 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const modifiedConfig: LandingPageConfig = {
         pages: modifiedPages,
       };
-      await service.saveDraft(tenant.id, modifiedConfig);
+      await service.saveBuildModeDraft(tenant.id, modifiedConfig);
 
       // Verify draft was updated
       const result = await service.getDraft(tenant.id);
       expect(result.draft?.pages?.about?.enabled).toBe(false);
     });
 
-    it('should throw NotFoundError for non-existent tenant', async () => {
+    it('should throw error for non-existent tenant', async () => {
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
 
-      await expect(service.saveDraft('non-existent-tenant-id', draftConfig)).rejects.toThrow(
-        NotFoundError
-      );
+      // Note: saveBuildModeDraft uses tenantRepo.update() which throws Prisma's P2025 error
+      // (record not found), not a wrapped NotFoundError. This is acceptable because
+      // the AI tools layer handles errors differently than REST routes.
+      await expect(
+        service.saveBuildModeDraft('non-existent-tenant-id', draftConfig)
+      ).rejects.toThrow();
     });
   });
 
@@ -166,7 +174,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Publish
       const result = await service.publish(tenant.id);
@@ -182,7 +190,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Verify draft exists
       const before = await service.getDraft(tenant.id);
@@ -221,7 +229,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Verify draft exists
       const before = await service.getDraft(tenant.id);
@@ -242,7 +250,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const liveConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, liveConfig);
+      await service.saveBuildModeDraft(tenant.id, liveConfig);
       await service.publish(tenant.id);
 
       // Save a different draft
@@ -256,7 +264,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: modifiedPages as PagesConfig,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Discard draft
       await service.discardDraft(tenant.id);
@@ -292,7 +300,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftA: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenantA.id, draftA);
+      await service.saveBuildModeDraft(tenantA.id, draftA);
 
       // Tenant B should have no draft
       const resultB = await service.getDraft(tenantB.id);
@@ -311,7 +319,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const configA: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenantA.id, configA);
+      await service.saveBuildModeDraft(tenantA.id, configA);
       await service.publish(tenantA.id);
 
       // Tenant B's config should be independent (null)
@@ -336,12 +344,12 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Step 3: Verify draft exists for preview
       const preview = await service.getDraft(tenant.id);
       expect(preview.draft).not.toBeNull();
-      expect(preview.draftUpdatedAt).not.toBeNull();
+      // NOTE: Build Mode doesn't set draftUpdatedAt (only Visual Editor did)
 
       // Step 4: Publish
       await service.publish(tenant.id);
@@ -360,7 +368,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const liveConfig: LandingPageConfig = {
         pages: VALID_MOCK_PAGES_CONFIG,
       };
-      await service.saveDraft(tenant.id, liveConfig);
+      await service.saveBuildModeDraft(tenant.id, liveConfig);
       await service.publish(tenant.id);
 
       // Make draft changes
@@ -374,7 +382,7 @@ describe.sequential('Landing Page Admin Routes Integration Tests', () => {
       const draftConfig: LandingPageConfig = {
         pages: modifiedPages as PagesConfig,
       };
-      await service.saveDraft(tenant.id, draftConfig);
+      await service.saveBuildModeDraft(tenant.id, draftConfig);
 
       // Discard draft
       await service.discardDraft(tenant.id);

@@ -18,10 +18,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
-import { ZodError } from 'zod';
 import type { LandingPageService } from '../services/landing-page.service';
-import { LandingPageConfigSchema } from '@macon/contracts';
-import type { LandingPageSections } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { NotFoundError, ValidationError, TooManyRequestsError } from '../lib/errors';
 import {
@@ -93,109 +90,12 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
     }
   });
 
-  /**
-   * PUT /v1/tenant-admin/landing-page
-   * Update landing page configuration for authenticated tenant
-   * Full configuration update (replaces entire config)
-   *
-   * Request body: LandingPageConfig (validated by Zod)
-   *
-   * @returns 200 - Updated landing page configuration
-   * @returns 400 - Validation error
-   * @returns 401 - Missing or invalid authentication
-   * @returns 500 - Internal server error
-   */
-  router.put('/', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const { tenantId } = tenantAuth;
-
-      // Validate request body against schema
-      const data = LandingPageConfigSchema.parse(req.body);
-
-      // Service handles sanitization and update
-      const updatedConfig = await landingPageService.updateConfig(tenantId, data);
-      res.json(updatedConfig);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      next(error);
-    }
-  });
-
-  /**
-   * PATCH /v1/tenant-admin/landing-page/sections
-   * Toggle individual section visibility on/off
-   * Partial update - only affects the specified section
-   *
-   * @returns 200 - Success indicator
-   * @returns 400 - Validation error
-   * @returns 401 - Missing or invalid authentication
-   * @returns 500 - Internal server error
-   */
-  router.patch('/sections', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-        return;
-      }
-      const { tenantId } = tenantAuth;
-
-      const { section, enabled } = req.body;
-
-      const validSections = [
-        'hero',
-        'socialProofBar',
-        'segmentSelector',
-        'about',
-        'testimonials',
-        'accommodation',
-        'gallery',
-        'faq',
-        'finalCta',
-      ];
-
-      if (!section || !validSections.includes(section)) {
-        res.status(400).json({
-          error: 'Invalid section name',
-          details: [`Section must be one of: ${validSections.join(', ')}`],
-        });
-        return;
-      }
-
-      if (typeof enabled !== 'boolean') {
-        res.status(400).json({
-          error: 'Invalid enabled value',
-          details: ['enabled must be a boolean'],
-        });
-        return;
-      }
-
-      // Type assertion is safe here because validSections.includes() validates the value above
-      await landingPageService.toggleSection(
-        tenantId,
-        section as keyof LandingPageSections,
-        enabled
-      );
-      res.json({ success: true });
-    } catch (error) {
-      next(error);
-    }
-  });
-
   // ============================================================================
   // Draft System Endpoints
   // ============================================================================
+  // NOTE: Visual Editor write routes (PUT /, PATCH /sections) have been deleted.
+  // All storefront editing now happens through the AI agent chatbot (Build Mode).
+  // See: 2026-02-01 realtime preview plan.
 
   /**
    * GET /v1/tenant-admin/landing-page/draft
@@ -226,57 +126,9 @@ export function createTenantAdminLandingPageRoutes(landingPageService: LandingPa
     }
   });
 
-  /**
-   * PUT /v1/tenant-admin/landing-page/draft
-   * Save draft landing page configuration (auto-save target)
-   *
-   * RATE LIMITED: 120 saves per minute per tenant (TODO-249)
-   *
-   * @returns 200 - Save result with timestamp
-   * @returns 400 - Validation error
-   * @returns 401 - Missing or invalid authentication
-   * @returns 404 - Tenant not found
-   * @returns 429 - Rate limit exceeded
-   * @returns 500 - Internal server error
-   */
-  router.put(
-    '/draft',
-    draftAutosaveLimiter,
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const tenantAuth = res.locals.tenantAuth;
-        if (!tenantAuth) {
-          res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
-          return;
-        }
-        const { tenantId } = tenantAuth;
-
-        // Validate request body against schema
-        const data = LandingPageConfigSchema.parse(req.body);
-
-        // Service handles sanitization and save
-        const result = await landingPageService.saveDraft(tenantId, data);
-        res.json(result);
-      } catch (error) {
-        if (error instanceof ZodError) {
-          res.status(400).json({
-            error: 'Validation error',
-            details: error.issues,
-          });
-          return;
-        }
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
-          return;
-        }
-        if (error instanceof ValidationError) {
-          res.status(400).json({ error: error.message });
-          return;
-        }
-        next(error);
-      }
-    }
-  );
+  // NOTE: PUT /draft (autosave) has been deleted.
+  // All storefront editing now happens through the AI agent chatbot (Build Mode).
+  // See: 2026-02-01 realtime preview plan.
 
   /**
    * POST /v1/tenant-admin/landing-page/publish
