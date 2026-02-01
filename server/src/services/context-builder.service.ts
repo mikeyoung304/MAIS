@@ -216,12 +216,12 @@ export class ContextBuilderService {
       where: { id: tenantId },
       select: {
         id: true,
-        businessName: true,
+        name: true, // businessName field doesn't exist - use name
         slug: true,
         branding: true,
         landingPageConfig: true,
         landingPageConfigDraft: true,
-        onboardingDone: true,
+        onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
       },
     });
@@ -230,13 +230,17 @@ export class ContextBuilderService {
       throw new Error(`Tenant not found: ${tenantId}`);
     }
 
+    // Compute onboardingDone from completedAt or phase
+    const onboardingDone =
+      tenant.onboardingCompletedAt !== null || tenant.onboardingPhase === 'COMPLETED';
+
     // Extract discovery facts from branding (canonical storage)
     const branding = (tenant.branding as Record<string, unknown>) || {};
     const discoveryFacts = (branding.discoveryFacts as KnownFacts) || {};
 
     // Build known facts from discovery data
     const knownFacts: KnownFacts = {
-      businessName: tenant.businessName || discoveryFacts.businessName,
+      businessName: tenant.name || discoveryFacts.businessName,
       businessDescription: discoveryFacts.businessDescription,
       businessType: discoveryFacts.businessType,
       location: discoveryFacts.location,
@@ -272,14 +276,14 @@ export class ContextBuilderService {
         tenantId,
         knownFactCount: Object.keys(knownFacts).filter((k) => knownFacts[k] !== undefined).length,
         storefrontCompletion: storefrontState.completion,
-        onboardingComplete: tenant.onboardingDone,
+        onboardingComplete: onboardingDone,
       },
       '[ContextBuilder] Built agent context'
     );
 
     return {
       tenantId: tenant.id,
-      businessName: tenant.businessName || 'Your Business',
+      businessName: tenant.name || 'Your Business',
       businessType: discoveryFacts.businessType || 'service_professional',
 
       knownFacts,
@@ -291,7 +295,7 @@ export class ContextBuilderService {
       openTasks: [], // TODO: Populate from task system if exists
 
       forbiddenQuestions,
-      onboardingComplete: tenant.onboardingDone,
+      onboardingComplete: onboardingDone,
       onboardingPhase: tenant.onboardingPhase || 'NOT_STARTED',
     };
   }
@@ -305,12 +309,12 @@ export class ContextBuilderService {
       where: { id: tenantId },
       select: {
         id: true,
-        businessName: true,
+        name: true, // businessName field doesn't exist - use name
         slug: true,
         branding: true,
         landingPageConfig: true,
         landingPageConfigDraft: true,
-        onboardingDone: true,
+        onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
       },
     });
@@ -346,6 +350,10 @@ export class ContextBuilderService {
         discoveryFacts[key as keyof KnownFacts] !== null
     ) as (keyof KnownFacts)[];
 
+    // Compute onboardingDone from completedAt or phase
+    const onboardingDone =
+      tenant.onboardingCompletedAt !== null || tenant.onboardingPhase === 'COMPLETED';
+
     logger.info(
       { tenantId, factCount, forbiddenSlots, completion },
       '[ContextBuilder] Bootstrap data prepared'
@@ -353,9 +361,9 @@ export class ContextBuilderService {
 
     return {
       tenantId: tenant.id,
-      businessName: tenant.businessName || 'Your Business',
+      businessName: tenant.name || 'Your Business',
       slug: tenant.slug,
-      onboardingComplete: tenant.onboardingDone,
+      onboardingComplete: onboardingDone,
       onboardingPhase: tenant.onboardingPhase || 'NOT_STARTED',
       discoveryFacts,
       storefrontState: {
@@ -380,7 +388,7 @@ export class ContextBuilderService {
       where: { id: tenantId },
       select: {
         branding: true,
-        onboardingDone: true,
+        onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
       },
     });
@@ -395,9 +403,13 @@ export class ContextBuilderService {
       (k) => discoveryFacts[k] !== undefined
     ).length;
 
+    // Compute onboardingDone from completedAt or phase
+    const onboardingDone =
+      tenant.onboardingCompletedAt !== null || tenant.onboardingPhase === 'COMPLETED';
+
     return {
       phase: tenant.onboardingPhase || 'NOT_STARTED',
-      isComplete: tenant.onboardingDone || tenant.onboardingPhase === 'COMPLETED',
+      isComplete: onboardingDone,
       discoveryFacts,
       factCount,
     };

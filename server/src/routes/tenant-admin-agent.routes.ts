@@ -368,7 +368,7 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
         where: { id: tenantId },
         data: {
           onboardingPhase: 'SKIPPED',
-          onboardingDone: true,
+          onboardingCompletedAt: new Date(), // onboardingDone doesn't exist - use completedAt timestamp
         },
       });
 

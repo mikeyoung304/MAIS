@@ -106,7 +106,7 @@ export interface Container {
     catalog?: PrismaCatalogRepository; // Catalog repository for package lookups
     webhookSubscription?: PrismaWebhookSubscriptionRepository; // Webhook subscription management (TODO-278)
     earlyAccess?: PrismaEarlyAccessRepository; // Early access request persistence
-    advisorMemory?: AdvisorMemoryRepository; // Onboarding agent state projection
+    // AdvisorMemoryRepository removed - replaced by ContextBuilderService (Phase 1 Agent-First)
   };
   mailProvider?: PostmarkMailAdapter; // Export mail provider for password reset emails
   storageProvider: UploadAdapter; // Export storage provider for file uploads
