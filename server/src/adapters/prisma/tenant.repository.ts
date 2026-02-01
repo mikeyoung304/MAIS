@@ -8,6 +8,7 @@ import {
   TenantPublicDtoSchema,
   SafeImageUrlSchema,
   LandingPageConfigSchema,
+  LenientLandingPageConfigSchema,
 } from '@macon/contracts';
 import type { TenantPublicDto, LandingPageConfig, LandingPageSections } from '@macon/contracts';
 import { logger } from '../../lib/core/logger';
@@ -520,15 +521,19 @@ export class PrismaTenantRepository {
     }
 
     // Parse draft config from separate column
+    // IMPORTANT: Use LENIENT validation for drafts - allows empty arrays
+    // This fixes the P1 bug where empty pricing sections caused validation failure
+    // and silent fallback to published content. See: 2026-02-01 realtime preview plan.
     let draft: LandingPageConfig | null = null;
     if (tenant.landingPageConfigDraft) {
-      const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      const draftResult = LenientLandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
       if (draftResult.success) {
         draft = draftResult.data;
       } else {
-        logger.warn(
+        // Even lenient validation failed - this is a real corruption issue
+        logger.error(
           { tenantId: tenant.id, slug, errors: draftResult.error.issues },
-          'Invalid draft config in findBySlugForPreview'
+          'Draft failed even lenient validation in findBySlugForPreview'
         );
       }
     }
@@ -1004,14 +1009,18 @@ export class PrismaTenantRepository {
     let draftUpdatedAt: string | null = null;
 
     // First, try Build Mode column (landingPageConfigDraft)
+    // IMPORTANT: Use LENIENT validation for drafts - allows empty arrays
+    // This fixes the P1 bug where empty pricing sections caused validation failure
+    // and silent fallback to published content. See: 2026-02-01 realtime preview plan.
     if (tenant.landingPageConfigDraft) {
-      const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      const draftResult = LenientLandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
       if (draftResult.success) {
         draft = draftResult.data;
       } else {
-        logger.warn(
+        // Even lenient validation failed - this is a real corruption issue
+        logger.error(
           { tenantId, errors: draftResult.error.issues },
-          'Invalid draft config in landingPageConfigDraft column'
+          'Draft failed even lenient validation - data may be corrupted'
         );
       }
     }
@@ -1020,15 +1029,16 @@ export class PrismaTenantRepository {
     const wrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
 
     // If no Build Mode draft, check Visual Editor draft in wrapper
+    // NOTE: Visual Editor is deprecated but still reads from this path during transition
     if (!draft && wrapper.draft) {
-      const draftResult = LandingPageConfigSchema.safeParse(wrapper.draft);
+      const draftResult = LenientLandingPageConfigSchema.safeParse(wrapper.draft);
       if (draftResult.success) {
         draft = draftResult.data;
         draftUpdatedAt = wrapper.draftUpdatedAt ?? null;
       } else {
-        logger.warn(
+        logger.error(
           { tenantId, errors: draftResult.error.issues },
-          'Invalid draft config in wrapper format'
+          'Draft in wrapper failed lenient validation - data may be corrupted'
         );
       }
     }

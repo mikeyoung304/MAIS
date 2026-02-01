@@ -847,3 +847,156 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
 export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
   pages: DEFAULT_PAGES_CONFIG,
 };
+
+// ============================================================================
+// LENIENT SCHEMAS (for drafts - allow empty arrays)
+// ============================================================================
+//
+// These schemas are identical to the strict versions EXCEPT:
+// - .min(1) constraints are removed from array fields
+// - Empty arrays are valid (drafts can be incomplete)
+//
+// ONLY sections with .min(1) constraints need lenient versions:
+// - PricingSectionSchema: tiers.min(1) → allows empty tiers
+// - FeaturesSectionSchema: features.min(1) → allows empty features
+//
+// Other sections (TestimonialsSection, FAQSection) already use .default([])
+// without .min(1), so they don't need lenient versions.
+// ============================================================================
+
+/**
+ * Lenient Pricing Section (for drafts)
+ *
+ * Identical to PricingSectionSchema but allows empty tiers array.
+ * Use for draft validation where incomplete content is expected.
+ */
+export const LenientPricingSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
+  type: z.literal('pricing'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  tiers: z.array(PricingTierSchema).max(5).default([]), // No .min(1)
+  backgroundColor: z.enum(['white', 'neutral']).optional(),
+});
+
+export type LenientPricingSection = z.infer<typeof LenientPricingSectionSchema>;
+
+/**
+ * Lenient Features Section (for drafts)
+ *
+ * Identical to FeaturesSectionSchema but allows empty features array.
+ * Use for draft validation where incomplete content is expected.
+ */
+export const LenientFeaturesSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
+  type: z.literal('features'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  features: z.array(FeatureItemSchema).max(12).default([]), // No .min(1)
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  backgroundColor: z.enum(['white', 'neutral']).optional(),
+});
+
+export type LenientFeaturesSection = z.infer<typeof LenientFeaturesSectionSchema>;
+
+/**
+ * Lenient Section Schema (discriminated union for drafts)
+ *
+ * Uses lenient versions for pricing/features, standard for others.
+ * All other sections already allow empty arrays.
+ */
+export const LenientSectionSchema = z.discriminatedUnion('type', [
+  HeroSectionSchema,
+  TextSectionSchema,
+  GallerySectionSchema,
+  TestimonialsSectionSchema,
+  FAQSectionSchema,
+  ContactSectionSchema,
+  CTASectionSchema,
+  LenientPricingSectionSchema, // Lenient: allows empty tiers
+  LenientFeaturesSectionSchema, // Lenient: allows empty features
+]);
+
+export type LenientSection = z.infer<typeof LenientSectionSchema>;
+
+/**
+ * Lenient Page Config Schema (for drafts)
+ *
+ * Uses lenient section schema for draft validation.
+ */
+export const LenientPageConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  sections: z.array(LenientSectionSchema).default([]),
+});
+
+export type LenientPageConfig = z.infer<typeof LenientPageConfigSchema>;
+
+/**
+ * Lenient Pages Config Schema (for drafts)
+ *
+ * All pages use lenient section validation.
+ */
+export const LenientPagesConfigSchema = z.object({
+  home: LenientPageConfigSchema.extend({ enabled: z.literal(true) }),
+  about: LenientPageConfigSchema,
+  services: LenientPageConfigSchema,
+  faq: LenientPageConfigSchema,
+  contact: LenientPageConfigSchema,
+  gallery: LenientPageConfigSchema,
+  testimonials: LenientPageConfigSchema,
+});
+
+export type LenientPagesConfig = z.infer<typeof LenientPagesConfigSchema>;
+
+/**
+ * Lenient Landing Page Config Schema (for drafts)
+ *
+ * Top-level schema using lenient section validation.
+ * Drafts can have incomplete sections (empty arrays).
+ *
+ * @example
+ * // This passes lenient validation but fails strict:
+ * { pages: { home: { enabled: true, sections: [{ type: 'pricing', headline: 'Plans', tiers: [] }] } } }
+ */
+export const LenientLandingPageConfigSchema = z.object({
+  // New page-based configuration (preferred)
+  pages: LenientPagesConfigSchema.optional(),
+
+  // Legacy section-based configuration (for backward compatibility)
+  sections: LandingPageSectionsSchema.optional(),
+  hero: HeroSectionConfigSchema.optional(),
+  socialProofBar: SocialProofBarConfigSchema.optional(),
+  about: AboutSectionConfigSchema.optional(),
+  testimonials: TestimonialsSectionConfigSchema.optional(),
+  accommodation: AccommodationSectionConfigSchema.optional(),
+  gallery: GallerySectionConfigSchema.optional(),
+  faq: FaqSectionConfigSchema.optional(),
+  finalCta: FinalCtaSectionConfigSchema.optional(),
+});
+
+export type LenientLandingPageConfig = z.infer<typeof LenientLandingPageConfigSchema>;
+
+// ============================================================================
+// STRICT SCHEMA ALIASES (for explicit publish-time validation)
+// ============================================================================
+//
+// These are aliases to existing schemas, renamed for clarity when used
+// alongside lenient versions. No functional difference from originals.
+// ============================================================================
+
+/**
+ * Strict Section Schema (for publishing)
+ *
+ * Alias to SectionSchema. Use for explicit "this is publish validation" code.
+ * Requires non-empty arrays for pricing/features sections.
+ */
+export const StrictSectionSchema = SectionSchema;
+export type StrictSection = Section;
+
+/**
+ * Strict Landing Page Config Schema (for publishing)
+ *
+ * Alias to LandingPageConfigSchema. Requires complete sections.
+ */
+export const StrictLandingPageConfigSchema = LandingPageConfigSchema;
+export type StrictLandingPageConfig = LandingPageConfig;
