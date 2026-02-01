@@ -266,7 +266,7 @@ export class ContextBuilderService {
     );
 
     // Determine goals based on state
-    const goals = this.buildGoals(storefrontState, tenant.onboardingDone);
+    const goals = this.buildGoals(storefrontState, onboardingDone);
 
     // Generate forbidden questions based on known facts
     const forbiddenQuestions = this.buildForbiddenQuestions(knownFacts);
