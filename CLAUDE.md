@@ -81,21 +81,23 @@ For detailed architecture documentation, search or read these files when working
 
 ### Landing Page Config Terminology
 
-The codebase has two draft systems for landing page configuration (documented technical debt):
+**Current state (2026-02-01):** Visual Editor is deprecated. All storefront editing happens through the AI agent chatbot (Build Mode).
 
-| Term                          | Storage Location                           | Used By                  | Description                                                        |
-| ----------------------------- | ------------------------------------------ | ------------------------ | ------------------------------------------------------------------ |
-| `landingPageConfig.draft`     | JSON wrapper in `landingPageConfig` column | Visual Editor (REST API) | Unpublished changes stored as `{ draft: {...}, published: {...} }` |
-| `landingPageConfig.published` | JSON wrapper in `landingPageConfig` column | Visual Editor (REST API) | Live content wrapped in `{ published: {...} }` format              |
-| `landingPageConfigDraft`      | Separate Prisma column                     | Build Mode (AI tools)    | AI-edited draft stored in dedicated column                         |
-| `live`                        | -                                          | AI tool responses        | What the AI considers "currently live" (reads from published)      |
+| Term                          | Storage Location                           | Used By               | Description                                              |
+| ----------------------------- | ------------------------------------------ | --------------------- | -------------------------------------------------------- |
+| `landingPageConfigDraft`      | Separate Prisma column                     | Build Mode (AI tools) | AI-edited draft stored in dedicated column (CANONICAL)   |
+| `landingPageConfig.published` | JSON wrapper in `landingPageConfig` column | Public API, preview   | Live content wrapped in `{ published: {...} }` format    |
+| `landingPageConfig.draft`     | JSON wrapper in `landingPageConfig` column | Legacy (READ-ONLY)    | Fallback for old drafts, no longer written to            |
+| `live`                        | -                                          | AI tool responses     | What the AI considers "currently live" (reads published) |
 
 **Key behaviors:**
 
-- **Visual Editor publishes** by calling `createPublishedWrapper(draft)` → writes `{ published: draft, publishedAt }` to `landingPageConfig`
-- **Build Mode publishes** by copying `landingPageConfigDraft` → `landingPageConfig` with wrapper format
+- **AI agent edits** via `saveBuildModeDraft()` → writes to `landingPageConfigDraft` column
+- **Publish** reads from `landingPageConfigDraft` first, falls back to wrapper format
 - **Reading live config**: Always extract from wrapper: `config.published ?? config`
 - **Single source of truth**: `LandingPageService` in `server/src/services/landing-page.service.ts`
+
+**Deleted (2026-02-01):** Visual Editor write routes (`PUT /draft`, `PUT /landing-page`, `PATCH /sections`) and their service/repository methods. See `docs/plans/2026-02-01-realtime-preview-handoff.md`.
 
 **Use `repo-research-analyst` agent** for codebase exploration when context is unclear.
 
