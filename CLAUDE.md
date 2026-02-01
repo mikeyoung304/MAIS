@@ -73,7 +73,7 @@ For detailed architecture documentation, search or read these files when working
 | AI Agents (Vertex AI + ADK)    | `server/src/agent-v2/`, 3-agent architecture           |
 | Agent deployment               | `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`       |
 | Agent architecture (Phase 4)   | customer-agent, tenant-agent, research-agent           |
-| Business advisor (onboarding)  | `server/src/agent/onboarding/`, AdvisorMemoryService   |
+| Agent context (Agent-First)    | `server/src/services/context-builder.service.ts`       |
 | Build mode (storefront editor) | `docs/architecture/BUILD_MODE_VISION.md`               |
 | Landing page config            | `apps/web/src/lib/tenant.ts`, `normalizeToPages()`     |
 | Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`          |
@@ -360,6 +360,7 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 ### Agent-Frontend Integration Pitfalls (90)
 
 90. dashboardAction not extracted from tool results - Agent tools return `dashboardAction` objects in their results (e.g., `{type: 'NAVIGATE', section: 'website'}`), but frontend only checked tool NAMES for heuristics; must extract `call.result?.dashboardAction` and process action types (NAVIGATE, SCROLL_TO_SECTION, SHOW_PREVIEW, REFRESH); symptom: agent says "Take a look" but nothing happens in UI. See `apps/web/src/components/agent/AgentPanel.tsx` `handleConciergeToolComplete` for correct pattern.
+91. Agent asking known questions (P0) - Agent repeatedly asks "What do you do?" when it already knows; root cause: context not injected at session creation, only `tenantId` passed to ADK; fix: use `ContextBuilder.getBootstrapData()` and pass `forbiddenSlots[]` at session start; use **slot-policy** (key-based) not phrase-matching; agent checks slot keys not question phrases. See `docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md`
 
 ## Prevention Strategies
 
@@ -373,6 +374,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[AGENT_TOOLS_PREVENTION_INDEX.md](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Agent tool patterns
 - **[ZOD_PARAMETER_VALIDATION_PREVENTION.md](docs/solutions/patterns/ZOD_PARAMETER_VALIDATION_PREVENTION.md)** - Zod validation patterns
 - **[AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md](docs/solutions/patterns/AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md)** - Tool state return patterns
+- **[SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md](docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md)** - P0 fix: forbiddenSlots at session start
 - **[ADK_A2A_PREVENTION_INDEX.md](docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md)** - ADK/A2A integration patterns
 - **[A2A_SESSION_STATE_PREVENTION.md](docs/solutions/patterns/A2A_SESSION_STATE_PREVENTION.md)** - Session isolation & state handling
 - **[DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md](docs/solutions/patterns/DUAL_CONTEXT_AGENT_TOOL_ISOLATION_PREVENTION.md)** - Dual-context tool gating

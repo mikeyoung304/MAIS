@@ -67,8 +67,7 @@ import { createInternalRoutes } from './internal.routes';
 import { createInternalAgentRoutes } from './internal-agent.routes';
 import { createInternalAgentHealthRoutes } from './internal-agent-health.routes';
 import { createPublicCustomerChatRoutes } from './public-customer-chat.routes';
-import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
-import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
+import { createContextBuilderService } from '../services/context-builder.service';
 import { startCleanupScheduler } from '../jobs/cleanup';
 import {
   createPublicBookingManagementRouter,
@@ -790,9 +789,8 @@ export function createV1Router(
   if (services) {
     // Use tenantRepo from parameter if available (mock mode), otherwise create new (real mode fallback)
     const internalTenantRepo = tenantRepo ?? new PrismaTenantRepository(prismaClient);
-    // Create advisor memory service for bootstrap endpoint
-    const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prismaClient);
-    const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepo);
+    // Create context builder service (replaces legacy AdvisorMemoryService)
+    const contextBuilder = createContextBuilderService(prismaClient);
     // Create vocabulary embedding service for semantic section resolution
     const vocabularyEmbeddingService = new VocabularyEmbeddingService(prismaClient);
 
@@ -803,7 +801,7 @@ export function createV1Router(
       bookingService: services.booking,
       tenantRepo: internalTenantRepo,
       serviceRepo: repositories?.service,
-      advisorMemoryService,
+      contextBuilder,
       projectHubService: services.projectHub,
       vocabularyEmbeddingService,
     });

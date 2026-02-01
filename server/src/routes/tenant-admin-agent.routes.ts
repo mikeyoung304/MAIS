@@ -21,10 +21,10 @@ import { z, ZodError } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { VertexAgentService, createVertexAgentService } from '../services/vertex-agent.service';
-import { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
-import { PrismaAdvisorMemoryRepository } from '../adapters/prisma/advisor-memory.repository';
-import { appendEvent } from '../agent/onboarding/event-sourcing';
-import { parseOnboardingPhase } from '@macon/contracts';
+import {
+  ContextBuilderService,
+  createContextBuilderService,
+} from '../services/context-builder.service';
 
 // =============================================================================
 // REQUEST SCHEMAS
@@ -62,9 +62,8 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
   // Use provided service or create new instance with Prisma
   const agentService = deps.vertexAgentService || createVertexAgentService(prisma);
 
-  // Initialize advisor memory service for onboarding state
-  const advisorMemoryRepository = new PrismaAdvisorMemoryRepository(prisma);
-  const advisorMemoryService = new AdvisorMemoryService(advisorMemoryRepository);
+  // Initialize context builder service (replaces legacy AdvisorMemoryService)
+  const contextBuilder = createContextBuilderService(prisma);
 
   // ===========================================================================
   // POST /chat - Send a message to the Concierge agent
@@ -288,39 +287,37 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
       }
 
       const { tenantId } = tenantAuth;
-      const context = await advisorMemoryService.getOnboardingContext(tenantId);
-      const resumeMessage = context.isReturning
-        ? await advisorMemoryService.getResumeSummary(tenantId)
-        : null;
+
+      // Use ContextBuilder for state (replaces legacy AdvisorMemoryService)
+      const state = await contextBuilder.getOnboardingState(tenantId);
 
       logger.info(
-        { tenantId, phase: context.currentPhase, isReturning: context.isReturning },
+        { tenantId, phase: state.phase, factCount: state.factCount },
         '[Onboarding] State retrieved'
       );
 
       res.json({
-        phase: context.currentPhase,
-        isComplete: context.currentPhase === 'COMPLETED' || context.currentPhase === 'SKIPPED',
-        isReturning: context.isReturning,
-        lastActiveAt: context.lastActiveAt?.toISOString() ?? null,
+        phase: state.phase,
+        isComplete: state.isComplete,
+        isReturning: false, // Simplified: ContextBuilder doesn't track sessions
+        lastActiveAt: null,
         summaries: {
-          discovery: context.summaries.discovery || null,
-          marketContext: context.summaries.marketContext || null,
-          preferences: context.summaries.preferences || null,
-          decisions: context.summaries.decisions || null,
-          pendingQuestions: context.summaries.pendingQuestions || null,
+          discovery: null,
+          marketContext: null,
+          preferences: null,
+          decisions: null,
+          pendingQuestions: null,
         },
-        resumeMessage,
-        memory: context.memory
-          ? {
-              currentPhase: context.memory.currentPhase,
-              discoveryData: context.memory.discoveryData ?? null,
-              marketResearchData: context.memory.marketResearchData ?? null,
-              servicesData: context.memory.servicesData ?? null,
-              marketingData: context.memory.marketingData ?? null,
-              lastEventVersion: context.memory.lastEventVersion,
-            }
-          : null,
+        resumeMessage: null,
+        // Provide discovery facts in a consistent format
+        memory: {
+          currentPhase: state.phase,
+          discoveryData: state.discoveryFacts,
+          marketResearchData: null,
+          servicesData: null,
+          marketingData: null,
+          lastEventVersion: 0,
+        },
       });
     } catch (error) {
       handleError(res, error, '/onboarding-state');
@@ -347,7 +344,6 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
         where: { id: tenantId },
         select: {
           onboardingPhase: true,
-          onboardingVersion: true,
         },
       });
 
@@ -356,8 +352,7 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
         return;
       }
 
-      const currentPhase = parseOnboardingPhase(tenant.onboardingPhase);
-      const currentVersion = tenant.onboardingVersion || 0;
+      const currentPhase = tenant.onboardingPhase || 'NOT_STARTED';
 
       // Check if already completed or skipped
       if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
@@ -368,28 +363,16 @@ export function createTenantAdminAgentRoutes(deps: TenantAdminAgentRoutesDeps): 
         return;
       }
 
-      // Append ONBOARDING_SKIPPED event
-      const result = await appendEvent(
-        prisma,
-        tenantId,
-        'ONBOARDING_SKIPPED',
-        {
-          skippedAt: new Date().toISOString(),
-          lastPhase: currentPhase,
-          reason: reason || undefined,
+      // Direct state update (replaces event sourcing)
+      await prisma.tenant.update({
+        where: { id: tenantId },
+        data: {
+          onboardingPhase: 'SKIPPED',
+          onboardingDone: true,
         },
-        currentVersion
-      );
+      });
 
-      if (!result.success) {
-        if (result.error === 'CONCURRENT_MODIFICATION') {
-          res.status(409).json({ error: 'State changed, please try again' });
-          return;
-        }
-        throw new Error(result.error || 'Failed to skip onboarding');
-      }
-
-      logger.info({ tenantId, phase: currentPhase }, '[Onboarding] Skipped');
+      logger.info({ tenantId, previousPhase: currentPhase, reason }, '[Onboarding] Skipped');
 
       res.json({
         success: true,

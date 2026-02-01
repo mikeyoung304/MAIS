@@ -69,6 +69,10 @@ import {
   denyRequestTool,
   sendMessageToCustomerTool,
   updateProjectStatusTool,
+
+  // Discovery (T1) - Phase 4 Migration Fix
+  storeDiscoveryFactTool,
+  getKnownFactsTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,8 +86,8 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 3 (Customer Agent Consolidation)
- * Tool count: 24
+ * Current Phase: 4 (Discovery Tools Migration Fix)
+ * Tool count: 26
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -92,6 +96,7 @@ import {
  * - Page toggle (1)
  * - Marketing copy generation (2)
  * - Project management (7)
+ * - Discovery/onboarding (2) - store_discovery_fact, get_known_facts
  */
 export const tenantAgent = new LlmAgent({
   name: 'tenant',
@@ -176,6 +181,16 @@ export const tenantAgent = new LlmAgent({
     denyRequestTool,
     sendMessageToCustomerTool,
     updateProjectStatusTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Discovery Tools (T1) - Phase 4 Migration Fix
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Active memory for onboarding - stores facts learned during conversation
+    storeDiscoveryFactTool,
+
+    // Retrieve stored facts - prevents asking redundant questions
+    getKnownFactsTool,
   ],
 
   // Lifecycle callbacks for observability

@@ -29,6 +29,11 @@ import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
+import {
+  ContextBuilderService,
+  createContextBuilderService,
+  type BootstrapData,
+} from './context-builder.service';
 
 // =============================================================================
 // ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
@@ -199,10 +204,13 @@ export class VertexAgentService {
   private auth: GoogleAuth;
   private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
   private sessionService: SessionService;
+  private contextBuilder: ContextBuilderService;
 
   constructor(prisma: PrismaClient) {
     // Initialize persistent session service
     this.sessionService = createSessionService(prisma);
+    // Initialize context builder for bootstrap data (Agent-First Architecture)
+    this.contextBuilder = createContextBuilderService(prisma);
 
     // Initialize Google Auth for Cloud Run authentication
     // Priority: GOOGLE_SERVICE_ACCOUNT_JSON (Render) > ADC (GCP/local)
@@ -243,7 +251,53 @@ export class VertexAgentService {
     requestId?: string,
     userAgent?: string
   ): Promise<string> {
-    // Create session on ADK first to get a valid session ID
+    // =========================================================================
+    // AGENT-FIRST ARCHITECTURE: Inject context at session creation
+    // This is the P0 fix - agent now knows facts at session start
+    // =========================================================================
+
+    // Step 1: Fetch bootstrap data (discovery facts, storefront state, forbidden slots)
+    let bootstrap: BootstrapData | null = null;
+    try {
+      bootstrap = await this.contextBuilder.getBootstrapData(tenantId);
+      logger.info(
+        {
+          tenantId,
+          businessName: bootstrap.businessName,
+          factCount: Object.keys(bootstrap.discoveryFacts).length,
+          forbiddenSlots: bootstrap.forbiddenSlots,
+          onboardingComplete: bootstrap.onboardingComplete,
+        },
+        '[VertexAgent] Bootstrap data loaded for session'
+      );
+    } catch (error) {
+      // Graceful degradation - create session without bootstrap
+      logger.warn(
+        { tenantId, error: error instanceof Error ? error.message : String(error) },
+        '[VertexAgent] Failed to load bootstrap data, creating session with tenantId only'
+      );
+    }
+
+    // Step 2: Build ADK session state with full context
+    // Agent receives this at session start and knows what NOT to ask
+    const sessionState = {
+      tenantId,
+      // Identity
+      businessName: bootstrap?.businessName ?? null,
+      slug: bootstrap?.slug ?? null,
+      // Known facts (agent must NOT ask about these)
+      knownFacts: bootstrap?.discoveryFacts ?? {},
+      // Forbidden slots - enterprise slot-policy
+      // Agent checks slot keys, not phrase matching
+      forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
+      // Storefront state summary
+      storefrontState: bootstrap?.storefrontState ?? null,
+      // Onboarding state
+      onboardingComplete: bootstrap?.onboardingComplete ?? false,
+      onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+    };
+
+    // Create session on ADK with full context
     const adkUserId = `${tenantId}:${userId}`; // Combine tenant and user for ADK user_id
     let adkSessionId: string;
 
@@ -259,10 +313,9 @@ export class VertexAgentService {
             ...(token && { Authorization: `Bearer ${token}` }),
             ...(requestId && { 'X-Request-ID': requestId }),
           },
-          // When using POST /apps/{appName}/users/{userId}/sessions (auto-generate ID),
           // ADK expects state wrapped: { state: { key: value } }
-          // This is different from POST .../sessions/{sessionId} which uses direct key-values
-          body: JSON.stringify({ state: { tenantId } }),
+          // NOW INCLUDES: knownFacts, forbiddenSlots, storefrontState, etc.
+          body: JSON.stringify({ state: sessionState }),
         }
       );
 

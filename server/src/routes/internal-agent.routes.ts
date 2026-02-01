@@ -63,7 +63,7 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import type { BookingService } from '../services/booking.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ServiceRepository } from '../lib/ports';
-import type { AdvisorMemoryService } from '../agent/onboarding/advisor-memory.service';
+import type { ContextBuilderService } from '../services/context-builder.service';
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
@@ -208,7 +208,7 @@ interface InternalAgentRoutesDeps {
   bookingService: BookingService;
   tenantRepo: PrismaTenantRepository;
   serviceRepo?: ServiceRepository;
-  advisorMemoryService?: AdvisorMemoryService;
+  contextBuilder?: ContextBuilderService;
   projectHubService?: ProjectHubService;
   vocabularyEmbeddingService?: VocabularyEmbeddingService;
 }
@@ -229,7 +229,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     bookingService,
     tenantRepo,
     serviceRepo,
-    advisorMemoryService,
+    contextBuilder,
     projectHubService,
     vocabularyEmbeddingService,
   } = deps;
@@ -380,41 +380,30 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      // Get discovery data from advisor memory (if service available)
+      // Get discovery data from ContextBuilder (single source of truth)
+      // This replaces the legacy AdvisorMemoryService approach
       let discoveryData: Record<string, unknown> | null = null;
-      if (advisorMemoryService) {
+      if (contextBuilder) {
         try {
-          const context = await advisorMemoryService.getOnboardingContext(tenantId);
-          if (context.memory?.discoveryData) {
-            // Convert to plain object for JSON serialization
-            discoveryData = {
-              businessType: context.memory.discoveryData.businessType,
-              businessName: context.memory.discoveryData.businessName,
-              location: context.memory.discoveryData.location,
-              targetMarket: context.memory.discoveryData.targetMarket,
-              yearsInBusiness: context.memory.discoveryData.yearsInBusiness,
-              servicesOffered: context.memory.discoveryData.servicesOffered,
-            };
-          }
+          const bootstrapData = await contextBuilder.getBootstrapData(tenantId);
+          discoveryData = bootstrapData.discoveryFacts;
         } catch (error) {
           // Graceful degradation - continue without discovery data
           logger.warn(
             { tenantId, error: error instanceof Error ? error.message : String(error) },
-            '[Agent] Failed to fetch advisor memory, continuing without discovery data'
+            '[Agent] Failed to fetch context, continuing without discovery data'
           );
         }
       }
 
-      // Extract branding and discovery facts
+      // Fallback: Extract branding and discovery facts directly if contextBuilder unavailable
       const branding = (tenant.branding as Record<string, unknown>) || {};
       const brandingDiscoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
 
-      // Merge discovery facts from branding into discoveryData (branding takes precedence as it's newer)
+      // Use contextBuilder data or fallback to branding.discoveryFacts
       const mergedDiscoveryData =
-        discoveryData || (Object.keys(brandingDiscoveryFacts).length > 0 ? {} : null);
-      if (mergedDiscoveryData && Object.keys(brandingDiscoveryFacts).length > 0) {
-        Object.assign(mergedDiscoveryData, brandingDiscoveryFacts);
-      }
+        discoveryData ||
+        (Object.keys(brandingDiscoveryFacts).length > 0 ? brandingDiscoveryFacts : null);
 
       // Extract industry from discovery data or branding
       const industry =
@@ -602,24 +591,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Storing discovery fact'
       );
 
-      // Get current advisor memory context
-      if (!advisorMemoryService) {
-        res.status(503).json({
-          error: 'Advisor memory service not available',
-        });
-        return;
-      }
-
-      // For now, we store facts by emitting an event through the event sourcing system
-      // This will be picked up by the AdvisorMemoryRepository on next read
-      //
-      // Note: A more complete implementation would:
-      // 1. Create a DISCOVERY_FACT_UPDATED event type
-      // 2. Append it to the OnboardingEvent table
-      // 3. The projection would merge these facts into discoveryData
-      //
-      // For MVP, we'll update the tenant's branding JSON as a simple storage mechanism
-      // This allows the bootstrap endpoint to pick it up via the existing flow
+      // Agent-First Architecture: Store discovery facts directly in tenant.branding.discoveryFacts
+      // This is the canonical storage location. ContextBuilder reads from here.
 
       const tenant = await tenantRepo.findById(tenantId);
       if (!tenant) {

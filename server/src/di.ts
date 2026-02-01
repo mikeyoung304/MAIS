@@ -58,8 +58,7 @@ import {
   PrismaAvailabilityRuleRepository,
   PrismaEarlyAccessRepository,
 } from './adapters/prisma';
-import { PrismaAdvisorMemoryRepository } from './adapters/prisma/advisor-memory.repository';
-import type { AdvisorMemoryRepository } from './lib/ports';
+// AdvisorMemoryRepository removed - replaced by ContextBuilderService
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
@@ -316,16 +315,12 @@ export function buildContainer(config: Config): Container {
       projectHub: projectHubService,
     };
 
-    // Create AdvisorMemoryRepository for onboarding agent
-    const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(mockPrisma);
-
     const repositories = {
       service: serviceRepo,
       availabilityRule: availabilityRuleRepo,
       booking: adapters.bookingRepo as any, // Mock booking repo - type compatibility
       catalog: adapters.catalogRepo as any, // Mock catalog repo
       earlyAccess: adapters.earlyAccessRepo as any, // Mock early access repo
-      advisorMemory: advisorMemoryRepo, // Onboarding agent state projection
     };
 
     // Cleanup function for mock mode
@@ -750,9 +745,6 @@ export function buildContainer(config: Config): Container {
   // Create EarlyAccessRepository for early access request persistence
   const earlyAccessRepo = new PrismaEarlyAccessRepository(prisma);
 
-  // Create AdvisorMemoryRepository for onboarding agent
-  const advisorMemoryRepo = new PrismaAdvisorMemoryRepository(prisma);
-
   const repositories = {
     service: serviceRepo,
     availabilityRule: availabilityRuleRepo,
@@ -760,7 +752,6 @@ export function buildContainer(config: Config): Container {
     catalog: catalogRepo,
     webhookSubscription: webhookSubscriptionRepo,
     earlyAccess: earlyAccessRepo,
-    advisorMemory: advisorMemoryRepo, // Onboarding agent state projection
   };
 
   // Cleanup function for real mode

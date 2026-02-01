@@ -83,3 +83,14 @@ export {
   sendMessageToCustomerTool,
   updateProjectStatusTool,
 } from './project-management.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discovery Tools (T1) - Phase 4 Migration Fix
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  storeDiscoveryFactTool,
+  getKnownFactsTool,
+  DISCOVERY_FACT_KEYS,
+  type DiscoveryFactKey,
+} from './discovery.js';

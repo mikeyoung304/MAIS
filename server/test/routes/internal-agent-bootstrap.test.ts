@@ -10,7 +10,7 @@ import express from 'express';
 import request from 'supertest';
 import { createInternalAgentRoutes } from '../../src/routes/internal-agent.routes';
 import type { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
-import type { AdvisorMemoryService } from '../../src/agent/onboarding/advisor-memory.service';
+import type { ContextBuilderService } from '../../src/services/context-builder.service';
 import type { CatalogService } from '../../src/services/catalog.service';
 
 // Mock logger to prevent console output
@@ -39,24 +39,9 @@ describe('Internal Agent Bootstrap Endpoint', () => {
     updatedAt: new Date(),
   };
 
-  const mockOnboardingContext = {
-    tenantId: 'tenant-123',
-    currentPhase: 'NOT_STARTED' as const,
-    memory: null,
-    summaries: {
-      discovery: '',
-      marketContext: '',
-      preferences: '',
-      decisions: '',
-      pendingQuestions: "Let's get started!",
-    },
-    isReturning: false,
-    lastActiveAt: null,
-  };
-
   // Mock dependencies
   let mockTenantRepo: Partial<PrismaTenantRepository>;
-  let mockAdvisorMemoryService: Partial<AdvisorMemoryService>;
+  let mockContextBuilder: Partial<ContextBuilderService>;
   let mockCatalogService: Partial<CatalogService>;
   let app: express.Application;
 
@@ -71,7 +56,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         catalogService: mockCatalogService as CatalogService,
         bookingService: {} as any,
         tenantRepo: mockTenantRepo as PrismaTenantRepository,
-        advisorMemoryService: mockAdvisorMemoryService as AdvisorMemoryService,
+        contextBuilder: mockContextBuilder as ContextBuilderService,
       })
     );
     return testApp;
@@ -86,8 +71,18 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       update: vi.fn().mockResolvedValue(mockTenant),
     };
 
-    mockAdvisorMemoryService = {
-      getOnboardingContext: vi.fn().mockResolvedValue(mockOnboardingContext),
+    // Mock ContextBuilderService (replaces legacy AdvisorMemoryService)
+    mockContextBuilder = {
+      getBootstrapData: vi.fn().mockResolvedValue({
+        tenantId: 'tenant-123',
+        businessName: 'Test Business',
+        slug: 'test-business',
+        onboardingComplete: false,
+        onboardingPhase: 'NOT_STARTED',
+        discoveryFacts: {},
+        storefrontState: { hasDraft: false, hasPublished: false, completion: 0 },
+        forbiddenSlots: [],
+      }),
     };
 
     mockCatalogService = {
@@ -196,27 +191,25 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should include discovery data from advisor memory', async () => {
-      const mockMemoryWithDiscovery = {
-        ...mockOnboardingContext,
-        memory: {
-          tenantId: 'tenant-123',
-          currentPhase: 'DISCOVERY' as const,
-          lastEventVersion: 1,
-          lastEventTimestamp: new Date().toISOString(),
-          discoveryData: {
-            businessType: 'wedding photographer',
-            businessName: 'Jane Photo',
-            location: { city: 'Austin', state: 'TX' },
-            targetMarket: 'luxury',
-            yearsInBusiness: 5,
-            servicesOffered: ['weddings', 'portraits'],
-          },
+    it('should include discovery data from context builder', async () => {
+      // Mock contextBuilder with discovery data
+      mockContextBuilder.getBootstrapData = vi.fn().mockResolvedValue({
+        tenantId: 'tenant-123',
+        businessName: 'Jane Photo',
+        slug: 'jane-photo',
+        onboardingComplete: false,
+        onboardingPhase: 'DISCOVERY',
+        discoveryFacts: {
+          businessType: 'wedding photographer',
+          businessName: 'Jane Photo',
+          location: { city: 'Austin', state: 'TX' },
+          targetMarket: 'luxury',
+          yearsInBusiness: 5,
+          servicesOffered: ['weddings', 'portraits'],
         },
-      };
-      mockAdvisorMemoryService.getOnboardingContext = vi
-        .fn()
-        .mockResolvedValue(mockMemoryWithDiscovery);
+        storefrontState: { hasDraft: false, hasPublished: false, completion: 0 },
+        forbiddenSlots: ['businessType', 'businessName', 'location'],
+      });
 
       const response = await request(app)
         .post('/v1/internal/agent/bootstrap')
@@ -232,15 +225,21 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.body.industry).toBe('wedding photographer');
     });
 
-    it('should merge discovery facts from branding', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue({
-        ...mockTenant,
-        branding: {
-          discoveryFacts: {
-            businessType: 'life coach',
-            yearsInBusiness: 3,
-          },
+    it('should return discovery facts from context builder (reads from branding)', async () => {
+      // ContextBuilder reads from tenant.branding.discoveryFacts internally
+      // So we mock contextBuilder to return the expected facts
+      mockContextBuilder.getBootstrapData = vi.fn().mockResolvedValue({
+        tenantId: 'tenant-123',
+        businessName: 'Test Business',
+        slug: 'test-business',
+        onboardingComplete: false,
+        onboardingPhase: 'DISCOVERY',
+        discoveryFacts: {
+          businessType: 'life coach',
+          yearsInBusiness: 3,
         },
+        storefrontState: { hasDraft: false, hasPublished: false, completion: 0 },
+        forbiddenSlots: ['businessType', 'yearsInBusiness'],
       });
 
       const response = await request(app)
@@ -256,27 +255,28 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.body.industry).toBe('life coach');
     });
 
-    it('should work without advisor memory service (graceful degradation)', async () => {
-      // Create app without advisor memory service
-      const appNoMemory = express();
-      appNoMemory.use(express.json());
-      appNoMemory.use(
+    it('should work without context builder service (graceful degradation)', async () => {
+      // Create app without context builder service
+      const appNoContext = express();
+      appNoContext.use(express.json());
+      appNoContext.use(
         '/v1/internal/agent',
         createInternalAgentRoutes({
           internalApiSecret: INTERNAL_SECRET,
           catalogService: {} as any,
           bookingService: {} as any,
           tenantRepo: mockTenantRepo as PrismaTenantRepository,
-          // No advisorMemoryService
+          // No contextBuilder - should fall back to branding.discoveryFacts
         })
       );
 
-      const response = await request(appNoMemory)
+      const response = await request(appNoContext)
         .post('/v1/internal/agent/bootstrap')
         .set('X-Internal-Secret', INTERNAL_SECRET)
         .send({ tenantId: 'tenant-123' });
 
       expect(response.status).toBe(200);
+      // Falls back to null when no contextBuilder and no branding.discoveryFacts
       expect(response.body.discoveryData).toBeNull();
     });
 
