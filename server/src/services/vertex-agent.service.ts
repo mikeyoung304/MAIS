@@ -205,8 +205,10 @@ export class VertexAgentService {
   private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
   private sessionService: SessionService;
   private contextBuilder: ContextBuilderService;
+  private prisma: PrismaClient; // Direct access for adkSessionId updates
 
   constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
     // Initialize persistent session service
     this.sessionService = createSessionService(prisma);
     // Initialize context builder for bootstrap data (Agent-First Architecture)
@@ -357,14 +359,20 @@ export class VertexAgentService {
     }
 
     // Persist session to PostgreSQL via SessionService
-    // The session ID from ADK becomes our database session ID
     const dbSession = await this.sessionService.getOrCreateSession(
       tenantId,
-      adkSessionId, // Use ADK session ID as our session ID for correlation
+      `${tenantId}:${userId}`, // Use tenant:user format for session grouping
       'ADMIN', // Vertex agent sessions are admin sessions
       undefined, // No customer ID for admin sessions
       userAgent
     );
+
+    // Store adkSessionId on the session for later correlation
+    // This is CRITICAL: sendMessage must use this ID, not the local session ID
+    await this.prisma.agentSession.update({
+      where: { id: dbSession.id },
+      data: { adkSessionId },
+    });
 
     logger.info(
       {
@@ -375,7 +383,7 @@ export class VertexAgentService {
         userId,
         adkSessionId,
       },
-      'Session audit: session.created'
+      'Session audit: session.created (adkSessionId stored)'
     );
 
     return dbSession.id;
@@ -453,7 +461,7 @@ export class VertexAgentService {
     version: number,
     requestId?: string
   ): Promise<SendMessageResult> {
-    // Get session to verify access and get userId
+    // Get session to verify access and get adkSessionId
     const dbSession = await this.sessionService.getSession(sessionId, tenantId);
     if (!dbSession) {
       throw new Error('Session not found');
@@ -462,8 +470,16 @@ export class VertexAgentService {
     // Extract userId from session (we'll need it for ADK calls)
     const userId = dbSession.customerId || tenantId; // Admin sessions use tenantId
 
+    // Get adkSessionId - CRITICAL: use this for ADK calls, not local sessionId
+    // Need to fetch from DB since sessionService might not include this field
+    const sessionWithAdk = await this.prisma.agentSession.findUnique({
+      where: { id: sessionId },
+      select: { adkSessionId: true },
+    });
+    let adkSessionId = sessionWithAdk?.adkSessionId;
+
     logger.info(
-      { tenantId, sessionId, messageLength: message.length },
+      { tenantId, sessionId, adkSessionId, messageLength: message.length },
       '[VertexAgent] Sending message'
     );
 
@@ -508,7 +524,23 @@ export class VertexAgentService {
       // Get identity token for Cloud Run authentication
       const token = await this.getIdentityToken();
 
-      // Send to Concierge agent via A2A protocol
+      // If no adkSessionId, create one first
+      if (!adkSessionId) {
+        logger.info(
+          { tenantId, sessionId },
+          '[VertexAgent] No adkSessionId found, creating new ADK session'
+        );
+        adkSessionId = await this.createADKSession(tenantId, userId, requestId);
+        if (adkSessionId) {
+          // Store it for future calls
+          await this.prisma.agentSession.update({
+            where: { id: sessionId },
+            data: { adkSessionId },
+          });
+        }
+      }
+
+      // Send to Tenant agent via A2A protocol
       // user_id must match the format used in session creation
       const adkUserId = `${tenantId}:${userId}`;
       const response = await fetchWithTimeout(`${getTenantAgentUrl()}/run`, {
@@ -520,11 +552,11 @@ export class VertexAgentService {
         },
         // ADK uses camelCase for A2A protocol parameters
         // Note: App name is 'agent' (from /list-apps), not 'concierge'
-        // IMPORTANT: /run endpoint does NOT accept state - state must be set on session creation
+        // CRITICAL: Use adkSessionId (ADK's UUID), NOT local sessionId (our CUID)
         body: JSON.stringify({
           appName: 'agent',
           userId: adkUserId,
-          sessionId: sessionId,
+          sessionId: adkSessionId || sessionId, // Fallback to local ID if ADK unreachable
           newMessage: {
             role: 'user',
             parts: [{ text: message }],
@@ -538,13 +570,23 @@ export class VertexAgentService {
         // Handle 404 "Session not found" by creating a new ADK session and retrying
         if (response.status === 404 && errorText.includes('Session not found')) {
           logger.info(
-            { tenantId, sessionId },
+            { tenantId, sessionId, oldAdkSessionId: adkSessionId },
             '[VertexAgent] Session not found on ADK, creating new session and retrying'
           );
 
           // Create a new session on ADK (we keep our DB session)
           const newAdkSessionId = await this.createADKSession(tenantId, userId, requestId);
           if (newAdkSessionId) {
+            // Store the new adkSessionId for future calls
+            await this.prisma.agentSession.update({
+              where: { id: sessionId },
+              data: { adkSessionId: newAdkSessionId },
+            });
+            logger.info(
+              { tenantId, sessionId, newAdkSessionId },
+              '[VertexAgent] Stored new adkSessionId after retry'
+            );
+
             // Retry with same DB session but new ADK session
             // Note: we don't update currentVersion here since we already saved the user message
             return this.sendMessageToADK(
@@ -855,7 +897,7 @@ export class VertexAgentService {
   // =============================================================================
 
   /**
-   * Create a new session on ADK Cloud Run.
+   * Create a new session on ADK Cloud Run with full bootstrap context.
    * Returns the session ID if successful, null if failed.
    * @param requestId - Optional request ID for correlation
    */
@@ -868,6 +910,33 @@ export class VertexAgentService {
       const token = await this.getIdentityToken();
       const adkUserId = `${tenantId}:${userId}`;
 
+      // Fetch bootstrap data for context injection (same as createSession)
+      let bootstrap: BootstrapData | null = null;
+      try {
+        bootstrap = await this.contextBuilder.getBootstrapData(tenantId);
+        logger.info(
+          { tenantId, forbiddenSlots: bootstrap.forbiddenSlots },
+          '[VertexAgent] Bootstrap data loaded for ADK session retry'
+        );
+      } catch (error) {
+        logger.warn(
+          { tenantId, error: error instanceof Error ? error.message : String(error) },
+          '[VertexAgent] Failed to load bootstrap data for retry, using tenantId only'
+        );
+      }
+
+      // Build session state with full context (same structure as createSession)
+      const sessionState = {
+        tenantId,
+        businessName: bootstrap?.businessName ?? null,
+        slug: bootstrap?.slug ?? null,
+        knownFacts: bootstrap?.discoveryFacts ?? {},
+        forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
+        storefrontState: bootstrap?.storefrontState ?? null,
+        onboardingComplete: bootstrap?.onboardingComplete ?? false,
+        onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+      };
+
       const response = await fetchWithTimeout(
         `${getTenantAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
@@ -877,7 +946,7 @@ export class VertexAgentService {
             ...(token && { Authorization: `Bearer ${token}` }),
             ...(requestId && { 'X-Request-ID': requestId }),
           },
-          body: JSON.stringify({ state: { tenantId } }),
+          body: JSON.stringify({ state: sessionState }),
         }
       );
 

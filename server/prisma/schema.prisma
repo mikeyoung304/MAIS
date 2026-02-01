@@ -942,6 +942,7 @@ model AgentSession {
   tenantId    String // Tenant isolation - CRITICAL
   customerId  String? // NULL for admin sessions, set for customer sessions
   sessionType SessionType @default(ADMIN) // ADMIN or CUSTOMER
+  adkSessionId String? // ADK session UUID for A2A correlation (distinct from local CUID id)
   messages    Json        @default("[]") // Array of ChatMessage objects (legacy, kept for backward compat)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
