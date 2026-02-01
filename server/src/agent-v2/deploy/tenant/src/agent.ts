@@ -73,6 +73,9 @@ import {
   // Discovery (T1) - Phase 4 Migration Fix
   storeDiscoveryFactTool,
   getKnownFactsTool,
+
+  // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
+  managePackagesTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,8 +89,8 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 4 (Discovery Tools Migration Fix)
- * Tool count: 26
+ * Current Phase: 5 (Package Management P0 Fix)
+ * Tool count: 27
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -97,6 +100,7 @@ import {
  * - Marketing copy generation (2)
  * - Project management (7)
  * - Discovery/onboarding (2) - store_discovery_fact, get_known_facts
+ * - Package management (1) - manage_packages (CRUD for bookable services)
  */
 export const tenantAgent = new LlmAgent({
   name: 'tenant',
@@ -191,6 +195,15 @@ export const tenantAgent = new LlmAgent({
 
     // Retrieve stored facts - prevents asking redundant questions
     getKnownFactsTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
+    // CRITICAL: This manages ACTUAL bookable packages (Package table), NOT the
+    // cosmetic "pricing section" in landingPageConfigDraft.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Create, update, delete, or list actual bookable service packages
+    managePackagesTool,
   ],
 
   // Lifecycle callbacks for observability

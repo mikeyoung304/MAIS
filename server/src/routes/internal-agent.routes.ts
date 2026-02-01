@@ -2321,6 +2321,219 @@ Apply the feedback while maintaining the ${tone} tone.`;
     }
   });
 
+  // ===========================================================================
+  // PACKAGE MANAGEMENT Endpoints (for Tenant Agent)
+  // ===========================================================================
+  // CRITICAL P0 FIX: This endpoint manages ACTUAL bookable packages (Package table),
+  // NOT the cosmetic "pricing section" in landingPageConfigDraft.
+  //
+  // This addresses the E2E failure where agent said "Done" but Services section
+  // still showed generic $0 packages.
+  //
+  // @see docs/reports/2026-02-01-agent-testing-failure-report.md
+  // @see todos/811-pending-p1-missing-package-management-tools.md
+  // ===========================================================================
+
+  const ManagePackagesSchema = TenantIdSchema.extend({
+    action: z.enum(['list', 'create', 'update', 'delete']),
+    // Create fields
+    slug: z.string().min(1).optional(),
+    title: z.string().min(1).optional(),
+    description: z.string().optional(),
+    priceCents: z.number().min(100, 'Price must be at least $1 (100 cents)').optional(),
+    // Update/Delete fields
+    packageId: z.string().min(1).optional(),
+  });
+
+  /**
+   * POST /manage-packages - Create, update, delete, or list packages
+   *
+   * IMPORTANT: This modifies ACTUAL bookable packages that:
+   * - Appear in the Services section on the storefront
+   * - Have "Book" buttons that lead to real checkout
+   * - Must have price >= $1 (P0 fix for $0 booking path)
+   *
+   * Called by: Tenant Agent's manage_packages tool
+   */
+  router.post('/manage-packages', async (req: Request, res: Response) => {
+    try {
+      const params = ManagePackagesSchema.parse(req.body);
+      const { tenantId, action } = params;
+
+      logger.info(
+        { tenantId, action, endpoint: '/manage-packages' },
+        '[Agent] Package management request'
+      );
+
+      // Verify tenant exists
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      switch (action) {
+        case 'list': {
+          const packages = await catalogService.getAllPackages(tenantId);
+          const formatted = packages.map((pkg) => ({
+            id: pkg.id,
+            name: pkg.title || pkg.name || 'Unnamed Package',
+            description: pkg.description || '',
+            priceInDollars: Math.round((pkg.priceCents || pkg.basePrice || 0) / 100),
+            slug: pkg.slug,
+            active: pkg.active !== false,
+          }));
+
+          res.json({
+            packages: formatted,
+            totalCount: formatted.length,
+          });
+          return;
+        }
+
+        case 'create': {
+          // Validate required create fields
+          if (!params.slug || !params.title || !params.priceCents) {
+            res.status(400).json({
+              error: 'Missing required fields for create: slug, title, priceCents',
+            });
+            return;
+          }
+
+          // P0 FIX: Enforce minimum price to prevent $0 booking path
+          if (params.priceCents < 100) {
+            res.status(400).json({
+              error: 'Price must be at least $1 (100 cents). Free packages are not allowed.',
+            });
+            return;
+          }
+
+          const newPackage = await catalogService.createPackage(tenantId, {
+            slug: params.slug,
+            title: params.title,
+            description: params.description || '',
+            priceCents: params.priceCents,
+          });
+
+          // Get updated count for verification
+          const allPackages = await catalogService.getAllPackages(tenantId);
+
+          logger.info(
+            { tenantId, packageId: newPackage.id, name: newPackage.title },
+            '[Agent] Package created'
+          );
+
+          res.json({
+            package: {
+              id: newPackage.id,
+              name: newPackage.title || newPackage.name,
+              description: newPackage.description,
+              priceInDollars: Math.round(
+                (newPackage.priceCents || newPackage.basePrice || 0) / 100
+              ),
+              slug: newPackage.slug,
+            },
+            totalCount: allPackages.length,
+          });
+          return;
+        }
+
+        case 'update': {
+          if (!params.packageId) {
+            res.status(400).json({ error: 'packageId is required for update' });
+            return;
+          }
+
+          // SECURITY: Verify package belongs to tenant (pitfall #816)
+          const existingPkg = await catalogService.getPackageById(tenantId, params.packageId);
+          if (!existingPkg) {
+            res.status(404).json({ error: 'Package not found' });
+            return;
+          }
+
+          // P0 FIX: Enforce minimum price if updating price
+          if (params.priceCents !== undefined && params.priceCents < 100) {
+            res.status(400).json({
+              error: 'Price must be at least $1 (100 cents). Free packages are not allowed.',
+            });
+            return;
+          }
+
+          // Build update payload (only include provided fields)
+          const updateData: {
+            slug?: string;
+            title?: string;
+            description?: string;
+            priceCents?: number;
+          } = {};
+
+          if (params.slug) updateData.slug = params.slug;
+          if (params.title) updateData.title = params.title;
+          if (params.description) updateData.description = params.description;
+          if (params.priceCents !== undefined) updateData.priceCents = params.priceCents;
+
+          const updatedPackage = await catalogService.updatePackage(
+            tenantId,
+            params.packageId,
+            updateData
+          );
+
+          const allPackages = await catalogService.getAllPackages(tenantId);
+
+          logger.info(
+            { tenantId, packageId: updatedPackage.id, updates: Object.keys(updateData) },
+            '[Agent] Package updated'
+          );
+
+          res.json({
+            package: {
+              id: updatedPackage.id,
+              name: updatedPackage.title || updatedPackage.name,
+              description: updatedPackage.description,
+              priceInDollars: Math.round(
+                (updatedPackage.priceCents || updatedPackage.basePrice || 0) / 100
+              ),
+              slug: updatedPackage.slug,
+            },
+            totalCount: allPackages.length,
+          });
+          return;
+        }
+
+        case 'delete': {
+          if (!params.packageId) {
+            res.status(400).json({ error: 'packageId is required for delete' });
+            return;
+          }
+
+          // SECURITY: Verify package belongs to tenant (pitfall #816)
+          const existingPkg = await catalogService.getPackageById(tenantId, params.packageId);
+          if (!existingPkg) {
+            res.status(404).json({ error: 'Package not found' });
+            return;
+          }
+
+          await catalogService.deletePackage(tenantId, params.packageId);
+
+          const remainingPackages = await catalogService.getAllPackages(tenantId);
+
+          logger.info({ tenantId, deletedPackageId: params.packageId }, '[Agent] Package deleted');
+
+          res.json({
+            deletedId: params.packageId,
+            totalCount: remainingPackages.length,
+          });
+          return;
+        }
+
+        default:
+          res.status(400).json({ error: 'Invalid action' });
+      }
+    } catch (error) {
+      handleError(res, error, '/manage-packages');
+    }
+  });
+
   return router;
 }
 

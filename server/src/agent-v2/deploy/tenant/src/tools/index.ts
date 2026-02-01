@@ -94,3 +94,16 @@ export {
   DISCOVERY_FACT_KEYS,
   type DiscoveryFactKey,
 } from './discovery.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Package Management Tools (T1/T2/T3) - P0 Fix for E2E Failures
+// ─────────────────────────────────────────────────────────────────────────────
+// CRITICAL: These manage ACTUAL bookable packages (Package table), NOT the
+// cosmetic "pricing section" in landingPageConfigDraft. This addresses the
+// core E2E failure where agent said "Done" but Services section showed $0.
+//
+// @see docs/reports/2026-02-01-agent-testing-failure-report.md
+// @see todos/811-pending-p1-missing-package-management-tools.md
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { managePackagesTool } from './packages.js';
