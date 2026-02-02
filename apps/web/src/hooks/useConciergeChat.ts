@@ -57,9 +57,10 @@ export interface ConciergeToolCall {
  * These control UI navigation, scrolling, and preview updates
  */
 export interface DashboardAction {
-  type: 'NAVIGATE' | 'SCROLL_TO_SECTION' | 'SHOW_PREVIEW' | 'REFRESH';
+  type: 'NAVIGATE' | 'SCROLL_TO_SECTION' | 'SHOW_PREVIEW' | 'REFRESH' | 'REFRESH_PREVIEW';
   section?: string;
   blockType?: string;
+  sectionId?: string; // Used by SCROLL_TO_SECTION from storefront tools
   highlight?: boolean;
   fullScreen?: boolean;
 }

@@ -72,6 +72,14 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     mockTenantRepo = {
       findById: vi.fn().mockResolvedValue(mockTenant),
       update: vi.fn().mockResolvedValue(mockTenant),
+      // P1 #817 fix: Routes now delegate to these repository methods
+      publishLandingPageDraft: vi.fn().mockResolvedValue({
+        success: true,
+        publishedAt: new Date().toISOString(),
+      }),
+      discardLandingPageDraft: vi.fn().mockResolvedValue({
+        success: true,
+      }),
     };
 
     mockCatalogService = {
@@ -379,6 +387,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/publish (T3 Action)', () => {
     it('should publish draft to live', async () => {
+      // Route delegates to repository method which handles all logic
       mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
 
       const response = await request(app)
@@ -389,21 +398,15 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.action).toBe('published');
-      expect(mockTenantRepo.update).toHaveBeenCalledWith(
-        'tenant-123',
-        expect.objectContaining({
-          landingPageConfig: expect.any(Object),
-          landingPageConfigDraft: null,
-        })
-      );
+      // P1 #817: Route now delegates to repository method
+      expect(mockTenantRepo.publishLandingPageDraft).toHaveBeenCalledWith('tenant-123');
     });
 
     it('should return 400 when no draft exists', async () => {
-      // No draft
-      mockTenantRepo.findById = vi.fn().mockResolvedValue({
-        ...mockTenant,
-        landingPageConfigDraft: null,
-      });
+      // Repository method throws when no draft exists
+      mockTenantRepo.publishLandingPageDraft = vi
+        .fn()
+        .mockRejectedValue(new Error('No draft to publish'));
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/publish')
@@ -417,8 +420,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/discard (T3 Action)', () => {
     it('should discard draft changes', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
-
+      // Route delegates to repository method which handles all logic
       const response = await request(app)
         .post('/v1/internal/agent/storefront/discard')
         .set('X-Internal-Secret', INTERNAL_SECRET)
@@ -427,25 +429,23 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.action).toBe('discarded');
-      expect(mockTenantRepo.update).toHaveBeenCalledWith(
-        'tenant-123',
-        expect.objectContaining({ landingPageConfigDraft: null })
-      );
+      // P1 #817: Route now delegates to repository method
+      expect(mockTenantRepo.discardLandingPageDraft).toHaveBeenCalledWith('tenant-123');
     });
 
-    it('should return 400 when no draft exists', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue({
-        ...mockTenant,
-        landingPageConfigDraft: null,
-      });
+    it('should return 404 when tenant not found', async () => {
+      // Repository method throws when tenant not found
+      mockTenantRepo.discardLandingPageDraft = vi
+        .fn()
+        .mockRejectedValue(new Error('Tenant not found'));
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/discard')
         .set('X-Internal-Secret', INTERNAL_SECRET)
         .send({ tenantId: 'tenant-123' });
 
-      expect(response.status).toBe(400);
-      expect(response.body.error).toContain('No draft to discard');
+      expect(response.status).toBe(404);
+      expect(response.body.error).toContain('Tenant not found');
     });
   });
 

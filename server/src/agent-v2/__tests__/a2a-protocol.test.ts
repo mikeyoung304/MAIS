@@ -49,6 +49,9 @@ function buildA2ARequestBody(options: A2ARequestOptions): Record<string, unknown
  * Handles multiple response formats.
  */
 function parseA2AResponse(data: unknown): string {
+  if (data === undefined) {
+    return 'undefined';
+  }
   if (!data || typeof data !== 'object') {
     return JSON.stringify(data);
   }

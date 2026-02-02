@@ -207,7 +207,12 @@ export function AgentPanel({ className }: AgentPanelProps) {
           break;
         case 'SCROLL_TO_SECTION':
           // Scroll to and highlight a specific website section
-          if (action.blockType) {
+          // Supports both formats:
+          // - blockType: legacy format (e.g., "HERO" → "home-HERO-primary")
+          // - sectionId: new format from storefront tools (e.g., "home-hero-abc123")
+          if (action.sectionId) {
+            agentUIActions.highlightSection(action.sectionId);
+          } else if (action.blockType) {
             // Convert HERO → home-HERO-primary format for highlightSection
             const sectionId = `home-${action.blockType}-primary`;
             agentUIActions.highlightSection(sectionId);
@@ -218,6 +223,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
           agentUIActions.refreshPreview();
           break;
         case 'REFRESH':
+        case 'REFRESH_PREVIEW':
           agentUIActions.refreshPreview();
           break;
       }

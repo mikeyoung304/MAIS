@@ -150,17 +150,23 @@ grep -rn "sectionContent" server/src/ --include="*.ts"
 
 ## Phase 2: Code Deletions (Post-Schema Migration)
 
-### 1. Visual Editor Draft Logic
+### 1. Visual Editor Draft Logic ✅ DONE (2026-02-01)
 
 **Why:** Visual editor becomes a view, not an author.
 
-| Path                                              | What to delete                          |
-| ------------------------------------------------- | --------------------------------------- |
-| `apps/web/src/components/editor/DraftManager.tsx` | If exists - draft management UI         |
-| `server/src/services/landing-page.service.ts`     | `saveDraft()`, `publishDraft()` methods |
-| `packages/contracts/src/landing-page.ts`          | Draft-related endpoints                 |
+**Completed deletions:**
 
-**What to keep:** Read endpoints, publish confirmation flow (T3 action).
+| Path                                                    | What was deleted                                                                    |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `server/src/routes/tenant-admin-landing-page.routes.ts` | `PUT /draft`, `PUT /`, `PATCH /sections` routes                                     |
+| `server/src/services/landing-page.service.ts`           | `saveDraft()`, `updateConfig()`, `toggleSection()`                                  |
+| `server/src/adapters/prisma/tenant.repository.ts`       | `saveLandingPageDraft()`, `updateLandingPageConfig()`, `toggleLandingPageSection()` |
+
+**What was kept:** Read endpoints (`GET /`, `GET /draft`), publish (`POST /publish`), discard (`DELETE /draft`), image upload.
+
+**Fixed:** `publishLandingPageDraft()` and `discardLandingPageDraft()` now read from Build Mode column first.
+
+See: `docs/plans/2026-02-01-realtime-preview-handoff.md` for full details.
 
 ### 2. Dual-Path Utilities
 

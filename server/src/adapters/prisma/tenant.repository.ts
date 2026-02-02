@@ -3,13 +3,14 @@
  * Provides data layer for multi-tenant operations
  */
 
-import type { PrismaClient, Tenant, Prisma } from '../../generated/prisma/client';
+import type { PrismaClient, Tenant } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import {
   TenantPublicDtoSchema,
-  SafeImageUrlSchema,
   LandingPageConfigSchema,
+  LenientLandingPageConfigSchema,
 } from '@macon/contracts';
-import type { TenantPublicDto, LandingPageConfig, LandingPageSections } from '@macon/contracts';
+import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
 import { logger } from '../../lib/core/logger';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 
@@ -520,15 +521,19 @@ export class PrismaTenantRepository {
     }
 
     // Parse draft config from separate column
+    // IMPORTANT: Use LENIENT validation for drafts - allows empty arrays
+    // This fixes the P1 bug where empty pricing sections caused validation failure
+    // and silent fallback to published content. See: 2026-02-01 realtime preview plan.
     let draft: LandingPageConfig | null = null;
     if (tenant.landingPageConfigDraft) {
-      const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      const draftResult = LenientLandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
       if (draftResult.success) {
         draft = draftResult.data;
       } else {
-        logger.warn(
+        // Even lenient validation failed - this is a real corruption issue
+        logger.error(
           { tenantId: tenant.id, slug, errors: draftResult.error.issues },
-          'Invalid draft config in findBySlugForPreview'
+          'Draft failed even lenient validation in findBySlugForPreview'
         );
       }
     }
@@ -729,77 +734,9 @@ export class PrismaTenantRepository {
     return result.data;
   }
 
-  /**
-   * Update landing page configuration for tenant
-   * Used by tenant admins to configure their landing page
-   *
-   * @param tenantId - Tenant ID
-   * @param config - Landing page configuration object
-   * @returns Updated landing page config
-   * @throws ValidationError if config fails schema validation
-   */
-  async updateLandingPageConfig(
-    tenantId: string,
-    config: LandingPageConfig
-  ): Promise<LandingPageConfig> {
-    // Validate before storing
-    const validated = LandingPageConfigSchema.parse(config);
-
-    const tenant = await this.prisma.tenant.update({
-      where: { id: tenantId },
-      data: { landingPageConfig: validated },
-      select: { landingPageConfig: true },
-    });
-
-    return tenant.landingPageConfig as LandingPageConfig;
-  }
-
-  /**
-   * Toggle a specific section in landing page configuration
-   * Partial update - only affects the specified section's enabled state
-   *
-   * @param tenantId - Tenant ID
-   * @param section - Section name to toggle (must be a valid section key)
-   * @param enabled - Whether section should be enabled
-   * @returns Updated landing page config
-   */
-  async toggleLandingPageSection(
-    tenantId: string,
-    section: keyof LandingPageSections,
-    enabled: boolean
-  ): Promise<LandingPageConfig> {
-    // Get current config
-    const currentConfig = await this.getLandingPageConfig(tenantId);
-
-    // Default sections configuration
-    const defaultSections: LandingPageSections = {
-      hero: false,
-      socialProofBar: false,
-      segmentSelector: true,
-      about: false,
-      testimonials: false,
-      accommodation: false,
-      gallery: false,
-      faq: false,
-      finalCta: false,
-    };
-
-    // Initialize config if it doesn't exist
-    const config: LandingPageConfig = currentConfig || {
-      sections: defaultSections,
-    };
-
-    // Initialize sections if they don't exist
-    if (!config.sections) {
-      config.sections = defaultSections;
-    }
-
-    // Update the specific section
-    config.sections[section] = enabled;
-
-    // Save updated config
-    return await this.updateLandingPageConfig(tenantId, config);
-  }
+  // NOTE: updateLandingPageConfig() and toggleLandingPageSection() methods deleted.
+  // Visual Editor is deprecated. All storefront editing now happens through AI agent chatbot.
+  // See: 2026-02-01 realtime preview plan.
 
   // ============================================================================
   // Draft System Methods
@@ -884,89 +821,6 @@ export class PrismaTenantRepository {
   }
 
   /**
-   * Validates all image URLs in a landing page configuration.
-   *
-   * Checks that URLs use allowed protocols (https:, http:, blob:)
-   * and rejects dangerous protocols (javascript:, data:).
-   *
-   * @param config - The landing page configuration to validate
-   * @throws ValidationError if any image URL uses a dangerous protocol
-   *
-   * @remarks
-   * This is a defense-in-depth measure. URLs are also validated by
-   * SafeImageUrlSchema in @macon/contracts, but this server-side check
-   * ensures malicious URLs can't be injected via:
-   * - Browser DevTools console modification
-   * - Proxy interception of API requests
-   * - Direct API calls bypassing the frontend
-   *
-   * Validated locations:
-   * - hero.backgroundImageUrl
-   * - about.imageUrl
-   * - accommodation.imageUrl
-   * - gallery.images[].url
-   * - testimonials.items[].imageUrl
-   */
-  private validateImageUrls(config: LandingPageConfig): void {
-    const urlsToValidate: { path: string; url: string }[] = [];
-
-    // Collect all image URLs from config
-    if (config.hero?.backgroundImageUrl) {
-      urlsToValidate.push({
-        path: 'hero.backgroundImageUrl',
-        url: config.hero.backgroundImageUrl,
-      });
-    }
-
-    if (config.about?.imageUrl) {
-      urlsToValidate.push({
-        path: 'about.imageUrl',
-        url: config.about.imageUrl,
-      });
-    }
-
-    if (config.accommodation?.imageUrl) {
-      urlsToValidate.push({
-        path: 'accommodation.imageUrl',
-        url: config.accommodation.imageUrl,
-      });
-    }
-
-    if (config.gallery?.images) {
-      config.gallery.images.forEach((img, idx) => {
-        if (img.url) {
-          urlsToValidate.push({
-            path: `gallery.images[${idx}].url`,
-            url: img.url,
-          });
-        }
-      });
-    }
-
-    if (config.testimonials?.items) {
-      config.testimonials.items.forEach((item, idx) => {
-        if (item.imageUrl) {
-          urlsToValidate.push({
-            path: `testimonials.items[${idx}].imageUrl`,
-            url: item.imageUrl,
-          });
-        }
-      });
-    }
-
-    // Validate each URL
-    for (const { path, url } of urlsToValidate) {
-      const result = SafeImageUrlSchema.safeParse(url);
-      if (!result.success) {
-        logger.warn({ path, url: url.substring(0, 100) }, 'Invalid image URL rejected');
-        throw new ValidationError(
-          `Invalid image URL at ${path}: ${result.error.issues[0]?.message}`
-        );
-      }
-    }
-  }
-
-  /**
    * Get draft and published landing page configuration
    *
    * SECURITY: Tenant isolation enforced via tenantId parameter
@@ -1004,14 +858,18 @@ export class PrismaTenantRepository {
     let draftUpdatedAt: string | null = null;
 
     // First, try Build Mode column (landingPageConfigDraft)
+    // IMPORTANT: Use LENIENT validation for drafts - allows empty arrays
+    // This fixes the P1 bug where empty pricing sections caused validation failure
+    // and silent fallback to published content. See: 2026-02-01 realtime preview plan.
     if (tenant.landingPageConfigDraft) {
-      const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+      const draftResult = LenientLandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
       if (draftResult.success) {
         draft = draftResult.data;
       } else {
-        logger.warn(
+        // Even lenient validation failed - this is a real corruption issue
+        logger.error(
           { tenantId, errors: draftResult.error.issues },
-          'Invalid draft config in landingPageConfigDraft column'
+          'Draft failed even lenient validation - data may be corrupted'
         );
       }
     }
@@ -1020,15 +878,16 @@ export class PrismaTenantRepository {
     const wrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
 
     // If no Build Mode draft, check Visual Editor draft in wrapper
+    // NOTE: Visual Editor is deprecated but still reads from this path during transition
     if (!draft && wrapper.draft) {
-      const draftResult = LandingPageConfigSchema.safeParse(wrapper.draft);
+      const draftResult = LenientLandingPageConfigSchema.safeParse(wrapper.draft);
       if (draftResult.success) {
         draft = draftResult.data;
         draftUpdatedAt = wrapper.draftUpdatedAt ?? null;
       } else {
-        logger.warn(
+        logger.error(
           { tenantId, errors: draftResult.error.issues },
-          'Invalid draft config in wrapper format'
+          'Draft in wrapper failed lenient validation - data may be corrupted'
         );
       }
     }
@@ -1062,71 +921,10 @@ export class PrismaTenantRepository {
     };
   }
 
-  /**
-   * Save draft landing page configuration
-   *
-   * SECURITY:
-   * - Tenant isolation enforced via tenantId parameter
-   * - Image URLs re-validated before storage (defense-in-depth)
-   *
-   * DATA INTEGRITY:
-   * - Uses Prisma transaction to prevent TOCTOU race conditions
-   * - Concurrent saves from multiple tabs will serialize correctly
-   * - On failure, no partial state is written
-   *
-   * PERFORMANCE NOTE (TODO-240):
-   * The read-modify-write pattern inside the transaction is intentional.
-   * We must read currentWrapper to preserve the `published` config while
-   * updating only `draft`. Raw SQL (UPDATE...jsonb_set) was considered but
-   * rejected because:
-   * - Prisma type safety would be lost
-   * - Transaction already provides ACID guarantees
-   * - Auto-save debouncing limits actual save frequency to ~1 per 2-5 seconds
-   * - The overhead of one extra SELECT is negligible vs correctness
-   *
-   * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
-   * @param config - Draft configuration to save
-   * @returns Save result with timestamp
-   */
-  async saveLandingPageDraft(
-    tenantId: string,
-    config: LandingPageConfig
-  ): Promise<{ success: boolean; draftUpdatedAt: string }> {
-    // Re-validate all image URLs (defense-in-depth) - outside transaction for fast failure
-    this.validateImageUrls(config);
-
-    return await this.prisma.$transaction(async (tx) => {
-      const now = new Date().toISOString();
-
-      // Read-modify-write is intentional: preserves `published` while updating `draft`
-      const tenant = await tx.tenant.findUnique({
-        where: { id: tenantId },
-        select: { landingPageConfig: true },
-      });
-
-      if (!tenant) {
-        throw new NotFoundError('Tenant not found');
-      }
-
-      const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
-
-      // Update only draft, preserve published
-      const newWrapper: LandingPageDraftWrapper = {
-        ...currentWrapper,
-        draft: config,
-        draftUpdatedAt: now,
-      };
-
-      await tx.tenant.update({
-        where: { id: tenantId },
-        data: { landingPageConfig: newWrapper as any },
-      });
-
-      logger.info({ tenantId }, 'Landing page draft saved');
-
-      return { success: true, draftUpdatedAt: now };
-    });
-  }
+  // NOTE: saveLandingPageDraft() method deleted - Visual Editor autosave is deprecated.
+  // All storefront editing now happens through AI agent chatbot (Build Mode).
+  // The AI tools write directly to landingPageConfigDraft column via tenantRepo.update().
+  // See: 2026-02-01 realtime preview plan.
 
   /**
    * Publish draft to live landing page
@@ -1140,6 +938,11 @@ export class PrismaTenantRepository {
    * - Draft→Published copy is all-or-nothing
    * - On failure, both draft and published remain unchanged
    *
+   * DUAL DRAFT SYSTEM:
+   * Checks both draft sources in priority order:
+   * 1. Build Mode (AI tools): `landingPageConfigDraft` column (preferred)
+   * 2. Visual Editor (deprecated): `landingPageConfig.draft` wrapper format
+   *
    * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
    * @returns Publish result with timestamp
    * @throws NotFoundError if no draft exists to publish
@@ -1148,39 +951,80 @@ export class PrismaTenantRepository {
     tenantId: string
   ): Promise<{ success: boolean; publishedAt: string }> {
     return await this.prisma.$transaction(async (tx) => {
-      // Fetch current config within transaction
+      // Fetch current config within transaction - include both draft sources
       const tenant = await tx.tenant.findUnique({
         where: { id: tenantId },
-        select: { landingPageConfig: true },
+        select: {
+          landingPageConfig: true,
+          landingPageConfigDraft: true,
+        },
       });
 
       if (!tenant) {
         throw new NotFoundError('Tenant not found');
       }
 
-      const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+      // DUAL DRAFT SYSTEM: Check both sources for draft
+      // Priority: Build Mode column takes precedence if present
+      let draftToPublish: LandingPageConfig | null = null;
+      let draftSource: 'buildMode' | 'visualEditor' | null = null;
 
-      if (!currentWrapper.draft) {
+      // 1. First, try Build Mode column (landingPageConfigDraft)
+      if (tenant.landingPageConfigDraft) {
+        const draftResult = LandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
+        if (draftResult.success) {
+          draftToPublish = draftResult.data;
+          draftSource = 'buildMode';
+        } else {
+          logger.warn(
+            { tenantId, errors: draftResult.error.issues },
+            'Build Mode draft failed strict validation for publish'
+          );
+        }
+      }
+
+      // 2. Fall back to Visual Editor wrapper format
+      if (!draftToPublish) {
+        const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
+        if (currentWrapper.draft) {
+          const draftResult = LandingPageConfigSchema.safeParse(currentWrapper.draft);
+          if (draftResult.success) {
+            draftToPublish = draftResult.data;
+            draftSource = 'visualEditor';
+          } else {
+            logger.warn(
+              { tenantId, errors: draftResult.error.issues },
+              'Visual Editor draft failed strict validation for publish'
+            );
+          }
+        }
+      }
+
+      if (!draftToPublish) {
         throw new ValidationError('No draft to publish');
       }
 
       const now = new Date().toISOString();
 
-      // Atomically copy draft to published, clear draft, reset version
+      // Atomically: set published, clear BOTH draft sources, reset version
       const newWrapper: LandingPageDraftWrapper = {
         draft: null,
         draftUpdatedAt: null,
-        published: currentWrapper.draft,
+        published: draftToPublish,
         publishedAt: now,
         version: 0, // Reset on publish (#620)
       };
 
       await tx.tenant.update({
         where: { id: tenantId },
-        data: { landingPageConfig: newWrapper as any },
+        data: {
+          landingPageConfig: newWrapper as any,
+          landingPageConfigDraft: Prisma.DbNull, // Clear Build Mode column (use DbNull for nullable JSON)
+          landingPageConfigDraftVersion: 0, // Reset version
+        },
       });
 
-      logger.info({ tenantId }, 'Landing page draft published');
+      logger.info({ tenantId, draftSource }, 'Landing page draft published');
 
       return { success: true, publishedAt: now };
     });
@@ -1195,6 +1039,11 @@ export class PrismaTenantRepository {
    * - Uses Prisma transaction to prevent TOCTOU race conditions
    * - Concurrent operations will serialize correctly
    * - On failure, no partial state is written
+   *
+   * DUAL DRAFT SYSTEM:
+   * Clears both draft sources:
+   * 1. Build Mode (AI tools): `landingPageConfigDraft` column
+   * 2. Visual Editor (deprecated): `landingPageConfig.draft` wrapper format
    *
    * @param tenantId - Tenant ID (REQUIRED for tenant isolation)
    * @returns Discard result
@@ -1212,7 +1061,7 @@ export class PrismaTenantRepository {
 
       const currentWrapper = this.getLandingPageWrapper(tenant.landingPageConfig);
 
-      // Clear draft, keep published, reset version
+      // Clear BOTH draft sources, keep published, reset version
       const newWrapper: LandingPageDraftWrapper = {
         draft: null,
         draftUpdatedAt: null,
@@ -1223,7 +1072,11 @@ export class PrismaTenantRepository {
 
       await tx.tenant.update({
         where: { id: tenantId },
-        data: { landingPageConfig: newWrapper as any },
+        data: {
+          landingPageConfig: newWrapper as any,
+          landingPageConfigDraft: Prisma.DbNull, // Clear Build Mode column (use DbNull for nullable JSON)
+          landingPageConfigDraftVersion: 0, // Reset version
+        },
       });
 
       logger.info({ tenantId }, 'Landing page draft discarded');

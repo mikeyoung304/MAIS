@@ -260,10 +260,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # PostgreSQL service container
+    # PostgreSQL service container with pgvector extension
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -353,7 +353,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -408,10 +408,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    # PostgreSQL service container for E2E seed
+    # PostgreSQL service container for E2E seed (with pgvector extension)
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

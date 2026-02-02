@@ -67,7 +67,8 @@ import type { ContextBuilderService } from '../services/context-builder.service'
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
-import { createPublishedWrapper } from '../lib/landing-page-utils';
+// NOTE: createPublishedWrapper import removed - agent routes now delegate to repository methods
+// which handle the wrapper format internally. See: CODE_PATH_DRIFT_PREVENTION.md
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
 
 // =============================================================================
@@ -1601,71 +1602,74 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // POST /storefront/publish - Publish draft to live
+  // IMPORTANT: Delegates to repository method to handle DUAL DRAFT SYSTEM correctly
+  // See: docs/solutions/patterns/CODE_PATH_DRIFT_PREVENTION.md
   router.post('/storefront/publish', async (req: Request, res: Response) => {
     try {
       const { tenantId } = TenantIdSchema.parse(req.body);
 
       logger.info({ tenantId, endpoint: '/storefront/publish' }, '[Agent] Publishing draft');
 
+      // Delegate to repository method which handles:
+      // 1. Build Mode column (landingPageConfigDraft) - primary
+      // 2. Visual Editor wrapper (landingPageConfig.draft) - fallback for legacy data
+      // 3. Transaction safety and version reset
+      const result = await tenantRepo.publishLandingPageDraft(tenantId);
+
+      // Get tenant slug for response
       const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
-        return;
-      }
-
-      if (!tenant.landingPageConfigDraft) {
-        res.status(400).json({ error: 'No draft to publish' });
-        return;
-      }
-
-      // Publish: copy draft to live (using wrapper format for compatibility)
-      // Must use createPublishedWrapper to include publishedAt timestamp
-      // See: docs/solutions/integration-issues/agent-deployment-ci-cd-gap.md
-      const draftConfig = tenant.landingPageConfigDraft;
-      await tenantRepo.update(tenantId, {
-        landingPageConfig: createPublishedWrapper(draftConfig),
-        landingPageConfigDraft: null,
-      });
 
       res.json({
-        success: true,
+        success: result.success,
         action: 'published',
-        liveUrl: tenant.slug ? `/t/${tenant.slug}` : null,
+        publishedAt: result.publishedAt,
+        liveUrl: tenant?.slug ? `/t/${tenant.slug}` : null,
         note: 'Draft changes are now live.',
       });
     } catch (error) {
+      // Map repository errors to HTTP responses
+      if (error instanceof Error) {
+        if (error.message === 'Tenant not found') {
+          res.status(404).json({ error: 'Tenant not found' });
+          return;
+        }
+        if (error.message === 'No draft to publish') {
+          res.status(400).json({ error: 'No draft to publish' });
+          return;
+        }
+      }
       handleError(res, error, '/storefront/publish');
     }
   });
 
   // POST /storefront/discard - Discard draft
+  // IMPORTANT: Delegates to repository method to handle DUAL DRAFT SYSTEM correctly
+  // See: docs/solutions/patterns/CODE_PATH_DRIFT_PREVENTION.md
   router.post('/storefront/discard', async (req: Request, res: Response) => {
     try {
       const { tenantId } = TenantIdSchema.parse(req.body);
 
       logger.info({ tenantId, endpoint: '/storefront/discard' }, '[Agent] Discarding draft');
 
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
-        return;
-      }
-
-      if (!tenant.landingPageConfigDraft) {
-        res.status(400).json({ error: 'No draft to discard' });
-        return;
-      }
-
-      await tenantRepo.update(tenantId, {
-        landingPageConfigDraft: null,
-      });
+      // Delegate to repository method which handles:
+      // 1. Clearing Build Mode column (landingPageConfigDraft)
+      // 2. Clearing Visual Editor wrapper (landingPageConfig.draft) for legacy data
+      // 3. Transaction safety and version reset
+      const result = await tenantRepo.discardLandingPageDraft(tenantId);
 
       res.json({
-        success: true,
+        success: result.success,
         action: 'discarded',
         note: 'Draft changes discarded. Reverted to live version.',
       });
     } catch (error) {
+      // Map repository errors to HTTP responses
+      if (error instanceof Error) {
+        if (error.message === 'Tenant not found') {
+          res.status(404).json({ error: 'Tenant not found' });
+          return;
+        }
+      }
       handleError(res, error, '/storefront/discard');
     }
   });
