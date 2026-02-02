@@ -72,8 +72,13 @@ export default defineConfig({
   // Run your local dev server before starting the tests
   // Note: Next.js uses NEXT_PUBLIC_* env vars (not VITE_*)
   // The E2E tenant key is set in apps/web/.env.local for development
+  //
+  // CI Mode: API is started separately in the workflow, so we only start Next.js here.
+  // Local Mode: Start both API and Next.js with dev:e2e for convenience.
   webServer: {
-    command: 'ADAPTERS_PRESET=real E2E_TEST=1 npm run dev:e2e',
+    command: process.env.CI
+      ? 'npm run dev:web' // CI: API already running, just start Next.js
+      : 'ADAPTERS_PRESET=real E2E_TEST=1 npm run dev:e2e', // Local: start both
     cwd: '..',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,

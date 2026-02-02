@@ -496,6 +496,9 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+          # NextAuth v5 requires AUTH_SECRET for Next.js dev server
+          AUTH_SECRET: e2e-test-secret-not-for-production
+          NEXT_PUBLIC_API_URL: http://localhost:3001
 
       - name: Upload Playwright report on failure
         if: failure()
@@ -556,6 +559,10 @@ jobs:
 
       - name: Build all packages
         run: npm run build --workspaces --if-present
+        env:
+          # NextAuth v5 requires AUTH_SECRET at build time for page data collection.
+          # This is a dummy value for CI builds; real secret is used at runtime.
+          AUTH_SECRET: ci-build-placeholder-not-used-at-runtime
 
       - name: Upload build artifacts (PR only)
         if: github.event_name == 'pull_request'
