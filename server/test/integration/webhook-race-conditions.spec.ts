@@ -96,7 +96,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
           amount_total: 250000,
           metadata: {
             tenantId: testTenantId,
-            packageId: testPackageSlug, // Use slug, not database ID
+            packageId: testPackageId, // CUID - booking service queries by id, not slug
             eventDate,
             email: `test-${eventId}@example.com`,
             coupleName: `Test Couple ${eventId}`,

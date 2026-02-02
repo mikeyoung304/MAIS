@@ -34,6 +34,7 @@ import { z } from 'zod';
  * Lightweight structured logger for Cloud Run agents
  * Outputs JSON for easy parsing in Cloud Logging
  */
+/* eslint-disable no-console -- Structured logger wraps console for Cloud Logging */
 const logger = {
   info: (data: Record<string, unknown>, msg: string) =>
     console.log(
@@ -48,6 +49,7 @@ const logger = {
       JSON.stringify({ level: 'error', msg, ...data, timestamp: new Date().toISOString() })
     ),
 };
+/* eslint-enable no-console */
 
 // =============================================================================
 // ENVIRONMENT CONFIGURATION

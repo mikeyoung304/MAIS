@@ -29,7 +29,7 @@ import {
 // ============================================================================
 
 /** Access token query param schema */
-const AccessQuerySchema = z.object({
+const _AccessQuerySchema = z.object({
   token: z.string().min(1, 'Access token is required'),
 });
 

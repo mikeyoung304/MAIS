@@ -1681,6 +1681,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // ===========================================================================
 
   // Lazy import Vertex client to avoid startup issues if not configured
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   let vertexClientPromise: Promise<typeof import('../llm/vertex-client')> | null = null;
   async function getVertexModule() {
     if (!vertexClientPromise) {
@@ -1803,7 +1804,7 @@ Apply the feedback while maintaining the ${tone} tone.`;
   ): Promise<{ primary: string; variants: string[]; rationale: string }> {
     const vertexModule = await getVertexModule();
     const client = vertexModule.getVertexClient();
-    const model = client.models.generateContent;
+    const _model = client.models.generateContent; // Preserved for potential future use
 
     const prompt = buildMarketingPrompt(type, params, businessContext);
 
@@ -2041,7 +2042,7 @@ Apply the feedback while maintaining the ${tone} tone.`;
     status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'ON_HOLD']).optional(),
   });
 
-  const ProjectHubAddNoteSchema = TenantIdSchema.extend({
+  const _ProjectHubAddNoteSchema = TenantIdSchema.extend({
     projectId: z.string().min(1, 'projectId is required'),
     note: z.string().min(1, 'note is required'),
   });

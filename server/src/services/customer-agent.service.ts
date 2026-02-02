@@ -98,7 +98,7 @@ async function fetchWithTimeout(
 // CONFIGURATION
 // =============================================================================
 
-function getRequiredEnv(name: string): string {
+function _getRequiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}. Set this in your .env file.`);
@@ -355,7 +355,7 @@ export class CustomerAgentService {
       throw new Error(userMsgResult.error || 'Failed to save message');
     }
 
-    let currentVersion = userMsgResult.newVersion!;
+    const currentVersion = userMsgResult.newVersion!;
 
     try {
       // 4. Send to Booking Agent

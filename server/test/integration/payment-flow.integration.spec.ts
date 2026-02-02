@@ -180,7 +180,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     it('should complete flow: createCheckout → webhook → booking created', async () => {
       // Step 1: Create checkout session
       const checkoutResponse = await bookingService.createCheckout(testTenantId, {
-        packageId: testPackageSlug,
+        packageId: testPackageId,
         eventDate: '2025-06-15',
         email: 'couple@example.com',
         coupleName: 'Jane & John',
@@ -194,7 +194,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'cs_test_payment_success',
         {
           tenantId: testTenantId,
-          packageId: testPackageSlug,
+          packageId: testPackageId,
           eventDate: '2025-06-15',
           email: 'couple@example.com',
           coupleName: 'Jane & John',
@@ -232,7 +232,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'pi_test_failed',
         {
           tenantId: testTenantId,
-          packageId: testPackageSlug,
+          packageId: testPackageId,
           eventDate: '2025-06-20',
           email: 'failed@example.com',
           coupleName: 'Failed Payment',
@@ -267,7 +267,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     it('should enforce idempotency: duplicate checkout request returns same URL', async () => {
       // Create checkout session twice with same data
       const input = {
-        packageId: testPackageSlug,
+        packageId: testPackageId,
         eventDate: '2025-07-01',
         email: 'idempotent@example.com',
         coupleName: 'Idempotent Test',
@@ -292,7 +292,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'cs_test_commission',
         {
           tenantId: testTenantId,
-          packageId: testPackageSlug,
+          packageId: testPackageId,
           eventDate: '2025-08-01',
           email: 'commission@example.com',
           coupleName: 'Commission Test',
@@ -324,7 +324,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     it('should validate Stripe application fee matches commission amount', async () => {
       // Create checkout with commission
       const checkoutResponse = await bookingService.createCheckout(testTenantId, {
-        packageId: testPackageSlug,
+        packageId: testPackageId,
         eventDate: '2025-08-15',
         email: 'appfee@example.com',
         coupleName: 'App Fee Test',
@@ -357,7 +357,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
 
       // Create checkout session (should use Connect)
       const checkoutResponse = await bookingService.createCheckout(testTenantId, {
-        packageId: testPackageSlug,
+        packageId: testPackageId,
         eventDate: '2025-09-01',
         email: 'connect@example.com',
         coupleName: 'Connect Test',
@@ -371,7 +371,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'cs_test_connect',
         {
           tenantId: testTenantId,
-          packageId: testPackageSlug,
+          packageId: testPackageId,
           eventDate: '2025-09-01',
           email: 'connect@example.com',
           coupleName: 'Connect Test',

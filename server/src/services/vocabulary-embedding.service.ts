@@ -18,7 +18,7 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import { PrismaClient, BlockType } from '../generated/prisma';
+import type { PrismaClient, BlockType } from '../generated/prisma';
 import { getVertexClient } from '../llm/vertex-client';
 import { logger } from '../lib/core/logger';
 import { createId } from '@paralleldrive/cuid2';

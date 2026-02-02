@@ -14,7 +14,13 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, logger, getTenantId, TIMEOUTS, fetchWithTimeout } from '../utils.js';
+import {
+  callMaisApi as _callMaisApi,
+  logger,
+  getTenantId,
+  TIMEOUTS,
+  fetchWithTimeout,
+} from '../utils.js';
 import type { BlockType } from '../context-builder.js';
 
 // ─────────────────────────────────────────────────────────────────────────────

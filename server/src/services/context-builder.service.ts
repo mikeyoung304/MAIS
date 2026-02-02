@@ -424,7 +424,7 @@ export class ContextBuilderService {
     draft: Prisma.JsonValue | null
   ): StorefrontState {
     const hasDraft = draft !== null && Object.keys(draft as object).length > 0;
-    const hasPublished = published !== null && Object.keys(published as object).length > 0;
+    const _hasPublished = published !== null && Object.keys(published as object).length > 0;
 
     // Extract section states from published config
     const publishedConfig = published as Record<string, unknown> | null;

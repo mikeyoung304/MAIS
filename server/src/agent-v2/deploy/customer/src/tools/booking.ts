@@ -7,7 +7,7 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool, type ToolContext as _ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { getTenantId, callMaisApi, logger } from '../utils.js';
 

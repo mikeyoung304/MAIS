@@ -14,12 +14,8 @@
  */
 
 import { logger } from '../lib/core/logger';
-import {
-  classifyGeminiError,
-  GeminiErrorType,
-  type ClassifiedGeminiError,
-  requiresAlert,
-} from './errors';
+import type { GeminiErrorType } from './errors';
+import { classifyGeminiError, type ClassifiedGeminiError, requiresAlert } from './errors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

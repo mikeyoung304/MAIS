@@ -335,7 +335,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const payment1 = {
           sessionId: `sess_1_${uniqueSuffix}`,
-          packageId: testPackageSlug,
+          packageId: testPackageId,
           eventDate,
           email: `payment1-${uniqueSuffix}@example.com`,
           coupleName: 'Payment Test 1',
@@ -345,7 +345,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const payment2 = {
           sessionId: `sess_2_${uniqueSuffix}`,
-          packageId: testPackageSlug,
+          packageId: testPackageId,
           eventDate,
           email: `payment2-${uniqueSuffix}@example.com`,
           coupleName: 'Payment Test 2',
@@ -390,7 +390,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           try {
             await bookingService.onPaymentCompleted(testTenantId, {
               sessionId: `sess_rapid_${i}`,
-              packageId: testPackageSlug,
+              packageId: testPackageId,
               eventDate,
               email: `rapid${i}@example.com`,
               coupleName: `Rapid Test ${i}`,

@@ -19,7 +19,7 @@ import { setTimeout } from 'timers/promises';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { logger } from '../lib/core/logger';
 import { validatePreviewToken } from '../lib/preview-tokens';
-import type { TenantPublicDto } from '@macon/contracts';
+import type { TenantPublicDto as _TenantPublicDto } from '@macon/contracts';
 
 /**
  * Create public tenant routes

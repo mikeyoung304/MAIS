@@ -96,7 +96,7 @@ interface TenantAgentRoutesDeps {
  */
 export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps): Router {
   const router = Router();
-  const { prisma } = deps;
+  const { prisma: _prisma } = deps;
 
   // ===========================================================================
   // POST /chat - Send a message to the Tenant Agent

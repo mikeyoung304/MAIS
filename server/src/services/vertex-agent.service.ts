@@ -29,11 +29,8 @@ import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
-import {
-  ContextBuilderService,
-  createContextBuilderService,
-  type BootstrapData,
-} from './context-builder.service';
+import type { ContextBuilderService } from './context-builder.service';
+import { createContextBuilderService, type BootstrapData } from './context-builder.service';
 
 // =============================================================================
 // ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
@@ -153,11 +150,11 @@ function getTenantAgentUrl(): string {
   );
 }
 
-function getGoogleCloudProject(): string {
+function _getGoogleCloudProject(): string {
   return getRequiredEnv('GOOGLE_CLOUD_PROJECT');
 }
 
-const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+const _GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
 // =============================================================================
 // TYPES

@@ -64,6 +64,7 @@ export const TIMEOUTS = {
  * Lightweight structured logger for Cloud Run agents.
  * Outputs JSON for easy parsing in Cloud Logging.
  */
+/* eslint-disable no-console -- Structured logger wraps console for Cloud Logging */
 export const logger = {
   debug: (data: Record<string, unknown>, msg: string) =>
     console.log(
@@ -82,6 +83,7 @@ export const logger = {
       JSON.stringify({ level: 'error', msg, ...data, timestamp: new Date().toISOString() })
     ),
 };
+/* eslint-enable no-console */
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Network Utilities

@@ -279,7 +279,7 @@ describe('Gemini Retry Logic', () => {
 
   describe('exponential backoff', () => {
     it('should increase delay with each attempt', async () => {
-      let attemptDelays: number[] = [];
+      const attemptDelays: number[] = [];
       let lastAttemptTime = Date.now();
 
       const operation = vi.fn().mockImplementation(async () => {
@@ -333,7 +333,7 @@ describe('Gemini Retry Logic', () => {
   describe('API-provided retry hints', () => {
     it('should use retry-after hint from error', async () => {
       let retryDelay = 0;
-      let originalNow = Date.now();
+      const originalNow = Date.now();
 
       const operation = vi
         .fn()

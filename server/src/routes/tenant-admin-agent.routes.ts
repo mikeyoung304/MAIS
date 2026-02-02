@@ -20,9 +20,10 @@ import { Router } from 'express';
 import { z, ZodError } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-import { VertexAgentService, createVertexAgentService } from '../services/vertex-agent.service';
+import type { VertexAgentService } from '../services/vertex-agent.service';
+import { createVertexAgentService } from '../services/vertex-agent.service';
 import {
-  ContextBuilderService,
+  ContextBuilderService as _ContextBuilderService,
   createContextBuilderService,
 } from '../services/context-builder.service';
 

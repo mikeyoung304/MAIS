@@ -21,8 +21,13 @@
 import type { PrismaClient } from '../../generated/prisma/client';
 import { logger } from '../../lib/core/logger';
 import { encryptionService, type EncryptedData } from '../../lib/encryption.service';
-import { SessionRepository, createSessionRepository } from './session.repository';
-import { SessionCache, sessionCache as defaultCache, createSessionCache } from './session.cache';
+import type { SessionRepository } from './session.repository';
+import { createSessionRepository } from './session.repository';
+import type { SessionCache } from './session.cache';
+import {
+  sessionCache as defaultCache,
+  createSessionCache as _createSessionCache,
+} from './session.cache';
 import {
   type CreateMessageInput,
   type SessionMessage,
