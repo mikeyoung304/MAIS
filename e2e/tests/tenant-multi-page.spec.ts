@@ -29,16 +29,17 @@ const BASE_PATH = `${NEXTJS_BASE_URL}/t/${TENANT_SLUG}`;
 
 test.describe('Tenant Multi-Page Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    // Skip if NEXTJS_E2E env var not set
+    // SKIP REASON: These tests require Next.js app running with full tenant data.
+    // Run with: NEXTJS_E2E=1 npx playwright test tenant-multi-page.spec.ts
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
   });
 
   test.describe('Desktop Navigation', () => {
     test('landing page shows navigation header', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Should show navigation
       const nav = page.locator('nav[aria-label="Main navigation"]');
@@ -55,35 +56,35 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
     test('can navigate to all pages', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Navigate to Services
       await page.getByRole('link', { name: 'Services' }).first().click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(`${BASE_PATH}/services`);
       await expect(page.getByRole('heading', { name: /our services/i })).toBeVisible();
 
       // Navigate to About
       await page.getByRole('link', { name: 'About' }).first().click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(`${BASE_PATH}/about`);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
       // Navigate to FAQ
       await page.getByRole('link', { name: 'FAQ' }).first().click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(`${BASE_PATH}/faq`);
       await expect(page.getByRole('heading', { name: /frequently asked/i })).toBeVisible();
 
       // Navigate to Contact
       await page.getByRole('link', { name: 'Contact' }).first().click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(`${BASE_PATH}/contact`);
       await expect(page.getByRole('heading', { name: /get in touch/i })).toBeVisible();
 
       // Navigate back to Home
       await page.getByRole('link', { name: 'Home' }).first().click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(BASE_PATH);
     });
 
@@ -92,7 +93,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
       for (const pagePath of pages) {
         await page.goto(`${BASE_PATH}${pagePath}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         const footer = page.locator('footer[role="contentinfo"]');
         await expect(footer).toBeVisible();
@@ -111,7 +112,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
     test('shows hamburger menu on mobile', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Desktop nav links should be hidden
       const desktopNav = page.locator('nav[aria-label="Main navigation"] .md\\:flex');
@@ -125,20 +126,15 @@ test.describe('Tenant Multi-Page Navigation', () => {
     test('can open and close mobile menu', async ({ page }) => {
       // Navigate first, then viewport size should already be mobile from beforeEach
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
-
-      // Wait a bit for React hydration
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
 
       // Open menu
       const menuButton = page.getByRole('button', { name: /open menu/i });
       await expect(menuButton).toBeVisible({ timeout: 10000 });
       await menuButton.click();
 
-      // Wait for animation
-      await page.waitForTimeout(300);
-
       // Menu should be open (translated into view, aria-hidden false)
+      // The assertion will wait for the animation to complete
       const mobileMenu = page.locator('#mobile-menu');
       await expect(mobileMenu).toHaveClass(/translate-x-0/);
       await expect(mobileMenu).toHaveAttribute('aria-hidden', 'false');
@@ -156,7 +152,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
     test('mobile menu closes on navigation', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Open menu
       await page.getByRole('button', { name: /open menu/i }).click();
@@ -166,7 +162,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
       await servicesLink.click();
 
       // Should navigate and close menu
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(`${BASE_PATH}/services`);
 
       // Menu should be closed
@@ -176,7 +172,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
     test('mobile menu closes on Escape key', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Open menu
       await page.getByRole('button', { name: /open menu/i }).click();
@@ -196,7 +192,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
   test.describe('Skip Link', () => {
     test('skip link is visible on focus', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Skip link should be initially hidden (sr-only) - use first() since there may be multiple
       const skipLink = page.getByRole('link', { name: /skip to main content/i }).first();
@@ -210,7 +206,7 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
     test('skip link navigates to main content', async ({ page }) => {
       await page.goto(BASE_PATH);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Focus and click skip link
       await page.keyboard.press('Tab');
@@ -224,14 +220,16 @@ test.describe('Tenant Multi-Page Navigation', () => {
 
 test.describe('Contact Form', () => {
   test.beforeEach(async ({ page }) => {
-    // Skip if NEXTJS_E2E env var not set
+    // SKIP REASON: Requires Next.js app with tenant contact form
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
     await page.goto(`${BASE_PATH}/contact`);
-    await page.waitForLoadState('networkidle');
-    // Wait for React hydration
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
+    // Wait for form to be interactive (hydration complete)
+    await expect(page.getByRole('button', { name: /send message/i })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('shows required field validation', async ({ page }) => {
@@ -319,12 +317,12 @@ test.describe('Contact Form', () => {
 
 test.describe('FAQ Accordion', () => {
   test.beforeEach(async ({ page }) => {
-    // Skip if NEXTJS_E2E env var not set
+    // SKIP REASON: Requires Next.js app with tenant FAQ page
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
     await page.goto(`${BASE_PATH}/faq`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('shows FAQ heading', async ({ page }) => {
@@ -350,7 +348,7 @@ test.describe('FAQ Accordion', () => {
     await expect(contactLink).toBeVisible();
 
     await contactLink.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page).toHaveURL(`${BASE_PATH}/contact`);
   });
@@ -358,9 +356,9 @@ test.describe('FAQ Accordion', () => {
 
 test.describe('SEO Metadata', () => {
   test.beforeEach(async ({ page }) => {
-    // Skip if NEXTJS_E2E env var not set
+    // SKIP REASON: Requires Next.js app with proper metadata generation
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
   });
 
@@ -375,7 +373,7 @@ test.describe('SEO Metadata', () => {
   pages.forEach(({ path, titleContains }) => {
     test(`${path || 'home'} page has correct title`, async ({ page }) => {
       await page.goto(`${BASE_PATH}${path}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Check page title contains expected text
       const title = await page.title();
@@ -385,7 +383,7 @@ test.describe('SEO Metadata', () => {
 
   test('pages have meta description', async ({ page }) => {
     await page.goto(`${BASE_PATH}/about`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const metaDescription = await page.getAttribute('meta[name="description"]', 'content');
     expect(metaDescription).toBeTruthy();
@@ -395,16 +393,16 @@ test.describe('SEO Metadata', () => {
 
 test.describe('Booking Flow Isolation', () => {
   test.beforeEach(async () => {
-    // Skip if NEXTJS_E2E env var not set
+    // SKIP REASON: Requires Next.js app with booking flow pages
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
   });
 
   test('booking page has its own header (no TenantNav)', async ({ page }) => {
     // First navigate to a regular site page to verify TenantNav exists
     await page.goto(BASE_PATH);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const siteNav = page.locator('nav[aria-label="Main navigation"]');
     await expect(siteNav).toBeVisible();
@@ -412,7 +410,7 @@ test.describe('Booking Flow Isolation', () => {
     // Now navigate to booking flow
     // We need to find a valid package slug from the E2E tenant
     await page.goto(`${BASE_PATH}/book/starter-package`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Booking flow should NOT have the main TenantNav
     // It should have its own booking-specific header or back button
@@ -427,15 +425,15 @@ test.describe('Booking Flow Isolation', () => {
 
 test.describe('Accessibility', () => {
   test.beforeEach(async () => {
-    // Skip if NEXTJS_E2E env var not set
+    // SKIP REASON: Requires Next.js app with accessible components
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
   });
 
   test('navigation has proper ARIA labels', async ({ page }) => {
     await page.goto(BASE_PATH);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Main nav has aria-label
     const mainNav = page.locator('nav[aria-label="Main navigation"]');
@@ -448,7 +446,7 @@ test.describe('Accessibility', () => {
 
   test('footer has contentinfo role', async ({ page }) => {
     await page.goto(BASE_PATH);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const footer = page.locator('footer[role="contentinfo"]');
     await expect(footer).toBeVisible();
@@ -456,7 +454,7 @@ test.describe('Accessibility', () => {
 
   test('contact form fields have accessible labels', async ({ page }) => {
     await page.goto(`${BASE_PATH}/contact`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Each input should have a label
     const nameLabel = page.locator('label[for="name"]');

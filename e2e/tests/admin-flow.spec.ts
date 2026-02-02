@@ -11,7 +11,17 @@ import { test, expect } from '@playwright/test';
  * 5. Add an add-on
  * 6. Create a blackout date
  * 7. Clean up (delete package)
+ *
+ * Environment Variables:
+ * - E2E_ADMIN_EMAIL: Admin email (default: admin@example.com)
+ * - E2E_ADMIN_PASSWORD: Admin password (default: admin123admin)
  */
+
+// Admin credentials from environment variables with test defaults
+// SECURITY NOTE: These are test-only defaults. In CI, set proper env vars.
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@example.com';
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || 'admin123admin';
+
 test.describe('Admin Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Clear any existing auth token
@@ -28,15 +38,15 @@ test.describe('Admin Flow', () => {
     await expect(page.getByRole('heading', { name: /^Login$/i })).toBeVisible();
 
     // 2. Fill login form
-    await page.fill('#email', 'admin@example.com');
-    await page.fill('#password', 'admin123admin');
+    await page.fill('#email', ADMIN_EMAIL);
+    await page.fill('#password', ADMIN_PASSWORD);
 
     // 3. Click login button and wait for navigation
     await page.getByRole('button', { name: /Login/i }).click();
     await page.waitForURL('/admin/dashboard', { timeout: 10000 });
 
     // 4. Wait for dashboard to fully load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 5. Verify dashboard loads with heading
     await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible();
@@ -56,11 +66,11 @@ test.describe('Admin Flow', () => {
   test('admin can manage packages', async ({ page }) => {
     // Login first
     await page.goto('/login');
-    await page.fill('#email', 'admin@example.com');
-    await page.fill('#password', 'admin123admin');
+    await page.fill('#email', ADMIN_EMAIL);
+    await page.fill('#password', ADMIN_PASSWORD);
     await page.getByRole('button', { name: /Login/i }).click();
     await page.waitForURL('/admin/dashboard', { timeout: 10000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 1. Click "Packages" tab
     await page.getByRole('button', { name: 'Packages' }).click();
@@ -150,11 +160,11 @@ test.describe('Admin Flow', () => {
   test('admin can manage blackout dates', async ({ page }) => {
     // Login first
     await page.goto('/login');
-    await page.fill('#email', 'admin@example.com');
-    await page.fill('#password', 'admin123admin');
+    await page.fill('#email', ADMIN_EMAIL);
+    await page.fill('#password', ADMIN_PASSWORD);
     await page.getByRole('button', { name: /Login/i }).click();
     await page.waitForURL('/admin/dashboard', { timeout: 10000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 1. Click "Blackouts" tab
     await page.getByRole('button', { name: 'Blackouts' }).click();
@@ -187,11 +197,11 @@ test.describe('Admin Flow', () => {
   test('admin can view bookings table', async ({ page }) => {
     // Login first
     await page.goto('/login');
-    await page.fill('#email', 'admin@example.com');
-    await page.fill('#password', 'admin123admin');
+    await page.fill('#email', ADMIN_EMAIL);
+    await page.fill('#password', ADMIN_PASSWORD);
     await page.getByRole('button', { name: /Login/i }).click();
     await page.waitForURL('/admin/dashboard', { timeout: 10000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Bookings tab should be active by default
     await expect(page.getByRole('heading', { name: /Bookings/i })).toBeVisible();
@@ -209,11 +219,11 @@ test.describe('Admin Flow', () => {
   test('admin can logout', async ({ page }) => {
     // Login first
     await page.goto('/login');
-    await page.fill('#email', 'admin@example.com');
-    await page.fill('#password', 'admin123admin');
+    await page.fill('#email', ADMIN_EMAIL);
+    await page.fill('#password', ADMIN_PASSWORD);
     await page.getByRole('button', { name: /Login/i }).click();
     await page.waitForURL('/admin/dashboard', { timeout: 10000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click logout button
     await page.getByRole('button', { name: /Logout/i }).click();

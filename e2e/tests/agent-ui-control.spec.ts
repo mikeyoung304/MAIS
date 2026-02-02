@@ -28,7 +28,7 @@ import type { Page } from '@playwright/test';
  */
 async function goToDashboard(page: Page): Promise<void> {
   await page.goto('/tenant/dashboard');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Wait for agent panel to be visible
   await page.waitForSelector('[data-testid="agent-panel"]', { timeout: 15000 });
@@ -338,7 +338,7 @@ test.describe('Agent UI Control', () => {
   test('activates preview with showPreview query param', async ({ authenticatedPage }) => {
     // Navigate with query param
     await authenticatedPage.goto('/tenant/dashboard?showPreview=true');
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState('domcontentloaded');
 
     // Preview should be visible
     await expect(authenticatedPage.locator('[data-testid="content-area-preview"]')).toBeVisible({
@@ -364,7 +364,7 @@ test.describe('Agent UI Control', () => {
 
     // Reload to get the draft state
     await authenticatedPage.reload();
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState('domcontentloaded');
 
     // Show preview again after reload
     await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
@@ -389,8 +389,8 @@ test.describe('Agent UI Control', () => {
       // Close dialog by clicking Cancel
       await authenticatedPage.getByRole('button', { name: /Cancel/i }).click();
     } else {
-      // If no draft exists, skip this assertion
-      test.skip();
+      // SKIP REASON: Publish button only visible when draft exists
+      test.skip(true, 'No draft exists - publish button not visible');
     }
   });
 
@@ -412,7 +412,7 @@ test.describe('Agent UI Control', () => {
 
     // Reload to get the draft state
     await authenticatedPage.reload();
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState('domcontentloaded');
 
     // Show preview again after reload
     await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
@@ -437,8 +437,8 @@ test.describe('Agent UI Control', () => {
       // Close dialog by clicking Cancel
       await authenticatedPage.getByRole('button', { name: /Cancel/i }).click();
     } else {
-      // If no draft exists, skip this assertion
-      test.skip();
+      // SKIP REASON: Discard button only visible when draft exists
+      test.skip(true, 'No draft exists - discard button not visible');
     }
   });
 

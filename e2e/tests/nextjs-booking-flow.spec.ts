@@ -24,10 +24,11 @@ const TEST_TENANT_SLUG = 'handled-e2e';
 test.describe.configure({ mode: 'parallel' });
 
 test.describe('Next.js Tenant Storefront Booking Flow', () => {
-  // Skip if Next.js E2E flag not set
+  // SKIP REASON: These tests require Next.js app running with booking flow.
+  // Run with: NEXTJS_E2E=1 npx playwright test nextjs-booking-flow.spec.ts
   test.beforeEach(async ({ page }) => {
     if (!process.env.NEXTJS_E2E) {
-      test.skip();
+      test.skip(true, 'Requires NEXTJS_E2E=1 environment variable');
     }
 
     // Set base URL for Next.js app
@@ -38,7 +39,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
     await page.goto(`${NEXTJS_BASE_URL}/t/${TEST_TENANT_SLUG}`);
 
     // Wait for page to load (ISR may take a moment on first hit)
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify tenant name is displayed
     await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
@@ -55,7 +56,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
 
   test('can navigate to package booking page', async ({ page }) => {
     await page.goto(`${NEXTJS_BASE_URL}/t/${TEST_TENANT_SLUG}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Find and click a "Book Now" or similar button
     const bookButton = page
@@ -68,7 +69,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
 
       // Verify navigation to booking page
       await expect(page).toHaveURL(new RegExp(`/t/${TEST_TENANT_SLUG}/book/`));
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Verify booking wizard is displayed
       const bookingHeading = page.locator('h1, h2').filter({ hasText: /book|select|choose/i });
@@ -81,7 +82,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
   test('booking wizard shows date selection step', async ({ page }) => {
     // Navigate directly to a booking page (assuming package slug format)
     await page.goto(`${NEXTJS_BASE_URL}/t/${TEST_TENANT_SLUG}/book/wedding-essential`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for date picker or calendar element
     const calendar = page.locator('[role="grid"], .rdp, .calendar, [data-testid="calendar"]');
@@ -106,7 +107,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
 
   test('booking form validates required fields', async ({ page }) => {
     await page.goto(`${NEXTJS_BASE_URL}/t/${TEST_TENANT_SLUG}/book/wedding-essential`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Try to submit without filling required fields
     const submitButton = page
@@ -136,7 +137,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
     await page.goto(
       `${NEXTJS_BASE_URL}/t/${TEST_TENANT_SLUG}/book/success?booking_id=test-booking-123`
     );
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify success page content
     const successHeading = page.locator('h1, h2').filter({ hasText: /confirmed|success|thank/i });
@@ -153,7 +154,7 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
     // For now, we test the internal route directly
 
     await page.goto(`${NEXTJS_BASE_URL}/t/_domain?domain=${TEST_TENANT_SLUG}.example.com`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // If domain is configured, should show tenant content
     // If not, should show 404 or error
