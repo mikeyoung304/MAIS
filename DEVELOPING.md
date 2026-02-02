@@ -362,6 +362,9 @@ CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=change-me  # Generate: openssl rand -hex 32
 TENANT_SECRETS_ENCRYPTION_KEY=...  # Generate: openssl rand -hex 32
 
+# NextAuth.js (apps/web/.env.local) - See "NextAuth Configuration" section below
+AUTH_SECRET=...  # Generate: openssl rand -base64 32
+
 # Real mode - Database (✅ IMPLEMENTED)
 # Prisma 7 requires both URLs - see prisma.config.ts
 DATABASE_URL=postgresql://username:password@localhost:5432/mais_dev?schema=public
@@ -439,6 +442,67 @@ For production deployments, rotate secrets quarterly:
 - [SECRET_ROTATION_GUIDE.md](./docs/security/SECRET_ROTATION_GUIDE.md) - Complete rotation procedures
 - [IMMEDIATE_SECURITY_ACTIONS.md](./docs/security/IMMEDIATE_SECURITY_ACTIONS.md) - Urgent actions checklist
 - [SECURITY.md](./docs/security/SECURITY.md) - Security best practices
+
+## NextAuth.js Configuration
+
+The Next.js frontend (`apps/web`) uses NextAuth.js v5 for authentication. The auth system works differently across environments:
+
+### Environment Requirements
+
+| Environment         | AUTH_SECRET Required? | Why                          |
+| ------------------- | --------------------- | ---------------------------- |
+| Local Development   | ✅ Yes                | Sign JWT tokens for sessions |
+| Production (Vercel) | ✅ Yes                | Set in Vercel dashboard      |
+| CI (GitHub Actions) | ❌ No                 | Tests use mock adapters      |
+
+### Why CI Doesn't Need AUTH_SECRET
+
+CI tests run in "mock adapter mode" (`ADAPTERS_PRESET=mock`) which:
+
+- Bypasses real authentication flows
+- Uses test fixtures instead of database lookups
+- Doesn't create/verify real JWT sessions
+
+The E2E tests authenticate via:
+
+1. Direct API calls with test tokens
+2. The `auth.fixture.ts` helper that creates pre-authenticated sessions
+3. Mock middleware that accepts any bearer token
+
+### Local Development Setup
+
+```bash
+# apps/web/.env.local
+AUTH_SECRET=$(openssl rand -base64 32)
+
+# Or generate manually:
+# node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+### Production Setup (Vercel)
+
+1. Go to Vercel dashboard → Your Project → Settings → Environment Variables
+2. Add `AUTH_SECRET` with a secure random value
+3. Scope it to "Production" environment only
+
+### Troubleshooting
+
+**"AUTH_SECRET is not set" error locally:**
+
+```bash
+# Check if .env.local exists
+cat apps/web/.env.local | grep AUTH_SECRET
+
+# If missing, create it:
+echo "AUTH_SECRET=$(openssl rand -base64 32)" >> apps/web/.env.local
+```
+
+**CI auth test failures:**
+Tests should use mock mode. If auth tests fail in CI:
+
+1. Check that `ADAPTERS_PRESET=mock` is set
+2. Verify test uses `auth.fixture.ts` for authentication
+3. Check for hardcoded production URLs in test code
 
 ## Repo structure (current)
 

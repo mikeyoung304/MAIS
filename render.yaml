@@ -9,6 +9,7 @@ services:
     region: oregon
     plan: starter  # Hobby tier in dashboard ($5/month, always-on)
     branch: main
+    autoDeploy: false  # CI controls deployment via deploy hook after tests pass
     buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/api
     startCommand: cd server && npm run start
     healthCheckPath: /health/live

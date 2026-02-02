@@ -1,11 +1,16 @@
 name: Deploy to Production
 
 on:
+  # Trigger AFTER main-pipeline completes successfully on main branch
+  workflow_run:
+    workflows: ["Main CI/CD Pipeline"]
+    branches: [main]
+    types: [completed]
+  # Direct trigger for version tags (skip duplicate tests)
   push:
-    branches:
-      - main
     tags:
       - 'v*.*.*'
+  # Manual trigger for emergency hotfixes
   workflow_dispatch:
     inputs:
       environment:
@@ -43,11 +48,42 @@ env:
   PRODUCTION_CLIENT_URL: ${{ secrets.PRODUCTION_CLIENT_URL }}
 
 jobs:
+  # Job 0: Gate - Only proceed if main-pipeline passed (for workflow_run trigger)
+  check-ci-status:
+    name: Verify CI Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    # Skip this check for tags and manual dispatch (they have their own validation)
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+
+    steps:
+      - name: Check if main-pipeline succeeded
+        id: check
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
+            echo "✅ Main CI/CD Pipeline passed - proceeding with deployment"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Main CI/CD Pipeline failed - skipping deployment"
+            echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
   # Job 1: Pre-deployment validation
   pre-deployment-checks:
     name: Pre-Deployment Validation
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: [check-ci-status]
+    # Run if: CI passed (workflow_run), OR it's a tag push, OR it's manual dispatch
+    if: |
+      always() && (
+        (github.event_name == 'workflow_run' && needs.check-ci-status.outputs.should_deploy == 'true') ||
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch'
+      )
 
     steps:
       - name: Checkout code
@@ -90,28 +126,19 @@ jobs:
             echo "✅ No breaking changes detected"
           fi
 
-  # Job 2: Comprehensive testing
-  test-before-deploy:
-    name: Comprehensive Pre-Deployment Tests
+  # Job 2: Quick sanity tests (only for tags and manual dispatch with tests enabled)
+  # NOTE: Tests are SKIPPED for workflow_run because main-pipeline already ran them
+  quick-validation:
+    name: Quick Validation (Tags/Manual Only)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     needs: [pre-deployment-checks]
-    if: github.event.inputs.skip_tests != 'true'
-
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: mais_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # Only run for: tag pushes OR manual dispatch WITHOUT skip_tests
+    if: |
+      always() && needs.pre-deployment-checks.result == 'success' && (
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_tests != 'true')
+      )
 
     steps:
       - name: Checkout code
@@ -127,89 +154,28 @@ jobs:
         run: npm ci
 
       - name: Run linting
+        # NO continue-on-error - lint failures BLOCK deployment (pitfall #58)
         run: npm run lint
-        continue-on-error: true  # Don't block deploy on lint issues (TODO: fix lint errors)
 
       - name: Run type checking
         run: npm run typecheck
-
-      - name: Generate Prisma Client
-        run: npm run --workspace=server prisma:generate
-        env:
-          # Prisma 7 requires DATABASE_URL even for generate (to parse schema)
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
 
       - name: Build workspace packages
         run: |
           npm run build --workspace=packages/contracts
           npm run build --workspace=packages/shared
 
-      - name: Run database migrations
-        run: |
-          cd server
-          npx prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-
-      - name: Run unit tests
-        run: npm run test:unit
-        env:
-          NODE_ENV: test
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
-          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-
-      - name: Run integration tests with coverage
-        run: npm run test:integration -- --coverage
-        env:
-          NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
-          DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test?connection_limit=10&pool_timeout=20
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
-          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Build contracts package
-        run: npm run build --workspace=packages/contracts
-
-      - name: Run E2E tests
-        run: npm run test:e2e
-        # Tests skip gracefully when infrastructure not ready (see CLAUDE.md pitfall #58)
-        env:
-          CI: true
-          NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/mais_test
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          BOOKING_TOKEN_SECRET: ${{ secrets.BOOKING_TOKEN_SECRET }}
-          TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        continue-on-error: true  # Don't block deploy on coverage upload issues
-        with:
-          files: ./server/coverage/lcov.info
-          flags: production-pre-deploy
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
   # Job 3: Build for production
   build-production:
     name: Build Production Artifacts
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [test-before-deploy]
-    if: always() && (needs.test-before-deploy.result == 'success' || needs.test-before-deploy.result == 'skipped')
+    needs: [pre-deployment-checks, quick-validation]
+    # Run if pre-deployment passed AND (quick-validation passed OR was skipped)
+    if: |
+      always() &&
+      needs.pre-deployment-checks.result == 'success' &&
+      (needs.quick-validation.result == 'success' || needs.quick-validation.result == 'skipped')
 
     steps:
       - name: Checkout code
