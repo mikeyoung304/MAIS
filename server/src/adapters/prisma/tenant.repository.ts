@@ -3,7 +3,8 @@
  * Provides data layer for multi-tenant operations
  */
 
-import type { PrismaClient, Tenant, Prisma } from '../../generated/prisma/client';
+import type { PrismaClient, Tenant } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import {
   TenantPublicDtoSchema,
   LandingPageConfigSchema,
@@ -1018,7 +1019,7 @@ export class PrismaTenantRepository {
         where: { id: tenantId },
         data: {
           landingPageConfig: newWrapper as any,
-          landingPageConfigDraft: null, // Clear Build Mode column
+          landingPageConfigDraft: Prisma.DbNull, // Clear Build Mode column (use DbNull for nullable JSON)
           landingPageConfigDraftVersion: 0, // Reset version
         },
       });
@@ -1073,7 +1074,7 @@ export class PrismaTenantRepository {
         where: { id: tenantId },
         data: {
           landingPageConfig: newWrapper as any,
-          landingPageConfigDraft: null, // Clear Build Mode column
+          landingPageConfigDraft: Prisma.DbNull, // Clear Build Mode column (use DbNull for nullable JSON)
           landingPageConfigDraftVersion: 0, // Reset version
         },
       });
