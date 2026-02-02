@@ -195,45 +195,62 @@ export function AgentPanel({ className }: AgentPanelProps) {
   }, []);
 
   // Handle dashboard actions from agent navigation tools (new - from backend extraction)
-  const handleDashboardActions = useCallback((actions: DashboardAction[]) => {
-    for (const action of actions) {
-      switch (action.type) {
-        case 'NAVIGATE':
-          // Navigate to a dashboard section - "website" means show preview
-          if (action.section === 'website') {
+  // Fix #819: Add cache invalidation to SHOW_PREVIEW and REFRESH actions
+  const handleDashboardActions = useCallback(
+    async (actions: DashboardAction[]) => {
+      for (const action of actions) {
+        switch (action.type) {
+          case 'NAVIGATE':
+            // Navigate to a dashboard section - "website" means show preview
+            if (action.section === 'website') {
+              agentUIActions.showPreview('home');
+            }
+            // Other sections could be handled here (bookings, projects, settings, analytics)
+            break;
+          case 'SCROLL_TO_SECTION':
+            // Scroll to and highlight a specific website section
+            // Supports both formats:
+            // - blockType: legacy format (e.g., "HERO" → "home-HERO-primary")
+            // - sectionId: new format from storefront tools (e.g., "home-hero-abc123")
+            if (action.sectionId) {
+              agentUIActions.highlightSection(action.sectionId);
+            } else if (action.blockType) {
+              // Convert HERO → home-HERO-primary format for highlightSection
+              const sectionId = `home-${action.blockType}-primary`;
+              agentUIActions.highlightSection(sectionId);
+            }
+            break;
+          case 'SHOW_PREVIEW':
+            // Fix #819: Invalidate cache before showing preview (with timing fix from #818)
+            // Wait for backend transaction to commit (Pitfall #30)
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            queryClient.invalidateQueries({
+              queryKey: getDraftConfigQueryKey(),
+              refetchType: 'active',
+            });
             agentUIActions.showPreview('home');
-          }
-          // Other sections could be handled here (bookings, projects, settings, analytics)
-          break;
-        case 'SCROLL_TO_SECTION':
-          // Scroll to and highlight a specific website section
-          // Supports both formats:
-          // - blockType: legacy format (e.g., "HERO" → "home-HERO-primary")
-          // - sectionId: new format from storefront tools (e.g., "home-hero-abc123")
-          if (action.sectionId) {
-            agentUIActions.highlightSection(action.sectionId);
-          } else if (action.blockType) {
-            // Convert HERO → home-HERO-primary format for highlightSection
-            const sectionId = `home-${action.blockType}-primary`;
-            agentUIActions.highlightSection(sectionId);
-          }
-          break;
-        case 'SHOW_PREVIEW':
-          agentUIActions.showPreview('home');
-          agentUIActions.refreshPreview();
-          break;
-        case 'REFRESH':
-        case 'REFRESH_PREVIEW':
-          agentUIActions.refreshPreview();
-          break;
+            break;
+          case 'REFRESH':
+          case 'REFRESH_PREVIEW':
+            // Fix #819: Invalidate cache before refreshing preview
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            queryClient.invalidateQueries({
+              queryKey: getDraftConfigQueryKey(),
+              refetchType: 'active',
+            });
+            agentUIActions.refreshPreview();
+            break;
+        }
       }
-    }
-  }, []);
+    },
+    [queryClient]
+  );
 
   // Handle Concierge tool completion (triggers preview refresh for storefront changes)
   // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
+  // Fix #818: Make async and add 100ms delay before invalidation to allow transaction commit
   const handleConciergeToolComplete = useCallback(
-    (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
+    async (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
       // Check if any tool call modified storefront content
       const modifiedStorefront = toolCalls.some(
         (call) =>
@@ -246,6 +263,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
       );
 
       if (modifiedStorefront) {
+        // Fix #818: Wait for backend transaction to commit (Pitfall #30)
+        // The 100ms delay ensures the database write is visible before we refetch
+        await new Promise((resolve) => setTimeout(resolve, 100));
         // Invalidate draft config cache using queryClient directly (not module singleton)
         // This fixes the race condition where queryClientRef could be null
         // Flow: TanStack Query refetch → ContentArea → PreviewPanel → sendConfigToIframe
@@ -266,6 +286,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
       if (generatedMarketing) {
         // Show preview to display the generated content
         agentUIActions.showPreview('home');
+        // Fix #818: Wait for backend transaction to commit
+        await new Promise((resolve) => setTimeout(resolve, 100));
         // Invalidate using queryClient directly (not module singleton)
         queryClient.invalidateQueries({
           queryKey: getDraftConfigQueryKey(),

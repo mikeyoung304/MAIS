@@ -137,7 +137,13 @@ export function useDraftConfig(): UseDraftConfigResult {
         logger.warn('[useDraftConfig] Unexpected response status', { status: response.status });
         throw new Error(`Failed to load draft configuration (${response.status})`);
       } catch (error) {
-        logger.error('[useDraftConfig] Failed to fetch draft', { error });
+        // Fix #817: Serialize Error properties explicitly (Error objects have non-enumerable
+        // properties that become {} when JSON-serialized)
+        logger.error('[useDraftConfig] Failed to fetch draft', {
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          errorName: error instanceof Error ? error.name : undefined,
+        });
         throw error;
       }
     },
@@ -165,7 +171,11 @@ export function useDraftConfig(): UseDraftConfigResult {
     },
     onSuccess: () => {
       // Invalidate to refetch fresh state
-      queryClient.invalidateQueries({ queryKey: DRAFT_CONFIG_QUERY_KEY });
+      // Fix #820: Add refetchType: 'active' for consistent behavior across all invalidations
+      queryClient.invalidateQueries({
+        queryKey: DRAFT_CONFIG_QUERY_KEY,
+        refetchType: 'active',
+      });
       logger.info('[useDraftConfig] Draft published successfully');
     },
     onError: (error) => {
@@ -191,7 +201,11 @@ export function useDraftConfig(): UseDraftConfigResult {
     },
     onSuccess: () => {
       // Invalidate to refetch fresh state
-      queryClient.invalidateQueries({ queryKey: DRAFT_CONFIG_QUERY_KEY });
+      // Fix #820: Add refetchType: 'active' for consistent behavior across all invalidations
+      queryClient.invalidateQueries({
+        queryKey: DRAFT_CONFIG_QUERY_KEY,
+        refetchType: 'active',
+      });
       logger.info('[useDraftConfig] Draft discarded successfully');
     },
     onError: (error) => {

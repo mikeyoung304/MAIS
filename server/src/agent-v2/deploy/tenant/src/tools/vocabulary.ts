@@ -20,6 +20,7 @@ import {
   getTenantId,
   TIMEOUTS,
   fetchWithTimeout,
+  requireEnv,
 } from '../utils.js';
 import type { BlockType } from '../context-builder.js';
 
@@ -28,7 +29,8 @@ import type { BlockType } from '../context-builder.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MAIS_API_URL = process.env.MAIS_API_URL || 'https://api.gethandled.ai';
-const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
+// Fix #802: Use requireEnv to fail-fast at startup if secret is missing (Pitfall #45)
+const INTERNAL_API_SECRET = requireEnv('INTERNAL_API_SECRET');
 const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,7 +131,7 @@ This is a T1 tool - executes immediately.`,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Internal-Secret': INTERNAL_API_SECRET || '',
+            'X-Internal-Secret': INTERNAL_API_SECRET,
           },
           body: JSON.stringify({
             phrase,
