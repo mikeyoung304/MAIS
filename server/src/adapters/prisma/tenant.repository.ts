@@ -6,7 +6,6 @@
 import type { PrismaClient, Tenant, Prisma } from '../../generated/prisma/client';
 import {
   TenantPublicDtoSchema,
-  SafeImageUrlSchema,
   LandingPageConfigSchema,
   LenientLandingPageConfigSchema,
 } from '@macon/contracts';
@@ -818,89 +817,6 @@ export class PrismaTenantRepository {
       publishedAt: config.publishedAt ?? null,
       version: config.version ?? 0,
     };
-  }
-
-  /**
-   * Validates all image URLs in a landing page configuration.
-   *
-   * Checks that URLs use allowed protocols (https:, http:, blob:)
-   * and rejects dangerous protocols (javascript:, data:).
-   *
-   * @param config - The landing page configuration to validate
-   * @throws ValidationError if any image URL uses a dangerous protocol
-   *
-   * @remarks
-   * This is a defense-in-depth measure. URLs are also validated by
-   * SafeImageUrlSchema in @macon/contracts, but this server-side check
-   * ensures malicious URLs can't be injected via:
-   * - Browser DevTools console modification
-   * - Proxy interception of API requests
-   * - Direct API calls bypassing the frontend
-   *
-   * Validated locations:
-   * - hero.backgroundImageUrl
-   * - about.imageUrl
-   * - accommodation.imageUrl
-   * - gallery.images[].url
-   * - testimonials.items[].imageUrl
-   */
-  private validateImageUrls(config: LandingPageConfig): void {
-    const urlsToValidate: { path: string; url: string }[] = [];
-
-    // Collect all image URLs from config
-    if (config.hero?.backgroundImageUrl) {
-      urlsToValidate.push({
-        path: 'hero.backgroundImageUrl',
-        url: config.hero.backgroundImageUrl,
-      });
-    }
-
-    if (config.about?.imageUrl) {
-      urlsToValidate.push({
-        path: 'about.imageUrl',
-        url: config.about.imageUrl,
-      });
-    }
-
-    if (config.accommodation?.imageUrl) {
-      urlsToValidate.push({
-        path: 'accommodation.imageUrl',
-        url: config.accommodation.imageUrl,
-      });
-    }
-
-    if (config.gallery?.images) {
-      config.gallery.images.forEach((img, idx) => {
-        if (img.url) {
-          urlsToValidate.push({
-            path: `gallery.images[${idx}].url`,
-            url: img.url,
-          });
-        }
-      });
-    }
-
-    if (config.testimonials?.items) {
-      config.testimonials.items.forEach((item, idx) => {
-        if (item.imageUrl) {
-          urlsToValidate.push({
-            path: `testimonials.items[${idx}].imageUrl`,
-            url: item.imageUrl,
-          });
-        }
-      });
-    }
-
-    // Validate each URL
-    for (const { path, url } of urlsToValidate) {
-      const result = SafeImageUrlSchema.safeParse(url);
-      if (!result.success) {
-        logger.warn({ path, url: url.substring(0, 100) }, 'Invalid image URL rejected');
-        throw new ValidationError(
-          `Invalid image URL at ${path}: ${result.error.issues[0]?.message}`
-        );
-      }
-    }
   }
 
   /**

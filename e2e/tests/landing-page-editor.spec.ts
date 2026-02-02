@@ -84,7 +84,19 @@ async function discardDraftsIfAny(page: Page): Promise<void> {
   await page.waitForTimeout(500);
 }
 
-test.describe('Landing Page Editor', () => {
+/**
+ * @deprecated Visual Editor is deprecated as of 2026-02-01.
+ * All storefront editing now happens through the AI agent chatbot (Build Mode).
+ * See docs/architecture/BUILD_MODE_VISION.md and CLAUDE.md "Landing Page Config Terminology"
+ *
+ * These tests are skipped because:
+ * 1. The Visual Editor frontend routes have been removed
+ * 2. The backend PUT /landing-page and PUT /draft routes have been deleted
+ * 3. All edits go through the agent's storefront-write tool now
+ *
+ * TODO: Delete this file after confirming Build Mode E2E tests cover storefront editing
+ */
+test.describe.skip('Landing Page Editor (DEPRECATED)', () => {
   test('loads landing page editor with sidebar and preview', async ({ authenticatedPage }) => {
     await goToLandingPageEditor(authenticatedPage);
 

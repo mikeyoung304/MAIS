@@ -364,6 +364,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 90. dashboardAction not extracted from tool results - Agent tools return `dashboardAction` objects in their results (e.g., `{type: 'NAVIGATE', section: 'website'}`), but frontend only checked tool NAMES for heuristics; must extract `call.result?.dashboardAction` and process action types (NAVIGATE, SCROLL_TO_SECTION, SHOW_PREVIEW, REFRESH); symptom: agent says "Take a look" but nothing happens in UI. See `apps/web/src/components/agent/AgentPanel.tsx` `handleConciergeToolComplete` for correct pattern.
 91. Agent asking known questions (P0) - Agent repeatedly asks "What do you do?" when it already knows; root cause: context not injected at session creation, only `tenantId` passed to ADK; fix: use `ContextBuilder.getBootstrapData()` and pass `forbiddenSlots[]` at session start; use **slot-policy** (key-based) not phrase-matching; agent checks slot keys not question phrases. See `docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md`
 
+### Code Path Drift Pitfalls (92)
+
+92. Code path drift in duplicate implementations - Multiple implementations of same operation (e.g., publish draft in both agent routes AND repository) diverge when one is updated but others aren't; routes should delegate to service/repository layer, not implement business logic directly; detect with `grep -rn "operation_name" server/src/routes/ server/src/services/`; test all paths with same edge cases. See `docs/solutions/patterns/CODE_PATH_DRIFT_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
