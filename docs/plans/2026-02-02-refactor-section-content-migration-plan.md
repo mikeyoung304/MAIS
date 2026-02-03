@@ -4,7 +4,7 @@ type: refactor
 date: 2026-02-02
 supersedes: AGENT_FIRST_ARCHITECTURE_SPEC.md (Phase 2 storage consolidation)
 status: in-progress
-progress: Phases 0-4 complete, Phase 5.0 route migration complete (2026-02-02)
+progress: Phases 0-5.1 complete, 1929 lines of legacy code removed (2026-02-02)
 constraints:
   - NO real users - all demo data, clean cutover
   - NO time pressure - enterprise quality priority
@@ -542,23 +542,35 @@ This is the **key infrastructure change** - agent tools (`publishDraftTool`, `di
 - ✅ `server/src/routes/internal-agent.routes.ts` - Migrated to SectionContentService
 - ✅ `server/test/routes/internal-agent-storefront.test.ts` - Added publishAll/discardAll mocks, updated assertions
 
-### 5.1 Files to DELETE Completely (PENDING)
+### 5.1 Files DELETED ✅ COMPLETE
 
-| File                                                 | Reason                      |
-| ---------------------------------------------------- | --------------------------- |
-| `server/src/lib/landing-page-utils.ts`               | Wrapper format utilities    |
-| `server/src/services/landing-page.service.ts`        | Legacy JSON service         |
-| `server/eslint-rules/landing-page-config-wrapper.js` | Obsolete ESLint rule        |
-| `server/test/services/landing-page.service.test.ts`  | Tests legacy service        |
-| All `docs/solutions/*WRAPPER*` files                 | References deleted patterns |
+| File                                                    | Reason                   | Status  |
+| ------------------------------------------------------- | ------------------------ | ------- |
+| `server/src/lib/landing-page-utils.ts`                  | Wrapper format utilities | ✅ Done |
+| `server/src/services/landing-page.service.ts`           | Legacy JSON service      | ✅ Done |
+| `server/eslint-rules/landing-page-config-wrapper.js`    | Obsolete ESLint rule     | ✅ Done |
+| `server/test/services/landing-page.service.test.ts`     | Tests legacy service     | ✅ Done |
+| `server/test/integration/landing-page-routes.spec.ts`   | Tests legacy routes      | ✅ Done |
+| `server/src/routes/tenant-admin-landing-page.routes.ts` | Legacy admin routes      | ✅ Done |
+| `apps/web/src/app/api/tenant/landing-page/route.ts`     | Next.js proxy route      | ✅ Done |
 
-### 5.2 Code to Remove from Files
+### 5.2 Code Removed from Files ✅ COMPLETE
 
-| File                                              | Code to Remove                                  |
-| ------------------------------------------------- | ----------------------------------------------- |
-| `server/src/adapters/prisma/tenant.repository.ts` | Lines 713-1086: All `landingPageConfig` methods |
-| `apps/web/src/lib/tenant.client.ts`               | `normalizeToPages()` function (lines 75-282)    |
-| `packages/contracts/src/landing-page.ts`          | Legacy schemas                                  |
+| File                                                   | Code Removed                                                                | Status  |
+| ------------------------------------------------------ | --------------------------------------------------------------------------- | ------- |
+| `server/src/adapters/prisma/tenant.repository.ts`      | `publishLandingPageDraft`, `discardLandingPageDraft`, `getLandingPageDraft` | ✅ Done |
+| `server/src/di.ts`                                     | `LandingPageService` import and wiring                                      | ✅ Done |
+| `server/src/routes/index.ts`                           | Landing page route mounting                                                 | ✅ Done |
+| `server/test/prevention/deployment-prevention.test.ts` | Updated to expect `sectionContent` service                                  | ✅ Done |
+| `CLAUDE.md`                                            | Retired pitfalls #25, #26, #56, #57, #92                                    | ✅ Done |
+
+### 5.3 Remaining Work (DEFERRED)
+
+| Task                                                       | Reason for Deferral                                     |
+| ---------------------------------------------------------- | ------------------------------------------------------- |
+| `apps/web/src/lib/tenant.client.ts` - `normalizeToPages()` | Still used by public storefront rendering               |
+| `packages/contracts/src/landing-page.ts`                   | Still used for type definitions in read paths           |
+| Schema migration to drop columns                           | Requires coordinated frontend migration to sections API |
 
 ### 5.3 Schema Migration
 

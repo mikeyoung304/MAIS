@@ -79,25 +79,24 @@ For detailed architecture documentation, search or read these files when working
 | Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`          |
 | Webhook idempotency            | `webhookEvent` table, ADR-002                          |
 
-### Landing Page Config Terminology
+### Storefront Storage (Phase 5 - February 2026)
 
-**Current state (2026-02-01):** Visual Editor is deprecated. All storefront editing happens through the AI agent chatbot (Build Mode).
+**Current state (2026-02-02):** Storefront content uses normalized `SectionContent` table instead of legacy JSON columns.
 
-| Term                          | Storage Location                           | Used By               | Description                                              |
-| ----------------------------- | ------------------------------------------ | --------------------- | -------------------------------------------------------- |
-| `landingPageConfigDraft`      | Separate Prisma column                     | Build Mode (AI tools) | AI-edited draft stored in dedicated column (CANONICAL)   |
-| `landingPageConfig.published` | JSON wrapper in `landingPageConfig` column | Public API, preview   | Live content wrapped in `{ published: {...} }` format    |
-| `landingPageConfig.draft`     | JSON wrapper in `landingPageConfig` column | Legacy (READ-ONLY)    | Fallback for old drafts, no longer written to            |
-| `live`                        | -                                          | AI tool responses     | What the AI considers "currently live" (reads published) |
+| Storage                           | Purpose            | Access                                  |
+| --------------------------------- | ------------------ | --------------------------------------- |
+| `SectionContent` (isDraft: true)  | Draft sections     | Agent tools via `SectionContentService` |
+| `SectionContent` (isDraft: false) | Published sections | Public storefront via `/sections` API   |
+| `landingPageConfig` (legacy)      | READ-ONLY fallback | Public routes during transition         |
 
 **Key behaviors:**
 
-- **AI agent edits** via `saveBuildModeDraft()` → writes to `landingPageConfigDraft` column
-- **Publish** reads from `landingPageConfigDraft` first, falls back to wrapper format
-- **Reading live config**: Always extract from wrapper: `config.published ?? config`
-- **Single source of truth**: `LandingPageService` in `server/src/services/landing-page.service.ts`
+- **AI agent edits** via `SectionContentService.updateSection()` → writes to `SectionContent` table
+- **Publish** via `SectionContentService.publishAll()` → copies draft rows to published
+- **Section-level operations** → CRUD individual sections without touching entire config
+- **Single source of truth**: `SectionContentService` in `server/src/services/section-content.service.ts`
 
-**Deleted (2026-02-01):** Visual Editor write routes (`PUT /draft`, `PUT /landing-page`, `PATCH /sections`) and their service/repository methods. See `docs/plans/2026-02-01-realtime-preview-handoff.md`.
+**Deleted (2026-02-02):** `LandingPageService`, `landing-page-utils.ts`, tenant-admin-landing-page routes, and legacy repository methods. See `docs/plans/2026-02-02-refactor-section-content-migration-plan.md`.
 
 **Use `repo-research-analyst` agent** for codebase exploration when context is unclear.
 
@@ -245,8 +244,8 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 22. Form hydration race (add 500ms wait after `waitForSelector`)
 23. Session leak in E2E (use `browser.newContext()`)
 24. UUID validation on CUID fields (use `z.string()` not `z.string().uuid()`)
-25. Multi-path data format mismatch (verify read/write paths agree)
-26. AI tool responses missing state guidance (include `hasDraft` indicator)
+25. _Retired: Multi-path data format mismatch (obsolete after Phase 5 Section Content Migration)_
+26. _Retired: AI tool responses missing state guidance (obsolete - SectionContentService now canonical)_
 27. Deleting `.client.ts` files as "duplicates" (they exist for server/client boundary)
 28. Trust tier mismatch tool definition vs createProposal
 29. TanStack Query staleTime blocking real-time (use `staleTime: 0`)
@@ -286,10 +285,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 54. Dual deployment architecture - Backend (Render) and Frontend (Vercel) auto-deploy on push to `main`, but Agents (Cloud Run) deploy via separate GitHub Actions workflow; if workflow fails silently, agent features appear broken in production despite code being merged
 55. Agent deployment verification - After merging agent changes, verify deployment succeeded in GitHub Actions → "Deploy AI Agents to Cloud Run"; manual deploy: `cd server/src/agent-v2/deploy/[agent] && npm run deploy`
 
-### Data Format Pitfalls (56-57)
+### Data Format Pitfalls (56-57) - RETIRED
 
-56. Incomplete landingPageConfig wrapper (WRITE) - When publishing storefront drafts, must use `createPublishedWrapper(draftConfig)` from `lib/landing-page-utils.ts`, NOT bare `{ published: draftConfig }` - missing `publishedAt` timestamp causes data not to round-trip through validation
-57. Wrapper format not extracted on READ - When reading `landingPageConfig` for editing, must extract from wrapper: `const config = liveConfig.published ?? liveConfig` - otherwise `config.pages` is undefined and falls back to defaults, losing all existing content
+56. _Retired: Incomplete landingPageConfig wrapper (obsolete - SectionContent table replaces JSON columns)_
+57. _Retired: Wrapper format not extracted on READ (obsolete after Phase 5 Section Content Migration)_
 
 ### CI/CD Pitfalls (58-59)
 
@@ -364,9 +363,9 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 90. dashboardAction not extracted from tool results - Agent tools return `dashboardAction` objects in their results (e.g., `{type: 'NAVIGATE', section: 'website'}`), but frontend only checked tool NAMES for heuristics; must extract `call.result?.dashboardAction` and process action types (NAVIGATE, SCROLL_TO_SECTION, SHOW_PREVIEW, REFRESH); symptom: agent says "Take a look" but nothing happens in UI. See `apps/web/src/components/agent/AgentPanel.tsx` `handleConciergeToolComplete` for correct pattern.
 91. Agent asking known questions (P0) - Agent repeatedly asks "What do you do?" when it already knows; root cause: context not injected at session creation, only `tenantId` passed to ADK; fix: use `ContextBuilder.getBootstrapData()` and pass `forbiddenSlots[]` at session start; use **slot-policy** (key-based) not phrase-matching; agent checks slot keys not question phrases. See `docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md`
 
-### Code Path Drift Pitfalls (92)
+### Code Path Drift Pitfalls (92) - RETIRED
 
-92. Code path drift in duplicate implementations - Multiple implementations of same operation (e.g., publish draft in both agent routes AND repository) diverge when one is updated but others aren't; routes should delegate to service/repository layer, not implement business logic directly; detect with `grep -rn "operation_name" server/src/routes/ server/src/services/`; test all paths with same edge cases. See `docs/solutions/patterns/CODE_PATH_DRIFT_PREVENTION.md`
+92. _Retired: Code path drift in duplicate implementations (obsolete - unified through SectionContentService in Phase 5)_
 
 ## Prevention Strategies
 
