@@ -4,7 +4,7 @@ type: refactor
 date: 2026-02-02
 supersedes: AGENT_FIRST_ARCHITECTURE_SPEC.md (Phase 2 storage consolidation)
 status: in-progress
-progress: Phases 0-4 complete (2026-02-02)
+progress: Phases 0-4 complete, Phase 5.0 route migration complete (2026-02-02)
 constraints:
   - NO real users - all demo data, clean cutover
   - NO time pressure - enterprise quality priority
@@ -524,9 +524,25 @@ export function pagesToSections(tenantId: string, pages: PagesConfig): SectionCo
 
 ---
 
-## Phase 5: Complete Legacy Removal
+## Phase 5: Complete Legacy Removal (IN PROGRESS)
 
-### 5.1 Files to DELETE Completely
+### 5.0 Route Migration ✅ COMPLETE
+
+**Critical change:** Migrated bulk publish/discard routes from legacy tenant repository to SectionContentService:
+
+| Endpoint              | Before                                 | After                                |
+| --------------------- | -------------------------------------- | ------------------------------------ |
+| `/storefront/publish` | `tenantRepo.publishLandingPageDraft()` | `sectionContentService.publishAll()` |
+| `/storefront/discard` | `tenantRepo.discardLandingPageDraft()` | `sectionContentService.discardAll()` |
+
+This is the **key infrastructure change** - agent tools (`publishDraftTool`, `discardDraftTool`) now use the new SectionContent storage without code changes.
+
+### Files Modified (Phase 5.0) ✅
+
+- ✅ `server/src/routes/internal-agent.routes.ts` - Migrated to SectionContentService
+- ✅ `server/test/routes/internal-agent-storefront.test.ts` - Added publishAll/discardAll mocks, updated assertions
+
+### 5.1 Files to DELETE Completely (PENDING)
 
 | File                                                 | Reason                      |
 | ---------------------------------------------------- | --------------------------- |

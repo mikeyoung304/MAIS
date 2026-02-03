@@ -48,7 +48,8 @@ import { createTenantAdminBillingRoutes } from './tenant-admin-billing.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
-import { createTenantAdminLandingPageRoutes } from './tenant-admin-landing-page.routes';
+// DELETED: createTenantAdminLandingPageRoutes - Phase 5 Section Content Migration
+// All storefront editing now uses agent tools via internal-agent.routes.ts
 import { createTenantAdminAgentRoutes } from './tenant-admin-agent.routes';
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
@@ -95,7 +96,7 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { ReminderService } from '../services/reminder.service';
-import type { LandingPageService } from '../services/landing-page.service';
+// DELETED: LandingPageService type - Phase 5 Section Content Migration
 import type { SectionContentService } from '../services/section-content.service';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import type { AvailabilityService } from '../services/availability.service';
@@ -126,7 +127,7 @@ interface Services {
   tenantOnboarding?: TenantOnboardingService;
   tenantProvisioning?: TenantProvisioningService;
   reminder?: ReminderService;
-  landingPage?: LandingPageService;
+  // DELETED: landingPage - Phase 5 Section Content Migration
   sectionContent?: SectionContentService;
   webhookDelivery?: WebhookDeliveryService;
   projectHub?: ProjectHubService;
@@ -648,14 +649,9 @@ export function createV1Router(
       '✅ Tenant admin deposit settings routes mounted at /v1/tenant-admin/settings/deposits'
     );
 
-    // Register tenant admin landing page routes (for landing page configuration)
-    // Requires tenant admin authentication
-    // Uses LandingPageService for business logic (TODO-241: service layer consistency)
-    if (services.landingPage) {
-      const tenantAdminLandingPageRoutes = createTenantAdminLandingPageRoutes(services.landingPage);
-      app.use('/v1/tenant-admin/landing-page', tenantAuthMiddleware, tenantAdminLandingPageRoutes);
-      logger.info('✅ Tenant admin landing page routes mounted at /v1/tenant-admin/landing-page');
-    }
+    // DELETED: Tenant admin landing page routes - Phase 5 Section Content Migration
+    // All storefront editing now uses agent tools via /v1/internal/agent/storefront/* routes
+    // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md
 
     // Register public scheduling routes (for customer booking widget)
     // Requires tenant context via X-Tenant-Key header

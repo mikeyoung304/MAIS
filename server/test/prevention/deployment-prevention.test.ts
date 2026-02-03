@@ -118,7 +118,8 @@ describe.runIf(hasDatabaseUrl)('Deployment Prevention Tests', () => {
           'tenantOnboarding',
           'packageDraft',
           'reminder',
-          'landingPage',
+          // DELETED: 'landingPage' - Phase 5 Section Content Migration
+          'sectionContent', // Replaces landingPage service
         ],
       };
 
