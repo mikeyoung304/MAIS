@@ -275,7 +275,9 @@ export function createApp(
       tenantOnboarding: container.services.tenantOnboarding,
       tenantProvisioning: container.services.tenantProvisioning,
       reminder: container.services.reminder,
-      // Phase 5.2: landingPage service removed - use sectionContent service instead
+      sectionContent: container.services.sectionContent, // Phase 5.2: Replaced landingPage service
+      webhookDelivery: container.services.webhookDelivery,
+      projectHub: container.services.projectHub,
     },
     container.mailProvider,
     container.prisma,
