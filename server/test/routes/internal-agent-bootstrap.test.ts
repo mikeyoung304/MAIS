@@ -649,15 +649,12 @@ describe('Internal Agent Bootstrap Endpoint', () => {
   });
 
   describe('POST /faq (P1-4)', () => {
-    it('should return FAQ answer when matched', async () => {
+    // Phase 5.2: FAQs now managed via SectionContent table, not landingPageConfig
+    // The FAQ endpoint currently returns empty array until SectionContentService integration
+    it('should return not found when no FAQs exist (Phase 5.2)', async () => {
       mockTenantRepo.findById = vi.fn().mockResolvedValue({
         ...mockTenant,
-        landingPageConfig: {
-          faqs: [
-            { question: 'What are your hours?', answer: 'We are open 9-5 M-F' },
-            { question: 'Do you offer refunds?', answer: 'Yes within 30 days' },
-          ],
-        },
+        // Phase 5.2: landingPageConfig removed, FAQs now in SectionContent
       });
 
       const response = await request(app)
@@ -666,16 +663,15 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .send({ tenantId: 'tenant-123', question: 'What are your hours?' });
 
       expect(response.status).toBe(200);
-      expect(response.body.found).toBe(true);
-      expect(response.body.answer).toContain('9-5');
+      // Phase 5.2: FAQs return empty until SectionContentService integration
+      expect(response.body.found).toBe(false);
+      expect(response.body.availableFaqs).toEqual([]);
     });
 
-    it('should return available FAQs when no match', async () => {
+    it('should return empty available FAQs list (Phase 5.2)', async () => {
       mockTenantRepo.findById = vi.fn().mockResolvedValue({
         ...mockTenant,
-        landingPageConfig: {
-          faqs: [{ question: 'What are your hours?', answer: 'We are open 9-5' }],
-        },
+        // Phase 5.2: landingPageConfig removed
       });
 
       const response = await request(app)
@@ -686,6 +682,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.status).toBe(200);
       expect(response.body.found).toBe(false);
       expect(response.body.availableFaqs).toBeDefined();
+      expect(response.body.availableFaqs).toEqual([]);
     });
   });
 

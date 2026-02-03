@@ -39,6 +39,8 @@ const webhookEvents = new Map<
 const earlyAccessRequests = new Map<string, EarlyAccessRequest>();
 
 // In-memory tenant storage for mock mode
+// Phase 5.2 Section Content Migration: landingPageConfig columns removed
+// All storefront content now stored in SectionContent table
 interface MockTenant {
   id: string;
   slug: string;
@@ -54,8 +56,6 @@ interface MockTenant {
   isTestTenant: boolean;
   tier: 'FREE' | 'STARTER' | 'PRO';
   onboardingPhase: string;
-  landingPageConfig: unknown;
-  landingPageConfigDraft: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -90,8 +90,6 @@ function seedTenants(): void {
     isTestTenant: false,
     tier: 'PRO',
     onboardingPhase: 'COMPLETED',
-    landingPageConfig: null,
-    landingPageConfigDraft: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -1262,8 +1260,6 @@ export class MockTenantRepository {
       isTestTenant: false,
       tier: data.tier || 'FREE',
       onboardingPhase: 'NOT_STARTED',
-      landingPageConfig: null,
-      landingPageConfigDraft: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

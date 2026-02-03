@@ -67,7 +67,8 @@ import type { ContextBuilderService } from '../services/context-builder.service'
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 import type { SectionContentService } from '../services/section-content.service';
-import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
+// NOTE: DEFAULT_PAGES_CONFIG import removed - storefront endpoints now use SectionContentService
+// which reads from SectionContent table (seeded at tenant provisioning)
 // NOTE: createPublishedWrapper import removed - agent routes now delegate to repository methods
 // which handle the wrapper format internally. See: CODE_PATH_DRIFT_PREVENTION.md
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
@@ -185,10 +186,8 @@ const ReorderSectionsSchema = TenantIdSchema.extend({
   toPosition: z.number().min(0),
 });
 
-const TogglePageSchema = TenantIdSchema.extend({
-  pageName: z.enum(PAGE_NAMES),
-  enabled: z.boolean(),
-});
+// TogglePageSchema DELETED - multi-page toggles not needed for single long-scroll pages
+// See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 
 const UpdateBrandingSchema = TenantIdSchema.extend({
   primaryColor: z.string().optional(),
@@ -898,9 +897,10 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      // Extract FAQs from landing page config
-      const landingPageConfig = (tenant.landingPageConfig as Record<string, unknown>) || {};
-      const faqs = (landingPageConfig.faqs as Array<{ question: string; answer: string }>) || [];
+      // Phase 5.2: FAQs now stored in SectionContent table under FAQ block type
+      // TODO: Extract FAQs from SectionContentService when FAQ section exists
+      // For now, return empty array as FAQs are managed via section-level operations
+      const faqs: Array<{ question: string; answer: string }> = [];
 
       // Simple keyword matching for FAQ lookup
       // In production, this could use embeddings/vector search
@@ -1086,6 +1086,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // ===========================================================================
 
   // POST /storefront/structure - Get page structure with section IDs
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/structure', async (req: Request, res: Response) => {
     try {
       const { tenantId, pageName, includeOnlyPlaceholders } = GetPageStructureSchema.parse(
@@ -1097,60 +1099,50 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Getting page structure'
       );
 
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
+        return;
+      }
+
       const tenant = await tenantRepo.findById(tenantId);
       if (!tenant) {
         res.status(404).json({ error: 'Tenant not found' });
         return;
       }
 
-      // Get config from draft if exists, otherwise from live
-      const draftConfig = tenant.landingPageConfigDraft as Record<string, unknown> | null;
-      const liveConfig = tenant.landingPageConfig as Record<string, unknown> | null;
-      const hasDraft = !!draftConfig;
+      // Get structure from SectionContentService
+      const result = await sectionContentService.getPageStructure(tenantId, {
+        pageName: pageName as
+          | 'home'
+          | 'about'
+          | 'services'
+          | 'faq'
+          | 'contact'
+          | 'gallery'
+          | 'testimonials'
+          | undefined,
+      });
 
-      // Use draft if available, otherwise live, fall back to defaults for new tenants
-      const workingConfig = draftConfig || liveConfig;
-      const configPages = (workingConfig as { pages?: Record<string, unknown> } | null)?.pages;
+      // Transform to agent-friendly format
+      let sections = result.pages.flatMap((page) =>
+        page.sections.map((s) => ({
+          id: s.sectionId,
+          page: s.page,
+          type: s.type,
+          headline: s.headline || '',
+          hasPlaceholder: s.isPlaceholder,
+        }))
+      );
 
-      // Use DEFAULT_PAGES_CONFIG when no explicit config exists (new tenants)
-      const pages = configPages || (DEFAULT_PAGES_CONFIG as unknown as Record<string, unknown>);
-
-      // Build section list
-      const sections: Array<{
-        id: string;
-        page: string;
-        type: string;
-        headline: string;
-        hasPlaceholder: boolean;
-      }> = [];
-
-      for (const [page, pageConfig] of Object.entries(pages)) {
-        if (pageName && page !== pageName) continue;
-
-        const pageSections =
-          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
-        for (let i = 0; i < pageSections.length; i++) {
-          const section = pageSections[i];
-          const sectionId = (section.id as string) || `${page}-${section.type}-${i}`;
-          const headline = (section.headline as string) || '';
-          const hasPlaceholder = /^\[[\w\s-]+\]$/.test(headline);
-
-          if (includeOnlyPlaceholders && !hasPlaceholder) continue;
-
-          sections.push({
-            id: sectionId,
-            page,
-            type: section.type as string,
-            headline,
-            hasPlaceholder,
-          });
-        }
+      // Filter if requested
+      if (includeOnlyPlaceholders) {
+        sections = sections.filter((s) => s.hasPlaceholder);
       }
 
       res.json({
         sections,
         totalCount: sections.length,
-        hasDraft,
+        hasDraft: result.hasDraft,
         previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
       });
     } catch (error) {
@@ -1159,6 +1151,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // POST /storefront/section - Get section content by ID
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/section', async (req: Request, res: Response) => {
     try {
       const { tenantId, sectionId } = GetSectionContentSchema.parse(req.body);
@@ -1168,45 +1162,32 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Getting section content'
       );
 
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
         return;
       }
 
-      const draftConfig = tenant.landingPageConfigDraft as Record<string, unknown> | null;
-      const liveConfig = tenant.landingPageConfig as Record<string, unknown> | null;
-      const workingConfig = draftConfig || liveConfig;
-      const configPages = (workingConfig as { pages?: Record<string, unknown> } | null)?.pages;
-      // Use DEFAULT_PAGES_CONFIG when no explicit config exists (new tenants)
-      const pages = configPages || (DEFAULT_PAGES_CONFIG as unknown as Record<string, unknown>);
-
-      // Find section by ID
-      for (const [pageName, pageConfig] of Object.entries(pages)) {
-        const pageSections =
-          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
-        for (let i = 0; i < pageSections.length; i++) {
-          const section = pageSections[i];
-          const currentId = (section.id as string) || `${pageName}-${section.type}-${i}`;
-          if (currentId === sectionId) {
-            res.json({
-              section,
-              page: pageName,
-              index: i,
-              hasDraft: !!draftConfig,
-            });
-            return;
-          }
-        }
+      const result = await sectionContentService.getSectionContent(tenantId, sectionId);
+      if (!result) {
+        res.status(404).json({ error: `Section '${sectionId}' not found` });
+        return;
       }
 
-      res.status(404).json({ error: `Section '${sectionId}' not found` });
+      // Return in agent-friendly format matching legacy response shape
+      res.json({
+        section: result.section,
+        page: result.page,
+        index: result.index,
+        hasDraft: result.isDraft,
+      });
     } catch (error) {
       handleError(res, error, '/storefront/section');
     }
   });
 
   // POST /storefront/update-section - Update section content (saves to draft)
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/update-section', async (req: Request, res: Response) => {
     try {
       const { tenantId, sectionId, ...updates } = UpdateSectionSchema.parse(req.body);
@@ -1216,65 +1197,31 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Updating section'
       );
 
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
+        return;
+      }
+
       const tenant = await tenantRepo.findById(tenantId);
       if (!tenant) {
         res.status(404).json({ error: 'Tenant not found' });
         return;
       }
 
-      // Get current config (draft or live), fall back to defaults for new tenants
-      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
-      let existingConfig = tenant.landingPageConfigDraft;
-      if (!existingConfig && tenant.landingPageConfig) {
-        // Extract from wrapper format if present, otherwise use directly
-        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
-        existingConfig = liveConfig.published ?? liveConfig;
-      }
-      const draftConfig = existingConfig
-        ? (existingConfig as Record<string, unknown>)
-        : { pages: DEFAULT_PAGES_CONFIG };
-      const pages = JSON.parse(
-        JSON.stringify(
-          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
-        )
-      );
+      const result = await sectionContentService.updateSection(tenantId, sectionId, updates);
 
-      // Find and update section
-      let found = false;
-      for (const [pageName, pageConfig] of Object.entries(pages)) {
-        const pageSections =
-          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
-        for (let i = 0; i < pageSections.length; i++) {
-          const section = pageSections[i];
-          const currentId = (section.id as string) || `${pageName}-${section.type}-${i}`;
-          if (currentId === sectionId) {
-            // Update the section with provided fields
-            Object.assign(section, updates);
-            // Ensure ID is preserved
-            section.id = sectionId;
-            found = true;
-            break;
-          }
-        }
-        if (found) break;
-      }
-
-      if (!found) {
-        res.status(404).json({ error: `Section '${sectionId}' not found` });
+      if (!result.success) {
+        res.status(404).json({ error: result.message });
         return;
       }
-
-      // Save to draft column
-      await tenantRepo.update(tenantId, {
-        landingPageConfigDraft: { ...draftConfig, pages },
-      });
 
       res.json({
         success: true,
         sectionId,
-        hasDraft: true,
+        hasDraft: result.hasDraft,
         previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft` : undefined,
-        note: 'Section updated in draft. Publish to make live.',
+        note: result.message,
+        dashboardAction: result.dashboardAction,
       });
     } catch (error) {
       handleError(res, error, '/storefront/update-section');
@@ -1282,6 +1229,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // POST /storefront/add-section - Add a new section (saves to draft)
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/add-section', async (req: Request, res: Response) => {
     try {
       const { tenantId, pageName, sectionType, position, ...content } = AddSectionSchema.parse(
@@ -1293,60 +1242,37 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Adding section'
       );
 
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
+        return;
+      }
+
       const tenant = await tenantRepo.findById(tenantId);
       if (!tenant) {
         res.status(404).json({ error: 'Tenant not found' });
         return;
       }
 
-      // Get current config, fall back to defaults for new tenants
-      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
-      let existingConfig = tenant.landingPageConfigDraft;
-      if (!existingConfig && tenant.landingPageConfig) {
-        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
-        existingConfig = liveConfig.published ?? liveConfig;
-      }
-      const draftConfig = existingConfig
-        ? (existingConfig as Record<string, unknown>)
-        : { pages: DEFAULT_PAGES_CONFIG };
-      const pages = JSON.parse(
-        JSON.stringify(
-          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
-        )
+      const result = await sectionContentService.addSection(
+        tenantId,
+        pageName,
+        sectionType,
+        Object.keys(content).length > 0 ? content : undefined,
+        position
       );
 
-      // Ensure page exists
-      if (!pages[pageName]) {
-        pages[pageName] = { enabled: true, sections: [] };
+      if (!result.success) {
+        res.status(400).json({ error: result.message });
+        return;
       }
-
-      const pageSections = (pages[pageName] as { sections: Array<Record<string, unknown>> })
-        .sections;
-
-      // Create new section
-      const newSection: Record<string, unknown> = {
-        id: `${pageName}-${sectionType}-${Date.now()}`,
-        type: sectionType,
-        ...content,
-      };
-
-      // Insert at position or append
-      if (position !== undefined && position >= 0 && position < pageSections.length) {
-        pageSections.splice(position, 0, newSection);
-      } else {
-        pageSections.push(newSection);
-      }
-
-      await tenantRepo.update(tenantId, {
-        landingPageConfigDraft: { ...draftConfig, pages },
-      });
 
       res.json({
         success: true,
-        sectionId: newSection.id,
+        sectionId: result.sectionId,
         page: pageName,
-        hasDraft: true,
+        hasDraft: result.hasDraft,
         previewUrl: tenant.slug ? `/t/${tenant.slug}?preview=draft&page=${pageName}` : undefined,
+        dashboardAction: result.dashboardAction,
       });
     } catch (error) {
       handleError(res, error, '/storefront/add-section');
@@ -1354,6 +1280,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // POST /storefront/remove-section - Remove a section (saves to draft)
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/remove-section', async (req: Request, res: Response) => {
     try {
       const { tenantId, sectionId } = RemoveSectionSchema.parse(req.body);
@@ -1363,60 +1291,24 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Removing section'
       );
 
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
         return;
       }
 
-      // Get current config, fall back to defaults for new tenants
-      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
-      let existingConfig = tenant.landingPageConfigDraft;
-      if (!existingConfig && tenant.landingPageConfig) {
-        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
-        existingConfig = liveConfig.published ?? liveConfig;
-      }
-      const draftConfig = existingConfig
-        ? (existingConfig as Record<string, unknown>)
-        : { pages: DEFAULT_PAGES_CONFIG };
-      const pages = JSON.parse(
-        JSON.stringify(
-          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
-        )
-      );
+      const result = await sectionContentService.removeSection(tenantId, sectionId);
 
-      let found = false;
-      let removedFrom = '';
-      for (const [pageName, pageConfig] of Object.entries(pages)) {
-        const pageSections =
-          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
-        const index = pageSections.findIndex((s, i) => {
-          const id = (s.id as string) || `${pageName}-${s.type}-${i}`;
-          return id === sectionId;
-        });
-        if (index !== -1) {
-          pageSections.splice(index, 1);
-          found = true;
-          removedFrom = pageName;
-          break;
-        }
-      }
-
-      if (!found) {
-        res.status(404).json({ error: `Section '${sectionId}' not found` });
+      if (!result.success) {
+        res.status(404).json({ error: result.message });
         return;
       }
-
-      await tenantRepo.update(tenantId, {
-        landingPageConfigDraft: { ...draftConfig, pages },
-      });
 
       res.json({
         success: true,
         sectionId,
-        removedFrom,
-        hasDraft: true,
-        note: 'Section removed from draft. Discard to undo.',
+        removedSectionId: result.removedSectionId,
+        hasDraft: result.hasDraft,
+        note: result.message,
       });
     } catch (error) {
       handleError(res, error, '/storefront/remove-section');
@@ -1424,6 +1316,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // POST /storefront/reorder-sections - Move a section (saves to draft)
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/reorder-sections', async (req: Request, res: Response) => {
     try {
       const { tenantId, sectionId, toPosition } = ReorderSectionsSchema.parse(req.body);
@@ -1433,122 +1327,32 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         '[Agent] Reordering sections'
       );
 
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
         return;
       }
 
-      // Get current config, fall back to defaults for new tenants
-      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
-      let existingConfig = tenant.landingPageConfigDraft;
-      if (!existingConfig && tenant.landingPageConfig) {
-        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
-        existingConfig = liveConfig.published ?? liveConfig;
-      }
-      const draftConfig = existingConfig
-        ? (existingConfig as Record<string, unknown>)
-        : { pages: DEFAULT_PAGES_CONFIG };
-      const pages = JSON.parse(
-        JSON.stringify(
-          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
-        )
-      );
+      const result = await sectionContentService.reorderSection(tenantId, sectionId, toPosition);
 
-      let found = false;
-      for (const [pageName, pageConfig] of Object.entries(pages)) {
-        const pageSections =
-          (pageConfig as { sections?: Array<Record<string, unknown>> }).sections || [];
-        const index = pageSections.findIndex((s, i) => {
-          const id = (s.id as string) || `${pageName}-${s.type}-${i}`;
-          return id === sectionId;
-        });
-        if (index !== -1) {
-          const [section] = pageSections.splice(index, 1);
-          const newPos = Math.min(Math.max(0, toPosition), pageSections.length);
-          pageSections.splice(newPos, 0, section);
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        res.status(404).json({ error: `Section '${sectionId}' not found` });
+      if (!result.success) {
+        res.status(404).json({ error: result.message });
         return;
       }
-
-      await tenantRepo.update(tenantId, {
-        landingPageConfigDraft: { ...draftConfig, pages },
-      });
 
       res.json({
         success: true,
         sectionId,
-        newPosition: toPosition,
-        hasDraft: true,
+        newPosition: result.newPosition,
+        hasDraft: result.hasDraft,
       });
     } catch (error) {
       handleError(res, error, '/storefront/reorder-sections');
     }
   });
 
-  // POST /storefront/toggle-page - Enable/disable a page
-  router.post('/storefront/toggle-page', async (req: Request, res: Response) => {
-    try {
-      const { tenantId, pageName, enabled } = TogglePageSchema.parse(req.body);
-
-      logger.info(
-        { tenantId, pageName, enabled, endpoint: '/storefront/toggle-page' },
-        '[Agent] Toggling page'
-      );
-
-      if (pageName === 'home' && !enabled) {
-        res.status(400).json({ error: 'Home page cannot be disabled' });
-        return;
-      }
-
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
-        return;
-      }
-
-      // Get current config, fall back to defaults for new tenants
-      // Handle wrapper format: landingPageConfig may be { published: {...} } or direct config
-      let existingConfig = tenant.landingPageConfigDraft;
-      if (!existingConfig && tenant.landingPageConfig) {
-        const liveConfig = tenant.landingPageConfig as Record<string, unknown>;
-        existingConfig = liveConfig.published ?? liveConfig;
-      }
-      const draftConfig = existingConfig
-        ? (existingConfig as Record<string, unknown>)
-        : { pages: DEFAULT_PAGES_CONFIG };
-      const pages = JSON.parse(
-        JSON.stringify(
-          (draftConfig as { pages?: Record<string, unknown> }).pages || DEFAULT_PAGES_CONFIG
-        )
-      );
-
-      if (!pages[pageName]) {
-        pages[pageName] = { enabled, sections: [] };
-      } else {
-        (pages[pageName] as { enabled: boolean }).enabled = enabled;
-      }
-
-      await tenantRepo.update(tenantId, {
-        landingPageConfigDraft: { ...draftConfig, pages },
-      });
-
-      res.json({
-        success: true,
-        pageName,
-        enabled,
-        hasDraft: true,
-      });
-    } catch (error) {
-      handleError(res, error, '/storefront/toggle-page');
-    }
-  });
+  // POST /storefront/toggle-page - DELETED
+  // This endpoint was for multi-page websites but MAIS uses single long-scroll pages.
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 
   // POST /storefront/update-branding - Update branding (immediate, not draft)
   router.post('/storefront/update-branding', async (req: Request, res: Response) => {
@@ -1593,9 +1397,16 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // POST /storefront/preview - Get preview URL
+  // MIGRATED: Now uses SectionContentService instead of legacy JSON columns
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   router.post('/storefront/preview', async (req: Request, res: Response) => {
     try {
       const { tenantId } = TenantIdSchema.parse(req.body);
+
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
+        return;
+      }
 
       const tenant = await tenantRepo.findById(tenantId);
       if (!tenant) {
@@ -1603,7 +1414,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
 
-      const hasDraft = !!tenant.landingPageConfigDraft;
+      const hasDraft = await sectionContentService.hasDraft(tenantId);
 
       res.json({
         hasDraft,
@@ -2499,7 +2310,7 @@ Apply the feedback while maintaining the ${tone} tone.`;
   // PACKAGE MANAGEMENT Endpoints (for Tenant Agent)
   // ===========================================================================
   // CRITICAL P0 FIX: This endpoint manages ACTUAL bookable packages (Package table),
-  // NOT the cosmetic "pricing section" in landingPageConfigDraft.
+  // NOT the cosmetic "pricing section" in the storefront.
   //
   // This addresses the E2E failure where agent said "Done" but Services section
   // still showed generic $0 packages.

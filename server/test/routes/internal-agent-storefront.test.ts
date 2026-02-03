@@ -27,7 +27,8 @@ vi.mock('../../src/lib/core/logger', () => ({
 describe('Internal Agent Storefront & Booking Endpoints', () => {
   const INTERNAL_SECRET = 'test-secret-123';
 
-  // Mock tenant with storefront config
+  // Mock tenant (Phase 5.2: landingPageConfig columns removed)
+  // All storefront content now stored in SectionContent table via SectionContentService
   const mockTenant = {
     id: 'tenant-123',
     name: 'Test Business',
@@ -35,31 +36,13 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     tier: 'FREE' as const,
     onboardingPhase: 'NOT_STARTED' as const,
     branding: {},
-    landingPageConfig: null,
-    landingPageConfigDraft: null,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
-  const mockTenantWithDraft = {
-    ...mockTenant,
-    landingPageConfigDraft: {
-      pages: {
-        home: {
-          enabled: true,
-          sections: [
-            { id: 'home-hero-1', type: 'hero', headline: 'Welcome' },
-            { id: 'home-text-2', type: 'text', headline: '[Add your story]' },
-          ],
-        },
-        about: {
-          enabled: true,
-          sections: [{ id: 'about-text-1', type: 'text', headline: 'About Us' }],
-        },
-      },
-    },
-  };
+  // Phase 5.2: mockTenantWithDraft removed - use SectionContentService mocks instead
+  // Storefront state (hasDraft, hasPublished) now comes from SectionContentService
 
   // Mock dependencies
   let mockTenantRepo: Partial<PrismaTenantRepository>;
@@ -74,14 +57,8 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     mockTenantRepo = {
       findById: vi.fn().mockResolvedValue(mockTenant),
       update: vi.fn().mockResolvedValue(mockTenant),
-      // P1 #817 fix: Routes now delegate to these repository methods
-      publishLandingPageDraft: vi.fn().mockResolvedValue({
-        success: true,
-        publishedAt: new Date().toISOString(),
-      }),
-      discardLandingPageDraft: vi.fn().mockResolvedValue({
-        success: true,
-      }),
+      // Phase 5.2: publishLandingPageDraft and discardLandingPageDraft removed
+      // These operations now go through SectionContentService
     };
 
     mockCatalogService = {
@@ -111,8 +88,77 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       }),
     };
 
-    // Mock SectionContentService for section-level publish/discard
+    // Mock SectionContentService (Phase 5.2: Single source of truth for storefront)
     mockSectionContentService = {
+      // Structure and content methods
+      getPageStructure: vi.fn().mockResolvedValue({
+        pages: [
+          {
+            name: 'home',
+            sections: [
+              {
+                sectionId: 'home-hero-1',
+                blockType: 'HERO',
+                type: 'hero',
+                page: 'home',
+                index: 0,
+                headline: 'Welcome',
+                isPlaceholder: false,
+                isDraft: true,
+                isPublished: false,
+                hasUnpublishedChanges: true,
+              },
+              {
+                sectionId: 'home-text-2',
+                blockType: 'TEXT',
+                type: 'text',
+                page: 'home',
+                index: 1,
+                headline: '[Add your story]',
+                isPlaceholder: true,
+                isDraft: true,
+                isPublished: false,
+                hasUnpublishedChanges: true,
+              },
+            ],
+          },
+        ],
+        hasDraft: true,
+      }),
+      addSection: vi.fn().mockResolvedValue({
+        success: true,
+        sectionId: 'new-section-123',
+        blockType: 'TEXT',
+        type: 'text',
+        page: 'home',
+        index: 2,
+        section: { headline: 'New Section' },
+        isDraft: true,
+        isPublished: false,
+        hasDraft: true, // Phase 5.2: Route returns hasDraft from service result
+      }),
+      updateSection: vi.fn().mockResolvedValue({
+        success: true,
+        sectionId: 'section-123',
+        blockType: 'HERO',
+        type: 'hero',
+        page: 'home',
+        section: { headline: 'Updated headline' },
+        index: 0,
+        isDraft: true,
+        isPublished: false,
+        hasUnpublishedChanges: true,
+        visibility: 'draft' as const,
+        hasDraft: true,
+      }),
+      reorderSection: vi.fn().mockResolvedValue({
+        success: true,
+        hasDraft: true,
+        visibility: 'draft' as const,
+        message: 'Section reordered.',
+        sectionId: 'home-text-2',
+        newIndex: 0,
+      }),
       publishSection: vi
         .fn()
         .mockImplementation(
@@ -145,9 +191,10 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
         success: true,
         sectionId: 'section-123',
         blockType: 'HERO',
-        sectionType: 'hero',
-        pageName: 'home',
-        content: { headline: 'Test' },
+        type: 'hero', // Phase 5.2: renamed from sectionType
+        page: 'home', // Phase 5.2: renamed from pageName
+        section: { headline: 'Test' }, // Phase 5.2: renamed from content
+        index: 0, // Phase 5.2: renamed from order
         isDraft: true,
         isPublished: false,
         hasUnpublishedChanges: true,
@@ -230,7 +277,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/structure', () => {
     it('should return page structure with sections', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/structure')
@@ -244,7 +291,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     });
 
     it('should filter sections by page name', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/structure')
@@ -256,7 +303,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     });
 
     it('should filter to only placeholders when requested', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/structure')
@@ -291,7 +338,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/section', () => {
     it('should return section content by ID', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/section')
@@ -300,12 +347,15 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.section).toBeDefined();
-      expect(response.body.section.type).toBe('hero');
+      // Phase 5.2: section is the content object, type is returned via the mock's section field
+      expect(response.body.section.headline).toBe('Test');
       expect(response.body.page).toBe('home');
     });
 
     it('should return 404 for missing section', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
+      // Mock service to return null for nonexistent section
+      mockSectionContentService.getSectionContent = vi.fn().mockResolvedValue(null);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/section')
@@ -318,7 +368,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/update-section', () => {
     it('should update section and save to draft', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/update-section')
@@ -333,11 +383,17 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.hasDraft).toBe(true);
-      expect(mockTenantRepo.update).toHaveBeenCalled();
+      // Phase 5.2: Route delegates to SectionContentService, not tenant repo
+      expect(mockSectionContentService.updateSection).toHaveBeenCalled();
     });
 
     it('should return 404 for missing section', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
+      // Mock service to return failure for nonexistent section
+      mockSectionContentService.updateSection = vi.fn().mockResolvedValue({
+        success: false,
+        error: 'Section not found',
+      });
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/update-section')
@@ -354,7 +410,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/add-section', () => {
     it('should add a new section to draft', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/add-section')
@@ -375,7 +431,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/remove-section', () => {
     it('should remove a section from draft', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/remove-section')
@@ -384,11 +440,17 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.removedFrom).toBe('home');
+      expect(response.body.sectionId).toBe('home-text-2');
+      expect(response.body.hasDraft).toBe(false); // Phase 5.2: Route returns hasDraft from service
     });
 
     it('should return 404 for missing section', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
+      // Mock service to return failure for nonexistent section
+      mockSectionContentService.removeSection = vi.fn().mockResolvedValue({
+        success: false,
+        message: 'Section not found',
+      });
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/remove-section')
@@ -401,7 +463,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/reorder-sections', () => {
     it('should move section to new position', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/reorder-sections')
@@ -414,32 +476,9 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     });
   });
 
-  describe('POST /storefront/toggle-page', () => {
-    it('should toggle page enabled state', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
-
-      const response = await request(app)
-        .post('/v1/internal/agent/storefront/toggle-page')
-        .set('X-Internal-Secret', INTERNAL_SECRET)
-        .send({ tenantId: 'tenant-123', pageName: 'about', enabled: false });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.enabled).toBe(false);
-    });
-
-    it('should not allow disabling home page', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
-
-      const response = await request(app)
-        .post('/v1/internal/agent/storefront/toggle-page')
-        .set('X-Internal-Secret', INTERNAL_SECRET)
-        .send({ tenantId: 'tenant-123', pageName: 'home', enabled: false });
-
-      expect(response.status).toBe(400);
-      expect(response.body.error).toContain('cannot be disabled');
-    });
-  });
+  // Phase 5.2: POST /storefront/toggle-page tests removed
+  // Single-page UX model - no multi-page toggle needed
+  // Endpoint was deleted from internal-agent.routes.ts
 
   describe('POST /storefront/update-branding', () => {
     it('should update branding colors', async () => {
@@ -469,7 +508,9 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
   describe('POST /storefront/preview', () => {
     it('should return preview URLs', async () => {
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      // Phase 5.2: hasDraft now comes from SectionContentService
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
+      mockSectionContentService.hasDraft = vi.fn().mockResolvedValue(true);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/preview')
@@ -486,7 +527,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
   describe('POST /storefront/publish (T3 Action)', () => {
     it('should publish all draft sections to live', async () => {
       // Phase 5: Route now delegates to SectionContentService.publishAll()
-      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
+      mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenant);
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/publish')

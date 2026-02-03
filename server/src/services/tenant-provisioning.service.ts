@@ -38,7 +38,7 @@ import {
   DEFAULT_SECTION_CONTENT,
 } from '../lib/tenant-defaults';
 import { TenantProvisioningError } from '../lib/errors';
-import { DEFAULT_LANDING_PAGE_CONFIG } from '@macon/contracts';
+// Phase 5.2: DEFAULT_LANDING_PAGE_CONFIG removed - sections stored in SectionContent table
 
 /**
  * Input for creating a new tenant via admin API
@@ -202,6 +202,8 @@ export class TenantProvisioningService {
       // Create tenant with default landing page config
       // P4-FIX: Seed DEFAULT_PAGES_CONFIG on tenant provisioning
       // This ensures new tenants have a complete landing page structure with placeholders
+      // Phase 5.2: landingPageConfig removed - sections stored in SectionContent table
+      // Default sections are created via createDefaultSections() in createDefaultSegmentAndPackages()
       const tenant = await tx.tenant.create({
         data: {
           slug,
@@ -210,7 +212,6 @@ export class TenantProvisioningService {
           apiKeySecret: keys.secretKeyHash,
           commissionPercent,
           branding: {},
-          landingPageConfig: DEFAULT_LANDING_PAGE_CONFIG as unknown as Prisma.JsonObject,
         },
       });
 
@@ -279,7 +280,8 @@ export class TenantProvisioningService {
             apiKeySecret: secretKeyHash,
             commissionPercent: 10.0,
             emailVerified: false,
-            landingPageConfig: DEFAULT_LANDING_PAGE_CONFIG as unknown as Prisma.JsonObject,
+            // Phase 5.2: landingPageConfig removed - sections stored in SectionContent table
+            // Default sections are created via createDefaultSections() in createDefaultSegmentAndPackages()
           },
         });
 

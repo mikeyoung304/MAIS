@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ContextBuilderService, type KnownFacts } from './context-builder.service';
 import type { PrismaClient } from '../generated/prisma/client';
+import type { SectionContentService } from './section-content.service';
 
 // =============================================================================
 // MOCKS
@@ -23,23 +24,31 @@ const createMockPrisma = () =>
     },
   }) as unknown as PrismaClient;
 
+const createMockSectionContentService = (overrides: Partial<SectionContentService> = {}) =>
+  ({
+    hasDraft: vi.fn().mockResolvedValue(false),
+    hasPublished: vi.fn().mockResolvedValue(false),
+    getPageStructure: vi.fn().mockResolvedValue({ pages: [] }),
+    ...overrides,
+  }) as unknown as SectionContentService;
+
 // =============================================================================
 // TEST DATA
 // =============================================================================
 
 const TENANT_ID = 'tenant_test_123';
 
+// Phase 5.2 Section Content Migration: landingPageConfig columns removed
+// Storefront state is now derived from SectionContentService
 const createMockTenant = (discoveryFacts: KnownFacts = {}) => ({
   id: TENANT_ID,
-  businessName: 'Test Photography',
+  name: 'Test Photography', // Note: field is 'name' not 'businessName'
   slug: 'test-photo',
   branding: {
     discoveryFacts,
     voice: { tone: 'warm' },
   },
-  landingPageConfig: null,
-  landingPageConfigDraft: null,
-  onboardingDone: false,
+  onboardingCompletedAt: null,
   onboardingPhase: 'NOT_STARTED',
 });
 
@@ -50,10 +59,12 @@ const createMockTenant = (discoveryFacts: KnownFacts = {}) => ({
 describe('ContextBuilderService', () => {
   let contextBuilder: ContextBuilderService;
   let mockPrisma: ReturnType<typeof createMockPrisma>;
+  let mockSectionContentService: ReturnType<typeof createMockSectionContentService>;
 
   beforeEach(() => {
     mockPrisma = createMockPrisma();
-    contextBuilder = new ContextBuilderService(mockPrisma);
+    mockSectionContentService = createMockSectionContentService();
+    contextBuilder = new ContextBuilderService(mockPrisma, mockSectionContentService);
     vi.clearAllMocks();
   });
 
@@ -136,13 +147,13 @@ describe('ContextBuilderService', () => {
     });
 
     it('should compute correct storefront state flags', async () => {
-      // Arrange: Tenant with published config
-      const mockTenant = {
-        ...createMockTenant({ businessType: 'wedding_planner' }),
-        landingPageConfig: { pages: [{ sections: [] }] },
-        landingPageConfigDraft: { pages: [{ sections: [] }] },
-      };
+      // Arrange: Tenant with published and draft content via SectionContentService
+      const mockTenant = createMockTenant({ businessType: 'wedding_planner' });
       (mockPrisma.tenant.findUnique as any).mockResolvedValue(mockTenant);
+
+      // Phase 5.2: Mock SectionContentService to return draft/published state
+      (mockSectionContentService.hasDraft as any).mockResolvedValue(true);
+      (mockSectionContentService.hasPublished as any).mockResolvedValue(true);
 
       // Act
       const bootstrap = await contextBuilder.getBootstrapData(TENANT_ID);

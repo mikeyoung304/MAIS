@@ -49,13 +49,18 @@ export interface StorefrontResult {
 
 /**
  * Section summary for page structure
+ *
+ * Field naming follows agent tool conventions:
+ * - type: Lowercase frontend name (e.g., "hero", "about")
+ * - page: Page name (e.g., "home")
+ * - index: Order position on page (0-based)
  */
 export interface SectionSummary {
   sectionId: string;
   blockType: BlockType;
-  sectionType: string; // Lowercase frontend name
-  pageName: string;
-  order: number;
+  type: string; // Lowercase frontend name (e.g., "hero", "about")
+  page: string; // Page name (e.g., "home")
+  index: number; // Order position on page
   headline?: string;
   isPlaceholder: boolean;
   isDraft: boolean;
@@ -77,14 +82,21 @@ export interface PageStructureResult {
 
 /**
  * Section content result
+ *
+ * Field naming follows agent tool conventions:
+ * - type: Lowercase frontend name (e.g., "hero", "about")
+ * - page: Page name (e.g., "home")
+ * - section: The full content object for this section
+ * - index: Order position on page (0-based)
  */
 export interface SectionContentResult {
   success: boolean;
   sectionId: string;
   blockType: BlockType;
-  sectionType: string;
-  pageName: string;
-  content: unknown;
+  type: string; // Lowercase frontend name (e.g., "hero", "about")
+  page: string; // Page name (e.g., "home")
+  section: unknown; // Full content object
+  index: number; // Order position on page
   isDraft: boolean;
   isPublished: boolean;
   hasUnpublishedChanges: boolean;
@@ -238,9 +250,9 @@ export class SectionContentService {
       const summary: SectionSummary = {
         sectionId: section.id,
         blockType: section.blockType,
-        sectionType: blockTypeToSectionType(section.blockType),
-        pageName: section.pageName,
-        order: section.order,
+        type: blockTypeToSectionType(section.blockType),
+        page: section.pageName,
+        index: section.order,
         headline,
         isPlaceholder: this.isPlaceholderContent(content),
         isDraft: section.isDraft,
@@ -255,7 +267,7 @@ export class SectionContentService {
 
     const pages = Array.from(pageMap.entries()).map(([name, sections]) => ({
       name,
-      sections: sections.sort((a, b) => a.order - b.order),
+      sections: sections.sort((a, b) => a.index - b.index),
     }));
 
     return {
@@ -286,9 +298,10 @@ export class SectionContentService {
       success: true,
       sectionId: section.id,
       blockType: section.blockType,
-      sectionType: blockTypeToSectionType(section.blockType),
-      pageName: section.pageName,
-      content: section.content,
+      type: blockTypeToSectionType(section.blockType),
+      page: section.pageName,
+      section: section.content,
+      index: section.order,
       isDraft: section.isDraft,
       isPublished: !section.isDraft,
       hasUnpublishedChanges: section.isDraft,
@@ -321,6 +334,15 @@ export class SectionContentService {
    */
   async hasDraft(tenantId: string): Promise<boolean> {
     return this.repo.hasDrafts(tenantId);
+  }
+
+  /**
+   * Check if tenant has any published sections
+   * Phase 5.2: Added for ContextBuilderService compatibility
+   */
+  async hasPublished(tenantId: string): Promise<boolean> {
+    const published = await this.repo.findAllForTenant(tenantId, { publishedOnly: true });
+    return published.length > 0;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -95,10 +95,9 @@ model Tenant {
   depositPercent Decimal? @db.Decimal(5, 2) // null = full payment required
   balanceDueDays Int      @default(30) // Days before event balance is due
 
-  // Landing Page Configuration
-  landingPageConfig             Json? // Stores tenant's landing page configuration (sections, hero, testimonials, etc.)
-  landingPageConfigDraft        Json? // Draft version for Build Mode/AI editing. Published by wrapping in {published: draft, publishedAt} format in landingPageConfig column.
-  landingPageConfigDraftVersion Int   @default(0) // Optimistic locking: increments on each draft write, reset on publish/discard
+  // Landing Page Configuration - DELETED (Phase 5.2 Section Content Migration)
+  // All storefront content now stored in SectionContent table
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 
   // Tier Display Names - Tenant customization for tier labels
   // Structure: {"tier_1": "The Grounding Reset", "tier_2": "The Team Recharge", "tier_3": "The Executive Reset"}

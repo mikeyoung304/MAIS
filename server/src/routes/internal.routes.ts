@@ -72,7 +72,7 @@ export function createInternalRoutes(config: { internalApiSecret?: string }): Ro
    * POST /v1/internal/revalidate
    *
    * Triggers ISR revalidation for tenant pages on the Next.js frontend.
-   * Called after tenant saves landingPageConfig, branding, or packages.
+   * Called after tenant saves section content, branding, or packages.
    *
    * Request body:
    * {

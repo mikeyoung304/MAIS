@@ -13,8 +13,8 @@
  */
 
 import type { PrismaClient } from '../generated/prisma/client';
-import type { Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import type { SectionContentService } from './section-content.service';
 
 // =============================================================================
 // TYPES
@@ -205,7 +205,10 @@ const DEFAULT_SECTION_STATE: SectionState = {
 // =============================================================================
 
 export class ContextBuilderService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly sectionContentService?: SectionContentService
+  ) {}
 
   /**
    * Build complete agent context for a tenant
@@ -219,8 +222,6 @@ export class ContextBuilderService {
         name: true, // businessName field doesn't exist - use name
         slug: true,
         branding: true,
-        landingPageConfig: true,
-        landingPageConfigDraft: true,
         onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
       },
@@ -259,11 +260,8 @@ export class ContextBuilderService {
       visualPreferences: branding.visual as { style?: string; colors?: string[] } | undefined,
     };
 
-    // Build storefront state
-    const storefrontState = this.buildStorefrontState(
-      tenant.landingPageConfig as Prisma.JsonValue | null,
-      tenant.landingPageConfigDraft as Prisma.JsonValue | null
-    );
+    // Build storefront state from SectionContentService (Phase 5.2 migration)
+    const storefrontState = await this.buildStorefrontStateFromSections(tenantId);
 
     // Determine goals based on state
     const goals = this.buildGoals(storefrontState, onboardingDone);
@@ -312,8 +310,6 @@ export class ContextBuilderService {
         name: true, // businessName field doesn't exist - use name
         slug: true,
         branding: true,
-        landingPageConfig: true,
-        landingPageConfigDraft: true,
         onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
       },
@@ -326,12 +322,13 @@ export class ContextBuilderService {
     const branding = (tenant.branding as Record<string, unknown>) || {};
     const discoveryFacts = (branding.discoveryFacts as KnownFacts) || {};
 
-    const hasPublished =
-      tenant.landingPageConfig !== null &&
-      Object.keys(tenant.landingPageConfig as object).length > 0;
-    const hasDraft =
-      tenant.landingPageConfigDraft !== null &&
-      Object.keys(tenant.landingPageConfigDraft as object).length > 0;
+    // Determine draft/published state from SectionContentService (Phase 5.2 migration)
+    let hasDraft = false;
+    let hasPublished = false;
+    if (this.sectionContentService) {
+      hasDraft = await this.sectionContentService.hasDraft(tenantId);
+      hasPublished = await this.sectionContentService.hasPublished(tenantId);
+    }
 
     // Calculate simple completion score
     const factCount = Object.keys(discoveryFacts).filter(
@@ -419,39 +416,69 @@ export class ContextBuilderService {
   // PRIVATE HELPERS
   // ===========================================================================
 
-  private buildStorefrontState(
-    published: Prisma.JsonValue | null,
-    draft: Prisma.JsonValue | null
-  ): StorefrontState {
-    const hasDraft = draft !== null && Object.keys(draft as object).length > 0;
-    const _hasPublished = published !== null && Object.keys(published as object).length > 0;
+  /**
+   * Build storefront state from SectionContentService (Phase 5.2 migration)
+   * Replaces legacy JSON column-based buildStorefrontState()
+   */
+  private async buildStorefrontStateFromSections(tenantId: string): Promise<StorefrontState> {
+    // If SectionContentService not available, return empty state
+    if (!this.sectionContentService) {
+      logger.warn(
+        { tenantId },
+        '[ContextBuilder] SectionContentService not available, returning empty storefront state'
+      );
+      return {
+        completion: 0,
+        sections: {
+          hero: DEFAULT_SECTION_STATE,
+          about: DEFAULT_SECTION_STATE,
+          services: DEFAULT_SECTION_STATE,
+          faq: DEFAULT_SECTION_STATE,
+          reviews: DEFAULT_SECTION_STATE,
+        },
+        hasDraft: false,
+        lastPublished: undefined,
+      };
+    }
 
-    // Extract section states from published config
-    const publishedConfig = published as Record<string, unknown> | null;
-    const extractedPublished =
-      (publishedConfig?.published as Record<string, unknown>) ?? publishedConfig;
-    const pages = (extractedPublished?.pages as Array<{ sections?: unknown[] }>) || [];
+    // Get all sections for this tenant (published)
+    const structure = await this.sectionContentService.getPageStructure(tenantId, {});
+    const hasDraft = await this.sectionContentService.hasDraft(tenantId);
 
-    const getSectionStatus = (sectionType: string): SectionState => {
-      for (const page of pages) {
-        const sections = (page.sections as Array<{ type?: string }>) || [];
-        const found = sections.find((s) => s.type === sectionType);
-        if (found) {
-          return { status: 'published', content: found as Record<string, unknown> };
-        }
+    // Flatten sections from all pages
+    const allSections = structure.pages.flatMap((page) => page.sections);
+
+    // Helper to get section state by type
+    const getSectionState = (sectionType: string): SectionState => {
+      const found = allSections.find((s) => s.type === sectionType && s.isPublished);
+      if (found) {
+        return {
+          status: 'published',
+          content: undefined, // Content not needed for context
+          lastModified: undefined,
+        };
+      }
+      // Check for draft
+      const draftFound = allSections.find((s) => s.type === sectionType && s.isDraft);
+      if (draftFound) {
+        return {
+          status: 'draft',
+          content: undefined,
+          lastModified: undefined,
+        };
       }
       return DEFAULT_SECTION_STATE;
     };
 
-    // Calculate completion score
+    // Calculate completion score based on published sections
     const sectionWeights = { hero: 25, about: 20, services: 40, faq: 10, reviews: 5 };
     let completion = 0;
 
-    const heroState = getSectionStatus('hero');
-    const aboutState = getSectionStatus('about');
-    const servicesState = getSectionStatus('services');
-    const faqState = getSectionStatus('faq');
-    const reviewsState = getSectionStatus('reviews');
+    const heroState = getSectionState('hero');
+    const aboutState = getSectionState('about');
+    const servicesState = getSectionState('services');
+    const faqState = getSectionState('faq');
+    const reviewsState = getSectionState('reviews');
 
     if (heroState.status === 'published') completion += sectionWeights.hero;
     if (aboutState.status === 'published') completion += sectionWeights.about;
@@ -469,7 +496,7 @@ export class ContextBuilderService {
         reviews: reviewsState,
       },
       hasDraft,
-      lastPublished: undefined, // TODO: Track this
+      lastPublished: undefined, // TODO: Track this via SectionContent updatedAt
     };
   }
 
@@ -534,6 +561,9 @@ export class ContextBuilderService {
 // FACTORY
 // =============================================================================
 
-export function createContextBuilderService(prisma: PrismaClient): ContextBuilderService {
-  return new ContextBuilderService(prisma);
+export function createContextBuilderService(
+  prisma: PrismaClient,
+  sectionContentService?: SectionContentService
+): ContextBuilderService {
+  return new ContextBuilderService(prisma, sectionContentService);
 }

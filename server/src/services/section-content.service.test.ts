@@ -120,7 +120,7 @@ describe('SectionContentService', () => {
       expect(faqPage?.sections).toHaveLength(1);
     });
 
-    it('should sort sections by order within each page', async () => {
+    it('should sort sections by index within each page', async () => {
       vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
         createMockSection({ id: 's2', order: 2, blockType: 'SERVICES' }),
         createMockSection({ id: 's1', order: 0, blockType: 'HERO' }),
@@ -130,9 +130,9 @@ describe('SectionContentService', () => {
       const result = await service.getPageStructure('tenant-1');
 
       const sections = result.pages[0].sections;
-      expect(sections[0].order).toBe(0);
-      expect(sections[1].order).toBe(1);
-      expect(sections[2].order).toBe(2);
+      expect(sections[0].index).toBe(0);
+      expect(sections[1].index).toBe(1);
+      expect(sections[2].index).toBe(2);
     });
 
     it('should indicate hasDraft when any section is draft', async () => {
@@ -186,14 +186,14 @@ describe('SectionContentService', () => {
       expect(result.pages[0].sections[1].isPlaceholder).toBe(false);
     });
 
-    it('should convert blockType to sectionType', async () => {
+    it('should convert blockType to type', async () => {
       vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
         createMockSection({ blockType: 'HERO' }),
       ]);
 
       const result = await service.getPageStructure('tenant-1');
 
-      expect(result.pages[0].sections[0].sectionType).toBe('hero');
+      expect(result.pages[0].sections[0].type).toBe('hero');
     });
   });
 
@@ -208,7 +208,7 @@ describe('SectionContentService', () => {
       expect(result).not.toBeNull();
       expect(result!.success).toBe(true);
       expect(result!.sectionId).toBe('section-1');
-      expect(result!.content).toEqual({ headline: 'Test' });
+      expect(result!.section).toEqual({ headline: 'Test' });
     });
 
     it('should return null for non-existent section', async () => {

@@ -5,12 +5,11 @@
 
 import type { PrismaClient, Tenant } from '../../generated/prisma/client';
 import { Prisma } from '../../generated/prisma/client';
-import {
-  TenantPublicDtoSchema,
-  LandingPageConfigSchema,
-  LenientLandingPageConfigSchema,
-} from '@macon/contracts';
-import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
+import { TenantPublicDtoSchema } from '@macon/contracts';
+import type { TenantPublicDto } from '@macon/contracts';
+// NOTE: LandingPageConfigSchema, LenientLandingPageConfigSchema removed
+// All storefront content now uses SectionContent table via SectionContentService
+// See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 import { logger } from '../../lib/core/logger';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 
@@ -41,9 +40,9 @@ export interface UpdateTenantInput {
   emailVerified?: boolean;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
-  // Landing page configuration
-  landingPageConfig?: any;
-  landingPageConfigDraft?: any | null; // Separate column for Build Mode (AI tools)
+  // DELETED: landingPageConfig, landingPageConfigDraft
+  // All storefront editing now uses SectionContent table via SectionContentService
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   // Trial & Subscription fields (Product-Led Growth)
   trialEndsAt?: Date;
   subscriptionStatus?: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';
@@ -408,7 +407,8 @@ export class PrismaTenantRepository {
             chatEnabled: true,
             branding: true,
             tierDisplayNames: true,
-            landingPageConfig: true, // Include for branding.landingPage
+            // NOTE: landingPageConfig removed - frontend fetches sections from /sections API
+            // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
             isActive: true,
           },
         },
@@ -422,18 +422,7 @@ export class PrismaTenantRepository {
 
     const tenant = tenantDomain.tenant;
 
-    // Extract published landing page config from the draft wrapper structure
-    // The landingPageConfig column uses { draft, published, ... } wrapper
-    // For public display, we use the published config (or direct config for legacy format)
-    const landingPageConfig = this.extractPublishedLandingPage(tenant.landingPageConfig);
-
-    // Build branding object with landingPage merged in
-    const branding = tenant.branding as Record<string, unknown> | null;
-    const mergedBranding = landingPageConfig
-      ? { ...branding, landingPage: landingPageConfig }
-      : branding;
-
-    // Build and validate response (same as findBySlugPublic)
+    // Build and validate response (no landingPage merge needed - frontend uses sections API)
     const candidateDto = {
       id: tenant.id,
       slug: tenant.slug,
@@ -444,7 +433,7 @@ export class PrismaTenantRepository {
       accentColor: tenant.accentColor,
       backgroundColor: tenant.backgroundColor,
       chatEnabled: tenant.chatEnabled,
-      branding: mergedBranding,
+      branding: tenant.branding as Record<string, unknown> | undefined,
       tierDisplayNames: tenant.tierDisplayNames as
         | { tier_1?: string; tier_2?: string; tier_3?: string }
         | undefined,
@@ -481,17 +470,15 @@ export class PrismaTenantRepository {
   }
 
   /**
-   * Find active tenant by slug with draft config for preview mode
-   * Used by preview endpoint to serve draft landing page content
+   * Find active tenant by slug for preview mode
    *
-   * PERFORMANCE: Single query fetches both published and draft configs,
-   * eliminating the need for a second query to getLandingPageDraft.
+   * NOTE: Draft detection now uses SectionContent table via SectionContentService.hasDraft()
+   * at the calling site (frontend page.tsx). This method returns basic tenant data only.
    *
    * SECURITY: Only returns allowlisted fields (same as findBySlugPublic)
-   * plus draft config for authenticated preview.
    *
    * @param slug - URL-safe tenant identifier
-   * @returns TenantPreviewDto (with draft/published configs) or null if not found/inactive
+   * @returns TenantPreviewDto or null if not found/inactive
    */
   async findBySlugForPreview(slug: string): Promise<TenantPreviewDto | null> {
     const tenant = await this.prisma.tenant.findUnique({
@@ -511,8 +498,8 @@ export class PrismaTenantRepository {
         chatEnabled: true,
         branding: true,
         tierDisplayNames: true,
-        landingPageConfig: true, // Published config
-        landingPageConfigDraft: true, // Draft config (for preview)
+        // NOTE: landingPageConfig removed - frontend fetches sections from /sections API
+        // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
       },
     });
 
@@ -520,35 +507,7 @@ export class PrismaTenantRepository {
       return null;
     }
 
-    // Parse draft config from separate column
-    // IMPORTANT: Use LENIENT validation for drafts - allows empty arrays
-    // This fixes the P1 bug where empty pricing sections caused validation failure
-    // and silent fallback to published content. See: 2026-02-01 realtime preview plan.
-    let draft: LandingPageConfig | null = null;
-    if (tenant.landingPageConfigDraft) {
-      const draftResult = LenientLandingPageConfigSchema.safeParse(tenant.landingPageConfigDraft);
-      if (draftResult.success) {
-        draft = draftResult.data;
-      } else {
-        // Even lenient validation failed - this is a real corruption issue
-        logger.error(
-          { tenantId: tenant.id, slug, errors: draftResult.error.issues },
-          'Draft failed even lenient validation in findBySlugForPreview'
-        );
-      }
-    }
-
-    // Parse published config from main column
-    const published = this.extractPublishedLandingPage(tenant.landingPageConfig);
-
-    // Build branding object - use draft if available, otherwise published
-    const landingPageConfig = draft ?? published;
-    const branding = tenant.branding as Record<string, unknown> | null;
-    const mergedBranding = landingPageConfig
-      ? { ...branding, landingPage: landingPageConfig }
-      : branding;
-
-    // Build candidate response object
+    // Build candidate response object (no landingPage merge needed - frontend uses sections API)
     const candidateDto = {
       id: tenant.id,
       slug: tenant.slug,
@@ -559,7 +518,7 @@ export class PrismaTenantRepository {
       accentColor: tenant.accentColor,
       backgroundColor: tenant.backgroundColor,
       chatEnabled: tenant.chatEnabled,
-      branding: mergedBranding,
+      branding: tenant.branding as Record<string, unknown> | undefined,
       tierDisplayNames: tenant.tierDisplayNames as
         | { tier_1?: string; tier_2?: string; tier_3?: string }
         | undefined,
@@ -593,13 +552,13 @@ export class PrismaTenantRepository {
           branding: undefined,
           tierDisplayNames: undefined,
         },
-        hasDraft: !!draft,
+        hasDraft: false, // Cannot determine here - caller uses SectionContentService
       };
     }
 
     return {
       tenant: validationResult.data,
-      hasDraft: !!draft,
+      hasDraft: false, // Cannot determine here - caller uses SectionContentService
     };
   }
 
@@ -634,7 +593,8 @@ export class PrismaTenantRepository {
         chatEnabled: true,
         branding: true,
         tierDisplayNames: true,
-        landingPageConfig: true, // Include for branding.landingPage
+        // NOTE: landingPageConfig removed - frontend fetches sections from /sections API
+        // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
       },
     });
 
@@ -642,18 +602,7 @@ export class PrismaTenantRepository {
       return null;
     }
 
-    // Extract published landing page config from the draft wrapper structure
-    // The landingPageConfig column uses { draft, published, ... } wrapper
-    // For public display, we use the published config (or direct config for legacy format)
-    const landingPageConfig = this.extractPublishedLandingPage(tenant.landingPageConfig);
-
-    // Build branding object with landingPage merged in
-    const branding = tenant.branding as Record<string, unknown> | null;
-    const mergedBranding = landingPageConfig
-      ? { ...branding, landingPage: landingPageConfig }
-      : branding;
-
-    // Build candidate response object
+    // Build candidate response object (no landingPage merge needed - frontend uses sections API)
     const candidateDto = {
       id: tenant.id,
       slug: tenant.slug,
@@ -664,7 +613,7 @@ export class PrismaTenantRepository {
       accentColor: tenant.accentColor,
       backgroundColor: tenant.backgroundColor,
       chatEnabled: tenant.chatEnabled,
-      branding: mergedBranding,
+      branding: tenant.branding as Record<string, unknown> | undefined,
       tierDisplayNames: tenant.tierDisplayNames as
         | { tier_1?: string; tier_2?: string; tier_3?: string }
         | undefined,
@@ -704,175 +653,41 @@ export class PrismaTenantRepository {
     return validationResult.data;
   }
 
-  /**
-   * Get landing page configuration for tenant
-   * Used by tenant admins to view current landing page setup
-   *
-   * @param tenantId - Tenant ID
-   * @returns Landing page config or null if not set
-   */
-  async getLandingPageConfig(tenantId: string): Promise<LandingPageConfig | null> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { landingPageConfig: true },
-    });
-
-    if (!tenant?.landingPageConfig) {
-      return null;
-    }
-
-    // Validate stored config matches expected schema
-    const result = LandingPageConfigSchema.safeParse(tenant.landingPageConfig);
-    if (!result.success) {
-      logger.warn(
-        { tenantId, errors: result.error.issues.length },
-        'Invalid landing page config in database, returning null'
-      );
-      return null;
-    }
-
-    return result.data;
-  }
-
-  // NOTE: updateLandingPageConfig() and toggleLandingPageSection() methods deleted.
-  // Visual Editor is deprecated. All storefront editing now happens through AI agent chatbot.
-  // See: 2026-02-01 realtime preview plan.
-
-  // ============================================================================
-  // Draft System Methods
-  // ============================================================================
-
-  /**
-   * DESIGN DECISION: Single JSON column for draft/published (TODO-243)
-   *
-   * The landing page configuration uses a single JSON column (Tenant.landingPageConfig)
-   * with a wrapper structure containing both draft and published states.
-   *
-   * PROS:
-   * - Simple schema, no migrations needed for config field changes
-   * - Atomic draft/publish operations in single row update
-   * - No joins needed for common operations
-   *
-   * LIMITATIONS:
-   * - No version history (cannot revert to previous published version)
-   * - No diff view between historical versions
-   * - JSON column has no database-level schema evolution protection
-   *
-   * FUTURE: If versioning is needed, consider migrating to a separate
-   * LandingPageVersion table with proper version tracking.
-   * See docs/solutions/ for schema design documentation.
-   */
-
-  /**
-   * Extract the published landing page config for public display.
-   *
-   * The landingPageConfig column can contain either:
-   * 1. Draft wrapper format: { draft, published, draftUpdatedAt, publishedAt }
-   * 2. Legacy direct format: { pages: {...}, sections: {...}, ... }
-   *
-   * This method extracts the appropriate config for public storefront display.
-   * Reuses getLandingPageWrapper for wrapper extraction, letting Zod schema
-   * validation determine format validity.
-   *
-   * @param config - Raw JSON from database (may be null, undefined, or malformed)
-   * @returns The published/live landing page config, or null if not set
-   */
-  private extractPublishedLandingPage(config: unknown): LandingPageConfig | null {
-    const wrapper = this.getLandingPageWrapper(config);
-
-    // Draft wrapper format with published content
-    if (wrapper.published) {
-      const result = LandingPageConfigSchema.safeParse(wrapper.published);
-      return result.success ? result.data : null;
-    }
-
-    // Legacy direct format or empty - let schema validation decide
-    const result = LandingPageConfigSchema.safeParse(config);
-    return result.success ? result.data : null;
-  }
-
-  /**
-   * Parse raw JSON config into strongly-typed wrapper structure.
-   *
-   * Handles missing or malformed config by returning null values
-   * for all properties, ensuring consistent return type.
-   *
-   * @param config - Raw JSON from database (may be null, undefined, or malformed)
-   * @returns Normalized wrapper with all properties set (null if not present)
-   */
-  private getLandingPageWrapper(config: any): LandingPageDraftWrapper {
-    if (!config || typeof config !== 'object') {
-      return {
-        draft: null,
-        published: null,
-        draftUpdatedAt: null,
-        publishedAt: null,
-        version: 0,
-      };
-    }
-
-    return {
-      draft: config.draft ?? null,
-      published: config.published ?? null,
-      draftUpdatedAt: config.draftUpdatedAt ?? null,
-      publishedAt: config.publishedAt ?? null,
-      version: config.version ?? 0,
-    };
-  }
-
-  /**
-   * Get draft and published landing page configuration
-   *
-   * SECURITY: Tenant isolation enforced via tenantId parameter
-   *
-   * P2-FIX: Now reads from BOTH columns:
-   * - `landingPageConfigDraft` for draft content (what AI tools write to)
-   * - `landingPageConfig` for published content
-   *
-   * DELETED (Phase 5 Section Content Migration): getLandingPageDraft()
-   * All storefront editing now uses SectionContentService via internal-agent.routes.ts.
-   * See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md
-   */
-
-  // DELETED (Phase 5 Section Content Migration): publishLandingPageDraft()
-  // All publishing now uses SectionContentService.publishAll() via internal-agent.routes.ts.
+  // DELETED (Phase 5.2 Section Content Migration): getLandingPageConfig()
+  // Image browser now uses SectionContentService.getPublishedSections() via tenant-admin.routes.ts
+  // All storefront editing now uses agent tools via internal-agent.routes.ts
   // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md
 
-  // DELETED (Phase 5 Section Content Migration): discardLandingPageDraft()
-  // All discard operations now use SectionContentService.discardAll() via internal-agent.routes.ts.
-  // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md
+  // ============================================================================
+  // Draft System Methods - DELETED (Phase 5.2 Section Content Migration)
+  // ============================================================================
+  //
+  // All draft/publish functionality has been moved to SectionContentService
+  // which uses the SectionContent table instead of JSON columns.
+  //
+  // DELETED METHODS:
+  // - extractPublishedLandingPage() - no longer needed
+  // - getLandingPageWrapper() - no longer needed
+  // - getLandingPageDraft() - migrated to SectionContentService
+  // - publishLandingPageDraft() - migrated to SectionContentService.publishAll()
+  // - discardLandingPageDraft() - migrated to SectionContentService.discardAll()
+  //
+  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 }
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/**
- * Landing page draft wrapper type
- *
- * Stores both draft and published configs in a single JSON column.
- * This is an intentional simplification for MVP - see TODO-243 for
- * future versioning considerations.
- *
- * @property draft - Work-in-progress configuration (auto-saved)
- * @property published - Live configuration visible to visitors
- * @property draftUpdatedAt - ISO timestamp of last draft save
- * @property publishedAt - ISO timestamp of last publish operation
- */
-export interface LandingPageDraftWrapper {
-  draft: LandingPageConfig | null;
-  published: LandingPageConfig | null;
-  draftUpdatedAt: string | null;
-  publishedAt: string | null;
-  /** Optimistic locking version - increments on each draft write (#620) */
-  version: number;
-}
+// NOTE: LandingPageDraftWrapper type DELETED (Phase 5.2 Section Content Migration)
+// All draft/publish functionality has been moved to SectionContent table
+// See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 
 /**
  * Tenant preview DTO for preview endpoint
  * Combines public tenant data with draft indicator for logging
  *
- * PERFORMANCE: Single query return type for findBySlugForPreview
+ * NOTE: hasDraft now determined via SectionContentService.hasDraft() at calling site
  */
 export interface TenantPreviewDto {
   tenant: TenantPublicDto;
