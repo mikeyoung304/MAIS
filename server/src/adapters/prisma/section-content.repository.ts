@@ -78,7 +78,12 @@ export class PrismaSectionContentRepository implements ISectionContentRepository
       segmentId?: string | null;
     }
   ): Promise<SectionContentEntity[]> {
-    const where: Parameters<typeof this.prisma.sectionContent.findMany>[0]['where'] = {
+    const where: {
+      tenantId: string;
+      isDraft?: boolean;
+      pageName?: string;
+      segmentId?: string | null;
+    } = {
       tenantId,
     };
 

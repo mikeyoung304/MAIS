@@ -3,7 +3,7 @@
  * Handles platform-level operations (tenant management, system monitoring, etc.)
  */
 
-import type { PrismaClient } from '../generated/prisma/index.js';
+import type { PrismaClient, Tenant } from '../generated/prisma/client';
 import type { TenantDto, PlatformStats } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 
@@ -40,7 +40,7 @@ export class PlatformAdminController {
         },
       });
 
-      return tenants.map((tenant) => ({
+      return tenants.map((tenant: Tenant & { _count: { packages: number; bookings: number } }) => ({
         id: tenant.id,
         slug: tenant.slug,
         name: tenant.name,
@@ -101,7 +101,7 @@ export class PlatformAdminController {
               where: { isTestTenant: false },
               select: { id: true },
             })
-            .then((tenants) => tenants.map((t) => t.id));
+            .then((tenants: { id: string }[]) => tenants.map((t) => t.id));
 
       // Build related filter using IN clause (uses tenantId indexes, avoids JOINs)
       const relatedTenantFilter = realTenantIds ? { tenantId: { in: realTenantIds } } : {};

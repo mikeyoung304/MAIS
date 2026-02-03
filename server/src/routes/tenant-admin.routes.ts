@@ -26,6 +26,7 @@ import type { BookingService } from '../services/booking.service';
 import type { BlackoutRepository } from '../lib/ports';
 import type { SegmentService } from '../services/segment.service';
 import type { PackageDraftService } from '../services/package-draft.service';
+import type { SectionContentService } from '../services/section-content.service';
 import {
   createPackageSchema,
   updatePackageSchema,
@@ -261,6 +262,8 @@ export class TenantAdminController {
 
 /**
  * Create tenant admin routes
+ *
+ * @param sectionContentService - Phase 5.2: Added for image gallery endpoint
  */
 export function createTenantAdminRoutes(
   tenantRepository: PrismaTenantRepository,
@@ -268,7 +271,8 @@ export function createTenantAdminRoutes(
   bookingService: BookingService,
   blackoutRepo: BlackoutRepository,
   segmentService?: SegmentService,
-  packageDraftService?: PackageDraftService
+  packageDraftService?: PackageDraftService,
+  sectionContentService?: SectionContentService
 ): Router {
   const router = Router();
   const controller = new TenantAdminController(tenantRepository);
@@ -1728,34 +1732,40 @@ export function createTenantAdminRoutes(
         }
       }
 
-      // 3. Get landing page images
-      const landingPageConfig = await tenantRepository.getLandingPageConfig(tenantId);
-      if (landingPageConfig) {
-        // Hero background
-        if (landingPageConfig.hero?.backgroundImageUrl) {
-          images.push({
-            url: landingPageConfig.hero.backgroundImageUrl,
-            type: 'landing-page',
-            source: 'Landing Page: Hero',
-          });
-        }
-        // About image
-        if (landingPageConfig.about?.imageUrl) {
-          images.push({
-            url: landingPageConfig.about.imageUrl,
-            type: 'landing-page',
-            source: 'Landing Page: About',
-          });
-        }
-        // Gallery images
-        if (landingPageConfig.gallery?.images) {
-          for (const img of landingPageConfig.gallery.images) {
-            if (img.url) {
-              images.push({
-                url: img.url,
-                type: 'landing-page',
-                source: 'Landing Page: Gallery',
-              });
+      // 3. Get landing page images from SectionContent table (Phase 5.2)
+      if (sectionContentService) {
+        const sections = await sectionContentService.getPublishedSections(tenantId);
+        for (const section of sections) {
+          const content = section.content as Record<string, unknown>;
+
+          // Hero background
+          if (section.blockType === 'HERO' && content.backgroundImage) {
+            images.push({
+              url: content.backgroundImage as string,
+              type: 'landing-page',
+              source: 'Landing Page: Hero',
+            });
+          }
+
+          // About/Text image
+          if (section.blockType === 'ABOUT' && content.image) {
+            images.push({
+              url: content.image as string,
+              type: 'landing-page',
+              source: 'Landing Page: About',
+            });
+          }
+
+          // Gallery images
+          if (section.blockType === 'GALLERY' && Array.isArray(content.items)) {
+            for (const item of content.items as Array<{ url?: string }>) {
+              if (item.url) {
+                images.push({
+                  url: item.url,
+                  type: 'landing-page',
+                  source: 'Landing Page: Gallery',
+                });
+              }
             }
           }
         }

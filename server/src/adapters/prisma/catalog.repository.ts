@@ -12,10 +12,10 @@ import type {
   PackagePhoto,
   PackageWithDraft,
   UpdatePackageDraftInput,
-} from '../lib/ports';
-import type { Package, AddOn } from '../lib/entities';
-import { DomainError } from '../lib/errors';
-import { NotFoundError } from '../lib/errors/http';
+} from '../../lib/ports';
+import type { Package, AddOn } from '../../lib/entities';
+import { DomainError } from '../../lib/errors';
+import { NotFoundError } from '../../lib/errors/http';
 
 export class PrismaCatalogRepository implements CatalogRepository {
   constructor(private readonly prisma: PrismaClient) {}

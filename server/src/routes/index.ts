@@ -526,7 +526,8 @@ export function createV1Router(
       services.booking,
       blackoutRepo,
       services.segment,
-      services.packageDraft
+      services.packageDraft,
+      services.sectionContent // Phase 5.2: Added for image gallery endpoint
     );
     app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminRoutes);
 

@@ -6,11 +6,11 @@
 import type { Decimal } from '@prisma/client/runtime/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import type { PrismaClient } from '../../generated/prisma/client';
-import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
-import type { Booking } from '../lib/entities';
+import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../../lib/ports';
+import type { Booking } from '../../lib/entities';
 import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
-import { toISODate } from '../lib/date-utils';
+import { toISODate } from '../../lib/date-utils';
 import { hashTenantDate, hashTenantBooking } from '../../lib/advisory-locks';
 
 // Transaction configuration for booking creation

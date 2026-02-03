@@ -9,7 +9,6 @@ import {
   normalizeToPages,
   sectionsToLandingConfig,
   type TenantStorefrontData,
-  type SectionContentDtoClient,
 } from '@/lib/tenant';
 import {
   getPublishedSections,
@@ -228,6 +227,7 @@ function getContactFromSections(sections: SectionContentDto[]): ContactSection |
   const content = contactSection.content as Record<string, unknown>;
   return {
     type: 'contact',
+    headline: (content.title as string) || 'Get in Touch',
     email: content.email as string | undefined,
     phone: content.phone as string | undefined,
   };

@@ -107,8 +107,8 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       // Verify tier features are arrays (JSON was saved correctly)
       expect(result.tiers.every((t) => Array.isArray(t.features))).toBe(true);
 
-      // Verify section content created (all 10 block types)
-      expect(result.sectionContent).toHaveLength(10);
+      // Verify section content created (all 11 block types including FEATURES)
+      expect(result.sectionContent).toHaveLength(11);
       expect(result.sectionContent.every((s) => s.tenantId === result.tenant.id)).toBe(true);
       expect(result.sectionContent.every((s) => s.segmentId === null)).toBe(true); // Tenant-level
 
@@ -119,6 +119,7 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       expect(blockTypes).toContain('SERVICES');
       expect(blockTypes).toContain('PRICING');
       expect(blockTypes).toContain('CONTACT');
+      expect(blockTypes).toContain('FEATURES');
     });
 
     it('should throw TenantProvisioningError on failure', async () => {

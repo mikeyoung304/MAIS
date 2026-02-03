@@ -123,10 +123,12 @@ jobs:
             })
 
   # Job 3: TypeScript Type Checking
+  # IMPORTANT: This runs WORKSPACE-LEVEL typechecks, not just root-level.
+  # Root-level passes even with workspace errors (2026-02-03 regression fix).
   typecheck:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -141,8 +143,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run TypeScript type checking
-        run: npm run typecheck
+      # Build dependencies first - workspace typechecks need compiled packages
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
+
+      - name: Build contracts package
+        run: npm run build --workspace=packages/contracts
+
+      - name: Generate Prisma Client
+        run: npm run --workspace=server prisma:generate
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+
+      # Run workspace-level typechecks (catches errors that root-level misses)
+      - name: Run server workspace typecheck
+        run: npm run --workspace=server typecheck
+
+      - name: Run web workspace typecheck
+        run: npm run --workspace=apps/web typecheck
+
+      - name: Run contracts workspace typecheck
+        run: npm run --workspace=@macon/contracts typecheck
 
       - name: Comment PR on typecheck failure
         if: failure() && github.event_name == 'pull_request'
@@ -153,7 +174,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ **TypeScript type checking failed**\n\nPlease fix type errors:\n```bash\nnpm run typecheck\n```'
+              body: '❌ **TypeScript type checking failed**\n\nPlease fix type errors:\n```bash\n# Run workspace-level checks\nnpm run --workspace=server typecheck\nnpm run --workspace=apps/web typecheck\nnpm run --workspace=@macon/contracts typecheck\n```'
             })
 
   # Job 4: Security Audit (PR-only)

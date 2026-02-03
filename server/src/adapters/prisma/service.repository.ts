@@ -3,10 +3,10 @@
  */
 
 import type { PrismaClient } from '../../generated/prisma/client';
-import type { ServiceRepository, CreateServiceInput, UpdateServiceInput } from '../lib/ports';
-import type { Service } from '../lib/entities';
-import { DomainError } from '../lib/errors';
-import { logger } from '../lib/core/logger';
+import type { ServiceRepository, CreateServiceInput, UpdateServiceInput } from '../../lib/ports';
+import type { Service } from '../../lib/entities';
+import { DomainError } from '../../lib/errors';
+import { logger } from '../../lib/core/logger';
 
 export class PrismaServiceRepository implements ServiceRepository {
   constructor(private readonly prisma: PrismaClient) {}

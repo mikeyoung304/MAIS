@@ -25,6 +25,7 @@ import {
 export {
   isPageEnabled,
   normalizeToPages,
+  sectionsToLandingConfig,
   validateDomain,
   TenantNotFoundError,
   TenantApiError,
@@ -32,6 +33,7 @@ export {
   type PackageData,
   type SegmentData,
   type TenantStorefrontData,
+  type SectionContentDtoClient,
 } from './tenant.client';
 
 /**

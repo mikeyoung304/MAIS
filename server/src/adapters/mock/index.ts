@@ -3,19 +3,19 @@
  */
 
 import { toUtcMidnight } from '@macon/shared';
-import type { Package, AddOn } from '../lib/entities';
-import type { CatalogRepository, PackageWithDraft, UpdatePackageDraftInput } from '../lib/ports';
-import type { Booking } from '../lib/entities';
-import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../lib/ports';
-import type { BlackoutRepository, CalendarProvider, WebhookRepository } from '../lib/ports';
-import type { PaymentProvider, CheckoutSession } from '../lib/ports';
-import type { EmailProvider } from '../lib/ports';
-import type { User, UserRepository } from '../lib/ports';
-import type { EarlyAccessRepository, EarlyAccessRequest } from '../lib/ports';
+import type { Package, AddOn } from '../../lib/entities';
+import type { CatalogRepository, PackageWithDraft, UpdatePackageDraftInput } from '../../lib/ports';
+import type { Booking } from '../../lib/entities';
+import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../../lib/ports';
+import type { BlackoutRepository, CalendarProvider, WebhookRepository } from '../../lib/ports';
+import type { PaymentProvider, CheckoutSession } from '../../lib/ports';
+import type { EmailProvider } from '../../lib/ports';
+import type { User, UserRepository } from '../../lib/ports';
+import type { EarlyAccessRepository, EarlyAccessRequest } from '../../lib/ports';
 import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import bcrypt from 'bcryptjs';
 import type Stripe from 'stripe';
-import { logger } from '../lib/core/logger';
+import { logger } from '../../lib/core/logger';
 
 // Default tenant ID for mock mode (single-tenant simulation)
 const DEFAULT_TENANT = 'tenant_default_legacy';

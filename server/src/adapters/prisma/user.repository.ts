@@ -3,7 +3,7 @@
  */
 
 import type { PrismaClient } from '../../generated/prisma/client';
-import type { UserRepository, User } from '../lib/ports';
+import type { UserRepository, User } from '../../lib/ports';
 
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaClient) {}

@@ -204,8 +204,17 @@ export const DEFAULT_SECTION_CONTENT: Record<
       columns: 3,
     },
   },
-  CUSTOM: {
+  FEATURES: {
     order: 9,
+    content: {
+      visible: false, // Optional section for feature highlights
+      title: 'Features',
+      items: [],
+      layout: 'grid',
+    },
+  },
+  CUSTOM: {
+    order: 10,
     content: {
       visible: false,
     },

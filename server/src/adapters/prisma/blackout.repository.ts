@@ -3,8 +3,8 @@
  */
 
 import type { PrismaClient } from '../../generated/prisma/client';
-import type { BlackoutRepository } from '../lib/ports';
-import { toISODate } from '../lib/date-utils';
+import type { BlackoutRepository } from '../../lib/ports';
+import { toISODate } from '../../lib/date-utils';
 
 export class PrismaBlackoutRepository implements BlackoutRepository {
   constructor(private readonly prisma: PrismaClient) {}

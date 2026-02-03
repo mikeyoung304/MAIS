@@ -367,6 +367,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 92. _Retired: Code path drift in duplicate implementations (obsolete - unified through SectionContentService in Phase 5)_
 
+### Workspace Build Pitfalls (93)
+
+93. Root-level typecheck passes but workspace fails - Root `npm run typecheck` may pass while `npm run --workspace=server typecheck` fails; CI must run WORKSPACE-LEVEL checks: `npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`; root-level only validates project references exist, not workspace internals; caused by symlinks, missing exports, or Prisma path issues that incremental compilation masks. **ALWAYS verify locally**: `rm -rf server/dist packages/*/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:

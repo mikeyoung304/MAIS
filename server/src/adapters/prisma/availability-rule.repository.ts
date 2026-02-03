@@ -8,7 +8,7 @@ import type {
   AvailabilityRule,
   CreateAvailabilityRuleData,
   UpdateAvailabilityRuleData,
-} from '../lib/ports';
+} from '../../lib/ports';
 
 export class PrismaAvailabilityRuleRepository implements AvailabilityRuleRepository {
   constructor(private readonly prisma: PrismaClient) {}

@@ -404,6 +404,111 @@ export interface TenantStorefrontData {
 }
 
 // ============================================================================
+// Section Content Conversion (Phase 5.2)
+// ============================================================================
+// These functions convert between the new SectionContent table format
+// and the legacy LandingPageConfig format for backward compatibility.
+// See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md
+
+/**
+ * Block type to section type mapping (client-side version)
+ * Matches server/src/lib/block-type-mapper.ts
+ */
+const BLOCK_TO_SECTION_MAP: Record<string, string> = {
+  HERO: 'hero',
+  ABOUT: 'text', // Use 'text' for backward compat with existing components
+  GALLERY: 'gallery',
+  TESTIMONIALS: 'testimonials',
+  FAQ: 'faq',
+  CONTACT: 'contact',
+  CTA: 'cta',
+  PRICING: 'pricing',
+  SERVICES: 'services',
+  FEATURES: 'features',
+  CUSTOM: 'custom',
+};
+
+/**
+ * Section content DTO from the new /sections API
+ * Simplified type for client-side use (full type in @macon/contracts)
+ */
+export interface SectionContentDtoClient {
+  id: string;
+  blockType: string;
+  pageName: string;
+  content: Record<string, unknown>;
+  order: number;
+}
+
+/**
+ * Convert SectionContentDto array to LandingPageConfig format.
+ *
+ * This enables backward compatibility with existing components
+ * (TenantLandingPage, SectionRenderer) that expect LandingPageConfig.
+ *
+ * Phase 5.2: Used by page.tsx to convert sections fetched from the new
+ * /sections API into the format expected by TenantLandingPageClient.
+ *
+ * @param sections - Array of SectionContentDto from the sections API
+ * @returns LandingPageConfig object compatible with existing components
+ *
+ * @example
+ * const sections = await getPublishedSections(slug);
+ * const landingConfig = sectionsToLandingConfig(sections);
+ * // landingConfig.pages.home.sections contains the converted sections
+ */
+export function sectionsToLandingConfig(sections: SectionContentDtoClient[]): LandingPageConfig {
+  // Start with a deep clone of DEFAULT_PAGES_CONFIG to ensure all pages exist
+  const pages: PagesConfig = JSON.parse(JSON.stringify(DEFAULT_PAGES_CONFIG));
+
+  // Group sections by page
+  const pageMap = new Map<string, Section[]>();
+
+  for (const section of sections) {
+    const sectionType = BLOCK_TO_SECTION_MAP[section.blockType] || section.blockType.toLowerCase();
+    const content = section.content || {};
+
+    // Build section object matching Section type from contracts
+    // The content spread brings in type-specific fields (headline, items, etc.)
+    // Note: 'visible' is not part of Section type, it's used in SectionContent.content
+    const legacySection = {
+      id: section.id,
+      type: sectionType as Section['type'],
+      ...content,
+    } as Section;
+
+    const existing = pageMap.get(section.pageName) || [];
+    existing.push(legacySection);
+    pageMap.set(section.pageName, existing);
+  }
+
+  // Update pages with actual sections from database
+  for (const [pageName, pageSections] of pageMap) {
+    // Sort by order (preserve database ordering)
+    const sortedSections = [...pageSections].sort((a, b) => {
+      // Find original section to get order
+      const aSection = sections.find((s) => s.id === a.id);
+      const bSection = sections.find((s) => s.id === b.id);
+      return (aSection?.order ?? 0) - (bSection?.order ?? 0);
+    });
+
+    // Update existing page with sections (home must stay enabled: true)
+    if (pageName === 'home') {
+      pages.home = { enabled: true as const, sections: sortedSections };
+    } else if (pageName in pages) {
+      pages[pageName as Exclude<PageName, 'home'>] = {
+        enabled: true,
+        sections: sortedSections,
+      };
+    }
+  }
+
+  // Return LandingPageConfig with pages structure
+  // Components use normalizeToPages() which handles this format
+  return { pages };
+}
+
+// ============================================================================
 // CLIENT-SAFE API FUNCTIONS
 // ============================================================================
 // These functions are designed for use in 'use client' components.
