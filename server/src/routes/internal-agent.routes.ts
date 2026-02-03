@@ -66,6 +66,7 @@ import type { ServiceRepository } from '../lib/ports';
 import type { ContextBuilderService } from '../services/context-builder.service';
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
+import type { SectionContentService } from '../services/section-content.service';
 import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 // NOTE: createPublishedWrapper import removed - agent routes now delegate to repository methods
 // which handle the wrapper format internally. See: CODE_PATH_DRIFT_PREVENTION.md
@@ -198,6 +199,17 @@ const UpdateBrandingSchema = TenantIdSchema.extend({
   logoUrl: z.string().optional(),
 });
 
+// Section-level publish/discard schemas (Phase 3: Section Content Migration)
+const PublishSectionSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+  confirmationReceived: z.boolean(),
+});
+
+const DiscardSectionSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+  confirmationReceived: z.boolean(),
+});
+
 // =============================================================================
 // Route Factory
 // =============================================================================
@@ -212,6 +224,7 @@ interface InternalAgentRoutesDeps {
   contextBuilder?: ContextBuilderService;
   projectHubService?: ProjectHubService;
   vocabularyEmbeddingService?: VocabularyEmbeddingService;
+  sectionContentService?: SectionContentService;
 }
 
 /**
@@ -233,6 +246,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     contextBuilder,
     projectHubService,
     vocabularyEmbeddingService,
+    sectionContentService,
   } = deps;
 
   // ===========================================================================
@@ -1671,6 +1685,125 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         }
       }
       handleError(res, error, '/storefront/discard');
+    }
+  });
+
+  // ===========================================================================
+  // SECTION-LEVEL PUBLISH/DISCARD ENDPOINTS
+  // Phase 3: Section Content Migration - enables per-section publishing
+  // These use the new SectionContentService instead of the legacy JSON columns
+  // ===========================================================================
+
+  // POST /storefront/publish-section - Publish a single section (T3)
+  router.post('/storefront/publish-section', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sectionId, confirmationReceived } = PublishSectionSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sectionId, confirmationReceived, endpoint: '/storefront/publish-section' },
+        '[Agent] Publish section request'
+      );
+
+      // Require SectionContentService
+      if (!sectionContentService) {
+        res.status(503).json({
+          error: 'Section content service not configured',
+        });
+        return;
+      }
+
+      // Call service - T3 confirmation is handled by the service
+      const result = await sectionContentService.publishSection(
+        tenantId,
+        sectionId,
+        confirmationReceived
+      );
+
+      // If confirmation is required, return early with T3 prompt
+      if (result.requiresConfirmation) {
+        res.json({
+          success: false,
+          requiresConfirmation: true,
+          sectionId,
+          message: result.message,
+        });
+        return;
+      }
+
+      res.json(result);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+        return;
+      }
+      handleError(res, error, '/storefront/publish-section');
+    }
+  });
+
+  // POST /storefront/discard-section - Discard changes to a single section (T3)
+  router.post('/storefront/discard-section', async (req: Request, res: Response) => {
+    try {
+      const { tenantId, sectionId, confirmationReceived } = DiscardSectionSchema.parse(req.body);
+
+      logger.info(
+        { tenantId, sectionId, confirmationReceived, endpoint: '/storefront/discard-section' },
+        '[Agent] Discard section request'
+      );
+
+      // Require SectionContentService
+      if (!sectionContentService) {
+        res.status(503).json({
+          error: 'Section content service not configured',
+        });
+        return;
+      }
+
+      // T3 confirmation check
+      if (!confirmationReceived) {
+        res.json({
+          success: false,
+          requiresConfirmation: true,
+          sectionId,
+          message:
+            'Discard changes to this section? This will revert to the last published version.',
+        });
+        return;
+      }
+
+      // Get the section first to verify it exists and belongs to tenant
+      const section = await sectionContentService.getSectionContent(tenantId, sectionId);
+      if (!section) {
+        res.status(404).json({ error: 'Section not found' });
+        return;
+      }
+
+      // Remove the draft section - this effectively reverts to published
+      await sectionContentService.removeSection(tenantId, sectionId);
+
+      const hasDraft = await sectionContentService.hasDraft(tenantId);
+
+      res.json({
+        success: true,
+        hasDraft,
+        visibility: 'live' as const,
+        message: 'Section changes discarded. Reverted to published version.',
+        sectionId,
+        dashboardAction: {
+          type: 'REFRESH',
+        },
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+        return;
+      }
+      handleError(res, error, '/storefront/discard-section');
     }
   });
 

@@ -12,6 +12,7 @@ import { createInternalAgentRoutes } from '../../src/routes/internal-agent.route
 import type { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import type { CatalogService } from '../../src/services/catalog.service';
 import type { BookingService } from '../../src/services/booking.service';
+import type { SectionContentService } from '../../src/services/section-content.service';
 
 // Mock logger to prevent console output
 vi.mock('../../src/lib/core/logger', () => ({
@@ -64,6 +65,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
   let mockTenantRepo: Partial<PrismaTenantRepository>;
   let mockCatalogService: Partial<CatalogService>;
   let mockBookingService: Partial<BookingService>;
+  let mockSectionContentService: Partial<SectionContentService>;
   let app: express.Application;
 
   beforeEach(() => {
@@ -109,6 +111,59 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       }),
     };
 
+    // Mock SectionContentService for section-level publish/discard
+    mockSectionContentService = {
+      publishSection: vi.fn().mockImplementation(
+        (_tenantId: string, sectionId: string, confirmationReceived: boolean) => {
+          // Return T3 confirmation prompt if not confirmed
+          if (!confirmationReceived) {
+            return Promise.resolve({
+              success: false,
+              hasDraft: true,
+              visibility: 'draft' as const,
+              message: 'Publish this section? This will make changes visible to customers.',
+              requiresConfirmation: true,
+              sectionId,
+            });
+          }
+          // Return success if confirmed
+          return Promise.resolve({
+            success: true,
+            hasDraft: false,
+            visibility: 'live' as const,
+            message: 'Section published! Changes are now live.',
+            sectionId,
+            blockType: 'HERO',
+            publishedAt: new Date().toISOString(),
+            dashboardAction: { type: 'SHOW_PREVIEW', sectionId },
+          });
+        }
+      ),
+      getSectionContent: vi.fn().mockResolvedValue({
+        success: true,
+        sectionId: 'section-123',
+        blockType: 'HERO',
+        sectionType: 'hero',
+        pageName: 'home',
+        content: { headline: 'Test' },
+        isDraft: true,
+        isPublished: false,
+        hasUnpublishedChanges: true,
+        canUndo: false,
+        undoSteps: 0,
+        publishedAt: null,
+        lastModified: new Date().toISOString(),
+      }),
+      removeSection: vi.fn().mockResolvedValue({
+        success: true,
+        hasDraft: false,
+        visibility: 'draft' as const,
+        message: 'Section removed.',
+        removedSectionId: 'section-123',
+      }),
+      hasDraft: vi.fn().mockResolvedValue(false),
+    };
+
     app = express();
     app.use(express.json());
     app.use(
@@ -118,6 +173,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
         catalogService: mockCatalogService as CatalogService,
         bookingService: mockBookingService as BookingService,
         tenantRepo: mockTenantRepo as PrismaTenantRepository,
+        sectionContentService: mockSectionContentService as SectionContentService,
       })
     );
   });
@@ -446,6 +502,121 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.error).toContain('Tenant not found');
+    });
+  });
+
+  // ==========================================================================
+  // SECTION-LEVEL PUBLISH/DISCARD ENDPOINTS (Phase 3: Section Content Migration)
+  // ==========================================================================
+
+  describe('POST /storefront/publish-section (T3 Action)', () => {
+    it('should require confirmation when confirmationReceived is false', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/storefront/publish-section')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          sectionId: 'section-123',
+          confirmationReceived: false,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(false);
+      expect(response.body.requiresConfirmation).toBe(true);
+      expect(response.body.sectionId).toBe('section-123');
+      expect(response.body.message).toBeDefined();
+    });
+
+    it('should publish section when confirmation received', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/storefront/publish-section')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          sectionId: 'section-123',
+          confirmationReceived: true,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.visibility).toBe('live');
+      expect(mockSectionContentService.publishSection).toHaveBeenCalledWith(
+        'tenant-123',
+        'section-123',
+        true
+      );
+    });
+
+    it('should return validation error for missing sectionId', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/storefront/publish-section')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          confirmationReceived: true,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Validation error');
+    });
+  });
+
+  describe('POST /storefront/discard-section (T3 Action)', () => {
+    it('should require confirmation when confirmationReceived is false', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/storefront/discard-section')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          sectionId: 'section-123',
+          confirmationReceived: false,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(false);
+      expect(response.body.requiresConfirmation).toBe(true);
+      expect(response.body.sectionId).toBe('section-123');
+      expect(response.body.message).toContain('Discard');
+    });
+
+    it('should discard section when confirmation received', async () => {
+      const response = await request(app)
+        .post('/v1/internal/agent/storefront/discard-section')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          sectionId: 'section-123',
+          confirmationReceived: true,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.visibility).toBe('live');
+      expect(response.body.sectionId).toBe('section-123');
+      expect(mockSectionContentService.getSectionContent).toHaveBeenCalledWith(
+        'tenant-123',
+        'section-123'
+      );
+      expect(mockSectionContentService.removeSection).toHaveBeenCalledWith(
+        'tenant-123',
+        'section-123'
+      );
+    });
+
+    it('should return 404 when section not found', async () => {
+      mockSectionContentService.getSectionContent = vi.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/v1/internal/agent/storefront/discard-section')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          sectionId: 'nonexistent',
+          confirmationReceived: true,
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Section not found');
     });
   });
 

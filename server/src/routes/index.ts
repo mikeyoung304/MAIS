@@ -96,6 +96,7 @@ import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { ReminderService } from '../services/reminder.service';
 import type { LandingPageService } from '../services/landing-page.service';
+import type { SectionContentService } from '../services/section-content.service';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import type { AvailabilityService } from '../services/availability.service';
 import type { ProjectHubService } from '../services/project-hub.service';
@@ -126,6 +127,7 @@ interface Services {
   tenantProvisioning?: TenantProvisioningService;
   reminder?: ReminderService;
   landingPage?: LandingPageService;
+  sectionContent?: SectionContentService;
   webhookDelivery?: WebhookDeliveryService;
   projectHub?: ProjectHubService;
 }
@@ -804,6 +806,7 @@ export function createV1Router(
       contextBuilder,
       projectHubService: services.projectHub,
       vocabularyEmbeddingService,
+      sectionContentService: services.sectionContent,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');

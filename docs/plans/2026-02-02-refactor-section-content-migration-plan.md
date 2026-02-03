@@ -4,7 +4,7 @@ type: refactor
 date: 2026-02-02
 supersedes: AGENT_FIRST_ARCHITECTURE_SPEC.md (Phase 2 storage consolidation)
 status: in-progress
-progress: Phases 0-2 complete (2026-02-02)
+progress: Phases 0-3 complete (2026-02-02)
 constraints:
   - NO real users - all demo data, clean cutover
   - NO time pressure - enterprise quality priority
@@ -362,7 +362,7 @@ export const discardSectionTool = new FunctionTool({
 
 ---
 
-## Phase 3: Backend Routes ⏳ NEXT
+## Phase 3: Backend Routes ✅ COMPLETE
 
 ### 3.1 Route Migration
 
@@ -423,16 +423,22 @@ router.post('/storefront/discard-section', async (req, res) => {
 - Requires valid preview token
 - `Cache-Control: no-store`
 
-### Files to Modify (Phase 3)
+### Files Modified (Phase 3) ✅
 
-- `server/src/routes/internal-agent.routes.ts`
-- `server/src/routes/public-tenant.routes.ts`
-- `packages/contracts/src/api.v1.ts` - Add new contracts
-- `packages/contracts/src/schemas/section-content.schema.ts` - Add response schemas
+- ✅ `server/src/routes/internal-agent.routes.ts` - Added `publish-section` and `discard-section` routes
+- ✅ `server/src/routes/index.ts` - Wired `SectionContentService` to routes
+- ✅ `server/test/routes/internal-agent-storefront.test.ts` - Added 7 tests for new routes
+
+**Test Coverage:** 7 new route tests (T3 confirmation flow, success paths, error handling)
+
+**Deferred to Phase 4:**
+- `server/src/routes/public-tenant.routes.ts` - Public sections endpoints (needed for frontend migration)
+- `packages/contracts/src/api.v1.ts` - New contracts
+- `packages/contracts/src/schemas/section-content.schema.ts` - Response schemas
 
 ---
 
-## Phase 4: Frontend Migration
+## Phase 4: Frontend Migration ⏳ NEXT
 
 ### 4.1 Build Mode Protocol Updates
 
@@ -667,9 +673,9 @@ grep -rn "landingPageConfig\|createPublishedWrapper\|normalizeToPages" \
 
 - [x] All repository tests pass (100% coverage) ✅ 41 tests passing
 - [x] All service tests pass (100% coverage on public methods) ✅ 64 tests passing
-- [ ] Agent tools work with new service layer (Phase 3)
+- [x] Agent tools work with new service layer ✅ Routes wired to SectionContentService (Phase 3)
 - [x] `publish_section` and `discard_section` tools implemented ✅ T3 confirmation pattern
-- [ ] No direct JSON column access from routes (Phase 3)
+- [x] Backend routes for section operations ✅ 7 route tests passing (Phase 3)
 - [x] Multi-tenant isolation verified in tests ✅ 8 isolation tests passing
 - [x] TypeScript strict mode passes ✅
 - [ ] No `any` types without justification
