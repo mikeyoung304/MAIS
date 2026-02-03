@@ -555,7 +555,10 @@ export function createV1Router(
     // NO authentication required - returns only safe public fields
     // Rate limited to prevent enumeration attacks
     // Uses tenantRepo for DI (same repo used for tenant admin routes)
-    const publicTenantRoutes = createPublicTenantRoutes(tenantRepo);
+    const publicTenantRoutes = createPublicTenantRoutes({
+      tenantRepository: tenantRepo,
+      sectionContentService: services.sectionContent,
+    });
     app.use('/v1/public/tenants', publicTenantLookupLimiter, publicTenantRoutes);
     logger.info('✅ Public tenant lookup routes mounted at /v1/public/tenants');
 

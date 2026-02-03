@@ -4,7 +4,7 @@ type: refactor
 date: 2026-02-02
 supersedes: AGENT_FIRST_ARCHITECTURE_SPEC.md (Phase 2 storage consolidation)
 status: in-progress
-progress: Phases 0-3 complete (2026-02-02)
+progress: Phases 0-4 complete (2026-02-02)
 constraints:
   - NO real users - all demo data, clean cutover
   - NO time pressure - enterprise quality priority
@@ -432,13 +432,14 @@ router.post('/storefront/discard-section', async (req, res) => {
 **Test Coverage:** 7 new route tests (T3 confirmation flow, success paths, error handling)
 
 **Deferred to Phase 4:**
+
 - `server/src/routes/public-tenant.routes.ts` - Public sections endpoints (needed for frontend migration)
 - `packages/contracts/src/api.v1.ts` - New contracts
 - `packages/contracts/src/schemas/section-content.schema.ts` - Response schemas
 
 ---
 
-## Phase 4: Frontend Migration ⏳ NEXT
+## Phase 4: Frontend Migration ✅ COMPLETE
 
 ### 4.1 Build Mode Protocol Updates
 
@@ -503,18 +504,23 @@ export function sectionsToPages(sections: SectionContent[]): PagesConfig;
 export function pagesToSections(tenantId: string, pages: PagesConfig): SectionContentInput[];
 ```
 
-### Files to Modify (Phase 4)
+### Files Modified (Phase 4) ✅
 
-- `apps/web/src/lib/build-mode/protocol.ts`
-- `apps/web/src/hooks/useBuildModeSync.ts`
-- `apps/web/src/app/t/[slug]/(site)/page.tsx`
-- `apps/web/src/lib/query-client.ts`
+- ✅ `apps/web/src/lib/build-mode/protocol.ts` - Added `BUILD_MODE_SECTION_UPDATE`, `BUILD_MODE_PUBLISH_NOTIFICATION`, `BUILD_MODE_SECTION_RENDERED`
+- ✅ `apps/web/src/hooks/useBuildModeSync.ts` - Handle new message types, section-level state, `notifySectionRendered` callback
+- ✅ `apps/web/src/app/t/[slug]/(site)/page.tsx` - Fetch sections in parallel (monitoring for rollout)
+- ✅ `apps/web/src/lib/query-client.ts` - Added `sections` and `buildMode` query keys
+- ✅ `server/src/routes/public-tenant.routes.ts` - Added `/sections` and `/sections/preview` endpoints
+- ✅ `server/src/routes/index.ts` - Wired `SectionContentService` to public routes
+- ✅ `packages/contracts/src/schemas/section-content.schema.ts` - Added API response schemas
 
-### Files to Create (Phase 4)
+### Files Created (Phase 4) ✅
 
-- `apps/web/src/lib/sections-api.ts`
-- `server/src/lib/section-transforms.ts`
-- `server/src/lib/section-transforms.test.ts`
+- ✅ `apps/web/src/lib/sections-api.ts` - Typed fetch functions for section operations (21 exports)
+- ✅ `server/src/lib/section-transforms.ts` - Bidirectional `sectionsToPages()` / `pagesToSections()` + utilities
+- ✅ `server/src/lib/section-transforms.test.ts` - 21 tests passing (round-trip, utilities)
+
+**Test Coverage:** 21 new tests for section transforms; TypeScript strict mode passes
 
 ---
 

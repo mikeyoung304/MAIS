@@ -82,6 +82,30 @@ export const queryKeys = {
     customers: ['tenant-admin', 'customers'] as const,
     availabilityRules: ['tenant-admin', 'availability-rules'] as const,
   },
+  /**
+   * Section content query keys for storefront management.
+   * Used by Build Mode and public storefront pages.
+   */
+  sections: {
+    /** Published sections for a tenant's public storefront */
+    published: (slug: string) => ['sections', 'published', slug] as const,
+    /** Draft sections for preview mode */
+    draft: (slug: string) => ['sections', 'draft', slug] as const,
+    /** Single section by tenant and block type */
+    byId: (tenantId: string, sectionId: string) => ['sections', tenantId, sectionId] as const,
+    /** Page structure (section summaries) */
+    structure: (tenantId: string) => ['sections', 'structure', tenantId] as const,
+  },
+  /**
+   * Build Mode specific query keys.
+   * Separate from sections for fine-grained invalidation.
+   */
+  buildMode: {
+    /** Current draft state for Build Mode editing */
+    draft: (tenantId: string) => ['buildMode', 'draft', tenantId] as const,
+    /** Whether tenant has unpublished changes */
+    hasDraft: (tenantId: string) => ['buildMode', 'hasDraft', tenantId] as const,
+  },
 } as const;
 
 /**

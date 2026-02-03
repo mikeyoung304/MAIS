@@ -8,7 +8,13 @@ import {
   TenantApiError,
   normalizeToPages,
 } from '@/lib/tenant';
+import {
+  getPublishedSections,
+  getPreviewSections,
+  SectionsNotFoundError,
+} from '@/lib/sections-api';
 import type { TenantPublicDto, ContactSection, LandingPageConfig } from '@macon/contracts';
+import { logger } from '@/lib/logger';
 
 interface TenantPageProps {
   params: Promise<{ slug: string }>;
@@ -29,6 +35,14 @@ interface TenantPageProps {
  * - Initial request renders on server
  * - Cached for 60 seconds
  * - Revalidated on tenant config changes via webhook
+ *
+ * **Phase 4 Migration (2026-02-02):**
+ * Section content is now stored in the `SectionContent` table.
+ * This page fetches sections from the new `/sections` API alongside the
+ * existing tenant data. Currently logs section count for monitoring;
+ * full component migration to sections-based rendering is a follow-up.
+ *
+ * @see docs/plans/2026-02-02-refactor-section-content-migration-plan.md
  */
 
 /**
@@ -128,9 +142,33 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     // Fetch data based on mode
     // Preview mode: Use token to fetch draft content from preview endpoint
     // Normal mode: Use cached ISR-friendly endpoint
-    const data = isPreviewMode
-      ? await getTenantStorefrontDataWithPreview(slug, token)
-      : await getTenantStorefrontData(slug);
+    //
+    // Phase 4: Also fetch sections from the new API (parallel with legacy fetch)
+    // This demonstrates the sections API works; full migration is follow-up
+    const [data, sections] = await Promise.all([
+      isPreviewMode
+        ? getTenantStorefrontDataWithPreview(slug, token)
+        : getTenantStorefrontData(slug),
+      // Sections API - gracefully handle if not yet populated
+      (isPreviewMode && token ? getPreviewSections(slug, token) : getPublishedSections(slug)).catch(
+        (err) => {
+          // Log but don't fail - sections may not exist for all tenants yet
+          if (!(err instanceof SectionsNotFoundError)) {
+            logger.warn('Failed to fetch sections', { slug, error: err.message });
+          }
+          return [];
+        }
+      ),
+    ]);
+
+    // Log section count for monitoring Phase 4 rollout
+    if (sections.length > 0) {
+      logger.info('[Phase 4] Sections fetched successfully', {
+        slug,
+        sectionCount: sections.length,
+        isPreviewMode,
+      });
+    }
 
     const localBusinessSchema = generateLocalBusinessSchema(data.tenant, slug);
 

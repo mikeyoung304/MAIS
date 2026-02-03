@@ -154,9 +154,10 @@ export const GalleryContentSchema = BaseBlockSchema.extend({
 });
 
 /**
- * Individual feature item
+ * Individual feature item for section content
+ * Named differently from landing-page.ts to avoid export collision
  */
-export const FeatureItemSchema = z.object({
+export const SectionFeatureItemSchema = z.object({
   id: z.string().min(1), // CUID
   title: z.string().max(100, 'Title must be 100 characters or less'),
   description: z.string().max(500, 'Description must be 500 characters or less'),
@@ -170,7 +171,7 @@ export const FeatureItemSchema = z.object({
 export const FeaturesContentSchema = BaseBlockSchema.extend({
   title: z.string().max(100).default('Why Choose Us'),
   subtitle: z.string().max(200).optional(),
-  items: z.array(FeatureItemSchema).max(12, 'Maximum 12 feature items'),
+  items: z.array(SectionFeatureItemSchema).max(12, 'Maximum 12 feature items'),
   layout: z.enum(['grid', 'list', 'cards']).default('grid'),
   columns: z.number().int().min(2).max(4).default(3),
 });
@@ -245,7 +246,7 @@ export type ContactContent = z.infer<typeof ContactContentSchema>;
 export type CtaContent = z.infer<typeof CtaContentSchema>;
 export type GalleryItem = z.infer<typeof GalleryItemSchema>;
 export type GalleryContent = z.infer<typeof GalleryContentSchema>;
-export type FeatureItem = z.infer<typeof FeatureItemSchema>;
+export type SectionFeatureItem = z.infer<typeof SectionFeatureItemSchema>;
 export type FeaturesContent = z.infer<typeof FeaturesContentSchema>;
 export type CustomContent = z.infer<typeof CustomContentSchema>;
 export type SectionContent = z.infer<typeof SectionContentSchema>;
@@ -282,3 +283,144 @@ export function validateBlockContent<T extends BlockType>(
   const schema = BLOCK_CONTENT_SCHEMAS[blockType];
   return schema.safeParse(content);
 }
+
+// ============================================
+// API Response Schemas (Phase 4)
+// ============================================
+
+/**
+ * Section summary for page structure responses
+ * Matches SectionContentService.SectionSummary
+ */
+export const SectionSummarySchema = z.object({
+  sectionId: z.string().min(1),
+  blockType: BlockTypeSchema,
+  sectionType: z.string().min(1), // Lowercase frontend name (hero, about, etc.)
+  pageName: z.string().min(1),
+  order: z.number().int().min(0),
+  headline: z.string().optional(),
+  isPlaceholder: z.boolean(),
+  isDraft: z.boolean(),
+  isPublished: z.boolean(),
+  hasUnpublishedChanges: z.boolean(),
+});
+
+/**
+ * Page with its sections
+ */
+export const PageWithSectionsSchema = z.object({
+  name: z.string().min(1),
+  sections: z.array(SectionSummarySchema),
+});
+
+/**
+ * Response from GET /sections/structure
+ */
+export const PageStructureResponseSchema = z.object({
+  success: z.boolean(),
+  hasDraft: z.boolean(),
+  pages: z.array(PageWithSectionsSchema),
+});
+
+/**
+ * Full section entity for API responses
+ * Includes all fields from SectionContentEntity
+ */
+export const SectionContentDtoSchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  segmentId: z.string().nullable(),
+  blockType: BlockTypeSchema,
+  pageName: z.string(),
+  content: z.unknown(), // JSON content varies by blockType
+  order: z.number().int(),
+  isDraft: z.boolean(),
+  publishedAt: z.string().datetime().nullable(),
+  versions: z.unknown(), // JSON array of version history
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+/**
+ * Response from GET /sections (published or preview)
+ */
+export const SectionsListResponseSchema = z.object({
+  success: z.boolean(),
+  sections: z.array(SectionContentDtoSchema),
+});
+
+/**
+ * Response from GET /sections/:id
+ */
+export const SectionContentResponseSchema = z.object({
+  success: z.boolean(),
+  sectionId: z.string(),
+  blockType: BlockTypeSchema,
+  sectionType: z.string(),
+  pageName: z.string(),
+  content: z.unknown(),
+  isDraft: z.boolean(),
+  isPublished: z.boolean(),
+  hasUnpublishedChanges: z.boolean(),
+  canUndo: z.boolean(),
+  undoSteps: z.number().int().min(0),
+  publishedAt: z.string().datetime().nullable(),
+  lastModified: z.string().datetime(),
+});
+
+/**
+ * Dashboard action for agent-frontend communication
+ */
+export const DashboardActionSchema = z.object({
+  type: z.enum(['NAVIGATE', 'SCROLL_TO_SECTION', 'SHOW_PREVIEW', 'REFRESH']),
+  sectionId: z.string().optional(),
+  section: z.string().optional(),
+});
+
+/**
+ * Base storefront result matching service layer
+ */
+export const StorefrontResultSchema = z.object({
+  success: z.boolean(),
+  hasDraft: z.boolean(),
+  visibility: z.enum(['draft', 'live']),
+  message: z.string(),
+  dashboardAction: DashboardActionSchema.optional(),
+});
+
+/**
+ * Response from publish/discard operations
+ */
+export const PublishSectionResponseSchema = StorefrontResultSchema.extend({
+  requiresConfirmation: z.boolean().optional(),
+  sectionId: z.string().optional(),
+  blockType: BlockTypeSchema.optional(),
+  publishedAt: z.string().datetime().optional(),
+});
+
+export const PublishAllResponseSchema = StorefrontResultSchema.extend({
+  requiresConfirmation: z.boolean().optional(),
+  publishedCount: z.number().int().optional(),
+  publishedAt: z.string().datetime().optional(),
+});
+
+export const DiscardAllResponseSchema = StorefrontResultSchema.extend({
+  requiresConfirmation: z.boolean().optional(),
+  discardedCount: z.number().int().optional(),
+});
+
+// ============================================
+// API Response Type Exports
+// ============================================
+
+export type SectionSummary = z.infer<typeof SectionSummarySchema>;
+export type PageWithSections = z.infer<typeof PageWithSectionsSchema>;
+export type PageStructureResponse = z.infer<typeof PageStructureResponseSchema>;
+export type SectionContentDto = z.infer<typeof SectionContentDtoSchema>;
+export type SectionsListResponse = z.infer<typeof SectionsListResponseSchema>;
+export type SectionContentResponse = z.infer<typeof SectionContentResponseSchema>;
+export type DashboardAction = z.infer<typeof DashboardActionSchema>;
+export type StorefrontResult = z.infer<typeof StorefrontResultSchema>;
+export type PublishSectionResponse = z.infer<typeof PublishSectionResponseSchema>;
+export type PublishAllResponse = z.infer<typeof PublishAllResponseSchema>;
+export type DiscardAllResponse = z.infer<typeof DiscardAllResponseSchema>;
