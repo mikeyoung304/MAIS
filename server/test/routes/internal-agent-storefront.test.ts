@@ -532,7 +532,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       const response = await request(app)
         .post('/v1/internal/agent/storefront/publish')
         .set('X-Internal-Secret', INTERNAL_SECRET)
-        .send({ tenantId: 'tenant-123' });
+        .send({ tenantId: 'tenant-123', confirmationReceived: true }); // T3 pattern requires explicit confirmation
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -556,7 +556,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       const response = await request(app)
         .post('/v1/internal/agent/storefront/publish')
         .set('X-Internal-Secret', INTERNAL_SECRET)
-        .send({ tenantId: 'tenant-123' });
+        .send({ tenantId: 'tenant-123', confirmationReceived: true }); // T3 pattern requires explicit confirmation
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -570,7 +570,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       const response = await request(app)
         .post('/v1/internal/agent/storefront/discard')
         .set('X-Internal-Secret', INTERNAL_SECRET)
-        .send({ tenantId: 'tenant-123' });
+        .send({ tenantId: 'tenant-123', confirmationReceived: true }); // T3 pattern requires explicit confirmation
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -594,7 +594,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       const response = await request(app)
         .post('/v1/internal/agent/storefront/discard')
         .set('X-Internal-Secret', INTERNAL_SECRET)
-        .send({ tenantId: 'tenant-123' });
+        .send({ tenantId: 'tenant-123', confirmationReceived: true }); // T3 pattern requires explicit confirmation
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

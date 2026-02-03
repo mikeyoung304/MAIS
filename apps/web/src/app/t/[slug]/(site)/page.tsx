@@ -7,13 +7,21 @@ import {
   TenantNotFoundError,
   TenantApiError,
   normalizeToPages,
+  sectionsToLandingConfig,
+  type TenantStorefrontData,
+  type SectionContentDtoClient,
 } from '@/lib/tenant';
 import {
   getPublishedSections,
   getPreviewSections,
   SectionsNotFoundError,
 } from '@/lib/sections-api';
-import type { TenantPublicDto, ContactSection, LandingPageConfig } from '@macon/contracts';
+import type {
+  TenantPublicDto,
+  ContactSection,
+  LandingPageConfig,
+  SectionContentDto,
+} from '@macon/contracts';
 import { logger } from '@/lib/logger';
 
 interface TenantPageProps {
@@ -48,20 +56,29 @@ interface TenantPageProps {
 /**
  * Generate SEO metadata for the tenant page.
  *
- * **Enhanced (2026-01-12):** Now correctly extracts hero content from both
- * page-based configs (pages.home.sections[type=hero]) and legacy configs
- * (hero.subheadline). Uses normalizeToPages() for consistent extraction.
+ * **Phase 5.2 (2026-02-02):** Now fetches sections from new SectionContent table
+ * and uses them as primary source for metadata. Falls back to legacy landingPageConfig.
  */
 export async function generateMetadata({ params }: TenantPageProps): Promise<Metadata> {
   const { slug } = await params;
 
   try {
-    const data = await getTenantStorefrontData(slug);
+    // Fetch both storefront data and sections in parallel
+    const [data, sections] = await Promise.all([
+      getTenantStorefrontData(slug),
+      getPublishedSections(slug).catch(() => [] as SectionContentDto[]),
+    ]);
     const { tenant } = data;
 
-    // Extract hero content using consistent normalization
-    const heroContent = getHeroContent(tenant.branding?.landingPage);
-    const metaDescription = heroContent?.subheadline || `Book services with ${tenant.name}`;
+    // Phase 5.2: Prefer sections data over legacy config
+    const heroFromSections = sections.length > 0 ? getHeroFromSections(sections) : null;
+    const heroFromConfig = getHeroContent(tenant.branding?.landingPage);
+
+    // Use sections hero first, fall back to legacy config
+    const metaDescription =
+      heroFromSections?.subheadline ||
+      heroFromConfig?.subheadline ||
+      `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,
@@ -130,6 +147,92 @@ function getHeroContent(config: LandingPageConfig | undefined): {
   return null;
 }
 
+/**
+ * Inject sections from SectionContent table into TenantStorefrontData.
+ *
+ * Phase 5.2: This bridges the gap between the new SectionContent table
+ * and the existing TenantLandingPage component which expects LandingPageConfig.
+ *
+ * Strategy:
+ * - If sections exist (new format), convert to LandingPageConfig
+ * - Otherwise, keep existing branding.landingPage (fallback for legacy tenants)
+ *
+ * @param data - Original storefront data from getTenantStorefrontData
+ * @param sections - Sections from getPublishedSections/getPreviewSections
+ * @returns Enhanced data with sections injected into branding.landingPage
+ */
+function injectSectionsIntoData(
+  data: TenantStorefrontData,
+  sections: SectionContentDto[]
+): TenantStorefrontData {
+  // If no sections from new API, return data as-is (uses legacy landingPageConfig)
+  if (!sections || sections.length === 0) {
+    return data;
+  }
+
+  // Convert sections to LandingPageConfig format
+  // Cast SectionContentDto to client DTO (compatible subset)
+  const landingConfig = sectionsToLandingConfig(
+    sections.map((s) => ({
+      id: s.id,
+      blockType: s.blockType,
+      pageName: s.pageName,
+      content: s.content as Record<string, unknown>,
+      order: s.order,
+    }))
+  );
+
+  // Inject into data, replacing legacy landingPage config
+  return {
+    ...data,
+    tenant: {
+      ...data.tenant,
+      branding: {
+        ...data.tenant.branding,
+        landingPage: landingConfig,
+      },
+    },
+  };
+}
+
+/**
+ * Extract hero content from sections array.
+ * Used for SEO metadata generation with new section format.
+ */
+function getHeroFromSections(sections: SectionContentDto[]): {
+  headline?: string;
+  subheadline?: string;
+  ctaText?: string;
+  backgroundImageUrl?: string;
+} | null {
+  const heroSection = sections.find((s) => s.blockType === 'HERO');
+  if (!heroSection) return null;
+
+  const content = heroSection.content as Record<string, unknown>;
+  return {
+    headline: content.headline as string | undefined,
+    subheadline: content.subheadline as string | undefined,
+    ctaText: content.ctaText as string | undefined,
+    backgroundImageUrl: content.backgroundImage as string | undefined,
+  };
+}
+
+/**
+ * Extract contact info from sections array.
+ * Used for Schema.org structured data with new section format.
+ */
+function getContactFromSections(sections: SectionContentDto[]): ContactSection | null {
+  const contactSection = sections.find((s) => s.blockType === 'CONTACT');
+  if (!contactSection) return null;
+
+  const content = contactSection.content as Record<string, unknown>;
+  return {
+    type: 'contact',
+    email: content.email as string | undefined,
+    phone: content.phone as string | undefined,
+  };
+}
+
 export default async function TenantPage({ params, searchParams }: TenantPageProps) {
   const { slug } = await params;
   const { preview, token } = await searchParams;
@@ -161,16 +264,20 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
       ),
     ]);
 
-    // Log section count for monitoring Phase 4 rollout
+    // Phase 5.2: Use sections as primary source for landing page content
+    // Convert sections to LandingPageConfig format for backward compatibility
+    // with existing TenantLandingPage component
+    const enhancedData = injectSectionsIntoData(data, sections);
+
     if (sections.length > 0) {
-      logger.info('[Phase 4] Sections fetched successfully', {
+      logger.info('[Phase 5.2] Rendering from SectionContent table', {
         slug,
         sectionCount: sections.length,
         isPreviewMode,
       });
     }
 
-    const localBusinessSchema = generateLocalBusinessSchema(data.tenant, slug);
+    const localBusinessSchema = generateLocalBusinessSchema(enhancedData.tenant, slug, sections);
 
     return (
       <>
@@ -179,10 +286,10 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
         {!isPreviewMode && (
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
           />
         )}
-        <TenantLandingPageClient data={data} basePath={`/t/${slug}`} />
+        <TenantLandingPageClient data={enhancedData} basePath={`/t/${slug}`} />
       </>
     );
   } catch (error) {
@@ -195,15 +302,23 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     if (error instanceof TenantApiError && error.statusCode === 401 && isPreviewMode) {
       // Token invalid/expired - fall back to normal published content
       // This prevents jarring error pages when token expires during preview
-      const fallbackData = await getTenantStorefrontData(slug);
-      const localBusinessSchema = generateLocalBusinessSchema(fallbackData.tenant, slug);
+      const [fallbackData, fallbackSections] = await Promise.all([
+        getTenantStorefrontData(slug),
+        getPublishedSections(slug).catch(() => [] as SectionContentDto[]),
+      ]);
+      const enhancedFallbackData = injectSectionsIntoData(fallbackData, fallbackSections);
+      const localBusinessSchema = generateLocalBusinessSchema(
+        enhancedFallbackData.tenant,
+        slug,
+        fallbackSections
+      );
       return (
         <>
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
           />
-          <TenantLandingPageClient data={fallbackData} basePath={`/t/${slug}`} />
+          <TenantLandingPageClient data={enhancedFallbackData} basePath={`/t/${slug}`} />
         </>
       );
     }
@@ -245,21 +360,52 @@ function getContactInfo(config: LandingPageConfig | undefined): ContactSection |
 }
 
 /**
+ * Safely serialize data for JSON-LD script injection.
+ *
+ * JSON-LD content injected via dangerouslySetInnerHTML is an XSS vector
+ * if tenant data contains unescaped characters like "</script>".
+ * This function escapes dangerous characters using Unicode escape sequences,
+ * which are valid JSON but prevent script tag injection.
+ *
+ * @example
+ * // Input with malicious content:
+ * safeJsonLd({ name: '</script><script>alert(1)</script>' })
+ * // Output: '{"name":"\\u003c/script\\u003e\\u003cscript\\u003ealert(1)\\u003c/script\\u003e"}'
+ *
+ * @see https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
+ */
+function safeJsonLd(data: object): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c') // Escape < to prevent </script>
+    .replace(/>/g, '\\u003e') // Escape > for completeness
+    .replace(/&/g, '\\u0026'); // Escape & for HTML entity safety
+}
+
+/**
  * Generate Schema.org LocalBusiness JSON-LD structured data.
  *
  * This markup helps search engines understand the business information
  * and can improve search result appearance with rich snippets.
+ *
+ * Phase 5.2: Now accepts optional sections array for primary data extraction.
+ * Falls back to legacy landingConfig if sections not provided.
  *
  * @see https://schema.org/LocalBusiness
  * @see https://developers.google.com/search/docs/appearance/structured-data/local-business
  */
 function generateLocalBusinessSchema(
   tenant: TenantPublicDto,
-  slug: string
+  slug: string,
+  sections: SectionContentDto[] = []
 ): Record<string, unknown> {
+  // Phase 5.2: Prefer sections data over legacy config
+  const heroFromSections = sections.length > 0 ? getHeroFromSections(sections) : null;
+  const contactFromSections = sections.length > 0 ? getContactFromSections(sections) : null;
+
+  // Fallback to legacy config if no sections
   const landingConfig = tenant.branding?.landingPage;
-  const contact = getContactInfo(landingConfig);
-  const heroSubheadline = landingConfig?.hero?.subheadline;
+  const contact = contactFromSections || getContactInfo(landingConfig);
+  const heroSubheadline = heroFromSections?.subheadline || landingConfig?.hero?.subheadline;
 
   // Build the canonical URL - prefer custom domain if available
   const url = `https://gethandled.ai/t/${slug}`;

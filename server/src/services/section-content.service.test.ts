@@ -54,6 +54,7 @@ function createMockSection(overrides: Partial<SectionContentEntity> = {}): Secti
  */
 function createMockRepo(): ISectionContentRepository {
   return {
+    findById: vi.fn(),
     findByBlockType: vi.fn(),
     findAllForTenant: vi.fn().mockResolvedValue([]),
     hasDrafts: vi.fn().mockResolvedValue(false),
@@ -64,8 +65,6 @@ function createMockRepo(): ISectionContentRepository {
     publishAll: vi.fn().mockResolvedValue({ count: 0 }),
     discardSection: vi.fn(),
     discardAll: vi.fn().mockResolvedValue({ count: 0 }),
-    getVersionHistory: vi.fn().mockResolvedValue([]),
-    restoreVersion: vi.fn(),
   };
 }
 
@@ -199,9 +198,9 @@ describe('SectionContentService', () => {
 
   describe('getSectionContent', () => {
     it('should return section content by ID', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
-        createMockSection({ id: 'section-1', content: { headline: 'Test' } }),
-      ]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(
+        createMockSection({ id: 'section-1', content: { headline: 'Test' } })
+      );
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 
@@ -212,7 +211,7 @@ describe('SectionContentService', () => {
     });
 
     it('should return null for non-existent section', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(null);
 
       const result = await service.getSectionContent('tenant-1', 'nonexistent');
 
@@ -224,7 +223,7 @@ describe('SectionContentService', () => {
         { content: { v: 1 }, timestamp: '2024-01-01T00:00:00Z' },
         { content: { v: 2 }, timestamp: '2024-01-02T00:00:00Z' },
       ];
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection({ versions })]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection({ versions }));
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 
@@ -233,7 +232,7 @@ describe('SectionContentService', () => {
     });
 
     it('should indicate no undo when no versions', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection({ versions: [] })]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection({ versions: [] }));
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 
@@ -242,9 +241,7 @@ describe('SectionContentService', () => {
     });
 
     it('should include draft status', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
-        createMockSection({ isDraft: true }),
-      ]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection({ isDraft: true }));
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 
@@ -256,9 +253,9 @@ describe('SectionContentService', () => {
     it('should format publishedAt and lastModified as ISO strings', async () => {
       const publishedAt = new Date('2024-01-15T10:00:00Z');
       const updatedAt = new Date('2024-01-16T12:00:00Z');
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
-        createMockSection({ publishedAt, updatedAt, isDraft: false }),
-      ]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(
+        createMockSection({ publishedAt, updatedAt, isDraft: false })
+      );
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 
@@ -315,13 +312,46 @@ describe('SectionContentService', () => {
     });
   });
 
+  describe('hasPublished', () => {
+    it('should return true when tenant has published sections', async () => {
+      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
+        createMockSection({ isDraft: false, publishedAt: new Date() }),
+        createMockSection({ id: 's2', isDraft: false, publishedAt: new Date() }),
+      ]);
+
+      const result = await service.hasPublished('tenant-1');
+
+      expect(result).toBe(true);
+      expect(mockRepo.findAllForTenant).toHaveBeenCalledWith('tenant-1', { publishedOnly: true });
+    });
+
+    it('should return false when tenant has only drafts', async () => {
+      // publishedOnly filter returns empty array when only drafts exist
+      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([]);
+
+      const result = await service.hasPublished('tenant-1');
+
+      expect(result).toBe(false);
+      expect(mockRepo.findAllForTenant).toHaveBeenCalledWith('tenant-1', { publishedOnly: true });
+    });
+
+    it('should return false for new tenant with no sections', async () => {
+      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([]);
+
+      const result = await service.hasPublished('tenant-1');
+
+      expect(result).toBe(false);
+      expect(mockRepo.findAllForTenant).toHaveBeenCalledWith('tenant-1', { publishedOnly: true });
+    });
+  });
+
   // ─────────────────────────────────────────────────────────────────────────
   // Write Operations (T2)
   // ─────────────────────────────────────────────────────────────────────────
 
   describe('updateSection', () => {
     it('should return error for non-existent section', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(null);
 
       const result = await service.updateSection('tenant-1', 'nonexistent', {
         headline: 'New',
@@ -335,7 +365,7 @@ describe('SectionContentService', () => {
       const existing = createMockSection({
         content: { headline: 'Old', subheadline: 'Keep this' },
       });
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([existing]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(existing);
       vi.mocked(mockRepo.upsert).mockResolvedValue(
         createMockSection({
           content: { headline: 'New', subheadline: 'Keep this' },
@@ -354,7 +384,7 @@ describe('SectionContentService', () => {
     });
 
     it('should return success with hasDraft=true', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection()]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
       vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
 
       const result = await service.updateSection('tenant-1', 'section-1', {
@@ -368,7 +398,7 @@ describe('SectionContentService', () => {
 
     it('should include updated section in result', async () => {
       const updated = createMockSection({ content: { headline: 'Updated' } });
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection()]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
       vi.mocked(mockRepo.upsert).mockResolvedValue(updated);
 
       const result = await service.updateSection('tenant-1', 'section-1', {
@@ -382,7 +412,7 @@ describe('SectionContentService', () => {
       const updated = createMockSection({
         versions: [{ content: {}, timestamp: 'now' }],
       });
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection()]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
       vi.mocked(mockRepo.upsert).mockResolvedValue(updated);
 
       const result = await service.updateSection('tenant-1', 'section-1', {});
@@ -391,7 +421,7 @@ describe('SectionContentService', () => {
     });
 
     it('should include dashboardAction for UI navigation', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection()]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
       vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
 
       const result = await service.updateSection('tenant-1', 'section-1', {});
@@ -404,7 +434,7 @@ describe('SectionContentService', () => {
 
     it('should proceed even with validation warnings', async () => {
       // Invalid content for HERO (missing required fields per schema)
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([createMockSection()]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
       vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
 
       const result = await service.updateSection('tenant-1', 'section-1', {
@@ -413,6 +443,62 @@ describe('SectionContentService', () => {
 
       // Should still succeed - validation is advisory
       expect(result.success).toBe(true);
+    });
+
+    it('should sanitize script tags from content', async () => {
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
+      vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
+
+      await service.updateSection('tenant-1', 'section-1', {
+        headline: '<script>alert("xss")</script>Hello World',
+        body: 'Some text with <script>malicious()</script> injection',
+      });
+
+      const upsertCall = vi.mocked(mockRepo.upsert).mock.calls[0];
+      expect(upsertCall[1].content).toMatchObject({
+        headline: 'Hello World',
+        body: 'Some text with  injection',
+      });
+    });
+
+    it('should sanitize event handlers from content', async () => {
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
+      vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
+
+      await service.updateSection('tenant-1', 'section-1', {
+        headline: '<img src="x" onerror="alert(1)">Test',
+        body: '<div onclick="steal()">Click me</div>',
+      });
+
+      const upsertCall = vi.mocked(mockRepo.upsert).mock.calls[0];
+      // DOMPurify removes dangerous attributes but preserves safe tags
+      expect(upsertCall[1].content).toMatchObject({
+        headline: expect.not.stringContaining('onerror'),
+        body: expect.not.stringContaining('onclick'),
+      });
+    });
+
+    it('should sanitize nested content objects', async () => {
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection());
+      vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
+
+      await service.updateSection('tenant-1', 'section-1', {
+        items: [
+          { title: '<script>bad()</script>Item 1', description: 'Safe text' },
+          { title: 'Item 2', description: '<img src=x onerror=alert(1)>' },
+        ],
+      });
+
+      const upsertCall = vi.mocked(mockRepo.upsert).mock.calls[0];
+      const content = upsertCall[1].content as {
+        items: Array<{ title: string; description: string }>;
+      };
+
+      // Script tags should be removed
+      expect(content.items[0].title).toBe('Item 1');
+      expect(content.items[0].description).toBe('Safe text');
+      // Event handlers should be removed from img
+      expect(content.items[1].description).not.toContain('onerror');
     });
   });
 
@@ -519,6 +605,38 @@ describe('SectionContentService', () => {
         expect(upsertCall?.[1].content).toBeDefined();
         expect(upsertCall?.[1].content).toHaveProperty('visible', true);
       }
+    });
+
+    it('should sanitize script tags from provided content', async () => {
+      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([]);
+      vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
+
+      await service.addSection('tenant-1', 'home', 'hero', {
+        headline: '<script>alert("xss")</script>My Business',
+        subheadline: 'Text with <script>bad()</script> removed',
+      });
+
+      const upsertCall = vi.mocked(mockRepo.upsert).mock.calls[0];
+      expect(upsertCall[1].content).toMatchObject({
+        headline: 'My Business',
+        subheadline: 'Text with  removed',
+      });
+    });
+
+    it('should sanitize event handlers from provided content', async () => {
+      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([]);
+      vi.mocked(mockRepo.upsert).mockResolvedValue(createMockSection());
+
+      await service.addSection('tenant-1', 'home', 'about', {
+        title: '<img src="x" onerror="alert(1)">About Us',
+        body: '<a href="#" onclick="steal()">Click</a>',
+      });
+
+      const upsertCall = vi.mocked(mockRepo.upsert).mock.calls[0];
+      expect(upsertCall[1].content).toMatchObject({
+        title: expect.not.stringContaining('onerror'),
+        body: expect.not.stringContaining('onclick'),
+      });
     });
   });
 
@@ -812,9 +930,9 @@ describe('SectionContentService', () => {
 
   describe('edge cases', () => {
     it('should handle null versions gracefully', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
-        createMockSection({ versions: null as unknown as VersionEntry[] }),
-      ]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(
+        createMockSection({ versions: null as unknown as VersionEntry[] })
+      );
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 
@@ -823,9 +941,7 @@ describe('SectionContentService', () => {
     });
 
     it('should handle null publishedAt gracefully', async () => {
-      vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
-        createMockSection({ publishedAt: null }),
-      ]);
+      vi.mocked(mockRepo.findById).mockResolvedValue(createMockSection({ publishedAt: null }));
 
       const result = await service.getSectionContent('tenant-1', 'section-1');
 

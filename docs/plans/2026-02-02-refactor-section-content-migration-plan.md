@@ -517,8 +517,8 @@ export function pagesToSections(tenantId: string, pages: PagesConfig): SectionCo
 ### Files Created (Phase 4) ✅
 
 - ✅ `apps/web/src/lib/sections-api.ts` - Typed fetch functions for section operations (21 exports)
-- ✅ `server/src/lib/section-transforms.ts` - Bidirectional `sectionsToPages()` / `pagesToSections()` + utilities
-- ✅ `server/src/lib/section-transforms.test.ts` - 21 tests passing (round-trip, utilities)
+- ❌ `server/src/lib/section-transforms.ts` - DELETED (dead code - never used in production)
+- ❌ `server/src/lib/section-transforms.test.ts` - DELETED (only tested dead code)
 
 **Test Coverage:** 21 new tests for section transforms; TypeScript strict mode passes
 
@@ -652,23 +652,23 @@ grep -rn "landingPageConfig\|createPublishedWrapper\|normalizeToPages" \
 
 ### Create (15 files)
 
-| File                                                            | Purpose                                  |
-| --------------------------------------------------------------- | ---------------------------------------- |
-| `server/src/lib/block-type-mapper.ts`                           | Type mapping utilities                   |
-| `server/src/lib/block-type-mapper.test.ts`                      | Mapping tests                            |
-| `server/src/lib/section-transforms.ts`                          | PagesConfig ↔ SectionContent conversion |
-| `server/src/lib/section-transforms.test.ts`                     | Transform tests                          |
-| `server/src/adapters/prisma/section-content.repository.ts`      | Repository implementation                |
-| `server/src/adapters/prisma/section-content.repository.test.ts` | Repository tests                         |
-| `server/src/services/section-content.service.ts`                | Service implementation                   |
-| `server/src/services/section-content.service.test.ts`           | Service tests                            |
-| `apps/web/src/lib/sections-api.ts`                              | Frontend API client                      |
-| `server/src/agent-v2/.../storefront-read.test.ts`               | Read tool tests                          |
-| `server/src/agent-v2/.../storefront-write.test.ts`              | Write tool tests                         |
-| `server/src/agent-v2/.../storefront.integration.test.ts`        | Integration tests                        |
-| `e2e/tests/build-mode-sections.spec.ts`                         | E2E tests                                |
-| Schema migration (add pageName)                                 | Prisma migration                         |
-| Schema migration (drop JSON columns)                            | Prisma migration                         |
+| File                                                            | Purpose                   |
+| --------------------------------------------------------------- | ------------------------- |
+| `server/src/lib/block-type-mapper.ts`                           | Type mapping utilities    |
+| `server/src/lib/block-type-mapper.test.ts`                      | Mapping tests             |
+| ~~`server/src/lib/section-transforms.ts`~~                      | DELETED - dead code       |
+| ~~`server/src/lib/section-transforms.test.ts`~~                 | DELETED - dead code       |
+| `server/src/adapters/prisma/section-content.repository.ts`      | Repository implementation |
+| `server/src/adapters/prisma/section-content.repository.test.ts` | Repository tests          |
+| `server/src/services/section-content.service.ts`                | Service implementation    |
+| `server/src/services/section-content.service.test.ts`           | Service tests             |
+| `apps/web/src/lib/sections-api.ts`                              | Frontend API client       |
+| `server/src/agent-v2/.../storefront-read.test.ts`               | Read tool tests           |
+| `server/src/agent-v2/.../storefront-write.test.ts`              | Write tool tests          |
+| `server/src/agent-v2/.../storefront.integration.test.ts`        | Integration tests         |
+| `e2e/tests/build-mode-sections.spec.ts`                         | E2E tests                 |
+| Schema migration (add pageName)                                 | Prisma migration          |
+| Schema migration (drop JSON columns)                            | Prisma migration          |
 
 ### Modify (15 files)
 

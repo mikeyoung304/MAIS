@@ -40,6 +40,17 @@ export class PrismaSectionContentRepository implements ISectionContentRepository
   // Read Operations (T1)
   // ─────────────────────────────────────────────────────────────────────────
 
+  async findById(tenantId: string, sectionId: string): Promise<SectionContentEntity | null> {
+    const section = await this.prisma.sectionContent.findFirst({
+      where: {
+        id: sectionId,
+        tenantId,
+      },
+    });
+
+    return section ? this.toEntity(section) : null;
+  }
+
   async findByBlockType(
     tenantId: string,
     blockType: BlockType,
@@ -341,108 +352,61 @@ export class PrismaSectionContentRepository implements ISectionContentRepository
         return { count: 0 };
       }
 
-      let discardedCount = 0;
+      // Separate new sections (no history) from modified sections (has history)
+      const newSectionIds: string[] = [];
+      const sectionsToRestore: Array<{
+        id: string;
+        content: object;
+        versions: object[];
+      }> = [];
 
       for (const draft of drafts) {
         const versions = draft.versions as VersionEntry[] | null;
 
         if (!versions || versions.length === 0) {
-          // No history - delete new sections
-          await tx.sectionContent.delete({
-            where: { id: draft.id },
-          });
+          newSectionIds.push(draft.id);
         } else {
-          // Restore last version
-          const lastVersion = versions[0];
-          await tx.sectionContent.update({
-            where: { id: draft.id },
-            data: {
-              content: lastVersion.content as object,
-              isDraft: false,
-              versions: versions.slice(1) as object[],
-            },
+          sectionsToRestore.push({
+            id: draft.id,
+            content: versions[0].content as object,
+            versions: versions.slice(1) as object[],
           });
         }
-
-        discardedCount++;
       }
 
-      return { count: discardedCount };
+      // Bulk delete new sections (O(1) instead of O(n))
+      if (newSectionIds.length > 0) {
+        await tx.sectionContent.deleteMany({
+          where: {
+            tenantId,
+            id: { in: newSectionIds },
+          },
+        });
+      }
+
+      // Restore modified sections - each needs different content, so use Promise.all
+      // for parallelization instead of sequential loop
+      if (sectionsToRestore.length > 0) {
+        await Promise.all(
+          sectionsToRestore.map((section) =>
+            tx.sectionContent.update({
+              where: { id: section.id },
+              data: {
+                content: section.content,
+                isDraft: false,
+                versions: section.versions,
+              },
+            })
+          )
+        );
+      }
+
+      return { count: drafts.length };
     });
 
     logger.info({ tenantId, count: result.count }, '[SectionContentRepo] All drafts discarded');
 
     return result;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Version History
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async getVersionHistory(tenantId: string, sectionId: string): Promise<VersionEntry[]> {
-    const section = await this.prisma.sectionContent.findFirst({
-      where: {
-        id: sectionId,
-        tenantId,
-      },
-      select: {
-        versions: true,
-      },
-    });
-
-    if (!section) {
-      throw new Error(`Section ${sectionId} not found for tenant ${tenantId}`);
-    }
-
-    return (section.versions as VersionEntry[] | null) ?? [];
-  }
-
-  async restoreVersion(
-    tenantId: string,
-    sectionId: string,
-    versionIndex: number
-  ): Promise<SectionContentEntity> {
-    const section = await this.prisma.sectionContent.findFirst({
-      where: {
-        id: sectionId,
-        tenantId,
-      },
-    });
-
-    if (!section) {
-      throw new Error(`Section ${sectionId} not found for tenant ${tenantId}`);
-    }
-
-    const versions = section.versions as VersionEntry[] | null;
-
-    if (!versions || versionIndex >= versions.length) {
-      throw new Error(`Version ${versionIndex} not found for section ${sectionId}`);
-    }
-
-    const targetVersion = versions[versionIndex];
-
-    // Add current content to history before restoring
-    const newVersions = this.addToVersionHistory(
-      versions,
-      section.content,
-      `Restored to version from ${targetVersion.timestamp}`
-    );
-
-    // Remove the restored version from history (it's now current)
-    newVersions.splice(versionIndex + 1, 1);
-
-    const restored = await this.prisma.sectionContent.update({
-      where: { id: sectionId },
-      data: {
-        content: targetVersion.content as object,
-        isDraft: true, // Restoration creates a draft
-        versions: newVersions as object[],
-      },
-    });
-
-    logger.info({ tenantId, sectionId, versionIndex }, '[SectionContentRepo] Version restored');
-
-    return this.toEntity(restored);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

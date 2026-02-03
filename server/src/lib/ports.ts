@@ -1221,6 +1221,15 @@ export interface ISectionContentRepository {
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
+   * Find a section by ID
+   *
+   * @param tenantId - Tenant ID for isolation
+   * @param sectionId - Section ID to find
+   * @returns Section or null
+   */
+  findById(tenantId: string, sectionId: string): Promise<SectionContentEntity | null>;
+
+  /**
    * Find a specific section by block type
    *
    * @param tenantId - Tenant ID for isolation
@@ -1332,31 +1341,4 @@ export interface ISectionContentRepository {
    * @returns Count of discarded sections
    */
   discardAll(tenantId: string): Promise<{ count: number }>;
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Version History
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Get version history for a section
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param sectionId - Section ID
-   * @returns Array of version entries (newest first)
-   */
-  getVersionHistory(tenantId: string, sectionId: string): Promise<VersionEntry[]>;
-
-  /**
-   * Restore a previous version of a section
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param sectionId - Section ID
-   * @param versionIndex - Index in version history (0 = most recent previous)
-   * @returns Restored section
-   */
-  restoreVersion(
-    tenantId: string,
-    sectionId: string,
-    versionIndex: number
-  ): Promise<SectionContentEntity>;
 }

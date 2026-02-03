@@ -1431,8 +1431,9 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md (Phase 5)
   router.post('/storefront/publish', async (req: Request, res: Response) => {
     try {
-      // Accept optional confirmationReceived for T3 pattern (defaults to true for backward compat)
-      const { tenantId, confirmationReceived = true } = TenantIdSchema.extend({
+      // T3 confirmation pattern: confirmationReceived must be explicitly true
+      // First call without confirmation returns preview, second call with confirmation=true publishes
+      const { tenantId, confirmationReceived } = TenantIdSchema.extend({
         confirmationReceived: z.boolean().optional(),
       }).parse(req.body);
 
@@ -1488,8 +1489,9 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md (Phase 5)
   router.post('/storefront/discard', async (req: Request, res: Response) => {
     try {
-      // Accept optional confirmationReceived for T3 pattern (defaults to true for backward compat)
-      const { tenantId, confirmationReceived = true } = TenantIdSchema.extend({
+      // T3 confirmation pattern: confirmationReceived must be explicitly true
+      // First call without confirmation returns preview, second call with confirmation=true discards
+      const { tenantId, confirmationReceived } = TenantIdSchema.extend({
         confirmationReceived: z.boolean().optional(),
       }).parse(req.body);
 

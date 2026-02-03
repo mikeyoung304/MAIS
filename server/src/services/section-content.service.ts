@@ -22,6 +22,8 @@ import { sectionTypeToBlockType, blockTypeToSectionType } from '../lib/block-typ
 import { validateBlockContent } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { createId } from '@paralleldrive/cuid2';
+import { LRUCache } from 'lru-cache';
+import DOMPurify from 'isomorphic-dompurify';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -221,6 +223,19 @@ function generateSectionId(pageName: string, blockType: BlockType): string {
  * Provides business logic for storefront section management.
  */
 export class SectionContentService {
+  /**
+   * LRU cache for published sections.
+   * Key: `published:${tenantId}`, Value: SectionContentEntity[]
+   *
+   * - Max 1000 tenants cached (prevents memory exhaustion)
+   * - 5-minute TTL (published content changes infrequently)
+   * - Invalidated on publishAll() and publishSection()
+   */
+  private publishedCache = new LRUCache<string, SectionContentEntity[]>({
+    max: 1000,
+    ttl: 300_000, // 5 minutes
+  });
+
   constructor(private readonly repo: ISectionContentRepository) {}
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -284,9 +299,8 @@ export class SectionContentService {
     tenantId: string,
     sectionId: string
   ): Promise<SectionContentResult | null> {
-    // Try to find by ID directly first
-    const sections = await this.repo.findAllForTenant(tenantId);
-    const section = sections.find((s) => s.id === sectionId);
+    // Use findById for O(1) lookup instead of N+1 pattern
+    const section = await this.repo.findById(tenantId, sectionId);
 
     if (!section) {
       return null;
@@ -313,10 +327,19 @@ export class SectionContentService {
   }
 
   /**
-   * Get all published sections for a tenant
+   * Get all published sections for a tenant.
+   * Results are cached with 5-minute TTL for performance.
    */
   async getPublishedSections(tenantId: string): Promise<SectionContentEntity[]> {
-    return this.repo.findAllForTenant(tenantId, { publishedOnly: true });
+    const cacheKey = `published:${tenantId}`;
+    const cached = this.publishedCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const sections = await this.repo.findAllForTenant(tenantId, { publishedOnly: true });
+    this.publishedCache.set(cacheKey, sections);
+    return sections;
   }
 
   /**
@@ -357,9 +380,8 @@ export class SectionContentService {
     sectionId: string,
     updates: Record<string, unknown>
   ): Promise<UpdateSectionResult> {
-    // Find the section first
-    const sections = await this.repo.findAllForTenant(tenantId);
-    const existing = sections.find((s) => s.id === sectionId);
+    // Use findById for O(1) lookup instead of N+1 pattern
+    const existing = await this.repo.findById(tenantId, sectionId);
 
     if (!existing) {
       return {
@@ -375,10 +397,13 @@ export class SectionContentService {
 
     // Merge updates with existing content
     const existingContent = existing.content as Record<string, unknown>;
-    const newContent = {
+    const mergedContent = {
       ...existingContent,
       ...updates,
     };
+
+    // Sanitize content to prevent XSS attacks
+    const newContent = this.sanitizeContent(mergedContent);
 
     // Validate content for the block type
     const validation = validateBlockContent(existing.blockType, newContent);
@@ -451,7 +476,10 @@ export class SectionContentService {
 
     // Create default content if not provided
     const defaultContent = this.getDefaultContent(blockType);
-    const sectionContent = content ? { ...defaultContent, ...content } : defaultContent;
+    const mergedContent = content ? { ...defaultContent, ...content } : defaultContent;
+
+    // Sanitize content to prevent XSS attacks
+    const sectionContent = this.sanitizeContent(mergedContent);
 
     // Create the section
     const section = await this.repo.upsert(tenantId, {
@@ -564,6 +592,9 @@ export class SectionContentService {
       const published = await this.repo.publishSection(tenantId, sectionId);
       const hasDraft = await this.repo.hasDrafts(tenantId);
 
+      // Invalidate published sections cache
+      this.publishedCache.delete(`published:${tenantId}`);
+
       logger.info(
         { tenantId, sectionId, blockType: published.blockType },
         '[SectionContentService] Section published'
@@ -595,8 +626,9 @@ export class SectionContentService {
 
   /**
    * Publish all draft sections
+   * T3 confirmation pattern: if confirmationReceived is falsy, returns requiresConfirmation
    */
-  async publishAll(tenantId: string, confirmationReceived: boolean): Promise<PublishAllResult> {
+  async publishAll(tenantId: string, confirmationReceived?: boolean): Promise<PublishAllResult> {
     const hasDraftBefore = await this.repo.hasDrafts(tenantId);
 
     if (!hasDraftBefore) {
@@ -621,6 +653,9 @@ export class SectionContentService {
 
     const result = await this.repo.publishAll(tenantId);
 
+    // Invalidate published sections cache
+    this.publishedCache.delete(`published:${tenantId}`);
+
     logger.info(
       { tenantId, count: result.count },
       '[SectionContentService] All sections published'
@@ -641,8 +676,9 @@ export class SectionContentService {
 
   /**
    * Discard all draft changes
+   * T3 confirmation pattern: if confirmationReceived is falsy, returns requiresConfirmation
    */
-  async discardAll(tenantId: string, confirmationReceived: boolean): Promise<DiscardAllResult> {
+  async discardAll(tenantId: string, confirmationReceived?: boolean): Promise<DiscardAllResult> {
     const hasDraftBefore = await this.repo.hasDrafts(tenantId);
 
     if (!hasDraftBefore) {
@@ -684,6 +720,21 @@ export class SectionContentService {
   // ─────────────────────────────────────────────────────────────────────────
   // Private Helpers
   // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Sanitize content to prevent XSS attacks.
+   * Deep-sanitizes all string values in the content object using DOMPurify.
+   *
+   * @param content - The content object to sanitize
+   * @returns Sanitized content with all string values cleaned of XSS payloads
+   */
+  private sanitizeContent<T extends object>(content: T): T {
+    return JSON.parse(
+      JSON.stringify(content, (_key, value) =>
+        typeof value === 'string' ? DOMPurify.sanitize(value) : value
+      )
+    );
+  }
 
   /**
    * Check if content is placeholder/default
