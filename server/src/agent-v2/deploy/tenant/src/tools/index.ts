@@ -47,6 +47,14 @@ export {
 } from './storefront-write.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Section Publish/Discard Tools (T3) - Section Content Migration
+// ─────────────────────────────────────────────────────────────────────────────
+// These enable per-section publishing instead of all-or-nothing.
+// @see docs/plans/2026-02-02-refactor-section-content-migration-plan.md
+
+export { publishSectionTool, discardSectionTool } from './storefront-write.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Branding Tool (T2) - Phase 2b
 // ─────────────────────────────────────────────────────────────────────────────
 

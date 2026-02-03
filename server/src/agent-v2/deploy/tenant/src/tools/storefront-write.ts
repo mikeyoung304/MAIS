@@ -447,3 +447,236 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     };
   },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Publish Section Tool (T3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PublishSectionParams = z.object({
+  sectionId: z
+    .string()
+    .min(1)
+    .describe('Section ID to publish. Get from get_page_structure first.'),
+  confirmationReceived: z
+    .boolean()
+    .describe(
+      'Set to true ONLY if user explicitly said "publish this section", "publish the hero", "make it live", or similar confirmation. This is a T3 action that affects the live site.'
+    ),
+});
+
+/**
+ * Publish Section Tool (T3)
+ *
+ * Publishes a single section to make it live.
+ * Other draft sections remain unpublished.
+ *
+ * CRITICAL: This is a T3 action. MUST have confirmationReceived=true.
+ * Only set to true if user explicitly confirmed publishing this section.
+ *
+ * @see docs/plans/2026-02-02-refactor-section-content-migration-plan.md
+ */
+export const publishSectionTool = new FunctionTool({
+  name: 'publish_section',
+  description: `Publish a single section to make it live.
+
+**T3 ACTION - REQUIRES EXPLICIT CONFIRMATION**
+
+Only call with confirmationReceived=true if user explicitly said:
+- "publish this section", "publish the hero"
+- "make it live", "ship it"
+- "yes" (in response to section publish confirmation)
+
+This publishes ONLY the specified section - other drafts remain.
+Use publish_draft to publish ALL changes at once.
+
+Get sectionId from get_page_structure first.`,
+  parameters: PublishSectionParams,
+  execute: async (params, context: ToolContext | undefined) => {
+    // Validate with Zod first (pitfall #62)
+    const parseResult = PublishSectionParams.safeParse(params);
+    if (!parseResult.success) {
+      return {
+        success: false,
+        error: 'Invalid parameters',
+        details: parseResult.error.format(),
+      };
+    }
+
+    // Get tenant ID from context
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return {
+        success: false,
+        error: 'No tenant context available',
+      };
+    }
+
+    const { sectionId, confirmationReceived } = parseResult.data;
+
+    // T3 confirmation check (pitfall #49)
+    if (!confirmationReceived) {
+      logger.info({ sectionId }, '[TenantAgent] publish_section called without confirmation');
+      return {
+        success: false,
+        requiresConfirmation: true,
+        confirmationType: 'publish_section',
+        sectionId,
+        message:
+          'Ready to publish this section? This will make it visible to your visitors immediately.',
+        confirmationPrompt: 'Say "publish" or "yes" to confirm.',
+      };
+    }
+
+    logger.info({ sectionId }, '[TenantAgent] publish_section called with confirmation');
+
+    // Call backend API
+    const result = await callMaisApi('/storefront/publish-section', tenantId, {
+      sectionId,
+      confirmationReceived: true,
+    });
+
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
+
+    const data = result.data as Record<string, unknown>;
+
+    return {
+      success: true,
+      published: true,
+      sectionId,
+      hasDraft: data.hasDraft ?? false,
+      publishedAt: data.publishedAt,
+      message: 'Section published! This section is now live.',
+      visibilityNote: data.hasDraft
+        ? 'This section is live. You still have other unpublished changes.'
+        : 'All changes are now live.',
+      dashboardAction: {
+        type: 'SHOW_PREVIEW',
+        sectionId,
+      },
+      ...data,
+    };
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discard Section Tool (T3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DiscardSectionParams = z.object({
+  sectionId: z
+    .string()
+    .min(1)
+    .describe('Section ID to discard. Get from get_page_structure first.'),
+  confirmationReceived: z
+    .boolean()
+    .describe(
+      'Set to true ONLY if user explicitly said "discard this section", "revert this section", "undo changes to hero", or similar confirmation. This action cannot be undone.'
+    ),
+});
+
+/**
+ * Discard Section Tool (T3)
+ *
+ * Discards unpublished changes to a single section.
+ * Reverts to the last published version.
+ * Other draft sections remain unchanged.
+ *
+ * CRITICAL: This is a T3 action. MUST have confirmationReceived=true.
+ * Only set to true if user explicitly confirmed discarding this section.
+ *
+ * WARNING: This action CANNOT be undone.
+ *
+ * @see docs/plans/2026-02-02-refactor-section-content-migration-plan.md
+ */
+export const discardSectionTool = new FunctionTool({
+  name: 'discard_section',
+  description: `Discard unpublished changes to a single section.
+
+**T3 ACTION - REQUIRES EXPLICIT CONFIRMATION**
+
+Only call with confirmationReceived=true if user explicitly said:
+- "discard this section", "discard the hero changes"
+- "revert this section", "undo changes to about"
+- "yes" (in response to discard confirmation)
+
+**WARNING:** This loses unpublished changes for this section. Cannot be undone.
+
+This discards ONLY the specified section - other drafts remain.
+Use discard_draft to discard ALL changes at once.
+
+Get sectionId from get_page_structure first.`,
+  parameters: DiscardSectionParams,
+  execute: async (params, context: ToolContext | undefined) => {
+    // Validate with Zod first (pitfall #62)
+    const parseResult = DiscardSectionParams.safeParse(params);
+    if (!parseResult.success) {
+      return {
+        success: false,
+        error: 'Invalid parameters',
+        details: parseResult.error.format(),
+      };
+    }
+
+    // Get tenant ID from context
+    const tenantId = getTenantId(context);
+    if (!tenantId) {
+      return {
+        success: false,
+        error: 'No tenant context available',
+      };
+    }
+
+    const { sectionId, confirmationReceived } = parseResult.data;
+
+    // T3 confirmation check (pitfall #49)
+    if (!confirmationReceived) {
+      logger.info({ sectionId }, '[TenantAgent] discard_section called without confirmation');
+      return {
+        success: false,
+        requiresConfirmation: true,
+        confirmationType: 'discard_section',
+        sectionId,
+        message:
+          'Discard changes to this section? This will revert to the last published version and cannot be undone.',
+        confirmationPrompt: 'Say "discard" or "yes" to confirm.',
+      };
+    }
+
+    logger.info({ sectionId }, '[TenantAgent] discard_section called with confirmation');
+
+    // Call backend API
+    const result = await callMaisApi('/storefront/discard-section', tenantId, {
+      sectionId,
+      confirmationReceived: true,
+    });
+
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
+
+    const data = result.data as Record<string, unknown>;
+
+    return {
+      success: true,
+      discarded: true,
+      sectionId,
+      hasDraft: data.hasDraft ?? false,
+      message: 'Section changes discarded. Reverted to published version.',
+      visibilityNote: data.hasDraft
+        ? 'This section is back to the published version. You still have other unpublished changes.'
+        : 'All sections are now at their published versions.',
+      dashboardAction: {
+        type: 'REFRESH',
+      },
+      ...data,
+    };
+  },
+});

@@ -304,6 +304,7 @@ model SectionContent {
   segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
 
   blockType BlockType
+  pageName  String    @default("home") // Multi-page support: home, about, services, faq, contact, gallery, testimonials
   content   Json // Block-specific content structure (validated by SectionContentSchema)
   order     Int       @default(0) // Display order within page
 
@@ -317,10 +318,11 @@ model SectionContent {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([tenantId, segmentId, blockType]) // One of each block type per tenant/segment combo
+  @@unique([tenantId, segmentId, blockType, pageName]) // One of each block type per page per tenant/segment combo
   @@index([tenantId, blockType])
   @@index([tenantId, segmentId])
   @@index([tenantId, isDraft]) // Query draft vs published content
+  @@index([tenantId, pageName, order]) // Query by page with ordering
 }
 
 enum BlockType {
@@ -333,6 +335,7 @@ enum BlockType {
   CONTACT
   CTA
   GALLERY
+  FEATURES
   CUSTOM
 }
 

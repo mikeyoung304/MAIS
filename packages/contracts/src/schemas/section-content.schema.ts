@@ -154,6 +154,28 @@ export const GalleryContentSchema = BaseBlockSchema.extend({
 });
 
 /**
+ * Individual feature item
+ */
+export const FeatureItemSchema = z.object({
+  id: z.string().min(1), // CUID
+  title: z.string().max(100, 'Title must be 100 characters or less'),
+  description: z.string().max(500, 'Description must be 500 characters or less'),
+  icon: z.string().max(50, 'Icon name must be 50 characters or less').optional(),
+  image: z.string().url('Image must be a valid URL').optional(),
+});
+
+/**
+ * Features section content
+ */
+export const FeaturesContentSchema = BaseBlockSchema.extend({
+  title: z.string().max(100).default('Why Choose Us'),
+  subtitle: z.string().max(200).optional(),
+  items: z.array(FeatureItemSchema).max(12, 'Maximum 12 feature items'),
+  layout: z.enum(['grid', 'list', 'cards']).default('grid'),
+  columns: z.number().int().min(2).max(4).default(3),
+});
+
+/**
  * Custom section content - flexible schema for custom blocks
  */
 export const CustomContentSchema = BaseBlockSchema.extend({
@@ -177,6 +199,7 @@ export const BlockTypeSchema = z.enum([
   'CONTACT',
   'CTA',
   'GALLERY',
+  'FEATURES',
   'CUSTOM',
 ]);
 
@@ -201,6 +224,7 @@ export const SectionContentSchema = z.discriminatedUnion('blockType', [
   z.object({ blockType: z.literal('CONTACT'), content: ContactContentSchema }),
   z.object({ blockType: z.literal('CTA'), content: CtaContentSchema }),
   z.object({ blockType: z.literal('GALLERY'), content: GalleryContentSchema }),
+  z.object({ blockType: z.literal('FEATURES'), content: FeaturesContentSchema }),
   z.object({ blockType: z.literal('CUSTOM'), content: CustomContentSchema }),
 ]);
 
@@ -221,6 +245,8 @@ export type ContactContent = z.infer<typeof ContactContentSchema>;
 export type CtaContent = z.infer<typeof CtaContentSchema>;
 export type GalleryItem = z.infer<typeof GalleryItemSchema>;
 export type GalleryContent = z.infer<typeof GalleryContentSchema>;
+export type FeatureItem = z.infer<typeof FeatureItemSchema>;
+export type FeaturesContent = z.infer<typeof FeaturesContentSchema>;
 export type CustomContent = z.infer<typeof CustomContentSchema>;
 export type SectionContent = z.infer<typeof SectionContentSchema>;
 
@@ -242,6 +268,7 @@ export const BLOCK_CONTENT_SCHEMAS = {
   CONTACT: ContactContentSchema,
   CTA: CtaContentSchema,
   GALLERY: GalleryContentSchema,
+  FEATURES: FeaturesContentSchema,
   CUSTOM: CustomContentSchema,
 } as const;
 

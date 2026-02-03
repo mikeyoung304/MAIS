@@ -46,6 +46,10 @@ import {
   removeSectionTool,
   reorderSectionsTool,
 
+  // Section Publish/Discard (T3) - Section Content Migration
+  publishSectionTool,
+  discardSectionTool,
+
   // Branding (T2) - Phase 2b
   updateBrandingTool,
 
@@ -89,11 +93,12 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 5 (Package Management P0 Fix)
- * Tool count: 27
+ * Current Phase: 6 (Section Content Migration)
+ * Tool count: 29
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
+ * - Section publish/discard (2) - per-section T3 operations
  * - Branding updates (1)
  * - Draft management (3)
  * - Page toggle (1)
@@ -158,8 +163,13 @@ export const tenantAgent = new LlmAgent({
     // T3: Require explicit confirmation (publish, delete)
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Draft Management (all-or-nothing)
     publishDraftTool,
     discardDraftTool,
+
+    // Section-level publish/discard (per-section granularity)
+    publishSectionTool,
+    discardSectionTool,
 
     // ─────────────────────────────────────────────────────────────────────────
     // Marketing Copy (T1/T2) - Phase 2c

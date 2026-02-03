@@ -24,6 +24,7 @@ import { SchedulingAvailabilityService } from './services/scheduling-availabilit
 import { PackageDraftService } from './services/package-draft.service';
 import { ReminderService } from './services/reminder.service';
 import { LandingPageService } from './services/landing-page.service';
+import { SectionContentService } from './services/section-content.service';
 import { HealthCheckService } from './services/health-check.service';
 import { WebhookDeliveryService } from './services/webhook-delivery.service';
 import { ProjectHubService } from './services/project-hub.service';
@@ -57,6 +58,7 @@ import {
   PrismaServiceRepository,
   PrismaAvailabilityRuleRepository,
   PrismaEarlyAccessRepository,
+  PrismaSectionContentRepository,
 } from './adapters/prisma';
 // AdvisorMemoryRepository removed - replaced by ContextBuilderService
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
@@ -96,6 +98,7 @@ export interface Container {
     packageDraft: PackageDraftService; // Visual editor draft management
     reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
     landingPage: LandingPageService; // Landing page visual editor (TODO-241)
+    sectionContent: SectionContentService; // Section content for storefront editing
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
     projectHub?: ProjectHubService; // Project Hub dual-faced communication
   };
@@ -106,6 +109,7 @@ export interface Container {
     catalog?: PrismaCatalogRepository; // Catalog repository for package lookups
     webhookSubscription?: PrismaWebhookSubscriptionRepository; // Webhook subscription management (TODO-278)
     earlyAccess?: PrismaEarlyAccessRepository; // Early access request persistence
+    sectionContent?: PrismaSectionContentRepository; // Section content for storefront editing
     // AdvisorMemoryRepository removed - replaced by ContextBuilderService (Phase 1 Agent-First)
   };
   mailProvider?: PostmarkMailAdapter; // Export mail provider for password reset emails
@@ -257,6 +261,10 @@ export function buildContainer(config: Config): Container {
     // Create LandingPageService with mock tenant repository
     const landingPageService = new LandingPageService(mockTenantRepo);
 
+    // Create SectionContentService with mock repository
+    const sectionContentRepo = new PrismaSectionContentRepository(mockPrisma);
+    const sectionContentService = new SectionContentService(sectionContentRepo);
+
     // Create HealthCheckService with mock adapters (won't be used in mock mode)
     const healthCheckService = new HealthCheckService({
       stripeAdapter: undefined, // Mock mode doesn't use real adapters
@@ -312,6 +320,7 @@ export function buildContainer(config: Config): Container {
       packageDraft: packageDraftService,
       reminder: reminderService,
       landingPage: landingPageService,
+      sectionContent: sectionContentService,
       projectHub: projectHubService,
     };
 
@@ -321,6 +330,7 @@ export function buildContainer(config: Config): Container {
       booking: adapters.bookingRepo as any, // Mock booking repo - type compatibility
       catalog: adapters.catalogRepo as any, // Mock catalog repo
       earlyAccess: adapters.earlyAccessRepo as any, // Mock early access repo
+      sectionContent: sectionContentRepo,
     };
 
     // Cleanup function for mock mode
@@ -586,6 +596,10 @@ export function buildContainer(config: Config): Container {
   // Create LandingPageService with real tenant repository
   const landingPageService = new LandingPageService(tenantRepo);
 
+  // Create SectionContentService with real repository
+  const sectionContentRepo = new PrismaSectionContentRepository(prisma);
+  const sectionContentService = new SectionContentService(sectionContentRepo);
+
   // Create ReminderService with real adapters
   const reminderService = new ReminderService(bookingRepo, catalogRepo, eventEmitter);
 
@@ -738,6 +752,7 @@ export function buildContainer(config: Config): Container {
     packageDraft: packageDraftService,
     reminder: reminderService,
     landingPage: landingPageService,
+    sectionContent: sectionContentService,
     webhookDelivery: webhookDeliveryService,
     projectHub: projectHubService,
   };
@@ -752,6 +767,7 @@ export function buildContainer(config: Config): Container {
     catalog: catalogRepo,
     webhookSubscription: webhookSubscriptionRepo,
     earlyAccess: earlyAccessRepo,
+    sectionContent: sectionContentRepo,
   };
 
   // Cleanup function for real mode
