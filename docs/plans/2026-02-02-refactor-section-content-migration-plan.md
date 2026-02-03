@@ -3,7 +3,8 @@ title: 'refactor: Migrate to Section-by-Section Storefront Storage'
 type: refactor
 date: 2026-02-02
 supersedes: AGENT_FIRST_ARCHITECTURE_SPEC.md (Phase 2 storage consolidation)
-status: approved
+status: in-progress
+progress: Phases 0-2 complete (2026-02-02)
 constraints:
   - NO real users - all demo data, clean cutover
   - NO time pressure - enterprise quality priority
@@ -32,7 +33,7 @@ Migrate from monolithic JSON columns (`landingPageConfig`, `landingPageConfigDra
 
 ---
 
-## Phase 0: Type System Alignment (Prerequisites)
+## Phase 0: Type System Alignment (Prerequisites) ✅ COMPLETE
 
 ### 0.1 BlockType Enum Mismatch
 
@@ -97,15 +98,15 @@ export function blockTypeToSectionType(blockType: BlockType): string;
 export function isValidBlockType(value: string): value is BlockType;
 ```
 
-### Files to Create (Phase 0)
+### Files Created (Phase 0) ✅
 
-- `server/src/lib/block-type-mapper.ts`
-- `server/src/lib/block-type-mapper.test.ts`
-- `server/prisma/migrations/[timestamp]_section_content_enhancements/migration.sql`
+- ✅ `server/src/lib/block-type-mapper.ts` - Bidirectional mapping utilities
+- ✅ `server/src/lib/block-type-mapper.test.ts` - 33 tests passing
+- ✅ `server/prisma/migrations/20260202_section_content_enhancements/migration.sql`
 
 ---
 
-## Phase 1: Service Layer
+## Phase 1: Service Layer ✅ COMPLETE
 
 ### 1.1 Port Interface
 
@@ -262,21 +263,23 @@ interface PublishSectionResult extends StorefrontResult {
 | `discardAll()`      | `$transaction` | All-or-nothing discard    |
 | `restoreVersion()`  | `$transaction` | Consistency guarantee     |
 
-### Files to Create (Phase 1)
+### Files Created (Phase 1) ✅
 
-- `server/src/adapters/prisma/section-content.repository.ts`
-- `server/src/adapters/prisma/section-content.repository.test.ts`
-- `server/src/services/section-content.service.ts`
-- `server/src/services/section-content.service.test.ts`
+- ✅ `server/src/adapters/prisma/section-content.repository.ts` - Repository implementation
+- ✅ `server/src/adapters/prisma/section-content.repository.test.ts` - 41 tests passing
+- ✅ `server/src/services/section-content.service.ts` - Service implementation
+- ✅ `server/src/services/section-content.service.test.ts` - 64 tests passing
 
-### Files to Modify (Phase 1)
+### Files Modified (Phase 1) ✅
 
-- `server/src/lib/ports.ts` - Add `ISectionContentRepository`
-- `server/src/di.ts` - Wire up new service and repository
+- ✅ `server/src/lib/ports.ts` - Added `ISectionContentRepository` interface
+- ✅ `server/src/di.ts` - Wired up service and repository in both mock and real modes
+
+**Test Coverage:** 138 total tests (33 mapper + 41 repository + 64 service)
 
 ---
 
-## Phase 2: Agent Tools Migration
+## Phase 2: Agent Tools Migration ✅ COMPLETE
 
 ### 2.1 Enhanced Response Formats
 
@@ -343,21 +346,23 @@ export const discardSectionTool = new FunctionTool({
 | `publish_section`     | `remainingDrafts`, `publishedAt`                                                      |
 | `discard_section`     | `revertedTo`, `remainingDrafts`                                                       |
 
-### Files to Modify (Phase 2)
+### Files Modified (Phase 2) ✅
 
-- `server/src/agent-v2/deploy/tenant/src/tools/storefront-read.ts`
-- `server/src/agent-v2/deploy/tenant/src/tools/storefront-write.ts`
-- `server/src/agent-v2/deploy/tenant/src/tools/index.ts`
+- ✅ `server/src/agent-v2/deploy/tenant/src/tools/storefront-write.ts` - Added `publishSectionTool` and `discardSectionTool` T3 tools
+- ✅ `server/src/agent-v2/deploy/tenant/src/tools/index.ts` - Exported new tools
+- ✅ `server/src/agent-v2/deploy/tenant/src/agent.ts` - Registered tools (29 total)
 
-### Files to Create (Phase 2)
+### Files to Create (Phase 2) - DEFERRED TO PHASE 3
 
 - `server/src/agent-v2/deploy/tenant/src/tools/storefront-read.test.ts`
 - `server/src/agent-v2/deploy/tenant/src/tools/storefront-write.test.ts`
 - `server/src/agent-v2/deploy/tenant/src/tools/storefront.integration.test.ts`
 
+**Note:** Agent tool tests are deferred until backend routes exist (Phase 3) since tools call backend endpoints.
+
 ---
 
-## Phase 3: Backend Routes
+## Phase 3: Backend Routes ⏳ NEXT
 
 ### 3.1 Route Migration
 
@@ -661,16 +666,16 @@ grep -rn "landingPageConfig\|createPublishedWrapper\|normalizeToPages" \
 ## Success Criteria
 
 - [x] All repository tests pass (100% coverage) ✅ 41 tests passing
-- [ ] All service tests pass (100% coverage on public methods)
-- [ ] Agent tools work with new service layer
-- [ ] `publish_section` and `discard_section` tools implemented
-- [ ] No direct JSON column access from routes
+- [x] All service tests pass (100% coverage on public methods) ✅ 64 tests passing
+- [ ] Agent tools work with new service layer (Phase 3)
+- [x] `publish_section` and `discard_section` tools implemented ✅ T3 confirmation pattern
+- [ ] No direct JSON column access from routes (Phase 3)
 - [x] Multi-tenant isolation verified in tests ✅ 8 isolation tests passing
 - [x] TypeScript strict mode passes ✅
 - [ ] No `any` types without justification
-- [ ] All legacy code removed (grep verification passes)
-- [ ] CLAUDE.md updated with new patterns
-- [ ] E2E tests pass
+- [ ] All legacy code removed (grep verification passes) (Phase 5)
+- [ ] CLAUDE.md updated with new patterns (Phase 5)
+- [ ] E2E tests pass (Phase 4)
 
 ---
 
