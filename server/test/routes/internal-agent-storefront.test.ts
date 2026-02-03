@@ -113,32 +113,34 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
 
     // Mock SectionContentService for section-level publish/discard
     mockSectionContentService = {
-      publishSection: vi.fn().mockImplementation(
-        (_tenantId: string, sectionId: string, confirmationReceived: boolean) => {
-          // Return T3 confirmation prompt if not confirmed
-          if (!confirmationReceived) {
+      publishSection: vi
+        .fn()
+        .mockImplementation(
+          (_tenantId: string, sectionId: string, confirmationReceived: boolean) => {
+            // Return T3 confirmation prompt if not confirmed
+            if (!confirmationReceived) {
+              return Promise.resolve({
+                success: false,
+                hasDraft: true,
+                visibility: 'draft' as const,
+                message: 'Publish this section? This will make changes visible to customers.',
+                requiresConfirmation: true,
+                sectionId,
+              });
+            }
+            // Return success if confirmed
             return Promise.resolve({
-              success: false,
-              hasDraft: true,
-              visibility: 'draft' as const,
-              message: 'Publish this section? This will make changes visible to customers.',
-              requiresConfirmation: true,
+              success: true,
+              hasDraft: false,
+              visibility: 'live' as const,
+              message: 'Section published! Changes are now live.',
               sectionId,
+              blockType: 'HERO',
+              publishedAt: new Date().toISOString(),
+              dashboardAction: { type: 'SHOW_PREVIEW', sectionId },
             });
           }
-          // Return success if confirmed
-          return Promise.resolve({
-            success: true,
-            hasDraft: false,
-            visibility: 'live' as const,
-            message: 'Section published! Changes are now live.',
-            sectionId,
-            blockType: 'HERO',
-            publishedAt: new Date().toISOString(),
-            dashboardAction: { type: 'SHOW_PREVIEW', sectionId },
-          });
-        }
-      ),
+        ),
       getSectionContent: vi.fn().mockResolvedValue({
         success: true,
         sectionId: 'section-123',
@@ -162,6 +164,46 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
         removedSectionId: 'section-123',
       }),
       hasDraft: vi.fn().mockResolvedValue(false),
+      // Phase 5: publishAll/discardAll for bulk operations
+      publishAll: vi.fn().mockImplementation((_tenantId: string, confirmationReceived: boolean) => {
+        if (!confirmationReceived) {
+          return Promise.resolve({
+            success: false,
+            hasDraft: true,
+            visibility: 'draft' as const,
+            message: 'Publish all changes? This will make all drafts visible to customers.',
+            requiresConfirmation: true,
+          });
+        }
+        return Promise.resolve({
+          success: true,
+          hasDraft: false,
+          visibility: 'live' as const,
+          message: 'Published 2 section(s)! All changes are now live.',
+          publishedCount: 2,
+          publishedAt: new Date().toISOString(),
+          dashboardAction: { type: 'REFRESH' },
+        });
+      }),
+      discardAll: vi.fn().mockImplementation((_tenantId: string, confirmationReceived: boolean) => {
+        if (!confirmationReceived) {
+          return Promise.resolve({
+            success: false,
+            hasDraft: true,
+            visibility: 'draft' as const,
+            message: 'Discard all changes? This will revert to the last published version.',
+            requiresConfirmation: true,
+          });
+        }
+        return Promise.resolve({
+          success: true,
+          hasDraft: false,
+          visibility: 'live' as const,
+          message: 'Discarded 2 draft(s). Reverted to published version.',
+          discardedCount: 2,
+          dashboardAction: { type: 'REFRESH' },
+        });
+      }),
     };
 
     app = express();
@@ -442,8 +484,8 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
   });
 
   describe('POST /storefront/publish (T3 Action)', () => {
-    it('should publish draft to live', async () => {
-      // Route delegates to repository method which handles all logic
+    it('should publish all draft sections to live', async () => {
+      // Phase 5: Route now delegates to SectionContentService.publishAll()
       mockTenantRepo.findById = vi.fn().mockResolvedValue(mockTenantWithDraft);
 
       const response = await request(app)
@@ -454,29 +496,36 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.action).toBe('published');
-      // P1 #817: Route now delegates to repository method
-      expect(mockTenantRepo.publishLandingPageDraft).toHaveBeenCalledWith('tenant-123');
+      expect(response.body.publishedCount).toBe(2);
+      expect(response.body.hasDraft).toBe(false);
+      // Phase 5: Now uses SectionContentService instead of tenant repository
+      expect(mockSectionContentService.publishAll).toHaveBeenCalledWith('tenant-123', true);
     });
 
-    it('should return 400 when no draft exists', async () => {
-      // Repository method throws when no draft exists
-      mockTenantRepo.publishLandingPageDraft = vi
-        .fn()
-        .mockRejectedValue(new Error('No draft to publish'));
+    it('should return success with 0 count when no drafts exist', async () => {
+      // Service returns success with count=0 when no drafts
+      mockSectionContentService.publishAll = vi.fn().mockResolvedValue({
+        success: true,
+        hasDraft: false,
+        visibility: 'live' as const,
+        message: 'No drafts to publish. Everything is already live.',
+        publishedCount: 0,
+      });
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/publish')
         .set('X-Internal-Secret', INTERNAL_SECRET)
         .send({ tenantId: 'tenant-123' });
 
-      expect(response.status).toBe(400);
-      expect(response.body.error).toContain('No draft to publish');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.publishedCount).toBe(0);
     });
   });
 
   describe('POST /storefront/discard (T3 Action)', () => {
-    it('should discard draft changes', async () => {
-      // Route delegates to repository method which handles all logic
+    it('should discard all draft sections', async () => {
+      // Phase 5: Route now delegates to SectionContentService.discardAll()
       const response = await request(app)
         .post('/v1/internal/agent/storefront/discard')
         .set('X-Internal-Secret', INTERNAL_SECRET)
@@ -485,23 +534,30 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.action).toBe('discarded');
-      // P1 #817: Route now delegates to repository method
-      expect(mockTenantRepo.discardLandingPageDraft).toHaveBeenCalledWith('tenant-123');
+      expect(response.body.discardedCount).toBe(2);
+      expect(response.body.hasDraft).toBe(false);
+      // Phase 5: Now uses SectionContentService instead of tenant repository
+      expect(mockSectionContentService.discardAll).toHaveBeenCalledWith('tenant-123', true);
     });
 
-    it('should return 404 when tenant not found', async () => {
-      // Repository method throws when tenant not found
-      mockTenantRepo.discardLandingPageDraft = vi
-        .fn()
-        .mockRejectedValue(new Error('Tenant not found'));
+    it('should return success with 0 count when no drafts exist', async () => {
+      // Service returns success with count=0 when no drafts
+      mockSectionContentService.discardAll = vi.fn().mockResolvedValue({
+        success: true,
+        hasDraft: false,
+        visibility: 'live' as const,
+        message: 'No drafts to discard.',
+        discardedCount: 0,
+      });
 
       const response = await request(app)
         .post('/v1/internal/agent/storefront/discard')
         .set('X-Internal-Secret', INTERNAL_SECRET)
         .send({ tenantId: 'tenant-123' });
 
-      expect(response.status).toBe(404);
-      expect(response.body.error).toContain('Tenant not found');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.discardedCount).toBe(0);
     });
   });
 

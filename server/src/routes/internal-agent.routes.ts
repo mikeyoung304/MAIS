@@ -1615,20 +1615,41 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     }
   });
 
-  // POST /storefront/publish - Publish draft to live
-  // IMPORTANT: Delegates to repository method to handle DUAL DRAFT SYSTEM correctly
-  // See: docs/solutions/patterns/CODE_PATH_DRIFT_PREVENTION.md
+  // POST /storefront/publish - Publish all draft sections to live
+  // MIGRATED: Now uses SectionContentService instead of legacy tenant repository
+  // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md (Phase 5)
   router.post('/storefront/publish', async (req: Request, res: Response) => {
     try {
-      const { tenantId } = TenantIdSchema.parse(req.body);
+      // Accept optional confirmationReceived for T3 pattern (defaults to true for backward compat)
+      const { tenantId, confirmationReceived = true } = TenantIdSchema.extend({
+        confirmationReceived: z.boolean().optional(),
+      }).parse(req.body);
 
-      logger.info({ tenantId, endpoint: '/storefront/publish' }, '[Agent] Publishing draft');
+      logger.info(
+        { tenantId, confirmationReceived, endpoint: '/storefront/publish' },
+        '[Agent] Publishing all sections'
+      );
 
-      // Delegate to repository method which handles:
-      // 1. Build Mode column (landingPageConfigDraft) - primary
-      // 2. Visual Editor wrapper (landingPageConfig.draft) - fallback for legacy data
-      // 3. Transaction safety and version reset
-      const result = await tenantRepo.publishLandingPageDraft(tenantId);
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
+        return;
+      }
+
+      // Delegate to SectionContentService which handles:
+      // 1. T3 confirmation check
+      // 2. Publishing all draft sections
+      // 3. Returning hasDraft state for agent context
+      const result = await sectionContentService.publishAll(tenantId, confirmationReceived);
+
+      // If confirmation is required, return T3 prompt
+      if (result.requiresConfirmation) {
+        res.json({
+          success: false,
+          requiresConfirmation: true,
+          message: result.message,
+        });
+        return;
+      }
 
       // Get tenant slug for response
       const tenant = await tenantRepo.findById(tenantId);
@@ -1637,52 +1658,67 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         success: result.success,
         action: 'published',
         publishedAt: result.publishedAt,
+        publishedCount: result.publishedCount,
+        hasDraft: result.hasDraft,
         liveUrl: tenant?.slug ? `/t/${tenant.slug}` : null,
-        note: 'Draft changes are now live.',
+        note: result.message,
       });
     } catch (error) {
-      // Map repository errors to HTTP responses
-      if (error instanceof Error) {
-        if (error.message === 'Tenant not found') {
-          res.status(404).json({ error: 'Tenant not found' });
-          return;
-        }
-        if (error.message === 'No draft to publish') {
-          res.status(400).json({ error: 'No draft to publish' });
-          return;
-        }
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
       }
       handleError(res, error, '/storefront/publish');
     }
   });
 
-  // POST /storefront/discard - Discard draft
-  // IMPORTANT: Delegates to repository method to handle DUAL DRAFT SYSTEM correctly
-  // See: docs/solutions/patterns/CODE_PATH_DRIFT_PREVENTION.md
+  // POST /storefront/discard - Discard all draft sections
+  // MIGRATED: Now uses SectionContentService instead of legacy tenant repository
+  // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md (Phase 5)
   router.post('/storefront/discard', async (req: Request, res: Response) => {
     try {
-      const { tenantId } = TenantIdSchema.parse(req.body);
+      // Accept optional confirmationReceived for T3 pattern (defaults to true for backward compat)
+      const { tenantId, confirmationReceived = true } = TenantIdSchema.extend({
+        confirmationReceived: z.boolean().optional(),
+      }).parse(req.body);
 
-      logger.info({ tenantId, endpoint: '/storefront/discard' }, '[Agent] Discarding draft');
+      logger.info(
+        { tenantId, confirmationReceived, endpoint: '/storefront/discard' },
+        '[Agent] Discarding all draft sections'
+      );
 
-      // Delegate to repository method which handles:
-      // 1. Clearing Build Mode column (landingPageConfigDraft)
-      // 2. Clearing Visual Editor wrapper (landingPageConfig.draft) for legacy data
-      // 3. Transaction safety and version reset
-      const result = await tenantRepo.discardLandingPageDraft(tenantId);
+      if (!sectionContentService) {
+        res.status(503).json({ error: 'Section content service not configured' });
+        return;
+      }
+
+      // Delegate to SectionContentService which handles:
+      // 1. T3 confirmation check
+      // 2. Discarding all draft sections
+      // 3. Returning hasDraft state for agent context
+      const result = await sectionContentService.discardAll(tenantId, confirmationReceived);
+
+      // If confirmation is required, return T3 prompt
+      if (result.requiresConfirmation) {
+        res.json({
+          success: false,
+          requiresConfirmation: true,
+          message: result.message,
+        });
+        return;
+      }
 
       res.json({
         success: result.success,
         action: 'discarded',
-        note: 'Draft changes discarded. Reverted to live version.',
+        discardedCount: result.discardedCount,
+        hasDraft: result.hasDraft,
+        note: result.message,
       });
     } catch (error) {
-      // Map repository errors to HTTP responses
-      if (error instanceof Error) {
-        if (error.message === 'Tenant not found') {
-          res.status(404).json({ error: 'Tenant not found' });
-          return;
-        }
+      if (error instanceof NotFoundError) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
       }
       handleError(res, error, '/storefront/discard');
     }
