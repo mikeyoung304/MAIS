@@ -367,9 +367,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 92. _Retired: Code path drift in duplicate implementations (obsolete - unified through SectionContentService in Phase 5)_
 
-### Workspace Build Pitfalls (93)
+### Workspace Build Pitfalls (93-94)
 
 93. Root-level typecheck passes but workspace fails - Root `npm run typecheck` may pass while `npm run --workspace=server typecheck` fails; CI must run WORKSPACE-LEVEL checks: `npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`; root-level only validates project references exist, not workspace internals; caused by symlinks, missing exports, or Prisma path issues that incremental compilation masks. **ALWAYS verify locally**: `rm -rf server/dist packages/*/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
+94. Comment-code mismatch in DI wiring - Comment says "use X service instead" but actual code line was never added; services object in `app.ts` must explicitly include EVERY service that routes depend on; TypeScript won't catch this because the Services interface has optional fields (`?`); symptom: 503 "Service not configured" in routes that check `if (!service)`; always verify DI wiring by searching for both the comment AND the actual assignment. See commit `4cd02a55`.
 
 ## Prevention Strategies
 
