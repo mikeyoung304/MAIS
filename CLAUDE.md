@@ -376,6 +376,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 95. Agent onboarding says "first draft" but shows placeholders - Agent system prompt says "build in background" but doesn't specify HOW; the only described workflow requires user approval before `update_section`; agent stores facts but never autonomously updates content; symptom: agent says "Take a look - I put together a first draft" but preview shows placeholder content; fix: add explicit "First Draft Workflow (Autonomous)" section to system prompt that triggers after 2-3 facts and calls `update_section` WITHOUT waiting for approval. See `docs/solutions/agent-issues/AUTONOMOUS_FIRST_DRAFT_WORKFLOW.md`
 
+### Zustand State Management Pitfalls (96)
+
+96. Zustand selector returning new object causes re-renders - Selectors that return `{ computed: value }` create a new object on every call; Zustand's shallow comparison sees `{} !== {}` and triggers re-render even when values unchanged; symptom: component re-renders on ANY store update, not just relevant fields; fix: use `useShallow` from `zustand/shallow` OR split into primitive selectors OR use `createSelector` from reselect. See `docs/solutions/react-performance/ZUSTAND_SELECTOR_NEW_OBJECT_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
