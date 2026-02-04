@@ -70,7 +70,7 @@ export function hashTenantBooking(tenantId: string, bookingId: string): number {
 
 /**
  * Generate deterministic lock ID from tenantId for storefront edits.
- * Used for TOCTOU prevention on JSON field updates (landingPageConfigDraft).
+ * Used for TOCTOU prevention on SectionContent table updates (Phase 5.2 migration).
  *
  * P1-659 FIX: Provides tenant-level locking for storefront draft edits to prevent
  * race conditions when concurrent section updates check for ID uniqueness.

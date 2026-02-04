@@ -9,6 +9,7 @@ import {
   type ConciergeToolCall,
   type DashboardAction,
 } from '@/hooks/useConciergeChat';
+import { registerAgentSender } from '@/lib/tenant-agent-dispatch';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 
 /**
@@ -73,6 +74,7 @@ export function ConciergeChat({
     isInitializing,
     isAvailable,
     sendMessage,
+    sendProgrammaticMessage,
     setInputValue,
     initializeSession,
     messagesEndRef,
@@ -102,6 +104,13 @@ export function ConciergeChat({
   });
 
   const inputRef = externalInputRef || internalInputRef;
+
+  // Register message sender for external components (SectionWidget)
+  React.useEffect(() => {
+    if (isAvailable && sendProgrammaticMessage) {
+      return registerAgentSender(sendProgrammaticMessage);
+    }
+  }, [isAvailable, sendProgrammaticMessage]);
 
   // Loading state
   if (isInitializing) {

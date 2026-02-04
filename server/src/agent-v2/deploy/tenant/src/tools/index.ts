@@ -107,11 +107,31 @@ export {
 // Package Management Tools (T1/T2/T3) - P0 Fix for E2E Failures
 // ─────────────────────────────────────────────────────────────────────────────
 // CRITICAL: These manage ACTUAL bookable packages (Package table), NOT the
-// cosmetic "pricing section" in landingPageConfigDraft. This addresses the
-// core E2E failure where agent said "Done" but Services section showed $0.
+// cosmetic "pricing section" in the storefront. This addresses the core E2E
+// failure where agent said "Done" but Services section showed $0.
 //
 // @see docs/reports/2026-02-01-agent-testing-failure-report.md
 // @see todos/811-pending-p1-missing-package-management-tools.md
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { managePackagesTool } from './packages.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Guided Refinement Tools (T1/T2) - Phase 1 Guided Refinement
+// ─────────────────────────────────────────────────────────────────────────────
+// Section-by-section editing experience with 3 tone variants per section.
+// State stored in ADK session via context.state.set/get.
+//
+// @see docs/plans/2026-02-04-feat-guided-refinement-implementation-plan.md
+// @see docs/spikes/2026-02-04-adk-session-state-spike.md
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  // T1: Generate variants (read + generate, no persistent change)
+  generateSectionVariantsTool,
+  // T2: Apply variant to draft
+  applySectionVariantTool,
+  // T1: State tracking only
+  markSectionCompleteTool,
+  getNextIncompleteSectionTool,
+} from './refinement.js';

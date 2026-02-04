@@ -8,7 +8,15 @@ import { AdminSidebar } from '@/components/layouts/AdminSidebar';
 import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
 import { AgentPanel } from '@/components/agent/AgentPanel';
 import { ContentArea } from '@/components/dashboard/ContentArea';
+import { SectionWidget, PublishReadyWidget } from '@/components/build-mode/SectionWidget';
 import { useAgentUIStore, selectIsPreviewActive } from '@/stores/agent-ui-store';
+import {
+  useRefinementStore,
+  selectIsInGuidedRefine,
+  selectIsPublishReady,
+  type ToneVariant,
+} from '@/stores/refinement-store';
+import { queueAgentMessage } from '@/lib/tenant-agent-dispatch';
 import { setQueryClientRef } from '@/hooks/useDraftConfig';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-client';
@@ -56,8 +64,66 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const initialize = useAgentUIStore((state) => state.initialize);
   const showDashboard = useAgentUIStore((state) => state.showDashboard);
 
+  // Refinement store - guided refinement mode and publish ready detection
+  const isInGuidedRefine = useRefinementStore(selectIsInGuidedRefine);
+  const isPublishReady = useRefinementStore(selectIsPublishReady);
+
   // Auto-redirect to Build Mode when reaching MARKETING phase
   useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
+
+  // ========== SectionWidget Callbacks ==========
+  // These connect widget actions to agent chat messages
+
+  /**
+   * Regenerate variants for the current section
+   */
+  const handleWidgetRefresh = useCallback(() => {
+    queueAgentMessage('Please regenerate tone options for the current section');
+  }, []);
+
+  /**
+   * User selected a variant - notify the agent
+   */
+  const handleSelectVariant = useCallback((_sectionId: string, variant: ToneVariant) => {
+    // The store already tracks selection; also notify the agent
+    queueAgentMessage(`I prefer the ${variant} tone for this section`);
+  }, []);
+
+  /**
+   * User approved a variant and wants to continue
+   */
+  const handleMarkComplete = useCallback((_sectionId: string) => {
+    queueAgentMessage('This looks good - please apply my selection and move to the next section');
+  }, []);
+
+  /**
+   * User wants to move to the next section
+   */
+  const handleNext = useCallback(() => {
+    queueAgentMessage('Show me the next section to refine');
+  }, []);
+
+  /**
+   * User clicked close on the widget
+   */
+  const handleWidgetClose = useCallback(() => {
+    // Widget hides itself via store; optionally notify agent
+    queueAgentMessage("I'll continue with the chat for now");
+  }, []);
+
+  /**
+   * User wants to publish the site
+   */
+  const handlePublish = useCallback(() => {
+    queueAgentMessage('Please publish my site now');
+  }, []);
+
+  /**
+   * User wants to edit sections from publish-ready state
+   */
+  const handleEdit = useCallback(() => {
+    queueAgentMessage("I'd like to make some more edits before publishing");
+  }, []);
 
   // Reset preview mode when navigating to pages that don't support it
   // This prevents the "all links go to page builder" bug
@@ -140,6 +206,25 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
       </main>
       {/* Agent Panel - always visible side panel */}
       <AgentPanel />
+
+      {/* Guided Refinement Widgets */}
+      {isInGuidedRefine && !isPublishReady && (
+        <SectionWidget
+          onRefresh={handleWidgetRefresh}
+          onSelectVariant={handleSelectVariant}
+          onMarkComplete={handleMarkComplete}
+          onNext={handleNext}
+          onClose={handleWidgetClose}
+        />
+      )}
+
+      {isPublishReady && (
+        <PublishReadyWidget
+          onPublish={handlePublish}
+          onEdit={handleEdit}
+          onClose={handleWidgetClose}
+        />
+      )}
     </div>
   );
 }

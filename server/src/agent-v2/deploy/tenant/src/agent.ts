@@ -80,6 +80,12 @@ import {
 
   // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
   managePackagesTool,
+
+  // Guided Refinement (T1/T2) - Phase 1 Guided Refinement
+  generateSectionVariantsTool,
+  applySectionVariantTool,
+  markSectionCompleteTool,
+  getNextIncompleteSectionTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,8 +99,8 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 6 (Section Content Migration)
- * Tool count: 29
+ * Current Phase: 7 (Guided Refinement)
+ * Tool count: 33
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -106,6 +112,7 @@ import {
  * - Project management (7)
  * - Discovery/onboarding (2) - store_discovery_fact, get_known_facts
  * - Package management (1) - manage_packages (CRUD for bookable services)
+ * - Guided Refinement (4) - generate_section_variants, apply_section_variant, mark_section_complete, get_next_incomplete_section
  */
 export const tenantAgent = new LlmAgent({
   name: 'tenant',
@@ -209,11 +216,30 @@ export const tenantAgent = new LlmAgent({
     // ─────────────────────────────────────────────────────────────────────────
     // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
     // CRITICAL: This manages ACTUAL bookable packages (Package table), NOT the
-    // cosmetic "pricing section" in landingPageConfigDraft.
+    // cosmetic "pricing section" in the storefront.
     // ─────────────────────────────────────────────────────────────────────────
 
     // Create, update, delete, or list actual bookable service packages
     managePackagesTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Guided Refinement Tools (T1/T2) - Phase 1 Guided Refinement
+    // Section-by-section editing with 3 tone variants per section.
+    // State stored in ADK session via context.state.set/get.
+    // @see docs/plans/2026-02-04-feat-guided-refinement-implementation-plan.md
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // T1: Generate 3 tone variants (Professional/Premium/Friendly)
+    generateSectionVariantsTool,
+
+    // T2: Apply selected variant to draft
+    applySectionVariantTool,
+
+    // T1: Mark section as complete in refinement flow
+    markSectionCompleteTool,
+
+    // T1: Get next section that needs refinement
+    getNextIncompleteSectionTool,
   ],
 
   // Lifecycle callbacks for observability

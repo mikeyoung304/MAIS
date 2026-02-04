@@ -370,11 +370,31 @@ export const SectionContentResponseSchema = z.object({
 
 /**
  * Dashboard action for agent-frontend communication
+ *
+ * Action types:
+ * - NAVIGATE: Navigate to a section in the dashboard
+ * - SCROLL_TO_SECTION: Scroll the preview to a specific section
+ * - SHOW_PREVIEW: Show the storefront preview
+ * - REFRESH: Refresh the current view
+ * - SHOW_VARIANT_WIDGET: Show the tone variant selection widget (Guided Refinement)
+ * - SHOW_PUBLISH_READY: Show the publish-ready state (Guided Refinement)
+ * - HIGHLIGHT_NEXT_SECTION: Highlight the next section to refine (Guided Refinement)
  */
 export const DashboardActionSchema = z.object({
-  type: z.enum(['NAVIGATE', 'SCROLL_TO_SECTION', 'SHOW_PREVIEW', 'REFRESH']),
+  type: z.enum([
+    'NAVIGATE',
+    'SCROLL_TO_SECTION',
+    'SHOW_PREVIEW',
+    'REFRESH',
+    // Guided Refinement actions (Phase 5.1)
+    'SHOW_VARIANT_WIDGET',
+    'SHOW_PUBLISH_READY',
+    'HIGHLIGHT_NEXT_SECTION',
+  ]),
   sectionId: z.string().optional(),
   section: z.string().optional(),
+  // Guided Refinement: variant options for SHOW_VARIANT_WIDGET
+  variants: z.array(z.enum(['professional', 'premium', 'friendly'])).optional(),
 });
 
 /**

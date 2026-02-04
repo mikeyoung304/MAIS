@@ -124,6 +124,7 @@ export interface UseConciergeChatchatReturn {
 
   // Actions
   sendMessage: () => Promise<void>;
+  sendProgrammaticMessage: (message: string) => Promise<void>;
   setInputValue: (value: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<ConciergeMessage[]>>;
   initializeSession: () => Promise<void>;
@@ -404,6 +405,103 @@ export function useConciergeChat({
     onDashboardActions,
   ]);
 
+  /**
+   * Send a message programmatically (for external components like SectionWidget)
+   * This bypasses the input field and sends directly.
+   */
+  const sendProgrammaticMessage = useCallback(
+    async (message: string) => {
+      if (!message.trim() || isLoading || !sessionId) return;
+
+      // Track first message
+      if (!hasSentFirstMessage) {
+        setHasSentFirstMessage(true);
+        onFirstMessage?.();
+      }
+
+      setError(null);
+      setIsLoading(true);
+
+      // Add user message optimistically
+      const userMessage: ConciergeMessage = {
+        role: 'user',
+        content: message,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      try {
+        const response = await fetch(`${API_URL}/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message,
+            sessionId,
+            version,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to send message');
+        }
+
+        const data = await response.json();
+
+        // Update version for optimistic locking
+        if (data.version !== undefined) {
+          setVersion(data.version);
+          try {
+            localStorage.setItem(VERSION_STORAGE_KEY, String(data.version));
+          } catch {
+            // Ignore localStorage errors
+          }
+        }
+
+        // Extract tool calls if present
+        const toolCalls: ConciergeToolCall[] = data.toolCalls || [];
+        setLastToolCalls(toolCalls);
+
+        // Extract dashboard actions
+        const dashboardActions: DashboardAction[] = data.dashboardActions || [];
+
+        // Add assistant message
+        const assistantMessage: ConciergeMessage = {
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date(),
+          toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // Notify about tool completion
+        if (toolCalls.length > 0) {
+          onToolComplete?.(toolCalls);
+        }
+
+        // Process dashboard actions
+        if (dashboardActions.length > 0) {
+          onDashboardActions?.(dashboardActions);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to send message');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      isLoading,
+      sessionId,
+      version,
+      hasSentFirstMessage,
+      onFirstMessage,
+      onToolComplete,
+      onDashboardActions,
+    ]
+  );
+
   // Handle textarea enter key
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -430,6 +528,7 @@ export function useConciergeChat({
 
     // Actions
     sendMessage,
+    sendProgrammaticMessage,
     setInputValue,
     setMessages,
     initializeSession,

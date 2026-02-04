@@ -1,8 +1,12 @@
 /**
  * useDraftConfig - TanStack Query hook for draft configuration state
  *
- * Complements useDraftAutosave by providing:
- * - Fetching current draft state from the API
+ * Phase 5.2 Migration: This hook now delegates to useSectionsDraft which
+ * fetches from the SectionContent table instead of the legacy JSON column.
+ * The external interface remains unchanged for backward compatibility.
+ *
+ * Provides:
+ * - Fetching current draft state from the API (via sections endpoint)
  * - Cache invalidation when agent tools modify config
  * - Loading and error states
  * - Derived hasDraft state
@@ -12,35 +16,27 @@
  * - PreviewPanel to display current draft
  * - Agent tool handlers (via invalidateDraftConfig) to refresh after modifications
  *
+ * @see useSectionsDraft.ts for the underlying section-based implementation
  * @see stores/agent-ui-store.ts for UI state management
- * @see hooks/useDraftAutosave.ts for local autosave logic
  */
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
-import { DEFAULT_PAGES_CONFIG, type PagesConfig } from '@macon/contracts';
+import { useQueryClient, QueryClient } from '@tanstack/react-query';
+import { type PagesConfig } from '@macon/contracts';
 import { logger } from '@/lib/logger';
-import { createClientApiClient } from '@/lib/api.client';
-import { useMemo, useCallback } from 'react';
+import { useEffect } from 'react';
+import {
+  useSectionsDraft,
+  setSectionsQueryClientRef,
+  invalidateSectionsDraft,
+  getSectionsDraftQueryKey,
+  type SectionEntity,
+} from './useSectionsDraft';
 
 // ============================================
 // TYPES
 // ============================================
-
-/**
- * Draft configuration data structure
- */
-interface DraftConfigData {
-  /** Pages configuration */
-  pages: PagesConfig;
-  /** Whether there's an unpublished draft */
-  hasDraft: boolean;
-  /** When the draft was last updated */
-  draftUpdatedAt?: string;
-  /** Optimistic locking version - tracks concurrent modifications (#620) */
-  version: number;
-}
 
 /**
  * Return type for useDraftConfig hook
@@ -68,10 +64,14 @@ interface UseDraftConfigResult {
   isDiscarding: boolean;
   /** Invalidate the cache (call after agent tools modify config) */
   invalidate: () => void;
+  /** Raw section entities for direct access (Phase 5.2 addition) */
+  sections?: SectionEntity[];
+  /** Find a section by ID (Phase 5.2 addition) */
+  findSectionById?: (sectionId: string) => SectionEntity | undefined;
 }
 
 // ============================================
-// QUERY KEY
+// QUERY KEY (for backward compatibility)
 // ============================================
 
 const DRAFT_CONFIG_QUERY_KEY = ['draft-config'] as const;
@@ -83,168 +83,31 @@ const DRAFT_CONFIG_QUERY_KEY = ['draft-config'] as const;
 export function useDraftConfig(): UseDraftConfigResult {
   const queryClient = useQueryClient();
 
-  // Create API client instance
-  const apiClient = useMemo(() => createClientApiClient(), []);
+  // Delegate to the new section-based hook
+  const sectionsDraft = useSectionsDraft();
 
-  // Fetch draft configuration
-  const query = useQuery({
-    queryKey: DRAFT_CONFIG_QUERY_KEY,
-    queryFn: async (): Promise<DraftConfigData> => {
-      logger.debug('[useDraftConfig] Fetching draft config');
-
-      try {
-        // Fetch draft endpoint which returns both draft and published
-        const response = await apiClient.getDraft({});
-
-        if (response.status === 200) {
-          const body = response.body;
-          // API returns: { draft, published, draftUpdatedAt, publishedAt, version }
-          // draft and published are LandingPageConfig objects with { pages, branding, ... }
-          // Prefer draft over published, with fallback to defaults
-          const hasDraft = body.draft !== null;
-          const config = body.draft || body.published;
-          const pages = config?.pages || DEFAULT_PAGES_CONFIG;
-
-          return {
-            pages,
-            hasDraft,
-            draftUpdatedAt: body.draftUpdatedAt ?? undefined,
-            version: body.version,
-          };
-        }
-
-        // 404 means tenant not found or no config - use defaults (recoverable)
-        if (response.status === 404) {
-          logger.debug('[useDraftConfig] No config found, using defaults');
-          return { pages: DEFAULT_PAGES_CONFIG, hasDraft: false, version: 0 };
-        }
-
-        // Auth errors - throw to show error state (user needs to re-login)
-        // CRITICAL: Don't silently use defaults - this causes the "DEFAULT config in preview" bug
-        // where the preview shows [Your Transformation Headline] instead of actual content
-        if (response.status === 401 || response.status === 403) {
-          logger.error('[useDraftConfig] Authentication error', { status: response.status });
-          throw new Error('Session expired. Please refresh the page to log in again.');
-        }
-
-        // Server errors - throw to show error state
-        if (response.status >= 500) {
-          logger.error('[useDraftConfig] Server error', { status: response.status });
-          throw new Error(`Server error (${response.status}). Please try again later.`);
-        }
-
-        // Other unexpected errors - throw to surface the problem
-        logger.warn('[useDraftConfig] Unexpected response status', { status: response.status });
-        throw new Error(`Failed to load draft configuration (${response.status})`);
-      } catch (error) {
-        // Fix #817: Serialize Error properties explicitly (Error objects have non-enumerable
-        // properties that become {} when JSON-serialized)
-        logger.error('[useDraftConfig] Failed to fetch draft', {
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined,
-          errorName: error instanceof Error ? error.name : undefined,
-        });
-        throw error;
-      }
-    },
-    staleTime: 0, // Real-time updates: agent tools modify config, refetch immediately
-    gcTime: 5 * 60_000, // 5 minutes garbage collection
-    refetchOnWindowFocus: false, // Don't refetch on tab focus
-    retry: 1, // Only retry once
-  });
-
-  // Publish mutation
-  const publishMutation = useMutation({
-    mutationFn: async () => {
-      logger.info('[useDraftConfig] Publishing draft');
-      const response = await apiClient.publishDraft({ body: {} });
-
-      if (response.status !== 200) {
-        throw new Error(
-          response.body && typeof response.body === 'object' && 'error' in response.body
-            ? String(response.body.error)
-            : 'Failed to publish draft'
-        );
-      }
-
-      return response.body;
-    },
-    onSuccess: () => {
-      // Invalidate to refetch fresh state
-      // Fix #820: Add refetchType: 'active' for consistent behavior across all invalidations
-      queryClient.invalidateQueries({
-        queryKey: DRAFT_CONFIG_QUERY_KEY,
-        refetchType: 'active',
-      });
-      logger.info('[useDraftConfig] Draft published successfully');
-    },
-    onError: (error) => {
-      logger.error('[useDraftConfig] Publish failed', { error });
-    },
-  });
-
-  // Discard mutation
-  const discardMutation = useMutation({
-    mutationFn: async () => {
-      logger.info('[useDraftConfig] Discarding draft');
-      const response = await apiClient.discardDraft({});
-
-      if (response.status !== 200) {
-        throw new Error(
-          response.body && typeof response.body === 'object' && 'error' in response.body
-            ? String(response.body.error)
-            : 'Failed to discard draft'
-        );
-      }
-
-      return response.body;
-    },
-    onSuccess: () => {
-      // Invalidate to refetch fresh state
-      // Fix #820: Add refetchType: 'active' for consistent behavior across all invalidations
-      queryClient.invalidateQueries({
-        queryKey: DRAFT_CONFIG_QUERY_KEY,
-        refetchType: 'active',
-      });
-      logger.info('[useDraftConfig] Draft discarded successfully');
-    },
-    onError: (error) => {
-      logger.error('[useDraftConfig] Discard failed', { error });
-    },
-  });
-
-  // Invalidate cache (for external callers like agent tool handlers)
-  const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: DRAFT_CONFIG_QUERY_KEY });
+  // Set up the query client reference for external access
+  useEffect(() => {
+    setSectionsQueryClientRef(queryClient);
+    // Also set legacy ref for any code still using it
+    setQueryClientRef(queryClient);
   }, [queryClient]);
 
-  // Refetch wrapper
-  const refetch = useCallback(async () => {
-    await query.refetch();
-  }, [query]);
-
-  // Publish wrapper
-  const publishDraft = useCallback(async () => {
-    await publishMutation.mutateAsync();
-  }, [publishMutation]);
-
-  // Discard wrapper
-  const discardDraft = useCallback(async () => {
-    await discardMutation.mutateAsync();
-  }, [discardMutation]);
-
   return {
-    config: query.data?.pages ?? DEFAULT_PAGES_CONFIG,
-    hasDraft: query.data?.hasDraft ?? false,
-    version: query.data?.version ?? 0,
-    isLoading: query.isLoading,
-    error: query.error,
-    refetch,
-    publishDraft,
-    discardDraft,
-    isPublishing: publishMutation.isPending,
-    isDiscarding: discardMutation.isPending,
-    invalidate,
+    config: sectionsDraft.config,
+    hasDraft: sectionsDraft.hasDraft,
+    version: sectionsDraft.version,
+    isLoading: sectionsDraft.isLoading,
+    error: sectionsDraft.error,
+    refetch: sectionsDraft.refetch,
+    publishDraft: sectionsDraft.publishDraft,
+    discardDraft: sectionsDraft.discardDraft,
+    isPublishing: sectionsDraft.isPublishing,
+    isDiscarding: sectionsDraft.isDiscarding,
+    invalidate: sectionsDraft.invalidate,
+    // Phase 5.2 additions for direct section access
+    sections: sectionsDraft.sections,
+    findSectionById: sectionsDraft.findSectionById,
   };
 }
 
@@ -295,6 +158,9 @@ export const setQueryClientRef = (client: QueryClient): void => {
  * Invalidate draft config from outside React
  * Call this after agent tools modify the draft configuration
  *
+ * Phase 5.2: Now delegates to invalidateSectionsDraft() which invalidates
+ * the sections-based cache.
+ *
  * @example
  * // In agent response handler:
  * if (response.toolResults?.some(t => t.toolName.includes('update_section'))) {
@@ -302,21 +168,27 @@ export const setQueryClientRef = (client: QueryClient): void => {
  * }
  */
 export const invalidateDraftConfig = (): void => {
+  // Invalidate the new sections-based cache
+  invalidateSectionsDraft();
+
+  // Also invalidate legacy cache key for any code still using it
   if (queryClientRef) {
     queryClientRef.invalidateQueries({
       queryKey: DRAFT_CONFIG_QUERY_KEY,
-      refetchType: 'active', // Force refetch even if query is inactive
+      refetchType: 'active',
     });
-    logger.debug('[useDraftConfig] Externally invalidated draft config');
+    logger.debug('[useDraftConfig] Externally invalidated draft config (both caches)');
   } else {
-    logger.warn('[useDraftConfig] Cannot invalidate - query client not set');
+    logger.warn('[useDraftConfig] Cannot invalidate legacy cache - query client not set');
   }
 };
 
 /**
  * Get the query key for draft config
  * Useful for components that need to interact with the cache directly
+ *
+ * Phase 5.2: Returns the new sections-based query key
  */
-export const getDraftConfigQueryKey = (): readonly ['draft-config'] => {
-  return DRAFT_CONFIG_QUERY_KEY;
+export const getDraftConfigQueryKey = (): readonly ['sections-draft'] => {
+  return getSectionsDraftQueryKey();
 };

@@ -209,6 +209,20 @@ const DiscardSectionSchema = TenantIdSchema.extend({
   confirmationReceived: z.boolean(),
 });
 
+// Guided Refinement - Section Variant Generation
+const TONE_VARIANTS = ['professional', 'premium', 'friendly'] as const;
+const GenerateSectionVariantsSchema = TenantIdSchema.extend({
+  sectionId: z.string().min(1, 'sectionId is required'),
+  sectionType: z.enum(SECTION_TYPES),
+  currentContent: z.object({
+    headline: z.string().optional(),
+    subheadline: z.string().optional(),
+    content: z.string().optional(),
+    ctaText: z.string().optional(),
+  }),
+  tones: z.array(z.enum(TONE_VARIANTS)).default(['professional', 'premium', 'friendly']),
+});
+
 // =============================================================================
 // Route Factory
 // =============================================================================
@@ -1653,6 +1667,214 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         return;
       }
       handleError(res, error, '/storefront/discard-section');
+    }
+  });
+
+  // ===========================================================================
+  // GUIDED REFINEMENT ENDPOINTS
+  // Generate tone variants for section content to help users refine their copy.
+  // Used by tenant-agent's refinement tools for the Guided Refinement Mode.
+  // ===========================================================================
+
+  // Rate limiting: Track requests per tenant (10 requests per minute)
+  const variantGenerationRateLimit = new LRUCache<string, { count: number; resetAt: number }>({
+    max: 1000,
+    ttl: 60_000, // 1 minute
+  });
+
+  /**
+   * Build prompt for generating section content variants across different tones.
+   */
+  function buildVariantGenerationPrompt(
+    sectionType: string,
+    currentContent: { headline?: string; subheadline?: string; content?: string; ctaText?: string },
+    businessContext: { name: string; industry: string },
+    tones: readonly string[]
+  ): string {
+    const businessName = businessContext.name || 'the business';
+    const industry = businessContext.industry || 'service';
+
+    const toneDescriptions: Record<string, string> = {
+      professional: 'Clean, authoritative, confidence-inspiring. Direct and results-focused.',
+      premium: 'Elegant, exclusive, refined. Emphasizes quality and unique value.',
+      friendly: 'Warm, approachable, conversational. Like talking to a trusted friend.',
+    };
+
+    const toneList = tones.map((t) => `- ${t}: ${toneDescriptions[t] || t}`).join('\n');
+
+    const currentFields = Object.entries(currentContent)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}: "${v}"`)
+      .join('\n');
+
+    return `You are a marketing copywriter for ${businessName}, a ${industry} business.
+
+Generate 3 different versions of this ${sectionType} section content, each in a different tone.
+
+CURRENT CONTENT:
+${currentFields || 'No current content - generate from scratch for a typical business in this industry.'}
+
+REQUIRED TONES:
+${toneList}
+
+Return ONLY valid JSON with this exact structure:
+{
+  "variants": {
+    "${tones[0]}": {
+      "headline": "...",
+      "subheadline": "...",
+      "content": "...",
+      "ctaText": "..."
+    },
+    "${tones[1]}": {
+      "headline": "...",
+      "subheadline": "...",
+      "content": "...",
+      "ctaText": "..."
+    },
+    "${tones[2]}": {
+      "headline": "...",
+      "subheadline": "...",
+      "content": "...",
+      "ctaText": "..."
+    }
+  },
+  "recommendation": "${tones[0]}",
+  "rationale": "Brief 1-2 sentence explanation of why this tone fits best."
+}
+
+RULES:
+- Headlines: Under 10 words, impactful, no clichés
+- Subheadlines: 1-2 sentences, supports the headline
+- Content: 2-4 sentences for the section body
+- CTA: 2-4 words, action-oriented
+- Recommendation: Choose the tone that best fits ${industry} businesses
+- NEVER use overused phrases like "passion for excellence" or unsubstantiated superlatives`;
+  }
+
+  // POST /storefront/generate-variants - Generate tone variants for a section
+  router.post('/storefront/generate-variants', async (req: Request, res: Response) => {
+    try {
+      const params = GenerateSectionVariantsSchema.parse(req.body);
+      const { tenantId, sectionId, sectionType, currentContent, tones } = params;
+
+      logger.info(
+        { tenantId, sectionId, sectionType, tones, endpoint: '/storefront/generate-variants' },
+        '[Agent] Generating section variants'
+      );
+
+      // Rate limiting: 10 requests per minute per tenant
+      const rateLimitKey = `variant-gen:${tenantId}`;
+      const rateState = variantGenerationRateLimit.get(rateLimitKey);
+      const now = Date.now();
+
+      if (rateState) {
+        if (now < rateState.resetAt && rateState.count >= 10) {
+          const waitSeconds = Math.ceil((rateState.resetAt - now) / 1000);
+          res.status(429).json({
+            error: 'Rate limit exceeded',
+            message: `Too many variant generation requests. Please wait ${waitSeconds} seconds.`,
+            retryAfter: waitSeconds,
+          });
+          return;
+        }
+        // Increment count
+        variantGenerationRateLimit.set(rateLimitKey, {
+          count: now >= rateState.resetAt ? 1 : rateState.count + 1,
+          resetAt: now >= rateState.resetAt ? now + 60_000 : rateState.resetAt,
+        });
+      } else {
+        variantGenerationRateLimit.set(rateLimitKey, { count: 1, resetAt: now + 60_000 });
+      }
+
+      // Get business context
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const businessContext = {
+        name: tenant.name,
+        industry: (branding.businessType as string) || (branding.industry as string) || 'service',
+      };
+
+      // Generate variants using Vertex AI
+      const vertexModule = await getVertexModule();
+      const client = vertexModule.getVertexClient();
+      const prompt = buildVariantGenerationPrompt(
+        sectionType,
+        currentContent,
+        businessContext,
+        tones
+      );
+
+      const response = await client.models.generateContent({
+        model: vertexModule.DEFAULT_MODEL,
+        contents: prompt,
+        config: {
+          temperature: 0.8, // Higher for creative diversity
+          maxOutputTokens: 2048,
+        },
+      });
+
+      const text = response.text || '';
+
+      // Parse JSON from response
+      let result: {
+        variants: Record<
+          string,
+          { headline?: string; subheadline?: string; content?: string; ctaText?: string }
+        >;
+        recommendation: string;
+        rationale: string;
+      };
+
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          result = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (parseError) {
+        logger.warn(
+          { parseError, textPreview: text.substring(0, 300) },
+          '[Variants] Failed to parse JSON'
+        );
+        // Return error - don't use fallback for this critical feature
+        res.status(500).json({
+          error: 'Failed to generate variants',
+          message: 'The AI response could not be parsed. Please try again.',
+        });
+        return;
+      }
+
+      // Sanitize the generated content (XSS prevention - Blocking Issue B4)
+      const { sanitizeObject } = await import('../lib/sanitization');
+      const sanitizedVariants = sanitizeObject(result.variants, {
+        allowHtml: ['content'], // Allow basic HTML in content field only
+      });
+
+      res.json({
+        success: true,
+        sectionId,
+        sectionType,
+        variants: sanitizedVariants,
+        recommendation: result.recommendation,
+        rationale: result.rationale,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+        return;
+      }
+      handleError(res, error, '/storefront/generate-variants');
     }
   });
 

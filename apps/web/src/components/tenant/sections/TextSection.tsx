@@ -57,7 +57,7 @@ export function TextSection({
               </h2>
             )}
             <div className={headline ? 'mt-6 space-y-4' : 'space-y-4'}>
-              {content.split('\n\n').map((paragraph, i) => (
+              {(content ?? '').split('\n\n').map((paragraph, i) => (
                 <p key={i} className="text-lg text-text-muted leading-relaxed">
                   {paragraph}
                 </p>

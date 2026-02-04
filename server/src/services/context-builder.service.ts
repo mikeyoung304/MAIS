@@ -167,6 +167,23 @@ export interface BootstrapData {
    * This is the enterprise-grade slot-policy: check slot keys, not phrase matching.
    */
   forbiddenSlots: (keyof KnownFacts)[];
+  /**
+   * Guided refinement state hint for the agent.
+   * The full state is stored in ADK session state, but this gives the agent
+   * an initial hint about the current mode at session start.
+   *
+   * @see server/src/types/guided-refinement.ts
+   */
+  guidedRefinementHint?: {
+    /** Current mode: 'interview' | 'draft_build' | 'guided_refine' | 'publish_ready' */
+    mode: string;
+    /** Number of completed sections */
+    completedSections: number;
+    /** Total number of sections to refine */
+    totalSections: number;
+    /** Current section ID being refined (if any) */
+    currentSectionId: string | null;
+  };
 }
 
 // =============================================================================
