@@ -372,6 +372,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 93. Root-level typecheck passes but workspace fails - Root `npm run typecheck` may pass while `npm run --workspace=server typecheck` fails; CI must run WORKSPACE-LEVEL checks: `npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`; root-level only validates project references exist, not workspace internals; caused by symlinks, missing exports, or Prisma path issues that incremental compilation masks. **ALWAYS verify locally**: `rm -rf server/dist packages/*/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
 94. Comment-code mismatch in DI wiring - Comment says "use X service instead" but actual code line was never added; services object in `app.ts` must explicitly include EVERY service that routes depend on; TypeScript won't catch this because the Services interface has optional fields (`?`); symptom: 503 "Service not configured" in routes that check `if (!service)`; always verify DI wiring by searching for both the comment AND the actual assignment. See commit `4cd02a55`.
 
+### Agent Onboarding Workflow Pitfalls (95)
+
+95. Agent onboarding says "first draft" but shows placeholders - Agent system prompt says "build in background" but doesn't specify HOW; the only described workflow requires user approval before `update_section`; agent stores facts but never autonomously updates content; symptom: agent says "Take a look - I put together a first draft" but preview shows placeholder content; fix: add explicit "First Draft Workflow (Autonomous)" section to system prompt that triggers after 2-3 facts and calls `update_section` WITHOUT waiting for approval. See `docs/solutions/agent-issues/AUTONOMOUS_FIRST_DRAFT_WORKFLOW.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -384,6 +388,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[AGENT_TOOLS_PREVENTION_INDEX.md](docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md)** - Agent tool patterns
 - **[ZOD_PARAMETER_VALIDATION_PREVENTION.md](docs/solutions/patterns/ZOD_PARAMETER_VALIDATION_PREVENTION.md)** - Zod validation patterns
 - **[AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md](docs/solutions/patterns/AGENT_TOOL_ACTIVE_MEMORY_PREVENTION.md)** - Tool state return patterns
+- **[AUTONOMOUS_FIRST_DRAFT_WORKFLOW.md](docs/solutions/agent-issues/AUTONOMOUS_FIRST_DRAFT_WORKFLOW.md)** - First draft workflow without approval
 - **[SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md](docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md)** - P0 fix: forbiddenSlots at session start
 - **[ADK_A2A_PREVENTION_INDEX.md](docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md)** - ADK/A2A integration patterns
 - **[A2A_SESSION_STATE_PREVENTION.md](docs/solutions/patterns/A2A_SESSION_STATE_PREVENTION.md)** - Session isolation & state handling
