@@ -292,10 +292,29 @@ export function AgentPanel({ className }: AgentPanelProps) {
   // Handle tenant-agent tool completion (triggers preview refresh for storefront changes)
   // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
   // Fix #818: Make async and add 100ms delay before invalidation to allow transaction commit
+  // Fix #818 (Pitfall #90): Extract dashboardAction from tool results for UI navigation
   // Note: Function name retained as "Concierge" for backwards compatibility
   const handleConciergeToolComplete = useCallback(
     async (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
-      // Check if any tool call modified storefront content
+      // FIRST: Extract dashboard actions from tool results (Fix #818 / Pitfall #90)
+      // Tool results may contain dashboardAction objects like:
+      // { type: 'SCROLL_TO_SECTION', sectionId: 'home-hero-abc123' }
+      // { type: 'SHOW_PREVIEW', page: 'home' }
+      const dashboardActions = toolCalls
+        .map((call) => {
+          const result = call.result as Record<string, unknown> | undefined;
+          return result?.dashboardAction as DashboardAction | undefined;
+        })
+        .filter((action): action is DashboardAction => Boolean(action));
+
+      // Process extracted dashboard actions BEFORE cache invalidation
+      // This ensures UI navigation (scroll, highlight, show preview) happens
+      // when agent says "Take a look" after updating a section
+      if (dashboardActions.length > 0) {
+        await handleDashboardActions(dashboardActions);
+      }
+
+      // THEN: Check if any tool call modified storefront content (existing logic)
       const modifiedStorefront = toolCalls.some(
         (call) =>
           call.name.includes('storefront') ||
@@ -339,7 +358,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
         });
       }
     },
-    [queryClient]
+    [queryClient, handleDashboardActions]
   );
 
   // Handle first message sent - mark user as welcomed

@@ -106,21 +106,13 @@ function _getRequiredEnv(name: string): string {
   return value;
 }
 
-// Phase 4 Update: Renamed from getCustomerAgentUrl() to getCustomerAgentUrl()
-// Now points to unified customer-agent (booking + project-hub customer view)
+// Phase 4 Update: Unified customer-agent (booking + project-hub customer view)
 function getCustomerAgentUrl(): string {
-  // Support both new and legacy env var names for backward compatibility during rollout
-  const newUrl = process.env.CUSTOMER_AGENT_URL;
-  if (newUrl) return newUrl;
-
-  // Fallback to legacy variable (deprecated - remove after migration complete)
-  const legacyUrl = process.env.BOOKING_AGENT_URL;
-  if (legacyUrl) return legacyUrl;
-
-  throw new Error(
-    'Missing required environment variable: CUSTOMER_AGENT_URL. ' +
-      'Set this in your .env file or Render dashboard.'
-  );
+  const url = process.env.CUSTOMER_AGENT_URL;
+  if (!url) {
+    throw new Error('Missing required environment variable: CUSTOMER_AGENT_URL');
+  }
+  return url;
 }
 
 // =============================================================================

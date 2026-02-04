@@ -110,6 +110,10 @@ export function PreviewPanel({
   const iframeReadyTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const { publishDraft, discardDraft, isPublishing, isDiscarding } = useDraftConfig();
 
+  // Ref to access draftConfig without making it a useEffect dependency
+  // This prevents listener re-registration when config changes (Race #1 fix)
+  const draftConfigRef = useRef(draftConfig);
+
   // Preview token for draft access
   const { token: previewToken, isLoading: isTokenLoading, error: tokenError } = usePreviewToken();
 
@@ -154,6 +158,11 @@ export function PreviewPanel({
     };
   }, []);
 
+  // Keep draftConfigRef in sync with prop changes
+  useEffect(() => {
+    draftConfigRef.current = draftConfig;
+  }, [draftConfig]);
+
   // Auto-refresh when previewRefreshKey changes (triggered by package updates)
   // Skip initial value (0) to avoid unnecessary refresh on mount
   // Uses soft refresh via PostMessage for fluid canvas experience
@@ -185,6 +194,7 @@ export function PreviewPanel({
   }, [isIframeReady, draftConfig]);
 
   // Handle iframe messages
+  // Uses draftConfigRef to avoid re-registering listener on config changes (Race #1 fix)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Only accept messages from our own origin
@@ -198,11 +208,11 @@ export function PreviewPanel({
         case 'BUILD_MODE_READY':
           setIsIframeReady(true);
           setIsLoading(false);
-          // Send initial config
-          if (draftConfig && iframeRef.current?.contentWindow) {
+          // Send initial config using ref to get latest value
+          if (draftConfigRef.current && iframeRef.current?.contentWindow) {
             const initMessage: BuildModeParentMessage = {
               type: 'BUILD_MODE_INIT',
-              data: { draftConfig },
+              data: { draftConfig: draftConfigRef.current },
             };
             iframeRef.current.contentWindow.postMessage(initMessage, window.location.origin);
           }
@@ -240,7 +250,7 @@ export function PreviewPanel({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [draftConfig]);
+  }, []); // Empty deps - listener never re-registers (Race #1 fix)
 
   // Send config updates to iframe
   useEffect(() => {

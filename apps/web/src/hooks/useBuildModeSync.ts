@@ -102,7 +102,7 @@ interface UseBuildModeSyncResult {
  * ```
  */
 /** Timeout for PostMessage handshake in milliseconds */
-const HANDSHAKE_TIMEOUT_MS = 5000;
+const HANDSHAKE_TIMEOUT_MS = 10000;
 
 /** Retry interval for re-sending BUILD_MODE_READY if no response */
 const HANDSHAKE_RETRY_MS = 1000;
@@ -194,8 +194,11 @@ export function useBuildModeSync({
         retryCount++;
       };
 
-      // Initial send
-      sendReady();
+      // Initial send with 100ms delay to allow parent listener to register first
+      // This prevents race condition when cached iframe loads instantly (Race #3 fix)
+      const initialDelayTimeout = setTimeout(() => {
+        sendReady();
+      }, 100);
 
       // Retry periodically until we get BUILD_MODE_INIT or max retries
       const retryInterval = setInterval(() => {
@@ -206,7 +209,10 @@ export function useBuildModeSync({
         sendReady();
       }, HANDSHAKE_RETRY_MS);
 
-      return () => clearInterval(retryInterval);
+      return () => {
+        clearTimeout(initialDelayTimeout);
+        clearInterval(retryInterval);
+      };
     }
   }, [enabled, isReady]);
 

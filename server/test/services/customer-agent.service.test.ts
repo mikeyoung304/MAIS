@@ -181,7 +181,7 @@ describe('CustomerAgentService', () => {
     global.fetch = vi.fn().mockResolvedValue(mockFetchResponse({ id: 'adk_session_123' }));
 
     // Set required env var
-    process.env.BOOKING_AGENT_URL = 'https://booking-agent.example.com';
+    process.env.CUSTOMER_AGENT_URL = 'https://customer-agent.example.com';
 
     // Create service
     service = createCustomerAgentService(mockPrisma);
@@ -189,7 +189,7 @@ describe('CustomerAgentService', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-    delete process.env.BOOKING_AGENT_URL;
+    delete process.env.CUSTOMER_AGENT_URL;
   });
 
   // ===========================================================================

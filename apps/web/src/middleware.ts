@@ -189,8 +189,17 @@ export default auth((request) => {
     }
   }
 
-  // ===== CONTINUE NORMALLY =====
-  return NextResponse.next();
+  // ===== SECURITY HEADERS =====
+  const response = NextResponse.next();
+
+  // Add CSP frame-ancestors for tenant routes to prevent clickjacking
+  // 'self' allows same-origin framing (needed for Build Mode preview)
+  // but prevents external sites from embedding tenant storefronts
+  if (pathname.startsWith('/t/')) {
+    response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
+  }
+
+  return response;
 });
 
 // Configure which routes the middleware runs on

@@ -122,21 +122,11 @@ async function fetchWithTimeout(
  * Throws clear error if not configured (Pitfall #45: fail-fast on missing config).
  */
 function getCustomerAgentUrl(): string {
-  // Primary: new unified customer-agent URL
-  const newUrl = process.env.CUSTOMER_AGENT_URL;
-  if (newUrl) return newUrl;
-
-  // Fallback: legacy variable names (deprecated - remove after migration complete)
-  const legacyProjectHubUrl = process.env.PROJECT_HUB_AGENT_URL;
-  if (legacyProjectHubUrl) return legacyProjectHubUrl;
-
-  const legacyBookingUrl = process.env.BOOKING_AGENT_URL;
-  if (legacyBookingUrl) return legacyBookingUrl;
-
-  throw new Error(
-    'Missing required environment variable: CUSTOMER_AGENT_URL. ' +
-      'Set this in Render dashboard or .env file.'
-  );
+  const url = process.env.CUSTOMER_AGENT_URL;
+  if (!url) {
+    throw new Error('Missing required environment variable: CUSTOMER_AGENT_URL');
+  }
+  return url;
 }
 
 // =============================================================================
