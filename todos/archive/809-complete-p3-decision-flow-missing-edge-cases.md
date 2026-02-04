@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: 809
 tags: [code-review, agent, prompt-engineering]
@@ -74,15 +74,16 @@ Add branches:
 
 ## Acceptance Criteria
 
-- [ ] All common interaction patterns are covered
-- [ ] Agent handles contradictions gracefully
-- [ ] Agent can skip sections on user request
+- [x] All common interaction patterns are covered
+- [x] Agent handles contradictions gracefully
+- [x] Agent can skip sections on user request
 
 ## Work Log
 
-| Date       | Action                          | Learnings                           |
-| ---------- | ------------------------------- | ----------------------------------- |
-| 2026-01-31 | Identified during prompt review | Several common patterns not covered |
+| Date       | Action                                    | Learnings                           |
+| ---------- | ----------------------------------------- | ----------------------------------- |
+| 2026-01-31 | Identified during prompt review           | Several common patterns not covered |
+| 2026-02-04 | Added Decision Flow Edge Cases subsection | Clear examples help agent behavior  |
 
 ## Resources
 

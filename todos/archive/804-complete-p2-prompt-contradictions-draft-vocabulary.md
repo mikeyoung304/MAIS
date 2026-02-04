@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: 804
 tags: [code-review, agent, prompt-engineering]
@@ -48,7 +48,7 @@ Based on `hasDraft` returned by tools:
 
 ## Proposed Solutions
 
-### Option A: Change Draft State Communication (Recommended)
+### Option A: Change Draft State Communication (Recommended) - IMPLEMENTED
 
 **Pros:** Keeps forbidden words rule intact, maintains non-technical voice
 **Cons:** Requires finding good alternatives
@@ -81,7 +81,7 @@ Remove "draft" from forbidden list but keep other terms.
 
 ## Recommended Action
 
-<!-- Filled during triage -->
+Option A implemented - changed "Draft System" to "Preview vs Live" and updated all agent communication patterns.
 
 ## Technical Details
 
@@ -93,15 +93,33 @@ Remove "draft" from forbidden list but keep other terms.
 
 ## Acceptance Criteria
 
-- [ ] No contradictions between forbidden words and required phrases
-- [ ] Agent consistently uses approved vocabulary
-- [ ] Draft state is communicated (if needed) using natural language
+- [x] No contradictions between forbidden words and required phrases
+- [x] Agent consistently uses approved vocabulary
+- [x] Draft state is communicated (if needed) using natural language
 
 ## Work Log
 
-| Date       | Action                                    | Learnings                                |
-| ---------- | ----------------------------------------- | ---------------------------------------- |
-| 2026-01-31 | Identified during multi-agent code review | Prompt contains self-contradicting rules |
+| Date       | Action                                      | Learnings                                                                                                    |
+| ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 2026-01-31 | Identified during multi-agent code review   | Prompt contains self-contradicting rules                                                                     |
+| 2026-02-04 | Implemented Option A - natural language fix | Use "preview" instead of "draft" for user-facing communication; "first draft" is acceptable natural language |
+
+## Resolution Summary
+
+Updated `server/src/agent-v2/deploy/tenant/src/prompts/system.ts`:
+
+1. Renamed section header: "Draft System (CRITICAL for Trust)" → "Preview vs Live (CRITICAL for Trust)"
+2. Updated all agent response patterns:
+   - "Updated in draft" → "Updated. Check the preview"
+   - "Saved in draft" → "Saved to preview"
+   - "Ready to publish?" → "Ready to go live?"
+3. Updated internal documentation comments:
+   - "goes to draft" → "goes to preview"
+   - "draft visibility" → "preview only"
+4. Kept "first draft" terminology as it's natural language (like an author's first draft)
+5. Kept Forbidden Words Reference table which maps `draft mode` → `preview / unpublished changes`
+
+The API still returns `visibility: 'draft'` but the agent now speaks in natural language to users.
 
 ## Resources
 

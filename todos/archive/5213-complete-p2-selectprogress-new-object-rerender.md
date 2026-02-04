@@ -1,9 +1,10 @@
 ---
-status: ready
+status: complete
 priority: p2
 issue_id: '5213'
 tags: [code-review, performance, zustand, guided-refinement]
 dependencies: []
+completed: '2026-02-04'
 ---
 
 # P2: selectProgress Creates New Object on Every Call

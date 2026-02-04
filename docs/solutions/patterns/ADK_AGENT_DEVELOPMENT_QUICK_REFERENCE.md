@@ -152,6 +152,32 @@ execute: async (params, context) => {
 };
 ```
 
+#### Exception: Agent-Native Copy Generation
+
+The `generate_copy` and `improve_section_copy` tools in `marketing.ts` intentionally return
+instructions for the LLM rather than actual content. This is an **approved architectural
+exception** for copy/text generation because:
+
+1. **Eliminates backend round-trip** - The agent already runs on Vertex AI with Gemini access;
+   calling the backend to invoke Vertex AI again is redundant
+2. **Leverages native LLM capabilities** - Copy generation IS what the LLM is best at;
+   having it generate copy directly is more natural than wrapping it in a backend call
+3. **Explicitly handled in system prompt** - The tenant-agent system prompt instructs the
+   agent to use these instructions to generate copy, then call `update_section` to apply it
+
+**This pattern is ONLY acceptable for:**
+
+- Marketing copy generation (`generate_copy`)
+- Copy improvement (`improve_section_copy`)
+
+**This pattern is NOT acceptable for:**
+
+- Data retrieval (must return actual data)
+- State mutations (must perform the action and return result)
+- External API calls (must make the call and return response)
+
+See `server/src/agent-v2/deploy/tenant/src/tools/marketing.ts` for implementation.
+
 ### 6. Call Security Functions, Don't Just Define Them
 
 ```typescript

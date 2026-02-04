@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p1
 issue_id: 802
 tags: [code-review, agent, security, pitfall-45]
@@ -64,7 +64,7 @@ Add validation before the API call that throws if secret is missing.
 
 ## Recommended Action
 
-<!-- Filled during triage -->
+**Implemented Option A** - Using `requireEnv()` for fail-fast behavior.
 
 ## Technical Details
 
@@ -76,15 +76,16 @@ Add validation before the API call that throws if secret is missing.
 
 ## Acceptance Criteria
 
-- [ ] `INTERNAL_API_SECRET` accessed via `requireEnv()`
-- [ ] Agent fails fast at startup if secret is missing
-- [ ] No silent auth failures possible from missing env var
+- [x] `INTERNAL_API_SECRET` accessed via `requireEnv()`
+- [x] Agent fails fast at startup if secret is missing
+- [x] No silent auth failures possible from missing env var
 
 ## Work Log
 
 | Date       | Action                                    | Learnings                              |
 | ---------- | ----------------------------------------- | -------------------------------------- |
 | 2026-01-31 | Identified during multi-agent code review | Pitfall #45 violation in vocabulary.ts |
+| 2026-02-04 | Fixed: requireEnv() now used              | Already fixed in prior commit          |
 
 ## Resources
 

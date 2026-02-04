@@ -1,5 +1,5 @@
 ---
-status: ready
+status: complete
 priority: p3
 issue_id: '5217'
 tags: [code-review, quality, error-handling, guided-refinement]
@@ -85,15 +85,16 @@ Add `.catch()` handler that logs to `logger.error()` with context. Maintains fir
 
 ## Acceptance Criteria
 
-- [ ] Errors from registeredSender are caught
-- [ ] Errors are logged with context
-- [ ] No unhandled promise rejections
+- [x] Errors from registeredSender are caught
+- [x] Errors are logged with context
+- [x] No unhandled promise rejections
 
 ## Work Log
 
 | Date       | Action                   | Learnings                           |
 | ---------- | ------------------------ | ----------------------------------- |
 | 2026-02-04 | Created from code review | Identified by code-quality reviewer |
+| 2026-02-04 | Implemented Option A     | Added .catch() with logger.error()  |
 
 ## Resources
 

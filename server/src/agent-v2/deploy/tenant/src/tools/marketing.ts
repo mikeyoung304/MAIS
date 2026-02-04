@@ -13,6 +13,26 @@
  * OLD: Agent → Backend → Vertex AI → Response (broken - routes didn't exist)
  * NEW: Agent (on Vertex AI) → generates copy directly (no backend needed)
  *
+ * ============================================================================
+ * IMPORTANT: INTENTIONAL EXCEPTION TO PITFALL #47
+ * ============================================================================
+ * These tools return INSTRUCTIONS for the LLM, not concrete results.
+ * This violates Pitfall #47 ("Tools return instructions") but is an APPROVED
+ * architectural exception because:
+ *
+ * 1. The agent already runs on Vertex AI with Gemini access - calling the
+ *    backend to invoke Vertex AI again would be redundant
+ * 2. Copy generation IS what the LLM is best at - having it generate copy
+ *    directly is more natural than wrapping it in a backend call
+ * 3. The system prompt explicitly instructs the agent to use these instructions
+ *    to generate copy, then call `update_section` to apply it
+ *
+ * DO NOT "fix" this by adding backend copy generation routes. This is by design.
+ *
+ * @see docs/solutions/patterns/ADK_AGENT_DEVELOPMENT_QUICK_REFERENCE.md
+ *      (Exception: Agent-Native Copy Generation)
+ * ============================================================================
+ *
  * Migrated from: marketing-agent (Phase 2c)
  * Redesigned: 2026-01-31 (agent-native approach)
  * @see docs/issues/2026-01-31-tenant-agent-testing-issues.md

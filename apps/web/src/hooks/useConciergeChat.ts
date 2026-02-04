@@ -1,16 +1,20 @@
 /**
- * useConciergeChat - Chat logic for the Vertex AI Concierge agent
+ * useConciergeChat - Chat logic for the Tenant Agent (Cloud Run)
  *
- * This hook connects to the Concierge agent that orchestrates specialist agents:
- * - Marketing Agent (headlines, copy, taglines)
- * - Storefront Agent (layout, sections, branding)
- * - Research Agent (competitors, market analysis)
+ * This hook connects to the unified tenant-agent that handles all tenant-facing operations:
+ * - Storefront editing and content management
+ * - Marketing content generation (headlines, copy, taglines)
+ * - Project management and client communication
+ *
+ * Note: File/export names retained as "Concierge" for backwards compatibility.
+ * The actual backend is the unified `tenant-agent` on Cloud Run.
+ * See SERVICE_REGISTRY.md for current agent architecture.
  *
  * Key differences from legacy useAgentChat:
  * - Uses /api/tenant-admin/agent/* endpoints (not /api/agent/*)
- * - Concierge returns tool calls with specialist delegations
+ * - Tenant-agent returns tool calls with dashboard actions
  * - Session management is explicit (POST /session first)
- * - Response format: { response, sessionId, toolCalls }
+ * - Response format: { response, sessionId, toolCalls, dashboardActions }
  *
  * @example
  * ```tsx
@@ -44,7 +48,8 @@ export interface ConciergeMessage {
 }
 
 /**
- * Tool call from the Concierge (specialist delegation or direct action)
+ * Tool call from the tenant-agent (storefront/marketing actions)
+ * Note: Type name retained as "Concierge" for backwards compatibility.
  */
 export interface ConciergeToolCall {
   name: string;
@@ -91,9 +96,10 @@ export interface DashboardAction {
 }
 
 /**
- * Configuration options for useConciergeChat
+ * Configuration options for useConciergeChat (tenant-agent chat hook)
+ * Note: Type name retained as "Concierge" for backwards compatibility.
  */
-export interface UseConciergeChatchatOptions {
+export interface UseConciergeChatOptions {
   /** Initial greeting message */
   initialGreeting?: string;
   /** Callback when session starts */
@@ -107,9 +113,10 @@ export interface UseConciergeChatchatOptions {
 }
 
 /**
- * Return type for useConciergeChat hook
+ * Return type for useConciergeChat hook (tenant-agent chat)
+ * Note: Type name retained as "Concierge" for backwards compatibility.
  */
-export interface UseConciergeChatchatReturn {
+export interface UseConciergeChatReturn {
   // State
   messages: ConciergeMessage[];
   inputValue: string;
@@ -142,13 +149,16 @@ export interface UseConciergeChatchatReturn {
 }
 
 /**
- * useConciergeChat - Core chat logic for Vertex AI Concierge agent
+ * useConciergeChat - Core chat logic for Tenant Agent (Cloud Run)
  *
  * Handles:
- * - Session initialization
+ * - Session initialization with tenant-agent backend
  * - Message sending with optimistic UI updates
- * - Tool call tracking for specialist delegations
+ * - Tool call tracking for storefront and marketing actions
+ * - Dashboard action processing (navigation, preview, guided refinement)
  * - Auto-scroll on new messages
+ *
+ * Note: Function name retained as "Concierge" for backwards compatibility.
  */
 export function useConciergeChat({
   initialGreeting = "Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?",
@@ -156,7 +166,7 @@ export function useConciergeChat({
   onToolComplete,
   onDashboardActions,
   onFirstMessage,
-}: UseConciergeChatchatOptions = {}): UseConciergeChatchatReturn {
+}: UseConciergeChatOptions = {}): UseConciergeChatReturn {
   // Core state
   const [messages, setMessages] = useState<ConciergeMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -187,7 +197,7 @@ export function useConciergeChat({
   }, [messages, scrollToBottom]);
 
   /**
-   * Initialize session with the Concierge
+   * Initialize session with the tenant-agent
    * Restores existing session from localStorage if available, otherwise creates new one
    */
   const initializeSession = useCallback(async () => {
@@ -309,107 +319,10 @@ export function useConciergeChat({
   }, [initializeSession]);
 
   /**
-   * Send a message to the Concierge agent
+   * Core message sending logic shared by sendMessage and sendProgrammaticMessage.
+   * Handles API call, optimistic updates, tool calls, and dashboard actions.
    */
-  const sendMessage = useCallback(async () => {
-    const message = inputValue.trim();
-    if (!message || isLoading || !sessionId) return;
-
-    // Track first message
-    if (!hasSentFirstMessage) {
-      setHasSentFirstMessage(true);
-      onFirstMessage?.();
-    }
-
-    setInputValue('');
-    setError(null);
-    setIsLoading(true);
-
-    // Add user message optimistically
-    const userMessage: ConciergeMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const response = await fetch(`${API_URL}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          sessionId,
-          version, // Required for optimistic locking (Pitfall #69)
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to send message');
-      }
-
-      const data = await response.json();
-
-      // Update version for optimistic locking (Pitfall #69)
-      if (data.version !== undefined) {
-        setVersion(data.version);
-        try {
-          localStorage.setItem(VERSION_STORAGE_KEY, String(data.version));
-        } catch {
-          // Ignore localStorage errors
-        }
-      }
-
-      // Extract tool calls if present
-      const toolCalls: ConciergeToolCall[] = data.toolCalls || [];
-      setLastToolCalls(toolCalls);
-
-      // Extract dashboard actions (navigation, scroll, preview commands)
-      const dashboardActions: DashboardAction[] = data.dashboardActions || [];
-
-      // Add assistant message
-      const assistantMessage: ConciergeMessage = {
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Notify about tool completion
-      if (toolCalls.length > 0) {
-        onToolComplete?.(toolCalls);
-      }
-
-      // Process dashboard actions (UI navigation commands from agent)
-      if (dashboardActions.length > 0) {
-        onDashboardActions?.(dashboardActions);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
-    }
-  }, [
-    inputValue,
-    isLoading,
-    sessionId,
-    version,
-    hasSentFirstMessage,
-    onFirstMessage,
-    onToolComplete,
-    onDashboardActions,
-  ]);
-
-  /**
-   * Send a message programmatically (for external components like SectionWidget)
-   * This bypasses the input field and sends directly.
-   */
-  const sendProgrammaticMessage = useCallback(
+  const sendMessageCore = useCallback(
     async (message: string) => {
       if (!message.trim() || isLoading || !sessionId) return;
 
@@ -439,7 +352,7 @@ export function useConciergeChat({
           body: JSON.stringify({
             message,
             sessionId,
-            version,
+            version, // Required for optimistic locking (Pitfall #69)
           }),
         });
 
@@ -450,7 +363,7 @@ export function useConciergeChat({
 
         const data = await response.json();
 
-        // Update version for optimistic locking
+        // Update version for optimistic locking (Pitfall #69)
         if (data.version !== undefined) {
           setVersion(data.version);
           try {
@@ -464,7 +377,7 @@ export function useConciergeChat({
         const toolCalls: ConciergeToolCall[] = data.toolCalls || [];
         setLastToolCalls(toolCalls);
 
-        // Extract dashboard actions
+        // Extract dashboard actions (navigation, scroll, preview commands)
         const dashboardActions: DashboardAction[] = data.dashboardActions || [];
 
         // Add assistant message
@@ -481,7 +394,7 @@ export function useConciergeChat({
           onToolComplete?.(toolCalls);
         }
 
-        // Process dashboard actions
+        // Process dashboard actions (UI navigation commands from agent)
         if (dashboardActions.length > 0) {
           onDashboardActions?.(dashboardActions);
         }
@@ -501,6 +414,24 @@ export function useConciergeChat({
       onDashboardActions,
     ]
   );
+
+  /**
+   * Send a message to the tenant-agent.
+   * Reads from inputValue, clears the input, sends the message, then focuses the input.
+   */
+  const sendMessage = useCallback(async () => {
+    const message = inputValue.trim();
+    if (!message) return;
+    setInputValue('');
+    await sendMessageCore(message);
+    inputRef.current?.focus();
+  }, [inputValue, sendMessageCore]);
+
+  /**
+   * Send a message programmatically (for external components like SectionWidget).
+   * This bypasses the input field and sends directly.
+   */
+  const sendProgrammaticMessage = sendMessageCore;
 
   // Handle textarea enter key
   const handleKeyDown = useCallback(

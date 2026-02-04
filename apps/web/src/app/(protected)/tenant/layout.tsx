@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -53,7 +53,6 @@ const queryClient = new QueryClient({
  * Agent Panel state is managed internally by AgentPanel component.
  */
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
-  const [isMounted, setIsMounted] = useState(false);
   const { tenantId } = useAuth();
   const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
   const localQueryClient = useQueryClient();
@@ -139,10 +138,6 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, isPreviewActive, showDashboard]);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   // Initialize agent UI store with tenant ID (security isolation)
   useEffect(() => {
     if (tenantId) {
@@ -180,8 +175,7 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   }, [handleKeyDown]);
 
   // Always push content since panel is always visible (just may be collapsed)
-  // Default to pushed during SSR to prevent hydration mismatch
-  const shouldPushContent = isMounted ? true : true;
+  const shouldPushContent = true;
 
   return (
     <div className="min-h-screen bg-surface">

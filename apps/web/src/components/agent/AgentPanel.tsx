@@ -175,7 +175,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
     };
   }, [isMobileOpen, isMobile]);
 
-  // Handle UI actions from Concierge agent tool calls (legacy - from tool name matching)
+  // Handle UI actions from tenant-agent tool calls (legacy - from tool name matching)
+  // Note: Function name retained as "Concierge" for backwards compatibility
   const handleConciergeUIAction = useCallback((action: ConciergeUIAction) => {
     switch (action.type) {
       case 'SHOW_PREVIEW':
@@ -288,9 +289,10 @@ export function AgentPanel({ className }: AgentPanelProps) {
     [queryClient]
   );
 
-  // Handle Concierge tool completion (triggers preview refresh for storefront changes)
+  // Handle tenant-agent tool completion (triggers preview refresh for storefront changes)
   // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
   // Fix #818: Make async and add 100ms delay before invalidation to allow transaction commit
+  // Note: Function name retained as "Concierge" for backwards compatibility
   const handleConciergeToolComplete = useCallback(
     async (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
       // Check if any tool call modified storefront content

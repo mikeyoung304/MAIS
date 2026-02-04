@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
+import { useShallow } from 'zustand/shallow';
 import { Check, CheckCircle2, RefreshCw, Loader2, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,10 +27,10 @@ import {
   selectCurrentVariants,
   selectIsLoading,
   selectError,
-  selectProgress,
   selectIsWidgetVisible,
   selectIsSectionComplete,
   type ToneVariant,
+  type RefinementState,
 } from '@/stores/refinement-store';
 
 // ============================================
@@ -88,7 +89,17 @@ export function SectionWidget({
   const variants = useRefinementStore(selectCurrentVariants);
   const isLoading = useRefinementStore(selectIsLoading);
   const error = useRefinementStore(selectError);
-  const progress = useRefinementStore(selectProgress);
+
+  // Use useShallow to prevent re-renders when object reference changes but values are the same
+  // See: Pitfall #96 - Zustand selector new object re-renders
+  const progress = useRefinementStore(
+    useShallow((state: RefinementState) => ({
+      completed: state.completedSections.length,
+      total: state.totalSections,
+    }))
+  );
+  // Calculate percentage in component (derived from primitives)
+  const progressPercentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
 
   // Check if current section is complete
   const isCurrentComplete = useRefinementStore(
@@ -326,7 +337,7 @@ export function SectionWidget({
       <div className="h-1 bg-gray-100">
         <div
           className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
-          style={{ width: `${progress.percentage}%` }}
+          style={{ width: `${progressPercentage}%` }}
           role="progressbar"
           aria-valuenow={progress.completed}
           aria-valuemin={0}

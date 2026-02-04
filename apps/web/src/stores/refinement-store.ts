@@ -249,10 +249,6 @@ export const useRefinementStore = create<RefinementState>()(
             if (!state.completedSections.includes(sectionId)) {
               state.completedSections.push(sectionId);
             }
-            // Mark variant set as having a selection (preserve selected variant)
-            if (state.sectionVariants[sectionId]) {
-              // Keep the selected variant
-            }
             // Check if all complete
             if (state.completedSections.length >= state.totalSections) {
               state.mode = 'publish_ready';
@@ -260,6 +256,9 @@ export const useRefinementStore = create<RefinementState>()(
             }
           }),
 
+        /**
+         * @reserved For future "undo section approval" feature
+         */
         unmarkComplete: (sectionId) =>
           set((state) => {
             state.completedSections = state.completedSections.filter((id) => id !== sectionId);
@@ -301,10 +300,7 @@ export const useRefinementStore = create<RefinementState>()(
             if (data.totalSections !== undefined) {
               state.totalSections = data.totalSections;
             }
-            if (data.completedSections !== undefined) {
-              // Convert count to empty array (we don't have the IDs from hint)
-              // The actual IDs will come from subsequent tool calls
-            }
+            // Note: completedSections count is accepted but IDs come from subsequent tool calls
             if (data.currentSectionId !== undefined) {
               state.currentSectionId = data.currentSectionId;
             }

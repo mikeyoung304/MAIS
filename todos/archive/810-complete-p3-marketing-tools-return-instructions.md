@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: 810
 tags: [code-review, agent, architecture, documentation]
@@ -75,15 +75,16 @@ Add exception clause to:
 
 ## Acceptance Criteria
 
-- [ ] ADK Quick Reference documents the agent-native exception
-- [ ] marketing.ts comments explain why this pattern is used
-- [ ] Future developers won't "fix" this as a bug
+- [x] ADK Quick Reference documents the agent-native exception
+- [x] marketing.ts comments explain why this pattern is used
+- [x] Future developers won't "fix" this as a bug
 
 ## Work Log
 
-| Date       | Action                                  | Learnings                                 |
-| ---------- | --------------------------------------- | ----------------------------------------- |
-| 2026-01-31 | Identified during ADK compliance review | Intentional exception needs documentation |
+| Date       | Action                                  | Learnings                                   |
+| ---------- | --------------------------------------- | ------------------------------------------- |
+| 2026-01-31 | Identified during ADK compliance review | Intentional exception needs documentation   |
+| 2026-02-04 | Documented exception in both locations  | Clear documentation prevents future "fixes" |
 
 ## Resources
 

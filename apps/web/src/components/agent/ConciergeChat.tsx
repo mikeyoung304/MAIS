@@ -13,8 +13,9 @@ import { registerAgentSender } from '@/lib/tenant-agent-dispatch';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 
 /**
- * UI Action from Concierge tool calls
- * Maps specialist agent actions to UI updates
+ * UI Action from tenant-agent tool calls
+ * Maps agent actions to UI updates (preview, navigation, highlighting)
+ * Note: Type name retained as "Concierge" for backwards compatibility.
  */
 export interface ConciergeUIAction {
   type: 'SHOW_PREVIEW' | 'SHOW_DASHBOARD' | 'HIGHLIGHT_SECTION' | 'REFRESH_PREVIEW';
@@ -42,17 +43,21 @@ interface ConciergeChatProps {
 }
 
 /**
- * ConciergeChat - Chat interface for Vertex AI Concierge agent
+ * ConciergeChat - Chat interface for Tenant Agent (Cloud Run)
  *
- * This component connects to the Concierge orchestrator that delegates to:
- * - Marketing Agent: headlines, copy, taglines
- * - Storefront Agent: layout changes, branding
- * - Research Agent: competitor analysis, market research
+ * This component connects to the unified tenant-agent that handles:
+ * - Storefront editing: layout changes, section updates, branding
+ * - Marketing content: headlines, copy, taglines
+ * - Project management: client communication, task tracking
  *
  * Features:
  * - Real-time tool call visualization
- * - Specialist agent activity indicators
+ * - Activity indicators for tool execution
  * - Integration with preview panel via callbacks
+ * - Dashboard action processing (navigation, scroll, guided refinement)
+ *
+ * Note: Component name retained as "Concierge" for backwards compatibility.
+ * See SERVICE_REGISTRY.md for current agent architecture.
  */
 export function ConciergeChat({
   welcomeMessage = "Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?",
@@ -290,7 +295,8 @@ export function ConciergeChat({
 }
 
 /**
- * ToolCallBadge - Visual indicator for specialist agent delegation
+ * ToolCallBadge - Visual indicator for tenant-agent tool execution
+ * Shows which category of tool is being executed (marketing, storefront, research)
  */
 function ToolCallBadge({ toolCall }: { toolCall: ConciergeToolCall }) {
   // Determine agent type from tool name
