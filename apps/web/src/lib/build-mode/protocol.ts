@@ -11,7 +11,7 @@
  */
 
 import { z } from 'zod';
-import { PAGE_NAMES, PagesConfigSchema, BlockTypeSchema } from '@macon/contracts';
+import { PAGE_NAMES, PagesConfigSchema } from '@macon/contracts';
 import { logger } from '@/lib/logger';
 
 // ============================================================================
@@ -39,18 +39,6 @@ export const BuildModeConfigUpdateSchema = z.object({
 });
 
 /**
- * Highlight section message - sent to highlight a specific section by index
- * @deprecated Use BUILD_MODE_HIGHLIGHT_SECTION_BY_ID for more reliable targeting
- */
-export const BuildModeHighlightSectionSchema = z.object({
-  type: z.literal('BUILD_MODE_HIGHLIGHT_SECTION'),
-  data: z.object({
-    pageId: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
-    sectionIndex: z.number().int().min(0),
-  }),
-});
-
-/**
  * Highlight section by ID message - sent to highlight a specific section by its stable ID
  *
  * Preferred over BUILD_MODE_HIGHLIGHT_SECTION because:
@@ -73,50 +61,13 @@ export const BuildModeClearHighlightSchema = z.object({
 });
 
 /**
- * Section update message - sent when a single section changes (Phase 4)
- *
- * More efficient than BUILD_MODE_CONFIG_UPDATE for granular updates.
- * Enables real-time preview without refreshing the entire page config.
- */
-export const BuildModeSectionUpdateSchema = z.object({
-  type: z.literal('BUILD_MODE_SECTION_UPDATE'),
-  data: z.object({
-    sectionId: z.string().min(1).max(50),
-    blockType: BlockTypeSchema,
-    content: z.unknown(), // Content varies by blockType
-    action: z.enum(['create', 'update', 'delete']),
-    pageName: z.string().min(1).max(50).optional(),
-    order: z.number().int().min(0).optional(),
-  }),
-});
-
-/**
- * Publish notification - sent when sections are published
- *
- * Allows iframe to update UI indicators (e.g., remove draft badges)
- * without refetching all content.
- */
-export const BuildModePublishNotificationSchema = z.object({
-  type: z.literal('BUILD_MODE_PUBLISH_NOTIFICATION'),
-  data: z.object({
-    /** If provided, only this section was published. Otherwise, all sections. */
-    sectionId: z.string().min(1).max(50).optional(),
-    publishedAt: z.string(), // ISO datetime
-    publishedCount: z.number().int().min(0).optional(),
-  }),
-});
-
-/**
  * Union of all parent → iframe messages
  */
 export const BuildModeParentMessageSchema = z.discriminatedUnion('type', [
   BuildModeInitSchema,
   BuildModeConfigUpdateSchema,
-  BuildModeHighlightSectionSchema,
   BuildModeHighlightSectionByIdSchema,
   BuildModeClearHighlightSchema,
-  BuildModeSectionUpdateSchema,
-  BuildModePublishNotificationSchema,
 ]);
 
 export type BuildModeParentMessage = z.infer<typeof BuildModeParentMessageSchema>;
@@ -130,19 +81,6 @@ export type BuildModeParentMessage = z.infer<typeof BuildModeParentMessageSchema
  */
 export const BuildModeReadySchema = z.object({
   type: z.literal('BUILD_MODE_READY'),
-});
-
-/**
- * Section edit message - sent when user edits text inline
- */
-export const BuildModeSectionEditSchema = z.object({
-  type: z.literal('BUILD_MODE_SECTION_EDIT'),
-  data: z.object({
-    pageId: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
-    sectionIndex: z.number().int().min(0),
-    field: z.string().min(1).max(50),
-    value: z.string().max(10000), // Max 10KB for rich text
-  }),
 });
 
 /**
@@ -167,33 +105,12 @@ export const BuildModePageChangeSchema = z.object({
 });
 
 /**
- * Section rendered message - sent when a section finishes rendering (Phase 4)
- *
- * Confirms to parent that a section update was applied and rendered.
- * Useful for:
- * - Scroll-to-section after agent edits
- * - Performance monitoring
- * - Coordination between parent and iframe state
- */
-export const BuildModeSectionRenderedSchema = z.object({
-  type: z.literal('BUILD_MODE_SECTION_RENDERED'),
-  data: z.object({
-    sectionId: z.string().min(1).max(50),
-    blockType: z.string().min(1).max(20),
-    /** Time in ms since section update was received */
-    renderTime: z.number().int().min(0).optional(),
-  }),
-});
-
-/**
  * Union of all iframe → parent messages
  */
 export const BuildModeChildMessageSchema = z.discriminatedUnion('type', [
   BuildModeReadySchema,
-  BuildModeSectionEditSchema,
   BuildModeSectionSelectedSchema,
   BuildModePageChangeSchema,
-  BuildModeSectionRenderedSchema,
 ]);
 
 export type BuildModeChildMessage = z.infer<typeof BuildModeChildMessageSchema>;

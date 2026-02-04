@@ -1,43 +1,16 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import type { PagesConfig, PageName, SectionContentDto, BlockType } from '@macon/contracts';
+import type { PagesConfig, PageName } from '@macon/contracts';
 import { parseParentMessage, sendToParent, isSameOrigin } from '@/lib/build-mode/protocol';
-
-/**
- * Section update data from BUILD_MODE_SECTION_UPDATE message
- */
-export interface SectionUpdateData {
-  sectionId: string;
-  blockType: BlockType;
-  content: unknown;
-  action: 'create' | 'update' | 'delete';
-  pageName?: string;
-  order?: number;
-}
-
-/**
- * Publish notification data from BUILD_MODE_PUBLISH_NOTIFICATION message
- */
-export interface PublishNotificationData {
-  sectionId?: string;
-  publishedAt: string;
-  publishedCount?: number;
-}
 
 interface UseBuildModeSyncOptions {
   /** Whether this component should listen for Build Mode messages */
   enabled?: boolean;
   /** Initial pages config (used if not in Build Mode) */
   initialConfig?: PagesConfig | null;
-  /** Initial sections (for section-based rendering) */
-  initialSections?: SectionContentDto[] | null;
-  /** Callback when config changes (legacy full-config updates) */
+  /** Callback when config changes */
   onConfigChange?: (config: PagesConfig) => void;
-  /** Callback when a single section updates (Phase 4 granular updates) */
-  onSectionUpdate?: (data: SectionUpdateData) => void;
-  /** Callback when sections are published */
-  onPublishNotification?: (data: PublishNotificationData) => void;
 }
 
 interface UseBuildModeSyncResult {
@@ -46,9 +19,6 @@ interface UseBuildModeSyncResult {
 
   /** Current draft config (may be updated by parent) */
   draftConfig: PagesConfig | null;
-
-  /** Current sections array (Phase 4 section-based state) */
-  sections: SectionContentDto[] | null;
 
   /** Currently highlighted section index */
   highlightedSection: number | null;
@@ -62,23 +32,11 @@ interface UseBuildModeSyncResult {
   /** Whether handshake timed out */
   hasTimedOut: boolean;
 
-  /** Whether there are unpublished changes */
-  hasDraft: boolean;
-
-  /** Last publish timestamp (if any) */
-  lastPublishedAt: string | null;
-
   /** Notify parent of section selection */
   selectSection: (pageId: PageName, sectionIndex: number) => void;
 
-  /** Notify parent of inline text edit */
-  editSection: (pageId: PageName, sectionIndex: number, field: string, value: string) => void;
-
   /** Notify parent of page navigation */
   notifyPageChange: (pageId: PageName) => void;
-
-  /** Notify parent that a section has finished rendering (Phase 4) */
-  notifySectionRendered: (sectionId: string, blockType: string, renderTime?: number) => void;
 }
 
 /**
@@ -87,13 +45,12 @@ interface UseBuildModeSyncResult {
  * Handles:
  * - Detecting if running in Build Mode iframe
  * - Receiving config updates from parent
- * - Sending edit events to parent
  * - Managing highlighted section state
  *
  * Usage in storefront page:
  * ```tsx
  * const { isEditMode, draftConfig, highlightedSection, selectSection } = useBuildModeSync({
- *   enabled: isPreviewMode,
+ *   enabled: true,
  *   initialConfig: tenant.landingPageConfig?.pages,
  * });
  *
@@ -140,38 +97,22 @@ function removeUpdateFeedback() {
 export function useBuildModeSync({
   enabled = true,
   initialConfig = null,
-  initialSections = null,
   onConfigChange,
-  onSectionUpdate,
-  onPublishNotification,
 }: UseBuildModeSyncOptions = {}): UseBuildModeSyncResult {
   const [isEditMode, setIsEditMode] = useState(false);
   const [draftConfig, setDraftConfig] = useState<PagesConfig | null>(initialConfig);
-  const [sections, setSections] = useState<SectionContentDto[] | null>(initialSections);
   const [highlightedSection, setHighlightedSection] = useState<number | null>(null);
   const [highlightedSectionId, setHighlightedSectionId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [hasTimedOut, setHasTimedOut] = useState(false);
-  const [hasDraft, setHasDraft] = useState(false);
-  const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
 
-  // Refs for callbacks to avoid stale closures
+  // Ref for callback to avoid stale closures
   const onConfigChangeRef = useRef(onConfigChange);
-  const onSectionUpdateRef = useRef(onSectionUpdate);
-  const onPublishNotificationRef = useRef(onPublishNotification);
 
-  // Keep callback refs up to date
+  // Keep callback ref up to date
   useEffect(() => {
     onConfigChangeRef.current = onConfigChange;
   }, [onConfigChange]);
-
-  useEffect(() => {
-    onSectionUpdateRef.current = onSectionUpdate;
-  }, [onSectionUpdate]);
-
-  useEffect(() => {
-    onPublishNotificationRef.current = onPublishNotification;
-  }, [onPublishNotification]);
 
   // Check if we're in an iframe with edit query param
   // Implements retry logic for robust handshake with parent
@@ -261,16 +202,6 @@ export function useBuildModeSync({
           });
           break;
 
-        case 'BUILD_MODE_HIGHLIGHT_SECTION': {
-          setHighlightedSection(message.data.sectionIndex);
-          // Scroll section into view
-          const sectionEl = document.querySelector(
-            `[data-section-index="${message.data.sectionIndex}"]`
-          );
-          sectionEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          break;
-        }
-
         case 'BUILD_MODE_HIGHLIGHT_SECTION_BY_ID': {
           // ID-based highlighting - find section by data-section-id attribute
           const sectionByIdEl = document.querySelector(
@@ -295,126 +226,6 @@ export function useBuildModeSync({
           setHighlightedSection(null);
           setHighlightedSectionId(null);
           break;
-
-        case 'BUILD_MODE_SECTION_UPDATE': {
-          // Phase 4: Granular section update
-          const updateData: SectionUpdateData = {
-            sectionId: message.data.sectionId,
-            blockType: message.data.blockType,
-            content: message.data.content,
-            action: message.data.action,
-            pageName: message.data.pageName,
-            order: message.data.order,
-          };
-
-          // Update local sections state
-          setSections((prev) => {
-            if (!prev) return prev;
-
-            switch (updateData.action) {
-              case 'create': {
-                // Add new section at the right position
-                const newSection: SectionContentDto = {
-                  id: updateData.sectionId,
-                  tenantId: '', // Will be filled by parent
-                  segmentId: null,
-                  blockType: updateData.blockType,
-                  pageName: updateData.pageName || 'home',
-                  content: updateData.content,
-                  order: updateData.order ?? prev.length,
-                  isDraft: true,
-                  publishedAt: null,
-                  versions: [],
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                };
-                return [...prev, newSection].sort((a, b) => a.order - b.order);
-              }
-
-              case 'update':
-                return prev.map((s) =>
-                  s.id === updateData.sectionId
-                    ? {
-                        ...s,
-                        content: updateData.content,
-                        isDraft: true,
-                        updatedAt: new Date().toISOString(),
-                      }
-                    : s
-                );
-
-              case 'delete':
-                return prev.filter((s) => s.id !== updateData.sectionId);
-
-              default:
-                return prev;
-            }
-          });
-
-          // Mark as having drafts
-          setHasDraft(true);
-
-          // Add visual feedback for the specific section
-          const sectionEl = document.querySelector(`[data-section-id="${message.data.sectionId}"]`);
-          if (sectionEl) {
-            sectionEl.classList.add('section-updating');
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sectionEl.classList.remove('section-updating');
-                sectionEl.classList.add('section-updated');
-                setTimeout(() => {
-                  sectionEl.classList.remove('section-updated');
-                }, 600);
-              });
-            });
-          }
-
-          // Notify callback
-          onSectionUpdateRef.current?.(updateData);
-          break;
-        }
-
-        case 'BUILD_MODE_PUBLISH_NOTIFICATION': {
-          // Phase 4: Sections published
-          const publishData: PublishNotificationData = {
-            sectionId: message.data.sectionId,
-            publishedAt: message.data.publishedAt,
-            publishedCount: message.data.publishedCount,
-          };
-
-          // Update sections state - mark as published
-          setSections((prev) => {
-            if (!prev) return prev;
-
-            if (publishData.sectionId) {
-              // Single section published
-              return prev.map((s) =>
-                s.id === publishData.sectionId
-                  ? { ...s, isDraft: false, publishedAt: publishData.publishedAt }
-                  : s
-              );
-            } else {
-              // All sections published
-              return prev.map((s) => ({
-                ...s,
-                isDraft: false,
-                publishedAt: publishData.publishedAt,
-              }));
-            }
-          });
-
-          // Update draft state
-          if (!publishData.sectionId) {
-            // All published - no more drafts
-            setHasDraft(false);
-          }
-
-          setLastPublishedAt(publishData.publishedAt);
-
-          // Notify callback
-          onPublishNotificationRef.current?.(publishData);
-          break;
-        }
       }
     };
 
@@ -434,18 +245,6 @@ export function useBuildModeSync({
     [isEditMode]
   );
 
-  // Notify parent of inline text edit
-  const editSection = useCallback(
-    (pageId: PageName, sectionIndex: number, field: string, value: string) => {
-      if (!isEditMode) return;
-      sendToParent({
-        type: 'BUILD_MODE_SECTION_EDIT',
-        data: { pageId, sectionIndex, field, value },
-      });
-    },
-    [isEditMode]
-  );
-
   // Notify parent of page navigation
   const notifyPageChange = useCallback(
     (pageId: PageName) => {
@@ -458,31 +257,14 @@ export function useBuildModeSync({
     [isEditMode]
   );
 
-  // Notify parent that a section has finished rendering (Phase 4)
-  const notifySectionRendered = useCallback(
-    (sectionId: string, blockType: string, renderTime?: number) => {
-      if (!isEditMode) return;
-      sendToParent({
-        type: 'BUILD_MODE_SECTION_RENDERED',
-        data: { sectionId, blockType, renderTime },
-      });
-    },
-    [isEditMode]
-  );
-
   return {
     isEditMode,
     draftConfig,
-    sections,
     highlightedSection,
     highlightedSectionId,
     isReady,
     hasTimedOut,
-    hasDraft,
-    lastPublishedAt,
     selectSection,
-    editSection,
     notifyPageChange,
-    notifySectionRendered,
   };
 }

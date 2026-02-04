@@ -12,11 +12,10 @@ export {
   // Schemas
   BuildModeInitSchema,
   BuildModeConfigUpdateSchema,
-  BuildModeHighlightSectionSchema,
+  BuildModeHighlightSectionByIdSchema,
   BuildModeClearHighlightSchema,
   BuildModeParentMessageSchema,
   BuildModeReadySchema,
-  BuildModeSectionEditSchema,
   BuildModeSectionSelectedSchema,
   BuildModePageChangeSchema,
   BuildModeChildMessageSchema,

@@ -137,7 +137,6 @@ model Tenant {
   domains              TenantDomain[] // Custom domains for tenant website
   agentProposals       AgentProposal[] // AI agent write operation proposals
   agentSessions        AgentSession[] // AI agent chat sessions
-  onboardingEvents     OnboardingEvent[] // Onboarding event sourcing audit trail
   // Agent Evaluation System relations
   conversationTraces   ConversationTrace[] // Agent conversation traces
   agentUsages          AgentUsage[] // Agent token usage tracking
@@ -1020,38 +1019,7 @@ enum SessionType {
   CUSTOMER // Customer using the public booking chatbot
 }
 
-// ============================================================================
-// Onboarding Agent Models (Event Sourcing)
-// ============================================================================
-
-/// OnboardingEvent - Event sourcing model for onboarding agent
-/// Provides audit trail and state reconstruction for tenant onboarding flow.
-/// Each event represents a state transition or data collection milestone.
-///
-/// Event Types:
-/// - DISCOVERY_STARTED: Initial onboarding session started
-/// - DISCOVERY_COMPLETED: Business type, location, target market collected
-/// - MARKET_RESEARCH_STARTED: Market research phase initiated
-/// - MARKET_RESEARCH_COMPLETED: Pricing benchmarks and competitor data collected
-/// - SERVICES_CONFIGURED: Service packages created/updated
-/// - MARKETING_CONFIGURED: Landing page and brand voice configured
-/// - ONBOARDING_COMPLETED: Full onboarding flow completed
-/// - ONBOARDING_SKIPPED: User chose to skip onboarding
-model OnboardingEvent {
-  id        String   @id @default(cuid())
-  tenantId  String // Tenant isolation - CRITICAL
-  eventType String // Discriminated event type (e.g., "discovery_completed")
-  payload   Json // Event-specific payload (validated by Zod)
-  timestamp DateTime @default(now())
-  version   Int // Sequential version for optimistic locking
-
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId, timestamp])
-  @@index([tenantId, version])
-}
-
-/// Onboarding phase enum for state machine
+/// Onboarding phase enum for state machine (still used by Tenant.onboardingPhase)
 enum OnboardingPhase {
   NOT_STARTED // Initial state - no onboarding interaction yet
   DISCOVERY // Collecting business info (type, location, target market)
