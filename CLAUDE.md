@@ -380,6 +380,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 96. Zustand selector returning new object causes re-renders - Selectors that return `{ computed: value }` create a new object on every call; Zustand's shallow comparison sees `{} !== {}` and triggers re-render even when values unchanged; symptom: component re-renders on ANY store update, not just relevant fields; fix: use `useShallow` from `zustand/shallow` OR split into primitive selectors OR use `createSelector` from reselect. See `docs/solutions/react-performance/ZUSTAND_SELECTOR_NEW_OBJECT_PREVENTION.md`
 
+### PostMessage Protocol Pitfalls (97)
+
+97. Dead PostMessage handlers (zombie code) - Handler case statements exist but nothing sends the message type; handlers LOOK used but never execute; symptom: debugging shows unreachable code paths; detection: run `grep` for both sender (`postMessage.*TYPE`) AND handler (`case.*TYPE`) - if handler exists but no sender, it's dead; ~40% of MAIS Build Mode handlers were dead (5 types removed in #821); verify BOTH directions before code review approval. See `docs/solutions/patterns/POSTMESSAGE_QUICK_REFERENCE.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -406,6 +410,8 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[VERTEX-AI-PLAN-RETROSPECTIVE.md](docs/solutions/VERTEX-AI-PLAN-RETROSPECTIVE.md)** - Lessons learned from Phases 1-4
 - **[MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md](docs/solutions/react-performance/MODULE_LEVEL_QUERY_CLIENT_SINGLETON_PREVENTION.md)** - React Query singleton anti-pattern
 - **[ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md](docs/solutions/build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md)** - Clean build before committing deletions
+- **[POSTMESSAGE_QUICK_REFERENCE.md](docs/solutions/patterns/POSTMESSAGE_QUICK_REFERENCE.md)** - Dead PostMessage detection (3-minute audit)
+- **[DEAD_CODE_QUICK_REFERENCE.md](docs/solutions/code-review-patterns/DEAD_CODE_QUICK_REFERENCE.md)** - Sender/receiver bidirectional verification
 
 When you hit an issue:
 
