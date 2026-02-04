@@ -384,6 +384,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 97. Dead PostMessage handlers (zombie code) - Handler case statements exist but nothing sends the message type; handlers LOOK used but never execute; symptom: debugging shows unreachable code paths; detection: run `grep` for both sender (`postMessage.*TYPE`) AND handler (`case.*TYPE`) - if handler exists but no sender, it's dead; ~40% of MAIS Build Mode handlers were dead (5 types removed in #821); verify BOTH directions before code review approval. See `docs/solutions/patterns/POSTMESSAGE_QUICK_REFERENCE.md`
 
+### React Hooks Time-Dependent Pitfalls (98)
+
+98. useMemo stale timer pattern - Using `useMemo` to calculate elapsed time with `Date.now()` but only static dependencies like `[order.created_at]`; timer shows correct initial value then freezes forever because dependency never changes; symptom: "Timer stuck at 0m", "Works after page refresh"; fix: use `useState` + `useEffect` with `setInterval` to create a `now` dependency that updates periodically; ESLint won't catch this (Date.now() inside useMemo is syntactically valid). See `docs/solutions/react-performance/USEMEMO_STALE_TIMER_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
