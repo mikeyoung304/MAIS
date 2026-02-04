@@ -14,7 +14,7 @@
 
 **Tagline:** "The rest is Handled."
 
-**Hero Pattern:** "You're a [profession], so [verb]." — Identity-first marketing that makes visitors feel seen.
+**Hero Pattern:** "Do what you love. The rest is handled." — Universal message that resonates with all service professionals.
 
 ---
 
@@ -175,17 +175,17 @@ The agent should push for best practices but let the user overrule:
 ### Headlines
 
 - **Serif font** (`font-serif`) for warmth
-- **Identity-first** — lead with who they are, not what we do
+- **Universal appeal** — speak to the shared experience of service professionals
 - **Period at the end** for confidence
-- **"The rest is Handled"** as the payoff line
+- **"The rest is handled."** as the payoff line
 
 ```tsx
-// Hero pattern (scrolling identity)
+// Hero pattern (universal)
 <h1 className="font-serif">
-  You're a <ScrollingIdentity />
+  Do what you love.
 </h1>
-<p className="font-serif text-sage">
-  The rest is handled.
+<p className="font-serif text-text-muted">
+  The rest is <span className="text-sage">handled</span>.
 </p>
 
 // Section headlines
@@ -464,12 +464,11 @@ transition-all duration-200
 ### Landing Page Structure
 
 ```
-1. Hero (pt-32 pb-20 md:pt-40 md:pb-32)
-   - Headline: "You're a [scrolling identity], so [verb]."
-   - Tagline: "The rest is handled." (in sage green)
-   - Subheadline: Fragment-style value prop
-   - Primary CTA: "Get Handled" (sage)
-   - Secondary CTA: "See What's Included" (outline)
+1. Hero (min-h-[70vh], centered)
+   - Headline: "Do what you love." (white)
+   - Tagline: "The rest is handled." (muted + sage accent on "handled")
+   - Primary CTA: "Get Started" (teal)
+   - Scroll indicator: "See how it works"
 
 2. Problem (py-32 md:py-40, bg-white)
    - Headline: "You didn't start your business to debug a website."
@@ -716,17 +715,14 @@ Before shipping any new page or component:
 
 ## Examples from HANDLED Landing Page
 
-### Hero (Scrolling Identity Pattern)
+### Hero (Universal Pattern)
 
 ```
-You're a photographer, so capture moments.
-You're a therapist, so hold space.
-You're a coach, so unlock potential.
-
+Do what you love.
 The rest is handled.
 ```
 
-_Why it works: Identity-first, makes them feel SEEN, "so [verb]" gives permission to focus on their craft_
+_Why it works: Universal appeal—every service professional can identify with "doing what they love." No risk of alienating professions not explicitly listed. Clean, confident, memorable._
 
 ### Subheadline
 

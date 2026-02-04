@@ -25,7 +25,7 @@ export function Hero() {
         <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.05] tracking-tight">
           <span className="block">Do what you love.</span>
           <span className="block text-text-muted md:whitespace-nowrap">
-            The rest, is <span className="text-sage">handled</span>.
+            The rest is <span className="text-sage">handled</span>.
           </span>
         </h1>
 
