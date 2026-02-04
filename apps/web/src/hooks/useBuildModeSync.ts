@@ -306,7 +306,7 @@ export function useBuildModeSync({
             if (!prev) return prev;
 
             switch (updateData.action) {
-              case 'create':
+              case 'create': {
                 // Add new section at the right position
                 const newSection: SectionContentDto = {
                   id: updateData.sectionId,
@@ -323,6 +323,7 @@ export function useBuildModeSync({
                   updatedAt: new Date().toISOString(),
                 };
                 return [...prev, newSection].sort((a, b) => a.order - b.order);
+              }
 
               case 'update':
                 return prev.map((s) =>
