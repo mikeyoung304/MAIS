@@ -23,9 +23,8 @@ export function Hero() {
       <div className="relative max-w-4xl mx-auto text-center">
         {/* Headline - universal message */}
         <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-text-primary leading-[1.05] tracking-tight">
-          Do what you love.
-          <br />
-          <span className="text-text-muted">
+          <span className="block">Do what you love.</span>
+          <span className="block text-text-muted md:whitespace-nowrap">
             The rest, is <span className="text-sage">handled</span>.
           </span>
         </h1>
