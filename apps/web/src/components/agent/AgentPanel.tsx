@@ -11,6 +11,7 @@ import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
+import { refinementActions } from '@/stores/refinement-store';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
 import { Drawer } from 'vaul';
@@ -196,6 +197,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
   // Handle dashboard actions from agent navigation tools (new - from backend extraction)
   // Fix #819: Add cache invalidation to SHOW_PREVIEW and REFRESH actions
+  // Guided Refinement: Handle SHOW_VARIANT_WIDGET, SHOW_PUBLISH_READY, HIGHLIGHT_NEXT_SECTION
   const handleDashboardActions = useCallback(
     async (actions: DashboardAction[]) => {
       for (const action of actions) {
@@ -239,6 +241,46 @@ export function AgentPanel({ className }: AgentPanelProps) {
               refetchType: 'active',
             });
             agentUIActions.refreshPreview();
+            break;
+
+          // ========== Guided Refinement Actions ==========
+          // These power the section-by-section editing experience
+
+          case 'SHOW_VARIANT_WIDGET':
+            // Agent has generated tone variants for a section
+            // Update the refinement store with the variants and show the widget
+            if (action.sectionId && action.variants) {
+              refinementActions.setCurrentSection(action.sectionId, action.sectionType);
+              refinementActions.setVariants(
+                action.sectionId,
+                {
+                  professional: action.variants.professional,
+                  premium: action.variants.premium,
+                  friendly: action.variants.friendly,
+                },
+                action.recommendation,
+                action.rationale
+              );
+              refinementActions.setMode('guided_refine');
+              // Also scroll to the section in preview
+              agentUIActions.highlightSection(action.sectionId);
+              agentUIActions.showPreview('home');
+            }
+            break;
+
+          case 'SHOW_PUBLISH_READY':
+            // All sections are complete, ready to publish
+            refinementActions.setMode('publish_ready');
+            refinementActions.setWidgetVisible(true);
+            break;
+
+          case 'HIGHLIGHT_NEXT_SECTION':
+            // Highlight and scroll to the next section to refine
+            if (action.sectionId) {
+              refinementActions.setCurrentSection(action.sectionId, action.sectionType);
+              agentUIActions.highlightSection(action.sectionId);
+              agentUIActions.showPreview('home');
+            }
             break;
         }
       }

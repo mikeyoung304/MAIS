@@ -36,3 +36,30 @@ export {
   getAgentSessionId,
   isAgentSessionValid,
 } from './agent-session-store';
+
+export {
+  // Refinement store hook
+  useRefinementStore,
+  // External actions (for non-React code)
+  refinementActions,
+  // Selectors
+  selectRefinementMode,
+  selectCurrentSectionId,
+  selectCurrentSectionType,
+  selectSectionVariants,
+  selectCurrentVariants,
+  selectIsSectionComplete,
+  selectProgress,
+  selectIsLoading as selectRefinementLoading,
+  selectError as selectRefinementError,
+  selectIsWidgetVisible,
+  selectAllComplete,
+  selectIsInGuidedRefine,
+  selectIsPublishReady,
+  // Types
+  type RefinementMode,
+  type ToneVariant,
+  type VariantContent,
+  type SectionVariants,
+  type RefinementState,
+} from './refinement-store';

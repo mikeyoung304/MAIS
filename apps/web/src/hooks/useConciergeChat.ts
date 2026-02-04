@@ -55,14 +55,39 @@ export interface ConciergeToolCall {
 /**
  * Dashboard action from agent navigation tools
  * These control UI navigation, scrolling, and preview updates
+ *
+ * Guided Refinement actions (added in Phase 5.1):
+ * - SHOW_VARIANT_WIDGET: Display tone variant selection widget
+ * - SHOW_PUBLISH_READY: Show publish-ready state
+ * - HIGHLIGHT_NEXT_SECTION: Highlight and scroll to next section
  */
 export interface DashboardAction {
-  type: 'NAVIGATE' | 'SCROLL_TO_SECTION' | 'SHOW_PREVIEW' | 'REFRESH' | 'REFRESH_PREVIEW';
+  type:
+    | 'NAVIGATE'
+    | 'SCROLL_TO_SECTION'
+    | 'SHOW_PREVIEW'
+    | 'REFRESH'
+    | 'REFRESH_PREVIEW'
+    // Guided Refinement actions
+    | 'SHOW_VARIANT_WIDGET'
+    | 'SHOW_PUBLISH_READY'
+    | 'HIGHLIGHT_NEXT_SECTION';
   section?: string;
   blockType?: string;
-  sectionId?: string; // Used by SCROLL_TO_SECTION from storefront tools
+  sectionId?: string; // Used by SCROLL_TO_SECTION and Guided Refinement
   highlight?: boolean;
   fullScreen?: boolean;
+  // Guided Refinement: variant options for SHOW_VARIANT_WIDGET
+  variants?: {
+    professional: { headline?: string; body?: string; content?: string; subheadline?: string };
+    premium: { headline?: string; body?: string; content?: string; subheadline?: string };
+    friendly: { headline?: string; body?: string; content?: string; subheadline?: string };
+  };
+  // Guided Refinement: AI's recommendation
+  recommendation?: 'professional' | 'premium' | 'friendly';
+  rationale?: string;
+  // Section type for display
+  sectionType?: string;
 }
 
 /**
