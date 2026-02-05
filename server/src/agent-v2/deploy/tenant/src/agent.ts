@@ -86,6 +86,9 @@ import {
   applySectionVariantTool,
   markSectionCompleteTool,
   getNextIncompleteSectionTool,
+
+  // Research Delegation (T1) - Onboarding Market Research
+  delegateToResearchTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,8 +102,8 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 7 (Guided Refinement)
- * Tool count: 33
+ * Current Phase: 7 (Guided Refinement + Research Delegation)
+ * Tool count: 34
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -240,6 +243,15 @@ export const tenantAgent = new LlmAgent({
 
     // T1: Get next section that needs refinement
     getNextIncompleteSectionTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Research Delegation (T1) - Onboarding Market Research
+    // Calls research-agent for competitor pricing and market positioning.
+    // Trigger: When agent has businessType + location during onboarding.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // T1: Delegate market research (async, can continue conversation while waiting)
+    delegateToResearchTool,
   ],
 
   // Lifecycle callbacks for observability

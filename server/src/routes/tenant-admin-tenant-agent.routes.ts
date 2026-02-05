@@ -442,6 +442,9 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       // Get or create session
       let sessionId = providedSessionId;
 
+      // Bootstrap data for context injection - hoisted for access later (P0 fix)
+      let bootstrap: BootstrapData | null = null;
+
       if (!sessionId) {
         // =========================================================================
         // FIX: Create proper ADK session with bootstrap context
@@ -449,7 +452,6 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         // =========================================================================
 
         // Step 1: Fetch bootstrap data
-        let bootstrap: BootstrapData | null = null;
         try {
           bootstrap = await contextBuilder.getBootstrapData(tenantId);
         } catch (error) {
@@ -527,6 +529,30 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const agentUrl = getTenantAgentUrl();
       logger.debug({ agentUrl, sessionId }, '[TenantAgent] Calling Tenant Agent');
 
+      // =========================================================================
+      // P0 FIX (Pitfall #91): Inject context directly into message
+      // The LLM doesn't automatically see session state - we must prefix the
+      // first message with forbiddenSlots so the agent knows what NOT to ask.
+      // =========================================================================
+      let messageWithContext = message;
+
+      // On first message (newly created session), inject context prefix
+      // This ensures the LLM sees the data, not just instructions about it
+      if (!providedSessionId && bootstrap) {
+        const contextPrefix = buildContextPrefix(bootstrap);
+        if (contextPrefix) {
+          messageWithContext = `${contextPrefix}\n\n${message}`;
+          logger.info(
+            {
+              tenantId,
+              forbiddenSlots: bootstrap.forbiddenSlots,
+              factCount: Object.keys(bootstrap.discoveryFacts).length,
+            },
+            '[TenantAgent] Injected context prefix into first message'
+          );
+        }
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
@@ -545,7 +571,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
             sessionId,
             newMessage: {
               role: 'user',
-              parts: [{ text: message }],
+              parts: [{ text: messageWithContext }],
             },
             // Pass tenant context in state for the agent to use
             state: {
@@ -964,6 +990,66 @@ function extractMessagesFromEvents(
   }
 
   return messages;
+}
+
+/**
+ * Build a context prefix to inject into the first message.
+ *
+ * This is the P0 fix for Pitfall #91 (Agent asking known questions).
+ * The LLM doesn't automatically see session state, so we inject
+ * forbiddenSlots directly into the message.
+ *
+ * Format is designed to be parseable by the system prompt instructions
+ * in "Session State (Enterprise Slot-Policy)" section.
+ *
+ * @param bootstrap - Bootstrap data from ContextBuilder
+ * @returns Context prefix string, or null if no context to inject
+ */
+function buildContextPrefix(bootstrap: BootstrapData): string | null {
+  const parts: string[] = [];
+
+  // Only inject if there's meaningful context
+  const hasFacts = Object.keys(bootstrap.discoveryFacts).length > 0;
+  const hasForbidden = bootstrap.forbiddenSlots.length > 0;
+
+  if (!hasFacts && !hasForbidden && !bootstrap.onboardingComplete) {
+    return null; // New user with no context - no prefix needed
+  }
+
+  parts.push('[SESSION CONTEXT]');
+
+  // Forbidden slots (what NOT to ask)
+  if (hasForbidden) {
+    parts.push(`forbiddenSlots: ${JSON.stringify(bootstrap.forbiddenSlots)}`);
+  }
+
+  // Known facts (what we already know)
+  if (hasFacts) {
+    // Format each fact on its own line for readability
+    const factLines = Object.entries(bootstrap.discoveryFacts)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => `  - ${key}: ${JSON.stringify(value)}`);
+
+    if (factLines.length > 0) {
+      parts.push('knownFacts:');
+      parts.push(...factLines);
+    }
+  }
+
+  // Onboarding state
+  parts.push(`onboardingComplete: ${bootstrap.onboardingComplete}`);
+  if (bootstrap.onboardingPhase) {
+    parts.push(`onboardingPhase: ${bootstrap.onboardingPhase}`);
+  }
+
+  // Business identity (for personalization)
+  if (bootstrap.businessName) {
+    parts.push(`businessName: ${JSON.stringify(bootstrap.businessName)}`);
+  }
+
+  parts.push('[END CONTEXT]');
+
+  return parts.join('\n');
 }
 
 /**

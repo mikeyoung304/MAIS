@@ -135,3 +135,14 @@ export {
   markSectionCompleteTool,
   getNextIncompleteSectionTool,
 } from './refinement.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Research Delegation Tool (T1) - Onboarding Market Research
+// ─────────────────────────────────────────────────────────────────────────────
+// Delegates to research-agent for competitor pricing and market positioning.
+// Trigger: When agent has businessType + location during onboarding.
+//
+// @see CLAUDE.md "The Onboarding Conversation" section
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { delegateToResearchTool } from './research.js';
