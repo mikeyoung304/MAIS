@@ -688,4 +688,6 @@ Add to Common Pitfalls section:
 - [ADK A2A Prevention Strategies](./ADK_A2A_PREVENTION_INDEX.md) - ADK-specific patterns
 - [A2A Session State Prevention](./A2A_SESSION_STATE_PREVENTION.md) - Session state management
 - [ESLint Prevention Index](./ESLINT_PREVENTION_INDEX.md) - Dead code detection
+- [Dual-System Migration Drift Prevention](./DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md) - Migration drift causing P0 bugs
+- [Slot-Policy Context Injection](./SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md) - Context injection at session creation
 - [Project Hub Phase 1 Plan](../../plans/2026-01-25-feat-project-hub-phase-1-chat-fix-plan.md) - Original fix plan

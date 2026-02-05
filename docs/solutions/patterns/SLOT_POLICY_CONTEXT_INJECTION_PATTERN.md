@@ -147,3 +147,9 @@ Before implementing agent context:
 - **Pitfall #88:** Fact-to-Storefront bridge missing (different issue, same agent)
 - **Pitfall #52:** Tool confirmation-only response (agent loses context)
 - **Pitfall #53:** Discovery facts dual-source (branding vs OnboardingEvent)
+- **Pitfall #99:** Dual-system migration drift (P0 when OLD system lacks context injection)
+
+## Related Documents
+
+- **[DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md](DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md)** - Prevention strategies for migration drift pattern
+- **[SERVICE_WIRING_AND_FAKE_SESSION_PREVENTION.md](SERVICE_WIRING_AND_FAKE_SESSION_PREVENTION.md)** - Fake session ID detection

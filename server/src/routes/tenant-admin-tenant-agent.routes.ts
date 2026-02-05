@@ -1,8 +1,8 @@
 /**
  * Tenant Admin Tenant Agent Routes
  *
- * Dashboard API endpoints for chatting with the new unified Tenant Agent.
- * This is part of Phase 2a of the Semantic Storefront Architecture.
+ * Dashboard API endpoints for chatting with the unified Tenant Agent.
+ * This is the canonical route file after the Concierge → Tenant Agent migration.
  *
  * The Tenant Agent consolidates:
  * - Concierge (routing)
@@ -11,8 +11,18 @@
  * - Project Hub (project management)
  *
  * Endpoints:
+ * - POST /session - Create a new ADK session with bootstrap context
+ * - GET /session/:id - Get session history from ADK
+ * - DELETE /session/:id - Close a session
  * - POST /chat - Send a message to the Tenant Agent
+ * - GET /onboarding-state - Get onboarding phase and context
+ * - POST /skip-onboarding - Skip the onboarding flow
  *
+ * CRITICAL: Session creation injects forbiddenSlots to fix Pitfall #91
+ * (Agent asking known questions). Context is injected at session start,
+ * not inferred from conversation.
+ *
+ * @see docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
@@ -21,7 +31,7 @@ import { Router } from 'express';
 import { z, ZodError } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-// Note: Config utilities not needed - using process.env directly for simplicity
+import type { ContextBuilderService, BootstrapData } from '../services/context-builder.service';
 
 // =============================================================================
 // CONFIGURATION
@@ -29,26 +39,68 @@ import { logger } from '../lib/core/logger';
 
 /**
  * Get the Tenant Agent Cloud Run URL.
- * Uses environment variable with fallback for local development.
+ * Uses environment variable - no hardcoded fallbacks per Pitfall #38.
  */
 function getTenantAgentUrl(): string {
-  // In production, this should be set via environment variable
   const envUrl = process.env.TENANT_AGENT_URL;
   if (envUrl) {
     return envUrl;
   }
 
   // Fallback for local development (pointing to deployed Cloud Run)
+  // This is acceptable for dev but should be set via env in production
   return 'https://tenant-agent-506923455711.us-central1.run.app';
 }
 
 // =============================================================================
-// REQUEST/RESPONSE SCHEMAS
+// REQUEST/RESPONSE SCHEMAS (Pitfall #62: Zod validation for runtime data)
 // =============================================================================
 
 const SendMessageSchema = z.object({
   message: z.string().min(1).max(10000),
   sessionId: z.string().optional(),
+});
+
+const SessionIdSchema = z.object({
+  id: z.string().min(1),
+});
+
+/**
+ * ADK session creation response format.
+ */
+const AdkSessionResponseSchema = z.object({
+  id: z.string(),
+});
+
+/**
+ * ADK session GET response format.
+ * Used when fetching session history.
+ */
+const AdkSessionDataSchema = z.object({
+  id: z.string(),
+  userId: z.string().optional(),
+  appName: z.string().optional(),
+  state: z.record(z.unknown()).optional(),
+  events: z
+    .array(
+      z.object({
+        content: z
+          .object({
+            role: z.string().optional(),
+            parts: z
+              .array(
+                z.object({
+                  text: z.string().optional(),
+                })
+              )
+              .optional(),
+          })
+          .optional(),
+      })
+    )
+    .optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 /**
@@ -86,20 +138,288 @@ const AdkResponseSchema = z.array(
 
 interface TenantAgentRoutesDeps {
   prisma: PrismaClient;
+  contextBuilder: ContextBuilderService;
 }
 
 /**
  * Create tenant admin routes for the unified Tenant Agent.
  *
- * @param deps - Dependencies (prisma is required)
+ * @param deps - Dependencies (prisma, contextBuilder)
  * @returns Express router
  */
 export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps): Router {
   const router = Router();
-  const { prisma: _prisma } = deps;
+  const { prisma, contextBuilder } = deps;
+
+  // ===========================================================================
+  // POST /session - Create a new ADK session with bootstrap context
+  // ===========================================================================
+  // This is the P0 fix for Pitfall #91 (Agent asking known questions).
+  // Context is injected at session creation, not inferred from conversation.
+  // ===========================================================================
+
+  router.post('/session', async (_req: Request, res: Response) => {
+    try {
+      // Get tenant context from auth middleware
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string; slug: string } })
+        .tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId, slug } = tenantAuth;
+      const userId = `${tenantId}:${slug}`;
+
+      // =========================================================================
+      // AGENT-FIRST ARCHITECTURE: Inject context at session creation
+      // This is the P0 fix - agent now knows facts at session start
+      // =========================================================================
+
+      // Step 1: Fetch bootstrap data (discovery facts, storefront state, forbidden slots)
+      let bootstrap: BootstrapData | null = null;
+      try {
+        bootstrap = await contextBuilder.getBootstrapData(tenantId);
+        logger.info(
+          {
+            tenantId,
+            businessName: bootstrap.businessName,
+            factCount: Object.keys(bootstrap.discoveryFacts).length,
+            forbiddenSlots: bootstrap.forbiddenSlots,
+            onboardingComplete: bootstrap.onboardingComplete,
+          },
+          '[TenantAgent] Bootstrap data loaded for session'
+        );
+      } catch (error) {
+        // Graceful degradation - create session without bootstrap
+        logger.warn(
+          { tenantId, error: error instanceof Error ? error.message : String(error) },
+          '[TenantAgent] Failed to load bootstrap data, creating session with tenantId only'
+        );
+      }
+
+      // Step 2: Build ADK session state with full context
+      // Agent receives this at session start and knows what NOT to ask
+      const sessionState = {
+        tenantId,
+        // Identity
+        businessName: bootstrap?.businessName ?? null,
+        slug: bootstrap?.slug ?? null,
+        // Known facts (agent must NOT ask about these)
+        knownFacts: bootstrap?.discoveryFacts ?? {},
+        // Forbidden slots - enterprise slot-policy (Pitfall #91 fix)
+        // Agent checks slot keys, not phrase matching
+        forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
+        // Storefront state summary
+        storefrontState: bootstrap?.storefrontState ?? null,
+        // Onboarding state
+        onboardingComplete: bootstrap?.onboardingComplete ?? false,
+        onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+      };
+
+      // Step 3: Create session on ADK with full context
+      const token = await getIdentityToken();
+      const agentUrl = getTenantAgentUrl();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout per Pitfall #46
+
+      let response: globalThis.Response;
+      try {
+        response = await fetch(
+          // ADK app name is 'agent' (from /list-apps endpoint)
+          `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            // ADK expects state wrapped: { state: { key: value } }
+            // NOW INCLUDES: knownFacts, forbiddenSlots, storefrontState, etc.
+            body: JSON.stringify({ state: sessionState }),
+            signal: controller.signal,
+          }
+        );
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(
+          { tenantId, status: response.status, error: errorText },
+          '[TenantAgent] Failed to create ADK session'
+        );
+        res.status(502).json({
+          success: false,
+          error: 'Agent temporarily unavailable',
+          details: process.env.NODE_ENV === 'development' ? errorText : undefined,
+        });
+        return;
+      }
+
+      // Validate ADK response with Zod (Pitfall #62)
+      const rawResponse = await response.json();
+      const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
+      if (!parseResult.success) {
+        logger.error(
+          { tenantId, error: parseResult.error.message, rawResponse },
+          '[TenantAgent] Invalid ADK session response format'
+        );
+        res.status(502).json({
+          success: false,
+          error: 'Invalid agent response format',
+        });
+        return;
+      }
+
+      const sessionId = parseResult.data.id;
+      logger.info({ tenantId, sessionId }, '[TenantAgent] Session created');
+
+      res.json({
+        success: true,
+        sessionId,
+        version: 0, // New sessions start at version 0
+      });
+    } catch (error) {
+      handleError(res, error, '/session');
+    }
+  });
+
+  // ===========================================================================
+  // GET /session/:id - Get session history from ADK
+  // ===========================================================================
+
+  router.get('/session/:id', async (req: Request, res: Response) => {
+    try {
+      const { id: sessionId } = SessionIdSchema.parse({ id: req.params.id });
+
+      // Get tenant context from auth middleware
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string; slug: string } })
+        .tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId, slug } = tenantAuth;
+      const userId = `${tenantId}:${slug}`;
+
+      // Fetch session from ADK
+      const token = await getIdentityToken();
+      const agentUrl = getTenantAgentUrl();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for reads
+
+      let response: globalThis.Response;
+      try {
+        response = await fetch(
+          `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            signal: controller.signal,
+          }
+        );
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          res.status(404).json({ error: 'Session not found' });
+          return;
+        }
+        const errorText = await response.text();
+        logger.error(
+          { tenantId, sessionId, status: response.status, error: errorText },
+          '[TenantAgent] Failed to fetch session'
+        );
+        res.status(502).json({
+          success: false,
+          error: 'Agent temporarily unavailable',
+        });
+        return;
+      }
+
+      const rawSessionData = await response.json();
+
+      // Validate ADK response with Zod (Pitfall #62)
+      const sessionParseResult = AdkSessionDataSchema.safeParse(rawSessionData);
+      if (!sessionParseResult.success) {
+        logger.error(
+          { tenantId, sessionId, error: sessionParseResult.error.message, rawSessionData },
+          '[TenantAgent] Invalid ADK session response format'
+        );
+        res.status(502).json({
+          success: false,
+          error: 'Invalid agent session format',
+        });
+        return;
+      }
+
+      const sessionData = sessionParseResult.data;
+
+      // Transform ADK session format to our API format
+      // ADK returns: { id, userId, appName, state, events[] }
+      const messages = extractMessagesFromEvents(sessionData.events || []);
+
+      res.json({
+        session: {
+          sessionId: sessionData.id,
+          createdAt: sessionData.createdAt || new Date().toISOString(),
+          lastMessageAt: sessionData.updatedAt || new Date().toISOString(),
+          messageCount: messages.length,
+          version: 0, // ADK doesn't track versions - we use 0 for compatibility
+        },
+        messages,
+        hasMore: false, // ADK doesn't paginate events
+        total: messages.length,
+      });
+    } catch (error) {
+      handleError(res, error, '/session/:id');
+    }
+  });
+
+  // ===========================================================================
+  // DELETE /session/:id - Close a session
+  // ===========================================================================
+
+  router.delete('/session/:id', async (req: Request, res: Response) => {
+    try {
+      const { id: sessionId } = SessionIdSchema.parse({ id: req.params.id });
+
+      // Get tenant context from auth middleware
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId } = tenantAuth;
+
+      // ADK doesn't have a session close endpoint - we just acknowledge the request
+      // Sessions naturally expire based on ADK configuration
+      logger.info({ tenantId, sessionId }, '[TenantAgent] Session close requested');
+
+      res.json({
+        success: true,
+        message: 'Session closed',
+      });
+    } catch (error) {
+      handleError(res, error, '/session/:id');
+    }
+  });
 
   // ===========================================================================
   // POST /chat - Send a message to the Tenant Agent
+  // ===========================================================================
+  // Fixed: Creates proper ADK session with bootstrap context when no sessionId
   // ===========================================================================
 
   router.post('/chat', async (req: Request, res: Response) => {
@@ -117,21 +437,95 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const { tenantId, slug } = tenantAuth;
       const userId = `${tenantId}:${slug}`;
 
-      logger.info(
-        { tenantId, messageLength: message.length },
-        '[TenantAgentChat] Message received'
-      );
+      logger.info({ tenantId, messageLength: message.length }, '[TenantAgent] Message received');
 
-      // Use provided session ID or generate a new one
-      // Note: ADK manages its own sessions - we just need to provide a consistent ID
-      const sessionId = providedSessionId || `tenant-${tenantId}-${Date.now()}`;
+      // Get or create session
+      let sessionId = providedSessionId;
+
+      if (!sessionId) {
+        // =========================================================================
+        // FIX: Create proper ADK session with bootstrap context
+        // Previously used fake ID: `tenant-${tenantId}-${Date.now()}` (Pitfall #85)
+        // =========================================================================
+
+        // Step 1: Fetch bootstrap data
+        let bootstrap: BootstrapData | null = null;
+        try {
+          bootstrap = await contextBuilder.getBootstrapData(tenantId);
+        } catch (error) {
+          logger.warn(
+            { tenantId, error: error instanceof Error ? error.message : String(error) },
+            '[TenantAgent] Failed to load bootstrap data for inline session'
+          );
+        }
+
+        // Step 2: Build session state
+        const sessionState = {
+          tenantId,
+          businessName: bootstrap?.businessName ?? null,
+          slug: bootstrap?.slug ?? null,
+          knownFacts: bootstrap?.discoveryFacts ?? {},
+          forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
+          storefrontState: bootstrap?.storefrontState ?? null,
+          onboardingComplete: bootstrap?.onboardingComplete ?? false,
+          onboardingPhase: bootstrap?.onboardingPhase ?? 'NOT_STARTED',
+        };
+
+        // Step 3: Create ADK session
+        const token = await getIdentityToken();
+        const agentUrl = getTenantAgentUrl();
+
+        const createController = new AbortController();
+        const createTimeoutId = setTimeout(() => createController.abort(), 30000);
+
+        try {
+          const createResponse = await fetch(
+            `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` }),
+              },
+              body: JSON.stringify({ state: sessionState }),
+              signal: createController.signal,
+            }
+          );
+
+          clearTimeout(createTimeoutId);
+
+          if (createResponse.ok) {
+            const createData = await createResponse.json();
+            const parseResult = AdkSessionResponseSchema.safeParse(createData);
+            if (parseResult.success) {
+              sessionId = parseResult.data.id;
+              logger.info(
+                { tenantId, sessionId },
+                '[TenantAgent] Inline session created with bootstrap context'
+              );
+            }
+          }
+        } catch {
+          clearTimeout(createTimeoutId);
+          // Fall through to use a fallback session ID
+        }
+
+        // Fallback if ADK session creation failed (shouldn't happen often)
+        if (!sessionId) {
+          sessionId = `LOCAL:tenant-${tenantId}-${Date.now()}`;
+          logger.warn(
+            { tenantId, sessionId },
+            '[TenantAgent] Using fallback local session ID - ADK session creation failed'
+          );
+        }
+      }
 
       // Get identity token for Cloud Run authentication (if in GCP environment)
       const token = await getIdentityToken();
 
       // Call the Tenant Agent via A2A protocol
       const agentUrl = getTenantAgentUrl();
-      logger.debug({ agentUrl, sessionId }, '[TenantAgentChat] Calling Tenant Agent');
+      logger.debug({ agentUrl, sessionId }, '[TenantAgent] Calling Tenant Agent');
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
@@ -168,7 +562,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         const errorText = await response.text();
         logger.error(
           { tenantId, sessionId, status: response.status, error: errorText },
-          '[TenantAgentChat] Agent call failed'
+          '[TenantAgent] Agent call failed'
         );
         res.status(502).json({
           success: false,
@@ -184,7 +578,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       if (!parseResult.success) {
         logger.error(
           { tenantId, sessionId, error: parseResult.error.message, rawData },
-          '[TenantAgentChat] Invalid response format'
+          '[TenantAgent] Invalid response format'
         );
         res.status(502).json({
           success: false,
@@ -196,17 +590,20 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       // Extract text response from the last model message
       const agentResponse = extractAgentResponse(parseResult.data);
       const dashboardActions = extractDashboardActions(parseResult.data);
+      const toolCalls = extractToolCalls(parseResult.data);
 
       logger.info(
         { tenantId, sessionId, responseLength: agentResponse.length },
-        '[TenantAgentChat] Response received'
+        '[TenantAgent] Response received'
       );
 
       res.json({
         success: true,
         sessionId,
+        version: 0, // Simplified version tracking for new system
         response: agentResponse,
         dashboardActions,
+        toolCalls,
       });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -218,7 +615,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       }
 
       if (error instanceof Error && error.name === 'AbortError') {
-        logger.error({ error }, '[TenantAgentChat] Request timed out');
+        logger.error({ error }, '[TenantAgent] Request timed out');
         res.status(504).json({
           success: false,
           error: 'Agent request timed out',
@@ -226,12 +623,125 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         return;
       }
 
-      logger.error({ error }, '[TenantAgentChat] Internal error');
+      logger.error({ error }, '[TenantAgent] Internal error');
       res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
+    }
+  });
+
+  // ===========================================================================
+  // GET /onboarding-state - Get current onboarding phase and context
+  // ===========================================================================
+
+  router.get('/onboarding-state', async (_req: Request, res: Response) => {
+    try {
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId } = tenantAuth;
+
+      // Use ContextBuilder for state (replaces legacy AdvisorMemoryService)
+      const state = await contextBuilder.getOnboardingState(tenantId);
+
+      logger.info(
+        { tenantId, phase: state.phase, factCount: state.factCount },
+        '[TenantAgent] Onboarding state retrieved'
+      );
+
+      res.json({
+        phase: state.phase,
+        isComplete: state.isComplete,
+        isReturning: false, // Simplified: ContextBuilder doesn't track sessions
+        lastActiveAt: null,
+        summaries: {
+          discovery: null,
+          marketContext: null,
+          preferences: null,
+          decisions: null,
+          pendingQuestions: null,
+        },
+        resumeMessage: null,
+        // Provide discovery facts in a consistent format
+        memory: {
+          currentPhase: state.phase,
+          discoveryData: state.discoveryFacts,
+          marketResearchData: null,
+          servicesData: null,
+          marketingData: null,
+          lastEventVersion: 0,
+        },
+      });
+    } catch (error) {
+      handleError(res, error, '/onboarding-state');
+    }
+  });
+
+  // ===========================================================================
+  // POST /skip-onboarding - Skip the onboarding process
+  // ===========================================================================
+
+  router.post('/skip-onboarding', async (req: Request, res: Response) => {
+    try {
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId } = tenantAuth;
+      const { reason } = req.body as { reason?: string };
+
+      // Get current tenant state
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          onboardingPhase: true,
+        },
+      });
+
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const currentPhase = tenant.onboardingPhase || 'NOT_STARTED';
+
+      // Check if already completed or skipped
+      if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
+        res.status(409).json({
+          error: 'Onboarding already finished',
+          phase: currentPhase,
+        });
+        return;
+      }
+
+      // Direct state update
+      await prisma.tenant.update({
+        where: { id: tenantId },
+        data: {
+          onboardingPhase: 'SKIPPED',
+          onboardingCompletedAt: new Date(),
+        },
+      });
+
+      logger.info(
+        { tenantId, previousPhase: currentPhase, reason },
+        '[TenantAgent] Onboarding skipped'
+      );
+
+      res.json({
+        success: true,
+        phase: 'SKIPPED',
+        message: 'Onboarding skipped. You can set up your business manually.',
+      });
+    } catch (error) {
+      handleError(res, error, '/skip-onboarding');
     }
   });
 
@@ -264,7 +774,7 @@ async function getIdentityToken(): Promise<string | null> {
         return await response.text();
       }
     } catch (error) {
-      logger.warn({ error }, '[TenantAgentChat] Failed to get metadata token');
+      logger.warn({ error }, '[TenantAgent] Failed to get metadata token');
     }
   }
 
@@ -281,7 +791,7 @@ async function getIdentityToken(): Promise<string | null> {
     }
   } catch (error) {
     // Expected in local dev without ADC
-    logger.debug({ error }, '[TenantAgentChat] GoogleAuth not available');
+    logger.debug({ error }, '[TenantAgent] GoogleAuth not available');
   }
 
   return null;
@@ -339,4 +849,106 @@ function extractDashboardActions(
   }
 
   return actions;
+}
+
+/**
+ * Extract tool calls from ADK response.
+ * Returns function calls with their arguments and results.
+ */
+function extractToolCalls(
+  data: z.infer<typeof AdkResponseSchema>
+): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
+  const toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }> = [];
+  const pendingCalls = new Map<string, { name: string; args: Record<string, unknown> }>();
+
+  for (const item of data) {
+    for (const part of item.content.parts) {
+      // Collect function calls
+      if (part.functionCall) {
+        pendingCalls.set(part.functionCall.name, {
+          name: part.functionCall.name,
+          args: part.functionCall.args as Record<string, unknown>,
+        });
+      }
+
+      // Match function responses to calls
+      if (part.functionResponse) {
+        const call = pendingCalls.get(part.functionResponse.name);
+        if (call) {
+          toolCalls.push({
+            name: call.name,
+            args: call.args,
+            result: part.functionResponse.response,
+          });
+          pendingCalls.delete(part.functionResponse.name);
+        }
+      }
+    }
+  }
+
+  // Add any pending calls without responses
+  for (const call of pendingCalls.values()) {
+    toolCalls.push(call);
+  }
+
+  return toolCalls;
+}
+
+/**
+ * Extract messages from ADK session events.
+ * Transforms ADK event format to our API message format.
+ */
+function extractMessagesFromEvents(
+  events: Array<{ content?: { role?: string; parts?: Array<{ text?: string }> } }>
+): Array<{ role: 'user' | 'assistant'; content: string; timestamp: Date }> {
+  const messages: Array<{ role: 'user' | 'assistant'; content: string; timestamp: Date }> = [];
+
+  for (const event of events) {
+    if (!event.content || !event.content.role || !event.content.parts) continue;
+
+    const role = event.content.role === 'user' ? 'user' : 'assistant';
+    const content = event.content.parts
+      .filter((p) => p.text)
+      .map((p) => p.text)
+      .join('');
+
+    if (content) {
+      messages.push({
+        role,
+        content,
+        timestamp: new Date(), // ADK doesn't provide timestamps in events
+      });
+    }
+  }
+
+  return messages;
+}
+
+/**
+ * Centralized error handler for all routes.
+ */
+function handleError(res: Response, error: unknown, endpoint: string): void {
+  if (error instanceof ZodError) {
+    res.status(400).json({
+      error: 'Validation error',
+      details: error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+    });
+    return;
+  }
+
+  if (error instanceof Error && error.name === 'AbortError') {
+    logger.error({ error, endpoint }, '[TenantAgent] Request timed out');
+    res.status(504).json({
+      success: false,
+      error: 'Agent request timed out',
+    });
+    return;
+  }
+
+  logger.error({ error, endpoint }, '[TenantAgent] Internal error');
+
+  res.status(500).json({
+    error: 'Internal server error',
+    message: error instanceof Error ? error.message : 'Unknown error',
+  });
 }

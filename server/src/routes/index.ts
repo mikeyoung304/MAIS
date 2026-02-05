@@ -722,12 +722,17 @@ export function createV1Router(
       '✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent (with rate limiting)'
     );
 
-    // Register Tenant Agent routes (Phase 2a - Semantic Storefront Architecture)
+    // Register Tenant Agent routes (Canonical agent after Concierge migration)
     // The Tenant Agent consolidates: Concierge, Storefront, Marketing, Project Hub
-    // This runs alongside the existing Concierge routes during migration
+    // CRITICAL: contextBuilder injects forbiddenSlots at session creation (Pitfall #91 fix)
     // @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
+    const tenantAgentContextBuilder = createContextBuilderService(
+      prismaClient,
+      services.sectionContent
+    );
     const tenantAdminTenantAgentRoutes = createTenantAdminTenantAgentRoutes({
       prisma: prismaClient,
+      contextBuilder: tenantAgentContextBuilder,
     });
     app.use(
       '/v1/tenant-admin/agent/tenant',
