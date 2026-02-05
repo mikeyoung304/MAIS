@@ -14,6 +14,17 @@ export default defineConfig(({ mode }) => {
           find: /^(.*)\/generated\/prisma$/,
           replacement: path.resolve(__dirname, 'src/generated/prisma/client.ts'),
         },
+        // Resolve workspace packages from TypeScript source instead of dist/
+        // This avoids the "Failed to resolve entry for package" error when dist/
+        // is stale or missing (dist/ is gitignored, so fresh clones and CI fail)
+        {
+          find: '@macon/contracts',
+          replacement: path.resolve(__dirname, '../packages/contracts/src/index.ts'),
+        },
+        {
+          find: '@macon/shared',
+          replacement: path.resolve(__dirname, '../packages/shared/src/index.ts'),
+        },
       ],
     },
     test: {
