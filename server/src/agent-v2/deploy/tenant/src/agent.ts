@@ -14,7 +14,7 @@
  * - Dashboard actions for frontend UI control
  *
  * Benefits over multi-agent approach:
- * - No context loss during delegation (pitfall #90)
+ * - No context loss during delegation (pitfall #82)
  * - Faster responses (no inter-agent latency)
  * - Simpler maintenance (1 codebase vs 4)
  * - Lower cost (fewer LLM calls per task)

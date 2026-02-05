@@ -19,8 +19,59 @@ import type {
   GenerateContentResponse,
 } from '@google/genai';
 import { Type } from '@google/genai';
-import type { AgentTool, AgentToolResult } from '../agent/tools/types';
 import { randomUUID } from 'crypto';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy Agent Types (inlined from deleted server/src/agent/tools/types.ts)
+// Only the types needed for Gemini API conversion are retained here.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Result from a read tool */
+interface ReadToolResult<T = unknown> {
+  success: true;
+  data: T;
+  meta?: Record<string, unknown>;
+}
+
+/** Result from a write tool - returns a proposal for approval */
+interface WriteToolProposal {
+  success: true;
+  proposalId: string;
+  operation: string;
+  preview: Record<string, unknown>;
+  trustTier: string;
+  requiresApproval: boolean;
+  expiresAt: string;
+}
+
+/** Error result from any tool */
+interface ToolError {
+  success: false;
+  error: string;
+  code?: string;
+}
+
+/** Union type for all tool results */
+export type AgentToolResult<T = unknown> = ReadToolResult<T> | WriteToolProposal | ToolError;
+
+/** Tool definition (subset needed for Gemini FunctionDeclaration conversion) */
+export interface AgentTool {
+  name: string;
+  description: string;
+  trustTier: 'T1' | 'T2' | 'T3';
+  inputSchema: {
+    type: 'object';
+    properties: Record<
+      string,
+      {
+        type: string;
+        description: string;
+        enum?: string[];
+      }
+    >;
+    required?: string[];
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal Types (used by orchestrators)

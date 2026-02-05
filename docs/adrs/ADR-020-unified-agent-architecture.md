@@ -9,8 +9,8 @@
 
 The Phase 4 agent architecture evolved through two prior designs:
 
-- **ADR-018** established a hub-and-spoke model with a Concierge orchestrator routing to 5 specialist agents via A2A protocol
-- **ADR-019** proposed a dual-context pattern with `requireContext()` guards to share agents between user types
+- **ADR-018** (Hub-and-Spoke) established a Concierge orchestrator routing to 5 specialist agents (booking, storefront, marketing, project-hub, research) via A2A protocol. It solved the "single monolithic agent" problem but introduced inter-agent communication overhead and 6 Cloud Run services.
+- **ADR-019** (Dual-Context) proposed collapsing agents by user type and using `requireContext()` runtime guards to share tools between customer and tenant flows. It reduced service count but created security risks — a prompt injection could bypass runtime guards to access cross-context tools (see Pitfall #60).
 
 Both approaches introduced unnecessary complexity:
 
@@ -54,3 +54,29 @@ Key changes:
 
 - Archived agents available in git history for reference
 - Migration completed January 31, 2026
+
+## Alternatives Considered
+
+### Keep 6 Separate Agents (ADR-018 Status Quo)
+
+Retain the Concierge orchestrator with 5 specialists. Rejected because A2A delegation added 200-500ms per tool call, session state was fragmented across agents, and 6 Cloud Run services were expensive to maintain and deploy.
+
+### Dual-Context Shared Agents (ADR-019)
+
+Collapse by capability (e.g., one "project-hub-agent" serving both customers and tenants) with `requireContext()` runtime guards. Rejected because runtime guards are bypassable via prompt injection, shared tool registries made auditing difficult, and testing required full matrix of context x tool combinations.
+
+### Microservice per Capability
+
+One Cloud Run service per tool category (booking-service, storefront-service, etc.) called via HTTP from a thin agent layer. Rejected as over-engineering — added network hops without meaningful isolation benefit, and ADK's native tool execution is simpler.
+
+### Two Agents (No Research Agent)
+
+Merge research into tenant-agent. Rejected because research involves long-running web scraping (up to 90s) that would block tenant-agent's responsiveness, and research has no tenant data access requirements.
+
+## References
+
+- `server/src/agent-v2/deploy/SERVICE_REGISTRY.md` — Live service registry
+- `server/src/agent-v2/deploy/customer/` — Customer agent implementation
+- `server/src/agent-v2/deploy/tenant/` — Tenant agent implementation
+- `docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md` — Migration plan
+- Archived agents: `booking-agent`, `project-hub-agent`, `storefront-agent`, `marketing-agent`, `concierge-agent` (available in git history)

@@ -40,9 +40,6 @@ export interface UpdateTenantInput {
   emailVerified?: boolean;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
-  // DELETED: landingPageConfig, landingPageConfigDraft
-  // All storefront editing now uses SectionContent table via SectionContentService
-  // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
   // Trial & Subscription fields (Product-Led Growth)
   trialEndsAt?: Date;
   subscriptionStatus?: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';

@@ -121,7 +121,7 @@ Editable fields vary by section type:
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: UpdateSectionParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = UpdateSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -173,7 +173,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
 
     const updatedSection = verifyResult.data as Record<string, unknown>;
 
-    // Return with full state for verification (pitfall #52) and clear visibility
+    // Return with full state for verification (pitfall #48) and clear visibility
     return {
       success: true,
       verified: true,
@@ -241,7 +241,7 @@ Position is 0-based. Omit to add at end of page.
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: AddSectionParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = AddSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -322,7 +322,7 @@ Get sectionId from get_page_structure first.
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: RemoveSectionParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = RemoveSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -400,7 +400,7 @@ Get sectionId from get_page_structure first.
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: ReorderSectionsParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = ReorderSectionsParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -492,7 +492,7 @@ Use publish_draft to publish ALL changes at once.
 Get sectionId from get_page_structure first.`,
   parameters: PublishSectionParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = PublishSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -513,7 +513,7 @@ Get sectionId from get_page_structure first.`,
 
     const { sectionId, confirmationReceived } = parseResult.data;
 
-    // T3 confirmation check (pitfall #49)
+    // T3 confirmation check (pitfall #45)
     if (!confirmationReceived) {
       logger.info({ sectionId }, '[TenantAgent] publish_section called without confirmation');
       return {
@@ -612,7 +612,7 @@ Use discard_draft to discard ALL changes at once.
 Get sectionId from get_page_structure first.`,
   parameters: DiscardSectionParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = DiscardSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -633,7 +633,7 @@ Get sectionId from get_page_structure first.`,
 
     const { sectionId, confirmationReceived } = parseResult.data;
 
-    // T3 confirmation check (pitfall #49)
+    // T3 confirmation check (pitfall #45)
     if (!confirmationReceived) {
       logger.info({ sectionId }, '[TenantAgent] discard_section called without confirmation');
       return {

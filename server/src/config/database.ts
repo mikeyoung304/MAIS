@@ -79,19 +79,6 @@ export function getSupabaseAuthClient(): SupabaseClient {
 }
 
 /**
- * @deprecated Use Prisma for database verification instead.
- * This function used the Supabase JS client which queries via REST API,
- * but the Tenant table is not exposed via Supabase API.
- *
- * Database verification now happens in index.ts using Prisma directly
- * after the DI container is built.
- */
-export async function verifyDatabaseConnection(): Promise<void> {
-  logger.warn('⚠️  verifyDatabaseConnection() is deprecated. Use Prisma for DB verification.');
-  // No-op - kept for backwards compatibility
-}
-
-/**
  * Close all Supabase client connections
  * Call during graceful shutdown
  */

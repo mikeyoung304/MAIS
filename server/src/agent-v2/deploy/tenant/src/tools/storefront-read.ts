@@ -83,7 +83,7 @@ Returns:
 This is a T1 tool - executes immediately.`,
   parameters: GetPageStructureParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = GetPageStructureParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -153,7 +153,7 @@ The sectionId comes from get_page_structure - call that first.
 This is a T1 tool - executes immediately.`,
   parameters: GetSectionContentParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = GetSectionContentParams.safeParse(params);
     if (!parseResult.success) {
       return {

@@ -28,12 +28,12 @@ export type ScrollTarget =
  * Cache invalidation delay in milliseconds.
  * Prevents race condition where refetch happens before DB write commits.
  *
- * @see CLAUDE.md Pitfall #30: Race condition on cache invalidation
+ * @see CLAUDE.md Pitfall #26: Race condition on cache invalidation
  */
 export const CACHE_INVALIDATION_DELAY_MS = 100;
 
 /**
- * Encapsulates cache invalidation delay (Pitfall #30).
+ * Encapsulates cache invalidation delay (Pitfall #26).
  * Document the delay in one place, not scattered throughout code.
  *
  * This utility waits 100ms before invalidating queries to ensure
@@ -51,7 +51,7 @@ export async function invalidateWithCacheBuffer(
   queryClient: QueryClient,
   queryKey: QueryKey
 ): Promise<void> {
-  // 100ms delay for cache consistency (see Pitfall #30)
+  // 100ms delay for cache consistency (see Pitfall #26)
   await new Promise((resolve) => setTimeout(resolve, CACHE_INVALIDATION_DELAY_MS));
   await queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
 }

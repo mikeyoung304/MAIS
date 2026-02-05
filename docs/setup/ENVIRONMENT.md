@@ -161,4 +161,11 @@ Configure via `apps/web/.env.local` (if needed):
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+
+# Authentication
+AUTH_SECRET=change-me  # Generate with: openssl rand -hex 32
+# Used by NextAuth.js to sign session tokens and CSRF tokens
+# NEXTAUTH_SECRET is accepted as an alias (legacy name)
+# Code checks: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+# MUST be changed in production and kept secret
 ```

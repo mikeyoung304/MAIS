@@ -12,7 +12,7 @@
  *
  * Design notes:
  * - The service is stateless and uses dependency injection for Prisma
- * - Embedding generation has a 15-second timeout (per pitfall #46)
+ * - Embedding generation has a 15-second timeout (per pitfall #42)
  * - Results are cached at the database level via pgvector indexes
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
@@ -47,7 +47,7 @@ const EMBEDDING_MODEL = 'text-embedding-005';
 const MINIMUM_CONFIDENCE_THRESHOLD = 0.7;
 
 /**
- * Timeout for embedding generation requests (15 seconds per pitfall #46).
+ * Timeout for embedding generation requests (15 seconds per pitfall #42).
  */
 const EMBEDDING_TIMEOUT_MS = 15_000;
 

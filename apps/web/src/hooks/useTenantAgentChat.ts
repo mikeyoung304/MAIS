@@ -176,7 +176,7 @@ export function useTenantAgentChat({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [version, setVersion] = useState<number>(0); // Optimistic locking version (Pitfall #69)
+  const [version, setVersion] = useState<number>(0); // Optimistic locking version (Pitfall #62)
   const [error, setError] = useState<string | null>(null);
   const [lastToolCalls, setLastToolCalls] = useState<TenantAgentToolCall[]>([]);
 
@@ -415,7 +415,7 @@ export function useTenantAgentChat({
           body: JSON.stringify({
             message,
             sessionId,
-            version, // Required for optimistic locking (Pitfall #69)
+            version, // Required for optimistic locking (Pitfall #62)
           }),
         });
 
@@ -426,7 +426,7 @@ export function useTenantAgentChat({
 
         const data = await response.json();
 
-        // Update version for optimistic locking (Pitfall #69)
+        // Update version for optimistic locking (Pitfall #62)
         if (data.version !== undefined) {
           setVersion(data.version);
           try {

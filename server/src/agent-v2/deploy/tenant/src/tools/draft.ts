@@ -7,7 +7,7 @@
  * - discard_draft (T3): Discard all draft changes
  *
  * T3 tools REQUIRE explicit user confirmation via confirmationReceived parameter.
- * This follows pitfall #49: Trust tier enforcement must be programmatic.
+ * This follows pitfall #45: Trust tier enforcement must be programmatic.
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
@@ -127,7 +127,7 @@ the confirmation prompt, then wait for their explicit approval.
 This affects the LIVE site that visitors see.`,
   parameters: PublishDraftParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = PublishDraftParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -146,7 +146,7 @@ This affects the LIVE site that visitors see.`,
       };
     }
 
-    // T3 confirmation check (pitfall #49)
+    // T3 confirmation check (pitfall #45)
     if (!parseResult.data.confirmationReceived) {
       logger.info({}, '[TenantAgent] publish_draft called without confirmation');
       return {
@@ -219,7 +219,7 @@ the confirmation prompt.
 **WARNING:** This loses ALL unpublished changes. Cannot be undone.`,
   parameters: DiscardDraftParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = DiscardDraftParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -238,7 +238,7 @@ the confirmation prompt.
       };
     }
 
-    // T3 confirmation check (pitfall #49)
+    // T3 confirmation check (pitfall #45)
     if (!parseResult.data.confirmationReceived) {
       logger.info({}, '[TenantAgent] discard_draft called without confirmation');
       return {

@@ -224,7 +224,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
             break;
           case 'SHOW_PREVIEW':
             // Fix #819: Invalidate cache before showing preview (with timing fix from #818)
-            // Wait for backend transaction to commit (Pitfall #30)
+            // Wait for backend transaction to commit (Pitfall #26)
             await new Promise((resolve) => setTimeout(resolve, 100));
             queryClient.invalidateQueries({
               queryKey: getDraftConfigQueryKey(),
@@ -291,10 +291,10 @@ export function AgentPanel({ className }: AgentPanelProps) {
   // Handle tenant-agent tool completion (triggers preview refresh for storefront changes)
   // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
   // Fix #818: Make async and add 100ms delay before invalidation to allow transaction commit
-  // Fix #818 (Pitfall #90): Extract dashboardAction from tool results for UI navigation
+  // Fix #818 (Pitfall #82): Extract dashboardAction from tool results for UI navigation
   const handleTenantAgentToolComplete = useCallback(
     async (toolCalls: TenantAgentToolCall[]) => {
-      // FIRST: Extract dashboard actions from tool results (Fix #818 / Pitfall #90)
+      // FIRST: Extract dashboard actions from tool results (Fix #818 / Pitfall #82)
       // Tool results may contain dashboardAction objects like:
       // { type: 'SCROLL_TO_SECTION', sectionId: 'home-hero-abc123' }
       // { type: 'SHOW_PREVIEW', page: 'home' }
@@ -324,7 +324,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
       );
 
       if (modifiedStorefront) {
-        // Fix #818: Wait for backend transaction to commit (Pitfall #30)
+        // Fix #818: Wait for backend transaction to commit (Pitfall #26)
         // The 100ms delay ensures the database write is visible before we refetch
         await new Promise((resolve) => setTimeout(resolve, 100));
         // Invalidate draft config cache using queryClient directly (not module singleton)

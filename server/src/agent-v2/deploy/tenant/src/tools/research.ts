@@ -25,7 +25,7 @@ const RESEARCH_AGENT_URL =
   process.env.RESEARCH_AGENT_URL || 'https://research-agent-506923455711.us-central1.run.app';
 
 // Longer timeout for research (web scraping, analysis)
-const RESEARCH_TIMEOUT_MS = 90_000; // 90s per pitfall #46
+const RESEARCH_TIMEOUT_MS = 90_000; // 90s per pitfall #42
 
 // Cache research results for 30 minutes to avoid redundant calls
 const researchCache = new TTLCache<ResearchResult>(30 * 60 * 1000, 100, 'research-cache');
@@ -135,7 +135,7 @@ Examples:
   }),
 
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #62, #70)
+    // Validate params (pitfall #56)
     const parseResult = z
       .object({
         businessType: z.string().min(1),

@@ -11,7 +11,7 @@
  * Features:
  * - 3-tier fallback: Cloud Run metadata → JWT.fetchIdToken() → gcloud CLI
  * - Per-audience token caching with 55-minute TTL
- * - Zod safeParse for credential validation (Pitfall #62)
+ * - Zod safeParse for credential validation (Pitfall #56)
  *
  * ADC (GoogleAuth.getIdTokenClient) is intentionally omitted:
  * It silently returns empty headers for service accounts on non-GCP environments.
@@ -32,7 +32,7 @@ interface CachedToken {
 
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes (tokens valid ~1 hour)
 
-// Zod schema for credential validation (Pitfall #62: runtime data must be validated)
+// Zod schema for credential validation (Pitfall #56: runtime data must be validated)
 const ServiceAccountSchema = z.object({
   client_email: z.string().min(1),
   private_key: z.string().min(1),

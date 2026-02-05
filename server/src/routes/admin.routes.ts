@@ -29,7 +29,7 @@ export class AdminController {
    * - Queries ALL bookings from real (non-test) tenants
    * - Includes tenant name/slug for display
    * - Includes package name for display
-   * - Enforces pagination (Pitfall #67)
+   * - Enforces pagination (Pitfall #60)
    *
    * @param cursor - Optional pagination cursor (booking ID)
    * @returns Paginated bookings with tenant info

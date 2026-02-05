@@ -247,7 +247,7 @@ export const getProjectStatusTool = new FunctionTool({
     projectId: z.string().describe('The project ID to check status for'),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = ProjectIdSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -278,7 +278,7 @@ export const getProjectStatusTool = new FunctionTool({
           serviceName: project.serviceName,
           preferences: project.customerPreferences,
         },
-        // State indicators for agent context (Pitfall #52)
+        // State indicators for agent context (Pitfall #48)
         projectStatus: project.status,
         lastUpdated: new Date().toISOString(),
       };
@@ -302,7 +302,7 @@ export const getPrepChecklistTool = new FunctionTool({
     projectId: z.string().describe('The project ID'),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = ProjectIdSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -327,7 +327,7 @@ export const getPrepChecklistTool = new FunctionTool({
       return {
         success: true,
         checklist: checklist.items,
-        // State indicators for agent context (Pitfall #52)
+        // State indicators for agent context (Pitfall #48)
         checklistItemCount: checklist.items.length,
         completedItemCount: checklist.items.filter((item) => item.completed).length,
         lastUpdated: new Date().toISOString(),
@@ -352,7 +352,7 @@ export const answerPrepQuestionTool = new FunctionTool({
     question: z.string().describe('The customer question to answer'),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = ProjectIdWithQuestionSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -453,7 +453,7 @@ export const getTimelineTool = new FunctionTool({
     projectId: z.string().describe('The project ID'),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = ProjectIdSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -537,7 +537,7 @@ export const submitRequestTool = new FunctionTool({
       ),
   }),
   execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = SubmitRequestSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -554,7 +554,7 @@ export const submitRequestTool = new FunctionTool({
       return { error: 'Unauthorized: Project does not match your session' };
     }
 
-    // T3 confirmation for high-risk actions (Pitfall #49)
+    // T3 confirmation for high-risk actions (Pitfall #45)
     if (
       T3_REQUEST_TYPES.includes(requestType as (typeof T3_REQUEST_TYPES)[number]) &&
       !confirmationReceived
@@ -595,7 +595,7 @@ export const submitRequestTool = new FunctionTool({
         requestId: request.id,
         message: `Your ${requestType.toLowerCase().replace('_', ' ')} request has been submitted. The service provider typically responds within 24-48 hours.`,
         expiresAt: request.expiresAt,
-        // State indicators for agent context (Pitfall #52)
+        // State indicators for agent context (Pitfall #48)
         hasPendingRequest: true,
         requestStatus: 'PENDING' as const,
         projectStatus: 'awaiting_provider_response',

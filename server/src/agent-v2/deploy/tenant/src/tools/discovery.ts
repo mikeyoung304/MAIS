@@ -8,7 +8,7 @@
  * Ported from archived concierge agent during Phase 4 migration.
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
- * @see CLAUDE.md pitfall #53 (discovery facts dual-source)
+ * @see CLAUDE.md pitfall #49 (discovery facts dual-source)
  */
 
 import { FunctionTool, type ToolContext } from '@google/adk';
@@ -83,7 +83,7 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
   }),
 
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #62, #70)
+    // Validate params (pitfall #56)
     const parseResult = z
       .object({
         key: z.enum(DISCOVERY_FACT_KEYS),

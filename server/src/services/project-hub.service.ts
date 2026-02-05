@@ -515,7 +515,7 @@ export class ProjectHubService {
     tenantId: string,
     limit: number = 25
   ): Promise<{ requests: ProjectRequestWithContext[]; hasMore: boolean }> {
-    // Enforce maximum limit to prevent unbounded queries (Pitfall #67)
+    // Enforce maximum limit to prevent unbounded queries (Pitfall #60)
     const MAX_LIMIT = 50;
     const effectiveLimit = Math.min(limit, MAX_LIMIT);
 
@@ -802,7 +802,7 @@ export class ProjectHubService {
     cursor?: string,
     limit: number = 50
   ): Promise<{ projects: Array<ProjectWithBooking>; nextCursor?: string; hasMore: boolean }> {
-    // Enforce maximum limit to prevent unbounded queries (Pitfall #67)
+    // Enforce maximum limit to prevent unbounded queries (Pitfall #60)
     const MAX_LIMIT = 100;
     const effectiveLimit = Math.min(limit, MAX_LIMIT);
 

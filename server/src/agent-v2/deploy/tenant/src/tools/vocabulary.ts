@@ -29,7 +29,7 @@ import type { BlockType } from '../context-builder.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MAIS_API_URL = process.env.MAIS_API_URL || 'https://api.gethandled.ai';
-// Fix #802: Use requireEnv to fail-fast at startup if secret is missing (Pitfall #45)
+// Fix #802: Use requireEnv to fail-fast at startup if secret is missing (Pitfall #41)
 const INTERNAL_API_SECRET = requireEnv('INTERNAL_API_SECRET');
 const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 
@@ -106,7 +106,7 @@ Common mappings:
 This is a T1 tool - executes immediately.`,
   parameters: ResolveVocabularyParams,
   execute: async (params, context) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = ResolveVocabularyParams.safeParse(params);
     if (!parseResult.success) {
       return {

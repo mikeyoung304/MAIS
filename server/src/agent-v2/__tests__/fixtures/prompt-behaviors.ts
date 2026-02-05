@@ -6,7 +6,7 @@
  * don't regress critical functionality.
  *
  * Categories:
- * 1. Fact-to-Storefront Bridge - Storing facts AND applying them (pitfall #88)
+ * 1. Fact-to-Storefront Bridge - Storing facts AND applying them (pitfall #80)
  * 2. Trust Tier T3 Confirmation - Hard confirmation for publish/discard
  * 3. Onboarding Detection - Proactive vs passive behavior
  * 4. Jargon Prevention - No technical terms in responses
@@ -14,7 +14,7 @@
  * 6. Voice & Tone - Confirmation vocabulary, no enthusiasm excesses
  * 7. Tool Failure Recovery - Graceful degradation
  *
- * @see CLAUDE.md pitfall #88 (Fact-to-Storefront Bridge)
+ * @see CLAUDE.md pitfall #80 (Fact-to-Storefront Bridge)
  * @see docs/design/VOICE_QUICK_REFERENCE.md
  * @see server/src/agent-v2/deploy/tenant/src/prompts/system.ts
  */
@@ -246,7 +246,7 @@ export const BRAND_APPROVED_WORDS = [
 
 export const EXPECTED_BEHAVIORS: PromptBehaviorTestCase[] = [
   // ============================================================================
-  // CATEGORY: Fact-to-Storefront Bridge (Pitfall #88)
+  // CATEGORY: Fact-to-Storefront Bridge (Pitfall #80)
   // ============================================================================
   {
     id: 'fact-bridge-001',

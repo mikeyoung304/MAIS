@@ -110,7 +110,7 @@ export const getPendingRequestsTool = new FunctionTool({
       .describe('Maximum number of requests to return'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = LimitSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -139,7 +139,7 @@ export const getPendingRequestsTool = new FunctionTool({
           version: r.version,
         })),
         count: result.count,
-        // State indicators for agent context (Pitfall #52)
+        // State indicators for agent context (Pitfall #48)
         hasPendingRequests: result.count > 0,
         pendingRequestCount: result.count,
         lastUpdated: new Date().toISOString(),
@@ -166,7 +166,7 @@ export const getCustomerActivityTool = new FunctionTool({
       .describe('Number of days to look back'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = DaysSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -216,7 +216,7 @@ export const getProjectDetailsTool = new FunctionTool({
     projectId: z.string().describe('The project ID to get details for'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = GetProjectDetailsSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -271,7 +271,7 @@ export const approveRequestTool = new FunctionTool({
     response: z.string().optional().describe('Optional response message to customer'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = ApproveRequestSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -331,7 +331,7 @@ export const denyRequestTool = new FunctionTool({
     response: z.string().optional().describe('Optional additional response message to customer'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = DenyRequestSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -386,7 +386,7 @@ export const sendMessageToCustomerTool = new FunctionTool({
     notifyByEmail: z.boolean().default(true).describe('Whether to also send email notification'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = SendMessageSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -451,7 +451,7 @@ export const updateProjectStatusTool = new FunctionTool({
     reason: z.string().optional().describe('Reason for status change'),
   }),
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = UpdateStatusSchema.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };

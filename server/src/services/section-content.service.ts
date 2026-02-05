@@ -43,7 +43,7 @@ export interface DashboardAction {
  */
 export interface StorefrontResult {
   success: boolean;
-  hasDraft: boolean; // CRITICAL: Agent needs this (Pitfall #52)
+  hasDraft: boolean; // CRITICAL: Agent needs this (Pitfall #48)
   visibility: 'draft' | 'live';
   message: string;
   dashboardAction?: DashboardAction;

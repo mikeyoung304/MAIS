@@ -9,8 +9,8 @@
  * 3. userId with colon - Format "tenantId:userId" (MAIS multi-tenant pattern)
  * 4. userId without colon - Direct tenant ID (fallback)
  *
- * @see CLAUDE.md Pitfall #41 - State Map-like API
- * @see CLAUDE.md Pitfall #42 - Missing state defaults
+ * @see CLAUDE.md Pitfall #37 - State Map-like API
+ * @see CLAUDE.md Pitfall #38 - Missing state defaults
  * @see docs/solutions/patterns/A2A_SESSION_STATE_PREVENTION.md
  */
 

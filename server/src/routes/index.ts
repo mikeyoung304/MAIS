@@ -697,7 +697,7 @@ export function createV1Router(
 
     // Register Tenant Agent routes (unified agent for dashboard)
     // Consolidates: Storefront editing, Marketing copy, Project management
-    // CRITICAL: contextBuilder injects forbiddenSlots at session creation (Pitfall #91 fix)
+    // CRITICAL: contextBuilder injects forbiddenSlots at session creation (Pitfall #83 fix)
     // Dual-layer rate limiting to protect Vertex AI costs:
     // - agentChatLimiter: 30 messages per minute per tenant (overall quota)
     // - agentSessionLimiter: 10 messages per minute per session (burst protection)

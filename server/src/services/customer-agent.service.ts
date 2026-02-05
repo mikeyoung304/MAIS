@@ -30,7 +30,7 @@ import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../config/tiers'
 import { cloudRunAuth } from './cloud-run-auth.service';
 
 // =============================================================================
-// ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
+// ADK RESPONSE SCHEMAS (Pitfall #56: Runtime validation for external APIs)
 // =============================================================================
 
 const AdkSessionResponseSchema = z.object({
