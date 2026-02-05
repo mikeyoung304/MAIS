@@ -5,8 +5,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
-import { ConciergeChat, type ConciergeUIAction } from './ConciergeChat';
-import type { DashboardAction } from '@/hooks/useConciergeChat';
+import { TenantAgentChat, type TenantAgentUIAction } from './TenantAgentChat';
+import type { DashboardAction, TenantAgentToolCall } from '@/hooks/useTenantAgentChat';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
@@ -176,8 +176,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
   }, [isMobileOpen, isMobile]);
 
   // Handle UI actions from tenant-agent tool calls (legacy - from tool name matching)
-  // Note: Function name retained as "Concierge" for backwards compatibility
-  const handleConciergeUIAction = useCallback((action: ConciergeUIAction) => {
+  const handleTenantAgentUIAction = useCallback((action: TenantAgentUIAction) => {
     switch (action.type) {
       case 'SHOW_PREVIEW':
         agentUIActions.showPreview((action.page as PageName) || 'home');
@@ -293,9 +292,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
   // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
   // Fix #818: Make async and add 100ms delay before invalidation to allow transaction commit
   // Fix #818 (Pitfall #90): Extract dashboardAction from tool results for UI navigation
-  // Note: Function name retained as "Concierge" for backwards compatibility
-  const handleConciergeToolComplete = useCallback(
-    async (toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }>) => {
+  const handleTenantAgentToolComplete = useCallback(
+    async (toolCalls: TenantAgentToolCall[]) => {
       // FIRST: Extract dashboard actions from tool results (Fix #818 / Pitfall #90)
       // Tool results may contain dashboardAction objects like:
       // { type: 'SCROLL_TO_SECTION', sectionId: 'home-hero-abc123' }
@@ -484,13 +482,12 @@ export function AgentPanel({ className }: AgentPanelProps) {
             />
           )}
 
-          {/* Chat content - TESTING: Always use ConciergeChat */}
+          {/* Chat content - TenantAgentChat (agent speaks first based on session state) */}
           <div className="flex-1 overflow-hidden">
-            <ConciergeChat
-              welcomeMessage="Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?"
+            <TenantAgentChat
               onFirstMessage={handleFirstMessage}
-              onUIAction={handleConciergeUIAction}
-              onToolComplete={handleConciergeToolComplete}
+              onUIAction={handleTenantAgentUIAction}
+              onToolComplete={handleTenantAgentToolComplete}
               onDashboardActions={handleDashboardActions}
               className="h-full"
             />
@@ -624,13 +621,12 @@ export function AgentPanel({ className }: AgentPanelProps) {
               />
             )}
 
-            {/* Chat content - TESTING: Always use ConciergeChat */}
+            {/* Chat content - TenantAgentChat (agent speaks first based on session state) */}
             <div className="flex-1 overflow-hidden">
-              <ConciergeChat
-                welcomeMessage="Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?"
+              <TenantAgentChat
                 onFirstMessage={handleFirstMessage}
-                onUIAction={handleConciergeUIAction}
-                onToolComplete={handleConciergeToolComplete}
+                onUIAction={handleTenantAgentUIAction}
+                onToolComplete={handleTenantAgentToolComplete}
                 onDashboardActions={handleDashboardActions}
                 inputRef={inputRef}
                 messagesRole="log"

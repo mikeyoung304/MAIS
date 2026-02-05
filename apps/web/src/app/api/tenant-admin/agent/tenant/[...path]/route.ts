@@ -1,24 +1,29 @@
 /**
- * Tenant Admin Agent API Proxy Route
+ * Tenant Admin Tenant Agent API Proxy Route
  *
- * Proxies all /api/tenant-admin/agent/* requests to the backend Concierge agent API.
- * This allows dashboard components to chat with the Vertex AI Concierge agent
+ * Proxies all /api/tenant-admin/agent/tenant/* requests to the backend Tenant Agent API.
+ * This allows dashboard components to chat with the unified Tenant Agent
  * without exposing the backend token.
  *
- * The backend token is securely retrieved from the server-side session and added
- * to the request headers.
+ * This is the canonical proxy after the Concierge → Tenant Agent migration.
+ * The Tenant Agent consolidates: Concierge, Storefront, Marketing, Project Hub.
  *
  * Example:
- *   Client calls: /api/tenant-admin/agent/chat
- *   Proxied to:   ${API_BASE_URL}/v1/tenant-admin/agent/chat
+ *   Client calls: /api/tenant-admin/agent/tenant/chat
+ *   Proxied to:   ${API_BASE_URL}/v1/tenant-admin/agent/tenant/chat
  *
  * Endpoints proxied:
- *   - POST /chat - Send message to Concierge
+ *   - POST /chat - Send message to Tenant Agent
  *   - GET /session/:id - Get session history
- *   - POST /session - Create new session
+ *   - POST /session - Create new session (with bootstrap context injection)
  *   - DELETE /session/:id - Close session
  *   - GET /onboarding-state - Get onboarding phase and context
  *   - POST /skip-onboarding - Skip the onboarding flow
+ *
+ * CRITICAL: Session creation now injects forbiddenSlots (Pitfall #91 fix)
+ * Context is injected at session start, not inferred from conversation.
+ *
+ * @see docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -29,7 +34,7 @@ import { unauthorizedResponse, badRequestResponse, serverErrorResponse } from '@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
- * Handle all HTTP methods for tenant admin agent routes
+ * Handle all HTTP methods for tenant admin tenant agent routes
  */
 async function handleRequest(
   request: NextRequest,
@@ -53,8 +58,8 @@ async function handleRequest(
     const url = new URL(request.url);
     const queryString = url.search;
 
-    // Build the backend URL - route to tenant-admin/agent endpoint
-    const backendUrl = `${API_BASE_URL}/v1/tenant-admin/agent/${pathString}${queryString}`;
+    // Build the backend URL - route to tenant-admin/agent/tenant endpoint
+    const backendUrl = `${API_BASE_URL}/v1/tenant-admin/agent/tenant/${pathString}${queryString}`;
 
     // Prepare headers
     const headers: HeadersInit = {
@@ -97,9 +102,9 @@ async function handleRequest(
       });
     }
 
-    // Log 404 responses to help diagnose routing issues (TODO-758)
+    // Log 404 responses to help diagnose routing issues
     if (response.status === 404) {
-      logger.warn('Tenant admin agent API returned 404', {
+      logger.warn('Tenant Agent API returned 404', {
         backendUrl,
         method,
         path: pathString,
@@ -109,7 +114,7 @@ async function handleRequest(
 
     return NextResponse.json(responseData, { status: response.status });
   } catch (error) {
-    logger.error('Tenant admin agent API proxy error', {
+    logger.error('Tenant Agent API proxy error', {
       error,
       method: request.method,
       url: request.url,

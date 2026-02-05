@@ -1,20 +1,21 @@
 /**
- * useConciergeChat - Chat logic for the Tenant Agent (Cloud Run)
+ * useTenantAgentChat - Chat logic for the Tenant Agent (Cloud Run)
  *
  * This hook connects to the unified tenant-agent that handles all tenant-facing operations:
  * - Storefront editing and content management
  * - Marketing content generation (headlines, copy, taglines)
  * - Project management and client communication
  *
- * Note: File/export names retained as "Concierge" for backwards compatibility.
- * The actual backend is the unified `tenant-agent` on Cloud Run.
- * See SERVICE_REGISTRY.md for current agent architecture.
+ * IMPORTANT: The agent speaks first based on session state (forbiddenSlots).
+ * Do NOT pass a hardcoded greeting - let the agent's system prompt determine the opener.
  *
- * Key differences from legacy useAgentChat:
- * - Uses /api/tenant-admin/agent/* endpoints (not /api/agent/*)
- * - Tenant-agent returns tool calls with dashboard actions
- * - Session management is explicit (POST /session first)
- * - Response format: { response, sessionId, toolCalls, dashboardActions }
+ * See SERVICE_REGISTRY.md for current agent architecture.
+ * See docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md for context injection.
+ *
+ * Key differences from legacy useConciergeChat:
+ * - Agent speaks first (fetches initial message from backend)
+ * - Uses new localStorage keys (with migration from old keys)
+ * - Renamed types: TenantAgentMessage, TenantAgentToolCall, etc.
  *
  * @example
  * ```tsx
@@ -23,35 +24,37 @@
  *   isLoading,
  *   sendMessage,
  *   toolCalls,
- * } = useConciergeChat();
+ * } = useTenantAgentChat();
  * ```
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-// API proxy URL - proxies to /v1/tenant-admin/agent/*
-const API_URL = '/api/tenant-admin/agent';
+// API proxy URL - proxies to /v1/tenant-admin/agent/tenant/*
+const API_URL = '/api/tenant-admin/agent/tenant';
 
 // LocalStorage keys for persisting session state
-const SESSION_STORAGE_KEY = 'handled:concierge:sessionId';
-const VERSION_STORAGE_KEY = 'handled:concierge:version';
+// Migration: Read from old keys, write to new keys
+const OLD_SESSION_KEY = 'handled:concierge:sessionId';
+const OLD_VERSION_KEY = 'handled:concierge:version';
+const SESSION_KEY = 'handled:tenant-agent:sessionId';
+const VERSION_KEY = 'handled:tenant-agent:version';
 
 /**
  * Message in the chat history
  */
-export interface ConciergeMessage {
+export interface TenantAgentMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   /** Tool calls made by the agent (e.g., delegate_to_marketing) */
-  toolCalls?: ConciergeToolCall[];
+  toolCalls?: TenantAgentToolCall[];
 }
 
 /**
  * Tool call from the tenant-agent (storefront/marketing actions)
- * Note: Type name retained as "Concierge" for backwards compatibility.
  */
-export interface ConciergeToolCall {
+export interface TenantAgentToolCall {
   name: string;
   args: Record<string, unknown>;
   result?: unknown;
@@ -96,16 +99,13 @@ export interface DashboardAction {
 }
 
 /**
- * Configuration options for useConciergeChat (tenant-agent chat hook)
- * Note: Type name retained as "Concierge" for backwards compatibility.
+ * Configuration options for useTenantAgentChat
  */
-export interface UseConciergeChatOptions {
-  /** Initial greeting message */
-  initialGreeting?: string;
+export interface UseTenantAgentChatOptions {
   /** Callback when session starts */
   onSessionStart?: (sessionId: string) => void;
   /** Callback when a tool completes */
-  onToolComplete?: (toolCalls: ConciergeToolCall[]) => void;
+  onToolComplete?: (toolCalls: TenantAgentToolCall[]) => void;
   /** Callback when dashboard actions are received (navigation, scroll, preview) */
   onDashboardActions?: (actions: DashboardAction[]) => void;
   /** Callback when user sends first message */
@@ -113,17 +113,16 @@ export interface UseConciergeChatOptions {
 }
 
 /**
- * Return type for useConciergeChat hook (tenant-agent chat)
- * Note: Type name retained as "Concierge" for backwards compatibility.
+ * Return type for useTenantAgentChat hook
  */
-export interface UseConciergeChatReturn {
+export interface UseTenantAgentChatReturn {
   // State
-  messages: ConciergeMessage[];
+  messages: TenantAgentMessage[];
   inputValue: string;
   isLoading: boolean;
   sessionId: string | null;
   error: string | null;
-  lastToolCalls: ConciergeToolCall[];
+  lastToolCalls: TenantAgentToolCall[];
 
   // Health state
   isInitializing: boolean;
@@ -133,7 +132,7 @@ export interface UseConciergeChatReturn {
   sendMessage: () => Promise<void>;
   sendProgrammaticMessage: (message: string) => Promise<void>;
   setInputValue: (value: string) => void;
-  setMessages: React.Dispatch<React.SetStateAction<ConciergeMessage[]>>;
+  setMessages: React.Dispatch<React.SetStateAction<TenantAgentMessage[]>>;
   initializeSession: () => Promise<void>;
 
   // Refs
@@ -149,32 +148,71 @@ export interface UseConciergeChatReturn {
 }
 
 /**
- * useConciergeChat - Core chat logic for Tenant Agent (Cloud Run)
+ * Helper to migrate localStorage keys from old Concierge keys to new Tenant Agent keys
+ */
+function migrateLocalStorageKeys(): { sessionId: string | null; version: number | null } {
+  let sessionId: string | null = null;
+  let version: number | null = null;
+
+  try {
+    // Try new keys first
+    sessionId = localStorage.getItem(SESSION_KEY);
+    const storedVersion = localStorage.getItem(VERSION_KEY);
+    version = storedVersion ? parseInt(storedVersion, 10) : null;
+
+    // If no new keys, try old keys and migrate
+    if (!sessionId) {
+      const oldSessionId = localStorage.getItem(OLD_SESSION_KEY);
+      const oldVersion = localStorage.getItem(OLD_VERSION_KEY);
+
+      if (oldSessionId) {
+        sessionId = oldSessionId;
+        version = oldVersion ? parseInt(oldVersion, 10) : null;
+
+        // Migrate to new keys
+        localStorage.setItem(SESSION_KEY, sessionId);
+        if (version !== null) {
+          localStorage.setItem(VERSION_KEY, String(version));
+        }
+
+        // Clean up old keys
+        localStorage.removeItem(OLD_SESSION_KEY);
+        localStorage.removeItem(OLD_VERSION_KEY);
+      }
+    }
+  } catch {
+    // localStorage unavailable (private browsing) - continue without persistence
+  }
+
+  return { sessionId, version };
+}
+
+/**
+ * useTenantAgentChat - Core chat logic for Tenant Agent (Cloud Run)
  *
  * Handles:
  * - Session initialization with tenant-agent backend
+ * - Agent speaks first: fetches initial message based on session state
  * - Message sending with optimistic UI updates
  * - Tool call tracking for storefront and marketing actions
  * - Dashboard action processing (navigation, preview, guided refinement)
  * - Auto-scroll on new messages
- *
- * Note: Function name retained as "Concierge" for backwards compatibility.
+ * - LocalStorage key migration from Concierge → Tenant Agent
  */
-export function useConciergeChat({
-  initialGreeting = "Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?",
+export function useTenantAgentChat({
   onSessionStart,
   onToolComplete,
   onDashboardActions,
   onFirstMessage,
-}: UseConciergeChatOptions = {}): UseConciergeChatReturn {
+}: UseTenantAgentChatOptions = {}): UseTenantAgentChatReturn {
   // Core state
-  const [messages, setMessages] = useState<ConciergeMessage[]>([]);
+  const [messages, setMessages] = useState<TenantAgentMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [version, setVersion] = useState<number>(0); // Optimistic locking version (Pitfall #69)
   const [error, setError] = useState<string | null>(null);
-  const [lastToolCalls, setLastToolCalls] = useState<ConciergeToolCall[]>([]);
+  const [lastToolCalls, setLastToolCalls] = useState<TenantAgentToolCall[]>([]);
 
   // Initialization state
   const [isInitializing, setIsInitializing] = useState(true);
@@ -197,24 +235,82 @@ export function useConciergeChat({
   }, [messages, scrollToBottom]);
 
   /**
+   * Fetch the agent's first message by sending a "hello" to the chat endpoint.
+   * This lets the agent speak first based on session state (forbiddenSlots).
+   */
+  const fetchAgentGreeting = useCallback(
+    async (newSessionId: string, currentVersion: number) => {
+      try {
+        const response = await fetch(`${API_URL}/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: 'hello',
+            sessionId: newSessionId,
+            version: currentVersion,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get agent greeting');
+        }
+
+        const data = await response.json();
+
+        // Update version from response
+        if (data.version !== undefined) {
+          setVersion(data.version);
+          try {
+            localStorage.setItem(VERSION_KEY, String(data.version));
+          } catch {
+            // Ignore localStorage errors
+          }
+        }
+
+        // Set the agent's actual first message
+        setMessages([
+          {
+            role: 'assistant',
+            content: data.response,
+            timestamp: new Date(),
+            toolCalls: data.toolCalls?.length > 0 ? data.toolCalls : undefined,
+          },
+        ]);
+
+        // Process any dashboard actions from the greeting
+        const dashboardActions: DashboardAction[] = data.dashboardActions || [];
+        if (dashboardActions.length > 0) {
+          onDashboardActions?.(dashboardActions);
+        }
+      } catch (err) {
+        // If we can't get the agent greeting, show a fallback
+        setMessages([
+          {
+            role: 'assistant',
+            content: "Hey, I'm your AI assistant. What can I help you with today?",
+            timestamp: new Date(),
+          },
+        ]);
+        console.error('Failed to fetch agent greeting:', err);
+      }
+    },
+    [onDashboardActions]
+  );
+
+  /**
    * Initialize session with the tenant-agent
    * Restores existing session from localStorage if available, otherwise creates new one
+   * After session creation/restoration, fetches agent's first message
    */
   const initializeSession = useCallback(async () => {
     setIsInitializing(true);
     setError(null);
 
     try {
-      // Check localStorage for existing session
-      let existingSessionId: string | null = null;
-      let existingVersion: number | null = null;
-      try {
-        existingSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-        const storedVersion = localStorage.getItem(VERSION_STORAGE_KEY);
-        existingVersion = storedVersion ? parseInt(storedVersion, 10) : null;
-      } catch {
-        // localStorage unavailable (private browsing) - continue without persistence
-      }
+      // Check localStorage for existing session (with migration from old keys)
+      const { sessionId: existingSessionId, version: existingVersion } = migrateLocalStorageKeys();
 
       // If we have an existing session, try to restore it
       if (existingSessionId) {
@@ -238,7 +334,7 @@ export function useConciergeChat({
 
             // Restore messages from history
             if (historyData.messages && historyData.messages.length > 0) {
-              const restoredMessages: ConciergeMessage[] = historyData.messages.map(
+              const restoredMessages: TenantAgentMessage[] = historyData.messages.map(
                 (msg: { role: 'user' | 'assistant'; content: string; timestamp?: string }) => ({
                   role: msg.role,
                   content: msg.content,
@@ -247,22 +343,27 @@ export function useConciergeChat({
               );
               setMessages(restoredMessages);
               setIsInitializing(false);
-              return; // Successfully restored session
+              return; // Successfully restored session with history
             }
+
+            // Session exists but no messages - fetch agent's first message
+            setIsInitializing(false);
+            await fetchAgentGreeting(existingSessionId, restoredVersion);
+            return;
           }
-          // If history fetch failed or no messages, fall through to create new session
+          // If history fetch failed, fall through to create new session
           // Clear invalid session from localStorage
           try {
-            localStorage.removeItem(SESSION_STORAGE_KEY);
-            localStorage.removeItem(VERSION_STORAGE_KEY);
+            localStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(VERSION_KEY);
           } catch {
             // Ignore localStorage errors
           }
         } catch {
           // Session validation failed, create new session
           try {
-            localStorage.removeItem(SESSION_STORAGE_KEY);
-            localStorage.removeItem(VERSION_STORAGE_KEY);
+            localStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(VERSION_KEY);
           } catch {
             // Ignore localStorage errors
           }
@@ -285,33 +386,29 @@ export function useConciergeChat({
       const data = await response.json();
       setSessionId(data.sessionId);
       // New sessions start at version 0
-      setVersion(data.version ?? 0);
+      const newVersion = data.version ?? 0;
+      setVersion(newVersion);
       setIsAvailable(true);
       onSessionStart?.(data.sessionId);
 
       // Persist session state to localStorage
       try {
-        localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
-        localStorage.setItem(VERSION_STORAGE_KEY, String(data.version ?? 0));
+        localStorage.setItem(SESSION_KEY, data.sessionId);
+        localStorage.setItem(VERSION_KEY, String(newVersion));
       } catch {
         // localStorage unavailable - continue without persistence
       }
 
-      // Show initial greeting
-      setMessages([
-        {
-          role: 'assistant',
-          content: initialGreeting,
-          timestamp: new Date(),
-        },
-      ]);
+      // AGENT SPEAKS FIRST: Fetch the agent's initial message based on session state
+      // This replaces the hardcoded greeting - the agent's system prompt determines what to say
+      setIsInitializing(false);
+      await fetchAgentGreeting(data.sessionId, newVersion);
     } catch (err) {
       setIsAvailable(false);
       setError(err instanceof Error ? err.message : 'Failed to connect to assistant');
-    } finally {
       setIsInitializing(false);
     }
-  }, [initialGreeting, onSessionStart]);
+  }, [onSessionStart, fetchAgentGreeting]);
 
   // Initialize on mount
   useEffect(() => {
@@ -336,7 +433,7 @@ export function useConciergeChat({
       setIsLoading(true);
 
       // Add user message optimistically
-      const userMessage: ConciergeMessage = {
+      const userMessage: TenantAgentMessage = {
         role: 'user',
         content: message,
         timestamp: new Date(),
@@ -367,21 +464,21 @@ export function useConciergeChat({
         if (data.version !== undefined) {
           setVersion(data.version);
           try {
-            localStorage.setItem(VERSION_STORAGE_KEY, String(data.version));
+            localStorage.setItem(VERSION_KEY, String(data.version));
           } catch {
             // Ignore localStorage errors
           }
         }
 
         // Extract tool calls if present
-        const toolCalls: ConciergeToolCall[] = data.toolCalls || [];
+        const toolCalls: TenantAgentToolCall[] = data.toolCalls || [];
         setLastToolCalls(toolCalls);
 
         // Extract dashboard actions (navigation, scroll, preview commands)
         const dashboardActions: DashboardAction[] = data.dashboardActions || [];
 
         // Add assistant message
-        const assistantMessage: ConciergeMessage = {
+        const assistantMessage: TenantAgentMessage = {
           role: 'assistant',
           content: data.response,
           timestamp: new Date(),
@@ -476,3 +573,11 @@ export function useConciergeChat({
     hasSentFirstMessage,
   };
 }
+
+// Re-export old names for backwards compatibility during migration
+// These can be removed after all consumers are updated
+export type ConciergeMessage = TenantAgentMessage;
+export type ConciergeToolCall = TenantAgentToolCall;
+export type UseConciergeChatOptions = UseTenantAgentChatOptions;
+export type UseConciergeChatReturn = UseTenantAgentChatReturn;
+export const useConciergeChat = useTenantAgentChat;

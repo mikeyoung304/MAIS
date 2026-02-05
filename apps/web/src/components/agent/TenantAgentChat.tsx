@@ -5,33 +5,30 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Send, Loader2, Bot, AlertTriangle, Sparkles, Zap } from 'lucide-react';
 import {
-  useConciergeChat,
-  type ConciergeToolCall,
+  useTenantAgentChat,
+  type TenantAgentToolCall,
   type DashboardAction,
-} from '@/hooks/useConciergeChat';
+} from '@/hooks/useTenantAgentChat';
 import { registerAgentSender } from '@/lib/tenant-agent-dispatch';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 
 /**
  * UI Action from tenant-agent tool calls
  * Maps agent actions to UI updates (preview, navigation, highlighting)
- * Note: Type name retained as "Concierge" for backwards compatibility.
  */
-export interface ConciergeUIAction {
+export interface TenantAgentUIAction {
   type: 'SHOW_PREVIEW' | 'SHOW_DASHBOARD' | 'HIGHLIGHT_SECTION' | 'REFRESH_PREVIEW';
   page?: string;
   sectionId?: string;
 }
 
-interface ConciergeChatProps {
-  /** Custom welcome message */
-  welcomeMessage?: string;
+interface TenantAgentChatProps {
   /** Callback when user sends their first message */
   onFirstMessage?: () => void;
   /** Callback when tool calls complete (for preview updates) */
-  onToolComplete?: (toolCalls: ConciergeToolCall[]) => void;
+  onToolComplete?: (toolCalls: TenantAgentToolCall[]) => void;
   /** Callback for UI actions derived from tool calls */
-  onUIAction?: (action: ConciergeUIAction) => void;
+  onUIAction?: (action: TenantAgentUIAction) => void;
   /** Callback when dashboard actions are received from agent (navigation, scroll, preview) */
   onDashboardActions?: (actions: DashboardAction[]) => void;
   /** Ref for the input textarea (for focus management from parent) */
@@ -43,24 +40,27 @@ interface ConciergeChatProps {
 }
 
 /**
- * ConciergeChat - Chat interface for Tenant Agent (Cloud Run)
+ * TenantAgentChat - Chat interface for Tenant Agent (Cloud Run)
  *
  * This component connects to the unified tenant-agent that handles:
  * - Storefront editing: layout changes, section updates, branding
  * - Marketing content: headlines, copy, taglines
  * - Project management: client communication, task tracking
  *
+ * IMPORTANT: The agent speaks first based on session state (forbiddenSlots).
+ * There is no hardcoded welcome message - the agent's system prompt determines the opener.
+ *
  * Features:
+ * - Agent-first greeting based on session context
  * - Real-time tool call visualization
  * - Activity indicators for tool execution
  * - Integration with preview panel via callbacks
  * - Dashboard action processing (navigation, scroll, guided refinement)
  *
- * Note: Component name retained as "Concierge" for backwards compatibility.
  * See SERVICE_REGISTRY.md for current agent architecture.
+ * See docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md for context injection.
  */
-export function ConciergeChat({
-  welcomeMessage = "Hey there! I'm your AI assistant. I can help you write better headlines, update your storefront, or research your market. What would you like to work on?",
+export function TenantAgentChat({
   onFirstMessage,
   onToolComplete,
   onUIAction,
@@ -68,7 +68,7 @@ export function ConciergeChat({
   inputRef: externalInputRef,
   messagesRole = 'log',
   className,
-}: ConciergeChatProps) {
+}: TenantAgentChatProps) {
   const {
     messages,
     inputValue,
@@ -85,8 +85,7 @@ export function ConciergeChat({
     messagesEndRef,
     inputRef: internalInputRef,
     handleKeyDown,
-  } = useConciergeChat({
-    initialGreeting: welcomeMessage,
+  } = useTenantAgentChat({
     onFirstMessage,
     onDashboardActions,
     onToolComplete: (toolCalls) => {
@@ -250,20 +249,20 @@ export function ConciergeChat({
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-neutral-700 bg-surface-alt">
-        <span id="concierge-input-description" className="sr-only">
+        <span id="tenant-agent-input-description" className="sr-only">
           Chat with AI assistant. Press Enter to send, Shift+Enter for new line.
         </span>
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
-            data-concierge-input
-            data-testid="concierge-input"
+            data-tenant-agent-input
+            data-testid="tenant-agent-input"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything..."
             aria-label="Message input"
-            aria-describedby="concierge-input-description"
+            aria-describedby="tenant-agent-input-description"
             className={cn(
               'flex-1 resize-none rounded-xl border border-neutral-700 px-3 py-2 text-sm',
               'focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20',
@@ -298,7 +297,7 @@ export function ConciergeChat({
  * ToolCallBadge - Visual indicator for tenant-agent tool execution
  * Shows which category of tool is being executed (marketing, storefront, research)
  */
-function ToolCallBadge({ toolCall }: { toolCall: ConciergeToolCall }) {
+function ToolCallBadge({ toolCall }: { toolCall: TenantAgentToolCall }) {
   // Determine agent type from tool name
   const getAgentInfo = (name: string) => {
     if (name.includes('marketing') || name.includes('headline') || name.includes('copy')) {
@@ -329,4 +328,8 @@ function ToolCallBadge({ toolCall }: { toolCall: ConciergeToolCall }) {
   );
 }
 
-export default ConciergeChat;
+// Re-export old names for backwards compatibility during migration
+export type ConciergeUIAction = TenantAgentUIAction;
+export const ConciergeChat = TenantAgentChat;
+
+export default TenantAgentChat;

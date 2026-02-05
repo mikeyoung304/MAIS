@@ -84,6 +84,19 @@ export {
 // Subscription & Billing
 export { useSubscription, type SubscriptionTier } from './useSubscription';
 
-// Agent Chat - Legacy exports removed (migrated to Vertex AI)
-// Use useConciergeChat from '@/hooks/useConciergeChat' for new implementations
-// Types available from '@/components/chat/ChatMessage' for backwards compatibility
+// Agent Chat - Tenant Agent (Cloud Run)
+// Migrated 2026-02 from Concierge → Tenant Agent naming
+export {
+  useTenantAgentChat,
+  type TenantAgentMessage,
+  type TenantAgentToolCall,
+  type DashboardAction,
+  type UseTenantAgentChatOptions,
+  type UseTenantAgentChatReturn,
+  // Backwards compatibility exports (can be removed after migration)
+  useConciergeChat,
+  type ConciergeMessage,
+  type ConciergeToolCall,
+  type UseConciergeChatOptions,
+  type UseConciergeChatReturn,
+} from './useTenantAgentChat';
