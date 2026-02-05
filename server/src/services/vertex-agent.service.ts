@@ -24,13 +24,13 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
-import { GoogleAuth, JWT } from 'google-auth-library';
 import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
 import type { ContextBuilderService } from './context-builder.service';
 import { createContextBuilderService, type BootstrapData } from './context-builder.service';
+import { cloudRunAuth } from './cloud-run-auth.service';
 
 // =============================================================================
 // ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
@@ -198,8 +198,6 @@ export interface SendMessageResult {
 // =============================================================================
 
 export class VertexAgentService {
-  private auth: GoogleAuth;
-  private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
   private sessionService: SessionService;
   private contextBuilder: ContextBuilderService;
   private prisma: PrismaClient; // Direct access for adkSessionId updates
@@ -210,27 +208,6 @@ export class VertexAgentService {
     this.sessionService = createSessionService(prisma);
     // Initialize context builder for bootstrap data (Agent-First Architecture)
     this.contextBuilder = createContextBuilderService(prisma);
-
-    // Initialize Google Auth for Cloud Run authentication
-    // Priority: GOOGLE_SERVICE_ACCOUNT_JSON (Render) > ADC (GCP/local)
-    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    if (serviceAccountJson) {
-      try {
-        const credentials = JSON.parse(serviceAccountJson);
-        this.auth = new GoogleAuth({ credentials });
-        // Store credentials for JWT-based ID token generation
-        this.serviceAccountCredentials = {
-          client_email: credentials.client_email,
-          private_key: credentials.private_key,
-        };
-        logger.info('[VertexAgent] Using service account from GOOGLE_SERVICE_ACCOUNT_JSON');
-      } catch (e) {
-        logger.error({ error: e }, '[VertexAgent] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
-        this.auth = new GoogleAuth();
-      }
-    } else {
-      this.auth = new GoogleAuth();
-    }
   }
 
   /**
@@ -301,7 +278,7 @@ export class VertexAgentService {
     let adkSessionId: string;
 
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const response = await fetchWithTimeout(
         // ADK app name is 'agent' (from /list-apps endpoint)
         `${getTenantAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
@@ -519,7 +496,7 @@ export class VertexAgentService {
 
     try {
       // Get identity token for Cloud Run authentication
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
 
       // If no adkSessionId, create one first
       if (!adkSessionId) {
@@ -725,7 +702,7 @@ export class VertexAgentService {
 
     let response: Response;
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       response = await fetchWithTimeout(`${getTenantAgentUrl()}/run`, {
         method: 'POST',
         headers: {
@@ -904,7 +881,7 @@ export class VertexAgentService {
     requestId?: string
   ): Promise<string | null> {
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const adkUserId = `${tenantId}:${userId}`;
 
       // Fetch bootstrap data for context injection (same as createSession)
@@ -983,72 +960,6 @@ export class VertexAgentService {
       logger.error({ tenantId, userId, error }, '[VertexAgent] Error creating ADK session');
       return null;
     }
-  }
-
-  /**
-   * Get identity token for Cloud Run authentication.
-   * Priority: JWT (service account) > GoogleAuth (ADC) > gcloud CLI (local dev)
-   */
-  private async getIdentityToken(): Promise<string | null> {
-    // First try: JWT with service account credentials (most reliable for Render)
-    // This directly uses the private key to sign an ID token request
-    if (this.serviceAccountCredentials) {
-      try {
-        const jwtClient = new JWT({
-          email: this.serviceAccountCredentials.client_email,
-          key: this.serviceAccountCredentials.private_key,
-        });
-        const idToken = await jwtClient.fetchIdToken(getTenantAgentUrl());
-        if (idToken) {
-          logger.info('[VertexAgent] Got identity token via JWT (service account)');
-          return idToken;
-        }
-        logger.warn('[VertexAgent] JWT.fetchIdToken returned empty token');
-      } catch (e) {
-        logger.warn(
-          { error: e instanceof Error ? e.message : String(e) },
-          '[VertexAgent] JWT fetchIdToken failed'
-        );
-      }
-    }
-
-    // Second try: GoogleAuth (works with ADC on GCP)
-    try {
-      const client = await this.auth.getIdTokenClient(getTenantAgentUrl());
-      const headers = await client.getRequestHeaders();
-      // getRequestHeaders returns { Authorization: 'Bearer ...' } or empty object
-      const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';
-      const token = authHeader.replace('Bearer ', '');
-      if (token) {
-        logger.info('[VertexAgent] Got identity token via GoogleAuth');
-        return token;
-      }
-    } catch (e) {
-      logger.warn(
-        { error: e instanceof Error ? e.message : String(e) },
-        '[VertexAgent] GoogleAuth failed, trying fallback'
-      );
-    }
-
-    // Third try: gcloud CLI (works with user credentials locally)
-    try {
-      const { execSync } = await import('child_process');
-      const token = execSync('gcloud auth print-identity-token', {
-        encoding: 'utf-8',
-        timeout: 5000,
-      }).trim();
-      if (token) {
-        logger.info('[VertexAgent] Using gcloud CLI identity token (local dev)');
-        return token;
-      }
-    } catch {
-      // gcloud CLI not available or failed - this is expected on Render
-    }
-
-    logger.warn(
-      '[VertexAgent] No identity token available - Cloud Run calls will be unauthenticated'
-    );
-    return null;
   }
 
   /**
