@@ -1,7 +1,10 @@
 # Legacy Agent System Migration Plan
 
+> **COMPLETED (2026-01-26):** This migration is complete. All legacy agent orchestrators have been deleted and replaced by Vertex AI Cloud Run agents. The `AdvisorMemoryService` mentioned in this plan has been deleted and replaced by `ContextBuilder`. Some sections below may reference deleted code paths for historical context.
+
 **Created:** 2026-01-26
-**Last Updated:** 2026-01-26
+**Last Updated:** 2026-02-05 (status update)
+**Status:** COMPLETE
 **Goal:** Migrate all agent functionality to Vertex AI Cloud Run architecture, delete legacy code
 **Preservation Strategy:** Archive legacy code on GitHub branches before deletion
 

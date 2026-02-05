@@ -122,12 +122,6 @@ export const uploadLimiterTenant = rateLimit({
 });
 
 /**
- * @deprecated Use uploadLimiterIP and uploadLimiterTenant instead
- * Legacy single-layer rate limiter - kept for backwards compatibility
- */
-export const uploadLimiter = uploadLimiterIP;
-
-/**
  * Rate limiter for visual editor draft autosave endpoints
  * Allows frequent saves (1 per second client debounce) while preventing abuse
  * 120 saves per minute per tenant (2 per second to allow for bursts)

@@ -9,12 +9,14 @@
 
 ## Implemented Tests
 
-### Unit Tests (44 passing)
+### Unit Tests (~1700 tests)
 
-- `availability.service` — busy/booked/blackout cases ✅
-- `booking.service` — unique date + refund path; idempotent webhook ✅
-- `catalog.service` — package/add-on CRUD operations ✅
-- `identity.service` — login success/fail ✅
+Run `npm test` to execute the full test suite covering:
+
+- Domain services (availability, booking, catalog, identity, tenant)
+- Integration tests (webhook race conditions, booking repository)
+- Payment services (refund processing, deposits, checkout)
+- Agent tools and multi-tenant isolation
 
 ### E2E Tests (9 scenarios)
 

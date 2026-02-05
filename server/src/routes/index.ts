@@ -48,8 +48,6 @@ import { createTenantAdminBillingRoutes } from './tenant-admin-billing.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
-// DELETED: createTenantAdminLandingPageRoutes - Phase 5 Section Content Migration
-// DELETED: createTenantAdminAgentRoutes - Concierge → Tenant Agent migration complete
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
@@ -95,7 +93,6 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { ReminderService } from '../services/reminder.service';
-// DELETED: LandingPageService type - Phase 5 Section Content Migration
 import type { SectionContentService } from '../services/section-content.service';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import type { AvailabilityService } from '../services/availability.service';
@@ -126,7 +123,6 @@ interface Services {
   tenantOnboarding?: TenantOnboardingService;
   tenantProvisioning?: TenantProvisioningService;
   reminder?: ReminderService;
-  // DELETED: landingPage - Phase 5 Section Content Migration
   sectionContent?: SectionContentService;
   webhookDelivery?: WebhookDeliveryService;
   projectHub?: ProjectHubService;
@@ -648,10 +644,6 @@ export function createV1Router(
     logger.info(
       '✅ Tenant admin deposit settings routes mounted at /v1/tenant-admin/settings/deposits'
     );
-
-    // DELETED: Tenant admin landing page routes - Phase 5 Section Content Migration
-    // All storefront editing now uses agent tools via /v1/internal/agent/storefront/* routes
-    // See: docs/plans/2026-02-02-refactor-section-content-migration-plan.md
 
     // Register public scheduling routes (for customer booking widget)
     // Requires tenant context via X-Tenant-Key header

@@ -141,7 +141,7 @@ This approach encountered P2034 deadlock errors in production-like concurrency s
 - Created predicate locks that conflicted even for different dates
 - Failed with P2034 in 5 critical integration tests
 
-See ADR-012 for the improved solution using PostgreSQL advisory locks.
+See ADR-013 for the improved solution using PostgreSQL advisory locks.
 
 ## References
 
@@ -151,5 +151,5 @@ See ADR-012 for the improved solution using PostgreSQL advisory locks.
 
 ## Related ADRs
 
-- ADR-012: PostgreSQL Advisory Locks (supersedes this ADR)
+- ADR-013: PostgreSQL Advisory Locks (supersedes this ADR)
 - ADR-009: Database-Based Webhook Dead Letter Queue

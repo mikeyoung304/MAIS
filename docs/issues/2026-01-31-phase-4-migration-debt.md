@@ -37,13 +37,13 @@ The Phase 4 agent consolidation (January 2026) successfully migrated tools from 
 
 ### 1.1 Phase 4 Migration (January 2026)
 
-| Legacy Agent      | Migrated To     | Date       | Archived Location                          |
-| ----------------- | --------------- | ---------- | ------------------------------------------ |
-| storefront-agent  | tenant-agent    | 2026-01-30 | `server/src/agent-v2/archive/storefront/`  |
-| marketing-agent   | tenant-agent    | 2026-01-30 | `server/src/agent-v2/archive/marketing/`   |
-| concierge-agent   | tenant-agent    | 2026-01-30 | `server/src/agent-v2/archive/concierge/`   |
-| booking-agent     | customer-agent  | 2026-01-31 | `server/src/agent-v2/archive/booking/`     |
-| project-hub-agent | customer+tenant | 2026-01-31 | `server/src/agent-v2/archive/project-hub/` |
+| Legacy Agent      | Migrated To     | Date       | Archived Location               |
+| ----------------- | --------------- | ---------- | ------------------------------- |
+| storefront-agent  | tenant-agent    | 2026-01-30 | git history (directory deleted) |
+| marketing-agent   | tenant-agent    | 2026-01-30 | git history (directory deleted) |
+| concierge-agent   | tenant-agent    | 2026-01-30 | git history (directory deleted) |
+| booking-agent     | customer-agent  | 2026-01-31 | git history (directory deleted) |
+| project-hub-agent | customer+tenant | 2026-01-31 | git history (directory deleted) |
 
 **Current Active Agents:**
 

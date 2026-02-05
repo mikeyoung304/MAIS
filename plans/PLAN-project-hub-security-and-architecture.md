@@ -1,5 +1,7 @@
 # Project Hub: Security Fixes + Architecture Evolution Plan
 
+> **COMPLETED & SUPERSEDED (2026-02-05):** Phase 1 security fixes and Phase 2 architecture decisions were completed. However, the `project-hub-agent` mentioned in this plan was subsequently retired and split into `customer-agent` and `tenant-agent` in the Agent Consolidation (January 2026). The security patterns established here (context guards, T3 confirmation, ownership verification) remain active in the successor agents.
+
 ## Executive Summary
 
 **Recommendation:** Fix P1 security issues first (Phase 1), then evaluate split architecture (Phase 2).

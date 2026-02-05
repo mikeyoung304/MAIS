@@ -29,7 +29,7 @@ This document tracks all deployed ADK agent services to prevent naming conflicts
 > - `tenant-agent` handles all tenant-facing tasks (storefront, marketing, project management)
 > - `customer-agent` handles all customer-facing tasks (booking, project hub)
 > - See `docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md` for migration plan.
-> - Archived code is in `server/src/agent-v2/archive/` for 30-day rollback safety.
+> - Archived agents are available in git history for reference (retired agents: concierge, marketing, storefront, booking, project-hub).
 
 ---
 
@@ -137,4 +137,4 @@ curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 ---
 
-**Last Updated:** 2026-01-30 (storefront-agent and marketing-agent retired, code archived)
+**Last Updated:** 2026-02-05 (removed phantom archive directory references; agents available in git history)

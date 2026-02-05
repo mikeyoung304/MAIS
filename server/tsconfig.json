@@ -34,7 +34,6 @@
     "test",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
-    "src/adapters/lib",
-    "src/agent-v2/archive/**"
+    "src/adapters/lib"
   ]
 }

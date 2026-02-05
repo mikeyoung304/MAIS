@@ -125,9 +125,6 @@ cd apps/web && npm run dev        # Next.js dev server (port 3000)
 cd apps/web && npm run build      # Production build
 cd apps/web && npm run start      # Production server
 
-# Frontend - Legacy Admin (client/)
-npm run dev:client                # Vite dev server (port 5173)
-
 # Full Stack
 npm run dev:all                   # API + client + Stripe webhook listener
 ```
@@ -142,27 +139,24 @@ npm run test:e2e:headed           # E2E with visible browser
 
 ## AI Agent Development & Deployment
 
-The platform includes AI agents deployed to Google Cloud Run using the ADK (Agent Development Kit). These agents provide conversational AI capabilities for onboarding, marketing, storefront editing, and more.
+The platform includes 3 AI agents deployed to Google Cloud Run using the ADK (Agent Development Kit). These agents provide conversational AI capabilities for booking, storefront editing, marketing, project management, and research.
 
 ### Agent Architecture
 
 ```
 server/src/agent-v2/deploy/
-├── concierge/        # Main orchestrator - routes to specialists
-├── marketing/        # Marketing research and competitive analysis
-├── storefront/       # Storefront content editing
-├── research/         # Industry research tools
-├── booking/          # Booking management
-└── project-hub/      # Multi-tenant agent registry
+├── customer/         # Service discovery, booking, project hub (customer view)
+├── tenant/           # Storefront editing, marketing, project management (tenant view)
+└── research/         # Web research
 ```
 
-**Hub-and-Spoke Pattern:** The Concierge agent orchestrates all interactions, delegating to specialist agents (Marketing, Storefront, Research) as needed.
+**Direct-Execution Model:** Each agent owns its tools and executes directly without an orchestrator layer. See ADR-020 for migration rationale from the previous 6-agent hub-and-spoke model. Archived agents (concierge, marketing, storefront, booking, project-hub) are available in git history.
 
 ### Local Agent Development
 
 ```bash
 # Start agent in local development mode
-cd server/src/agent-v2/deploy/concierge
+cd server/src/agent-v2/deploy/customer
 npm install
 npm run dev    # Opens ADK DevTools at http://localhost:8080
 ```
@@ -178,7 +172,7 @@ npm run dev    # Opens ADK DevTools at http://localhost:8080
 
 ```bash
 # Deploy a single agent
-cd server/src/agent-v2/deploy/concierge
+cd server/src/agent-v2/deploy/customer
 npm install
 npm run deploy
 
@@ -194,11 +188,9 @@ npm run deploy:dry-run
 **Service URLs after deployment:**
 | Agent | URL |
 |-------|-----|
-| Concierge | https://concierge-agent-506923455711.us-central1.run.app |
-| Marketing | https://marketing-agent-506923455711.us-central1.run.app |
-| Storefront | https://storefront-agent-506923455711.us-central1.run.app |
+| Customer | https://customer-agent-506923455711.us-central1.run.app |
+| Tenant | https://tenant-agent-506923455711.us-central1.run.app |
 | Research | https://research-agent-506923455711.us-central1.run.app |
-| Booking | https://booking-agent-506923455711.us-central1.run.app |
 
 ### Automated Agent Deployment (CI/CD)
 
@@ -509,10 +501,11 @@ Tests should use mock mode. If auth tests fail in CI:
 ```
 server/                           # Express 4 API
   src/
-    routes/*.routes.ts            # HTTP routes (was http/v1/*.http.ts)
-    services/*.service.ts         # Business logic (was domains/*/service.ts)
+    routes/*.routes.ts            # HTTP routes
+    services/*.service.ts         # Business logic
     middleware/                   # Express middleware
     adapters/                     # External integrations (prisma, stripe, postmark, gcal, mock)
+    agent-v2/deploy/              # AI agents (customer, tenant, research)
     lib/
       core/                       # Config, logger, events, errors
       ports.ts                    # Repository/provider interfaces
@@ -524,13 +517,11 @@ server/                           # Express 4 API
   prisma/                         # Database schema & migrations
   test/                           # Unit & integration tests
 
-client/                           # React 18 + Vite
+apps/web/                         # Next.js 14 App Router (primary frontend)
   src/
-    features/{catalog,booking,admin}/  # Feature modules
-    pages/                        # Route pages
-    ui/                           # Reusable components
-    lib/                          # Utilities & API client
-    app/                          # App shell
+    app/                          # App Router pages (/t/[slug], auth, etc.)
+    components/                   # React components (tenant, ui, agent)
+    lib/                          # Auth, API client, utilities
 
 packages/
   contracts/                      # @ts-rest API contracts

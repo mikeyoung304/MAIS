@@ -9,14 +9,16 @@
 
 ## Implementation Status
 
-| Phase       | Status      | Description                                                 |
-| ----------- | ----------- | ----------------------------------------------------------- |
-| **Phase 0** | ✅ Complete | Legacy deletion (XState, AdvisorMemoryService, archive)     |
-| **Phase 1** | ✅ Complete | Context injection with `forbiddenSlots` slot-policy         |
-| **Phase 2** | ⏳ Pending  | Schema migration (`storefrontDraft`, `storefrontPublished`) |
-| **Phase 3** | ⏳ Pending  | Agent prompt hardening                                      |
-| **Phase 4** | ⏳ Pending  | Evaluation pipeline restoration                             |
-| **Phase 5** | ⏳ Pending  | Visual editor simplification                                |
+> **Note (February 2, 2026):** Phase 2's planned `storefrontDraft`/`storefrontPublished` columns were superseded by the Phase 5 Section Content Migration. The `SectionContent` table now serves as canonical storage with `isDraft` boolean for draft/publish workflow. See CLAUDE.md "Storefront Storage (Phase 5)" section.
+
+| Phase       | Status        | Description                                                             |
+| ----------- | ------------- | ----------------------------------------------------------------------- |
+| **Phase 0** | ✅ Complete   | Legacy deletion (XState, AdvisorMemoryService, archive)                 |
+| **Phase 1** | ✅ Complete   | Context injection with `forbiddenSlots` slot-policy                     |
+| **Phase 2** | ✅ Superseded | `SectionContent` table replaced planned `storefrontDraft` columns       |
+| **Phase 3** | ⏳ Pending    | Agent prompt hardening                                                  |
+| **Phase 4** | ⏳ Pending    | Evaluation pipeline restoration                                         |
+| **Phase 5** | ✅ Complete   | Visual editor simplification (via SectionContent migration, Feb 2 2026) |
 
 **Phase 1 Key Files:**
 
@@ -69,12 +71,14 @@ class ContextBuilder {
 Agent writes to one canonical location. No parallel draft systems.
 
 ```typescript
-// The ONLY draft location
-tenant.storefrontDraft: StorefrontSchema  // Agent writes here
+// The ONLY draft location (as of Phase 5 Section Content Migration)
+SectionContent table with isDraft: true  // Agent writes here via SectionContentService
 
 // DELETED: These no longer exist
-// tenant.landingPageConfig.draft  ← DELETE
-// tenant.landingPageConfigDraft   ← DELETE (after migration)
+// tenant.storefrontDraft        ← SUPERSEDED by SectionContent (this spec was itself outdated)
+// tenant.storefrontPublished    ← SUPERSEDED by SectionContent (isDraft: false)
+// tenant.landingPageConfig.draft  ← DELETED
+// tenant.landingPageConfigDraft   ← DELETED
 ```
 
 ### 4. Agent Owns Business Reality
@@ -207,24 +211,28 @@ interface SectionState {
 
 ## Canonical Storage Schema
 
-### What Stays
+> **Updated (February 2, 2026):** The original plan for `storefrontDraft`/`storefrontPublished` columns was superseded. `SectionContent` table became the canonical storage instead.
 
-| Storage                          | Purpose                        | Owner                              |
-| -------------------------------- | ------------------------------ | ---------------------------------- |
-| `tenant.branding.discoveryFacts` | Known facts about the business | Agent (via `store_discovery_fact`) |
-| `tenant.storefrontDraft`         | Agent-authored draft content   | Agent (via storefront tools)       |
-| `tenant.storefrontPublished`     | Live storefront content        | Agent (via publish action)         |
+### What Exists Now (Post-Phase 5)
 
-### What Gets Deleted
+| Storage                           | Purpose                        | Owner                               |
+| --------------------------------- | ------------------------------ | ----------------------------------- |
+| `tenant.branding.discoveryFacts`  | Known facts about the business | Agent (via `store_discovery_fact`)  |
+| `SectionContent` (isDraft: true)  | Agent-authored draft content   | Agent (via `SectionContentService`) |
+| `SectionContent` (isDraft: false) | Live storefront content        | Agent (via `publishAll()`)          |
+| `tenant.landingPageConfig`        | READ-ONLY legacy fallback      | Public routes during transition     |
 
-| Storage                          | Current Purpose               | Reason for Deletion                      |
-| -------------------------------- | ----------------------------- | ---------------------------------------- |
-| `tenant.landingPageConfig.draft` | Visual editor draft wrapper   | Replaced by `storefrontDraft`            |
-| `tenant.landingPageConfigDraft`  | Agent draft (separate column) | Consolidated into `storefrontDraft`      |
-| `OnboardingEvent` table          | Event-sourced onboarding      | Replaced by state-based `discoveryFacts` |
-| `SectionContent` model           | Unified section storage       | Never fully used, consolidate            |
-| XState machines                  | Onboarding flow control       | Agent handles flow natively              |
-| `AdvisorMemoryService`           | Legacy memory system          | Replaced by `ContextBuilder`             |
+### What Was Deleted
+
+| Storage                          | Original Purpose              | Deletion Status                              |
+| -------------------------------- | ----------------------------- | -------------------------------------------- |
+| `tenant.landingPageConfig.draft` | Visual editor draft wrapper   | DELETED                                      |
+| `tenant.landingPageConfigDraft`  | Agent draft (separate column) | DELETED                                      |
+| `tenant.storefrontDraft`         | Planned in this spec          | NEVER CREATED - superseded by SectionContent |
+| `tenant.storefrontPublished`     | Planned in this spec          | NEVER CREATED - superseded by SectionContent |
+| `OnboardingEvent` table          | Event-sourced onboarding      | Kept (dual-source with discoveryFacts)       |
+| XState machines                  | Onboarding flow control       | DELETED                                      |
+| `AdvisorMemoryService`           | Legacy memory system          | DELETED                                      |
 
 ---
 

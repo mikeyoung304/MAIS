@@ -138,119 +138,38 @@ Club members currently have self-service access to:
 
 ---
 
-## Agent-Powered Platform (Future Roadmap)
+## Agent-Powered Platform (Live - January 2026)
 
-HANDLED has a planned evolution into an **agent-powered, config-driven platform** that enables AI agents to collaborate with members in managing their website and booking configurations.
+HANDLED is an **agent-powered, config-driven platform** where AI agents collaborate with members to manage their website, booking, and marketing configurations.
 
-### What's Changing
+### AI Agent System
 
-**From:** Manual admin updates with hardcoded UI logic
-**To:** AI agents propose config changes, admins approve with one click
+The platform runs 3 consolidated AI agents on Google Cloud Run using Google ADK (Agent Development Kit):
+
+| Agent              | Purpose                                                         |
+| ------------------ | --------------------------------------------------------------- |
+| **customer-agent** | Service discovery, booking, project hub (customer view)         |
+| **tenant-agent**   | Storefront editing, marketing, project management (tenant view) |
+| **research-agent** | Web research                                                    |
+
+These replaced a 6-agent hub-and-spoke architecture in January 2026 (see ADR-020). Previously archived agents (concierge, marketing, storefront, booking, project-hub) are available in git history.
 
 ### Core Capabilities
 
-**🤖 AI Agent Collaboration**
-
-AI agents can analyze tenant context and propose configuration updates:
-
-- **Seasonal Promotions**: "It's January - should we feature winter elopement packages?"
-- **Display Optimization**: "Package X has low conversion - try reordering it?"
-- **Branding Adjustments**: "Your logo colors could improve accessibility"
-- **Content Refinement**: "Package description could highlight your unique value better"
-
-All agent proposals require **human admin approval** via dashboard UI with diff view.
-
-**⚙️ Configuration as Source of Truth**
-
-Every visual and business logic element controlled by versioned config:
-
-- **Branding**: Colors, fonts, logos (migrating from Tenant table to ConfigVersion)
-- **Package Display**: Visibility, ordering, featured status, seasonal promotions
-- **Display Rules**: Conditional visibility based on date, location, or user context
-- **Widget Layout**: Component ordering, feature toggles, customization
-
-**📝 Audit Trail & Rollback**
-
-Every configuration change is tracked with full audit logging:
-
-- **Before/After Snapshots**: See exactly what changed in each update
-- **User/Agent Attribution**: Know who or what made each change
-- **Timestamps**: Complete change history with millisecond precision
-- **One-Click Rollback**: Restore any previous configuration version instantly
-
-**🎨 Preview/Publish Workflow**
-
-Test configuration changes before going live:
-
-```typescript
-// Draft mode: Preview changes before publishing
-GET /v1/config?versionId=draft_abc123
-
-// Published mode: Live configuration served to production widgets
-GET /v1/config (returns latest published version)
-```
-
-**🔄 Live Widget Updates**
-
-Embedded widgets automatically fetch configuration at runtime:
-
-- **Zero Redeployment**: Config changes reflect instantly in all embedded widgets
-- **PostMessage Hydration**: Parent window can trigger widget refresh
-- **Graceful Fallback**: Default theme/layout if config unavailable
-- **Tenant Branding**: Each widget automatically styled with tenant's config
-
-### Implementation Roadmap
-
-**Completed Sprints (2024-2025):**
-
-- ✅ **Sprint 1**: Cache leak fix, branding endpoint, Stripe refund logic, cache audit
-- ✅ **Sprint 2**: Audit logging system (ConfigChangeLog + AuditService)
-- ✅ **Sprint 3**: Type safety improvements and Zod schema additions
-- ✅ **Sprint 4**: Cache isolation and HTTP catalog implementation
-- ✅ **Sprint 5**: Test suite foundation and integration helper patterns
-- ✅ **Sprint 6**: Test stabilization (60% pass rate, 0% variance, infrastructure fixes)
-- ✅ **Sprint 7**: Test stabilization improvements (70% target achieved)
-- ✅ **Sprint 8-8.5**: UX & mobile excellence (progress indicators, back buttons, responsive design)
-- ✅ **Sprint 9**: Package catalog & discovery (segment-based organization, featured packages)
-- ✅ **Sprint 10**: Technical excellence (100% test pass rate, OWASP 70%, Redis caching)
-
-**Current Phase: Production (December 2025)**
-
-Deploying Sprint 10 platform for demo users with production infrastructure.
-
-**Future Sprints: Config Versioning & Agent Interface (Post-Launch)**
-
-- **Config Versioning Infrastructure**:
-  - ConfigVersion database schema (draft/published states)
-  - Config versioning API endpoints (create, publish, rollback)
-  - Backward compatibility layer with feature flags
-  - Widget config hydration via PostMessage
-
-- **Agent Interface**:
-  - AgentProposal table (pending/approved/rejected states)
-  - Agent API endpoints with rate limiting and authentication
-  - Admin proposal review UI with diff view and inline approval
-  - Display rules configuration (visibility, ordering, grouping)
-
-### Security & Safety
-
-**Human-in-the-Loop**: All agent proposals require admin approval before publishing
-
-**Rate Limiting**: Agent API endpoints protected against abuse
-
-**Authentication**: Agent API requires secure credentials separate from tenant keys
-
-**Type Safety**: All config validated with Zod schemas before persistence
-
-**Rollback Protection**: Admins can instantly revert bad changes
+- **Conversational onboarding** -- AI-guided storefront setup with autonomous first-draft generation
+- **Storefront editing** -- Section-level content management via `SectionContentService`
+- **Marketing assistance** -- Brand strategy, competitive analysis, content generation
+- **Customer booking** -- 24/7 AI-powered booking assistant on tenant storefronts
+- **Project management** -- Customer-tenant communication and project tracking
+- **Trust tiers** -- T1 (read-only), T2 (modify with preview), T3 (publish/delete with confirmation)
 
 ### Learn More
 
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Config-driven architecture details
-- **[docs/archive/planning/2025-01-analysis/](./docs/archive/planning/2025-01-analysis/)** - Complete planning documentation
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Agent architecture and system design
 - **[docs/sprints/SPRINT_10_FINAL_SUMMARY.md](./docs/sprints/SPRINT_10_FINAL_SUMMARY.md)** - Sprint 10 completion report
+- **[server/src/agent-v2/deploy/SERVICE_REGISTRY.md](./server/src/agent-v2/deploy/SERVICE_REGISTRY.md)** - Agent deployment registry
 
-**Status**: Production (December 2025). Sprint 10+ complete, customer chatbot shipped, 1196 tests passing.
+**Status**: Production (January 2026). 3-agent architecture live, storefront content via SectionContent table.
 
 ---
 
@@ -288,13 +207,12 @@ Learn more: [ARCHITECTURE.md](./ARCHITECTURE.md) | [MULTI_TENANT_IMPLEMENTATION_
 
 ### Frontend
 
-- **Framework**: React 18
-- **Build Tool**: Vite 6
+- **Framework**: Next.js 14 App Router (React 18, React Server Components)
 - **Language**: TypeScript 5.9.3
 - **Styling**: Tailwind CSS 3
 - **UI Components**: Radix UI (accessible primitives)
 - **State Management**: TanStack Query (server state)
-- **Routing**: React Router 7
+- **Auth**: NextAuth.js v5 (Credentials Provider)
 - **API Client**: ts-rest/core (generated from contracts)
 
 ### Infrastructure
@@ -316,10 +234,12 @@ mais/
 │   │   ├── services/    # Business logic (booking, catalog, availability)
 │   │   ├── adapters/    # External integrations (Prisma, Stripe, Postmark)
 │   │   ├── middleware/  # Auth, error handling, logging
-│   │   ├── agent/       # AI agent system
-│   │   │   ├── customer/    # Customer chatbot (tools, orchestrator)
-│   │   │   ├── tools/       # Shared tool framework
-│   │   │   └── proposals/   # T3 confirmation system
+│   │   ├── agent-v2/   # AI agent system (3-agent architecture)
+│   │   │   ├── deploy/
+│   │   │   │   ├── customer/   # Customer-facing agent (13 tools)
+│   │   │   │   ├── tenant/     # Tenant-facing agent (24 tools)
+│   │   │   │   └── research/   # Web research agent
+│   │   │   └── archive/        # Archived legacy agents
 │   │   └── lib/         # Core utilities (config, logger, errors)
 │   ├── prisma/          # Database schema and migrations
 │   │   ├── schema.prisma
@@ -327,19 +247,11 @@ mais/
 │   │   └── seed.ts
 │   └── test/            # Unit and integration tests
 │
-├── client/              # Legacy admin (Vite SPA)
-│   ├── src/
-│   │   ├── pages/       # Route components
-│   │   ├── features/    # Feature-based modules (booking, catalog, admin)
-│   │   ├── components/  # Reusable UI components
-│   │   └── lib/         # Client utilities
-│   └── public/          # Static assets
-│
 ├── apps/
-│   └── web/             # Next.js 14 storefronts (primary frontend)
+│   └── web/             # Next.js 14 App Router (primary frontend)
 │       ├── src/
 │       │   ├── app/     # App Router pages (/t/[slug], auth, etc.)
-│       │   ├── components/  # React components (tenant, ui)
+│       │   ├── components/  # React components (tenant, ui, agent)
 │       │   └── lib/     # Auth, API client, utilities
 │       └── public/      # Static assets
 │
@@ -360,10 +272,10 @@ mais/
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT (React)                          │
+│                    FRONTEND (Next.js 14)                         │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │   Booking    │  │   Catalog    │  │    Admin     │         │
-│  │     Flow     │  │   Browser    │  │  Dashboard   │         │
+│  │   Booking    │  │   Tenant     │  │    Admin     │         │
+│  │     Flow     │  │  Storefronts │  │  Dashboard   │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
 └────────────────────────┬────────────────────────────────────────┘
                          │ ts-rest client (type-safe)
@@ -457,12 +369,12 @@ Perfect for local development and testing without setting up external services.
 # 1. Start the API (mock mode is default)
 npm run dev:api
 
-# 2. In a new terminal, start the web client
-npm run dev:client
+# 2. In a new terminal, start the Next.js frontend
+cd apps/web && npm run dev
 
 # 3. Open your browser
 # API: http://localhost:3001
-# Web: http://localhost:5173
+# Web: http://localhost:3000
 ```
 
 **What's mocked:**
@@ -501,12 +413,12 @@ npx prisma migrate deploy
 npm run db:seed  # Creates sample data
 cd ..
 
-# 4. Start all services (API + Client + Stripe webhooks)
+# 4. Start all services (API + Next.js + Stripe webhooks)
 npm run dev:all
 
 # Or start each service separately:
-npm run dev:api          # Terminal 1: API server
-npm run dev:client       # Terminal 2: Web client
+npm run dev:api                    # Terminal 1: API server
+cd apps/web && npm run dev         # Terminal 2: Next.js frontend
 stripe listen --forward-to localhost:3001/v1/webhooks/stripe  # Terminal 3: Webhooks
 ```
 
@@ -599,12 +511,12 @@ npm test
 ### What to Do Next
 
 1. **Explore the Admin Dashboard**
-   - Visit http://localhost:5173/admin/login
+   - Visit http://localhost:3000/admin/login
    - Login with `admin@example.com` / `admin`
    - Manage packages, add-ons, and blackout dates
 
 2. **Test the Booking Flow**
-   - Visit http://localhost:5173
+   - Visit http://localhost:3000
    - Browse packages
    - Select a date and complete checkout
    - (Mock mode: use any email, no payment needed)
@@ -661,7 +573,7 @@ stripe listen --print-secret
 curl http://localhost:3001/health
 
 # Check CORS_ORIGIN in server/.env
-# Should be: http://localhost:5173
+# Should be: http://localhost:3000
 
 # Clear browser cache and hard reload
 ```

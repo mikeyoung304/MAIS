@@ -7,7 +7,7 @@ Configure via `server/.env`:
 ```bash
 ADAPTERS_PRESET=mock|real
 API_PORT=3001
-CORS_ORIGIN=http://localhost:5173  # Vite dev server
+CORS_ORIGIN=http://localhost:3000  # Next.js dev server
 
 # ============================================================================
 # SECURITY CONFIGURATION (CRITICAL)
@@ -34,8 +34,8 @@ DIRECT_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/po
 # Stripe Payment Processing
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
-STRIPE_SUCCESS_URL=http://localhost:5173/success
-STRIPE_CANCEL_URL=http://localhost:5173
+STRIPE_SUCCESS_URL=http://localhost:3000/success
+STRIPE_CANCEL_URL=http://localhost:3000
 
 # Real mode - Optional (graceful fallbacks)
 POSTMARK_SERVER_TOKEN=...  # Falls back to file-sink if not set
@@ -154,12 +154,11 @@ All public endpoints require the header:
 
 - `POST /v1/webhooks/stripe` - Stripe payment webhooks
 
-## WEB (client/)
+## WEB (apps/web/)
 
-Configure via `client/.env` (if needed):
+Configure via `apps/web/.env.local` (if needed):
 
 ```bash
-VITE_API_URL=http://localhost:3001
-VITE_APP_MODE=mock|real
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 ```

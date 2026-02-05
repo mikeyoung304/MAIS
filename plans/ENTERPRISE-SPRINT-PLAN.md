@@ -1,6 +1,9 @@
 # Enterprise Sprint Plan
 
+> **PARTIALLY SUPERSEDED (2026-02-05):** Sprint 1 (Optimistic Locking for Drafts) was completed. However, the `landingPageConfigDraftVersion` field mentioned below was part of the legacy draft system that has since been replaced by the `SectionContent` table in the Phase 5 Section Content Migration (February 2, 2026). The `storefront-executors.ts` file referenced below no longer exists.
+
 **Created:** 2026-01-21
+**Last Updated:** 2026-02-05 (status update)
 **Triage By:** DHH Rails Reviewer, Kieran TypeScript Reviewer, Code Simplicity Reviewer
 **Focus:** Enterprise quality and stability
 

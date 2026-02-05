@@ -309,7 +309,7 @@ User: "Write me a tagline"
 
 **Problem:** Agent had no concept of onboarding. When user said "build my site", agent asked "What would you like to do?" and mentioned multi-page setup. Agent was passive and reactive.
 
-**Root Cause:** The archived concierge agent had a complete onboarding system in `server/src/agent-v2/archive/concierge/src/prompts/onboarding.ts` that never got migrated to the tenant-agent.
+**Root Cause:** The archived concierge agent had a complete onboarding system (formerly at `server/src/agent-v2/archive/concierge/src/prompts/onboarding.ts`, now only in git history) that never got migrated to the tenant-agent.
 
 **Fix Applied:**
 

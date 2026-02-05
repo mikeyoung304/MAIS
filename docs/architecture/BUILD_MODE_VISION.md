@@ -1,7 +1,9 @@
 # Build Mode Architecture Vision
 
+> **SUPERSEDED (February 2, 2026):** This document describes a draft/publish system using `landingPageConfigDraft`, `storefrontDraft`, and `storefrontPublished` columns. These were replaced by the `SectionContent` table in the Phase 5 Section Content Migration. The UX concepts (real-time preview, publish/discard flow) remain valid, but the storage implementation changed. See CLAUDE.md "Storefront Storage (Phase 5)" section for current architecture.
+
 **Created:** 2026-01-10
-**Status:** In Progress (Cleaning up vibe coding debt)
+**Status:** SUPERSEDED - Storage implementation replaced by SectionContent table
 
 ---
 

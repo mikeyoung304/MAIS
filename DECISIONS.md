@@ -39,10 +39,11 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - [ADR-016: Field Naming Conventions](docs/adrs/ADR-016-field-naming-conventions.md) - Database vs API/Frontend field naming (title/name, priceCents/basePrice)
 - [ADR-017: Dark Theme Auth Pages](docs/adrs/ADR-017-dark-theme-auth-pages.md) - Dark graphite theme for signup/login vs light marketing site
 
-### AI Agent Architecture (ADR-018, ADR-019)
+### AI Agent Architecture (ADR-018, ADR-019, ADR-020)
 
-- [ADR-018: Hub-and-Spoke Agent Architecture](docs/adrs/ADR-018-hub-and-spoke-agent-architecture.md) - Concierge orchestrator + specialist agents pattern for Project Hub
-- [ADR-019: Single Agent Dual-Context Pattern](docs/adrs/ADR-019-single-agent-dual-context-pattern.md) - Programmatic context enforcement vs. physical agent separation
+- [ADR-018: Hub-and-Spoke Agent Architecture](docs/adrs/ADR-018-hub-and-spoke-agent-architecture.md) - **SUPERSEDED by ADR-020**
+- [ADR-019: Single Agent Dual-Context Pattern](docs/adrs/ADR-019-single-agent-dual-context-pattern.md) - **SUPERSEDED by ADR-020**
+- [ADR-020: Unified Agent Architecture](docs/adrs/ADR-020-unified-agent-architecture.md) - **ACTIVE** 3-agent consolidation (supersedes ADR-018, ADR-019)
 
 ## Quick Reference by Category
 
@@ -54,8 +55,9 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 - **Next.js App Router:** ADR-014
 - **API Proxy:** ADR-015
 - **Field Naming:** ADR-016
-- **Hub-and-Spoke Agents:** ADR-018
-- **Dual-Context Single Agent:** ADR-019
+- **Hub-and-Spoke Agents:** ADR-018 (superseded)
+- **Dual-Context Single Agent:** ADR-019 (superseded)
+- **Unified 3-Agent Architecture:** ADR-020
 
 ### Concurrency Control
 
@@ -74,27 +76,28 @@ This document serves as an index to all Architecture Decision Records (ADRs) for
 
 ## Decision Summary Table
 
-| ADR     | Decision                       | Status     | Priority | Category      |
-| ------- | ------------------------------ | ---------- | -------- | ------------- |
-| ADR-001 | Adopt Diataxis Framework       | Accepted   | P1       | Documentation |
-| ADR-002 | Documentation Naming Standards | Accepted   | P1       | Documentation |
-| ADR-003 | Sprint Documentation Lifecycle | Accepted   | P1       | Documentation |
-| ADR-004 | Time-Based Archive Strategy    | Accepted   | P1       | Documentation |
-| ADR-005 | Documentation Security Review  | Accepted   | P1       | Documentation |
-| ADR-006 | Modular Monolith Architecture  | Accepted   | P0       | Architecture  |
-| ADR-007 | Mock-First Development         | Accepted   | P0       | Development   |
-| ADR-008 | Pessimistic Locking            | Superseded | -        | Concurrency   |
-| ADR-009 | Webhook Dead Letter Queue      | Accepted   | P0       | Reliability   |
-| ADR-010 | Git History Rewrite            | Pending    | P1       | Security      |
-| ADR-011 | PaymentProvider Interface      | Accepted   | P1       | Architecture  |
-| ADR-012 | Full Test Coverage (Webhooks)  | Accepted   | P0       | Testing       |
-| ADR-013 | PostgreSQL Advisory Locks      | Accepted   | P0       | Concurrency   |
-| ADR-014 | Next.js App Router Migration   | Accepted   | P0       | Frontend      |
-| ADR-015 | API Proxy Pattern              | Accepted   | P1       | Architecture  |
-| ADR-016 | Field Naming Conventions       | Accepted   | P2       | Architecture  |
-| ADR-017 | Dark Theme Auth Pages          | Accepted   | P2       | Frontend      |
-| ADR-018 | Hub-and-Spoke Agent Arch       | Accepted   | P1       | AI Agents     |
-| ADR-019 | Single Agent Dual-Context      | Accepted   | P1       | AI Agents     |
+| ADR     | Decision                       | Status                            | Priority | Category      |
+| ------- | ------------------------------ | --------------------------------- | -------- | ------------- |
+| ADR-001 | Adopt Diataxis Framework       | Accepted                          | P1       | Documentation |
+| ADR-002 | Documentation Naming Standards | Accepted                          | P1       | Documentation |
+| ADR-003 | Sprint Documentation Lifecycle | Accepted                          | P1       | Documentation |
+| ADR-004 | Time-Based Archive Strategy    | Accepted                          | P1       | Documentation |
+| ADR-005 | Documentation Security Review  | Accepted                          | P1       | Documentation |
+| ADR-006 | Modular Monolith Architecture  | Accepted                          | P0       | Architecture  |
+| ADR-007 | Mock-First Development         | Accepted                          | P0       | Development   |
+| ADR-008 | Pessimistic Locking            | Superseded                        | -        | Concurrency   |
+| ADR-009 | Webhook Dead Letter Queue      | Accepted                          | P0       | Reliability   |
+| ADR-010 | Git History Rewrite            | Accepted (Implementation Pending) | P1       | Security      |
+| ADR-011 | PaymentProvider Interface      | Accepted                          | P1       | Architecture  |
+| ADR-012 | Full Test Coverage (Webhooks)  | Accepted                          | P0       | Testing       |
+| ADR-013 | PostgreSQL Advisory Locks      | Accepted                          | P0       | Concurrency   |
+| ADR-014 | Next.js App Router Migration   | Implemented                       | P0       | Frontend      |
+| ADR-015 | API Proxy Pattern              | Accepted                          | P1       | Architecture  |
+| ADR-016 | Field Naming Conventions       | Accepted                          | P2       | Architecture  |
+| ADR-017 | Dark Theme Auth Pages          | Accepted                          | P2       | Frontend      |
+| ADR-018 | Hub-and-Spoke Agent Arch       | Superseded by ADR-020             | -        | AI Agents     |
+| ADR-019 | Single Agent Dual-Context      | Superseded by ADR-020             | -        | AI Agents     |
+| ADR-020 | Unified Agent Architecture     | Accepted                          | P0       | AI Agents     |
 
 ## Decision Process
 

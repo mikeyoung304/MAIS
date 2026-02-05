@@ -279,10 +279,6 @@ The middleware maintains a list of MAIS domains that bypass custom domain resolu
 - `*.vercel.app` (preview deployments)
 - `localhost` (development)
 
-### Frontend - Legacy Admin (client/)
-
-React 18 + Vite, feature‑based (catalog, booking, admin). Uses a generated ts‑rest client and TanStack Query. Being gradually migrated to Next.js.
-
 ### Backend (server/)
 
 - **routes/** — HTTP routes using @ts-rest/express, bound to contracts
@@ -315,64 +311,26 @@ DTOs, money/date helpers, small types.
 
 ## AI Agent System
 
-MAIS uses **Google ADK (Agent Development Kit)** with a **hub-and-spoke architecture** for AI-powered features.
+MAIS uses **Google ADK (Agent Development Kit)** with a **3-agent direct-execution architecture** for AI-powered features. This replaces the earlier 6-agent hub-and-spoke model (see ADR-020 for migration rationale).
 
-### Architecture: Hub-and-Spoke
+### Architecture: 3-Agent Direct Execution
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                     AI AGENT ARCHITECTURE                         │
-├───────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌─────────────┐                                                 │
-│  │   Tenant    │──────────────────┐                              │
-│  │  Dashboard  │                  │                              │
-│  └─────────────┘                  ▼                              │
-│                          ┌────────────────┐                      │
-│                          │   CONCIERGE    │  (Hub/Orchestrator)  │
-│                          │   Cloud Run    │                      │
-│                          └───────┬────────┘                      │
-│                                  │                               │
-│            ┌─────────────────────┼─────────────────────┐        │
-│            │           │         │         │           │        │
-│            ▼           ▼         ▼         ▼           ▼        │
-│       ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-│       │Marketing│ │Storefront│ │Research│ │Project │ │ Booking │
-│       │Specialist│ │Specialist│ │Specialist│ │Hub    │ │ Agent  │
-│       └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
-│            (via A2A)                            (direct entry)   │
-│                                                                   │
-│  ┌─────────────┐         ┌─────────────────────┐                │
-│  │  Customer   │────────►│  Project Hub Agent  │                │
-│  │   Portal    │         │  (contextType=customer)              │
-│  └─────────────┘         └─────────────────────┘                │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
-```
+Each agent owns its tools directly and executes without an orchestrator layer:
 
-### Deployed Agents
+| Agent              | Cloud Run Service | Tools | Purpose                                                         | Entry            |
+| ------------------ | ----------------- | ----- | --------------------------------------------------------------- | ---------------- |
+| **customer-agent** | `customer-agent`  | 13    | Service discovery, booking, project hub (customer view)         | Customer portal  |
+| **tenant-agent**   | `tenant-agent`    | 24    | Storefront editing, marketing, project management (tenant view) | Tenant dashboard |
+| **research-agent** | `research-agent`  | --    | Web research                                                    | Via other agents |
 
-| Agent           | Service Name        | Purpose                                  | Entry                                        |
-| --------------- | ------------------- | ---------------------------------------- | -------------------------------------------- |
-| **Concierge**   | `concierge-agent`   | Hub orchestrator, routes to specialists  | Tenant dashboard                             |
-| **Marketing**   | `marketing-agent`   | Brand strategy, content generation       | Via Concierge (A2A)                          |
-| **Storefront**  | `storefront-agent`  | Landing page editing, section management | Via Concierge (A2A)                          |
-| **Research**    | `research-agent`    | Industry research, best practices        | Via Concierge (A2A)                          |
-| **Project Hub** | `project-hub-agent` | Customer-tenant communication, requests  | Dual: Concierge (tenant) / Direct (customer) |
-| **Booking**     | `booking-agent`     | Booking flow conversation                | Direct entry                                 |
+Previously archived agents (concierge, marketing, storefront, booking, project-hub) are available in git history.
 
 ### Key Patterns
 
-**A2A Protocol (Agent-to-Agent):**
-
-- Concierge calls specialists using standardized protocol
-- camelCase field names: `appName`, `userId`, `sessionId`, `newMessage`
-- Session caching per `{agentUrl}:{tenantId}` with 30-min TTL
-
 **Dual-Context Agents:**
 
-- Some agents serve both customers and tenants (e.g., Project Hub)
-- `contextType` parameter controls access
+- Customer-agent and tenant-agent serve different user types
+- `contextType` parameter controls tool access
 - `requireContext()` guards as FIRST LINE in tool execute functions
 - Never trust user input for context determination
 
@@ -387,13 +345,13 @@ MAIS uses **Google ADK (Agent Development Kit)** with a **hub-and-spoke architec
 - **Deployment:** Google Cloud Run (managed serverless)
 - **CI/CD:** GitHub Actions (`deploy-agents.yml`) auto-deploys on push to `main`
 - **Registry:** `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`
-- **Naming:** `{agent-name}-agent` (e.g., `concierge-agent`)
+- **Naming:** `{agent-name}-agent` (e.g., `customer-agent`)
 
 ### Key Files
 
-- Agents: `server/src/agent-v2/deploy/{agent}/src/agent.ts`
+- Agents: `server/src/agent-v2/deploy/{customer,tenant,research}/src/agent.ts`
 - Patterns: `docs/solutions/patterns/ADK_*_PREVENTION_INDEX.md`
-- ADR: `docs/adrs/ADR-018-hub-and-spoke-agent-architecture.md`
+- ADR: `docs/adrs/ADR-020-three-agent-consolidation.md` (supersedes ADR-018)
 
 **See Also:** CLAUDE.md "ADK/A2A Pitfalls" section for common issues and prevention.
 
@@ -686,74 +644,55 @@ const paymentIntent = await stripe.paymentIntents.create(
 - **User**(id, email\*, passwordHash, role)
 - **WebhookEvent**(id, tenantId, eventId\*, eventType, payload, status, attempts, lastError?, processedAt?)
 
-### Landing Page Configuration (Tenant.landingPageConfig JSON)
+### Storefront Content Storage (SectionContent Table)
 
-**PagesConfig Schema:**
+> **Note:** As of Phase 5 Section Content Migration (February 2, 2026), `SectionContent` is the canonical storage for storefront content. The legacy `landingPageConfig` JSON column is read-only fallback only.
 
-The `pages` field in `landingPageConfig` controls which pages are enabled and their section content:
+**Storage Model:**
+
+| Storage                           | Purpose            | Access                                  |
+| --------------------------------- | ------------------ | --------------------------------------- |
+| `SectionContent` (isDraft: true)  | Draft sections     | Agent tools via `SectionContentService` |
+| `SectionContent` (isDraft: false) | Published sections | Public storefront via `/sections` API   |
+| `landingPageConfig` (legacy)      | READ-ONLY fallback | Public routes during transition         |
+
+**SectionContent Schema:**
 
 ```typescript
-// PagesConfig - 7 page types with enabled toggles
-{
-  home: { enabled: true, sections: [...] },     // Always enabled (literal true)
-  about: { enabled: boolean, sections: [...] },
-  services: { enabled: boolean, sections: [...] },
-  faq: { enabled: boolean, sections: [...] },
-  contact: { enabled: boolean, sections: [...] },
-  gallery: { enabled: boolean, sections: [...] },
-  testimonials: { enabled: boolean, sections: [...] },
+// Per-section storage with draft/publish workflow
+model SectionContent {
+  id          String     @id @default(cuid())
+  tenantId    String
+  segmentId   String?    // null = shared across all segments
+  blockType   BlockType  // HERO, ABOUT, TESTIMONIALS, FAQ, CTA, CONTACT, GALLERY
+  pageName    String     @default("home") // Multi-page support
+  content     Json       // Block-specific content (validated by Zod)
+  order       Int        @default(0)
+  isDraft     Boolean    @default(true)
+  publishedAt DateTime?
 }
 ```
 
-**Section Discriminated Union:**
+**Key Behaviors:**
 
-Each section has a `type` field that determines its shape:
+- **AI agent edits** via `SectionContentService.updateSection()` - writes to `SectionContent` table
+- **Publish** via `SectionContentService.publishAll()` - copies draft rows to published
+- **Section-level operations** - CRUD individual sections without touching entire config
+- **Single source of truth**: `SectionContentService` in `server/src/services/section-content.service.ts`
 
-```typescript
-// Section types (discriminated by 'type' field)
-type Section =
-  | {
-      type: 'hero';
-      headline: string;
-      subheadline?: string;
-      ctaText: string;
-      backgroundImageUrl?: string;
-    }
-  | {
-      type: 'text';
-      headline?: string;
-      content: string;
-      imageUrl?: string;
-      imagePosition: 'left' | 'right';
-    }
-  | {
-      type: 'gallery';
-      headline: string;
-      images: { url: string; alt: string }[];
-      instagramHandle?: string;
-    }
-  | {
-      type: 'testimonials';
-      headline: string;
-      items: { quote: string; authorName: string; rating: number }[];
-    }
-  | { type: 'faq'; headline: string; items: { question: string; answer: string }[] }
-  | {
-      type: 'contact';
-      headline: string;
-      email?: string;
-      phone?: string;
-      address?: string;
-      hours?: string;
-    }
-  | { type: 'cta'; headline: string; subheadline?: string; ctaText: string };
-```
+**Block Types (Discriminated by `blockType` enum):**
 
-**Key Constraints:**
+- `HERO` - Landing page hero with headline, subheadline, CTA
+- `ABOUT` - Business description with optional image
+- `GALLERY` - Image gallery with Instagram integration
+- `TESTIMONIALS` - Customer reviews with ratings
+- `FAQ` - Frequently asked questions
+- `CONTACT` - Contact information and hours
+- `CTA` - Call-to-action blocks
 
-- Home page `enabled` must be `true` (enforced by Zod schema)
-- Navigation dynamically renders links only for enabled pages
-- Default configuration provided for new tenants (`DEFAULT_PAGES_CONFIG`)
+**Legacy Support:**
+
+The `landingPageConfig` JSON column remains for read-only backward compatibility during transition. New writes go exclusively to `SectionContent`.
 
 ## Backing services
 

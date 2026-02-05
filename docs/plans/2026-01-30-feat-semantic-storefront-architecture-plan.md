@@ -12,6 +12,8 @@ branch: feat/semantic-storefront
 
 # Semantic Storefront Architecture Implementation Plan
 
+> **Note (2026-02-05):** References to `server/src/agent-v2/archive/` below are historical. The archive directory was created and deleted on the same day (commit `4e65d93d`). Archived agent code is available in git history only.
+
 ## Implementation Progress
 
 | Phase    | Status      | Commits    | Description                                                            |

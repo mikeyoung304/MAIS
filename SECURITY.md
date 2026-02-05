@@ -46,7 +46,7 @@ MAIS uses row-level multi-tenancy with **strict tenant ID scoping**:
 - JWT-based authentication
 - bcrypt password hashing (cost factor: 10)
 - Rate limiting: 5 attempts per 15 minutes per IP
-- Session expiry: 24 hours
+- Session expiry: 7 days
 
 **Tenant Admin:**
 
@@ -134,7 +134,9 @@ await tx.$queryRawUnsafe(`SELECT * FROM "Booking" WHERE "tenantId" = '${tenantId
 **Environment Variables:**
 
 - `JWT_SECRET` - JWT signing key (256-bit)
+- `AUTH_SECRET` - Next.js Auth.js session signing key (256-bit)
 - `TENANT_SECRETS_ENCRYPTION_KEY` - Tenant-specific secret encryption (256-bit)
+- `INTERNAL_API_SECRET` - Internal service-to-service authentication
 - `DATABASE_URL` - PostgreSQL connection string
 - `STRIPE_SECRET_KEY` - Stripe API key
 - `POSTMARK_SERVER_TOKEN` - Email service token

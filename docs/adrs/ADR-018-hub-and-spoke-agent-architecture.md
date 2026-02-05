@@ -1,6 +1,8 @@
 # ADR-018: Hub-and-Spoke Agent Architecture for Project Hub
 
-**Status:** Accepted
+**SUPERSEDED:** This ADR described the hub-and-spoke agent architecture which was replaced by the 3-agent direct-execution model (see ADR-020).
+
+**Status:** Superseded by ADR-020
 **Date:** 2026-01-21
 **Deciders:** Mike Young, Claude (Architecture Agent)
 **Technical Story:** Project Hub Feature Implementation

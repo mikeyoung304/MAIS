@@ -168,15 +168,6 @@ jobs:
           MAIS_API_URL=https://mais-5bwx.onrender.com
           EOF
 
-          # Concierge needs specialist agent URLs for delegation
-          if [ "${{ matrix.agent }}" = "concierge" ]; then
-            cat >> .env << 'EOF'
-          MARKETING_AGENT_URL=https://marketing-agent-506923455711.us-central1.run.app
-          STOREFRONT_AGENT_URL=https://storefront-agent-506923455711.us-central1.run.app
-          RESEARCH_AGENT_URL=https://research-agent-506923455711.us-central1.run.app
-          EOF
-          fi
-
           # Verify .env was created with content
           ENV_LINES=$(wc -l < .env)
           echo "📝 Created .env with $ENV_LINES lines for ${{ matrix.agent }}"

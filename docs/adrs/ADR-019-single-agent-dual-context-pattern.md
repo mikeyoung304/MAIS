@@ -1,6 +1,8 @@
 # ADR-019: Single Agent Dual-Context Pattern for Project Hub
 
-**Status:** Accepted
+**SUPERSEDED:** This ADR described the dual-context agent pattern which was replaced by physically separate agents (see ADR-020).
+
+**Status:** Superseded by ADR-020
 **Date:** 2026-01-24
 **Deciders:** Engineering Team, Claude Sonnet 4.5 (Phase 1 implementation)
 **Technical Story:** Project Hub security hardening and architecture evolution

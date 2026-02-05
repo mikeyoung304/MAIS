@@ -1,8 +1,10 @@
 # Deletion Manifest: Agent-First Migration
 
-> **Status:** APPROVED
-> **Date:** 2026-02-01
+> **Status:** MOSTLY COMPLETE (February 2026)
+> **Date:** 2026-02-01 (original), 2026-02-05 (status update)
 > **Purpose:** Define exactly what gets deleted in the Agent-First consolidation
+>
+> **Note:** Phase 1 schema migration was superseded by Phase 5 Section Content Migration (February 2, 2026). Instead of `storefrontDraft`/`storefrontPublished` columns, the `SectionContent` table became the canonical storage.
 
 ---
 
@@ -14,42 +16,35 @@ Archive branches exist. Git history exists. We delete aggressively.
 
 ---
 
-## Phase 0: Immediate Deletions
+## Phase 0: Immediate Deletions ✅ COMPLETE
 
-These can be deleted TODAY. No migration required.
+These have been deleted. No migration required.
 
-### 1. XState Onboarding System
+### 1. XState Onboarding System ✅ DELETED
 
 **Why:** Agent handles flow natively. XState was a pre-agent control mechanism.
 
-| Path                                                  | Description                |
-| ----------------------------------------------------- | -------------------------- |
-| `server/src/agent/onboarding/`                        | Entire directory           |
-| `server/src/agent/onboarding/machines/`               | XState machine definitions |
-| `server/src/agent/onboarding/AdvisorMemoryService.ts` | Legacy memory service      |
-| `server/src/agent/onboarding/BusinessAdvisor.ts`      | Orchestrator class         |
-| `server/src/agent/onboarding/AdvisorContext.ts`       | Context types              |
+| Path                                                  | Description                | Status     |
+| ----------------------------------------------------- | -------------------------- | ---------- |
+| `server/src/agent/onboarding/`                        | Entire directory           | ✅ DELETED |
+| `server/src/agent/onboarding/machines/`               | XState machine definitions | ✅ DELETED |
+| `server/src/agent/onboarding/AdvisorMemoryService.ts` | Legacy memory service      | ✅ DELETED |
+| `server/src/agent/onboarding/BusinessAdvisor.ts`      | Orchestrator class         | ✅ DELETED |
+| `server/src/agent/onboarding/AdvisorContext.ts`       | Context types              | ✅ DELETED |
 
-**Verification before deletion:**
-
-```bash
-# Ensure no imports remain
-grep -rn "from.*onboarding" server/src/ --include="*.ts" | grep -v "\.test\." | grep -v "\.spec\."
-```
-
-### 2. Archived Agents
+### 2. Archived Agents ✅ DELETED
 
 **Why:** Already migrated to customer-agent and tenant-agent.
 
-| Path                                             | Description                  |
-| ------------------------------------------------ | ---------------------------- |
-| `server/src/agent-v2/archive/booking-agent/`     | → migrated to customer-agent |
-| `server/src/agent-v2/archive/project-hub-agent/` | → split to customer/tenant   |
-| `server/src/agent-v2/archive/storefront-agent/`  | → migrated to tenant-agent   |
-| `server/src/agent-v2/archive/marketing-agent/`   | → migrated to tenant-agent   |
-| `server/src/agent-v2/archive/concierge-agent/`   | → migrated to tenant-agent   |
+| Path                                             | Description                | Status     |
+| ------------------------------------------------ | -------------------------- | ---------- |
+| `server/src/agent-v2/archive/booking-agent/`     | migrated to customer-agent | ✅ DELETED |
+| `server/src/agent-v2/archive/project-hub-agent/` | split to customer/tenant   | ✅ DELETED |
+| `server/src/agent-v2/archive/storefront-agent/`  | migrated to tenant-agent   | ✅ DELETED |
+| `server/src/agent-v2/archive/marketing-agent/`   | migrated to tenant-agent   | ✅ DELETED |
+| `server/src/agent-v2/archive/concierge-agent/`   | migrated to tenant-agent   | ✅ DELETED |
 
-**Verification:** Confirm customer-agent and tenant-agent are deployed and functional.
+**Verification:** customer-agent and tenant-agent are deployed and functional on Cloud Run.
 
 ### 3. Dead Utility Modules
 
@@ -66,50 +61,30 @@ npx madge --orphans server/src/
 
 ---
 
-## Phase 1: Schema Consolidation
+## Phase 1: Schema Consolidation ✅ SUPERSEDED
 
-These require data migration before deletion.
+> **Note:** This phase was superseded by the Phase 5 Section Content Migration (February 2, 2026). Instead of the planned `storefrontDraft`/`storefrontPublished` columns, the `SectionContent` table became the canonical storage.
 
-### 1. Draft System Unification
+### 1. Draft System Unification ✅ SUPERSEDED
 
-**Current state:**
-
-- `tenant.landingPageConfig` - JSON with `{ draft?: {...}, published: {...} }` wrapper
-- `tenant.landingPageConfigDraft` - Separate column for agent drafts
-
-**Target state:**
+**Original plan (not implemented):**
 
 - `tenant.storefrontDraft` - Single draft location (agent-authored)
 - `tenant.storefrontPublished` - Single published location
 
-**Migration steps:**
+**Actual implementation (Phase 5 Section Content Migration):**
 
-```sql
--- Step 1: Add new columns
-ALTER TABLE "Tenant" ADD COLUMN "storefrontDraft" JSONB;
-ALTER TABLE "Tenant" ADD COLUMN "storefrontPublished" JSONB;
+- `SectionContent` table with `isDraft: boolean` field
+- `SectionContentService` as single source of truth
+- `landingPageConfig` kept as read-only legacy fallback
 
--- Step 2: Migrate data
-UPDATE "Tenant"
-SET
-  "storefrontDraft" = COALESCE(
-    "landingPageConfigDraft",
-    "landingPageConfig"->>'draft',
-    "landingPageConfig"->>'published'
-  ),
-  "storefrontPublished" = COALESCE(
-    "landingPageConfig"->>'published',
-    "landingPageConfig"
-  );
+**What was deleted:**
 
--- Step 3: Verify migration
-SELECT COUNT(*) FROM "Tenant" WHERE "storefrontDraft" IS NULL AND "landingPageConfig" IS NOT NULL;
--- Should be 0
-
--- Step 4: Delete old columns (AFTER verification + code update)
-ALTER TABLE "Tenant" DROP COLUMN "landingPageConfig";
-ALTER TABLE "Tenant" DROP COLUMN "landingPageConfigDraft";
-```
+- `tenant.landingPageConfigDraft` column - DELETED
+- `tenant.landingPageConfig.draft` wrapper - DELETED (write path)
+- `LandingPageService` - DELETED
+- `landing-page-utils.ts` - DELETED
+- `tenant-admin-landing-page.routes.ts` write endpoints - DELETED
 
 ### 2. OnboardingEvent Table
 
@@ -135,16 +110,17 @@ HAVING COUNT(e.id) > 0;
 DROP TABLE "OnboardingEvent";
 ```
 
-### 3. SectionContent Model
+### 3. SectionContent Model ✅ KEPT (Now Canonical)
 
-**Current state:** Unified section storage (partially used)
-**Analysis needed:** Is this used? If not, delete.
+**Status:** The `SectionContent` table became the canonical storage in Phase 5 Section Content Migration.
 
-```bash
-# Check usage
-grep -rn "SectionContent" server/src/ --include="*.ts"
-grep -rn "sectionContent" server/src/ --include="*.ts"
-```
+This was originally marked for potential deletion, but the direction changed - instead of consolidating into `storefrontDraft`/`storefrontPublished` columns, the `SectionContent` table was enhanced to become the canonical storage for all storefront content.
+
+**Current usage:**
+
+- `SectionContentService` in `server/src/services/section-content.service.ts`
+- Agent tools write via `updateSection()`, `publishAll()`
+- Public storefront reads via `/sections` API
 
 ---
 

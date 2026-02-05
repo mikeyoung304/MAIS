@@ -23,7 +23,6 @@ import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
 import { PackageDraftService } from './services/package-draft.service';
 import { ReminderService } from './services/reminder.service';
-// DELETED: LandingPageService - Phase 5 Section Content Migration
 import { SectionContentService } from './services/section-content.service';
 import { HealthCheckService } from './services/health-check.service';
 import { WebhookDeliveryService } from './services/webhook-delivery.service';
@@ -97,7 +96,6 @@ export interface Container {
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
     packageDraft: PackageDraftService; // Visual editor draft management
     reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
-    // DELETED: landingPage - Phase 5 Section Content Migration
     sectionContent: SectionContentService; // Section content for storefront editing
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
     projectHub?: ProjectHubService; // Project Hub dual-faced communication
@@ -258,8 +256,6 @@ export function buildContainer(config: Config): Container {
     // Create PackageDraftService with mock catalog repository
     const packageDraftService = new PackageDraftService(adapters.catalogRepo, cacheAdapter);
 
-    // DELETED: LandingPageService - Phase 5 Section Content Migration
-
     // Create SectionContentService with mock repository
     const sectionContentRepo = new PrismaSectionContentRepository(mockPrisma);
     const sectionContentService = new SectionContentService(sectionContentRepo);
@@ -318,7 +314,6 @@ export function buildContainer(config: Config): Container {
       schedulingAvailability: schedulingAvailabilityService,
       packageDraft: packageDraftService,
       reminder: reminderService,
-      // DELETED: landingPage - Phase 5 Section Content Migration
       sectionContent: sectionContentService,
       projectHub: projectHubService,
     };
@@ -592,8 +587,6 @@ export function buildContainer(config: Config): Container {
   // Create PackageDraftService with real catalog repository
   const packageDraftService = new PackageDraftService(catalogRepo, cacheAdapter);
 
-  // DELETED: LandingPageService - Phase 5 Section Content Migration
-
   // Create SectionContentService with real repository
   const sectionContentRepo = new PrismaSectionContentRepository(prisma);
   const sectionContentService = new SectionContentService(sectionContentRepo);
@@ -749,7 +742,6 @@ export function buildContainer(config: Config): Container {
     schedulingAvailability: schedulingAvailabilityService,
     packageDraft: packageDraftService,
     reminder: reminderService,
-    // DELETED: landingPage - Phase 5 Section Content Migration
     sectionContent: sectionContentService,
     webhookDelivery: webhookDeliveryService,
     projectHub: projectHubService,

@@ -205,8 +205,7 @@ After deploying, run this Playwright test:
 
 ## Reference: The Archived Concierge
 
-The original research-based onboarding is preserved at:
-`server/src/agent-v2/archive/concierge/src/prompts/onboarding.ts`
+The original research-based onboarding was formerly at `server/src/agent-v2/archive/concierge/src/prompts/onboarding.ts` (archive directory deleted; available in git history).
 
 Key patterns to restore:
 

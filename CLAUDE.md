@@ -107,7 +107,7 @@ MAIS uses 3 consolidated AI agents deployed to Cloud Run:
 | Agent          | Cloud Run Service | Tools | Purpose                                                         |
 | -------------- | ----------------- | ----- | --------------------------------------------------------------- |
 | customer-agent | `customer-agent`  | 13    | Service discovery, booking, project hub (customer view)         |
-| tenant-agent   | `tenant-agent`    | 24    | Storefront editing, marketing, project management (tenant view) |
+| tenant-agent   | `tenant-agent`    | 34    | Storefront editing, marketing, project management (tenant view) |
 | research-agent | `research-agent`  | —     | Web research (unchanged)                                        |
 
 **Environment Variables:**
@@ -116,7 +116,7 @@ MAIS uses 3 consolidated AI agents deployed to Cloud Run:
 - `TENANT_AGENT_URL` - Unified tenant-facing agent (storefront + marketing + project-hub tenant)
 - `RESEARCH_AGENT_URL` - Web research agent
 
-**Archived Agents** (5 total, in `server/src/agent-v2/archive/`):
+**Archived Agents** (5 agents retired, available in git history):
 
 - `booking-agent` → migrated to customer-agent
 - `project-hub-agent` → split between customer-agent and tenant-agent
@@ -231,26 +231,22 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 9. Duplicate data fetching (wrap with React `cache()`)
 10. Wrong underscore prefix for "unused" vars that ARE used
 11. Circular dependencies in agent modules (check with `npx madge --circular`)
-12. _Retired: Legacy orchestrator pitfall removed in migration_
-13. Field name mismatches in DTOs (use canonical names from contracts)
-14. Singleton caches preventing DI (export class + factory)
-15. Missing cache invalidation after writes
-16. Early return before hooks (violates Rules of Hooks)
-17. Symlinks in TypeScript src directories (causes double compilation)
-18. TOCTOU on JSON field validation (wrap in `$transaction` + advisory lock)
-19. Duplicated tool logic (extract to shared utilities in `agent-v2/deploy/*/src/tools/`)
-20. _Retired: Legacy orchestrator pitfall removed in migration_
-21. E2E rate limiter misses (ALL need `isTestEnvironment` check)
-22. Form hydration race (add 500ms wait after `waitForSelector`)
-23. Session leak in E2E (use `browser.newContext()`)
-24. UUID validation on CUID fields (use `z.string()` not `z.string().uuid()`)
-25. _Retired: Multi-path data format mismatch (obsolete after Phase 5 Section Content Migration)_
-26. _Retired: AI tool responses missing state guidance (obsolete - SectionContentService now canonical)_
-27. Deleting `.client.ts` files as "duplicates" (they exist for server/client boundary)
-28. Trust tier mismatch tool definition vs createProposal
-29. TanStack Query staleTime blocking real-time (use `staleTime: 0`)
-30. Race condition on cache invalidation (add 100ms delay)
-31. Sage background with white text (fails WCAG AA - use teal/navy for backgrounds, sage for text only)
+12. Field name mismatches in DTOs (use canonical names from contracts)
+13. Singleton caches preventing DI (export class + factory)
+14. Missing cache invalidation after writes
+15. Early return before hooks (violates Rules of Hooks)
+16. Symlinks in TypeScript src directories (causes double compilation)
+17. TOCTOU on JSON field validation (wrap in `$transaction` + advisory lock)
+18. Duplicated tool logic (extract to shared utilities in `agent-v2/deploy/*/src/tools/`)
+19. E2E rate limiter misses (ALL need `isTestEnvironment` check)
+20. Form hydration race (add 500ms wait after `waitForSelector`)
+21. Session leak in E2E (use `browser.newContext()`)
+22. UUID validation on CUID fields (use `z.string()` not `z.string().uuid()`)
+23. Deleting `.client.ts` files as "duplicates" (they exist for server/client boundary)
+24. Trust tier mismatch tool definition vs createProposal
+25. TanStack Query staleTime blocking real-time (use `staleTime: 0`)
+26. Race condition on cache invalidation (add 100ms delay)
+27. Sage background with white text (fails WCAG AA - use teal/navy for backgrounds, sage for text only)
 
 ### ADK/A2A Pitfalls (32-44)
 
@@ -284,11 +280,6 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 54. Dual deployment architecture - Backend (Render) and Frontend (Vercel) auto-deploy on push to `main`, but Agents (Cloud Run) deploy via separate GitHub Actions workflow; if workflow fails silently, agent features appear broken in production despite code being merged
 55. Agent deployment verification - After merging agent changes, verify deployment succeeded in GitHub Actions → "Deploy AI Agents to Cloud Run"; manual deploy: `cd server/src/agent-v2/deploy/[agent] && npm run deploy`
-
-### Data Format Pitfalls (56-57) - RETIRED
-
-56. _Retired: Incomplete landingPageConfig wrapper (obsolete - SectionContent table replaces JSON columns)_
-57. _Retired: Wrapper format not extracted on READ (obsolete after Phase 5 Section Content Migration)_
 
 ### CI/CD Pitfalls (58-59)
 
@@ -362,10 +353,6 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 90. dashboardAction not extracted from tool results - Agent tools return `dashboardAction` objects in their results (e.g., `{type: 'NAVIGATE', section: 'website'}`), but frontend only checked tool NAMES for heuristics; must extract `call.result?.dashboardAction` and process action types (NAVIGATE, SCROLL_TO_SECTION, SHOW_PREVIEW, REFRESH); symptom: agent says "Take a look" but nothing happens in UI. See `apps/web/src/components/agent/AgentPanel.tsx` `handleConciergeToolComplete` for correct pattern.
 91. Agent asking known questions (P0) - Agent repeatedly asks "What do you do?" when it already knows; root cause: context not injected at session creation, only `tenantId` passed to ADK; fix: use `ContextBuilder.getBootstrapData()` and pass `forbiddenSlots[]` at session start; use **slot-policy** (key-based) not phrase-matching; agent checks slot keys not question phrases. See `docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md`
-
-### Code Path Drift Pitfalls (92) - RETIRED
-
-92. _Retired: Code path drift in duplicate implementations (obsolete - unified through SectionContentService in Phase 5)_
 
 ### Workspace Build Pitfalls (93-94)
 
