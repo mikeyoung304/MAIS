@@ -755,16 +755,24 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 /**
  * Get Google Cloud identity token for Cloud Run authentication.
  *
- * In Cloud Run, uses the metadata service.
- * In local dev, uses Application Default Credentials via GoogleAuth.
+ * Priority order:
+ * 1. Cloud Run metadata service (when running on Cloud Run)
+ * 2. Explicit service account credentials (GOOGLE_SERVICE_ACCOUNT_JSON - for Render)
+ * 3. Application Default Credentials (local development with `gcloud auth`)
+ *
+ * IMPORTANT: This is Pitfall #36 (Identity Token Auth) - non-GCP environments like
+ * Render require explicit credentials, not metadata service.
+ *
+ * @see docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md
  */
 async function getIdentityToken(): Promise<string | null> {
-  // Check if we're in Cloud Run (has metadata service)
+  const audience = getTenantAgentUrl();
+
+  // Priority 1: Cloud Run metadata service (fastest when available)
   if (process.env.K_SERVICE) {
     try {
       const metadataUrl =
         'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity';
-      const audience = getTenantAgentUrl();
 
       const response = await fetch(`${metadataUrl}?audience=${audience}`, {
         headers: { 'Metadata-Flavor': 'Google' },
@@ -778,22 +786,56 @@ async function getIdentityToken(): Promise<string | null> {
     }
   }
 
-  // In local development, try GoogleAuth
+  // Priority 2: Explicit service account credentials (Render, CI, etc.)
+  // This is the fix for Pitfall #36 - Render can't use metadata service
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (serviceAccountJson) {
+    try {
+      const { GoogleAuth } = await import('google-auth-library');
+
+      // Parse the JSON credentials from environment variable
+      const credentials = JSON.parse(serviceAccountJson);
+
+      // Create auth client with explicit credentials and target audience
+      const auth = new GoogleAuth({
+        credentials,
+        // targetAudience tells GoogleAuth we want an ID token, not an access token
+        // The audience MUST match the Cloud Run service URL
+      });
+
+      const client = await auth.getIdTokenClient(audience);
+      const headers = await client.getRequestHeaders();
+      const authHeader = (headers as unknown as Record<string, string>)['Authorization'];
+
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        logger.debug('[TenantAgent] Got identity token from explicit credentials');
+        return authHeader.slice(7);
+      }
+    } catch (error) {
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        '[TenantAgent] Failed to get identity token from GOOGLE_SERVICE_ACCOUNT_JSON'
+      );
+    }
+  }
+
+  // Priority 3: Application Default Credentials (local development)
   try {
     const { GoogleAuth } = await import('google-auth-library');
     const auth = new GoogleAuth();
-    const client = await auth.getIdTokenClient(getTenantAgentUrl());
+    const client = await auth.getIdTokenClient(audience);
     const headers = await client.getRequestHeaders();
-    // headers is { [key: string]: string } - access via bracket notation
     const authHeader = (headers as unknown as Record<string, string>)['Authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
+      logger.debug('[TenantAgent] Got identity token from ADC');
       return authHeader.slice(7);
     }
   } catch (error) {
-    // Expected in local dev without ADC
-    logger.debug({ error }, '[TenantAgent] GoogleAuth not available');
+    // Expected in local dev without ADC or service account
+    logger.debug({ error }, '[TenantAgent] GoogleAuth ADC not available');
   }
 
+  logger.warn('[TenantAgent] No identity token available - requests will be unauthenticated');
   return null;
 }
 
