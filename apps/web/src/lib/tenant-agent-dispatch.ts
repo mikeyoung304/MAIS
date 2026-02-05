@@ -2,18 +2,14 @@
  * Tenant Agent Message Dispatcher
  *
  * Enables external components (like SectionWidget) to send messages
- * to the tenant-agent chat without direct coupling to ConciergeChat component.
+ * to the tenant-agent chat without direct coupling to TenantAgentChat component.
  *
  * Pattern: Producer/Consumer with callback registration
  * - SectionWidget calls queueAgentMessage() → producer
- * - ConciergeChat component registers sendProgrammaticMessage → consumer
- *
- * Architecture note: The frontend hook/component are still named "ConciergeChat"
- * for backwards compatibility, but they connect to the unified `tenant-agent`
- * on Cloud Run. See SERVICE_REGISTRY.md for current agent architecture.
+ * - TenantAgentChat component registers sendProgrammaticMessage → consumer
  *
  * @see apps/web/src/components/build-mode/SectionWidget.tsx
- * @see apps/web/src/hooks/useConciergeChat.ts (legacy name, connects to tenant-agent)
+ * @see apps/web/src/hooks/useTenantAgentChat.ts
  * @see server/src/agent-v2/deploy/SERVICE_REGISTRY.md
  */
 

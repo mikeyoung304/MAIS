@@ -85,7 +85,6 @@ export {
 export { useSubscription, type SubscriptionTier } from './useSubscription';
 
 // Agent Chat - Tenant Agent (Cloud Run)
-// Migrated 2026-02 from Concierge → Tenant Agent naming
 export {
   useTenantAgentChat,
   type TenantAgentMessage,
@@ -93,10 +92,4 @@ export {
   type DashboardAction,
   type UseTenantAgentChatOptions,
   type UseTenantAgentChatReturn,
-  // Backwards compatibility exports (can be removed after migration)
-  useConciergeChat,
-  type ConciergeMessage,
-  type ConciergeToolCall,
-  type UseConciergeChatOptions,
-  type UseConciergeChatReturn,
 } from './useTenantAgentChat';

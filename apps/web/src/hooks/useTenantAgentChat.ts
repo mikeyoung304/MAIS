@@ -573,11 +573,3 @@ export function useTenantAgentChat({
     hasSentFirstMessage,
   };
 }
-
-// Re-export old names for backwards compatibility during migration
-// These can be removed after all consumers are updated
-export type ConciergeMessage = TenantAgentMessage;
-export type ConciergeToolCall = TenantAgentToolCall;
-export type UseConciergeChatOptions = UseTenantAgentChatOptions;
-export type UseConciergeChatReturn = UseTenantAgentChatReturn;
-export const useConciergeChat = useTenantAgentChat;

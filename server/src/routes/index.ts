@@ -49,8 +49,7 @@ import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 // DELETED: createTenantAdminLandingPageRoutes - Phase 5 Section Content Migration
-// All storefront editing now uses agent tools via internal-agent.routes.ts
-import { createTenantAdminAgentRoutes } from './tenant-admin-agent.routes';
+// DELETED: createTenantAdminAgentRoutes - Concierge → Tenant Agent migration complete
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
 import { createTenantAuthRoutes } from './tenant-auth.routes';
@@ -704,28 +703,12 @@ export function createV1Router(
     app.use('/v1/tenant-admin/domains', tenantAuthMiddleware, tenantAdminDomainsRouter);
     logger.info('✅ Tenant admin domain routes mounted at /v1/tenant-admin/domains');
 
-    // Register Concierge agent routes (for Vertex AI agent integration)
-    // Requires tenant admin authentication - chat with Concierge for dashboard actions
+    // Register Tenant Agent routes (unified agent for dashboard)
+    // Consolidates: Storefront editing, Marketing copy, Project management
+    // CRITICAL: contextBuilder injects forbiddenSlots at session creation (Pitfall #91 fix)
     // Dual-layer rate limiting to protect Vertex AI costs:
     // - agentChatLimiter: 30 messages per minute per tenant (overall quota)
     // - agentSessionLimiter: 10 messages per minute per session (burst protection)
-    // Now uses persistent session storage via PostgreSQL (#session-persistence)
-    const tenantAdminAgentRoutes = createTenantAdminAgentRoutes({ prisma: prismaClient });
-    app.use(
-      '/v1/tenant-admin/agent',
-      tenantAuthMiddleware,
-      agentChatLimiter,
-      agentSessionLimiter,
-      tenantAdminAgentRoutes
-    );
-    logger.info(
-      '✅ Tenant admin Concierge routes mounted at /v1/tenant-admin/agent (with rate limiting)'
-    );
-
-    // Register Tenant Agent routes (Canonical agent after Concierge migration)
-    // The Tenant Agent consolidates: Concierge, Storefront, Marketing, Project Hub
-    // CRITICAL: contextBuilder injects forbiddenSlots at session creation (Pitfall #91 fix)
-    // @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
     const tenantAgentContextBuilder = createContextBuilderService(
       prismaClient,
       services.sectionContent
@@ -741,7 +724,7 @@ export function createV1Router(
       agentSessionLimiter,
       tenantAdminTenantAgentRoutes
     );
-    logger.info('✅ Tenant Agent routes mounted at /v1/tenant-admin/agent/tenant (Phase 2a)');
+    logger.info('✅ Tenant Agent routes mounted at /v1/tenant-admin/agent/tenant');
 
     // Register tenant admin project routes (for project management dashboard)
     // Requires tenant admin authentication - manage projects, view/approve requests

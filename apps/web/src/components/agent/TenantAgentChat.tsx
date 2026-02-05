@@ -328,8 +328,4 @@ function ToolCallBadge({ toolCall }: { toolCall: TenantAgentToolCall }) {
   );
 }
 
-// Re-export old names for backwards compatibility during migration
-export type ConciergeUIAction = TenantAgentUIAction;
-export const ConciergeChat = TenantAgentChat;
-
 export default TenantAgentChat;
