@@ -388,6 +388,10 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 98. useMemo stale timer pattern - Using `useMemo` to calculate elapsed time with `Date.now()` but only static dependencies like `[order.created_at]`; timer shows correct initial value then freezes forever because dependency never changes; symptom: "Timer stuck at 0m", "Works after page refresh"; fix: use `useState` + `useEffect` with `setInterval` to create a `now` dependency that updates periodically; ESLint won't catch this (Date.now() inside useMemo is syntactically valid). See `docs/solutions/react-performance/USEMEMO_STALE_TIMER_PREVENTION.md`
 
+### Migration Drift Pitfalls (99)
+
+99. Dual-system migration drift (P0 risk) - "During migration" technical debt where NEW system has features but OLD system is still used; symptom: Agent asks "What do you do?" when it already knows (context injection exists in backend but frontend uses fake session IDs); detection: `grep "during migration"` comments older than 30 days, OLD system at 100% traffic; fix: max 30-day migration timeline, comment format `// MIGRATION[name]: expires YYYY-MM-DD: reason`, E2E tests must send 2+ messages to catch fake sessions; fake sessions pass single-message tests but fail on second with "session not found". See `docs/solutions/patterns/DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -416,6 +420,7 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md](docs/solutions/build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md)** - Clean build before committing deletions
 - **[POSTMESSAGE_QUICK_REFERENCE.md](docs/solutions/patterns/POSTMESSAGE_QUICK_REFERENCE.md)** - Dead PostMessage detection (3-minute audit)
 - **[DEAD_CODE_QUICK_REFERENCE.md](docs/solutions/code-review-patterns/DEAD_CODE_QUICK_REFERENCE.md)** - Sender/receiver bidirectional verification
+- **[DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md](docs/solutions/patterns/DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md)** - Migration drift, fake sessions, context injection
 
 When you hit an issue:
 

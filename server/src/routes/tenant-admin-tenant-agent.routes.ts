@@ -814,28 +814,28 @@ async function getIdentityToken(): Promise<string | null> {
 
   // Priority 2: Explicit service account credentials (Render, CI, etc.)
   // This is the fix for Pitfall #36 - Render can't use metadata service
+  // CRITICAL: GoogleAuth.getIdTokenClient().getRequestHeaders() silently returns empty headers
+  // for service accounts on non-GCP environments. Must use JWT.fetchIdToken() instead.
+  // @see docs/solutions/JWT_ID_TOKEN_FOR_CLOUD_RUN_AUTH.md
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (serviceAccountJson) {
     try {
-      const { GoogleAuth } = await import('google-auth-library');
+      const { JWT } = await import('google-auth-library');
 
       // Parse the JSON credentials from environment variable
       const credentials = JSON.parse(serviceAccountJson);
 
-      // Create auth client with explicit credentials and target audience
-      const auth = new GoogleAuth({
-        credentials,
-        // targetAudience tells GoogleAuth we want an ID token, not an access token
-        // The audience MUST match the Cloud Run service URL
+      // Use JWT.fetchIdToken() directly - this is the ONLY method that works
+      // for generating ID tokens from service accounts on non-GCP environments
+      const jwtClient = new JWT({
+        email: credentials.client_email,
+        key: credentials.private_key,
       });
 
-      const client = await auth.getIdTokenClient(audience);
-      const headers = await client.getRequestHeaders();
-      const authHeader = (headers as unknown as Record<string, string>)['Authorization'];
-
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        logger.debug('[TenantAgent] Got identity token from explicit credentials');
-        return authHeader.slice(7);
+      const idToken = await jwtClient.fetchIdToken(audience);
+      if (idToken) {
+        logger.info('[TenantAgent] Got identity token via JWT (service account)');
+        return idToken;
       }
     } catch (error) {
       logger.error(
