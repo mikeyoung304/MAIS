@@ -5,9 +5,6 @@
  * This allows dashboard components to chat with the unified Tenant Agent
  * without exposing the backend token.
  *
- * This is the canonical proxy after the Concierge → Tenant Agent migration.
- * The Tenant Agent consolidates: Concierge, Storefront, Marketing, Project Hub.
- *
  * Example:
  *   Client calls: /api/tenant-admin/agent/tenant/chat
  *   Proxied to:   ${API_BASE_URL}/v1/tenant-admin/agent/tenant/chat
@@ -20,7 +17,7 @@
  *   - GET /onboarding-state - Get onboarding phase and context
  *   - POST /skip-onboarding - Skip the onboarding flow
  *
- * CRITICAL: Session creation now injects forbiddenSlots (Pitfall #91 fix)
+ * CRITICAL: Session creation injects forbiddenSlots (Pitfall #91 fix)
  * Context is injected at session start, not inferred from conversation.
  *
  * @see docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md

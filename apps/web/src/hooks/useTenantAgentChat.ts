@@ -12,11 +12,6 @@
  * See SERVICE_REGISTRY.md for current agent architecture.
  * See docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md for context injection.
  *
- * Key differences from legacy useConciergeChat:
- * - Agent speaks first (fetches initial message from backend)
- * - Uses new localStorage keys (with migration from old keys)
- * - Renamed types: TenantAgentMessage, TenantAgentToolCall, etc.
- *
  * @example
  * ```tsx
  * const {
@@ -34,9 +29,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 const API_URL = '/api/tenant-admin/agent/tenant';
 
 // LocalStorage keys for persisting session state
-// Migration: Read from old keys, write to new keys
-const OLD_SESSION_KEY = 'handled:concierge:sessionId';
-const OLD_VERSION_KEY = 'handled:concierge:version';
 const SESSION_KEY = 'handled:tenant-agent:sessionId';
 const VERSION_KEY = 'handled:tenant-agent:version';
 
@@ -148,43 +140,18 @@ export interface UseTenantAgentChatReturn {
 }
 
 /**
- * Helper to migrate localStorage keys from old Concierge keys to new Tenant Agent keys
+ * Read session state from localStorage
  */
-function migrateLocalStorageKeys(): { sessionId: string | null; version: number | null } {
-  let sessionId: string | null = null;
-  let version: number | null = null;
-
+function getStoredSession(): { sessionId: string | null; version: number | null } {
   try {
-    // Try new keys first
-    sessionId = localStorage.getItem(SESSION_KEY);
+    const sessionId = localStorage.getItem(SESSION_KEY);
     const storedVersion = localStorage.getItem(VERSION_KEY);
-    version = storedVersion ? parseInt(storedVersion, 10) : null;
-
-    // If no new keys, try old keys and migrate
-    if (!sessionId) {
-      const oldSessionId = localStorage.getItem(OLD_SESSION_KEY);
-      const oldVersion = localStorage.getItem(OLD_VERSION_KEY);
-
-      if (oldSessionId) {
-        sessionId = oldSessionId;
-        version = oldVersion ? parseInt(oldVersion, 10) : null;
-
-        // Migrate to new keys
-        localStorage.setItem(SESSION_KEY, sessionId);
-        if (version !== null) {
-          localStorage.setItem(VERSION_KEY, String(version));
-        }
-
-        // Clean up old keys
-        localStorage.removeItem(OLD_SESSION_KEY);
-        localStorage.removeItem(OLD_VERSION_KEY);
-      }
-    }
+    const version = storedVersion ? parseInt(storedVersion, 10) : null;
+    return { sessionId, version };
   } catch {
     // localStorage unavailable (private browsing) - continue without persistence
+    return { sessionId: null, version: null };
   }
-
-  return { sessionId, version };
 }
 
 /**
@@ -197,7 +164,6 @@ function migrateLocalStorageKeys(): { sessionId: string | null; version: number 
  * - Tool call tracking for storefront and marketing actions
  * - Dashboard action processing (navigation, preview, guided refinement)
  * - Auto-scroll on new messages
- * - LocalStorage key migration from Concierge → Tenant Agent
  */
 export function useTenantAgentChat({
   onSessionStart,
@@ -309,8 +275,8 @@ export function useTenantAgentChat({
     setError(null);
 
     try {
-      // Check localStorage for existing session (with migration from old keys)
-      const { sessionId: existingSessionId, version: existingVersion } = migrateLocalStorageKeys();
+      // Check localStorage for existing session
+      const { sessionId: existingSessionId, version: existingVersion } = getStoredSession();
 
       // If we have an existing session, try to restore it
       if (existingSessionId) {

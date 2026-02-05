@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { OnboardingPhase } from '@macon/contracts';
 import { queryKeys } from '@/lib/query-client';
 
-// Migrated to Tenant Agent endpoints (Concierge → Tenant Agent migration complete)
-// Uses unified Tenant Agent with proper bootstrap context injection (Pitfall #91 fix)
+// Unified Tenant Agent API with bootstrap context injection (Pitfall #91 fix)
 const API_PROXY = '/api/tenant-admin/agent/tenant';
 
 /**
