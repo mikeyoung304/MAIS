@@ -22,12 +22,12 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
-import { GoogleAuth, JWT } from 'google-auth-library';
 import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
 import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../config/tiers';
+import { cloudRunAuth } from './cloud-run-auth.service';
 
 // =============================================================================
 // ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
@@ -149,33 +149,12 @@ export interface CustomerChatResponse {
 // =============================================================================
 
 export class CustomerAgentService {
-  private auth: GoogleAuth;
-  private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
   private sessionService: SessionService;
   private prisma: PrismaClient;
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
     this.sessionService = createSessionService(prisma);
-
-    // Initialize Google Auth
-    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    if (serviceAccountJson) {
-      try {
-        const credentials = JSON.parse(serviceAccountJson);
-        this.auth = new GoogleAuth({ credentials });
-        this.serviceAccountCredentials = {
-          client_email: credentials.client_email,
-          private_key: credentials.private_key,
-        };
-        logger.info('[CustomerAgent] Using service account from GOOGLE_SERVICE_ACCOUNT_JSON');
-      } catch (e) {
-        logger.error({ error: e }, '[CustomerAgent] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
-        this.auth = new GoogleAuth();
-      }
-    } else {
-      this.auth = new GoogleAuth();
-    }
   }
 
   /**
@@ -204,7 +183,7 @@ export class CustomerAgentService {
     let adkSessionId: string;
 
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
       const response = await fetchWithTimeout(
         `${getCustomerAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
@@ -351,7 +330,7 @@ export class CustomerAgentService {
 
     try {
       // 4. Send to Booking Agent
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
       const adkUserId = dbSession.customerId
         ? `${tenantId}:customer:${dbSession.customerId}`
         : `${tenantId}:anonymous`;
@@ -508,7 +487,7 @@ export class CustomerAgentService {
     let newAdkSessionId: string | null = null;
 
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
       const response = await fetchWithTimeout(
         `${getCustomerAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
         {
@@ -540,7 +519,7 @@ export class CustomerAgentService {
     }
 
     // Retry with new session
-    const token = await this.getIdentityToken();
+    const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
     const response = await fetchWithTimeout(`${getCustomerAgentUrl()}/run`, {
       method: 'POST',
       headers: {
@@ -601,54 +580,6 @@ export class CustomerAgentService {
       sessionId: dbSessionId,
       toolResults,
     };
-  }
-
-  private async getIdentityToken(): Promise<string | null> {
-    // JWT with service account
-    if (this.serviceAccountCredentials) {
-      try {
-        const jwtClient = new JWT({
-          email: this.serviceAccountCredentials.client_email,
-          key: this.serviceAccountCredentials.private_key,
-        });
-        const idToken = await jwtClient.fetchIdToken(getCustomerAgentUrl());
-        if (idToken) {
-          return idToken;
-        }
-      } catch (e) {
-        logger.warn({ error: e }, '[CustomerAgent] JWT fetchIdToken failed');
-      }
-    }
-
-    // GoogleAuth (ADC)
-    try {
-      const client = await this.auth.getIdTokenClient(getCustomerAgentUrl());
-      const headers = await client.getRequestHeaders();
-      const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';
-      const token = authHeader.replace('Bearer ', '');
-      if (token) {
-        return token;
-      }
-    } catch (e) {
-      logger.warn({ error: e }, '[CustomerAgent] GoogleAuth failed');
-    }
-
-    // gcloud CLI (local dev)
-    try {
-      const { execSync } = await import('child_process');
-      const token = execSync('gcloud auth print-identity-token', {
-        encoding: 'utf-8',
-        timeout: 5000,
-      }).trim();
-      if (token) {
-        return token;
-      }
-    } catch {
-      // Expected on non-local environments
-    }
-
-    logger.warn('[CustomerAgent] No identity token available');
-    return null;
   }
 
   private extractAgentResponse(data: AdkRunResponse): string {

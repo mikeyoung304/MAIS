@@ -23,9 +23,9 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
-import { GoogleAuth, JWT } from 'google-auth-library';
 import { z } from 'zod';
 import { logger } from '../lib/core/logger';
+import { cloudRunAuth } from './cloud-run-auth.service';
 
 // =============================================================================
 // ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
@@ -151,29 +151,8 @@ export type ContextType = 'customer' | 'tenant';
 // =============================================================================
 
 export class ProjectHubAgentService {
-  private auth: GoogleAuth;
-  private serviceAccountCredentials: { client_email: string; private_key: string } | null = null;
-
   constructor() {
-    // Initialize Google Auth for Cloud Run authentication
-    // Priority: GOOGLE_SERVICE_ACCOUNT_JSON (Render) > ADC (GCP/local)
-    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    if (serviceAccountJson) {
-      try {
-        const credentials = JSON.parse(serviceAccountJson);
-        this.auth = new GoogleAuth({ credentials });
-        this.serviceAccountCredentials = {
-          client_email: credentials.client_email,
-          private_key: credentials.private_key,
-        };
-        logger.info('[ProjectHubAgent] Using service account from GOOGLE_SERVICE_ACCOUNT_JSON');
-      } catch (e) {
-        logger.error({ error: e }, '[ProjectHubAgent] Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
-        this.auth = new GoogleAuth();
-      }
-    } else {
-      this.auth = new GoogleAuth();
-    }
+    // No-op: Cloud Run auth is now handled by cloudRunAuth singleton
   }
 
   /**
@@ -201,7 +180,7 @@ export class ProjectHubAgentService {
     const userId = `${tenantId}:${customerId || 'tenant'}`;
 
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
       const agentUrl = getCustomerAgentUrl();
 
       const response = await fetchWithTimeout(
@@ -306,7 +285,7 @@ export class ProjectHubAgentService {
     );
 
     try {
-      const token = await this.getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
       const agentUrl = getCustomerAgentUrl();
       const fullUrl = `${agentUrl}/run`;
 
@@ -420,69 +399,6 @@ export class ProjectHubAgentService {
   // =============================================================================
   // PRIVATE HELPERS
   // =============================================================================
-
-  /**
-   * Get identity token for Cloud Run authentication.
-   * Priority: JWT (service account) > GoogleAuth (ADC) > gcloud CLI (local dev)
-   */
-  private async getIdentityToken(): Promise<string | null> {
-    const targetUrl = getCustomerAgentUrl();
-
-    // First try: JWT with service account credentials (most reliable for Render)
-    if (this.serviceAccountCredentials) {
-      try {
-        const jwtClient = new JWT({
-          email: this.serviceAccountCredentials.client_email,
-          key: this.serviceAccountCredentials.private_key,
-        });
-        const idToken = await jwtClient.fetchIdToken(targetUrl);
-        if (idToken) {
-          logger.debug('[ProjectHubAgent] Got identity token via JWT');
-          return idToken;
-        }
-      } catch (e) {
-        logger.warn(
-          { error: e instanceof Error ? e.message : String(e) },
-          '[ProjectHubAgent] JWT fetchIdToken failed'
-        );
-      }
-    }
-
-    // Second try: GoogleAuth (works with ADC on GCP)
-    try {
-      const client = await this.auth.getIdTokenClient(targetUrl);
-      const headers = await client.getRequestHeaders();
-      const authHeader = (headers as unknown as Record<string, string>)['Authorization'] || '';
-      const token = authHeader.replace('Bearer ', '');
-      if (token) {
-        logger.debug('[ProjectHubAgent] Got identity token via GoogleAuth');
-        return token;
-      }
-    } catch (e) {
-      logger.warn(
-        { error: e instanceof Error ? e.message : String(e) },
-        '[ProjectHubAgent] GoogleAuth failed, trying fallback'
-      );
-    }
-
-    // Third try: gcloud CLI (works with user credentials locally)
-    try {
-      const { execSync } = await import('child_process');
-      const token = execSync('gcloud auth print-identity-token', {
-        encoding: 'utf-8',
-        timeout: 5000,
-      }).trim();
-      if (token) {
-        logger.debug('[ProjectHubAgent] Using gcloud CLI identity token (local dev)');
-        return token;
-      }
-    } catch {
-      // gcloud CLI not available - expected on Render
-    }
-
-    logger.warn('[ProjectHubAgent] No identity token available - calls will be unauthenticated');
-    return null;
-  }
 
   /**
    * Extract text response from ADK response format.

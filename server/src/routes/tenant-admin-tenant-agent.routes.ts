@@ -32,6 +32,7 @@ import { z, ZodError } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import type { ContextBuilderService, BootstrapData } from '../services/context-builder.service';
+import { cloudRunAuth } from '../services/cloud-run-auth.service';
 
 // =============================================================================
 // CONFIGURATION
@@ -218,7 +219,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       };
 
       // Step 3: Create session on ADK with full context
-      const token = await getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const agentUrl = getTenantAgentUrl();
 
       const controller = new AbortController();
@@ -307,7 +308,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const userId = `${tenantId}:${slug}`;
 
       // Fetch session from ADK
-      const token = await getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const agentUrl = getTenantAgentUrl();
 
       const controller = new AbortController();
@@ -474,7 +475,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         };
 
         // Step 3: Create ADK session
-        const token = await getIdentityToken();
+        const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
         const agentUrl = getTenantAgentUrl();
 
         const createController = new AbortController();
@@ -523,7 +524,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       }
 
       // Get identity token for Cloud Run authentication (if in GCP environment)
-      const token = await getIdentityToken();
+      const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
 
       // Call the Tenant Agent via A2A protocol
       const agentUrl = getTenantAgentUrl();
@@ -777,93 +778,6 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
-
-/**
- * Get Google Cloud identity token for Cloud Run authentication.
- *
- * Priority order:
- * 1. Cloud Run metadata service (when running on Cloud Run)
- * 2. Explicit service account credentials (GOOGLE_SERVICE_ACCOUNT_JSON - for Render)
- * 3. Application Default Credentials (local development with `gcloud auth`)
- *
- * IMPORTANT: This is Pitfall #36 (Identity Token Auth) - non-GCP environments like
- * Render require explicit credentials, not metadata service.
- *
- * @see docs/solutions/patterns/ADK_A2A_PREVENTION_INDEX.md
- */
-async function getIdentityToken(): Promise<string | null> {
-  const audience = getTenantAgentUrl();
-
-  // Priority 1: Cloud Run metadata service (fastest when available)
-  if (process.env.K_SERVICE) {
-    try {
-      const metadataUrl =
-        'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity';
-
-      const response = await fetch(`${metadataUrl}?audience=${audience}`, {
-        headers: { 'Metadata-Flavor': 'Google' },
-      });
-
-      if (response.ok) {
-        return await response.text();
-      }
-    } catch (error) {
-      logger.warn({ error }, '[TenantAgent] Failed to get metadata token');
-    }
-  }
-
-  // Priority 2: Explicit service account credentials (Render, CI, etc.)
-  // This is the fix for Pitfall #36 - Render can't use metadata service
-  // CRITICAL: GoogleAuth.getIdTokenClient().getRequestHeaders() silently returns empty headers
-  // for service accounts on non-GCP environments. Must use JWT.fetchIdToken() instead.
-  // @see docs/solutions/JWT_ID_TOKEN_FOR_CLOUD_RUN_AUTH.md
-  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (serviceAccountJson) {
-    try {
-      const { JWT } = await import('google-auth-library');
-
-      // Parse the JSON credentials from environment variable
-      const credentials = JSON.parse(serviceAccountJson);
-
-      // Use JWT.fetchIdToken() directly - this is the ONLY method that works
-      // for generating ID tokens from service accounts on non-GCP environments
-      const jwtClient = new JWT({
-        email: credentials.client_email,
-        key: credentials.private_key,
-      });
-
-      const idToken = await jwtClient.fetchIdToken(audience);
-      if (idToken) {
-        logger.info('[TenantAgent] Got identity token via JWT (service account)');
-        return idToken;
-      }
-    } catch (error) {
-      logger.error(
-        { error: error instanceof Error ? error.message : String(error) },
-        '[TenantAgent] Failed to get identity token from GOOGLE_SERVICE_ACCOUNT_JSON'
-      );
-    }
-  }
-
-  // Priority 3: Application Default Credentials (local development)
-  try {
-    const { GoogleAuth } = await import('google-auth-library');
-    const auth = new GoogleAuth();
-    const client = await auth.getIdTokenClient(audience);
-    const headers = await client.getRequestHeaders();
-    const authHeader = (headers as unknown as Record<string, string>)['Authorization'];
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      logger.debug('[TenantAgent] Got identity token from ADC');
-      return authHeader.slice(7);
-    }
-  } catch (error) {
-    // Expected in local dev without ADC or service account
-    logger.debug({ error }, '[TenantAgent] GoogleAuth ADC not available');
-  }
-
-  logger.warn('[TenantAgent] No identity token available - requests will be unauthenticated');
-  return null;
-}
 
 /**
  * Extract text response from ADK response array.
