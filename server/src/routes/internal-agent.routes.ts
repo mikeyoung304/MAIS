@@ -72,6 +72,7 @@ import type { SectionContentService } from '../services/section-content.service'
 // NOTE: createPublishedWrapper import removed - agent routes now delegate to repository methods
 // which handle the wrapper format internally. See: CODE_PATH_DRIFT_PREVENTION.md
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
+import type { OnboardingPhase } from '../generated/prisma/enums';
 
 // =============================================================================
 // Request Schemas
@@ -610,6 +611,38 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     value: z.unknown(),
   });
 
+  /**
+   * Compute onboarding phase from known fact keys.
+   * Phases advance monotonically based on which facts have been gathered.
+   */
+  function computeCurrentPhase(knownFactKeys: string[]): OnboardingPhase {
+    const has = (key: string) => knownFactKeys.includes(key);
+
+    // MARKETING requires: uniqueValue OR testimonial
+    if (has('uniqueValue') || has('testimonial')) return 'MARKETING';
+
+    // SERVICES requires: servicesOffered OR priceRange
+    if (has('servicesOffered') || has('priceRange')) return 'SERVICES';
+
+    // MARKET_RESEARCH requires: location (triggers research agent)
+    if (has('location')) return 'MARKET_RESEARCH';
+
+    // DISCOVERY requires: businessType
+    if (has('businessType')) return 'DISCOVERY';
+
+    return 'NOT_STARTED';
+  }
+
+  const PHASE_ORDER: Record<string, number> = {
+    NOT_STARTED: 0,
+    DISCOVERY: 1,
+    MARKET_RESEARCH: 2,
+    SERVICES: 3,
+    MARKETING: 4,
+    COMPLETED: 5,
+    SKIPPED: 5,
+  };
+
   router.post('/store-discovery-fact', async (req: Request, res: Response) => {
     try {
       const { tenantId, key, value } = StoreDiscoveryFactSchema.parse(req.body);
@@ -637,17 +670,35 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         branding: { ...branding, discoveryFacts },
       });
 
+      // Compute phase advancement from fact inventory
+      const knownFactKeys = Object.keys(discoveryFacts);
+      const newPhase = computeCurrentPhase(knownFactKeys);
+      const currentPhase = (tenant.onboardingPhase as string) || 'NOT_STARTED';
+      const phaseAdvanced = (PHASE_ORDER[newPhase] ?? 0) > (PHASE_ORDER[currentPhase] ?? 0);
+
+      // Advance phase if needed (monotonic — never moves backward)
+      if (phaseAdvanced) {
+        await tenantRepo.update(tenantId, {
+          onboardingPhase: newPhase,
+        });
+        logger.info(
+          { tenantId, from: currentPhase, to: newPhase },
+          '[Agent] Onboarding phase advanced'
+        );
+      }
+
       // Invalidate bootstrap cache so next request gets updated facts
       invalidateBootstrapCache(tenantId);
 
-      // Return updated facts list so agent knows what it knows
-      const knownFactKeys = Object.keys(discoveryFacts);
+      // Return updated facts list + phase info so agent knows what it knows
       res.json({
         stored: true,
         key,
         value,
         totalFactsKnown: knownFactKeys.length,
         knownFactKeys,
+        currentPhase: phaseAdvanced ? newPhase : currentPhase,
+        phaseAdvanced,
         message: `Stored ${key} successfully. Now know: ${knownFactKeys.join(', ')}`,
       });
     } catch (error) {

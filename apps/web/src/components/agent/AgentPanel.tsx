@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
 import { refinementActions } from '@/stores/refinement-store';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
+import { queryKeys } from '@/lib/query-client';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -354,6 +355,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
           queryKey: getDraftConfigQueryKey(),
           refetchType: 'active',
         });
+      }
+
+      // Invalidate onboarding state when discovery facts are stored
+      // This ensures the stepper UI updates immediately after phase advancement
+      const storedFact = toolCalls.some((call) => call.name === 'store_discovery_fact');
+      if (storedFact) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
       }
     },
     [queryClient, handleDashboardActions]
