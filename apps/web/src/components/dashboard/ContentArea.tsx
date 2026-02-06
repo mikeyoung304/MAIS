@@ -3,17 +3,15 @@
 /**
  * ContentArea - Dynamic content container for Agent-First Dashboard
  *
- * This component renders different views based on the agent UI store's ViewState:
- * - 'dashboard': Shows the children (page content) or DashboardView
- * - 'preview': Shows the PreviewPanel with storefront preview
- * - 'loading': Shows a loading skeleton
- * - 'error': Shows an error state with recovery option
- *
- * The discriminated union pattern ensures only one state is active at a time,
- * eliminating bugs like "showing preview and dashboard simultaneously".
+ * Renders views based on the agent UI store's ViewState (exhaustive switch, no default):
+ * - 'coming_soon': Pre-build placeholder during Discovery + Building phases
+ * - 'revealing': One-shot animated reveal when first draft completes
+ * - 'preview': Storefront preview with real-time PostMessage updates
+ * - 'dashboard': Stats/Insights page content (post-publish)
+ * - 'loading': Transitional loading state
+ * - 'error': Error state with recovery option
  *
  * @see stores/agent-ui-store.ts for ViewState definition
- * @see plans/agent-first-dashboard-architecture.md for architecture details
  */
 
 import { Suspense, lazy } from 'react';
@@ -25,6 +23,43 @@ import { cn } from '@/lib/utils';
 
 // Lazy load PreviewPanel to reduce initial bundle size
 const PreviewPanel = lazy(() => import('@/components/preview/PreviewPanel'));
+
+// ============================================
+// COMING SOON (Phase 1 stub — full ComingSoonDisplay in Phase 2)
+// ============================================
+
+function ComingSoonStub() {
+  return (
+    <div className="h-full flex items-center justify-center bg-neutral-50 dark:bg-surface">
+      <div className="flex flex-col items-center gap-6 text-center max-w-md p-8">
+        <div className="w-16 h-16 rounded-full bg-sage/10 flex items-center justify-center">
+          <span className="text-2xl">&#10022;</span>
+        </div>
+        <div>
+          <h2 className="text-xl font-serif font-medium text-text-primary mb-2">
+            Your website is being crafted
+          </h2>
+          <p className="text-text-muted">Keep talking — every detail makes it better.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// REVEAL (Phase 1 stub — full RevealTransition in Phase 2)
+// ============================================
+
+function RevealStub() {
+  return (
+    <div className="h-full flex items-center justify-center bg-neutral-50 dark:bg-surface">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-10 w-10 animate-spin text-sage" />
+        <span className="text-sm text-text-muted font-medium">Building your site...</span>
+      </div>
+    </div>
+  );
+}
 
 // ============================================
 // LOADING STATE
@@ -79,18 +114,6 @@ function ErrorView({ error, onRetry }: ErrorViewProps) {
 function PreviewLoader() {
   return (
     <div className="h-full flex flex-col bg-neutral-100 dark:bg-surface-alt">
-      {/* Toolbar skeleton */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-surface border-b border-neutral-200 dark:border-neutral-700">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-24 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
-          <div className="h-8 w-32 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
-          <div className="h-8 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
-        </div>
-      </div>
-      {/* Preview area skeleton */}
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-sage" />
@@ -115,13 +138,13 @@ interface ContentAreaProps {
 /**
  * ContentArea renders content based on the agent UI store's view state.
  *
- * Uses discriminated unions for type-safe view switching:
- * - When status is 'preview', config is guaranteed to exist
- * - When status is 'error', error message is guaranteed to exist
+ * EXHAUSTIVE switch — no default case. TypeScript `never` check ensures
+ * every ViewState variant is handled. Adding a new status without a case
+ * here produces a compile error.
  */
 export function ContentArea({ children, className }: ContentAreaProps) {
   const view = useAgentUIStore((state) => state.view);
-  const { config, hasDraft, invalidate, isLoading, error: draftError, refetch } = useDraftConfig();
+  const { config, invalidate, isLoading, error: draftError, refetch } = useDraftConfig();
 
   // Check for draft config errors first (auth failures, server errors)
   // This prevents the silent "DEFAULT config in preview" bug
@@ -133,8 +156,39 @@ export function ContentArea({ children, className }: ContentAreaProps) {
     );
   }
 
-  // Switch on discriminated union - TypeScript knows exactly what's available in each case
+  // Exhaustive switch on discriminated union — NO default case
   switch (view.status) {
+    case 'coming_soon':
+      return (
+        <div className={cn('h-full', className)} data-testid="content-area-coming-soon">
+          <ComingSoonStub />
+        </div>
+      );
+
+    case 'revealing':
+      return (
+        <div className={cn('h-full', className)} data-testid="content-area-revealing">
+          <RevealStub />
+        </div>
+      );
+
+    case 'preview':
+      return (
+        <div className={cn('h-full', className)} data-testid="content-area-preview">
+          <Suspense fallback={<PreviewLoader />}>
+            <PreviewPanel
+              highlightedSectionId={view.config.highlightedSectionId}
+              draftConfig={config}
+              onConfigUpdate={invalidate}
+              isConfigLoading={isLoading}
+            />
+          </Suspense>
+        </div>
+      );
+
+    case 'dashboard':
+      return <div data-testid="content-area-dashboard">{children}</div>;
+
     case 'loading':
       return (
         <div className={cn('h-full', className)} data-testid="content-area-loading">
@@ -149,26 +203,12 @@ export function ContentArea({ children, className }: ContentAreaProps) {
         </div>
       );
 
-    case 'preview':
-      return (
-        <div className={cn('h-full', className)} data-testid="content-area-preview">
-          <Suspense fallback={<PreviewLoader />}>
-            <PreviewPanel
-              currentPage={view.config.currentPage}
-              highlightedSectionId={view.config.highlightedSectionId}
-              draftConfig={config}
-              hasDraft={hasDraft}
-              onConfigUpdate={invalidate}
-              isConfigLoading={isLoading}
-            />
-          </Suspense>
-        </div>
-      );
-
-    case 'dashboard':
-    default:
-      // Render children (page content) - this allows each page to have its own content
+    default: {
+      // Compile error if any ViewState variant is not handled above
+      const _exhaustive: never = view;
+      void _exhaustive;
       return <div data-testid="content-area-dashboard">{children}</div>;
+    }
   }
 }
 

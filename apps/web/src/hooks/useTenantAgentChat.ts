@@ -28,6 +28,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 // API proxy URL - proxies to /v1/tenant-admin/agent/tenant/*
 const API_URL = '/api/tenant-admin/agent/tenant';
 
+/**
+ * Connection status for the chat session
+ * 'connecting' = first-time init, 'reconnecting' = restoring existing session,
+ * 'ready' = session active, 'error' = connection failed
+ */
+export type ConnectionStatus = 'connecting' | 'reconnecting' | 'ready' | 'error';
+
 // LocalStorage keys for persisting session state
 const SESSION_KEY = 'handled:tenant-agent:sessionId';
 const VERSION_KEY = 'handled:tenant-agent:version';
@@ -119,6 +126,7 @@ export interface UseTenantAgentChatReturn {
   // Health state
   isInitializing: boolean;
   isAvailable: boolean;
+  connectionStatus: ConnectionStatus;
 
   // Actions
   sendMessage: () => Promise<void>;
@@ -183,9 +191,15 @@ export function useTenantAgentChat({
   // Initialization state
   const [isInitializing, setIsInitializing] = useState(true);
   const [isAvailable, setIsAvailable] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
 
   // First message tracking
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+
+  // Guard against re-initialization from callback dependency cascade
+  // React Strict Mode double-invokes effects, and callback deps change on every render —
+  // this ref ensures session init runs exactly once per mount.
+  const hasInitializedRef = useRef(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
@@ -280,6 +294,7 @@ export function useTenantAgentChat({
 
       // If we have an existing session, try to restore it
       if (existingSessionId) {
+        setConnectionStatus('reconnecting');
         try {
           // Verify session exists and get messages
           const historyResponse = await fetch(`${API_URL}/session/${existingSessionId}`, {
@@ -296,6 +311,7 @@ export function useTenantAgentChat({
             const restoredVersion = historyData.session?.version ?? existingVersion ?? 0;
             setVersion(restoredVersion);
             setIsAvailable(true);
+            setConnectionStatus('ready');
             onSessionStart?.(existingSessionId);
 
             // Restore messages from history
@@ -337,6 +353,7 @@ export function useTenantAgentChat({
       }
 
       // Create a new session
+      setConnectionStatus('connecting');
       const response = await fetch(`${API_URL}/session`, {
         method: 'POST',
         headers: {
@@ -355,6 +372,7 @@ export function useTenantAgentChat({
       const newVersion = data.version ?? 0;
       setVersion(newVersion);
       setIsAvailable(true);
+      setConnectionStatus('ready');
       onSessionStart?.(data.sessionId);
 
       // Persist session state to localStorage
@@ -371,15 +389,20 @@ export function useTenantAgentChat({
       await fetchAgentGreeting(data.sessionId, newVersion);
     } catch (err) {
       setIsAvailable(false);
+      setConnectionStatus('error');
       setError(err instanceof Error ? err.message : 'Failed to connect to assistant');
       setIsInitializing(false);
     }
   }, [onSessionStart, fetchAgentGreeting]);
 
-  // Initialize on mount
+  // Initialize on mount — guarded by ref to prevent re-initialization
+  // from callback dependency cascade (Pitfall: initializeSession deps change
+  // when parent re-renders and passes new onDashboardActions closure)
   useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
     initializeSession();
-  }, [initializeSession]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentional mount-only
 
   /**
    * Core message sending logic shared by sendMessage and sendProgrammaticMessage.
@@ -519,6 +542,7 @@ export function useTenantAgentChat({
     // Health state
     isInitializing,
     isAvailable,
+    connectionStatus,
 
     // Actions
     sendMessage,

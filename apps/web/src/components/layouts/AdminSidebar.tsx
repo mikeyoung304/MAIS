@@ -10,16 +10,16 @@ import { useLocalStorageBoolean } from '@/hooks/useLocalStorage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import {
-  LayoutDashboard,
+  House,
   Calendar,
-  CreditCard,
+  BarChart3,
   Settings,
   LogOut,
   Menu,
   X,
   ChevronLeft,
+  LayoutDashboard,
   Building2,
-  Globe2, // Website tab icon
 } from 'lucide-react';
 
 interface NavItem {
@@ -30,39 +30,31 @@ interface NavItem {
 }
 
 /**
- * Tenant navigation - Consolidated 5-item sidebar
+ * Tenant navigation — Post-publish sidebar (4 items)
  *
- * Consolidation mapping (8 → 5):
- * - Dashboard: unchanged
- * - Website: merges Branding + Pages + Packages (visual editor + AI agent)
- * - Scheduling: unchanged (appointments, availability, blackouts)
- * - Revenue: merges Payments + Billing (all money-related)
- * - Settings: includes Domains as advanced section
+ * "Your site IS the dashboard." Website editing happens via the agent chat,
+ * so no separate Website item. Revenue becomes Insights for broader analytics.
+ *
+ * Only visible after publish — hidden during onboarding.
  */
 const tenantNavItems: NavItem[] = [
   {
     href: '/tenant/dashboard',
-    label: 'Dashboard',
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    description: 'Overview and metrics',
-  },
-  {
-    href: '/tenant/website',
-    label: 'Website',
-    icon: <Globe2 className="h-5 w-5" />,
-    description: 'Edit your site with AI',
+    label: 'Home',
+    icon: <House className="h-5 w-5" />,
+    description: 'Your site at a glance',
   },
   {
     href: '/tenant/scheduling',
-    label: 'Scheduling',
+    label: 'Schedule',
     icon: <Calendar className="h-5 w-5" />,
     description: 'Availability and appointments',
   },
   {
     href: '/tenant/revenue',
-    label: 'Revenue',
-    icon: <CreditCard className="h-5 w-5" />,
-    description: 'Payments and billing',
+    label: 'Insights',
+    icon: <BarChart3 className="h-5 w-5" />,
+    description: 'Revenue and analytics',
   },
   {
     href: '/tenant/settings',

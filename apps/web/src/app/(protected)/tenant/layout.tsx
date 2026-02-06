@@ -9,7 +9,11 @@ import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
 import { AgentPanel } from '@/components/agent/AgentPanel';
 import { ContentArea } from '@/components/dashboard/ContentArea';
 import { SectionWidget, PublishReadyWidget } from '@/components/build-mode/SectionWidget';
-import { useAgentUIStore, selectIsPreviewActive } from '@/stores/agent-ui-store';
+import {
+  useAgentUIStore,
+  selectIsPreviewActive,
+  selectIsOnboardingView,
+} from '@/stores/agent-ui-store';
 import {
   useRefinementStore,
   selectIsInGuidedRefine,
@@ -60,12 +64,18 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
 
   // Agent UI store - preview mode detection and control
   const isPreviewActive = useAgentUIStore(selectIsPreviewActive);
+  const isOnboardingView = useAgentUIStore(selectIsOnboardingView);
   const initialize = useAgentUIStore((state) => state.initialize);
   const showDashboard = useAgentUIStore((state) => state.showDashboard);
+  const showComingSoon = useAgentUIStore((state) => state.showComingSoon);
+  const showPreview = useAgentUIStore((state) => state.showPreview);
 
   // Refinement store - guided refinement mode and publish ready detection
   const isInGuidedRefine = useRefinementStore(selectIsInGuidedRefine);
   const isPublishReady = useRefinementStore(selectIsPublishReady);
+
+  // Derived: is this tenant still in onboarding?
+  const isOnboarding = currentPhase !== 'COMPLETED' && currentPhase !== 'SKIPPED';
 
   // Auto-redirect to Build Mode when reaching MARKETING phase
   useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
@@ -124,10 +134,10 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
     queueAgentMessage("I'd like to make some more edits before publishing");
   }, []);
 
-  // Reset preview mode when navigating to pages that don't support it
-  // This prevents the "all links go to page builder" bug
+  // Reset preview mode when navigating to pages that don't support it.
+  // Don't reset during onboarding — coming_soon is the canonical state.
   useEffect(() => {
-    if (!pathname || !isPreviewActive) return;
+    if (!pathname || !isPreviewActive || isOnboarding) return;
 
     // Check if current path supports preview mode
     const supportsPreview = PREVIEW_ENABLED_PATHS.some((path) => pathname.startsWith(path));
@@ -136,7 +146,7 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
       // Reset to dashboard view when navigating to non-preview pages
       showDashboard();
     }
-  }, [pathname, isPreviewActive, showDashboard]);
+  }, [pathname, isPreviewActive, isOnboarding, showDashboard]);
 
   // Initialize agent UI store with tenant ID (security isolation)
   useEffect(() => {
@@ -144,6 +154,18 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
       initialize(tenantId);
     }
   }, [tenantId, initialize]);
+
+  // Set default view based on onboarding phase.
+  // Onboarding (any phase before COMPLETED/SKIPPED) → coming_soon display.
+  // Post-onboarding → preview (your live site IS the dashboard).
+  useEffect(() => {
+    if (onboardingLoading || !tenantId) return;
+    if (isOnboarding) {
+      showComingSoon();
+    } else {
+      showPreview();
+    }
+  }, [isOnboarding, onboardingLoading, tenantId]); // eslint-disable-line react-hooks/exhaustive-deps — actions are stable
 
   // Set query client ref for external invalidation (agent tool handlers)
   useEffect(() => {
@@ -177,22 +199,27 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   // Always push content since panel is always visible (just may be collapsed)
   const shouldPushContent = true;
 
+  // Sidebar hidden during onboarding — full-bleed canvas + agent panel only
+  const showSidebar = !isOnboarding;
+
   return (
     <div className="min-h-screen bg-surface">
-      <AdminSidebar />
+      {showSidebar && <AdminSidebar />}
       <main
         className={cn(
-          'lg:pl-72 transition-[padding-right] duration-300 ease-in-out',
-          // Push content left when panel is visible (desktop only)
+          'transition-all duration-300 ease-in-out',
+          // Sidebar padding only when visible (post-publish)
+          showSidebar && 'lg:pl-72',
+          // Push content left when agent panel is visible (desktop only)
           shouldPushContent && 'lg:pr-[400px]'
         )}
       >
-        {/* Dynamic padding based on preview mode */}
+        {/* Dynamic padding based on view mode */}
         <div
           className={cn(
             'transition-all duration-300',
-            // Full-bleed when preview is active, padded otherwise
-            isPreviewActive ? 'p-0 h-[calc(100vh)]' : 'p-6 lg:p-8'
+            // Full-bleed when preview or onboarding active, padded for dashboard
+            isPreviewActive || isOnboardingView ? 'p-0 h-[calc(100vh)]' : 'p-6 lg:p-8'
           )}
         >
           <ContentArea>{children}</ContentArea>
