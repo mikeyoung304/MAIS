@@ -13,7 +13,9 @@
  */
 
 import type { PrismaClient } from '../generated/prisma/client';
+import type { SectionReadiness } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
+import { computeSectionReadiness } from '../lib/slot-machine';
 import type { SectionContentService } from './section-content.service';
 
 // =============================================================================
@@ -184,6 +186,18 @@ export interface BootstrapData {
     /** Current section ID being refined (if any) */
     currentSectionId: string | null;
   };
+  /**
+   * Per-section readiness computed from known discovery facts.
+   * Used by the agent to know which sections can be built and at what quality.
+   *
+   * @see server/src/lib/slot-machine.ts computeSectionReadiness()
+   */
+  sectionReadiness?: SectionReadiness[];
+  /**
+   * Whether the reveal animation has already been shown.
+   * Frontend uses this to skip coming-soon → reveal transition on return visits.
+   */
+  revealCompleted?: boolean;
 }
 
 // =============================================================================
@@ -329,6 +343,7 @@ export class ContextBuilderService {
         branding: true,
         onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
+        revealCompletedAt: true,
       },
     });
 
@@ -373,6 +388,14 @@ export class ContextBuilderService {
       '[ContextBuilder] Bootstrap data prepared'
     );
 
+    // Compute per-section readiness from known fact keys
+    const knownFactKeys = Object.keys(discoveryFacts).filter(
+      (k) =>
+        discoveryFacts[k as keyof KnownFacts] !== undefined &&
+        discoveryFacts[k as keyof KnownFacts] !== null
+    );
+    const sectionReadiness = computeSectionReadiness(knownFactKeys);
+
     return {
       tenantId: tenant.id,
       businessName: tenant.name || 'Your Business',
@@ -386,6 +409,8 @@ export class ContextBuilderService {
         completion,
       },
       forbiddenSlots,
+      sectionReadiness,
+      revealCompleted: tenant.revealCompletedAt !== null,
     };
   }
 

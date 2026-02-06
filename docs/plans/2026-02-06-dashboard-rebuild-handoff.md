@@ -261,26 +261,43 @@ Philosophy: Apple closed system. We've got it handled. User just chats.
 - **Working tree:** Clean (all committed)
 - **Phase 1 commit:** `a6ff14cb` — API-first preview, chat persistence, strip toolbar, hidden sidebar + defaults
 - **Phase 2 commit:** `42bbb339` — ComingSoonDisplay, RevealTransition, REVEAL_SITE action, comingSoon store slice
+- **Phase 3 commit:** `43fd1eec` — Section blueprint, slot machine readiness, prompt rewrite, revealCompletedAt, backend wiring
 - **Clean typecheck:** Both workspaces pass (`apps/web` + `server`)
-- **Next:** Phase 3 — Agent Intelligence (section-aware discovery, prompt rewrite, slot machine extension)
+- **Next:** Phase 4 — Guided Review + Publish (section status tracking, review flow, full-site publish)
 
-### What's Done (Phases 1-2)
+### What's Done (Phases 1-3)
 
-| Phase   | Tasks                                                                                   | Commit     |
-| ------- | --------------------------------------------------------------------------------------- | ---------- |
-| **1.1** | API-first preview: removed PostMessage blocking, exponential backoff                    | `a6ff14cb` |
-| **1.2** | Chat persistence: hasInitializedRef guard, ConnectionStatus type                        | `a6ff14cb` |
-| **1.3** | Strip toolbar: PreviewPanel 575→307 lines, minimal floating refresh                     | `a6ff14cb` |
-| **1.4** | Hidden sidebar + defaults: ViewState extended, exhaustive switch                        | `a6ff14cb` |
-| **2.1** | ComingSoonDisplay: dark graphite backdrop, shimmer, progress dots, fact labels          | `42bbb339` |
-| **2.2** | RevealTransition: 2.5s desktop sequence, mobile fade-only, reduced-motion, iframe guard | `42bbb339` |
-| **2.3** | REVEAL_SITE: shared contracts type, AgentPanel handler, store piping                    | `42bbb339` |
+| Phase   | Tasks                                                                                                                                                                                  | Commit     |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| **1.1** | API-first preview: removed PostMessage blocking, exponential backoff                                                                                                                   | `a6ff14cb` |
+| **1.2** | Chat persistence: hasInitializedRef guard, ConnectionStatus type                                                                                                                       | `a6ff14cb` |
+| **1.3** | Strip toolbar: PreviewPanel 575→307 lines, minimal floating refresh                                                                                                                    | `a6ff14cb` |
+| **1.4** | Hidden sidebar + defaults: ViewState extended, exhaustive switch                                                                                                                       | `a6ff14cb` |
+| **2.1** | ComingSoonDisplay: dark graphite backdrop, shimmer, progress dots, fact labels                                                                                                         | `42bbb339` |
+| **2.2** | RevealTransition: 2.5s desktop sequence, mobile fade-only, reduced-motion, iframe guard                                                                                                | `42bbb339` |
+| **2.3** | REVEAL_SITE: shared contracts type, AgentPanel handler, store piping                                                                                                                   | `42bbb339` |
+| **3.1** | Rewrite system prompt: section blueprint table, guided review protocol, financial safety, escape hatches, error handling                                                               | see log    |
+| **3.2** | Extend slot machine: `SectionReadiness` + quality levels, `computeSectionReadiness()`, derived from `SECTION_BLUEPRINT`                                                                | see log    |
+| **3.3** | Agent tools: `get_next_incomplete_section`, `mark_section_complete`, `scroll_to_website_section` — already existed                                                                     | see log    |
+| **3.4** | Backend wiring: `revealCompletedAt` field + migration, `/mark-reveal-completed` endpoint, first-draft returns `REVEAL_SITE`, bootstrap includes `sectionReadiness` + `revealCompleted` | see log    |
 
-### What's Next (Phase 3)
+### What's Next (Phase 4)
 
-Phase 3 is **backend + agent code** — it makes the agent intelligent enough to drive the UI built in Phases 1-2.
+Phase 4 is **frontend + agent flow** — the guided review experience after the reveal.
 
-1. **3.1** Rewrite tenant agent system prompt — section blueprint, guided review protocol, financial safety, error handling
-2. **3.2** Extend slot machine for section readiness — `SectionReadiness` interface with quality levels
-3. **3.3** Add agent tools — `get_next_incomplete_section`, `mark_section_complete`, `scroll_to_website_section`
-4. **Backend wiring** — `revealCompletedAt` persistence in OnboardingProgress, first-draft tool returns `dashboardAction: { type: 'REVEAL_SITE' }`
+1. **4.1** Section status tracking — rename modes (`interview`→`discovering`, `draft_build`→`building`, `guided_refine`→`reviewing`), add `publishStatus`, mode transition validation, remove dead tone variant types
+2. **4.2** Guided review flow — agent-driven preview scrolling, sage glow highlight, progress indicator in AgentPanel ("Reviewing: 3 of 7 sections"), skip/go-back escape hatches, WCAG a11y announcements
+3. **4.3** Full-site publish — verify `publishAll()` transaction safety, publish confirmation modal with confetti + share links (copy link, Twitter, Facebook), sidebar fade-in after publish, agent transitions to post-onboarding mode
+
+### Key Files Modified in Phase 3
+
+| File                                                         | Change                                                                                         |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `packages/contracts/src/schemas/section-blueprint.schema.ts` | **NEW** — Canonical blueprint (8 sections, required/optional facts, quality types)             |
+| `server/src/lib/slot-machine.ts`                             | `SectionReadiness[]`, `computeQuality()`, `computeSectionReadiness()` — derived from blueprint |
+| `server/src/agent-v2/deploy/tenant/src/prompts/system.ts`    | Full rewrite: section blueprint, guided review, financial safety, escape hatches               |
+| `server/src/agent-v2/deploy/tenant/src/tools/first-draft.ts` | Returns `REVEAL_SITE` dashboardAction, fire-and-forget `/mark-reveal-completed`                |
+| `server/prisma/schema.prisma` + migration                    | `revealCompletedAt DateTime?` on Tenant                                                        |
+| `server/src/routes/internal-agent.routes.ts`                 | New `/mark-reveal-completed` endpoint (idempotent one-shot guard)                              |
+| `server/src/services/context-builder.service.ts`             | Bootstrap includes `sectionReadiness[]` + `revealCompleted`                                    |
+| `server/src/adapters/prisma/tenant.repository.ts`            | `revealCompletedAt` in `UpdateTenantInput`                                                     |

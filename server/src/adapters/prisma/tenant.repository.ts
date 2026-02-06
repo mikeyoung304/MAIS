@@ -58,6 +58,8 @@ export interface UpdateTenantInput {
     | 'COMPLETED'
     | 'SKIPPED';
   onboardingCompletedAt?: Date | null;
+  // Reveal animation one-shot guard (Phase 3 — Dashboard Rebuild)
+  revealCompletedAt?: Date | null;
 }
 
 /**
