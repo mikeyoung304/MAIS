@@ -17,6 +17,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { SECTION_BLUEPRINT } from '@macon/contracts';
 
 // ============================================
 // TYPES
@@ -164,7 +165,7 @@ const initialState = {
   completedSections: [] as string[],
   isLoading: false,
   error: null as string | null,
-  totalSections: 7, // Default total
+  totalSections: SECTION_BLUEPRINT.length, // Derived from single source of truth
   publishStatus: 'idle' as PublishStatus,
 };
 
@@ -336,7 +337,28 @@ export const selectIsSectionComplete = (sectionId: string) => (state: Refinement
   state.completedSections.includes(sectionId);
 
 /**
- * Select completion progress
+ * Select count of completed sections (primitive — safe for Zustand ===)
+ */
+export const selectCompletedCount = (state: RefinementState) => state.completedSections.length;
+
+/**
+ * Select total sections count (primitive — safe for Zustand ===)
+ */
+export const selectTotalSections = (state: RefinementState) => state.totalSections;
+
+/**
+ * Select completion percentage (primitive — safe for Zustand ===)
+ */
+export const selectCompletionPercentage = (state: RefinementState) =>
+  state.totalSections > 0 ? (state.completedSections.length / state.totalSections) * 100 : 0;
+
+/**
+ * Select completion progress as an object.
+ *
+ * @deprecated Returns a new object on every call, causing unnecessary re-renders
+ * with Zustand's default === equality check (Pitfall #87). Use the individual
+ * primitive selectors instead: selectCompletedCount, selectTotalSections,
+ * selectCompletionPercentage.
  */
 export const selectProgress = (state: RefinementState) => ({
   completed: state.completedSections.length,
@@ -380,7 +402,7 @@ export const selectPublishStatus = (state: RefinementState) => state.publishStat
 // E2E TEST SUPPORT - Expose on window for Playwright
 // ============================================
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   (window as unknown as { useRefinementStore: typeof useRefinementStore }).useRefinementStore =
     useRefinementStore;
   (window as unknown as { refinementActions: typeof refinementActions }).refinementActions =

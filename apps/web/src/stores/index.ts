@@ -47,6 +47,10 @@ export {
   selectCurrentSectionId,
   selectCurrentSectionType,
   selectIsSectionComplete,
+  selectCompletedCount,
+  selectTotalSections,
+  selectCompletionPercentage,
+  /** @deprecated Use selectCompletedCount, selectTotalSections, selectCompletionPercentage instead (Pitfall #87) */
   selectProgress,
   selectIsLoading as selectRefinementLoading,
   selectError as selectRefinementError,

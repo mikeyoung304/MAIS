@@ -138,11 +138,7 @@ export function ContentArea({ children, className }: ContentAreaProps) {
       return (
         <div className={cn('h-full', className)} data-testid="content-area-revealing">
           <Suspense fallback={<LoadingView />}>
-            <RevealTransition
-              slug={slug}
-              draftConfig={config}
-              onComplete={() => agentUIActions.showPreview()}
-            />
+            <RevealTransition slug={slug} onComplete={() => agentUIActions.showPreview()} />
           </Suspense>
         </div>
       );

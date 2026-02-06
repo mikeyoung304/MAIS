@@ -24,6 +24,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 // API proxy URL - proxies to /v1/tenant-admin/agent/tenant/*
 const API_URL = '/api/tenant-admin/agent/tenant';
@@ -277,7 +278,7 @@ export function useTenantAgentChat({
             timestamp: new Date(),
           },
         ]);
-        console.error('Failed to fetch agent greeting:', err);
+        logger.error('Failed to fetch agent greeting', err instanceof Error ? err : undefined);
       }
     },
     [onDashboardActions]

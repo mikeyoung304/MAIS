@@ -172,9 +172,6 @@ No user approval needed for first draft — just build and announce.`,
       totalPlaceholders: sectionsToUpdate.length,
       instruction:
         'Generate personalized content for each section below using the known facts. Call update_section for each one. Explain WHY you wrote what you wrote — build with narrative. After ALL sections are updated, the preview will reveal automatically.',
-      // Trigger the reveal animation after first draft is built
-      // Frontend handles this: ComingSoonDisplay → RevealTransition → PreviewPanel
-      dashboardAction: { type: 'REVEAL_SITE' },
     };
   },
 });

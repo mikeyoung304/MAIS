@@ -20,7 +20,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePrefersReducedMotion, useIsMobile } from '@/hooks/useBreakpoint';
 import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { ComingSoonDisplay } from './ComingSoonDisplay';
-import type { PagesConfig } from '@macon/contracts';
 
 // ============================================
 // TYPES
@@ -29,8 +28,6 @@ import type { PagesConfig } from '@macon/contracts';
 interface RevealTransitionProps {
   /** Tenant slug for building iframe URL */
   slug: string | null | undefined;
-  /** Draft config to pass to iframe (not used directly — iframe loads via SSR) */
-  draftConfig: PagesConfig;
   /** Called when the reveal animation completes → agentUIActions.showPreview() */
   onComplete: () => void;
 }

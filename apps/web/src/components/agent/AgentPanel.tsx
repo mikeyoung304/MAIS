@@ -20,6 +20,7 @@ import { ReviewProgress } from './ReviewProgress';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import { queryKeys } from '@/lib/query-client';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
+import { SECTION_BLUEPRINT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 
@@ -271,14 +272,32 @@ export function AgentPanel({ className }: AgentPanelProps) {
             refinementActions.setMode('publish_ready');
             break;
 
-          case 'HIGHLIGHT_NEXT_SECTION':
-            // Highlight and scroll to the next section to review
-            if (action.sectionId) {
-              refinementActions.setCurrentSection(action.sectionId, action.sectionType);
-              agentUIActions.highlightSection(action.sectionId);
+          case 'HIGHLIGHT_NEXT_SECTION': {
+            // Highlight and scroll to the next section to review.
+            // Fix #5203: When sectionId is not provided by the agent tool,
+            // compute the next incomplete section from SECTION_BLUEPRINT order.
+            let nextId = action.sectionId;
+            let nextType = action.sectionType;
+
+            if (!nextId) {
+              const { completedSections } = useRefinementStore.getState();
+              const nextEntry = SECTION_BLUEPRINT.find(
+                (entry) => !completedSections.includes(entry.sectionType)
+              );
+              if (nextEntry) {
+                nextId = nextEntry.sectionType;
+                nextType = nextEntry.sectionType;
+              }
+            }
+
+            if (nextId) {
+              refinementActions.setCurrentSection(nextId, nextType);
+              agentUIActions.highlightSection(nextId);
               agentUIActions.showPreview('home');
             }
+            // If all sections are complete, no-op (publish_ready handles that)
             break;
+          }
 
           case 'REVEAL_SITE':
             // One-shot reveal animation — mobile: dismiss drawer first, blur keyboard
@@ -313,7 +332,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
         }
       }
     },
-    [queryClient]
+    [queryClient, isMobile]
   );
 
   // Handle tenant-agent tool completion (triggers preview refresh for storefront changes)

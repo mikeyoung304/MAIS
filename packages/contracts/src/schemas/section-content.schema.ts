@@ -376,6 +376,9 @@ export const SectionContentResponseSchema = z.object({
  * - SCROLL_TO_SECTION: Scroll the preview to a specific section
  * - SHOW_PREVIEW: Show the storefront preview
  * - REFRESH: Refresh the current view
+ * - REFRESH_PREVIEW: Alias for REFRESH (used by legacy UI action path)
+ * - REVEAL_SITE: Trigger the first-draft reveal animation (onboarding)
+ * - PUBLISH_SITE: Full-site publish completed (draft.ts publish_draft tool)
  * - SHOW_VARIANT_WIDGET: Show the tone variant selection widget (Guided Refinement)
  * - SHOW_PUBLISH_READY: Show the publish-ready state (Guided Refinement)
  * - HIGHLIGHT_NEXT_SECTION: Highlight the next section to refine (Guided Refinement)
@@ -386,8 +389,11 @@ export const DashboardActionSchema = z.object({
     'SCROLL_TO_SECTION',
     'SHOW_PREVIEW',
     'REFRESH',
+    'REFRESH_PREVIEW',
     // Onboarding reveal (first draft complete)
     'REVEAL_SITE',
+    // Full-site publish completed
+    'PUBLISH_SITE',
     // Guided Refinement actions (Phase 5.1)
     'SHOW_VARIANT_WIDGET',
     'SHOW_PUBLISH_READY',
@@ -395,6 +401,16 @@ export const DashboardActionSchema = z.object({
   ]),
   sectionId: z.string().optional(),
   section: z.string().optional(),
+  // SCROLL_TO_SECTION: block type to scroll to (legacy format)
+  blockType: z.string().optional(),
+  // SCROLL_TO_SECTION: whether to highlight the section
+  highlight: z.boolean().optional(),
+  // SHOW_PREVIEW: whether to show full screen
+  fullScreen: z.boolean().optional(),
+  // Guided Refinement: section type for display
+  sectionType: z.string().optional(),
+  // NAVIGATE: sub-section target (e.g., 'appointment-types')
+  subSection: z.string().optional(),
   // Guided Refinement: variant options for SHOW_VARIANT_WIDGET
   variants: z.array(z.enum(['professional', 'premium', 'friendly'])).optional(),
 });

@@ -136,12 +136,20 @@ export interface PublishConfirmationProps {
 export function PublishConfirmation({ slug, onClose }: PublishConfirmationProps) {
   const [copied, setCopied] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const siteUrl = typeof window !== 'undefined' ? `${window.location.origin}/t/${slug}` : '';
 
   // Focus close button on mount (WCAG 2.4.3)
   useEffect(() => {
     closeButtonRef.current?.focus();
+  }, []);
+
+  // Clean up copy timer on unmount to prevent state updates on unmounted component
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
   }, []);
 
   const handleCopy = useCallback(async () => {
@@ -157,7 +165,8 @@ export function PublishConfirmation({ slug, onClose }: PublishConfirmationProps)
       document.body.removeChild(input);
     }
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
   }, [siteUrl]);
 
   const handleShare = useCallback(async () => {

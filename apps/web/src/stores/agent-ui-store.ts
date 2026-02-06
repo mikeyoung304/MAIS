@@ -266,12 +266,6 @@ export interface AgentUIState {
    */
   addDiscoveredFact: (key: string, slotMetrics: SlotMetrics) => void;
 
-  /**
-   * Hydrate coming-soon state from onboarding API (page refresh recovery).
-   * Called with knownFactKeys[] from get_known_facts or onboarding state.
-   */
-  hydrateComingSoon: (discoveredKeys: string[], slotMetrics: SlotMetrics) => void;
-
   // ========== Event Sourcing ==========
 
   /**
@@ -566,13 +560,6 @@ export const useAgentUIStore = create<AgentUIState>()(
             state.comingSoon.slotMetrics = slotMetrics;
           }),
 
-        // Hydrate from API (page refresh recovery)
-        hydrateComingSoon: (discoveredKeys, slotMetrics) =>
-          set((state) => {
-            state.comingSoon.discoveredKeys = discoveredKeys;
-            state.comingSoon.slotMetrics = slotMetrics;
-          }),
-
         // Get action log
         getActionLog: () => get().actionLog,
 
@@ -668,9 +655,6 @@ export const agentUIActions = {
   addDiscoveredFact: (key: string, slotMetrics: SlotMetrics) =>
     useAgentUIStore.getState().addDiscoveredFact(key, slotMetrics),
 
-  hydrateComingSoon: (discoveredKeys: string[], slotMetrics: SlotMetrics) =>
-    useAgentUIStore.getState().hydrateComingSoon(discoveredKeys, slotMetrics),
-
   getActionLog: () => useAgentUIStore.getState().getActionLog(),
 
   undoLastAction: () => useAgentUIStore.getState().undoLastAction(),
@@ -759,7 +743,7 @@ export const selectShowConflictDialog = (state: AgentUIState) => state.showConfl
  *
  * @see e2e/tests/agent-ui-control.spec.ts
  */
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   (window as unknown as { useAgentUIStore: typeof useAgentUIStore }).useAgentUIStore =
     useAgentUIStore;
   (window as unknown as { agentUIActions: typeof agentUIActions }).agentUIActions = agentUIActions;
