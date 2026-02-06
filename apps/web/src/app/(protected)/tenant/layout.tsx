@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -8,7 +8,8 @@ import { AdminSidebar } from '@/components/layouts/AdminSidebar';
 import { ImpersonationBanner } from '@/components/layouts/ImpersonationBanner';
 import { AgentPanel } from '@/components/agent/AgentPanel';
 import { ContentArea } from '@/components/dashboard/ContentArea';
-import { SectionWidget, PublishReadyWidget } from '@/components/build-mode/SectionWidget';
+import { PublishReadyWidget } from '@/components/build-mode/SectionWidget';
+import { PublishConfirmation } from '@/components/preview/PublishConfirmation';
 import {
   useAgentUIStore,
   selectIsPreviewActive,
@@ -16,9 +17,9 @@ import {
 } from '@/stores/agent-ui-store';
 import {
   useRefinementStore,
-  selectIsInGuidedRefine,
+  selectIsReviewing,
   selectIsPublishReady,
-  type ToneVariant,
+  selectPublishStatus,
 } from '@/stores/refinement-store';
 import { queueAgentMessage } from '@/lib/tenant-agent-dispatch';
 import { setQueryClientRef } from '@/hooks/useDraftConfig';
@@ -57,7 +58,7 @@ const queryClient = new QueryClient({
  * Agent Panel state is managed internally by AgentPanel component.
  */
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
-  const { tenantId } = useAuth();
+  const { tenantId, slug: tenantSlug } = useAuth();
   const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
   const localQueryClient = useQueryClient();
   const pathname = usePathname();
@@ -70,55 +71,27 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const showComingSoon = useAgentUIStore((state) => state.showComingSoon);
   const showPreview = useAgentUIStore((state) => state.showPreview);
 
-  // Refinement store - guided refinement mode and publish ready detection
-  const isInGuidedRefine = useRefinementStore(selectIsInGuidedRefine);
+  // Refinement store - review mode and publish ready detection
+  const isReviewing = useRefinementStore(selectIsReviewing);
   const isPublishReady = useRefinementStore(selectIsPublishReady);
+  const publishStatus = useRefinementStore(selectPublishStatus);
 
   // Derived: is this tenant still in onboarding?
   const isOnboarding = currentPhase !== 'COMPLETED' && currentPhase !== 'SKIPPED';
 
+  // Publish celebration modal — shown once when publishStatus transitions to 'published'
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  useEffect(() => {
+    if (publishStatus === 'published') {
+      setShowPublishModal(true);
+    }
+  }, [publishStatus]);
+
   // Auto-redirect to Build Mode when reaching MARKETING phase
   useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
 
-  // ========== SectionWidget Callbacks ==========
-  // These connect widget actions to agent chat messages
-
-  /**
-   * Regenerate variants for the current section
-   */
-  const handleWidgetRefresh = useCallback(() => {
-    queueAgentMessage('Please regenerate tone options for the current section');
-  }, []);
-
-  /**
-   * User selected a variant - notify the agent
-   */
-  const handleSelectVariant = useCallback((_sectionId: string, variant: ToneVariant) => {
-    // The store already tracks selection; also notify the agent
-    queueAgentMessage(`I prefer the ${variant} tone for this section`);
-  }, []);
-
-  /**
-   * User approved a variant and wants to continue
-   */
-  const handleMarkComplete = useCallback((_sectionId: string) => {
-    queueAgentMessage('This looks good - please apply my selection and move to the next section');
-  }, []);
-
-  /**
-   * User wants to move to the next section
-   */
-  const handleNext = useCallback(() => {
-    queueAgentMessage('Show me the next section to refine');
-  }, []);
-
-  /**
-   * User clicked close on the widget
-   */
-  const handleWidgetClose = useCallback(() => {
-    // Widget hides itself via store; optionally notify agent
-    queueAgentMessage("I'll continue with the chat for now");
-  }, []);
+  // ========== Widget Callbacks ==========
+  // Connect publish-ready widget to agent chat
 
   /**
    * User wants to publish the site
@@ -132,6 +105,13 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
    */
   const handleEdit = useCallback(() => {
     queueAgentMessage("I'd like to make some more edits before publishing");
+  }, []);
+
+  /**
+   * User clicked close on the widget
+   */
+  const handleWidgetClose = useCallback(() => {
+    queueAgentMessage("I'll continue with the chat for now");
   }, []);
 
   // Reset preview mode when navigating to pages that don't support it.
@@ -199,8 +179,9 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   // Always push content since panel is always visible (just may be collapsed)
   const shouldPushContent = true;
 
-  // Sidebar hidden during onboarding — full-bleed canvas + agent panel only
-  const showSidebar = !isOnboarding;
+  // Sidebar hidden during onboarding — full-bleed canvas + agent panel only.
+  // After publish, sidebar fades in (smooth transition via CSS).
+  const showSidebar = !isOnboarding || publishStatus === 'published';
 
   return (
     <div className="min-h-screen bg-surface">
@@ -218,8 +199,10 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
         <div
           className={cn(
             'transition-all duration-300',
-            // Full-bleed when preview or onboarding active, padded for dashboard
-            isPreviewActive || isOnboardingView ? 'p-0 h-[calc(100vh)]' : 'p-6 lg:p-8'
+            // Full-bleed when preview, onboarding, or reviewing active; padded for dashboard
+            isPreviewActive || isOnboardingView || isReviewing
+              ? 'p-0 h-[calc(100vh)]'
+              : 'p-6 lg:p-8'
           )}
         >
           <ContentArea>{children}</ContentArea>
@@ -228,23 +211,18 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Agent Panel - always visible side panel */}
       <AgentPanel />
 
-      {/* Guided Refinement Widgets */}
-      {isInGuidedRefine && !isPublishReady && (
-        <SectionWidget
-          onRefresh={handleWidgetRefresh}
-          onSelectVariant={handleSelectVariant}
-          onMarkComplete={handleMarkComplete}
-          onNext={handleNext}
-          onClose={handleWidgetClose}
-        />
-      )}
-
-      {isPublishReady && (
+      {/* Publish Ready Widget — shown when all sections reviewed */}
+      {isPublishReady && publishStatus === 'idle' && (
         <PublishReadyWidget
           onPublish={handlePublish}
           onEdit={handleEdit}
           onClose={handleWidgetClose}
         />
+      )}
+
+      {/* Publish Celebration Modal — shown once after successful publish */}
+      {showPublishModal && tenantSlug && (
+        <PublishConfirmation slug={tenantSlug} onClose={() => setShowPublishModal(false)} />
       )}
     </div>
   );

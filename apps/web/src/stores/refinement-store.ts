@@ -1,17 +1,16 @@
 /**
- * Refinement Store - Zustand store for Guided Refinement UI state
+ * Refinement Store - Zustand store for onboarding + guided review UI state
  *
- * This store manages the section-by-section editing experience, tracking:
- * - Current refinement mode
- * - Variant options for each section
- * - Completion progress
- * - User tone preferences
+ * This store manages the section-by-section review experience, tracking:
+ * - Current onboarding mode (discovering → building → reviewing → publish_ready)
+ * - Section completion progress
+ * - Publish status
  *
  * The store syncs with ADK session state via dashboard actions from the agent.
- * When the agent calls tools like generate_section_variants, it returns
- * dashboardAction objects that trigger updates to this store.
+ * Server-side uses different mode names (interview/draft_build/guided_refine)
+ * which are mapped in hydrate().
  *
- * @see docs/plans/2026-02-04-feat-guided-refinement-implementation-plan.md
+ * @see docs/plans/2026-02-06-feat-dashboard-onboarding-rebuild-plan.md
  * @see server/src/agent-v2/deploy/tenant/src/tools/refinement.ts
  */
 
@@ -24,116 +23,96 @@ import { immer } from 'zustand/middleware/immer';
 // ============================================
 
 /**
- * Refinement mode - matches ADK session state machine
+ * Onboarding/refinement mode — frontend-facing names.
+ *
+ * Server-side ADK session uses different names:
+ *   interview → discovering, draft_build → building, guided_refine → reviewing
+ * Mapping happens in hydrate() via SERVER_TO_CLIENT_MODE.
  */
 export type RefinementMode =
-  | 'interview' // Collecting discovery facts
-  | 'draft_build' // Autonomously creating first draft
-  | 'guided_refine' // Section-by-section editing with variants
+  | 'discovering' // Collecting discovery facts (server: 'interview')
+  | 'building' // Autonomously creating first draft (server: 'draft_build')
+  | 'reviewing' // Section-by-section guided review (server: 'guided_refine')
   | 'publish_ready'; // All sections approved, awaiting publish
 
 /**
- * Tone variant options
+ * Valid mode transitions — prevents impossible state jumps.
+ * In dev mode, invalid transitions log a warning.
  */
-export type ToneVariant = 'professional' | 'premium' | 'friendly';
+const VALID_TRANSITIONS: Record<RefinementMode, RefinementMode[]> = {
+  discovering: ['building'],
+  building: ['reviewing'],
+  reviewing: ['publish_ready'],
+  publish_ready: ['reviewing'], // User wants to re-review
+};
 
 /**
- * Variant content structure
+ * Map server-side ADK mode names → frontend mode names.
+ * The ADK session state uses the old naming convention.
  */
-export interface VariantContent {
-  headline?: string;
-  subheadline?: string;
-  body?: string;
-  content?: string;
-  ctaText?: string;
-}
+const SERVER_TO_CLIENT_MODE: Record<string, RefinementMode> = {
+  interview: 'discovering',
+  draft_build: 'building',
+  guided_refine: 'reviewing',
+  publish_ready: 'publish_ready',
+  // Also accept the new names directly (frontend-originated)
+  discovering: 'discovering',
+  building: 'building',
+  reviewing: 'reviewing',
+};
 
 /**
- * Set of variants for a section
+ * Publish status — tracks the publish lifecycle.
  */
-export interface SectionVariants {
-  professional: VariantContent;
-  premium: VariantContent;
-  friendly: VariantContent;
-  /** Currently selected variant (null if none selected) */
-  selectedVariant: ToneVariant | null;
-  /** Timestamp when variants were generated */
-  generatedAt: string;
-  /** AI's recommended variant */
-  recommendation?: ToneVariant;
-  /** Rationale for the recommendation */
-  rationale?: string;
-}
+export type PublishStatus = 'idle' | 'publishing' | 'published';
 
 /**
  * Refinement store state and actions
  */
 export interface RefinementState {
-  // Current mode in the guided refinement flow
+  // Current mode in the onboarding/review flow
   mode: RefinementMode | null;
 
-  // Section currently being refined
+  // Section currently being reviewed
   currentSectionId: string | null;
 
   // Type of the current section (for display)
   currentSectionType: string | null;
 
-  // Sections that have been completed
+  // Sections that have been completed/approved
   completedSections: string[];
 
-  // Variants for each section (keyed by sectionId)
-  sectionVariants: Record<string, SectionVariants>;
-
-  // Loading state for variant generation
+  // Loading state
   isLoading: boolean;
 
   // Error message (if any)
   error: string | null;
 
-  // Total sections to refine (from page structure)
+  // Total sections to review (from section blueprint)
   totalSections: number;
 
-  // Widget visibility
-  isWidgetVisible: boolean;
+  // Publish lifecycle status
+  publishStatus: PublishStatus;
 
   // ========== Actions ==========
 
   /**
-   * Set the current refinement mode
+   * Set the current refinement mode (with transition validation in dev)
    */
   setMode: (mode: RefinementMode | null) => void;
 
   /**
-   * Set the current section being refined
+   * Set the current section being reviewed
    */
   setCurrentSection: (sectionId: string | null, sectionType?: string | null) => void;
 
   /**
-   * Store generated variants for a section
-   */
-  setVariants: (
-    sectionId: string,
-    variants: {
-      professional: VariantContent;
-      premium: VariantContent;
-      friendly: VariantContent;
-    },
-    recommendation?: ToneVariant,
-    rationale?: string
-  ) => void;
-
-  /**
-   * Select a variant for the current section
-   */
-  selectVariant: (sectionId: string, variant: ToneVariant) => void;
-
-  /**
-   * Mark a section as complete
+   * Mark a section as complete/approved
    */
   markComplete: (sectionId: string) => void;
 
   /**
-   * Unmark a section as complete (for editing)
+   * Unmark a section as complete (for re-review)
    */
   unmarkComplete: (sectionId: string) => void;
 
@@ -153,9 +132,9 @@ export interface RefinementState {
   setTotalSections: (count: number) => void;
 
   /**
-   * Show/hide the variant widget
+   * Set publish status
    */
-  setWidgetVisible: (visible: boolean) => void;
+  setPublishStatus: (status: PublishStatus) => void;
 
   /**
    * Reset store to initial state
@@ -163,7 +142,8 @@ export interface RefinementState {
   reset: () => void;
 
   /**
-   * Hydrate store from agent bootstrap data
+   * Hydrate store from agent bootstrap data.
+   * Maps server-side mode names to frontend names via SERVER_TO_CLIENT_MODE.
    */
   hydrate: (data: {
     mode?: string;
@@ -182,11 +162,10 @@ const initialState = {
   currentSectionId: null as string | null,
   currentSectionType: null as string | null,
   completedSections: [] as string[],
-  sectionVariants: {} as Record<string, SectionVariants>,
   isLoading: false,
   error: null as string | null,
   totalSections: 7, // Default total
-  isWidgetVisible: false,
+  publishStatus: 'idle' as PublishStatus,
 };
 
 // ============================================
@@ -201,47 +180,22 @@ export const useRefinementStore = create<RefinementState>()(
 
         setMode: (mode) =>
           set((state) => {
+            // Validate transition in dev mode
+            if (process.env.NODE_ENV === 'development' && state.mode && mode) {
+              const valid = VALID_TRANSITIONS[state.mode];
+              if (valid && !valid.includes(mode)) {
+                console.warn(
+                  `[refinement-store] Invalid mode transition: ${state.mode} → ${mode}. Valid: ${valid.join(', ')}`
+                );
+              }
+            }
             state.mode = mode;
-            // Auto-show widget when entering guided_refine
-            if (mode === 'guided_refine') {
-              state.isWidgetVisible = true;
-            }
-            // Hide widget when leaving guided_refine
-            if (mode === 'publish_ready' || mode === 'interview' || mode === null) {
-              state.isWidgetVisible = false;
-            }
           }),
 
         setCurrentSection: (sectionId, sectionType = null) =>
           set((state) => {
             state.currentSectionId = sectionId;
             state.currentSectionType = sectionType;
-            // Show widget when a section is selected
-            if (sectionId && state.mode === 'guided_refine') {
-              state.isWidgetVisible = true;
-            }
-          }),
-
-        setVariants: (sectionId, variants, recommendation, rationale) =>
-          set((state) => {
-            state.sectionVariants[sectionId] = {
-              professional: variants.professional,
-              premium: variants.premium,
-              friendly: variants.friendly,
-              selectedVariant: null,
-              generatedAt: new Date().toISOString(),
-              recommendation,
-              rationale,
-            };
-            state.isLoading = false;
-            state.isWidgetVisible = true;
-          }),
-
-        selectVariant: (sectionId, variant) =>
-          set((state) => {
-            if (state.sectionVariants[sectionId]) {
-              state.sectionVariants[sectionId].selectedVariant = variant;
-            }
           }),
 
         markComplete: (sectionId) =>
@@ -249,23 +203,18 @@ export const useRefinementStore = create<RefinementState>()(
             if (!state.completedSections.includes(sectionId)) {
               state.completedSections.push(sectionId);
             }
-            // Check if all complete
+            // Auto-advance to publish_ready when all sections reviewed
             if (state.completedSections.length >= state.totalSections) {
               state.mode = 'publish_ready';
-              state.isWidgetVisible = false;
             }
           }),
 
-        /**
-         * @reserved For future "undo section approval" feature
-         */
         unmarkComplete: (sectionId) =>
           set((state) => {
             state.completedSections = state.completedSections.filter((id) => id !== sectionId);
-            // Return to guided_refine mode if we were in publish_ready
+            // Return to reviewing mode if we were in publish_ready
             if (state.mode === 'publish_ready') {
-              state.mode = 'guided_refine';
-              state.isWidgetVisible = true;
+              state.mode = 'reviewing';
             }
           }),
 
@@ -285,9 +234,9 @@ export const useRefinementStore = create<RefinementState>()(
             state.totalSections = count;
           }),
 
-        setWidgetVisible: (visible) =>
+        setPublishStatus: (status) =>
           set((state) => {
-            state.isWidgetVisible = visible;
+            state.publishStatus = status;
           }),
 
         reset: () => set(initialState),
@@ -295,18 +244,19 @@ export const useRefinementStore = create<RefinementState>()(
         hydrate: (data) =>
           set((state) => {
             if (data.mode) {
-              state.mode = data.mode as RefinementMode;
+              // Map server-side mode names → frontend names
+              const mapped = SERVER_TO_CLIENT_MODE[data.mode];
+              if (mapped) {
+                state.mode = mapped;
+              } else if (process.env.NODE_ENV === 'development') {
+                console.warn(`[refinement-store] Unknown server mode: ${data.mode}`);
+              }
             }
             if (data.totalSections !== undefined) {
               state.totalSections = data.totalSections;
             }
-            // Note: completedSections count is accepted but IDs come from subsequent tool calls
             if (data.currentSectionId !== undefined) {
               state.currentSectionId = data.currentSectionId;
-            }
-            // Show widget if in guided_refine mode
-            if (data.mode === 'guided_refine') {
-              state.isWidgetVisible = true;
             }
           }),
       }))
@@ -327,8 +277,8 @@ export const useRefinementStore = create<RefinementState>()(
  *
  * @example
  * // In AgentPanel handleDashboardActions:
- * if (action.type === 'SHOW_VARIANT_WIDGET') {
- *   refinementActions.setVariants(action.sectionId, action.variants);
+ * if (action.type === 'HIGHLIGHT_NEXT_SECTION') {
+ *   refinementActions.setCurrentSection(action.sectionId, action.sectionType);
  * }
  */
 export const refinementActions = {
@@ -336,20 +286,6 @@ export const refinementActions = {
 
   setCurrentSection: (sectionId: string | null, sectionType?: string | null) =>
     useRefinementStore.getState().setCurrentSection(sectionId, sectionType),
-
-  setVariants: (
-    sectionId: string,
-    variants: {
-      professional: VariantContent;
-      premium: VariantContent;
-      friendly: VariantContent;
-    },
-    recommendation?: ToneVariant,
-    rationale?: string
-  ) => useRefinementStore.getState().setVariants(sectionId, variants, recommendation, rationale),
-
-  selectVariant: (sectionId: string, variant: ToneVariant) =>
-    useRefinementStore.getState().selectVariant(sectionId, variant),
 
   markComplete: (sectionId: string) => useRefinementStore.getState().markComplete(sectionId),
 
@@ -361,7 +297,8 @@ export const refinementActions = {
 
   setTotalSections: (count: number) => useRefinementStore.getState().setTotalSections(count),
 
-  setWidgetVisible: (visible: boolean) => useRefinementStore.getState().setWidgetVisible(visible),
+  setPublishStatus: (status: PublishStatus) =>
+    useRefinementStore.getState().setPublishStatus(status),
 
   reset: () => useRefinementStore.getState().reset(),
 
@@ -393,18 +330,6 @@ export const selectCurrentSectionId = (state: RefinementState) => state.currentS
 export const selectCurrentSectionType = (state: RefinementState) => state.currentSectionType;
 
 /**
- * Select variants for a specific section
- */
-export const selectSectionVariants = (sectionId: string) => (state: RefinementState) =>
-  state.sectionVariants[sectionId] || null;
-
-/**
- * Select variants for the current section
- */
-export const selectCurrentVariants = (state: RefinementState) =>
-  state.currentSectionId ? state.sectionVariants[state.currentSectionId] || null : null;
-
-/**
  * Select whether a section is complete
  */
 export const selectIsSectionComplete = (sectionId: string) => (state: RefinementState) =>
@@ -431,25 +356,25 @@ export const selectIsLoading = (state: RefinementState) => state.isLoading;
 export const selectError = (state: RefinementState) => state.error;
 
 /**
- * Select widget visibility
- */
-export const selectIsWidgetVisible = (state: RefinementState) => state.isWidgetVisible;
-
-/**
  * Select whether all sections are complete
  */
 export const selectAllComplete = (state: RefinementState) =>
   state.completedSections.length >= state.totalSections;
 
 /**
- * Select whether in guided refine mode
+ * Select whether in reviewing mode (agent-driven guided review)
  */
-export const selectIsInGuidedRefine = (state: RefinementState) => state.mode === 'guided_refine';
+export const selectIsReviewing = (state: RefinementState) => state.mode === 'reviewing';
 
 /**
  * Select whether ready to publish
  */
 export const selectIsPublishReady = (state: RefinementState) => state.mode === 'publish_ready';
+
+/**
+ * Select publish status
+ */
+export const selectPublishStatus = (state: RefinementState) => state.publishStatus;
 
 // ============================================
 // E2E TEST SUPPORT - Expose on window for Playwright

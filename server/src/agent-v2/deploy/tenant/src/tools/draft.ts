@@ -176,6 +176,7 @@ This affects the LIVE site that visitors see.`,
       published: true,
       hasDraft: false,
       message: 'Published! Your changes are now live.',
+      dashboardAction: { type: 'PUBLISH_SITE' },
       ...(result.data as Record<string, unknown>),
     };
   },

@@ -261,9 +261,10 @@ Philosophy: Apple closed system. We've got it handled. User just chats.
 - **Working tree:** Clean (all committed)
 - **Phase 1 commit:** `a6ff14cb` — API-first preview, chat persistence, strip toolbar, hidden sidebar + defaults
 - **Phase 2 commit:** `42bbb339` — ComingSoonDisplay, RevealTransition, REVEAL_SITE action, comingSoon store slice
-- **Phase 3 commit:** `43fd1eec` — Section blueprint, slot machine readiness, prompt rewrite, revealCompletedAt, backend wiring
+- **Phase 3 commit:** `0a1251e5` — Section blueprint, slot machine readiness, prompt rewrite, revealCompletedAt, backend wiring
+- **Phase 4 commit:** `7b432384` — Guided review + publish (refinement store, ReviewProgress, PublishConfirmation, PUBLISH_SITE action)
 - **Clean typecheck:** Both workspaces pass (`apps/web` + `server`)
-- **Next:** Phase 4 — Guided Review + Publish (section status tracking, review flow, full-site publish)
+- **Status:** All 4 phases complete. Ready for review (`/workflows:review`) and merge to `main`.
 
 ### What's Done (Phases 1-3)
 
@@ -280,14 +281,42 @@ Philosophy: Apple closed system. We've got it handled. User just chats.
 | **3.2** | Extend slot machine: `SectionReadiness` + quality levels, `computeSectionReadiness()`, derived from `SECTION_BLUEPRINT`                                                                | see log    |
 | **3.3** | Agent tools: `get_next_incomplete_section`, `mark_section_complete`, `scroll_to_website_section` — already existed                                                                     | see log    |
 | **3.4** | Backend wiring: `revealCompletedAt` field + migration, `/mark-reveal-completed` endpoint, first-draft returns `REVEAL_SITE`, bootstrap includes `sectionReadiness` + `revealCompleted` | see log    |
+| **4.1** | Refactored refinement store: renamed modes, `PublishStatus`, `VALID_TRANSITIONS`, `SERVER_TO_CLIENT_MODE`, dead code purge (net -390 lines)                                            | see below  |
+| **4.2** | `ReviewProgress.tsx`: sage progress bar, WCAG announcements, `mark_section_complete` wiring, auto-advance to `publish_ready`                                                           | see below  |
+| **4.3** | `PublishConfirmation.tsx`: canvas confetti, share modal, `PUBLISH_SITE` action, sidebar fade-in, `publish_draft` returns dashboardAction                                               | see below  |
+| **4.4** | Clean typecheck: both workspaces compile clean                                                                                                                                         | see below  |
 
-### What's Next (Phase 4)
+### What's Done (Phase 4) — Guided Review + Publish
 
-Phase 4 is **frontend + agent flow** — the guided review experience after the reveal.
+| Phase   | Tasks                                                                                                                                                                                                                                         | Status |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **4.1** | Refactored refinement store: renamed modes (`interview`→`discovering`, `draft_build`→`building`, `guided_refine`→`reviewing`), added `PublishStatus`, `VALID_TRANSITIONS`, `SERVER_TO_CLIENT_MODE`, removed dead tone variant types/selectors | Done   |
+| **4.2** | Guided review: `ReviewProgress.tsx` (sage progress bar + WCAG announcements), wired `mark_section_complete` tool result → refinement store, auto-advance to `publish_ready`                                                                   | Done   |
+| **4.3** | Full-site publish: `PublishConfirmation.tsx` (canvas confetti + share modal), `PUBLISH_SITE` dashboardAction, sidebar fade-in after publish, `publish_draft` tool returns dashboardAction                                                     | Done   |
+| **4.4** | Clean typecheck: both `apps/web` and `server` workspaces compile clean                                                                                                                                                                        | Done   |
 
-1. **4.1** Section status tracking — rename modes (`interview`→`discovering`, `draft_build`→`building`, `guided_refine`→`reviewing`), add `publishStatus`, mode transition validation, remove dead tone variant types
-2. **4.2** Guided review flow — agent-driven preview scrolling, sage glow highlight, progress indicator in AgentPanel ("Reviewing: 3 of 7 sections"), skip/go-back escape hatches, WCAG a11y announcements
-3. **4.3** Full-site publish — verify `publishAll()` transaction safety, publish confirmation modal with confetti + share links (copy link, Twitter, Facebook), sidebar fade-in after publish, agent transitions to post-onboarding mode
+### Key Files Modified/Created in Phase 4
+
+| File                                                      | Change                                                                                        |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `apps/web/src/stores/refinement-store.ts`                 | Renamed modes, `PublishStatus`, `VALID_TRANSITIONS`, `SERVER_TO_CLIENT_MODE`, dead code purge |
+| `apps/web/src/stores/index.ts`                            | Updated barrel exports (new selectors, removed dead types)                                    |
+| `apps/web/src/components/agent/ReviewProgress.tsx`        | **NEW** — Sage progress bar + WCAG `aria-live` announcements                                  |
+| `apps/web/src/components/preview/PublishConfirmation.tsx` | **NEW** — Canvas confetti (2s) + Copy Link + Web Share API + View Your Site CTA               |
+| `apps/web/src/components/build-mode/SectionWidget.tsx`    | Stripped dead `SectionWidget`, kept only `PublishReadyWidget`                                 |
+| `apps/web/src/components/agent/AgentPanel.tsx`            | `PUBLISH_SITE` handler, `ReviewProgress` rendering, `mark_section_complete` wiring            |
+| `apps/web/src/hooks/useTenantAgentChat.ts`                | Added `PUBLISH_SITE` to `DashboardAction` type                                                |
+| `apps/web/src/app/(protected)/tenant/layout.tsx`          | `PublishConfirmation` rendering, sidebar-after-publish, slug destructuring                    |
+| `server/src/agent-v2/deploy/tenant/src/tools/draft.ts`    | `publish_draft` returns `dashboardAction: { type: 'PUBLISH_SITE' }`                           |
+
+### What's Next
+
+All 4 phases are implementation-complete. Next steps:
+
+1. **Review** — Run `/workflows:review` for multi-agent code review
+2. **Test** — Manual E2E walkthrough of full onboarding flow (discovery → reveal → guided review → publish)
+3. **Merge** — PR to `main` with all 4 phases
+4. **Compound** — Run `/workflows:compound` to document patterns learned
 
 ### Key Files Modified in Phase 3
 

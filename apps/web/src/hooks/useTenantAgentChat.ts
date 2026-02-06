@@ -77,10 +77,12 @@ export interface DashboardAction {
     | 'REFRESH_PREVIEW'
     // Reveal animation (onboarding first-draft complete)
     | 'REVEAL_SITE'
-    // Guided Refinement actions
+    // Guided Review actions
     | 'SHOW_VARIANT_WIDGET'
     | 'SHOW_PUBLISH_READY'
-    | 'HIGHLIGHT_NEXT_SECTION';
+    | 'HIGHLIGHT_NEXT_SECTION'
+    // Full-site publish completed
+    | 'PUBLISH_SITE';
   section?: string;
   blockType?: string;
   sectionId?: string; // Used by SCROLL_TO_SECTION and Guided Refinement
