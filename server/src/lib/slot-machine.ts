@@ -143,9 +143,6 @@ const QUESTION_PRIORITY: string[] = [
 const FIRST_DRAFT_REQUIRED = ['businessType', 'location'];
 const FIRST_DRAFT_OPTIONAL = ['servicesOffered', 'uniqueValue', 'dreamClient'];
 
-/** Research trigger: these facts must be known */
-const RESEARCH_REQUIRED = ['businessType', 'location'];
-
 // ============================================================================
 // Phase Computation (also used by internal-agent.routes.ts)
 // ============================================================================

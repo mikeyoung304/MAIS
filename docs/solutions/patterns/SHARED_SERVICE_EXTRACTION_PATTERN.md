@@ -22,11 +22,19 @@ export class CloudRunAuthService {
   private tokenCache = new Map<string, CachedToken>();
   private serviceAccountCredentials: ServiceAccountCreds | null = null;
 
-  constructor() { /* Zod safeParse credentials from env */ }
+  constructor() {
+    /* Zod safeParse credentials from env */
+  }
 
-  async getIdentityToken(audience: string): Promise<string | null> { /* cached */ }
-  clearCacheFor(audience: string): void { /* for 401/403 retry */ }
-  private async fetchIdentityToken(audience: string): Promise<string | null> { /* 3-tier */ }
+  async getIdentityToken(audience: string): Promise<string | null> {
+    /* cached */
+  }
+  clearCacheFor(audience: string): void {
+    /* for 401/403 retry */
+  }
+  private async fetchIdentityToken(audience: string): Promise<string | null> {
+    /* 3-tier */
+  }
 }
 
 export const cloudRunAuth = new CloudRunAuthService();
@@ -34,15 +42,15 @@ export const cloudRunAuth = new CloudRunAuthService();
 
 ### Key Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| Module-level singleton | No DI container needed; stateless service benefits from reuse |
-| Per-audience caching | Different Cloud Run services need different tokens |
-| 55-minute TTL | Under GCP's 60-minute token lifetime |
-| `clearCacheFor(audience)` | Supports 401/403 cache invalidation retry |
-| ADC dropped | `GoogleAuth.getIdTokenClient()` silently returns empty headers on non-GCP |
-| Zod safeParse for credentials | Runtime validation at construction (Pitfall #62) |
-| Static `child_process` import | Simpler than dynamic; gcloud is dev-only fallback |
+| Decision                      | Rationale                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| Module-level singleton        | No DI container needed; stateless service benefits from reuse             |
+| Per-audience caching          | Different Cloud Run services need different tokens                        |
+| 55-minute TTL                 | Under GCP's 60-minute token lifetime                                      |
+| `clearCacheFor(audience)`     | Supports 401/403 cache invalidation retry                                 |
+| ADC dropped                   | `GoogleAuth.getIdTokenClient()` silently returns empty headers on non-GCP |
+| Zod safeParse for credentials | Runtime validation at construction (Pitfall #62)                          |
+| Static `child_process` import | Simpler than dynamic; gcloud is dev-only fallback                         |
 
 ### Consumer Update Pattern
 
@@ -62,6 +70,7 @@ const token = await cloudRunAuth.getIdentityToken(getAgentUrl());
 ## When to Apply This Pattern
 
 Extract a shared service when:
+
 1. **3+ files** have identical or near-identical implementations
 2. The logic is **stateless or cache-only** (no per-request state)
 3. The function has **external dependencies** (credentials, tokens) that benefit from reuse
@@ -76,6 +85,7 @@ Extract a shared service when:
 ## Testing
 
 4 unit tests cover the service:
+
 1. JWT token fetch + cache hit on second call
 2. Fallback chain: JWT fails → gcloud CLI succeeds
 3. Malformed JSON credentials → Zod rejects gracefully

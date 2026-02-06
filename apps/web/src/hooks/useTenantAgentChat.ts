@@ -407,7 +407,8 @@ export function useTenantAgentChat({
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
     initializeSession();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentional mount-only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Core message sending logic shared by sendMessage and sendProgrammaticMessage.

@@ -5,6 +5,7 @@
 import type { Package, AddOn, Booking, Service } from './entities';
 import type Stripe from 'stripe';
 import type { AdvisorMemory } from '@macon/contracts';
+import type { BlockType } from '../generated/prisma/client';
 
 // ============================================================================
 // Repository Ports
@@ -1171,7 +1172,7 @@ export interface SectionContentEntity {
   id: string;
   tenantId: string;
   segmentId: string | null;
-  blockType: import('../generated/prisma/client').BlockType;
+  blockType: BlockType;
   pageName: string;
   content: unknown; // JSON content validated by SectionContentSchema
   order: number;
@@ -1186,7 +1187,7 @@ export interface SectionContentEntity {
  * Input for upserting section content
  */
 export interface UpsertSectionInput {
-  blockType: import('../generated/prisma/client').BlockType;
+  blockType: BlockType;
   pageName?: string;
   segmentId?: string | null;
   content: unknown;
@@ -1240,7 +1241,7 @@ export interface ISectionContentRepository {
    */
   findByBlockType(
     tenantId: string,
-    blockType: import('../generated/prisma/client').BlockType,
+    blockType: BlockType,
     pageName?: string,
     segmentId?: string | null
   ): Promise<SectionContentEntity | null>;

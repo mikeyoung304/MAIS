@@ -135,7 +135,8 @@ export function useBuildModeSync({
     );
 
     return () => timeouts.forEach(clearTimeout);
-  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps — mount-only, isReady tracked via ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 
   // Listen for messages from parent
   useEffect(() => {

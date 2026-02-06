@@ -37,11 +37,11 @@ Resolved **11 code review findings** using **11 parallel agents** in ~5 minutes 
 
 After completing Phase 5.2 of the Section Content Migration, `/resolve_todo_parallel` identified 11 issues from code review:
 
-| Priority | Count | Description |
-|----------|-------|-------------|
-| 🔴 P1 | 2 | Security: XSS sanitization, JSON-LD injection |
-| 🟡 P2 | 6 | Performance + Quality: N+1 queries, T3 pattern, caching, tests |
-| 🔵 P3 | 3 | Dead code removal: ~1,100 lines |
+| Priority | Count | Description                                                    |
+| -------- | ----- | -------------------------------------------------------------- |
+| 🔴 P1    | 2     | Security: XSS sanitization, JSON-LD injection                  |
+| 🟡 P2    | 6     | Performance + Quality: N+1 queries, T3 pattern, caching, tests |
+| 🔵 P3    | 3     | Dead code removal: ~1,100 lines                                |
 
 ## Solution: 11 Parallel Agents
 
@@ -80,7 +80,7 @@ Task('Fix XSS sanitization (5206)', {
     [Step-by-step implementation guide]
     ## Acceptance Criteria
     [Checklist of what done looks like]
-    After completing, run \`npm run typecheck\` to verify.`
+    After completing, run \`npm run typecheck\` to verify.`,
 });
 // Repeat for all 11 todos...
 ```
@@ -124,7 +124,7 @@ const sanitizedContent = this.sanitizeContent(content);
 ```typescript
 function safeJsonLd(data: object): string {
   return JSON.stringify(data)
-    .replace(/</g, '\\u003c')  // Prevents </script>
+    .replace(/</g, '\\u003c') // Prevents </script>
     .replace(/>/g, '\\u003e')
     .replace(/&/g, '\\u0026');
 }
@@ -189,18 +189,18 @@ const { confirmationReceived } = req.body;
 if (!confirmationReceived) {
   return res.json({
     requiresConfirmation: true,
-    message: "This will publish all drafts. Are you sure?"
+    message: 'This will publish all drafts. Are you sure?',
   });
 }
 ```
 
 ### P3: Dead Code Removal (~1,100 lines)
 
-| File | Lines Removed | Reason |
-|------|---------------|--------|
-| `section-transforms.ts` | 695 | Only imported by tests, not production |
-| `getVersionHistory()` / `restoreVersion()` | ~200 | Never called |
-| `fromBlockType()` / `isValidSectionType()` / etc. | ~200 | Unused mapper functions |
+| File                                              | Lines Removed | Reason                                 |
+| ------------------------------------------------- | ------------- | -------------------------------------- |
+| `section-transforms.ts`                           | 695           | Only imported by tests, not production |
+| `getVersionHistory()` / `restoreVersion()`        | ~200          | Never called                           |
+| `fromBlockType()` / `isValidSectionType()` / etc. | ~200          | Unused mapper functions                |
 
 ## Prevention Strategies
 
@@ -216,15 +216,19 @@ if (!confirmationReceived) {
 
 ```markdown
 ## Problem
+
 [What's wrong and why it matters]
 
 ## Location
+
 [Exact file paths and line numbers]
 
 ## Solution Required
+
 [Step-by-step implementation guide with code examples]
 
 ## Acceptance Criteria
+
 - [ ] Specific, verifiable outcomes
 - [ ] Run typecheck/tests commands
 
@@ -249,16 +253,16 @@ After completing, run `npm run typecheck` to verify.
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| TODOs Resolved | 11 |
-| Parallel Agents | 11 |
-| Resolution Time | ~5 minutes |
-| Sequential Estimate | ~1 hour |
-| Speedup | ~12x |
-| Tests Passing | 1,288 |
-| Lines Removed | ~1,100 |
-| Files Changed | 35 |
+| Metric              | Value      |
+| ------------------- | ---------- |
+| TODOs Resolved      | 11         |
+| Parallel Agents     | 11         |
+| Resolution Time     | ~5 minutes |
+| Sequential Estimate | ~1 hour    |
+| Speedup             | ~12x       |
+| Tests Passing       | 1,288      |
+| Lines Removed       | ~1,100     |
+| Files Changed       | 35         |
 
 ## Key Learnings
 
@@ -277,13 +281,13 @@ After completing, run `npm run typecheck` to verify.
 
 ## Files Changed
 
-| File | Changes |
-|------|---------|
-| `section-content.service.ts` | +XSS sanitization, +LRU cache |
+| File                            | Changes                              |
+| ------------------------------- | ------------------------------------ |
+| `section-content.service.ts`    | +XSS sanitization, +LRU cache        |
 | `section-content.repository.ts` | +findById(), discardAll optimization |
-| `internal-agent.routes.ts` | T3 confirmation enforcement |
-| `page.tsx` | safeJsonLd() for JSON-LD |
-| `ports.ts` | +findById to interface |
-| `section-transforms.ts` | DELETED |
-| `block-type-mapper.ts` | -unused functions |
-| 21 todo archive files | ready → complete |
+| `internal-agent.routes.ts`      | T3 confirmation enforcement          |
+| `page.tsx`                      | safeJsonLd() for JSON-LD             |
+| `ports.ts`                      | +findById to interface               |
+| `section-transforms.ts`         | DELETED                              |
+| `block-type-mapper.ts`          | -unused functions                    |
+| 21 todo archive files           | ready → complete                     |

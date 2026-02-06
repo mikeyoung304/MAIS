@@ -145,7 +145,8 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
     } else {
       showPreview();
     }
-  }, [isOnboarding, onboardingLoading, tenantId]); // eslint-disable-line react-hooks/exhaustive-deps — actions are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnboarding, onboardingLoading, tenantId]);
 
   // Set query client ref for external invalidation (agent tool handlers)
   useEffect(() => {

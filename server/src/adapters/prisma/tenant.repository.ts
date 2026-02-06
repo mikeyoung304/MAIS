@@ -4,14 +4,13 @@
  */
 
 import type { PrismaClient, Tenant } from '../../generated/prisma/client';
-import { Prisma } from '../../generated/prisma/client';
+import type { Prisma } from '../../generated/prisma/client';
 import { TenantPublicDtoSchema } from '@macon/contracts';
 import type { TenantPublicDto } from '@macon/contracts';
 // NOTE: LandingPageConfigSchema, LenientLandingPageConfigSchema removed
 // All storefront content now uses SectionContent table via SectionContentService
 // See: docs/plans/2026-02-02-refactor-section-content-phase-5.2-simplified-plan.md
 import { logger } from '../../lib/core/logger';
-import { NotFoundError, ValidationError } from '../../lib/errors';
 
 export interface CreateTenantInput {
   slug: string;
