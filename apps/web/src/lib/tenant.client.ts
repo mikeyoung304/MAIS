@@ -441,6 +441,105 @@ export interface SectionContentDtoClient {
 }
 
 /**
+ * Known section types that have corresponding React components.
+ * Unknown types (SERVICES, CUSTOM) are filtered out to prevent SectionRenderer crashes.
+ */
+const KNOWN_SECTION_TYPES = new Set([
+  'hero',
+  'text',
+  'gallery',
+  'testimonials',
+  'faq',
+  'contact',
+  'cta',
+  'pricing',
+  'features',
+]);
+
+/**
+ * Transform SectionContent field names to Landing Page Section field names.
+ *
+ * The SectionContent schema (database) uses different field names than the
+ * Section type system (contracts/components). This function bridges the gap.
+ *
+ * Idempotent: if content already uses Landing Page field names, the guards
+ * (`!('headline' in transformed)`) prevent double-mapping.
+ *
+ * @see docs/plans/2026-02-05-feat-onboarding-ecosystem-rebuild-plan.md (Schema Field Name Cross-Reference)
+ */
+export function transformContentForSection(
+  sectionType: string,
+  content: Record<string, unknown>
+): Record<string, unknown> {
+  const transformed = { ...content };
+
+  // --- Universal field renames (7 of 11 block types need title → headline) ---
+  // HERO and CTA already use 'headline' in SectionContent schema, so this is safe
+  if ('title' in transformed && !('headline' in transformed)) {
+    transformed.headline = transformed.title;
+    delete transformed.title;
+  }
+  if ('subtitle' in transformed && !('subheadline' in transformed)) {
+    transformed.subheadline = transformed.subtitle;
+    delete transformed.subtitle;
+  }
+
+  // --- ABOUT-specific: body → content (TextSection uses 'content' not 'body') ---
+  if (sectionType === 'text' && 'body' in transformed && !('content' in transformed)) {
+    transformed.content = transformed.body;
+    delete transformed.body;
+  }
+
+  // --- FEATURES-specific: items → features ---
+  if (sectionType === 'features' && 'items' in transformed && !('features' in transformed)) {
+    transformed.features = transformed.items;
+    delete transformed.items;
+  }
+
+  // --- GALLERY-specific: items → images ---
+  if (sectionType === 'gallery' && 'items' in transformed && !('images' in transformed)) {
+    transformed.images = transformed.items;
+    delete transformed.items;
+  }
+
+  // --- CTA-specific: buttonText → ctaText, buttonLink → ctaLink ---
+  if (sectionType === 'cta') {
+    if ('buttonText' in transformed && !('ctaText' in transformed)) {
+      transformed.ctaText = transformed.buttonText;
+      delete transformed.buttonText;
+    }
+    if ('buttonLink' in transformed && !('ctaLink' in transformed)) {
+      transformed.ctaLink = transformed.buttonLink;
+      delete transformed.buttonLink;
+    }
+  }
+
+  // --- TESTIMONIALS-specific: item-level field renames ---
+  if (sectionType === 'testimonials' && Array.isArray(transformed.items)) {
+    transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
+      const mapped = { ...item };
+      if (mapped.name && !mapped.authorName) {
+        mapped.authorName = mapped.name;
+        delete mapped.name;
+      }
+      if (mapped.role && !mapped.authorRole) {
+        mapped.authorRole = mapped.role;
+        delete mapped.role;
+      }
+      if (mapped.image && !mapped.authorPhotoUrl) {
+        mapped.authorPhotoUrl = mapped.image;
+        delete mapped.image;
+      }
+      return mapped;
+    });
+  }
+
+  // NOTE: FAQ uses 'items' in BOTH schemas — no transform needed
+
+  return transformed;
+}
+
+/**
  * Convert SectionContentDto array to LandingPageConfig format.
  *
  * This enables backward compatibility with existing components
@@ -466,15 +565,28 @@ export function sectionsToLandingConfig(sections: SectionContentDtoClient[]): La
 
   for (const section of sections) {
     const sectionType = BLOCK_TO_SECTION_MAP[section.blockType] || section.blockType.toLowerCase();
+
+    // Skip unknown section types that have no React component (SERVICES, CUSTOM)
+    if (!KNOWN_SECTION_TYPES.has(sectionType)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `[sectionsToLandingConfig] Skipping unknown section type: ${sectionType} (blockType: ${section.blockType})`
+        );
+      }
+      continue;
+    }
+
     const content = section.content || {};
 
+    // Transform SectionContent field names to Landing Page Section field names
+    const transformedContent = transformContentForSection(sectionType, content);
+
     // Build section object matching Section type from contracts
-    // The content spread brings in type-specific fields (headline, items, etc.)
     // Note: 'visible' is not part of Section type, it's used in SectionContent.content
     const legacySection = {
       id: section.id,
       type: sectionType as Section['type'],
-      ...content,
+      ...transformedContent,
     } as Section;
 
     const existing = pageMap.get(section.pageName) || [];

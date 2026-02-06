@@ -132,7 +132,7 @@ export function TenantLandingPage({
       {landingConfig?.sections?.socialProofBar && landingConfig?.socialProofBar && (
         <section className="border-y border-neutral-100 bg-surface-alt py-8">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-8 px-6 md:gap-16">
-            {landingConfig.socialProofBar.items.map((item, i) => (
+            {(landingConfig.socialProofBar?.items ?? []).map((item, i) => (
               <div key={i} className="text-center">
                 <p className="text-2xl font-bold text-text-primary">{item.text}</p>
               </div>

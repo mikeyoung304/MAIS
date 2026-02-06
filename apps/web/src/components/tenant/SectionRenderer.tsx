@@ -100,8 +100,12 @@ export function SectionRenderer({
             case 'features':
               return <FeaturesSection {...section} tenant={tenant} />;
             default: {
-              const _exhaustive: never = section;
-              return _exhaustive;
+              if (process.env.NODE_ENV === 'development') {
+                console.warn(
+                  `[SectionRenderer] Unknown section type: ${(section as { type: string }).type}`
+                );
+              }
+              return null;
             }
           }
         })();
