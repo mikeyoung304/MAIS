@@ -89,6 +89,9 @@ import {
 
   // Research Delegation (T1) - Onboarding Market Research
   delegateToResearchTool,
+
+  // First Draft (T2) - Onboarding Ecosystem Rebuild Phase 5
+  buildFirstDraftTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,8 +105,8 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 7 (Guided Refinement + Research Delegation)
- * Tool count: 34
+ * Current Phase: 8 (Onboarding Ecosystem Rebuild)
+ * Tool count: 35
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -113,7 +116,7 @@ import {
  * - Page toggle (1)
  * - Marketing copy generation (2)
  * - Project management (7)
- * - Discovery/onboarding (2) - store_discovery_fact, get_known_facts
+ * - Discovery/onboarding (3) - store_discovery_fact, get_known_facts, build_first_draft
  * - Package management (1) - manage_packages (CRUD for bookable services)
  * - Guided Refinement (4) - generate_section_variants, apply_section_variant, mark_section_complete, get_next_incomplete_section
  */
@@ -207,14 +210,18 @@ export const tenantAgent = new LlmAgent({
     updateProjectStatusTool,
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Discovery Tools (T1) - Phase 4 Migration Fix
+    // Discovery Tools (T1/T2) - Phase 4 Migration Fix + Phase 5 First Draft
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Active memory for onboarding - stores facts learned during conversation
+    // T1: Active memory for onboarding - stores facts learned during conversation
     storeDiscoveryFactTool,
 
-    // Retrieve stored facts - prevents asking redundant questions
+    // T1: Retrieve stored facts - prevents asking redundant questions
     getKnownFactsTool,
+
+    // T2: First draft orchestrator - identifies placeholders, returns structured
+    //     data for LLM to generate copy. Triggered by slot machine BUILD_FIRST_DRAFT.
+    buildFirstDraftTool,
 
     // ─────────────────────────────────────────────────────────────────────────
     // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
