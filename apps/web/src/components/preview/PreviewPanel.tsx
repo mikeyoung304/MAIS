@@ -34,6 +34,7 @@ import { parseChildMessage } from '@/lib/build-mode/protocol';
 import type { BuildModeParentMessage } from '@/lib/build-mode/types';
 import type { PagesConfig } from '@macon/contracts';
 import { cn } from '@/lib/utils';
+import { buildPreviewUrl } from '@/lib/preview-utils';
 import { Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 
 // ============================================
@@ -83,17 +84,7 @@ export function PreviewPanel({
   const showConflictDialog = useAgentUIStore(selectShowConflictDialog);
 
   // Build iframe URL with preview token — always loads 'home' (single scrolling page)
-  const iframeUrl = useMemo(() => {
-    const baseUrl = `/t/${slug}/`;
-    const params = new URLSearchParams({
-      preview: 'draft',
-      edit: 'true',
-    });
-    if (previewToken) {
-      params.set('token', previewToken);
-    }
-    return `${baseUrl}?${params.toString()}`;
-  }, [slug, previewToken]);
+  const iframeUrl = useMemo(() => buildPreviewUrl(slug, previewToken), [slug, previewToken]);
 
   // Keep draftConfigRef in sync with prop changes
   useEffect(() => {
@@ -215,7 +206,7 @@ export function PreviewPanel({
     setIsLoading(true);
     setError(null);
     setIsIframeReady(false);
-    if (iframeRef.current) {
+    if (iframeRef.current && iframeUrl) {
       iframeRef.current.src = iframeUrl;
     }
   };
@@ -282,7 +273,7 @@ export function PreviewPanel({
           {/* Iframe */}
           <iframe
             ref={iframeRef}
-            src={iframeUrl}
+            src={iframeUrl ?? undefined}
             className="w-full h-full border-0"
             title="Storefront Preview"
             onLoad={handleIframeLoad}

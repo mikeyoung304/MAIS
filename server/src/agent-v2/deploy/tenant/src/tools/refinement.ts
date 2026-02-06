@@ -37,6 +37,13 @@ const TONE_VARIANTS = ['professional', 'premium', 'friendly'] as const;
 const STATE_KEY = 'guidedRefinementState';
 const MAX_TONE_HISTORY = 5;
 
+/**
+ * Total canonical sections matching SECTION_BLUEPRINT in @macon/contracts.
+ * @macon/contracts is not available in the agent deploy — keep in sync manually.
+ * @see packages/contracts/src/schemas/section-blueprint.schema.ts
+ */
+const TOTAL_SECTIONS = 8;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions
 // ─────────────────────────────────────────────────────────────────────────────
@@ -302,7 +309,7 @@ This is a T1 tool - generates options without changing the draft.`,
         Object.keys(state.sectionVariants).length + (state.completedSections.length || 0),
       currentProgress: {
         completed: state.completedSections.length,
-        total: 7, // Default total, can be refined
+        total: TOTAL_SECTIONS,
       },
       dashboardAction: {
         type: 'SHOW_VARIANT_WIDGET',
@@ -499,8 +506,8 @@ This is a T1 tool - updates state only.`,
       state.sectionVariants[sectionId].isComplete = true;
     }
 
-    // 3. Check if all complete (using 7 as default total)
-    const totalSections = 7; // TODO: Get actual count from page structure
+    // 3. Check if all complete
+    const totalSections = TOTAL_SECTIONS;
     const allComplete = state.completedSections.length >= totalSections;
 
     if (allComplete) {

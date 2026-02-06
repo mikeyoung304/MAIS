@@ -19,6 +19,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrefersReducedMotion, useIsMobile } from '@/hooks/useBreakpoint';
 import { usePreviewToken } from '@/hooks/usePreviewToken';
+import { buildPreviewUrl } from '@/lib/preview-utils';
 import { ComingSoonDisplay } from './ComingSoonDisplay';
 
 // ============================================
@@ -198,18 +199,8 @@ export function RevealTransition({ slug, onComplete }: RevealTransitionProps) {
   const isMobile = isMobileQuery ?? false;
   const { token: previewToken, isLoading: isTokenLoading } = usePreviewToken();
 
-  // Build iframe URL (same as PreviewPanel — always loads 'home')
-  const iframeUrl = useMemo(() => {
-    if (!slug) return null;
-    const params = new URLSearchParams({
-      preview: 'draft',
-      edit: 'true',
-    });
-    if (previewToken) {
-      params.set('token', previewToken);
-    }
-    return `/t/${slug}/?${params.toString()}`;
-  }, [slug, previewToken]);
+  // Build iframe URL (shared helper — always loads 'home')
+  const iframeUrl = useMemo(() => buildPreviewUrl(slug, previewToken), [slug, previewToken]);
 
   // Handle iframe load — marks ready for animation
   const handleIframeLoad = useCallback(() => {

@@ -153,6 +153,23 @@ export const SECTION_BLUEPRINT: readonly SectionBlueprintEntry[] = [
 ] as const;
 
 /**
+ * Union of all canonical section type strings.
+ *
+ * SECTION_BLUEPRINT is typed as `readonly SectionBlueprintEntry[]` (sectionType: string),
+ * so we define the literal union explicitly to enable autocomplete and narrowing.
+ * Keep this in sync with the SECTION_BLUEPRINT entries above.
+ */
+export type CanonicalSectionType =
+  | 'hero'
+  | 'about'
+  | 'services'
+  | 'pricing'
+  | 'testimonials'
+  | 'faq'
+  | 'contact'
+  | 'cta';
+
+/**
  * Section types as a flat array of strings.
  * Useful for validation and iteration.
  */
@@ -160,7 +177,44 @@ export const CANONICAL_SECTION_TYPES = SECTION_BLUEPRINT.map((s) => s.sectionTyp
 
 /**
  * Lookup map: sectionType → SectionBlueprintEntry
+ *
+ * Narrowed to Record<CanonicalSectionType, ...> so consumers get autocomplete
+ * for valid section IDs (e.g., SECTION_BLUEPRINT_MAP['hero']) instead of
+ * accepting arbitrary strings. Object.fromEntries() returns Record<string, V>,
+ * so the assertion recovers the narrow key type.
  */
-export const SECTION_BLUEPRINT_MAP: Record<string, SectionBlueprintEntry> = Object.fromEntries(
+export const SECTION_BLUEPRINT_MAP = Object.fromEntries(
   SECTION_BLUEPRINT.map((s) => [s.sectionType, s])
-);
+) as Record<CanonicalSectionType, SectionBlueprintEntry>;
+
+// ============================================================================
+// Discovery Fact Labels (human-readable labels for each fact key)
+// ============================================================================
+
+/**
+ * Human-readable labels for discovery fact keys.
+ *
+ * Single source of truth for the ComingSoon progress dots and any future
+ * UI that shows fact-level labels. Derived from the same domain knowledge
+ * as SECTION_BLUEPRINT but scoped to individual fact keys rather than sections.
+ *
+ * @see apps/web/src/components/preview/ComingSoonDisplay.tsx (consumer)
+ * @see server/src/agent-v2/deploy/tenant/src/tools/discovery.ts (DISCOVERY_FACT_KEYS)
+ */
+export const DISCOVERY_FACT_LABELS: Readonly<Record<string, string>> = {
+  businessType: 'What you do',
+  businessName: 'Your business name',
+  location: "Where you're based",
+  targetMarket: 'Who you serve',
+  priceRange: 'Your pricing',
+  yearsInBusiness: 'Your experience',
+  teamSize: 'Your team',
+  uniqueValue: 'What sets you apart',
+  servicesOffered: 'Your services',
+  specialization: 'Your specialty',
+  approach: 'Your approach',
+  dreamClient: 'Your ideal client',
+  testimonial: 'Client feedback',
+  faq: 'Common questions',
+  contactInfo: 'How to reach you',
+};

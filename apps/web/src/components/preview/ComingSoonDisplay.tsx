@@ -20,32 +20,15 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAgentUIStore } from '@/stores/agent-ui-store';
+import { DISCOVERY_FACT_LABELS } from '@macon/contracts';
 
 // ============================================
-// FACT KEY → HUMAN LABEL MAP
+// FACT KEY → HUMAN LABEL (from contracts)
 // ============================================
-
-const FACT_LABELS: Record<string, string> = {
-  businessType: 'What you do',
-  businessName: 'Your business name',
-  location: "Where you're based",
-  targetMarket: 'Who you serve',
-  priceRange: 'Your pricing',
-  yearsInBusiness: 'Your experience',
-  teamSize: 'Your team',
-  uniqueValue: 'What sets you apart',
-  servicesOffered: 'Your services',
-  specialization: 'Your specialty',
-  approach: 'Your approach',
-  dreamClient: 'Your ideal client',
-  testimonial: 'Client feedback',
-  faq: 'Common questions',
-  contactInfo: 'How to reach you',
-};
 
 /** Get human-readable label for a fact key */
 function getFactLabel(key: string): string {
-  return FACT_LABELS[key] ?? key;
+  return DISCOVERY_FACT_LABELS[key] ?? key;
 }
 
 // ============================================
