@@ -329,6 +329,13 @@ export function AgentPanel({ className }: AgentPanelProps) {
             // Switch to live preview
             agentUIActions.showPreview('home');
             break;
+
+          default: {
+            // Exhaustive check — compile error if a new DashboardAction type is added
+            // but not handled here (mirrors ContentArea.tsx pattern)
+            const _exhaustive: never = action.type;
+            void _exhaustive;
+          }
         }
       }
     },

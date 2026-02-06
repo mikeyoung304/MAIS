@@ -107,8 +107,16 @@ function AnimatedRevealSequence({ iframeRef, onComplete, isMobile }: AnimatedRev
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow) return;
 
-    const doc = iframe.contentDocument ?? iframe.contentWindow.document;
-    const scrollHeight = doc.documentElement.scrollHeight - doc.documentElement.clientHeight;
+    // Cross-origin safety: contentDocument access throws SecurityError if iframe
+    // is on a different origin (e.g., tenant subdomain or CDN split).
+    // The reveal animation still works without scroll — graceful degradation.
+    let scrollHeight: number;
+    try {
+      const doc = iframe.contentDocument ?? iframe.contentWindow.document;
+      scrollHeight = doc.documentElement.scrollHeight - doc.documentElement.clientHeight;
+    } catch {
+      return; // Cross-origin — skip auto-scroll
+    }
 
     if (scrollHeight <= 0) return;
 

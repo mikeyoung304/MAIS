@@ -22,6 +22,8 @@ export {
   selectHighlightedSectionId,
   selectError,
   selectIsInitialized,
+  selectIsOnboardingView,
+  selectPreviewRefreshKey,
   // Types
   type ViewState,
   type AgentAction,

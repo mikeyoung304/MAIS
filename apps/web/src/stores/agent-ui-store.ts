@@ -58,7 +58,7 @@ export interface ComingSoonState {
  * Preview configuration when showing storefront preview
  */
 interface PreviewConfig {
-  /** Which page is currently shown in preview */
+  /** @deprecated Multi-page model removed — always 'home' (single scrolling page). Remove in follow-up PR. */
   currentPage: PageName;
   /** Section ID to highlight (format: {page}-{type}-{qualifier}) */
   highlightedSectionId: string | null;
@@ -479,7 +479,7 @@ export const useAgentUIStore = create<AgentUIState>()(
             }
           }),
 
-        // Set preview page
+        /** @deprecated Multi-page model removed — always 'home'. Remove in follow-up PR. */
         setPreviewPage: (page) =>
           set((state) => {
             if (!state.tenantId) return;
@@ -639,6 +639,7 @@ export const agentUIActions = {
 
   clearHighlight: () => useAgentUIStore.getState().clearHighlight(),
 
+  /** @deprecated Multi-page model removed — always 'home'. Remove in follow-up PR. */
   setPreviewPage: (page: PageName) => useAgentUIStore.getState().setPreviewPage(page),
 
   setDirty: (dirty: boolean) => useAgentUIStore.getState().setDirty(dirty),
@@ -691,7 +692,7 @@ export const selectIsDirty = (state: AgentUIState) => state.isDirty;
 export const selectPreviewRefreshKey = (state: AgentUIState) => state.previewRefreshKey;
 
 /**
- * Select current page in preview (or null)
+ * @deprecated Multi-page model removed — always returns 'home'. Remove in follow-up PR.
  */
 export const selectCurrentPage = (state: AgentUIState) =>
   state.view.status === 'preview' ? state.view.config.currentPage : null;

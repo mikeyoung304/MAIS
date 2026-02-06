@@ -371,13 +371,14 @@ export class ContextBuilderService {
       Math.round((factCount / 10) * 50) + (hasPublished ? 50 : hasDraft ? 25 : 0)
     );
 
-    // Enterprise slot-policy: compute which slots have values
-    // Agent must NOT ask for any of these slots
-    const forbiddenSlots = Object.keys(discoveryFacts).filter(
+    // Enterprise slot-policy: compute which slots have values (single pass)
+    // Used for both forbiddenSlots (agent must NOT re-ask) and section readiness
+    const knownFactKeys = Object.keys(discoveryFacts).filter(
       (key) =>
         discoveryFacts[key as keyof KnownFacts] !== undefined &&
         discoveryFacts[key as keyof KnownFacts] !== null
-    ) as (keyof KnownFacts)[];
+    );
+    const forbiddenSlots = knownFactKeys as (keyof KnownFacts)[];
 
     // Compute onboardingDone from completedAt or phase
     const onboardingDone =
@@ -389,11 +390,6 @@ export class ContextBuilderService {
     );
 
     // Compute per-section readiness from known fact keys
-    const knownFactKeys = Object.keys(discoveryFacts).filter(
-      (k) =>
-        discoveryFacts[k as keyof KnownFacts] !== undefined &&
-        discoveryFacts[k as keyof KnownFacts] !== null
-    );
     const sectionReadiness = computeSectionReadiness(knownFactKeys);
 
     return {

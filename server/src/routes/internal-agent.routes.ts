@@ -607,6 +607,9 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
 
       await tenantRepo.update(tenantId, { revealCompletedAt: new Date() });
 
+      // Invalidate bootstrap cache so next request reflects revealCompleted state
+      invalidateBootstrapCache(tenantId);
+
       logger.info({ tenantId }, '[InternalAgent] revealCompletedAt written');
       res.json({ success: true, alreadyCompleted: false });
     } catch (error) {
