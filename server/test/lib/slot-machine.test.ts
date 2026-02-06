@@ -4,7 +4,7 @@ import {
   computeCurrentPhase,
   computeSectionReadiness,
   PHASE_ORDER,
-} from './slot-machine';
+} from '../../src/lib/slot-machine';
 
 describe('computeCurrentPhase', () => {
   it('returns NOT_STARTED with no facts', () => {
