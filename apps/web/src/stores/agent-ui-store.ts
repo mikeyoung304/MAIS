@@ -27,6 +27,30 @@ import type { PageName } from '@macon/contracts';
 const MAX_ACTION_LOG_SIZE = 100;
 
 // ============================================
+// COMING SOON - Lightweight fact progress for onboarding display
+// ============================================
+
+/**
+ * Slot metrics from store_discovery_fact tool result.
+ * Tracks how many facts the agent has discovered vs total possible.
+ */
+export interface SlotMetrics {
+  filled: number;
+  total: number;
+}
+
+/**
+ * State for the "Coming Soon" display during onboarding.
+ * Updated in real-time from agent tool results (<200ms, no network round-trip).
+ */
+export interface ComingSoonState {
+  /** Ordered list of discovered fact keys (e.g., ['businessType', 'location']) */
+  discoveredKeys: string[];
+  /** Slot metrics from the slot machine */
+  slotMetrics: SlotMetrics;
+}
+
+// ============================================
 // DISCRIMINATED UNIONS - Eliminate impossible states
 // ============================================
 
@@ -34,28 +58,32 @@ const MAX_ACTION_LOG_SIZE = 100;
  * Preview configuration when showing storefront preview
  */
 interface PreviewConfig {
-  /** Which page is currently shown in preview */
+  /** @deprecated Multi-page model removed — always 'home' (single scrolling page). Remove in follow-up PR. */
   currentPage: PageName;
   /** Section ID to highlight (format: {page}-{type}-{qualifier}) */
   highlightedSectionId: string | null;
 }
 
 /**
- * View state discriminated union
+ * View state discriminated union — EXHAUSTIVE, no default case in switch
  *
- * TypeScript ensures only ONE state is active at a time:
- * - 'dashboard': Normal dashboard view with cards
- * - 'preview': Storefront preview with toolbar
- * - 'loading': Transitioning between states
+ * TypeScript ensures only ONE state is active at a time.
+ * ContentArea switches on `status` with a `never` exhaustiveness check.
+ *
+ * States:
+ * - 'coming_soon': Pre-build onboarding (Discovery + Building phases)
+ * - 'revealing': One-shot animated reveal when first draft completes (2.5s)
+ * - 'preview': Storefront preview (Review + Published phases)
+ * - 'dashboard': Stats/Insights (post-publish, accessed via sidebar)
+ * - 'loading': Transitional state between views
  * - 'error': Something went wrong with recovery option
- *
- * This eliminates bugs like "showing preview and dashboard simultaneously"
- * or "missing loading state during navigation".
  */
 export type ViewState =
+  | { status: 'coming_soon' }
+  | { status: 'revealing' }
   | { status: 'dashboard' }
   | { status: 'preview'; config: PreviewConfig }
-  | { status: 'loading'; target: 'dashboard' | 'preview' }
+  | { status: 'loading'; target: string }
   | { status: 'error'; error: string; recovery?: () => void };
 
 // ============================================
@@ -84,6 +112,8 @@ export type ViewState =
 export type AgentActionType =
   | 'SHOW_PREVIEW'
   | 'HIDE_PREVIEW'
+  | 'SHOW_COMING_SOON'
+  | 'REVEAL_SITE'
   | 'HIGHLIGHT_SECTION'
   | 'CLEAR_HIGHLIGHT'
   | 'NAVIGATE'
@@ -111,6 +141,8 @@ interface AgentActionBase {
 export type AgentAction =
   | (AgentActionBase & { type: 'SHOW_PREVIEW'; payload: { page: PageName } })
   | (AgentActionBase & { type: 'HIDE_PREVIEW'; payload: Record<string, never> })
+  | (AgentActionBase & { type: 'SHOW_COMING_SOON'; payload: Record<string, never> })
+  | (AgentActionBase & { type: 'REVEAL_SITE'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'HIGHLIGHT_SECTION'; payload: { sectionId: string } })
   | (AgentActionBase & { type: 'CLEAR_HIGHLIGHT'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'NAVIGATE'; payload: { page: PageName } })
@@ -145,6 +177,9 @@ export interface AgentUIState {
   // True when agent tool returns CONCURRENT_MODIFICATION error
   showConflictDialog: boolean;
 
+  // Coming Soon display state (onboarding progress dots)
+  comingSoon: ComingSoonState;
+
   // ========== Actions ==========
 
   /**
@@ -165,6 +200,18 @@ export interface AgentUIState {
    * @param agentSessionId Optional agent session for audit
    */
   showDashboard: (agentSessionId?: string | null) => void;
+
+  /**
+   * Show "Coming Soon" view for pre-build onboarding (T1)
+   * Used during Discovery and Building phases when site isn't built yet.
+   */
+  showComingSoon: (agentSessionId?: string | null) => void;
+
+  /**
+   * Trigger reveal animation (T1)
+   * One-shot: stored in backend via revealCompletedAt. Component owns timer.
+   */
+  revealSite: (agentSessionId?: string | null) => void;
 
   /**
    * Highlight a section in the preview (T1)
@@ -212,6 +259,12 @@ export interface AgentUIState {
    * Called when agent tool returns CONCURRENT_MODIFICATION error
    */
   setShowConflictDialog: (show: boolean) => void;
+
+  /**
+   * Add a discovered fact from store_discovery_fact tool result.
+   * Updates progress dots in ComingSoonDisplay within <200ms.
+   */
+  addDiscoveredFact: (key: string, slotMetrics: SlotMetrics) => void;
 
   // ========== Event Sourcing ==========
 
@@ -273,6 +326,7 @@ export const useAgentUIStore = create<AgentUIState>()(
         actionLog: [],
         tenantId: null,
         showConflictDialog: false,
+        comingSoon: { discoveredKeys: [], slotMetrics: { filled: 0, total: 0 } },
 
         // Initialize with tenant
         initialize: (tenantId) =>
@@ -330,6 +384,48 @@ export const useAgentUIStore = create<AgentUIState>()(
             state.view = { status: 'dashboard' };
           }),
 
+        // Show Coming Soon (pre-build onboarding)
+        showComingSoon: (agentSessionId = null) =>
+          set((state) => {
+            if (!state.tenantId) return;
+
+            const action: AgentAction = {
+              id: generateActionId(),
+              type: 'SHOW_COMING_SOON',
+              payload: {},
+              timestamp: Date.now(),
+              agentSessionId,
+              tenantId: state.tenantId,
+            };
+
+            state.actionLog.push(action);
+            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+              state.actionLog.shift();
+            }
+            state.view = { status: 'coming_soon' };
+          }),
+
+        // Reveal site (one-shot animation trigger — component owns the timer)
+        revealSite: (agentSessionId = null) =>
+          set((state) => {
+            if (!state.tenantId) return;
+
+            const action: AgentAction = {
+              id: generateActionId(),
+              type: 'REVEAL_SITE',
+              payload: {},
+              timestamp: Date.now(),
+              agentSessionId,
+              tenantId: state.tenantId,
+            };
+
+            state.actionLog.push(action);
+            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
+              state.actionLog.shift();
+            }
+            state.view = { status: 'revealing' };
+          }),
+
         // Highlight section
         highlightSection: (sectionId, agentSessionId = null) =>
           set((state) => {
@@ -383,7 +479,7 @@ export const useAgentUIStore = create<AgentUIState>()(
             }
           }),
 
-        // Set preview page
+        /** @deprecated Multi-page model removed — always 'home'. Remove in follow-up PR. */
         setPreviewPage: (page) =>
           set((state) => {
             if (!state.tenantId) return;
@@ -454,6 +550,16 @@ export const useAgentUIStore = create<AgentUIState>()(
             state.showConflictDialog = show;
           }),
 
+        // Add discovered fact (real-time from agent tool results)
+        addDiscoveredFact: (key, slotMetrics) =>
+          set((state) => {
+            // Deduplicate — a fact key can only appear once
+            if (!state.comingSoon.discoveredKeys.includes(key)) {
+              state.comingSoon.discoveredKeys.push(key);
+            }
+            state.comingSoon.slotMetrics = slotMetrics;
+          }),
+
         // Get action log
         getActionLog: () => get().actionLog,
 
@@ -473,6 +579,12 @@ export const useAgentUIStore = create<AgentUIState>()(
                   status: 'preview',
                   config: { currentPage: 'home', highlightedSectionId: null },
                 };
+                break;
+              case 'SHOW_COMING_SOON':
+                state.view = { status: 'dashboard' };
+                break;
+              case 'REVEAL_SITE':
+                state.view = { status: 'coming_soon' };
                 break;
               case 'HIGHLIGHT_SECTION':
                 if (state.view.status === 'preview') {
@@ -516,11 +628,18 @@ export const agentUIActions = {
   showDashboard: (agentSessionId?: string | null) =>
     useAgentUIStore.getState().showDashboard(agentSessionId),
 
+  showComingSoon: (agentSessionId?: string | null) =>
+    useAgentUIStore.getState().showComingSoon(agentSessionId),
+
+  revealSite: (agentSessionId?: string | null) =>
+    useAgentUIStore.getState().revealSite(agentSessionId),
+
   highlightSection: (sectionId: string, agentSessionId?: string | null) =>
     useAgentUIStore.getState().highlightSection(sectionId, agentSessionId),
 
   clearHighlight: () => useAgentUIStore.getState().clearHighlight(),
 
+  /** @deprecated Multi-page model removed — always 'home'. Remove in follow-up PR. */
   setPreviewPage: (page: PageName) => useAgentUIStore.getState().setPreviewPage(page),
 
   setDirty: (dirty: boolean) => useAgentUIStore.getState().setDirty(dirty),
@@ -533,6 +652,9 @@ export const agentUIActions = {
   clearError: () => useAgentUIStore.getState().clearError(),
 
   setShowConflictDialog: (show: boolean) => useAgentUIStore.getState().setShowConflictDialog(show),
+
+  addDiscoveredFact: (key: string, slotMetrics: SlotMetrics) =>
+    useAgentUIStore.getState().addDiscoveredFact(key, slotMetrics),
 
   getActionLog: () => useAgentUIStore.getState().getActionLog(),
 
@@ -570,7 +692,7 @@ export const selectIsDirty = (state: AgentUIState) => state.isDirty;
 export const selectPreviewRefreshKey = (state: AgentUIState) => state.previewRefreshKey;
 
 /**
- * Select current page in preview (or null)
+ * @deprecated Multi-page model removed — always returns 'home'. Remove in follow-up PR.
  */
 export const selectCurrentPage = (state: AgentUIState) =>
   state.view.status === 'preview' ? state.view.config.currentPage : null;
@@ -591,6 +713,13 @@ export const selectError = (state: AgentUIState) =>
  * Select whether store is initialized
  */
 export const selectIsInitialized = (state: AgentUIState) => state.tenantId !== null;
+
+/**
+ * Select whether view is in an onboarding state (coming_soon or revealing)
+ * Used by layout to hide sidebar during onboarding.
+ */
+export const selectIsOnboardingView = (state: AgentUIState) =>
+  state.view.status === 'coming_soon' || state.view.status === 'revealing';
 
 /**
  * Select conflict dialog visibility (#620 - optimistic locking)
@@ -615,7 +744,7 @@ export const selectShowConflictDialog = (state: AgentUIState) => state.showConfl
  *
  * @see e2e/tests/agent-ui-control.spec.ts
  */
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   (window as unknown as { useAgentUIStore: typeof useAgentUIStore }).useAgentUIStore =
     useAgentUIStore;
   (window as unknown as { agentUIActions: typeof agentUIActions }).agentUIActions = agentUIActions;

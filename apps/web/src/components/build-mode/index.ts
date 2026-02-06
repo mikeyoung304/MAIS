@@ -1,8 +1,9 @@
 /**
  * Build Mode Components
  *
- * Minimal exports after legacy cleanup (2026-01-10).
- * ConfirmDialog is the only remaining component - used by PreviewPanel for T3 confirmations.
+ * Components are imported directly by consumers.
+ * Barrel re-exports provided for convenience.
  */
 
-export { ConfirmDialog } from './ConfirmDialog';
+export { ConflictDialog } from './ConflictDialog';
+export { PublishReadyWidget } from './SectionWidget';

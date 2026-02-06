@@ -148,6 +148,12 @@ No user approval needed for first draft — just build and announce.`,
       currentHeadline: s.headline || '(no headline)',
     }));
 
+    // 5. Write revealCompletedAt to backend (one-shot guard for reveal animation)
+    // This is fire-and-forget — failure shouldn't block the first draft
+    callMaisApi('/mark-reveal-completed', tenantId, {}).catch((err) => {
+      logger.warn({ tenantId, error: err }, '[TenantAgent] Failed to write revealCompletedAt');
+    });
+
     logger.info(
       {
         tenantId,
@@ -165,11 +171,7 @@ No user approval needed for first draft — just build and announce.`,
       factKeys: factsData.factKeys,
       totalPlaceholders: sectionsToUpdate.length,
       instruction:
-        'Generate personalized content for each section below using the known facts. Call update_section for each one. Explain WHY you wrote what you wrote — build with narrative.',
-      // Scroll to the first section being built
-      dashboardAction: sectionsToUpdate[0]
-        ? { type: 'SCROLL_TO_SECTION', sectionId: sectionsToUpdate[0].sectionId }
-        : undefined,
+        'Generate personalized content for each section below using the known facts. Call update_section for each one. Explain WHY you wrote what you wrote — build with narrative. After ALL sections are updated, the preview will reveal automatically.',
     };
   },
 });

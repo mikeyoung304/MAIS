@@ -26,11 +26,8 @@ interface UseBuildModeSyncResult {
   /** Currently highlighted section ID (for ID-based highlighting) */
   highlightedSectionId: string | null;
 
-  /** Whether Build Mode is ready (handshake completed) */
+  /** Whether PostMessage channel is established (real-time updates available) */
   isReady: boolean;
-
-  /** Whether handshake timed out */
-  hasTimedOut: boolean;
 
   /** Notify parent of section selection */
   selectSection: (pageId: PageName, sectionIndex: number) => void;
@@ -42,30 +39,23 @@ interface UseBuildModeSyncResult {
 /**
  * useBuildModeSync - Hook for storefront pages to sync with Build Mode
  *
+ * API-first strategy: iframe loads draft content from SSR (via ?preview=draft&token=JWT).
+ * PostMessage is a non-blocking real-time update channel — not required for initial display.
+ * If PostMessage never connects, user still sees their draft content.
+ *
  * Handles:
  * - Detecting if running in Build Mode iframe
+ * - Establishing PostMessage channel for real-time updates (non-blocking)
  * - Receiving config updates from parent
  * - Managing highlighted section state
- *
- * Usage in storefront page:
- * ```tsx
- * const { isEditMode, draftConfig, highlightedSection, selectSection } = useBuildModeSync({
- *   enabled: true,
- *   initialConfig: tenant.landingPageConfig?.pages,
- * });
- *
- * // Use draftConfig ?? initialConfig for rendering
- * const config = isEditMode ? draftConfig : initialConfig;
- * ```
  */
-/** Timeout for PostMessage handshake in milliseconds */
-const HANDSHAKE_TIMEOUT_MS = 10000;
 
-/** Retry interval for re-sending BUILD_MODE_READY if no response */
-const HANDSHAKE_RETRY_MS = 1000;
-
-/** Max retries before giving up */
-const HANDSHAKE_MAX_RETRIES = 4;
+/**
+ * Retry schedule for PostMessage channel establishment (absolute ms from mount).
+ * Exponential backoff: if parent isn't ready at 500ms, try 1500ms, then 4000ms.
+ * If all retries fail, real-time updates degrade gracefully — content still visible.
+ */
+const HANDSHAKE_RETRY_DELAYS = [500, 1500, 4000];
 
 /**
  * Add visual feedback during config updates for fluid canvas feel
@@ -104,18 +94,24 @@ export function useBuildModeSync({
   const [highlightedSection, setHighlightedSection] = useState<number | null>(null);
   const [highlightedSectionId, setHighlightedSectionId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [hasTimedOut, setHasTimedOut] = useState(false);
 
   // Ref for callback to avoid stale closures
   const onConfigChangeRef = useRef(onConfigChange);
+  // Track readiness via ref so scheduled retries don't need isReady as a dependency
+  const isReadyRef = useRef(false);
 
-  // Keep callback ref up to date
+  // Keep refs up to date
   useEffect(() => {
     onConfigChangeRef.current = onConfigChange;
   }, [onConfigChange]);
 
-  // Check if we're in an iframe with edit query param
-  // Implements retry logic for robust handshake with parent
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
+
+  // Detect edit mode and establish non-blocking PostMessage channel.
+  // API-first: iframe already has draft content from SSR. This channel
+  // enables real-time updates but is NOT required for initial display.
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
 
@@ -123,52 +119,23 @@ export function useBuildModeSync({
     const isInIframe = window.parent !== window;
     const hasEditParam = params.get('edit') === 'true';
 
-    if (isInIframe && hasEditParam) {
-      setIsEditMode(true);
+    if (!isInIframe || !hasEditParam) return;
 
-      // Send ready message to parent with retry logic
-      // Parent may not be ready to receive immediately after iframe loads
-      let retryCount = 0;
-      const sendReady = () => {
-        if (isReady) return; // Stop retrying once connected
-        sendToParent({ type: 'BUILD_MODE_READY' });
-        retryCount++;
-      };
+    setIsEditMode(true);
 
-      // Initial send with 100ms delay to allow parent listener to register first
-      // This prevents race condition when cached iframe loads instantly (Race #3 fix)
-      const initialDelayTimeout = setTimeout(() => {
-        sendReady();
-      }, 100);
-
-      // Retry periodically until we get BUILD_MODE_INIT or max retries
-      const retryInterval = setInterval(() => {
-        if (isReady || retryCount >= HANDSHAKE_MAX_RETRIES) {
-          clearInterval(retryInterval);
-          return;
+    // Schedule BUILD_MODE_READY at exponential backoff intervals.
+    // Each retry checks isReadyRef — once parent responds with BUILD_MODE_INIT,
+    // remaining retries become no-ops.
+    const timeouts = HANDSHAKE_RETRY_DELAYS.map((delay) =>
+      setTimeout(() => {
+        if (!isReadyRef.current) {
+          sendToParent({ type: 'BUILD_MODE_READY' });
         }
-        sendReady();
-      }, HANDSHAKE_RETRY_MS);
+      }, delay)
+    );
 
-      return () => {
-        clearTimeout(initialDelayTimeout);
-        clearInterval(retryInterval);
-      };
-    }
-  }, [enabled, isReady]);
-
-  // Timeout for handshake - if we're in edit mode but not ready within timeout, show error
-  useEffect(() => {
-    if (!isEditMode || isReady) return;
-
-    const timeoutId = setTimeout(() => {
-      if (!isReady) {
-        setHasTimedOut(true);
-      }
-    }, HANDSHAKE_TIMEOUT_MS);
-
-    return () => clearTimeout(timeoutId);
-  }, [isEditMode, isReady]);
+    return () => timeouts.forEach(clearTimeout);
+  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps — mount-only, isReady tracked via ref
 
   // Listen for messages from parent
   useEffect(() => {
@@ -263,7 +230,6 @@ export function useBuildModeSync({
     highlightedSection,
     highlightedSectionId,
     isReady,
-    hasTimedOut,
     selectSection,
     notifyPageChange,
   };

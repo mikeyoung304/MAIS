@@ -583,6 +583,41 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   });
 
   // ===========================================================================
+  // POST /mark-reveal-completed - One-shot guard for reveal animation
+  // Called by build_first_draft tool after generating first draft content
+  // Sets revealCompletedAt so the frontend skips the reveal on future visits
+  // ===========================================================================
+
+  router.post('/mark-reveal-completed', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      // Idempotent: only write if not already set
+      const tenant = await tenantRepo.findById(tenantId);
+
+      if (!tenant) {
+        res.status(404).json({ success: false, error: 'Tenant not found' });
+        return;
+      }
+
+      if (tenant.revealCompletedAt) {
+        res.json({ success: true, alreadyCompleted: true });
+        return;
+      }
+
+      await tenantRepo.update(tenantId, { revealCompletedAt: new Date() });
+
+      // Invalidate bootstrap cache so next request reflects revealCompleted state
+      invalidateBootstrapCache(tenantId);
+
+      logger.info({ tenantId }, '[InternalAgent] revealCompletedAt written');
+      res.json({ success: true, alreadyCompleted: false });
+    } catch (error) {
+      handleError(res, error, '/mark-reveal-completed');
+    }
+  });
+
+  // ===========================================================================
   // POST /store-discovery-fact - Store a fact learned during onboarding
   // Called by Concierge when it learns something about the business
   // ===========================================================================

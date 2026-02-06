@@ -11,10 +11,16 @@ import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
 import { agentUIActions } from '@/stores/agent-ui-store';
-import { refinementActions } from '@/stores/refinement-store';
+import {
+  refinementActions,
+  useRefinementStore,
+  selectIsReviewing,
+} from '@/stores/refinement-store';
+import { ReviewProgress } from './ReviewProgress';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import { queryKeys } from '@/lib/query-client';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
+import { SECTION_BLUEPRINT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 
@@ -96,6 +102,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const { slug: tenantSlug } = useAuth();
   // Use React Query client directly instead of module singleton (fixes race condition)
   const queryClient = useQueryClient();
+
+  // Guided review mode — show progress indicator when reviewing sections
+  const isReviewing = useRefinementStore(selectIsReviewing);
 
   // Mobile/desktop detection
   const isMobileQuery = useIsMobile();
@@ -244,26 +253,15 @@ export function AgentPanel({ className }: AgentPanelProps) {
             agentUIActions.refreshPreview();
             break;
 
-          // ========== Guided Refinement Actions ==========
-          // These power the section-by-section editing experience
+          // ========== Guided Review Actions ==========
+          // These power the agent-driven section-by-section review
 
           case 'SHOW_VARIANT_WIDGET':
-            // Agent has generated tone variants for a section
-            // Update the refinement store with the variants and show the widget
-            if (action.sectionId && action.variants) {
+            // Legacy: agent generated variants. In the new flow, agent drives
+            // review via chat. Still enter reviewing mode and highlight.
+            if (action.sectionId) {
               refinementActions.setCurrentSection(action.sectionId, action.sectionType);
-              refinementActions.setVariants(
-                action.sectionId,
-                {
-                  professional: action.variants.professional,
-                  premium: action.variants.premium,
-                  friendly: action.variants.friendly,
-                },
-                action.recommendation,
-                action.rationale
-              );
-              refinementActions.setMode('guided_refine');
-              // Also scroll to the section in preview
+              refinementActions.setMode('reviewing');
               agentUIActions.highlightSection(action.sectionId);
               agentUIActions.showPreview('home');
             }
@@ -272,21 +270,76 @@ export function AgentPanel({ className }: AgentPanelProps) {
           case 'SHOW_PUBLISH_READY':
             // All sections are complete, ready to publish
             refinementActions.setMode('publish_ready');
-            refinementActions.setWidgetVisible(true);
             break;
 
-          case 'HIGHLIGHT_NEXT_SECTION':
-            // Highlight and scroll to the next section to refine
-            if (action.sectionId) {
-              refinementActions.setCurrentSection(action.sectionId, action.sectionType);
-              agentUIActions.highlightSection(action.sectionId);
+          case 'HIGHLIGHT_NEXT_SECTION': {
+            // Highlight and scroll to the next section to review.
+            // Fix #5203: When sectionId is not provided by the agent tool,
+            // compute the next incomplete section from SECTION_BLUEPRINT order.
+            let nextId = action.sectionId;
+            let nextType = action.sectionType;
+
+            if (!nextId) {
+              const { completedSections } = useRefinementStore.getState();
+              const nextEntry = SECTION_BLUEPRINT.find(
+                (entry) => !completedSections.includes(entry.sectionType)
+              );
+              if (nextEntry) {
+                nextId = nextEntry.sectionType;
+                nextType = nextEntry.sectionType;
+              }
+            }
+
+            if (nextId) {
+              refinementActions.setCurrentSection(nextId, nextType);
+              agentUIActions.highlightSection(nextId);
               agentUIActions.showPreview('home');
             }
+            // If all sections are complete, no-op (publish_ready handles that)
             break;
+          }
+
+          case 'REVEAL_SITE':
+            // One-shot reveal animation — mobile: dismiss drawer first, blur keyboard
+            if (isMobile) {
+              (document.activeElement as HTMLElement)?.blur();
+              setIsMobileOpen(false);
+              await new Promise((r) => setTimeout(r, 300)); // Wait for drawer dismiss
+            }
+            agentUIActions.revealSite();
+            break;
+
+          case 'PUBLISH_SITE':
+            // Publish already completed on backend (publish_draft tool).
+            // Frontend: update state, invalidate caches, show celebration modal.
+            if (isMobile) {
+              (document.activeElement as HTMLElement)?.blur();
+              setIsMobileOpen(false);
+              await new Promise((r) => setTimeout(r, 300));
+            }
+            refinementActions.setPublishStatus('published');
+            // Wait for backend transaction to commit (Pitfall #26)
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            queryClient.invalidateQueries({
+              queryKey: getDraftConfigQueryKey(),
+              refetchType: 'active',
+            });
+            // Refresh onboarding state (phase may advance to COMPLETED)
+            queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
+            // Switch to live preview
+            agentUIActions.showPreview('home');
+            break;
+
+          default: {
+            // Exhaustive check — compile error if a new DashboardAction type is added
+            // but not handled here (mirrors ContentArea.tsx pattern)
+            const _exhaustive: never = action.type;
+            void _exhaustive;
+          }
         }
       }
     },
-    [queryClient]
+    [queryClient, isMobile]
   );
 
   // Handle tenant-agent tool completion (triggers preview refresh for storefront changes)
@@ -359,9 +412,35 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
       // Invalidate onboarding state when discovery facts are stored
       // This ensures the stepper UI updates immediately after phase advancement
-      const storedFact = toolCalls.some((call) => call.name === 'store_discovery_fact');
+      const storedFact = toolCalls.find((call) => call.name === 'store_discovery_fact');
       if (storedFact) {
         queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
+
+        // Pipe fact key + slotMetrics to ComingSoonDisplay via agent-ui-store (<200ms update)
+        const factResult = storedFact.result as
+          | {
+              key?: string;
+              slotMetrics?: { filled: number; total: number };
+            }
+          | undefined;
+        if (factResult?.key && factResult?.slotMetrics) {
+          agentUIActions.addDiscoveredFact(factResult.key, factResult.slotMetrics);
+        }
+      }
+
+      // Wire mark_section_complete tool results → refinement store
+      // Updates the progress bar and auto-advances to publish_ready if all complete
+      const completedSection = toolCalls.find((call) => call.name === 'mark_section_complete');
+      if (completedSection) {
+        const result = completedSection.result as
+          | { sectionId?: string; completedSections?: string[]; totalSections?: number }
+          | undefined;
+        if (result?.sectionId) {
+          refinementActions.markComplete(result.sectionId);
+        }
+        if (result?.totalSections !== undefined) {
+          refinementActions.setTotalSections(result.totalSections);
+        }
       }
     },
     [queryClient, handleDashboardActions]
@@ -489,6 +568,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
               tenantSlug={tenantSlug}
             />
           )}
+
+          {/* Review Progress (when agent is walking through sections) */}
+          {isReviewing && <ReviewProgress />}
 
           {/* Chat content - TenantAgentChat (agent speaks first based on session state) */}
           <div className="flex-1 overflow-hidden">
@@ -628,6 +710,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
                 tenantSlug={tenantSlug}
               />
             )}
+
+            {/* Review Progress (when agent is walking through sections) */}
+            {isReviewing && <ReviewProgress />}
 
             {/* Chat content - TenantAgentChat (agent speaks first based on session state) */}
             <div className="flex-1 overflow-hidden">

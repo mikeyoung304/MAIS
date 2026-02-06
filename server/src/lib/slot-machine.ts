@@ -13,6 +13,7 @@
  */
 
 import type { OnboardingPhase } from '../generated/prisma/enums';
+import { SECTION_BLUEPRINT, type SectionReadiness, type SectionQuality } from '@macon/contracts';
 
 // ============================================================================
 // Types
@@ -24,6 +25,9 @@ export type SlotAction =
   | 'BUILD_FIRST_DRAFT'
   | 'TRIGGER_RESEARCH'
   | 'OFFER_REFINEMENT';
+
+// Re-export for consumers
+export type { SectionReadiness, SectionQuality };
 
 export interface SlotMachineResult {
   /** What to do next */
@@ -47,6 +51,9 @@ export interface SlotMachineResult {
     total: number;
     utilization: number; // 0-100
   };
+
+  /** Per-section readiness with quality levels (Phase 3) */
+  sectionReadiness: SectionReadiness[];
 }
 
 // ============================================================================
@@ -73,48 +80,22 @@ const ALL_FACT_KEYS = [
 ] as const;
 
 /**
- * Section readiness thresholds.
+ * Section readiness thresholds — derived from canonical SECTION_BLUEPRINT.
  * Each section requires specific facts before it can be built.
  */
 const SECTION_REQUIREMENTS: Record<
   string,
-  { required: string[][]; priority: 'MUST' | 'SHOULD' | 'IDEAL' }
-> = {
-  hero: {
-    required: [['businessType']],
-    priority: 'SHOULD',
-  },
-  about: {
-    // businessType + (uniqueValue OR approach)
-    required: [['businessType'], ['uniqueValue', 'approach']],
-    priority: 'SHOULD',
-  },
-  services: {
-    required: [['servicesOffered']],
-    priority: 'MUST',
-  },
-  pricing: {
-    required: [['servicesOffered'], ['priceRange']],
-    priority: 'IDEAL',
-  },
-  faq: {
-    required: [['businessType'], ['servicesOffered']],
-    priority: 'IDEAL',
-  },
-  contact: {
-    required: [['businessType']],
-    priority: 'SHOULD',
-  },
-  cta: {
-    required: [['businessType']],
-    priority: 'SHOULD',
-  },
-  testimonials: {
-    required: [['testimonial']],
-    priority: 'IDEAL',
-  },
-  // GALLERY is not auto-buildable (requires images)
-};
+  { required: string[][]; optional: string[]; priority: 'MUST' | 'SHOULD' | 'IDEAL' }
+> = Object.fromEntries(
+  SECTION_BLUEPRINT.map((entry) => [
+    entry.sectionType,
+    {
+      required: entry.requiredFacts,
+      optional: entry.optionalFacts,
+      priority: entry.priority,
+    },
+  ])
+);
 
 /** Questions to ask for each missing fact key */
 const FACT_QUESTIONS: Record<string, string> = {
@@ -207,6 +188,68 @@ function isSectionReady(requirements: string[][], knownKeys: Set<string>): boole
 }
 
 /**
+ * Compute quality level based on how many relevant facts are available.
+ *
+ * - minimal: Only required facts present (bare minimum to build)
+ * - good: Required + some optional facts
+ * - excellent: Required + most/all optional facts
+ */
+function computeQuality(
+  requiredFacts: string[][],
+  optionalFacts: string[],
+  knownKeys: Set<string>
+): SectionQuality {
+  // All unique fact keys relevant to this section
+  const allRelevant = [...new Set([...requiredFacts.flat(), ...optionalFacts])];
+  const knownRelevant = allRelevant.filter((k) => knownKeys.has(k));
+  const ratio = allRelevant.length > 0 ? knownRelevant.length / allRelevant.length : 0;
+
+  if (ratio >= 0.8) return 'excellent';
+  if (ratio >= 0.5) return 'good';
+  return 'minimal';
+}
+
+/**
+ * Compute per-section readiness for all canonical sections.
+ * Returns an array in blueprint order (hero → cta).
+ */
+export function computeSectionReadiness(knownFactKeys: string[]): SectionReadiness[] {
+  const knownSet = new Set(knownFactKeys);
+
+  return SECTION_BLUEPRINT.map((entry) => {
+    const config = SECTION_REQUIREMENTS[entry.sectionType];
+    if (!config) {
+      return {
+        sectionType: entry.sectionType,
+        isReady: false,
+        knownFacts: [],
+        missingFacts: [],
+        quality: 'minimal' as SectionQuality,
+      };
+    }
+
+    const isReady = isSectionReady(config.required, knownSet);
+
+    // Collect all relevant fact keys for this section
+    const allRelevant = [...new Set([...config.required.flat(), ...config.optional])];
+    const knownFacts = allRelevant.filter((k) => knownSet.has(k));
+    const missingFacts = allRelevant.filter((k) => !knownSet.has(k));
+
+    const quality = isReady
+      ? computeQuality(config.required, config.optional, knownSet)
+      : 'minimal';
+
+    return {
+      sectionType: entry.sectionType,
+      isReady,
+      knownFacts,
+      missingFacts,
+      quality,
+    };
+  });
+}
+
+/**
  * Compute the slot machine result from known fact keys.
  *
  * Pure function — no database calls, no side effects.
@@ -275,6 +318,9 @@ export function computeSlotMachine(
     nextAction = 'ASK';
   }
 
+  // Compute per-section readiness (Phase 3)
+  const sectionReadiness = computeSectionReadiness(knownFactKeys);
+
   return {
     nextAction,
     currentPhase,
@@ -282,5 +328,6 @@ export function computeSlotMachine(
     readySections,
     missingForNext: missingForNext.slice(0, 3), // Top 3 most valuable
     slotMetrics,
+    sectionReadiness,
   };
 }

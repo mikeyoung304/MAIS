@@ -1,14 +1,14 @@
 /**
  * Tenant Agent Message Dispatcher
  *
- * Enables external components (like SectionWidget) to send messages
- * to the tenant-agent chat without direct coupling to TenantAgentChat component.
+ * Enables external components (like PublishReadyWidget, layout.tsx) to send
+ * messages to the tenant-agent chat without direct coupling to TenantAgentChat.
  *
  * Pattern: Producer/Consumer with callback registration
- * - SectionWidget calls queueAgentMessage() → producer
+ * - PublishReadyWidget calls queueAgentMessage() → producer
  * - TenantAgentChat component registers sendProgrammaticMessage → consumer
  *
- * @see apps/web/src/components/build-mode/SectionWidget.tsx
+ * @see apps/web/src/components/build-mode/SectionWidget.tsx (exports PublishReadyWidget)
  * @see apps/web/src/hooks/useTenantAgentChat.ts
  * @see server/src/agent-v2/deploy/SERVICE_REGISTRY.md
  */
@@ -64,7 +64,7 @@ export function registerAgentSender(sender: MessageSender): () => void {
  * @param message - The message to send
  *
  * @example
- * // From SectionWidget when user clicks "Approve & Continue"
+ * // From PublishReadyWidget when user clicks "Approve & Continue"
  * queueAgentMessage("I approve the professional variant for the hero section");
  */
 export function queueAgentMessage(message: string): void {

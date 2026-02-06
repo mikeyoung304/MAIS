@@ -13,7 +13,9 @@
  */
 
 import type { PrismaClient } from '../generated/prisma/client';
+import type { SectionReadiness } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
+import { computeSectionReadiness } from '../lib/slot-machine';
 import type { SectionContentService } from './section-content.service';
 
 // =============================================================================
@@ -184,6 +186,18 @@ export interface BootstrapData {
     /** Current section ID being refined (if any) */
     currentSectionId: string | null;
   };
+  /**
+   * Per-section readiness computed from known discovery facts.
+   * Used by the agent to know which sections can be built and at what quality.
+   *
+   * @see server/src/lib/slot-machine.ts computeSectionReadiness()
+   */
+  sectionReadiness?: SectionReadiness[];
+  /**
+   * Whether the reveal animation has already been shown.
+   * Frontend uses this to skip coming-soon → reveal transition on return visits.
+   */
+  revealCompleted?: boolean;
 }
 
 // =============================================================================
@@ -329,6 +343,7 @@ export class ContextBuilderService {
         branding: true,
         onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
+        revealCompletedAt: true,
       },
     });
 
@@ -356,13 +371,14 @@ export class ContextBuilderService {
       Math.round((factCount / 10) * 50) + (hasPublished ? 50 : hasDraft ? 25 : 0)
     );
 
-    // Enterprise slot-policy: compute which slots have values
-    // Agent must NOT ask for any of these slots
-    const forbiddenSlots = Object.keys(discoveryFacts).filter(
+    // Enterprise slot-policy: compute which slots have values (single pass)
+    // Used for both forbiddenSlots (agent must NOT re-ask) and section readiness
+    const knownFactKeys = Object.keys(discoveryFacts).filter(
       (key) =>
         discoveryFacts[key as keyof KnownFacts] !== undefined &&
         discoveryFacts[key as keyof KnownFacts] !== null
-    ) as (keyof KnownFacts)[];
+    );
+    const forbiddenSlots = knownFactKeys as (keyof KnownFacts)[];
 
     // Compute onboardingDone from completedAt or phase
     const onboardingDone =
@@ -372,6 +388,9 @@ export class ContextBuilderService {
       { tenantId, factCount, forbiddenSlots, completion },
       '[ContextBuilder] Bootstrap data prepared'
     );
+
+    // Compute per-section readiness from known fact keys
+    const sectionReadiness = computeSectionReadiness(knownFactKeys);
 
     return {
       tenantId: tenant.id,
@@ -386,6 +405,8 @@ export class ContextBuilderService {
         completion,
       },
       forbiddenSlots,
+      sectionReadiness,
+      revealCompleted: tenant.revealCompletedAt !== null,
     };
   }
 

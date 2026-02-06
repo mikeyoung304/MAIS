@@ -20,3 +20,6 @@ export * from './schemas/project-hub.schema';
 export * from './schemas/tier.schema';
 export * from './schemas/section-content.schema';
 export * from './schemas/version-history.schema';
+
+// Section Blueprint (canonical section list for onboarding)
+export * from './schemas/section-blueprint.schema';

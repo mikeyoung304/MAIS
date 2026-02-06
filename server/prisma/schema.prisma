@@ -117,6 +117,7 @@ model Tenant {
   // Phase tracks current state, version enables optimistic locking, completedAt marks finish
   onboardingPhase       OnboardingPhase @default(NOT_STARTED)
   onboardingCompletedAt DateTime? // When onboarding was finished or skipped
+  revealCompletedAt     DateTime? // When the first-draft reveal animation was shown (one-shot guard)
   onboardingVersion     Int             @default(0) // Optimistic locking version counter
 
   // Relations
