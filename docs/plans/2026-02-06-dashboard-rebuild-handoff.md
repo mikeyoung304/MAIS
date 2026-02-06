@@ -258,6 +258,29 @@ Philosophy: Apple closed system. We've got it handled. User just chats.
 ## Branch Info
 
 - **Current branch:** `feat/dashboard-onboarding-rebuild` (created from `main` at `985970a2`)
-- **Working tree:** 8 modified files, UNCOMMITTED — Phase 1 complete, needs commit
-- **Phase 1 status:** ALL 4 TASKS COMPLETE (1.1, 1.2, 1.3, 1.4)
+- **Working tree:** Clean (all committed)
+- **Phase 1 commit:** `a6ff14cb` — API-first preview, chat persistence, strip toolbar, hidden sidebar + defaults
+- **Phase 2 commit:** `42bbb339` — ComingSoonDisplay, RevealTransition, REVEAL_SITE action, comingSoon store slice
 - **Clean typecheck:** Both workspaces pass (`apps/web` + `server`)
+- **Next:** Phase 3 — Agent Intelligence (section-aware discovery, prompt rewrite, slot machine extension)
+
+### What's Done (Phases 1-2)
+
+| Phase   | Tasks                                                                                   | Commit     |
+| ------- | --------------------------------------------------------------------------------------- | ---------- |
+| **1.1** | API-first preview: removed PostMessage blocking, exponential backoff                    | `a6ff14cb` |
+| **1.2** | Chat persistence: hasInitializedRef guard, ConnectionStatus type                        | `a6ff14cb` |
+| **1.3** | Strip toolbar: PreviewPanel 575→307 lines, minimal floating refresh                     | `a6ff14cb` |
+| **1.4** | Hidden sidebar + defaults: ViewState extended, exhaustive switch                        | `a6ff14cb` |
+| **2.1** | ComingSoonDisplay: dark graphite backdrop, shimmer, progress dots, fact labels          | `42bbb339` |
+| **2.2** | RevealTransition: 2.5s desktop sequence, mobile fade-only, reduced-motion, iframe guard | `42bbb339` |
+| **2.3** | REVEAL_SITE: shared contracts type, AgentPanel handler, store piping                    | `42bbb339` |
+
+### What's Next (Phase 3)
+
+Phase 3 is **backend + agent code** — it makes the agent intelligent enough to drive the UI built in Phases 1-2.
+
+1. **3.1** Rewrite tenant agent system prompt — section blueprint, guided review protocol, financial safety, error handling
+2. **3.2** Extend slot machine for section readiness — `SectionReadiness` interface with quality levels
+3. **3.3** Add agent tools — `get_next_incomplete_section`, `mark_section_complete`, `scroll_to_website_section`
+4. **Backend wiring** — `revealCompletedAt` persistence in OnboardingProgress, first-draft tool returns `dashboardAction: { type: 'REVEAL_SITE' }`
