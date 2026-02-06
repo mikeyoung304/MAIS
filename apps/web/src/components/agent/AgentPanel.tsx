@@ -283,6 +283,16 @@ export function AgentPanel({ className }: AgentPanelProps) {
               agentUIActions.showPreview('home');
             }
             break;
+
+          case 'REVEAL_SITE':
+            // One-shot reveal animation — mobile: dismiss drawer first, blur keyboard
+            if (isMobile) {
+              (document.activeElement as HTMLElement)?.blur();
+              setIsMobileOpen(false);
+              await new Promise((r) => setTimeout(r, 300)); // Wait for drawer dismiss
+            }
+            agentUIActions.revealSite();
+            break;
         }
       }
     },
@@ -359,9 +369,20 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
       // Invalidate onboarding state when discovery facts are stored
       // This ensures the stepper UI updates immediately after phase advancement
-      const storedFact = toolCalls.some((call) => call.name === 'store_discovery_fact');
+      const storedFact = toolCalls.find((call) => call.name === 'store_discovery_fact');
       if (storedFact) {
         queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
+
+        // Pipe fact key + slotMetrics to ComingSoonDisplay via agent-ui-store (<200ms update)
+        const factResult = storedFact.result as
+          | {
+              key?: string;
+              slotMetrics?: { filled: number; total: number };
+            }
+          | undefined;
+        if (factResult?.key && factResult?.slotMetrics) {
+          agentUIActions.addDiscoveredFact(factResult.key, factResult.slotMetrics);
+        }
       }
     },
     [queryClient, handleDashboardActions]

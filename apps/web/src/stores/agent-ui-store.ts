@@ -27,6 +27,30 @@ import type { PageName } from '@macon/contracts';
 const MAX_ACTION_LOG_SIZE = 100;
 
 // ============================================
+// COMING SOON - Lightweight fact progress for onboarding display
+// ============================================
+
+/**
+ * Slot metrics from store_discovery_fact tool result.
+ * Tracks how many facts the agent has discovered vs total possible.
+ */
+export interface SlotMetrics {
+  filled: number;
+  total: number;
+}
+
+/**
+ * State for the "Coming Soon" display during onboarding.
+ * Updated in real-time from agent tool results (<200ms, no network round-trip).
+ */
+export interface ComingSoonState {
+  /** Ordered list of discovered fact keys (e.g., ['businessType', 'location']) */
+  discoveredKeys: string[];
+  /** Slot metrics from the slot machine */
+  slotMetrics: SlotMetrics;
+}
+
+// ============================================
 // DISCRIMINATED UNIONS - Eliminate impossible states
 // ============================================
 
@@ -153,6 +177,9 @@ export interface AgentUIState {
   // True when agent tool returns CONCURRENT_MODIFICATION error
   showConflictDialog: boolean;
 
+  // Coming Soon display state (onboarding progress dots)
+  comingSoon: ComingSoonState;
+
   // ========== Actions ==========
 
   /**
@@ -233,6 +260,18 @@ export interface AgentUIState {
    */
   setShowConflictDialog: (show: boolean) => void;
 
+  /**
+   * Add a discovered fact from store_discovery_fact tool result.
+   * Updates progress dots in ComingSoonDisplay within <200ms.
+   */
+  addDiscoveredFact: (key: string, slotMetrics: SlotMetrics) => void;
+
+  /**
+   * Hydrate coming-soon state from onboarding API (page refresh recovery).
+   * Called with knownFactKeys[] from get_known_facts or onboarding state.
+   */
+  hydrateComingSoon: (discoveredKeys: string[], slotMetrics: SlotMetrics) => void;
+
   // ========== Event Sourcing ==========
 
   /**
@@ -293,6 +332,7 @@ export const useAgentUIStore = create<AgentUIState>()(
         actionLog: [],
         tenantId: null,
         showConflictDialog: false,
+        comingSoon: { discoveredKeys: [], slotMetrics: { filled: 0, total: 0 } },
 
         // Initialize with tenant
         initialize: (tenantId) =>
@@ -516,6 +556,23 @@ export const useAgentUIStore = create<AgentUIState>()(
             state.showConflictDialog = show;
           }),
 
+        // Add discovered fact (real-time from agent tool results)
+        addDiscoveredFact: (key, slotMetrics) =>
+          set((state) => {
+            // Deduplicate — a fact key can only appear once
+            if (!state.comingSoon.discoveredKeys.includes(key)) {
+              state.comingSoon.discoveredKeys.push(key);
+            }
+            state.comingSoon.slotMetrics = slotMetrics;
+          }),
+
+        // Hydrate from API (page refresh recovery)
+        hydrateComingSoon: (discoveredKeys, slotMetrics) =>
+          set((state) => {
+            state.comingSoon.discoveredKeys = discoveredKeys;
+            state.comingSoon.slotMetrics = slotMetrics;
+          }),
+
         // Get action log
         getActionLog: () => get().actionLog,
 
@@ -607,6 +664,12 @@ export const agentUIActions = {
   clearError: () => useAgentUIStore.getState().clearError(),
 
   setShowConflictDialog: (show: boolean) => useAgentUIStore.getState().setShowConflictDialog(show),
+
+  addDiscoveredFact: (key: string, slotMetrics: SlotMetrics) =>
+    useAgentUIStore.getState().addDiscoveredFact(key, slotMetrics),
+
+  hydrateComingSoon: (discoveredKeys: string[], slotMetrics: SlotMetrics) =>
+    useAgentUIStore.getState().hydrateComingSoon(discoveredKeys, slotMetrics),
 
   getActionLog: () => useAgentUIStore.getState().getActionLog(),
 

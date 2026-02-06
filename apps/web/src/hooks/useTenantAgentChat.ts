@@ -75,6 +75,8 @@ export interface DashboardAction {
     | 'SHOW_PREVIEW'
     | 'REFRESH'
     | 'REFRESH_PREVIEW'
+    // Reveal animation (onboarding first-draft complete)
+    | 'REVEAL_SITE'
     // Guided Refinement actions
     | 'SHOW_VARIANT_WIDGET'
     | 'SHOW_PUBLISH_READY'

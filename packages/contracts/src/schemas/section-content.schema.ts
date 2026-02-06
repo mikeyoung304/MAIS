@@ -386,6 +386,8 @@ export const DashboardActionSchema = z.object({
     'SCROLL_TO_SECTION',
     'SHOW_PREVIEW',
     'REFRESH',
+    // Onboarding reveal (first draft complete)
+    'REVEAL_SITE',
     // Guided Refinement actions (Phase 5.1)
     'SHOW_VARIANT_WIDGET',
     'SHOW_PUBLISH_READY',

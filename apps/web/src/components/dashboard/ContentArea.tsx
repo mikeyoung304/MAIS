@@ -15,51 +15,19 @@
  */
 
 import { Suspense, lazy } from 'react';
-import { useAgentUIStore } from '@/stores/agent-ui-store';
+import { useAgentUIStore, agentUIActions } from '@/stores/agent-ui-store';
 import { useDraftConfig } from '@/hooks/useDraftConfig';
+import { useAuth } from '@/lib/auth-client';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// Lazy load PreviewPanel to reduce initial bundle size
+// Lazy load PreviewPanel and RevealTransition to reduce initial bundle size
 const PreviewPanel = lazy(() => import('@/components/preview/PreviewPanel'));
+const RevealTransition = lazy(() => import('@/components/preview/RevealTransition'));
 
-// ============================================
-// COMING SOON (Phase 1 stub — full ComingSoonDisplay in Phase 2)
-// ============================================
-
-function ComingSoonStub() {
-  return (
-    <div className="h-full flex items-center justify-center bg-neutral-50 dark:bg-surface">
-      <div className="flex flex-col items-center gap-6 text-center max-w-md p-8">
-        <div className="w-16 h-16 rounded-full bg-sage/10 flex items-center justify-center">
-          <span className="text-2xl">&#10022;</span>
-        </div>
-        <div>
-          <h2 className="text-xl font-serif font-medium text-text-primary mb-2">
-            Your website is being crafted
-          </h2>
-          <p className="text-text-muted">Keep talking — every detail makes it better.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// REVEAL (Phase 1 stub — full RevealTransition in Phase 2)
-// ============================================
-
-function RevealStub() {
-  return (
-    <div className="h-full flex items-center justify-center bg-neutral-50 dark:bg-surface">
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-10 w-10 animate-spin text-sage" />
-        <span className="text-sm text-text-muted font-medium">Building your site...</span>
-      </div>
-    </div>
-  );
-}
+// Eager import for ComingSoonDisplay (lightweight, shown immediately during onboarding)
+import { ComingSoonDisplay } from '@/components/preview/ComingSoonDisplay';
 
 // ============================================
 // LOADING STATE
@@ -145,6 +113,7 @@ interface ContentAreaProps {
 export function ContentArea({ children, className }: ContentAreaProps) {
   const view = useAgentUIStore((state) => state.view);
   const { config, invalidate, isLoading, error: draftError, refetch } = useDraftConfig();
+  const { slug } = useAuth();
 
   // Check for draft config errors first (auth failures, server errors)
   // This prevents the silent "DEFAULT config in preview" bug
@@ -161,14 +130,20 @@ export function ContentArea({ children, className }: ContentAreaProps) {
     case 'coming_soon':
       return (
         <div className={cn('h-full', className)} data-testid="content-area-coming-soon">
-          <ComingSoonStub />
+          <ComingSoonDisplay />
         </div>
       );
 
     case 'revealing':
       return (
         <div className={cn('h-full', className)} data-testid="content-area-revealing">
-          <RevealStub />
+          <Suspense fallback={<LoadingView />}>
+            <RevealTransition
+              slug={slug}
+              draftConfig={config}
+              onComplete={() => agentUIActions.showPreview()}
+            />
+          </Suspense>
         </div>
       );
 
