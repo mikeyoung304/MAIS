@@ -93,13 +93,12 @@ export const getPublishedSections = cache(async (slug: string): Promise<SectionC
  */
 export const getPreviewSections = cache(
   async (slug: string, token: string): Promise<SectionContentDto[]> => {
-    const url = `${API_URL}/v1/public/tenants/${encodeURIComponent(slug)}/sections/preview`;
+    const url = `${API_URL}/v1/public/tenants/${encodeURIComponent(slug)}/sections/preview?token=${encodeURIComponent(token)}`;
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
       },
       // No caching for preview
       cache: 'no-store',

@@ -106,17 +106,17 @@ No user approval needed for first draft — just build and announce.`,
       };
     }
 
+    // API returns flat sections array, not nested pages
+    // See: server/src/routes/internal-agent.routes.ts /storefront/structure
     const structureData = structureResult.data as {
-      pages: Array<{
-        pageName: string;
-        enabled: boolean;
-        sections: Array<{
-          id: string;
-          type: string;
-          headline?: string;
-          isPlaceholder?: boolean;
-        }>;
+      sections: Array<{
+        id: string;
+        page: string;
+        type: string;
+        headline: string;
+        hasPlaceholder: boolean;
       }>;
+      totalCount: number;
       hasDraft: boolean;
     };
 
@@ -126,15 +126,9 @@ No user approval needed for first draft — just build and announce.`,
       factKeys: string[];
     };
 
-    // 3. Collect all placeholder sections across all pages
-    const allSections = structureData.pages.flatMap((page) =>
-      page.sections.map((section) => ({
-        ...section,
-        pageName: page.pageName,
-      }))
-    );
-
-    const placeholderSections = allSections.filter((s) => s.isPlaceholder);
+    // 3. Collect placeholder sections from flat array
+    const allSections = structureData.sections ?? [];
+    const placeholderSections = allSections.filter((s) => s.hasPlaceholder);
 
     if (placeholderSections.length === 0) {
       return {
@@ -150,8 +144,8 @@ No user approval needed for first draft — just build and announce.`,
     const sectionsToUpdate = placeholderSections.map((s) => ({
       sectionId: s.id,
       sectionType: s.type,
-      pageName: s.pageName,
-      currentHeadline: s.headline ?? '(no headline)',
+      pageName: s.page,
+      currentHeadline: s.headline || '(no headline)',
     }));
 
     logger.info(
