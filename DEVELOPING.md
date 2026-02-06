@@ -348,7 +348,7 @@ cd server && npm exec prisma migrate status
 # server/.env
 ADAPTERS_PRESET=mock # or real
 API_PORT=3001
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:3000
 
 # Security (REQUIRED for real mode)
 JWT_SECRET=change-me  # Generate: openssl rand -hex 32
@@ -365,8 +365,8 @@ DIRECT_URL=postgresql://username:password@localhost:5432/mais_dev  # For prisma 
 # Real mode - Stripe (✅ IMPLEMENTED)
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
-STRIPE_SUCCESS_URL=http://localhost:5173/success
-STRIPE_CANCEL_URL=http://localhost:5173
+STRIPE_SUCCESS_URL=http://localhost:3000/success
+STRIPE_CANCEL_URL=http://localhost:3000
 
 # Real mode - Email (✅ IMPLEMENTED with file-sink fallback)
 POSTMARK_SERVER_TOKEN=...          # Optional: falls back to file-sink

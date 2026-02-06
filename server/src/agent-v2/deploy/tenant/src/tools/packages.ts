@@ -25,7 +25,7 @@ import { logger, callMaisApi, getTenantId } from '../utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema for Package Management
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTE: ADK doesn't support z.discriminatedUnion (pitfall #34), so we use a
+// NOTE: ADK doesn't support z.discriminatedUnion (pitfall #30), so we use a
 // flat object with optional fields and validate action-specific requirements
 // at runtime in the execute function.
 
@@ -117,7 +117,7 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
 
   execute: async (params, context: ToolContext | undefined) => {
     // -------------------------------------------------------------------------
-    // 1. Validate parameters (pitfall #62, #70)
+    // 1. Validate parameters (pitfall #56)
     // -------------------------------------------------------------------------
     const parseResult = ManagePackagesParams.safeParse(params);
     if (!parseResult.success) {
@@ -131,7 +131,7 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
     const validParams = parseResult.data;
 
     // -------------------------------------------------------------------------
-    // 2. Extract tenant ID (pitfall #60, #61)
+    // 2. Extract tenant ID (pitfall #54, #55)
     // -------------------------------------------------------------------------
     const tenantId = getTenantId(context);
     if (!tenantId) {
@@ -302,7 +302,7 @@ async function handleCreatePackage(
     totalCount: number;
   };
 
-  // Return full state for verification (pitfall #52)
+  // Return full state for verification (pitfall #48)
   return {
     success: true,
     created: true,
@@ -366,7 +366,7 @@ async function handleUpdatePackage(
     totalCount: number;
   };
 
-  // Return updated state for verification (pitfall #52)
+  // Return updated state for verification (pitfall #48)
   return {
     success: true,
     updated: true,

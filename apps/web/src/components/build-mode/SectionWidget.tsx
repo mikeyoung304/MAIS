@@ -91,7 +91,7 @@ export function SectionWidget({
   const error = useRefinementStore(selectError);
 
   // Use useShallow to prevent re-renders when object reference changes but values are the same
-  // See: Pitfall #96 - Zustand selector new object re-renders
+  // See: Pitfall #87 - Zustand selector new object re-renders
   const progress = useRefinementStore(
     useShallow((state: RefinementState) => ({
       completed: state.completedSections.length,

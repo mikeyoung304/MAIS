@@ -7,7 +7,7 @@
  * - Rollback files exist (use forward migrations instead)
  *
  * @see docs/solutions/database-issues/MIGRATION_ROLLBACK_ANTIPATTERN.md
- * @see CLAUDE.md pitfall #59
+ * @see CLAUDE.md pitfall #53
  */
 import { readdirSync } from 'fs';
 import { join, dirname } from 'path';

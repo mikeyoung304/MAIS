@@ -355,7 +355,7 @@ export class BookingService {
    * - Queries ALL bookings from real (non-test) tenants
    * - Includes tenant name/slug for display
    * - Includes package name for display
-   * - Enforces pagination (Pitfall #67: unbounded queries)
+   * - Enforces pagination (Pitfall #60: unbounded queries)
    * - Returns hasMore indicator for infinite scroll
    *
    * SECURITY: This method is only for PLATFORM_ADMIN role - authorization
@@ -395,7 +395,7 @@ export class BookingService {
       throw new Error('Prisma client required for platform-wide booking queries');
     }
 
-    // Enforce pagination limits (Pitfall #67)
+    // Enforce pagination limits (Pitfall #60)
     const MAX_LIMIT = 100;
     const DEFAULT_LIMIT = 50;
     const limit = Math.min(options?.limit || DEFAULT_LIMIT, MAX_LIMIT);

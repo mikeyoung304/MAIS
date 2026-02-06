@@ -67,12 +67,14 @@ const iconMap: Record<string, LucideIcon> = {
 export function FeaturesSection({
   headline,
   subheadline,
-  features,
+  features = [],
   columns = 3,
   backgroundColor = 'white',
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: FeaturesSectionProps) {
+  if (features.length === 0) return null;
+
   const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
   const gridCols = {
     2: 'md:grid-cols-2',

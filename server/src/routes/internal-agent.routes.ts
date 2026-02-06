@@ -72,6 +72,7 @@ import type { SectionContentService } from '../services/section-content.service'
 // NOTE: createPublishedWrapper import removed - agent routes now delegate to repository methods
 // which handle the wrapper format internally. See: CODE_PATH_DRIFT_PREVENTION.md
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
+import { computeSlotMachine, computeCurrentPhase, PHASE_ORDER } from '../lib/slot-machine';
 
 // =============================================================================
 // Request Schemas
@@ -610,6 +611,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     value: z.unknown(),
   });
 
+  // Phase computation and slot machine imported from ../lib/slot-machine.ts
+
   router.post('/store-discovery-fact', async (req: Request, res: Response) => {
     try {
       const { tenantId, key, value } = StoreDiscoveryFactSchema.parse(req.body);
@@ -637,17 +640,38 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
         branding: { ...branding, discoveryFacts },
       });
 
+      // Run slot machine to compute phase + next action
+      const knownFactKeys = Object.keys(discoveryFacts);
+      const previousPhase = (tenant.onboardingPhase as string) || 'NOT_STARTED';
+      const slotResult = computeSlotMachine(knownFactKeys, previousPhase);
+
+      // Advance phase if needed (monotonic — never moves backward)
+      if (slotResult.phaseAdvanced) {
+        await tenantRepo.update(tenantId, {
+          onboardingPhase: slotResult.currentPhase,
+        });
+        logger.info(
+          { tenantId, from: previousPhase, to: slotResult.currentPhase },
+          '[Agent] Onboarding phase advanced'
+        );
+      }
+
       // Invalidate bootstrap cache so next request gets updated facts
       invalidateBootstrapCache(tenantId);
 
-      // Return updated facts list so agent knows what it knows
-      const knownFactKeys = Object.keys(discoveryFacts);
+      // Return facts + slot machine result so agent knows what to do next
       res.json({
         stored: true,
         key,
         value,
         totalFactsKnown: knownFactKeys.length,
         knownFactKeys,
+        currentPhase: slotResult.currentPhase,
+        phaseAdvanced: slotResult.phaseAdvanced,
+        nextAction: slotResult.nextAction,
+        readySections: slotResult.readySections,
+        missingForNext: slotResult.missingForNext,
+        slotMetrics: slotResult.slotMetrics,
         message: `Stored ${key} successfully. Now know: ${knownFactKeys.join(', ')}`,
       });
     } catch (error) {

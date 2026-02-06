@@ -28,7 +28,7 @@ import { logger } from '../lib/core/logger';
 import { cloudRunAuth } from './cloud-run-auth.service';
 
 // =============================================================================
-// ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
+// ADK RESPONSE SCHEMAS (Pitfall #56: Runtime validation for external APIs)
 // =============================================================================
 
 /**
@@ -91,12 +91,12 @@ const AdkRunResponseSchema = z.union([
 type AdkRunResponse = z.infer<typeof AdkRunResponseSchema>;
 
 // =============================================================================
-// FETCH WITH TIMEOUT (Pitfall #46: All fetch calls need timeout)
+// FETCH WITH TIMEOUT (Pitfall #42: All fetch calls need timeout)
 // =============================================================================
 
 /**
  * Fetch with timeout for ADK agent calls.
- * Per CLAUDE.md Pitfall #46: agent calls use 30s timeout.
+ * Per CLAUDE.md Pitfall #42: agent calls use 30s timeout.
  */
 async function fetchWithTimeout(
   url: string,
@@ -119,7 +119,7 @@ async function fetchWithTimeout(
 /**
  * Get Customer Agent URL from environment.
  * Phase 4 Update: Now uses CUSTOMER_AGENT_URL (unified customer-agent).
- * Throws clear error if not configured (Pitfall #45: fail-fast on missing config).
+ * Throws clear error if not configured (Pitfall #41: fail-fast on missing config).
  */
 function getCustomerAgentUrl(): string {
   const url = process.env.CUSTOMER_AGENT_URL;
@@ -214,7 +214,7 @@ export class ProjectHubAgentService {
         throw new Error(`Session creation failed: ${response.status}`);
       }
 
-      // Validate response with Zod (Pitfall #62)
+      // Validate response with Zod (Pitfall #56)
       const rawResponse = await response.json();
       const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
       if (!parseResult.success) {
@@ -301,7 +301,7 @@ export class ProjectHubAgentService {
           ...(token && { Authorization: `Bearer ${token}` }),
           ...(requestId && { 'X-Request-ID': requestId }),
         },
-        // ADK uses camelCase for A2A protocol (Pitfall #32)
+        // ADK uses camelCase for A2A protocol (Pitfall #28)
         // Note: /run does NOT accept state - state must be set on session creation
         body: JSON.stringify({
           appName: 'agent', // Project Hub agent's ADK app name
@@ -342,7 +342,7 @@ export class ProjectHubAgentService {
         };
       }
 
-      // Validate response with Zod (Pitfall #62)
+      // Validate response with Zod (Pitfall #56)
       const rawData = await response.json();
       const parseResult = AdkRunResponseSchema.safeParse(rawData);
       if (!parseResult.success) {

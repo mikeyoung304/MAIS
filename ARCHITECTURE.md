@@ -17,10 +17,9 @@
 
 **Test Coverage:**
 
-- 771 server tests passing (100%)
-- 114 E2E tests (22 passing post-migration)
+- Comprehensive server test suite (run `npm test` to verify)
+- E2E tests with Playwright for tenant storefronts, booking flow
 - Test infrastructure: Retry helpers with exponential backoff
-- Next.js E2E: Playwright tests for tenant storefronts, booking flow
 
 **Security Posture:**
 
@@ -320,19 +319,12 @@ Each agent owns its tools directly and executes without an orchestrator layer:
 | Agent              | Cloud Run Service | Tools | Purpose                                                         | Entry            |
 | ------------------ | ----------------- | ----- | --------------------------------------------------------------- | ---------------- |
 | **customer-agent** | `customer-agent`  | 13    | Service discovery, booking, project hub (customer view)         | Customer portal  |
-| **tenant-agent**   | `tenant-agent`    | 24    | Storefront editing, marketing, project management (tenant view) | Tenant dashboard |
+| **tenant-agent**   | `tenant-agent`    | 34    | Storefront editing, marketing, project management (tenant view) | Tenant dashboard |
 | **research-agent** | `research-agent`  | --    | Web research                                                    | Via other agents |
 
 Previously archived agents (concierge, marketing, storefront, booking, project-hub) are available in git history.
 
 ### Key Patterns
-
-**Dual-Context Agents:**
-
-- Customer-agent and tenant-agent serve different user types
-- `contextType` parameter controls tool access
-- `requireContext()` guards as FIRST LINE in tool execute functions
-- Never trust user input for context determination
 
 **Trust Tiers:**
 
@@ -351,7 +343,7 @@ Previously archived agents (concierge, marketing, storefront, booking, project-h
 
 - Agents: `server/src/agent-v2/deploy/{customer,tenant,research}/src/agent.ts`
 - Patterns: `docs/solutions/patterns/ADK_*_PREVENTION_INDEX.md`
-- ADR: `docs/adrs/ADR-020-three-agent-consolidation.md` (supersedes ADR-018)
+- ADR: `docs/adrs/ADR-020-unified-agent-architecture.md` (supersedes ADR-018, ADR-019)
 
 **See Also:** CLAUDE.md "ADK/A2A Pitfalls" section for common issues and prevention.
 

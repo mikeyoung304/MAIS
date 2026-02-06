@@ -17,7 +17,7 @@
  *   - GET /onboarding-state - Get onboarding phase and context
  *   - POST /skip-onboarding - Skip the onboarding flow
  *
- * CRITICAL: Session creation injects forbiddenSlots (Pitfall #91 fix)
+ * CRITICAL: Session creation injects forbiddenSlots (Pitfall #83 fix)
  * Context is injected at session start, not inferred from conversation.
  *
  * @see docs/solutions/patterns/SLOT_POLICY_CONTEXT_INJECTION_PATTERN.md

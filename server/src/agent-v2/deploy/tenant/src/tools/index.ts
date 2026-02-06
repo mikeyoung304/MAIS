@@ -146,3 +146,13 @@ export {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { delegateToResearchTool } from './research.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// First Draft Tool (T2) - Onboarding Ecosystem Rebuild Phase 5
+// ─────────────────────────────────────────────────────────────────────────────
+// Orchestrator tool that identifies placeholder sections ready for content
+// generation. Called when slot machine returns nextAction: 'BUILD_FIRST_DRAFT'.
+//
+// @see docs/plans/2026-02-05-feat-onboarding-ecosystem-rebuild-plan.md (Phase 5)
+
+export { buildFirstDraftTool } from './first-draft.js';

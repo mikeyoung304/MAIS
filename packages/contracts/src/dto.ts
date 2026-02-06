@@ -221,7 +221,7 @@ export const PlatformBookingDtoSchema = BookingDtoSchema.extend({
 
 export type PlatformBookingDto = z.infer<typeof PlatformBookingDtoSchema>;
 
-// Paginated response for platform bookings (Pitfall #67: unbounded queries)
+// Paginated response for platform bookings (Pitfall #60: unbounded queries)
 export const PlatformBookingsResponseSchema = z.object({
   bookings: z.array(PlatformBookingDtoSchema),
   hasMore: z.boolean(),

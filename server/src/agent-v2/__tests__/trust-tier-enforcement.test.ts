@@ -9,9 +9,9 @@
  * - T3: Hard confirm - cancellations, refunds, deletes with existing bookings
  *
  * Key Security Requirements:
- * - T3 tools MUST have `confirmationReceived` parameter (CLAUDE.md pitfall #49)
- * - Enforcement must be programmatic, not prompt-only (CLAUDE.md pitfall #60)
- * - Context type must come from session state, not user input (CLAUDE.md pitfall #61)
+ * - T3 tools MUST have `confirmationReceived` parameter (CLAUDE.md pitfall #45)
+ * - Enforcement must be programmatic, not prompt-only (CLAUDE.md pitfall #54)
+ * - Context type must come from session state, not user input (CLAUDE.md pitfall #55)
  *
  * @see CLAUDE.md pitfalls #49, #60, #61
  * @see docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md
@@ -104,7 +104,7 @@ const UpdateBrandingSchema = z.object({
  * T3 Tool Schema - Hard confirmation REQUIRED
  * CRITICAL: confirmationReceived is NOT optional for T3 tools
  *
- * @see CLAUDE.md pitfall #49 - T3 without confirmation param
+ * @see CLAUDE.md pitfall #45 - T3 without confirmation param
  */
 const CancelBookingSchema = z.object({
   tenantId: z.string().describe('The tenant ID'),
@@ -353,7 +353,7 @@ describe('T3 Enforcement Patterns', () => {
 // DUAL-CONTEXT SECURITY TESTS
 // =============================================================================
 
-describe('Dual-Context Security (CLAUDE.md pitfall #60, #61)', () => {
+describe('Dual-Context Security (CLAUDE.md pitfall #54, #55)', () => {
   /**
    * Context types for dual-context agents
    */

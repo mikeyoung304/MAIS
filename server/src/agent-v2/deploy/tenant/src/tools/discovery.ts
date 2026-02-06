@@ -8,7 +8,7 @@
  * Ported from archived concierge agent during Phase 4 migration.
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
- * @see CLAUDE.md pitfall #53 (discovery facts dual-source)
+ * @see CLAUDE.md pitfall #49 (discovery facts dual-source)
  */
 
 import { FunctionTool, type ToolContext } from '@google/adk';
@@ -83,7 +83,7 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
   }),
 
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #62, #70)
+    // Validate params (pitfall #56)
     const parseResult = z
       .object({
         key: z.enum(DISCOVERY_FACT_KEYS),
@@ -123,13 +123,19 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
       };
     }
 
-    // Return updated facts list so agent knows what it knows mid-conversation
+    // Return updated facts list + slot machine result so agent knows what to do next
     const responseData = result.data as {
       stored: boolean;
       key: string;
       value: unknown;
       totalFactsKnown: number;
       knownFactKeys: string[];
+      currentPhase: string;
+      phaseAdvanced: boolean;
+      nextAction: string;
+      readySections: string[];
+      missingForNext: Array<{ key: string; question: string }>;
+      slotMetrics: { filled: number; total: number; utilization: number };
       message: string;
     };
 
@@ -139,10 +145,14 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
       value,
       totalFactsKnown: responseData.totalFactsKnown,
       knownFactKeys: responseData.knownFactKeys,
+      // Slot machine results — agent follows nextAction deterministically
+      currentPhase: responseData.currentPhase,
+      phaseAdvanced: responseData.phaseAdvanced,
+      nextAction: responseData.nextAction,
+      readySections: responseData.readySections,
+      missingForNext: responseData.missingForNext,
+      slotMetrics: responseData.slotMetrics,
       message: `Got it! I now know: ${responseData.knownFactKeys.join(', ')}`,
-      // Remind agent to apply to storefront
-      nextStep:
-        'If this fact relates to storefront content (headline, about, etc.), call update_section to apply it.',
     };
   },
 });

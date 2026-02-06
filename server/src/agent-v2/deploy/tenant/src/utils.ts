@@ -23,7 +23,7 @@ import type { ToolContext } from '@google/adk';
 
 /**
  * Require an environment variable, throwing if not set.
- * Addresses pitfall #45: Empty secret fallback masks misconfiguration.
+ * Addresses pitfall #41: Empty secret fallback masks misconfiguration.
  */
 export function requireEnv(name: string): string {
   const value = process.env[name];
@@ -47,7 +47,7 @@ if (
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Timeout Configuration (per pitfall #46)
+// Timeout Configuration (per pitfall #42)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const TIMEOUTS = {
@@ -91,7 +91,7 @@ export const logger = {
 
 /**
  * Fetch with timeout using AbortController.
- * Addresses pitfall #46: No fetch timeouts.
+ * Addresses pitfall #42: No fetch timeouts.
  */
 export async function fetchWithTimeout(
   url: string,
@@ -292,7 +292,7 @@ export function getTenantId(context: ToolContext | undefined): string | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TTL Cache (addresses pitfall #50)
+// TTL Cache (addresses pitfall #46)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CacheEntry<T> {
@@ -303,7 +303,7 @@ interface CacheEntry<T> {
 /**
  * TTL Cache with size limits and periodic cleanup.
  *
- * Addresses pitfall #50: Module-level cache unbounded.
+ * Addresses pitfall #46: Module-level cache unbounded.
  * Entries are evicted:
  * 1. On access if expired (passive cleanup)
  * 2. When size limit reached (LRU-style: oldest entry evicted)

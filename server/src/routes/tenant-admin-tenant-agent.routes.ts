@@ -18,7 +18,7 @@
  * - GET /onboarding-state - Get onboarding phase and context
  * - POST /skip-onboarding - Skip the onboarding flow
  *
- * CRITICAL: Session creation injects forbiddenSlots to fix Pitfall #91
+ * CRITICAL: Session creation injects forbiddenSlots to fix Pitfall #83
  * (Agent asking known questions). Context is injected at session start,
  * not inferred from conversation.
  *
@@ -40,7 +40,7 @@ import { cloudRunAuth } from '../services/cloud-run-auth.service';
 
 /**
  * Get the Tenant Agent Cloud Run URL.
- * Uses environment variable - no hardcoded fallbacks per Pitfall #38.
+ * Uses environment variable - no hardcoded fallbacks per Pitfall #34.
  */
 function getTenantAgentUrl(): string {
   const envUrl = process.env.TENANT_AGENT_URL;
@@ -54,7 +54,7 @@ function getTenantAgentUrl(): string {
 }
 
 // =============================================================================
-// REQUEST/RESPONSE SCHEMAS (Pitfall #62: Zod validation for runtime data)
+// REQUEST/RESPONSE SCHEMAS (Pitfall #56: Zod validation for runtime data)
 // =============================================================================
 
 const SendMessageSchema = z.object({
@@ -106,7 +106,7 @@ const AdkSessionDataSchema = z.object({
 
 /**
  * ADK A2A protocol response format.
- * Must handle both array and object formats (Pitfall #39).
+ * Must handle both array and object formats (Pitfall #35).
  */
 const AdkResponseSchema = z.array(
   z.object({
@@ -155,7 +155,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // ===========================================================================
   // POST /session - Create a new ADK session with bootstrap context
   // ===========================================================================
-  // This is the P0 fix for Pitfall #91 (Agent asking known questions).
+  // This is the P0 fix for Pitfall #83 (Agent asking known questions).
   // Context is injected at session creation, not inferred from conversation.
   // ===========================================================================
 
@@ -208,7 +208,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         slug: bootstrap?.slug ?? null,
         // Known facts (agent must NOT ask about these)
         knownFacts: bootstrap?.discoveryFacts ?? {},
-        // Forbidden slots - enterprise slot-policy (Pitfall #91 fix)
+        // Forbidden slots - enterprise slot-policy (Pitfall #83 fix)
         // Agent checks slot keys, not phrase matching
         forbiddenSlots: bootstrap?.forbiddenSlots ?? [],
         // Storefront state summary
@@ -223,7 +223,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const agentUrl = getTenantAgentUrl();
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout per Pitfall #46
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout per Pitfall #42
 
       let response: globalThis.Response;
       try {
@@ -260,7 +260,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         return;
       }
 
-      // Validate ADK response with Zod (Pitfall #62)
+      // Validate ADK response with Zod (Pitfall #56)
       const rawResponse = await response.json();
       const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
       if (!parseResult.success) {
@@ -350,7 +350,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 
       const rawSessionData = await response.json();
 
-      // Validate ADK response with Zod (Pitfall #62)
+      // Validate ADK response with Zod (Pitfall #56)
       const sessionParseResult = AdkSessionDataSchema.safeParse(rawSessionData);
       if (!sessionParseResult.success) {
         logger.error(
@@ -449,7 +449,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       if (!sessionId) {
         // =========================================================================
         // FIX: Create proper ADK session with bootstrap context
-        // Previously used fake ID: `tenant-${tenantId}-${Date.now()}` (Pitfall #85)
+        // Previously used fake ID: `tenant-${tenantId}-${Date.now()}` (Pitfall #77)
         // =========================================================================
 
         // Step 1: Fetch bootstrap data
@@ -531,7 +531,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       logger.debug({ agentUrl, sessionId }, '[TenantAgent] Calling Tenant Agent');
 
       // =========================================================================
-      // P0 FIX (Pitfall #91): Inject context directly into message
+      // P0 FIX (Pitfall #83): Inject context directly into message
       // The LLM doesn't automatically see session state - we must prefix the
       // first message with forbiddenSlots so the agent knows what NOT to ask.
       // =========================================================================
@@ -566,7 +566,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
             ...(token && { Authorization: `Bearer ${token}` }),
           },
           body: JSON.stringify({
-            // A2A protocol format (Pitfall #32 - must use camelCase)
+            // A2A protocol format (Pitfall #28 - must use camelCase)
             appName: 'agent',
             userId,
             sessionId,
@@ -599,7 +599,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         return;
       }
 
-      // Parse ADK response (Pitfall #39 - handle array format)
+      // Parse ADK response (Pitfall #35 - handle array format)
       const rawData = await response.json();
       const parseResult = AdkResponseSchema.safeParse(rawData);
       if (!parseResult.success) {
@@ -909,7 +909,7 @@ function extractMessagesFromEvents(
 /**
  * Build a context prefix to inject into the first message.
  *
- * This is the P0 fix for Pitfall #91 (Agent asking known questions).
+ * This is the P0 fix for Pitfall #83 (Agent asking known questions).
  * The LLM doesn't automatically see session state, so we inject
  * forbiddenSlots directly into the message.
  *

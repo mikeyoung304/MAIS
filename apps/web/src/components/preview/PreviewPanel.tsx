@@ -284,6 +284,9 @@ export function PreviewPanel({
     iframeReadyTimeoutRef.current = setTimeout(() => {
       if (!isIframeReady) {
         setIsLoading(false);
+        setError(
+          'Preview failed to connect. This usually means the storefront had a rendering error.'
+        );
       }
     }, BUILD_MODE_CONFIG.timing.iframeReadyTimeout);
   }, [isIframeReady]);

@@ -33,7 +33,7 @@ import { createContextBuilderService, type BootstrapData } from './context-build
 import { cloudRunAuth } from './cloud-run-auth.service';
 
 // =============================================================================
-// ADK RESPONSE SCHEMAS (Pitfall #62: Runtime validation for external APIs)
+// ADK RESPONSE SCHEMAS (Pitfall #56: Runtime validation for external APIs)
 // =============================================================================
 
 /**
@@ -106,7 +106,7 @@ type AdkRunResponse = z.infer<typeof AdkRunResponseSchema>;
 
 /**
  * Fetch with timeout for ADK agent calls.
- * Per CLAUDE.md Pitfall #46: agent calls use 30s timeout.
+ * Per CLAUDE.md Pitfall #42: agent calls use 30s timeout.
  */
 async function fetchWithTimeout(
   url: string,
@@ -128,7 +128,7 @@ async function fetchWithTimeout(
 
 /**
  * Get required environment variable, throwing clear error if missing.
- * Validation deferred to first access to avoid breaking test imports (CLAUDE.md pitfall #38, #45).
+ * Validation deferred to first access to avoid breaking test imports (CLAUDE.md pitfall #34, #41).
  */
 function getRequiredEnv(name: string): string {
   const value = process.env[name];
@@ -304,7 +304,7 @@ export class VertexAgentService {
         throw new Error(`ADK session creation failed: ${response.status}`);
       }
 
-      // Validate ADK response with Zod (Pitfall #62)
+      // Validate ADK response with Zod (Pitfall #56)
       const rawResponse = await response.json();
       const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
       if (!parseResult.success) {
@@ -586,7 +586,7 @@ export class VertexAgentService {
       }
 
       // ADK returns an array of events, not an object
-      // Validate with Zod (Pitfall #62)
+      // Validate with Zod (Pitfall #56)
       const rawData = await response.json();
       const parseResult = AdkRunResponseSchema.safeParse(rawData);
       if (!parseResult.success) {
@@ -750,7 +750,7 @@ export class VertexAgentService {
       };
     }
 
-    // Validate with Zod (Pitfall #62)
+    // Validate with Zod (Pitfall #56)
     const rawData = await response.json();
     const parseResult = AdkRunResponseSchema.safeParse(rawData);
     if (!parseResult.success) {
@@ -933,7 +933,7 @@ export class VertexAgentService {
         return null;
       }
 
-      // Validate ADK response with Zod (Pitfall #62)
+      // Validate ADK response with Zod (Pitfall #56)
       const rawResponse = await response.json();
       const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
       if (!parseResult.success) {
@@ -965,7 +965,7 @@ export class VertexAgentService {
   /**
    * Extract the text response from A2A response format.
    * ADK returns an array of events: [{ content: { role, parts } }, ...]
-   * Data is pre-validated by AdkRunResponseSchema (Pitfall #62)
+   * Data is pre-validated by AdkRunResponseSchema (Pitfall #56)
    */
   private extractAgentResponse(data: AdkRunResponse): string {
     // ADK format: [{ content: { role: 'model', parts: [{ text: '...' }] } }]
@@ -1002,7 +1002,7 @@ export class VertexAgentService {
   /**
    * Extract tool calls from A2A response format.
    * ADK returns an array of events: [{ content: { parts: [{ functionCall }] } }, ...]
-   * Data is pre-validated by AdkRunResponseSchema (Pitfall #62)
+   * Data is pre-validated by AdkRunResponseSchema (Pitfall #56)
    */
   private extractToolCalls(
     data: AdkRunResponse

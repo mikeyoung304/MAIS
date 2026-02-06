@@ -132,7 +132,7 @@ export class SessionRepository {
     limit: number = 100,
     offset: number = 0
   ): Promise<{ messages: SessionMessage[]; total: number; hasMore: boolean }> {
-    // Enforce max page size (Pitfall #67)
+    // Enforce max page size (Pitfall #60)
     const safeLimit = Math.min(limit, 100);
 
     const [messages, total] = await Promise.all([
@@ -222,7 +222,7 @@ export class SessionRepository {
     input: CreateMessageInput,
     expectedVersion: number
   ): Promise<{ success: boolean; message?: SessionMessage; error?: string; newVersion?: number }> {
-    // Validate input (Pitfall #70)
+    // Validate input (Pitfall #56)
     const parsed = CreateMessageInputSchema.safeParse(input);
     if (!parsed.success) {
       return { success: false, error: `Invalid message: ${parsed.error.message}` };

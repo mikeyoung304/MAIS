@@ -75,7 +75,7 @@ Use this when:
 This is a T1 tool - executes immediately.`,
   parameters: NavigateToDashboardSectionParams,
   execute: async (params) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = NavigateToDashboardSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {

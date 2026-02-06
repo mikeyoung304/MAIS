@@ -11,7 +11,7 @@
  * - Seamless transition from browsing to post-booking
  *
  * Benefits over multi-agent approach:
- * - No context loss during delegation (pitfall #90)
+ * - No context loss during delegation (pitfall #82)
  * - Faster responses (no inter-agent latency)
  * - Simpler maintenance (1 codebase vs 2)
  * - Single customer experience across journey

@@ -69,7 +69,7 @@ export const getServicesTool = new FunctionTool({
     'Get all available services for this business. Returns service names, descriptions, prices, and durations.',
   parameters: GetServicesParams,
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = GetServicesParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -99,7 +99,7 @@ export const getServiceDetailsTool = new FunctionTool({
     'Get detailed information about a specific service including full description and pricing.',
   parameters: GetServiceDetailsParams,
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = GetServiceDetailsParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -132,7 +132,7 @@ export const checkAvailabilityTool = new FunctionTool({
     'Check available time slots for a service within a date range. Returns a list of available and unavailable slots.',
   parameters: CheckAvailabilityParams,
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = CheckAvailabilityParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -190,7 +190,7 @@ export const answerFaqTool = new FunctionTool({
     'Look up an answer in the business FAQ database. Returns the answer and confidence level.',
   parameters: AnswerFaqParams,
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = AnswerFaqParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -224,7 +224,7 @@ export const recommendPackageTool = new FunctionTool({
     'Recommend services based on customer preferences like budget, occasion, and group size.',
   parameters: RecommendPackageParams,
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = RecommendPackageParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
@@ -262,13 +262,13 @@ export const createBookingTool = new FunctionTool({
     'Create a new booking for a service. T3 ACTION: Always show booking details and get explicit customer confirmation before calling. Requires confirmationReceived: true.',
   parameters: CreateBookingParams,
   execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #62)
+    // P1 Security: Validate params FIRST (Pitfall #56)
     const parsed = CreateBookingParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
     }
 
-    // T3 confirmation check (Pitfall #49)
+    // T3 confirmation check (Pitfall #45)
     if (!parsed.data.confirmationReceived) {
       return {
         requiresConfirmation: true,
@@ -296,7 +296,7 @@ export const createBookingTool = new FunctionTool({
       return { success: false, error: result.error };
     }
 
-    // Return state for agent context (Pitfall #52)
+    // Return state for agent context (Pitfall #48)
     return {
       success: true,
       ...(result.data as object),

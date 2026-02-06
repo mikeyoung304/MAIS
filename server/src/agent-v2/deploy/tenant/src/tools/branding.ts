@@ -62,7 +62,7 @@ Color format: hex with # (e.g., "#1a365d", "#ffffff")
 This is a T2 tool - executes and shows result.`,
   parameters: UpdateBrandingParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = UpdateBrandingParams.safeParse(params);
     if (!parseResult.success) {
       return {

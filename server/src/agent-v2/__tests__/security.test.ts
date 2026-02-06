@@ -11,7 +11,7 @@
  * 4. INJECTION_PATTERNS - Pattern coverage regression tests
  *
  * @see docs/solutions/patterns/AGENT_TOOLS_PREVENTION_INDEX.md
- * @see CLAUDE.md Pitfall #70 - Zod safeParse in agent tools
+ * @see CLAUDE.md Pitfall #56 - Zod safeParse in agent tools
  */
 
 import { describe, it, expect } from 'vitest';

@@ -17,7 +17,7 @@
  * IMPORTANT: INTENTIONAL EXCEPTION TO PITFALL #47
  * ============================================================================
  * These tools return INSTRUCTIONS for the LLM, not concrete results.
- * This violates Pitfall #47 ("Tools return instructions") but is an APPROVED
+ * This violates Pitfall #43 ("Tools return instructions") but is an APPROVED
  * architectural exception because:
  *
  * 1. The agent already runs on Vertex AI with Gemini access - calling the
@@ -259,7 +259,7 @@ Tone options:
 This is a T1 tool - returns instructions immediately.`,
   parameters: GenerateCopyParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = GenerateCopyParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -346,7 +346,7 @@ Common improvements:
 This is a T1 tool - reads content and returns instructions immediately.`,
   parameters: ImproveSectionCopyParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = ImproveSectionCopyParams.safeParse(params);
     if (!parseResult.success) {
       return {

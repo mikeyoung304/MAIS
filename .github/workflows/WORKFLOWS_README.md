@@ -231,7 +231,7 @@ server/src/agent-v2/deploy/*/tsconfig.json
 
 **Manual Trigger Options:**
 
-- `agent`: Select specific agent (concierge, marketing, storefront, research, booking) or "all"
+- `agent`: Select specific agent (customer, tenant, research) or "all"
 - `force`: Force deployment even without detected changes
 
 **Features:**
@@ -251,13 +251,11 @@ GCP_SERVICE_ACCOUNT=github-actions-deploy@handled-484216.iam.gserviceaccount.com
 
 **Service Registry:**
 
-| Agent      | Cloud Run Service | Purpose            |
-| ---------- | ----------------- | ------------------ |
-| concierge  | concierge-agent   | Main orchestrator  |
-| marketing  | marketing-agent   | Marketing research |
-| storefront | storefront-agent  | Content editing    |
-| research   | research-agent    | Industry analysis  |
-| booking    | booking-agent     | Booking management |
+| Agent    | Cloud Run Service | Purpose                                                 |
+| -------- | ----------------- | ------------------------------------------------------- |
+| customer | customer-agent    | Service discovery, booking, project hub (customer view) |
+| tenant   | tenant-agent      | Storefront editing, marketing, project management       |
+| research | research-agent    | Web research                                            |
 
 ### 6. Database Maintenance (`database-maintenance.yml`)
 
@@ -465,7 +463,7 @@ Deployment branches:
     │PostgreSQL│ │    Render   │    │  Vercel   │
     │(Supabase)│ │ (API Server)│    │ (Client)  │
     └──────────┘ └─────────────┘    └───────────┘
-    Migrations   Node.js Express    React + Vite
+    Migrations   Node.js Express    Next.js
 ```
 
 ### Deployment Sequence

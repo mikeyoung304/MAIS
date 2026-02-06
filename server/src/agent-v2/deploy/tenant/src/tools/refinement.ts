@@ -183,7 +183,7 @@ export const generateSectionVariantsTool = new FunctionTool({
 This is a T1 tool - generates options without changing the draft.`,
   parameters: GenerateSectionVariantsParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #62/#70)
+    // REQUIRED: Zod validation as first line (Pitfall #56)
     const parseResult = GenerateSectionVariantsParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -341,7 +341,7 @@ export const applySectionVariantTool = new FunctionTool({
 This is a T2 tool - applies changes to draft.`,
   parameters: ApplySectionVariantParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #62/#70)
+    // REQUIRED: Zod validation as first line (Pitfall #56)
     const parseResult = ApplySectionVariantParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -409,7 +409,7 @@ This is a T2 tool - applies changes to draft.`,
     state.preferenceMemory = updatePreferenceMemory(state.preferenceMemory, variant);
     saveState(context, state);
 
-    // 4. Verify the write (pitfall #52)
+    // 4. Verify the write (pitfall #48)
     const verifyResult = await callMaisApi('/storefront/section', tenantId, { sectionId });
 
     logger.info(
@@ -465,7 +465,7 @@ export const markSectionCompleteTool = new FunctionTool({
 This is a T1 tool - updates state only.`,
   parameters: MarkSectionCompleteParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #62/#70)
+    // REQUIRED: Zod validation as first line (Pitfall #56)
     const parseResult = MarkSectionCompleteParams.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -561,7 +561,7 @@ export const getNextIncompleteSectionTool = new FunctionTool({
 This is a T1 tool - reads state only.`,
   parameters: GetNextIncompleteSectionParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #62/#70)
+    // REQUIRED: Zod validation as first line (Pitfall #56)
     const parseResult = GetNextIncompleteSectionParams.safeParse(params);
     if (!parseResult.success) {
       return {

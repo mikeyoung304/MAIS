@@ -20,11 +20,13 @@ interface PricingSectionProps extends PricingSectionType {
 export function PricingSection({
   headline,
   subheadline,
-  tiers,
+  tiers = [],
   backgroundColor = 'white',
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: PricingSectionProps) {
+  if (tiers.length === 0) return null;
+
   const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
 
   return (
@@ -81,7 +83,7 @@ export function PricingSection({
               </div>
 
               <ul className="mt-8 space-y-4">
-                {tier.features.map((feature) => (
+                {(tier.features ?? []).map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
                     <span className="text-text-muted">{feature}</span>

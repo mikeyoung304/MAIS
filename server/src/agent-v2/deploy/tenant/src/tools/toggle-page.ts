@@ -81,7 +81,7 @@ When enabled:
 This is a T1 tool - executes immediately.`,
   parameters: TogglePageParams,
   execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #62)
+    // Validate with Zod first (pitfall #56)
     const parseResult = TogglePageParams.safeParse(params);
     if (!parseResult.success) {
       return {

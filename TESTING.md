@@ -9,7 +9,7 @@
 
 ## Implemented Tests
 
-### Unit Tests (~1700 tests)
+### Unit Tests
 
 Run `npm test` to execute the full test suite covering:
 
