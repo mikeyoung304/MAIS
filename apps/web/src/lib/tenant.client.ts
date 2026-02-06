@@ -495,11 +495,19 @@ export function transformContentForSection(
     transformed.features = transformed.items;
     delete transformed.items;
   }
+  // Ensure features array is never null/undefined (prevents .map() crash)
+  if (sectionType === 'features') {
+    transformed.features = transformed.features ?? [];
+  }
 
   // --- GALLERY-specific: items → images ---
   if (sectionType === 'gallery' && 'items' in transformed && !('images' in transformed)) {
     transformed.images = transformed.items;
     delete transformed.items;
+  }
+  // Ensure images array is never null/undefined (prevents .map() crash)
+  if (sectionType === 'gallery') {
+    transformed.images = transformed.images ?? [];
   }
 
   // --- CTA-specific: buttonText → ctaText, buttonLink → ctaLink ---
@@ -535,6 +543,19 @@ export function transformContentForSection(
   }
 
   // NOTE: FAQ uses 'items' in BOTH schemas — no transform needed
+
+  // Ensure items array is never null/undefined for FAQ and testimonials (prevents .map() crash)
+  if (
+    (sectionType === 'faq' || sectionType === 'testimonials') &&
+    !Array.isArray(transformed.items)
+  ) {
+    transformed.items = transformed.items ?? [];
+  }
+
+  // Ensure tiers array is never null/undefined for pricing (prevents .map() crash)
+  if (sectionType === 'pricing') {
+    transformed.tiers = transformed.tiers ?? [];
+  }
 
   return transformed;
 }
