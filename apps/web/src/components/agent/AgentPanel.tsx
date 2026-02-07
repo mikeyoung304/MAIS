@@ -381,13 +381,14 @@ export function AgentPanel({ className }: AgentPanelProps) {
         // Fix #818: Wait for backend transaction to commit (Pitfall #26)
         // The 100ms delay ensures the database write is visible before we refetch
         await new Promise((resolve) => setTimeout(resolve, 100));
-        // Invalidate draft config cache using queryClient directly (not module singleton)
-        // This fixes the race condition where queryClientRef could be null
-        // Flow: TanStack Query refetch → ContentArea → PreviewPanel → sendConfigToIframe
-        queryClient.invalidateQueries({
+        // Invalidate and AWAIT refetch so fresh data is available before we push to iframe
+        // Without await, refreshPreview() sends stale draftConfig via PostMessage
+        await queryClient.invalidateQueries({
           queryKey: getDraftConfigQueryKey(),
           refetchType: 'active',
         });
+        // Push fresh draft data to the preview iframe via PostMessage
+        agentUIActions.refreshPreview();
       }
 
       // Check if marketing content was generated (headlines, etc.)
@@ -403,11 +404,11 @@ export function AgentPanel({ className }: AgentPanelProps) {
         agentUIActions.showPreview('home');
         // Fix #818: Wait for backend transaction to commit
         await new Promise((resolve) => setTimeout(resolve, 100));
-        // Invalidate using queryClient directly (not module singleton)
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: getDraftConfigQueryKey(),
           refetchType: 'active',
         });
+        agentUIActions.refreshPreview();
       }
 
       // Invalidate onboarding state when discovery facts are stored

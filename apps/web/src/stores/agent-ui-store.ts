@@ -341,6 +341,8 @@ export const useAgentUIStore = create<AgentUIState>()(
         showPreview: (page = 'home', agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return; // Security: require tenant
+            // Guard: only revealSite() can transition away from coming_soon
+            if (state.view.status === 'coming_soon') return;
 
             const action: AgentAction = {
               id: generateActionId(),
@@ -366,6 +368,8 @@ export const useAgentUIStore = create<AgentUIState>()(
         showDashboard: (agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return;
+            // Guard: only revealSite() can transition away from coming_soon
+            if (state.view.status === 'coming_soon') return;
 
             const action: AgentAction = {
               id: generateActionId(),
@@ -448,6 +452,9 @@ export const useAgentUIStore = create<AgentUIState>()(
 
             // Extract page from section ID
             const pageFromId = extractPageFromSectionId(sectionId);
+
+            // Guard: only revealSite() can transition away from coming_soon
+            if (state.view.status === 'coming_soon') return;
 
             // If not in preview, switch to preview
             if (state.view.status !== 'preview') {
