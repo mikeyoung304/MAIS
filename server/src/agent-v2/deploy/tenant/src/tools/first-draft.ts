@@ -148,12 +148,6 @@ No user approval needed for first draft — just build and announce.`,
       currentHeadline: s.headline || '(no headline)',
     }));
 
-    // 5. Write revealCompletedAt to backend (one-shot guard for reveal animation)
-    // This is fire-and-forget — failure shouldn't block the first draft
-    callMaisApi('/mark-reveal-completed', tenantId, {}).catch((err) => {
-      logger.warn({ tenantId, error: err }, '[TenantAgent] Failed to write revealCompletedAt');
-    });
-
     logger.info(
       {
         tenantId,

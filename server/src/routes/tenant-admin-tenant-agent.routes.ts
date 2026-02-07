@@ -686,6 +686,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         isComplete: state.isComplete,
         isReturning: false, // Simplified: ContextBuilder doesn't track sessions
         lastActiveAt: null,
+        revealCompleted: state.revealCompleted,
         summaries: {
           discovery: null,
           marketContext: null,
@@ -769,6 +770,49 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       });
     } catch (error) {
       handleError(res, error, '/skip-onboarding');
+    }
+  });
+
+  // ===========================================================================
+  // POST /mark-reveal-completed - Frontend calls after reveal animation finishes
+  // One-shot guard: only writes revealCompletedAt if not already set.
+  // ===========================================================================
+
+  router.post('/mark-reveal-completed', async (_req: Request, res: Response) => {
+    try {
+      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+      if (!tenantAuth) {
+        res.status(401).json({ error: 'Tenant authentication required' });
+        return;
+      }
+
+      const { tenantId } = tenantAuth;
+
+      // Idempotent: only write if not already set
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { revealCompletedAt: true },
+      });
+
+      if (!tenant) {
+        res.status(404).json({ success: false, error: 'Tenant not found' });
+        return;
+      }
+
+      if (tenant.revealCompletedAt) {
+        res.json({ success: true, alreadyCompleted: true });
+        return;
+      }
+
+      await prisma.tenant.update({
+        where: { id: tenantId },
+        data: { revealCompletedAt: new Date() },
+      });
+
+      logger.info({ tenantId }, '[TenantAgent] revealCompletedAt written (frontend trigger)');
+      res.json({ success: true, alreadyCompleted: false });
+    } catch (error) {
+      handleError(res, error, '/mark-reveal-completed');
     }
   });
 

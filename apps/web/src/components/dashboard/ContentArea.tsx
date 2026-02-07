@@ -14,13 +14,17 @@
  * @see stores/agent-ui-store.ts for ViewState definition
  */
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAgentUIStore, agentUIActions } from '@/stores/agent-ui-store';
 import { useDraftConfig } from '@/hooks/useDraftConfig';
 import { useAuth } from '@/lib/auth-client';
+import { queryKeys } from '@/lib/query-client';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const API_PROXY = '/api/tenant-admin/agent/tenant';
 
 // Lazy load PreviewPanel and RevealTransition to reduce initial bundle size
 const PreviewPanel = lazy(() => import('@/components/preview/PreviewPanel'));
@@ -114,6 +118,21 @@ export function ContentArea({ children, className }: ContentAreaProps) {
   const view = useAgentUIStore((state) => state.view);
   const { config, invalidate, isLoading, error: draftError, refetch } = useDraftConfig();
   const { slug } = useAuth();
+  const queryClient = useQueryClient();
+
+  // After reveal animation completes → persist to backend + transition to preview
+  const handleRevealComplete = useCallback(async () => {
+    // Mark reveal as completed (one-shot, idempotent)
+    // Await the POST before invalidating so the re-fetch sees revealCompleted: true
+    // and layout.tsx doesn't flicker back to coming_soon.
+    try {
+      await fetch(`${API_PROXY}/mark-reveal-completed`, { method: 'POST' });
+    } catch {
+      // Non-critical — next page load will still show preview via revealCompleted check
+    }
+    await queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
+    agentUIActions.showPreview();
+  }, [queryClient]);
 
   // Check for draft config errors first (auth failures, server errors)
   // This prevents the silent "DEFAULT config in preview" bug
@@ -138,7 +157,7 @@ export function ContentArea({ children, className }: ContentAreaProps) {
       return (
         <div className={cn('h-full', className)} data-testid="content-area-revealing">
           <Suspense fallback={<LoadingView />}>
-            <RevealTransition slug={slug} onComplete={() => agentUIActions.showPreview()} />
+            <RevealTransition slug={slug} onComplete={handleRevealComplete} />
           </Suspense>
         </div>
       );

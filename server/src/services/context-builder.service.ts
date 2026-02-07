@@ -418,6 +418,7 @@ export class ContextBuilderService {
     isComplete: boolean;
     discoveryFacts: KnownFacts;
     factCount: number;
+    revealCompleted: boolean;
   }> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -425,6 +426,7 @@ export class ContextBuilderService {
         branding: true,
         onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
+        revealCompletedAt: true,
       },
     });
 
@@ -447,6 +449,7 @@ export class ContextBuilderService {
       isComplete: onboardingDone,
       discoveryFacts,
       factCount,
+      revealCompleted: tenant.revealCompletedAt !== null,
     };
   }
 
