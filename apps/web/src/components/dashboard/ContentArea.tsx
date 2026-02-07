@@ -121,13 +121,16 @@ export function ContentArea({ children, className }: ContentAreaProps) {
   const queryClient = useQueryClient();
 
   // After reveal animation completes → persist to backend + transition to preview
-  const handleRevealComplete = useCallback(() => {
+  const handleRevealComplete = useCallback(async () => {
     // Mark reveal as completed (one-shot, idempotent)
-    fetch(`${API_PROXY}/mark-reveal-completed`, { method: 'POST' }).catch(() => {
+    // Await the POST before invalidating so the re-fetch sees revealCompleted: true
+    // and layout.tsx doesn't flicker back to coming_soon.
+    try {
+      await fetch(`${API_PROXY}/mark-reveal-completed`, { method: 'POST' });
+    } catch {
       // Non-critical — next page load will still show preview via revealCompleted check
-    });
-    // Invalidate onboarding state so layout sees revealCompleted: true
-    queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
+    }
+    await queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
     agentUIActions.showPreview();
   }, [queryClient]);
 

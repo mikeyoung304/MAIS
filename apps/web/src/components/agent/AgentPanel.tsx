@@ -391,11 +391,14 @@ export function AgentPanel({ className }: AgentPanelProps) {
         agentUIActions.refreshPreview();
 
         // Auto-reveal: if the user is still on Coming Soon and the agent just
-        // modified storefront content, trigger the reveal animation automatically.
-        // This closes the loop for Bug 3 — agent updates sections → reveal fires
-        // without needing a separate REVEAL_SITE dashboard action.
+        // wrote actual section content, trigger the reveal animation.
+        // Narrowed to update_section/add_section to avoid premature reveal from
+        // read-only section tools (get_next_incomplete_section, mark_section_complete).
+        const isContentWrite = toolCalls.some(
+          (call) => call.name === 'update_section' || call.name === 'add_section'
+        );
         const currentView = useAgentUIStore.getState().view;
-        if (currentView.status === 'coming_soon') {
+        if (currentView.status === 'coming_soon' && isContentWrite) {
           agentUIActions.revealSite();
         }
       }
