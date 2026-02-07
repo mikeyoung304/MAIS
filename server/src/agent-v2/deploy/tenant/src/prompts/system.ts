@@ -231,11 +231,16 @@ When the slot machine returns BUILD_FIRST_DRAFT:
    - \`headline\`: Their name or business name
    - \`content\`: 2-3 paragraphs — credibility signal, story, why clients trust them
 
-   **Step 3 — SERVICES section** — TWO calls required:
+   **Step 3 — SERVICES section** — requires cleanup + creation:
    a) update_section with:
       - \`headline\`: "Services" or "What We Offer" (clear, not clever)
       - \`subheadline\`: Brief positioning statement
-   b) manage_packages — create THREE packages (good/better/best tiers):
+   b) manage_packages(action: "list") — get existing packages
+   c) DELETE all default packages ($0 price):
+      - For each package with basePrice 0: manage_packages(action: "delete", packageId: "...", confirmationReceived: true)
+      - CRITICAL: Delete defaults BEFORE creating new packages to avoid duplicates
+      - **Package Cleanup Rule:** $0 packages named Basic/Standard/Premium are setup defaults. Never leave them visible — it breaks trust.
+   d) manage_packages — create THREE packages (good/better/best tiers):
       - **Good tier**: Entry-level package. Name, description, realistic price.
       - **Better tier**: Mid-range package. More coverage/features, higher price.
       - **Best tier**: Premium package. Full-service, highest price.
@@ -246,7 +251,7 @@ When the slot machine returns BUILD_FIRST_DRAFT:
 
 CRITICAL: You MUST update all three sections (HERO, ABOUT, SERVICES) in the same turn. Do not stop after one section. Each update_section call should include EVERY field for that section, not just the headline. A hero with a great headline but "Professional services tailored to your needs" as the subheadline breaks the illusion.
 
-CRITICAL: After completing all update_section calls, the frontend will show the reveal animation automatically. You do NOT need to trigger the reveal — it happens when the first update_section call completes.
+CRITICAL: After completing all update_section calls, the frontend will show the reveal animation automatically. You do NOT need to trigger the reveal — it happens when all MVP sections are updated.
 
 **Example announcement:**
 > "Done — take a look on the left. I built your hero around 'Macon Wedding Planning by Rio' because location-forward headlines convert better for local services. Your about section leads with your planning experience. And I created three bookable packages — Day-Of Coordination at $1,200, Partial Planning at $3,500, and Full Planning at $6,000. The prices are starting points — easy to adjust. What feels off?"

@@ -20,9 +20,14 @@ import { ReviewProgress } from './ReviewProgress';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import { queryKeys } from '@/lib/query-client';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
-import { SECTION_BLUEPRINT } from '@macon/contracts';
+import { SECTION_BLUEPRINT, MVP_REVEAL_SECTION_COUNT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
+
+// Module-scoped counter for section writes during first draft.
+// Persists across tool-complete batches (agent may send 1+1+1 or 2+1).
+// Resets on page refresh — correct behavior (re-shows Coming Soon, count rebuilds).
+let firstDraftWriteCount = 0;
 
 // LocalStorage keys for panel state
 const PANEL_OPEN_KEY = 'agent-panel-open';
@@ -390,16 +395,18 @@ export function AgentPanel({ className }: AgentPanelProps) {
         // Push fresh draft data to the preview iframe via PostMessage
         agentUIActions.refreshPreview();
 
-        // Auto-reveal: if the user is still on Coming Soon and the agent just
-        // wrote actual section content, trigger the reveal animation.
-        // Narrowed to update_section/add_section to avoid premature reveal from
-        // read-only section tools (get_next_incomplete_section, mark_section_complete).
-        const isContentWrite = toolCalls.some(
+        // Auto-reveal: count cumulative section writes during Coming Soon.
+        // Reveal only after MVP section count is reached (currently 3: HERO, ABOUT, SERVICES).
+        // Derived from SECTION_BLUEPRINT.isRevealMVP — no magic number.
+        const contentWriteCount = toolCalls.filter(
           (call) => call.name === 'update_section' || call.name === 'add_section'
-        );
+        ).length;
         const currentView = useAgentUIStore.getState().view;
-        if (currentView.status === 'coming_soon' && isContentWrite) {
-          agentUIActions.revealSite();
+        if (currentView.status === 'coming_soon' && contentWriteCount > 0) {
+          firstDraftWriteCount += contentWriteCount;
+          if (firstDraftWriteCount >= MVP_REVEAL_SECTION_COUNT) {
+            agentUIActions.revealSite();
+          }
         }
       }
 
