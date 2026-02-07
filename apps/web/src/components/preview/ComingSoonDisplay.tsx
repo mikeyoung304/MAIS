@@ -21,6 +21,7 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAgentUIStore } from '@/stores/agent-ui-store';
 import { DISCOVERY_FACT_LABELS } from '@macon/contracts';
+import { logout } from '@/lib/auth-client';
 
 // ============================================
 // FACT KEY → HUMAN LABEL (from contracts)
@@ -136,12 +137,20 @@ export function ComingSoonDisplay({ buildingIndicator }: ComingSoonDisplayProps)
 
   return (
     <div
-      className="h-full flex items-center justify-center"
+      className="h-full flex items-center justify-center relative"
       style={{
         background: 'radial-gradient(ellipse at center, #27272A 0%, #18181B 70%)',
       }}
       data-testid="coming-soon-display"
     >
+      {/* Sign out — subtle top-left link so users aren't trapped (P0) */}
+      <button
+        onClick={() => logout('/')}
+        className="absolute top-4 left-4 text-xs text-[#FAFAFA]/30 hover:text-[#FAFAFA]/60 transition-colors"
+      >
+        Sign out
+      </button>
+
       <div className="flex flex-col items-center gap-8 text-center max-w-md px-8">
         <ShimmerIcon />
 

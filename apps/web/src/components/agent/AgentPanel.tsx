@@ -10,7 +10,7 @@ import type { DashboardAction, TenantAgentToolCall } from '@/hooks/useTenantAgen
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
-import { agentUIActions } from '@/stores/agent-ui-store';
+import { agentUIActions, useAgentUIStore } from '@/stores/agent-ui-store';
 import {
   refinementActions,
   useRefinementStore,
@@ -389,6 +389,15 @@ export function AgentPanel({ className }: AgentPanelProps) {
         });
         // Push fresh draft data to the preview iframe via PostMessage
         agentUIActions.refreshPreview();
+
+        // Auto-reveal: if the user is still on Coming Soon and the agent just
+        // modified storefront content, trigger the reveal animation automatically.
+        // This closes the loop for Bug 3 — agent updates sections → reveal fires
+        // without needing a separate REVEAL_SITE dashboard action.
+        const currentView = useAgentUIStore.getState().view;
+        if (currentView.status === 'coming_soon') {
+          agentUIActions.revealSite();
+        }
       }
 
       // Check if marketing content was generated (headlines, etc.)
