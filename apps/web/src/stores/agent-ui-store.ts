@@ -90,19 +90,15 @@ export type ViewState =
  * Valid ViewState transitions — prevents impossible state jumps.
  * coming_soon is locked: only revealSite() can exit it.
  *
- * Note: Not currently enforced at runtime (guards are inline in methods).
- * Preserved as documentation and for future validation logic.
+ * Enforced inline via guards in showPreview/showDashboard/highlightSection.
+ *
+ * coming_soon  → revealing
+ * revealing    → preview
+ * preview      → dashboard | loading | error | preview (page/highlight changes)
+ * dashboard    → preview | coming_soon | loading | error
+ * loading      → preview | dashboard | error
+ * error        → dashboard | preview
  */
-// @ts-expect-error - Intentionally unused, preserved for documentation and future validation
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _VALID_VIEW_TRANSITIONS: Record<string, string[]> = {
-  coming_soon: ['revealing'],
-  revealing: ['preview'],
-  preview: ['dashboard', 'loading', 'error', 'preview'], // preview→preview for page/highlight changes
-  dashboard: ['preview', 'coming_soon', 'loading', 'error'],
-  loading: ['preview', 'dashboard', 'error'],
-  error: ['dashboard', 'preview'],
-};
 
 // ============================================
 // EVENT SOURCING - Audit trail for all actions
