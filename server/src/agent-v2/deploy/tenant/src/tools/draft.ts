@@ -13,8 +13,31 @@
  */
 
 import { FunctionTool, type ToolContext } from '@google/adk';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { callMaisApi, getTenantId, logger } from '../utils.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Confirmation Token System (T3 Defense-in-Depth)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Generate a short confirmation token for T3 two-phase confirmation.
+ * Format: CONF-{6 hex chars} (e.g., "CONF-a7b3f2")
+ * Stored in ADK session state with 5-minute TTL.
+ */
+function generateConfirmationToken(): string {
+  return `CONF-${randomBytes(3).toString('hex')}`;
+}
+
+/** Session state key for storing pending confirmation tokens */
+const PUBLISH_TOKEN_KEY = 'pendingPublishToken';
+const PUBLISH_TOKEN_EXPIRY_KEY = 'pendingPublishTokenExpiry';
+const DISCARD_TOKEN_KEY = 'pendingDiscardToken';
+const DISCARD_TOKEN_EXPIRY_KEY = 'pendingDiscardTokenExpiry';
+
+/** Token TTL in milliseconds (5 minutes) */
+const TOKEN_TTL_MS = 5 * 60 * 1000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schemas
@@ -28,6 +51,12 @@ const PublishDraftParams = z.object({
     .describe(
       'Set to true ONLY if user explicitly said "publish", "make it live", "ship it", "go live", or similar confirmation. This is a T3 action that affects the live site.'
     ),
+  confirmationToken: z
+    .string()
+    .optional()
+    .describe(
+      'The confirmation token returned from the first call. Required when confirmationReceived is true.'
+    ),
 });
 
 const DiscardDraftParams = z.object({
@@ -35,6 +64,12 @@ const DiscardDraftParams = z.object({
     .boolean()
     .describe(
       'Set to true ONLY if user explicitly said "discard", "revert", "undo all", "cancel changes", or similar confirmation. This will lose all unpublished changes.'
+    ),
+  confirmationToken: z
+    .string()
+    .optional()
+    .describe(
+      'The confirmation token returned from the first call. Required when confirmationReceived is true.'
     ),
 });
 
@@ -148,18 +183,70 @@ This affects the LIVE site that visitors see.`,
 
     // T3 confirmation check (pitfall #45)
     if (!parseResult.data.confirmationReceived) {
-      logger.info({}, '[TenantAgent] publish_draft called without confirmation');
+      // Phase 1: Generate and store confirmation token
+      const token = generateConfirmationToken();
+
+      // Store token in ADK session state
+      context?.state?.set(PUBLISH_TOKEN_KEY, token);
+      context?.state?.set(PUBLISH_TOKEN_EXPIRY_KEY, Date.now() + TOKEN_TTL_MS);
+
+      logger.info({ token }, '[TenantAgent] publish_draft: generated confirmation token');
       return {
         success: false,
         requiresConfirmation: true,
         confirmationType: 'publish',
+        confirmationToken: token,
         message:
           'Ready to publish? This will make all draft changes visible to your visitors immediately.',
-        confirmationPrompt: 'Say "publish" or "go live" to confirm.',
+        confirmationPrompt: `Say "publish" or "go live" to confirm. (Token: ${token})`,
       };
     }
 
-    logger.info({}, '[TenantAgent] publish_draft called with confirmation');
+    // Phase 2: Validate confirmation token (defense-in-depth, pitfall #803)
+    const storedToken = context?.state?.get<string>(PUBLISH_TOKEN_KEY);
+    const storedExpiry = context?.state?.get<number>(PUBLISH_TOKEN_EXPIRY_KEY);
+
+    if (!storedToken || !parseResult.data.confirmationToken) {
+      logger.warn({}, '[TenantAgent] publish_draft: missing confirmation token');
+      return {
+        success: false,
+        error: 'Missing confirmation token. Please start the publish flow again.',
+        requiresConfirmation: true,
+        confirmationType: 'publish',
+      };
+    }
+
+    if (parseResult.data.confirmationToken !== storedToken) {
+      logger.warn(
+        { provided: parseResult.data.confirmationToken, expected: storedToken },
+        '[TenantAgent] publish_draft: token mismatch'
+      );
+      return {
+        success: false,
+        error: 'Invalid confirmation token. Please start the publish flow again.',
+        requiresConfirmation: true,
+        confirmationType: 'publish',
+      };
+    }
+
+    if (storedExpiry && Date.now() > storedExpiry) {
+      logger.warn({}, '[TenantAgent] publish_draft: confirmation token expired');
+      // Clear expired token
+      context?.state?.set(PUBLISH_TOKEN_KEY, null);
+      context?.state?.set(PUBLISH_TOKEN_EXPIRY_KEY, null);
+      return {
+        success: false,
+        error: 'Confirmation token expired. Please confirm again.',
+        requiresConfirmation: true,
+        confirmationType: 'publish',
+      };
+    }
+
+    // Clear token after successful validation (one-time use)
+    context?.state?.set(PUBLISH_TOKEN_KEY, null);
+    context?.state?.set(PUBLISH_TOKEN_EXPIRY_KEY, null);
+
+    logger.info({}, '[TenantAgent] publish_draft: token validated, proceeding');
 
     // Call backend API
     const result = await callMaisApi('/storefront/publish', tenantId);
@@ -241,18 +328,70 @@ the confirmation prompt.
 
     // T3 confirmation check (pitfall #45)
     if (!parseResult.data.confirmationReceived) {
-      logger.info({}, '[TenantAgent] discard_draft called without confirmation');
+      // Phase 1: Generate and store confirmation token
+      const token = generateConfirmationToken();
+
+      // Store token in ADK session state
+      context?.state?.set(DISCARD_TOKEN_KEY, token);
+      context?.state?.set(DISCARD_TOKEN_EXPIRY_KEY, Date.now() + TOKEN_TTL_MS);
+
+      logger.info({ token }, '[TenantAgent] discard_draft: generated confirmation token');
       return {
         success: false,
         requiresConfirmation: true,
         confirmationType: 'discard',
+        confirmationToken: token,
         message:
           'This will discard ALL your unpublished changes and revert to the live version. This cannot be undone.',
-        confirmationPrompt: 'Say "discard" or "revert" to confirm.',
+        confirmationPrompt: `Say "discard" or "revert" to confirm. (Token: ${token})`,
       };
     }
 
-    logger.info({}, '[TenantAgent] discard_draft called with confirmation');
+    // Phase 2: Validate confirmation token (defense-in-depth, pitfall #803)
+    const storedToken = context?.state?.get<string>(DISCARD_TOKEN_KEY);
+    const storedExpiry = context?.state?.get<number>(DISCARD_TOKEN_EXPIRY_KEY);
+
+    if (!storedToken || !parseResult.data.confirmationToken) {
+      logger.warn({}, '[TenantAgent] discard_draft: missing confirmation token');
+      return {
+        success: false,
+        error: 'Missing confirmation token. Please start the discard flow again.',
+        requiresConfirmation: true,
+        confirmationType: 'discard',
+      };
+    }
+
+    if (parseResult.data.confirmationToken !== storedToken) {
+      logger.warn(
+        { provided: parseResult.data.confirmationToken, expected: storedToken },
+        '[TenantAgent] discard_draft: token mismatch'
+      );
+      return {
+        success: false,
+        error: 'Invalid confirmation token. Please start the discard flow again.',
+        requiresConfirmation: true,
+        confirmationType: 'discard',
+      };
+    }
+
+    if (storedExpiry && Date.now() > storedExpiry) {
+      logger.warn({}, '[TenantAgent] discard_draft: confirmation token expired');
+      // Clear expired token
+      context?.state?.set(DISCARD_TOKEN_KEY, null);
+      context?.state?.set(DISCARD_TOKEN_EXPIRY_KEY, null);
+      return {
+        success: false,
+        error: 'Confirmation token expired. Please confirm again.',
+        requiresConfirmation: true,
+        confirmationType: 'discard',
+      };
+    }
+
+    // Clear token after successful validation (one-time use)
+    context?.state?.set(DISCARD_TOKEN_KEY, null);
+    context?.state?.set(DISCARD_TOKEN_EXPIRY_KEY, null);
+
+    logger.info({}, '[TenantAgent] discard_draft: token validated, proceeding');
 
     // Call backend API
     const result = await callMaisApi('/storefront/discard', tenantId);

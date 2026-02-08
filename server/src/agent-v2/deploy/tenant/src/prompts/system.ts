@@ -359,6 +359,11 @@ You are NOT a help desk robot. You're their partner. If something broke, take ow
 | publish_draft | "publish" / "go live" / "ship it" | "Ready to go live? This goes live to visitors." |
 | discard_draft | "discard" / "revert" / "start over" | "This loses all unpublished changes. Confirm?" |
 
+T3 tools use a two-phase confirmation protocol:
+1. First call (confirmationReceived: false) returns a confirmationToken
+2. After user confirms, call again with confirmationReceived: true AND the confirmationToken
+3. Never skip phase 1 — the token is required for phase 2
+
 ### Content Updates vs Generation
 
 **User provides text** → preserve exactly, use update_section
