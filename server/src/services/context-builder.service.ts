@@ -13,7 +13,8 @@
  */
 
 import type { PrismaClient } from '../generated/prisma/client';
-import type { SectionReadiness } from '@macon/contracts';
+import type { SectionReadiness, OnboardingPhase } from '@macon/contracts';
+import { parseOnboardingPhase } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
 import { computeSectionReadiness } from '../lib/slot-machine';
 import type { SectionContentService } from './section-content.service';
@@ -145,7 +146,7 @@ export interface AgentContext {
 
   // Onboarding state
   onboardingComplete: boolean;
-  onboardingPhase: string;
+  onboardingPhase: OnboardingPhase;
 }
 
 /**
@@ -157,7 +158,7 @@ export interface BootstrapData {
   businessName: string;
   slug: string;
   onboardingComplete: boolean;
-  onboardingPhase: string;
+  onboardingPhase: OnboardingPhase;
   discoveryFacts: KnownFacts;
   storefrontState: {
     hasDraft: boolean;
@@ -262,9 +263,13 @@ export class ContextBuilderService {
       throw new Error(`Tenant not found: ${tenantId}`);
     }
 
-    // Compute onboardingDone from completedAt or phase
-    const onboardingDone =
-      tenant.onboardingCompletedAt !== null || tenant.onboardingPhase === 'COMPLETED';
+    // Resolve onboarding phase using waterfall heuristic (fixes B3: all 3 methods)
+    const hasRealContent = await this.hasNonPlaceholderContent(tenantId);
+    const effectivePhase = this.resolveOnboardingPhase(tenant, hasRealContent);
+    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
+
+    // Lazy backfill: write phase permanently so heuristic becomes a no-op
+    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
 
     // Extract discovery facts from branding (canonical storage)
     const branding = (tenant.branding as Record<string, unknown>) || {};
@@ -325,7 +330,7 @@ export class ContextBuilderService {
 
       forbiddenQuestions,
       onboardingComplete: onboardingDone,
-      onboardingPhase: tenant.onboardingPhase || 'NOT_STARTED',
+      onboardingPhase: effectivePhase,
     };
   }
 
@@ -380,9 +385,13 @@ export class ContextBuilderService {
     );
     const forbiddenSlots = knownFactKeys as (keyof KnownFacts)[];
 
-    // Compute onboardingDone from completedAt or phase
-    const onboardingDone =
-      tenant.onboardingCompletedAt !== null || tenant.onboardingPhase === 'COMPLETED';
+    // Resolve onboarding phase using waterfall heuristic (fixes B3: all 3 methods)
+    const hasRealContent = await this.hasNonPlaceholderContent(tenantId);
+    const effectivePhase = this.resolveOnboardingPhase(tenant, hasRealContent);
+    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
+
+    // Lazy backfill: write phase permanently so heuristic becomes a no-op
+    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
 
     logger.info(
       { tenantId, factCount, forbiddenSlots, completion },
@@ -397,7 +406,7 @@ export class ContextBuilderService {
       businessName: tenant.name || 'Your Business',
       slug: tenant.slug,
       onboardingComplete: onboardingDone,
-      onboardingPhase: tenant.onboardingPhase || 'NOT_STARTED',
+      onboardingPhase: effectivePhase,
       discoveryFacts,
       storefrontState: {
         hasDraft,
@@ -406,7 +415,8 @@ export class ContextBuilderService {
       },
       forbiddenSlots,
       sectionReadiness,
-      revealCompleted: tenant.revealCompletedAt !== null,
+      // B4: revealCompleted fallback applied in BOTH getOnboardingState AND getBootstrapData
+      revealCompleted: tenant.revealCompletedAt !== null || hasRealContent,
     };
   }
 
@@ -414,7 +424,7 @@ export class ContextBuilderService {
    * Get onboarding state (replaces AdvisorMemoryService.getOnboardingContext)
    */
   async getOnboardingState(tenantId: string): Promise<{
-    phase: string;
+    phase: OnboardingPhase;
     isComplete: boolean;
     discoveryFacts: KnownFacts;
     factCount: number;
@@ -424,7 +434,7 @@ export class ContextBuilderService {
       where: { id: tenantId },
       select: {
         branding: true,
-        onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
+        onboardingCompletedAt: true,
         onboardingPhase: true,
         revealCompletedAt: true,
       },
@@ -440,22 +450,94 @@ export class ContextBuilderService {
       (k) => discoveryFacts[k] !== undefined
     ).length;
 
-    // Compute onboardingDone from completedAt or phase
-    const onboardingDone =
-      tenant.onboardingCompletedAt !== null || tenant.onboardingPhase === 'COMPLETED';
+    // Resolve onboarding phase using waterfall heuristic (fixes B3: all 3 methods)
+    const hasRealContent = await this.hasNonPlaceholderContent(tenantId);
+    const effectivePhase = this.resolveOnboardingPhase(tenant, hasRealContent);
+    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
+
+    // Lazy backfill: write phase permanently so heuristic becomes a no-op
+    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
 
     return {
-      phase: tenant.onboardingPhase || 'NOT_STARTED',
+      phase: effectivePhase,
       isComplete: onboardingDone,
       discoveryFacts,
       factCount,
-      revealCompleted: tenant.revealCompletedAt !== null,
+      // B4: revealCompleted fallback applied in BOTH getOnboardingState AND getBootstrapData
+      revealCompleted: tenant.revealCompletedAt !== null || hasRealContent,
     };
   }
 
   // ===========================================================================
   // PRIVATE HELPERS
   // ===========================================================================
+
+  /**
+   * Resolve the effective onboarding phase for a tenant.
+   *
+   * Waterfall logic:
+   * 1. Explicit phase set in database → trust it
+   * 2. onboardingCompletedAt set (old flow) → COMPLETED
+   * 3. Has real content (pre-rebuild tenant) → COMPLETED + lazy-write backfill
+   * 4. Truly new tenant → NOT_STARTED
+   */
+  private resolveOnboardingPhase(
+    tenant: {
+      onboardingPhase: string | null;
+      onboardingCompletedAt: Date | null;
+    },
+    hasRealContent: boolean
+  ): OnboardingPhase {
+    // 1. Explicit phase → trust it (uses Zod safeParse for type safety)
+    if (tenant.onboardingPhase) {
+      return parseOnboardingPhase(tenant.onboardingPhase);
+    }
+    // 2. Completed via old flow
+    if (tenant.onboardingCompletedAt) return 'COMPLETED';
+    // 3. Has real content (pre-rebuild tenant with real packages)
+    if (hasRealContent) return 'COMPLETED';
+    // 4. Truly new tenant
+    return 'NOT_STARTED';
+  }
+
+  /**
+   * Detect if a tenant has real (non-seed) content.
+   *
+   * IMPORTANT: Cannot use sectionContent count — seed sections are created
+   * as isDraft: false at provisioning time (tenant-provisioning.service.ts:170).
+   * Every provisioned tenant has published sections regardless of content quality.
+   *
+   * Instead, check for packages with basePrice > 0 (seed packages are always $0).
+   * Cross-ref: server/src/lib/tenant-defaults.ts:28-50
+   */
+  private async hasNonPlaceholderContent(tenantId: string): Promise<boolean> {
+    const realPackageCount = await this.prisma.package.count({
+      where: { tenantId, basePrice: { gt: 0 } },
+    });
+    return realPackageCount > 0;
+  }
+
+  /**
+   * Lazy backfill: set the phase permanently so heuristic becomes a no-op.
+   * Idempotent, non-blocking (fire-and-forget), converts perpetual per-load
+   * cost into a one-time cost per tenant.
+   */
+  private lazyBackfillPhase(
+    tenantId: string,
+    effectivePhase: OnboardingPhase,
+    hasExplicitPhase: boolean
+  ): void {
+    if (effectivePhase === 'COMPLETED' && !hasExplicitPhase) {
+      this.prisma.tenant
+        .update({
+          where: { id: tenantId },
+          data: { onboardingPhase: 'COMPLETED', onboardingCompletedAt: new Date() },
+        })
+        .catch((err) =>
+          logger.warn({ tenantId, err }, '[ContextBuilder] Lazy backfill failed — non-fatal')
+        );
+    }
+  }
 
   /**
    * Build storefront state from SectionContentService (Phase 5.2 migration)

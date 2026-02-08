@@ -296,8 +296,14 @@ export function SegmentPackagesSection({
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [segments]);
 
-  // Filter active packages
-  const activePackages = packages.filter((p) => p.isActive ?? p.active);
+  // Safety net: never show $0 seed packages to visitors.
+  // Cross-ref: server/src/lib/tenant-defaults.ts:28-50
+  const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'];
+
+  // Filter active packages, excluding seed defaults
+  const activePackages = packages.filter(
+    (p) => (p.isActive ?? p.active) && !(p.priceCents === 0 && SEED_PACKAGE_NAMES.includes(p.title))
+  );
 
   // Group packages by segment (memoized to avoid recomputation on every render)
   const packagesBySegment = useMemo(() => {

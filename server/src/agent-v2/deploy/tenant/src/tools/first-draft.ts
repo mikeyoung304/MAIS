@@ -165,17 +165,27 @@ No user approval needed for first draft — just build and announce.`,
       '[TenantAgent] build_first_draft identified MVP sections'
     );
 
-    // Programmatic fallback: delete $0 default packages before agent creates real ones.
+    // Programmatic fallback: delete seed packages before agent creates real ones.
     // The system prompt also instructs the agent to list-then-delete, but this ensures
     // cleanup even if the LLM skips the step. Defense-in-depth for financial-impact data.
     // API: single POST /manage-packages with action param (see packages.ts:226, :391)
+    //
+    // IMPORTANT: Match by name AND price, not just price. Legitimate free consultations
+    // with non-seed names must be preserved.
+    // Cross-ref: server/src/lib/tenant-defaults.ts:28-50
+    const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
+
     try {
       const listResult = await callMaisApi('/manage-packages', tenantId, { action: 'list' });
       if (listResult.ok) {
         const packages =
-          (listResult.data as { packages?: Array<{ id: string; basePrice: number }> })?.packages ??
-          [];
-        const defaultPackages = packages.filter((pkg) => pkg.basePrice === 0);
+          (listResult.data as { packages?: Array<{ id: string; name: string; basePrice: number }> })
+            ?.packages ?? [];
+        const defaultPackages = packages.filter(
+          (pkg) =>
+            pkg.basePrice === 0 &&
+            SEED_PACKAGE_NAMES.includes(pkg.name as (typeof SEED_PACKAGE_NAMES)[number])
+        );
         for (const pkg of defaultPackages) {
           await callMaisApi('/manage-packages', tenantId, {
             action: 'delete',
@@ -185,7 +195,7 @@ No user approval needed for first draft — just build and announce.`,
         if (defaultPackages.length > 0) {
           logger.info(
             { tenantId, deletedCount: defaultPackages.length },
-            '[TenantAgent] build_first_draft cleaned up default $0 packages'
+            '[TenantAgent] build_first_draft cleaned up seed $0 packages'
           );
         }
       }
@@ -193,7 +203,7 @@ No user approval needed for first draft — just build and announce.`,
       // Non-fatal: agent prompt will also instruct cleanup
       logger.warn(
         { tenantId, err },
-        '[TenantAgent] $0 package cleanup failed, agent will retry via prompt'
+        '[TenantAgent] seed package cleanup failed, agent will retry via prompt'
       );
     }
 

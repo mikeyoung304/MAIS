@@ -4,12 +4,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Sparkles, MessageCircle } from 'lucide-react';
 import { TenantAgentChat, type TenantAgentUIAction } from './TenantAgentChat';
 import type { DashboardAction, TenantAgentToolCall } from '@/hooks/useTenantAgentChat';
-import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
-import { useAuth } from '@/lib/auth-client';
 import { agentUIActions, useAgentUIStore } from '@/stores/agent-ui-store';
 import {
   refinementActions,
@@ -19,7 +17,7 @@ import {
 import { ReviewProgress } from './ReviewProgress';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import { queryKeys } from '@/lib/query-client';
-import type { PageName, OnboardingPhase } from '@macon/contracts';
+import type { PageName } from '@macon/contracts';
 import { SECTION_BLUEPRINT, MVP_REVEAL_SECTION_COUNT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -60,56 +58,6 @@ interface AgentPanelProps {
 }
 
 /**
- * OnboardingSection - Reusable onboarding progress and preview section
- * (Fix for #747: Extract duplicate onboarding section)
- */
-interface OnboardingSectionProps {
-  currentPhase: OnboardingPhase;
-  onSkip: () => Promise<void>;
-  isSkipping: boolean;
-  skipError: string | null;
-  tenantSlug: string | null | undefined;
-}
-
-function OnboardingSection({
-  currentPhase,
-  onSkip,
-  isSkipping,
-  skipError,
-  tenantSlug,
-}: OnboardingSectionProps) {
-  return (
-    <div className="px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-      <OnboardingProgress
-        currentPhase={currentPhase}
-        onSkip={onSkip}
-        isSkipping={isSkipping}
-        skipError={skipError}
-      />
-
-      {/* Storefront Preview Link */}
-      {tenantSlug && (
-        <a
-          href={`/t/${tenantSlug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(
-            'flex items-center gap-2 mt-3 px-3 py-2',
-            'bg-sage/10 hover:bg-sage/20 rounded-lg',
-            'text-sm text-sage transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-sage/30'
-          )}
-          aria-label="Preview your storefront in a new tab"
-        >
-          <ExternalLink className="w-4 h-4" />
-          <span>View your storefront</span>
-        </a>
-      )}
-    </div>
-  );
-}
-
-/**
  * AgentPanel - Right-side AI assistant panel (formerly GrowthAssistantPanel)
  *
  * Agent-first architecture: The AI chatbot is THE central interface for tenant dashboard.
@@ -125,7 +73,6 @@ function OnboardingSection({
  * - Uses personalized welcome messages for returning users
  */
 export function AgentPanel({ className }: AgentPanelProps) {
-  const { slug: tenantSlug } = useAuth();
   // Use React Query client directly instead of module singleton (fixes race condition)
   const queryClient = useQueryClient();
 
@@ -152,8 +99,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const focusTimerRef = useRef<number | null>(null);
 
   // Onboarding state
-  const { currentPhase, isOnboarding, skipOnboarding, isSkipping, skipError } =
-    useOnboardingState();
+  const { isOnboarding, skipOnboarding, isSkipping } = useOnboardingState();
 
   // WCAG 4.1.3: Screen reader announcement helper
   const announce = useCallback((message: string) => {
@@ -600,15 +546,18 @@ export function AgentPanel({ className }: AgentPanelProps) {
             </Button>
           </div>
 
-          {/* Onboarding Progress (when in onboarding mode) */}
+          {/* Minimal skip link (when in onboarding mode) */}
           {isOnboarding && (
-            <OnboardingSection
-              currentPhase={currentPhase}
-              onSkip={handleSkip}
-              isSkipping={isSkipping}
-              skipError={skipError}
-              tenantSlug={tenantSlug}
-            />
+            <div className="flex justify-end px-4 py-1 border-b border-neutral-700 bg-surface-alt shrink-0">
+              <button
+                onClick={handleSkip}
+                disabled={isSkipping}
+                className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+                aria-label="Skip onboarding setup"
+              >
+                {isSkipping ? 'Skipping...' : 'Skip setup'}
+              </button>
+            </div>
           )}
 
           {/* Review Progress (when agent is walking through sections) */}
@@ -742,15 +691,18 @@ export function AgentPanel({ className }: AgentPanelProps) {
               </Drawer.Close>
             </div>
 
-            {/* Onboarding Progress (when in onboarding mode) */}
+            {/* Minimal skip link (when in onboarding mode) */}
             {isOnboarding && (
-              <OnboardingSection
-                currentPhase={currentPhase}
-                onSkip={handleSkip}
-                isSkipping={isSkipping}
-                skipError={skipError}
-                tenantSlug={tenantSlug}
-              />
+              <div className="flex justify-end px-4 py-1 border-b border-neutral-700 bg-surface-alt shrink-0">
+                <button
+                  onClick={handleSkip}
+                  disabled={isSkipping}
+                  className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+                  aria-label="Skip onboarding setup"
+                >
+                  {isSkipping ? 'Skipping...' : 'Skip setup'}
+                </button>
+              </div>
             )}
 
             {/* Review Progress (when agent is walking through sections) */}

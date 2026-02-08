@@ -48,15 +48,11 @@ export function BuildModeWrapper({ initialConfig, pageName, children }: BuildMod
   // API-first: render SSR content immediately. No blocking on PostMessage handshake.
   return (
     <div className={cn('relative', isEditMode && 'build-mode-active')}>
-      {/* Edit mode indicator */}
-      {isEditMode && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-sage/90 text-white text-sm text-center py-1.5 font-medium">
-          Build Mode Preview — Click sections to select them
-        </div>
-      )}
+      {/* Subtle edit mode indicator — thin sage line instead of green banner */}
+      {isEditMode && <div className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-sage/40" />}
 
       {/* Render content with effective config */}
-      <div className={cn(isEditMode && 'mt-10')}>{children(effectiveConfig, isEditMode)}</div>
+      <div>{children(effectiveConfig, isEditMode)}</div>
 
       {/* Section selection overlay (when in edit mode) */}
       {isEditMode && (

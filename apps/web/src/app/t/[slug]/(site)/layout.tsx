@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import { getTenantStorefrontData, TenantNotFoundError } from '@/lib/tenant';
 import { TenantNav } from '@/components/tenant/TenantNav';
 import { TenantFooter } from '@/components/tenant/TenantFooter';
 import { TenantChatWidget } from '@/components/chat/TenantChatWidget';
 import { StickyMobileCTA } from '@/components/tenant/StickyMobileCTA';
+import { EditModeGate } from '@/components/tenant/EditModeGate';
 
 interface TenantSiteLayoutProps {
   children: React.ReactNode;
@@ -28,24 +30,45 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
 
     return (
       <div className="flex min-h-screen flex-col bg-surface">
-        <TenantNav tenant={tenant} />
+        {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
+            Prevents TenantChatWidget from mounting (no wasted agent session).
+            Suspense required because useSearchParams() triggers client-side boundary. */}
+        <Suspense>
+          <EditModeGate>
+            <TenantNav tenant={tenant} />
+          </EditModeGate>
+        </Suspense>
+
         <div className="flex-1">{children}</div>
-        <TenantFooter tenant={tenant} />
 
-        {/* Customer Chat Widget - floating chatbot for booking assistance */}
-        <TenantChatWidget
-          tenantApiKey={tenant.apiKeyPublic}
-          businessName={tenant.name}
-          primaryColor={tenant.primaryColor}
-          chatEnabled={tenant.chatEnabled}
-        />
+        <Suspense>
+          <EditModeGate>
+            <TenantFooter tenant={tenant} />
+          </EditModeGate>
+        </Suspense>
 
-        {/* Sticky Mobile CTA - appears on scroll for easy booking access */}
-        <StickyMobileCTA
-          ctaText={tenant.branding?.landingPage?.hero?.ctaText || 'View Packages'}
-          href="#packages"
-          observeElementId="main-content"
-        />
+        <Suspense>
+          <EditModeGate>
+            {/* Customer Chat Widget - floating chatbot for booking assistance */}
+            <TenantChatWidget
+              tenantApiKey={tenant.apiKeyPublic}
+              businessName={tenant.name}
+              primaryColor={tenant.primaryColor}
+              chatEnabled={tenant.chatEnabled}
+            />
+          </EditModeGate>
+        </Suspense>
+
+        <Suspense>
+          <EditModeGate>
+            {/* Sticky Mobile CTA - appears on scroll for easy booking access */}
+            <StickyMobileCTA
+              ctaText={tenant.branding?.landingPage?.hero?.ctaText || 'View Packages'}
+              href="#packages"
+              observeElementId="main-content"
+            />
+          </EditModeGate>
+        </Suspense>
       </div>
     );
   } catch (error) {
