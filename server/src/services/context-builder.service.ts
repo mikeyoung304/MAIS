@@ -205,6 +205,11 @@ export interface BootstrapData {
 // DEFAULT VALUES
 // =============================================================================
 
+// Module-scoped dedup cache for lazy backfill (Pitfall #46)
+// Prevents redundant writes on every request for pre-rebuild tenants
+const recentlyBackfilled = new Set<string>();
+const MAX_BACKFILL_CACHE = 1000;
+
 const DEFAULT_CONSTRAINTS: AgentConstraints = {
   maxTurnsPerSession: 50,
   maxTokensPerSession: 100000,
@@ -263,13 +268,8 @@ export class ContextBuilderService {
       throw new Error(`Tenant not found: ${tenantId}`);
     }
 
-    // Resolve onboarding phase using waterfall heuristic (fixes B3: all 3 methods)
-    const hasRealContent = await this.hasNonPlaceholderContent(tenantId);
-    const effectivePhase = this.resolveOnboardingPhase(tenant, hasRealContent);
-    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
-
-    // Lazy backfill: write phase permanently so heuristic becomes a no-op
-    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
+    // Resolve onboarding phase and trigger lazy backfill
+    const { effectivePhase, onboardingDone } = await this.resolveAndBackfillPhase(tenantId, tenant);
 
     // Extract discovery facts from branding (canonical storage)
     const branding = (tenant.branding as Record<string, unknown>) || {};
@@ -385,13 +385,8 @@ export class ContextBuilderService {
     );
     const forbiddenSlots = knownFactKeys as (keyof KnownFacts)[];
 
-    // Resolve onboarding phase using waterfall heuristic (fixes B3: all 3 methods)
-    const hasRealContent = await this.hasNonPlaceholderContent(tenantId);
-    const effectivePhase = this.resolveOnboardingPhase(tenant, hasRealContent);
-    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
-
-    // Lazy backfill: write phase permanently so heuristic becomes a no-op
-    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
+    // Resolve onboarding phase and trigger lazy backfill
+    const { effectivePhase, onboardingDone } = await this.resolveAndBackfillPhase(tenantId, tenant);
 
     logger.info(
       { tenantId, factCount, forbiddenSlots, completion },
@@ -416,7 +411,8 @@ export class ContextBuilderService {
       forbiddenSlots,
       sectionReadiness,
       // B4: revealCompleted fallback applied in BOTH getOnboardingState AND getBootstrapData
-      revealCompleted: tenant.revealCompletedAt !== null || hasRealContent,
+      revealCompleted:
+        tenant.revealCompletedAt !== null || (await this.hasNonSeedPackages(tenantId)),
     };
   }
 
@@ -450,13 +446,8 @@ export class ContextBuilderService {
       (k) => discoveryFacts[k] !== undefined
     ).length;
 
-    // Resolve onboarding phase using waterfall heuristic (fixes B3: all 3 methods)
-    const hasRealContent = await this.hasNonPlaceholderContent(tenantId);
-    const effectivePhase = this.resolveOnboardingPhase(tenant, hasRealContent);
-    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
-
-    // Lazy backfill: write phase permanently so heuristic becomes a no-op
-    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
+    // Resolve onboarding phase and trigger lazy backfill
+    const { effectivePhase, onboardingDone } = await this.resolveAndBackfillPhase(tenantId, tenant);
 
     return {
       phase: effectivePhase,
@@ -464,13 +455,33 @@ export class ContextBuilderService {
       discoveryFacts,
       factCount,
       // B4: revealCompleted fallback applied in BOTH getOnboardingState AND getBootstrapData
-      revealCompleted: tenant.revealCompletedAt !== null || hasRealContent,
+      revealCompleted:
+        tenant.revealCompletedAt !== null || (await this.hasNonSeedPackages(tenantId)),
     };
   }
 
   // ===========================================================================
   // PRIVATE HELPERS
   // ===========================================================================
+
+  /**
+   * Resolve effective phase and trigger lazy backfill.
+   * Extracts repeated 3-line block from build(), getBootstrapData(), getOnboardingState().
+   */
+  private async resolveAndBackfillPhase(
+    tenantId: string,
+    tenant: {
+      onboardingPhase: string | null;
+      onboardingCompletedAt: Date | null;
+    }
+  ): Promise<{ effectivePhase: OnboardingPhase; onboardingDone: boolean }> {
+    const effectivePhase = await this.resolveOnboardingPhase(tenant, () =>
+      this.hasNonSeedPackages(tenantId)
+    );
+    const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
+    this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
+    return { effectivePhase, onboardingDone };
+  }
 
   /**
    * Resolve the effective onboarding phase for a tenant.
@@ -480,28 +491,31 @@ export class ContextBuilderService {
    * 2. onboardingCompletedAt set (old flow) → COMPLETED
    * 3. Has real content (pre-rebuild tenant) → COMPLETED + lazy-write backfill
    * 4. Truly new tenant → NOT_STARTED
+   *
+   * @param hasRealContentThunk Lazy thunk that only executes if steps 1 and 2 fail
    */
-  private resolveOnboardingPhase(
+  private async resolveOnboardingPhase(
     tenant: {
       onboardingPhase: string | null;
       onboardingCompletedAt: Date | null;
     },
-    hasRealContent: boolean
-  ): OnboardingPhase {
+    hasRealContentThunk: () => Promise<boolean>
+  ): Promise<OnboardingPhase> {
     // 1. Explicit phase → trust it (uses Zod safeParse for type safety)
-    if (tenant.onboardingPhase) {
+    if (tenant.onboardingPhase && tenant.onboardingPhase !== 'NOT_STARTED') {
       return parseOnboardingPhase(tenant.onboardingPhase);
     }
     // 2. Completed via old flow
     if (tenant.onboardingCompletedAt) return 'COMPLETED';
-    // 3. Has real content (pre-rebuild tenant with real packages)
+    // 3. Has real content (pre-rebuild tenant with real packages) - LAZY evaluation
+    const hasRealContent = await hasRealContentThunk();
     if (hasRealContent) return 'COMPLETED';
     // 4. Truly new tenant
     return 'NOT_STARTED';
   }
 
   /**
-   * Detect if a tenant has real (non-seed) content.
+   * Detect if a tenant has real (non-seed) packages.
    *
    * IMPORTANT: Cannot use sectionContent count — seed sections are created
    * as isDraft: false at provisioning time (tenant-provisioning.service.ts:170).
@@ -510,7 +524,7 @@ export class ContextBuilderService {
    * Instead, check for packages with basePrice > 0 (seed packages are always $0).
    * Cross-ref: server/src/lib/tenant-defaults.ts:28-50
    */
-  private async hasNonPlaceholderContent(tenantId: string): Promise<boolean> {
+  private async hasNonSeedPackages(tenantId: string): Promise<boolean> {
     const realPackageCount = await this.prisma.package.count({
       where: { tenantId, basePrice: { gt: 0 } },
     });
@@ -521,6 +535,9 @@ export class ContextBuilderService {
    * Lazy backfill: set the phase permanently so heuristic becomes a no-op.
    * Idempotent, non-blocking (fire-and-forget), converts perpetual per-load
    * cost into a one-time cost per tenant.
+   *
+   * Dedup: Module-scoped Set prevents redundant writes on subsequent requests.
+   * Bounded: Clear entire Set after 1000 entries to avoid unbounded growth.
    */
   private lazyBackfillPhase(
     tenantId: string,
@@ -528,10 +545,25 @@ export class ContextBuilderService {
     hasExplicitPhase: boolean
   ): void {
     if (effectivePhase === 'COMPLETED' && !hasExplicitPhase) {
+      // Skip if already backfilled in this process lifetime
+      if (recentlyBackfilled.has(tenantId)) {
+        return;
+      }
+
+      // Fire-and-forget write
       this.prisma.tenant
         .update({
           where: { id: tenantId },
           data: { onboardingPhase: 'COMPLETED', onboardingCompletedAt: new Date() },
+        })
+        .then(() => {
+          // Track successful backfill
+          recentlyBackfilled.add(tenantId);
+
+          // Bounded memory: clear entire Set if it grows too large
+          if (recentlyBackfilled.size > MAX_BACKFILL_CACHE) {
+            recentlyBackfilled.clear();
+          }
         })
         .catch((err) =>
           logger.warn({ tenantId, err }, '[ContextBuilder] Lazy backfill failed — non-fatal')

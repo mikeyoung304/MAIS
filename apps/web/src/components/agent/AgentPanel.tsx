@@ -52,6 +52,25 @@ let firstDraftWriteCount = 0;
 const PANEL_OPEN_KEY = 'agent-panel-open';
 const WELCOMED_KEY = 'agent-panel-welcomed';
 
+/**
+ * SkipSetupLink - Reusable skip button for onboarding mode
+ * Used in both desktop (aside) and mobile (drawer) layouts
+ */
+function SkipSetupLink({ onSkip, isSkipping }: { onSkip: () => void; isSkipping: boolean }) {
+  return (
+    <div className="flex justify-end px-4 py-1 border-b border-neutral-700 bg-surface-alt shrink-0">
+      <button
+        onClick={onSkip}
+        disabled={isSkipping}
+        className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+        aria-label="Skip onboarding setup"
+      >
+        {isSkipping ? 'Skipping...' : 'Skip setup'}
+      </button>
+    </div>
+  );
+}
+
 interface AgentPanelProps {
   /** Additional CSS classes */
   className?: string;
@@ -547,18 +566,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
           </div>
 
           {/* Minimal skip link (when in onboarding mode) */}
-          {isOnboarding && (
-            <div className="flex justify-end px-4 py-1 border-b border-neutral-700 bg-surface-alt shrink-0">
-              <button
-                onClick={handleSkip}
-                disabled={isSkipping}
-                className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-                aria-label="Skip onboarding setup"
-              >
-                {isSkipping ? 'Skipping...' : 'Skip setup'}
-              </button>
-            </div>
-          )}
+          {isOnboarding && <SkipSetupLink onSkip={handleSkip} isSkipping={isSkipping} />}
 
           {/* Review Progress (when agent is walking through sections) */}
           {isReviewing && <ReviewProgress />}
@@ -692,18 +700,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
             </div>
 
             {/* Minimal skip link (when in onboarding mode) */}
-            {isOnboarding && (
-              <div className="flex justify-end px-4 py-1 border-b border-neutral-700 bg-surface-alt shrink-0">
-                <button
-                  onClick={handleSkip}
-                  disabled={isSkipping}
-                  className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-                  aria-label="Skip onboarding setup"
-                >
-                  {isSkipping ? 'Skipping...' : 'Skip setup'}
-                </button>
-              </div>
-            )}
+            {isOnboarding && <SkipSetupLink onSkip={handleSkip} isSkipping={isSkipping} />}
 
             {/* Review Progress (when agent is walking through sections) */}
             {isReviewing && <ReviewProgress />}

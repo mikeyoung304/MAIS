@@ -131,8 +131,8 @@ No user approval needed for first draft — just build and announce.`,
     const placeholderSections = allSections.filter((s) => s.hasPlaceholder);
 
     // MVP reveal scope — only return the "wow moment" sections for first draft.
-    // Source of truth: SECTION_BLUEPRINT.isRevealMVP in @macon/contracts
-    // Hardcoded here because Cloud Run agent doesn't import from contracts.
+    // Source of truth: packages/contracts/src/schemas/section-blueprint.schema.ts → MVP_REVEAL_SECTION_TYPES
+    // Cloud Run agent cannot import from @macon/contracts — keep in sync manually with isRevealMVP: true entries
     const MVP_SECTIONS = new Set(['HERO', 'ABOUT', 'SERVICES']);
     const mvpPlaceholders = placeholderSections.filter((s) => MVP_SECTIONS.has(s.type));
 
@@ -172,18 +172,24 @@ No user approval needed for first draft — just build and announce.`,
     //
     // IMPORTANT: Match by name AND price, not just price. Legitimate free consultations
     // with non-seed names must be preserved.
-    // Cross-ref: server/src/lib/tenant-defaults.ts:28-50
+    //
+    // Canonical source: @macon/contracts SEED_PACKAGE_NAMES
+    // Cloud Run agent cannot import from contracts — hardcoded here with cross-reference
     const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
 
     try {
       const listResult = await callMaisApi('/manage-packages', tenantId, { action: 'list' });
       if (listResult.ok) {
+        // API returns priceInDollars (dollars), not basePrice (cents) — see internal-agent.routes.ts
         const packages =
-          (listResult.data as { packages?: Array<{ id: string; name: string; basePrice: number }> })
-            ?.packages ?? [];
+          (
+            listResult.data as {
+              packages?: Array<{ id: string; name: string; priceInDollars: number }>;
+            }
+          )?.packages ?? [];
         const defaultPackages = packages.filter(
           (pkg) =>
-            pkg.basePrice === 0 &&
+            pkg.priceInDollars === 0 &&
             SEED_PACKAGE_NAMES.includes(pkg.name as (typeof SEED_PACKAGE_NAMES)[number])
         );
         for (const pkg of defaultPackages) {

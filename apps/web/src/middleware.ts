@@ -194,9 +194,14 @@ export default auth((request) => {
 
   // Add CSP frame-ancestors for tenant routes to prevent clickjacking
   // 'self' allows same-origin framing (needed for Build Mode preview)
-  // but prevents external sites from embedding tenant storefronts
+  // *.gethandled.ai allows dashboard preview iframe
+  // localhost:3000 allows dev environment
   if (pathname.startsWith('/t/')) {
-    response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
+    const isDev = process.env.NODE_ENV === 'development';
+    const frameAncestors = isDev
+      ? "'self' *.gethandled.ai http://localhost:3000"
+      : "'self' *.gethandled.ai";
+    response.headers.set('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
   }
 
   return response;

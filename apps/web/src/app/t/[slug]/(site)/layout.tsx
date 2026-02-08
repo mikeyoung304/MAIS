@@ -31,7 +31,7 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
     return (
       <div className="flex min-h-screen flex-col bg-surface">
         {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
-            Prevents TenantChatWidget from mounting (no wasted agent session).
+            Nav wrapped separately (above content), footer/widgets share one gate (below content).
             Suspense required because useSearchParams() triggers client-side boundary. */}
         <Suspense>
           <EditModeGate>
@@ -44,11 +44,6 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
         <Suspense>
           <EditModeGate>
             <TenantFooter tenant={tenant} />
-          </EditModeGate>
-        </Suspense>
-
-        <Suspense>
-          <EditModeGate>
             {/* Customer Chat Widget - floating chatbot for booking assistance */}
             <TenantChatWidget
               tenantApiKey={tenant.apiKeyPublic}
@@ -56,11 +51,6 @@ export default async function TenantSiteLayout({ children, params }: TenantSiteL
               primaryColor={tenant.primaryColor}
               chatEnabled={tenant.chatEnabled}
             />
-          </EditModeGate>
-        </Suspense>
-
-        <Suspense>
-          <EditModeGate>
             {/* Sticky Mobile CTA - appears on scroll for easy booking access */}
             <StickyMobileCTA
               ctaText={tenant.branding?.landingPage?.hero?.ctaText || 'View Packages'}
