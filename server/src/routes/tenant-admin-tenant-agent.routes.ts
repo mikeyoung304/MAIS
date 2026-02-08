@@ -33,6 +33,7 @@ import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import type { ContextBuilderService, BootstrapData } from '../services/context-builder.service';
 import { cloudRunAuth } from '../services/cloud-run-auth.service';
+import { AdkSessionResponseSchema, fetchWithTimeout } from '../lib/adk-client';
 
 // =============================================================================
 // CONFIGURATION
@@ -66,12 +67,7 @@ const SessionIdSchema = z.object({
   id: z.string().min(1),
 });
 
-/**
- * ADK session creation response format.
- */
-const AdkSessionResponseSchema = z.object({
-  id: z.string(),
-});
+// AdkSessionResponseSchema imported from '../lib/adk-client'
 
 /**
  * ADK session GET response format.
@@ -222,29 +218,20 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const agentUrl = getTenantAgentUrl();
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout per Pitfall #42
-
-      let response: globalThis.Response;
-      try {
-        response = await fetch(
-          // ADK app name is 'agent' (from /list-apps endpoint)
-          `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            // ADK expects state wrapped: { state: { key: value } }
-            // NOW INCLUDES: knownFacts, forbiddenSlots, storefrontState, etc.
-            body: JSON.stringify({ state: sessionState }),
-            signal: controller.signal,
-          }
-        );
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      // ADK app name is 'agent' (from /list-apps endpoint)
+      const response = await fetchWithTimeout(
+        `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          // ADK expects state wrapped: { state: { key: value } }
+          // NOW INCLUDES: knownFacts, forbiddenSlots, storefrontState, etc.
+          body: JSON.stringify({ state: sessionState }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -311,25 +298,17 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const agentUrl = getTenantAgentUrl();
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for reads
-
-      let response: globalThis.Response;
-      try {
-        response = await fetch(
-          `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            signal: controller.signal,
-          }
-        );
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      const response = await fetchWithTimeout(
+        `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        },
+        15_000 // 15s timeout for reads
+      );
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -478,11 +457,8 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
         const agentUrl = getTenantAgentUrl();
 
-        const createController = new AbortController();
-        const createTimeoutId = setTimeout(() => createController.abort(), 30000);
-
         try {
-          const createResponse = await fetch(
+          const createResponse = await fetchWithTimeout(
             `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
             {
               method: 'POST',
@@ -491,11 +467,8 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
                 ...(token && { Authorization: `Bearer ${token}` }),
               },
               body: JSON.stringify({ state: sessionState }),
-              signal: createController.signal,
             }
           );
-
-          clearTimeout(createTimeoutId);
 
           if (createResponse.ok) {
             const createData = await createResponse.json();
@@ -509,7 +482,6 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
             }
           }
         } catch {
-          clearTimeout(createTimeoutId);
           // Fall through to use a fallback session ID
         }
 
@@ -554,36 +526,27 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         }
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-      let response: globalThis.Response;
-      try {
-        response = await fetch(`${agentUrl}/run`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
+      const response = await fetchWithTimeout(`${agentUrl}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          // A2A protocol format (Pitfall #28 - must use camelCase)
+          appName: 'agent',
+          userId,
+          sessionId,
+          newMessage: {
+            role: 'user',
+            parts: [{ text: messageWithContext }],
           },
-          body: JSON.stringify({
-            // A2A protocol format (Pitfall #28 - must use camelCase)
-            appName: 'agent',
-            userId,
-            sessionId,
-            newMessage: {
-              role: 'user',
-              parts: [{ text: messageWithContext }],
-            },
-            // Pass tenant context in state for the agent to use
-            state: {
-              tenantId,
-            },
-          }),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
+          // Pass tenant context in state for the agent to use
+          state: {
+            tenantId,
+          },
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
