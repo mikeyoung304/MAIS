@@ -1,12 +1,20 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-
 /**
  * Not Found Page for Tenant Routes
  *
  * Displayed when:
  * - Tenant slug doesn't exist
  * - Custom domain isn't registered
+ *
+ * IMPORTANT: This file must NOT import client components (Button, Link, etc.).
+ * Next.js 14.x has a bug where not-found.tsx at route segment boundaries
+ * (e.g., app/t/not-found.tsx) maps shared client component module IDs to
+ * deeper chunks (page.js) that aren't loaded when the NotFoundBoundary
+ * renders. The not-found.js chunk IS built but its <script> tag is NOT
+ * included in the HTML, causing "Cannot read properties of undefined
+ * (reading 'call')" in webpack's module factory.
+ *
+ * Use plain <a> tags instead to avoid the client component chunk dependency.
+ * See: https://github.com/vercel/next.js/issues/58100
  */
 export default function TenantNotFound() {
   return (
@@ -18,16 +26,19 @@ export default function TenantNotFound() {
           The business you&apos;re looking for doesn&apos;t exist or may have moved.
         </p>
         <div className="mt-8">
-          <Button asChild variant="sage">
-            <Link href="/">Go to Homepage</Link>
-          </Button>
+          <a
+            href="/"
+            className="inline-flex items-center justify-center whitespace-nowrap font-semibold rounded-lg px-6 py-3 bg-sage text-white hover:bg-sage-hover transition-colors"
+          >
+            Go to Homepage
+          </a>
         </div>
       </div>
       <p className="mt-16 text-center text-sm text-text-muted">
         Are you a business owner?{' '}
-        <Link href="/signup" className="text-sage underline hover:no-underline">
+        <a href="/signup" className="text-sage underline hover:no-underline">
           Get started with HANDLED
-        </Link>
+        </a>
       </p>
     </div>
   );
