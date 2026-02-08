@@ -1,10 +1,9 @@
 ---
-status: complete
+status: pending
 priority: p2
 issue_id: 816
 tags: [code-review, agent, security, multi-tenant]
 dependencies: [811]
-completed_date: 2026-02-02
 ---
 
 # Package Tool Must Verify Tenant Ownership Before Mutations
@@ -167,10 +166,10 @@ logger.info(
 
 ## Acceptance Criteria
 
-- [x] Backend route verifies `pkg.tenantId === requestingTenantId` before update/delete
-- [x] 404 returned (not 403) to avoid leaking package existence
-- [x] Audit log includes tenantId, packageId, and action
-- [ ] Test: Tenant A cannot update Tenant B's package (deferred - manual verification needed)
+- [ ] Backend route verifies `pkg.tenantId === requestingTenantId` before update/delete
+- [ ] 404 returned (not 403) to avoid leaking package existence
+- [ ] Audit log includes tenantId, packageId, and action
+- [ ] Test: Tenant A cannot update Tenant B's package
 
 ## Work Log
 
@@ -178,60 +177,6 @@ logger.info(
 | ---------- | ----------------------- | --------------------------------------- |
 | 2026-02-01 | Security agent analysis | Cross-tenant mutation is critical risk  |
 | 2026-02-01 | Pattern review          | Existing code in tenant-admin.routes.ts |
-| 2026-02-02 | Verification complete   | Security already implemented correctly  |
-
-## Resolution Summary
-
-**Status: Already Implemented**
-
-The security checks identified in this TODO were already implemented in the `/manage-packages` route in `internal-agent.routes.ts` (lines 2432-2437 for update, lines 2494-2499 for delete).
-
-**Implementation details:**
-
-1. **Route-level ownership check** (lines 2432-2437 and 2494-2499):
-
-   ```typescript
-   // SECURITY: Verify package belongs to tenant (pitfall #816)
-   const existingPkg = await catalogService.getPackageById(tenantId, params.packageId);
-   if (!existingPkg) {
-     res.status(404).json({ error: 'Package not found' });
-     return;
-   }
-   ```
-
-2. **Service-level tenant scoping** (`catalog.service.ts` line 140-142):
-
-   ```typescript
-   async getPackageById(tenantId: string, id: string): Promise<Package | null> {
-     return this.repository.getPackageById(tenantId, id);
-   }
-   ```
-
-3. **Repository-level tenant scoping** (`catalog.repository.ts` lines 110-116):
-
-   ```typescript
-   async getPackageById(tenantId: string, id: string): Promise<Package | null> {
-     const pkg = await this.prisma.package.findFirst({
-       where: { tenantId, id },  // Both tenantId AND id required
-     });
-     return pkg ? this.toDomainPackage(pkg) : null;
-   }
-   ```
-
-4. **Audit logging** (lines 2468-2472 for update, line 2505 for delete):
-   ```typescript
-   logger.info(
-     { tenantId, packageId: updatedPackage.id, updates: Object.keys(updateData) },
-     '[Agent] Package updated'
-   );
-   ```
-
-**Key security features:**
-
-- Returns 404 (not 403) to prevent package existence leakage
-- Check happens BEFORE mutation, not after
-- Defense-in-depth: tenant scoping at route, service, and repository layers
-- Comments reference pitfall #816 for future maintainers
 
 ## Resources
 
