@@ -15,8 +15,11 @@ import type { BlockType } from '../generated/prisma/client';
  * Catalog Repository - Package and AddOn persistence
  */
 export interface CatalogRepository {
-  getAllPackages(tenantId: string): Promise<Package[]>;
-  getAllPackagesWithAddOns(tenantId: string): Promise<(Package & { addOns: AddOn[] })[]>;
+  getAllPackages(tenantId: string, options?: { take?: number }): Promise<Package[]>;
+  getAllPackagesWithAddOns(
+    tenantId: string,
+    options?: { take?: number }
+  ): Promise<(Package & { addOns: AddOn[] })[]>;
   getPackageBySlug(tenantId: string, slug: string): Promise<Package | null>;
   getPackageBySlugWithAddOns(
     tenantId: string,
@@ -28,7 +31,7 @@ export interface CatalogRepository {
     id: string
   ): Promise<(Package & { addOns: AddOn[] }) | null>;
   getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>;
-  getAllAddOns(tenantId: string): Promise<AddOn[]>;
+  getAllAddOns(tenantId: string, options?: { take?: number }): Promise<AddOn[]>;
   getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]>;
   getAddOnById(tenantId: string, id: string): Promise<AddOn | null>;
   createPackage(tenantId: string, data: CreatePackageInput): Promise<Package>;
@@ -39,15 +42,27 @@ export interface CatalogRepository {
   deleteAddOn(tenantId: string, id: string): Promise<void>;
 
   // Segment-scoped methods (Phase A - Segment Implementation)
-  getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]>;
+  getPackagesBySegment(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<Package[]>;
   getPackagesBySegmentWithAddOns(
     tenantId: string,
-    segmentId: string
+    segmentId: string,
+    options?: { take?: number }
   ): Promise<(Package & { addOns: AddOn[] })[]>;
-  getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]>;
+  getAddOnsForSegment(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<AddOn[]>;
 
   // Draft methods (Visual Editor)
-  getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]>;
+  getAllPackagesWithDrafts(
+    tenantId: string,
+    options?: { take?: number }
+  ): Promise<PackageWithDraft[]>;
   updateDraft(
     tenantId: string,
     packageId: string,
@@ -503,8 +518,12 @@ export interface WebhookDeliveryListItem {
  * Service Repository - Scheduling service management
  */
 export interface ServiceRepository {
-  getAll(tenantId: string, includeInactive?: boolean): Promise<Service[]>;
-  getActiveServices(tenantId: string): Promise<Service[]>;
+  getAll(
+    tenantId: string,
+    includeInactive?: boolean,
+    options?: { take?: number }
+  ): Promise<Service[]>;
+  getActiveServices(tenantId: string, options?: { take?: number }): Promise<Service[]>;
   getBySlug(tenantId: string, slug: string): Promise<Service | null>;
   getById(tenantId: string, id: string): Promise<Service | null>;
   create(tenantId: string, data: CreateServiceInput): Promise<Service>;

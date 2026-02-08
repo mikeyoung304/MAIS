@@ -17,19 +17,26 @@ import type { Package, AddOn } from '../../lib/entities';
 import { DomainError } from '../../lib/errors';
 import { NotFoundError } from '../../lib/errors/http';
 
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+
 export class PrismaCatalogRepository implements CatalogRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async getAllPackages(tenantId: string): Promise<Package[]> {
+  async getAllPackages(tenantId: string, options?: { take?: number }): Promise<Package[]> {
     const packages = await this.prisma.package.findMany({
       where: { tenantId },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: { createdAt: 'asc' },
     });
 
     return packages.map((pkg) => this.toDomainPackage(pkg));
   }
 
-  async getAllPackagesWithAddOns(tenantId: string): Promise<Array<Package & { addOns: AddOn[] }>> {
+  async getAllPackagesWithAddOns(
+    tenantId: string,
+    options?: { take?: number }
+  ): Promise<Array<Package & { addOns: AddOn[] }>> {
     const packages = await this.prisma.package.findMany({
       where: { tenantId },
       include: {
@@ -39,6 +46,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           },
         },
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: { createdAt: 'asc' },
     });
 
@@ -160,7 +168,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return packages.map((pkg) => this.toDomainPackage(pkg));
   }
 
-  async getAllAddOns(tenantId: string): Promise<AddOn[]> {
+  async getAllAddOns(tenantId: string, options?: { take?: number }): Promise<AddOn[]> {
     const addOns = await this.prisma.addOn.findMany({
       where: { tenantId },
       include: {
@@ -170,6 +178,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           },
         },
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: { createdAt: 'asc' },
     });
 
@@ -437,13 +446,18 @@ export class PrismaCatalogRepository implements CatalogRepository {
    * @param segmentId - Segment ID to filter packages
    * @returns Array of packages ordered by groupingOrder then createdAt
    */
-  async getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]> {
+  async getPackagesBySegment(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<Package[]> {
     const packages = await this.prisma.package.findMany({
       where: {
         tenantId,
         segmentId,
         active: true,
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: [{ groupingOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
@@ -463,7 +477,8 @@ export class PrismaCatalogRepository implements CatalogRepository {
    */
   async getPackagesBySegmentWithAddOns(
     tenantId: string,
-    segmentId: string
+    segmentId: string,
+    options?: { take?: number }
   ): Promise<Array<Package & { addOns: AddOn[] }>> {
     const packages = await this.prisma.package.findMany({
       where: {
@@ -478,6 +493,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           },
         },
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: [{ groupingOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
@@ -515,7 +531,11 @@ export class PrismaCatalogRepository implements CatalogRepository {
    * @param segmentId - Segment ID to filter add-ons
    * @returns Array of add-ons ordered by createdAt
    */
-  async getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]> {
+  async getAddOnsForSegment(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<AddOn[]> {
     const addOns = await this.prisma.addOn.findMany({
       where: {
         tenantId,
@@ -530,6 +550,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           },
         },
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: { createdAt: 'asc' },
     });
 
@@ -543,9 +564,13 @@ export class PrismaCatalogRepository implements CatalogRepository {
   /**
    * Get all packages with draft fields for visual editor
    */
-  async getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]> {
+  async getAllPackagesWithDrafts(
+    tenantId: string,
+    options?: { take?: number }
+  ): Promise<PackageWithDraft[]> {
     const packages = await this.prisma.package.findMany({
       where: { tenantId },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: { createdAt: 'asc' },
     });
 

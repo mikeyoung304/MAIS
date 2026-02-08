@@ -68,6 +68,10 @@ export interface UpdateTenantInput {
  * Note: ITenantRepository interface exists in ports.ts for test mocking,
  * but this class returns full Prisma Tenant for compatibility with existing code.
  */
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_ADMIN_PAGE_SIZE = 500;
+const MAX_STATS_PAGE_SIZE = 100;
+
 export class PrismaTenantRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -185,7 +189,7 @@ export class PrismaTenantRepository {
    * @returns Array of tenants
    */
   async list(
-    options: { onlyActive?: boolean; includeTestTenants?: boolean } = {}
+    options: { onlyActive?: boolean; includeTestTenants?: boolean; take?: number } = {}
   ): Promise<Tenant[]> {
     const { onlyActive = false, includeTestTenants = false } = options;
 
@@ -195,6 +199,7 @@ export class PrismaTenantRepository {
 
     return await this.prisma.tenant.findMany({
       where: Object.keys(where).length ? where : undefined,
+      take: Math.min(options.take ?? DEFAULT_PAGE_SIZE, MAX_ADMIN_PAGE_SIZE),
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -205,9 +210,13 @@ export class PrismaTenantRepository {
    * @param includeTestTenants - Whether to include test tenants (default: false)
    * @returns Array of tenants with booking/package/addon counts
    */
-  async listWithStats(includeTestTenants = false): Promise<TenantWithStats[]> {
+  async listWithStats(
+    includeTestTenants = false,
+    options?: { take?: number }
+  ): Promise<TenantWithStats[]> {
     const tenants = await this.prisma.tenant.findMany({
       where: includeTestTenants ? undefined : { isTestTenant: false },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_STATS_PAGE_SIZE),
       select: {
         id: true,
         slug: true,
@@ -321,13 +330,14 @@ export class PrismaTenantRepository {
    *
    * @returns Array of { slug, updatedAt } for active tenants
    */
-  async listActive(): Promise<{ slug: string; updatedAt: Date }[]> {
+  async listActive(options?: { take?: number }): Promise<{ slug: string; updatedAt: Date }[]> {
     return await this.prisma.tenant.findMany({
       where: {
         isActive: true,
         isTestTenant: false,
       },
       select: { slug: true, updatedAt: true },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_ADMIN_PAGE_SIZE),
       orderBy: { updatedAt: 'desc' },
     });
   }
