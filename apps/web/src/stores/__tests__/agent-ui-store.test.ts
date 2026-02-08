@@ -17,7 +17,6 @@ import {
   selectIsPreviewActive,
   selectPreviewConfig,
   selectIsDirty,
-  selectCurrentPage,
   selectHighlightedSectionId,
   selectError,
   selectIsInitialized,
@@ -85,7 +84,7 @@ describe('agent-ui-store', () => {
       // First set to preview
       useAgentUIStore.setState({
         tenantId: 'tenant_old',
-        view: { status: 'preview', config: { currentPage: 'about', highlightedSectionId: null } },
+        view: { status: 'preview', config: { highlightedSectionId: null } },
       });
 
       useAgentUIStore.getState().initialize('tenant_new');
@@ -102,7 +101,7 @@ describe('agent-ui-store', () => {
           {
             id: 'action_1',
             type: 'SHOW_PREVIEW',
-            payload: { page: 'home' },
+            payload: {},
             timestamp: Date.now(),
             agentSessionId: null,
             tenantId: 'tenant_old',
@@ -142,25 +141,6 @@ describe('agent-ui-store', () => {
       expect(state.view.status).toBe('preview');
     });
 
-    it('should set config.currentPage to default "home"', () => {
-      useAgentUIStore.getState().showPreview();
-
-      const state = useAgentUIStore.getState();
-      expect(state.view.status).toBe('preview');
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('home');
-      }
-    });
-
-    it('should accept custom page parameter', () => {
-      useAgentUIStore.getState().showPreview('about');
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('about');
-      }
-    });
-
     it('should set highlightedSectionId to null', () => {
       useAgentUIStore.getState().showPreview();
 
@@ -179,7 +159,7 @@ describe('agent-ui-store', () => {
       expect(state.actionLog).toHaveLength(1);
       expect(state.actionLog[0]).toMatchObject({
         type: 'SHOW_PREVIEW',
-        payload: { page: 'home' },
+        payload: {},
         agentSessionId: 'agent_session_456',
         tenantId: 'tenant_123',
       });
@@ -260,16 +240,6 @@ describe('agent-ui-store', () => {
       }
     });
 
-    it('should parse page from sectionId (format: {page}-{type}-{qualifier})', () => {
-      useAgentUIStore.getState().showPreview('home');
-      useAgentUIStore.getState().highlightSection('about-hero-main');
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('about');
-      }
-    });
-
     it('should auto-switch to preview if in dashboard mode', () => {
       // Start in dashboard
       expect(useAgentUIStore.getState().view.status).toBe('dashboard');
@@ -280,7 +250,6 @@ describe('agent-ui-store', () => {
       expect(state.view.status).toBe('preview');
       if (state.view.status === 'preview') {
         expect(state.view.config.highlightedSectionId).toBe('services-hero-main');
-        expect(state.view.config.currentPage).toBe('services');
       }
     });
 
@@ -295,26 +264,6 @@ describe('agent-ui-store', () => {
         agentSessionId: 'agent_session_111',
         tenantId: 'tenant_123',
       });
-    });
-
-    it('should keep current page if sectionId has invalid page', () => {
-      useAgentUIStore.getState().showPreview('gallery');
-      useAgentUIStore.getState().highlightSection('invalid-hero-main');
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        // Should keep current page since 'invalid' is not a valid page
-        expect(state.view.config.currentPage).toBe('gallery');
-      }
-    });
-
-    it('should use "home" as fallback for invalid sectionId when switching from dashboard', () => {
-      useAgentUIStore.getState().highlightSection('xy'); // Less than 3 parts
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('home');
-      }
     });
 
     it('should do nothing if tenantId is null', () => {
@@ -368,71 +317,7 @@ describe('agent-ui-store', () => {
   });
 
   // ============================================
-  // 7. SET PREVIEW PAGE
-  // ============================================
-
-  describe('setPreviewPage(page)', () => {
-    beforeEach(() => {
-      useAgentUIStore.getState().initialize('tenant_123');
-      useAgentUIStore.getState().showPreview('home');
-    });
-
-    it('should change currentPage when in preview mode', () => {
-      useAgentUIStore.getState().setPreviewPage('about');
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('about');
-      }
-    });
-
-    it('should clear highlight when changing page', () => {
-      useAgentUIStore.getState().highlightSection('home-hero-main');
-      useAgentUIStore.getState().setPreviewPage('services');
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        expect(state.view.config.highlightedSectionId).toBeNull();
-      }
-    });
-
-    it('should add action to actionLog with type SET_PAGE', () => {
-      useAgentUIStore.getState().setPreviewPage('contact');
-
-      const state = useAgentUIStore.getState();
-      const lastAction = state.actionLog[state.actionLog.length - 1];
-      expect(lastAction).toMatchObject({
-        type: 'SET_PAGE',
-        payload: { page: 'contact' },
-        tenantId: 'tenant_123',
-      });
-    });
-
-    it('should do nothing when not in preview mode', () => {
-      useAgentUIStore.getState().showDashboard();
-      const actionCountBefore = useAgentUIStore.getState().actionLog.length;
-
-      useAgentUIStore.getState().setPreviewPage('gallery');
-
-      const state = useAgentUIStore.getState();
-      expect(state.view.status).toBe('dashboard');
-      expect(state.actionLog.length).toBe(actionCountBefore);
-    });
-
-    it('should do nothing if tenantId is null', () => {
-      useAgentUIStore.setState({ tenantId: null });
-
-      useAgentUIStore.getState().setPreviewPage('testimonials');
-
-      // Should remain unchanged - view should still be dashboard and no actions logged
-      const state = useAgentUIStore.getState();
-      expect(state.view.status).toBe('dashboard');
-      expect(state.actionLog.length).toBe(0);
-    });
-  });
-
-  // ============================================
-  // 8. SET ERROR AND CLEAR ERROR
+  // 7. SET ERROR AND CLEAR ERROR
   // ============================================
 
   describe('setError() and clearError()', () => {
@@ -512,7 +397,7 @@ describe('agent-ui-store', () => {
 
       expect(action.id).toMatch(/^action_\d+_[a-z0-9]+$/);
       expect(action.type).toBe('SHOW_PREVIEW');
-      expect(action.payload).toEqual({ page: 'home' });
+      expect(action.payload).toEqual({});
       expect(action.timestamp).toBe(Date.now());
       expect(action.agentSessionId).toBe('session_abc');
       expect(action.tenantId).toBe('tenant_123');
@@ -528,13 +413,13 @@ describe('agent-ui-store', () => {
     it('should accumulate multiple actions in order', () => {
       useAgentUIStore.getState().showPreview('home');
       useAgentUIStore.getState().highlightSection('home-hero-main');
-      useAgentUIStore.getState().setPreviewPage('about');
+      useAgentUIStore.getState().showDashboard();
 
       const state = useAgentUIStore.getState();
       expect(state.actionLog).toHaveLength(3);
       expect(state.actionLog[0].type).toBe('SHOW_PREVIEW');
       expect(state.actionLog[1].type).toBe('HIGHLIGHT_SECTION');
-      expect(state.actionLog[2].type).toBe('SET_PAGE');
+      expect(state.actionLog[2].type).toBe('HIDE_PREVIEW');
     });
 
     it('getActionLog() should return current action log', () => {
@@ -567,7 +452,7 @@ describe('agent-ui-store', () => {
         const state = useAgentUIStore.getState();
         expect(state.view.status).toBe('preview');
         if (state.view.status === 'preview') {
-          expect(state.view.config.currentPage).toBe('home');
+          expect(state.view.config.highlightedSectionId).toBeNull();
         }
       });
 
@@ -628,14 +513,13 @@ describe('agent-ui-store', () => {
     });
 
     it('should narrow to preview config when status is preview', () => {
-      useAgentUIStore.getState().showPreview('services');
+      useAgentUIStore.getState().showPreview();
 
       const state = useAgentUIStore.getState();
 
       // TypeScript narrowing test
       if (state.view.status === 'preview') {
         // This should compile and work
-        expect(state.view.config.currentPage).toBe('services');
         expect(state.view.config.highlightedSectionId).toBeNull();
       }
     });
@@ -689,9 +573,6 @@ describe('agent-ui-store', () => {
 
       const state = useAgentUIStore.getState();
       expect(state.view.status).toBe('preview');
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('about');
-      }
     });
 
     it('agentUIActions.showDashboard should work outside React', () => {
@@ -719,16 +600,6 @@ describe('agent-ui-store', () => {
       const state = useAgentUIStore.getState();
       if (state.view.status === 'preview') {
         expect(state.view.config.highlightedSectionId).toBeNull();
-      }
-    });
-
-    it('agentUIActions.setPreviewPage should work outside React', () => {
-      agentUIActions.showPreview();
-      agentUIActions.setPreviewPage('faq');
-
-      const state = useAgentUIStore.getState();
-      if (state.view.status === 'preview') {
-        expect(state.view.config.currentPage).toBe('faq');
       }
     });
 
@@ -833,12 +704,11 @@ describe('agent-ui-store', () => {
 
     describe('selectPreviewConfig', () => {
       it('should return config when in preview mode', () => {
-        useAgentUIStore.getState().showPreview('about');
+        useAgentUIStore.getState().showPreview();
         const state = useAgentUIStore.getState();
         const config = selectPreviewConfig(state);
 
         expect(config).toEqual({
-          currentPage: 'about',
           highlightedSectionId: null,
         });
       });
@@ -859,19 +729,6 @@ describe('agent-ui-store', () => {
         useAgentUIStore.getState().setDirty(true);
         const state = useAgentUIStore.getState();
         expect(selectIsDirty(state)).toBe(true);
-      });
-    });
-
-    describe('selectCurrentPage', () => {
-      it('should return current page when in preview', () => {
-        useAgentUIStore.getState().showPreview('gallery');
-        const state = useAgentUIStore.getState();
-        expect(selectCurrentPage(state)).toBe('gallery');
-      });
-
-      it('should return null when not in preview', () => {
-        const state = useAgentUIStore.getState();
-        expect(selectCurrentPage(state)).toBeNull();
       });
     });
 
@@ -933,30 +790,14 @@ describe('agent-ui-store', () => {
 
     it('should handle rapid state changes', () => {
       // Simulate rapid navigation
-      useAgentUIStore.getState().showPreview('home');
-      useAgentUIStore.getState().setPreviewPage('about');
-      useAgentUIStore.getState().setPreviewPage('services');
+      useAgentUIStore.getState().showPreview();
       useAgentUIStore.getState().highlightSection('services-hero-main');
       useAgentUIStore.getState().clearHighlight();
       useAgentUIStore.getState().showDashboard();
 
       const state = useAgentUIStore.getState();
       expect(state.view.status).toBe('dashboard');
-      expect(state.actionLog).toHaveLength(5); // showPreview, setPage x2, highlight, hidePreview (clearHighlight doesn't log)
-    });
-
-    it('should validate all page types in section ID extraction', () => {
-      const validPages = ['home', 'about', 'services', 'faq', 'contact', 'gallery', 'testimonials'];
-
-      for (const page of validPages) {
-        useAgentUIStore.getState().initialize('tenant_123'); // Reset
-        useAgentUIStore.getState().highlightSection(`${page}-hero-main`);
-
-        const state = useAgentUIStore.getState();
-        if (state.view.status === 'preview') {
-          expect(state.view.config.currentPage).toBe(page);
-        }
-      }
+      expect(state.actionLog).toHaveLength(3); // showPreview, highlight, hidePreview (clearHighlight doesn't log)
     });
 
     it('should handle multiple initializations (tenant switch)', () => {

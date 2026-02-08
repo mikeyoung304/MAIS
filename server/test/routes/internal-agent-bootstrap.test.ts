@@ -71,7 +71,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       update: vi.fn().mockResolvedValue(mockTenant),
     };
 
-    // Mock ContextBuilderService (replaces legacy AdvisorMemoryService)
+    // Mock ContextBuilderService for agent bootstrap data
     mockContextBuilder = {
       getBootstrapData: vi.fn().mockResolvedValue({
         tenantId: 'tenant-123',

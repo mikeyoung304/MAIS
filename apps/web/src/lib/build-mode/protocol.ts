@@ -95,22 +95,11 @@ export const BuildModeSectionSelectedSchema = z.object({
 });
 
 /**
- * Page change message - sent when iframe navigates to different page
- */
-export const BuildModePageChangeSchema = z.object({
-  type: z.literal('BUILD_MODE_PAGE_CHANGE'),
-  data: z.object({
-    pageId: z.enum(PAGE_NAMES as unknown as [string, ...string[]]),
-  }),
-});
-
-/**
  * Union of all iframe → parent messages
  */
 export const BuildModeChildMessageSchema = z.discriminatedUnion('type', [
   BuildModeReadySchema,
   BuildModeSectionSelectedSchema,
-  BuildModePageChangeSchema,
 ]);
 
 export type BuildModeChildMessage = z.infer<typeof BuildModeChildMessageSchema>;

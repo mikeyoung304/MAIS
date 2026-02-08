@@ -4,7 +4,6 @@
 
 import type { Package, AddOn, Booking, Service } from './entities';
 import type Stripe from 'stripe';
-import type { AdvisorMemory } from '@macon/contracts';
 import type { BlockType } from '../generated/prisma/client';
 
 // ============================================================================
@@ -15,8 +14,11 @@ import type { BlockType } from '../generated/prisma/client';
  * Catalog Repository - Package and AddOn persistence
  */
 export interface CatalogRepository {
-  getAllPackages(tenantId: string): Promise<Package[]>;
-  getAllPackagesWithAddOns(tenantId: string): Promise<(Package & { addOns: AddOn[] })[]>;
+  getAllPackages(tenantId: string, options?: { take?: number }): Promise<Package[]>;
+  getAllPackagesWithAddOns(
+    tenantId: string,
+    options?: { take?: number }
+  ): Promise<(Package & { addOns: AddOn[] })[]>;
   getPackageBySlug(tenantId: string, slug: string): Promise<Package | null>;
   getPackageBySlugWithAddOns(
     tenantId: string,
@@ -28,7 +30,7 @@ export interface CatalogRepository {
     id: string
   ): Promise<(Package & { addOns: AddOn[] }) | null>;
   getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>;
-  getAllAddOns(tenantId: string): Promise<AddOn[]>;
+  getAllAddOns(tenantId: string, options?: { take?: number }): Promise<AddOn[]>;
   getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]>;
   getAddOnById(tenantId: string, id: string): Promise<AddOn | null>;
   createPackage(tenantId: string, data: CreatePackageInput): Promise<Package>;
@@ -39,15 +41,27 @@ export interface CatalogRepository {
   deleteAddOn(tenantId: string, id: string): Promise<void>;
 
   // Segment-scoped methods (Phase A - Segment Implementation)
-  getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]>;
+  getPackagesBySegment(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<Package[]>;
   getPackagesBySegmentWithAddOns(
     tenantId: string,
-    segmentId: string
+    segmentId: string,
+    options?: { take?: number }
   ): Promise<(Package & { addOns: AddOn[] })[]>;
-  getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]>;
+  getAddOnsForSegment(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<AddOn[]>;
 
   // Draft methods (Visual Editor)
-  getAllPackagesWithDrafts(tenantId: string): Promise<PackageWithDraft[]>;
+  getAllPackagesWithDrafts(
+    tenantId: string,
+    options?: { take?: number }
+  ): Promise<PackageWithDraft[]>;
   updateDraft(
     tenantId: string,
     packageId: string,
@@ -503,8 +517,12 @@ export interface WebhookDeliveryListItem {
  * Service Repository - Scheduling service management
  */
 export interface ServiceRepository {
-  getAll(tenantId: string, includeInactive?: boolean): Promise<Service[]>;
-  getActiveServices(tenantId: string): Promise<Service[]>;
+  getAll(
+    tenantId: string,
+    includeInactive?: boolean,
+    options?: { take?: number }
+  ): Promise<Service[]>;
+  getActiveServices(tenantId: string, options?: { take?: number }): Promise<Service[]>;
   getBySlug(tenantId: string, slug: string): Promise<Service | null>;
   getById(tenantId: string, id: string): Promise<Service | null>;
   create(tenantId: string, data: CreateServiceInput): Promise<Service>;
@@ -1016,70 +1034,6 @@ export interface StorageProvider {
 // ============================================================================
 // ONBOARDING AGENT INTERFACES
 // ============================================================================
-
-/**
- * Advisor Memory Repository - Event sourcing projection for onboarding agent
- *
- * Provides:
- * - Memory projection from event history (for session resumption)
- * - Memory clearing (for reset/testing)
- * - Event history access (for debugging/audit)
- *
- * This interface enables testability by abstracting database access.
- * (Kieran Fix #5: Repository interface for AdvisorMemory)
- */
-export interface AdvisorMemoryRepository {
-  /**
-   * Get current advisor memory for a tenant.
-   * Returns null if no events exist.
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @returns Projected memory state or null
-   */
-  getMemory(tenantId: string): Promise<AdvisorMemory | null>;
-
-  /**
-   * Project memory from event history.
-   * Replays all events to build current state.
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @returns Projected memory state
-   */
-  projectFromEvents(tenantId: string): Promise<AdvisorMemory>;
-
-  /**
-   * Clear all onboarding memory for a tenant.
-   * Used for reset/testing scenarios.
-   *
-   * @param tenantId - Tenant ID for isolation
-   */
-  clearMemory(tenantId: string): Promise<void>;
-
-  /**
-   * Get event history for a tenant.
-   * Returns events in descending order (newest first).
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param limit - Maximum events to return (default 50)
-   */
-  getEventHistory(
-    tenantId: string,
-    limit?: number
-  ): Promise<
-    Array<{
-      id: string;
-      eventType: string;
-      version: number;
-      timestamp: Date;
-    }>
-  >;
-}
-
-/**
- * Advisor Memory type for onboarding agent
- * Re-exported from contracts - single source of truth (Kieran Fix #5)
- */
-export type { AdvisorMemory } from '@macon/contracts';
 
 // ============================================================================
 // Tenant Repository Port

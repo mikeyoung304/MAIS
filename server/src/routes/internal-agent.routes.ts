@@ -54,8 +54,8 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { timingSafeEqual } from 'crypto';
 import { z, ZodError } from 'zod';
+import { timingSafeCompare } from '../lib/timing-safe';
 import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
 import type { CatalogService } from '../services/catalog.service';
@@ -285,15 +285,8 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
     }
 
     // Verify secret matches using constant-time comparison to prevent timing attacks
-    // timingSafeEqual requires equal-length buffers, so we check length first
     const secretStr = typeof secret === 'string' ? secret : '';
-    const secretBuffer = Buffer.from(secretStr);
-    const expectedBuffer = Buffer.from(expectedSecret);
-
-    if (
-      secretBuffer.length !== expectedBuffer.length ||
-      !timingSafeEqual(secretBuffer, expectedBuffer)
-    ) {
+    if (!timingSafeCompare(secretStr, expectedSecret)) {
       logger.warn({ ip: req.ip }, 'Invalid internal API secret from agent');
       res.status(403).json({
         error: 'Invalid API secret',
@@ -410,7 +403,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get discovery data from ContextBuilder (single source of truth)
-      // This replaces the legacy AdvisorMemoryService approach
+      // ContextBuilder provides discovery data for agent context injection
       let discoveryData: Record<string, unknown> | null = null;
       if (contextBuilder) {
         try {
@@ -2846,11 +2839,11 @@ function handleError(res: Response, error: unknown, endpoint: string): void {
     return;
   }
 
-  logger.error({ error, endpoint }, '[Agent] Internal error');
+  logger.error({ error, endpoint, requestId: res.locals?.requestId }, '[Agent] Internal error');
 
   res.status(500).json({
     error: 'Internal server error',
-    message: error instanceof Error ? error.message : 'Unknown error',
+    requestId: res.locals?.requestId,
   });
 }
 

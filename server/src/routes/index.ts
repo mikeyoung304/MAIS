@@ -767,11 +767,11 @@ export function createV1Router(
 
   // Register internal agent routes (for Vertex AI agent-to-backend communication)
   // Secured with X-Internal-Secret header - agents call these to fetch tenant data
-  // Required services: catalog, booking, tenant repository, advisor memory
+  // Required services: catalog, booking, tenant repository, context builder
   if (services) {
     // Use tenantRepo from parameter if available (mock mode), otherwise create new (real mode fallback)
     const internalTenantRepo = tenantRepo ?? new PrismaTenantRepository(prismaClient);
-    // Create context builder service (replaces legacy AdvisorMemoryService)
+    // Create context builder service for agent bootstrap data
     const contextBuilder = createContextBuilderService(prismaClient);
     // Create vocabulary embedding service for semantic section resolution
     const vocabularyEmbeddingService = new VocabularyEmbeddingService(prismaClient);

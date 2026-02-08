@@ -8,27 +8,36 @@ import type { Service } from '../../lib/entities';
 import { DomainError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
 
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+
 export class PrismaServiceRepository implements ServiceRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async getAll(tenantId: string, includeInactive = false): Promise<Service[]> {
+  async getAll(
+    tenantId: string,
+    includeInactive = false,
+    options?: { take?: number }
+  ): Promise<Service[]> {
     const services = await this.prisma.service.findMany({
       where: {
         tenantId,
         ...(includeInactive ? {} : { active: true }),
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     return services.map(this.toDomainService);
   }
 
-  async getActiveServices(tenantId: string): Promise<Service[]> {
+  async getActiveServices(tenantId: string, options?: { take?: number }): Promise<Service[]> {
     const services = await this.prisma.service.findMany({
       where: {
         tenantId,
         active: true,
       },
+      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 

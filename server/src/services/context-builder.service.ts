@@ -2,7 +2,7 @@
  * ContextBuilder Service
  *
  * Single source of truth for agent context assembly.
- * Replaces legacy AdvisorMemoryService with direct reads from canonical storage.
+ * Reads directly from canonical storage for agent context.
  *
  * Architecture: Agent-First (2026-02-01)
  * - Context is injected at session start, never inferred
@@ -363,8 +363,10 @@ export class ContextBuilderService {
     let hasDraft = false;
     let hasPublished = false;
     if (this.sectionContentService) {
-      hasDraft = await this.sectionContentService.hasDraft(tenantId);
-      hasPublished = await this.sectionContentService.hasPublished(tenantId);
+      [hasDraft, hasPublished] = await Promise.all([
+        this.sectionContentService.hasDraft(tenantId),
+        this.sectionContentService.hasPublished(tenantId),
+      ]);
     }
 
     // Calculate simple completion score
@@ -417,7 +419,7 @@ export class ContextBuilderService {
   }
 
   /**
-   * Get onboarding state (replaces AdvisorMemoryService.getOnboardingContext)
+   * Get onboarding state for agent context injection
    */
   async getOnboardingState(tenantId: string): Promise<{
     phase: OnboardingPhase;
@@ -596,9 +598,11 @@ export class ContextBuilderService {
       };
     }
 
-    // Get all sections for this tenant (published)
-    const structure = await this.sectionContentService.getPageStructure(tenantId, {});
-    const hasDraft = await this.sectionContentService.hasDraft(tenantId);
+    // Get all sections for this tenant (published) — parallel for perf
+    const [structure, hasDraft] = await Promise.all([
+      this.sectionContentService.getPageStructure(tenantId, {}),
+      this.sectionContentService.hasDraft(tenantId),
+    ]);
 
     // Flatten sections from all pages
     const allSections = structure.pages.flatMap((page) => page.sections);

@@ -109,45 +109,50 @@ export function createApp(
     })
   );
 
-  // CORS - Multi-origin support for widget embedding
+  // CORS - Known origins + project-specific preview deployment patterns
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3003',
+    'https://gethandled.ai',
+    'https://www.gethandled.ai',
+    'https://app.gethandled.ai',
+    'https://widget.gethandled.ai',
+  ];
+
+  const allowedOrigins = new Set([...defaultOrigins, ...(config.ALLOWED_ORIGINS || [])]);
+
+  // Project-specific preview deployment patterns
+  // Only match OUR project's preview URLs, not all of Render/Vercel
+  const RENDER_PREVIEW_RE = /^https:\/\/mais-[a-z0-9-]+\.onrender\.com$/;
+  const VERCEL_PREVIEW_RE = /^https:\/\/mais-[a-z0-9-]+\.vercel\.app$/;
+
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, Postman, curl)
+        // Allow requests with no origin (same-origin, server-to-server)
         if (!origin) return callback(null, true);
 
-        // In development, allow all origins
-        if (process.env.NODE_ENV === 'development') {
+        // Exact match against known origins
+        if (allowedOrigins.has(origin)) return callback(null, true);
+
+        // Allow OUR Render preview deployments only
+        if (RENDER_PREVIEW_RE.test(origin)) return callback(null, true);
+
+        // Allow OUR Vercel preview deployments only
+        if (VERCEL_PREVIEW_RE.test(origin)) return callback(null, true);
+
+        // In development, allow all localhost ports
+        if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost:')) {
           return callback(null, true);
         }
 
-        // Hardcoded production origins (always allowed)
-        const defaultOrigins = [
-          'http://localhost:5173',
-          'http://localhost:3000',
-          'https://gethandled.ai',
-          'https://www.gethandled.ai',
-          'https://app.gethandled.ai',
-          'https://widget.gethandled.ai',
-        ];
-
-        // Merge with environment variable overrides
-        const allowedOrigins = [...defaultOrigins, ...(config.ALLOWED_ORIGINS || [])];
-
-        if (allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
-          // Allow all HTTPS origins in production (widget embedding on customer sites)
-          callback(null, true);
-        } else {
-          logger.warn({ origin, allowedOrigins }, 'CORS request blocked - origin not in allowlist');
-          callback(new Error('Not allowed by CORS'));
-        }
+        logger.warn({ origin }, 'CORS request blocked');
+        callback(new Error('Not allowed by CORS'));
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Key'],
-      exposedHeaders: ['X-Tenant-Key'], // Allow clients to read this header
+      exposedHeaders: ['X-Tenant-Key'],
     })
   );
 

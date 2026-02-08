@@ -67,12 +67,6 @@ export { updateBrandingTool } from './branding.js';
 export { previewDraftTool, publishDraftTool, discardDraftTool } from './draft.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Page Management Tool (T1) - Phase 2b
-// ─────────────────────────────────────────────────────────────────────────────
-
-export { togglePageTool } from './toggle-page.js';
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Marketing Copy Tools (T1/T2) - Phase 2c
 // ─────────────────────────────────────────────────────────────────────────────
 

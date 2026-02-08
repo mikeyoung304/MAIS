@@ -283,6 +283,7 @@ describe('AuditService', () => {
           entityType: 'Package',
           entityId: 'pkg_456',
         },
+        take: 100,
         orderBy: {
           createdAt: 'desc',
         },

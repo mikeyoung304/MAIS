@@ -209,12 +209,15 @@ seedData();
 
 // Mock Catalog Repository
 export class MockCatalogRepository implements CatalogRepository {
-  async getAllPackages(_tenantId: string): Promise<Package[]> {
+  async getAllPackages(_tenantId: string, _options?: { take?: number }): Promise<Package[]> {
     // Mock mode: Ignore tenantId, return all packages
     return Array.from(packages.values());
   }
 
-  async getAllPackagesWithAddOns(_tenantId: string): Promise<Array<Package & { addOns: AddOn[] }>> {
+  async getAllPackagesWithAddOns(
+    _tenantId: string,
+    _options?: { take?: number }
+  ): Promise<Array<Package & { addOns: AddOn[] }>> {
     // Mock mode: Ignore tenantId, return all packages
     const allPackages = Array.from(packages.values());
     return allPackages.map((pkg) => ({
@@ -267,7 +270,7 @@ export class MockCatalogRepository implements CatalogRepository {
     return ids.map((id) => packages.get(id)).filter((pkg): pkg is Package => pkg !== undefined);
   }
 
-  async getAllAddOns(_tenantId: string): Promise<AddOn[]> {
+  async getAllAddOns(_tenantId: string, _options?: { take?: number }): Promise<AddOn[]> {
     // Mock mode: Ignore tenantId, return all add-ons
     return Array.from(addOns.values());
   }
@@ -418,14 +421,19 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   // Segment-scoped methods (Phase A - Segment Implementation)
-  async getPackagesBySegment(_tenantId: string, segmentId: string): Promise<Package[]> {
+  async getPackagesBySegment(
+    _tenantId: string,
+    segmentId: string,
+    _options?: { take?: number }
+  ): Promise<Package[]> {
     // Mock mode: Return all packages (mock doesn't support segments)
     return Array.from(packages.values()).filter((p) => p.segmentId === segmentId);
   }
 
   async getPackagesBySegmentWithAddOns(
     tenantId: string,
-    segmentId: string
+    segmentId: string,
+    _options?: { take?: number }
   ): Promise<Array<Package & { addOns: AddOn[] }>> {
     // Mock mode: Return packages with their add-ons
     const segmentPackages = await this.getPackagesBySegment(tenantId, segmentId);
@@ -435,7 +443,11 @@ export class MockCatalogRepository implements CatalogRepository {
     }));
   }
 
-  async getAddOnsForSegment(_tenantId: string, segmentId: string): Promise<AddOn[]> {
+  async getAddOnsForSegment(
+    _tenantId: string,
+    segmentId: string,
+    _options?: { take?: number }
+  ): Promise<AddOn[]> {
     // Mock mode: Return all add-ons for packages in segment
     const segmentPackages = await this.getPackagesBySegment(_tenantId, segmentId);
     const packageIds = new Set(segmentPackages.map((p) => p.id));
@@ -443,7 +455,10 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   // Draft methods (Visual Editor)
-  async getAllPackagesWithDrafts(_tenantId: string): Promise<PackageWithDraft[]> {
+  async getAllPackagesWithDrafts(
+    _tenantId: string,
+    _options?: { take?: number }
+  ): Promise<PackageWithDraft[]> {
     // Mock mode: Return packages with draft fields (all null since mock doesn't persist drafts)
     return Array.from(packages.values()).map((pkg) => ({
       id: pkg.id,
@@ -1200,9 +1215,6 @@ export class MockEarlyAccessRepository implements EarlyAccessRepository {
     return { request, isNew: true };
   }
 }
-
-// Export MockAdvisorMemoryRepository for onboarding agent testing
-export { MockAdvisorMemoryRepository } from './advisor-memory.repository';
 
 // Export MockSectionContentRepository for section content testing
 export { MockSectionContentRepository } from './section-content.repository';

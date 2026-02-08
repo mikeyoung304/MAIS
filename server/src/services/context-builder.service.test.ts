@@ -22,6 +22,9 @@ const createMockPrisma = () =>
     tenant: {
       findUnique: vi.fn(),
     },
+    package: {
+      count: vi.fn().mockResolvedValue(0),
+    },
   }) as unknown as PrismaClient;
 
 const createMockSectionContentService = (overrides: Partial<SectionContentService> = {}) =>

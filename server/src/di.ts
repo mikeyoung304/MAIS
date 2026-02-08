@@ -59,7 +59,6 @@ import {
   PrismaEarlyAccessRepository,
   PrismaSectionContentRepository,
 } from './adapters/prisma';
-// AdvisorMemoryRepository removed - replaced by ContextBuilderService
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
@@ -108,7 +107,6 @@ export interface Container {
     webhookSubscription?: PrismaWebhookSubscriptionRepository; // Webhook subscription management (TODO-278)
     earlyAccess?: PrismaEarlyAccessRepository; // Early access request persistence
     sectionContent?: PrismaSectionContentRepository; // Section content for storefront editing
-    // AdvisorMemoryRepository removed - replaced by ContextBuilderService (Phase 1 Agent-First)
   };
   mailProvider?: PostmarkMailAdapter; // Export mail provider for password reset emails
   storageProvider: UploadAdapter; // Export storage provider for file uploads

@@ -61,9 +61,15 @@ export class IdentityService {
    * Create an impersonation JWT token with tenant context
    */
   createImpersonationToken(payload: UnifiedTokenPayload): string {
-    return jwt.sign(payload, this.jwtSecret, {
-      algorithm: 'HS256',
-      expiresIn: '7d', // Consider shorter expiry for security
-    });
+    return jwt.sign(
+      // NOTE: `type: 'impersonation'` is audit metadata only — NOT used in middleware validation.
+      // Future: add claim-based route restrictions if needed.
+      { ...payload, type: 'impersonation' },
+      this.jwtSecret,
+      {
+        algorithm: 'HS256',
+        expiresIn: '2h',
+      }
+    );
   }
 }

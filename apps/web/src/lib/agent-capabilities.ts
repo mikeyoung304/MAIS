@@ -224,15 +224,6 @@ export const AGENT_CAPABILITIES: AgentCapability[] = [
     example: 'Move the testimonials section above the CTA',
   },
   {
-    id: 'toggle_page_enabled',
-    name: 'Toggle Page',
-    description: 'Enable or disable an entire page on your storefront',
-    category: 'editing',
-    keywords: ['enable', 'disable', 'hide', 'show', 'page', 'toggle'],
-    trustTier: 'T1', // Low risk - easily reversible
-    example: 'Disable the gallery page',
-  },
-  {
     id: 'update_storefront_branding',
     name: 'Update Branding',
     description: 'Update brand colors, fonts, or logo (applies immediately)',

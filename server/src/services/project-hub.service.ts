@@ -486,6 +486,7 @@ export class ProjectHubService {
         tenantId, // CRITICAL: tenant-scoped
         ...visibilityFilter,
       },
+      take: 200,
       orderBy: { createdAt: 'asc' },
     });
 

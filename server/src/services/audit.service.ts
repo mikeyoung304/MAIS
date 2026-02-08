@@ -217,7 +217,8 @@ export class AuditService {
   async getEntityHistory(
     tenantId: string,
     entityType: string,
-    entityId: string
+    entityId: string,
+    options?: { take?: number }
   ): Promise<AuditLogEntry[]> {
     const logs = await this.prisma.configChangeLog.findMany({
       where: {
@@ -225,6 +226,7 @@ export class AuditService {
         entityType,
         entityId,
       },
+      take: Math.min(options?.take ?? 100, 500),
       orderBy: {
         createdAt: 'desc',
       },
@@ -305,7 +307,7 @@ export class AuditService {
       orderBy: {
         createdAt: 'desc',
       },
-      take: options?.limit ?? 50,
+      take: Math.min(options?.limit ?? 50, 500),
       skip: options?.offset ?? 0,
       select: {
         id: true,

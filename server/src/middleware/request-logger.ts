@@ -17,6 +17,9 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
   res.locals.logger = reqLogger;
   res.locals.requestId = requestId;
 
+  // Set response header so clients can correlate errors with server logs
+  res.setHeader('X-Request-ID', requestId);
+
   // Log request start
   reqLogger.info(
     {
