@@ -13,6 +13,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import { z, ZodError } from 'zod';
 import { logger } from '../lib/core/logger';
+import { timingSafeCompare } from '../lib/timing-safe';
 
 // Validation schema for revalidation request
 const revalidateSchema = z.object({
@@ -57,7 +58,7 @@ export function createInternalRoutes(config: { internalApiSecret?: string }): Ro
     const token = authHeader.substring(7); // Remove 'Bearer '
 
     // Constant-time comparison to prevent timing attacks
-    if (!constantTimeCompare(token, expectedSecret)) {
+    if (!timingSafeCompare(token, expectedSecret)) {
       logger.warn({ ip: req.ip }, 'Invalid internal API secret');
       res.status(403).json({
         error: 'Invalid API secret',
@@ -110,7 +111,6 @@ export function createInternalRoutes(config: { internalApiSecret?: string }): Ro
         logger.warn('NEXTJS_REVALIDATE_SECRET not configured');
         res.status(503).json({
           error: 'Revalidation not configured',
-          message: 'NEXTJS_REVALIDATE_SECRET environment variable not set',
         });
         return;
       }
@@ -169,20 +169,4 @@ export function createInternalRoutes(config: { internalApiSecret?: string }): Ro
   });
 
   return router;
-}
-
-/**
- * Constant-time string comparison to prevent timing attacks
- */
-function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-
-  return result === 0;
 }

@@ -15,6 +15,7 @@
 import type { Express, Request, Response, NextFunction } from 'express';
 import { register, collectDefaultMetrics, Counter, Gauge } from 'prom-client';
 import { logger } from '../lib/core/logger';
+import { timingSafeCompare } from '../lib/timing-safe';
 
 /**
  * Metrics authentication middleware
@@ -50,7 +51,7 @@ function metricsAuthMiddleware(req: Request, res: Response, next: NextFunction):
     const providedToken = tokenMatch[1];
 
     // Constant-time comparison to prevent timing attacks
-    if (!timingSafeEqual(providedToken, expectedToken)) {
+    if (!timingSafeCompare(providedToken, expectedToken)) {
       logger.warn({ ip: req.ip }, 'Invalid metrics bearer token');
       res.status(401).json({ error: 'Invalid bearer token' });
       return;
@@ -84,21 +85,6 @@ function metricsAuthMiddleware(req: Request, res: Response, next: NextFunction):
 
 // Avoid log spam - warn only once per startup
 let metricsAuthWarningLogged = false;
-
-/**
- * Constant-time string comparison to prevent timing attacks
- */
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return result === 0;
-}
 
 export interface MetricsDeps {
   startTime: number;

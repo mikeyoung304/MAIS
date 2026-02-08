@@ -650,11 +650,11 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         return;
       }
 
-      logger.error({ error }, '[TenantAgent] Internal error');
+      logger.error({ error, requestId: res.locals.requestId }, '[TenantAgent] Internal error');
       res.status(500).json({
         success: false,
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        requestId: res.locals.requestId,
       });
     }
   });
@@ -1031,10 +1031,13 @@ function handleError(res: Response, error: unknown, endpoint: string): void {
     return;
   }
 
-  logger.error({ error, endpoint }, '[TenantAgent] Internal error');
+  logger.error(
+    { error, endpoint, requestId: res.locals.requestId },
+    '[TenantAgent] Internal error'
+  );
 
   res.status(500).json({
     error: 'Internal server error',
-    message: error instanceof Error ? error.message : 'Unknown error',
+    requestId: res.locals.requestId,
   });
 }
