@@ -23,6 +23,27 @@ import type { PageName, OnboardingPhase } from '@macon/contracts';
 import { SECTION_BLUEPRINT, MVP_REVEAL_SECTION_COUNT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { z } from 'zod';
+
+// Zod schema for validating dashboardAction from agent tool results (Fix #5203)
+const DashboardActionSchema = z.object({
+  type: z.enum([
+    'NAVIGATE',
+    'SCROLL_TO_SECTION',
+    'SHOW_PREVIEW',
+    'REFRESH',
+    'REFRESH_PREVIEW',
+    'REVEAL_SITE',
+    'SHOW_VARIANT_WIDGET',
+    'SHOW_PUBLISH_READY',
+    'HIGHLIGHT_NEXT_SECTION',
+    'PUBLISH_SITE',
+  ]),
+  section: z.string().optional(),
+  blockType: z.string().optional(),
+  sectionId: z.string().optional(),
+  sectionType: z.string().optional(),
+});
 
 // Module-scoped counter for section writes during first draft.
 // Persists across tool-complete batches (agent may send 1+1+1 or 2+1).
@@ -360,7 +381,8 @@ export function AgentPanel({ className }: AgentPanelProps) {
       const dashboardActions = toolCalls
         .map((call) => {
           const result = call.result as Record<string, unknown> | undefined;
-          return result?.dashboardAction as DashboardAction | undefined;
+          const parsed = DashboardActionSchema.safeParse(result?.dashboardAction);
+          return parsed.success ? (parsed.data as DashboardAction) : undefined;
         })
         .filter((action): action is DashboardAction => Boolean(action));
 

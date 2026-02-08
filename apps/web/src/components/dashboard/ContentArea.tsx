@@ -30,8 +30,12 @@ const API_PROXY = '/api/tenant-admin/agent/tenant';
 const PreviewPanel = lazy(() => import('@/components/preview/PreviewPanel'));
 const RevealTransition = lazy(() => import('@/components/preview/RevealTransition'));
 
-// Eager import for ComingSoonDisplay (lightweight, shown immediately during onboarding)
-import { ComingSoonDisplay } from '@/components/preview/ComingSoonDisplay';
+// Lazy load ComingSoonDisplay (uses framer-motion ~35KB, only shown during onboarding)
+const ComingSoonDisplay = lazy(() =>
+  import('@/components/preview/ComingSoonDisplay').then((mod) => ({
+    default: mod.ComingSoonDisplay,
+  }))
+);
 
 // ============================================
 // LOADING STATE
@@ -149,7 +153,9 @@ export function ContentArea({ children, className }: ContentAreaProps) {
     case 'coming_soon':
       return (
         <div className={cn('h-full', className)} data-testid="content-area-coming-soon">
-          <ComingSoonDisplay />
+          <Suspense fallback={<LoadingView />}>
+            <ComingSoonDisplay />
+          </Suspense>
         </div>
       );
 

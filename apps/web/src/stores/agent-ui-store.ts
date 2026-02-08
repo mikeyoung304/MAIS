@@ -86,6 +86,20 @@ export type ViewState =
   | { status: 'loading'; target: string }
   | { status: 'error'; error: string; recovery?: () => void };
 
+/**
+ * Valid ViewState transitions — prevents impossible state jumps.
+ * coming_soon is locked: only revealSite() can exit it.
+ *
+ * Enforced inline via guards in showPreview/showDashboard/highlightSection.
+ *
+ * coming_soon  → revealing
+ * revealing    → preview
+ * preview      → dashboard | loading | error | preview (page/highlight changes)
+ * dashboard    → preview | coming_soon | loading | error
+ * loading      → preview | dashboard | error
+ * error        → dashboard | preview
+ */
+
 // ============================================
 // EVENT SOURCING - Audit trail for all actions
 // ============================================
@@ -115,8 +129,6 @@ export type AgentActionType =
   | 'SHOW_COMING_SOON'
   | 'REVEAL_SITE'
   | 'HIGHLIGHT_SECTION'
-  | 'CLEAR_HIGHLIGHT'
-  | 'NAVIGATE'
   | 'SET_PAGE'
   | 'SET_ERROR';
 
@@ -144,8 +156,6 @@ export type AgentAction =
   | (AgentActionBase & { type: 'SHOW_COMING_SOON'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'REVEAL_SITE'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'HIGHLIGHT_SECTION'; payload: { sectionId: string } })
-  | (AgentActionBase & { type: 'CLEAR_HIGHLIGHT'; payload: Record<string, never> })
-  | (AgentActionBase & { type: 'NAVIGATE'; payload: { page: PageName } })
   | (AgentActionBase & { type: 'SET_PAGE'; payload: { page: PageName } })
   | (AgentActionBase & { type: 'SET_ERROR'; payload: { error: string } });
 
@@ -289,6 +299,17 @@ export interface AgentUIState {
 const generateActionId = () => `action_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
 /**
+ * Append an action to the FIFO log, evicting the oldest if at capacity.
+ * O(n) shift is acceptable at MAX_ACTION_LOG_SIZE=100.
+ */
+function appendToActionLog(actionLog: AgentAction[], action: AgentAction): void {
+  actionLog.push(action);
+  if (actionLog.length > MAX_ACTION_LOG_SIZE) {
+    actionLog.shift();
+  }
+}
+
+/**
  * Extract page name from section ID
  * @param sectionId Format: {page}-{type}-{qualifier}
  * @returns Page name or null if invalid
@@ -353,11 +374,7 @@ export const useAgentUIStore = create<AgentUIState>()(
               tenantId: state.tenantId,
             };
 
-            state.actionLog.push(action);
-            // FIFO: Remove oldest actions when limit exceeded
-            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-              state.actionLog.shift();
-            }
+            appendToActionLog(state.actionLog, action);
             state.view = {
               status: 'preview',
               config: { currentPage: page, highlightedSectionId: null },
@@ -380,11 +397,7 @@ export const useAgentUIStore = create<AgentUIState>()(
               tenantId: state.tenantId,
             };
 
-            state.actionLog.push(action);
-            // FIFO: Remove oldest actions when limit exceeded
-            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-              state.actionLog.shift();
-            }
+            appendToActionLog(state.actionLog, action);
             state.view = { status: 'dashboard' };
           }),
 
@@ -402,10 +415,7 @@ export const useAgentUIStore = create<AgentUIState>()(
               tenantId: state.tenantId,
             };
 
-            state.actionLog.push(action);
-            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-              state.actionLog.shift();
-            }
+            appendToActionLog(state.actionLog, action);
             state.view = { status: 'coming_soon' };
           }),
 
@@ -423,10 +433,7 @@ export const useAgentUIStore = create<AgentUIState>()(
               tenantId: state.tenantId,
             };
 
-            state.actionLog.push(action);
-            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-              state.actionLog.shift();
-            }
+            appendToActionLog(state.actionLog, action);
             state.view = { status: 'revealing' };
           }),
 
@@ -434,6 +441,7 @@ export const useAgentUIStore = create<AgentUIState>()(
         highlightSection: (sectionId, agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return;
+            if (state.view.status === 'coming_soon') return; // Guard: only revealSite exits coming_soon
 
             const action: AgentAction = {
               id: generateActionId(),
@@ -444,17 +452,10 @@ export const useAgentUIStore = create<AgentUIState>()(
               tenantId: state.tenantId,
             };
 
-            state.actionLog.push(action);
-            // FIFO: Remove oldest actions when limit exceeded
-            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-              state.actionLog.shift();
-            }
+            appendToActionLog(state.actionLog, action);
 
             // Extract page from section ID
             const pageFromId = extractPageFromSectionId(sectionId);
-
-            // Guard: only revealSite() can transition away from coming_soon
-            if (state.view.status === 'coming_soon') return;
 
             // If not in preview, switch to preview
             if (state.view.status !== 'preview') {
@@ -501,11 +502,7 @@ export const useAgentUIStore = create<AgentUIState>()(
                 tenantId: state.tenantId,
               };
 
-              state.actionLog.push(action);
-              // FIFO: Remove oldest actions when limit exceeded
-              if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-                state.actionLog.shift();
-              }
+              appendToActionLog(state.actionLog, action);
               state.view.config.currentPage = page;
               state.view.config.highlightedSectionId = null;
             }
@@ -537,11 +534,7 @@ export const useAgentUIStore = create<AgentUIState>()(
               tenantId: state.tenantId,
             };
 
-            state.actionLog.push(action);
-            // FIFO: Remove oldest actions when limit exceeded
-            if (state.actionLog.length > MAX_ACTION_LOG_SIZE) {
-              state.actionLog.shift();
-            }
+            appendToActionLog(state.actionLog, action);
             state.view = { status: 'error', error, recovery };
           }),
 

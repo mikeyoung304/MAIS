@@ -148,7 +148,6 @@ export interface RefinementState {
    */
   hydrate: (data: {
     mode?: string;
-    completedSections?: number;
     totalSections?: number;
     currentSectionId?: string | null;
   }) => void;
@@ -303,12 +302,8 @@ export const refinementActions = {
 
   reset: () => useRefinementStore.getState().reset(),
 
-  hydrate: (data: {
-    mode?: string;
-    completedSections?: number;
-    totalSections?: number;
-    currentSectionId?: string | null;
-  }) => useRefinementStore.getState().hydrate(data),
+  hydrate: (data: { mode?: string; totalSections?: number; currentSectionId?: string | null }) =>
+    useRefinementStore.getState().hydrate(data),
 };
 
 // ============================================

@@ -244,6 +244,7 @@ export function RevealTransition({ slug, onComplete }: RevealTransitionProps) {
           className="w-full h-full border-0"
           onLoad={handleIframeLoad}
           title="Website preview"
+          sandbox="allow-scripts allow-same-origin"
         />
       </div>
     );
@@ -258,6 +259,7 @@ export function RevealTransition({ slug, onComplete }: RevealTransitionProps) {
         className="absolute inset-0 w-full h-full border-0 z-0"
         onLoad={handleIframeLoad}
         title="Website preview"
+        sandbox="allow-scripts allow-same-origin"
       />
 
       {/* Wait for iframe readiness (P0 guard) */}

@@ -172,11 +172,16 @@ export function useBuildModeSync({
 
         case 'BUILD_MODE_HIGHLIGHT_SECTION_BY_ID': {
           // ID-based highlighting - find section by data-section-id attribute
-          const sectionByIdEl = document.querySelector(
-            `[data-section-id="${message.data.sectionId}"]`
-          );
+          // Fix #5203: Sanitize section ID to prevent CSS selector injection
+          const SAFE_SECTION_ID = /^[a-zA-Z0-9_-]+$/;
+          const safeSectionId = SAFE_SECTION_ID.test(message.data.sectionId)
+            ? message.data.sectionId
+            : null;
+          if (!safeSectionId) break;
+
+          const sectionByIdEl = document.querySelector(`[data-section-id="${safeSectionId}"]`);
           // Always set the section ID for ID-based state
-          setHighlightedSectionId(message.data.sectionId);
+          setHighlightedSectionId(safeSectionId);
           if (sectionByIdEl) {
             // Get the section index for the highlight state (backward compat)
             const indexAttr = sectionByIdEl.getAttribute('data-section-index');
