@@ -66,7 +66,7 @@ export default function TenantDashboardPage() {
   useEffect(() => {
     if (isStoreInitialized && searchParams.get('showPreview') === 'true') {
       // Trigger preview mode via agent UI store
-      agentUIActions.showPreview('home');
+      agentUIActions.showPreview();
       // Clean up URL to prevent re-triggering on refresh
       window.history.replaceState({}, '', '/tenant/dashboard');
     }

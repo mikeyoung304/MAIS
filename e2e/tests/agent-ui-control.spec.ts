@@ -132,7 +132,7 @@ test.describe('Agent UI Control', () => {
     });
 
     // Trigger show_preview action (simulating agent tool execution)
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
 
     // Should now show preview panel (assertion handles waiting for state change)
     await expect(authenticatedPage.locator('[data-testid="content-area-preview"]')).toBeVisible({
@@ -149,7 +149,7 @@ test.describe('Agent UI Control', () => {
    */
   test('returns to dashboard when agent triggers hide_preview', async ({ authenticatedPage }) => {
     // First show preview
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
     await expect(authenticatedPage.locator('[data-testid="content-area-preview"]')).toBeVisible({
       timeout: 5000,
     });
@@ -221,7 +221,6 @@ test.describe('Agent UI Control', () => {
         interval = 100
       ): Promise<{
         status: string;
-        currentPage: string | null;
         highlightedSectionId: string | null;
       } | null> => {
         return new Promise((resolve) => {
@@ -233,7 +232,7 @@ test.describe('Agent UI Control', () => {
                   getState: () => {
                     view: {
                       status: string;
-                      config?: { currentPage: string; highlightedSectionId: string | null };
+                      config?: { highlightedSectionId: string | null };
                     };
                   };
                 };
@@ -244,8 +243,6 @@ test.describe('Agent UI Control', () => {
               const state = store.getState();
               const result = {
                 status: state.view.status,
-                currentPage:
-                  'config' in state.view ? (state.view.config?.currentPage ?? null) : null,
                 highlightedSectionId:
                   'config' in state.view ? (state.view.config?.highlightedSectionId ?? null) : null,
               };
@@ -266,7 +263,7 @@ test.describe('Agent UI Control', () => {
                     getState: () => {
                       view: {
                         status: string;
-                        config?: { currentPage: string; highlightedSectionId: string | null };
+                        config?: { highlightedSectionId: string | null };
                       };
                     };
                   };
@@ -276,8 +273,6 @@ test.describe('Agent UI Control', () => {
                 const state = store2.getState();
                 resolve({
                   status: state.view.status,
-                  currentPage:
-                    'config' in state.view ? (state.view.config?.currentPage ?? null) : null,
                   highlightedSectionId:
                     'config' in state.view
                       ? (state.view.config?.highlightedSectionId ?? null)
@@ -355,7 +350,7 @@ test.describe('Agent UI Control', () => {
     await createDraft(authenticatedPage);
 
     // Show preview to access the publish button
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
     await expect(authenticatedPage.locator('[data-testid="preview-panel"]')).toBeVisible({
       timeout: 10000,
     });
@@ -365,7 +360,7 @@ test.describe('Agent UI Control', () => {
     await authenticatedPage.waitForLoadState('domcontentloaded');
 
     // Show preview again after reload
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
     await expect(authenticatedPage.locator('[data-testid="preview-panel"]')).toBeVisible({
       timeout: 10000,
     });
@@ -403,7 +398,7 @@ test.describe('Agent UI Control', () => {
     await createDraft(authenticatedPage);
 
     // Show preview to access the discard button
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
     await expect(authenticatedPage.locator('[data-testid="preview-panel"]')).toBeVisible({
       timeout: 10000,
     });
@@ -413,7 +408,7 @@ test.describe('Agent UI Control', () => {
     await authenticatedPage.waitForLoadState('domcontentloaded');
 
     // Show preview again after reload
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
     await expect(authenticatedPage.locator('[data-testid="preview-panel"]')).toBeVisible({
       timeout: 10000,
     });
@@ -474,7 +469,7 @@ test.describe('Preview Panel Navigation', () => {
     await goToDashboard(authenticatedPage);
 
     // Show preview
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
+    await callAgentUIAction(authenticatedPage, 'showPreview');
     await expect(authenticatedPage.locator('[data-testid="content-area-preview"]')).toBeVisible({
       timeout: 10000,
     });
