@@ -58,8 +58,6 @@ export interface ComingSoonState {
  * Preview configuration when showing storefront preview
  */
 interface PreviewConfig {
-  /** @deprecated Multi-page model removed — always 'home' (single scrolling page). Remove in follow-up PR. */
-  currentPage: PageName;
   /** Section ID to highlight (format: {page}-{type}-{qualifier}) */
   highlightedSectionId: string | null;
 }
@@ -129,7 +127,6 @@ export type AgentActionType =
   | 'SHOW_COMING_SOON'
   | 'REVEAL_SITE'
   | 'HIGHLIGHT_SECTION'
-  | 'SET_PAGE'
   | 'SET_ERROR';
 
 /**
@@ -151,12 +148,11 @@ interface AgentActionBase {
  * to narrow the payload type based on the action type.
  */
 export type AgentAction =
-  | (AgentActionBase & { type: 'SHOW_PREVIEW'; payload: { page: PageName } })
+  | (AgentActionBase & { type: 'SHOW_PREVIEW'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'HIDE_PREVIEW'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'SHOW_COMING_SOON'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'REVEAL_SITE'; payload: Record<string, never> })
   | (AgentActionBase & { type: 'HIGHLIGHT_SECTION'; payload: { sectionId: string } })
-  | (AgentActionBase & { type: 'SET_PAGE'; payload: { page: PageName } })
   | (AgentActionBase & { type: 'SET_ERROR'; payload: { error: string } });
 
 // ============================================
@@ -237,12 +233,6 @@ export interface AgentUIState {
   clearHighlight: () => void;
 
   /**
-   * Set page within preview
-   * @param page Page to navigate to
-   */
-  setPreviewPage: (page: PageName) => void;
-
-  /**
    * Set dirty state (has unpublished changes)
    */
   setDirty: (dirty: boolean) => void;
@@ -309,29 +299,6 @@ function appendToActionLog(actionLog: AgentAction[], action: AgentAction): void 
   }
 }
 
-/**
- * Extract page name from section ID
- * @param sectionId Format: {page}-{type}-{qualifier}
- * @returns Page name or null if invalid
- */
-const extractPageFromSectionId = (sectionId: string): PageName | null => {
-  const parts = sectionId.split('-');
-  if (parts.length < 3) return null;
-
-  const page = parts[0] as PageName;
-  const validPages: PageName[] = [
-    'home',
-    'about',
-    'services',
-    'faq',
-    'contact',
-    'gallery',
-    'testimonials',
-  ];
-
-  return validPages.includes(page) ? page : null;
-};
-
 // ============================================
 // STORE IMPLEMENTATION
 // ============================================
@@ -359,7 +326,7 @@ export const useAgentUIStore = create<AgentUIState>()(
           }),
 
         // Show preview
-        showPreview: (page = 'home', agentSessionId = null) =>
+        showPreview: (_page = 'home', agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return; // Security: require tenant
             // Guard: only revealSite() can transition away from coming_soon
@@ -368,7 +335,7 @@ export const useAgentUIStore = create<AgentUIState>()(
             const action: AgentAction = {
               id: generateActionId(),
               type: 'SHOW_PREVIEW',
-              payload: { page },
+              payload: {},
               timestamp: Date.now(),
               agentSessionId,
               tenantId: state.tenantId,
@@ -377,7 +344,7 @@ export const useAgentUIStore = create<AgentUIState>()(
             appendToActionLog(state.actionLog, action);
             state.view = {
               status: 'preview',
-              config: { currentPage: page, highlightedSectionId: null },
+              config: { highlightedSectionId: null },
             };
           }),
 
@@ -454,28 +421,15 @@ export const useAgentUIStore = create<AgentUIState>()(
 
             appendToActionLog(state.actionLog, action);
 
-            // Extract page from section ID
-            const pageFromId = extractPageFromSectionId(sectionId);
-
             // If not in preview, switch to preview
             if (state.view.status !== 'preview') {
               state.view = {
                 status: 'preview',
-                config: {
-                  currentPage: pageFromId || 'home',
-                  highlightedSectionId: sectionId,
-                },
+                config: { highlightedSectionId: sectionId },
               };
             } else {
-              // Already in preview - update page if needed and highlight
-              const currentPage = pageFromId || state.view.config.currentPage;
-              state.view = {
-                status: 'preview',
-                config: {
-                  currentPage,
-                  highlightedSectionId: sectionId,
-                },
-              };
+              // Already in preview - highlight section
+              state.view.config.highlightedSectionId = sectionId;
             }
           }),
 
@@ -483,27 +437,6 @@ export const useAgentUIStore = create<AgentUIState>()(
         clearHighlight: () =>
           set((state) => {
             if (state.view.status === 'preview') {
-              state.view.config.highlightedSectionId = null;
-            }
-          }),
-
-        /** @deprecated Multi-page model removed — always 'home'. Remove in follow-up PR. */
-        setPreviewPage: (page) =>
-          set((state) => {
-            if (!state.tenantId) return;
-
-            if (state.view.status === 'preview') {
-              const action: AgentAction = {
-                id: generateActionId(),
-                type: 'SET_PAGE',
-                payload: { page },
-                timestamp: Date.now(),
-                agentSessionId: null,
-                tenantId: state.tenantId,
-              };
-
-              appendToActionLog(state.actionLog, action);
-              state.view.config.currentPage = page;
               state.view.config.highlightedSectionId = null;
             }
           }),
@@ -577,7 +510,7 @@ export const useAgentUIStore = create<AgentUIState>()(
               case 'HIDE_PREVIEW':
                 state.view = {
                   status: 'preview',
-                  config: { currentPage: 'home', highlightedSectionId: null },
+                  config: { highlightedSectionId: null },
                 };
                 break;
               case 'SHOW_COMING_SOON':
@@ -590,9 +523,6 @@ export const useAgentUIStore = create<AgentUIState>()(
                 if (state.view.status === 'preview') {
                   state.view.config.highlightedSectionId = null;
                 }
-                break;
-              case 'SET_PAGE':
-                // Can't easily undo page change without tracking previous
                 break;
               case 'SET_ERROR':
                 state.view = { status: 'dashboard' };
@@ -638,9 +568,6 @@ export const agentUIActions = {
     useAgentUIStore.getState().highlightSection(sectionId, agentSessionId),
 
   clearHighlight: () => useAgentUIStore.getState().clearHighlight(),
-
-  /** @deprecated Multi-page model removed — always 'home'. Remove in follow-up PR. */
-  setPreviewPage: (page: PageName) => useAgentUIStore.getState().setPreviewPage(page),
 
   setDirty: (dirty: boolean) => useAgentUIStore.getState().setDirty(dirty),
 
@@ -690,12 +617,6 @@ export const selectIsDirty = (state: AgentUIState) => state.isDirty;
  * Select preview refresh key (increment triggers iframe reload)
  */
 export const selectPreviewRefreshKey = (state: AgentUIState) => state.previewRefreshKey;
-
-/**
- * @deprecated Multi-page model removed — always returns 'home'. Remove in follow-up PR.
- */
-export const selectCurrentPage = (state: AgentUIState) =>
-  state.view.status === 'preview' ? state.view.config.currentPage : null;
 
 /**
  * Select highlighted section ID (or null)

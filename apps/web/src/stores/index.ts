@@ -18,7 +18,6 @@ export {
   selectPreviewConfig,
   selectIsPreviewActive,
   selectIsDirty,
-  selectCurrentPage,
   selectHighlightedSectionId,
   selectError,
   selectIsInitialized,

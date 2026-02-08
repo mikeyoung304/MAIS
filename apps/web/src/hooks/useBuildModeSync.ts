@@ -31,9 +31,6 @@ interface UseBuildModeSyncResult {
 
   /** Notify parent of section selection */
   selectSection: (pageId: PageName, sectionIndex: number) => void;
-
-  /** Notify parent of page navigation */
-  notifyPageChange: (pageId: PageName) => void;
 }
 
 /**
@@ -218,18 +215,6 @@ export function useBuildModeSync({
     [isEditMode]
   );
 
-  // Notify parent of page navigation
-  const notifyPageChange = useCallback(
-    (pageId: PageName) => {
-      if (!isEditMode) return;
-      sendToParent({
-        type: 'BUILD_MODE_PAGE_CHANGE',
-        data: { pageId },
-      });
-    },
-    [isEditMode]
-  );
-
   return {
     isEditMode,
     draftConfig,
@@ -237,6 +222,5 @@ export function useBuildModeSync({
     highlightedSectionId,
     isReady,
     selectSection,
-    notifyPageChange,
   };
 }

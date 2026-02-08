@@ -1216,9 +1216,6 @@ export class MockEarlyAccessRepository implements EarlyAccessRepository {
   }
 }
 
-// Export MockAdvisorMemoryRepository for onboarding agent testing
-export { MockAdvisorMemoryRepository } from './advisor-memory.repository';
-
 // Export MockSectionContentRepository for section content testing
 export { MockSectionContentRepository } from './section-content.repository';
 

@@ -156,10 +156,6 @@ export function PreviewPanel({
             }
           }
           break;
-
-        case 'BUILD_MODE_PAGE_CHANGE':
-          // Single scrolling page — no action needed
-          break;
       }
     };
 

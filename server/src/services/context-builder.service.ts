@@ -2,7 +2,7 @@
  * ContextBuilder Service
  *
  * Single source of truth for agent context assembly.
- * Replaces legacy AdvisorMemoryService with direct reads from canonical storage.
+ * Reads directly from canonical storage for agent context.
  *
  * Architecture: Agent-First (2026-02-01)
  * - Context is injected at session start, never inferred
@@ -419,7 +419,7 @@ export class ContextBuilderService {
   }
 
   /**
-   * Get onboarding state (replaces AdvisorMemoryService.getOnboardingContext)
+   * Get onboarding state for agent context injection
    */
   async getOnboardingState(tenantId: string): Promise<{
     phase: OnboardingPhase;

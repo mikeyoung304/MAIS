@@ -30,20 +30,14 @@ interface BuildModeWrapperProps {
 export function BuildModeWrapper({ initialConfig, pageName, children }: BuildModeWrapperProps) {
   const [currentConfig, setCurrentConfig] = useState<PagesConfig | null>(initialConfig);
 
-  const { isEditMode, draftConfig, highlightedSection, selectSection, notifyPageChange } =
-    useBuildModeSync({
-      enabled: true,
-      initialConfig,
-      onConfigChange: setCurrentConfig,
-    });
+  const { isEditMode, draftConfig, highlightedSection, selectSection } = useBuildModeSync({
+    enabled: true,
+    initialConfig,
+    onConfigChange: setCurrentConfig,
+  });
 
   // Use draft config in edit mode, otherwise use initial/current
   const effectiveConfig = isEditMode && draftConfig ? draftConfig : currentConfig;
-
-  // Notify parent when this page loads
-  useEffect(() => {
-    notifyPageChange(pageName);
-  }, [pageName, notifyPageChange]);
 
   // API-first: render SSR content immediately. No blocking on PostMessage handshake.
   return (

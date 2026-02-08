@@ -57,7 +57,7 @@ async function initializeAgentStore(page: Page, tenantId: string): Promise<void>
  */
 async function callAgentUIAction(
   page: Page,
-  action: 'showPreview' | 'showDashboard' | 'highlightSection' | 'setPreviewPage',
+  action: 'showPreview' | 'showDashboard' | 'highlightSection',
   ...args: unknown[]
 ): Promise<void> {
   await page.evaluate(
@@ -302,8 +302,6 @@ test.describe('Agent UI Control', () => {
     expect(storeState).not.toBeNull();
     expect(storeState?.status).toBe('preview');
     expect(storeState?.highlightedSectionId).toBe('home-hero-main');
-    // Page should be 'home' (extracted from section ID 'home-hero-main')
-    expect(storeState?.currentPage).toBe('home');
   });
 
   /**
@@ -469,89 +467,9 @@ test.describe('Agent UI Control', () => {
 });
 
 /**
- * Additional test: Preview page tabs work correctly
+ * Additional test: Preview close button returns to dashboard
  */
 test.describe('Preview Panel Navigation', () => {
-  test('page tabs switch preview to different pages', async ({ authenticatedPage }) => {
-    await goToDashboard(authenticatedPage);
-
-    // Show preview
-    await callAgentUIAction(authenticatedPage, 'showPreview', 'home');
-    await expect(authenticatedPage.locator('[data-testid="preview-panel"]')).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Click on About tab
-    const aboutTab = authenticatedPage.locator('[data-testid="preview-page-tab-about"]');
-    await expect(aboutTab).toBeVisible({ timeout: 5000 });
-    await aboutTab.click();
-
-    // Wait for tab to become active (CSS class indicates active state: bg-sage/10)
-    await expect(aboutTab).toHaveClass(/bg-sage/, { timeout: 5000 });
-
-    // Poll store state until it reflects 'about' (replaces arbitrary timeout)
-    const currentPage = await authenticatedPage.evaluate(async () => {
-      // Helper to wait for store state condition
-      const waitForPageState = (
-        expectedPage: string,
-        maxAttempts = 20,
-        interval = 100
-      ): Promise<string | null> => {
-        return new Promise((resolve) => {
-          let attempts = 0;
-          const check = () => {
-            const store = (
-              window as unknown as {
-                useAgentUIStore?: {
-                  getState: () => { view: { config?: { currentPage: string } } };
-                };
-              }
-            ).useAgentUIStore;
-
-            if (store) {
-              const state = store.getState();
-              if (state.view && 'config' in state.view) {
-                const page = state.view.config?.currentPage;
-                if (page === expectedPage) {
-                  resolve(page);
-                  return;
-                }
-              }
-            }
-
-            attempts++;
-            if (attempts >= maxAttempts) {
-              // Return current state even if not matching
-              const store2 = (
-                window as unknown as {
-                  useAgentUIStore?: {
-                    getState: () => { view: { config?: { currentPage: string } } };
-                  };
-                }
-              ).useAgentUIStore;
-              if (store2) {
-                const state = store2.getState();
-                if (state.view && 'config' in state.view) {
-                  resolve(state.view.config?.currentPage ?? null);
-                  return;
-                }
-              }
-              resolve(null);
-              return;
-            }
-
-            setTimeout(check, interval);
-          };
-          check();
-        });
-      };
-
-      return waitForPageState('about');
-    });
-
-    expect(currentPage).toBe('about');
-  });
-
   test('close button returns to dashboard', async ({ authenticatedPage }) => {
     await goToDashboard(authenticatedPage);
 

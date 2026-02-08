@@ -5,13 +5,11 @@ import { cn } from '@/lib/utils';
 import { useAgentUIStore, selectPreviewRefreshKey } from '@/stores/agent-ui-store';
 import { usePreviewToken } from '@/hooks/usePreviewToken';
 import { Monitor, Tablet, Smartphone, RefreshCw, ExternalLink, Loader2 } from 'lucide-react';
-import type { PageName } from '@macon/contracts';
 
 type ViewportSize = 'desktop' | 'tablet' | 'mobile';
 
 interface LivePreviewProps {
   tenantSlug: string;
-  currentPage: PageName;
 }
 
 const VIEWPORT_SIZES: Record<
@@ -33,8 +31,9 @@ const VIEWPORT_SIZES: Record<
  * - URL bar showing current preview URL
  *
  * Uses draft mode query param to show unpublished changes.
+ * Storefront is a single scrolling page — no page routing needed.
  */
-export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
+export function LivePreview({ tenantSlug }: LivePreviewProps) {
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -47,17 +46,16 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
   const { token: previewToken } = usePreviewToken();
 
   // Build the preview URL with draft mode and token
-  // FIXED: Was using ?draft=true but page.tsx expects ?preview=draft&token=...
-  // This bug caused the preview to show DEFAULT config instead of actual draft content
+  // Storefront is a single scrolling page — always loads base path
   const previewUrl = useMemo(() => {
-    const basePath = `/t/${tenantSlug}${currentPage !== 'home' ? `/${currentPage}` : ''}`;
+    const basePath = `/t/${tenantSlug}`;
     const params = new URLSearchParams();
     params.set('preview', 'draft');
     if (previewToken) {
       params.set('token', previewToken);
     }
     return `${basePath}?${params.toString()}`;
-  }, [tenantSlug, currentPage, previewToken]);
+  }, [tenantSlug, previewToken]);
 
   // Handle iframe load
   const handleLoad = () => {
@@ -74,11 +72,6 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
       previousRefreshKeyRef.current = refreshKey;
     }
   }, [refreshKey]);
-
-  // Refresh when page changes
-  useEffect(() => {
-    setIsLoading(true);
-  }, [currentPage]);
 
   const handleRefresh = () => {
     if (iframeRef.current) {
@@ -129,7 +122,7 @@ export function LivePreview({ tenantSlug, currentPage }: LivePreviewProps) {
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </button>
           <a
-            href={`/t/${tenantSlug}${currentPage !== 'home' ? `/${currentPage}` : ''}`}
+            href={`/t/${tenantSlug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm

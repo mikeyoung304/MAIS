@@ -4,7 +4,6 @@
 
 import type { Package, AddOn, Booking, Service } from './entities';
 import type Stripe from 'stripe';
-import type { AdvisorMemory } from '@macon/contracts';
 import type { BlockType } from '../generated/prisma/client';
 
 // ============================================================================
@@ -1035,70 +1034,6 @@ export interface StorageProvider {
 // ============================================================================
 // ONBOARDING AGENT INTERFACES
 // ============================================================================
-
-/**
- * Advisor Memory Repository - Event sourcing projection for onboarding agent
- *
- * Provides:
- * - Memory projection from event history (for session resumption)
- * - Memory clearing (for reset/testing)
- * - Event history access (for debugging/audit)
- *
- * This interface enables testability by abstracting database access.
- * (Kieran Fix #5: Repository interface for AdvisorMemory)
- */
-export interface AdvisorMemoryRepository {
-  /**
-   * Get current advisor memory for a tenant.
-   * Returns null if no events exist.
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @returns Projected memory state or null
-   */
-  getMemory(tenantId: string): Promise<AdvisorMemory | null>;
-
-  /**
-   * Project memory from event history.
-   * Replays all events to build current state.
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @returns Projected memory state
-   */
-  projectFromEvents(tenantId: string): Promise<AdvisorMemory>;
-
-  /**
-   * Clear all onboarding memory for a tenant.
-   * Used for reset/testing scenarios.
-   *
-   * @param tenantId - Tenant ID for isolation
-   */
-  clearMemory(tenantId: string): Promise<void>;
-
-  /**
-   * Get event history for a tenant.
-   * Returns events in descending order (newest first).
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param limit - Maximum events to return (default 50)
-   */
-  getEventHistory(
-    tenantId: string,
-    limit?: number
-  ): Promise<
-    Array<{
-      id: string;
-      eventType: string;
-      version: number;
-      timestamp: Date;
-    }>
-  >;
-}
-
-/**
- * Advisor Memory type for onboarding agent
- * Re-exported from contracts - single source of truth (Kieran Fix #5)
- */
-export type { AdvisorMemory } from '@macon/contracts';
 
 // ============================================================================
 // Tenant Repository Port

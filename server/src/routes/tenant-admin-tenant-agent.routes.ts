@@ -673,7 +673,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 
       const { tenantId } = tenantAuth;
 
-      // Use ContextBuilder for state (replaces legacy AdvisorMemoryService)
+      // Use ContextBuilder for onboarding state
       const state = await contextBuilder.getOnboardingState(tenantId);
 
       logger.info(

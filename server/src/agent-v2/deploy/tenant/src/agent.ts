@@ -58,9 +58,6 @@ import {
   publishDraftTool,
   discardDraftTool,
 
-  // Page Management (T1) - Phase 2b
-  togglePageTool,
-
   // Marketing Copy (T1/T2) - Phase 2c
   generateCopyTool,
   improveSectionCopyTool,
@@ -106,14 +103,13 @@ import {
  * Project Hub agents.
  *
  * Current Phase: 8 (Onboarding Ecosystem Rebuild)
- * Tool count: 35
+ * Tool count: 34
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
  * - Section publish/discard (2) - per-section T3 operations
  * - Branding updates (1)
  * - Draft management (3)
- * - Page toggle (1)
  * - Marketing copy generation (2)
  * - Project management (7)
  * - Discovery/onboarding (3) - store_discovery_fact, get_known_facts, build_first_draft
@@ -152,9 +148,6 @@ export const tenantAgent = new LlmAgent({
     // Storefront Read
     getPageStructureTool,
     getSectionContentTool,
-
-    // Page Management
-    togglePageTool,
 
     // Draft Preview
     previewDraftTool,

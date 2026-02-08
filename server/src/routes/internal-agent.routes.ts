@@ -403,7 +403,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
       }
 
       // Get discovery data from ContextBuilder (single source of truth)
-      // This replaces the legacy AdvisorMemoryService approach
+      // ContextBuilder provides discovery data for agent context injection
       let discoveryData: Record<string, unknown> | null = null;
       if (contextBuilder) {
         try {

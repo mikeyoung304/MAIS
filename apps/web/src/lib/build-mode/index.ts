@@ -17,7 +17,6 @@ export {
   BuildModeParentMessageSchema,
   BuildModeReadySchema,
   BuildModeSectionSelectedSchema,
-  BuildModePageChangeSchema,
   BuildModeChildMessageSchema,
   // Functions
   parseParentMessage,
