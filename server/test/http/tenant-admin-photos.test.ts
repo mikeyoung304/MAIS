@@ -395,7 +395,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
         })
         .expect(400);
 
-      expect(res.body.error).toContain('Invalid file type');
+      expect(res.body.message).toContain('Invalid file type');
 
       // Verify no file was saved
       const pkg = await prisma.package.findUnique({

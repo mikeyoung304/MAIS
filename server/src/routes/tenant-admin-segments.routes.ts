@@ -6,7 +6,6 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { ZodError } from 'zod';
 import type { SegmentService } from '../services/segment.service';
 import {
   createSegmentSchema,
@@ -14,7 +13,6 @@ import {
   segmentIdSchema,
 } from '../validation/segment.schemas';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError } from '../lib/errors';
 
 /**
  * Create tenant admin segment routes
@@ -101,17 +99,6 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
 
       res.status(201).json(segment);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -146,17 +133,6 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
 
       res.json(segment);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -202,21 +178,6 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
 
       res.json(segment);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -254,17 +215,6 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
 
       res.status(204).send();
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -299,17 +249,6 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
 
       res.json(stats);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });

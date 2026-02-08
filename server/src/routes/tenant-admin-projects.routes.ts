@@ -20,7 +20,6 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import type { ProjectHubService } from '../services/project-hub.service';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError, ConcurrentModificationError } from '../lib/errors';
 
 // Rate limiter for tenant admin routes (higher limit than public routes)
 const tenantProjectRateLimiter = rateLimit({
@@ -188,21 +187,6 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
 
       res.json({ success: true, request: result });
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      if (error instanceof ConcurrentModificationError) {
-        res.status(409).json({
-          error: error.message,
-          currentVersion: error.currentVersion,
-        });
-        return;
-      }
       logger.error({ error }, 'Tenant request approve error');
       next(error);
     }
@@ -239,21 +223,6 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
 
       res.json({ success: true, request: result });
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      if (error instanceof ConcurrentModificationError) {
-        res.status(409).json({
-          error: error.message,
-          currentVersion: error.currentVersion,
-        });
-        return;
-      }
       logger.error({ error }, 'Tenant request deny error');
       next(error);
     }
@@ -280,10 +249,6 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
 
       res.json(project);
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       logger.error({ error }, 'Tenant project details error');
       next(error);
     }
@@ -306,10 +271,6 @@ export function createTenantAdminProjectRoutes(projectHubService: ProjectHubServ
 
       res.json({ events, count: events.length });
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       logger.error({ error }, 'Tenant project timeline error');
       next(error);
     }

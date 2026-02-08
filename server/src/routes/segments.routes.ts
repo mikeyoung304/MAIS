@@ -6,12 +6,10 @@
 
 import type { Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { SegmentService } from '../services/segment.service';
 import { segmentSlugSchema, segmentQuerySchema } from '../validation/segment.schemas';
 import { logger } from '../lib/core/logger';
-import { NotFoundError } from '../lib/errors';
 
 /**
  * Create public segment routes
@@ -47,13 +45,6 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
 
       res.json(segments);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
       next(error);
     }
   });
@@ -86,17 +77,6 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
 
       res.json(segment);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -189,17 +169,6 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
         addOns: transformedAddOns,
       });
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });

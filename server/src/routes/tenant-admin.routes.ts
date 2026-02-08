@@ -33,12 +33,7 @@ import {
   createBlackoutSchema,
   bookingQuerySchema,
 } from '../validation/tenant-admin.schemas';
-import {
-  NotFoundError,
-  ValidationError,
-  ForbiddenError,
-  TooManyRequestsError,
-} from '../lib/errors';
+import { BadRequestError } from '../lib/errors';
 import { generatePreviewToken } from '../lib/preview-tokens';
 import type { AddOn } from '../lib/entities';
 import { blockTypeToSectionType } from '../lib/block-type-mapper';
@@ -73,11 +68,11 @@ const uploadPackagePhoto = multer({
 function handleMulterError(error: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
+      // 413 Payload Too Large — multer error messages are safe/controlled strings
       res.status(413).json({ error: 'File too large (max 5MB)' });
       return;
     }
-    // Other multer errors (LIMIT_FILE_COUNT, LIMIT_FIELD_KEY, etc.)
-    res.status(400).json({ error: error.message });
+    next(new BadRequestError(error.message));
     return;
   }
   // Not a multer error, pass to next handler
@@ -91,7 +86,7 @@ export class TenantAdminController {
    * Upload logo
    * POST /v1/tenant/logo
    */
-  async uploadLogo(req: Request, res: Response): Promise<void> {
+  async uploadLogo(req: Request, res: Response, next: NextFunction): Promise<void> {
     const tenantAuth = res.locals.tenantAuth;
     if (!tenantAuth) {
       res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
@@ -138,18 +133,12 @@ export class TenantAdminController {
     } catch (error) {
       releaseUploadConcurrency(tenantId);
       logger.error({ error }, 'Error uploading logo');
-
-      // Handle concurrency limit exceeded
-      if (error instanceof TooManyRequestsError) {
-        res.status(429).json({ error: error.message });
+      // Upload service throws plain Error for invalid file types (MIME, size, empty)
+      if (error instanceof Error && !(error instanceof BadRequestError)) {
+        next(new BadRequestError(error.message));
         return;
       }
-
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Internal server error' });
-      }
+      next(error);
     }
   }
 
@@ -157,7 +146,7 @@ export class TenantAdminController {
    * Update branding
    * PUT /v1/tenant/branding
    */
-  async updateBranding(req: Request, res: Response): Promise<void> {
+  async updateBranding(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -216,12 +205,7 @@ export class TenantAdminController {
       });
     } catch (error) {
       logger.error({ error }, 'Error updating branding');
-
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Internal server error' });
-      }
+      next(error);
     }
   }
 
@@ -229,7 +213,7 @@ export class TenantAdminController {
    * Get branding (for tenant admin)
    * GET /v1/tenant/branding
    */
-  async getBranding(_req: Request, res: Response): Promise<void> {
+  async getBranding(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -256,7 +240,7 @@ export class TenantAdminController {
       });
     } catch (error) {
       logger.error({ error }, 'Error getting branding');
-      res.status(500).json({ error: 'Internal server error' });
+      next(error);
     }
   }
 }
@@ -284,12 +268,12 @@ export function createTenantAdminRoutes(
     uploadLimiterIP, // IP-level DDoS protection (200/hour)
     uploadLimiterTenant, // Tenant-level quota enforcement (50/hour)
     upload.single('logo'),
-    (req, res) => controller.uploadLogo(req, res)
+    (req, res, next) => controller.uploadLogo(req, res, next)
   );
 
   // Branding endpoints
-  router.get('/branding', (req, res) => controller.getBranding(req, res));
-  router.put('/branding', (req, res) => controller.updateBranding(req, res));
+  router.get('/branding', (req, res, next) => controller.getBranding(req, res, next));
+  router.put('/branding', (req, res, next) => controller.updateBranding(req, res, next));
 
   // ============================================================================
   // Package Management Endpoints
@@ -562,10 +546,7 @@ export function createTenantAdminRoutes(
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
+        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
         return;
       }
       next(error);
@@ -612,10 +593,7 @@ export function createTenantAdminRoutes(
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
+        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
         return;
       }
       next(error);
@@ -737,35 +715,11 @@ export function createTenantAdminRoutes(
       } catch (error) {
         releaseUploadConcurrency(tenantId);
         logger.error({ error }, 'Error uploading package photo');
-
-        // Handle concurrency limit exceeded
-        if (error instanceof TooManyRequestsError) {
-          res.status(429).json({ error: error.message });
+        // Upload service throws plain Error for invalid file types (MIME, size)
+        if (error instanceof Error && !(error instanceof BadRequestError)) {
+          next(new BadRequestError(error.message));
           return;
         }
-
-        // Discriminate error types for proper HTTP status codes
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
-          return;
-        }
-        if (error instanceof ValidationError) {
-          res.status(400).json({ error: error.message });
-          return;
-        }
-        if (error instanceof ForbiddenError) {
-          res.status(403).json({ error: error.message });
-          return;
-        }
-
-        // Handle generic errors from upload service (file validation)
-        if (error instanceof Error) {
-          // Upload service throws generic Error for invalid file types
-          res.status(400).json({ error: error.message });
-          return;
-        }
-
-        // Pass unknown errors to global error handler
         next(error);
       }
     }
@@ -883,14 +837,7 @@ export function createTenantAdminRoutes(
         });
       } catch (error) {
         if (error instanceof ZodError) {
-          res.status(400).json({
-            error: 'Validation error',
-            details: error.issues,
-          });
-          return;
-        }
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
+          next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
           return;
         }
         next(error);
@@ -967,10 +914,7 @@ export function createTenantAdminRoutes(
       res.status(201).json({ ok: true });
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
+        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
         return;
       }
       next(error);
@@ -1057,10 +1001,7 @@ export function createTenantAdminRoutes(
       res.json(bookingsDto);
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
+        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
         return;
       }
       next(error);
@@ -1187,7 +1128,7 @@ export function createTenantAdminRoutes(
         res.status(201).json(mapAddOnToDto(addOn));
       } catch (error) {
         if (error instanceof ZodError) {
-          res.status(400).json({ error: 'Validation error', details: error.issues });
+          next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
           return;
         }
         next(error);
@@ -1228,12 +1169,7 @@ export function createTenantAdminRoutes(
         res.json(mapAddOnToDto(addOn));
       } catch (error) {
         if (error instanceof ZodError) {
-          res.status(400).json({ error: 'Validation error', details: error.issues });
-          return;
-        }
-        // TODO-196 FIX: Explicit NotFoundError handling
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
+          next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
           return;
         }
         next(error);
@@ -1259,11 +1195,6 @@ export function createTenantAdminRoutes(
         await catalogService.deleteAddOn(tenantId, req.params.id);
         res.status(204).send();
       } catch (error) {
-        // TODO-196 FIX: Explicit NotFoundError handling
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
-          return;
-        }
         next(error);
       }
     }
@@ -1322,20 +1253,6 @@ export function createTenantAdminRoutes(
       } catch (error) {
         releaseUploadConcurrency(tenantId);
         logger.error({ error }, 'Error uploading segment image');
-
-        // Handle concurrency limit exceeded
-        if (error instanceof TooManyRequestsError) {
-          res.status(429).json({ error: error.message });
-          return;
-        }
-
-        // Handle generic errors from upload service (file validation)
-        if (error instanceof Error) {
-          res.status(400).json({ error: error.message });
-          return;
-        }
-
-        // Pass unknown errors to global error handler
         next(error);
       }
     }
@@ -1608,10 +1525,6 @@ export function createTenantAdminRoutes(
         refundAmount: cancelledBooking.refundAmount,
       });
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });

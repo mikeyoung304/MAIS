@@ -6,9 +6,10 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 import type { DomainVerificationService } from '../services/domain-verification.service';
 import { logger } from '../lib/core/logger';
+import { ConflictError, NotFoundError, BadRequestError } from '../lib/errors';
 
 // Validation schemas
 const addDomainSchema = z.object({
@@ -99,20 +100,13 @@ export function createTenantAdminDomainsRouter(domainService: DomainVerification
       logger.info({ tenantId, domain }, 'Domain added for verification');
 
       res.status(201).json(response);
-    } catch (error: any) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
+    } catch (error) {
+      if (error instanceof Error && error.message?.includes('already')) {
+        next(new ConflictError(error.message));
         return;
       }
-      if (error.message?.includes('already')) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      if (error.message === 'Invalid domain format') {
-        res.status(400).json({ error: 'Invalid domain format' });
+      if (error instanceof Error && error.message === 'Invalid domain format') {
+        next(new BadRequestError(error.message));
         return;
       }
       next(error);
@@ -149,13 +143,6 @@ export function createTenantAdminDomainsRouter(domainService: DomainVerification
 
       res.json(domain);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
       next(error);
     }
   });
@@ -188,16 +175,9 @@ export function createTenantAdminDomainsRouter(domainService: DomainVerification
       }
 
       res.json(result);
-    } catch (error: any) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error.message === 'Domain not found') {
-        res.status(404).json({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Domain not found') {
+        next(new NotFoundError(error.message));
         return;
       }
       next(error);
@@ -231,20 +211,13 @@ export function createTenantAdminDomainsRouter(domainService: DomainVerification
       logger.info({ tenantId, domainId: id, domain: domain.domain }, 'Domain set as primary');
 
       res.json(domain);
-    } catch (error: any) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Domain not found') {
+        next(new NotFoundError(error.message));
         return;
       }
-      if (error.message === 'Domain not found') {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      if (error.message?.includes('verified')) {
-        res.status(400).json({ error: error.message });
+      if (error instanceof Error && error.message?.includes('verified')) {
+        next(new BadRequestError(error.message));
         return;
       }
       next(error);
@@ -277,16 +250,9 @@ export function createTenantAdminDomainsRouter(domainService: DomainVerification
       logger.info({ tenantId, domainId: id }, 'Domain removed');
 
       res.status(204).send();
-    } catch (error: any) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error.message === 'Domain not found') {
-        res.status(404).json({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Domain not found') {
+        next(new NotFoundError(error.message));
         return;
       }
       next(error);

@@ -211,7 +211,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation error');
+      expect(response.body.error).toBe('VALIDATION_ERROR');
     });
 
     it('should validate day of week range', async () => {
@@ -296,7 +296,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         });
 
       expect(response.status).toBe(404);
-      expect(response.body.error).toContain('not found');
+      expect(response.body.message).toContain('not found');
     });
 
     it('should return 404 for non-existent rule', async () => {
@@ -319,7 +319,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation error');
+      expect(response.body.error).toBe('VALIDATION_ERROR');
     });
 
     it('should validate day of week range on update', async () => {
