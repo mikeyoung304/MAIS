@@ -289,9 +289,9 @@ Run every 3 months (e.g., first Monday of quarter).
    ```
 
 2. **Record results:**
-   - [ ] Run timestamp: ****\_\_\_****
+   - [ ] Run timestamp: \***\*\_\_\_\*\***
    - [ ] Found dead types? (Y/N): \_\_\_
-   - [ ] Types to investigate: ****\_\_\_****
+   - [ ] Types to investigate: \***\*\_\_\_\*\***
 
 3. **If dead types found:**
    - [ ] Determine if speculative or accidental
@@ -305,7 +305,7 @@ Run every 3 months (e.g., first Monday of quarter).
    ```
 
    - [ ] Note: Last audit was **\_**
-   - [ ] Changes made: ****\_\_\_****
+   - [ ] Changes made: \***\*\_\_\_\*\***
 
 5. **Commit if changes:**
    ```bash

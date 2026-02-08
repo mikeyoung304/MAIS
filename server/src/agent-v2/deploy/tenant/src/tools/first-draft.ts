@@ -130,7 +130,13 @@ No user approval needed for first draft — just build and announce.`,
     const allSections = structureData.sections ?? [];
     const placeholderSections = allSections.filter((s) => s.hasPlaceholder);
 
-    if (placeholderSections.length === 0) {
+    // MVP reveal scope — only return the "wow moment" sections for first draft.
+    // Source of truth: SECTION_BLUEPRINT.isRevealMVP in @macon/contracts
+    // Hardcoded here because Cloud Run agent doesn't import from contracts.
+    const MVP_SECTIONS = new Set(['HERO', 'ABOUT', 'SERVICES']);
+    const mvpPlaceholders = placeholderSections.filter((s) => MVP_SECTIONS.has(s.type));
+
+    if (mvpPlaceholders.length === 0) {
       return {
         success: true,
         sectionsToUpdate: [],
@@ -141,28 +147,55 @@ No user approval needed for first draft — just build and announce.`,
     }
 
     // 4. Return structured data for the LLM to generate copy
-    const sectionsToUpdate = placeholderSections.map((s) => ({
+    const sectionsToUpdate = mvpPlaceholders.map((s) => ({
       sectionId: s.id,
       sectionType: s.type,
       pageName: s.page,
       currentHeadline: s.headline || '(no headline)',
     }));
 
-    // 5. Write revealCompletedAt to backend (one-shot guard for reveal animation)
-    // This is fire-and-forget — failure shouldn't block the first draft
-    callMaisApi('/mark-reveal-completed', tenantId, {}).catch((err) => {
-      logger.warn({ tenantId, error: err }, '[TenantAgent] Failed to write revealCompletedAt');
-    });
-
     logger.info(
       {
         tenantId,
-        placeholderCount: sectionsToUpdate.length,
+        mvpCount: sectionsToUpdate.length,
+        totalPlaceholders: placeholderSections.length,
         totalSections: allSections.length,
         factCount: factsData.factCount,
       },
-      '[TenantAgent] build_first_draft identified sections'
+      '[TenantAgent] build_first_draft identified MVP sections'
     );
+
+    // Programmatic fallback: delete $0 default packages before agent creates real ones.
+    // The system prompt also instructs the agent to list-then-delete, but this ensures
+    // cleanup even if the LLM skips the step. Defense-in-depth for financial-impact data.
+    // API: single POST /manage-packages with action param (see packages.ts:226, :391)
+    try {
+      const listResult = await callMaisApi('/manage-packages', tenantId, { action: 'list' });
+      if (listResult.ok) {
+        const packages =
+          (listResult.data as { packages?: Array<{ id: string; basePrice: number }> })?.packages ??
+          [];
+        const defaultPackages = packages.filter((pkg) => pkg.basePrice === 0);
+        for (const pkg of defaultPackages) {
+          await callMaisApi('/manage-packages', tenantId, {
+            action: 'delete',
+            packageId: pkg.id,
+          });
+        }
+        if (defaultPackages.length > 0) {
+          logger.info(
+            { tenantId, deletedCount: defaultPackages.length },
+            '[TenantAgent] build_first_draft cleaned up default $0 packages'
+          );
+        }
+      }
+    } catch (err) {
+      // Non-fatal: agent prompt will also instruct cleanup
+      logger.warn(
+        { tenantId, err },
+        '[TenantAgent] $0 package cleanup failed, agent will retry via prompt'
+      );
+    }
 
     return {
       success: true,

@@ -10,7 +10,7 @@ import type { DashboardAction, TenantAgentToolCall } from '@/hooks/useTenantAgen
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
 import { useAuth } from '@/lib/auth-client';
-import { agentUIActions } from '@/stores/agent-ui-store';
+import { agentUIActions, useAgentUIStore } from '@/stores/agent-ui-store';
 import {
   refinementActions,
   useRefinementStore,
@@ -20,7 +20,7 @@ import { ReviewProgress } from './ReviewProgress';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import { queryKeys } from '@/lib/query-client';
 import type { PageName, OnboardingPhase } from '@macon/contracts';
-import { SECTION_BLUEPRINT } from '@macon/contracts';
+import { SECTION_BLUEPRINT, MVP_REVEAL_SECTION_COUNT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { z } from 'zod';
@@ -44,6 +44,11 @@ const DashboardActionSchema = z.object({
   sectionId: z.string().optional(),
   sectionType: z.string().optional(),
 });
+
+// Module-scoped counter for section writes during first draft.
+// Persists across tool-complete batches (agent may send 1+1+1 or 2+1).
+// Resets on page refresh — correct behavior (re-shows Coming Soon, count rebuilds).
+let firstDraftWriteCount = 0;
 
 // LocalStorage keys for panel state
 const PANEL_OPEN_KEY = 'agent-panel-open';
@@ -403,13 +408,28 @@ export function AgentPanel({ className }: AgentPanelProps) {
         // Fix #818: Wait for backend transaction to commit (Pitfall #26)
         // The 100ms delay ensures the database write is visible before we refetch
         await new Promise((resolve) => setTimeout(resolve, 100));
-        // Invalidate draft config cache using queryClient directly (not module singleton)
-        // This fixes the race condition where queryClientRef could be null
-        // Flow: TanStack Query refetch → ContentArea → PreviewPanel → sendConfigToIframe
-        queryClient.invalidateQueries({
+        // Invalidate and AWAIT refetch so fresh data is available before we push to iframe
+        // Without await, refreshPreview() sends stale draftConfig via PostMessage
+        await queryClient.invalidateQueries({
           queryKey: getDraftConfigQueryKey(),
           refetchType: 'active',
         });
+        // Push fresh draft data to the preview iframe via PostMessage
+        agentUIActions.refreshPreview();
+
+        // Auto-reveal: count cumulative section writes during Coming Soon.
+        // Reveal only after MVP section count is reached (currently 3: HERO, ABOUT, SERVICES).
+        // Derived from SECTION_BLUEPRINT.isRevealMVP — no magic number.
+        const contentWriteCount = toolCalls.filter(
+          (call) => call.name === 'update_section' || call.name === 'add_section'
+        ).length;
+        const currentView = useAgentUIStore.getState().view;
+        if (currentView.status === 'coming_soon' && contentWriteCount > 0) {
+          firstDraftWriteCount += contentWriteCount;
+          if (firstDraftWriteCount >= MVP_REVEAL_SECTION_COUNT) {
+            agentUIActions.revealSite();
+          }
+        }
       }
 
       // Check if marketing content was generated (headlines, etc.)
@@ -425,11 +445,11 @@ export function AgentPanel({ className }: AgentPanelProps) {
         agentUIActions.showPreview('home');
         // Fix #818: Wait for backend transaction to commit
         await new Promise((resolve) => setTimeout(resolve, 100));
-        // Invalidate using queryClient directly (not module singleton)
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: getDraftConfigQueryKey(),
           refetchType: 'active',
         });
+        agentUIActions.refreshPreview();
       }
 
       // Invalidate onboarding state when discovery facts are stored

@@ -15,6 +15,7 @@ interface OnboardingStateResponse {
   isComplete: boolean;
   isReturning: boolean;
   lastActiveAt: string | null;
+  revealCompleted: boolean;
   summaries: {
     discovery: string | null;
     marketContext: string | null;
@@ -133,6 +134,7 @@ export function useOnboardingState() {
     isOnboarding,
     isComplete: state?.isComplete ?? false,
     isReturning: state?.isReturning ?? false,
+    revealCompleted: state?.revealCompleted ?? false,
     resumeMessage: state?.resumeMessage ?? null,
     summaries: state?.summaries ?? null,
 

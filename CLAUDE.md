@@ -377,6 +377,17 @@ Numbered for searchability. When encountering issues, search `docs/solutions/` f
 
 90. Dual-system migration drift (P0 risk) - "During migration" technical debt where NEW system has features but OLD system is still used; symptom: Agent asks "What do you do?" when it already knows (context injection exists in backend but frontend uses fake session IDs); detection: `grep "during migration"` comments older than 30 days, OLD system at 100% traffic; fix: max 30-day migration timeline, comment format `// MIGRATION[name]: expires YYYY-MM-DD: reason`, E2E tests must send 2+ messages to catch fake sessions; fake sessions pass single-message tests but fail on second with "session not found". See `docs/solutions/patterns/DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md`
 
+### CI Test Discovery & Onboarding UX Pitfalls (91-92)
+
+91. CI test:unit only scans test/ directory - Root `package.json` `test:unit` passes `test/` as vitest path argument; tests placed in `server/src/` are invisible to CI even though local `npm run test:coverage` finds them; symptom: coverage unchanged after adding tests, local shows improvement but CI doesn't; fix: place all test files in `server/test/`, mirror source path (`src/lib/foo.ts` → `test/lib/foo.test.ts`); verify with `npm run test:unit 2>&1 | grep "your-test"`. See `docs/solutions/ci-cd/CI_TEST_DISCOVERY_PER_DIRECTORY_COVERAGE_THRESHOLDS.md`
+92. Zustand actions bypassing coming_soon state - `showPreview()`, `showDashboard()`, `highlightSection()` can override `coming_soon` view state during onboarding; symptom: "Coming Soon" display switches to placeholder website before first draft is ready; fix: add `if (state.view.status === 'coming_soon') return;` guard to ALL actions that change `view.status`; only `revealSite()` should transition from `coming_soon`; also: always `await queryClient.invalidateQueries()` before calling `agentUIActions.refreshPreview()` — fire-and-forget invalidation sends stale data to iframe. See `docs/solutions/ui-bugs/ONBOARDING_PREVIEW_STATE_GUARDS_AND_STALE_IFRAME_FIX.md`
+
+### Staged Reveal & LLM Mutation Pitfalls (93-95)
+
+93. Missing reveal scope for staged-reveal UI - Any UI that shows content progressively (onboarding reveal, wizard steps, beta rollout) needs an explicit scope definition: which items are visible at each stage; without it, default `visible: true` flags leak placeholder content into the reveal; fix: add a stage flag (`isRevealMVP`) to the canonical item list and derive visibility/thresholds from it; ONE definer, N consumers. See `docs/solutions/ui-bugs/ONBOARDING_REVEAL_SCOPE_PREVENTION.md`
+94. Prompt-only enforcement for LLM mutations affecting money/trust - Relying solely on system prompt to tell the LLM "delete default packages before creating new ones"; LLM skips the step silently, users see 6 packages (3 real + 3 $0 defaults); fix: belt-and-suspenders — keep the prompt instruction AND add programmatic cleanup in tool `execute()` as non-fatal fallback; applies to any mutation affecting financial data, visible storefront content, or booking flows. See `docs/solutions/ui-bugs/ONBOARDING_REVEAL_SCOPE_PREVENTION.md`
+95. Auto-reveal trigger on first write instead of completion count - Triggering a staged reveal after the FIRST content write instead of after ALL required items are written; user sees partial content flash; fix: use a cumulative counter (module-scoped `let` for single-consumer state) that triggers only when `count >= DERIVED_THRESHOLD`; threshold must be derived from the canonical scope definition, not hardcoded. See `docs/solutions/ui-bugs/ONBOARDING_REVEAL_SCOPE_PREVENTION.md`
+
 ## Prevention Strategies
 
 Search `docs/solutions/` for specific issues. Key indexes:
@@ -406,6 +417,9 @@ Search `docs/solutions/` for specific issues. Key indexes:
 - **[POSTMESSAGE_QUICK_REFERENCE.md](docs/solutions/patterns/POSTMESSAGE_QUICK_REFERENCE.md)** - Dead PostMessage detection (3-minute audit)
 - **[DEAD_CODE_QUICK_REFERENCE.md](docs/solutions/code-review-patterns/DEAD_CODE_QUICK_REFERENCE.md)** - Sender/receiver bidirectional verification
 - **[DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md](docs/solutions/patterns/DUAL_SYSTEM_MIGRATION_DRIFT_PREVENTION.md)** - Migration drift, fake sessions, context injection
+- **[CI_TEST_DISCOVERY_PER_DIRECTORY_COVERAGE_THRESHOLDS.md](docs/solutions/ci-cd/CI_TEST_DISCOVERY_PER_DIRECTORY_COVERAGE_THRESHOLDS.md)** - CI test discovery and per-directory coverage thresholds
+- **[ONBOARDING_PREVIEW_STATE_GUARDS_AND_STALE_IFRAME_FIX.md](docs/solutions/ui-bugs/ONBOARDING_PREVIEW_STATE_GUARDS_AND_STALE_IFRAME_FIX.md)** - Coming Soon guards, await invalidation + refreshPreview
+- **[ONBOARDING_REVEAL_SCOPE_PREVENTION.md](docs/solutions/ui-bugs/ONBOARDING_REVEAL_SCOPE_PREVENTION.md)** - Reveal scope pattern, LLM mutation defense-in-depth, count-based triggers
 
 When you hit an issue:
 

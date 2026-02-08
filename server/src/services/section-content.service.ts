@@ -21,7 +21,6 @@ import type { ISectionContentRepository, SectionContentEntity, PageName } from '
 import { sectionTypeToBlockType, blockTypeToSectionType } from '../lib/block-type-mapper';
 import { validateBlockContent } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
-import { createId } from '@paralleldrive/cuid2';
 import { LRUCache } from 'lru-cache';
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -165,52 +164,6 @@ export interface PublishAllResult extends StorefrontResult {
 export interface DiscardAllResult extends StorefrontResult {
   requiresConfirmation?: boolean;
   discardedCount?: number;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Section ID utilities
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Parse a section ID to extract components.
- *
- * Format: {pageName}-{sectionType}-{uniqueId}
- * Example: "home-hero-abc123"
- *
- * For database IDs (CUIDs), returns the ID as-is.
- */
-function parseSectionId(sectionId: string): {
-  pageName: string;
-  sectionType: string;
-  uniqueId: string;
-  isCompound: boolean;
-} {
-  // Check if it's a compound section ID
-  const parts = sectionId.split('-');
-  if (parts.length >= 3 && parts[0].length < 20) {
-    return {
-      pageName: parts[0],
-      sectionType: parts[1],
-      uniqueId: parts.slice(2).join('-'),
-      isCompound: true,
-    };
-  }
-
-  // It's a database CUID
-  return {
-    pageName: 'home',
-    sectionType: 'unknown',
-    uniqueId: sectionId,
-    isCompound: false,
-  };
-}
-
-/**
- * Generate a compound section ID
- */
-function generateSectionId(pageName: string, blockType: BlockType): string {
-  const sectionType = blockTypeToSectionType(blockType);
-  return `${pageName}-${sectionType}-${createId().slice(0, 8)}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -62,6 +62,7 @@ resolve: {
 ### Why NOT `pretest` Script
 
 The alternative (`"pretest": "npm run build -w @macon/contracts"`) was rejected because:
+
 1. Adds 2-3 seconds to every test run
 2. Hides the real design problem (coupling tests to build artifacts)
 3. Still fails if build has errors — cascading failure
@@ -69,12 +70,12 @@ The alternative (`"pretest": "npm run build -w @macon/contracts"`) was rejected 
 
 ## Impact
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Test suites | 79 passed / 21 failed | 99 passed / 0 failed |
-| Individual tests | 1,704 | 2,109 (+405 recovered) |
-| Requires `dist/` | Yes | No |
-| Fresh clone tests | ❌ Broken | ✅ Works |
+| Metric            | Before                | After                  |
+| ----------------- | --------------------- | ---------------------- |
+| Test suites       | 79 passed / 21 failed | 99 passed / 0 failed   |
+| Individual tests  | 1,704                 | 2,109 (+405 recovered) |
+| Requires `dist/`  | Yes                   | No                     |
+| Fresh clone tests | ❌ Broken             | ✅ Works               |
 
 ## Detection
 

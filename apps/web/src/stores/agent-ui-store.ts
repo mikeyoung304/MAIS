@@ -362,7 +362,8 @@ export const useAgentUIStore = create<AgentUIState>()(
         showPreview: (page = 'home', agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return; // Security: require tenant
-            if (state.view.status === 'coming_soon') return; // Guard: only revealSite exits coming_soon
+            // Guard: only revealSite() can transition away from coming_soon
+            if (state.view.status === 'coming_soon') return;
 
             const action: AgentAction = {
               id: generateActionId(),
@@ -384,7 +385,8 @@ export const useAgentUIStore = create<AgentUIState>()(
         showDashboard: (agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return;
-            if (state.view.status === 'coming_soon') return; // Guard: only revealSite exits coming_soon
+            // Guard: only revealSite() can transition away from coming_soon
+            if (state.view.status === 'coming_soon') return;
 
             const action: AgentAction = {
               id: generateActionId(),

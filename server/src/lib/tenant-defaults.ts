@@ -152,7 +152,7 @@ export const DEFAULT_SECTION_CONTENT: Record<
   PRICING: {
     order: 3,
     content: {
-      visible: true,
+      visible: false, // Hidden until services + tiers ready (reveal MVP scoping)
       title: 'Pricing',
       subtitle: 'Choose the package that fits your needs',
       showComparison: true,
@@ -179,7 +179,7 @@ export const DEFAULT_SECTION_CONTENT: Record<
   CONTACT: {
     order: 6,
     content: {
-      visible: true,
+      visible: false, // Hidden until agent gathers contact info (reveal MVP scoping)
       title: 'Get in Touch',
       showForm: true,
       formFields: ['name', 'email', 'message'],

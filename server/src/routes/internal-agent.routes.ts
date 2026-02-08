@@ -72,7 +72,7 @@ import type { SectionContentService } from '../services/section-content.service'
 // NOTE: createPublishedWrapper import removed - agent routes now delegate to repository methods
 // which handle the wrapper format internally. See: CODE_PATH_DRIFT_PREVENTION.md
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
-import { computeSlotMachine, computeCurrentPhase, PHASE_ORDER } from '../lib/slot-machine';
+import { computeSlotMachine } from '../lib/slot-machine';
 
 // =============================================================================
 // Request Schemas

@@ -80,15 +80,32 @@ export default defineConfig(({ mode }) => {
         ],
         all: true,
 
-        // Coverage thresholds - Realistic values that each test suite can meet independently
-        // CI runs unit and integration tests separately, so thresholds must be achievable by each
-        // Local baseline (2025-12-26): 43.27% lines, 81.11% branches, 46.7% functions
-        // Target: 80% lines, 75% branches, 80% functions, 80% statements
+        // Coverage thresholds — per-directory to match actual risk profiles.
+        // CI runs unit and integration tests separately, so thresholds must be achievable by each.
+        // Baseline measured 2026-02-06 from CI run. Thresholds set ~5% below current.
+        // Target direction: ratchet UP as tests are added, never down.
         thresholds: {
-          lines: 28, // Low threshold for CI - reduced from 30 to fix flakiness (2026-02-01)
-          branches: 60, // Branches typically have better coverage
-          functions: 35, // Low threshold for CI (integration tests cover different functions)
-          statements: 28, // Matches lines threshold - reduced from 30 to fix flakiness
+          // Global floor — catches new directories without explicit thresholds
+          lines: 25,
+          branches: 55,
+          functions: 30,
+          statements: 25,
+
+          // Business logic — highest standards (current: 38.25% lines, 81.71% branches)
+          'src/services/**': { lines: 33, branches: 75, functions: 45, statements: 33 },
+
+          // Core library — unit tests alone yield ~54% (subdirs drag average: errors 30%, mappers 5%)
+          // CI aggregate shows 68% but that includes integration coverage contribution
+          'src/lib/**': { lines: 50, branches: 80, functions: 40, statements: 50 },
+
+          // LLM utilities — well-tested (current: 87.24% lines)
+          'src/llm/**': { lines: 80, branches: 85, functions: 70, statements: 80 },
+
+          // Middleware — moderate (current: 55.68% lines)
+          'src/middleware/**': { lines: 50, branches: 60, functions: 15, statements: 50 },
+
+          // Validation — perfect, keep it (current: 100% lines)
+          'src/validation/**': { lines: 95, branches: 95, functions: 95, statements: 95 },
         },
 
         // Additional V8 options

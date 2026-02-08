@@ -59,7 +59,7 @@ const queryClient = new QueryClient({
  */
 function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const { tenantId, slug: tenantSlug } = useAuth();
-  const { currentPhase, isLoading: onboardingLoading } = useOnboardingState();
+  const { currentPhase, revealCompleted, isLoading: onboardingLoading } = useOnboardingState();
   const localQueryClient = useQueryClient();
   const pathname = usePathname();
 
@@ -136,16 +136,18 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   }, [tenantId, initialize]);
 
   // Set default view based on onboarding phase.
-  // Onboarding (any phase before COMPLETED/SKIPPED) → coming_soon display.
+  // Onboarding (reveal NOT done) → coming_soon display.
+  // Onboarding (reveal already done) → preview (returning user who already saw reveal).
   // Post-onboarding → preview (your live site IS the dashboard).
   useEffect(() => {
     if (onboardingLoading || !tenantId) return;
-    if (isOnboarding) {
+    if (isOnboarding && !revealCompleted) {
       showComingSoon();
     } else {
       showPreview();
     }
-  }, [isOnboarding, onboardingLoading, tenantId]); // eslint-disable-line react-hooks/exhaustive-deps — actions are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnboarding, revealCompleted, onboardingLoading, tenantId]);
 
   // Set query client ref for external invalidation (agent tool handlers)
   useEffect(() => {
