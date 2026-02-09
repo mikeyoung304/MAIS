@@ -195,7 +195,7 @@ export function extractToolCalls(data: AdkRunResponse): AdkToolCall[] {
     if (part.functionResponse) {
       // Find matching call and add result
       for (const [callId, call] of pendingCalls) {
-        if (callId.startsWith(part.functionResponse.name)) {
+        if (callId.startsWith(part.functionResponse.name + ':')) {
           toolCalls.push({
             ...call,
             result: part.functionResponse.response,

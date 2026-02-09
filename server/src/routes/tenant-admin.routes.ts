@@ -33,7 +33,7 @@ import {
   createBlackoutSchema,
   bookingQuerySchema,
 } from '../validation/tenant-admin.schemas';
-import { BadRequestError } from '../lib/errors';
+import { BadRequestError, AppError } from '../lib/errors';
 import { generatePreviewToken } from '../lib/preview-tokens';
 import type { AddOn } from '../lib/entities';
 import { blockTypeToSectionType } from '../lib/block-type-mapper';
@@ -134,7 +134,8 @@ export class TenantAdminController {
       releaseUploadConcurrency(tenantId);
       logger.error({ error }, 'Error uploading logo');
       // Upload service throws plain Error for invalid file types (MIME, size, empty)
-      if (error instanceof Error && !(error instanceof BadRequestError)) {
+      // Preserve AppError subclasses (e.g. TooManyRequestsError 429) — only wrap plain Errors
+      if (error instanceof Error && !(error instanceof AppError)) {
         next(new BadRequestError(error.message));
         return;
       }
@@ -716,7 +717,8 @@ export function createTenantAdminRoutes(
         releaseUploadConcurrency(tenantId);
         logger.error({ error }, 'Error uploading package photo');
         // Upload service throws plain Error for invalid file types (MIME, size)
-        if (error instanceof Error && !(error instanceof BadRequestError)) {
+        // Preserve AppError subclasses (e.g. TooManyRequestsError 429) — only wrap plain Errors
+        if (error instanceof Error && !(error instanceof AppError)) {
           next(new BadRequestError(error.message));
           return;
         }

@@ -39,11 +39,14 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
       'Domain error'
     );
 
+    // Spread extra fields from toJSON() (e.g. currentVersion, retryAfter)
+    const { name: _n, message: _m, code: _c, statusCode: _s, ...extra } = err.toJSON();
     res.status(err.statusCode).json({
       status: 'error',
       statusCode: err.statusCode,
       error: err.code,
       message: err.message,
+      ...extra,
       requestId,
     });
     return;
@@ -69,11 +72,14 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
       });
     }
 
+    // Spread extra fields from toJSON() (e.g. currentVersion, retryAfter)
+    const { name: _n, message: _m, code: _c, statusCode: _s, ...extra } = err.toJSON();
     res.status(err.statusCode).json({
       status: 'error',
       statusCode: err.statusCode,
       error: err.code,
       message: err.message,
+      ...extra,
       requestId,
     });
     return;
