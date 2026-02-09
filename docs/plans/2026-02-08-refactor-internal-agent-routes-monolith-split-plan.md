@@ -289,14 +289,14 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
 
 ## Acceptance Criteria
 
-- [ ] `internal-agent.routes.ts` is <100 LOC (thin aggregator)
-- [ ] No domain route file exceeds 800 LOC
-- [ ] All 41 endpoints respond identically (same paths, same behavior)
-- [ ] `index.ts` registration unchanged — single import, single mount
-- [ ] `internal-agent-health.routes.ts` untouched
-- [ ] Dead code `_ProjectHubAddNoteSchema` deleted
-- [ ] Clean typecheck passes: `rm -rf server/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
-- [ ] Server tests pass: `npm run --workspace=server test`
+- [x] `internal-agent.routes.ts` is <100 LOC (thin aggregator) — 54 LOC
+- [x] No domain route file exceeds 800 LOC — max is 793 (marketing)
+- [x] All 41 endpoints respond identically (same paths, same behavior)
+- [x] `index.ts` registration unchanged — single import, single mount
+- [x] `internal-agent-health.routes.ts` untouched
+- [x] Dead code `_ProjectHubAddNoteSchema` deleted
+- [x] Clean typecheck passes: `rm -rf server/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
+- [x] Server tests pass: `npm run --workspace=server test` — 2056 passed, 0 failed
 
 ## Risk Analysis
 
