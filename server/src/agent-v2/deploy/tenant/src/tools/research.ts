@@ -21,8 +21,11 @@ import { logger, fetchWithTimeout, getTenantId, TTLCache } from '../utils.js';
 // Environment Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-const RESEARCH_AGENT_URL =
-  process.env.RESEARCH_AGENT_URL || 'https://research-agent-506923455711.us-central1.run.app';
+const RESEARCH_AGENT_URL = process.env.RESEARCH_AGENT_URL;
+
+if (!RESEARCH_AGENT_URL) {
+  throw new Error('RESEARCH_AGENT_URL environment variable is required');
+}
 
 // Longer timeout for research (web scraping, analysis)
 const RESEARCH_TIMEOUT_MS = 90_000; // 90s per pitfall #42

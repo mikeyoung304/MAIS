@@ -18,7 +18,6 @@ import { ChatMessage } from '@/components/chat/ChatMessage';
  */
 export interface TenantAgentUIAction {
   type: 'SHOW_PREVIEW' | 'SHOW_DASHBOARD' | 'HIGHLIGHT_SECTION' | 'REFRESH_PREVIEW';
-  page?: string;
   sectionId?: string;
 }
 
@@ -96,7 +95,7 @@ export function TenantAgentChat({
         for (const call of toolCalls) {
           // Marketing agent calls → show preview
           if (call.name.includes('marketing') || call.name.includes('headline')) {
-            onUIAction({ type: 'SHOW_PREVIEW', page: 'home' });
+            onUIAction({ type: 'SHOW_PREVIEW' });
           }
           // Storefront agent calls → refresh preview
           if (call.name.includes('storefront') || call.name.includes('section')) {

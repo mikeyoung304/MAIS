@@ -17,7 +17,7 @@ import {
 import { ReviewProgress } from './ReviewProgress';
 import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
 import { queryKeys } from '@/lib/query-client';
-import type { PageName } from '@macon/contracts';
+
 import { SECTION_BLUEPRINT, MVP_REVEAL_SECTION_COUNT } from '@macon/contracts';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -180,7 +180,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
   const handleTenantAgentUIAction = useCallback((action: TenantAgentUIAction) => {
     switch (action.type) {
       case 'SHOW_PREVIEW':
-        agentUIActions.showPreview((action.page as PageName) || 'home');
+        agentUIActions.showPreview();
         break;
       case 'SHOW_DASHBOARD':
         agentUIActions.showDashboard();
@@ -206,7 +206,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
           case 'NAVIGATE':
             // Navigate to a dashboard section - "website" means show preview
             if (action.section === 'website') {
-              agentUIActions.showPreview('home');
+              agentUIActions.showPreview();
             }
             // Other sections could be handled here (bookings, projects, settings, analytics)
             break;
@@ -231,7 +231,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
               queryKey: getDraftConfigQueryKey(),
               refetchType: 'active',
             });
-            agentUIActions.showPreview('home');
+            agentUIActions.showPreview();
             break;
           case 'REFRESH':
           case 'REFRESH_PREVIEW':
@@ -254,7 +254,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
               refinementActions.setCurrentSection(action.sectionId, action.sectionType);
               refinementActions.setMode('reviewing');
               agentUIActions.highlightSection(action.sectionId);
-              agentUIActions.showPreview('home');
+              agentUIActions.showPreview();
             }
             break;
 
@@ -284,7 +284,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
             if (nextId) {
               refinementActions.setCurrentSection(nextId, nextType);
               agentUIActions.highlightSection(nextId);
-              agentUIActions.showPreview('home');
+              agentUIActions.showPreview();
             }
             // If all sections are complete, no-op (publish_ready handles that)
             break;
@@ -318,7 +318,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
             // Refresh onboarding state (phase may advance to COMPLETED)
             queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
             // Switch to live preview
-            agentUIActions.showPreview('home');
+            agentUIActions.showPreview();
             break;
 
           default: {
@@ -407,7 +407,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
 
       if (generatedMarketing) {
         // Show preview to display the generated content
-        agentUIActions.showPreview('home');
+        agentUIActions.showPreview();
         // Fix #818: Wait for backend transaction to commit
         await new Promise((resolve) => setTimeout(resolve, 100));
         await queryClient.invalidateQueries({

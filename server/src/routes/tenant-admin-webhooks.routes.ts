@@ -11,7 +11,6 @@ import { z } from 'zod';
 import type { WebhookSubscriptionRepository } from '../lib/ports';
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import { logger } from '../lib/core/logger';
-import { NotFoundError } from '../lib/errors';
 
 /**
  * Zod schemas for request validation
@@ -160,13 +159,6 @@ export function createTenantAdminWebhookRoutes(
 
       res.status(201).json(subscription);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.errors,
-        });
-        return;
-      }
       next(error);
     }
   });
@@ -211,17 +203,6 @@ export function createTenantAdminWebhookRoutes(
 
       res.json(updated);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.errors,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -251,10 +232,6 @@ export function createTenantAdminWebhookRoutes(
 
       res.status(204).send();
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -320,10 +297,6 @@ export function createTenantAdminWebhookRoutes(
 
       res.json(deliveries);
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });

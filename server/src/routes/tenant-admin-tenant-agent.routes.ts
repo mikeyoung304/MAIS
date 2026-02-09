@@ -26,13 +26,19 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import type { ContextBuilderService, BootstrapData } from '../services/context-builder.service';
 import { cloudRunAuth } from '../services/cloud-run-auth.service';
+import {
+  AdkSessionResponseSchema,
+  fetchWithTimeout,
+  extractAgentResponse,
+  extractToolCalls,
+} from '../lib/adk-client';
 
 // =============================================================================
 // CONFIGURATION
@@ -44,13 +50,10 @@ import { cloudRunAuth } from '../services/cloud-run-auth.service';
  */
 function getTenantAgentUrl(): string {
   const envUrl = process.env.TENANT_AGENT_URL;
-  if (envUrl) {
-    return envUrl;
+  if (!envUrl) {
+    throw new Error('TENANT_AGENT_URL environment variable is required');
   }
-
-  // Fallback for local development (pointing to deployed Cloud Run)
-  // This is acceptable for dev but should be set via env in production
-  return 'https://tenant-agent-506923455711.us-central1.run.app';
+  return envUrl;
 }
 
 // =============================================================================
@@ -66,12 +69,7 @@ const SessionIdSchema = z.object({
   id: z.string().min(1),
 });
 
-/**
- * ADK session creation response format.
- */
-const AdkSessionResponseSchema = z.object({
-  id: z.string(),
-});
+// AdkSessionResponseSchema imported from '../lib/adk-client'
 
 /**
  * ADK session GET response format.
@@ -159,7 +157,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // Context is injected at session creation, not inferred from conversation.
   // ===========================================================================
 
-  router.post('/session', async (_req: Request, res: Response) => {
+  router.post('/session', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       // Get tenant context from auth middleware
       const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string; slug: string } })
@@ -222,29 +220,20 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const agentUrl = getTenantAgentUrl();
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout per Pitfall #42
-
-      let response: globalThis.Response;
-      try {
-        response = await fetch(
-          // ADK app name is 'agent' (from /list-apps endpoint)
-          `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            // ADK expects state wrapped: { state: { key: value } }
-            // NOW INCLUDES: knownFacts, forbiddenSlots, storefrontState, etc.
-            body: JSON.stringify({ state: sessionState }),
-            signal: controller.signal,
-          }
-        );
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      // ADK app name is 'agent' (from /list-apps endpoint)
+      const response = await fetchWithTimeout(
+        `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          // ADK expects state wrapped: { state: { key: value } }
+          // NOW INCLUDES: knownFacts, forbiddenSlots, storefrontState, etc.
+          body: JSON.stringify({ state: sessionState }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -284,7 +273,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         version: 0, // New sessions start at version 0
       });
     } catch (error) {
-      handleError(res, error, '/session');
+      next(error);
     }
   });
 
@@ -292,7 +281,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // GET /session/:id - Get session history from ADK
   // ===========================================================================
 
-  router.get('/session/:id', async (req: Request, res: Response) => {
+  router.get('/session/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id: sessionId } = SessionIdSchema.parse({ id: req.params.id });
 
@@ -311,25 +300,17 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
       const agentUrl = getTenantAgentUrl();
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for reads
-
-      let response: globalThis.Response;
-      try {
-        response = await fetch(
-          `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-            signal: controller.signal,
-          }
-        );
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      const response = await fetchWithTimeout(
+        `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        },
+        15_000 // 15s timeout for reads
+      );
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -383,7 +364,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         total: messages.length,
       });
     } catch (error) {
-      handleError(res, error, '/session/:id');
+      next(error);
     }
   });
 
@@ -391,7 +372,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // DELETE /session/:id - Close a session
   // ===========================================================================
 
-  router.delete('/session/:id', async (req: Request, res: Response) => {
+  router.delete('/session/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id: sessionId } = SessionIdSchema.parse({ id: req.params.id });
 
@@ -413,7 +394,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         message: 'Session closed',
       });
     } catch (error) {
-      handleError(res, error, '/session/:id');
+      next(error);
     }
   });
 
@@ -423,7 +404,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // Fixed: Creates proper ADK session with bootstrap context when no sessionId
   // ===========================================================================
 
-  router.post('/chat', async (req: Request, res: Response) => {
+  router.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { message, sessionId: providedSessionId } = SendMessageSchema.parse(req.body);
 
@@ -478,11 +459,8 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         const token = await cloudRunAuth.getIdentityToken(getTenantAgentUrl());
         const agentUrl = getTenantAgentUrl();
 
-        const createController = new AbortController();
-        const createTimeoutId = setTimeout(() => createController.abort(), 30000);
-
         try {
-          const createResponse = await fetch(
+          const createResponse = await fetchWithTimeout(
             `${agentUrl}/apps/agent/users/${encodeURIComponent(userId)}/sessions`,
             {
               method: 'POST',
@@ -491,11 +469,8 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
                 ...(token && { Authorization: `Bearer ${token}` }),
               },
               body: JSON.stringify({ state: sessionState }),
-              signal: createController.signal,
             }
           );
-
-          clearTimeout(createTimeoutId);
 
           if (createResponse.ok) {
             const createData = await createResponse.json();
@@ -509,7 +484,6 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
             }
           }
         } catch {
-          clearTimeout(createTimeoutId);
           // Fall through to use a fallback session ID
         }
 
@@ -554,36 +528,27 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         }
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-      let response: globalThis.Response;
-      try {
-        response = await fetch(`${agentUrl}/run`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
+      const response = await fetchWithTimeout(`${agentUrl}/run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          // A2A protocol format (Pitfall #28 - must use camelCase)
+          appName: 'agent',
+          userId,
+          sessionId,
+          newMessage: {
+            role: 'user',
+            parts: [{ text: messageWithContext }],
           },
-          body: JSON.stringify({
-            // A2A protocol format (Pitfall #28 - must use camelCase)
-            appName: 'agent',
-            userId,
-            sessionId,
-            newMessage: {
-              role: 'user',
-              parts: [{ text: messageWithContext }],
-            },
-            // Pass tenant context in state for the agent to use
-            state: {
-              tenantId,
-            },
-          }),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
+          // Pass tenant context in state for the agent to use
+          state: {
+            tenantId,
+          },
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -633,29 +598,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         toolCalls,
       });
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
-        });
-        return;
-      }
-
-      if (error instanceof Error && error.name === 'AbortError') {
-        logger.error({ error }, '[TenantAgent] Request timed out');
-        res.status(504).json({
-          success: false,
-          error: 'Agent request timed out',
-        });
-        return;
-      }
-
-      logger.error({ error, requestId: res.locals.requestId }, '[TenantAgent] Internal error');
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        requestId: res.locals.requestId,
-      });
+      next(error);
     }
   });
 
@@ -663,7 +606,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // GET /onboarding-state - Get current onboarding phase and context
   // ===========================================================================
 
-  router.get('/onboarding-state', async (_req: Request, res: Response) => {
+  router.get('/onboarding-state', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
       if (!tenantAuth) {
@@ -706,7 +649,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         },
       });
     } catch (error) {
-      handleError(res, error, '/onboarding-state');
+      next(error);
     }
   });
 
@@ -714,7 +657,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // POST /skip-onboarding - Skip the onboarding process
   // ===========================================================================
 
-  router.post('/skip-onboarding', async (req: Request, res: Response) => {
+  router.post('/skip-onboarding', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
       if (!tenantAuth) {
@@ -769,7 +712,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         message: 'Onboarding skipped. You can set up your business manually.',
       });
     } catch (error) {
-      handleError(res, error, '/skip-onboarding');
+      next(error);
     }
   });
 
@@ -778,43 +721,46 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
   // One-shot guard: only writes revealCompletedAt if not already set.
   // ===========================================================================
 
-  router.post('/mark-reveal-completed', async (_req: Request, res: Response) => {
-    try {
-      const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
-      if (!tenantAuth) {
-        res.status(401).json({ error: 'Tenant authentication required' });
-        return;
+  router.post(
+    '/mark-reveal-completed',
+    async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const tenantAuth = (res.locals as { tenantAuth?: { tenantId: string } }).tenantAuth;
+        if (!tenantAuth) {
+          res.status(401).json({ error: 'Tenant authentication required' });
+          return;
+        }
+
+        const { tenantId } = tenantAuth;
+
+        // Idempotent: only write if not already set
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { revealCompletedAt: true },
+        });
+
+        if (!tenant) {
+          res.status(404).json({ success: false, error: 'Tenant not found' });
+          return;
+        }
+
+        if (tenant.revealCompletedAt) {
+          res.json({ success: true, alreadyCompleted: true });
+          return;
+        }
+
+        await prisma.tenant.update({
+          where: { id: tenantId },
+          data: { revealCompletedAt: new Date() },
+        });
+
+        logger.info({ tenantId }, '[TenantAgent] revealCompletedAt written (frontend trigger)');
+        res.json({ success: true, alreadyCompleted: false });
+      } catch (error) {
+        next(error);
       }
-
-      const { tenantId } = tenantAuth;
-
-      // Idempotent: only write if not already set
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { revealCompletedAt: true },
-      });
-
-      if (!tenant) {
-        res.status(404).json({ success: false, error: 'Tenant not found' });
-        return;
-      }
-
-      if (tenant.revealCompletedAt) {
-        res.json({ success: true, alreadyCompleted: true });
-        return;
-      }
-
-      await prisma.tenant.update({
-        where: { id: tenantId },
-        data: { revealCompletedAt: new Date() },
-      });
-
-      logger.info({ tenantId }, '[TenantAgent] revealCompletedAt written (frontend trigger)');
-      res.json({ success: true, alreadyCompleted: false });
-    } catch (error) {
-      handleError(res, error, '/mark-reveal-completed');
     }
-  });
+  );
 
   return router;
 }
@@ -823,29 +769,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 // HELPER FUNCTIONS
 // =============================================================================
 
-/**
- * Extract text response from ADK response array.
- * Finds the last model message and concatenates its text parts.
- */
-function extractAgentResponse(data: z.infer<typeof AdkResponseSchema>): string {
-  // Find the last model response (iterate from end)
-  for (let i = data.length - 1; i >= 0; i--) {
-    const item = data[i];
-    if (item.content.role === 'model') {
-      // Concatenate all text parts
-      const texts = item.content.parts
-        .filter((p) => p.text)
-        .map((p) => p.text!)
-        .join('');
-
-      if (texts) {
-        return texts;
-      }
-    }
-  }
-
-  return 'I processed your request but have no text response.';
-}
+// extractAgentResponse imported from '../lib/adk-client'
 
 /**
  * Extract dashboard actions from ADK response.
@@ -877,48 +801,7 @@ function extractDashboardActions(
   return actions;
 }
 
-/**
- * Extract tool calls from ADK response.
- * Returns function calls with their arguments and results.
- */
-function extractToolCalls(
-  data: z.infer<typeof AdkResponseSchema>
-): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
-  const toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }> = [];
-  const pendingCalls = new Map<string, { name: string; args: Record<string, unknown> }>();
-
-  for (const item of data) {
-    for (const part of item.content.parts) {
-      // Collect function calls
-      if (part.functionCall) {
-        pendingCalls.set(part.functionCall.name, {
-          name: part.functionCall.name,
-          args: part.functionCall.args as Record<string, unknown>,
-        });
-      }
-
-      // Match function responses to calls
-      if (part.functionResponse) {
-        const call = pendingCalls.get(part.functionResponse.name);
-        if (call) {
-          toolCalls.push({
-            name: call.name,
-            args: call.args,
-            result: part.functionResponse.response,
-          });
-          pendingCalls.delete(part.functionResponse.name);
-        }
-      }
-    }
-  }
-
-  // Add any pending calls without responses
-  for (const call of pendingCalls.values()) {
-    toolCalls.push(call);
-  }
-
-  return toolCalls;
-}
+// extractToolCalls imported from '../lib/adk-client'
 
 /**
  * Extract messages from ADK session events.
@@ -1008,36 +891,4 @@ function buildContextPrefix(bootstrap: BootstrapData): string | null {
   parts.push('[END CONTEXT]');
 
   return parts.join('\n');
-}
-
-/**
- * Centralized error handler for all routes.
- */
-function handleError(res: Response, error: unknown, endpoint: string): void {
-  if (error instanceof ZodError) {
-    res.status(400).json({
-      error: 'Validation error',
-      details: error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
-    });
-    return;
-  }
-
-  if (error instanceof Error && error.name === 'AbortError') {
-    logger.error({ error, endpoint }, '[TenantAgent] Request timed out');
-    res.status(504).json({
-      success: false,
-      error: 'Agent request timed out',
-    });
-    return;
-  }
-
-  logger.error(
-    { error, endpoint, requestId: res.locals.requestId },
-    '[TenantAgent] Internal error'
-  );
-
-  res.status(500).json({
-    error: 'Internal server error',
-    requestId: res.locals.requestId,
-  });
 }

@@ -7,7 +7,6 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { ZodError } from 'zod';
 import {
   CreateServiceDtoSchema,
   UpdateServiceDtoSchema,
@@ -21,7 +20,7 @@ import type {
 } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import { logger } from '../lib/core/logger';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError } from '../lib/errors';
 
 /**
  * Create tenant admin scheduling routes
@@ -151,17 +150,6 @@ export function createTenantAdminSchedulingRoutes(
 
       res.status(201).json(service);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -222,21 +210,6 @@ export function createTenantAdminSchedulingRoutes(
 
       res.json(service);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -278,10 +251,6 @@ export function createTenantAdminSchedulingRoutes(
 
       res.status(204).send();
     } catch (error) {
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -411,17 +380,6 @@ export function createTenantAdminSchedulingRoutes(
 
       res.status(201).json(ruleDto);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -500,24 +458,9 @@ export function createTenantAdminSchedulingRoutes(
 
       res.json(ruleDto);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof ValidationError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      // Handle repository error for rule not found
+      // Repository throws plain Error for rule not found (not NotFoundError)
       if (error instanceof Error && error.message.includes('not found')) {
-        res.status(404).json({ error: 'Availability rule not found' });
+        next(new NotFoundError('Availability rule not found'));
         return;
       }
       next(error);
@@ -565,10 +508,6 @@ export function createTenantAdminSchedulingRoutes(
 
         res.status(204).send();
       } catch (error) {
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
-          return;
-        }
         next(error);
       }
     }
@@ -682,13 +621,6 @@ export function createTenantAdminSchedulingRoutes(
 
       res.json(appointments);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
       next(error);
     }
   });

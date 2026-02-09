@@ -158,7 +158,7 @@ export function DashboardView() {
   // Handle Site Builder click - show preview via agent store
   const handleSiteBuilderClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    agentUIActions.showPreview('home');
+    agentUIActions.showPreview();
   };
 
   const quickActions = [

@@ -11,7 +11,6 @@
 
 import type { Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { ServiceRepository } from '../lib/ports';
 import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';
@@ -149,17 +148,6 @@ export function createPublicSchedulingRoutes(
 
       res.json(serviceDto);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        res.status(404).json({ error: error.message });
-        return;
-      }
       next(error);
     }
   });
@@ -271,17 +259,6 @@ export function createPublicSchedulingRoutes(
           slots: slotDtos,
         });
       } catch (error) {
-        if (error instanceof ZodError) {
-          res.status(400).json({
-            error: 'Validation error',
-            details: error.issues,
-          });
-          return;
-        }
-        if (error instanceof NotFoundError) {
-          res.status(404).json({ error: error.message });
-          return;
-        }
         next(error);
       }
     }

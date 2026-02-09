@@ -15,18 +15,11 @@
 
 import type { Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { ZodError } from 'zod';
 import type { TenantRequest } from '../middleware/tenant';
 import type { BookingService } from '../services/booking.service';
 import type { CacheServicePort } from '../lib/ports';
 import { CreateDateBookingDtoSchema } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
-import {
-  NotFoundError,
-  BookingConflictError,
-  InvalidBookingTypeError,
-  PackageNotAvailableError,
-} from '../lib/errors';
 import { publicSchedulingLimiter } from '../middleware/rateLimiter';
 
 /** TTL for idempotency cache entries (1 hour in seconds) */
@@ -171,57 +164,6 @@ export function createPublicDateBookingRoutes(
 
       res.status(200).json(result);
     } catch (error) {
-      const tenantId = req.tenantId;
-      const packageId = req.body?.packageId;
-
-      if (error instanceof ZodError) {
-        logger.warn(
-          { tenantId, packageId, issues: error.issues },
-          'Date booking validation failed'
-        );
-        res.status(400).json({
-          error: 'Validation error',
-          details: error.issues,
-        });
-        return;
-      }
-      if (error instanceof NotFoundError) {
-        logger.warn({ tenantId, packageId }, 'Date booking package not found');
-        res.status(404).json({ error: error.message });
-        return;
-      }
-      if (error instanceof InvalidBookingTypeError) {
-        logger.warn(
-          { tenantId, packageId, error: error.message },
-          'Date booking invalid package type'
-        );
-        res.status(400).json({
-          error: 'Booking method not supported',
-          message:
-            'This package requires appointment scheduling. Please visit our appointment booking page.',
-        });
-        return;
-      }
-      if (error instanceof PackageNotAvailableError) {
-        logger.warn({ tenantId, packageId }, 'Date booking attempted with inactive package');
-        res.status(400).json({
-          error: 'Package not available',
-          message: 'This package is no longer available for booking.',
-        });
-        return;
-      }
-      if (error instanceof BookingConflictError) {
-        logger.warn(
-          { tenantId, packageId, date: req.body?.date },
-          'Date booking conflict - date already booked'
-        );
-        res.status(409).json({ error: error.message });
-        return;
-      }
-      logger.error(
-        { tenantId, packageId, error: error instanceof Error ? error.message : String(error) },
-        'Date booking checkout failed'
-      );
       next(error);
     }
   });

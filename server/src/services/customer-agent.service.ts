@@ -22,77 +22,18 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
-import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
 import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../config/tiers';
 import { cloudRunAuth } from './cloud-run-auth.service';
-
-// =============================================================================
-// ADK RESPONSE SCHEMAS (Pitfall #56: Runtime validation for external APIs)
-// =============================================================================
-
-const AdkSessionResponseSchema = z.object({
-  id: z.string(),
-});
-
-const AdkPartSchema = z.object({
-  text: z.string().optional(),
-  functionCall: z
-    .object({
-      name: z.string(),
-      args: z.record(z.unknown()),
-    })
-    .optional(),
-  functionResponse: z
-    .object({
-      name: z.string(),
-      response: z.unknown(),
-    })
-    .optional(),
-});
-
-const AdkContentSchema = z.object({
-  role: z.string().optional(),
-  parts: z.array(AdkPartSchema).optional(),
-});
-
-const AdkEventSchema = z.object({
-  content: AdkContentSchema.optional(),
-});
-
-const AdkRunResponseSchema = z.union([
-  z.array(AdkEventSchema),
-  z.object({
-    messages: z.array(
-      z.object({
-        role: z.string(),
-        parts: z.array(AdkPartSchema).optional(),
-      })
-    ),
-  }),
-]);
-
-type AdkRunResponse = z.infer<typeof AdkRunResponseSchema>;
-
-// =============================================================================
-// FETCH WITH TIMEOUT
-// =============================================================================
-
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number = 30_000
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
+import {
+  AdkSessionResponseSchema,
+  AdkRunResponseSchema,
+  fetchWithTimeout,
+  extractAgentResponse,
+  extractToolCalls,
+} from '../lib/adk-client';
 
 // =============================================================================
 // CONFIGURATION
@@ -388,8 +329,8 @@ export class CustomerAgentService {
       }
 
       const data = parseResult.data;
-      const agentResponse = this.extractAgentResponse(data);
-      const toolResults = this.extractToolCalls(data);
+      const agentResponse = extractAgentResponse(data);
+      const toolResults = extractToolCalls(data);
 
       // 6. Persist agent response
       const schemaToolCalls =
@@ -554,8 +495,8 @@ export class CustomerAgentService {
     }
 
     const data = parseResult.data;
-    const agentResponse = this.extractAgentResponse(data);
-    const toolResults = this.extractToolCalls(data);
+    const agentResponse = extractAgentResponse(data);
+    const toolResults = extractToolCalls(data);
 
     // Persist response
     const schemaToolCalls =
@@ -580,89 +521,6 @@ export class CustomerAgentService {
       sessionId: dbSessionId,
       toolResults,
     };
-  }
-
-  private extractAgentResponse(data: AdkRunResponse): string {
-    if (Array.isArray(data)) {
-      for (let i = data.length - 1; i >= 0; i--) {
-        const event = data[i];
-        if (event.content?.role === 'model') {
-          const textPart = event.content.parts?.find((p) => p.text);
-          if (textPart?.text) {
-            return textPart.text;
-          }
-        }
-      }
-    } else {
-      const messages = data.messages;
-      for (let i = messages.length - 1; i >= 0; i--) {
-        const msg = messages[i];
-        if (msg.role === 'model') {
-          const textPart = msg.parts?.find((p) => p.text);
-          if (textPart?.text) {
-            return textPart.text;
-          }
-        }
-      }
-    }
-
-    return 'No response from agent.';
-  }
-
-  private extractToolCalls(
-    data: AdkRunResponse
-  ): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
-    type PartType = z.infer<typeof AdkPartSchema>;
-    const allParts: PartType[] = [];
-
-    if (Array.isArray(data)) {
-      for (const event of data) {
-        if (event.content?.parts) {
-          allParts.push(...event.content.parts);
-        }
-      }
-    } else {
-      for (const msg of data.messages) {
-        if (msg.parts) {
-          allParts.push(...msg.parts);
-        }
-      }
-    }
-
-    if (allParts.length === 0) {
-      return [];
-    }
-
-    const toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: unknown }> = [];
-    const pendingCalls = new Map<string, { name: string; args: Record<string, unknown> }>();
-
-    for (const part of allParts) {
-      if (part.functionCall) {
-        const callId = `${part.functionCall.name}:${JSON.stringify(part.functionCall.args)}`;
-        pendingCalls.set(callId, {
-          name: part.functionCall.name,
-          args: part.functionCall.args,
-        });
-      }
-      if (part.functionResponse) {
-        for (const [callId, call] of pendingCalls) {
-          if (callId.startsWith(part.functionResponse.name)) {
-            toolCalls.push({
-              ...call,
-              result: part.functionResponse.response,
-            });
-            pendingCalls.delete(callId);
-            break;
-          }
-        }
-      }
-    }
-
-    for (const call of pendingCalls.values()) {
-      toolCalls.push(call);
-    }
-
-    return toolCalls;
   }
 }
 

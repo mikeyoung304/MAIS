@@ -4,6 +4,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 import { logger } from '../lib/core/logger';
 import { DomainError, AppError } from '../lib/errors';
 import { captureException } from '../lib/errors/sentry';
@@ -38,11 +39,14 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
       'Domain error'
     );
 
+    // Spread extra fields from toJSON() (e.g. currentVersion, retryAfter)
+    const { name: _n, message: _m, code: _c, statusCode: _s, ...extra } = err.toJSON();
     res.status(err.statusCode).json({
       status: 'error',
       statusCode: err.statusCode,
       error: err.code,
       message: err.message,
+      ...extra,
       requestId,
     });
     return;
@@ -68,11 +72,31 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
       });
     }
 
+    // Spread extra fields from toJSON() (e.g. currentVersion, retryAfter)
+    const { name: _n, message: _m, code: _c, statusCode: _s, ...extra } = err.toJSON();
     res.status(err.statusCode).json({
       status: 'error',
       statusCode: err.statusCode,
       error: err.code,
       message: err.message,
+      ...extra,
+      requestId,
+    });
+    return;
+  }
+
+  // Map Zod validation errors to 400 Bad Request
+  if (err instanceof ZodError) {
+    reqLogger.info(
+      { err: { name: 'ZodError', issues: err.issues }, requestId },
+      'Validation error'
+    );
+
+    res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      error: 'VALIDATION_ERROR',
+      message: err.issues.map((i) => i.message).join(', '),
       requestId,
     });
     return;

@@ -296,7 +296,7 @@ describe('POST /v1/tenant-admin/logo - Logo Upload HTTP Tests', () => {
         .expect(400);
 
       expect(res.body).toHaveProperty('error');
-      expect(res.body.error).toMatch(/Invalid file type|Allowed types/i);
+      expect(res.body.message).toMatch(/Invalid file type|Allowed types/i);
     });
 
     it('should reject invalid MIME type (EXE)', async () => {
@@ -310,7 +310,7 @@ describe('POST /v1/tenant-admin/logo - Logo Upload HTTP Tests', () => {
         .expect(400);
 
       expect(res.body).toHaveProperty('error');
-      expect(res.body.error).toMatch(/Invalid file type|Allowed types/i);
+      expect(res.body.message).toMatch(/Invalid file type|Allowed types/i);
     });
 
     it('should accept valid PNG file', async () => {
@@ -530,7 +530,7 @@ describe('POST /v1/tenant-admin/logo - Logo Upload HTTP Tests', () => {
         .expect(400);
 
       expect(res.body).toHaveProperty('error');
-      expect(res.body.error).toMatch(/File buffer is empty|No file uploaded/i);
+      expect(res.body.message).toMatch(/File buffer is empty|No file uploaded/i);
     });
 
     it('should handle special characters in filename', async () => {

@@ -153,7 +153,7 @@ describe('agent-ui-store', () => {
     it('should add action to actionLog', () => {
       vi.setSystemTime(new Date('2026-01-09T12:00:00Z'));
 
-      useAgentUIStore.getState().showPreview('home', 'agent_session_456');
+      useAgentUIStore.getState().showPreview('agent_session_456');
 
       const state = useAgentUIStore.getState();
       expect(state.actionLog).toHaveLength(1);
@@ -390,7 +390,7 @@ describe('agent-ui-store', () => {
     it('should include all required fields in action entry', () => {
       vi.setSystemTime(new Date('2026-01-09T15:30:00Z'));
 
-      useAgentUIStore.getState().showPreview('home', 'session_abc');
+      useAgentUIStore.getState().showPreview('session_abc');
 
       const state = useAgentUIStore.getState();
       const action = state.actionLog[0];
@@ -411,7 +411,7 @@ describe('agent-ui-store', () => {
     });
 
     it('should accumulate multiple actions in order', () => {
-      useAgentUIStore.getState().showPreview('home');
+      useAgentUIStore.getState().showPreview();
       useAgentUIStore.getState().highlightSection('home-hero-main');
       useAgentUIStore.getState().showDashboard();
 
@@ -569,7 +569,7 @@ describe('agent-ui-store', () => {
     });
 
     it('agentUIActions.showPreview should work outside React', () => {
-      agentUIActions.showPreview('about', 'external_session');
+      agentUIActions.showPreview('external_session');
 
       const state = useAgentUIStore.getState();
       expect(state.view.status).toBe('preview');

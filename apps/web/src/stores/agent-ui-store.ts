@@ -21,7 +21,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import type { PageName } from '@macon/contracts';
 
 // Maximum number of actions to keep in the log (FIFO buffer - oldest removed first)
 const MAX_ACTION_LOG_SIZE = 100;
@@ -196,10 +195,9 @@ export interface AgentUIState {
 
   /**
    * Show storefront preview in content area (T1)
-   * @param page Which page to show (defaults to 'home')
    * @param agentSessionId Optional agent session for audit
    */
-  showPreview: (page?: PageName, agentSessionId?: string | null) => void;
+  showPreview: (agentSessionId?: string | null) => void;
 
   /**
    * Return to dashboard view (T1)
@@ -326,7 +324,7 @@ export const useAgentUIStore = create<AgentUIState>()(
           }),
 
         // Show preview
-        showPreview: (_page = 'home', agentSessionId = null) =>
+        showPreview: (agentSessionId = null) =>
           set((state) => {
             if (!state.tenantId) return; // Security: require tenant
             // Guard: only revealSite() can transition away from coming_soon
@@ -548,12 +546,12 @@ export const useAgentUIStore = create<AgentUIState>()(
  * @example
  * // In agent response handler:
  * if (response.uiAction?.type === 'SHOW_PREVIEW') {
- *   agentUIActions.showPreview(response.uiAction.page, sessionId);
+ *   agentUIActions.showPreview(sessionId);
  * }
  */
 export const agentUIActions = {
-  showPreview: (page?: PageName, agentSessionId?: string | null) =>
-    useAgentUIStore.getState().showPreview(page, agentSessionId),
+  showPreview: (agentSessionId?: string | null) =>
+    useAgentUIStore.getState().showPreview(agentSessionId),
 
   showDashboard: (agentSessionId?: string | null) =>
     useAgentUIStore.getState().showDashboard(agentSessionId),
