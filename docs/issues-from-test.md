@@ -338,6 +338,7 @@ Navigated to `/t/rerererer-1770426978827` (the storefront preview link) and foun
   SELECT phase FROM OnboardingProgress WHERE tenantId = ?;
   ```
 - **Are there any section content rows for this tenant?**
+
   ```sql
   SELECT section, isDraft, content FROM SectionContent WHERE tenantId = ?;
   ```
@@ -345,6 +346,7 @@ Navigated to `/t/rerererer-1770426978827` (the storefront preview link) and foun
   - **Expected:** If `build_first_draft` ran, should see rows for hero, about, services with `isDraft: true`
   - **If rows exist with placeholder content:** Tool executed but LLM didn't generate real content
   - **If rows don't exist:** Tool never executed or failed silently
+
 - **Check agent logs for `build_first_draft` tool calls:**
   - Did the tool get called?
   - Did `update_section` get called 3 times (hero, about, services)?

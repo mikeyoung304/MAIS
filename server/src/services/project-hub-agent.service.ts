@@ -31,7 +31,6 @@ import {
   fetchWithTimeout,
   extractAgentResponse,
   extractToolCalls,
-  type AdkRunResponse,
 } from '../lib/adk-client';
 
 // =============================================================================

@@ -28,7 +28,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import type { ContextBuilderService, BootstrapData } from '../services/context-builder.service';
