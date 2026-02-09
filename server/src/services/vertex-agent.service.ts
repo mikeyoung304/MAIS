@@ -521,8 +521,8 @@ export class VertexAgentService {
       const data = parseResult.data;
 
       // Extract response from A2A format
-      const agentResponse = this.extractAgentResponse(data);
-      const toolCalls = this.extractToolCalls(data);
+      const agentResponse = extractAgentResponse(data);
+      const toolCalls = extractToolCalls(data);
 
       // Persist agent response to database
       // Transform toolCalls to schema format (with id and arguments)
@@ -683,8 +683,8 @@ export class VertexAgentService {
       };
     }
     const data = parseResult.data;
-    const agentResponse = this.extractAgentResponse(data);
-    const toolCalls = this.extractToolCalls(data);
+    const agentResponse = extractAgentResponse(data);
+    const toolCalls = extractToolCalls(data);
 
     // Transform toolCalls to schema format (with id and arguments)
     const schemaToolCalls =
@@ -877,17 +877,6 @@ export class VertexAgentService {
       logger.error({ tenantId, userId, error }, '[VertexAgent] Error creating ADK session');
       return null;
     }
-  }
-
-  // Delegating wrappers — logic lives in shared adk-client.ts
-  private extractAgentResponse(data: AdkRunResponse): string {
-    return extractAgentResponse(data);
-  }
-
-  private extractToolCalls(
-    data: AdkRunResponse
-  ): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
-    return extractToolCalls(data);
   }
 }
 

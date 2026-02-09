@@ -59,7 +59,7 @@ export class DatabaseError extends AppError {
     message: string,
     public readonly originalError?: Error
   ) {
-    super(message, 'DATABASE_ERROR', 500, true);
+    super(message, 'DATABASE_ERROR', 500, false);
     this.name = 'DatabaseError';
     if (originalError) {
       this.cause = originalError;

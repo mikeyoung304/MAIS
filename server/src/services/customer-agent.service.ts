@@ -330,8 +330,8 @@ export class CustomerAgentService {
       }
 
       const data = parseResult.data;
-      const agentResponse = this.extractAgentResponse(data);
-      const toolResults = this.extractToolCalls(data);
+      const agentResponse = extractAgentResponse(data);
+      const toolResults = extractToolCalls(data);
 
       // 6. Persist agent response
       const schemaToolCalls =
@@ -496,8 +496,8 @@ export class CustomerAgentService {
     }
 
     const data = parseResult.data;
-    const agentResponse = this.extractAgentResponse(data);
-    const toolResults = this.extractToolCalls(data);
+    const agentResponse = extractAgentResponse(data);
+    const toolResults = extractToolCalls(data);
 
     // Persist response
     const schemaToolCalls =
@@ -522,17 +522,6 @@ export class CustomerAgentService {
       sessionId: dbSessionId,
       toolResults,
     };
-  }
-
-  // Delegating wrappers — logic lives in shared adk-client.ts
-  private extractAgentResponse(data: AdkRunResponse): string {
-    return extractAgentResponse(data);
-  }
-
-  private extractToolCalls(
-    data: AdkRunResponse
-  ): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
-    return extractToolCalls(data);
   }
 }
 

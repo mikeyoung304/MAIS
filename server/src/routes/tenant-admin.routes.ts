@@ -7,7 +7,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
-import { ZodError } from 'zod';
 import {
   UpdateBrandingDtoSchema,
   UpdatePackageDraftDtoSchema,
@@ -546,10 +545,6 @@ export function createTenantAdminRoutes(
         photoUrl: pkg.photoUrl,
       });
     } catch (error) {
-      if (error instanceof ZodError) {
-        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-        return;
-      }
       next(error);
     }
   });
@@ -593,10 +588,6 @@ export function createTenantAdminRoutes(
         photoUrl: pkg.photoUrl,
       });
     } catch (error) {
-      if (error instanceof ZodError) {
-        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-        return;
-      }
       next(error);
     }
   });
@@ -838,10 +829,6 @@ export function createTenantAdminRoutes(
           draftUpdatedAt: updatedPackage.draftUpdatedAt?.toISOString() ?? null,
         });
       } catch (error) {
-        if (error instanceof ZodError) {
-          next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-          return;
-        }
         next(error);
       }
     }
@@ -915,10 +902,6 @@ export function createTenantAdminRoutes(
       await blackoutRepo.addBlackout(tenantId, data.date, data.reason);
       res.status(201).json({ ok: true });
     } catch (error) {
-      if (error instanceof ZodError) {
-        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-        return;
-      }
       next(error);
     }
   });
@@ -1002,10 +985,6 @@ export function createTenantAdminRoutes(
 
       res.json(bookingsDto);
     } catch (error) {
-      if (error instanceof ZodError) {
-        next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-        return;
-      }
       next(error);
     }
   });
@@ -1129,10 +1108,6 @@ export function createTenantAdminRoutes(
         const addOn = await catalogService.createAddOn(tenantId, data);
         res.status(201).json(mapAddOnToDto(addOn));
       } catch (error) {
-        if (error instanceof ZodError) {
-          next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-          return;
-        }
         next(error);
       }
     }
@@ -1170,10 +1145,6 @@ export function createTenantAdminRoutes(
         const addOn = await catalogService.updateAddOn(tenantId, id, data);
         res.json(mapAddOnToDto(addOn));
       } catch (error) {
-        if (error instanceof ZodError) {
-          next(new BadRequestError(error.issues.map((i) => i.message).join(', ')));
-          return;
-        }
         next(error);
       }
     }

@@ -279,8 +279,8 @@ export class ProjectHubAgentService {
         };
       }
 
-      const agentResponse = this.extractAgentResponse(parseResult.data);
-      const toolCalls = this.extractToolCalls(parseResult.data);
+      const agentResponse = extractAgentResponse(parseResult.data);
+      const toolCalls = extractToolCalls(parseResult.data);
 
       logger.info(
         {
@@ -316,24 +316,6 @@ export class ProjectHubAgentService {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
-  }
-
-  // =============================================================================
-  // PRIVATE HELPERS
-  // =============================================================================
-
-  /**
-   * Extract text response from ADK response format.
-   */
-  // Delegating wrappers — logic lives in shared adk-client.ts
-  private extractAgentResponse(data: AdkRunResponse): string {
-    return extractAgentResponse(data);
-  }
-
-  private extractToolCalls(
-    data: AdkRunResponse
-  ): Array<{ name: string; args: Record<string, unknown>; result?: unknown }> {
-    return extractToolCalls(data);
   }
 }
 

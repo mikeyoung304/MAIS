@@ -121,6 +121,9 @@ export async function fetchWithTimeout(
  * Extract the text response from ADK response format.
  * ADK returns an array of events: [{ content: { role, parts } }, ...]
  * Data is pre-validated by AdkRunResponseSchema (Pitfall #56)
+ *
+ * Concatenates all text parts in the last model message (some agents split
+ * responses across multiple parts).
  */
 export function extractAgentResponse(data: AdkRunResponse): string {
   // Handle array format (ADK standard)
@@ -128,9 +131,14 @@ export function extractAgentResponse(data: AdkRunResponse): string {
     for (let i = data.length - 1; i >= 0; i--) {
       const event = data[i];
       if (event.content?.role === 'model') {
-        const textPart = event.content.parts?.find((p) => p.text);
-        if (textPart?.text) {
-          return textPart.text;
+        // Concatenate all text parts (some responses are split)
+        const texts = event.content.parts
+          ?.filter((p) => p.text)
+          .map((p) => p.text!)
+          .join('');
+
+        if (texts) {
+          return texts;
         }
       }
     }
@@ -140,9 +148,13 @@ export function extractAgentResponse(data: AdkRunResponse): string {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg.role === 'model') {
-        const textPart = msg.parts?.find((p) => p.text);
-        if (textPart?.text) {
-          return textPart.text;
+        const texts = msg.parts
+          ?.filter((p) => p.text)
+          .map((p) => p.text!)
+          .join('');
+
+        if (texts) {
+          return texts;
         }
       }
     }
