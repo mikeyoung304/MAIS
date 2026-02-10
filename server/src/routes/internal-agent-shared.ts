@@ -100,39 +100,52 @@ export function verifyInternalSecret(
 // =============================================================================
 
 /**
+ * Error response configuration map: error type → {status, response}
+ */
+const ERROR_RESPONSE_MAP: Record<
+  string,
+  { status: number; buildResponse: (error: unknown) => Record<string, unknown> }
+> = {
+  ZodError: {
+    status: 400,
+    buildResponse: (error: unknown) => ({
+      error: 'Validation error',
+      details: ((error as ZodError).issues || []).map((i) => `${i.path.join('.')}: ${i.message}`),
+    }),
+  },
+  NotFoundError: {
+    status: 404,
+    buildResponse: (error: unknown) => ({
+      error: 'NOT_FOUND',
+      message: (error as NotFoundError).message,
+    }),
+  },
+  ValidationError: {
+    status: 400,
+    buildResponse: (error: unknown) => ({
+      error: 'VALIDATION_ERROR',
+      message: (error as ValidationError).message,
+    }),
+  },
+  ConcurrentModificationError: {
+    status: 409,
+    buildResponse: (error: unknown) => ({
+      error: 'CONCURRENT_MODIFICATION',
+      message: (error as ConcurrentModificationError).message,
+      currentVersion: (error as ConcurrentModificationError).currentVersion,
+    }),
+  },
+};
+
+/**
  * Handle errors consistently across all internal agent endpoints.
  */
 export function handleError(res: Response, error: unknown, endpoint: string): void {
-  if (error instanceof ZodError) {
-    res.status(400).json({
-      error: 'Validation error',
-      details: error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
-    });
-    return;
-  }
+  const errorName = (error as Error).constructor.name;
+  const config = ERROR_RESPONSE_MAP[errorName];
 
-  if (error instanceof NotFoundError) {
-    res.status(404).json({
-      error: 'NOT_FOUND',
-      message: error.message,
-    });
-    return;
-  }
-
-  if (error instanceof ValidationError) {
-    res.status(400).json({
-      error: 'VALIDATION_ERROR',
-      message: error.message,
-    });
-    return;
-  }
-
-  if (error instanceof ConcurrentModificationError) {
-    res.status(409).json({
-      error: 'CONCURRENT_MODIFICATION',
-      message: error.message,
-      currentVersion: error.currentVersion,
-    });
+  if (config) {
+    res.status(config.status).json(config.buildResponse(error));
     return;
   }
 
