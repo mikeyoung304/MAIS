@@ -127,7 +127,7 @@ createV1Router(
 
 ### 4. Test Usage
 
-**File:** `server/test/http/internal-agent-marketing.http.spec.ts`
+**File:** `server/test/http/internal-agent-content-generation.http.spec.ts`
 
 ```typescript
 // Use the default mock tenant ID seeded by MockTenantRepository
@@ -135,7 +135,7 @@ const TEST_TENANT_ID = 'tenant_default_legacy';
 
 it('should generate headline for existing tenant', async () => {
   const response = await request(app)
-    .post('/v1/internal/agent/marketing/generate-headline')
+    .post('/v1/internal/agent/content-generation/generate-headline')
     .set('X-Internal-Secret', TEST_SECRET)
     .send({
       tenantId: TEST_TENANT_ID,

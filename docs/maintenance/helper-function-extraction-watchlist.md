@@ -15,9 +15,9 @@ This document tracks helper functions scoped to single files that may benefit fr
 - **Effort to Extract:** ~15 minutes
 - **Related Todo:** #5245 (schema centralization)
 
-### 2. Marketing Routes Helper Function
+### 2. Content Generation Routes Helper Function
 
-- **File:** `server/src/routes/internal-agent/marketing.routes.ts:106`
+- **File:** `server/src/routes/internal-agent-content-generation.routes.ts:106`
 - **Current Status:** Single-use, domain-specific
 - **Complexity:** Simple
 - **Extraction Trigger:** Duplication across domains OR growth beyond 20 lines
