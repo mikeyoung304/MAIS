@@ -1,7 +1,7 @@
 /**
- * Internal Agent Marketing & Generation Routes
+ * Internal Agent Content Generation Routes
  *
- * Content generation and management tools for the tenant agent:
+ * AI content generation and management tools for the tenant agent:
  * - Section variant generation (Vertex AI)
  * - Marketing copy generation (headlines, taglines, descriptions)
  * - Package management (CRUD on bookable packages)
@@ -281,10 +281,10 @@ async function generateMarketingContent(
 }
 
 /**
- * Create internal agent marketing & generation routes.
- * Mounted at `/marketing` by the aggregator.
+ * Create internal agent content generation routes.
+ * Mounted at `/content-generation` by the aggregator.
  */
-export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): Router {
+export function createInternalAgentContentGenerationRoutes(deps: MarketingRoutesDeps): Router {
   const router = Router();
   const { tenantRepo, catalogService, vocabularyEmbeddingService, internalApiSecret } = deps;
 

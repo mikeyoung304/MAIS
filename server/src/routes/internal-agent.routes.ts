@@ -10,7 +10,7 @@ import type { InternalAgentRoutesDeps } from './internal-agent-shared';
 import { createInternalAgentDiscoveryRoutes } from './internal-agent-discovery.routes';
 import { createInternalAgentBookingRoutes } from './internal-agent-booking.routes';
 import { createInternalAgentStorefrontRoutes } from './internal-agent-storefront.routes';
-import { createInternalAgentMarketingRoutes } from './internal-agent-marketing.routes';
+import { createInternalAgentContentGenerationRoutes } from './internal-agent-content-generation.routes';
 import { createInternalAgentProjectHubRoutes } from './internal-agent-project-hub.routes';
 
 /**
@@ -25,7 +25,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   // Mount domain routers
   router.use('/', createInternalAgentDiscoveryRoutes(deps));
   router.use('/', createInternalAgentBookingRoutes(deps));
-  router.use('/marketing', createInternalAgentMarketingRoutes(deps));
+  router.use('/content-generation', createInternalAgentContentGenerationRoutes(deps));
   router.use('/storefront', createInternalAgentStorefrontRoutes(deps));
   router.use('/project-hub', createInternalAgentProjectHubRoutes(deps));
 

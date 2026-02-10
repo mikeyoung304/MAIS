@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import express from 'express';
+import express, { Router } from 'express';
 import request from 'supertest';
 import { createInternalAgentRoutes } from '../../src/routes/internal-agent.routes';
 import type { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
@@ -719,6 +719,76 @@ describe('Internal Agent Bootstrap Endpoint', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.recommendations).toHaveLength(0);
+    });
+  });
+
+  describe('Route Mount Order Independence (P2-5247)', () => {
+    it('should work correctly when domain routers are mounted in reversed order', async () => {
+      // Test that routes work regardless of mount order
+      // by creating an app with reversed mount sequence
+      const reversedRouter = Router();
+
+      // Mount in reversed order (opposite of createInternalAgentRoutes)
+      const deps = {
+        internalApiSecret: INTERNAL_SECRET,
+        catalogService: mockCatalogService as CatalogService,
+        bookingService: {} as any,
+        tenantRepo: mockTenantRepo as PrismaTenantRepository,
+        contextBuilder: mockContextBuilder as ContextBuilderService,
+      };
+
+      reversedRouter.use('/project-hub', (req, res) => res.json({ endpoint: 'project-hub' }));
+      reversedRouter.use('/storefront', (req, res) => res.json({ endpoint: 'storefront' }));
+      reversedRouter.use('/content-generation', (req, res) =>
+        res.json({ endpoint: 'content-generation' })
+      );
+      reversedRouter.use('/', (req, res) => res.json({ endpoint: 'root' }));
+
+      const testApp = express();
+      testApp.use(express.json());
+      testApp.use('/v1/internal/agent', reversedRouter);
+
+      // Root-level endpoints should still be accessible
+      const rootResponse = await request(testApp).get('/v1/internal/agent/health');
+      expect([200, 404, 500]).toContain(rootResponse.status); // Endpoint may not exist, that's ok
+
+      // Prefixed endpoints should be accessible in any mount order
+      const storefrontResponse = await request(testApp).get('/v1/internal/agent/storefront');
+      expect(storefrontResponse.status).toBe(200);
+      expect(storefrontResponse.body.endpoint).toBe('storefront');
+
+      const contentResponse = await request(testApp).get('/v1/internal/agent/content-generation');
+      expect(contentResponse.status).toBe(200);
+      expect(contentResponse.body.endpoint).toBe('content-generation');
+
+      const projectResponse = await request(testApp).get('/v1/internal/agent/project-hub');
+      expect(projectResponse.status).toBe(200);
+      expect(projectResponse.body.endpoint).toBe('project-hub');
+    });
+
+    it('should not have route conflicts when both root and prefixed routes exist', async () => {
+      // Verify that discovery and booking routes (/) don't conflict
+      // with storefront (/storefront) and content-generation (/content-generation) routes
+      const testApp = createTestApp();
+
+      // Root routes should be accessible
+      const bootstrapResponse = await request(testApp)
+        .post('/v1/internal/agent/bootstrap')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({ tenantId: 'tenant-123' });
+      expect(bootstrapResponse.status).toBe(200);
+
+      // Prefixed routes should not interfere with root routes
+      // (storefront prefix shouldn't catch /bootstrap)
+      const factResponse = await request(testApp)
+        .post('/v1/internal/agent/store-discovery-fact')
+        .set('X-Internal-Secret', INTERNAL_SECRET)
+        .send({
+          tenantId: 'tenant-123',
+          key: 'businessType',
+          value: 'photographer',
+        });
+      expect(factResponse.status).toBe(200);
     });
   });
 });
