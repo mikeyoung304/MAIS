@@ -15,24 +15,17 @@ import type { Request, Response } from 'express';
 import { z, ZodError } from 'zod';
 import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
-import { verifyInternalSecret, handleError, TenantIdSchema } from './internal-agent-shared';
+import {
+  verifyInternalSecret,
+  handleError,
+  TenantIdSchema,
+  SECTION_TYPES,
+} from './internal-agent-shared';
 import type { MarketingRoutesDeps } from './internal-agent-shared';
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-const SECTION_TYPES = [
-  'hero',
-  'text',
-  'gallery',
-  'testimonials',
-  'faq',
-  'contact',
-  'cta',
-  'pricing',
-  'features',
-] as const;
 
 const TONE_VARIANTS = ['professional', 'premium', 'friendly'] as const;
 
@@ -289,7 +282,7 @@ async function generateMarketingContent(
 
 /**
  * Create internal agent marketing & generation routes.
- * Mounted at `/` by the aggregator (paths include their full prefixes).
+ * Mounted at `/marketing` by the aggregator.
  */
 export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): Router {
   const router = Router();
@@ -303,14 +296,14 @@ export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): R
     ttl: 60_000, // 1 minute
   });
 
-  // POST /storefront/generate-variants - Generate tone variants for a section
-  router.post('/storefront/generate-variants', async (req: Request, res: Response) => {
+  // POST /generate-variants - Generate tone variants for a section
+  router.post('/generate-variants', async (req: Request, res: Response) => {
     try {
       const params = GenerateSectionVariantsSchema.parse(req.body);
       const { tenantId, sectionId, sectionType, currentContent, tones } = params;
 
       logger.info(
-        { tenantId, sectionId, sectionType, tones, endpoint: '/storefront/generate-variants' },
+        { tenantId, sectionId, sectionType, tones, endpoint: '/marketing/generate-variants' },
         '[Agent] Generating section variants'
       );
 
@@ -425,12 +418,12 @@ export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): R
         });
         return;
       }
-      handleError(res, error, '/storefront/generate-variants');
+      handleError(res, error, '/marketing/generate-variants');
     }
   });
 
-  // POST /marketing/generate-headline - Generate headlines
-  router.post('/marketing/generate-headline', async (req: Request, res: Response) => {
+  // POST /generate-headline - Generate headlines
+  router.post('/generate-headline', async (req: Request, res: Response) => {
     try {
       const params = GenerateHeadlineSchema.parse(req.body);
       const { tenantId } = params;
@@ -465,8 +458,8 @@ export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): R
     }
   });
 
-  // POST /marketing/generate-tagline - Generate taglines
-  router.post('/marketing/generate-tagline', async (req: Request, res: Response) => {
+  // POST /generate-tagline - Generate taglines
+  router.post('/generate-tagline', async (req: Request, res: Response) => {
     try {
       const params = GenerateTaglineSchema.parse(req.body);
       const { tenantId } = params;
@@ -500,8 +493,8 @@ export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): R
     }
   });
 
-  // POST /marketing/generate-service-description - Generate service descriptions
-  router.post('/marketing/generate-service-description', async (req: Request, res: Response) => {
+  // POST /generate-service-description - Generate service descriptions
+  router.post('/generate-service-description', async (req: Request, res: Response) => {
     try {
       const params = GenerateServiceDescriptionSchema.parse(req.body);
       const { tenantId } = params;
@@ -539,8 +532,8 @@ export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): R
     }
   });
 
-  // POST /marketing/refine-copy - Refine existing copy
-  router.post('/marketing/refine-copy', async (req: Request, res: Response) => {
+  // POST /refine-copy - Refine existing copy
+  router.post('/refine-copy', async (req: Request, res: Response) => {
     try {
       const params = RefineCopySchema.parse(req.body);
       const { tenantId } = params;

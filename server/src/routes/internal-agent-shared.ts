@@ -21,6 +21,35 @@ import type { VocabularyEmbeddingService } from '../services/vocabulary-embeddin
 import type { SectionContentService } from '../services/section-content.service';
 
 // =============================================================================
+// Shared Constants
+// =============================================================================
+
+export const SECTION_TYPES = [
+  'hero',
+  'text',
+  'gallery',
+  'testimonials',
+  'faq',
+  'contact',
+  'cta',
+  'pricing',
+  'features',
+] as const;
+
+export const PAGE_NAMES = [
+  'home',
+  'about',
+  'services',
+  'faq',
+  'contact',
+  'gallery',
+  'testimonials',
+] as const;
+
+// Re-export DISCOVERY_FACT_KEYS for backward compatibility
+export { DISCOVERY_FACT_KEYS } from '../shared/constants/discovery-facts';
+
+// =============================================================================
 // Shared Schemas
 // =============================================================================
 

@@ -15,34 +15,18 @@ import type { Request, Response } from 'express';
 import { z, ZodError } from 'zod';
 import { logger } from '../lib/core/logger';
 import { NotFoundError } from '../lib/errors';
-import { verifyInternalSecret, handleError, TenantIdSchema } from './internal-agent-shared';
+import {
+  verifyInternalSecret,
+  handleError,
+  TenantIdSchema,
+  SECTION_TYPES,
+  PAGE_NAMES,
+} from './internal-agent-shared';
 import type { StorefrontRoutesDeps } from './internal-agent-shared';
 
 // =============================================================================
 // Schemas
 // =============================================================================
-
-const PAGE_NAMES = [
-  'home',
-  'about',
-  'services',
-  'faq',
-  'contact',
-  'gallery',
-  'testimonials',
-] as const;
-
-const SECTION_TYPES = [
-  'hero',
-  'text',
-  'gallery',
-  'testimonials',
-  'faq',
-  'contact',
-  'cta',
-  'pricing',
-  'features',
-] as const;
 
 const GetPageStructureSchema = TenantIdSchema.extend({
   pageName: z.enum(PAGE_NAMES).optional(),
@@ -146,15 +130,7 @@ export function createInternalAgentStorefrontRoutes(deps: StorefrontRoutesDeps):
 
       // Get structure from SectionContentService
       const result = await sectionContentService.getPageStructure(tenantId, {
-        pageName: pageName as
-          | 'home'
-          | 'about'
-          | 'services'
-          | 'faq'
-          | 'contact'
-          | 'gallery'
-          | 'testimonials'
-          | undefined,
+        pageName: pageName as (typeof PAGE_NAMES)[number] | undefined,
       });
 
       // Transform to agent-friendly format

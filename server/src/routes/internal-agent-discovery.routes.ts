@@ -14,7 +14,12 @@ import { z } from 'zod';
 import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
 import { computeSlotMachine } from '../lib/slot-machine';
-import { verifyInternalSecret, handleError, TenantIdSchema } from './internal-agent-shared';
+import {
+  verifyInternalSecret,
+  handleError,
+  TenantIdSchema,
+  DISCOVERY_FACT_KEYS,
+} from './internal-agent-shared';
 import type { DiscoveryRoutesDeps } from './internal-agent-shared';
 
 // =============================================================================
@@ -35,25 +40,6 @@ const CompleteOnboardingSchema = TenantIdSchema.extend({
   packagesCreated: z.number().optional(),
   summary: z.string().optional(),
 });
-
-// NOTE: Keep in sync with server/src/agent-v2/deploy/tenant/src/tools/discovery.ts
-const DISCOVERY_FACT_KEYS = [
-  'businessType',
-  'businessName',
-  'location',
-  'targetMarket',
-  'priceRange',
-  'yearsInBusiness',
-  'teamSize',
-  'uniqueValue',
-  'servicesOffered',
-  'specialization',
-  'approach',
-  'dreamClient',
-  'testimonial',
-  'faq',
-  'contactInfo',
-] as const;
 
 const StoreDiscoveryFactSchema = TenantIdSchema.extend({
   key: z.enum(DISCOVERY_FACT_KEYS),
@@ -174,18 +160,24 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
 
       // Get discovery data from ContextBuilder (single source of truth)
       // ContextBuilder provides discovery data for agent context injection
+      // CORE SERVICE for agents - return 503 if unavailable
+      if (!contextBuilder) {
+        res.status(503).json({ error: 'Context builder service not configured' });
+        return;
+      }
+
       let discoveryData: Record<string, unknown> | null = null;
-      if (contextBuilder) {
-        try {
-          const bootstrapData = await contextBuilder.getBootstrapData(tenantId);
-          discoveryData = bootstrapData.discoveryFacts;
-        } catch (error) {
-          // Graceful degradation - continue without discovery data
-          logger.warn(
-            { tenantId, error: error instanceof Error ? error.message : String(error) },
-            '[Agent] Failed to fetch context, continuing without discovery data'
-          );
-        }
+      try {
+        const bootstrapData = await contextBuilder.getBootstrapData(tenantId);
+        discoveryData = bootstrapData.discoveryFacts;
+      } catch (error) {
+        // If ContextBuilder fails to fetch, this is an error condition
+        logger.error(
+          { tenantId, error: error instanceof Error ? error.message : String(error) },
+          '[Agent] Failed to fetch context from ContextBuilder'
+        );
+        res.status(500).json({ error: 'Failed to fetch tenant context' });
+        return;
       }
 
       // Fallback: Extract branding and discovery facts directly if contextBuilder unavailable

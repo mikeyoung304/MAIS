@@ -255,7 +255,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.body.industry).toBe('life coach');
     });
 
-    it('should work without context builder service (graceful degradation)', async () => {
+    it('should return 503 when context builder service is missing', async () => {
       // Create app without context builder service
       const appNoContext = express();
       appNoContext.use(express.json());
@@ -275,9 +275,8 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .set('X-Internal-Secret', INTERNAL_SECRET)
         .send({ tenantId: 'tenant-123' });
 
-      expect(response.status).toBe(200);
-      // Falls back to null when no contextBuilder and no branding.discoveryFacts
-      expect(response.body.discoveryData).toBeNull();
+      expect(response.status).toBe(503);
+      expect(response.body.error).toBe('Context builder service not configured');
     });
 
     it('should cache bootstrap response', async () => {

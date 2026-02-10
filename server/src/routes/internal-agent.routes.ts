@@ -41,12 +41,9 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   const router = Router();
 
   // Mount domain routers
-  // Order: marketing before storefront so /storefront/generate-variants
-  // is matched by the marketing router (mounted at /) before the storefront
-  // router (mounted at /storefront) attempts a pass-through.
   router.use('/', createInternalAgentDiscoveryRoutes(deps));
   router.use('/', createInternalAgentBookingRoutes(deps));
-  router.use('/', createInternalAgentMarketingRoutes(deps));
+  router.use('/marketing', createInternalAgentMarketingRoutes(deps));
   router.use('/storefront', createInternalAgentStorefrontRoutes(deps));
   router.use('/project-hub', createInternalAgentProjectHubRoutes(deps));
 

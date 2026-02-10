@@ -300,7 +300,7 @@ export interface GenerateVariantsRequest {
 }
 
 /**
- * Response from /storefront/generate-variants endpoint.
+ * Response from /marketing/generate-variants endpoint.
  */
 export interface GenerateVariantsApiResponse {
   variants: Record<ToneVariant, VariantContent>;

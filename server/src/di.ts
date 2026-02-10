@@ -81,23 +81,32 @@ export interface Container {
     dev?: DevController;
   };
   services: {
+    // CORE SERVICES - Fail at startup if missing (throw Error in buildContainer)
+    // These are fundamental to the application and MUST be available
     identity: IdentityService;
     stripeConnect: StripeConnectService;
     tenantAuth: TenantAuthService;
     catalog: CatalogService;
     booking: BookingService;
-    availability: AvailabilityService; // Date availability checking
+    availability: AvailabilityService;
     audit: AuditService;
     segment: SegmentService;
-    tenantOnboarding: TenantOnboardingService; // Tenant signup default data creation
-    tenantProvisioning: TenantProvisioningService; // Atomic tenant + segment + package creation
-    googleCalendar?: GoogleCalendarService; // Optional - only if calendar provider supports sync
+    tenantOnboarding: TenantOnboardingService;
+    tenantProvisioning: TenantProvisioningService;
+    packageDraft: PackageDraftService;
+    reminder: ReminderService;
+    sectionContent: SectionContentService;
+
+    // FEATURE SERVICES - Return 503 if missing (check in routes with `if (!service)`)
+    // These enable specific features but application can start without them
+    googleCalendar?: GoogleCalendarService; // Calendar sync feature
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
-    packageDraft: PackageDraftService; // Visual editor draft management
-    reminder: ReminderService; // Lazy reminder evaluation (Phase 2)
-    sectionContent: SectionContentService; // Section content for storefront editing
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
     projectHub?: ProjectHubService; // Project Hub dual-faced communication
+
+    // OPTIONAL SERVICES - Degrade gracefully (try/catch with logger.warn)
+    // Application adapts behavior when these are unavailable
+    // (Currently none - vocabularyEmbedding would go here if added)
   };
   repositories?: {
     service?: PrismaServiceRepository;
