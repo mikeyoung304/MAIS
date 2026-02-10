@@ -14,34 +14,13 @@
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { logger, callMaisApi, getTenantId } from '../utils.js';
+import { DISCOVERY_FACT_KEYS } from '../../../../../shared/constants/discovery-facts.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Discovery Fact Keys
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Valid keys for discovery facts.
- * These map to fields that get applied to the storefront.
- */
-export const DISCOVERY_FACT_KEYS = [
-  'businessType',
-  'businessName',
-  'location',
-  'targetMarket',
-  'priceRange',
-  'yearsInBusiness',
-  'teamSize',
-  'uniqueValue',
-  'servicesOffered',
-  'specialization',
-  'approach',
-  'dreamClient',
-  'testimonial',
-  'faq',
-  'contactInfo',
-] as const;
-
-export type DiscoveryFactKey = (typeof DISCOVERY_FACT_KEYS)[number];
+// Re-export for backward compatibility with tools/index.ts
+export {
+  DISCOVERY_FACT_KEYS,
+  type DiscoveryFactKey,
+} from '../../../../../shared/constants/discovery-facts.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Store Discovery Fact Tool

@@ -178,7 +178,9 @@ No user approval needed for first draft — just build and announce.`,
     const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
 
     try {
-      const listResult = await callMaisApi('/manage-packages', tenantId, { action: 'list' });
+      const listResult = await callMaisApi('/marketing/manage-packages', tenantId, {
+        action: 'list',
+      });
       if (listResult.ok) {
         // API returns priceInDollars (dollars), not basePrice (cents) — see internal-agent.routes.ts
         const packages =
@@ -193,7 +195,7 @@ No user approval needed for first draft — just build and announce.`,
             SEED_PACKAGE_NAMES.includes(pkg.name as (typeof SEED_PACKAGE_NAMES)[number])
         );
         for (const pkg of defaultPackages) {
-          await callMaisApi('/manage-packages', tenantId, {
+          await callMaisApi('/marketing/manage-packages', tenantId, {
             action: 'delete',
             packageId: pkg.id,
           });

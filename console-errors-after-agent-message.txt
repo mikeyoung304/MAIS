@@ -1,0 +1,5 @@
+Total messages: 15 (Errors: 2, Warnings: 11)
+Returning 2 messages for level "error"
+
+[ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.gethandled.ai/api/tenant-admin/stripe/status:0
+[ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.gethandled.ai/api/tenant-admin/agent/tenant/session/2457e9b7-b337-4774-b05e-a5748905f020:0

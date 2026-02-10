@@ -223,7 +223,7 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function handleListPackages(tenantId: string) {
-  const result = await callMaisApi('/manage-packages', tenantId, {
+  const result = await callMaisApi('/marketing/manage-packages', tenantId, {
     action: 'list',
   });
 
@@ -275,7 +275,7 @@ async function handleCreatePackage(
     ? `${params.description} (${params.duration})`
     : params.description;
 
-  const result = await callMaisApi('/manage-packages', tenantId, {
+  const result = await callMaisApi('/marketing/manage-packages', tenantId, {
     action: 'create',
     slug,
     title: params.name,
@@ -345,7 +345,7 @@ async function handleUpdatePackage(
     updateData.priceCents = Math.round(params.priceInDollars * 100);
   }
 
-  const result = await callMaisApi('/manage-packages', tenantId, updateData);
+  const result = await callMaisApi('/marketing/manage-packages', tenantId, updateData);
 
   if (!result.ok) {
     return {
@@ -388,7 +388,7 @@ async function handleUpdatePackage(
 async function handleDeletePackage(tenantId: string, params: { packageId: string }) {
   // Note: T3 confirmation check is done in the switch statement before calling this handler
 
-  const result = await callMaisApi('/manage-packages', tenantId, {
+  const result = await callMaisApi('/marketing/manage-packages', tenantId, {
     action: 'delete',
     packageId: params.packageId,
   });

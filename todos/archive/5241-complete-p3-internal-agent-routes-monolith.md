@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '5241'
 tags: [code-review, architecture, routes, enterprise-review]

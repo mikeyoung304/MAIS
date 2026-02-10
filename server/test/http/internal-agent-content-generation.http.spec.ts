@@ -1,7 +1,7 @@
 /**
  * Marketing Endpoints HTTP Tests
  *
- * Tests for /v1/internal/agent/marketing/* endpoints
+ * Tests for /v1/internal/agent/content-generation/* endpoints
  * These endpoints generate marketing content using Gemini AI.
  *
  * Added as part of Phase 4.5 remediation (issue 5176)
@@ -64,7 +64,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
   describe('Authentication', () => {
     it('should reject requests without X-Internal-Secret header', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-headline')
+        .post('/v1/internal/agent/content-generation/generate-headline')
         .send({ tenantId: TEST_TENANT_ID, context: 'homepage hero' });
 
       expect(response.status).toBe(403);
@@ -73,7 +73,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
 
     it('should reject requests with wrong X-Internal-Secret', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-headline')
+        .post('/v1/internal/agent/content-generation/generate-headline')
         .set('X-Internal-Secret', 'wrong-secret')
         .send({ tenantId: TEST_TENANT_ID, context: 'homepage hero' });
 
@@ -83,7 +83,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
 
     it('should accept requests with correct X-Internal-Secret', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-headline')
+        .post('/v1/internal/agent/content-generation/generate-headline')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({ tenantId: TEST_TENANT_ID, context: 'homepage hero' });
 
@@ -92,8 +92,8 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
     });
   });
 
-  describe('POST /v1/internal/agent/marketing/generate-headline - Validation', () => {
-    const endpoint = '/v1/internal/agent/marketing/generate-headline';
+  describe('POST /v1/internal/agent/content-generation/generate-headline - Validation', () => {
+    const endpoint = '/v1/internal/agent/content-generation/generate-headline';
 
     it('should require tenantId', async () => {
       const response = await request(app)
@@ -180,8 +180,8 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
     });
   });
 
-  describe('POST /v1/internal/agent/marketing/generate-tagline - Validation', () => {
-    const endpoint = '/v1/internal/agent/marketing/generate-tagline';
+  describe('POST /v1/internal/agent/content-generation/generate-tagline - Validation', () => {
+    const endpoint = '/v1/internal/agent/content-generation/generate-tagline';
 
     it('should require tenantId and businessContext', async () => {
       const response = await request(app)
@@ -207,8 +207,8 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
     });
   });
 
-  describe('POST /v1/internal/agent/marketing/generate-service-description - Validation', () => {
-    const endpoint = '/v1/internal/agent/marketing/generate-service-description';
+  describe('POST /v1/internal/agent/content-generation/generate-service-description - Validation', () => {
+    const endpoint = '/v1/internal/agent/content-generation/generate-service-description';
 
     it('should require serviceName and serviceType', async () => {
       const response = await request(app)
@@ -237,8 +237,8 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
     });
   });
 
-  describe('POST /v1/internal/agent/marketing/refine-copy - Validation', () => {
-    const endpoint = '/v1/internal/agent/marketing/refine-copy';
+  describe('POST /v1/internal/agent/content-generation/refine-copy - Validation', () => {
+    const endpoint = '/v1/internal/agent/content-generation/refine-copy';
 
     it('should require originalCopy, feedback, and copyType', async () => {
       const response = await request(app)
@@ -288,7 +288,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
   describe('Error handling', () => {
     it('should handle validation errors with details array', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-headline')
+        .post('/v1/internal/agent/content-generation/generate-headline')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({});
 
@@ -300,7 +300,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
 
     it('should return proper error format', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-headline')
+        .post('/v1/internal/agent/content-generation/generate-headline')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({ tenantId: 'fake', context: 'test' });
 
@@ -313,7 +313,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
   describe('Success paths with mock tenant', () => {
     it('should generate headline for existing tenant', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-headline')
+        .post('/v1/internal/agent/content-generation/generate-headline')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({
           tenantId: TEST_TENANT_ID,
@@ -329,7 +329,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
 
     it('should generate tagline for existing tenant', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-tagline')
+        .post('/v1/internal/agent/content-generation/generate-tagline')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({
           tenantId: TEST_TENANT_ID,
@@ -343,7 +343,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
 
     it('should generate service description for existing tenant', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/generate-service-description')
+        .post('/v1/internal/agent/content-generation/generate-service-description')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({
           tenantId: TEST_TENANT_ID,
@@ -358,7 +358,7 @@ describe('Internal Agent Marketing HTTP Endpoints', () => {
 
     it('should refine copy for existing tenant', async () => {
       const response = await request(app)
-        .post('/v1/internal/agent/marketing/refine-copy')
+        .post('/v1/internal/agent/content-generation/refine-copy')
         .set('X-Internal-Secret', TEST_SECRET)
         .send({
           tenantId: TEST_TENANT_ID,
