@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "projectType": "typescript",
+  "reviewAgents": [
+    "kieran-typescript-reviewer",
+    "code-simplicity-reviewer",
+    "security-sentinel",
+    "performance-oracle"
+  ],
+  "planReviewAgents": [
+    "kieran-typescript-reviewer",
+    "code-simplicity-reviewer",
+    "architecture-strategist"
+  ],
+  "customAgents": {},
+  "conditionalAgents": {
+    "migrations": ["data-migration-expert"],
+    "frontend": [],
+    "architecture": ["architecture-strategist"],
+    "data": ["data-integrity-guardian"]
+  },
+  "options": {
+    "agentNative": true,
+    "parallelReviews": true
+  }
+}

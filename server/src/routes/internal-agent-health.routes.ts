@@ -15,9 +15,10 @@
  * - GET /v1/internal/agents/health - Check all agent health via /list-apps
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { logger } from '../lib/core/logger';
+import { verifyInternalSecret } from './internal-agent-shared';
 
 // =============================================================================
 // Types
@@ -73,37 +74,8 @@ export function createInternalAgentHealthRoutes(deps: InternalAgentHealthRoutesD
   // Authentication Middleware
   // ===========================================================================
 
-  /**
-   * Middleware to verify internal API secret
-   * Uses X-Internal-Secret header
-   */
-  const verifyInternalSecret = (req: Request, res: Response, next: NextFunction): void => {
-    const secret = req.headers['x-internal-secret'];
-    const expectedSecret = internalApiSecret;
-
-    // If no secret configured, reject all requests (fail-safe)
-    if (!expectedSecret) {
-      logger.warn('Internal API secret not configured - rejecting health check request');
-      res.status(503).json({
-        error: 'Internal API not configured',
-      });
-      return;
-    }
-
-    // Verify secret matches
-    if (!secret || secret !== expectedSecret) {
-      logger.warn({ ip: req.ip }, 'Invalid internal API secret for health check');
-      res.status(403).json({
-        error: 'Invalid API secret',
-      });
-      return;
-    }
-
-    next();
-  };
-
   // Apply auth to all routes
-  router.use(verifyInternalSecret);
+  router.use(verifyInternalSecret(internalApiSecret));
 
   // ===========================================================================
   // GET /agents/health - Check all agent health
