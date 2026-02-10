@@ -291,6 +291,7 @@ export function createInternalAgentMarketingRoutes(deps: MarketingRoutesDeps): R
   router.use(verifyInternalSecret(internalApiSecret));
 
   // Rate limiting for variant generation: 10 requests per minute per tenant
+  // Memory footprint: ~80 KB (1000 entries × ~80 bytes per rate limit state)
   const variantGenerationRateLimit = new LRUCache<string, { count: number; resetAt: number }>({
     max: 1000,
     ttl: 60_000, // 1 minute

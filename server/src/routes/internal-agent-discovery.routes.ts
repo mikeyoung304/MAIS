@@ -74,6 +74,7 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
     discoveryData: Record<string, unknown> | null;
   }
 
+  // Memory footprint: ~5 MB (1000 entries × ~5 KB per tenant bootstrap data)
   const bootstrapCache = new LRUCache<string, BootstrapData>({
     max: 1000,
     ttl: 30 * 60 * 1000, // 30 minutes
@@ -99,6 +100,7 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
    * Key format: `${tenantId}:${sessionId}`
    * Value: timestamp when greeted
    */
+  // Memory footprint: ~160 KB (5000 entries × ~32 bytes per compound key + timestamp)
   const greetedSessionsCache = new LRUCache<string, number>({
     max: 5000, // More sessions than tenants (many sessions per tenant)
     ttl: 60 * 60 * 1000, // 1 hour TTL - sessions rarely last longer
