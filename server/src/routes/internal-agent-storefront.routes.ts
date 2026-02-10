@@ -130,7 +130,7 @@ export function createInternalAgentStorefrontRoutes(deps: StorefrontRoutesDeps):
 
       // Get structure from SectionContentService
       const result = await sectionContentService.getPageStructure(tenantId, {
-        pageName: pageName as (typeof PAGE_NAMES)[number] | undefined,
+        pageName,
       });
 
       // Transform to agent-friendly format
