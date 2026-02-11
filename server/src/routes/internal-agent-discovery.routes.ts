@@ -63,26 +63,35 @@ const StoreDiscoveryFactSchema = TenantIdSchema.extend({
  */
 export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): Router {
   const router = Router();
-  const { tenantRepo, contextBuilder, catalogService, internalApiSecret } = deps;
+  const { internalApiSecret } = deps;
 
   router.use(verifyInternalSecret(internalApiSecret));
 
   // ===========================================================================
-  // Service Initialization
+  // Service Resolution — prefer DI-provided, fallback to local construction
   // ===========================================================================
 
-  // ResearchService needs access to DiscoveryService's cache invalidation.
-  // We create ResearchService first with a placeholder, then wire up after DiscoveryService.
-  const researchService = new ResearchService(tenantRepo, (tenantId: string) =>
-    discoveryService.invalidateBootstrapCache(tenantId)
-  );
+  let discoveryService: DiscoveryService;
+  let researchService: ResearchService;
 
-  const discoveryService = new DiscoveryService(
-    tenantRepo,
-    contextBuilder,
-    researchService,
-    catalogService
-  );
+  if (deps.discoveryService && deps.researchService) {
+    // Services provided by DI container (production path)
+    discoveryService = deps.discoveryService;
+    researchService = deps.researchService;
+  } else {
+    // Fallback: construct locally (backward compatibility for tests)
+    const { tenantRepo, contextBuilder, catalogService } = deps;
+    researchService = new ResearchService(tenantRepo, process.env.RESEARCH_AGENT_URL);
+    discoveryService = new DiscoveryService(
+      tenantRepo,
+      contextBuilder,
+      researchService,
+      catalogService
+    );
+    researchService.setBootstrapCacheInvalidator((tenantId) =>
+      discoveryService.invalidateBootstrapCache(tenantId)
+    );
+  }
 
   // ===========================================================================
   // POST /bootstrap - Session context for Concierge agent

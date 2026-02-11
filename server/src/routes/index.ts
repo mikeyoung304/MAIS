@@ -96,6 +96,8 @@ import type { SectionContentService } from '../services/section-content.service'
 import type { WebhookDeliveryService } from '../services/webhook-delivery.service';
 import type { AvailabilityService } from '../services/availability.service';
 import type { ProjectHubService } from '../services/project-hub.service';
+import type { DiscoveryService } from '../services/discovery.service';
+import type { ResearchService } from '../services/research.service';
 import { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 
 interface Controllers {
@@ -125,6 +127,8 @@ interface Services {
   sectionContent?: SectionContentService;
   webhookDelivery?: WebhookDeliveryService;
   projectHub?: ProjectHubService;
+  discovery?: DiscoveryService;
+  research?: ResearchService;
 }
 
 interface Repositories {
@@ -780,6 +784,8 @@ export function createV1Router(
       projectHubService: services.projectHub,
       vocabularyEmbeddingService,
       sectionContentService: services.sectionContent,
+      discoveryService: services.discovery,
+      researchService: services.research,
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');
