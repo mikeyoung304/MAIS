@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
 import { computeSlotMachine } from '../lib/slot-machine';
+import { cloudRunAuth } from '../services/cloud-run-auth.service';
 import {
   verifyInternalSecret,
   handleError,
@@ -394,14 +395,28 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
       const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
       discoveryFacts[key] = value;
 
+      // Check if research should be triggered (businessType + location now known)
+      const hasBusinessType = key === 'businessType' || !!discoveryFacts['businessType'];
+      const hasLocation = key === 'location' || !!discoveryFacts['location'];
+      const alreadyTriggered = !!discoveryFacts['_researchTriggered'];
+      const shouldTriggerResearch = hasBusinessType && hasLocation && !alreadyTriggered;
+
+      // Mark research as triggered BEFORE the async call to prevent re-triggers
+      if (shouldTriggerResearch) {
+        discoveryFacts['_researchTriggered'] = true;
+      }
+
       await tenantRepo.update(tenantId, {
         branding: { ...branding, discoveryFacts },
       });
 
-      // Run slot machine to compute phase + next action
-      const knownFactKeys = Object.keys(discoveryFacts);
+      // Filter _-prefixed metadata keys from fact keys (slot machine only sees real facts)
+      const knownFactKeys = Object.keys(discoveryFacts).filter((k) => !k.startsWith('_'));
       const previousPhase = (tenant.onboardingPhase as string) || 'NOT_STARTED';
-      const slotResult = computeSlotMachine(knownFactKeys, previousPhase);
+
+      // Pass researchTriggered so slot machine returns ASK instead of TRIGGER_RESEARCH
+      const researchTriggered = alreadyTriggered || shouldTriggerResearch;
+      const slotResult = computeSlotMachine(knownFactKeys, previousPhase, researchTriggered);
 
       // Advance phase if needed (monotonic — never moves backward)
       if (slotResult.phaseAdvanced) {
@@ -416,6 +431,70 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
 
       // Invalidate bootstrap cache so next request gets updated facts
       invalidateBootstrapCache(tenantId);
+
+      // Fire async backend research (fire-and-forget — no await)
+      if (shouldTriggerResearch) {
+        const businessType = String(discoveryFacts['businessType'] || '');
+        const location = String(discoveryFacts['location'] || '');
+        const researchAgentUrl = process.env.RESEARCH_AGENT_URL;
+
+        if (researchAgentUrl) {
+          logger.info(
+            { tenantId, businessType, location },
+            '[Agent] Firing async background research'
+          );
+
+          // Fire-and-forget: do NOT await — user continues chatting
+          void (async () => {
+            try {
+              const idToken = await cloudRunAuth.getIdentityToken(researchAgentUrl);
+              const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+              if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
+              const response = await fetch(`${researchAgentUrl}/research`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  query: `${businessType} pricing and positioning in ${location}`,
+                  businessType,
+                  location,
+                  tenantId,
+                }),
+                signal: AbortSignal.timeout(90_000), // 90s timeout per pitfall #42
+              });
+
+              if (response.ok) {
+                const researchData = await response.json();
+                // Store research results in branding.researchData
+                const freshTenant = await tenantRepo.findById(tenantId);
+                if (freshTenant) {
+                  const freshBranding = (freshTenant.branding as Record<string, unknown>) || {};
+                  await tenantRepo.update(tenantId, {
+                    branding: { ...freshBranding, researchData },
+                  });
+                  invalidateBootstrapCache(tenantId);
+                  logger.info({ tenantId }, '[Agent] Background research stored successfully');
+                }
+              } else {
+                logger.warn(
+                  { tenantId, status: response.status },
+                  '[Agent] Background research failed'
+                );
+              }
+            } catch (error) {
+              logger.warn(
+                { tenantId, error: error instanceof Error ? error.message : String(error) },
+                '[Agent] Background research error (non-blocking)'
+              );
+            }
+          })();
+        } else {
+          logger.warn(
+            { tenantId },
+            '[Agent] RESEARCH_AGENT_URL not configured — skipping research'
+          );
+        }
+      }
 
       // Return facts + slot machine result so agent knows what to do next
       res.json({
@@ -434,6 +513,35 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
       });
     } catch (error) {
       handleError(res, error, '/store-discovery-fact');
+    }
+  });
+
+  // ===========================================================================
+  // POST /get-research-data - Get pre-computed research results for a tenant
+  // Called by tenant-agent's delegate_to_research tool to check for cached results
+  // before making an expensive 30-90s direct call to the research agent
+  // ===========================================================================
+
+  router.post('/get-research-data', async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = TenantIdSchema.parse(req.body);
+
+      const tenant = await tenantRepo.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+
+      const branding = (tenant.branding as Record<string, unknown>) || {};
+      const researchData = branding.researchData as Record<string, unknown> | undefined;
+
+      res.json({
+        success: true,
+        hasData: !!researchData,
+        researchData: researchData || null,
+      });
+    } catch (error) {
+      handleError(res, error, '/get-research-data');
     }
   });
 

@@ -15,7 +15,7 @@
 
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { logger, fetchWithTimeout, getTenantId, TTLCache } from '../utils.js';
+import { logger, fetchWithTimeout, getTenantId, callMaisApi, TTLCache } from '../utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
@@ -163,18 +163,52 @@ Examples:
       };
     }
 
-    // Check cache first
+    // Tier 1: Check in-memory TTL cache (instant)
     const cacheKey = `${tenantId}:${businessType.toLowerCase()}:${location.toLowerCase()}`;
     const cached = researchCache.get(cacheKey);
     if (cached) {
-      logger.info({ tenantId, businessType, location }, '[Research] Cache hit');
+      logger.info({ tenantId, businessType, location }, '[Research] Cache hit (in-memory)');
       return {
         ...cached,
         fromCache: true,
       };
     }
 
-    logger.info({ tenantId, businessType, location }, '[Research] Delegating to research-agent');
+    // Tier 2: Check backend for pre-computed results (instant if async research finished)
+    try {
+      const backendResult = await callMaisApi('/get-research-data', tenantId);
+      if (backendResult.ok) {
+        const payload = backendResult.data as {
+          hasData: boolean;
+          researchData: ResearchResult | null;
+        };
+        if (payload.hasData && payload.researchData) {
+          logger.info(
+            { tenantId, businessType, location },
+            '[Research] Pre-computed results from backend'
+          );
+          // Cache the pre-computed results locally
+          researchCache.set(cacheKey, payload.researchData);
+          return {
+            ...payload.researchData,
+            fromCache: true,
+            source: 'backend-precomputed',
+          };
+        }
+      }
+    } catch (error) {
+      // Non-fatal: fall through to direct research agent call
+      logger.debug(
+        { error: error instanceof Error ? error.message : String(error) },
+        '[Research] Backend pre-computed check failed, falling through to direct call'
+      );
+    }
+
+    // Tier 3: Direct research agent call (30-90s)
+    logger.info(
+      { tenantId, businessType, location },
+      '[Research] Delegating to research-agent (direct call)'
+    );
 
     try {
       // Get identity token for Cloud Run auth

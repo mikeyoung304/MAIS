@@ -97,12 +97,16 @@ const SECTION_REQUIREMENTS: Record<
   ])
 );
 
-/** Questions to ask for each missing fact key */
+/** Questions to ask for each missing fact key.
+ * Q1 (location) and Q2 (businessType) are scripted in the system prompt.
+ * These hints are fallbacks for the slot machine's missingForNext — the agent
+ * uses its personality to phrase them, not reading them verbatim.
+ */
 const FACT_QUESTIONS: Record<string, string> = {
-  businessType:
-    'What kind of business do you run? (e.g., wedding photographer, life coach, massage therapist)',
+  businessType: 'What do you do, and who do you do it for?',
   businessName: "What's the name of your business?",
-  location: 'Where are you based? City and state is perfect.',
+  location:
+    'Welcome to Handled. I\u2019m going to help you set up your website and storefront. To get us started, what city and state are you in?',
   targetMarket: 'Who are your ideal clients?',
   priceRange: "What's your typical price range?",
   servicesOffered: 'Walk me through your packages or services — what do you offer?',
@@ -120,17 +124,22 @@ const FACT_QUESTIONS: Record<string, string> = {
 /**
  * Priority order for asking questions.
  * Earlier keys are asked first (highest-value facts for building content).
+ *
+ * Design: location (#1) + businessType (#2) triggers async backend research.
+ * Questions #3-#7 fill the ~30s research gap with hero/about content facts.
+ * servicesOffered (#8) + priceRange (#9) come AFTER research completes,
+ * so the agent can cite market data when discussing pricing.
  */
 const QUESTION_PRIORITY: string[] = [
-  'businessType',
-  'businessName',
-  'location',
-  'servicesOffered',
-  'uniqueValue',
-  'priceRange',
-  'targetMarket',
-  'dreamClient',
-  'approach',
+  'location', // #1 — greeting icebreaker, triggers research with businessType
+  'businessType', // #2 — triggers async research when combined with location
+  'businessName', // #3 — research running in background (~30s)
+  'uniqueValue', // #4 — powers hero/about content
+  'approach', // #5 — powers about section
+  'dreamClient', // #6 — powers hero/about content
+  'targetMarket', // #7 — research likely complete by now
+  'servicesOffered', // #8 — agent cites research data for pricing context
+  'priceRange', // #9 — informed by research results
   'testimonial',
   'faq',
   'contactInfo',

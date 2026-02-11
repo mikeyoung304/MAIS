@@ -140,10 +140,13 @@ describe('computeSlotMachine', () => {
     expect(result.phaseAdvanced).toBe(false);
   });
 
-  it('returns top 3 missing facts', () => {
+  it('returns top 3 missing facts in new priority order', () => {
     const result = computeSlotMachine([]);
     expect(result.missingForNext.length).toBe(3);
-    expect(result.missingForNext[0].key).toBe('businessType'); // highest priority
+    // New order: location (#1) → businessType (#2) → businessName (#3)
+    expect(result.missingForNext[0].key).toBe('location');
+    expect(result.missingForNext[1].key).toBe('businessType');
+    expect(result.missingForNext[2].key).toBe('businessName');
   });
 
   it('excludes known facts from missingForNext', () => {
