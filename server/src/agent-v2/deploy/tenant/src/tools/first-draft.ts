@@ -13,9 +13,9 @@
  * @see docs/solutions/agent-issues/AUTONOMOUS_FIRST_DRAFT_WORKFLOW.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, getTenantId } from '../utils.js';
+import { logger, callMaisApi, requireTenantId, validateParams, wrapToolExecute } from '../utils.js';
 import { MVP_SECTION_TYPES, SEED_PACKAGE_NAMES } from '../constants/shared.js';
 
 /** Shape of pre-computed research data from the backend */
@@ -76,23 +76,9 @@ No user approval needed for first draft — just build and announce.`,
 
   parameters: BuildFirstDraftParams,
 
-  execute: async (_params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #56)
-    const parseResult = BuildFirstDraftParams.safeParse(_params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-      };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (_params, context) => {
+    validateParams(BuildFirstDraftParams, _params);
+    const tenantId = requireTenantId(context);
 
     logger.info({ tenantId }, '[TenantAgent] build_first_draft called');
 
@@ -267,5 +253,5 @@ No user approval needed for first draft — just build and announce.`,
         `${pricingHint} ` +
         'Explain WHY you wrote what you wrote — build with narrative.',
     };
-  },
+  }),
 });

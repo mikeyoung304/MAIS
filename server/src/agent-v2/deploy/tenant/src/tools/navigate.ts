@@ -12,7 +12,7 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger } from '../utils.js';
+import { logger, validateParams, wrapToolExecute } from '../utils.js';
 import type { BlockType } from '../context-builder.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,18 +74,8 @@ Use this when:
 
 This is a T1 tool - executes immediately.`,
   parameters: NavigateToDashboardSectionParams,
-  execute: async (params) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = NavigateToDashboardSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    const { section } = parseResult.data;
+  execute: wrapToolExecute(async (params) => {
+    const { section } = validateParams(NavigateToDashboardSectionParams, params);
 
     logger.info({ section }, '[TenantAgent] Navigating to dashboard section');
 
@@ -97,7 +87,7 @@ This is a T1 tool - executes immediately.`,
         section,
       } as DashboardAction,
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -147,17 +137,8 @@ Use this when:
 
 This is a T1 tool - executes immediately.`,
   parameters: ScrollToWebsiteSectionParams,
-  execute: async (params) => {
-    const parseResult = ScrollToWebsiteSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    const { blockType, highlight } = parseResult.data;
+  execute: wrapToolExecute(async (params) => {
+    const { blockType, highlight } = validateParams(ScrollToWebsiteSectionParams, params);
 
     logger.info({ blockType, highlight }, '[TenantAgent] Scrolling to website section');
 
@@ -170,7 +151,7 @@ This is a T1 tool - executes immediately.`,
         highlight,
       } as DashboardAction,
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,17 +182,8 @@ Use this when:
 
 This is a T1 tool - executes immediately.`,
   parameters: ShowPreviewParams,
-  execute: async (params) => {
-    const parseResult = ShowPreviewParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    const { fullScreen } = parseResult.data;
+  execute: wrapToolExecute(async (params) => {
+    const { fullScreen } = validateParams(ShowPreviewParams, params);
 
     logger.info({ fullScreen }, '[TenantAgent] Showing preview');
 
@@ -223,5 +195,5 @@ This is a T1 tool - executes immediately.`,
         fullScreen,
       } as DashboardAction,
     };
-  },
+  }),
 });

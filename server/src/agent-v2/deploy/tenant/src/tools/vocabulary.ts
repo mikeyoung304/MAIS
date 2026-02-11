@@ -18,6 +18,8 @@ import {
   callMaisApi as _callMaisApi,
   logger,
   getTenantId,
+  validateParams,
+  wrapToolExecute,
   TIMEOUTS,
   fetchWithTimeout,
   requireEnv,
@@ -105,18 +107,8 @@ Common mappings:
 
 This is a T1 tool - executes immediately.`,
   parameters: ResolveVocabularyParams,
-  execute: async (params, context) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = ResolveVocabularyParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    const { phrase } = parseResult.data;
+  execute: wrapToolExecute(async (params, context) => {
+    const { phrase } = validateParams(ResolveVocabularyParams, params);
     const tenantId = getTenantId(context);
 
     logger.info({ phrase, tenantId }, '[TenantAgent] Resolving vocabulary');
@@ -208,5 +200,5 @@ This is a T1 tool - executes immediately.`,
         suggestion: 'Ask the user to specify which section they want to work on',
       };
     }
-  },
+  }),
 });

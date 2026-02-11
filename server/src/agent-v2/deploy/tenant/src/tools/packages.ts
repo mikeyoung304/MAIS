@@ -18,9 +18,9 @@
  * @see todos/811-pending-p1-missing-package-management-tools.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, getTenantId } from '../utils.js';
+import { logger, callMaisApi, requireTenantId, validateParams, wrapToolExecute } from '../utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema for Package Management
@@ -115,32 +115,9 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
 
   parameters: ManagePackagesParams,
 
-  execute: async (params, context: ToolContext | undefined) => {
-    // -------------------------------------------------------------------------
-    // 1. Validate parameters (pitfall #56)
-    // -------------------------------------------------------------------------
-    const parseResult = ManagePackagesParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-        suggestion: 'Check the action type and required fields.',
-      };
-    }
-
-    const validParams = parseResult.data;
-
-    // -------------------------------------------------------------------------
-    // 2. Extract tenant ID (pitfall #54, #55)
-    // -------------------------------------------------------------------------
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-        suggestion: 'Session may have expired. Please refresh and try again.',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(ManagePackagesParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info({ action: validParams.action, tenantId }, '[TenantAgent] manage_packages');
 
@@ -215,7 +192,7 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
           error: 'Unknown action. Use: list, create, update, or delete',
         };
     }
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

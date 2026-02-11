@@ -11,9 +11,9 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
 import { PAGE_NAMES } from '../constants/shared.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,30 +69,14 @@ Returns:
 
 This is a T1 tool - executes immediately.`,
   parameters: GetPageStructureParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = GetPageStructureParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(GetPageStructureParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    logger.info({ pageName: parseResult.data.pageName }, '[TenantAgent] get_page_structure called');
+    logger.info({ pageName: validatedParams.pageName }, '[TenantAgent] get_page_structure called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/structure', tenantId, parseResult.data);
+    const result = await callMaisApi('/storefront/structure', tenantId, validatedParams);
 
     if (!result.ok) {
       return {
@@ -105,7 +89,7 @@ This is a T1 tool - executes immediately.`,
       success: true,
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,33 +123,17 @@ The sectionId comes from get_page_structure - call that first.
 
 This is a T1 tool - executes immediately.`,
   parameters: GetSectionContentParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = GetSectionContentParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(GetSectionContentParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info(
-      { sectionId: parseResult.data.sectionId },
+      { sectionId: validatedParams.sectionId },
       '[TenantAgent] get_section_content called'
     );
 
     // Call backend API
-    const result = await callMaisApi('/storefront/section', tenantId, parseResult.data);
+    const result = await callMaisApi('/storefront/section', tenantId, validatedParams);
 
     if (!result.ok) {
       return {
@@ -178,5 +146,5 @@ This is a T1 tool - executes immediately.`,
       success: true,
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });

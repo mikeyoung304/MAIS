@@ -11,9 +11,9 @@
  * @see CLAUDE.md pitfall #49 (discovery facts dual-source)
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, getTenantId } from '../utils.js';
+import { logger, callMaisApi, requireTenantId, validateParams, wrapToolExecute } from '../utils.js';
 import { DISCOVERY_FACT_KEYS } from '../constants/discovery-facts.js';
 
 // Re-export for backward compatibility with tools/index.ts
@@ -62,31 +62,15 @@ Follow nextAction deterministically:
       .describe('The value to store (string, number, or object for complex data like location)'),
   }),
 
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #56)
-    const parseResult = z
-      .object({
+  execute: wrapToolExecute(async (params, context) => {
+    const { key, value } = validateParams(
+      z.object({
         key: z.enum(DISCOVERY_FACT_KEYS),
         value: z.unknown(),
-      })
-      .safeParse(params);
-
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-      };
-    }
-
-    const { key, value } = parseResult.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+      }),
+      params
+    );
+    const tenantId = requireTenantId(context);
 
     logger.info({ key, tenantId }, '[TenantAgent] store_discovery_fact');
 
@@ -134,7 +118,7 @@ Follow nextAction deterministically:
       slotMetrics: responseData.slotMetrics,
       message: `Got it! I now know: ${responseData.knownFactKeys.join(', ')}`,
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,14 +147,8 @@ Call this when:
 
   parameters: z.object({}),
 
-  execute: async (_params, context: ToolContext | undefined) => {
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (_params, context) => {
+    const tenantId = requireTenantId(context);
 
     logger.info({ tenantId }, '[TenantAgent] get_known_facts');
 
@@ -204,5 +182,5 @@ Call this when:
           ? `You already know ${responseData.factCount} facts. Don't ask about: ${responseData.factKeys.join(', ')}`
           : 'No facts stored yet. Start the interview pattern.',
     };
-  },
+  }),
 });

@@ -12,10 +12,10 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Confirmation Token System (T3 Defense-in-Depth)
@@ -96,15 +96,8 @@ Returns the preview URL that shows draft state vs live state.
 
 This is a T1 tool - executes immediately.`,
   parameters: PreviewDraftParams,
-  execute: async (_params, context: ToolContext | undefined) => {
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (_params, context) => {
+    const tenantId = requireTenantId(context);
 
     logger.info({}, '[TenantAgent] preview_draft called');
 
@@ -122,7 +115,7 @@ This is a T1 tool - executes immediately.`,
       success: true,
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,28 +154,12 @@ the confirmation prompt, then wait for their explicit approval.
 
 This affects the LIVE site that visitors see.`,
   parameters: PublishDraftParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = PublishDraftParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(PublishDraftParams, params);
+    const tenantId = requireTenantId(context);
 
     // T3 confirmation check (pitfall #45)
-    if (!parseResult.data.confirmationReceived) {
+    if (!validatedParams.confirmationReceived) {
       // Phase 1: Generate and store confirmation token
       const token = generateConfirmationToken();
 
@@ -206,7 +183,7 @@ This affects the LIVE site that visitors see.`,
     const storedToken = context?.state?.get<string>(PUBLISH_TOKEN_KEY);
     const storedExpiry = context?.state?.get<number>(PUBLISH_TOKEN_EXPIRY_KEY);
 
-    if (!storedToken || !parseResult.data.confirmationToken) {
+    if (!storedToken || !validatedParams.confirmationToken) {
       logger.warn({}, '[TenantAgent] publish_draft: missing confirmation token');
       return {
         success: false,
@@ -216,9 +193,9 @@ This affects the LIVE site that visitors see.`,
       };
     }
 
-    if (parseResult.data.confirmationToken !== storedToken) {
+    if (validatedParams.confirmationToken !== storedToken) {
       logger.warn(
-        { provided: parseResult.data.confirmationToken, expected: storedToken },
+        { provided: validatedParams.confirmationToken, expected: storedToken },
         '[TenantAgent] publish_draft: token mismatch'
       );
       return {
@@ -266,7 +243,7 @@ This affects the LIVE site that visitors see.`,
       dashboardAction: { type: 'PUBLISH_SITE' },
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -306,28 +283,12 @@ the confirmation prompt.
 
 **WARNING:** This loses ALL unpublished changes. Cannot be undone.`,
   parameters: DiscardDraftParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = DiscardDraftParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(DiscardDraftParams, params);
+    const tenantId = requireTenantId(context);
 
     // T3 confirmation check (pitfall #45)
-    if (!parseResult.data.confirmationReceived) {
+    if (!validatedParams.confirmationReceived) {
       // Phase 1: Generate and store confirmation token
       const token = generateConfirmationToken();
 
@@ -351,7 +312,7 @@ the confirmation prompt.
     const storedToken = context?.state?.get<string>(DISCARD_TOKEN_KEY);
     const storedExpiry = context?.state?.get<number>(DISCARD_TOKEN_EXPIRY_KEY);
 
-    if (!storedToken || !parseResult.data.confirmationToken) {
+    if (!storedToken || !validatedParams.confirmationToken) {
       logger.warn({}, '[TenantAgent] discard_draft: missing confirmation token');
       return {
         success: false,
@@ -361,9 +322,9 @@ the confirmation prompt.
       };
     }
 
-    if (parseResult.data.confirmationToken !== storedToken) {
+    if (validatedParams.confirmationToken !== storedToken) {
       logger.warn(
-        { provided: parseResult.data.confirmationToken, expected: storedToken },
+        { provided: validatedParams.confirmationToken, expected: storedToken },
         '[TenantAgent] discard_draft: token mismatch'
       );
       return {
@@ -410,5 +371,5 @@ the confirmation prompt.
       message: 'Draft discarded. Your site is back to the live version.',
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });

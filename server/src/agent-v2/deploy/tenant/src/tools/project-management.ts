@@ -7,9 +7,16 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
 
-import { FunctionTool, type ToolContext as _ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { getTenantId, callMaisApi, callBackendAPI, logger } from '../utils.js';
+import {
+  callMaisApi,
+  callBackendAPI,
+  logger,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+} from '../utils.js';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -118,17 +125,9 @@ export const getPendingRequestsTool = new FunctionTool({
   description:
     'Get all pending customer requests that need your attention. Returns requests awaiting approval/denial.',
   parameters: LimitSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = LimitSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    validateParams(LimitSchema, params);
+    const tenantId = requireTenantId(context);
 
     const result = await callMaisApi(`/project-hub/pending-requests`, tenantId, {});
     if (!result.ok) {
@@ -152,7 +151,7 @@ export const getPendingRequestsTool = new FunctionTool({
       pendingRequestCount: data.count,
       lastUpdated: new Date().toISOString(),
     };
-  },
+  }),
 });
 
 /**
@@ -162,18 +161,9 @@ export const getCustomerActivityTool = new FunctionTool({
   name: 'get_customer_activity',
   description: 'Get recent customer activity across all your projects.',
   parameters: DaysSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = DaysSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { days } = parsed.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { days } = validateParams(DaysSchema, params);
+    const tenantId = requireTenantId(context);
 
     // Uses GET with tenantId in path — callBackendAPI needed for non-POST methods
     try {
@@ -201,7 +191,7 @@ export const getCustomerActivityTool = new FunctionTool({
         error: error instanceof Error ? error.message : 'Failed to get activity',
       };
     }
-  },
+  }),
 });
 
 /**
@@ -211,18 +201,9 @@ export const getProjectDetailsTool = new FunctionTool({
   name: 'get_project_details',
   description: 'Get details about a specific customer project.',
   parameters: GetProjectDetailsSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = GetProjectDetailsSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId } = parsed.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { projectId } = validateParams(GetProjectDetailsSchema, params);
+    const tenantId = requireTenantId(context);
 
     const result = await callMaisApi(`/project-hub/project-details`, tenantId, { projectId });
     if (!result.ok) {
@@ -241,7 +222,7 @@ export const getProjectDetailsTool = new FunctionTool({
       },
       lastUpdated: new Date().toISOString(),
     };
-  },
+  }),
 });
 
 /**
@@ -252,18 +233,9 @@ export const approveRequestTool = new FunctionTool({
   description:
     'Approve a pending customer request. Requires expectedVersion for optimistic locking - get this from get_pending_requests first.',
   parameters: ApproveRequestSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = ApproveRequestSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { requestId, expectedVersion, response } = parsed.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { requestId, expectedVersion, response } = validateParams(ApproveRequestSchema, params);
+    const tenantId = requireTenantId(context);
 
     const result = await callMaisApi(`/project-hub/approve-request`, tenantId, {
       requestId,
@@ -288,7 +260,7 @@ export const approveRequestTool = new FunctionTool({
         data.remainingPendingCount !== undefined ? data.remainingPendingCount > 0 : undefined,
       remainingPendingCount: data.remainingPendingCount,
     };
-  },
+  }),
 });
 
 /**
@@ -299,18 +271,12 @@ export const denyRequestTool = new FunctionTool({
   description:
     'Deny a pending customer request with a reason. Requires expectedVersion for optimistic locking.',
   parameters: DenyRequestSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = DenyRequestSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { requestId, expectedVersion, reason, response } = parsed.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { requestId, expectedVersion, reason, response } = validateParams(
+      DenyRequestSchema,
+      params
+    );
+    const tenantId = requireTenantId(context);
 
     const result = await callMaisApi(`/project-hub/deny-request`, tenantId, {
       requestId,
@@ -336,7 +302,7 @@ export const denyRequestTool = new FunctionTool({
         data.remainingPendingCount !== undefined ? data.remainingPendingCount > 0 : undefined,
       remainingPendingCount: data.remainingPendingCount,
     };
-  },
+  }),
 });
 
 /**
@@ -346,18 +312,9 @@ export const sendMessageToCustomerTool = new FunctionTool({
   name: 'send_message_to_customer',
   description: 'Send a message directly to a customer about their project.',
   parameters: SendMessageSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = SendMessageSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId, message, notifyByEmail } = parsed.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { projectId, message, notifyByEmail } = validateParams(SendMessageSchema, params);
+    const tenantId = requireTenantId(context);
 
     const result = await callMaisApi(`/project-hub/projects/${projectId}/events`, tenantId, {
       type: 'MESSAGE_FROM_TENANT',
@@ -391,7 +348,7 @@ export const sendMessageToCustomerTool = new FunctionTool({
       messageSentToCustomer: true,
       emailNotificationSent: notifyByEmail,
     };
-  },
+  }),
 });
 
 /**
@@ -401,18 +358,9 @@ export const updateProjectStatusTool = new FunctionTool({
   name: 'update_project_status',
   description: 'Update the status of a project (e.g., mark as completed, on hold).',
   parameters: UpdateStatusSchema,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = UpdateStatusSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId, newStatus, reason } = parsed.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { success: false, error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { projectId, newStatus, reason } = validateParams(UpdateStatusSchema, params);
+    const tenantId = requireTenantId(context);
 
     // Uses PUT — callBackendAPI needed for non-POST methods
     try {
@@ -449,5 +397,5 @@ export const updateProjectStatusTool = new FunctionTool({
         error: error instanceof Error ? error.message : 'Failed to update status',
       };
     }
-  },
+  }),
 });

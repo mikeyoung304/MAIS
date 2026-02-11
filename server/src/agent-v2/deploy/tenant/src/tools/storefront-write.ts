@@ -13,9 +13,9 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
 import { PAGE_NAMES, SECTION_TYPES } from '../constants/shared.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,31 +95,15 @@ Editable fields vary by section type:
 
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: UpdateSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = UpdateSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(UpdateSectionParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    const { sectionId } = parseResult.data;
+    const { sectionId } = validatedParams;
     logger.info({ sectionId }, '[TenantAgent] update_section called');
 
     // Call backend API to update
-    const result = await callMaisApi('/storefront/update-section', tenantId, parseResult.data);
+    const result = await callMaisApi('/storefront/update-section', tenantId, validatedParams);
 
     if (!result.ok) {
       return {
@@ -166,7 +150,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
         sectionId,
       },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -215,31 +199,15 @@ Position is 0-based. Omit to add at end of page.
 
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: AddSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = AddSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(AddSectionParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    const { pageName, sectionType } = parseResult.data;
+    const { pageName, sectionType } = validatedParams;
     logger.info({ pageName, sectionType }, '[TenantAgent] add_section called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/add-section', tenantId, parseResult.data);
+    const result = await callMaisApi('/storefront/add-section', tenantId, validatedParams);
 
     if (!result.ok) {
       return {
@@ -267,7 +235,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       },
       ...data,
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -296,31 +264,15 @@ Get sectionId from get_page_structure first.
 
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: RemoveSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = RemoveSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(RemoveSectionParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    const { sectionId } = parseResult.data;
+    const { sectionId } = validatedParams;
     logger.info({ sectionId }, '[TenantAgent] remove_section called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/remove-section', tenantId, parseResult.data);
+    const result = await callMaisApi('/storefront/remove-section', tenantId, validatedParams);
 
     if (!result.ok) {
       return {
@@ -342,7 +294,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       suggestion: 'Ask if they want to publish now, or continue editing.',
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -374,31 +326,15 @@ Get sectionId from get_page_structure first.
 
 This is a T2 tool - executes and shows preview in dashboard.`,
   parameters: ReorderSectionsParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = ReorderSectionsParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(ReorderSectionsParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    const { sectionId, toPosition } = parseResult.data;
+    const { sectionId, toPosition } = validatedParams;
     logger.info({ sectionId, toPosition }, '[TenantAgent] reorder_sections called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/reorder-sections', tenantId, parseResult.data);
+    const result = await callMaisApi('/storefront/reorder-sections', tenantId, validatedParams);
 
     if (!result.ok) {
       return {
@@ -420,7 +356,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       suggestion: 'Ask if they want to publish now, or continue editing.',
       ...(result.data as Record<string, unknown>),
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -466,27 +402,11 @@ Use publish_draft to publish ALL changes at once.
 
 Get sectionId from get_page_structure first.`,
   parameters: PublishSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = PublishSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(PublishSectionParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    const { sectionId, confirmationReceived } = parseResult.data;
+    const { sectionId, confirmationReceived } = validatedParams;
 
     // T3 confirmation check (pitfall #45)
     if (!confirmationReceived) {
@@ -535,7 +455,7 @@ Get sectionId from get_page_structure first.`,
       },
       ...data,
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -586,27 +506,11 @@ Use discard_draft to discard ALL changes at once.
 
 Get sectionId from get_page_structure first.`,
   parameters: DiscardSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = DiscardSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(DiscardSectionParams, params);
+    const tenantId = requireTenantId(context);
 
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
-
-    const { sectionId, confirmationReceived } = parseResult.data;
+    const { sectionId, confirmationReceived } = validatedParams;
 
     // T3 confirmation check (pitfall #45)
     if (!confirmationReceived) {
@@ -653,5 +557,5 @@ Get sectionId from get_page_structure first.`,
       },
       ...data,
     };
-  },
+  }),
 });

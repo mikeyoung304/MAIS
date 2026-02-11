@@ -38,9 +38,16 @@
  * @see docs/issues/2026-01-31-tenant-agent-testing-issues.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import {
+  callMaisApi,
+  getTenantId,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -258,18 +265,8 @@ Tone options:
 
 This is a T1 tool - returns instructions immediately.`,
   parameters: GenerateCopyParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = GenerateCopyParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    const validatedParams = parseResult.data;
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(GenerateCopyParams, params);
 
     // Get tenant ID from context (for logging purposes)
     const tenantId = getTenantId(context);
@@ -300,7 +297,7 @@ This is a T1 tool - returns instructions immediately.`,
       nextStep:
         'Generate the copy based on the instructions above, then present it to the user. When they approve, call update_section to apply it.',
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -345,27 +342,9 @@ Common improvements:
 
 This is a T1 tool - reads content and returns instructions immediately.`,
   parameters: ImproveSectionCopyParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = ImproveSectionCopyParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    const { sectionId, feedback, tone } = parseResult.data;
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId, feedback, tone } = validateParams(ImproveSectionCopyParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info(
       { sectionId, feedback, tenantId },
@@ -420,5 +399,5 @@ This is a T1 tool - reads content and returns instructions immediately.`,
       nextStep:
         'Generate improved copy based on the instructions above, then present it to the user. When they approve, call update_section with the sectionId to apply it.',
     };
-  },
+  }),
 });

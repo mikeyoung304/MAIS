@@ -20,7 +20,7 @@
 
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
 import { TOTAL_SECTIONS } from '../constants/shared.js';
 import type {
   GuidedRefinementState,
@@ -183,26 +183,9 @@ export const generateSectionVariantsTool = new FunctionTool({
 
 This is a T1 tool - generates options without changing the draft.`,
   parameters: GenerateSectionVariantsParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = GenerateSectionVariantsParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-    const { sectionId } = parseResult.data;
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId } = validateParams(GenerateSectionVariantsParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check context.state is available
     if (!context?.state) {
@@ -311,7 +294,7 @@ This is a T1 tool - generates options without changing the draft.`,
         variants: ['professional', 'premium', 'friendly'],
       },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -341,26 +324,9 @@ export const applySectionVariantTool = new FunctionTool({
 
 This is a T2 tool - applies changes to draft.`,
   parameters: ApplySectionVariantParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = ApplySectionVariantParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-    const { sectionId, variant } = parseResult.data;
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId, variant } = validateParams(ApplySectionVariantParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check context.state is available
     if (!context?.state) {
@@ -434,7 +400,7 @@ This is a T2 tool - applies changes to draft.`,
         sectionId,
       },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -465,17 +431,8 @@ export const markSectionCompleteTool = new FunctionTool({
 
 This is a T1 tool - updates state only.`,
   parameters: MarkSectionCompleteParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = MarkSectionCompleteParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-    const { sectionId } = parseResult.data;
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId } = validateParams(MarkSectionCompleteParams, params);
 
     // Check context.state is available
     if (!context?.state) {
@@ -530,7 +487,7 @@ This is a T1 tool - updates state only.`,
         ? { type: 'SHOW_PUBLISH_READY' }
         : { type: 'HIGHLIGHT_NEXT_SECTION' },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -561,25 +518,9 @@ export const getNextIncompleteSectionTool = new FunctionTool({
 
 This is a T1 tool - reads state only.`,
   parameters: GetNextIncompleteSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = GetNextIncompleteSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    validateParams(GetNextIncompleteSectionParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check context.state is available
     if (!context?.state) {
@@ -673,5 +614,5 @@ This is a T1 tool - reads state only.`,
         sectionId: nextSection.id,
       },
     };
-  },
+  }),
 });

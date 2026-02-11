@@ -16,6 +16,7 @@
  */
 
 import type { ToolContext } from '@google/adk';
+import { z } from 'zod';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
@@ -289,6 +290,61 @@ export function getTenantId(context: ToolContext | undefined): string | null {
 
   logger.warn({}, '[TenantAgent] Could not extract tenantId from context');
   return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool Boilerplate Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Error thrown by tool helpers — caught by wrapToolExecute */
+export class ToolError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ToolError';
+  }
+}
+
+/**
+ * Extract tenantId from ADK context, throwing if not found.
+ * Eliminates the 5-line null-check boilerplate in every tool.
+ */
+export function requireTenantId(context: ToolContext | undefined): string {
+  const tenantId = getTenantId(context);
+  if (!tenantId) {
+    throw new ToolError('No tenant context available');
+  }
+  return tenantId;
+}
+
+/**
+ * Validate tool parameters against a Zod schema, throwing on failure.
+ * Replaces the 5-line safeParse + error return boilerplate.
+ */
+export function validateParams<S extends z.ZodTypeAny>(schema: S, params: unknown): z.output<S> {
+  const result = schema.safeParse(params);
+  if (!result.success) {
+    throw new ToolError(`Invalid parameters: ${result.error.message}`);
+  }
+  return result.data as z.output<S>;
+}
+
+/**
+ * Wrap a tool execute function with standardized error handling.
+ * Catches ToolError and returns { success: false, error } consistently.
+ */
+export function wrapToolExecute<P, R>(
+  fn: (params: P, context: ToolContext | undefined) => Promise<R>
+): (params: P, context: ToolContext | undefined) => Promise<R | { success: false; error: string }> {
+  return async (params, context) => {
+    try {
+      return await fn(params, context);
+    } catch (err) {
+      if (err instanceof ToolError) {
+        return { success: false, error: err.message };
+      }
+      throw err; // Re-throw unexpected errors
+    }
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
