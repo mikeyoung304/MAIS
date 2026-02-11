@@ -17,6 +17,14 @@ import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { logger, callMaisApi, getTenantId } from '../utils.js';
 
+/** Shape of pre-computed research data from the backend */
+interface ResearchData {
+  competitorPricing?: { low: number; high: number; currency: string; summary: string };
+  marketPositioning?: string[];
+  localDemand?: string;
+  insights?: string[];
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schema
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,19 +54,22 @@ const BuildFirstDraftParams = z.object({});
  */
 export const buildFirstDraftTool = new FunctionTool({
   name: 'build_first_draft',
-  description: `Identify all placeholder sections that need content and return them with known facts.
+  description: `Get ALL MVP sections (HERO, ABOUT, SERVICES) + known facts + research data for first draft.
 
 Call this when store_discovery_fact returns nextAction: 'BUILD_FIRST_DRAFT'.
 
-This tool gathers everything you need to build the first draft:
-- Which sections still have placeholder content
-- Which sections have enough facts to build (readySections)
+This tool returns everything you need to build the first draft in one turn:
+- ALL three MVP sections to write (always returns HERO, ABOUT, SERVICES)
 - All known discovery facts to use for copy generation
+- Pre-computed research data with competitor pricing (if available)
 
-After calling this, for each section in sectionsToUpdate:
-1. Generate personalized copy using knownFacts and the business tone
+IMPORTANT: This tool always returns MVP sections for overwrite. Seed defaults are NOT real content. Never refuse to build.
+
+After calling this, for EACH section in sectionsToUpdate:
+1. Generate personalized copy using knownFacts, business tone, and researchData
 2. Call update_section with the generated content
 3. Explain WHY you wrote what you wrote (build with narrative)
+4. Do NOT stop after one section — update ALL THREE in this turn
 
 No user approval needed for first draft — just build and announce.`,
 
@@ -126,43 +137,68 @@ No user approval needed for first draft — just build and announce.`,
       factKeys: string[];
     };
 
-    // 3. Collect placeholder sections from flat array
-    const allSections = structureData.sections ?? [];
-    const placeholderSections = allSections.filter((s) => s.hasPlaceholder);
-
-    // MVP reveal scope — only return the "wow moment" sections for first draft.
+    // 3. Find ALL MVP sections — the slot machine gates WHEN to build,
+    // this tool should always return MVP sections for overwrite.
+    // Seed defaults are not "real" content — always overwrite during first draft.
+    //
     // Source of truth: packages/contracts/src/schemas/section-blueprint.schema.ts → MVP_REVEAL_SECTION_TYPES
-    // Cloud Run agent cannot import from @macon/contracts — keep in sync manually with isRevealMVP: true entries
+    // Cloud Run agent cannot import from @macon/contracts — keep in sync manually
+    const allSections = structureData.sections ?? [];
     const MVP_SECTIONS = new Set(['HERO', 'ABOUT', 'SERVICES']);
-    const mvpPlaceholders = placeholderSections.filter((s) => MVP_SECTIONS.has(s.type));
+    const mvpSections = allSections.filter((s) => MVP_SECTIONS.has(s.type));
 
-    if (mvpPlaceholders.length === 0) {
+    if (mvpSections.length === 0) {
       return {
-        success: true,
+        success: false,
         sectionsToUpdate: [],
         knownFacts: factsData.facts,
-        message:
-          'No placeholder sections found — all sections already have content. Offer to refine existing content instead.',
+        error:
+          'No MVP sections (HERO, ABOUT, SERVICES) found in page structure. The storefront may not be provisioned correctly.',
       };
     }
 
-    // 4. Return structured data for the LLM to generate copy
-    const sectionsToUpdate = mvpPlaceholders.map((s) => ({
+    // 4. Fetch research data (pre-computed by async backend trigger after Q2)
+    // so the agent can cite market pricing when creating packages
+    let researchData: ResearchData | null = null;
+
+    try {
+      const researchResult = await callMaisApi('/get-research-data', tenantId);
+      if (researchResult.ok) {
+        const payload = researchResult.data as {
+          hasData: boolean;
+          researchData: ResearchData | null;
+        };
+        if (payload.hasData && payload.researchData) {
+          researchData = payload.researchData;
+          logger.info(
+            { tenantId, hasPricing: !!researchData?.competitorPricing },
+            '[TenantAgent] build_first_draft found pre-computed research data'
+          );
+        }
+      }
+    } catch {
+      // Non-fatal — agent will build without research data
+      logger.debug({ tenantId }, '[TenantAgent] Research data fetch failed, continuing without');
+    }
+
+    // 5. Return structured data for the LLM to generate copy
+    const sectionsToUpdate = mvpSections.map((s) => ({
       sectionId: s.id,
       sectionType: s.type,
       pageName: s.page,
       currentHeadline: s.headline || '(no headline)',
+      hasPlaceholder: s.hasPlaceholder,
     }));
 
     logger.info(
       {
         tenantId,
         mvpCount: sectionsToUpdate.length,
-        totalPlaceholders: placeholderSections.length,
         totalSections: allSections.length,
         factCount: factsData.factCount,
+        hasResearch: !!researchData,
       },
-      '[TenantAgent] build_first_draft identified MVP sections'
+      '[TenantAgent] build_first_draft identified MVP sections for overwrite'
     );
 
     // Programmatic fallback: delete seed packages before agent creates real ones.
@@ -215,14 +251,23 @@ No user approval needed for first draft — just build and announce.`,
       );
     }
 
+    const pricingHint = researchData?.competitorPricing
+      ? `Research data available: ${researchData.competitorPricing.summary}. Use $${researchData.competitorPricing.low.toLocaleString()}-$${researchData.competitorPricing.high.toLocaleString()} as pricing context when creating packages.`
+      : 'No research pricing data available yet. Use reasonable defaults for the business type and adjust later.';
+
     return {
       success: true,
       sectionsToUpdate,
       knownFacts: factsData.facts,
       factKeys: factsData.factKeys,
-      totalPlaceholders: sectionsToUpdate.length,
+      totalSections: sectionsToUpdate.length,
+      researchData,
       instruction:
-        'Generate personalized content for each section below using the known facts. Call update_section for each one. Explain WHY you wrote what you wrote — build with narrative. After ALL sections are updated, the preview will reveal automatically.',
+        `Generate personalized content for ALL ${sectionsToUpdate.length} sections below using the known facts. ` +
+        'Call update_section for EACH one — do NOT stop after one section. ' +
+        'After ALL sections are updated, the preview will reveal automatically. ' +
+        `${pricingHint} ` +
+        'Explain WHY you wrote what you wrote — build with narrative.',
     };
   },
 });

@@ -690,21 +690,44 @@ export class SectionContentService {
   }
 
   /**
-   * Check if content is placeholder/default
+   * Check if content is placeholder/default.
+   *
+   * Must catch ALL seed defaults from getDefaultContent() so the agent's
+   * build_first_draft tool correctly identifies sections needing real content.
+   * Missing a default title here causes the agent to skip building that section.
    */
   private isPlaceholderContent(content: Record<string, unknown>): boolean {
-    // Check for common placeholder indicators
     const headline = (content.headline as string) || (content.title as string);
-    if (headline) {
-      const lower = headline.toLowerCase();
-      return (
-        lower.includes('welcome') ||
-        lower.includes('your headline') ||
-        lower.includes('placeholder') ||
-        lower.includes('lorem ipsum')
-      );
+    if (!headline) {
+      // No headline/title = definitely not personalized content
+      return true;
     }
-    return false;
+
+    const lower = headline.toLowerCase().trim();
+
+    // Exact matches for all getDefaultContent() defaults
+    const SEED_TITLES = new Set([
+      'welcome to your business',
+      'about us',
+      'our services',
+      'pricing',
+      'what clients say',
+      'frequently asked questions',
+      'get in touch',
+      'ready to get started?',
+      'portfolio',
+      'why choose us',
+    ]);
+
+    if (SEED_TITLES.has(lower)) return true;
+
+    // Substring patterns for generic/template content
+    return (
+      lower.includes('your headline') ||
+      lower.includes('placeholder') ||
+      lower.includes('lorem ipsum') ||
+      lower.includes('your tagline')
+    );
   }
 
   /**

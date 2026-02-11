@@ -914,13 +914,27 @@ describe('SectionContentService', () => {
       expect(result.pages[0].sections[0].isPlaceholder).toBe(false);
     });
 
-    it('should handle content without headline gracefully', async () => {
+    it('should detect seed default titles as placeholder', async () => {
+      // All getDefaultContent() titles must be caught as placeholders
+      for (const seedTitle of ['About Us', 'Our Services', 'Pricing', 'Get in Touch']) {
+        vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
+          createMockSection({ content: { title: seedTitle } }),
+        ]);
+
+        const result = await service.getPageStructure('tenant-1');
+        expect(result.pages[0].sections[0].isPlaceholder).toBe(true);
+      }
+    });
+
+    it('should treat content without headline as placeholder', async () => {
+      // Content with no headline/title is not personalized — treat as placeholder
+      // so build_first_draft will overwrite it during onboarding
       vi.mocked(mockRepo.findAllForTenant).mockResolvedValue([
         createMockSection({ content: { items: [] } }),
       ]);
 
       const result = await service.getPageStructure('tenant-1');
-      expect(result.pages[0].sections[0].isPlaceholder).toBe(false);
+      expect(result.pages[0].sections[0].isPlaceholder).toBe(true);
     });
   });
 
