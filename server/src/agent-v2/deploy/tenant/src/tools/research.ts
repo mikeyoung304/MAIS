@@ -24,7 +24,10 @@ import { logger, fetchWithTimeout, getTenantId, callMaisApi, TTLCache } from '..
 const RESEARCH_AGENT_URL = process.env.RESEARCH_AGENT_URL;
 
 if (!RESEARCH_AGENT_URL) {
-  throw new Error('RESEARCH_AGENT_URL environment variable is required');
+  logger.warn(
+    {},
+    '[Research] RESEARCH_AGENT_URL not set — direct research delegation disabled, will use backend pre-computed results only'
+  );
 }
 
 // Longer timeout for research (web scraping, analysis)
@@ -205,6 +208,20 @@ Examples:
     }
 
     // Tier 3: Direct research agent call (30-90s)
+    if (!RESEARCH_AGENT_URL) {
+      logger.warn(
+        { tenantId, businessType, location },
+        '[Research] RESEARCH_AGENT_URL not configured — skipping direct call'
+      );
+      return {
+        success: false,
+        businessType,
+        location,
+        error: 'Research service not configured',
+        suggestion: 'Continue without research data. Ask the user about their pricing directly.',
+      };
+    }
+
     logger.info(
       { tenantId, businessType, location },
       '[Research] Delegating to research-agent (direct call)'

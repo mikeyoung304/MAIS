@@ -206,6 +206,27 @@ jobs:
             --region=${{ env.GOOGLE_CLOUD_REGION }} \
             --service_name=${{ matrix.agent }}-agent
 
+          # ADK injects .env vars for the BUILD but may not set them as
+          # Cloud Run RUNTIME env vars. Explicitly update the service to
+          # ensure runtime env vars match the .env file.
+          echo "🔧 Setting runtime environment variables on Cloud Run..."
+          ENV_ARGS=""
+          while IFS='=' read -r key value; do
+            # Skip empty lines and comments
+            [[ -z "$key" || "$key" =~ ^# ]] && continue
+            ENV_ARGS="${ENV_ARGS}${key}=${value},"
+          done < .env
+          # Remove trailing comma
+          ENV_ARGS="${ENV_ARGS%,}"
+
+          if [ -n "$ENV_ARGS" ]; then
+            gcloud run services update ${{ matrix.agent }}-agent \
+              --region=${{ env.GOOGLE_CLOUD_REGION }} \
+              --update-env-vars="$ENV_ARGS" \
+              --quiet
+            echo "✅ Runtime env vars set on Cloud Run"
+          fi
+
           # Verify a new revision was created
           sleep 5  # Give Cloud Run a moment to update
           REVISION_AFTER=$(gcloud run services describe ${{ matrix.agent }}-agent \
