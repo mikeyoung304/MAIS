@@ -15,7 +15,6 @@
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
 import {
-  callMaisApi as _callMaisApi,
   logger,
   getTenantId,
   validateParams,

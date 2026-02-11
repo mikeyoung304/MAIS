@@ -20,7 +20,7 @@ import {
   wrapToolExecute,
   logger,
 } from '../utils.js';
-import { GenericRecordResponse, SectionContentResponse } from '../types/api-responses.js';
+import { StorefrontStructureResponse, SectionContentResponse } from '../types/api-responses.js';
 import { PAGE_NAMES } from '../constants/shared.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ This is a T1 tool - executes immediately.`,
       '/storefront/structure',
       tenantId,
       validatedParams,
-      GenericRecordResponse
+      StorefrontStructureResponse
     );
 
     if (!result.ok) {

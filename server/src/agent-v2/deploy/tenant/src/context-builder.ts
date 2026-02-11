@@ -7,7 +7,7 @@
  * Design notes:
  * - Uses parallel fetching for performance (Promise.all)
  * - Summarizes section content to stay within token limits
- * - Returns dashboardCapabilities for the agent to understand what it can do
+ * - Returns structured context for agent decision-making
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
@@ -78,7 +78,6 @@ export interface TenantAgentContext {
   segments: SegmentInfo[];
   sections: SectionInfo[];
   projects: ProjectInfo[];
-  dashboardCapabilities: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -246,34 +245,6 @@ export async function buildTenantContext(tenantId: string): Promise<TenantAgentC
       unreadMessages: p.unreadMessages ?? p._count?.messages ?? 0,
     }));
 
-    // Build dashboard capabilities list for agent reference
-    // IMPORTANT: These must match actual tool names in tools/ directory
-    const dashboardCapabilities = [
-      // Navigation
-      'navigate_to_section(section: "website" | "bookings" | "projects" | "settings")',
-
-      // Website editing
-      'resolve_vocabulary(phrase) — maps natural language to BlockType',
-      'update_section(blockType, content) — updates website section, scrolls to it',
-      'update_branding(colors, fonts) — updates brand colors (live immediately)',
-      'reorder_sections(sectionId, position) — change section display order',
-      'add_section(blockType) — add new section to storefront',
-      'remove_section(sectionId) — remove section from storefront',
-
-      // Packages
-      'manage_packages(action, ...) — create/update/delete/list bookable packages',
-
-      // Publishing
-      'show_preview() — shows current draft state',
-      'publish_draft() — requires confirmation (T3, token-based)',
-      'discard_draft() — discard changes, requires confirmation (T3, token-based)',
-
-      // Project management
-      'get_project_details(projectId) — view project details',
-      'send_message_to_customer(projectId, message) — message customer',
-      'update_project_status(projectId, status) — change project status',
-    ];
-
     logger.info(
       {
         tenantId,
@@ -300,7 +271,6 @@ export async function buildTenantContext(tenantId: string): Promise<TenantAgentC
       segments,
       sections,
       projects,
-      dashboardCapabilities,
     };
   } catch (error) {
     logger.error(

@@ -16,7 +16,7 @@ import {
   wrapToolExecute,
   logger,
 } from '../utils.js';
-import { GenericRecordResponse } from '../types/api-responses.js';
+import { UpdateBrandingResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schema
@@ -103,7 +103,7 @@ This is a T2 tool - executes and shows result.`,
       '/storefront/update-branding',
       tenantId,
       validatedParams,
-      GenericRecordResponse
+      UpdateBrandingResponse
     );
 
     if (!result.ok) {
@@ -113,10 +113,11 @@ This is a T2 tool - executes and shows result.`,
       };
     }
 
+    const { success: _ok, ...brandingData } = result.data;
     return {
       success: true,
       message: 'Branding updated. Changes are live.',
-      ...result.data,
+      ...brandingData,
     };
   }),
 });

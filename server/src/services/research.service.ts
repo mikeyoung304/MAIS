@@ -10,6 +10,14 @@
  * - Read pre-computed research results
  * - Clear _researchTriggered flag on failure so retry is possible
  *
+ * RACE CONDITION MITIGATION:
+ * Both storeResults() and clearResearchTriggeredFlag() perform a read-modify-write
+ * on the tenant.branding JSON column, which can clobber concurrent writes from
+ * DiscoveryService.storeFact(). We mitigate this with an optimistic retry pattern:
+ * after writing, we re-read and verify our target key persists. If clobbered, we
+ * retry the full read-modify-write cycle. This is sufficient because onboarding is
+ * a single-user flow and the race window is sub-millisecond.
+ *
  * CRITICAL: All methods require tenantId for multi-tenant isolation.
  */
 
@@ -26,6 +34,16 @@ export interface ResearchDataResult {
   hasData: boolean;
   researchData: Record<string, unknown> | null;
 }
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+/** Max retries for optimistic read-modify-write on tenant.branding */
+const BRANDING_WRITE_MAX_RETRIES = 2;
+
+/** Delay between retries in ms (allows concurrent write to settle) */
+const BRANDING_WRITE_RETRY_DELAY_MS = 50;
 
 // =============================================================================
 // Service
@@ -87,16 +105,9 @@ export class ResearchService {
 
         if (response.ok) {
           const researchData = await response.json();
-          // Store research results in branding.researchData
-          const freshTenant = await this.tenantRepo.findById(tenantId);
-          if (freshTenant) {
-            const freshBranding = (freshTenant.branding as Record<string, unknown>) || {};
-            await this.tenantRepo.update(tenantId, {
-              branding: { ...freshBranding, researchData },
-            });
-            this.invalidateBootstrapCache(tenantId);
-            logger.info({ tenantId }, '[ResearchService] Background research stored successfully');
-          }
+          await this.storeResearchData(tenantId, researchData);
+          this.invalidateBootstrapCache(tenantId);
+          logger.info({ tenantId }, '[ResearchService] Background research stored successfully');
         } else {
           logger.warn(
             { tenantId, status: response.status },
@@ -137,28 +148,111 @@ export class ResearchService {
     };
   }
 
+  // ===========================================================================
+  // Private — Atomic-safe branding mutations (optimistic retry)
+  // ===========================================================================
+
   /**
-   * Clear the _researchTriggered flag so the next store-discovery-fact call
-   * can retry the research trigger. Called on research failure.
+   * Store research data in tenant.branding.researchData with optimistic retry.
    *
-   * This fixes a bug where the flag was set BEFORE the async call, and if the
-   * call failed, research could never be retried for that tenant.
+   * Performs read-modify-write with post-write verification: after writing,
+   * re-reads the tenant to confirm `researchData` was not clobbered by a
+   * concurrent DiscoveryService.storeFact() write. Retries if clobbered.
    */
-  private async clearResearchTriggeredFlag(tenantId: string): Promise<void> {
-    try {
+  private async storeResearchData(tenantId: string, researchData: unknown): Promise<void> {
+    for (let attempt = 0; attempt <= BRANDING_WRITE_MAX_RETRIES; attempt++) {
       const tenant = await this.tenantRepo.findById(tenantId);
       if (!tenant) return;
 
       const branding = (tenant.branding as Record<string, unknown>) || {};
-      const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
+      await this.tenantRepo.update(tenantId, {
+        branding: { ...branding, researchData },
+      });
 
-      if (discoveryFacts['_researchTriggered']) {
+      // Verify write was not clobbered
+      const verification = await this.tenantRepo.findById(tenantId);
+      const verifyBranding = (verification?.branding as Record<string, unknown>) || {};
+      if (verifyBranding.researchData !== undefined) {
+        return; // Write persisted — success
+      }
+
+      // Write was clobbered by concurrent update — retry
+      logger.warn(
+        { tenantId, attempt },
+        '[ResearchService] researchData clobbered by concurrent write, retrying'
+      );
+      await this.delay(BRANDING_WRITE_RETRY_DELAY_MS);
+    }
+
+    // Exhausted retries — log but don't throw (fire-and-forget context)
+    logger.error(
+      { tenantId, maxRetries: BRANDING_WRITE_MAX_RETRIES },
+      '[ResearchService] Failed to persist researchData after retries'
+    );
+  }
+
+  /**
+   * Clear the _researchTriggered flag so the next store-discovery-fact call
+   * can retry the research trigger. Called on research failure.
+   *
+   * Uses optimistic retry to avoid clobbering concurrent discoveryFacts writes.
+   * After deleting the flag and writing back, verifies the flag is actually gone
+   * and that other discoveryFacts keys were not lost.
+   */
+  private async clearResearchTriggeredFlag(tenantId: string): Promise<void> {
+    try {
+      for (let attempt = 0; attempt <= BRANDING_WRITE_MAX_RETRIES; attempt++) {
+        const tenant = await this.tenantRepo.findById(tenantId);
+        if (!tenant) return;
+
+        const branding = (tenant.branding as Record<string, unknown>) || {};
+        const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
+
+        if (!discoveryFacts['_researchTriggered']) {
+          return; // Flag already cleared — nothing to do
+        }
+
+        // Snapshot non-metadata fact keys before write (for clobber detection)
+        const factKeysBefore = Object.keys(discoveryFacts).filter((k) => !k.startsWith('_'));
+
         delete discoveryFacts['_researchTriggered'];
         await this.tenantRepo.update(tenantId, {
           branding: { ...branding, discoveryFacts },
         });
-        logger.info({ tenantId }, '[ResearchService] Cleared _researchTriggered flag for retry');
+
+        // Verify: flag is gone AND no real fact keys were lost
+        const verification = await this.tenantRepo.findById(tenantId);
+        const verifyBranding = (verification?.branding as Record<string, unknown>) || {};
+        const verifyFacts = (verifyBranding.discoveryFacts as Record<string, unknown>) || {};
+        const factKeysAfter = Object.keys(verifyFacts).filter((k) => !k.startsWith('_'));
+
+        const flagCleared = !verifyFacts['_researchTriggered'];
+        const noFactsLost = factKeysBefore.every((k) => k in verifyFacts);
+
+        if (flagCleared && noFactsLost) {
+          logger.info({ tenantId }, '[ResearchService] Cleared _researchTriggered flag for retry');
+          return; // Success
+        }
+
+        // Clobbered — concurrent write restored the flag or lost fact keys
+        logger.warn(
+          {
+            tenantId,
+            attempt,
+            flagCleared,
+            factKeysBefore,
+            factKeysAfter,
+          },
+          '[ResearchService] _researchTriggered clear clobbered by concurrent write, retrying'
+        );
+        await this.delay(BRANDING_WRITE_RETRY_DELAY_MS);
       }
+
+      // Exhausted retries — log but don't throw (cleanup during error handling)
+      logger.error(
+        { tenantId, maxRetries: BRANDING_WRITE_MAX_RETRIES },
+        '[ResearchService] Failed to clear _researchTriggered flag after retries'
+      );
     } catch (error) {
       // Log but don't throw -- this is cleanup during error handling
       logger.warn(
@@ -166,6 +260,11 @@ export class ResearchService {
         '[ResearchService] Failed to clear _researchTriggered flag'
       );
     }
+  }
+
+  /** Small delay for retry backoff */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

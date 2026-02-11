@@ -24,7 +24,8 @@ import {
   logger,
 } from '../utils.js';
 import {
-  GenericRecordResponse,
+  RemoveSectionResponse,
+  ReorderSectionsResponse,
   SectionContentResponse,
   AddSectionResponse,
   SectionLifecycleResponse,
@@ -299,7 +300,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       '/storefront/remove-section',
       tenantId,
       validatedParams,
-      GenericRecordResponse
+      RemoveSectionResponse
     );
 
     if (!result.ok) {
@@ -310,6 +311,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     }
 
     // FIX #812: Return with clear visibility status
+    const { success: _ok, ...removeData } = result.data;
     return {
       success: true,
       verified: true,
@@ -320,7 +322,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       visibilityNote:
         'Section still visible on live site until you publish. Discard draft to undo.',
       suggestion: 'Ask if they want to publish now, or continue editing.',
-      ...result.data,
+      ...removeData,
     };
   }),
 });
@@ -366,7 +368,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       '/storefront/reorder-sections',
       tenantId,
       validatedParams,
-      GenericRecordResponse
+      ReorderSectionsResponse
     );
 
     if (!result.ok) {
@@ -377,6 +379,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     }
 
     // FIX #812: Return with clear visibility status
+    const { success: _ok2, ...reorderData } = result.data;
     return {
       success: true,
       verified: true,
@@ -387,7 +390,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       message: `Section moved to position ${toPosition} in draft. Publish when ready to go live.`,
       visibilityNote: 'Order change is in DRAFT - live site order unchanged until published.',
       suggestion: 'Ask if they want to publish now, or continue editing.',
-      ...result.data,
+      ...reorderData,
     };
   }),
 });

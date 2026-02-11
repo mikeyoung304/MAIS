@@ -30,7 +30,7 @@ import {
 } from '../utils.js';
 import {
   SectionContentResponse,
-  GenerateVariantsResponse as GenerateVariantsApiResponseSchema,
+  GenerateVariantsResponse,
   StorefrontStructureResponse,
 } from '../types/api-responses.js';
 import { TOTAL_SECTIONS } from '../constants/shared.js';
@@ -239,7 +239,7 @@ This is a T1 tool - generates options without changing the draft.`,
         },
         tones: TONE_VARIANTS,
       },
-      GenerateVariantsApiResponseSchema
+      GenerateVariantsResponse
     );
 
     if (!variantsResult.ok) {

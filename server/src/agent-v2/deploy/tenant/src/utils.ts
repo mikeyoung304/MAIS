@@ -42,7 +42,11 @@ const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 if (
   MAIS_API_URL.startsWith('http://') &&
   !MAIS_API_URL.includes('localhost') &&
-  !MAIS_API_URL.includes('127.0.0.1')
+  !MAIS_API_URL.includes('127.0.0.1') &&
+  !MAIS_API_URL.includes('0.0.0.0') &&
+  !MAIS_API_URL.includes('[::1]') &&
+  !MAIS_API_URL.includes('::1') &&
+  !MAIS_API_URL.includes('host.docker.internal')
 ) {
   throw new Error(`MAIS_API_URL must use HTTPS for non-localhost hosts. Got: ${MAIS_API_URL}`);
 }
@@ -199,7 +203,7 @@ export async function callBackendAPI<T>(
         { endpoint, method, status: response.status, error: errorText },
         '[TenantAgent] Backend API error'
       );
-      throw new Error(`Backend API error: ${response.status} - ${errorText}`);
+      throw new Error(`Backend API error: ${response.status}`);
     }
 
     return response.json() as Promise<T>;
@@ -239,8 +243,8 @@ export async function callMaisApiTyped<T>(
 
   const parsed = responseSchema.safeParse(result.data);
   if (!parsed.success) {
-    logger.warn({ endpoint, errors: parsed.error.format() }, '[API] Response shape mismatch');
-    return { ok: false, error: `Response validation failed: ${parsed.error.message}` };
+    logger.error({ endpoint, errors: parsed.error.format() }, '[API] Response shape mismatch');
+    return { ok: false, error: 'Unexpected response format from backend' };
   }
   return { ok: true, data: parsed.data };
 }
@@ -364,7 +368,11 @@ export function wrapToolExecute<P, R>(
       if (err instanceof ToolError) {
         return { success: false, error: err.message };
       }
-      throw err; // Re-throw unexpected errors
+      logger.error(
+        { error: err instanceof Error ? err.message : String(err) },
+        '[Tool] Unexpected error in tool execution'
+      );
+      return { success: false, error: 'An unexpected error occurred' };
     }
   };
 }

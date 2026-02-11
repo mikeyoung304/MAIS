@@ -16,14 +16,17 @@ import { FunctionTool } from '@google/adk';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import {
-  callMaisApi,
   callMaisApiTyped,
   requireTenantId,
   validateParams,
   wrapToolExecute,
   logger,
 } from '../utils.js';
-import { GenericRecordResponse } from '../types/api-responses.js';
+import {
+  PreviewDraftResponse,
+  PublishAllResponse,
+  DiscardAllResponse,
+} from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Confirmation Token System (T3 Defense-in-Depth)
@@ -114,7 +117,7 @@ This is a T1 tool - executes immediately.`,
       '/storefront/preview',
       tenantId,
       {},
-      GenericRecordResponse
+      PreviewDraftResponse
     );
 
     if (!result.ok) {
@@ -239,12 +242,7 @@ This affects the LIVE site that visitors see.`,
     logger.info({}, '[TenantAgent] publish_draft: token validated, proceeding');
 
     // Call backend API
-    const result = await callMaisApiTyped(
-      '/storefront/publish',
-      tenantId,
-      {},
-      GenericRecordResponse
-    );
+    const result = await callMaisApiTyped('/storefront/publish', tenantId, {}, PublishAllResponse);
 
     if (!result.ok) {
       return {
@@ -253,13 +251,14 @@ This affects the LIVE site that visitors see.`,
       };
     }
 
+    const { success: _ok, ...publishData } = result.data;
     return {
       success: true,
       published: true,
       hasDraft: false,
       message: 'Published! Your changes are now live.',
       dashboardAction: { type: 'PUBLISH_SITE' },
-      ...result.data,
+      ...publishData,
     };
   }),
 });
@@ -373,12 +372,7 @@ the confirmation prompt.
     logger.info({}, '[TenantAgent] discard_draft: token validated, proceeding');
 
     // Call backend API
-    const result = await callMaisApiTyped(
-      '/storefront/discard',
-      tenantId,
-      {},
-      GenericRecordResponse
-    );
+    const result = await callMaisApiTyped('/storefront/discard', tenantId, {}, DiscardAllResponse);
 
     if (!result.ok) {
       return {
@@ -387,12 +381,13 @@ the confirmation prompt.
       };
     }
 
+    const { success: _ok2, ...discardData } = result.data;
     return {
       success: true,
       discarded: true,
       hasDraft: false,
       message: 'Draft discarded. Your site is back to the live version.',
-      ...result.data,
+      ...discardData,
     };
   }),
 });

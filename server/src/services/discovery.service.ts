@@ -235,10 +235,6 @@ export class DiscoveryService {
       discoveryFacts['_researchTriggered'] = true;
     }
 
-    await this.tenantRepo.update(tenantId, {
-      branding: { ...branding, discoveryFacts },
-    });
-
     // Filter _-prefixed metadata keys from fact keys (slot machine only sees real facts)
     const knownFactKeys = Object.keys(discoveryFacts).filter((k) => !k.startsWith('_'));
     const previousPhase = (tenant.onboardingPhase as string) || 'NOT_STARTED';
@@ -247,16 +243,16 @@ export class DiscoveryService {
     const researchTriggered = alreadyTriggered || shouldTriggerResearch;
     const slotResult = computeSlotMachine(knownFactKeys, previousPhase, researchTriggered);
 
-    // Advance phase if needed (monotonic -- never moves backward)
+    // Single DB write: store facts + advance phase if needed (merged from two sequential updates)
+    const updateData: Record<string, unknown> = { branding: { ...branding, discoveryFacts } };
     if (slotResult.phaseAdvanced) {
-      await this.tenantRepo.update(tenantId, {
-        onboardingPhase: slotResult.currentPhase,
-      });
+      updateData.onboardingPhase = slotResult.currentPhase;
       logger.info(
         { tenantId, from: previousPhase, to: slotResult.currentPhase },
         '[DiscoveryService] Onboarding phase advanced'
       );
     }
+    await this.tenantRepo.update(tenantId, updateData);
 
     // Invalidate bootstrap cache so next request gets updated facts
     this.invalidateBootstrapCache(tenantId);
@@ -297,11 +293,16 @@ export class DiscoveryService {
 
     const branding = (tenant.branding as Record<string, unknown>) || {};
     const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
-    const factKeys = Object.keys(discoveryFacts);
+
+    // Filter out _-prefixed internal metadata keys (e.g. _researchTriggered)
+    const filteredFacts = Object.fromEntries(
+      Object.entries(discoveryFacts).filter(([k]) => !k.startsWith('_'))
+    );
+    const factKeys = Object.keys(filteredFacts);
 
     return {
       success: true,
-      facts: discoveryFacts,
+      facts: filteredFacts,
       factCount: factKeys.length,
       factKeys,
       message: factKeys.length > 0 ? `Known facts: ${factKeys.join(', ')}` : 'No facts stored yet.',

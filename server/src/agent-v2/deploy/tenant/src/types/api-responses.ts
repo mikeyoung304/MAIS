@@ -218,14 +218,97 @@ export const GenerateVariantsResponse = z
 export type GenerateVariantsResponse = z.infer<typeof GenerateVariantsResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Generic Passthrough: for endpoints where we spread result.data
-// (branding, draft, storefront-write operations)
+// Update Branding: /storefront/update-branding
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Used for endpoints that return arbitrary data we spread into the response */
-export const GenericRecordResponse = z.record(z.unknown());
+export const UpdateBrandingResponse = z
+  .object({
+    success: z.boolean(),
+    updated: z.array(z.string()),
+    note: z.string().optional(),
+  })
+  .passthrough();
 
-export type GenericRecordResponse = z.infer<typeof GenericRecordResponse>;
+export type UpdateBrandingResponse = z.infer<typeof UpdateBrandingResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Remove Section: /storefront/remove-section
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RemoveSectionResponse = z
+  .object({
+    success: z.boolean(),
+    sectionId: z.string().optional(),
+    removedSectionId: z.string().optional(),
+    hasDraft: z.boolean().optional(),
+    note: z.string().optional(),
+  })
+  .passthrough();
+
+export type RemoveSectionResponse = z.infer<typeof RemoveSectionResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reorder Sections: /storefront/reorder-sections
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ReorderSectionsResponse = z
+  .object({
+    success: z.boolean(),
+    sectionId: z.string().optional(),
+    newPosition: z.number().optional(),
+    hasDraft: z.boolean().optional(),
+  })
+  .passthrough();
+
+export type ReorderSectionsResponse = z.infer<typeof ReorderSectionsResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Preview Draft: /storefront/preview
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PreviewDraftResponse = z
+  .object({
+    hasDraft: z.boolean(),
+    previewUrl: z.string().nullable().optional(),
+    liveUrl: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export type PreviewDraftResponse = z.infer<typeof PreviewDraftResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Publish All: /storefront/publish
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PublishAllResponse = z
+  .object({
+    success: z.boolean(),
+    action: z.string().optional(),
+    publishedAt: z.string().optional(),
+    publishedCount: z.number().optional(),
+    hasDraft: z.boolean().optional(),
+    liveUrl: z.string().nullable().optional(),
+    note: z.string().optional(),
+  })
+  .passthrough();
+
+export type PublishAllResponse = z.infer<typeof PublishAllResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discard All: /storefront/discard
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const DiscardAllResponse = z
+  .object({
+    success: z.boolean(),
+    action: z.string().optional(),
+    discardedCount: z.number().optional(),
+    hasDraft: z.boolean().optional(),
+    note: z.string().optional(),
+  })
+  .passthrough();
+
+export type DiscardAllResponse = z.infer<typeof DiscardAllResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Add Section: /storefront/add-section
