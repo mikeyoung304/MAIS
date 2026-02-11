@@ -20,7 +20,20 @@
 
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import {
+  callMaisApi,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import {
+  SectionContentResponse,
+  GenerateVariantsResponse,
+  StorefrontStructureResponse,
+} from '../types/api-responses.js';
+import { TOTAL_SECTIONS } from '../constants/shared.js';
 import type {
   GuidedRefinementState,
   PreferenceMemory,
@@ -36,13 +49,6 @@ import type {
 const TONE_VARIANTS = ['professional', 'premium', 'friendly'] as const;
 const STATE_KEY = 'guidedRefinementState';
 const MAX_TONE_HISTORY = 5;
-
-/**
- * Total canonical sections matching SECTION_BLUEPRINT in @macon/contracts.
- * @macon/contracts is not available in the agent deploy — keep in sync manually.
- * @see packages/contracts/src/schemas/section-blueprint.schema.ts
- */
-const TOTAL_SECTIONS = 8;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions
@@ -189,26 +195,9 @@ export const generateSectionVariantsTool = new FunctionTool({
 
 This is a T1 tool - generates options without changing the draft.`,
   parameters: GenerateSectionVariantsParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = GenerateSectionVariantsParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-    const { sectionId } = parseResult.data;
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId } = validateParams(GenerateSectionVariantsParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check context.state is available
     if (!context?.state) {
@@ -221,7 +210,12 @@ This is a T1 tool - generates options without changing the draft.`,
     logger.info({ sectionId, tenantId }, '[TenantAgent] generate_section_variants called');
 
     // 1. Get current section content
-    const sectionResult = await callMaisApi('/storefront/section', tenantId, { sectionId });
+    const sectionResult = await callMaisApiTyped(
+      '/storefront/section',
+      tenantId,
+      { sectionId },
+      SectionContentResponse
+    );
     if (!sectionResult.ok) {
       return {
         success: false,
@@ -229,24 +223,24 @@ This is a T1 tool - generates options without changing the draft.`,
       };
     }
 
-    const section = sectionResult.data as {
-      type: string;
-      headline?: string;
-      subheadline?: string;
-      content?: string;
-    };
+    const section = sectionResult.data;
 
     // 2. Generate variants via backend API (handles LLM call + sanitization)
-    const variantsResult = await callMaisApi('/content-generation/generate-variants', tenantId, {
-      sectionId,
-      sectionType: section.type,
-      currentContent: {
-        headline: section.headline,
-        subheadline: section.subheadline,
-        content: section.content,
+    const variantsResult = await callMaisApiTyped(
+      '/content-generation/generate-variants',
+      tenantId,
+      {
+        sectionId,
+        sectionType: section.type,
+        currentContent: {
+          headline: section.headline,
+          subheadline: section.subheadline,
+          content: section.content,
+        },
+        tones: TONE_VARIANTS,
       },
-      tones: TONE_VARIANTS,
-    });
+      GenerateVariantsResponse
+    );
 
     if (!variantsResult.ok) {
       return {
@@ -255,11 +249,7 @@ This is a T1 tool - generates options without changing the draft.`,
       };
     }
 
-    const generated = variantsResult.data as {
-      variants: Record<ToneVariant, VariantContent>;
-      recommendation: ToneVariant;
-      rationale: string;
-    };
+    const generated = variantsResult.data;
 
     // 3. Store variants in session state
     const state = getState(context);
@@ -317,7 +307,7 @@ This is a T1 tool - generates options without changing the draft.`,
         variants: ['professional', 'premium', 'friendly'],
       },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -347,26 +337,9 @@ export const applySectionVariantTool = new FunctionTool({
 
 This is a T2 tool - applies changes to draft.`,
   parameters: ApplySectionVariantParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = ApplySectionVariantParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-    const { sectionId, variant } = parseResult.data;
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId, variant } = validateParams(ApplySectionVariantParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check context.state is available
     if (!context?.state) {
@@ -440,7 +413,7 @@ This is a T2 tool - applies changes to draft.`,
         sectionId,
       },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -471,17 +444,8 @@ export const markSectionCompleteTool = new FunctionTool({
 
 This is a T1 tool - updates state only.`,
   parameters: MarkSectionCompleteParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = MarkSectionCompleteParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-    const { sectionId } = parseResult.data;
+  execute: wrapToolExecute(async (params, context) => {
+    const { sectionId } = validateParams(MarkSectionCompleteParams, params);
 
     // Check context.state is available
     if (!context?.state) {
@@ -536,7 +500,7 @@ This is a T1 tool - updates state only.`,
         ? { type: 'SHOW_PUBLISH_READY' }
         : { type: 'HIGHLIGHT_NEXT_SECTION' },
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -567,25 +531,9 @@ export const getNextIncompleteSectionTool = new FunctionTool({
 
 This is a T1 tool - reads state only.`,
   parameters: GetNextIncompleteSectionParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // REQUIRED: Zod validation as first line (Pitfall #56)
-    const parseResult = GetNextIncompleteSectionParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    validateParams(GetNextIncompleteSectionParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check context.state is available
     if (!context?.state) {
@@ -598,7 +546,12 @@ This is a T1 tool - reads state only.`,
     logger.info({ tenantId }, '[TenantAgent] get_next_incomplete_section called');
 
     // 1. Get page structure
-    const structureResult = await callMaisApi('/storefront/structure', tenantId, {});
+    const structureResult = await callMaisApiTyped(
+      '/storefront/structure',
+      tenantId,
+      {},
+      StorefrontStructureResponse
+    );
     if (!structureResult.ok) {
       return {
         success: false,
@@ -606,21 +559,16 @@ This is a T1 tool - reads state only.`,
       };
     }
 
-    const pages = structureResult.data as Array<{
-      pageName: string;
-      sections: Array<{
-        sectionId: string;
-        type: string;
-        headline?: string;
-      }>;
-    }>;
+    // API returns flat sections array, not nested pages
+    // See: server/src/routes/internal-agent.routes.ts /storefront/structure
+    const structureData = structureResult.data;
 
     // 2. Get completed sections from state
     const state = getState(context);
 
     // 3. Find first incomplete section
-    const allSections = pages.flatMap((page) => page.sections);
-    const nextSection = allSections.find((s) => !state.completedSections.includes(s.sectionId));
+    const allSections = structureData.sections;
+    const nextSection = allSections.find((s) => !state.completedSections.includes(s.id));
 
     if (!nextSection) {
       // All complete
@@ -641,7 +589,7 @@ This is a T1 tool - reads state only.`,
     }
 
     // 4. Update current section
-    state.currentSectionId = nextSection.sectionId;
+    state.currentSectionId = nextSection.id;
     saveState(context, state);
 
     // Determine if this section type supports variants
@@ -649,7 +597,7 @@ This is a T1 tool - reads state only.`,
     const hasVariants = variantSectionTypes.includes(nextSection.type);
 
     logger.info(
-      { sectionId: nextSection.sectionId, type: nextSection.type },
+      { sectionId: nextSection.id, type: nextSection.type },
       '[TenantAgent] Next section identified'
     );
 
@@ -657,7 +605,7 @@ This is a T1 tool - reads state only.`,
       success: true,
       allComplete: false,
       nextSection: {
-        sectionId: nextSection.sectionId,
+        sectionId: nextSection.id,
         type: nextSection.type,
         headline: nextSection.headline,
         hasVariants,
@@ -671,8 +619,8 @@ This is a T1 tool - reads state only.`,
         : `Moving to your ${nextSection.type} section. This one doesn't need variants—let me check if it looks good.`,
       dashboardAction: {
         type: 'SCROLL_TO_SECTION',
-        sectionId: nextSection.sectionId,
+        sectionId: nextSection.id,
       },
     };
-  },
+  }),
 });

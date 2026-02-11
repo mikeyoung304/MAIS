@@ -7,9 +7,16 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, getTenantId, logger } from '../utils.js';
+import {
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import { UpdateBrandingResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schema
@@ -61,29 +68,13 @@ Color format: hex with # (e.g., "#1a365d", "#ffffff")
 
 This is a T2 tool - executes and shows result.`,
   parameters: UpdateBrandingParams,
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate with Zod first (pitfall #56)
-    const parseResult = UpdateBrandingParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: 'Invalid parameters',
-        details: parseResult.error.format(),
-      };
-    }
-
-    // Get tenant ID from context
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validatedParams = validateParams(UpdateBrandingParams, params);
+    const tenantId = requireTenantId(context);
 
     // Check that at least one field is being updated
     const { primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily, logoUrl } =
-      parseResult.data;
+      validatedParams;
     if (
       !primaryColor &&
       !secondaryColor &&
@@ -108,7 +99,12 @@ This is a T2 tool - executes and shows result.`,
     );
 
     // Call backend API
-    const result = await callMaisApi('/storefront/update-branding', tenantId, parseResult.data);
+    const result = await callMaisApiTyped(
+      '/storefront/update-branding',
+      tenantId,
+      validatedParams,
+      UpdateBrandingResponse
+    );
 
     if (!result.ok) {
       return {
@@ -117,10 +113,11 @@ This is a T2 tool - executes and shows result.`,
       };
     }
 
+    const { success: _ok, ...brandingData } = result.data;
     return {
       success: true,
       message: 'Branding updated. Changes are live.',
-      ...(result.data as Record<string, unknown>),
+      ...brandingData,
     };
-  },
+  }),
 });

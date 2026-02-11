@@ -11,9 +11,16 @@
  * @see CLAUDE.md pitfall #49 (discovery facts dual-source)
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, getTenantId } from '../utils.js';
+import {
+  logger,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+} from '../utils.js';
+import { StoreDiscoveryFactResponse, GetDiscoveryFactsResponse } from '../types/api-responses.js';
 import { DISCOVERY_FACT_KEYS } from '../constants/discovery-facts.js';
 
 // Re-export for backward compatibility with tools/index.ts
@@ -29,16 +36,15 @@ export { DISCOVERY_FACT_KEYS, type DiscoveryFactKey } from '../constants/discove
  * Active memory management - call this when you learn something important
  * about the business during conversation.
  *
- * Part of the Fact-to-Storefront Bridge pattern:
+ * Part of the Slot Machine Protocol:
  * 1. User shares info → store_discovery_fact
- * 2. Immediately after → update_section to apply it
+ * 2. Response includes nextAction → follow it deterministically
  */
 export const storeDiscoveryFactTool = new FunctionTool({
   name: 'store_discovery_fact',
   description: `Store a fact about the business learned during conversation.
 
 CRITICAL: Call this when you learn something important about the business.
-This is part of the Fact-to-Storefront Bridge - after storing, immediately call update_section to apply it.
 
 Examples:
 - User says "I'm a life coach" → store_discovery_fact(key: "businessType", value: "life coach")
@@ -49,7 +55,12 @@ Examples:
 
 Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}
 
-After storing a fact that relates to storefront content, IMMEDIATELY call update_section to apply it.`,
+After storing, the response includes a nextAction from the slot machine.
+Follow nextAction deterministically:
+- ASK: Ask the question from missingForNext[0]
+- BUILD_FIRST_DRAFT: Call build_first_draft to build MVP sections
+- TRIGGER_RESEARCH: Call delegate_to_research
+- OFFER_REFINEMENT: Invite feedback on the draft`,
 
   parameters: z.object({
     key: z.enum(DISCOVERY_FACT_KEYS).describe('The type of fact being stored'),
@@ -58,62 +69,38 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
       .describe('The value to store (string, number, or object for complex data like location)'),
   }),
 
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #56)
-    const parseResult = z
-      .object({
+  execute: wrapToolExecute(async (params, context) => {
+    const { key, value } = validateParams(
+      z.object({
         key: z.enum(DISCOVERY_FACT_KEYS),
         value: z.unknown(),
-      })
-      .safeParse(params);
-
-    if (!parseResult.success) {
-      return {
-        stored: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-      };
-    }
-
-    const { key, value } = parseResult.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        stored: false,
-        error: 'No tenant context available',
-      };
-    }
+      }),
+      params
+    );
+    const tenantId = requireTenantId(context);
 
     logger.info({ key, tenantId }, '[TenantAgent] store_discovery_fact');
 
-    const result = await callMaisApi('/store-discovery-fact', tenantId, {
-      key,
-      value,
-    });
+    const result = await callMaisApiTyped(
+      '/store-discovery-fact',
+      tenantId,
+      {
+        key,
+        value,
+      },
+      StoreDiscoveryFactResponse
+    );
 
     if (!result.ok) {
       return {
-        stored: false,
+        success: false,
         error: result.error,
         suggestion: 'Fact not stored, but you can continue the conversation.',
       };
     }
 
     // Return updated facts list + slot machine result so agent knows what to do next
-    const responseData = result.data as {
-      stored: boolean;
-      key: string;
-      value: unknown;
-      totalFactsKnown: number;
-      knownFactKeys: string[];
-      currentPhase: string;
-      phaseAdvanced: boolean;
-      nextAction: string;
-      readySections: string[];
-      missingForNext: Array<{ key: string; question: string }>;
-      slotMetrics: { filled: number; total: number; utilization: number };
-      message: string;
-    };
+    const responseData = result.data;
 
     return {
       stored: true,
@@ -130,7 +117,7 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
       slotMetrics: responseData.slotMetrics,
       message: `Got it! I now know: ${responseData.knownFactKeys.join(', ')}`,
     };
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -159,18 +146,17 @@ Call this when:
 
   parameters: z.object({}),
 
-  execute: async (_params, context: ToolContext | undefined) => {
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (_params, context) => {
+    const tenantId = requireTenantId(context);
 
     logger.info({ tenantId }, '[TenantAgent] get_known_facts');
 
-    const result = await callMaisApi('/get-discovery-facts', tenantId);
+    const result = await callMaisApiTyped(
+      '/get-discovery-facts',
+      tenantId,
+      {},
+      GetDiscoveryFactsResponse
+    );
 
     if (!result.ok) {
       return {
@@ -180,13 +166,7 @@ Call this when:
       };
     }
 
-    const responseData = result.data as {
-      success: boolean;
-      facts: Record<string, unknown>;
-      factCount: number;
-      factKeys: string[];
-      message: string;
-    };
+    const responseData = result.data;
 
     return {
       success: true,
@@ -200,5 +180,5 @@ Call this when:
           ? `You already know ${responseData.factCount} facts. Don't ask about: ${responseData.factKeys.join(', ')}`
           : 'No facts stored yet. Start the interview pattern.',
     };
-  },
+  }),
 });

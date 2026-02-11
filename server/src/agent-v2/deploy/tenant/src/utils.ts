@@ -16,6 +16,7 @@
  */
 
 import type { ToolContext } from '@google/adk';
+import { z } from 'zod';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
@@ -41,7 +42,11 @@ const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 if (
   MAIS_API_URL.startsWith('http://') &&
   !MAIS_API_URL.includes('localhost') &&
-  !MAIS_API_URL.includes('127.0.0.1')
+  !MAIS_API_URL.includes('127.0.0.1') &&
+  !MAIS_API_URL.includes('0.0.0.0') &&
+  !MAIS_API_URL.includes('[::1]') &&
+  !MAIS_API_URL.includes('::1') &&
+  !MAIS_API_URL.includes('host.docker.internal')
 ) {
   throw new Error(`MAIS_API_URL must use HTTPS for non-localhost hosts. Got: ${MAIS_API_URL}`);
 }
@@ -198,7 +203,7 @@ export async function callBackendAPI<T>(
         { endpoint, method, status: response.status, error: errorText },
         '[TenantAgent] Backend API error'
       );
-      throw new Error(`Backend API error: ${response.status} - ${errorText}`);
+      throw new Error(`Backend API error: ${response.status}`);
     }
 
     return response.json() as Promise<T>;
@@ -220,6 +225,28 @@ export async function callBackendAPI<T>(
     );
     throw error;
   }
+}
+
+/**
+ * Call MAIS API with response validation.
+ * Parses response with Zod schema — returns typed data instead of unknown.
+ * Replaces unsafe `as` casts with runtime validation (todo 6010).
+ */
+export async function callMaisApiTyped<T>(
+  endpoint: string,
+  tenantId: string,
+  params: Record<string, unknown>,
+  responseSchema: z.ZodType<T>
+): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  const result = await callMaisApi(endpoint, tenantId, params);
+  if (!result.ok) return { ok: false, error: result.error ?? 'Request failed' };
+
+  const parsed = responseSchema.safeParse(result.data);
+  if (!parsed.success) {
+    logger.error({ endpoint, errors: parsed.error.format() }, '[API] Response shape mismatch');
+    return { ok: false, error: 'Unexpected response format from backend' };
+  }
+  return { ok: true, data: parsed.data };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -289,6 +316,65 @@ export function getTenantId(context: ToolContext | undefined): string | null {
 
   logger.warn({}, '[TenantAgent] Could not extract tenantId from context');
   return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool Boilerplate Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Error thrown by tool helpers — caught by wrapToolExecute */
+export class ToolError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ToolError';
+  }
+}
+
+/**
+ * Extract tenantId from ADK context, throwing if not found.
+ * Eliminates the 5-line null-check boilerplate in every tool.
+ */
+export function requireTenantId(context: ToolContext | undefined): string {
+  const tenantId = getTenantId(context);
+  if (!tenantId) {
+    throw new ToolError('No tenant context available');
+  }
+  return tenantId;
+}
+
+/**
+ * Validate tool parameters against a Zod schema, throwing on failure.
+ * Replaces the 5-line safeParse + error return boilerplate.
+ */
+export function validateParams<S extends z.ZodTypeAny>(schema: S, params: unknown): z.output<S> {
+  const result = schema.safeParse(params);
+  if (!result.success) {
+    throw new ToolError(`Invalid parameters: ${result.error.message}`);
+  }
+  return result.data as z.output<S>;
+}
+
+/**
+ * Wrap a tool execute function with standardized error handling.
+ * Catches ToolError and returns { success: false, error } consistently.
+ */
+export function wrapToolExecute<P, R>(
+  fn: (params: P, context: ToolContext | undefined) => Promise<R>
+): (params: P, context: ToolContext | undefined) => Promise<R | { success: false; error: string }> {
+  return async (params, context) => {
+    try {
+      return await fn(params, context);
+    } catch (err) {
+      if (err instanceof ToolError) {
+        return { success: false, error: err.message };
+      }
+      logger.error(
+        { error: err instanceof Error ? err.message : String(err) },
+        '[Tool] Unexpected error in tool execution'
+      );
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

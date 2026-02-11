@@ -18,9 +18,20 @@
  * @see todos/811-pending-p1-missing-package-management-tools.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, getTenantId } from '../utils.js';
+import {
+  logger,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+} from '../utils.js';
+import {
+  PackageListResponse,
+  PackageMutationResponse,
+  PackageDeleteResponse,
+} from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema for Package Management
@@ -115,32 +126,9 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
 
   parameters: ManagePackagesParams,
 
-  execute: async (params, context: ToolContext | undefined) => {
-    // -------------------------------------------------------------------------
-    // 1. Validate parameters (pitfall #56)
-    // -------------------------------------------------------------------------
-    const parseResult = ManagePackagesParams.safeParse(params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-        suggestion: 'Check the action type and required fields.',
-      };
-    }
-
-    const validParams = parseResult.data;
-
-    // -------------------------------------------------------------------------
-    // 2. Extract tenant ID (pitfall #54, #55)
-    // -------------------------------------------------------------------------
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-        suggestion: 'Session may have expired. Please refresh and try again.',
-      };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(ManagePackagesParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info({ action: validParams.action, tenantId }, '[TenantAgent] manage_packages');
 
@@ -215,7 +203,7 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
           error: 'Unknown action. Use: list, create, update, or delete',
         };
     }
-  },
+  }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,9 +211,14 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents.`,
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function handleListPackages(tenantId: string) {
-  const result = await callMaisApi('/content-generation/manage-packages', tenantId, {
-    action: 'list',
-  });
+  const result = await callMaisApiTyped(
+    '/content-generation/manage-packages',
+    tenantId,
+    {
+      action: 'list',
+    },
+    PackageListResponse
+  );
 
   if (!result.ok) {
     return {
@@ -235,17 +228,7 @@ async function handleListPackages(tenantId: string) {
     };
   }
 
-  const data = result.data as {
-    packages: Array<{
-      id: string;
-      name: string;
-      description: string;
-      priceInDollars: number;
-      slug: string;
-      active: boolean;
-    }>;
-    totalCount: number;
-  };
+  const data = result.data;
 
   return {
     success: true,
@@ -275,13 +258,18 @@ async function handleCreatePackage(
     ? `${params.description} (${params.duration})`
     : params.description;
 
-  const result = await callMaisApi('/content-generation/manage-packages', tenantId, {
-    action: 'create',
-    slug,
-    title: params.name,
-    description,
-    priceCents,
-  });
+  const result = await callMaisApiTyped(
+    '/content-generation/manage-packages',
+    tenantId,
+    {
+      action: 'create',
+      slug,
+      title: params.name,
+      description,
+      priceCents,
+    },
+    PackageMutationResponse
+  );
 
   if (!result.ok) {
     return {
@@ -291,16 +279,7 @@ async function handleCreatePackage(
     };
   }
 
-  const data = result.data as {
-    package: {
-      id: string;
-      name: string;
-      description: string;
-      priceInDollars: number;
-      slug: string;
-    };
-    totalCount: number;
-  };
+  const data = result.data;
 
   // Return full state for verification (pitfall #48)
   return {
@@ -345,7 +324,12 @@ async function handleUpdatePackage(
     updateData.priceCents = Math.round(params.priceInDollars * 100);
   }
 
-  const result = await callMaisApi('/content-generation/manage-packages', tenantId, updateData);
+  const result = await callMaisApiTyped(
+    '/content-generation/manage-packages',
+    tenantId,
+    updateData,
+    PackageMutationResponse
+  );
 
   if (!result.ok) {
     return {
@@ -355,16 +339,7 @@ async function handleUpdatePackage(
     };
   }
 
-  const data = result.data as {
-    package: {
-      id: string;
-      name: string;
-      description: string;
-      priceInDollars: number;
-      slug: string;
-    };
-    totalCount: number;
-  };
+  const data = result.data;
 
   // Return updated state for verification (pitfall #48)
   return {
@@ -388,10 +363,15 @@ async function handleUpdatePackage(
 async function handleDeletePackage(tenantId: string, params: { packageId: string }) {
   // Note: T3 confirmation check is done in the switch statement before calling this handler
 
-  const result = await callMaisApi('/content-generation/manage-packages', tenantId, {
-    action: 'delete',
-    packageId: params.packageId,
-  });
+  const result = await callMaisApiTyped(
+    '/content-generation/manage-packages',
+    tenantId,
+    {
+      action: 'delete',
+      packageId: params.packageId,
+    },
+    PackageDeleteResponse
+  );
 
   if (!result.ok) {
     return {
@@ -401,10 +381,7 @@ async function handleDeletePackage(tenantId: string, params: { packageId: string
     };
   }
 
-  const data = result.data as {
-    deletedId: string;
-    totalCount: number;
-  };
+  const data = result.data;
 
   return {
     success: true,

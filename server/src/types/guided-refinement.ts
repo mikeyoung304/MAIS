@@ -137,43 +137,6 @@ export interface GuidedRefinementState {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Factory Functions
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Create initial guided refinement state.
- * Called when entering guided refinement mode.
- */
-export function createInitialState(): GuidedRefinementState {
-  const now = new Date().toISOString();
-  return {
-    mode: 'interview',
-    currentSectionId: null,
-    completedSections: [],
-    sectionVariants: {},
-    preferenceMemory: {
-      toneHistory: [],
-    },
-    startedAt: now,
-    lastActivityAt: now,
-  };
-}
-
-/**
- * Create an empty variant set (before generation).
- */
-export function createEmptyVariantSet(): SectionVariantSet {
-  return {
-    professional: {},
-    premium: {},
-    friendly: {},
-    selectedVariant: null,
-    isComplete: false,
-    generatedAt: new Date().toISOString(),
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Dashboard Actions (extends existing DashboardAction type)
 // ─────────────────────────────────────────────────────────────────────────────
 

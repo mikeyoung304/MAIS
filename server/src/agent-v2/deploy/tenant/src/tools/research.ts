@@ -13,9 +13,18 @@
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, fetchWithTimeout, getTenantId, callMaisApi, TTLCache } from '../utils.js';
+import {
+  logger,
+  fetchWithTimeout,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  callMaisApiTyped,
+  TTLCache,
+} from '../utils.js';
+import { GetResearchDataResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
@@ -140,31 +149,15 @@ Examples:
     location: z.string().describe('City and state (e.g., "Austin, TX", "Denver, Colorado")'),
   }),
 
-  execute: async (params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #56)
-    const parseResult = z
-      .object({
+  execute: wrapToolExecute(async (params, context) => {
+    const { businessType, location } = validateParams(
+      z.object({
         businessType: z.string().min(1),
         location: z.string().min(1),
-      })
-      .safeParse(params);
-
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-      };
-    }
-
-    const { businessType, location } = parseResult.data;
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+      }),
+      params
+    );
+    const tenantId = requireTenantId(context);
 
     // Tier 1: Check in-memory TTL cache (instant)
     const cacheKey = `${tenantId}:${businessType.toLowerCase()}:${location.toLowerCase()}`;
@@ -179,21 +172,32 @@ Examples:
 
     // Tier 2: Check backend for pre-computed results (instant if async research finished)
     try {
-      const backendResult = await callMaisApi('/get-research-data', tenantId);
+      const backendResult = await callMaisApiTyped(
+        '/get-research-data',
+        tenantId,
+        {},
+        GetResearchDataResponse
+      );
       if (backendResult.ok) {
-        const payload = backendResult.data as {
-          hasData: boolean;
-          researchData: ResearchResult | null;
-        };
+        const payload = backendResult.data;
         if (payload.hasData && payload.researchData) {
           logger.info(
             { tenantId, businessType, location },
             '[Research] Pre-computed results from backend'
           );
-          // Cache the pre-computed results locally
-          researchCache.set(cacheKey, payload.researchData);
+          // Construct full ResearchResult for cache (backend data may lack success/businessType/location)
+          const cachedResult: ResearchResult = {
+            success: true,
+            businessType,
+            location,
+            competitorPricing: payload.researchData.competitorPricing,
+            marketPositioning: payload.researchData.marketPositioning,
+            localDemand: payload.researchData.localDemand,
+            insights: payload.researchData.insights,
+          };
+          researchCache.set(cacheKey, cachedResult);
           return {
-            ...payload.researchData,
+            ...cachedResult,
             fromCache: true,
             source: 'backend-precomputed',
           };
@@ -321,5 +325,5 @@ Examples:
         suggestion: 'Continue without research data. Ask the user about their pricing directly.',
       };
     }
-  },
+  }),
 });

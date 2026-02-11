@@ -13,9 +13,23 @@
  * @see docs/solutions/agent-issues/AUTONOMOUS_FIRST_DRAFT_WORKFLOW.md
  */
 
-import { FunctionTool, type ToolContext } from '@google/adk';
+import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, getTenantId } from '../utils.js';
+import {
+  logger,
+  callMaisApi,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+} from '../utils.js';
+import {
+  StorefrontStructureResponse,
+  GetDiscoveryFactsResponse,
+  GetResearchDataResponse,
+  PackageListResponse,
+} from '../types/api-responses.js';
+import { MVP_SECTION_TYPES, SEED_PACKAGE_NAMES } from '../constants/shared.js';
 
 /** Shape of pre-computed research data from the backend */
 interface ResearchData {
@@ -75,28 +89,30 @@ No user approval needed for first draft — just build and announce.`,
 
   parameters: BuildFirstDraftParams,
 
-  execute: async (_params, context: ToolContext | undefined) => {
-    // Validate params (pitfall #56)
-    const parseResult = BuildFirstDraftParams.safeParse(_params);
-    if (!parseResult.success) {
-      return {
-        success: false,
-        error: `Invalid parameters: ${parseResult.error.message}`,
-      };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return {
-        success: false,
-        error: 'No tenant context available',
-      };
-    }
+  execute: wrapToolExecute(async (_params, context) => {
+    validateParams(BuildFirstDraftParams, _params);
+    const tenantId = requireTenantId(context);
 
     logger.info({ tenantId }, '[TenantAgent] build_first_draft called');
 
-    // 1. Get page structure with placeholder flags
-    const structureResult = await callMaisApi('/storefront/structure', tenantId, {});
+    // 1. Fetch all data in parallel — structure + facts are required,
+    //    research + packages are optional (failures won't block the build)
+    const [structureResult, factsResult, researchResult, listResult] = await Promise.all([
+      callMaisApiTyped('/storefront/structure', tenantId, {}, StorefrontStructureResponse),
+      callMaisApiTyped('/get-discovery-facts', tenantId, {}, GetDiscoveryFactsResponse),
+      callMaisApiTyped('/get-research-data', tenantId, {}, GetResearchDataResponse).catch(() => {
+        logger.debug({ tenantId }, '[TenantAgent] Research data fetch failed, continuing without');
+        return { ok: false as const, error: 'Research unavailable' };
+      }),
+      callMaisApiTyped(
+        '/content-generation/manage-packages',
+        tenantId,
+        { action: 'list' },
+        PackageListResponse
+      ).catch(() => {
+        return { ok: false as const, error: 'Packages unavailable' };
+      }),
+    ]);
 
     if (!structureResult.ok) {
       return {
@@ -105,9 +121,6 @@ No user approval needed for first draft — just build and announce.`,
         suggestion: 'Try calling get_page_structure to check the storefront state.',
       };
     }
-
-    // 2. Get known facts
-    const factsResult = await callMaisApi('/get-discovery-facts', tenantId);
 
     if (!factsResult.ok) {
       return {
@@ -119,33 +132,18 @@ No user approval needed for first draft — just build and announce.`,
 
     // API returns flat sections array, not nested pages
     // See: server/src/routes/internal-agent.routes.ts /storefront/structure
-    const structureData = structureResult.data as {
-      sections: Array<{
-        id: string;
-        page: string;
-        type: string;
-        headline: string;
-        hasPlaceholder: boolean;
-      }>;
-      totalCount: number;
-      hasDraft: boolean;
-    };
+    const structureData = structureResult.data;
 
-    const factsData = factsResult.data as {
-      facts: Record<string, unknown>;
-      factCount: number;
-      factKeys: string[];
-    };
+    const factsData = factsResult.data;
 
-    // 3. Find ALL MVP sections — the slot machine gates WHEN to build,
+    // 2. Find ALL MVP sections — the slot machine gates WHEN to build,
     // this tool should always return MVP sections for overwrite.
     // Seed defaults are not "real" content — always overwrite during first draft.
     //
     // Source of truth: packages/contracts/src/schemas/section-blueprint.schema.ts → MVP_REVEAL_SECTION_TYPES
-    // Cloud Run agent cannot import from @macon/contracts — keep in sync manually
+    // Cloud Run agent cannot import from @macon/contracts — synced via constants/shared.ts
     const allSections = structureData.sections ?? [];
-    const MVP_SECTIONS = new Set(['HERO', 'ABOUT', 'SERVICES']);
-    const mvpSections = allSections.filter((s) => MVP_SECTIONS.has(s.type));
+    const mvpSections = allSections.filter((s) => MVP_SECTION_TYPES.has(s.type));
 
     if (mvpSections.length === 0) {
       return {
@@ -157,31 +155,22 @@ No user approval needed for first draft — just build and announce.`,
       };
     }
 
-    // 4. Fetch research data (pre-computed by async backend trigger after Q2)
+    // 3. Extract research data (pre-computed by async backend trigger after Q2)
     // so the agent can cite market pricing when creating packages
     let researchData: ResearchData | null = null;
 
-    try {
-      const researchResult = await callMaisApi('/get-research-data', tenantId);
-      if (researchResult.ok) {
-        const payload = researchResult.data as {
-          hasData: boolean;
-          researchData: ResearchData | null;
-        };
-        if (payload.hasData && payload.researchData) {
-          researchData = payload.researchData;
-          logger.info(
-            { tenantId, hasPricing: !!researchData?.competitorPricing },
-            '[TenantAgent] build_first_draft found pre-computed research data'
-          );
-        }
+    if (researchResult.ok) {
+      const payload = researchResult.data;
+      if (payload.hasData && payload.researchData) {
+        researchData = payload.researchData;
+        logger.info(
+          { tenantId, hasPricing: !!researchData?.competitorPricing },
+          '[TenantAgent] build_first_draft found pre-computed research data'
+        );
       }
-    } catch {
-      // Non-fatal — agent will build without research data
-      logger.debug({ tenantId }, '[TenantAgent] Research data fetch failed, continuing without');
     }
 
-    // 5. Return structured data for the LLM to generate copy
+    // 4. Return structured data for the LLM to generate copy
     const sectionsToUpdate = mvpSections.map((s) => ({
       sectionId: s.id,
       sectionType: s.type,
@@ -201,7 +190,7 @@ No user approval needed for first draft — just build and announce.`,
       '[TenantAgent] build_first_draft identified MVP sections for overwrite'
     );
 
-    // Programmatic fallback: delete seed packages before agent creates real ones.
+    // 5. Programmatic fallback: delete seed packages before agent creates real ones.
     // The system prompt also instructs the agent to list-then-delete, but this ensures
     // cleanup even if the LLM skips the step. Defense-in-depth for financial-impact data.
     // API: single POST /manage-packages with action param (see packages.ts:226, :391)
@@ -210,32 +199,24 @@ No user approval needed for first draft — just build and announce.`,
     // with non-seed names must be preserved.
     //
     // Canonical source: @macon/contracts SEED_PACKAGE_NAMES
-    // Cloud Run agent cannot import from contracts — hardcoded here with cross-reference
-    const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
-
+    // Cloud Run agent cannot import from contracts — synced via constants/shared.ts
     try {
-      const listResult = await callMaisApi('/content-generation/manage-packages', tenantId, {
-        action: 'list',
-      });
       if (listResult.ok) {
         // API returns priceInDollars (dollars), not basePrice (cents) — see internal-agent.routes.ts
-        const packages =
-          (
-            listResult.data as {
-              packages?: Array<{ id: string; name: string; priceInDollars: number }>;
-            }
-          )?.packages ?? [];
+        const packages = listResult.data.packages ?? [];
         const defaultPackages = packages.filter(
           (pkg) =>
             pkg.priceInDollars === 0 &&
             SEED_PACKAGE_NAMES.includes(pkg.name as (typeof SEED_PACKAGE_NAMES)[number])
         );
-        for (const pkg of defaultPackages) {
-          await callMaisApi('/content-generation/manage-packages', tenantId, {
-            action: 'delete',
-            packageId: pkg.id,
-          });
-        }
+        await Promise.all(
+          defaultPackages.map((pkg) =>
+            callMaisApi('/content-generation/manage-packages', tenantId, {
+              action: 'delete',
+              packageId: pkg.id,
+            })
+          )
+        );
         if (defaultPackages.length > 0) {
           logger.info(
             { tenantId, deletedCount: defaultPackages.length },
@@ -269,5 +250,5 @@ No user approval needed for first draft — just build and announce.`,
         `${pricingHint} ` +
         'Explain WHY you wrote what you wrote — build with narrative.',
     };
-  },
+  }),
 });
