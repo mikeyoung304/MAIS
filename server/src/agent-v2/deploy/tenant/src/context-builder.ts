@@ -247,6 +247,7 @@ export async function buildTenantContext(tenantId: string): Promise<TenantAgentC
     }));
 
     // Build dashboard capabilities list for agent reference
+    // IMPORTANT: These must match actual tool names in tools/ directory
     const dashboardCapabilities = [
       // Navigation
       'navigate_to_section(section: "website" | "bookings" | "projects" | "settings")',
@@ -259,19 +260,17 @@ export async function buildTenantContext(tenantId: string): Promise<TenantAgentC
       'add_section(blockType) — add new section to storefront',
       'remove_section(sectionId) — remove section from storefront',
 
-      // Segments & Tiers
-      'add_segment(name) — adds new customer segment (max 3)',
-      'update_segment(segmentId, data) — update segment details',
-      'update_tier(segmentId, level, data) — update tier pricing/features',
+      // Packages
+      'manage_packages(action, ...) — create/update/delete/list bookable packages',
 
       // Publishing
-      'preview_website() — shows current draft state',
-      'publish_website() — requires confirmation (T3)',
-      'discard_draft() — discard changes, requires confirmation (T3)',
+      'show_preview() — shows current draft state',
+      'publish_draft() — requires confirmation (T3, token-based)',
+      'discard_draft() — discard changes, requires confirmation (T3, token-based)',
 
       // Project management
       'get_project_details(projectId) — view project details',
-      'send_project_message(projectId, message) — message customer',
+      'send_message_to_customer(projectId, message) — message customer',
       'update_project_status(projectId, status) — change project status',
     ];
 

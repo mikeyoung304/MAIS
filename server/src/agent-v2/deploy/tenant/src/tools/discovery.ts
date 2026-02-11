@@ -29,16 +29,15 @@ export { DISCOVERY_FACT_KEYS, type DiscoveryFactKey } from '../constants/discove
  * Active memory management - call this when you learn something important
  * about the business during conversation.
  *
- * Part of the Fact-to-Storefront Bridge pattern:
+ * Part of the Slot Machine Protocol:
  * 1. User shares info → store_discovery_fact
- * 2. Immediately after → update_section to apply it
+ * 2. Response includes nextAction → follow it deterministically
  */
 export const storeDiscoveryFactTool = new FunctionTool({
   name: 'store_discovery_fact',
   description: `Store a fact about the business learned during conversation.
 
 CRITICAL: Call this when you learn something important about the business.
-This is part of the Fact-to-Storefront Bridge - after storing, immediately call update_section to apply it.
 
 Examples:
 - User says "I'm a life coach" → store_discovery_fact(key: "businessType", value: "life coach")
@@ -49,7 +48,12 @@ Examples:
 
 Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}
 
-After storing a fact that relates to storefront content, IMMEDIATELY call update_section to apply it.`,
+After storing, the response includes a nextAction from the slot machine.
+Follow nextAction deterministically:
+- ASK: Ask the question from missingForNext[0]
+- BUILD_FIRST_DRAFT: Call build_first_draft to build MVP sections
+- TRIGGER_RESEARCH: Call delegate_to_research
+- OFFER_REFINEMENT: Invite feedback on the draft`,
 
   parameters: z.object({
     key: z.enum(DISCOVERY_FACT_KEYS).describe('The type of fact being stored'),
@@ -69,7 +73,7 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
 
     if (!parseResult.success) {
       return {
-        stored: false,
+        success: false,
         error: `Invalid parameters: ${parseResult.error.message}`,
       };
     }
@@ -79,7 +83,7 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
     const tenantId = getTenantId(context);
     if (!tenantId) {
       return {
-        stored: false,
+        success: false,
         error: 'No tenant context available',
       };
     }
@@ -93,7 +97,7 @@ After storing a fact that relates to storefront content, IMMEDIATELY call update
 
     if (!result.ok) {
       return {
-        stored: false,
+        success: false,
         error: result.error,
         suggestion: 'Fact not stored, but you can continue the conversation.',
       };

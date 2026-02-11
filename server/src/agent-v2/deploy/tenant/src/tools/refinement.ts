@@ -606,21 +606,26 @@ This is a T1 tool - reads state only.`,
       };
     }
 
-    const pages = structureResult.data as Array<{
-      pageName: string;
+    // API returns flat sections array, not nested pages
+    // See: server/src/routes/internal-agent.routes.ts /storefront/structure
+    const structureData = structureResult.data as {
       sections: Array<{
-        sectionId: string;
+        id: string;
+        page: string;
         type: string;
-        headline?: string;
+        headline: string;
+        hasPlaceholder: boolean;
       }>;
-    }>;
+      totalCount: number;
+      hasDraft: boolean;
+    };
 
     // 2. Get completed sections from state
     const state = getState(context);
 
     // 3. Find first incomplete section
-    const allSections = pages.flatMap((page) => page.sections);
-    const nextSection = allSections.find((s) => !state.completedSections.includes(s.sectionId));
+    const allSections = structureData.sections;
+    const nextSection = allSections.find((s) => !state.completedSections.includes(s.id));
 
     if (!nextSection) {
       // All complete
@@ -641,7 +646,7 @@ This is a T1 tool - reads state only.`,
     }
 
     // 4. Update current section
-    state.currentSectionId = nextSection.sectionId;
+    state.currentSectionId = nextSection.id;
     saveState(context, state);
 
     // Determine if this section type supports variants
@@ -649,7 +654,7 @@ This is a T1 tool - reads state only.`,
     const hasVariants = variantSectionTypes.includes(nextSection.type);
 
     logger.info(
-      { sectionId: nextSection.sectionId, type: nextSection.type },
+      { sectionId: nextSection.id, type: nextSection.type },
       '[TenantAgent] Next section identified'
     );
 
@@ -657,7 +662,7 @@ This is a T1 tool - reads state only.`,
       success: true,
       allComplete: false,
       nextSection: {
-        sectionId: nextSection.sectionId,
+        sectionId: nextSection.id,
         type: nextSection.type,
         headline: nextSection.headline,
         hasVariants,
@@ -671,7 +676,7 @@ This is a T1 tool - reads state only.`,
         : `Moving to your ${nextSection.type} section. This one doesn't need variants—let me check if it looks good.`,
       dashboardAction: {
         type: 'SCROLL_TO_SECTION',
-        sectionId: nextSection.sectionId,
+        sectionId: nextSection.id,
       },
     };
   },

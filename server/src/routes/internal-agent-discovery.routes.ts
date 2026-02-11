@@ -229,7 +229,7 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
 
   // ===========================================================================
   // POST /mark-greeted - Issue #5 Fix: Mark session as greeted
-  // Called by Concierge agent AFTER sending greeting to prevent repeat greetings
+  // Called by dashboard route (tenant-admin-tenant-agent.routes.ts) to prevent repeat greetings
   // ===========================================================================
 
   router.post('/mark-greeted', async (req: Request, res: Response) => {
