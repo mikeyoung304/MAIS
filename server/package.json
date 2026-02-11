@@ -40,7 +40,6 @@
     "create-tenant-with-stripe": "tsx scripts/create-tenant-with-stripe.ts",
     "delete-test-users": "tsx scripts/delete-test-users.ts",
     "delete-test-tenants": "tsx scripts/delete-test-tenants.ts",
-    "eval-batch": "tsx scripts/run-eval-batch.ts",
     "test:commission": "tsx scripts/test-commission.ts",
     "test:stripe-connect": "tsx scripts/test-stripe-connect.ts",
     "db:diagnose": "tsx scripts/diagnose-database.ts",

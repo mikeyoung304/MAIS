@@ -237,7 +237,7 @@ This is a T1 tool - generates options without changing the draft.`,
     };
 
     // 2. Generate variants via backend API (handles LLM call + sanitization)
-    const variantsResult = await callMaisApi('/marketing/generate-variants', tenantId, {
+    const variantsResult = await callMaisApi('/content-generation/generate-variants', tenantId, {
       sectionId,
       sectionType: section.type,
       currentContent: {

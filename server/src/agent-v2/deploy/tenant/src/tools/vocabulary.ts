@@ -126,7 +126,7 @@ This is a T1 tool - executes immediately.`,
     // but we pass it for logging/analytics purposes
     try {
       const response = await fetchWithTimeout(
-        `${MAIS_API_URL}${AGENT_API_PATH}/marketing/vocabulary/resolve`,
+        `${MAIS_API_URL}${AGENT_API_PATH}/content-generation/vocabulary/resolve`,
         {
           method: 'POST',
           headers: {

@@ -52,25 +52,3 @@ services:
         sync: false  # Required for Gemini AI - set from Google Cloud project
       - key: GOOGLE_VERTEX_LOCATION
         sync: false  # Required for Gemini AI - e.g., us-central1
-
-  # Agent Evaluation Cron Job
-  # Runs every 15 minutes to evaluate conversation traces
-  - type: cron
-    name: mais-eval-batch
-    runtime: node
-    region: oregon
-    plan: starter
-    schedule: "*/15 * * * *"  # Every 15 minutes
-    buildCommand: npm ci && npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && cd server && npm run prisma:generate
-    startCommand: cd server && npx tsx scripts/run-eval-batch.ts
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        sync: false
-      - key: DIRECT_URL
-        sync: false
-      - key: GOOGLE_VERTEX_PROJECT
-        sync: false  # Required for Gemini AI
-      - key: GOOGLE_VERTEX_LOCATION
-        sync: false  # Required for Gemini AI

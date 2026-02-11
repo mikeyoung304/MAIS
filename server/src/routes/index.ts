@@ -58,7 +58,6 @@ import { createPublicSchedulingRoutes } from './public-scheduling.routes';
 import { createTenantAdminSchedulingRoutes } from './tenant-admin-scheduling.routes';
 import { createPublicTenantRoutes } from './public-tenant.routes';
 import { createTenantAdminWebhookRoutes } from './tenant-admin-webhooks.routes';
-import { createPlatformAdminTracesRouter } from './platform-admin-traces.routes';
 import { createTenantAdminDomainsRouter } from './tenant-admin-domains.routes';
 import { DomainVerificationService } from '../services/domain-verification.service';
 import { createInternalRoutes } from './internal.routes';
@@ -493,12 +492,6 @@ export function createV1Router(
   // Register admin Stripe Connect routes (Express router, not ts-rest)
   // Use factory function with shared prisma instance to avoid connection pool exhaustion
   app.use('/v1/admin/tenants', authMiddleware, createAdminStripeRoutes(prismaClient));
-
-  // Register platform admin traces routes (for agent evaluation monitoring)
-  // Requires platform admin authentication - used to review flagged conversations
-  const platformAdminTracesRouter = createPlatformAdminTracesRouter(prismaClient);
-  app.use('/v1/platform/admin/traces', authMiddleware, platformAdminTracesRouter);
-  logger.info('✅ Platform admin traces routes mounted at /v1/platform/admin/traces');
 
   // Register tenant authentication routes (login, /me)
   if (services) {
