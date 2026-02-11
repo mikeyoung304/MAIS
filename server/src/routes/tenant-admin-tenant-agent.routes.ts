@@ -106,28 +106,37 @@ const AdkSessionDataSchema = z.object({
  * ADK A2A protocol response format.
  * Must handle both array and object formats (Pitfall #35).
  */
+/**
+ * ADK A2A protocol response format (array variant).
+ * Content is optional — ADK error events have errorCode/errorMessage but no content.
+ * Uses shared part schema from adk-client (Pitfall #18).
+ */
 const AdkResponseSchema = z.array(
   z.object({
-    content: z.object({
-      role: z.string(),
-      parts: z.array(
-        z.object({
-          text: z.string().optional(),
-          functionCall: z
-            .object({
-              name: z.string(),
-              args: z.record(z.unknown()),
-            })
-            .optional(),
-          functionResponse: z
-            .object({
-              name: z.string(),
-              response: z.record(z.unknown()),
-            })
-            .optional(),
-        })
-      ),
-    }),
+    content: z
+      .object({
+        role: z.string(),
+        parts: z.array(
+          z.object({
+            text: z.string().optional(),
+            functionCall: z
+              .object({
+                name: z.string(),
+                args: z.record(z.unknown()),
+              })
+              .optional(),
+            functionResponse: z
+              .object({
+                name: z.string(),
+                response: z.record(z.unknown()),
+              })
+              .optional(),
+          })
+        ),
+      })
+      .optional(),
+    errorCode: z.string().optional(),
+    errorMessage: z.string().optional(),
   })
 );
 
@@ -781,6 +790,8 @@ function extractDashboardActions(
   const actions: Array<{ type: string; payload: unknown }> = [];
 
   for (const item of data) {
+    // Skip error events with no content
+    if (!item.content?.parts) continue;
     for (const part of item.content.parts) {
       // Look for function responses that contain dashboard actions
       if (part.functionResponse) {
