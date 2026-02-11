@@ -51,12 +51,22 @@ const BRANDING_WRITE_RETRY_DELAY_MS = 50;
 
 export class ResearchService {
   private readonly researchAgentUrl: string | undefined;
+  private onBootstrapCacheInvalidate: ((tenantId: string) => void) | undefined;
 
   constructor(
     private readonly tenantRepo: PrismaTenantRepository,
-    private readonly invalidateBootstrapCache: (tenantId: string) => void
+    researchAgentUrl?: string
   ) {
-    this.researchAgentUrl = process.env.RESEARCH_AGENT_URL;
+    this.researchAgentUrl = researchAgentUrl;
+  }
+
+  /**
+   * Set the bootstrap cache invalidation callback.
+   * Used by DI to break the circular dependency: ResearchService ↔ DiscoveryService.
+   * Must be called before triggerAsync() is invoked.
+   */
+  setBootstrapCacheInvalidator(fn: (tenantId: string) => void): void {
+    this.onBootstrapCacheInvalidate = fn;
   }
 
   /**
@@ -106,7 +116,7 @@ export class ResearchService {
         if (response.ok) {
           const researchData = await response.json();
           await this.storeResearchData(tenantId, researchData);
-          this.invalidateBootstrapCache(tenantId);
+          this.onBootstrapCacheInvalidate?.(tenantId);
           logger.info({ tenantId }, '[ResearchService] Background research stored successfully');
         } else {
           logger.warn(

@@ -166,6 +166,9 @@ export interface DiscoveryRoutesDeps {
   contextBuilder?: ContextBuilderService;
   catalogService: CatalogService;
   internalApiSecret?: string;
+  /** Pre-built services from DI. When provided, route factory skips internal instantiation. */
+  discoveryService?: import('../services/discovery.service').DiscoveryService;
+  researchService?: import('../services/research.service').ResearchService;
 }
 
 export interface StorefrontRoutesDeps {

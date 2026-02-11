@@ -27,6 +27,9 @@ import { SectionContentService } from './services/section-content.service';
 import { HealthCheckService } from './services/health-check.service';
 import { WebhookDeliveryService } from './services/webhook-delivery.service';
 import { ProjectHubService } from './services/project-hub.service';
+import { DiscoveryService } from './services/discovery.service';
+import { ResearchService } from './services/research.service';
+import { createContextBuilderService } from './services/context-builder.service';
 import { UploadAdapter } from './adapters/upload.adapter';
 import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
 import { PackagesController } from './routes/packages.routes';
@@ -103,6 +106,8 @@ export interface Container {
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
     projectHub?: ProjectHubService; // Project Hub dual-faced communication
+    discovery?: DiscoveryService; // Onboarding discovery + bootstrap
+    research?: ResearchService; // Background research triggers
 
     // OPTIONAL SERVICES - Degrade gracefully (try/catch with logger.warn)
     // Application adapts behavior when these are unavailable
@@ -267,6 +272,19 @@ export function buildContainer(config: Config): Container {
     const sectionContentRepo = new PrismaSectionContentRepository(mockPrisma);
     const sectionContentService = new SectionContentService(sectionContentRepo);
 
+    // Create DiscoveryService + ResearchService (setter injection breaks circular dep)
+    const mockContextBuilder = createContextBuilderService(mockPrisma, sectionContentService);
+    const researchService = new ResearchService(mockTenantRepo, process.env.RESEARCH_AGENT_URL);
+    const discoveryService = new DiscoveryService(
+      mockTenantRepo,
+      mockContextBuilder,
+      researchService,
+      catalogService
+    );
+    researchService.setBootstrapCacheInvalidator((tenantId) =>
+      discoveryService.invalidateBootstrapCache(tenantId)
+    );
+
     // Create HealthCheckService with mock adapters (won't be used in mock mode)
     const healthCheckService = new HealthCheckService({
       stripeAdapter: undefined, // Mock mode doesn't use real adapters
@@ -323,6 +341,8 @@ export function buildContainer(config: Config): Container {
       reminder: reminderService,
       sectionContent: sectionContentService,
       projectHub: projectHubService,
+      discovery: discoveryService,
+      research: researchService,
     };
 
     const repositories = {
@@ -601,6 +621,19 @@ export function buildContainer(config: Config): Container {
   // Create ReminderService with real adapters
   const reminderService = new ReminderService(bookingRepo, catalogRepo, eventEmitter);
 
+  // Create DiscoveryService + ResearchService (setter injection breaks circular dep)
+  const realContextBuilder = createContextBuilderService(prisma, sectionContentService);
+  const researchService = new ResearchService(tenantRepo, process.env.RESEARCH_AGENT_URL);
+  const discoveryService = new DiscoveryService(
+    tenantRepo,
+    realContextBuilder,
+    researchService,
+    catalogService
+  );
+  researchService.setBootstrapCacheInvalidator((tenantId) =>
+    discoveryService.invalidateBootstrapCache(tenantId)
+  );
+
   // Create WebhookDeliveryService for outbound webhook delivery (TODO-278)
   const webhookDeliveryService = new WebhookDeliveryService(webhookSubscriptionRepo, eventEmitter);
 
@@ -752,6 +785,8 @@ export function buildContainer(config: Config): Container {
     sectionContent: sectionContentService,
     webhookDelivery: webhookDeliveryService,
     projectHub: projectHubService,
+    discovery: discoveryService,
+    research: researchService,
   };
 
   // Create EarlyAccessRepository for early access request persistence
