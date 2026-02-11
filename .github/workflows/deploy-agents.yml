@@ -157,15 +157,28 @@ jobs:
 
       # Create .env file from GitHub Secrets for ADK deployment
       # ADK reads .env to know what runtime env vars to set on Cloud Run
-      # See Pitfall #89: ADK deployment without .env in CI
+      # See Pitfall #81: ADK deployment without .env in CI
       - name: Create .env for ADK deployment
         run: |
           cd server/src/agent-v2/deploy/${{ matrix.agent }}
 
-          # Base env vars needed by all agents
-          cat > .env << 'EOF'
+          # Get research agent URL dynamically from Cloud Run (Pitfall #34: no hardcoded URLs)
+          RESEARCH_URL=$(gcloud run services describe research-agent \
+            --region=${{ env.GOOGLE_CLOUD_REGION }} \
+            --format='value(status.url)' 2>/dev/null || echo "")
+
+          if [ -z "$RESEARCH_URL" ]; then
+            echo "⚠️  Could not retrieve research agent URL from Cloud Run"
+          fi
+
+          # Env vars needed by agents at module load time:
+          # - INTERNAL_API_SECRET: required by all agents (utils.ts requireEnv)
+          # - MAIS_API_URL: has fallback but explicit is safer
+          # - RESEARCH_AGENT_URL: required by tenant agent (research.ts module-level throw)
+          cat > .env << EOF
           INTERNAL_API_SECRET=${{ secrets.INTERNAL_API_SECRET }}
           MAIS_API_URL=https://mais-5bwx.onrender.com
+          RESEARCH_AGENT_URL=${RESEARCH_URL}
           EOF
 
           # Verify .env was created with content
