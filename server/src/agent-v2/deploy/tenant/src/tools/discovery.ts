@@ -14,13 +14,10 @@
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { logger, callMaisApi, getTenantId } from '../utils.js';
-import { DISCOVERY_FACT_KEYS } from '../../../../../shared/constants/discovery-facts.js';
+import { DISCOVERY_FACT_KEYS } from '../constants/discovery-facts.js';
 
 // Re-export for backward compatibility with tools/index.ts
-export {
-  DISCOVERY_FACT_KEYS,
-  type DiscoveryFactKey,
-} from '../../../../../shared/constants/discovery-facts.js';
+export { DISCOVERY_FACT_KEYS, type DiscoveryFactKey } from '../constants/discovery-facts.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Store Discovery Fact Tool
