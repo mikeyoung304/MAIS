@@ -13,7 +13,14 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
+import {
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import { GenericRecordResponse, SectionContentResponse } from '../types/api-responses.js';
 import { PAGE_NAMES } from '../constants/shared.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,7 +83,12 @@ This is a T1 tool - executes immediately.`,
     logger.info({ pageName: validatedParams.pageName }, '[TenantAgent] get_page_structure called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/structure', tenantId, validatedParams);
+    const result = await callMaisApiTyped(
+      '/storefront/structure',
+      tenantId,
+      validatedParams,
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -87,7 +99,7 @@ This is a T1 tool - executes immediately.`,
 
     return {
       success: true,
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });
@@ -133,7 +145,12 @@ This is a T1 tool - executes immediately.`,
     );
 
     // Call backend API
-    const result = await callMaisApi('/storefront/section', tenantId, validatedParams);
+    const result = await callMaisApiTyped(
+      '/storefront/section',
+      tenantId,
+      validatedParams,
+      SectionContentResponse
+    );
 
     if (!result.ok) {
       return {
@@ -144,7 +161,7 @@ This is a T1 tool - executes immediately.`,
 
     return {
       success: true,
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });

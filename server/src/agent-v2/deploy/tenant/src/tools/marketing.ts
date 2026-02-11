@@ -41,13 +41,14 @@
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
 import {
-  callMaisApi,
+  callMaisApiTyped,
   getTenantId,
   requireTenantId,
   validateParams,
   wrapToolExecute,
   logger,
 } from '../utils.js';
+import { SectionContentResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -352,7 +353,12 @@ This is a T1 tool - reads content and returns instructions immediately.`,
     );
 
     // Fetch current content using existing storefront endpoint
-    const result = await callMaisApi('/storefront/section', tenantId, { sectionId });
+    const result = await callMaisApiTyped(
+      '/storefront/section',
+      tenantId,
+      { sectionId },
+      SectionContentResponse
+    );
 
     if (!result.ok) {
       return {
@@ -361,13 +367,7 @@ This is a T1 tool - reads content and returns instructions immediately.`,
       };
     }
 
-    const sectionData = result.data as {
-      headline?: string;
-      subheadline?: string;
-      content?: string;
-      ctaText?: string;
-      blockType?: string;
-    };
+    const sectionData = result.data;
 
     // Build improvement instructions
     const instructions = buildImprovementInstructions(

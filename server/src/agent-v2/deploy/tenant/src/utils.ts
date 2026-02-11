@@ -223,6 +223,28 @@ export async function callBackendAPI<T>(
   }
 }
 
+/**
+ * Call MAIS API with response validation.
+ * Parses response with Zod schema — returns typed data instead of unknown.
+ * Replaces unsafe `as` casts with runtime validation (todo 6010).
+ */
+export async function callMaisApiTyped<T>(
+  endpoint: string,
+  tenantId: string,
+  params: Record<string, unknown>,
+  responseSchema: z.ZodType<T>
+): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  const result = await callMaisApi(endpoint, tenantId, params);
+  if (!result.ok) return { ok: false, error: result.error ?? 'Request failed' };
+
+  const parsed = responseSchema.safeParse(result.data);
+  if (!parsed.success) {
+    logger.warn({ endpoint, errors: parsed.error.format() }, '[API] Response shape mismatch');
+    return { ok: false, error: `Response validation failed: ${parsed.error.message}` };
+  }
+  return { ok: true, data: parsed.data };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tenant ID Extraction
 // ─────────────────────────────────────────────────────────────────────────────

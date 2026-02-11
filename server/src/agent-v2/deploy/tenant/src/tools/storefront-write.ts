@@ -15,7 +15,20 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
+import {
+  callMaisApi,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import {
+  GenericRecordResponse,
+  SectionContentResponse,
+  AddSectionResponse,
+  SectionLifecycleResponse,
+} from '../types/api-responses.js';
 import { PAGE_NAMES, SECTION_TYPES } from '../constants/shared.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,7 +128,12 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     // ─────────────────────────────────────────────────────────────────────────
     // FIX #812: Verify the write succeeded before claiming success
     // ─────────────────────────────────────────────────────────────────────────
-    const verifyResult = await callMaisApi('/storefront/section', tenantId, { sectionId });
+    const verifyResult = await callMaisApiTyped(
+      '/storefront/section',
+      tenantId,
+      { sectionId },
+      SectionContentResponse
+    );
 
     if (!verifyResult.ok) {
       logger.warn({ sectionId }, '[TenantAgent] update_section: write succeeded but verify failed');
@@ -130,7 +148,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       };
     }
 
-    const updatedSection = verifyResult.data as Record<string, unknown>;
+    const updatedSection = verifyResult.data;
 
     // Return with full state for verification (pitfall #48) and clear visibility
     return {
@@ -207,7 +225,12 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     logger.info({ pageName, sectionType }, '[TenantAgent] add_section called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/add-section', tenantId, validatedParams);
+    const result = await callMaisApiTyped(
+      '/storefront/add-section',
+      tenantId,
+      validatedParams,
+      AddSectionResponse
+    );
 
     if (!result.ok) {
       return {
@@ -216,7 +239,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       };
     }
 
-    const data = result.data as Record<string, unknown>;
+    const data = result.data;
 
     // FIX #812: Return with clear visibility status
     return {
@@ -272,7 +295,12 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     logger.info({ sectionId }, '[TenantAgent] remove_section called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/remove-section', tenantId, validatedParams);
+    const result = await callMaisApiTyped(
+      '/storefront/remove-section',
+      tenantId,
+      validatedParams,
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -292,7 +320,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       visibilityNote:
         'Section still visible on live site until you publish. Discard draft to undo.',
       suggestion: 'Ask if they want to publish now, or continue editing.',
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });
@@ -334,7 +362,12 @@ This is a T2 tool - executes and shows preview in dashboard.`,
     logger.info({ sectionId, toPosition }, '[TenantAgent] reorder_sections called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/reorder-sections', tenantId, validatedParams);
+    const result = await callMaisApiTyped(
+      '/storefront/reorder-sections',
+      tenantId,
+      validatedParams,
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -354,7 +387,7 @@ This is a T2 tool - executes and shows preview in dashboard.`,
       message: `Section moved to position ${toPosition} in draft. Publish when ready to go live.`,
       visibilityNote: 'Order change is in DRAFT - live site order unchanged until published.',
       suggestion: 'Ask if they want to publish now, or continue editing.',
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });
@@ -425,10 +458,15 @@ Get sectionId from get_page_structure first.`,
     logger.info({ sectionId }, '[TenantAgent] publish_section called with confirmation');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/publish-section', tenantId, {
-      sectionId,
-      confirmationReceived: true,
-    });
+    const result = await callMaisApiTyped(
+      '/storefront/publish-section',
+      tenantId,
+      {
+        sectionId,
+        confirmationReceived: true,
+      },
+      SectionLifecycleResponse
+    );
 
     if (!result.ok) {
       return {
@@ -437,7 +475,7 @@ Get sectionId from get_page_structure first.`,
       };
     }
 
-    const data = result.data as Record<string, unknown>;
+    const data = result.data;
 
     return {
       success: true,
@@ -529,10 +567,15 @@ Get sectionId from get_page_structure first.`,
     logger.info({ sectionId }, '[TenantAgent] discard_section called with confirmation');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/discard-section', tenantId, {
-      sectionId,
-      confirmationReceived: true,
-    });
+    const result = await callMaisApiTyped(
+      '/storefront/discard-section',
+      tenantId,
+      {
+        sectionId,
+        confirmationReceived: true,
+      },
+      SectionLifecycleResponse
+    );
 
     if (!result.ok) {
       return {
@@ -541,7 +584,7 @@ Get sectionId from get_page_structure first.`,
       };
     }
 
-    const data = result.data as Record<string, unknown>;
+    const data = result.data;
 
     return {
       success: true,

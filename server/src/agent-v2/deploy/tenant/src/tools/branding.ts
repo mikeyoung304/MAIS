@@ -9,7 +9,14 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
+import {
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import { GenericRecordResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schema
@@ -92,7 +99,12 @@ This is a T2 tool - executes and shows result.`,
     );
 
     // Call backend API
-    const result = await callMaisApi('/storefront/update-branding', tenantId, validatedParams);
+    const result = await callMaisApiTyped(
+      '/storefront/update-branding',
+      tenantId,
+      validatedParams,
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -104,7 +116,7 @@ This is a T2 tool - executes and shows result.`,
     return {
       success: true,
       message: 'Branding updated. Changes are live.',
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });

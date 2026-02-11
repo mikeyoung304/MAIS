@@ -20,7 +20,19 @@
 
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
+import {
+  callMaisApi,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import {
+  SectionContentResponse,
+  GenerateVariantsResponse as GenerateVariantsApiResponseSchema,
+  StorefrontStructureResponse,
+} from '../types/api-responses.js';
 import { TOTAL_SECTIONS } from '../constants/shared.js';
 import type {
   GuidedRefinementState,
@@ -198,7 +210,12 @@ This is a T1 tool - generates options without changing the draft.`,
     logger.info({ sectionId, tenantId }, '[TenantAgent] generate_section_variants called');
 
     // 1. Get current section content
-    const sectionResult = await callMaisApi('/storefront/section', tenantId, { sectionId });
+    const sectionResult = await callMaisApiTyped(
+      '/storefront/section',
+      tenantId,
+      { sectionId },
+      SectionContentResponse
+    );
     if (!sectionResult.ok) {
       return {
         success: false,
@@ -206,24 +223,24 @@ This is a T1 tool - generates options without changing the draft.`,
       };
     }
 
-    const section = sectionResult.data as {
-      type: string;
-      headline?: string;
-      subheadline?: string;
-      content?: string;
-    };
+    const section = sectionResult.data;
 
     // 2. Generate variants via backend API (handles LLM call + sanitization)
-    const variantsResult = await callMaisApi('/content-generation/generate-variants', tenantId, {
-      sectionId,
-      sectionType: section.type,
-      currentContent: {
-        headline: section.headline,
-        subheadline: section.subheadline,
-        content: section.content,
+    const variantsResult = await callMaisApiTyped(
+      '/content-generation/generate-variants',
+      tenantId,
+      {
+        sectionId,
+        sectionType: section.type,
+        currentContent: {
+          headline: section.headline,
+          subheadline: section.subheadline,
+          content: section.content,
+        },
+        tones: TONE_VARIANTS,
       },
-      tones: TONE_VARIANTS,
-    });
+      GenerateVariantsApiResponseSchema
+    );
 
     if (!variantsResult.ok) {
       return {
@@ -232,11 +249,7 @@ This is a T1 tool - generates options without changing the draft.`,
       };
     }
 
-    const generated = variantsResult.data as {
-      variants: Record<ToneVariant, VariantContent>;
-      recommendation: ToneVariant;
-      rationale: string;
-    };
+    const generated = variantsResult.data;
 
     // 3. Store variants in session state
     const state = getState(context);
@@ -533,7 +546,12 @@ This is a T1 tool - reads state only.`,
     logger.info({ tenantId }, '[TenantAgent] get_next_incomplete_section called');
 
     // 1. Get page structure
-    const structureResult = await callMaisApi('/storefront/structure', tenantId, {});
+    const structureResult = await callMaisApiTyped(
+      '/storefront/structure',
+      tenantId,
+      {},
+      StorefrontStructureResponse
+    );
     if (!structureResult.ok) {
       return {
         success: false,
@@ -543,17 +561,7 @@ This is a T1 tool - reads state only.`,
 
     // API returns flat sections array, not nested pages
     // See: server/src/routes/internal-agent.routes.ts /storefront/structure
-    const structureData = structureResult.data as {
-      sections: Array<{
-        id: string;
-        page: string;
-        type: string;
-        headline: string;
-        hasPlaceholder: boolean;
-      }>;
-      totalCount: number;
-      hasDraft: boolean;
-    };
+    const structureData = structureResult.data;
 
     // 2. Get completed sections from state
     const state = getState(context);

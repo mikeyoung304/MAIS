@@ -11,12 +11,18 @@ import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
 import {
   callMaisApi,
+  callMaisApiTyped,
   callBackendAPI,
   logger,
   requireTenantId,
   validateParams,
   wrapToolExecute,
 } from '../utils.js';
+import {
+  PendingRequestsResponse,
+  ProjectDetailsResponse,
+  RequestActionResponse,
+} from '../types/api-responses.js';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -129,12 +135,17 @@ export const getPendingRequestsTool = new FunctionTool({
     validateParams(LimitSchema, params);
     const tenantId = requireTenantId(context);
 
-    const result = await callMaisApi(`/project-hub/pending-requests`, tenantId, {});
+    const result = await callMaisApiTyped(
+      `/project-hub/pending-requests`,
+      tenantId,
+      {},
+      PendingRequestsResponse
+    );
     if (!result.ok) {
       return { success: false, error: result.error ?? 'Failed to get pending requests' };
     }
 
-    const data = result.data as { requests: ProjectRequest[]; count: number };
+    const data = result.data;
     return {
       success: true,
       requests: data.requests.map((r: ProjectRequest) => ({
@@ -205,12 +216,17 @@ export const getProjectDetailsTool = new FunctionTool({
     const { projectId } = validateParams(GetProjectDetailsSchema, params);
     const tenantId = requireTenantId(context);
 
-    const result = await callMaisApi(`/project-hub/project-details`, tenantId, { projectId });
+    const result = await callMaisApiTyped(
+      `/project-hub/project-details`,
+      tenantId,
+      { projectId },
+      ProjectDetailsResponse
+    );
     if (!result.ok) {
       return { success: false, error: result.error ?? 'Failed to get project details' };
     }
 
-    const project = result.data as Project;
+    const project = result.data;
     return {
       success: true,
       project: {
@@ -237,20 +253,21 @@ export const approveRequestTool = new FunctionTool({
     const { requestId, expectedVersion, response } = validateParams(ApproveRequestSchema, params);
     const tenantId = requireTenantId(context);
 
-    const result = await callMaisApi(`/project-hub/approve-request`, tenantId, {
-      requestId,
-      expectedVersion,
-      response,
-    });
+    const result = await callMaisApiTyped(
+      `/project-hub/approve-request`,
+      tenantId,
+      {
+        requestId,
+        expectedVersion,
+        response,
+      },
+      RequestActionResponse
+    );
     if (!result.ok) {
       return { success: false, error: result.error ?? 'Failed to approve request' };
     }
 
-    const data = result.data as {
-      success: boolean;
-      request: ProjectRequest;
-      remainingPendingCount?: number;
-    };
+    const data = result.data;
     return {
       success: true,
       message: 'Request approved successfully',
@@ -278,21 +295,22 @@ export const denyRequestTool = new FunctionTool({
     );
     const tenantId = requireTenantId(context);
 
-    const result = await callMaisApi(`/project-hub/deny-request`, tenantId, {
-      requestId,
-      expectedVersion,
-      reason,
-      response,
-    });
+    const result = await callMaisApiTyped(
+      `/project-hub/deny-request`,
+      tenantId,
+      {
+        requestId,
+        expectedVersion,
+        reason,
+        response,
+      },
+      RequestActionResponse
+    );
     if (!result.ok) {
       return { success: false, error: result.error ?? 'Failed to deny request' };
     }
 
-    const data = result.data as {
-      success: boolean;
-      request: ProjectRequest;
-      remainingPendingCount?: number;
-    };
+    const data = result.data;
     return {
       success: true,
       message: 'Request denied',

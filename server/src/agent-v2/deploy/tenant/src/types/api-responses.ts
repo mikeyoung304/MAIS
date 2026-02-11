@@ -1,0 +1,299 @@
+/**
+ * Typed API Response Schemas for Agent ↔ MAIS Contract
+ *
+ * Zod schemas for every API response the tenant agent consumes.
+ * Used with `callMaisApiTyped` to validate responses at runtime,
+ * replacing unsafe `as` casts with proper validation.
+ *
+ * Design decisions:
+ * - `.passthrough()` on all object schemas for forward compatibility
+ *   (extra fields from the backend don't cause validation failures)
+ * - Schemas derived from actual tool code casts as source of truth
+ * - Both Zod schemas and inferred TypeScript types exported
+ *
+ * @see server/src/agent-v2/deploy/tenant/src/utils.ts — callMaisApiTyped
+ * @see docs/plans/2026-02-11-refactor-agent-debt-cleanup-plan.md — Todo 6010
+ */
+
+import { z } from 'zod';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Storefront Structure: /storefront/structure
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const StorefrontStructureResponse = z
+  .object({
+    sections: z.array(
+      z
+        .object({
+          id: z.string(),
+          page: z.string(),
+          type: z.string(),
+          headline: z.string(),
+          hasPlaceholder: z.boolean(),
+        })
+        .passthrough()
+    ),
+    totalCount: z.number(),
+    hasDraft: z.boolean(),
+  })
+  .passthrough();
+
+export type StorefrontStructureResponse = z.infer<typeof StorefrontStructureResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section Content: /storefront/section
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Full section content — used by storefront-read, refinement, marketing */
+export const SectionContentResponse = z
+  .object({
+    type: z.string().optional(),
+    headline: z.string().optional(),
+    subheadline: z.string().optional(),
+    content: z.string().optional(),
+    ctaText: z.string().optional(),
+    ctaUrl: z.string().optional(),
+    blockType: z.string().optional(),
+    imageUrl: z.string().optional(),
+    backgroundImageUrl: z.string().optional(),
+  })
+  .passthrough();
+
+export type SectionContentResponse = z.infer<typeof SectionContentResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discovery Facts: /get-discovery-facts
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const GetDiscoveryFactsResponse = z
+  .object({
+    success: z.boolean(),
+    facts: z.record(z.unknown()),
+    factCount: z.number(),
+    factKeys: z.array(z.string()),
+    message: z.string().optional(),
+  })
+  .passthrough();
+
+export type GetDiscoveryFactsResponse = z.infer<typeof GetDiscoveryFactsResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Store Discovery Fact: /store-discovery-fact
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const StoreDiscoveryFactResponse = z
+  .object({
+    stored: z.boolean(),
+    key: z.string(),
+    value: z.unknown(),
+    totalFactsKnown: z.number(),
+    knownFactKeys: z.array(z.string()),
+    currentPhase: z.string(),
+    phaseAdvanced: z.boolean(),
+    nextAction: z.string(),
+    readySections: z.array(z.string()),
+    missingForNext: z.array(
+      z
+        .object({
+          key: z.string(),
+          question: z.string(),
+        })
+        .passthrough()
+    ),
+    slotMetrics: z
+      .object({
+        filled: z.number(),
+        total: z.number(),
+        utilization: z.number(),
+      })
+      .passthrough(),
+    message: z.string().optional(),
+  })
+  .passthrough();
+
+export type StoreDiscoveryFactResponse = z.infer<typeof StoreDiscoveryFactResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Research Data: /get-research-data
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ResearchDataSchema = z
+  .object({
+    success: z.boolean().optional(),
+    businessType: z.string().optional(),
+    location: z.string().optional(),
+    competitorPricing: z
+      .object({
+        low: z.number(),
+        high: z.number(),
+        currency: z.string(),
+        summary: z.string(),
+      })
+      .passthrough()
+      .optional(),
+    marketPositioning: z.array(z.string()).optional(),
+    localDemand: z.string().optional(),
+    insights: z.array(z.string()).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+
+export const GetResearchDataResponse = z
+  .object({
+    hasData: z.boolean(),
+    researchData: ResearchDataSchema.nullable(),
+  })
+  .passthrough();
+
+export type GetResearchDataResponse = z.infer<typeof GetResearchDataResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Package Management: /content-generation/manage-packages
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PackageSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    priceInDollars: z.number(),
+    slug: z.string().optional(),
+    active: z.boolean().optional(),
+  })
+  .passthrough();
+
+/** Response for action: 'list' */
+export const PackageListResponse = z
+  .object({
+    packages: z.array(PackageSchema),
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type PackageListResponse = z.infer<typeof PackageListResponse>;
+
+/** Response for action: 'create' or 'update' */
+export const PackageMutationResponse = z
+  .object({
+    package: PackageSchema,
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type PackageMutationResponse = z.infer<typeof PackageMutationResponse>;
+
+/** Response for action: 'delete' */
+export const PackageDeleteResponse = z
+  .object({
+    deletedId: z.string(),
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type PackageDeleteResponse = z.infer<typeof PackageDeleteResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generate Variants: /content-generation/generate-variants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VariantContentSchema = z
+  .object({
+    headline: z.string().optional(),
+    subheadline: z.string().optional(),
+    content: z.string().optional(),
+    ctaText: z.string().optional(),
+    ctaUrl: z.string().optional(),
+  })
+  .passthrough();
+
+export const GenerateVariantsResponse = z
+  .object({
+    variants: z.record(VariantContentSchema),
+    recommendation: z.string(),
+    rationale: z.string(),
+  })
+  .passthrough();
+
+export type GenerateVariantsResponse = z.infer<typeof GenerateVariantsResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic Passthrough: for endpoints where we spread result.data
+// (branding, draft, storefront-write operations)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Used for endpoints that return arbitrary data we spread into the response */
+export const GenericRecordResponse = z.record(z.unknown());
+
+export type GenericRecordResponse = z.infer<typeof GenericRecordResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Add Section: /storefront/add-section
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const AddSectionResponse = z
+  .object({
+    sectionId: z.string().optional(),
+  })
+  .passthrough();
+
+export type AddSectionResponse = z.infer<typeof AddSectionResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Publish/Discard Section: /storefront/publish-section, /storefront/discard-section
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SectionLifecycleResponse = z
+  .object({
+    hasDraft: z.boolean().optional(),
+    publishedAt: z.string().optional(),
+  })
+  .passthrough();
+
+export type SectionLifecycleResponse = z.infer<typeof SectionLifecycleResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Management: /project-hub/*
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ProjectRequestSchema = z
+  .object({
+    id: z.string(),
+    type: z.string(),
+    status: z.string(),
+    requestData: z.record(z.unknown()),
+    expiresAt: z.string(),
+    version: z.number().optional(),
+  })
+  .passthrough();
+
+export const PendingRequestsResponse = z
+  .object({
+    requests: z.array(ProjectRequestSchema),
+    count: z.number(),
+  })
+  .passthrough();
+
+export type PendingRequestsResponse = z.infer<typeof PendingRequestsResponse>;
+
+export const ProjectDetailsResponse = z
+  .object({
+    id: z.string(),
+    status: z.string(),
+    bookingDate: z.string(),
+    serviceName: z.string(),
+    customerPreferences: z.record(z.unknown()),
+  })
+  .passthrough();
+
+export type ProjectDetailsResponse = z.infer<typeof ProjectDetailsResponse>;
+
+export const RequestActionResponse = z
+  .object({
+    success: z.boolean(),
+    request: ProjectRequestSchema,
+    remainingPendingCount: z.number().optional(),
+  })
+  .passthrough();
+
+export type RequestActionResponse = z.infer<typeof RequestActionResponse>;

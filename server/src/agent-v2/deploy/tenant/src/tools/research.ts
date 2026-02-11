@@ -21,9 +21,10 @@ import {
   requireTenantId,
   validateParams,
   wrapToolExecute,
-  callMaisApi,
+  callMaisApiTyped,
   TTLCache,
 } from '../utils.js';
+import { GetResearchDataResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
@@ -171,21 +172,32 @@ Examples:
 
     // Tier 2: Check backend for pre-computed results (instant if async research finished)
     try {
-      const backendResult = await callMaisApi('/get-research-data', tenantId);
+      const backendResult = await callMaisApiTyped(
+        '/get-research-data',
+        tenantId,
+        {},
+        GetResearchDataResponse
+      );
       if (backendResult.ok) {
-        const payload = backendResult.data as {
-          hasData: boolean;
-          researchData: ResearchResult | null;
-        };
+        const payload = backendResult.data;
         if (payload.hasData && payload.researchData) {
           logger.info(
             { tenantId, businessType, location },
             '[Research] Pre-computed results from backend'
           );
-          // Cache the pre-computed results locally
-          researchCache.set(cacheKey, payload.researchData);
+          // Construct full ResearchResult for cache (backend data may lack success/businessType/location)
+          const cachedResult: ResearchResult = {
+            success: true,
+            businessType,
+            location,
+            competitorPricing: payload.researchData.competitorPricing,
+            marketPositioning: payload.researchData.marketPositioning,
+            localDemand: payload.researchData.localDemand,
+            insights: payload.researchData.insights,
+          };
+          researchCache.set(cacheKey, cachedResult);
           return {
-            ...payload.researchData,
+            ...cachedResult,
             fromCache: true,
             source: 'backend-precomputed',
           };

@@ -15,7 +15,15 @@
 import { FunctionTool } from '@google/adk';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
-import { callMaisApi, requireTenantId, validateParams, wrapToolExecute, logger } from '../utils.js';
+import {
+  callMaisApi,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+  logger,
+} from '../utils.js';
+import { GenericRecordResponse } from '../types/api-responses.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Confirmation Token System (T3 Defense-in-Depth)
@@ -102,7 +110,12 @@ This is a T1 tool - executes immediately.`,
     logger.info({}, '[TenantAgent] preview_draft called');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/preview', tenantId);
+    const result = await callMaisApiTyped(
+      '/storefront/preview',
+      tenantId,
+      {},
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -113,7 +126,7 @@ This is a T1 tool - executes immediately.`,
 
     return {
       success: true,
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });
@@ -226,7 +239,12 @@ This affects the LIVE site that visitors see.`,
     logger.info({}, '[TenantAgent] publish_draft: token validated, proceeding');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/publish', tenantId);
+    const result = await callMaisApiTyped(
+      '/storefront/publish',
+      tenantId,
+      {},
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -241,7 +259,7 @@ This affects the LIVE site that visitors see.`,
       hasDraft: false,
       message: 'Published! Your changes are now live.',
       dashboardAction: { type: 'PUBLISH_SITE' },
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });
@@ -355,7 +373,12 @@ the confirmation prompt.
     logger.info({}, '[TenantAgent] discard_draft: token validated, proceeding');
 
     // Call backend API
-    const result = await callMaisApi('/storefront/discard', tenantId);
+    const result = await callMaisApiTyped(
+      '/storefront/discard',
+      tenantId,
+      {},
+      GenericRecordResponse
+    );
 
     if (!result.ok) {
       return {
@@ -369,7 +392,7 @@ the confirmation prompt.
       discarded: true,
       hasDraft: false,
       message: 'Draft discarded. Your site is back to the live version.',
-      ...(result.data as Record<string, unknown>),
+      ...result.data,
     };
   }),
 });

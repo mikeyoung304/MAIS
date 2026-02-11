@@ -15,7 +15,20 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, requireTenantId, validateParams, wrapToolExecute } from '../utils.js';
+import {
+  logger,
+  callMaisApi,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+} from '../utils.js';
+import {
+  StorefrontStructureResponse,
+  GetDiscoveryFactsResponse,
+  GetResearchDataResponse,
+  PackageListResponse,
+} from '../types/api-responses.js';
 import { MVP_SECTION_TYPES, SEED_PACKAGE_NAMES } from '../constants/shared.js';
 
 /** Shape of pre-computed research data from the backend */
@@ -83,7 +96,12 @@ No user approval needed for first draft — just build and announce.`,
     logger.info({ tenantId }, '[TenantAgent] build_first_draft called');
 
     // 1. Get page structure with placeholder flags
-    const structureResult = await callMaisApi('/storefront/structure', tenantId, {});
+    const structureResult = await callMaisApiTyped(
+      '/storefront/structure',
+      tenantId,
+      {},
+      StorefrontStructureResponse
+    );
 
     if (!structureResult.ok) {
       return {
@@ -94,7 +112,12 @@ No user approval needed for first draft — just build and announce.`,
     }
 
     // 2. Get known facts
-    const factsResult = await callMaisApi('/get-discovery-facts', tenantId);
+    const factsResult = await callMaisApiTyped(
+      '/get-discovery-facts',
+      tenantId,
+      {},
+      GetDiscoveryFactsResponse
+    );
 
     if (!factsResult.ok) {
       return {
@@ -106,23 +129,9 @@ No user approval needed for first draft — just build and announce.`,
 
     // API returns flat sections array, not nested pages
     // See: server/src/routes/internal-agent.routes.ts /storefront/structure
-    const structureData = structureResult.data as {
-      sections: Array<{
-        id: string;
-        page: string;
-        type: string;
-        headline: string;
-        hasPlaceholder: boolean;
-      }>;
-      totalCount: number;
-      hasDraft: boolean;
-    };
+    const structureData = structureResult.data;
 
-    const factsData = factsResult.data as {
-      facts: Record<string, unknown>;
-      factCount: number;
-      factKeys: string[];
-    };
+    const factsData = factsResult.data;
 
     // 3. Find ALL MVP sections — the slot machine gates WHEN to build,
     // this tool should always return MVP sections for overwrite.
@@ -148,12 +157,14 @@ No user approval needed for first draft — just build and announce.`,
     let researchData: ResearchData | null = null;
 
     try {
-      const researchResult = await callMaisApi('/get-research-data', tenantId);
+      const researchResult = await callMaisApiTyped(
+        '/get-research-data',
+        tenantId,
+        {},
+        GetResearchDataResponse
+      );
       if (researchResult.ok) {
-        const payload = researchResult.data as {
-          hasData: boolean;
-          researchData: ResearchData | null;
-        };
+        const payload = researchResult.data;
         if (payload.hasData && payload.researchData) {
           researchData = payload.researchData;
           logger.info(
@@ -198,17 +209,17 @@ No user approval needed for first draft — just build and announce.`,
     // Canonical source: @macon/contracts SEED_PACKAGE_NAMES
     // Cloud Run agent cannot import from contracts — synced via constants/shared.ts
     try {
-      const listResult = await callMaisApi('/content-generation/manage-packages', tenantId, {
-        action: 'list',
-      });
+      const listResult = await callMaisApiTyped(
+        '/content-generation/manage-packages',
+        tenantId,
+        {
+          action: 'list',
+        },
+        PackageListResponse
+      );
       if (listResult.ok) {
         // API returns priceInDollars (dollars), not basePrice (cents) — see internal-agent.routes.ts
-        const packages =
-          (
-            listResult.data as {
-              packages?: Array<{ id: string; name: string; priceInDollars: number }>;
-            }
-          )?.packages ?? [];
+        const packages = listResult.data.packages ?? [];
         const defaultPackages = packages.filter(
           (pkg) =>
             pkg.priceInDollars === 0 &&

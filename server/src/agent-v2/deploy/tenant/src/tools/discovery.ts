@@ -13,7 +13,14 @@
 
 import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
-import { logger, callMaisApi, requireTenantId, validateParams, wrapToolExecute } from '../utils.js';
+import {
+  logger,
+  callMaisApiTyped,
+  requireTenantId,
+  validateParams,
+  wrapToolExecute,
+} from '../utils.js';
+import { StoreDiscoveryFactResponse, GetDiscoveryFactsResponse } from '../types/api-responses.js';
 import { DISCOVERY_FACT_KEYS } from '../constants/discovery-facts.js';
 
 // Re-export for backward compatibility with tools/index.ts
@@ -74,10 +81,15 @@ Follow nextAction deterministically:
 
     logger.info({ key, tenantId }, '[TenantAgent] store_discovery_fact');
 
-    const result = await callMaisApi('/store-discovery-fact', tenantId, {
-      key,
-      value,
-    });
+    const result = await callMaisApiTyped(
+      '/store-discovery-fact',
+      tenantId,
+      {
+        key,
+        value,
+      },
+      StoreDiscoveryFactResponse
+    );
 
     if (!result.ok) {
       return {
@@ -88,20 +100,7 @@ Follow nextAction deterministically:
     }
 
     // Return updated facts list + slot machine result so agent knows what to do next
-    const responseData = result.data as {
-      stored: boolean;
-      key: string;
-      value: unknown;
-      totalFactsKnown: number;
-      knownFactKeys: string[];
-      currentPhase: string;
-      phaseAdvanced: boolean;
-      nextAction: string;
-      readySections: string[];
-      missingForNext: Array<{ key: string; question: string }>;
-      slotMetrics: { filled: number; total: number; utilization: number };
-      message: string;
-    };
+    const responseData = result.data;
 
     return {
       stored: true,
@@ -152,7 +151,12 @@ Call this when:
 
     logger.info({ tenantId }, '[TenantAgent] get_known_facts');
 
-    const result = await callMaisApi('/get-discovery-facts', tenantId);
+    const result = await callMaisApiTyped(
+      '/get-discovery-facts',
+      tenantId,
+      {},
+      GetDiscoveryFactsResponse
+    );
 
     if (!result.ok) {
       return {
@@ -162,13 +166,7 @@ Call this when:
       };
     }
 
-    const responseData = result.data as {
-      success: boolean;
-      facts: Record<string, unknown>;
-      factCount: number;
-      factKeys: string[];
-      message: string;
-    };
+    const responseData = result.data;
 
     return {
       success: true,
