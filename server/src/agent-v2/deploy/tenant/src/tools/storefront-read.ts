@@ -14,20 +14,7 @@
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { callMaisApi, getTenantId, logger } from '../utils.js';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
-
-const PAGE_NAMES = [
-  'home',
-  'about',
-  'services',
-  'faq',
-  'contact',
-  'gallery',
-  'testimonials',
-] as const;
+import { PAGE_NAMES } from '../constants/shared.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schemas

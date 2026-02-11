@@ -21,6 +21,7 @@
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { callMaisApi, getTenantId, logger } from '../utils.js';
+import { TOTAL_SECTIONS } from '../constants/shared.js';
 import type {
   GuidedRefinementState,
   PreferenceMemory,
@@ -36,13 +37,6 @@ import type {
 const TONE_VARIANTS = ['professional', 'premium', 'friendly'] as const;
 const STATE_KEY = 'guidedRefinementState';
 const MAX_TONE_HISTORY = 5;
-
-/**
- * Total canonical sections matching SECTION_BLUEPRINT in @macon/contracts.
- * @macon/contracts is not available in the agent deploy — keep in sync manually.
- * @see packages/contracts/src/schemas/section-blueprint.schema.ts
- */
-const TOTAL_SECTIONS = 8;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions

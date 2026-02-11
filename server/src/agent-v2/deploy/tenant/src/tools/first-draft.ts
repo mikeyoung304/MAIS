@@ -16,6 +16,7 @@
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
 import { logger, callMaisApi, getTenantId } from '../utils.js';
+import { MVP_SECTION_TYPES, SEED_PACKAGE_NAMES } from '../constants/shared.js';
 
 /** Shape of pre-computed research data from the backend */
 interface ResearchData {
@@ -142,10 +143,9 @@ No user approval needed for first draft — just build and announce.`,
     // Seed defaults are not "real" content — always overwrite during first draft.
     //
     // Source of truth: packages/contracts/src/schemas/section-blueprint.schema.ts → MVP_REVEAL_SECTION_TYPES
-    // Cloud Run agent cannot import from @macon/contracts — keep in sync manually
+    // Cloud Run agent cannot import from @macon/contracts — synced via constants/shared.ts
     const allSections = structureData.sections ?? [];
-    const MVP_SECTIONS = new Set(['HERO', 'ABOUT', 'SERVICES']);
-    const mvpSections = allSections.filter((s) => MVP_SECTIONS.has(s.type));
+    const mvpSections = allSections.filter((s) => MVP_SECTION_TYPES.has(s.type));
 
     if (mvpSections.length === 0) {
       return {
@@ -210,9 +210,7 @@ No user approval needed for first draft — just build and announce.`,
     // with non-seed names must be preserved.
     //
     // Canonical source: @macon/contracts SEED_PACKAGE_NAMES
-    // Cloud Run agent cannot import from contracts — hardcoded here with cross-reference
-    const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
-
+    // Cloud Run agent cannot import from contracts — synced via constants/shared.ts
     try {
       const listResult = await callMaisApi('/content-generation/manage-packages', tenantId, {
         action: 'list',
