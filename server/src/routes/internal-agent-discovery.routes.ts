@@ -77,7 +77,12 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
     discoveryService.invalidateBootstrapCache(tenantId)
   );
 
-  const discoveryService = new DiscoveryService(tenantRepo, contextBuilder, researchService);
+  const discoveryService = new DiscoveryService(
+    tenantRepo,
+    contextBuilder,
+    researchService,
+    catalogService
+  );
 
   // ===========================================================================
   // POST /bootstrap - Session context for Concierge agent
@@ -143,35 +148,23 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
         '[Agent] Completing onboarding'
       );
 
-      // Fetch tenant to check current state (optimistic locking)
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
-        return;
-      }
+      const result = await discoveryService.completeOnboarding(tenantId, {
+        publishedUrl,
+        packagesCreated,
+        summary,
+      });
 
-      // Check if already completed (idempotent response)
-      if (tenant.onboardingPhase === 'COMPLETED') {
-        logger.info(
-          { tenantId, endpoint: '/complete-onboarding' },
-          '[Agent] Onboarding already completed - returning idempotent response'
-        );
+      if (result.status === 'already_complete') {
         res.json({
           success: true,
           wasAlreadyComplete: true,
           message: 'Onboarding was already completed',
-          completedAt: tenant.onboardingCompletedAt?.toISOString() || null,
+          completedAt: result.completedAt?.toISOString() || null,
         });
         return;
       }
 
-      // Validate prerequisites: at least one package must exist
-      const packages = await catalogService.getAllPackages(tenantId);
-      if (packages.length === 0) {
-        logger.warn(
-          { tenantId, endpoint: '/complete-onboarding' },
-          '[Agent] Blocked onboarding completion - no packages exist'
-        );
+      if (result.status === 'no_packages') {
         res.status(400).json({
           error: 'Cannot complete onboarding without at least one package',
           suggestion: 'Create a service package first using the storefront tools',
@@ -182,27 +175,25 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
         return;
       }
 
-      // Update tenant onboarding phase
-      const completedAt = new Date();
-      await tenantRepo.update(tenantId, {
-        onboardingPhase: 'COMPLETED',
-        onboardingCompletedAt: completedAt,
-      });
-
-      // Invalidate bootstrap cache so next request gets fresh data
-      discoveryService.invalidateBootstrapCache(tenantId);
-
       res.json({
         success: true,
         wasAlreadyComplete: false,
-        message: publishedUrl
-          ? `Onboarding complete! Live at ${publishedUrl}`
+        message: result.publishedUrl
+          ? `Onboarding complete! Live at ${result.publishedUrl}`
           : 'Onboarding marked as complete.',
-        completedAt: completedAt.toISOString(),
-        ...(packagesCreated !== undefined && { packagesCreated }),
-        ...(summary && { summary }),
+        completedAt: result.completedAt.toISOString(),
+        ...(result.packagesCreated !== undefined && { packagesCreated: result.packagesCreated }),
+        ...(result.summary && { summary: result.summary }),
       });
     } catch (error) {
+      if (error instanceof TenantNotFoundError) {
+        res.status(404).json({ error: 'Tenant not found' });
+        return;
+      }
+      if (error instanceof ServiceUnavailableError) {
+        res.status(503).json({ error: error.message });
+        return;
+      }
       handleError(res, error, '/complete-onboarding');
     }
   });
@@ -215,27 +206,16 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
     try {
       const { tenantId } = TenantIdSchema.parse(req.body);
 
-      // Idempotent: only write if not already set
-      const tenant = await tenantRepo.findById(tenantId);
-
-      if (!tenant) {
+      const result = await discoveryService.markRevealCompleted(tenantId);
+      res.json({
+        success: true,
+        alreadyCompleted: result.status === 'already_completed',
+      });
+    } catch (error) {
+      if (error instanceof TenantNotFoundError) {
         res.status(404).json({ success: false, error: 'Tenant not found' });
         return;
       }
-
-      if (tenant.revealCompletedAt) {
-        res.json({ success: true, alreadyCompleted: true });
-        return;
-      }
-
-      await tenantRepo.update(tenantId, { revealCompletedAt: new Date() });
-
-      // Invalidate bootstrap cache so next request reflects revealCompleted state
-      discoveryService.invalidateBootstrapCache(tenantId);
-
-      logger.info({ tenantId }, '[InternalAgent] revealCompletedAt written');
-      res.json({ success: true, alreadyCompleted: false });
-    } catch (error) {
       handleError(res, error, '/mark-reveal-completed');
     }
   });
