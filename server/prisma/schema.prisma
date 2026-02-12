@@ -120,11 +120,17 @@ model Tenant {
   revealCompletedAt     DateTime? // When the first-draft reveal animation was shown (one-shot guard)
   onboardingVersion     Int             @default(0) // Optimistic locking version counter
 
+  // Brain dump + location (onboarding conversation redesign)
+  brainDump String? @db.Text // Freetext "who are you, what do you do"
+  city      String? // City from signup form
+  state     String? // State from signup form
+
   // Relations
   users                User[] // Tenant admin users
   customers            Customer[] // Tenant-scoped customers
   venues               Venue[] // Tenant-scoped venues
   segments             Segment[] // Tenant's business segments (e.g., "Wellness Retreat", "Micro-Wedding")
+  tiers                Tier[] // Pricing tiers (bookable entities within segments)
   packages             Package[]
   addOns               AddOn[]
   bookings             Booking[]
@@ -258,36 +264,60 @@ model Segment {
 }
 
 // ============================================
-// TIER: Pricing tier (exactly 3 per segment: GOOD/BETTER/BEST)
-// Implements the 3×3 ontology from semantic storefront architecture
+// TIER: Bookable pricing tier within a segment
+// Replaces the old Package model as the bookable entity
+// sortOrder replaces TierLevel enum for flexible pricing structures
 // ============================================
 model Tier {
   id        String  @id @default(cuid())
+  tenantId  String // Direct tenant ref for isolation queries
   segmentId String
   segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  level       TierLevel // GOOD, BETTER, BEST (enforced - exactly one of each per segment)
-  name        String // Display name: "Essential", "Professional", "Premium"
+  // Replace TierLevel enum with flexible sortOrder
+  sortOrder   Int // 1, 2, 3 (display order within segment)
+  slug        String // URL-safe name for booking routes
+  name        String // Display name: "Essential", "Signature", "Premier"
   description String?   @db.Text
-  price       Decimal   @db.Decimal(10, 2)
+  priceCents  Int // Price in cents (consistent with Booking.totalPrice, Payment.amount)
   currency    String    @default("USD")
   features    Json // Array of TierFeature objects (validated by TierFeaturesSchema)
 
   // Booking integration
+  bookingType     BookingType @default(DATE)
   durationMinutes Int? // Service duration for time-based tiers
-  depositPercent  Int? @default(0) // Deposit percentage (0-100)
+  depositPercent  Int?        @default(0) // Deposit percentage (0-100)
+  active          Boolean     @default(true)
+
+  // Photo gallery (migrated from Package)
+  photos Json @default("[]") // [{url, filename, size, order}]
+
+  // Relations
+  addOns   TierAddOn[]
+  bookings Booking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([segmentId, level]) // Exactly one of each level per segment
+  @@unique([segmentId, sortOrder])
+  @@unique([tenantId, slug])
+  @@index([tenantId, active])
   @@index([segmentId])
 }
 
-enum TierLevel {
-  GOOD
-  BETTER
-  BEST
+// ============================================
+// TIER ADD-ON: Join table linking Tiers to AddOns
+// ============================================
+model TierAddOn {
+  tierId  String
+  addOnId String
+  tier    Tier  @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  addOn   AddOn @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+
+  @@id([tierId, addOnId])
+  @@index([tierId])
+  @@index([addOnId])
 }
 
 // ============================================
@@ -425,6 +455,7 @@ model AddOn {
   tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   segment     Segment?       @relation(fields: [segmentId], references: [id], onDelete: SetNull)
   packages    PackageAddOn[]
+  tiers       TierAddOn[] // Tier-based add-on associations
   bookingRefs BookingAddOn[]
 
   @@unique([tenantId, slug]) // Each tenant has unique add-on slugs
@@ -449,6 +480,7 @@ model Booking {
   tenantId   String // Tenant isolation
   customerId String
   packageId  String? // Optional for TIMESLOT bookings (which use serviceId instead)
+  tierId     String? // New: nullable during Package→Tier transition
   venueId    String?
 
   // Customer-facing confirmation code for booking lookups (e.g., "BK-ABC123")
@@ -513,6 +545,7 @@ model Booking {
   tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer       @relation(fields: [customerId], references: [id])
   package  Package?       @relation(fields: [packageId], references: [id])
+  tier     Tier?          @relation(fields: [tierId], references: [id], onDelete: Restrict)
   venue    Venue?         @relation(fields: [venueId], references: [id])
   service  Service?       @relation(fields: [serviceId], references: [id])
   addOns   BookingAddOn[]
@@ -535,6 +568,7 @@ model Booking {
   @@index([tenantId])
   @@index([customerId])
   @@index([packageId])
+  @@index([tierId])
   @@index([serviceId])
   @@index([venueId])
   @@index([stripePaymentIntentId])

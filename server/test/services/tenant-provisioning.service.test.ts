@@ -99,10 +99,11 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       expect(result.packages.every((p) => p.tenantId === result.tenant.id)).toBe(true);
       expect(result.packages.every((p) => p.segmentId === result.segment.id)).toBe(true);
 
-      // Verify tiers created (GOOD, BETTER, BEST)
+      // Verify tiers created (sortOrder 1, 2, 3)
       expect(result.tiers).toHaveLength(3);
-      expect(result.tiers.map((t) => t.level).sort()).toEqual(['BEST', 'BETTER', 'GOOD']);
+      expect(result.tiers.map((t) => t.sortOrder).sort()).toEqual([1, 2, 3]);
       expect(result.tiers.every((t) => t.segmentId === result.segment.id)).toBe(true);
+      expect(result.tiers.every((t) => t.tenantId === result.tenant.id)).toBe(true);
 
       // Verify tier features are arrays (JSON was saved correctly)
       expect(result.tiers.every((t) => Array.isArray(t.features))).toBe(true);

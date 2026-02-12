@@ -26,7 +26,6 @@ import type {
   Tier,
   SectionContent,
   Prisma,
-  TierLevel,
   BlockType,
 } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
@@ -139,17 +138,19 @@ export class TenantProvisioningService {
       })
     );
 
-    // Create default tiers (GOOD, BETTER, BEST) for the segment
-    const tierLevels: TierLevel[] = ['GOOD', 'BETTER', 'BEST'];
-    const tierPromises = tierLevels.map((level) => {
-      const config = DEFAULT_TIER_CONFIGS[level];
+    // Create default tiers (sortOrder 1, 2, 3) for the segment
+    const sortOrders = [1, 2, 3];
+    const tierPromises = sortOrders.map((sortOrder) => {
+      const config = DEFAULT_TIER_CONFIGS[sortOrder];
       return tx.tier.create({
         data: {
+          tenantId,
           segmentId: segment.id,
-          level,
+          sortOrder,
+          slug: config.slug,
           name: config.name,
           description: config.description,
-          price: config.price,
+          priceCents: config.priceCents,
           currency: 'USD',
           features: config.features as unknown as Prisma.InputJsonValue,
         },
