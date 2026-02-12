@@ -90,24 +90,8 @@ export const StoreDiscoveryFactResponse = z
     totalFactsKnown: z.number(),
     knownFactKeys: z.array(z.string()),
     currentPhase: z.string(),
-    phaseAdvanced: z.boolean(),
-    nextAction: z.string(),
-    readySections: z.array(z.string()),
-    missingForNext: z.array(
-      z
-        .object({
-          key: z.string(),
-          question: z.string(),
-        })
-        .passthrough()
-    ),
-    slotMetrics: z
-      .object({
-        filled: z.number(),
-        total: z.number(),
-        utilization: z.number(),
-      })
-      .passthrough(),
+    readyForReveal: z.boolean(),
+    missingForMVP: z.array(z.string()),
     message: z.string().optional(),
   })
   .passthrough();

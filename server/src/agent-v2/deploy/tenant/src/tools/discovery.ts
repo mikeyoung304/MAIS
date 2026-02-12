@@ -33,12 +33,9 @@ export { DISCOVERY_FACT_KEYS, type DiscoveryFactKey } from '../constants/discove
 /**
  * Store Discovery Fact Tool
  *
- * Active memory management - call this when you learn something important
- * about the business during conversation.
- *
- * Part of the Slot Machine Protocol:
- * 1. User shares info → store_discovery_fact
- * 2. Response includes nextAction → follow it deterministically
+ * Active memory management — call this when you learn something important
+ * about the business during conversation. The response includes MVP readiness
+ * signals (readyForReveal, missingForMVP) that guide your next action.
  */
 export const storeDiscoveryFactTool = new FunctionTool({
   name: 'store_discovery_fact',
@@ -55,12 +52,8 @@ Examples:
 
 Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}
 
-After storing, the response includes a nextAction from the slot machine.
-Follow nextAction deterministically:
-- ASK: Ask the question from missingForNext[0]
-- BUILD_FIRST_DRAFT: Call build_first_draft to build MVP sections
-- TRIGGER_RESEARCH: Call delegate_to_research
-- OFFER_REFINEMENT: Invite feedback on the draft`,
+After storing, the response includes readyForReveal (boolean) and missingForMVP (string[]).
+Use these to guide the conversation — when readyForReveal is true, call build_first_draft.`,
 
   parameters: z.object({
     key: z.enum(DISCOVERY_FACT_KEYS).describe('The type of fact being stored'),
@@ -99,7 +92,6 @@ Follow nextAction deterministically:
       };
     }
 
-    // Return updated facts list + slot machine result so agent knows what to do next
     const responseData = result.data;
 
     return {
@@ -108,13 +100,9 @@ Follow nextAction deterministically:
       value,
       totalFactsKnown: responseData.totalFactsKnown,
       knownFactKeys: responseData.knownFactKeys,
-      // Slot machine results — agent follows nextAction deterministically
       currentPhase: responseData.currentPhase,
-      phaseAdvanced: responseData.phaseAdvanced,
-      nextAction: responseData.nextAction,
-      readySections: responseData.readySections,
-      missingForNext: responseData.missingForNext,
-      slotMetrics: responseData.slotMetrics,
+      readyForReveal: responseData.readyForReveal,
+      missingForMVP: responseData.missingForMVP,
       message: `Got it! I now know: ${responseData.knownFactKeys.join(', ')}`,
     };
   }),

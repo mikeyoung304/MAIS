@@ -423,13 +423,13 @@ enum OnboardingPhase {
 
 **Acceptance Criteria:**
 
-- [ ] `slot-machine.ts` deleted, no file references remain
-- [ ] `storeFact()` works without slot machine (stores fact, returns state)
-- [ ] Auto-fire research removed from `storeFact()`
-- [ ] OnboardingPhase simplified to NOT_STARTED/BUILDING/COMPLETED/SKIPPED
-- [ ] ContextBuilder provides bootstrap data without slot machine
-- [ ] Clean typecheck: `rm -rf server/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
-- [ ] Existing unit tests updated or deleted (slot machine tests removed)
+- [x] `slot-machine.ts` deleted, no file references remain
+- [x] `storeFact()` works without slot machine (stores fact, returns state)
+- [x] Auto-fire research removed from `storeFact()`
+- [x] OnboardingPhase: BUILDING added (step 1 of 2; old values stay until Phase 7 recreates enum)
+- [x] ContextBuilder provides bootstrap data without slot machine
+- [x] Clean typecheck: `rm -rf server/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck`
+- [x] Existing unit tests updated or deleted (slot machine tests removed, discovery tests rewritten)
 
 ---
 

@@ -1054,13 +1054,14 @@ enum SessionType {
   CUSTOMER // Customer using the public booking chatbot
 }
 
-/// Onboarding phase enum for state machine (still used by Tenant.onboardingPhase)
+/// Onboarding phase enum (legacy values kept until Phase 7 migration recreates enum)
 enum OnboardingPhase {
   NOT_STARTED // Initial state - no onboarding interaction yet
-  DISCOVERY // Collecting business info (type, location, target market)
-  MARKET_RESEARCH // Analyzing market and generating pricing recommendations
-  SERVICES // Creating service packages based on recommendations
-  MARKETING // Configuring landing page and brand voice
+  DISCOVERY // (legacy) Collecting business info
+  MARKET_RESEARCH // (legacy) Analyzing market
+  SERVICES // (legacy) Creating service packages
+  MARKETING // (legacy) Configuring landing page
+  BUILDING // NEW: Replaces DISCOVERY/MARKET_RESEARCH/SERVICES/MARKETING
   COMPLETED // Onboarding finished
   SKIPPED // User opted to skip onboarding
 }
