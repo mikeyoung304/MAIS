@@ -291,6 +291,9 @@ export const TenantSignupDtoSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   businessName: z.string().min(2, 'Business name must be at least 2 characters').max(100),
+  city: z.string().max(100).optional(),
+  state: z.string().max(50).optional(),
+  brainDump: z.string().max(2000, 'Must be 2000 characters or less').optional(),
 });
 
 export type TenantSignupDto = z.infer<typeof TenantSignupDtoSchema>;

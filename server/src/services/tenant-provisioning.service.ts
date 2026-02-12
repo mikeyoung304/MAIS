@@ -56,6 +56,9 @@ export interface SignupCreateTenantInput {
   businessName: string;
   email: string;
   passwordHash: string;
+  city?: string;
+  state?: string;
+  brainDump?: string;
 }
 
 /**
@@ -259,7 +262,7 @@ export class TenantProvisioningService {
    * @see todos/632-pending-p2-stricter-signup-error-handling.md
    */
   async createFromSignup(input: SignupCreateTenantInput): Promise<ProvisionedTenantResult> {
-    const { slug, businessName, email, passwordHash } = input;
+    const { slug, businessName, email, passwordHash, city, state, brainDump } = input;
 
     // Generate API keys (even though signup users don't typically need them)
     const publicKey = apiKeyService.generatePublicKey(slug);
@@ -268,9 +271,7 @@ export class TenantProvisioningService {
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        // Create tenant with auth credentials and default landing page config
-        // P4-FIX: Seed DEFAULT_PAGES_CONFIG on tenant provisioning
-        // This ensures new tenants have a complete landing page structure with placeholders
+        // Create tenant with auth credentials
         const tenant = await tx.tenant.create({
           data: {
             slug,
@@ -281,8 +282,9 @@ export class TenantProvisioningService {
             apiKeySecret: secretKeyHash,
             commissionPercent: 10.0,
             emailVerified: false,
-            // Phase 5.2: landingPageConfig removed - sections stored in SectionContent table
-            // Default sections are created via createDefaultSections() in createDefaultSegmentAndPackages()
+            city: city || null,
+            state: state || null,
+            brainDump: brainDump || null,
           },
         });
 

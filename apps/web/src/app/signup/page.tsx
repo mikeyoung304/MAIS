@@ -11,6 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertCircle,
   Loader2,
   Building2,
@@ -21,6 +28,7 @@ import {
   Sparkles,
   Check,
   ArrowRight,
+  MapPin,
 } from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -71,6 +79,63 @@ function getTierContent(tier: string | null): TierContent {
   return TIER_CONTENT.default;
 }
 
+const BRAIN_DUMP_MAX = 2000;
+
+const US_STATES = [
+  'AL',
+  'AK',
+  'AZ',
+  'AR',
+  'CA',
+  'CO',
+  'CT',
+  'DE',
+  'FL',
+  'GA',
+  'HI',
+  'ID',
+  'IL',
+  'IN',
+  'IA',
+  'KS',
+  'KY',
+  'LA',
+  'ME',
+  'MD',
+  'MA',
+  'MI',
+  'MN',
+  'MS',
+  'MO',
+  'MT',
+  'NE',
+  'NV',
+  'NH',
+  'NJ',
+  'NM',
+  'NY',
+  'NC',
+  'ND',
+  'OH',
+  'OK',
+  'OR',
+  'PA',
+  'RI',
+  'SC',
+  'SD',
+  'TN',
+  'TX',
+  'UT',
+  'VT',
+  'VA',
+  'WA',
+  'WV',
+  'WI',
+  'WY',
+  'DC',
+  'Other',
+] as const;
+
 // =============================================================================
 // Signup Form Component
 // =============================================================================
@@ -91,6 +156,9 @@ function SignupForm() {
   const content = getTierContent(rawTier);
 
   const [businessName, setBusinessName] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [brainDump, setBrainDump] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -143,6 +211,11 @@ function SignupForm() {
       errors.password = 'Password must be at least 8 characters';
     }
 
+    // Brain dump validation (optional, but enforce max length)
+    if (brainDump.length > BRAIN_DUMP_MAX) {
+      errors.brainDump = `Must be ${BRAIN_DUMP_MAX} characters or less`;
+    }
+
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -170,7 +243,14 @@ function SignupForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, businessName }),
+        body: JSON.stringify({
+          email,
+          password,
+          businessName,
+          ...(city && { city }),
+          ...(state && { state }),
+          ...(brainDump && { brainDump }),
+        }),
       });
 
       if (!response.ok) {
@@ -295,6 +375,87 @@ function SignupForm() {
                   {fieldErrors.businessName}
                 </p>
               )}
+            </div>
+
+            {/* City + State (side by side) */}
+            <div className="flex gap-3">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="city" className="text-text-primary">
+                  City
+                </Label>
+                <div className="relative">
+                  <MapPin
+                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    id="city"
+                    type="text"
+                    placeholder="Austin"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className={`pl-10 ${inputStyles}`}
+                    autoComplete="address-level2"
+                    disabled={isLoading}
+                    maxLength={100}
+                  />
+                </div>
+              </div>
+              <div className="w-28 space-y-2">
+                <Label htmlFor="state" className="text-text-primary">
+                  State
+                </Label>
+                <Select value={state} onValueChange={setState} disabled={isLoading}>
+                  <SelectTrigger id="state" className={`${inputStyles} h-11`}>
+                    <SelectValue placeholder="--" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {US_STATES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Brain Dump */}
+            <div className="space-y-2">
+              <Label htmlFor="brainDump" className="text-text-primary">
+                Tell us about your business
+              </Label>
+              <textarea
+                id="brainDump"
+                placeholder="Who are you? What do you do, and who do you do it for? The more you share, the better we can help."
+                value={brainDump}
+                onChange={(e) => {
+                  setBrainDump(e.target.value);
+                  if (fieldErrors.brainDump) {
+                    setFieldErrors((prev) => ({ ...prev, brainDump: '' }));
+                  }
+                }}
+                rows={3}
+                maxLength={BRAIN_DUMP_MAX}
+                className={`w-full rounded-xl border px-4 py-3 text-sm resize-none ${inputStyles} ${fieldErrors.brainDump ? inputErrorStyles : ''}`}
+                disabled={isLoading}
+                aria-invalid={!!fieldErrors.brainDump}
+                aria-describedby={fieldErrors.brainDump ? 'brainDump-error' : 'brainDump-hint'}
+              />
+              <div className="flex justify-between items-center">
+                {fieldErrors.brainDump ? (
+                  <p id="brainDump-error" className="text-sm text-danger-500" role="alert">
+                    {fieldErrors.brainDump}
+                  </p>
+                ) : (
+                  <p id="brainDump-hint" className="text-xs text-text-muted">
+                    Optional — helps our AI tailor your storefront
+                  </p>
+                )}
+                <span className="text-xs text-text-muted">
+                  {brainDump.length}/{BRAIN_DUMP_MAX}
+                </span>
+              </div>
             </div>
 
             {/* Email */}

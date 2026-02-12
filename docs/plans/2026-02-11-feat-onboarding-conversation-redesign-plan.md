@@ -286,13 +286,13 @@ await provisioningService.createTenant({
 
 **Acceptance Criteria:**
 
-- [ ] Signup form shows city, state, brain dump fields
-- [ ] Fields are optional (don't block registration)
-- [ ] Brain dump textarea has helpful placeholder text
-- [ ] Backend stores all three fields on Tenant record
-- [ ] State uses dropdown with US states (+ "Other" for international)
-- [ ] Brain dump max length: 2000 characters (prevent abuse)
-- [ ] E2E test: signup with brain dump → verify stored on tenant
+- [x] Signup form shows city, state, brain dump fields
+- [x] Fields are optional (don't block registration)
+- [x] Brain dump textarea has helpful placeholder text
+- [x] Backend stores all three fields on Tenant record
+- [x] State uses dropdown with US states (+ "Other" for international)
+- [x] Brain dump max length: 2000 characters (prevent abuse)
+- [ ] E2E test: signup with brain dump → verify stored on tenant (deferred to Phase 9)
 
 ---
 
