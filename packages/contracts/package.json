@@ -16,8 +16,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -b --force",
-    "typecheck": "tsc -b --noEmit"
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
     "@ts-rest/core": "^3.52.1",
