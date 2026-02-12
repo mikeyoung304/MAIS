@@ -98,17 +98,18 @@ export {
 } from './discovery.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Package Management Tools (T1/T2/T3) - P0 Fix for E2E Failures
+// Catalog Management Tools (T1/T2/T3) - Segments, Tiers, Add-Ons
 // ─────────────────────────────────────────────────────────────────────────────
-// CRITICAL: These manage ACTUAL bookable packages (Package table), NOT the
-// cosmetic "pricing section" in the storefront. This addresses the core E2E
-// failure where agent said "Done" but Services section showed $0.
+// Segment → Tier → AddOn hierarchy replaces the flat Package model.
+// Segments group services by client type. Tiers are the bookable entities
+// with real prices. Add-ons are optional extras.
 //
-// @see docs/reports/2026-02-01-agent-testing-failure-report.md
-// @see todos/811-pending-p1-missing-package-management-tools.md
+// @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
 // ─────────────────────────────────────────────────────────────────────────────
 
-export { managePackagesTool } from './packages.js';
+export { manageSegmentsTool } from './segments.js';
+export { manageTiersTool } from './tiers.js';
+export { manageAddOnsTool } from './addons.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Guided Refinement Tools (T1/T2) - Phase 1 Guided Refinement
@@ -131,22 +132,22 @@ export {
 } from './refinement.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Research Delegation Tool (T1) - Onboarding Market Research
+// Research Delegation Tool (T1) - On-Demand Market Research
 // ─────────────────────────────────────────────────────────────────────────────
 // Delegates to research-agent for competitor pricing and market positioning.
-// Trigger: When agent has businessType + location during onboarding.
+// On-demand: call when setting tier prices, not automatically during discovery.
 //
-// @see CLAUDE.md "The Onboarding Conversation" section
+// @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { delegateToResearchTool } from './research.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// First Draft Tool (T2) - Onboarding Ecosystem Rebuild Phase 5
+// First Draft Tool (T2) - Onboarding First Draft
 // ─────────────────────────────────────────────────────────────────────────────
 // Orchestrator tool that identifies placeholder sections ready for content
-// generation. Called when slot machine returns nextAction: 'BUILD_FIRST_DRAFT'.
+// generation. Called when store_discovery_fact returns readyForReveal: true.
 //
-// @see docs/plans/2026-02-05-feat-onboarding-ecosystem-rebuild-plan.md (Phase 5)
+// @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
 
 export { buildFirstDraftTool } from './first-draft.js';

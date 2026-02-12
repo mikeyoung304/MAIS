@@ -19,6 +19,8 @@ import type { ContextBuilderService } from '../services/context-builder.service'
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 import type { SectionContentService } from '../services/section-content.service';
+import type { SegmentService } from '../services/segment.service';
+import type { PrismaClient } from '../generated/prisma/client';
 
 // =============================================================================
 // Shared Constants
@@ -180,6 +182,8 @@ export interface StorefrontRoutesDeps {
 export interface MarketingRoutesDeps {
   tenantRepo: PrismaTenantRepository;
   catalogService: CatalogService;
+  segmentService?: SegmentService;
+  prisma?: PrismaClient;
   vocabularyEmbeddingService?: VocabularyEmbeddingService;
   internalApiSecret?: string;
 }

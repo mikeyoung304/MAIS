@@ -211,7 +211,7 @@ Section types:
 - faq: Frequently asked questions accordion
 - contact: Contact information and form
 - cta: Call-to-action banner
-- pricing: Pricing tiers/packages (cosmetic text - for actual packages use manage_packages)
+- pricing: Pricing tiers/packages (cosmetic text - for actual tiers use manage_tiers)
 - features: Feature highlights grid
 
 Position is 0-based. Omit to add at end of page.

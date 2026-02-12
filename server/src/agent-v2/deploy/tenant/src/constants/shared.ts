@@ -42,8 +42,11 @@ export const SECTION_TYPES = [
   'custom',
 ] as const;
 
-/** Seed package names to clean up during first draft. @see contracts SEED_PACKAGE_NAMES */
-export const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
-
 /** Total canonical sections. @see contracts SECTION_BLUEPRINT.length */
 export const TOTAL_SECTIONS = 8;
+
+/** Maximum segments per tenant */
+export const MAX_SEGMENTS_PER_TENANT = 5;
+
+/** Maximum tiers per segment */
+export const MAX_TIERS_PER_SEGMENT = 5;

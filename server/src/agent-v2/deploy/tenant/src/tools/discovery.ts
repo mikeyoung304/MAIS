@@ -53,7 +53,9 @@ Examples:
 Valid keys: ${DISCOVERY_FACT_KEYS.join(', ')}
 
 After storing, the response includes readyForReveal (boolean) and missingForMVP (string[]).
-Use these to guide the conversation — when readyForReveal is true, call build_first_draft.`,
+Use these to guide the conversation:
+- When missingForMVP has items, naturally steer conversation to learn those facts
+- When readyForReveal is true, call build_first_draft to generate the storefront`,
 
   parameters: z.object({
     key: z.enum(DISCOVERY_FACT_KEYS).describe('The type of fact being stored'),

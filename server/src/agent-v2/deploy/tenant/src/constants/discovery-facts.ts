@@ -26,6 +26,9 @@ export const DISCOVERY_FACT_KEYS = [
   'testimonial',
   'faq',
   'contactInfo',
+  // Phase 4: Onboarding redesign — track segment/tier configuration progress
+  'primarySegment',
+  'tiersConfigured',
 ] as const;
 
 export type DiscoveryFactKey = (typeof DISCOVERY_FACT_KEYS)[number];

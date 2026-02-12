@@ -523,16 +523,16 @@ enum OnboardingPhase {
 
 **Acceptance Criteria:**
 
-- [ ] `manage_segments` tool: list/create/update/delete segments (max 5)
-- [ ] `manage_tiers` tool: list/create/update/delete tiers per segment
-- [ ] `manage_addons` tool: list/create/update/delete add-ons
-- [ ] `manage_packages` tool deleted, no references remain
-- [ ] `store_discovery_fact` works without slot machine
-- [ ] `build_first_draft` uses tiers instead of packages
-- [ ] `delegate_to_research` description updated for on-demand use
-- [ ] All tools follow ADK patterns: flat z.object(), runtime switch, wrapToolExecute
-- [ ] Trust tiers assigned correctly: T1 (list), T2 (create/update), T3 (delete with confirmation)
-- [ ] Tool results return full state (not just success flag) per pitfall #52
+- [x] `manage_segments` tool: list/create/update/delete segments (max 5)
+- [x] `manage_tiers` tool: list/create/update/delete tiers per segment
+- [x] `manage_addons` tool: list/create/update/delete add-ons
+- [x] `manage_packages` tool deleted, no references remain
+- [x] `store_discovery_fact` works without slot machine
+- [x] `build_first_draft` uses tiers instead of packages
+- [x] `delegate_to_research` description updated for on-demand use
+- [x] All tools follow ADK patterns: flat z.object(), runtime switch, wrapToolExecute
+- [x] Trust tiers assigned correctly: T1 (list), T2 (create/update), T3 (delete with confirmation)
+- [x] Tool results return full state (not just success flag) per pitfall #52
 - [ ] Constants drift test passes
 
 ---

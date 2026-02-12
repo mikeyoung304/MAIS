@@ -75,8 +75,10 @@ import {
   storeDiscoveryFactTool,
   getKnownFactsTool,
 
-  // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
-  managePackagesTool,
+  // Catalog Management (T1/T2/T3) - Segments, Tiers, Add-Ons
+  manageSegmentsTool,
+  manageTiersTool,
+  manageAddOnsTool,
 
   // Guided Refinement (T1/T2) - Phase 1 Guided Refinement
   generateSectionVariantsTool,
@@ -102,8 +104,8 @@ import {
  * were previously split across Concierge, Storefront, Marketing, and
  * Project Hub agents.
  *
- * Current Phase: 8 (Onboarding Ecosystem Rebuild)
- * Tool count: 34
+ * Current Phase: 9 (Onboarding Conversation Redesign)
+ * Tool count: 36
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -113,7 +115,7 @@ import {
  * - Marketing copy generation (2)
  * - Project management (7)
  * - Discovery/onboarding (3) - store_discovery_fact, get_known_facts, build_first_draft
- * - Package management (1) - manage_packages (CRUD for bookable services)
+ * - Catalog management (3) - manage_segments, manage_tiers, manage_addons
  * - Guided Refinement (4) - generate_section_variants, apply_section_variant, mark_section_complete, get_next_incomplete_section
  */
 export const tenantAgent = new LlmAgent({
@@ -213,17 +215,23 @@ export const tenantAgent = new LlmAgent({
     getKnownFactsTool,
 
     // T2: First draft orchestrator - identifies placeholders, returns structured
-    //     data for LLM to generate copy. Triggered by slot machine BUILD_FIRST_DRAFT.
+    //     data for LLM to generate copy. Triggered by readyForReveal: true.
     buildFirstDraftTool,
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Package Management (T1/T2/T3) - P0 Fix for E2E Failures
-    // CRITICAL: This manages ACTUAL bookable packages (Package table), NOT the
-    // cosmetic "pricing section" in the storefront.
+    // Catalog Management (T1/T2/T3) - Segments, Tiers, Add-Ons
+    // Segment → Tier → AddOn hierarchy. Segments group services by client type,
+    // Tiers are bookable entities with prices, Add-ons are optional extras.
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Create, update, delete, or list actual bookable service packages
-    managePackagesTool,
+    // CRUD for client segments (e.g., "Weddings", "Portraits")
+    manageSegmentsTool,
+
+    // CRUD for pricing tiers within segments (bookable with real prices)
+    manageTiersTool,
+
+    // CRUD for optional add-on services
+    manageAddOnsTool,
 
     // ─────────────────────────────────────────────────────────────────────────
     // Guided Refinement Tools (T1/T2) - Phase 1 Guided Refinement
@@ -245,12 +253,12 @@ export const tenantAgent = new LlmAgent({
     getNextIncompleteSectionTool,
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Research Delegation (T1) - Onboarding Market Research
+    // Research Delegation (T1) - On-Demand Market Research
     // Calls research-agent for competitor pricing and market positioning.
-    // Trigger: When agent has businessType + location during onboarding.
+    // On-demand: call when setting tier prices, not automatically.
     // ─────────────────────────────────────────────────────────────────────────
 
-    // T1: Delegate market research (async, can continue conversation while waiting)
+    // T1: Delegate market research (on-demand for tier pricing context)
     delegateToResearchTool,
   ],
 
