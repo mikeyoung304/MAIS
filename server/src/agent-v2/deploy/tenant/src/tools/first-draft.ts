@@ -17,7 +17,6 @@ import { FunctionTool } from '@google/adk';
 import { z } from 'zod';
 import {
   logger,
-  callMaisApi,
   callMaisApiTyped,
   requireTenantId,
   validateParams,
@@ -27,9 +26,8 @@ import {
   StorefrontStructureResponse,
   GetDiscoveryFactsResponse,
   GetResearchDataResponse,
-  PackageListResponse,
 } from '../types/api-responses.js';
-import { MVP_SECTION_TYPES, SEED_PACKAGE_NAMES } from '../constants/shared.js';
+import { MVP_SECTION_TYPES } from '../constants/shared.js';
 
 /** Shape of pre-computed research data from the backend */
 interface ResearchData {
@@ -52,7 +50,7 @@ const BuildFirstDraftParams = z.object({});
 /**
  * Build First Draft Tool (T2)
  *
- * Called when the slot machine returns nextAction: 'BUILD_FIRST_DRAFT'.
+ * Called when store_discovery_fact returns readyForReveal: true.
  * Gathers all the information the LLM needs to generate a complete first
  * draft of the storefront in a single turn:
  *
@@ -70,7 +68,7 @@ export const buildFirstDraftTool = new FunctionTool({
   name: 'build_first_draft',
   description: `Get ALL MVP sections (HERO, ABOUT, SERVICES) + known facts + research data for first draft.
 
-Call this when store_discovery_fact returns nextAction: 'BUILD_FIRST_DRAFT'.
+Call this when store_discovery_fact returns readyForReveal: true.
 
 This tool returns everything you need to build the first draft in one turn:
 - ALL three MVP sections to write (always returns HERO, ABOUT, SERVICES)
@@ -96,21 +94,13 @@ No user approval needed for first draft — just build and announce.`,
     logger.info({ tenantId }, '[TenantAgent] build_first_draft called');
 
     // 1. Fetch all data in parallel — structure + facts are required,
-    //    research + packages are optional (failures won't block the build)
-    const [structureResult, factsResult, researchResult, listResult] = await Promise.all([
+    //    research is optional (failure won't block the build)
+    const [structureResult, factsResult, researchResult] = await Promise.all([
       callMaisApiTyped('/storefront/structure', tenantId, {}, StorefrontStructureResponse),
       callMaisApiTyped('/get-discovery-facts', tenantId, {}, GetDiscoveryFactsResponse),
       callMaisApiTyped('/get-research-data', tenantId, {}, GetResearchDataResponse).catch(() => {
         logger.debug({ tenantId }, '[TenantAgent] Research data fetch failed, continuing without');
         return { ok: false as const, error: 'Research unavailable' };
-      }),
-      callMaisApiTyped(
-        '/content-generation/manage-packages',
-        tenantId,
-        { action: 'list' },
-        PackageListResponse
-      ).catch(() => {
-        return { ok: false as const, error: 'Packages unavailable' };
       }),
     ]);
 
@@ -136,7 +126,7 @@ No user approval needed for first draft — just build and announce.`,
 
     const factsData = factsResult.data;
 
-    // 2. Find ALL MVP sections — the slot machine gates WHEN to build,
+    // 2. Find ALL MVP sections — readyForReveal gates WHEN to build,
     // this tool should always return MVP sections for overwrite.
     // Seed defaults are not "real" content — always overwrite during first draft.
     //
@@ -155,8 +145,8 @@ No user approval needed for first draft — just build and announce.`,
       };
     }
 
-    // 3. Extract research data (pre-computed by async backend trigger after Q2)
-    // so the agent can cite market pricing when creating packages
+    // 3. Extract research data (pre-computed by research-agent delegation)
+    // so the agent can cite market pricing when creating tiers
     let researchData: ResearchData | null = null;
 
     if (researchResult.ok) {
@@ -190,50 +180,8 @@ No user approval needed for first draft — just build and announce.`,
       '[TenantAgent] build_first_draft identified MVP sections for overwrite'
     );
 
-    // 5. Programmatic fallback: delete seed packages before agent creates real ones.
-    // The system prompt also instructs the agent to list-then-delete, but this ensures
-    // cleanup even if the LLM skips the step. Defense-in-depth for financial-impact data.
-    // API: single POST /manage-packages with action param (see packages.ts:226, :391)
-    //
-    // IMPORTANT: Match by name AND price, not just price. Legitimate free consultations
-    // with non-seed names must be preserved.
-    //
-    // Canonical source: @macon/contracts SEED_PACKAGE_NAMES
-    // Cloud Run agent cannot import from contracts — synced via constants/shared.ts
-    try {
-      if (listResult.ok) {
-        // API returns priceInDollars (dollars), not basePrice (cents) — see internal-agent.routes.ts
-        const packages = listResult.data.packages ?? [];
-        const defaultPackages = packages.filter(
-          (pkg) =>
-            pkg.priceInDollars === 0 &&
-            SEED_PACKAGE_NAMES.includes(pkg.name as (typeof SEED_PACKAGE_NAMES)[number])
-        );
-        await Promise.all(
-          defaultPackages.map((pkg) =>
-            callMaisApi('/content-generation/manage-packages', tenantId, {
-              action: 'delete',
-              packageId: pkg.id,
-            })
-          )
-        );
-        if (defaultPackages.length > 0) {
-          logger.info(
-            { tenantId, deletedCount: defaultPackages.length },
-            '[TenantAgent] build_first_draft cleaned up seed $0 packages'
-          );
-        }
-      }
-    } catch (err) {
-      // Non-fatal: agent prompt will also instruct cleanup
-      logger.warn(
-        { tenantId, err },
-        '[TenantAgent] seed package cleanup failed, agent will retry via prompt'
-      );
-    }
-
     const pricingHint = researchData?.competitorPricing
-      ? `Research data available: ${researchData.competitorPricing.summary}. Use $${researchData.competitorPricing.low.toLocaleString()}-$${researchData.competitorPricing.high.toLocaleString()} as pricing context when creating packages.`
+      ? `Research data available: ${researchData.competitorPricing.summary}. Use $${researchData.competitorPricing.low.toLocaleString()}-$${researchData.competitorPricing.high.toLocaleString()} as pricing context when creating tiers.`
       : 'No research pricing data available yet. Use reasonable defaults for the business type and adjust later.';
 
     return {

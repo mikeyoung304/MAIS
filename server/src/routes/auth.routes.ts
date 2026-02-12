@@ -386,7 +386,7 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
     const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
 
     try {
-      const { email, password, businessName } = req.body;
+      const { email, password, businessName, city, state, brainDump } = req.body;
 
       // Validate required fields
       if (!email || !password || !businessName) {
@@ -407,6 +407,11 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
       // Validate business name
       if (businessName.length < 2 || businessName.length > 100) {
         throw new ValidationError('Business name must be between 2 and 100 characters');
+      }
+
+      // Validate optional fields
+      if (brainDump && typeof brainDump === 'string' && brainDump.length > 2000) {
+        throw new ValidationError('Brain dump must be 2000 characters or less');
       }
 
       const normalizedEmail = email.toLowerCase().trim();
@@ -454,6 +459,9 @@ export function createUnifiedAuthRoutes(options: UnifiedAuthRoutesOptions): Rout
         businessName,
         email: normalizedEmail,
         passwordHash,
+        city: typeof city === 'string' ? city.trim() : undefined,
+        state: typeof state === 'string' ? state.trim() : undefined,
+        brainDump: typeof brainDump === 'string' ? brainDump.trim() : undefined,
       });
 
       const { tenant } = provisionedTenant;

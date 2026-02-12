@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { TierFeatureSchema, TierFeaturesSchema, TierLevelSchema } from '@macon/contracts';
+import { TierFeatureSchema, TierFeaturesSchema } from '@macon/contracts';
 
 describe('TierFeatureSchema', () => {
   it('should validate a valid feature', () => {
@@ -112,33 +112,6 @@ describe('TierFeaturesSchema', () => {
       { text: 'Valid feature', highlighted: false },
       { invalid: 'structure' }, // Missing text
     ]);
-    expect(result.success).toBe(false);
-  });
-});
-
-describe('TierLevelSchema', () => {
-  it('should accept GOOD', () => {
-    const result = TierLevelSchema.safeParse('GOOD');
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept BETTER', () => {
-    const result = TierLevelSchema.safeParse('BETTER');
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept BEST', () => {
-    const result = TierLevelSchema.safeParse('BEST');
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject invalid level', () => {
-    const result = TierLevelSchema.safeParse('INVALID');
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject lowercase', () => {
-    const result = TierLevelSchema.safeParse('good');
     expect(result.success).toBe(false);
   });
 });

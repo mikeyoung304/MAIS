@@ -1,11 +1,13 @@
 /**
  * Tier Schema Definitions
  *
- * Zod schemas for the Tier model's Json fields.
- * Used for validation in services and agent tools.
+ * Zod schemas for the Tier model's Json fields and validation.
+ * Tier is the bookable entity within a Segment, replacing the old Package model.
+ * sortOrder (1, 2, 3) replaces the TierLevel enum (GOOD/BETTER/BEST)
+ * for flexible pricing structures (duration-based, count-based, etc.).
  *
  * @see server/prisma/schema.prisma - Tier model
- * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
+ * @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
  */
 
 import { z } from 'zod';
@@ -33,33 +35,27 @@ export const TierFeaturesSchema = z
   .array(TierFeatureSchema)
   .max(15, 'Maximum 15 features per tier');
 
-/**
- * Tier level enum matching Prisma schema
- */
-export const TierLevelSchema = z.enum(['GOOD', 'BETTER', 'BEST']);
-
 // Type exports
 export type TierFeature = z.infer<typeof TierFeatureSchema>;
 export type TierFeatures = z.infer<typeof TierFeaturesSchema>;
-export type TierLevel = z.infer<typeof TierLevelSchema>;
 
 /**
- * Default features for each tier level
- * Used when creating new segments
+ * Default features for each sort position (1=entry, 2=mid, 3=premium)
+ * Used when creating new segments during onboarding
  */
-export const DEFAULT_TIER_FEATURES: Record<TierLevel, TierFeatures> = {
-  GOOD: [
+export const DEFAULT_TIER_FEATURES_BY_SORT: Record<number, TierFeatures> = {
+  1: [
     { text: 'Basic service package', highlighted: false },
     { text: 'Email support', highlighted: false },
     { text: 'Standard timeline', highlighted: false },
   ],
-  BETTER: [
+  2: [
     { text: 'Enhanced service package', highlighted: true },
     { text: 'Priority email support', highlighted: false },
     { text: 'Expedited timeline', highlighted: false },
     { text: 'One revision included', highlighted: false },
   ],
-  BEST: [
+  3: [
     { text: 'Premium service package', highlighted: true },
     { text: 'Dedicated support', highlighted: true },
     { text: 'Rush timeline available', highlighted: false },
@@ -69,10 +65,10 @@ export const DEFAULT_TIER_FEATURES: Record<TierLevel, TierFeatures> = {
 };
 
 /**
- * Default tier names for each level
+ * Default tier names by sort position
  */
-export const DEFAULT_TIER_NAMES: Record<TierLevel, string> = {
-  GOOD: 'Essential',
-  BETTER: 'Professional',
-  BEST: 'Premium',
+export const DEFAULT_TIER_NAMES_BY_SORT: Record<number, string> = {
+  1: 'Essential',
+  2: 'Professional',
+  3: 'Premium',
 };

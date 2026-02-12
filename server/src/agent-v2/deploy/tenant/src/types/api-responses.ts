@@ -90,24 +90,8 @@ export const StoreDiscoveryFactResponse = z
     totalFactsKnown: z.number(),
     knownFactKeys: z.array(z.string()),
     currentPhase: z.string(),
-    phaseAdvanced: z.boolean(),
-    nextAction: z.string(),
-    readySections: z.array(z.string()),
-    missingForNext: z.array(
-      z
-        .object({
-          key: z.string(),
-          question: z.string(),
-        })
-        .passthrough()
-    ),
-    slotMetrics: z
-      .object({
-        filled: z.number(),
-        total: z.number(),
-        utilization: z.number(),
-      })
-      .passthrough(),
+    readyForReveal: z.boolean(),
+    missingForMVP: z.array(z.string()),
     message: z.string().optional(),
   })
   .passthrough();
@@ -149,49 +133,140 @@ export const GetResearchDataResponse = z
 export type GetResearchDataResponse = z.infer<typeof GetResearchDataResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Package Management: /content-generation/manage-packages
+// Segment Management: /content-generation/manage-segments
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PackageSchema = z
+const SegmentSchema = z
   .object({
     id: z.string(),
     name: z.string(),
-    description: z.string().optional(),
-    priceInDollars: z.number(),
-    slug: z.string().optional(),
-    active: z.boolean().optional(),
+    slug: z.string(),
+    sortOrder: z.number(),
+    active: z.boolean(),
   })
   .passthrough();
 
-/** Response for action: 'list' */
-export const PackageListResponse = z
+export const SegmentListResponse = z
   .object({
-    packages: z.array(PackageSchema),
+    segments: z.array(SegmentSchema),
     totalCount: z.number(),
+    maxSegments: z.number(),
   })
   .passthrough();
 
-export type PackageListResponse = z.infer<typeof PackageListResponse>;
+export type SegmentListResponse = z.infer<typeof SegmentListResponse>;
 
-/** Response for action: 'create' or 'update' */
-export const PackageMutationResponse = z
+export const SegmentMutationResponse = z
   .object({
-    package: PackageSchema,
+    segment: SegmentSchema,
     totalCount: z.number(),
+    maxSegments: z.number(),
   })
   .passthrough();
 
-export type PackageMutationResponse = z.infer<typeof PackageMutationResponse>;
+export type SegmentMutationResponse = z.infer<typeof SegmentMutationResponse>;
 
-/** Response for action: 'delete' */
-export const PackageDeleteResponse = z
+export const SegmentDeleteResponse = z
   .object({
     deletedId: z.string(),
     totalCount: z.number(),
   })
   .passthrough();
 
-export type PackageDeleteResponse = z.infer<typeof PackageDeleteResponse>;
+export type SegmentDeleteResponse = z.infer<typeof SegmentDeleteResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tier Management: /content-generation/manage-tiers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TierSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    segmentId: z.string(),
+    segmentName: z.string().optional(),
+    sortOrder: z.number(),
+    priceInDollars: z.number(),
+    priceCents: z.number(),
+    features: z.array(z.unknown()),
+    bookingType: z.string(),
+    active: z.boolean(),
+  })
+  .passthrough();
+
+export const TierListResponse = z
+  .object({
+    tiers: z.array(TierSchema),
+    totalCount: z.number(),
+    segmentId: z.string().optional(),
+  })
+  .passthrough();
+
+export type TierListResponse = z.infer<typeof TierListResponse>;
+
+export const TierMutationResponse = z
+  .object({
+    tier: TierSchema,
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type TierMutationResponse = z.infer<typeof TierMutationResponse>;
+
+export const TierDeleteResponse = z
+  .object({
+    deletedId: z.string(),
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type TierDeleteResponse = z.infer<typeof TierDeleteResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AddOn Management: /content-generation/manage-addons
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AddOnSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().optional(),
+    priceInDollars: z.number(),
+    priceCents: z.number(),
+    segmentId: z.string().nullable(),
+    segmentName: z.string().optional(),
+    active: z.boolean(),
+  })
+  .passthrough();
+
+export const AddOnListResponse = z
+  .object({
+    addOns: z.array(AddOnSchema),
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type AddOnListResponse = z.infer<typeof AddOnListResponse>;
+
+export const AddOnMutationResponse = z
+  .object({
+    addOn: AddOnSchema,
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type AddOnMutationResponse = z.infer<typeof AddOnMutationResponse>;
+
+export const AddOnDeleteResponse = z
+  .object({
+    deletedId: z.string(),
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export type AddOnDeleteResponse = z.infer<typeof AddOnDeleteResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Generate Variants: /content-generation/generate-variants

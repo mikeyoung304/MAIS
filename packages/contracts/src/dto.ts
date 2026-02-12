@@ -291,6 +291,9 @@ export const TenantSignupDtoSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   businessName: z.string().min(2, 'Business name must be at least 2 characters').max(100),
+  city: z.string().max(100).optional(),
+  state: z.string().max(50).optional(),
+  brainDump: z.string().max(2000, 'Must be 2000 characters or less').optional(),
 });
 
 export type TenantSignupDto = z.infer<typeof TenantSignupDtoSchema>;
@@ -610,6 +613,119 @@ export const TenantDtoSchema = z.object({
 });
 
 export type TenantDto = z.infer<typeof TenantDtoSchema>;
+
+// ============================================================================
+// Tier DTOs (Bookable entity within a Segment)
+// ============================================================================
+
+/**
+ * Tier DTO — represents a bookable pricing tier within a segment.
+ * Replaces Package as the primary bookable entity.
+ * priceCents is in cents (consistent with Booking.totalPrice, Payment.amount).
+ */
+export const TierDtoSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  segmentId: z.string(),
+  sortOrder: z.number().int(),
+  slug: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  priceCents: z.number().int(),
+  currency: z.string(),
+  features: z.array(
+    z.object({
+      text: z.string(),
+      highlighted: z.boolean().optional(),
+      icon: z.string().optional(),
+    })
+  ),
+  bookingType: BookingTypeSchema,
+  durationMinutes: z.number().int().nullable(),
+  depositPercent: z.number().int().nullable(),
+  active: z.boolean(),
+  photos: z
+    .array(
+      z.object({
+        url: z.string(),
+        filename: z.string(),
+        size: z.number(),
+        order: z.number().int(),
+      })
+    )
+    .default([]),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type TierDto = z.infer<typeof TierDtoSchema>;
+
+export const CreateTierDtoSchema = z.object({
+  segmentId: z.string().min(1),
+  sortOrder: z.number().int().min(1).max(10),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  name: z.string().min(1).max(100),
+  description: z.string().max(2000).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
+  features: z
+    .array(
+      z.object({
+        text: z.string().min(1).max(200),
+        highlighted: z.boolean().optional(),
+        icon: z.string().optional(),
+      })
+    )
+    .max(15)
+    .default([]),
+  bookingType: BookingTypeSchema.default('DATE'),
+  durationMinutes: z.number().int().positive().optional(),
+  depositPercent: z.number().int().min(0).max(100).optional(),
+  active: z.boolean().default(true),
+});
+
+export type CreateTierDto = z.infer<typeof CreateTierDtoSchema>;
+
+export const UpdateTierDtoSchema = z.object({
+  sortOrder: z.number().int().min(1).max(10).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only')
+    .optional(),
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(2000).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
+    .optional(),
+  features: z
+    .array(
+      z.object({
+        text: z.string().min(1).max(200),
+        highlighted: z.boolean().optional(),
+        icon: z.string().optional(),
+      })
+    )
+    .max(15)
+    .optional(),
+  bookingType: BookingTypeSchema.optional(),
+  durationMinutes: z.number().int().positive().nullable().optional(),
+  depositPercent: z.number().int().min(0).max(100).nullable().optional(),
+  active: z.boolean().optional(),
+});
+
+export type UpdateTierDto = z.infer<typeof UpdateTierDtoSchema>;
 
 // Segment DTOs
 export const SegmentDtoSchema = z.object({

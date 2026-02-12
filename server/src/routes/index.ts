@@ -776,6 +776,8 @@ export function createV1Router(
     const internalAgentRoutes = createInternalAgentRoutes({
       internalApiSecret: config.INTERNAL_API_SECRET,
       catalogService: services.catalog,
+      segmentService: services.segment,
+      prisma: prismaClient,
       schedulingAvailabilityService: services.schedulingAvailability,
       bookingService: services.booking,
       tenantRepo: internalTenantRepo,

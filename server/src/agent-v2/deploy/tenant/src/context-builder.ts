@@ -18,8 +18,6 @@ import { callMaisApi, logger } from './utils.js';
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type TierLevel = 'GOOD' | 'BETTER' | 'BEST';
-
 export type BlockType =
   | 'HERO'
   | 'ABOUT'
@@ -34,10 +32,13 @@ export type BlockType =
 
 export interface TierInfo {
   id: string;
-  level: TierLevel;
+  sortOrder: number;
+  slug: string;
   name: string;
-  price: number;
+  priceCents: number;
   features: string[];
+  bookingType: string;
+  active: boolean;
 }
 
 export interface SegmentInfo {
@@ -185,9 +186,12 @@ export async function buildTenantContext(tenantId: string): Promise<TenantAgentC
           slug: string;
           tiers: Array<{
             id: string;
-            level: TierLevel;
+            sortOrder: number;
+            slug: string;
             name: string;
-            price: number;
+            priceCents: number;
+            bookingType: string;
+            active: boolean;
             features: unknown;
           }>;
         }>)
@@ -199,12 +203,16 @@ export async function buildTenantContext(tenantId: string): Promise<TenantAgentC
       slug: s.slug,
       tiers: s.tiers.map((t) => ({
         id: t.id,
-        level: t.level,
+        sortOrder: t.sortOrder,
+        slug: t.slug,
         name: t.name,
-        price: typeof t.price === 'number' ? t.price : parseFloat(String(t.price)),
+        priceCents:
+          typeof t.priceCents === 'number' ? t.priceCents : parseInt(String(t.priceCents), 10),
         features: Array.isArray(t.features)
           ? (t.features as Array<{ text: string }>).map((f) => f.text)
           : [],
+        bookingType: t.bookingType ?? 'DATE',
+        active: t.active ?? true,
       })),
     }));
 

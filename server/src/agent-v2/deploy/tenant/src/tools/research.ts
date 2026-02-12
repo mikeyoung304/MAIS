@@ -127,8 +127,8 @@ export const delegateToResearchTool = new FunctionTool({
   name: 'delegate_to_research',
   description: `Delegate market research to the research agent.
 
-WHEN TO CALL: As soon as you have businessType + location during onboarding.
-Runs in background - you can continue the conversation while waiting.
+WHEN TO CALL: When you want competitor pricing data to help the user set tier prices.
+Call this after creating segments, before or during tier creation. On-demand only.
 
 Returns:
 - competitorPricing: Price range for similar businesses in their area

@@ -14,12 +14,11 @@
 import { describe, it, expect } from 'vitest';
 
 // Canonical sources (monorepo)
-import { MVP_REVEAL_SECTION_TYPES, SEED_PACKAGE_NAMES } from '@macon/contracts';
+import { MVP_REVEAL_SECTION_TYPES } from '@macon/contracts';
 import { DISCOVERY_FACT_KEYS as CANONICAL_DISCOVERY_FACT_KEYS } from '../shared/constants/discovery-facts';
 
 // Local copies (Cloud Run tenant agent)
 import { MVP_SECTION_TYPES as AGENT_MVP_SECTION_TYPES } from '../agent-v2/deploy/tenant/src/constants/shared';
-import { SEED_PACKAGE_NAMES as AGENT_SEED_PACKAGE_NAMES } from '../agent-v2/deploy/tenant/src/constants/shared';
 import { DISCOVERY_FACT_KEYS as AGENT_DISCOVERY_FACT_KEYS } from '../agent-v2/deploy/tenant/src/constants/discovery-facts';
 
 // ============================================================================
@@ -32,19 +31,6 @@ describe('MVP_SECTION_TYPES sync', () => {
     const canonical = [...MVP_REVEAL_SECTION_TYPES].sort();
     // Agent: Set from local copy
     const agent = [...AGENT_MVP_SECTION_TYPES].sort();
-
-    expect(agent).toEqual(canonical);
-  });
-});
-
-// ============================================================================
-// SEED_PACKAGE_NAMES
-// ============================================================================
-
-describe('SEED_PACKAGE_NAMES sync', () => {
-  it('agent copy matches canonical contracts source', () => {
-    const canonical = [...SEED_PACKAGE_NAMES].sort();
-    const agent = [...AGENT_SEED_PACKAGE_NAMES].sort();
 
     expect(agent).toEqual(canonical);
   });

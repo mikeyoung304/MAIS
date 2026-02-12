@@ -59,38 +59,40 @@ export type PackageTierConfig = (typeof DEFAULT_PACKAGE_TIERS)[PackageTierKey];
 // Semantic Storefront Defaults
 // ============================================
 
-import type { TierLevel, TierFeatures } from '@macon/contracts';
+import type { TierFeatures } from '@macon/contracts';
 import type { BlockType } from '../generated/prisma/client';
 
 /**
- * Default Tier configurations for the 3-tier pricing ontology
- * Every segment gets exactly 3 tiers: GOOD, BETTER, BEST
- *
- * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
+ * Default Tier configurations by sortOrder (1=entry, 2=mid, 3=premium)
+ * Every segment gets 3 tiers on provisioning.
+ * sortOrder replaces the old TierLevel enum for flexible pricing structures.
  */
 export const DEFAULT_TIER_CONFIGS: Record<
-  TierLevel,
+  number,
   {
+    slug: string;
     name: string;
     description: string;
-    price: number;
+    priceCents: number;
     features: TierFeatures;
   }
 > = {
-  GOOD: {
+  1: {
+    slug: 'essential',
     name: 'Essential',
     description: 'Perfect for getting started',
-    price: 0,
+    priceCents: 0,
     features: [
       { text: 'Basic service package', highlighted: false },
       { text: 'Email support', highlighted: false },
       { text: 'Standard timeline', highlighted: false },
     ],
   },
-  BETTER: {
+  2: {
+    slug: 'professional',
     name: 'Professional',
     description: 'Our most popular option',
-    price: 0,
+    priceCents: 0,
     features: [
       { text: 'Enhanced service package', highlighted: true },
       { text: 'Priority email support', highlighted: false },
@@ -98,10 +100,11 @@ export const DEFAULT_TIER_CONFIGS: Record<
       { text: 'One revision included', highlighted: false },
     ],
   },
-  BEST: {
+  3: {
+    slug: 'premium',
     name: 'Premium',
     description: 'The complete experience',
-    price: 0,
+    priceCents: 0,
     features: [
       { text: 'Premium service package', highlighted: true },
       { text: 'Dedicated support', highlighted: true },

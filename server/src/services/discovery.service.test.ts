@@ -107,7 +107,7 @@ describe('DiscoveryService', () => {
       );
     });
 
-    it('triggers research when businessType + location are both known', async () => {
+    it('does NOT auto-trigger research (research is on-demand only)', async () => {
       tenantRepo.findById.mockResolvedValue(
         makeTenant({
           branding: { discoveryFacts: { businessType: 'Photography' } },
@@ -116,28 +116,7 @@ describe('DiscoveryService', () => {
 
       await service.storeFact('tenant-1', 'location', 'Austin, TX');
 
-      expect(researchService.triggerAsync).toHaveBeenCalledWith(
-        'tenant-1',
-        'Photography',
-        'Austin, TX'
-      );
-    });
-
-    it('does NOT re-trigger research if already triggered', async () => {
-      tenantRepo.findById.mockResolvedValue(
-        makeTenant({
-          branding: {
-            discoveryFacts: {
-              businessType: 'Photography',
-              location: 'NYC',
-              _researchTriggered: true,
-            },
-          },
-        })
-      );
-
-      await service.storeFact('tenant-1', 'targetMarket', 'Weddings');
-
+      // Research is no longer auto-fired — agent triggers it on-demand
       expect(researchService.triggerAsync).not.toHaveBeenCalled();
     });
 
@@ -172,8 +151,8 @@ describe('DiscoveryService', () => {
       expect(updateCall[1].branding).toBeDefined();
     });
 
-    it('never moves phase backward (monotonic advancement)', async () => {
-      // Tenant already in SERVICES phase
+    it('never moves phase backward (monotonic — only NOT_STARTED advances)', async () => {
+      // Tenant already past NOT_STARTED — phase should stay unchanged
       tenantRepo.findById.mockResolvedValue(
         makeTenant({
           onboardingPhase: 'SERVICES',
@@ -185,8 +164,8 @@ describe('DiscoveryService', () => {
 
       const result = await service.storeFact('tenant-1', 'businessName', 'Acme');
 
-      // businessName alone would suggest DISCOVERY, but we should never go backward
-      expect(result.phaseAdvanced).toBe(false);
+      // Phase stays SERVICES — we only advance NOT_STARTED → BUILDING
+      expect(result.currentPhase).toBe('SERVICES');
     });
   });
 

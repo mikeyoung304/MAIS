@@ -6,9 +6,8 @@
  *
  * Responsibilities:
  * - Store discovery facts in tenant.branding.discoveryFacts (read-modify-write)
- * - Compute slot machine result after each fact storage
+ * - Compute lightweight onboarding state after each fact storage
  * - Advance onboarding phase when thresholds are met
- * - Evaluate research trigger conditions
  * - Invalidate bootstrap cache after mutations
  *
  * CRITICAL: All methods require tenantId for multi-tenant isolation.
@@ -16,8 +15,6 @@
 
 import { LRUCache } from 'lru-cache';
 import { logger } from '../lib/core/logger';
-import { computeSlotMachine } from '../lib/slot-machine';
-import type { SlotMachineResult } from '../lib/slot-machine';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ContextBuilderService } from './context-builder.service';
 import type { CatalogService } from './catalog.service';
@@ -34,11 +31,8 @@ export interface StoreFactResult {
   totalFactsKnown: number;
   knownFactKeys: string[];
   currentPhase: string;
-  phaseAdvanced: boolean;
-  nextAction: string;
-  readySections: string[];
-  missingForNext: SlotMachineResult['missingForNext'];
-  slotMetrics: SlotMachineResult['slotMetrics'];
+  readyForReveal: boolean;
+  missingForMVP: string[];
   message: string;
 }
 
@@ -221,15 +215,12 @@ export class DiscoveryService {
   /**
    * Store a discovery fact learned during onboarding.
    *
-   * Performs a read-modify-write on tenant.branding.discoveryFacts, computes
-   * the slot machine result, advances the onboarding phase if needed,
-   * and triggers background research when conditions are met.
+   * Performs a read-modify-write on tenant.branding.discoveryFacts,
+   * computes lightweight onboarding state (replaces slot machine),
+   * and advances the onboarding phase if needed.
    *
-   * // TODO: Advisory lock for concurrent fact storage — the current
-   * // read-modify-write on tenant.branding has no locking. Two concurrent
-   * // store_discovery_fact calls can lose data. This is acceptable for now
-   * // because onboarding is a single-user flow, but should be addressed
-   * // if concurrent writes become possible.
+   * Research is no longer auto-fired — the agent triggers it on-demand
+   * when the tenant asks for pricing help or market research.
    */
   async storeFact(tenantId: string, key: string, value: unknown): Promise<StoreFactResult> {
     logger.info({ tenantId, key }, '[DiscoveryService] Storing discovery fact');
@@ -244,31 +235,22 @@ export class DiscoveryService {
     const discoveryFacts = (branding.discoveryFacts as Record<string, unknown>) || {};
     discoveryFacts[key] = value;
 
-    // Check if research should be triggered (businessType + location now known)
-    const hasBusinessType = key === 'businessType' || !!discoveryFacts['businessType'];
-    const hasLocation = key === 'location' || !!discoveryFacts['location'];
-    const alreadyTriggered = !!discoveryFacts['_researchTriggered'];
-    const shouldTriggerResearch = hasBusinessType && hasLocation && !alreadyTriggered;
-
-    // Mark research as triggered BEFORE the async call to prevent re-triggers
-    if (shouldTriggerResearch) {
-      discoveryFacts['_researchTriggered'] = true;
-    }
-
-    // Filter _-prefixed metadata keys from fact keys (slot machine only sees real facts)
+    // Filter _-prefixed metadata keys from fact keys
     const knownFactKeys = Object.keys(discoveryFacts).filter((k) => !k.startsWith('_'));
     const previousPhase = (tenant.onboardingPhase as string) || 'NOT_STARTED';
 
-    // Pass researchTriggered so slot machine returns ASK instead of TRIGGER_RESEARCH
-    const researchTriggered = alreadyTriggered || shouldTriggerResearch;
-    const slotResult = computeSlotMachine(knownFactKeys, previousPhase, researchTriggered);
+    // Lightweight state computation (replaces slot machine)
+    const state = this.computeOnboardingState(knownFactKeys);
 
-    // Single DB write: store facts + advance phase if needed (merged from two sequential updates)
+    // Advance phase from NOT_STARTED → BUILDING when first fact is stored
+    const shouldAdvancePhase = previousPhase === 'NOT_STARTED' && knownFactKeys.length > 0;
+
+    // Single DB write: store facts + advance phase if needed
     const updateData: Record<string, unknown> = { branding: { ...branding, discoveryFacts } };
-    if (slotResult.phaseAdvanced) {
-      updateData.onboardingPhase = slotResult.currentPhase;
+    if (shouldAdvancePhase) {
+      updateData.onboardingPhase = 'BUILDING';
       logger.info(
-        { tenantId, from: previousPhase, to: slotResult.currentPhase },
+        { tenantId, from: previousPhase, to: 'BUILDING' },
         '[DiscoveryService] Onboarding phase advanced'
       );
     }
@@ -277,26 +259,38 @@ export class DiscoveryService {
     // Invalidate bootstrap cache so next request gets updated facts
     this.invalidateBootstrapCache(tenantId);
 
-    // Fire async backend research (fire-and-forget)
-    if (shouldTriggerResearch) {
-      const businessType = String(discoveryFacts['businessType'] || '');
-      const location = String(discoveryFacts['location'] || '');
-      this.researchService.triggerAsync(tenantId, businessType, location);
-    }
-
     return {
       stored: true,
       key,
       value,
       totalFactsKnown: knownFactKeys.length,
       knownFactKeys,
-      currentPhase: slotResult.currentPhase,
-      phaseAdvanced: slotResult.phaseAdvanced,
-      nextAction: slotResult.nextAction,
-      readySections: slotResult.readySections,
-      missingForNext: slotResult.missingForNext,
-      slotMetrics: slotResult.slotMetrics,
+      currentPhase: shouldAdvancePhase ? 'BUILDING' : previousPhase,
+      readyForReveal: state.readyForReveal,
+      missingForMVP: state.missingForMVP,
       message: `Stored ${key} successfully. Now know: ${knownFactKeys.join(', ')}`,
+    };
+  }
+
+  /**
+   * Lightweight onboarding state computation.
+   *
+   * Replaces the slot machine's deterministic state engine with simple checks.
+   * The LLM agent now drives the conversation adaptively instead of following
+   * a fixed nextAction sequence.
+   */
+  private computeOnboardingState(factKeys: string[]): {
+    readyForReveal: boolean;
+    missingForMVP: string[];
+  } {
+    const hasSegment = factKeys.includes('primarySegment');
+    const hasTiers = factKeys.includes('tiersConfigured');
+
+    return {
+      readyForReveal: hasSegment && hasTiers,
+      missingForMVP: [!hasSegment && 'primarySegment', !hasTiers && 'tiersConfigured'].filter(
+        (x): x is string => typeof x === 'string'
+      ),
     };
   }
 
