@@ -159,6 +159,9 @@ export interface BootstrapData {
   onboardingComplete: boolean;
   onboardingPhase: OnboardingPhase;
   discoveryFacts: KnownFacts;
+  brainDump?: string | null;
+  city?: string | null;
+  state?: string | null;
   storefrontState: {
     hasDraft: boolean;
     hasPublished: boolean;
@@ -341,6 +344,9 @@ export class ContextBuilderService {
         onboardingCompletedAt: true, // onboardingDone doesn't exist - derive from this
         onboardingPhase: true,
         revealCompletedAt: true,
+        brainDump: true,
+        city: true,
+        state: true,
       },
     });
 
@@ -394,6 +400,9 @@ export class ContextBuilderService {
       onboardingComplete: onboardingDone,
       onboardingPhase: effectivePhase,
       discoveryFacts,
+      brainDump: tenant.brainDump ?? null,
+      city: tenant.city ?? null,
+      state: tenant.state ?? null,
       storefrontState: {
         hasDraft,
         hasPublished,

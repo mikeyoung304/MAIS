@@ -899,6 +899,15 @@ function buildContextPrefix(bootstrap: BootstrapData): string | null {
     parts.push(`businessName: ${JSON.stringify(bootstrap.businessName)}`);
   }
 
+  // Brain dump (primary context for onboarding)
+  if (bootstrap.brainDump) {
+    parts.push(`brainDump: ${JSON.stringify(bootstrap.brainDump)}`);
+  }
+  // Location from signup
+  if (bootstrap.city || bootstrap.state) {
+    parts.push(`location: ${[bootstrap.city, bootstrap.state].filter(Boolean).join(', ')}`);
+  }
+
   parts.push('[END CONTEXT]');
 
   return parts.join('\n');

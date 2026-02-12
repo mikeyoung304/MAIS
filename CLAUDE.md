@@ -65,17 +65,19 @@ const packages = await prisma.package.findMany({
 
 For detailed architecture documentation, search or read these files when working on specific subsystems:
 
-| Subsystem                      | Reference                                              |
-| ------------------------------ | ------------------------------------------------------ |
-| Layered architecture           | `server/src/di.ts`, `server/src/lib/ports.ts`          |
-| Port interfaces                | `ITenantRepository`, `BookingRepository` in `ports.ts` |
-| Type-safe API contracts        | `packages/contracts/`, ts-rest + Zod                   |
-| AI Agents (Vertex AI + ADK)    | `server/src/agent-v2/`, 3-agent architecture           |
-| Agent deployment               | `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`       |
-| Build mode (storefront editor) | `docs/architecture/BUILD_MODE_VISION.md`               |
-| Landing page config            | `apps/web/src/lib/tenant.ts`, `normalizeToPages()`     |
-| Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`          |
-| Webhook idempotency            | `webhookEvent` table, ADR-002                          |
+| Subsystem                      | Reference                                                                    |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| Layered architecture           | `server/src/di.ts`, `server/src/lib/ports.ts`                                |
+| Port interfaces                | `ITenantRepository`, `BookingRepository` in `ports.ts`                       |
+| Type-safe API contracts        | `packages/contracts/`, ts-rest + Zod                                         |
+| AI Agents (Vertex AI + ADK)    | `server/src/agent-v2/`, 3-agent architecture                                 |
+| Agent deployment               | `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`                             |
+| Build mode (storefront editor) | `docs/architecture/BUILD_MODE_VISION.md`                                     |
+| Landing page config            | `apps/web/src/lib/tenant.ts`, `normalizeToPages()`                           |
+| Double-booking prevention      | ADR-013, advisory locks, `booking.service.ts`                                |
+| Webhook idempotency            | `webhookEvent` table, ADR-002                                                |
+| Onboarding conversation design | `docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md`                        |
+| Onboarding brainstorm (full)   | `docs/brainstorms/2026-02-11-onboarding-conversation-redesign-brainstorm.md` |
 
 ### Storefront Storage (Phase 5)
 
