@@ -237,13 +237,16 @@ describe('constants', () => {
   it('SECTION_TYPES contains all expected types', () => {
     expect(SECTION_TYPES).toContain('hero');
     expect(SECTION_TYPES).toContain('text');
+    expect(SECTION_TYPES).toContain('about');
     expect(SECTION_TYPES).toContain('gallery');
     expect(SECTION_TYPES).toContain('testimonials');
     expect(SECTION_TYPES).toContain('faq');
     expect(SECTION_TYPES).toContain('contact');
     expect(SECTION_TYPES).toContain('cta');
     expect(SECTION_TYPES).toContain('pricing');
+    expect(SECTION_TYPES).toContain('services');
     expect(SECTION_TYPES).toContain('features');
-    expect(SECTION_TYPES.length).toBe(9);
+    expect(SECTION_TYPES).toContain('custom');
+    expect(SECTION_TYPES.length).toBe(12);
   });
 });

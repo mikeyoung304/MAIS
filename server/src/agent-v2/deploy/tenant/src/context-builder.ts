@@ -28,6 +28,7 @@ export type BlockType =
   | 'CONTACT'
   | 'CTA'
   | 'GALLERY'
+  | 'FEATURES'
   | 'CUSTOM';
 
 export interface TierInfo {

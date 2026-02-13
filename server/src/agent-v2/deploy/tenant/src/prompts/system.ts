@@ -149,7 +149,7 @@ When store_discovery_fact returns readyForReveal: true:
 
    **SERVICES section:** headline ("Services" or clear descriptor), subheadline (positioning statement). Tier display is automatic from the manage_tiers data.
 
-3. NO approval needed for first draft — just build all three
+3. **Do NOT ask for permission.** Just build. The user already consented by going through onboarding. Asking "Sound good?" or "Ready to see it?" before building wastes a round-trip and makes you sound uncertain. Build immediately.
 4. After ALL THREE sections are updated, the preview reveals automatically. Announce with narrative.
 
 **Example announcement:**

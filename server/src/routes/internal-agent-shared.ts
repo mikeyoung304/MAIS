@@ -29,13 +29,16 @@ import type { PrismaClient } from '../generated/prisma/client';
 export const SECTION_TYPES = [
   'hero',
   'text',
+  'about',
   'gallery',
   'testimonials',
   'faq',
   'contact',
   'cta',
   'pricing',
+  'services',
   'features',
+  'custom',
 ] as const;
 
 export const PAGE_NAMES = [

@@ -416,7 +416,7 @@ export interface TenantStorefrontData {
  */
 const BLOCK_TO_SECTION_MAP: Record<string, string> = {
   HERO: 'hero',
-  ABOUT: 'text', // Use 'text' for backward compat with existing components
+  ABOUT: 'about', // Canonical name per block-type-mapper.ts
   GALLERY: 'gallery',
   TESTIMONIALS: 'testimonials',
   FAQ: 'faq',
@@ -442,18 +442,21 @@ export interface SectionContentDtoClient {
 
 /**
  * Known section types that have corresponding React components.
- * Unknown types (SERVICES, CUSTOM) are filtered out to prevent SectionRenderer crashes.
+ * Must stay in sync with SectionRenderer switch cases and block-type-mapper.ts.
  */
 const KNOWN_SECTION_TYPES = new Set([
   'hero',
   'text',
+  'about',
   'gallery',
   'testimonials',
   'faq',
   'contact',
   'cta',
   'pricing',
+  'services',
   'features',
+  'custom',
 ]);
 
 /**
@@ -485,18 +488,26 @@ export function transformContentForSection(
   }
 
   // --- ABOUT-specific: body → content (TextSection uses 'content' not 'body') ---
-  if (sectionType === 'text' && 'body' in transformed && !('content' in transformed)) {
+  if (
+    (sectionType === 'text' || sectionType === 'about') &&
+    'body' in transformed &&
+    !('content' in transformed)
+  ) {
     transformed.content = transformed.body;
     delete transformed.body;
   }
 
-  // --- FEATURES-specific: items → features ---
-  if (sectionType === 'features' && 'items' in transformed && !('features' in transformed)) {
+  // --- FEATURES/SERVICES-specific: items → features ---
+  if (
+    (sectionType === 'features' || sectionType === 'services') &&
+    'items' in transformed &&
+    !('features' in transformed)
+  ) {
     transformed.features = transformed.items;
     delete transformed.items;
   }
   // Ensure features array is never null/undefined (prevents .map() crash)
-  if (sectionType === 'features') {
+  if (sectionType === 'features' || sectionType === 'services') {
     transformed.features = transformed.features ?? [];
   }
 

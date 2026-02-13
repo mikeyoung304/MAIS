@@ -20,12 +20,15 @@ import {
 const SECTION_TYPE_TO_ANCHOR_ID: Record<string, string> = {
   hero: 'hero',
   text: 'about', // Text section is typically used for "About" content
+  about: 'about', // Canonical name for about/text content
   gallery: 'gallery',
   testimonials: 'testimonials',
   faq: 'faq',
   contact: 'contact',
   pricing: 'pricing',
+  services: 'services', // Canonical name for services/features
   features: 'services', // Features section maps to "Services" nav
+  custom: 'custom',
   cta: 'cta',
 };
 
@@ -85,6 +88,9 @@ export function SectionRenderer({
               return <HeroSection {...section} tenant={tenant} basePath={basePath} />;
             case 'text':
               return <TextSection {...section} tenant={tenant} />;
+            case 'about':
+              // About has same shape as text; override type for component compatibility
+              return <TextSection {...section} type="text" tenant={tenant} />;
             case 'gallery':
               return <GallerySection {...section} tenant={tenant} />;
             case 'testimonials':
@@ -99,6 +105,12 @@ export function SectionRenderer({
               return <PricingSection {...section} tenant={tenant} />;
             case 'features':
               return <FeaturesSection {...section} tenant={tenant} />;
+            case 'services':
+              // Services has same shape as features; override type for component compatibility
+              return <FeaturesSection {...section} type="features" tenant={tenant} />;
+            case 'custom':
+              // Custom sections have no dedicated renderer yet — render null
+              return null;
             default: {
               if (process.env.NODE_ENV === 'development') {
                 console.warn(

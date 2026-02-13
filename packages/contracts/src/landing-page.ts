@@ -7,7 +7,7 @@
  *
  * Architecture:
  * - 7 page types: home, about, services, faq, contact, gallery, testimonials
- * - 7 section types: hero, text, gallery, testimonials, faq, contact, cta
+ * - 12 section types: hero, text, about, gallery, testimonials, faq, contact, cta, pricing, services, features, custom
  * - Home page is always enabled
  * - Dynamic navigation updates based on enabled pages
  */
@@ -48,13 +48,16 @@ export type PageName = (typeof PAGE_NAMES)[number];
 export const SECTION_TYPES = [
   'hero',
   'text',
+  'about',
   'gallery',
   'testimonials',
   'faq',
   'contact',
   'cta',
   'pricing',
+  'services',
   'features',
+  'custom',
 ] as const;
 export type SectionTypeName = (typeof SECTION_TYPES)[number];
 
@@ -80,7 +83,7 @@ export const SectionIdSchema = z
   .string()
   .max(50, 'Section ID must not exceed 50 characters')
   .regex(
-    /^(home|about|services|faq|contact|gallery|testimonials)-(hero|text|gallery|testimonials|faq|contact|cta|pricing|features)-(main|[a-z]+|[0-9]+)$/,
+    /^(home|about|services|faq|contact|gallery|testimonials)-(hero|text|about|gallery|testimonials|faq|contact|cta|pricing|services|features|custom)-(main|[a-z]+|[0-9]+)$/,
     'Section ID must be {page}-{type}-{qualifier} format (e.g., home-hero-main, about-text-2)'
   )
   .refine((id) => !RESERVED_PATTERNS.some((pattern) => id.includes(pattern)), {
@@ -388,6 +391,22 @@ export const TextSectionSchema = z.object({
 export type TextSection = z.infer<typeof TextSectionSchema>;
 
 /**
+ * About section - content block with optional image (canonical name for 'text')
+ * Same shape as TextSection but with type: 'about'.
+ * 'text' is the legacy alias; 'about' is canonical per block-type-mapper.ts.
+ */
+export const AboutSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
+  type: z.literal('about'),
+  headline: z.string().max(60).optional(),
+  content: z.string().min(1).max(2000),
+  imageUrl: SafeImageUrlOptionalSchema,
+  imagePosition: z.enum(['left', 'right']).default('left'),
+});
+
+export type AboutSection = z.infer<typeof AboutSectionSchema>;
+
+/**
  * Gallery section - image showcase with optional Instagram link
  */
 export const GallerySectionSchema = z.object({
@@ -547,12 +566,41 @@ export const FeaturesSectionSchema = z.object({
 export type FeaturesSection = z.infer<typeof FeaturesSectionSchema>;
 
 /**
+ * Services section - same shape as features, canonical name for service listings.
+ * Renders with FeaturesSection component. Separate type for semantic clarity.
+ */
+export const ServicesSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
+  type: z.literal('services'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  features: z.array(FeatureItemSchema).min(1).max(12),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  backgroundColor: z.enum(['white', 'neutral']).optional(),
+});
+
+export type ServicesSection = z.infer<typeof ServicesSectionSchema>;
+
+/**
+ * Custom section - flexible catch-all for non-standard content
+ */
+export const CustomSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
+  type: z.literal('custom'),
+  headline: z.string().max(60).optional(),
+  content: z.string().max(5000).optional(),
+});
+
+export type CustomSection = z.infer<typeof CustomSectionSchema>;
+
+/**
  * Discriminated union of all section types
  * Used for flexible page composition
  */
 export const SectionSchema = z.discriminatedUnion('type', [
   HeroSectionSchema,
   TextSectionSchema,
+  AboutSectionSchema,
   GallerySectionSchema,
   TestimonialsSectionSchema,
   FAQSectionSchema,
@@ -560,6 +608,8 @@ export const SectionSchema = z.discriminatedUnion('type', [
   CTASectionSchema,
   PricingSectionSchema,
   FeaturesSectionSchema,
+  ServicesSectionSchema,
+  CustomSectionSchema,
 ]);
 
 export type Section = z.infer<typeof SectionSchema>;
@@ -900,14 +950,32 @@ export const LenientFeaturesSectionSchema = z.object({
 export type LenientFeaturesSection = z.infer<typeof LenientFeaturesSectionSchema>;
 
 /**
+ * Lenient Services Section (for drafts)
+ *
+ * Identical to ServicesSectionSchema but allows empty features array.
+ */
+export const LenientServicesSectionSchema = z.object({
+  id: SectionIdSchema.optional(),
+  type: z.literal('services'),
+  headline: z.string().max(60),
+  subheadline: z.string().max(150).optional(),
+  features: z.array(FeatureItemSchema).max(12).default([]), // No .min(1)
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  backgroundColor: z.enum(['white', 'neutral']).optional(),
+});
+
+export type LenientServicesSection = z.infer<typeof LenientServicesSectionSchema>;
+
+/**
  * Lenient Section Schema (discriminated union for drafts)
  *
- * Uses lenient versions for pricing/features, standard for others.
+ * Uses lenient versions for pricing/features/services, standard for others.
  * All other sections already allow empty arrays.
  */
 export const LenientSectionSchema = z.discriminatedUnion('type', [
   HeroSectionSchema,
   TextSectionSchema,
+  AboutSectionSchema,
   GallerySectionSchema,
   TestimonialsSectionSchema,
   FAQSectionSchema,
@@ -915,6 +983,8 @@ export const LenientSectionSchema = z.discriminatedUnion('type', [
   CTASectionSchema,
   LenientPricingSectionSchema, // Lenient: allows empty tiers
   LenientFeaturesSectionSchema, // Lenient: allows empty features
+  LenientServicesSectionSchema, // Lenient: allows empty features
+  CustomSectionSchema,
 ]);
 
 export type LenientSection = z.infer<typeof LenientSectionSchema>;

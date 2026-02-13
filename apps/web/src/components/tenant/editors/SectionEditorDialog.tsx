@@ -589,13 +589,16 @@ function CTAEditor({
 const SECTION_TYPE_LABELS: Record<Section['type'], string> = {
   hero: 'Hero Section',
   text: 'Text Section',
+  about: 'About Section',
   gallery: 'Gallery Section',
   testimonials: 'Testimonials Section',
   faq: 'FAQ Section',
   contact: 'Contact Section',
   cta: 'Call to Action Section',
+  services: 'Services Section',
   features: 'Features Section',
   pricing: 'Pricing Section',
+  custom: 'Custom Section',
 };
 
 /**

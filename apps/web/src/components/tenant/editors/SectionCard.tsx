@@ -32,6 +32,7 @@ const SECTION_TYPE_META: Record<
 > = {
   hero: { icon: Star, label: 'Hero', color: 'bg-purple-100 text-purple-700' },
   text: { icon: Type, label: 'Text', color: 'bg-blue-100 text-blue-700' },
+  about: { icon: Type, label: 'About', color: 'bg-blue-100 text-blue-700' },
   gallery: { icon: Image, label: 'Gallery', color: 'bg-pink-100 text-pink-700' },
   testimonials: {
     icon: MessageSquare,
@@ -41,8 +42,10 @@ const SECTION_TYPE_META: Record<
   faq: { icon: HelpCircle, label: 'FAQ', color: 'bg-green-100 text-green-700' },
   contact: { icon: Mail, label: 'Contact', color: 'bg-cyan-100 text-cyan-700' },
   cta: { icon: Zap, label: 'Call to Action', color: 'bg-orange-100 text-orange-700' },
+  services: { icon: Grid, label: 'Services', color: 'bg-indigo-100 text-indigo-700' },
   features: { icon: Grid, label: 'Features', color: 'bg-indigo-100 text-indigo-700' },
   pricing: { icon: CreditCard, label: 'Pricing', color: 'bg-emerald-100 text-emerald-700' },
+  custom: { icon: Type, label: 'Custom', color: 'bg-neutral-100 text-neutral-700' },
 };
 
 /**
@@ -53,6 +56,7 @@ function getSectionSummary(section: Section): string {
     case 'hero':
       return section.headline || 'No headline';
     case 'text':
+    case 'about':
       return section.headline || section.content?.slice(0, 50) + '...' || 'No content';
     case 'gallery':
       return `${section.images?.length || 0} images`;
@@ -65,9 +69,12 @@ function getSectionSummary(section: Section): string {
     case 'cta':
       return section.headline || 'No headline';
     case 'features':
+    case 'services':
       return `${section.features?.length || 0} features`;
     case 'pricing':
       return `${section.tiers?.length || 0} pricing tiers`;
+    case 'custom':
+      return section.headline || 'Custom section';
   }
 }
 
