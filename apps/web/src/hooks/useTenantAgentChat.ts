@@ -222,9 +222,15 @@ export function useTenantAgentChat({
   /**
    * Fetch the agent's first message by sending a "hello" to the chat endpoint.
    * This lets the agent speak first based on session state (forbiddenSlots).
+   *
+   * For NEW sessions: pass newSessionId=null to trigger inline session creation
+   * in the /chat handler, which loads bootstrap and injects context prefix.
+   * The sessionId is returned in the response and stored in localStorage.
+   *
+   * For RESTORED sessions: pass the existing sessionId.
    */
   const fetchAgentGreeting = useCallback(
-    async (newSessionId: string, currentVersion: number) => {
+    async (newSessionId: string | null, currentVersion: number) => {
       try {
         const response = await fetch(`${API_URL}/chat`, {
           method: 'POST',
@@ -233,7 +239,8 @@ export function useTenantAgentChat({
           },
           body: JSON.stringify({
             message: 'hello',
-            sessionId: newSessionId,
+            // Omit sessionId for new sessions — triggers inline creation with context injection
+            ...(newSessionId && { sessionId: newSessionId }),
             version: currentVersion,
           }),
         });
@@ -243,6 +250,17 @@ export function useTenantAgentChat({
         }
 
         const data = await response.json();
+
+        // For new sessions: extract sessionId from response and persist
+        if (!newSessionId && data.sessionId) {
+          setSessionId(data.sessionId);
+          try {
+            localStorage.setItem(SESSION_KEY, data.sessionId);
+          } catch {
+            // Ignore localStorage errors
+          }
+          onSessionStart?.(data.sessionId);
+        }
 
         // Update version from response
         if (data.version !== undefined) {
@@ -281,7 +299,7 @@ export function useTenantAgentChat({
         logger.error('Failed to fetch agent greeting', err instanceof Error ? err : undefined);
       }
     },
-    [onDashboardActions]
+    [onDashboardActions, onSessionStart]
   );
 
   /**
@@ -357,41 +375,20 @@ export function useTenantAgentChat({
         }
       }
 
-      // Create a new session
+      // NEW SESSION: Skip POST /session — let POST /chat create the session inline.
+      // This ensures bootstrap data is loaded and context prefix is injected into
+      // the first message. The /chat handler creates the ADK session with full
+      // bootstrap state, then injects [SESSION CONTEXT] into the greeting.
+      // Previously, POST /session created the session (with bootstrap in session state)
+      // but POST /chat never read it — the LLM doesn't see session state automatically.
       setConnectionStatus('connecting');
-      const response = await fetch(`${API_URL}/session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create session');
-      }
-
-      const data = await response.json();
-      setSessionId(data.sessionId);
-      // New sessions start at version 0
-      const newVersion = data.version ?? 0;
-      setVersion(newVersion);
       setIsAvailable(true);
       setConnectionStatus('ready');
-      onSessionStart?.(data.sessionId);
 
-      // Persist session state to localStorage
-      try {
-        localStorage.setItem(SESSION_KEY, data.sessionId);
-        localStorage.setItem(VERSION_KEY, String(newVersion));
-      } catch {
-        // localStorage unavailable - continue without persistence
-      }
-
-      // AGENT SPEAKS FIRST: Fetch the agent's initial message based on session state
-      // This replaces the hardcoded greeting - the agent's system prompt determines what to say
+      // AGENT SPEAKS FIRST: Send "hello" without sessionId — /chat creates session
+      // inline with bootstrap + context injection, returns sessionId in response
       setIsInitializing(false);
-      await fetchAgentGreeting(data.sessionId, newVersion);
+      await fetchAgentGreeting(null, 0);
     } catch (err) {
       setIsAvailable(false);
       setConnectionStatus('error');

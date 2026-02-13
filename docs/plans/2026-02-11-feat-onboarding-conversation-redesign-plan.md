@@ -620,14 +620,14 @@ If brain dump is too vague to extract a segment after 2 attempts:
 
 **Acceptance Criteria:**
 
-- [ ] System prompt references new tools (manage_segments, manage_tiers, manage_addons)
-- [ ] No references to slot machine, manage_packages, or 15 fixed fact keys
-- [ ] Brain dump processing instructions included
-- [ ] Experience adaptation table (fast-track vs mentoring)
-- [ ] Phase 1 (MVP sprint) and Phase 2 (enhancement) clearly defined
-- [ ] Research is on-demand only (explicit instruction)
-- [ ] Forbidden vocabulary maintained (no "Great!", "Perfect!", etc.)
-- [ ] Financial safety protocol maintained (T3 for destructive operations)
+- [x] System prompt references new tools (manage_segments, manage_tiers, manage_addons)
+- [x] No references to slot machine, manage_packages, or 15 fixed fact keys
+- [x] Brain dump processing instructions included
+- [x] Experience adaptation table (fast-track vs mentoring)
+- [x] Phase 1 (MVP sprint) and Phase 2 (enhancement) clearly defined
+- [x] Research is on-demand only (explicit instruction)
+- [x] Forbidden vocabulary maintained (no "Great!", "Perfect!", etc.)
+- [x] Financial safety protocol maintained (T3 for destructive operations)
 
 ---
 

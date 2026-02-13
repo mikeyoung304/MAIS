@@ -864,7 +864,14 @@ function buildContextPrefix(bootstrap: BootstrapData): string | null {
   const hasFacts = Object.keys(bootstrap.discoveryFacts).length > 0;
   const hasForbidden = bootstrap.forbiddenSlots.length > 0;
 
-  if (!hasFacts && !hasForbidden && !bootstrap.onboardingComplete) {
+  if (
+    !hasFacts &&
+    !hasForbidden &&
+    !bootstrap.onboardingComplete &&
+    !bootstrap.brainDump &&
+    !bootstrap.city &&
+    !bootstrap.state
+  ) {
     return null; // New user with no context - no prefix needed
   }
 
