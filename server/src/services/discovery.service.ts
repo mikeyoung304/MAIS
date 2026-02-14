@@ -62,7 +62,7 @@ export type CompleteOnboardingResult =
       status: 'completed';
       completedAt: Date;
       publishedUrl?: string;
-      packagesCreated?: number;
+      tiersCreated?: number;
       summary?: string;
     }
   | {
@@ -70,7 +70,7 @@ export type CompleteOnboardingResult =
       completedAt: Date | null;
     }
   | {
-      status: 'no_packages';
+      status: 'no_tiers';
     };
 
 export type MarkRevealCompletedResult = { status: 'completed' } | { status: 'already_completed' };
@@ -330,14 +330,14 @@ export class DiscoveryService {
   /**
    * Complete the onboarding process for a tenant.
    *
-   * Validates prerequisites (at least one package exists), performs idempotency
+   * Validates prerequisites (at least one tier exists), performs idempotency
    * check, updates onboarding phase to COMPLETED, and invalidates cache.
    *
    * Returns a discriminated union so the route handler can map to HTTP responses.
    */
   async completeOnboarding(
     tenantId: string,
-    opts?: { publishedUrl?: string; packagesCreated?: number; summary?: string }
+    opts?: { publishedUrl?: string; tiersCreated?: number; summary?: string }
   ): Promise<CompleteOnboardingResult> {
     const tenant = await this.tenantRepo.findById(tenantId);
     if (!tenant) {
@@ -356,17 +356,17 @@ export class DiscoveryService {
       };
     }
 
-    // Prerequisite: at least one package must exist
+    // Prerequisite: at least one tier must exist
     if (!this.catalogService) {
       throw new ServiceUnavailableError('Catalog service not configured');
     }
-    const packages = await this.catalogService.getAllPackages(tenantId);
-    if (packages.length === 0) {
+    const tierCount = await this.catalogService.countTiers(tenantId);
+    if (tierCount === 0) {
       logger.warn(
         { tenantId },
-        '[DiscoveryService] Blocked onboarding completion - no packages exist'
+        '[DiscoveryService] Blocked onboarding completion - no tiers exist'
       );
-      return { status: 'no_packages' };
+      return { status: 'no_tiers' };
     }
 
     // Update tenant onboarding phase
@@ -382,7 +382,7 @@ export class DiscoveryService {
       status: 'completed',
       completedAt,
       ...(opts?.publishedUrl !== undefined && { publishedUrl: opts.publishedUrl }),
-      ...(opts?.packagesCreated !== undefined && { packagesCreated: opts.packagesCreated }),
+      ...(opts?.tiersCreated !== undefined && { tiersCreated: opts.tiersCreated }),
       ...(opts?.summary !== undefined && { summary: opts.summary }),
     };
   }

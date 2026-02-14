@@ -80,6 +80,19 @@ export class CatalogService {
   }
 
   /**
+   * Count active tiers for a tenant.
+   * Used as a prerequisite check (e.g., onboarding completion requires at least 1 tier).
+   */
+  async countTiers(tenantId: string): Promise<number> {
+    if (!this.prisma) {
+      throw new ValidationError('Prisma client not configured');
+    }
+    return this.prisma.tier.count({
+      where: { tenantId, active: true },
+    });
+  }
+
+  /**
    * Retrieves a single package by slug with its add-ons for a tenant
    *
    * MULTI-TENANT: Scoped to tenantId to prevent cross-tenant access

@@ -44,15 +44,19 @@ afterAll(async () => {
     const tenantIds = tenants.map((t) => t.id);
 
     if (tenantIds.length > 0) {
-      // Delete packages first (references segments)
+      // Delete in correct FK order
+      await prisma.tier.deleteMany({
+        where: { tenantId: { in: tenantIds } },
+      });
       await prisma.package.deleteMany({
         where: { tenantId: { in: tenantIds } },
       });
-      // Delete segments next
+      await prisma.sectionContent.deleteMany({
+        where: { tenantId: { in: tenantIds } },
+      });
       await prisma.segment.deleteMany({
         where: { tenantId: { in: tenantIds } },
       });
-      // Finally delete tenants
       await prisma.tenant.deleteMany({
         where: { id: { in: tenantIds } },
       });
@@ -131,7 +135,7 @@ describe('POST /v1/auth/signup - Tenant Signup', () => {
       expect(Number(tenant?.commissionPercent)).toBe(10);
       expect(tenant?.stripeOnboarded).toBe(false);
 
-      // Test 2: Verify default segment and packages were created atomically
+      // Test 2: Verify default segment and tiers were created atomically
       // TenantProvisioningService creates these in a single transaction during signup (#632)
       const segments = await prisma.segment.findMany({
         where: { tenantId: res.body.tenantId },
@@ -141,22 +145,22 @@ describe('POST /v1/auth/signup - Tenant Signup', () => {
       expect(segments[0].name).toBe('General');
       expect(segments[0].heroTitle).toBe('Our Services');
 
-      // Verify 3 default packages were created
-      const packages = await prisma.package.findMany({
+      // Verify 3 default tiers were created (Packages no longer created — Phase 1 migration)
+      const tiers = await prisma.tier.findMany({
         where: { tenantId: res.body.tenantId },
-        orderBy: { groupingOrder: 'asc' },
+        orderBy: { sortOrder: 'asc' },
       });
-      expect(packages).toHaveLength(3);
-      expect(packages[0].slug).toBe('basic-package');
-      expect(packages[0].name).toBe('Basic Package');
-      expect(packages[0].groupingOrder).toBe(1);
-      expect(packages[1].slug).toBe('standard-package');
-      expect(packages[1].groupingOrder).toBe(2);
-      expect(packages[2].slug).toBe('premium-package');
-      expect(packages[2].groupingOrder).toBe(3);
+      expect(tiers).toHaveLength(3);
+      expect(tiers[0].slug).toBe('essential');
+      expect(tiers[0].name).toBe('Essential');
+      expect(tiers[0].sortOrder).toBe(1);
+      expect(tiers[1].slug).toBe('professional');
+      expect(tiers[1].sortOrder).toBe(2);
+      expect(tiers[2].slug).toBe('premium');
+      expect(tiers[2].sortOrder).toBe(3);
 
-      // All packages should be linked to the default segment
-      expect(packages.every((p) => p.segmentId === segments[0].id)).toBe(true);
+      // All tiers should be linked to the default segment
+      expect(tiers.every((t) => t.segmentId === segments[0].id)).toBe(true);
 
       // Test 3: Token validity - use the token to access a protected endpoint
       const verifyRes = await request(app)

@@ -91,6 +91,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .mockResolvedValue([
           { id: 'pkg-1', title: 'Test Package', priceCents: 10000, active: true },
         ]),
+      countTiers: vi.fn().mockResolvedValue(3),
       getPackageById: vi.fn().mockResolvedValue({
         id: 'pkg-1',
         slug: 'test-package',
@@ -305,8 +306,8 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .send({
           tenantId: 'tenant-123',
           publishedUrl: 'https://test-business.gethandled.ai',
-          packagesCreated: 3,
-          summary: 'Created 3 packages and published storefront',
+          tiersCreated: 3,
+          summary: 'Created 3 tiers and published storefront',
         });
 
       expect(response.status).toBe(200);
@@ -375,9 +376,9 @@ describe('Internal Agent Bootstrap Endpoint', () => {
   });
 
   describe('POST /complete-onboarding (P1-3)', () => {
-    it('should block completion without packages', async () => {
-      // No packages exist
-      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([]);
+    it('should block completion without tiers', async () => {
+      // No tiers exist
+      mockCatalogService.countTiers = vi.fn().mockResolvedValue(0);
 
       const response = await request(app)
         .post('/v1/internal/agent/complete-onboarding')
@@ -385,21 +386,19 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .send({
           tenantId: 'tenant-123',
           publishedUrl: 'https://test.gethandled.ai',
-          packagesCreated: 0,
+          tiersCreated: 0,
           summary: 'Tried to complete',
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('at least one package');
-      expect(response.body.prerequisite).toBe('packages');
+      expect(response.body.error).toContain('at least one tier');
+      expect(response.body.prerequisite).toBe('tiers');
       expect(mockTenantRepo.update).not.toHaveBeenCalled();
     });
 
-    it('should allow completion with packages', async () => {
-      // Packages exist
-      mockCatalogService.getAllPackages = vi
-        .fn()
-        .mockResolvedValue([{ id: 'pkg-1', title: 'Wedding Package' }]);
+    it('should allow completion with tiers', async () => {
+      // Tiers exist
+      mockCatalogService.countTiers = vi.fn().mockResolvedValue(1);
 
       const response = await request(app)
         .post('/v1/internal/agent/complete-onboarding')
@@ -407,8 +406,8 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .send({
           tenantId: 'tenant-123',
           publishedUrl: 'https://test.gethandled.ai',
-          packagesCreated: 1,
-          summary: 'Created wedding package',
+          tiersCreated: 1,
+          summary: 'Created wedding tier',
         });
 
       expect(response.status).toBe(200);
@@ -515,7 +514,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         .send({
           tenantId: 'tenant-123',
           publishedUrl: 'https://test.gethandled.ai',
-          packagesCreated: 1,
+          tiersCreated: 1,
         });
 
       // Reset mock to track
