@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
-import { getTenantBySlug, isPageEnabled, TenantNotFoundError } from '@/lib/tenant';
-import type { LandingPageConfig, PageName } from '@macon/contracts';
+import { getTenantBySlug, TenantNotFoundError } from '@/lib/tenant';
+import { getPublishedSections } from '@/lib/sections-api';
+import { sectionsToPages } from '@/lib/storefront-utils';
+import type { SectionContentDto, PageName } from '@macon/contracts';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -14,23 +16,29 @@ export const revalidate = 3600;
  * - Home page (always enabled)
  * - All enabled subpages (about, services, gallery, testimonials, faq, contact)
  *
- * Benefits:
- * - Better SEO for multi-tenant sites
- * - Google discovers all tenant pages efficiently
- * - Custom domains can reference their own sitemap
+ * Page enablement is derived from SectionContent — if a page has sections,
+ * it's included in the sitemap.
  *
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
 export async function generateSitemaps() {
-  // This function enables the /t/[slug]/sitemap.xml route
-  // Returns an array of { id } objects for each slug
-  // The actual IDs come from the API call in the sitemap function
-  return [{ id: 0 }]; // Placeholder - Next.js handles dynamic generation
+  return [{ id: 0 }];
 }
 
 interface SitemapParams {
   slug: string;
 }
+
+/** Priority by page type for SEO weighting */
+const PAGE_PRIORITY: Record<string, number> = {
+  home: 1.0,
+  services: 0.8,
+  about: 0.7,
+  contact: 0.7,
+  gallery: 0.6,
+  testimonials: 0.6,
+  faq: 0.5,
+};
 
 export default async function sitemap({
   params,
@@ -40,40 +48,51 @@ export default async function sitemap({
   const { slug } = await params;
 
   try {
-    const tenant = await getTenantBySlug(slug);
-    const baseUrl = `${APP_URL}/t/${slug}`;
-    const landingConfig = tenant.branding?.landingPage as LandingPageConfig | undefined;
+    const [tenant, sections] = await Promise.all([
+      getTenantBySlug(slug),
+      getPublishedSections(slug).catch(() => [] as SectionContentDto[]),
+    ]);
 
-    // Define all possible tenant pages
-    const pages: Array<{
-      path: string;
-      pageName: Exclude<PageName, 'home'> | null;
-      priority: number;
-    }> = [
-      { path: '', pageName: null, priority: 1.0 }, // Home page (always enabled)
-      { path: '/about', pageName: 'about', priority: 0.7 },
-      { path: '/services', pageName: 'services', priority: 0.8 },
-      { path: '/gallery', pageName: 'gallery', priority: 0.6 },
-      { path: '/testimonials', pageName: 'testimonials', priority: 0.6 },
-      { path: '/faq', pageName: 'faq', priority: 0.5 },
-      { path: '/contact', pageName: 'contact', priority: 0.7 },
+    const baseUrl = `${APP_URL}/t/${slug}`;
+    const pages = sectionsToPages(sections);
+
+    // Home is always included
+    const entries: MetadataRoute.Sitemap = [
+      {
+        url: baseUrl,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 1.0,
+      },
     ];
 
-    // Filter to only enabled pages
-    const enabledPages = pages.filter(
-      (page) => page.pageName === null || isPageEnabled(landingConfig, page.pageName)
-    );
+    // Add enabled subpages (pages with sections)
+    const subpages: Array<Exclude<PageName, 'home'>> = [
+      'about',
+      'services',
+      'gallery',
+      'testimonials',
+      'faq',
+      'contact',
+    ];
 
-    // Generate sitemap entries
-    return enabledPages.map((page) => ({
-      url: `${baseUrl}${page.path}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: page.priority,
-    }));
+    for (const pageName of subpages) {
+      if (pages[pageName]?.enabled) {
+        entries.push({
+          url: `${baseUrl}/${pageName}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: PAGE_PRIORITY[pageName] ?? 0.5,
+        });
+      }
+    }
+
+    // Suppress unused variable warning — tenant fetched to validate slug exists
+    void tenant;
+
+    return entries;
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
-      // Return empty sitemap for non-existent tenants
       return [];
     }
     throw error;

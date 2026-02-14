@@ -13,7 +13,7 @@ import { getPublishedSections, SectionsNotFoundError } from '@/lib/sections-api'
 import type { SectionContentDto } from '@macon/contracts';
 import { logger } from '@/lib/logger';
 import {
-  injectSectionsIntoData,
+  sectionsToPages,
   getHeroFromSections,
   generateLocalBusinessSchema,
   safeJsonLd,
@@ -32,7 +32,7 @@ interface DomainPageProps {
  * 2. This page looks up the tenant by domain
  * 3. Renders the tenant landing page with sections API integration
  *
- * Feature parity with [slug]/(site)/page.tsx (sections, Schema.org, etc.)
+ * Data flow: SectionContent → sectionsToPages() → PagesConfig → components
  */
 
 export async function generateMetadata({ searchParams }: DomainPageProps): Promise<Metadata> {
@@ -46,10 +46,7 @@ export async function generateMetadata({ searchParams }: DomainPageProps): Promi
     const sections = await getPublishedSections(tenant.slug).catch(() => [] as SectionContentDto[]);
 
     const heroFromSections = sections.length > 0 ? getHeroFromSections(sections) : null;
-    const metaDescription =
-      heroFromSections?.subheadline ||
-      tenant.branding?.landingPage?.hero?.subheadline ||
-      `Book services with ${tenant.name}`;
+    const metaDescription = heroFromSections?.subheadline || `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,
@@ -105,7 +102,7 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
     ]);
 
     const data = { tenant, packages, segments };
-    const enhancedData = injectSectionsIntoData(data, sections);
+    const pages = sectionsToPages(sections);
     const domainParam = `?domain=${validatedDomain}`;
 
     if (sections.length > 0) {
@@ -117,11 +114,7 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
 
     // Use custom domain as canonical URL
     const canonicalUrl = `https://${validatedDomain}`;
-    const localBusinessSchema = generateLocalBusinessSchema(
-      enhancedData.tenant,
-      canonicalUrl,
-      sections
-    );
+    const localBusinessSchema = generateLocalBusinessSchema(data.tenant, canonicalUrl, sections);
 
     return (
       <>
@@ -129,7 +122,7 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
         />
-        <TenantLandingPageClient data={enhancedData} basePath="" domainParam={domainParam} />
+        <TenantLandingPageClient data={data} pages={pages} basePath="" domainParam={domainParam} />
       </>
     );
   } catch (error) {

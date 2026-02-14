@@ -9,7 +9,7 @@
  */
 
 import { Suspense } from 'react';
-import type { TenantPublicDto } from '@macon/contracts';
+import type { TenantPublicDto, PagesConfig, HeroSection } from '@macon/contracts';
 import { TenantNav } from './TenantNav';
 import { TenantFooter } from './TenantFooter';
 import { TenantChatWidget } from '../chat/TenantChatWidget';
@@ -18,6 +18,8 @@ import { EditModeGate } from './EditModeGate';
 
 interface TenantSiteShellProps {
   tenant: TenantPublicDto;
+  /** Pages configuration from SectionContent */
+  pages?: PagesConfig | null;
   /** Base path for links (e.g., '/t/slug' for slug routes, '' for domain routes) */
   basePath?: string;
   /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
@@ -25,14 +27,24 @@ interface TenantSiteShellProps {
   children: React.ReactNode;
 }
 
-export function TenantSiteShell({ tenant, basePath, domainParam, children }: TenantSiteShellProps) {
+export function TenantSiteShell({
+  tenant,
+  pages,
+  basePath,
+  domainParam,
+  children,
+}: TenantSiteShellProps) {
+  // Extract CTA text from hero section in pages config
+  const heroSection = pages?.home?.sections?.find((s): s is HeroSection => s.type === 'hero');
+  const ctaText = heroSection?.ctaText || 'View Packages';
+
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
           Suspense required because useSearchParams() triggers client-side boundary. */}
       <Suspense>
         <EditModeGate>
-          <TenantNav tenant={tenant} basePath={basePath} domainParam={domainParam} />
+          <TenantNav tenant={tenant} pages={pages} basePath={basePath} />
         </EditModeGate>
       </Suspense>
 
@@ -40,18 +52,19 @@ export function TenantSiteShell({ tenant, basePath, domainParam, children }: Ten
 
       <Suspense>
         <EditModeGate>
-          <TenantFooter tenant={tenant} basePath={basePath} domainParam={domainParam} />
+          <TenantFooter
+            tenant={tenant}
+            pages={pages}
+            basePath={basePath}
+            domainParam={domainParam}
+          />
           <TenantChatWidget
             tenantApiKey={tenant.apiKeyPublic}
             businessName={tenant.name}
             primaryColor={tenant.primaryColor}
             chatEnabled={tenant.chatEnabled}
           />
-          <StickyMobileCTA
-            ctaText={tenant.branding?.landingPage?.hero?.ctaText || 'View Packages'}
-            href="#packages"
-            observeElementId="main-content"
-          />
+          <StickyMobileCTA ctaText={ctaText} href="#packages" observeElementId="main-content" />
         </EditModeGate>
       </Suspense>
     </div>

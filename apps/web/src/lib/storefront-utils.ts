@@ -1,97 +1,187 @@
 /**
  * Shared storefront page utilities
  *
- * Extracted from [slug]/(site)/page.tsx to enable code sharing
- * between slug-based and domain-based route trees.
+ * Converts SectionContent rows from the database into PagesConfig
+ * for the component tree. Also handles Schema.org generation and
+ * safe JSON-LD serialization for SEO.
  *
- * Functions handle sections-to-config bridging, Schema.org generation,
- * and safe JSON-LD serialization for SEO.
+ * Data flow: SectionContent → sectionsToPages() → PagesConfig → components
  */
 
-import { normalizeToPages, sectionsToLandingConfig, type TenantStorefrontData } from './tenant';
+import { DEFAULT_PAGES_CONFIG } from '@macon/contracts';
 import type {
   TenantPublicDto,
   ContactSection,
-  LandingPageConfig,
+  PagesConfig,
+  PageName,
+  Section,
   SectionContentDto,
+  SectionTypeName,
 } from '@macon/contracts';
 
 /**
- * Inject sections from SectionContent table into TenantStorefrontData.
- *
- * Bridges the new SectionContent table with existing components that
- * expect LandingPageConfig. If sections exist, converts to config format.
- * Otherwise, keeps existing branding.landingPage (fallback for legacy tenants).
+ * Block type to section type mapping.
+ * Maps database UPPER_CASE blockType to component lowercase section type.
  */
-export function injectSectionsIntoData(
-  data: TenantStorefrontData,
-  sections: SectionContentDto[]
-): TenantStorefrontData {
-  if (!sections || sections.length === 0) {
-    return data;
+const BLOCK_TO_SECTION_TYPE: Record<string, SectionTypeName> = {
+  HERO: 'hero',
+  TEXT: 'text',
+  ABOUT: 'about',
+  GALLERY: 'gallery',
+  TESTIMONIALS: 'testimonials',
+  FAQ: 'faq',
+  CONTACT: 'contact',
+  CTA: 'cta',
+  PRICING: 'pricing',
+  SERVICES: 'services',
+  FEATURES: 'features',
+  CUSTOM: 'custom',
+};
+
+/**
+ * Transform database field names to component field names.
+ *
+ * The SectionContent table stores content with database-friendly names
+ * (title, body, items) but components expect semantic names
+ * (headline, content, features). This function bridges that gap.
+ */
+function transformContentForSection(
+  sectionType: SectionTypeName,
+  content: Record<string, unknown>
+): Record<string, unknown> {
+  const transformed: Record<string, unknown> = { ...content };
+
+  // Common field mappings
+  if ('title' in content && !('headline' in content)) {
+    transformed.headline = content.title;
+    delete transformed.title;
   }
 
-  const landingConfig = sectionsToLandingConfig(
-    sections.map((s) => ({
-      id: s.id,
-      blockType: s.blockType,
-      pageName: s.pageName,
-      content: s.content as Record<string, unknown>,
-      order: s.order,
-    }))
-  );
+  // Type-specific mappings
+  switch (sectionType) {
+    case 'text':
+    case 'about':
+      if ('body' in content && !('content' in content)) {
+        transformed.content = content.body;
+        delete transformed.body;
+      }
+      if ('image' in content && !('imageUrl' in content)) {
+        transformed.imageUrl = content.image;
+        delete transformed.image;
+      }
+      break;
+    case 'hero':
+      if ('backgroundImage' in content && !('backgroundImageUrl' in content)) {
+        transformed.backgroundImageUrl = content.backgroundImage;
+        delete transformed.backgroundImage;
+      }
+      break;
+    case 'features':
+    case 'services':
+      if ('items' in content && !('features' in content)) {
+        transformed.features = content.items;
+        delete transformed.items;
+      }
+      break;
+    case 'gallery':
+      if ('items' in content && !('images' in content)) {
+        transformed.images = content.items;
+        delete transformed.items;
+      }
+      break;
+  }
 
+  return transformed;
+}
+
+/**
+ * Convert SectionContent rows to PagesConfig.
+ *
+ * Single conversion from database format to component format.
+ * Data flow: SectionContent rows → sectionsToPages() → PagesConfig → components
+ *
+ * @param sections - Published SectionContent rows from the database
+ * @returns PagesConfig ready for component consumption
+ */
+export function sectionsToPages(sections: SectionContentDto[]): PagesConfig {
+  if (!sections || sections.length === 0) {
+    return DEFAULT_PAGES_CONFIG;
+  }
+
+  // Group sections by page
+  const pageMap = new Map<PageName, Section[]>();
+
+  for (const section of sections) {
+    const sectionType = BLOCK_TO_SECTION_TYPE[section.blockType];
+    if (!sectionType) continue;
+
+    const pageName = (section.pageName || 'home') as PageName;
+
+    const content = section.content as Record<string, unknown>;
+    const transformed = transformContentForSection(sectionType, content);
+
+    const sectionData: Section = {
+      ...transformed,
+      id: section.id,
+      type: sectionType,
+    } as Section;
+
+    const existing = pageMap.get(pageName) || [];
+    existing.push(sectionData);
+    pageMap.set(pageName, existing);
+  }
+
+  // Sort sections within each page by order
+  const sortedPageMap = new Map<PageName, Section[]>();
+  for (const [pageName, pageSections] of pageMap) {
+    const sectionOrder = new Map<string, number>();
+    for (const section of sections) {
+      sectionOrder.set(section.id, section.order);
+    }
+    const sorted = [...pageSections].sort((a, b) => {
+      const orderA = a.id ? (sectionOrder.get(a.id) ?? 0) : 0;
+      const orderB = b.id ? (sectionOrder.get(b.id) ?? 0) : 0;
+      return orderA - orderB;
+    });
+    sortedPageMap.set(pageName, sorted);
+  }
+
+  // Build PagesConfig from grouped sections
   return {
-    ...data,
-    tenant: {
-      ...data.tenant,
-      branding: {
-        ...data.tenant.branding,
-        landingPage: landingConfig,
-      },
+    home: {
+      enabled: true as const,
+      sections: sortedPageMap.get('home') || DEFAULT_PAGES_CONFIG.home.sections,
+    },
+    about: {
+      enabled: sortedPageMap.has('about'),
+      sections: sortedPageMap.get('about') || [],
+    },
+    services: {
+      enabled: sortedPageMap.has('services'),
+      sections: sortedPageMap.get('services') || [],
+    },
+    faq: {
+      enabled: sortedPageMap.has('faq'),
+      sections: sortedPageMap.get('faq') || [],
+    },
+    contact: {
+      enabled: sortedPageMap.has('contact'),
+      sections: sortedPageMap.get('contact') || [],
+    },
+    gallery: {
+      enabled: sortedPageMap.has('gallery'),
+      sections: sortedPageMap.get('gallery') || [],
+    },
+    testimonials: {
+      enabled: sortedPageMap.has('testimonials'),
+      sections: sortedPageMap.get('testimonials') || [],
     },
   };
 }
 
 /**
- * Extract hero content from landing page config.
- * Handles both page-based and legacy config formats consistently.
- */
-export function getHeroContent(config: LandingPageConfig | undefined): {
-  headline?: string;
-  subheadline?: string;
-  ctaText?: string;
-  backgroundImageUrl?: string;
-} | null {
-  if (!config) return null;
-
-  const pages = normalizeToPages(config);
-  const heroSection = pages.home.sections.find((s) => s.type === 'hero');
-
-  if (heroSection && heroSection.type === 'hero') {
-    return {
-      headline: heroSection.headline,
-      subheadline: heroSection.subheadline,
-      ctaText: heroSection.ctaText,
-      backgroundImageUrl: heroSection.backgroundImageUrl,
-    };
-  }
-
-  if (config.hero) {
-    return {
-      headline: config.hero.headline,
-      subheadline: config.hero.subheadline,
-      ctaText: config.hero.ctaText,
-      backgroundImageUrl: config.hero.backgroundImageUrl,
-    };
-  }
-
-  return null;
-}
-
-/**
  * Extract hero content from sections array.
- * Used for SEO metadata generation with new section format.
+ * Used for SEO metadata generation.
  */
 export function getHeroFromSections(sections: SectionContentDto[]): {
   headline?: string;
@@ -113,7 +203,7 @@ export function getHeroFromSections(sections: SectionContentDto[]): {
 
 /**
  * Extract contact info from sections array.
- * Used for Schema.org structured data with new section format.
+ * Used for Schema.org structured data.
  */
 export function getContactFromSections(sections: SectionContentDto[]): ContactSection | null {
   const contactSection = sections.find((s) => s.blockType === 'CONTACT');
@@ -126,27 +216,6 @@ export function getContactFromSections(sections: SectionContentDto[]): ContactSe
     email: content.email as string | undefined,
     phone: content.phone as string | undefined,
   };
-}
-
-/**
- * Extract contact information from landing page config.
- * Handles both legacy and new page-based config formats.
- */
-export function getContactInfo(config: LandingPageConfig | undefined): ContactSection | null {
-  if (!config) return null;
-
-  if (config.pages?.contact?.sections) {
-    const contactSection = config.pages.contact.sections.find(
-      (s): s is ContactSection => s.type === 'contact'
-    );
-    if (contactSection) return contactSection;
-  }
-
-  const pages = normalizeToPages(config);
-  const contactSections = pages.contact?.sections || [];
-  const contactSection = contactSections.find((s): s is ContactSection => s.type === 'contact');
-
-  return contactSection || null;
 }
 
 /**
@@ -166,7 +235,7 @@ export function safeJsonLd(data: object): string {
 /**
  * Generate Schema.org LocalBusiness JSON-LD structured data.
  *
- * Prefers sections data over legacy landingConfig when available.
+ * Uses sections data for hero subheadline and contact info.
  *
  * @see https://schema.org/LocalBusiness
  */
@@ -178,10 +247,6 @@ export function generateLocalBusinessSchema(
   const heroFromSections = sections.length > 0 ? getHeroFromSections(sections) : null;
   const contactFromSections = sections.length > 0 ? getContactFromSections(sections) : null;
 
-  const landingConfig = tenant.branding?.landingPage;
-  const contact = contactFromSections || getContactInfo(landingConfig);
-  const heroSubheadline = heroFromSections?.subheadline || landingConfig?.hero?.subheadline;
-
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -189,22 +254,22 @@ export function generateLocalBusinessSchema(
     url: canonicalUrl,
   };
 
-  if (heroSubheadline) {
-    schema.description = heroSubheadline;
+  if (heroFromSections?.subheadline) {
+    schema.description = heroFromSections.subheadline;
   }
 
-  if (contact?.email) {
-    schema.email = contact.email;
+  if (contactFromSections?.email) {
+    schema.email = contactFromSections.email;
   }
 
-  if (contact?.phone) {
-    schema.telephone = contact.phone;
+  if (contactFromSections?.phone) {
+    schema.telephone = contactFromSections.phone;
   }
 
-  if (contact?.address) {
+  if (contactFromSections?.address) {
     schema.address = {
       '@type': 'PostalAddress',
-      streetAddress: contact.address,
+      streetAddress: contactFromSections.address,
     };
   }
 
@@ -212,8 +277,8 @@ export function generateLocalBusinessSchema(
     schema.logo = tenant.branding.logoUrl;
   }
 
-  if (contact?.hours) {
-    schema.openingHours = contact.hours;
+  if (contactFromSections?.hours) {
+    schema.openingHours = contactFromSections.hours;
   }
 
   return schema;

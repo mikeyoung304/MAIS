@@ -5,7 +5,11 @@ import {
   InvalidDomainError,
   validateDomain,
 } from '@/lib/tenant';
+import { getPublishedSections, SectionsNotFoundError } from '@/lib/sections-api';
+import type { SectionContentDto } from '@macon/contracts';
+import { sectionsToPages } from '@/lib/storefront-utils';
 import { TenantSiteShell } from '@/components/tenant';
+import { logger } from '@/lib/logger';
 
 interface DomainLayoutProps {
   children: React.ReactNode;
@@ -16,7 +20,8 @@ interface DomainLayoutProps {
  * Shared layout for custom domain tenant pages
  *
  * Same shell as [slug]/(site)/layout.tsx but resolves tenant by domain.
- * Uses empty basePath with domainParam for proper navigation link construction.
+ * Fetches sections to derive PagesConfig for navigation.
+ * React cache() deduplicates with page.tsx — zero extra API calls.
  */
 export default async function DomainLayout({ children, searchParams }: DomainLayoutProps) {
   const { domain } = await searchParams;
@@ -32,11 +37,24 @@ export default async function DomainLayout({ children, searchParams }: DomainLay
   }
 
   try {
-    const tenant = await getTenantByDomain(validatedDomain);
+    const [tenant, sections] = await Promise.all([
+      getTenantByDomain(validatedDomain),
+      getPublishedSections(validatedDomain).catch((err) => {
+        if (!(err instanceof SectionsNotFoundError)) {
+          logger.warn('Failed to fetch sections for domain layout', {
+            domain: validatedDomain,
+            error: err.message,
+          });
+        }
+        return [] as SectionContentDto[];
+      }),
+    ]);
+
+    const pages = sectionsToPages(sections);
     const domainParam = `?domain=${validatedDomain}`;
 
     return (
-      <TenantSiteShell tenant={tenant} basePath="" domainParam={domainParam}>
+      <TenantSiteShell tenant={tenant} pages={pages} basePath="" domainParam={domainParam}>
         {children}
       </TenantSiteShell>
     );

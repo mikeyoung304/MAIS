@@ -4,11 +4,10 @@
  * Shared navigation items and utilities for TenantNav and TenantFooter.
  * Single source of truth for navigation structure.
  *
- * Supports both legacy static navigation and new dynamic navigation
- * based on page configuration.
+ * Derives navigation from PagesConfig — only enabled pages appear in nav.
  */
 
-import type { LandingPageConfig, PageName } from '@macon/contracts';
+import type { PagesConfig, PageName } from '@macon/contracts';
 
 /**
  * Navigation item definition
@@ -63,9 +62,6 @@ const PAGE_PATHS: Record<PageName, string> = {
 /**
  * Anchor IDs for single-page navigation
  * Maps page names to section IDs on the landing page
- *
- * Issue #6 Fix: Single landing page uses anchor links (#section) instead of
- * separate page routes (/about, /services, etc.)
  */
 const PAGE_ANCHORS: Record<PageName, string> = {
   home: '', // Top of page, no anchor
@@ -80,72 +76,30 @@ const PAGE_ANCHORS: Record<PageName, string> = {
 /**
  * Get navigation items based on page configuration
  *
- * Returns only the pages that are enabled in the tenant's configuration.
- * Falls back to legacy NAV_ITEMS if no pages config is present.
+ * Returns only the pages that are enabled in the tenant's PagesConfig.
  *
- * @param config - Landing page configuration (may include pages or legacy sections)
+ * @param pages - Pages configuration from SectionContent
  * @returns Array of navigation items for enabled pages
- *
- * @example
- * ```ts
- * const navItems = getNavigationItems(tenant.branding?.landingPage);
- * // Returns: [{ label: 'Home', path: '' }, { label: 'About', path: '/about' }, ...]
- * ```
  */
-export function getNavigationItems(config?: LandingPageConfig | null): NavItem[] {
-  // If new pages config exists, use it
-  if (config?.pages) {
-    return PAGE_ORDER.filter((page) => {
-      const pageConfig = config.pages![page];
-      return pageConfig?.enabled !== false;
-    }).map((page) => ({
-      label: PAGE_LABELS[page],
-      path: PAGE_PATHS[page],
-    }));
+export function getNavigationItems(pages?: PagesConfig | null): NavItem[] {
+  if (!pages) {
+    return [{ label: 'Home', path: '' }];
   }
 
-  // Fall back to legacy static navigation
-  return NAV_ITEMS;
+  return PAGE_ORDER.filter((page) => {
+    const pageConfig = pages[page];
+    return pageConfig?.enabled !== false;
+  }).map((page) => ({
+    label: PAGE_LABELS[page],
+    path: PAGE_PATHS[page],
+  }));
 }
-
-/**
- * Legacy static navigation items for tenant storefronts
- *
- * @deprecated Use getNavigationItems(config) for dynamic navigation
- *
- * @remarks
- * - 'path' is relative to the basePath
- * - Empty string '' represents the home page
- * - Kept for backward compatibility during migration
- */
-export const NAV_ITEMS: NavItem[] = [
-  { label: 'Home', path: '' },
-  { label: 'Services', path: '/services' },
-  { label: 'About', path: '/about' },
-  { label: 'FAQ', path: '/faq' },
-  { label: 'Contact', path: '/contact' },
-];
 
 /**
  * Build full href from basePath and nav item
  *
  * Handles both slug-based paths (/t/slug) and domain-based paths
  * with query parameters.
- *
- * @param basePath - Base path for the tenant (e.g., '/t/jane-photography')
- * @param item - Navigation item with relative path
- * @param domainParam - Optional domain query param for custom domains
- * @returns Full href for the navigation link
- *
- * @example
- * // Slug-based navigation
- * buildNavHref('/t/jane', { label: 'Services', path: '/services' })
- * // Returns: '/t/jane/services'
- *
- * @example
- * // Domain-based navigation
- * buildNavHref('', { label: 'Services', path: '/services' }, '?domain=example.com')
- * // Returns: '/services?domain=example.com'
  */
 export function buildNavHref(basePath: string, item: NavItem, domainParam?: string): string {
   // For home page with domain param, return root with param
@@ -172,39 +126,24 @@ export function buildNavHref(basePath: string, item: NavItem, domainParam?: stri
 /**
  * Get anchor-based navigation items for single landing page mode
  *
- * Issue #6 Fix: Single scrolling landing page MVP - multi-page routes are deferred.
- * This function returns anchor links (#about, #services, etc.) instead of
+ * Returns anchor links (#about, #services, etc.) instead of
  * separate page paths (/about, /services, etc.).
  *
- * @param config - Landing page configuration (may include pages config)
+ * @param pages - Pages configuration from SectionContent
  * @returns Array of navigation items with anchor-based paths
- *
- * @example
- * ```ts
- * const navItems = getAnchorNavigationItems(tenant.branding?.landingPage);
- * // Returns: [{ label: 'Home', path: '' }, { label: 'About', path: '#about' }, ...]
- * ```
  */
-export function getAnchorNavigationItems(config?: LandingPageConfig | null): NavItem[] {
-  // If new pages config exists, use it to determine which sections are enabled
-  if (config?.pages) {
-    return PAGE_ORDER.filter((page) => {
-      const pageConfig = config.pages![page];
-      return pageConfig?.enabled !== false;
-    }).map((page) => ({
-      label: PAGE_LABELS[page],
-      path: PAGE_ANCHORS[page],
-    }));
+export function getAnchorNavigationItems(pages?: PagesConfig | null): NavItem[] {
+  if (!pages) {
+    return [{ label: 'Home', path: '' }];
   }
 
-  // Fall back to legacy static navigation with anchors
-  return [
-    { label: 'Home', path: '' },
-    { label: 'Services', path: '#services' },
-    { label: 'About', path: '#about' },
-    { label: 'FAQ', path: '#faq' },
-    { label: 'Contact', path: '#contact' },
-  ];
+  return PAGE_ORDER.filter((page) => {
+    const pageConfig = pages[page];
+    return pageConfig?.enabled !== false;
+  }).map((page) => ({
+    label: PAGE_LABELS[page],
+    path: PAGE_ANCHORS[page],
+  }));
 }
 
 /**
@@ -212,15 +151,6 @@ export function getAnchorNavigationItems(config?: LandingPageConfig | null): Nav
  *
  * For single-page mode with anchor navigation. Handles the base path
  * combined with anchor fragments.
- *
- * @param basePath - Base path for the tenant (e.g., '/t/jane-photography')
- * @param item - Navigation item with anchor path (e.g., '#about')
- * @returns Full href for the anchor navigation link
- *
- * @example
- * // Anchor-based navigation
- * buildAnchorNavHref('/t/jane', { label: 'About', path: '#about' })
- * // Returns: '/t/jane#about'
  */
 export function buildAnchorNavHref(basePath: string, item: NavItem): string {
   // For home/top of page (empty path)

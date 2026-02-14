@@ -15,8 +15,7 @@ import {
 import type { SectionContentDto } from '@macon/contracts';
 import { logger } from '@/lib/logger';
 import {
-  injectSectionsIntoData,
-  getHeroContent,
+  sectionsToPages,
   getHeroFromSections,
   generateLocalBusinessSchema,
   safeJsonLd,
@@ -50,12 +49,8 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
     const { tenant } = data;
 
     const heroFromSections = sections.length > 0 ? getHeroFromSections(sections) : null;
-    const heroFromConfig = getHeroContent(tenant.branding?.landingPage);
 
-    const metaDescription =
-      heroFromSections?.subheadline ||
-      heroFromConfig?.subheadline ||
-      `Book services with ${tenant.name}`;
+    const metaDescription = heroFromSections?.subheadline || `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,
@@ -100,7 +95,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
       ),
     ]);
 
-    const enhancedData = injectSectionsIntoData(data, sections);
+    const pages = sectionsToPages(sections);
 
     if (sections.length > 0) {
       logger.info('[Storefront] Rendering from SectionContent table', {
@@ -111,11 +106,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     }
 
     const canonicalUrl = `https://gethandled.ai/t/${slug}`;
-    const localBusinessSchema = generateLocalBusinessSchema(
-      enhancedData.tenant,
-      canonicalUrl,
-      sections
-    );
+    const localBusinessSchema = generateLocalBusinessSchema(data.tenant, canonicalUrl, sections);
 
     return (
       <>
@@ -125,7 +116,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
             dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
           />
         )}
-        <TenantLandingPageClient data={enhancedData} basePath={`/t/${slug}`} />
+        <TenantLandingPageClient data={data} pages={pages} basePath={`/t/${slug}`} />
       </>
     );
   } catch (error) {
@@ -139,10 +130,10 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
         getTenantStorefrontData(slug),
         getPublishedSections(slug).catch(() => [] as SectionContentDto[]),
       ]);
-      const enhancedFallbackData = injectSectionsIntoData(fallbackData, fallbackSections);
+      const pages = sectionsToPages(fallbackSections);
       const canonicalUrl = `https://gethandled.ai/t/${slug}`;
       const localBusinessSchema = generateLocalBusinessSchema(
-        enhancedFallbackData.tenant,
+        fallbackData.tenant,
         canonicalUrl,
         fallbackSections
       );
@@ -152,7 +143,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
           />
-          <TenantLandingPageClient data={enhancedFallbackData} basePath={`/t/${slug}`} />
+          <TenantLandingPageClient data={fallbackData} pages={pages} basePath={`/t/${slug}`} />
         </>
       );
     }

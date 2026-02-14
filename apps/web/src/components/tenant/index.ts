@@ -8,9 +8,6 @@ export { SectionRenderer } from './SectionRenderer';
 // Section components
 export * from './sections';
 
-// Page content components
-export { AboutPageContent, ContactPageContent, FAQPageContent, ServicesPageContent } from './pages';
-
 // Error boundary
 export { TenantErrorBoundary, createTenantErrorBoundary } from './TenantErrorBoundary';
 
