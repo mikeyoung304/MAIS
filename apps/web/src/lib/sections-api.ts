@@ -190,9 +190,12 @@ export async function fetchSectionContent(
 /**
  * Update section content (creates draft).
  *
+ * Server expects a flat payload: { tenantId, sectionId, headline?, subheadline?, content?, ... }
+ * Updates are spread flat — NOT nested under an "updates" key.
+ *
  * @param tenantId - Tenant ID
  * @param sectionId - Section ID
- * @param updates - Partial content updates
+ * @param updates - Partial content updates (headline, subheadline, content, ctaText, backgroundImageUrl, imageUrl)
  * @param authToken - JWT auth token
  */
 export async function updateSection(
@@ -209,7 +212,7 @@ export async function updateSection(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${authToken}`,
     },
-    body: JSON.stringify({ tenantId, sectionId, updates }),
+    body: JSON.stringify({ tenantId, sectionId, ...updates }),
   });
 
   if (!response.ok) {

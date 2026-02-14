@@ -1,18 +1,31 @@
 /**
- * Tenant Agent Utilities
+ * Canonical Agent Utilities — Single Source of Truth
  *
- * Shared utilities for the Tenant Agent including:
- * - Structured logger for Cloud Run
- * - fetchWithTimeout for network calls
- * - callMaisApi for backend communication
- * - getTenantId for extracting tenant from context
+ * This file is the CANONICAL source for shared utilities used by all
+ * Cloud Run agent deployments (tenant, customer, research).
  *
- * Design notes:
- * - This is intentionally duplicated from other agents (concierge, storefront)
- *   because each agent deploys as standalone Cloud Run service with no shared deps
- * - If you update this code, update it in ALL agent files
+ * BUILD-TIME SYNC: This file is copied into each agent's src/ directory
+ * by the `prebuild` npm script. Do NOT edit the copies directly.
  *
- * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md
+ * DRIFT DETECTION: server/src/lib/constants-sync.test.ts verifies that
+ * agent copies match this canonical source.
+ *
+ * Exported utilities:
+ * - logger: Structured JSON logger for Cloud Logging
+ * - requireEnv: Fail-fast environment variable access
+ * - fetchWithTimeout: AbortController-based fetch timeout
+ * - getTenantId: 4-tier tenant ID extraction from ADK context
+ * - callMaisApi: POST-based backend API calls
+ * - callBackendAPI: Full HTTP method backend API calls
+ * - callMaisApiTyped: Zod-validated backend API calls
+ * - requireTenantId: Throw-on-missing tenant ID helper
+ * - validateParams: Zod schema validation helper
+ * - wrapToolExecute: Standardized error handling wrapper
+ * - ToolError: Error class for tool execution failures
+ * - TTLCache: Size-limited TTL cache with periodic cleanup
+ *
+ * @see server/src/lib/constants-sync.test.ts (drift detection)
+ * @see docs/solutions/patterns/CONSTANTS_DUPLICATION_TRAP_SECTION_TYPES.md
  */
 
 import type { ToolContext } from '@google/adk';
@@ -146,8 +159,8 @@ export async function callMaisApi(
     if (!response.ok) {
       const errorText = await response.text();
       logger.error(
-        { status: response.status, error: errorText },
-        `[TenantAgent] API error: ${endpoint}`
+        { status: response.status, error: errorText, endpoint },
+        `[Agent] API error: ${endpoint}`
       );
       return { ok: false, error: `API error: ${response.status}` };
     }
@@ -156,12 +169,12 @@ export async function callMaisApi(
     return { ok: true, data };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      logger.error({ endpoint }, '[TenantAgent] Backend API timeout');
+      logger.error({ endpoint }, '[Agent] Backend API timeout');
       return { ok: false, error: 'Request timed out. Please try again.' };
     }
     logger.error(
       { error: error instanceof Error ? error.message : String(error), endpoint },
-      '[TenantAgent] Network error'
+      '[Agent] Network error'
     );
     return { ok: false, error: 'Network error - could not reach backend' };
   }
@@ -201,7 +214,7 @@ export async function callBackendAPI<T>(
       const errorText = await response.text();
       logger.error(
         { endpoint, method, status: response.status, error: errorText },
-        '[TenantAgent] Backend API error'
+        '[Agent] Backend API error'
       );
       throw new Error(`Backend API error: ${response.status}`);
     }
@@ -209,10 +222,7 @@ export async function callBackendAPI<T>(
     return response.json() as Promise<T>;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      logger.error(
-        { endpoint, method, timeout: TIMEOUTS.BACKEND_API },
-        '[TenantAgent] API timeout'
-      );
+      logger.error({ endpoint, method, timeout: TIMEOUTS.BACKEND_API }, '[Agent] API timeout');
       throw new Error(`Backend API timeout after ${TIMEOUTS.BACKEND_API}ms`);
     }
     // Re-throw if already a handled error
@@ -221,7 +231,7 @@ export async function callBackendAPI<T>(
     }
     logger.error(
       { endpoint, method, error: error instanceof Error ? error.message : String(error) },
-      '[TenantAgent] Network error'
+      '[Agent] Network error'
     );
     throw error;
   }
@@ -272,12 +282,12 @@ export function getTenantId(context: ToolContext | undefined): string | null {
   try {
     const fromState = context.state?.get<string>('tenantId');
     if (fromState) {
-      logger.debug({}, `[TenantAgent] Got tenantId from state.get(): ${fromState}`);
+      logger.debug({}, `[Agent] Got tenantId from state.get(): ${fromState}`);
       return fromState;
     }
   } catch {
     // state.get() might not be available or might throw
-    logger.debug({}, '[TenantAgent] state.get() failed, trying alternatives');
+    logger.debug({}, '[Agent] state.get() failed, trying alternatives');
   }
 
   // Tier 2: Access state as plain object (A2A passes state as plain object)
@@ -286,12 +296,12 @@ export function getTenantId(context: ToolContext | undefined): string | null {
     if (stateObj && typeof stateObj === 'object' && 'tenantId' in stateObj) {
       const tenantId = stateObj.tenantId as string;
       if (tenantId) {
-        logger.debug({}, `[TenantAgent] Got tenantId from state object: ${tenantId}`);
+        logger.debug({}, `[Agent] Got tenantId from state object: ${tenantId}`);
         return tenantId;
       }
     }
   } catch {
-    logger.debug({}, '[TenantAgent] state object access failed');
+    logger.debug({}, '[Agent] state object access failed');
   }
 
   // Tier 3 & 4: Extract from userId
@@ -301,20 +311,17 @@ export function getTenantId(context: ToolContext | undefined): string | null {
       // Tier 3: Extract tenantId from "tenantId:userId" format
       const [tenantId] = userId.split(':');
       if (tenantId) {
-        logger.debug(
-          {},
-          `[TenantAgent] Extracted tenantId from userId (colon format): ${tenantId}`
-        );
+        logger.debug({}, `[Agent] Extracted tenantId from userId (colon format): ${tenantId}`);
         return tenantId;
       }
     } else {
       // Tier 4: userId might be the tenantId directly
-      logger.debug({}, `[TenantAgent] Using userId as tenantId: ${userId}`);
+      logger.debug({}, `[Agent] Using userId as tenantId: ${userId}`);
       return userId;
     }
   }
 
-  logger.warn({}, '[TenantAgent] Could not extract tenantId from context');
+  logger.warn({}, '[Agent] Could not extract tenantId from context');
   return null;
 }
 
@@ -374,6 +381,44 @@ export function wrapToolExecute<P, R>(
       );
       return { success: false, error: 'An unexpected error occurred' };
     }
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session Context
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Session context with proper typing for agents that need customer/project context.
+ */
+export interface CustomerSessionContext {
+  tenantId: string;
+  customerId?: string;
+  projectId?: string;
+}
+
+/**
+ * Extract full session context from ToolContext.
+ * @throws Error if tenant ID cannot be extracted (fail-fast)
+ */
+export function getSessionContext(ctx: ToolContext | undefined): CustomerSessionContext {
+  if (!ctx) {
+    throw new Error('Tool context is required');
+  }
+
+  const tenantId = getTenantId(ctx);
+  if (!tenantId) {
+    logger.error({}, '[Agent] No tenant context available - check session configuration');
+    throw new Error('No tenant context available - check session configuration');
+  }
+
+  // Cast through unknown because ADK's State type doesn't have an index signature
+  const state = ctx.state as unknown as Record<string, unknown>;
+
+  return {
+    tenantId,
+    customerId: state.customerId as string | undefined,
+    projectId: state.projectId as string | undefined,
   };
 }
 

@@ -54,6 +54,7 @@ export interface UpdateTenantInput {
     | 'MARKET_RESEARCH'
     | 'SERVICES'
     | 'MARKETING'
+    | 'BUILDING'
     | 'COMPLETED'
     | 'SKIPPED';
   onboardingCompletedAt?: Date | null;

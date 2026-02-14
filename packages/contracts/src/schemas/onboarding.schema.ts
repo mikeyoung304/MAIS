@@ -25,6 +25,7 @@ export const OnboardingPhaseSchema = z.enum([
   'MARKET_RESEARCH',
   'SERVICES',
   'MARKETING',
+  'BUILDING',
   'COMPLETED',
   'SKIPPED',
 ]);
@@ -243,6 +244,13 @@ export const UpdateOnboardingStateInputSchema = z.discriminatedUnion('phase', [
   z.object({
     phase: z.literal('MARKETING'),
     data: MarketingDataSchema,
+  }),
+  z.object({
+    phase: z.literal('BUILDING'),
+    data: z.object({
+      startedAt: z.string().datetime(),
+      summary: z.string().optional(),
+    }),
   }),
   z.object({
     phase: z.literal('COMPLETED'),

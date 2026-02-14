@@ -12,8 +12,8 @@
  * - delete: T3 (requires explicit confirmation)
  *
  * Price handling: Agent sends priceInDollars (e.g., 2500 for $2,500).
- * Conversion to priceCents happens server-side. LLMs are unreliable
- * at arithmetic — never let them work in cents.
+ * Conversion to priceCents happens agent-side before the API call.
+ * LLMs are unreliable at arithmetic — never let them work in cents.
  *
  * @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
  */
@@ -260,6 +260,9 @@ async function handleCreateTier(
     features?: string[];
   }
 ) {
+  // Convert dollars → cents for the server contract (server expects priceCents)
+  const priceCents = Math.round(params.priceInDollars * 100);
+
   const result = await callMaisApiTyped(
     '/content-generation/manage-tiers',
     tenantId,
@@ -267,7 +270,7 @@ async function handleCreateTier(
       action: 'create',
       segmentId: params.segmentId,
       name: params.name,
-      priceInDollars: params.priceInDollars,
+      priceCents,
       bookingType: params.bookingType ?? 'DATE',
       features: params.features ?? [],
     },
@@ -300,6 +303,12 @@ async function handleUpdateTier(
     features?: string[];
   }
 ) {
+  // Convert dollars → cents for the server contract (server expects priceCents)
+  const priceCentsPayload =
+    params.priceInDollars !== undefined
+      ? { priceCents: Math.round(params.priceInDollars * 100) }
+      : {};
+
   const result = await callMaisApiTyped(
     '/content-generation/manage-tiers',
     tenantId,
@@ -307,7 +316,7 @@ async function handleUpdateTier(
       action: 'update',
       tierId: params.tierId,
       ...(params.name !== undefined ? { name: params.name } : {}),
-      ...(params.priceInDollars !== undefined ? { priceInDollars: params.priceInDollars } : {}),
+      ...priceCentsPayload,
       ...(params.bookingType !== undefined ? { bookingType: params.bookingType } : {}),
       ...(params.features !== undefined ? { features: params.features } : {}),
     },

@@ -4,6 +4,7 @@
   "description": "Unified Tenant Agent for HANDLED - consolidates concierge, storefront, marketing, and project-hub capabilities",
   "main": "dist/agent.js",
   "scripts": {
+    "prebuild": "cp ../../shared/agent-utils.ts src/utils.ts",
     "build": "tsc",
     "dev": "npx adk dev",
     "deploy": "npm run build && npx adk deploy cloud_run --project=${GOOGLE_CLOUD_PROJECT:-handled-484216} --region=${GOOGLE_CLOUD_LOCATION:-us-central1} --service_name=tenant-agent",

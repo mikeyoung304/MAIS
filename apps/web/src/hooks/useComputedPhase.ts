@@ -40,6 +40,7 @@ const PHASE_METADATA: Record<OnboardingPhase, PhaseMetadata> = {
   MARKET_RESEARCH: { label: 'Research', description: 'Understanding your market', order: 2 },
   SERVICES: { label: 'Services', description: 'Setting up your offerings', order: 3 },
   MARKETING: { label: 'Marketing', description: 'Crafting your message', order: 4 },
+  BUILDING: { label: 'Building', description: 'Building your storefront', order: 4 },
   COMPLETED: { label: 'Done', description: 'Ready to go live', order: 5 },
   SKIPPED: { label: 'Skipped', description: 'Setup skipped', order: 5 },
 };
@@ -134,6 +135,7 @@ export function computePhase(
       'MARKET_RESEARCH',
       'SERVICES',
       'MARKETING',
+      'BUILDING',
     ];
     const currentIndex = phases.indexOf(apiPhase);
     const newIndex = Math.min(currentIndex + Math.ceil(reduction / 2), phases.length - 1);
