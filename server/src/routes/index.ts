@@ -253,62 +253,6 @@ export function createV1Router(
         return { status: 204 as const, body: undefined };
       },
 
-      adminLogin: async ({
-        req,
-        body,
-      }: {
-        req: any;
-        body: { email: string; password: string };
-      }) => {
-        const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
-        try {
-          const data = await controllers.admin.login(body);
-          return { status: 200 as const, body: data };
-        } catch (error) {
-          // Log failed admin login attempts
-          logger.warn(
-            {
-              event: 'admin_login_failed',
-              endpoint: '/v1/admin/login',
-              email: body.email,
-              ipAddress,
-              timestamp: new Date().toISOString(),
-              error: error instanceof Error ? error.message : 'Unknown error',
-            },
-            'Failed admin login attempt'
-          );
-          throw error;
-        }
-      },
-
-      tenantLogin: async ({
-        req,
-        body,
-      }: {
-        req: any;
-        body: { email: string; password: string };
-      }) => {
-        const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
-        try {
-          if (!services) {
-            throw new Error('Tenant auth service not available');
-          }
-          const data = await services.tenantAuth.login(body.email, body.password);
-          return { status: 200 as const, body: data };
-        } catch (error) {
-          logger.warn(
-            {
-              event: 'tenant_login_failed',
-              endpoint: '/v1/tenant-auth/login',
-              email: body.email,
-              ipAddress,
-            },
-            'Failed tenant login attempt'
-          );
-          throw error;
-        }
-      },
-
       platformGetAllTenants: async ({ query }: { query?: { includeTest?: 'true' | 'false' } }) => {
         // Auth middleware applied via app.use('/v1/admin/tenants', authMiddleware)
         const includeTestTenants = query?.includeTest === 'true';
@@ -445,13 +389,7 @@ export function createV1Router(
       // Apply middleware based on route path
       globalMiddleware: [
         (req, res, next) => {
-          // Apply strict rate limiting to login endpoints
-          if (
-            (req.path === '/v1/admin/login' || req.path === '/v1/tenant-auth/login') &&
-            req.method === 'POST'
-          ) {
-            return loginLimiter(req, res, next);
-          }
+          // Rate limiting for login is handled by the unified /v1/auth routes (auth.routes.ts)
           // Public API routes (packages, bookings, availability, tenant) require tenant
           if (
             req.path.startsWith('/v1/packages') ||
@@ -467,7 +405,7 @@ export function createV1Router(
             });
           }
           // Admin routes require authentication
-          else if (req.path.startsWith('/v1/admin/') && !req.path.startsWith('/v1/admin/login')) {
+          else if (req.path.startsWith('/v1/admin/')) {
             authMiddleware(req, res, next);
           }
           // Webhooks and other routes pass through
@@ -504,8 +442,8 @@ export function createV1Router(
     const tenantAuthMiddleware = createTenantAuthMiddleware(services.tenantAuth, identityService);
 
     // Mount tenant auth routes under /v1/tenant-auth
-    // /v1/tenant-auth/login - public
     // /v1/tenant-auth/me - requires authentication (protected by middleware in route handler)
+    // Login is handled by the unified /v1/auth routes
     app.use('/v1/tenant-auth', tenantAuthRoutes);
 
     // Register tenant admin routes (for tenant self-service)

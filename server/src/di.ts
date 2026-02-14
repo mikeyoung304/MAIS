@@ -42,7 +42,6 @@ import { AdminController } from './routes/admin.routes';
 import { BlackoutsController } from './routes/blackouts.routes';
 import { AdminPackagesController } from './routes/admin-packages.routes';
 import { TenantController } from './routes/tenant.routes';
-import { TenantAuthController } from './routes/tenant-auth.routes';
 import { DevController } from './routes/dev.routes';
 import { PlatformAdminController } from './controllers/platform-admin.controller';
 import { buildMockAdapters } from './adapters/mock';
@@ -80,7 +79,6 @@ export interface Container {
     adminPackages: AdminPackagesController;
     platformAdmin: PlatformAdminController;
     tenant: TenantController;
-    tenantAuth: TenantAuthController;
     dev?: DevController;
   };
   services: {
@@ -305,12 +303,11 @@ export function buildContainer(config: Config): Container {
         undefined, // No queue in mock mode - sync processing
         mockTenantRepo // For subscription checkout processing
       ),
-      admin: new AdminController(identityService, bookingService),
+      admin: new AdminController(bookingService),
       blackouts: new BlackoutsController(adapters.blackoutRepo),
       adminPackages: new AdminPackagesController(catalogService),
       platformAdmin: new PlatformAdminController(mockPrisma),
       tenant: new TenantController(mockTenantRepo),
-      tenantAuth: new TenantAuthController(tenantAuthService),
       dev: new DevController(bookingService, adapters.catalogRepo, adapters.bookingRepo),
     };
 
@@ -755,12 +752,11 @@ export function buildContainer(config: Config): Container {
       webhookQueue,
       tenantRepo
     ),
-    admin: new AdminController(identityService, bookingService),
+    admin: new AdminController(bookingService),
     blackouts: new BlackoutsController(blackoutRepo),
     adminPackages: new AdminPackagesController(catalogService),
     platformAdmin: new PlatformAdminController(prisma),
     tenant: new TenantController(tenantRepo),
-    tenantAuth: new TenantAuthController(tenantAuthService),
     // No dev controller in real mode
   };
 

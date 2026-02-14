@@ -105,7 +105,7 @@ describe.runIf(hasDatabaseUrl)('Deployment Prevention Tests', () => {
           'adminPackages',
           'platformAdmin',
           'tenant',
-          'tenantAuth',
+          // DELETED: 'tenantAuth' - Auth cleanup: unified /v1/auth replaces separate controller
         ],
         services: [
           'identity',
