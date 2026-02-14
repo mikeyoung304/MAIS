@@ -66,7 +66,11 @@ const AGENT_API_PATH = process.env.AGENT_API_PATH || '/v1/internal/agent';
 if (
   MAIS_API_URL.startsWith('http://') &&
   !MAIS_API_URL.includes('localhost') &&
-  !MAIS_API_URL.includes('127.0.0.1')
+  !MAIS_API_URL.includes('127.0.0.1') &&
+  !MAIS_API_URL.includes('0.0.0.0') &&
+  !MAIS_API_URL.includes('[::1]') &&
+  !MAIS_API_URL.includes('::1') &&
+  !MAIS_API_URL.includes('host.docker.internal')
 ) {
   throw new Error(`MAIS_API_URL must use HTTPS for non-localhost hosts. Got: ${MAIS_API_URL}`);
 }
@@ -359,7 +363,7 @@ function getTenantId(context: ToolContext | undefined): string | null {
       logger.info({}, `[ResearchAgent] Got tenantId from state.get(): ${fromState}`);
       return fromState;
     }
-  } catch (e) {
+  } catch {
     // state.get() might not be available or might throw
     logger.info({}, '[ResearchAgent] state.get() failed, trying alternatives');
   }
@@ -374,7 +378,7 @@ function getTenantId(context: ToolContext | undefined): string | null {
         return tenantId;
       }
     }
-  } catch (e) {
+  } catch {
     logger.info({}, '[ResearchAgent] state object access failed');
   }
 
@@ -427,7 +431,7 @@ async function callMaisApi(
     return { ok: true, data };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      logger.error({}, '[ResearchAgent] Backend API timeout after ${TIMEOUTS.BACKEND_API}ms');
+      logger.error({}, `[ResearchAgent] Backend API timeout after ${TIMEOUTS.BACKEND_API}ms`);
       return { ok: false, error: 'Request timed out. Please try again.' };
     }
     logger.error(

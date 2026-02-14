@@ -195,12 +195,12 @@ jobs:
 
       - name: Build packages in dependency order
         run: |
-          # Build contracts first (client depends on it)
+          # Build contracts first (web app depends on it)
           npm run build --workspace=packages/contracts
           npm run build --workspace=packages/shared
-          # Then build server and client
+          # Then build server and Next.js web app
           npm run build --workspace=server
-          npm run build --workspace=client
+          npm run vercel-build
         env:
           NODE_ENV: production
 
@@ -211,11 +211,11 @@ jobs:
           path: ./server/dist/
           retention-days: 30
 
-      - name: Upload client build
+      - name: Upload web app build
         uses: actions/upload-artifact@v4
         with:
-          name: client-build-production
-          path: ./client/dist/
+          name: web-build-production
+          path: ./apps/web/.next/
           retention-days: 30
 
       - name: Upload contracts build
@@ -402,9 +402,9 @@ jobs:
 
           echo "✅ Production smoke tests passed"
 
-  # Job 6: Deploy Client to Vercel (Production)
-  deploy-client-production:
-    name: Deploy Client to Production (Vercel)
+  # Job 6: Deploy Next.js Web App to Vercel (Production)
+  deploy-web-production:
+    name: Deploy Web App to Production (Vercel)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [deploy-api-production]
@@ -416,11 +416,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download client build
+      - name: Download web app build
         uses: actions/download-artifact@v4
         with:
-          name: client-build-production
-          path: ./client/dist/
+          name: web-build-production
+          path: ./apps/web/.next/
 
       - name: Deploy to Vercel (Production)
         uses: amondnet/vercel-action@v25
@@ -429,8 +429,8 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod --env VITE_API_URL=${{ env.PRODUCTION_API_URL }}'
-          working-directory: ./client
+          vercel-args: '--prod --env NEXT_PUBLIC_API_URL=${{ env.PRODUCTION_API_URL }}'
+          working-directory: ./apps/web
           alias-domains: |
             gethandled.ai
             www.gethandled.ai
@@ -472,7 +472,7 @@ jobs:
     name: Post-Deployment Validation
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: [deploy-client-production]
+    needs: [deploy-web-production]
 
     steps:
       - name: Checkout code
@@ -557,7 +557,7 @@ jobs:
   deployment-complete:
     name: Production Deployment Complete
     runs-on: ubuntu-latest
-    needs: [deploy-api-production, deploy-client-production, post-deployment-validation]
+    needs: [deploy-api-production, deploy-web-production, post-deployment-validation]
     if: always()
 
     steps:
@@ -565,7 +565,7 @@ jobs:
         id: check-status
         run: |
           if [ "${{ needs.deploy-api-production.result }}" != "success" ] || \
-             [ "${{ needs.deploy-client-production.result }}" != "success" ]; then
+             [ "${{ needs.deploy-web-production.result }}" != "success" ]; then
             echo "status=failed" >> $GITHUB_OUTPUT
             echo "❌ Production deployment failed"
             exit 1
