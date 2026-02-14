@@ -6,7 +6,7 @@
  */
 
 import type { Router, Request, Response, NextFunction } from 'express';
-import type { UnifiedAuthRoutesOptions } from './auth.routes';
+import type { UnifiedAuthRoutesOptions } from './auth-shared';
 import { signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { ValidationError } from '../lib/errors';

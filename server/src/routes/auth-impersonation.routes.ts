@@ -6,7 +6,7 @@
  */
 
 import type { Router, Request, Response, NextFunction } from 'express';
-import type { UnifiedAuthController } from './auth.routes';
+import type { UnifiedAuthController } from './auth-shared';
 import { logger } from '../lib/core/logger';
 
 export function registerImpersonationRoutes(
