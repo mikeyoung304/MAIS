@@ -10,6 +10,10 @@
  * - update: T2 (modifies database record)
  * - delete: T3 (requires explicit confirmation)
  *
+ * Price handling: Agent sends priceInDollars (e.g., 500 for $500).
+ * Conversion to priceCents happens agent-side before the API call.
+ * LLMs are unreliable at arithmetic — never let them work in cents.
+ *
  * @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
  */
 
@@ -226,6 +230,9 @@ async function handleCreateAddOn(
     segmentId?: string;
   }
 ) {
+  // Convert dollars → cents for the server contract (server expects priceCents)
+  const priceCents = Math.round(params.priceInDollars * 100);
+
   const result = await callMaisApiTyped(
     '/content-generation/manage-addons',
     tenantId,
@@ -233,7 +240,7 @@ async function handleCreateAddOn(
       action: 'create',
       name: params.name,
       description: params.description,
-      priceInDollars: params.priceInDollars,
+      priceCents,
       ...(params.segmentId ? { segmentId: params.segmentId } : {}),
     },
     AddOnMutationResponse
@@ -264,6 +271,12 @@ async function handleUpdateAddOn(
     segmentId?: string;
   }
 ) {
+  // Convert dollars → cents for the server contract (server expects priceCents)
+  const priceCentsPayload =
+    params.priceInDollars !== undefined
+      ? { priceCents: Math.round(params.priceInDollars * 100) }
+      : {};
+
   const result = await callMaisApiTyped(
     '/content-generation/manage-addons',
     tenantId,
@@ -272,7 +285,7 @@ async function handleUpdateAddOn(
       addOnId: params.addOnId,
       ...(params.name !== undefined ? { name: params.name } : {}),
       ...(params.description !== undefined ? { description: params.description } : {}),
-      ...(params.priceInDollars !== undefined ? { priceInDollars: params.priceInDollars } : {}),
+      ...priceCentsPayload,
       ...(params.segmentId !== undefined ? { segmentId: params.segmentId } : {}),
     },
     AddOnMutationResponse

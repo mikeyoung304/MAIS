@@ -5,9 +5,17 @@ on:
     branches:
       - main
     paths:
+      # Agent-specific source files
       - 'server/src/agent-v2/deploy/*/src/**'
       - 'server/src/agent-v2/deploy/*/package.json'
       - 'server/src/agent-v2/deploy/*/tsconfig.json'
+      # Shared dependencies — changes here affect all agents
+      # (Todo #8003: stale agents caused by missing triggers)
+      - 'packages/contracts/src/**'
+      - 'packages/shared/src/**'
+      - 'server/src/shared/**'
+      - 'server/src/services/**'
+      - 'server/src/lib/**'
   workflow_dispatch:
     inputs:
       agent:
@@ -73,12 +81,26 @@ jobs:
           fi
 
           # Auto-detect changes from git diff
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
           CHANGED_AGENTS=""
+
+          # Check if shared dependencies changed (Todo #8003)
+          # If so, ALL agents need redeployment since we can't know which are affected
+          SHARED_CHANGED=false
+          if echo "$CHANGED_FILES" | grep -qE "^(packages/contracts/src/|packages/shared/src/|server/src/shared/|server/src/services/|server/src/lib/)"; then
+            SHARED_CHANGED=true
+            echo "⚠️  Shared dependency changes detected — deploying ALL agents"
+            AGENTS='["customer","tenant","research"]'
+            echo "agents=$AGENTS" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📋 Shared deps changed — deploying: $AGENTS"
+            exit 0
+          fi
 
           # Check each agent directory for changes
           # Phase 4 Update: Only 3 active agents (customer, tenant, research)
           for AGENT in customer tenant research; do
-            if git diff --name-only HEAD~1 HEAD | grep -q "server/src/agent-v2/deploy/$AGENT/"; then
+            if echo "$CHANGED_FILES" | grep -q "server/src/agent-v2/deploy/$AGENT/"; then
               if [ -z "$CHANGED_AGENTS" ]; then
                 CHANGED_AGENTS="\"$AGENT\""
               else

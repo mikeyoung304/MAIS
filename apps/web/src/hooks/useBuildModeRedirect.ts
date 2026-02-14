@@ -38,8 +38,8 @@ export function useBuildModeRedirect(
       // Check if we've already redirected this tenant
       const hasRedirected = localStorage.getItem(storageKey) === 'true';
 
-      // Redirect to Build Mode when tenant reaches MARKETING phase (once only)
-      if (currentPhase === 'MARKETING' && !hasRedirected) {
+      // Redirect to Build Mode when tenant reaches MARKETING or BUILDING phase (once only)
+      if ((currentPhase === 'MARKETING' || currentPhase === 'BUILDING') && !hasRedirected) {
         localStorage.setItem(storageKey, 'true');
         router.push('/tenant/build');
       }
