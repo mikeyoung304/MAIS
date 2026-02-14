@@ -5,8 +5,7 @@ import {
   InvalidDomainError,
   validateDomain,
 } from '@/lib/tenant';
-import { TenantNav } from '@/components/tenant/TenantNav';
-import { TenantFooter } from '@/components/tenant/TenantFooter';
+import { TenantSiteShell } from '@/components/tenant';
 
 interface DomainLayoutProps {
   children: React.ReactNode;
@@ -16,13 +15,12 @@ interface DomainLayoutProps {
 /**
  * Shared layout for custom domain tenant pages
  *
- * Same as (site)/layout.tsx but resolves tenant by domain instead of slug.
+ * Same shell as [slug]/(site)/layout.tsx but resolves tenant by domain.
  * Uses empty basePath with domainParam for proper navigation link construction.
  */
 export default async function DomainLayout({ children, searchParams }: DomainLayoutProps) {
   const { domain } = await searchParams;
 
-  // Validate domain parameter
   let validatedDomain: string;
   try {
     validatedDomain = validateDomain(domain);
@@ -38,11 +36,9 @@ export default async function DomainLayout({ children, searchParams }: DomainLay
     const domainParam = `?domain=${validatedDomain}`;
 
     return (
-      <div className="flex min-h-screen flex-col bg-surface">
-        <TenantNav tenant={tenant} basePath="" domainParam={domainParam} />
-        <div className="flex-1">{children}</div>
-        <TenantFooter tenant={tenant} basePath="" domainParam={domainParam} />
-      </div>
+      <TenantSiteShell tenant={tenant} basePath="" domainParam={domainParam}>
+        {children}
+      </TenantSiteShell>
     );
   } catch (error) {
     if (error instanceof TenantNotFoundError) {

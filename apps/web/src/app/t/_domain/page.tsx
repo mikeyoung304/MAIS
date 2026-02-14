@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TenantLandingPage } from '@/components/tenant';
+import { TenantLandingPageClient } from '@/components/tenant';
 import {
   getTenantByDomain,
   getTenantPackages,
@@ -9,6 +9,15 @@ import {
   InvalidDomainError,
   validateDomain,
 } from '@/lib/tenant';
+import { getPublishedSections, SectionsNotFoundError } from '@/lib/sections-api';
+import type { SectionContentDto } from '@macon/contracts';
+import { logger } from '@/lib/logger';
+import {
+  injectSectionsIntoData,
+  getHeroFromSections,
+  generateLocalBusinessSchema,
+  safeJsonLd,
+} from '@/lib/storefront-utils';
 
 interface DomainPageProps {
   searchParams: Promise<{ domain?: string }>;
@@ -17,16 +26,15 @@ interface DomainPageProps {
 /**
  * Custom Domain Landing Page
  *
- * This page handles custom domain routing via middleware rewrite.
+ * Handles custom domain routing via middleware rewrite.
  * When a custom domain like "janephotography.com" is accessed:
  * 1. Middleware rewrites to /t/_domain?domain=janephotography.com
  * 2. This page looks up the tenant by domain
- * 3. Renders the tenant landing page
+ * 3. Renders the tenant landing page with sections API integration
  *
- * See: middleware.ts for the rewrite logic
+ * Feature parity with [slug]/(site)/page.tsx (sections, Schema.org, etc.)
  */
 
-// Generate SEO metadata for custom domain
 export async function generateMetadata({ searchParams }: DomainPageProps): Promise<Metadata> {
   const { domain } = await searchParams;
 
@@ -34,8 +42,14 @@ export async function generateMetadata({ searchParams }: DomainPageProps): Promi
     const validatedDomain = validateDomain(domain);
     const tenant = await getTenantByDomain(validatedDomain);
 
+    // Fetch sections for richer metadata
+    const sections = await getPublishedSections(tenant.slug).catch(() => [] as SectionContentDto[]);
+
+    const heroFromSections = sections.length > 0 ? getHeroFromSections(sections) : null;
     const metaDescription =
-      tenant.branding?.landingPage?.hero?.subheadline || `Book services with ${tenant.name}`;
+      heroFromSections?.subheadline ||
+      tenant.branding?.landingPage?.hero?.subheadline ||
+      `Book services with ${tenant.name}`;
 
     return {
       title: tenant.name,
@@ -62,7 +76,6 @@ export async function generateMetadata({ searchParams }: DomainPageProps): Promi
 export default async function DomainPage({ searchParams }: DomainPageProps) {
   const { domain } = await searchParams;
 
-  // Validate domain parameter
   let validatedDomain: string;
   try {
     validatedDomain = validateDomain(domain);
@@ -74,30 +87,55 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
   }
 
   try {
-    // Fetch tenant by domain
     const tenant = await getTenantByDomain(validatedDomain);
 
-    // Fetch packages and segments in parallel
-    const [packages, segments] = await Promise.all([
+    // Fetch packages, segments, and sections in parallel
+    const [packages, segments, sections] = await Promise.all([
       getTenantPackages(tenant.apiKeyPublic),
       getTenantSegments(tenant.apiKeyPublic),
+      getPublishedSections(tenant.slug).catch((err) => {
+        if (!(err instanceof SectionsNotFoundError)) {
+          logger.warn('Failed to fetch sections for domain', {
+            domain: validatedDomain,
+            error: err.message,
+          });
+        }
+        return [] as SectionContentDto[];
+      }),
     ]);
 
+    const data = { tenant, packages, segments };
+    const enhancedData = injectSectionsIntoData(data, sections);
     const domainParam = `?domain=${validatedDomain}`;
 
+    if (sections.length > 0) {
+      logger.info('[Storefront] Rendering from SectionContent table (domain)', {
+        domain: validatedDomain,
+        sectionCount: sections.length,
+      });
+    }
+
+    // Use custom domain as canonical URL
+    const canonicalUrl = `https://${validatedDomain}`;
+    const localBusinessSchema = generateLocalBusinessSchema(
+      enhancedData.tenant,
+      canonicalUrl,
+      sections
+    );
+
     return (
-      <TenantLandingPage
-        data={{ tenant, packages, segments }}
-        basePath=""
-        domainParam={domainParam}
-      />
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
+        />
+        <TenantLandingPageClient data={enhancedData} basePath="" domainParam={domainParam} />
+      </>
     );
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
       notFound();
     }
-
-    // Re-throw other errors
     throw error;
   }
 }

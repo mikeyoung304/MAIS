@@ -17,3 +17,4 @@ export { TenantErrorBoundary, createTenantErrorBoundary } from './TenantErrorBou
 // Build Mode
 export { BuildModeWrapper } from './BuildModeWrapper';
 export { TenantLandingPageClient } from './TenantLandingPageClient';
+export { TenantSiteShell } from './TenantSiteShell';
