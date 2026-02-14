@@ -9,7 +9,6 @@ import {
   AvailabilityDtoSchema,
   CreateCheckoutDtoSchema,
   CreateDateBookingDtoSchema,
-  AdminLoginDtoSchema,
   TenantSignupDtoSchema,
   TenantSignupResponseSchema,
   ForgotPasswordDtoSchema,
@@ -213,22 +212,6 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Handle Stripe webhook (raw body)',
-  },
-
-  // Tenant admin authentication endpoints
-  tenantLogin: {
-    method: 'POST',
-    path: '/v1/tenant-auth/login',
-    body: AdminLoginDtoSchema, // Same schema: email + password
-    responses: {
-      200: z.object({
-        token: z.string(),
-      }),
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Tenant admin login',
   },
 
   // Tenant self-service signup
@@ -645,22 +628,6 @@ export const Contracts = c.router({
     },
     summary:
       'Get all bookings for tenant with optional filters (requires tenant admin authentication)',
-  },
-
-  // Platform admin endpoints (authentication required - documented)
-  adminLogin: {
-    method: 'POST',
-    path: '/v1/admin/login',
-    body: AdminLoginDtoSchema,
-    responses: {
-      200: z.object({
-        token: z.string(),
-      }),
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Platform admin login',
   },
 
   platformGetAllTenants: {

@@ -5,19 +5,11 @@
  * SECURITY: All endpoints require PLATFORM_ADMIN authentication (enforced by route middleware).
  */
 
-import type { IdentityService } from '../services/identity.service';
 import type { BookingService } from '../services/booking.service';
-import type { AdminLoginDto, PlatformBookingsResponse } from '@macon/contracts';
+import type { PlatformBookingsResponse } from '@macon/contracts';
 
 export class AdminController {
-  constructor(
-    private readonly identityService: IdentityService,
-    private readonly bookingService: BookingService
-  ) {}
-
-  async login(input: AdminLoginDto): Promise<{ token: string }> {
-    return this.identityService.login(input.email, input.password);
-  }
+  constructor(private readonly bookingService: BookingService) {}
 
   /**
    * Get all bookings across ALL tenants (platform admin view)

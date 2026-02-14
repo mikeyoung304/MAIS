@@ -27,7 +27,7 @@ Admin endpoints require JWT authentication. Include the JWT token in the Authori
 Authorization: Bearer <token>
 \`\`\`
 
-To obtain a token, use the \`POST /v1/admin/login\` endpoint.
+To obtain a token, use the \`POST /v1/auth/login\` endpoint.
 
 ## Error Responses
 
@@ -80,7 +80,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'JWT token obtained from /v1/admin/login',
+        description: 'JWT token obtained from /v1/auth/login',
       },
     },
     schemas: {
@@ -544,51 +544,6 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
           },
           '500': {
             description: 'Webhook processing error',
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/ErrorResponse' },
-              },
-            },
-          },
-        },
-      },
-    },
-    '/v1/admin/login': {
-      post: {
-        operationId: 'adminLogin',
-        summary: 'Admin login',
-        tags: ['Admin'],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/AdminLoginRequest' },
-            },
-          },
-        },
-        responses: {
-          '200': {
-            description: 'Login successful',
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/AdminLoginResponse' },
-              },
-            },
-          },
-          '401': {
-            description: 'Invalid credentials',
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/ErrorResponse' },
-                example: {
-                  error: 'UNAUTHORIZED',
-                  message: 'Invalid email or password',
-                },
-              },
-            },
-          },
-          '500': {
-            description: 'Internal Server Error',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
