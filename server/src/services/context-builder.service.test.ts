@@ -22,7 +22,7 @@ const createMockPrisma = () =>
     tenant: {
       findUnique: vi.fn(),
     },
-    package: {
+    tier: {
       count: vi.fn().mockResolvedValue(0),
     },
   }) as unknown as PrismaClient;

@@ -410,8 +410,7 @@ export class ContextBuilderService {
       },
       forbiddenSlots,
       // B4: revealCompleted fallback applied in BOTH getOnboardingState AND getBootstrapData
-      revealCompleted:
-        tenant.revealCompletedAt !== null || (await this.hasNonSeedPackages(tenantId)),
+      revealCompleted: tenant.revealCompletedAt !== null || (await this.hasNonSeedTiers(tenantId)),
     };
   }
 
@@ -454,8 +453,7 @@ export class ContextBuilderService {
       discoveryFacts,
       factCount,
       // B4: revealCompleted fallback applied in BOTH getOnboardingState AND getBootstrapData
-      revealCompleted:
-        tenant.revealCompletedAt !== null || (await this.hasNonSeedPackages(tenantId)),
+      revealCompleted: tenant.revealCompletedAt !== null || (await this.hasNonSeedTiers(tenantId)),
     };
   }
 
@@ -475,7 +473,7 @@ export class ContextBuilderService {
     }
   ): Promise<{ effectivePhase: OnboardingPhase; onboardingDone: boolean }> {
     const effectivePhase = await this.resolveOnboardingPhase(tenant, () =>
-      this.hasNonSeedPackages(tenantId)
+      this.hasNonSeedTiers(tenantId)
     );
     const onboardingDone = effectivePhase === 'COMPLETED' || effectivePhase === 'SKIPPED';
     this.lazyBackfillPhase(tenantId, effectivePhase, !!tenant.onboardingPhase);
@@ -514,20 +512,20 @@ export class ContextBuilderService {
   }
 
   /**
-   * Detect if a tenant has real (non-seed) packages.
+   * Detect if a tenant has real (non-seed) tiers.
    *
    * IMPORTANT: Cannot use sectionContent count — seed sections are created
    * as isDraft: false at provisioning time (tenant-provisioning.service.ts:170).
    * Every provisioned tenant has published sections regardless of content quality.
    *
-   * Instead, check for packages with basePrice > 0 (seed packages are always $0).
-   * Cross-ref: server/src/lib/tenant-defaults.ts:28-50
+   * Instead, check for tiers with priceCents > 0 (seed tiers are always $0).
+   * Cross-ref: server/src/lib/tenant-defaults.ts:70-116
    */
-  private async hasNonSeedPackages(tenantId: string): Promise<boolean> {
-    const realPackageCount = await this.prisma.package.count({
-      where: { tenantId, basePrice: { gt: 0 } },
+  private async hasNonSeedTiers(tenantId: string): Promise<boolean> {
+    const realTierCount = await this.prisma.tier.count({
+      where: { tenantId, priceCents: { gt: 0 } },
     });
-    return realPackageCount > 0;
+    return realTierCount > 0;
   }
 
   /**

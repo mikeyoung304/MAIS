@@ -1,7 +1,7 @@
 /**
  * Tenant Provisioning Service Tests
  *
- * Tests atomic tenant creation with segment and packages.
+ * Tests atomic tenant creation with segment, tiers, and section content.
  * Ensures that if any part of provisioning fails, the entire
  * transaction rolls back and no partial tenant exists.
  *
@@ -75,7 +75,7 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
   });
 
   describe('createFromSignup', () => {
-    it('should create tenant with segment, packages, tiers, and sections atomically', async () => {
+    it('should create tenant with segment, tiers, and sections atomically', async () => {
       const email = generateTestEmail();
       const result = await service.createFromSignup({
         slug: `test-biz-${Date.now()}`,
@@ -94,12 +94,7 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
       expect(result.segment.slug).toBe('general');
       expect(result.segment.tenantId).toBe(result.tenant.id);
 
-      // Verify packages created
-      expect(result.packages).toHaveLength(3);
-      expect(result.packages.every((p) => p.tenantId === result.tenant.id)).toBe(true);
-      expect(result.packages.every((p) => p.segmentId === result.segment.id)).toBe(true);
-
-      // Verify tiers created (sortOrder 1, 2, 3)
+      // Verify tiers created (sortOrder 1, 2, 3) — Packages are no longer created
       expect(result.tiers).toHaveLength(3);
       expect(result.tiers.map((t) => t.sortOrder).sort()).toEqual([1, 2, 3]);
       expect(result.tiers.every((t) => t.segmentId === result.segment.id)).toBe(true);

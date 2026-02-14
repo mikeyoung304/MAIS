@@ -44,6 +44,7 @@ function createMockResearchService(overrides: Record<string, unknown> = {}) {
 function createMockCatalogService(overrides: Record<string, unknown> = {}) {
   return {
     getAllPackages: vi.fn(),
+    countTiers: vi.fn(),
     ...overrides,
   };
 }
@@ -325,9 +326,9 @@ describe('DiscoveryService', () => {
   // ============================================================================
 
   describe('completeOnboarding', () => {
-    it('completes onboarding when packages exist', async () => {
+    it('completes onboarding when tiers exist', async () => {
       tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingPhase: 'MARKETING' }));
-      catalogService.getAllPackages.mockResolvedValue([{ id: 'pkg-1' }]);
+      catalogService.countTiers.mockResolvedValue(1);
 
       const result = await service.completeOnboarding('tenant-1', {
         publishedUrl: 'https://example.com',
@@ -362,13 +363,13 @@ describe('DiscoveryService', () => {
       expect(tenantRepo.update).not.toHaveBeenCalled();
     });
 
-    it('returns no_packages when no packages exist', async () => {
+    it('returns no_tiers when no tiers exist', async () => {
       tenantRepo.findById.mockResolvedValue(makeTenant());
-      catalogService.getAllPackages.mockResolvedValue([]);
+      catalogService.countTiers.mockResolvedValue(0);
 
       const result = await service.completeOnboarding('tenant-1');
 
-      expect(result.status).toBe('no_packages');
+      expect(result.status).toBe('no_tiers');
       expect(tenantRepo.update).not.toHaveBeenCalled();
     });
 

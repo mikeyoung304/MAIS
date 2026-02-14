@@ -12,7 +12,8 @@
  * Guarantees:
  * - Tenant record created with API keys
  * - Default segment ("General") created
- * - Default packages (Basic/Standard/Premium) created and linked to segment
+ * - Default tiers (Essential/Professional/Premium) created and linked to segment
+ * - Default section content for all block types
  * - All operations atomic (rollback on any failure)
  *
  * @see todos/630-pending-p1-admin-api-skips-tenant-onboarding.md
@@ -22,7 +23,6 @@ import type {
   PrismaClient,
   Tenant,
   Segment,
-  Package,
   Tier,
   SectionContent,
   Prisma,
@@ -32,7 +32,6 @@ import { logger } from '../lib/core/logger';
 import { apiKeyService } from '../lib/api-key.service';
 import {
   DEFAULT_SEGMENT,
-  DEFAULT_PACKAGE_TIERS,
   DEFAULT_TIER_CONFIGS,
   DEFAULT_SECTION_CONTENT,
 } from '../lib/tenant-defaults';
@@ -67,7 +66,6 @@ export interface SignupCreateTenantInput {
 export interface ProvisionedTenantResult {
   tenant: Tenant;
   segment: Segment;
-  packages: Package[];
   /** Pricing tiers (GOOD/BETTER/BEST) created for the segment */
   tiers: Tier[];
   /** Section content created for the tenant's storefront */
@@ -85,30 +83,31 @@ type PrismaTransactionClient = Parameters<Parameters<PrismaClient['$transaction'
  * Ensures all tenant data is created in a single transaction:
  * - Tenant record with API keys
  * - Default segment
- * - Default packages linked to segment
+ * - Default tiers linked to segment
+ * - Default section content
  */
 export class TenantProvisioningService {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**
-   * Create default segment, packages, tiers, and section content for a tenant
+   * Create default segment, tiers, and section content for a tenant
    *
    * This is the single source of truth for the semantic storefront setup:
    * - 1 "General" segment
-   * - 3 packages (Basic, Standard, Premium) linked to that segment
-   * - 3 tiers (GOOD, BETTER, BEST) linked to that segment
+   * - 3 tiers (Essential, Professional, Premium) linked to that segment
    * - Default section content for all block types
+   *
+   * Phase 1 of Package→Tier migration: Packages are no longer created.
    *
    * @param tx - Prisma transaction client
    * @param tenantId - ID of the tenant to create defaults for
-   * @returns Created segment, packages, tiers, and section content
+   * @returns Created segment, tiers, and section content
    */
-  private async createDefaultSegmentAndPackages(
+  private async createDefaultSegmentAndTiers(
     tx: PrismaTransactionClient,
     tenantId: string
   ): Promise<{
     segment: Segment;
-    packages: Package[];
     tiers: Tier[];
     sectionContent: SectionContent[];
   }> {
@@ -124,22 +123,6 @@ export class TenantProvisioningService {
         active: true,
       },
     });
-
-    // Create default packages in parallel
-    const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
-      tx.package.create({
-        data: {
-          tenantId,
-          segmentId: segment.id,
-          slug: tier.slug,
-          name: tier.name,
-          description: tier.description,
-          basePrice: tier.basePrice,
-          groupingOrder: tier.groupingOrder,
-          active: true,
-        },
-      })
-    );
 
     // Create default tiers (sortOrder 1, 2, 3) for the segment
     const sortOrders = [1, 2, 3];
@@ -178,19 +161,18 @@ export class TenantProvisioningService {
     });
 
     // Execute all creates in parallel
-    const [packages, tiers, sectionContent] = await Promise.all([
-      Promise.all(packagePromises),
+    const [tiers, sectionContent] = await Promise.all([
       Promise.all(tierPromises),
       Promise.all(sectionPromises),
     ]);
 
-    return { segment, packages, tiers, sectionContent };
+    return { segment, tiers, sectionContent };
   }
 
   /**
    * Create a fully provisioned tenant (admin API)
    *
-   * Creates tenant, segment, and packages atomically.
+   * Creates tenant, segment, and tiers atomically.
    * Returns the secret key which must be shown to the admin once.
    *
    * @param input - Tenant configuration from admin
@@ -203,11 +185,6 @@ export class TenantProvisioningService {
     const keys = apiKeyService.generateKeyPair(slug);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // Create tenant with default landing page config
-      // P4-FIX: Seed DEFAULT_PAGES_CONFIG on tenant provisioning
-      // This ensures new tenants have a complete landing page structure with placeholders
-      // Phase 5.2: landingPageConfig removed - sections stored in SectionContent table
-      // Default sections are created via createDefaultSections() in createDefaultSegmentAndPackages()
       const tenant = await tx.tenant.create({
         data: {
           slug,
@@ -219,23 +196,24 @@ export class TenantProvisioningService {
         },
       });
 
-      // Create default segment, packages, tiers, and section content
-      const { segment, packages, tiers, sectionContent } =
-        await this.createDefaultSegmentAndPackages(tx, tenant.id);
+      // Create default segment, tiers, and section content
+      const { segment, tiers, sectionContent } = await this.createDefaultSegmentAndTiers(
+        tx,
+        tenant.id
+      );
 
       logger.info(
         {
           tenantId: tenant.id,
           slug: tenant.slug,
           segmentId: segment.id,
-          packagesCreated: packages.length,
           tiersCreated: tiers.length,
           sectionsCreated: sectionContent.length,
         },
         'Fully provisioned new tenant via admin API'
       );
 
-      return { tenant, segment, packages, tiers, sectionContent };
+      return { tenant, segment, tiers, sectionContent };
     });
 
     // Return secret key outside transaction (not stored in DB)
@@ -248,12 +226,12 @@ export class TenantProvisioningService {
   /**
    * Create a fully provisioned tenant (self-signup)
    *
-   * Creates tenant with auth credentials, segment, and packages atomically.
+   * Creates tenant with auth credentials, segment, and tiers atomically.
    * No secret key is returned as signup users authenticate via password.
    *
    * If any part of the provisioning fails, the entire transaction rolls back
    * and a TenantProvisioningError is thrown. This ensures no orphaned tenants
-   * exist without their required segment and packages.
+   * exist without their required segment and tiers.
    *
    * @param input - Tenant configuration from signup form
    * @returns Provisioned tenant with all default data
@@ -288,9 +266,11 @@ export class TenantProvisioningService {
           },
         });
 
-        // Create default segment, packages, tiers, and section content
-        const { segment, packages, tiers, sectionContent } =
-          await this.createDefaultSegmentAndPackages(tx, tenant.id);
+        // Create default segment, tiers, and section content
+        const { segment, tiers, sectionContent } = await this.createDefaultSegmentAndTiers(
+          tx,
+          tenant.id
+        );
 
         logger.info(
           {
@@ -298,14 +278,13 @@ export class TenantProvisioningService {
             slug: tenant.slug,
             email: tenant.email,
             segmentId: segment.id,
-            packagesCreated: packages.length,
             tiersCreated: tiers.length,
             sectionsCreated: sectionContent.length,
           },
           'Fully provisioned new tenant via signup'
         );
 
-        return { tenant, segment, packages, tiers, sectionContent };
+        return { tenant, segment, tiers, sectionContent };
       });
 
       return result;

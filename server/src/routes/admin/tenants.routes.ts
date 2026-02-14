@@ -104,7 +104,7 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
         throw new ValidationError(`Tenant with slug "${slug}" already exists`);
       }
 
-      // Create fully provisioned tenant (atomic: tenant + segment + packages)
+      // Create fully provisioned tenant (atomic: tenant + segment + tiers)
       const result = await provisioningService.createFullyProvisioned({
         slug,
         name,
@@ -127,10 +127,10 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
           slug: result.segment.slug,
           name: result.segment.name,
         },
-        packages: result.packages.map((pkg) => ({
-          id: pkg.id,
-          slug: pkg.slug,
-          name: pkg.name,
+        tiers: result.tiers.map((tier) => ({
+          id: tier.id,
+          slug: tier.slug,
+          name: tier.name,
         })),
       });
     } catch (error) {

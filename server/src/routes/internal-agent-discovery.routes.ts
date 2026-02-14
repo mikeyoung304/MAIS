@@ -43,7 +43,7 @@ const MarkGreetedSchema = TenantIdSchema.extend({
 
 const CompleteOnboardingSchema = TenantIdSchema.extend({
   publishedUrl: z.string().optional(),
-  packagesCreated: z.number().optional(),
+  tiersCreated: z.number().optional(),
   summary: z.string().optional(),
 });
 
@@ -148,18 +148,18 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
 
   router.post('/complete-onboarding', async (req: Request, res: Response) => {
     try {
-      const { tenantId, publishedUrl, packagesCreated, summary } = CompleteOnboardingSchema.parse(
+      const { tenantId, publishedUrl, tiersCreated, summary } = CompleteOnboardingSchema.parse(
         req.body
       );
 
       logger.info(
-        { tenantId, publishedUrl, packagesCreated, endpoint: '/complete-onboarding' },
+        { tenantId, publishedUrl, tiersCreated, endpoint: '/complete-onboarding' },
         '[Agent] Completing onboarding'
       );
 
       const result = await discoveryService.completeOnboarding(tenantId, {
         publishedUrl,
-        packagesCreated,
+        tiersCreated,
         summary,
       });
 
@@ -173,11 +173,11 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
         return;
       }
 
-      if (result.status === 'no_packages') {
+      if (result.status === 'no_tiers') {
         res.status(400).json({
-          error: 'Cannot complete onboarding without at least one package',
-          suggestion: 'Create a service package first using the storefront tools',
-          prerequisite: 'packages',
+          error: 'Cannot complete onboarding without at least one tier',
+          suggestion: 'Create a service tier first using the storefront tools',
+          prerequisite: 'tiers',
           required: 1,
           actual: 0,
         });
@@ -191,7 +191,7 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
           ? `Onboarding complete! Live at ${result.publishedUrl}`
           : 'Onboarding marked as complete.',
         completedAt: result.completedAt.toISOString(),
-        ...(result.packagesCreated !== undefined && { packagesCreated: result.packagesCreated }),
+        ...(result.tiersCreated !== undefined && { tiersCreated: result.tiersCreated }),
         ...(result.summary && { summary: result.summary }),
       });
     } catch (error) {
