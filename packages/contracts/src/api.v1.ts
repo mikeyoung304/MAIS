@@ -88,13 +88,6 @@ import {
   UnprocessableEntityErrorSchema,
   InternalServerErrorSchema,
 } from './dto';
-import { LandingPageConfigSchema } from './landing-page';
-import {
-  LandingPageDraftResponseSchema,
-  SaveDraftResponseSchema,
-  PublishDraftResponseSchema,
-  DiscardDraftResponseSchema,
-} from './tenant-admin/landing-page.contract';
 
 const c = initContract();
 
@@ -1850,78 +1843,5 @@ export const Contracts = c.router({
       500: InternalServerErrorSchema,
     },
     summary: 'Update deposit settings',
-  },
-
-  // ============================================================================
-  // Tenant Admin Landing Page Draft Endpoints
-  // ============================================================================
-
-  /**
-   * GET /v1/tenant-admin/landing-page/draft
-   * Get current draft and published landing page configuration
-   */
-  getDraft: {
-    method: 'GET',
-    path: '/v1/tenant-admin/landing-page/draft',
-    responses: {
-      200: LandingPageDraftResponseSchema,
-      401: UnauthorizedErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Get draft and published landing page configuration',
-  },
-
-  /**
-   * PUT /v1/tenant-admin/landing-page/draft
-   * Save draft landing page configuration (auto-save target)
-   */
-  saveDraft: {
-    method: 'PUT',
-    path: '/v1/tenant-admin/landing-page/draft',
-    body: LandingPageConfigSchema,
-    responses: {
-      200: SaveDraftResponseSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Save draft landing page configuration',
-  },
-
-  /**
-   * POST /v1/tenant-admin/landing-page/publish
-   * Publish draft to live landing page
-   */
-  publishDraft: {
-    method: 'POST',
-    path: '/v1/tenant-admin/landing-page/publish',
-    body: z.object({}),
-    responses: {
-      200: PublishDraftResponseSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Publish draft landing page to live',
-  },
-
-  /**
-   * DELETE /v1/tenant-admin/landing-page/draft
-   * Discard draft and revert to published configuration
-   */
-  discardDraft: {
-    method: 'DELETE',
-    path: '/v1/tenant-admin/landing-page/draft',
-    body: z.undefined(),
-    responses: {
-      200: DiscardDraftResponseSchema,
-      401: UnauthorizedErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Discard draft and revert to published configuration',
   },
 });

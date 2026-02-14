@@ -55,6 +55,19 @@ export const PAGE_NAMES = [
 export { DISCOVERY_FACT_KEYS } from '../shared/constants/discovery-facts';
 
 // =============================================================================
+// Shared Helpers
+// =============================================================================
+
+/** Convert text to URL-safe slug, max 50 chars */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50);
+}
+
+// =============================================================================
 // Shared Schemas
 // =============================================================================
 

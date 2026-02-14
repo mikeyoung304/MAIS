@@ -20,12 +20,9 @@ import {
   type TenantStorefrontData,
 } from './tenant.client';
 
-// Re-export client-safe utilities for backward compatibility with server components
+// Re-export client-safe utilities for server component convenience
 // Client components should import directly from '@/lib/tenant.client'
 export {
-  isPageEnabled,
-  normalizeToPages,
-  sectionsToLandingConfig,
   validateDomain,
   TenantNotFoundError,
   TenantApiError,
@@ -33,7 +30,6 @@ export {
   type PackageData,
   type SegmentData,
   type TenantStorefrontData,
-  type SectionContentDtoClient,
 } from './tenant.client';
 
 /**

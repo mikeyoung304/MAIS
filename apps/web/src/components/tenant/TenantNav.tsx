@@ -6,19 +6,16 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
-import type { TenantPublicDto, LandingPageConfig } from '@macon/contracts';
+import type { TenantPublicDto, PagesConfig } from '@macon/contracts';
 import { getAnchorNavigationItems, buildAnchorNavHref } from './navigation';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 interface TenantNavProps {
   tenant: TenantPublicDto;
+  /** Pages configuration from SectionContent */
+  pages?: PagesConfig | null;
   /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
   basePath?: string;
-  /**
-   * Domain query parameter for custom domain routes (e.g., '?domain=example.com')
-   * @deprecated Not used for anchor-based navigation (Issue #6). Kept for API compatibility.
-   */
-  domainParam?: string;
 }
 
 interface NavItemWithHref {
@@ -37,7 +34,7 @@ interface NavItemWithHref {
  * - Route change closes mobile menu
  * - Respects prefers-reduced-motion
  */
-export function TenantNav({ tenant, basePath: basePathProp }: TenantNavProps) {
+export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -47,18 +44,14 @@ export function TenantNav({ tenant, basePath: basePathProp }: TenantNavProps) {
   // Use provided basePath or default to slug-based path
   const basePath = basePathProp ?? `/t/${tenant.slug}`;
 
-  // Get landing page config for dynamic navigation
-  const landingPageConfig = tenant.branding?.landingPage as LandingPageConfig | undefined;
-
-  // Memoize navItems - Issue #6 Fix: Use anchor navigation for single-page MVP
-  // Multi-page routes are deferred; all navigation now uses #section anchors
+  // Memoize navItems — uses anchor navigation for single-page scroll
   const navItems = useMemo<NavItemWithHref[]>(
     () =>
-      getAnchorNavigationItems(landingPageConfig).map((item) => ({
+      getAnchorNavigationItems(pages).map((item) => ({
         label: item.label,
         href: buildAnchorNavHref(basePath, item),
       })),
-    [basePath, landingPageConfig]
+    [basePath, pages]
   );
 
   // Close menu on route change

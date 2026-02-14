@@ -6,21 +6,22 @@
  * a segment-first browsing experience.
  *
  * Layout:
- * 1. Pre-packages sections (hero, social proof, text, etc.)
+ * 1. Pre-packages sections (hero, text, etc.)
  * 2. Segment-first packages section (shows segments → tiers within)
- * 3. Post-packages sections (about, gallery, testimonials, faq)
+ * 3. Post-packages sections (testimonials, gallery, faq, contact)
  * 4. Final CTA
  */
 
 import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant.client';
-import { normalizeToPages } from '@/lib/tenant.client';
 import { SectionRenderer } from './SectionRenderer';
 import { SegmentPackagesSection } from './SegmentPackagesSection';
-import type { Section, HeroSection, CTASection, LandingPageConfig } from '@macon/contracts';
+import type { Section, HeroSection, CTASection, PagesConfig } from '@macon/contracts';
 
 interface TenantLandingPageProps {
   data: TenantStorefrontData;
+  /** Pages configuration from SectionContent */
+  pages: PagesConfig;
   /** Base path for links (e.g., '/t/slug' for slug routes, '' for domain routes) */
   basePath?: string;
   /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
@@ -30,15 +31,7 @@ interface TenantLandingPageProps {
 }
 
 /**
- * Build sections for the home page from landing config.
- *
- * This handles both:
- * - New page-based config (pages.home.sections)
- * - Legacy config (hero, about, testimonials, gallery, faq)
- *
- * **Enhanced (2026-01-12):** Now uses normalizeToPages() for all configs,
- * ensuring consistent behavior between preview and live. Section order is
- * determined by config, not hard-coded ID lookups.
+ * Build sections for the home page from PagesConfig.
  *
  * Returns sections split into pre-packages and post-packages groups
  * so packages can be rendered in between with special handling.
@@ -50,7 +43,7 @@ interface TenantLandingPageProps {
  * - Final CTA: call-to-action at the bottom
  */
 function buildHomeSections(
-  landingConfig: LandingPageConfig | undefined,
+  pages: PagesConfig,
   tenantName: string
 ): { preSections: Section[]; postSections: Section[]; finalCta: CTASection | null } {
   // Default hero if nothing configured
@@ -62,9 +55,6 @@ function buildHomeSections(
     ctaText: 'View Packages',
   };
 
-  // Always normalize through normalizeToPages() for consistent behavior
-  // This handles: legacy configs, partial page-based configs, and merging with defaults
-  const pages = normalizeToPages(landingConfig);
   const homeSections = pages.home.sections;
 
   // Find CTA section (usually rendered separately at the bottom)
@@ -102,20 +92,18 @@ function buildHomeSections(
  *
  * Used by both [slug] and _domain routes.
  * The basePath and domainParam props control link construction.
- *
- * Note: Footer is now in the shared layout (layout.tsx)
  */
 export function TenantLandingPage({
   data,
+  pages,
   basePath = '',
   domainParam = '',
   isEditMode = false,
 }: TenantLandingPageProps) {
   const { tenant } = data;
-  const landingConfig = tenant.branding?.landingPage;
 
   // Build sections for rendering
-  const { preSections, postSections, finalCta } = buildHomeSections(landingConfig, tenant.name);
+  const { preSections, postSections, finalCta } = buildHomeSections(pages, tenant.name);
 
   return (
     <>
@@ -128,24 +116,11 @@ export function TenantLandingPage({
         indexOffset={0}
       />
 
-      {/* ===== SOCIAL PROOF BAR ===== */}
-      {landingConfig?.sections?.socialProofBar && landingConfig?.socialProofBar && (
-        <section className="border-y border-neutral-100 bg-surface-alt py-8">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-8 px-6 md:gap-16">
-            {(landingConfig.socialProofBar?.items ?? []).map((item, i) => (
-              <div key={i} className="text-center">
-                <p className="text-2xl font-bold text-text-primary">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ===== SEGMENT-FIRST PACKAGES SECTION ===== */}
       {/* Shows segments as entry points, expands to reveal tiers when clicked */}
       <SegmentPackagesSection data={data} basePath={basePath} domainParam={domainParam} />
 
-      {/* ===== POST-PACKAGES SECTIONS (About, Testimonials, Gallery, FAQ) ===== */}
+      {/* ===== POST-PACKAGES SECTIONS (Testimonials, Gallery, FAQ) ===== */}
       <SectionRenderer
         sections={postSections}
         tenant={tenant}

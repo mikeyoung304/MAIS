@@ -1,7 +1,7 @@
 /**
- * Landing Page Configuration Types and Schemas
+ * Storefront Section & Page Configuration
  *
- * Defines the structure for tenant landing page configuration.
+ * Defines the structure for tenant storefront page configuration.
  * Uses a page-level toggle system where tenants can enable/disable entire pages.
  * Each page contains flexible sections that can be customized with content.
  *
@@ -10,6 +10,8 @@
  * - 12 section types: hero, text, about, gallery, testimonials, faq, contact, cta, pricing, services, features, custom
  * - Home page is always enabled
  * - Dynamic navigation updates based on enabled pages
+ *
+ * Data flow: SectionContent table → sectionsToPages() → PagesConfig → components
  */
 
 import { z } from 'zod';
@@ -94,7 +96,6 @@ export type SectionId = z.infer<typeof SectionIdSchema>;
 
 /**
  * Type guard to check if a section has a valid stable ID.
- * Use during migration period when IDs are optional.
  *
  * @param section - Any section object
  * @returns true if section has a valid id field that passes SectionIdSchema
@@ -189,7 +190,7 @@ export const SafeUrlSchema = z
 
 /**
  * Safe image URL schema - validates protocol and optionally image extension
- * Used for all image URLs in landing page configuration
+ * Used for all image URLs in storefront configuration
  */
 export const SafeImageUrlSchema = SafeUrlSchema;
 
@@ -217,149 +218,7 @@ export const InstagramHandleSchema = z
   .transform((val) => val.replace('@', '')); // Normalize by removing @ prefix
 
 // ============================================================================
-// Social Proof Icon Types
-// ============================================================================
-
-export const SocialProofIconSchema = z.enum([
-  'star',
-  'calendar',
-  'users',
-  'award',
-  'heart',
-  'check',
-]);
-export type SocialProofIcon = z.infer<typeof SocialProofIconSchema>;
-
-// ============================================================================
-// Hero Section Schema
-// ============================================================================
-
-export const HeroSectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  subheadline: z.string().max(500).optional(),
-  ctaText: z.string().min(1).max(50),
-  backgroundImageUrl: SafeImageUrlOptionalSchema,
-});
-
-export type HeroSectionConfig = z.infer<typeof HeroSectionConfigSchema>;
-
-// ============================================================================
-// Social Proof Bar Schema
-// ============================================================================
-
-export const SocialProofItemSchema = z.object({
-  icon: SocialProofIconSchema,
-  text: z.string().min(1).max(100),
-});
-
-export type SocialProofItem = z.infer<typeof SocialProofItemSchema>;
-
-export const SocialProofBarConfigSchema = z.object({
-  items: z.array(SocialProofItemSchema).min(1).max(6),
-});
-
-export type SocialProofBarConfig = z.infer<typeof SocialProofBarConfigSchema>;
-
-// ============================================================================
-// About Section Schema
-// ============================================================================
-
-export const AboutSectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  content: z.string().min(1).max(5000), // Markdown supported
-  imageUrl: SafeImageUrlOptionalSchema,
-  imagePosition: z.enum(['left', 'right']).default('right'),
-});
-
-export type AboutSectionConfig = z.infer<typeof AboutSectionConfigSchema>;
-
-// ============================================================================
-// Testimonials Section Schema
-// ============================================================================
-
-export const TestimonialItemSchema = z.object({
-  quote: z.string().min(1).max(1000),
-  author: z.string().min(1).max(100),
-  role: z.string().max(100).optional(),
-  imageUrl: SafeImageUrlOptionalSchema,
-  rating: z.number().int().min(1).max(5),
-});
-
-export type TestimonialItem = z.infer<typeof TestimonialItemSchema>;
-
-export const TestimonialsSectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  items: z.array(TestimonialItemSchema).min(1).max(10),
-});
-
-export type TestimonialsSectionConfig = z.infer<typeof TestimonialsSectionConfigSchema>;
-
-// ============================================================================
-// Accommodation Section Schema
-// ============================================================================
-
-export const AccommodationSectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  description: z.string().min(1).max(1000),
-  imageUrl: SafeImageUrlOptionalSchema,
-  ctaText: z.string().min(1).max(50),
-  ctaUrl: SafeUrlSchema, // Airbnb or other booking link - must be safe URL
-  highlights: z.array(z.string().max(100)).max(8),
-});
-
-export type AccommodationSectionConfig = z.infer<typeof AccommodationSectionConfigSchema>;
-
-// ============================================================================
-// Gallery Section Schema
-// ============================================================================
-
-export const GalleryImageSchema = z.object({
-  url: SafeImageUrlSchema,
-  alt: z.string().max(200).optional(),
-});
-
-export type GalleryImage = z.infer<typeof GalleryImageSchema>;
-
-export const GallerySectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  images: z.array(GalleryImageSchema).min(1).max(20),
-  instagramHandle: InstagramHandleSchema.optional(),
-});
-
-export type GallerySectionConfig = z.infer<typeof GallerySectionConfigSchema>;
-
-// ============================================================================
-// FAQ Section Schema
-// ============================================================================
-
-export const FaqItemSchema = z.object({
-  question: z.string().min(1).max(500),
-  answer: z.string().min(1).max(2000), // Markdown supported
-});
-
-export type FaqItem = z.infer<typeof FaqItemSchema>;
-
-export const FaqSectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  items: z.array(FaqItemSchema).min(1).max(20),
-});
-
-export type FaqSectionConfig = z.infer<typeof FaqSectionConfigSchema>;
-
-// ============================================================================
-// Final CTA Section Schema
-// ============================================================================
-
-export const FinalCtaSectionConfigSchema = z.object({
-  headline: z.string().min(1).max(200),
-  subheadline: z.string().max(500).optional(),
-  ctaText: z.string().min(1).max(50),
-});
-
-export type FinalCtaSectionConfig = z.infer<typeof FinalCtaSectionConfigSchema>;
-
-// ============================================================================
-// Flexible Section Schema (New Page-Based System)
+// Section Schemas (Page-Based System)
 // ============================================================================
 
 /**
@@ -615,7 +474,7 @@ export const SectionSchema = z.discriminatedUnion('type', [
 export type Section = z.infer<typeof SectionSchema>;
 
 // ============================================================================
-// Page Configuration Schema (New Page-Based System)
+// Page Configuration Schema
 // ============================================================================
 
 /**
@@ -644,109 +503,9 @@ export const PagesConfigSchema = z.object({
 
 export type PagesConfig = z.infer<typeof PagesConfigSchema>;
 
-// NOTE: PAGE_NAMES and PageName are defined at the top of this file
-// in the Section ID Schema section
-
-// ============================================================================
-// Section Visibility Toggles (Legacy - for backward compatibility)
-// ============================================================================
-
-export const LandingPageSectionsSchema = z.object({
-  hero: z.boolean().default(false),
-  socialProofBar: z.boolean().default(false),
-  segmentSelector: z.boolean().default(true), // Always shown by default
-  about: z.boolean().default(false),
-  testimonials: z.boolean().default(false),
-  accommodation: z.boolean().default(false),
-  gallery: z.boolean().default(false),
-  faq: z.boolean().default(false),
-  finalCta: z.boolean().default(false),
-});
-
-export type LandingPageSections = z.infer<typeof LandingPageSectionsSchema>;
-
-// ============================================================================
-// Complete Landing Page Configuration
-// ============================================================================
-
-/**
- * Landing Page Configuration Schema
- *
- * Supports both legacy section-based configuration AND new page-based configuration.
- * The `pages` field is the new system; legacy fields are kept for backward compatibility.
- *
- * Migration path:
- * 1. New tenants get `pages` field populated with defaults
- * 2. Existing tenants continue using legacy fields
- * 3. Migration script converts legacy → pages format
- * 4. After migration, legacy fields can be deprecated
- */
-export const LandingPageConfigSchema = z.object({
-  // New page-based configuration (preferred)
-  pages: PagesConfigSchema.optional(),
-
-  // Legacy section-based configuration (for backward compatibility)
-  sections: LandingPageSectionsSchema.optional(),
-  hero: HeroSectionConfigSchema.optional(),
-  socialProofBar: SocialProofBarConfigSchema.optional(),
-  about: AboutSectionConfigSchema.optional(),
-  testimonials: TestimonialsSectionConfigSchema.optional(),
-  accommodation: AccommodationSectionConfigSchema.optional(),
-  gallery: GallerySectionConfigSchema.optional(),
-  faq: FaqSectionConfigSchema.optional(),
-  finalCta: FinalCtaSectionConfigSchema.optional(),
-});
-
-export type LandingPageConfig = z.infer<typeof LandingPageConfigSchema>;
-
-// ============================================================================
-// API DTOs
-// ============================================================================
-
-/**
- * Response DTO for GET /v1/tenant-admin/landing
- */
-export const LandingPageConfigResponseSchema = LandingPageConfigSchema;
-export type LandingPageConfigResponse = z.infer<typeof LandingPageConfigResponseSchema>;
-
-/**
- * Request DTO for PUT /v1/tenant-admin/landing
- * Partial update - only provided fields are updated
- */
-export const UpdateLandingPageConfigSchema = z.object({
-  pages: PagesConfigSchema.optional(),
-  sections: LandingPageSectionsSchema.partial().optional(),
-  hero: HeroSectionConfigSchema.optional(),
-  socialProofBar: SocialProofBarConfigSchema.optional(),
-  about: AboutSectionConfigSchema.optional(),
-  testimonials: TestimonialsSectionConfigSchema.optional(),
-  accommodation: AccommodationSectionConfigSchema.optional(),
-  gallery: GallerySectionConfigSchema.optional(),
-  faq: FaqSectionConfigSchema.optional(),
-  finalCta: FinalCtaSectionConfigSchema.optional(),
-});
-
-export type UpdateLandingPageConfig = z.infer<typeof UpdateLandingPageConfigSchema>;
-
 // ============================================================================
 // Default Configuration for New Tenants
 // ============================================================================
-
-/**
- * Legacy section visibility defaults
- * @deprecated Use DEFAULT_LANDING_PAGE_CONFIG.pages instead
- */
-export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSections = {
-  hero: false,
-  socialProofBar: false,
-  segmentSelector: true,
-  about: false,
-  testimonials: false,
-  accommodation: false,
-  gallery: false,
-  faq: false,
-  finalCta: false,
-};
 
 /**
  * Default page configuration for new tenants
@@ -838,10 +597,6 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
         id: 'home-contact-main',
         type: 'contact',
         headline: '[Get In Touch]',
-        // NOTE: email/phone left undefined (not placeholders) because:
-        // 1. sanitizeObject() strips invalid emails/phones to empty strings
-        // 2. Tests expect DEFAULT_PAGES_CONFIG to survive saveDraft() round-trip
-        // 3. Empty fields in UI are self-evident, unlike text fields
         address: '[Your location - city/region is fine if you serve a local area]',
         hours: '[Your availability - e.g., "Weekdays 9am-5pm, Weekends by appointment"]',
       },
@@ -889,13 +644,6 @@ export const DEFAULT_PAGES_CONFIG: PagesConfig = {
     enabled: false,
     sections: [],
   },
-};
-
-/**
- * Complete default landing page configuration for new tenants
- */
-export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
-  pages: DEFAULT_PAGES_CONFIG,
 };
 
 // ============================================================================
@@ -1018,34 +766,6 @@ export const LenientPagesConfigSchema = z.object({
 
 export type LenientPagesConfig = z.infer<typeof LenientPagesConfigSchema>;
 
-/**
- * Lenient Landing Page Config Schema (for drafts)
- *
- * Top-level schema using lenient section validation.
- * Drafts can have incomplete sections (empty arrays).
- *
- * @example
- * // This passes lenient validation but fails strict:
- * { pages: { home: { enabled: true, sections: [{ type: 'pricing', headline: 'Plans', tiers: [] }] } } }
- */
-export const LenientLandingPageConfigSchema = z.object({
-  // New page-based configuration (preferred)
-  pages: LenientPagesConfigSchema.optional(),
-
-  // Legacy section-based configuration (for backward compatibility)
-  sections: LandingPageSectionsSchema.optional(),
-  hero: HeroSectionConfigSchema.optional(),
-  socialProofBar: SocialProofBarConfigSchema.optional(),
-  about: AboutSectionConfigSchema.optional(),
-  testimonials: TestimonialsSectionConfigSchema.optional(),
-  accommodation: AccommodationSectionConfigSchema.optional(),
-  gallery: GallerySectionConfigSchema.optional(),
-  faq: FaqSectionConfigSchema.optional(),
-  finalCta: FinalCtaSectionConfigSchema.optional(),
-});
-
-export type LenientLandingPageConfig = z.infer<typeof LenientLandingPageConfigSchema>;
-
 // ============================================================================
 // STRICT SCHEMA ALIASES (for explicit publish-time validation)
 // ============================================================================
@@ -1064,9 +784,9 @@ export const StrictSectionSchema = SectionSchema;
 export type StrictSection = Section;
 
 /**
- * Strict Landing Page Config Schema (for publishing)
+ * Strict Pages Config Schema (for publishing)
  *
- * Alias to LandingPageConfigSchema. Requires complete sections.
+ * Alias to PagesConfigSchema. Requires complete sections.
  */
-export const StrictLandingPageConfigSchema = LandingPageConfigSchema;
-export type StrictLandingPageConfig = LandingPageConfig;
+export const StrictPagesConfigSchema = PagesConfigSchema;
+export type StrictPagesConfig = PagesConfig;
