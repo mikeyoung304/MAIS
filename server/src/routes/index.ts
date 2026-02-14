@@ -38,6 +38,7 @@ import type {
   WebhookSubscriptionRepository,
   EarlyAccessRepository,
   CacheServicePort,
+  StorageProvider,
 } from '../lib/ports';
 import { createAdminTenantsRoutes } from './admin/tenants.routes';
 import { createAdminStripeRoutes } from './admin/stripe.routes';
@@ -154,7 +155,8 @@ export function createV1Router(
   repositories?: Repositories,
   cacheAdapter?: CacheServicePort,
   stripeAdapter?: StripePaymentAdapter,
-  tenantRepo?: PrismaTenantRepository // For internal agent routes (mock mode uses MockTenantRepository)
+  tenantRepo?: PrismaTenantRepository, // For internal agent routes (mock mode uses MockTenantRepository)
+  storageProvider?: StorageProvider // For tenant-admin file uploads (replaces deprecated upload.service singleton)
 ): void {
   // Require PrismaClient from DI - fail fast if misconfigured
   if (!prisma) {
@@ -450,15 +452,21 @@ export function createV1Router(
     // These routes use tenant auth middleware for authentication and authorization
     const tenantRepo = new PrismaTenantRepository(prismaClient);
     const blackoutRepo = new PrismaBlackoutRepository(prismaClient);
-    const tenantAdminRoutes = createTenantAdminRoutes(
-      tenantRepo,
-      services.catalog,
-      services.booking,
+    if (!storageProvider) {
+      throw new Error(
+        'StorageProvider is required for tenant-admin routes - ensure DI container provides it'
+      );
+    }
+    const tenantAdminRoutes = createTenantAdminRoutes({
+      tenantRepository: tenantRepo,
+      catalogService: services.catalog,
+      bookingService: services.booking,
       blackoutRepo,
-      services.segment,
-      services.packageDraft,
-      services.sectionContent // Phase 5.2: Added for image gallery endpoint
-    );
+      storageProvider,
+      segmentService: services.segment,
+      packageDraftService: services.packageDraft,
+      sectionContentService: services.sectionContent,
+    });
     app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminRoutes);
 
     // Register unified authentication routes (RECOMMENDED)

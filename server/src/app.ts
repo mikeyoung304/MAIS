@@ -16,7 +16,6 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { requestLogger } from './middleware/request-logger';
 import { skipIfHealth, adminLimiter, webhookLimiter } from './middleware/rateLimiter';
 import { openApiSpec } from './api-docs';
-import { uploadService } from './services/upload.service';
 import { sentryRequestHandler, sentryErrorHandler } from './lib/errors/sentry';
 import { registerHealthRoutes } from './routes/health.routes';
 import { registerMetricsRoutes } from './routes/metrics.routes';
@@ -204,16 +203,17 @@ export function createApp(
     sanitizeInput()(req, res, next);
   });
 
-  // Serve uploaded files (static)
-  const logoUploadDir = uploadService.getLogoUploadDir();
+  // Serve uploaded files (static) — paths from DI container's storageProvider
+  const { storageProvider } = container;
+  const logoUploadDir = storageProvider.getLogoUploadDir();
   app.use('/uploads/logos', express.static(logoUploadDir));
   logger.info({ uploadDir: logoUploadDir }, 'Serving uploaded logos from static directory');
 
-  const packagePhotoUploadDir = uploadService.getPackagePhotoUploadDir();
+  const packagePhotoUploadDir = storageProvider.getPackagePhotoUploadDir();
   app.use('/uploads/packages', express.static(packagePhotoUploadDir));
   logger.info({ uploadDir: packagePhotoUploadDir }, 'Serving package photos from static directory');
 
-  const segmentImageUploadDir = uploadService.getSegmentImageUploadDir();
+  const segmentImageUploadDir = storageProvider.getSegmentImageUploadDir();
   app.use('/uploads/segments', express.static(segmentImageUploadDir));
   logger.info({ uploadDir: segmentImageUploadDir }, 'Serving segment images from static directory');
 
@@ -289,7 +289,8 @@ export function createApp(
     container.repositories,
     container.cacheAdapter, // TODO-329: Pass cache adapter for date booking idempotency
     container.stripeAdapter, // For tenant billing routes
-    container.tenantRepo // For internal agent routes (mock mode uses MockTenantRepository)
+    container.tenantRepo, // For internal agent routes (mock mode uses MockTenantRepository)
+    container.storageProvider // For tenant-admin file uploads (replaces deprecated upload.service singleton)
   );
 
   // Register Stripe Connect webhook route (only in real mode with secrets configured)
