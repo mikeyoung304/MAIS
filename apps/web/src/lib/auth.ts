@@ -20,9 +20,6 @@ import { logger } from '@/lib/logger';
 import { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
 import { API_URL } from '@/lib/config';
 
-// Re-export for backward compatibility
-export { NEXTAUTH_COOKIE_NAMES } from '@/lib/auth-constants';
-
 /**
  * Extended User type with MAIS-specific fields
  */
@@ -293,8 +290,8 @@ export type { MAISUser, MAISJWT, MAISSession };
 /**
  * Get backend token for server-side API calls.
  *
- * Retrieves the JWT session token from cookies, supporting both NextAuth v5
- * and v4 cookie naming conventions across HTTP and HTTPS environments.
+ * Retrieves the JWT session token from cookies, supporting NextAuth v5
+ * cookie naming conventions across HTTP and HTTPS environments.
  *
  * SECURITY: This should only be used in Server Components or API routes.
  * The token is not exposed to client-side JavaScript.
