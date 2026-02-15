@@ -122,7 +122,7 @@ describe.sequential('SegmentRepository Integration Tests', () => {
       const tenantA = await ctx.tenants.tenantA.create();
       const tenantB = await ctx.tenants.tenantB.create();
 
-      // Create segment for tenant A with packages
+      // Create segment for tenant A with tiers
       const segmentA = await repository.create({
         tenantId: tenantA.id,
         slug: 'wellness-retreat',
@@ -132,15 +132,17 @@ describe.sequential('SegmentRepository Integration Tests', () => {
         active: true,
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenantA.id,
           segmentId: segmentA.id,
-          slug: 'package-1',
-          name: 'Package 1',
+          slug: 'tier-1',
+          name: 'Tier 1',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
           active: true,
+          sortOrder: 1,
+          features: [],
         },
       });
 
@@ -500,7 +502,7 @@ describe.sequential('SegmentRepository Integration Tests', () => {
       expect(available3).toBe(true);
     });
 
-    it('should get accurate segment stats (package and add-on counts)', async () => {
+    it('should get accurate segment stats (tier and add-on counts)', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await repository.create({
@@ -512,35 +514,39 @@ describe.sequential('SegmentRepository Integration Tests', () => {
         active: true,
       });
 
-      // Initially no packages or add-ons
+      // Initially no tiers or add-ons
       const stats1 = await repository.getStats(tenant.id, segment.id);
       expect(stats1.packageCount).toBe(0);
       expect(stats1.addOnCount).toBe(0);
 
-      // Create 2 packages linked to segment
-      await ctx.prisma.package.create({
+      // Create 2 tiers linked to segment
+      await ctx.prisma.tier.create({
         data: {
-          id: 'pkg1',
+          id: 'tier1',
           tenantId: tenant.id,
           segmentId: segment.id,
-          slug: 'package-1',
-          name: 'Package 1',
+          slug: 'tier-1',
+          name: 'Tier 1',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
           active: true,
+          sortOrder: 1,
+          features: [],
         },
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
-          id: 'pkg2',
+          id: 'tier2',
           tenantId: tenant.id,
           segmentId: segment.id,
-          slug: 'package-2',
-          name: 'Package 2',
+          slug: 'tier-2',
+          name: 'Tier 2',
           description: 'Description',
-          basePrice: 20000,
+          priceCents: 20000,
           active: true,
+          sortOrder: 2,
+          features: [],
         },
       });
 
@@ -566,8 +572,8 @@ describe.sequential('SegmentRepository Integration Tests', () => {
   // RELATIONSHIP HANDLING
   // ============================================================================
 
-  describe('Package relationship handling (onDelete: SetNull)', () => {
-    it('should set package.segmentId to null when segment is deleted', async () => {
+  describe('Tier relationship handling (onDelete: Cascade)', () => {
+    it('should cascade-delete tiers when segment is deleted', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await repository.create({
@@ -579,31 +585,32 @@ describe.sequential('SegmentRepository Integration Tests', () => {
         active: true,
       });
 
-      // Create package linked to segment
-      const pkg = await ctx.prisma.package.create({
+      // Create tier linked to segment
+      const tier = await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
-          slug: 'test-package',
-          name: 'Test Package',
+          slug: 'test-tier',
+          name: 'Test Tier',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
           active: true,
+          sortOrder: 1,
+          features: [],
         },
       });
 
-      expect(pkg.segmentId).toBe(segment.id);
+      expect(tier.segmentId).toBe(segment.id);
 
       // Delete segment
       await repository.delete(tenant.id, segment.id);
 
-      // Package should still exist but with null segmentId
-      const pkgAfter = await ctx.prisma.package.findUnique({
-        where: { id: pkg.id },
+      // Tier should be cascade-deleted along with the segment
+      const tierAfter = await ctx.prisma.tier.findUnique({
+        where: { id: tier.id },
       });
 
-      expect(pkgAfter).not.toBeNull();
-      expect(pkgAfter?.segmentId).toBeNull();
+      expect(tierAfter).toBeNull();
     });
   });
 });

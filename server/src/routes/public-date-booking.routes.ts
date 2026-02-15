@@ -1,6 +1,6 @@
 /**
  * Public Date Booking Routes
- * Customer-facing endpoint for booking DATE type packages (e.g., weddings)
+ * Customer-facing endpoint for booking DATE type tiers (e.g., weddings)
  * Requires tenant context via X-Tenant-Key header
  *
  * These routes should be mounted at /v1/public to match the contract paths:
@@ -64,7 +64,7 @@ export function createPublicDateBookingRoutes(
 
   /**
    * POST /v1/public/bookings/date
-   * Create checkout session for DATE booking type packages
+   * Create checkout session for DATE booking type tiers
    *
    * Phase 2 Refactor: Business logic moved to BookingService.createDateBooking()
    *
@@ -73,9 +73,9 @@ export function createPublicDateBookingRoutes(
    *
    * @header X-Idempotency-Key - Optional unique key for request deduplication
    * @returns 200 - Checkout URL for Stripe payment
-   * @returns 400 - Validation error (invalid input, wrong package type)
+   * @returns 400 - Validation error (invalid input, wrong tier type)
    * @returns 401 - Missing or invalid tenant key
-   * @returns 404 - Package not found
+   * @returns 404 - Tier not found
    * @returns 409 - Date already booked
    * @returns 500 - Internal server error
    */
@@ -113,7 +113,7 @@ export function createPublicDateBookingRoutes(
       // Return 200 success to not alert the bot that it was detected
       if (input.website) {
         logger.warn(
-          { tenantId, packageId: input.packageId },
+          { tenantId, tierId: input.tierId },
           'Honeypot triggered - likely bot submission, silently rejecting'
         );
         res.status(200).json({ checkoutUrl: 'https://example.com/thank-you' });
@@ -123,7 +123,7 @@ export function createPublicDateBookingRoutes(
       logger.info(
         {
           tenantId,
-          packageId: input.packageId,
+          tierId: input.tierId,
           date: input.date,
           hasIdempotencyKey: !!idempotencyKey,
         },
@@ -132,7 +132,7 @@ export function createPublicDateBookingRoutes(
 
       // Delegate all business logic to service layer
       const checkout = await bookingService.createDateBooking(tenantId, {
-        packageId: input.packageId,
+        tierId: input.tierId,
         date: input.date,
         customerName: input.customerName,
         customerEmail: input.customerEmail,
@@ -151,7 +151,7 @@ export function createPublicDateBookingRoutes(
       logger.info(
         {
           tenantId,
-          packageId: input.packageId,
+          tierId: input.tierId,
           date: input.date,
           customerEmail: input.customerEmail,
           addOnIds: input.addOnIds,

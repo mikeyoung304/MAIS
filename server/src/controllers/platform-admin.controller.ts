@@ -53,7 +53,7 @@ export class PlatformAdminController {
         isTestTenant: tenant.isTestTenant,
         createdAt: tenant.createdAt.toISOString(),
         updatedAt: tenant.updatedAt.toISOString(),
-        packageCount: tenant._count.packages,
+        tierCount: tenant._count.packages,
         bookingCount: tenant._count.bookings,
       }));
     } catch (error) {

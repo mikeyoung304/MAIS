@@ -2,7 +2,7 @@
  * Port interfaces for repositories and external adapters
  */
 
-import type { Package, AddOn, Booking, Service } from './entities';
+import type { Tier, TierPhoto, AddOn, Booking, Service } from './entities';
 import type Stripe from 'stripe';
 import type { BlockType } from '../generated/prisma/client';
 
@@ -11,65 +11,58 @@ import type { BlockType } from '../generated/prisma/client';
 // ============================================================================
 
 /**
- * Catalog Repository - Package and AddOn persistence
+ * Catalog Repository - Tier and AddOn persistence
+ *
+ * Phase 2: All Package methods renamed to Tier equivalents.
+ * The Prisma Package model still exists (dropped in Phase 5) but is never queried.
  */
 export interface CatalogRepository {
-  getAllPackages(tenantId: string, options?: { take?: number }): Promise<Package[]>;
-  getAllPackagesWithAddOns(
+  // Tier read methods
+  getAllTiers(tenantId: string, options?: { take?: number }): Promise<Tier[]>;
+  getAllTiersWithAddOns(
     tenantId: string,
     options?: { take?: number }
-  ): Promise<(Package & { addOns: AddOn[] })[]>;
-  getPackageBySlug(tenantId: string, slug: string): Promise<Package | null>;
-  getPackageBySlugWithAddOns(
+  ): Promise<Array<Tier & { addOns: AddOn[] }>>;
+  getTierBySlug(tenantId: string, slug: string): Promise<Tier | null>;
+  getTierBySlugWithAddOns(
     tenantId: string,
     slug: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null>;
-  getPackageById(tenantId: string, id: string): Promise<Package | null>;
-  getPackageByIdWithAddOns(
+  ): Promise<(Tier & { addOns: AddOn[] }) | null>;
+  getTierById(tenantId: string, id: string): Promise<Tier | null>;
+  getTierByIdWithAddOns(tenantId: string, id: string): Promise<(Tier & { addOns: AddOn[] }) | null>;
+  getTiersByIds(tenantId: string, ids: string[]): Promise<Tier[]>;
+
+  // Tier write methods
+  createTier(tenantId: string, data: CreateTierInput): Promise<Tier>;
+  updateTier(tenantId: string, id: string, data: UpdateTierInput): Promise<Tier>;
+  deleteTier(tenantId: string, id: string): Promise<void>;
+
+  // Segment-scoped tier methods
+  getTiersBySegment(
     tenantId: string,
-    id: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null>;
-  getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]>;
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<Tier[]>;
+  getTiersBySegmentWithAddOns(
+    tenantId: string,
+    segmentId: string,
+    options?: { take?: number }
+  ): Promise<Array<Tier & { addOns: AddOn[] }>>;
+
+  // AddOn methods
   getAllAddOns(tenantId: string, options?: { take?: number }): Promise<AddOn[]>;
-  getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]>;
+  getAddOnsByTierId(tenantId: string, tierId: string): Promise<AddOn[]>;
   getAddOnById(tenantId: string, id: string): Promise<AddOn | null>;
-  createPackage(tenantId: string, data: CreatePackageInput): Promise<Package>;
-  updatePackage(tenantId: string, id: string, data: UpdatePackageInput): Promise<Package>;
-  deletePackage(tenantId: string, id: string): Promise<void>;
   createAddOn(tenantId: string, data: CreateAddOnInput): Promise<AddOn>;
   updateAddOn(tenantId: string, id: string, data: UpdateAddOnInput): Promise<AddOn>;
   deleteAddOn(tenantId: string, id: string): Promise<void>;
 
-  // Segment-scoped methods (Phase A - Segment Implementation)
-  getPackagesBySegment(
-    tenantId: string,
-    segmentId: string,
-    options?: { take?: number }
-  ): Promise<Package[]>;
-  getPackagesBySegmentWithAddOns(
-    tenantId: string,
-    segmentId: string,
-    options?: { take?: number }
-  ): Promise<(Package & { addOns: AddOn[] })[]>;
+  // Segment-scoped add-on methods
   getAddOnsForSegment(
     tenantId: string,
     segmentId: string,
     options?: { take?: number }
   ): Promise<AddOn[]>;
-
-  // Draft methods (Visual Editor)
-  getAllPackagesWithDrafts(
-    tenantId: string,
-    options?: { take?: number }
-  ): Promise<PackageWithDraft[]>;
-  updateDraft(
-    tenantId: string,
-    packageId: string,
-    draft: UpdatePackageDraftInput
-  ): Promise<PackageWithDraft>;
-  publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]>;
-  discardDrafts(tenantId: string, packageIds?: string[]): Promise<number>;
-  countDrafts(tenantId: string): Promise<number>;
 }
 
 /**
@@ -301,7 +294,7 @@ export interface AppointmentDto {
   tenantId: string;
   customerId: string;
   serviceId: string | null;
-  packageId: string | null; // Nullable for TIMESLOT bookings
+  tierId: string | null; // Nullable for TIMESLOT bookings
   date: string; // YYYY-MM-DD
   startTime: string | null; // ISO datetime
   endTime: string | null; // ISO datetime
@@ -776,86 +769,36 @@ export interface AvailabilityCheck {
 // ============================================================================
 
 /**
- * Input for creating a new package
+ * Input for creating a new tier
  */
-export interface CreatePackageInput {
+export interface CreateTierInput {
   slug: string;
   title: string;
   description: string;
   priceCents: number;
-  photoUrl?: string;
-  // Tier/segment organization fields
   segmentId?: string | null;
-  grouping?: string | null;
-  groupingOrder?: number | null;
+  groupingOrder?: number;
+  photos?: TierPhoto[];
 }
 
 /**
- * Photo object for package gallery
+ * Input for updating an existing tier
  */
-export interface PackagePhoto {
-  url: string;
-  altText?: string;
-  order?: number;
-}
-
-/**
- * Input for updating an existing package
- */
-export interface UpdatePackageInput {
+export interface UpdateTierInput {
   slug?: string;
   title?: string;
   description?: string;
   priceCents?: number;
-  photoUrl?: string;
-  photos?: PackagePhoto[]; // Photo gallery JSON array
-  // Tier/segment organization fields
   segmentId?: string | null;
-  grouping?: string | null;
-  groupingOrder?: number | null;
-}
-
-/**
- * Package with draft fields for Visual Editor
- */
-export interface PackageWithDraft {
-  id: string;
-  tenantId: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  basePrice: number;
-  active: boolean;
-  segmentId: string | null;
-  grouping: string | null;
-  groupingOrder: number | null;
-  photos: PackagePhoto[];
-  // Draft fields
-  draftTitle: string | null;
-  draftDescription: string | null;
-  draftPriceCents: number | null;
-  draftPhotos: PackagePhoto[] | null;
-  hasDraft: boolean;
-  draftUpdatedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-/**
- * Input for updating package draft (Visual Editor autosave)
- */
-export interface UpdatePackageDraftInput {
-  title?: string;
-  description?: string;
-  priceCents?: number;
-  photos?: PackagePhoto[];
+  groupingOrder?: number;
+  photos?: TierPhoto[];
 }
 
 /**
  * Input for creating a new add-on
  */
 export interface CreateAddOnInput {
-  packageId: string;
+  tierId: string;
   title: string;
   priceCents: number;
   photoUrl?: string;
@@ -865,7 +808,7 @@ export interface CreateAddOnInput {
  * Input for updating an existing add-on
  */
 export interface UpdateAddOnInput {
-  packageId?: string;
+  tierId?: string;
   title?: string;
   priceCents?: number;
   photoUrl?: string;
@@ -920,13 +863,13 @@ export const DEFAULT_CACHE_TTL_SECONDS = 3600;
  * Implementations: Redis (production), In-Memory (development/fallback)
  *
  * CRITICAL: All cache keys MUST include tenantId to prevent cross-tenant data leakage
- * Example: `catalog:${tenantId}:packages` NOT `catalog:packages`
+ * Example: `catalog:${tenantId}:tiers` NOT `catalog:tiers`
  *
  * TTL BEHAVIOR:
  * - All cache entries MUST have a TTL to prevent stale data
  * - Default TTL: 1 hour (3600 seconds) when not specified
  * - Recommended TTLs:
- *   - Catalog/packages: 15 minutes (900s)
+ *   - Catalog/tiers: 15 minutes (900s)
  *   - Availability: 5 minutes (300s)
  *   - User sessions: 1 hour (3600s)
  *   - Static content: 24 hours (86400s)
@@ -1014,19 +957,15 @@ export interface FileSystem {
 }
 
 /**
- * Storage provider for file uploads (logos, package photos, segment images)
+ * Storage provider for file uploads (logos, tier photos, segment images)
  */
 export interface StorageProvider {
   uploadLogo(file: UploadedFile, tenantId: string): Promise<UploadResult>;
-  uploadPackagePhoto(
-    file: UploadedFile,
-    packageId: string,
-    tenantId?: string
-  ): Promise<UploadResult>;
+  uploadTierPhoto(file: UploadedFile, tierId: string, tenantId?: string): Promise<UploadResult>;
   uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadResult>;
   uploadLandingPageImage(file: UploadedFile, tenantId: string): Promise<UploadResult>;
   deleteLogo(filename: string): Promise<void>;
-  deletePackagePhoto(filename: string): Promise<void>;
+  deleteTierPhoto(filename: string): Promise<void>;
   deleteSegmentImage(url: string, tenantId: string): Promise<void>;
   deleteLandingPageImage(url: string, tenantId: string): Promise<void>;
 }

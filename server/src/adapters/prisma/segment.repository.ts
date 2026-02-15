@@ -166,7 +166,7 @@ export class PrismaSegmentRepository {
 
   /**
    * Delete segment by ID with tenant isolation
-   * Note: Packages will have segmentId set to null (onDelete: SetNull)
+   * Note: Tiers will be cascade-deleted (onDelete: Cascade)
    *
    * @param tenantId - Tenant ID for isolation (CRITICAL: prevents cross-tenant deletion)
    * @param id - Segment ID
@@ -188,46 +188,46 @@ export class PrismaSegmentRepository {
   }
 
   /**
-   * Get segment with related packages with tenant isolation
+   * Get segment with related tiers with tenant isolation
    *
    * @param tenantId - Tenant ID for isolation (CRITICAL: prevents cross-tenant data access)
    * @param id - Segment ID
-   * @returns Segment with packages or null if not found
+   * @returns Segment with tiers or null if not found
    */
-  async findByIdWithPackages(
+  async findByIdWithTiers(
     tenantId: string,
     id: string
   ): Promise<
     | (Segment & {
-        packages: any[];
+        tiers: any[];
       })
     | null
   > {
     return await this.prisma.segment.findFirst({
       where: { id, tenantId },
       include: {
-        packages: {
+        tiers: {
           where: { active: true },
-          orderBy: [{ groupingOrder: 'asc' }, { name: 'asc' }],
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
         },
       },
     });
   }
 
   /**
-   * Get segment by slug with related packages and add-ons
+   * Get segment by slug with related tiers and add-ons
    * Used for public segment landing pages
    *
    * @param tenantId - Tenant ID for isolation
    * @param slug - URL-safe segment identifier
-   * @returns Segment with packages and add-ons or null if not found
+   * @returns Segment with tiers and add-ons or null if not found
    */
   async findBySlugWithRelations(
     tenantId: string,
     slug: string
   ): Promise<
     | (Segment & {
-        packages: any[];
+        tiers: any[];
         addOns: any[];
       })
     | null
@@ -242,9 +242,9 @@ export class PrismaSegmentRepository {
           },
         },
         include: {
-          packages: {
+          tiers: {
             where: { active: true },
-            orderBy: [{ groupingOrder: 'asc' }, { name: 'asc' }],
+            orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
             include: {
               addOns: {
                 include: {
@@ -280,7 +280,7 @@ export class PrismaSegmentRepository {
   }
 
   /**
-   * Get segment statistics (package count, booking count) with tenant isolation
+   * Get segment statistics (tier count, add-on count) with tenant isolation
    *
    * @param tenantId - Tenant ID for isolation (CRITICAL: prevents cross-tenant data access)
    * @param id - Segment ID
@@ -299,7 +299,7 @@ export class PrismaSegmentRepository {
       include: {
         _count: {
           select: {
-            packages: true,
+            tiers: true,
             addOns: true,
           },
         },
@@ -311,7 +311,7 @@ export class PrismaSegmentRepository {
     }
 
     return {
-      packageCount: segment._count.packages,
+      packageCount: segment._count.tiers,
       addOnCount: segment._count.addOns,
     };
   }

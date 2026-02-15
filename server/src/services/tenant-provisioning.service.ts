@@ -97,7 +97,7 @@ export class TenantProvisioningService {
    * - 3 tiers (Essential, Professional, Premium) linked to that segment
    * - Default section content for all block types
    *
-   * Phase 1 of Package→Tier migration: Packages are no longer created.
+   * Package→Tier migration complete: Only Tiers are created (no Packages).
    *
    * @param tx - Prisma transaction client
    * @param tenantId - ID of the tenant to create defaults for

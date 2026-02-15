@@ -21,13 +21,13 @@ import {
   NotFoundError,
   InvalidBookingTypeError,
   BookingConflictError,
-  PackageNotAvailableError,
+  TierNotAvailableError,
 } from '../lib/errors';
 import { logger } from '../lib/core/logger';
 
 /** Input for creating a date booking via the orchestrator */
 export interface CreateDateBookingInput {
-  packageId: string;
+  tierId: string;
   date: string;
   customerName: string;
   customerEmail: string;
@@ -52,41 +52,39 @@ export class WeddingBookingOrchestrator {
   ) {}
 
   /**
-   * Creates a Stripe checkout session for a wedding package booking
+   * Creates a Stripe checkout session for a wedding tier booking
    *
    * MULTI-TENANT: All queries filter by tenantId
    *
    * @param tenantId - Tenant ID for data isolation
-   * @param input - Booking creation data (packageId as slug, eventDate, email, coupleName, addOnIds)
-   * @param prefetchedPackage - Optional pre-fetched package to avoid duplicate DB query
+   * @param input - Booking creation data (tierId, eventDate, email, coupleName, addOnIds)
+   * @param prefetchedTier - Optional pre-fetched tier to avoid duplicate DB query
    * @returns Object containing the Stripe checkout URL
-   * @throws {NotFoundError} If package doesn't exist
+   * @throws {NotFoundError} If tier doesn't exist
    */
   async createCheckout(
     tenantId: string,
     input: CreateBookingInput,
-    prefetchedPackage?: { id: string; slug: string; priceCents: number }
+    prefetchedTier?: { id: string; slug: string; priceCents: number }
   ): Promise<{ checkoutUrl: string }> {
-    // Use pre-fetched package if provided, otherwise fetch (avoids duplicate query)
-    // FIX: Use getPackageById since input.packageId is a CUID, not a slug
-    const pkg =
-      prefetchedPackage ?? (await this.catalogRepo.getPackageById(tenantId, input.packageId));
-    if (!pkg) {
-      logger.warn({ tenantId, packageId: input.packageId }, 'Package not found in checkout');
+    // Use pre-fetched tier if provided, otherwise fetch (avoids duplicate query)
+    const tier = prefetchedTier ?? (await this.catalogRepo.getTierById(tenantId, input.tierId));
+    if (!tier) {
+      logger.warn({ tenantId, tierId: input.tierId }, 'Tier not found in checkout');
       throw new NotFoundError('The requested resource was not found');
     }
 
     // Calculate deposit and commission
     const calc = await this.weddingDepositService.calculateDeposit(
       tenantId,
-      pkg.priceCents,
+      tier.priceCents,
       input.addOnIds || []
     );
 
     // Prepare metadata and create checkout session
     const metadata: Record<string, string> = {
       tenantId,
-      packageId: pkg.id,
+      tierId: tier.id,
       eventDate: input.eventDate,
       email: input.email,
       coupleName: input.coupleName,
@@ -107,7 +105,7 @@ export class WeddingBookingOrchestrator {
       email: input.email,
       metadata,
       applicationFeeAmount: calc.isDeposit ? calc.depositCommissionAmount : calc.totalCommission,
-      idempotencyKeyParts: [tenantId, input.email, pkg.id, input.eventDate, Date.now()],
+      idempotencyKeyParts: [tenantId, input.email, tier.id, input.eventDate, Date.now()],
     };
 
     return this.checkoutSessionFactory.createCheckoutSession(checkoutInput);
@@ -117,32 +115,32 @@ export class WeddingBookingOrchestrator {
    * Creates a Stripe checkout session for a DATE booking (e.g., weddings)
    *
    * MULTI-TENANT: All queries filter by tenantId
-   * Validates package, checks availability, and delegates to createCheckout.
+   * Validates tier, checks availability, and delegates to createCheckout.
    *
    * @param tenantId - Tenant ID for data isolation
-   * @param input - Date booking data (packageId as ID, date, customerName, customerEmail, addOnIds)
+   * @param input - Date booking data (tierId as ID, date, customerName, customerEmail, addOnIds)
    * @returns Object containing the Stripe checkout URL
-   * @throws {NotFoundError} If package doesn't exist
-   * @throws {InvalidBookingTypeError} If package doesn't support DATE booking
-   * @throws {PackageNotAvailableError} If package is inactive
+   * @throws {NotFoundError} If tier doesn't exist
+   * @throws {InvalidBookingTypeError} If tier doesn't support DATE booking
+   * @throws {TierNotAvailableError} If tier is inactive
    * @throws {BookingConflictError} If date is unavailable
    */
   async createDateBooking(
     tenantId: string,
     input: CreateDateBookingInput
   ): Promise<{ checkoutUrl: string }> {
-    // Fetch and validate package
-    const pkg = await this.catalogRepo.getPackageById(tenantId, input.packageId);
-    if (!pkg) {
-      logger.warn({ tenantId, packageId: input.packageId }, 'Package not found in date booking');
+    // Fetch and validate tier
+    const tier = await this.catalogRepo.getTierById(tenantId, input.tierId);
+    if (!tier) {
+      logger.warn({ tenantId, tierId: input.tierId }, 'Tier not found in date booking');
       throw new NotFoundError('The requested resource was not found');
     }
-    if (pkg.bookingType !== 'DATE') {
-      throw new InvalidBookingTypeError(pkg.title, 'DATE');
+    if (tier.bookingType !== 'DATE') {
+      throw new InvalidBookingTypeError(tier.title, 'DATE');
     }
-    if (!pkg.active) {
-      logger.warn({ tenantId, packageId: input.packageId }, 'Inactive package requested');
-      throw new PackageNotAvailableError();
+    if (!tier.active) {
+      logger.warn({ tenantId, tierId: input.tierId }, 'Inactive tier requested');
+      throw new TierNotAvailableError();
     }
 
     // Check availability
@@ -157,18 +155,18 @@ export class WeddingBookingOrchestrator {
       throw new BookingConflictError(input.date, reason);
     }
 
-    // Delegate to createCheckout - pass pre-fetched package to avoid duplicate DB query
+    // Delegate to createCheckout - pass pre-fetched tier to avoid duplicate DB query
     return this.createCheckout(
       tenantId,
       {
-        packageId: pkg.slug,
+        tierId: tier.slug,
         eventDate: input.date,
         email: input.customerEmail,
         coupleName: input.customerName,
         addOnIds: input.addOnIds,
         bookingType: 'DATE',
       },
-      pkg // Pass pre-fetched package
+      tier // Pass pre-fetched tier
     );
   }
 

@@ -504,7 +504,7 @@ export class ContextBuilderService {
     }
     // 2. Completed via old flow
     if (tenant.onboardingCompletedAt) return 'COMPLETED';
-    // 3. Has real content (pre-rebuild tenant with real packages) - LAZY evaluation
+    // 3. Has real content (pre-rebuild tenant with real tiers) - LAZY evaluation
     const hasRealContent = await hasRealContentThunk();
     if (hasRealContent) return 'COMPLETED';
     // 4. Truly new tenant

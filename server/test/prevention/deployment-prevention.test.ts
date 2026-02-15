@@ -96,15 +96,15 @@ describe.runIf(hasDatabaseUrl)('Deployment Prevention Tests', () => {
     it('should export all container services without missing implementations', () => {
       const requiredServices = {
         controllers: [
-          'packages',
           'availability',
           'bookings',
           'webhooks',
           'admin',
           'blackouts',
-          'adminPackages',
           'platformAdmin',
           'tenant',
+          // DELETED: 'packages' - Package→Tier migration Phase 2
+          // DELETED: 'adminPackages' - Package→Tier migration Phase 2
           // DELETED: 'tenantAuth' - Auth cleanup: unified /v1/auth replaces separate controller
         ],
         services: [
@@ -116,8 +116,9 @@ describe.runIf(hasDatabaseUrl)('Deployment Prevention Tests', () => {
           'audit',
           'segment',
           'tenantOnboarding',
-          'packageDraft',
+          'tenantProvisioning',
           'reminder',
+          // DELETED: 'packageDraft' - Package→Tier migration Phase 2
           // DELETED: 'landingPage' - Phase 5 Section Content Migration
           'sectionContent', // Replaces landingPage service
         ],

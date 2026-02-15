@@ -39,7 +39,7 @@ export class PublicBookingManagementController {
     booking: any;
     canReschedule: boolean;
     canCancel: boolean;
-    packageTitle: string;
+    tierTitle: string;
     addOnTitles: string[];
   }> {
     // Validate token with state validation
@@ -53,15 +53,15 @@ export class PublicBookingManagementController {
     // Fetch booking
     const booking = await this.bookingService.getBookingById(tenantId, bookingId);
 
-    // Fetch package details with add-ons
-    const packages = await this.catalogService.getAllPackages(tenantId);
-    const pkg = packages.find((p) => p.id === booking.packageId);
-    const packageTitle = pkg?.title || 'Unknown Package';
+    // Fetch tier details with add-ons
+    const tiers = await this.catalogService.getAllTiers(tenantId);
+    const tier = tiers.find((t) => t.id === booking.tierId);
+    const tierTitle = tier?.title || 'Unknown Tier';
 
-    // Get add-on titles from the package
+    // Get add-on titles from the tier
     let addOnTitles: string[] = [];
-    if (booking.addOnIds && booking.addOnIds.length > 0 && pkg?.addOns) {
-      addOnTitles = pkg.addOns.filter((a) => booking.addOnIds?.includes(a.id)).map((a) => a.title);
+    if (booking.addOnIds && booking.addOnIds.length > 0 && tier?.addOns) {
+      addOnTitles = tier.addOns.filter((a) => booking.addOnIds?.includes(a.id)).map((a) => a.title);
     }
 
     // Determine if booking can be modified
@@ -80,7 +80,7 @@ export class PublicBookingManagementController {
       },
       canReschedule,
       canCancel,
-      packageTitle,
+      tierTitle,
       addOnTitles,
     };
   }

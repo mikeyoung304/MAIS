@@ -362,7 +362,7 @@ export class IdempotencyService {
    * Generate checkout session idempotency key
    *
    * Creates a deterministic key for checkout session creation.
-   * Key is based ONLY on booking identity (tenant + email + package + date),
+   * Key is based ONLY on booking identity (tenant + email + tier + date),
    * NOT on request timing. This prevents double-charges when requests
    * straddle time boundaries.
    *
@@ -373,7 +373,7 @@ export class IdempotencyService {
    *
    * @param tenantId - Tenant ID
    * @param email - Customer email
-   * @param packageId - Package ID
+   * @param tierId - Tier ID
    * @param eventDate - Event date
    * @param _timestamp - DEPRECATED: Ignored for safety (kept for API compatibility)
    * @returns Idempotency key
@@ -381,7 +381,7 @@ export class IdempotencyService {
   generateCheckoutKey(
     tenantId: string,
     email: string,
-    packageId: string,
+    tierId: string,
     eventDate: string,
     _timestamp?: number
   ): string {
@@ -389,7 +389,7 @@ export class IdempotencyService {
     // Including timestamp causes double-charge risk when requests straddle
     // time bucket boundaries (e.g., T=9.9s vs T=10.1s get different keys).
     // The key should be deterministic based on the BOOKING IDENTITY only.
-    return this.generateKey('checkout', tenantId, email, packageId, eventDate);
+    return this.generateKey('checkout', tenantId, email, tierId, eventDate);
   }
 
   /**

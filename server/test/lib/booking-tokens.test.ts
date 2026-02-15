@@ -266,7 +266,7 @@ describe('Booking Tokens', () => {
       mockBooking = {
         id: mockBookingId,
         tenantId: mockTenantId,
-        packageId: 'pkg_123',
+        tierId: 'pkg_123',
         eventDate: '2025-06-15',
         coupleName: 'John & Jane Doe',
         email: 'john@example.com',
@@ -465,7 +465,7 @@ describe('Booking Tokens', () => {
       mockBooking = {
         id: mockBookingId,
         tenantId: mockTenantId,
-        packageId: 'pkg_123',
+        tierId: 'pkg_123',
         eventDate: '2025-06-15',
         coupleName: 'John & Jane Doe',
         email: 'john@example.com',

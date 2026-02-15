@@ -1,6 +1,6 @@
 /**
  * File Upload Adapter
- * Handles file uploads for tenant branding (logos), package photos, and segment images
+ * Handles file uploads for tenant branding (logos), tier photos, and segment images
  *
  * Dual-mode storage:
  * - Mock mode (ADAPTERS_PRESET=mock): Local filesystem in /uploads directory
@@ -23,11 +23,11 @@ const fileType = require('file-type') as {
 
 export interface UploadAdapterConfig {
   logoUploadDir: string;
-  packagePhotoUploadDir: string;
+  tierPhotoUploadDir: string;
   segmentImageUploadDir: string;
   landingPageImageUploadDir: string;
   maxFileSizeMB: number;
-  maxPackagePhotoSizeMB: number;
+  maxTierPhotoSizeMB: number;
   allowedMimeTypes: string[];
   baseUrl: string;
   isRealMode: boolean;
@@ -75,7 +75,7 @@ export class UploadAdapter implements StorageProvider {
     // Only create local directories in mock mode
     if (!config.isRealMode) {
       this.ensureUploadDir(config.logoUploadDir);
-      this.ensureUploadDir(config.packagePhotoUploadDir);
+      this.ensureUploadDir(config.tierPhotoUploadDir);
       this.ensureUploadDir(config.segmentImageUploadDir);
       this.ensureUploadDir(config.landingPageImageUploadDir);
     }
@@ -232,7 +232,7 @@ export class UploadAdapter implements StorageProvider {
 
   /**
    * Unified upload method for all file categories
-   * @private Internal method - use specific wrappers (uploadLogo, uploadPackagePhoto, uploadSegmentImage)
+   * @private Internal method - use specific wrappers (uploadLogo, uploadTierPhoto, uploadSegmentImage)
    */
   private async upload(
     file: UploadedFile,
@@ -260,7 +260,7 @@ export class UploadAdapter implements StorageProvider {
       // Local filesystem upload in mock mode
       const uploadDirMap = {
         logos: this.config.logoUploadDir,
-        packages: this.config.packagePhotoUploadDir,
+        packages: this.config.tierPhotoUploadDir,
         segments: this.config.segmentImageUploadDir,
         'landing-pages': this.config.landingPageImageUploadDir,
       };
@@ -302,29 +302,29 @@ export class UploadAdapter implements StorageProvider {
     });
   }
 
-  async uploadPackagePhoto(
+  async uploadTierPhoto(
     file: UploadedFile,
-    packageId: string,
+    tierId: string,
     tenantId?: string
   ): Promise<UploadResult> {
-    // Use tenantId if provided (for real mode), otherwise use packageId as context
-    const effectiveTenantId = tenantId || packageId;
+    // Use tenantId if provided (for real mode), otherwise use tierId as context
+    const effectiveTenantId = tenantId || tierId;
     return this.upload(file, effectiveTenantId, 'packages', {
-      maxSizeMB: this.config.maxPackagePhotoSizeMB,
-      logContext: { packageId },
-      errorContext: { packageId },
+      maxSizeMB: this.config.maxTierPhotoSizeMB,
+      logContext: { tierId },
+      errorContext: { tierId },
     });
   }
 
   async uploadSegmentImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
     return this.upload(file, tenantId, 'segments', {
-      maxSizeMB: this.config.maxPackagePhotoSizeMB,
+      maxSizeMB: this.config.maxTierPhotoSizeMB,
     });
   }
 
   async uploadLandingPageImage(file: UploadedFile, tenantId: string): Promise<UploadResult> {
     return this.upload(file, tenantId, 'landing-pages', {
-      maxSizeMB: this.config.maxPackagePhotoSizeMB, // 5MB for landing page images
+      maxSizeMB: this.config.maxTierPhotoSizeMB, // 5MB for landing page images
     });
   }
 
@@ -342,16 +342,16 @@ export class UploadAdapter implements StorageProvider {
     }
   }
 
-  async deletePackagePhoto(filename: string): Promise<void> {
+  async deleteTierPhoto(filename: string): Promise<void> {
     try {
-      const filepath = path.join(this.config.packagePhotoUploadDir, filename);
+      const filepath = path.join(this.config.tierPhotoUploadDir, filename);
 
       if (this.fileSystem.existsSync(filepath)) {
         await this.fileSystem.unlink(filepath);
-        logger.info({ filename }, 'Package photo deleted successfully');
+        logger.info({ filename }, 'Tier photo deleted successfully');
       }
     } catch (error) {
-      logger.error({ error, filename }, 'Error deleting package photo');
+      logger.error({ error, filename }, 'Error deleting tier photo');
       throw error;
     }
   }
@@ -467,8 +467,8 @@ export class UploadAdapter implements StorageProvider {
     return this.config.logoUploadDir;
   }
 
-  getPackagePhotoUploadDir(): string {
-    return this.config.packagePhotoUploadDir;
+  getTierPhotoUploadDir(): string {
+    return this.config.tierPhotoUploadDir;
   }
 
   getSegmentImageUploadDir(): string {

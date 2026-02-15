@@ -69,7 +69,7 @@ describe('StripePaymentAdapter', () => {
         email: 'customer@example.com',
         metadata: {
           tenantId: 'tenant_123',
-          packageId: 'pkg_intimate',
+          tierId: 'pkg_intimate',
         },
         successUrl: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
         cancelUrl: 'https://example.com/cancel',
@@ -92,8 +92,8 @@ describe('StripePaymentAdapter', () => {
                 currency: 'usd',
                 unit_amount: 150000,
                 product_data: {
-                  name: 'Wedding Package',
-                  description: 'Elopement/Micro-Wedding Package',
+                  name: 'Service Booking',
+                  description: 'Service tier booking',
                 },
               },
               quantity: 1,
@@ -103,7 +103,7 @@ describe('StripePaymentAdapter', () => {
           cancel_url: 'https://example.com/cancel',
           metadata: {
             tenantId: 'tenant_123',
-            packageId: 'pkg_intimate',
+            tierId: 'pkg_intimate',
           },
         },
         {}
@@ -150,7 +150,7 @@ describe('StripePaymentAdapter', () => {
         email: 'customer@example.com',
         metadata: {
           tenantId: 'tenant_123',
-          packageId: 'pkg_deluxe',
+          tierId: 'pkg_deluxe',
         },
         stripeAccountId: 'acct_connected_123',
         applicationFeeAmount: 24000, // 12% fee

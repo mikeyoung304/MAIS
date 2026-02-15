@@ -15,7 +15,7 @@ export function createCheckoutSessionCompletedEvent(
   sessionId: string,
   metadata: {
     tenantId: string;
-    packageId: string;
+    tierId: string;
     eventDate: string;
     email: string;
     coupleName: string;
@@ -45,7 +45,7 @@ export function createCheckoutSessionCompletedEvent(
         payment_intent: paymentIntentId || `pi_${Date.now()}`,
         metadata: {
           tenantId: metadata.tenantId,
-          packageId: metadata.packageId,
+          tierId: metadata.tierId,
           eventDate: metadata.eventDate,
           email: metadata.email,
           coupleName: metadata.coupleName,
@@ -72,7 +72,7 @@ export function createPaymentFailedEvent(
   paymentIntentId: string,
   metadata: {
     tenantId: string;
-    packageId: string;
+    tierId: string;
     eventDate: string;
     email: string;
     coupleName: string;
@@ -100,7 +100,7 @@ export function createPaymentFailedEvent(
         },
         metadata: {
           tenantId: metadata.tenantId,
-          packageId: metadata.packageId,
+          tierId: metadata.tierId,
           eventDate: metadata.eventDate,
           email: metadata.email,
           coupleName: metadata.coupleName,
@@ -183,7 +183,7 @@ export function createConnectCheckoutSessionCompletedEvent(
   sessionId: string,
   metadata: {
     tenantId: string;
-    packageId: string;
+    tierId: string;
     eventDate: string;
     email: string;
     coupleName: string;
@@ -221,7 +221,7 @@ export function createConnectCheckoutSessionCompletedEvent(
         },
         metadata: {
           tenantId: metadata.tenantId,
-          packageId: metadata.packageId,
+          tierId: metadata.tierId,
           eventDate: metadata.eventDate,
           email: metadata.email,
           coupleName: metadata.coupleName,

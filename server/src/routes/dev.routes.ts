@@ -4,6 +4,7 @@
 
 import { toUtcMidnight } from '@macon/shared';
 import type { BookingService } from '../services/booking.service';
+import type { CatalogService } from '../services/catalog.service';
 import type { CatalogRepository, BookingRepository } from '../lib/ports';
 import { getMockState, resetMockState } from '../adapters/mock';
 import { logger } from '../lib/core/logger';
@@ -15,6 +16,7 @@ const DEFAULT_TENANT = 'tenant_default_legacy';
 export class DevController {
   constructor(
     private readonly bookingService: BookingService,
+    private readonly catalogService: CatalogService,
     private readonly catalogRepo: CatalogRepository,
     private readonly bookingRepo?: BookingRepository
   ) {}
@@ -24,7 +26,7 @@ export class DevController {
    */
   async simulateCheckoutCompleted(input: {
     sessionId: string;
-    packageId: string;
+    tierId: string;
     eventDate: string;
     email: string;
     coupleName: string;
@@ -33,7 +35,7 @@ export class DevController {
     logger.info(
       {
         sessionId: input.sessionId,
-        packageId: input.packageId,
+        tierId: input.tierId,
         eventDate: input.eventDate,
       },
       '🧪 Simulating checkout completion'
@@ -42,16 +44,16 @@ export class DevController {
     // Normalize date
     const normalizedDate = toUtcMidnight(input.eventDate);
 
-    // Get package to calculate total
-    const pkg = await this.catalogRepo.getPackageById(DEFAULT_TENANT, input.packageId);
-    if (!pkg) {
-      throw new Error(`Package ${input.packageId} not found`);
+    // Get tier to calculate total
+    const tier = await this.catalogService.getTierById(DEFAULT_TENANT, input.tierId);
+    if (!tier) {
+      throw new Error(`Tier ${input.tierId} not found`);
     }
 
     // Calculate total
-    let totalCents = pkg.priceCents;
+    let totalCents = tier.priceCents;
     if (input.addOnIds && input.addOnIds.length > 0) {
-      const addOns = await this.catalogRepo.getAddOnsByPackageId(DEFAULT_TENANT, pkg.id);
+      const addOns = await this.catalogRepo.getAddOnsByTierId(DEFAULT_TENANT, tier.id);
       const selectedAddOns = addOns.filter((a) => input.addOnIds?.includes(a.id));
       totalCents += selectedAddOns.reduce((sum, a) => sum + a.priceCents, 0);
     }
@@ -59,7 +61,7 @@ export class DevController {
     // Call the same domain path used by webhook handler
     const booking = await this.bookingService.onPaymentCompleted(DEFAULT_TENANT, {
       sessionId: input.sessionId,
-      packageId: pkg.id,
+      tierId: tier.id,
       eventDate: normalizedDate,
       email: input.email,
       coupleName: input.coupleName,
@@ -138,7 +140,7 @@ export class DevController {
    * Convenience method for E2E tests that need a complete booking + token
    */
   async createBookingWithToken(input: {
-    packageId: string;
+    tierId: string;
     eventDate: string;
     email: string;
     coupleName: string;

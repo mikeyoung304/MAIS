@@ -105,7 +105,7 @@ export const InternalServerErrorSchema = ErrorResponseSchema.extend({
 // Add-on DTO
 export const AddOnDtoSchema = z.object({
   id: z.string(),
-  packageId: z.string(),
+  tierId: z.string(),
   title: z.string(),
   description: z.string().optional(),
   priceCents: z.number().int(),
@@ -115,14 +115,14 @@ export const AddOnDtoSchema = z.object({
 export type AddOnDto = z.infer<typeof AddOnDtoSchema>;
 
 /**
- * BookingType determines the booking flow for a package:
+ * BookingType determines the booking flow for a tier:
  * - DATE: Customer selects a calendar date (weddings, events, retreats)
  * - TIMESLOT: Customer selects a specific time slot (appointments, sessions)
  *
  * This enum matches Prisma BookingType and controls which booking UI is shown.
  *
  * @example
- * // Wedding photography package - customer picks their wedding date
+ * // Wedding photography tier - customer picks their wedding date
  * { bookingType: 'DATE', ... }
  *
  * // Headshot session - customer picks a 30-minute slot
@@ -133,42 +133,6 @@ export type AddOnDto = z.infer<typeof AddOnDtoSchema>;
  */
 export const BookingTypeSchema = z.enum(['DATE', 'TIMESLOT']);
 export type BookingType = z.infer<typeof BookingTypeSchema>;
-
-// Tier enum for package categorization (BASIC, STANDARD, PREMIUM, CUSTOM)
-export const TierEnumSchema = z.enum(['BASIC', 'STANDARD', 'PREMIUM', 'CUSTOM']);
-export type TierEnum = z.infer<typeof TierEnumSchema>;
-
-// Package DTO
-export const PackageDtoSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  description: z.string(),
-  priceCents: z.number().int(),
-  photoUrl: z.string().url().optional(),
-  addOns: z.array(AddOnDtoSchema),
-  // Additional fields from database schema
-  segmentId: z.string().nullable().optional(),
-  grouping: z.string().nullable().optional(),
-  groupingOrder: z.number().int().nullable().optional(),
-  isActive: z.boolean().default(true),
-  photos: z
-    .array(
-      z.object({
-        url: z.string().url(),
-        filename: z.string(),
-        size: z.number(),
-        order: z.number().int(),
-      })
-    )
-    .default([]),
-  // Booking configuration - determines which booking flow to use
-  bookingType: BookingTypeSchema.default('DATE'),
-  // Tier for frontend sorting and display (mapped from grouping)
-  tier: TierEnumSchema.default('BASIC'),
-});
-
-export type PackageDto = z.infer<typeof PackageDtoSchema>;
 
 // Availability DTO
 export const AvailabilityDtoSchema = z.object({
@@ -189,7 +153,7 @@ export type BatchAvailabilityDto = z.infer<typeof BatchAvailabilityDtoSchema>;
 // Booking DTO
 export const BookingDtoSchema = z.object({
   id: z.string(),
-  packageId: z.string().nullable(), // Nullable for TIMESLOT bookings
+  tierId: z.string().nullable(), // Nullable for TIMESLOT bookings (which use serviceId)
   coupleName: z.string(),
   email: z.string().email(),
   phone: z.string().optional(),
@@ -215,7 +179,7 @@ export type BookingDto = z.infer<typeof BookingDtoSchema>;
 export const PlatformBookingDtoSchema = BookingDtoSchema.extend({
   tenantName: z.string(),
   tenantSlug: z.string(),
-  packageName: z.string().optional(), // Package name for display
+  tierName: z.string().optional(), // Tier name for display
 });
 
 export type PlatformBookingDto = z.infer<typeof PlatformBookingDtoSchema>;
@@ -231,7 +195,7 @@ export type PlatformBookingsResponse = z.infer<typeof PlatformBookingsResponseSc
 
 // Create Checkout DTO (request body)
 export const CreateCheckoutDtoSchema = z.object({
-  packageId: z.string(),
+  tierId: z.string(),
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   coupleName: CustomerNameSchema,
   email: z.string().email(),
@@ -240,9 +204,9 @@ export const CreateCheckoutDtoSchema = z.object({
 
 export type CreateCheckoutDto = z.infer<typeof CreateCheckoutDtoSchema>;
 
-// Create Date Booking DTO (for DATE booking type packages)
+// Create Date Booking DTO (for DATE booking type tiers)
 export const CreateDateBookingDtoSchema = z.object({
-  packageId: z.string().min(1, 'Package ID is required'),
+  tierId: z.string().min(1, 'Tier ID is required'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
@@ -338,58 +302,12 @@ export const ResetPasswordDtoSchema = z.object({
 
 export type ResetPasswordDto = z.infer<typeof ResetPasswordDtoSchema>;
 
-// Admin Package CRUD DTOs
-export const CreatePackageDtoSchema = z.object({
-  slug: z.string().min(1),
-  title: z.string().min(1),
-  description: z.string().min(1),
-  priceCents: z
-    .number()
-    .int()
-    .min(0)
-    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
-  photoUrl: z.string().url().optional(),
-  // Tier/segment organization fields
-  segmentId: z.string().nullable().optional(),
-  grouping: z.string().nullable().optional(),
-  groupingOrder: z.number().int().nullable().optional(),
-});
-
-export type CreatePackageDto = z.infer<typeof CreatePackageDtoSchema>;
-
-export const UpdatePackageDtoSchema = z.object({
-  slug: z.string().min(1).optional(),
-  title: z.string().min(1).optional(),
-  description: z.string().min(1).optional(),
-  priceCents: z
-    .number()
-    .int()
-    .min(0)
-    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
-    .optional(),
-  photoUrl: z.string().url().optional(),
-  // Tier/segment organization fields
-  segmentId: z.string().nullable().optional(),
-  grouping: z.string().nullable().optional(),
-  groupingOrder: z.number().int().nullable().optional(),
-});
-
-export type UpdatePackageDto = z.infer<typeof UpdatePackageDtoSchema>;
-
-export const PackageResponseDtoSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  description: z.string(),
-  priceCents: z.number().int(),
-  photoUrl: z.string().url().optional(),
-});
-
-export type PackageResponseDto = z.infer<typeof PackageResponseDtoSchema>;
+// Package CRUD DTOs — DELETED in Phase 2 (Package→Tier migration)
+// Use CreateTierDtoSchema / UpdateTierDtoSchema / TierDtoSchema instead
 
 // Admin AddOn CRUD DTOs
 export const CreateAddOnDtoSchema = z.object({
-  packageId: z.string().min(1),
+  tierId: z.string().min(1),
   title: z.string().min(1),
   description: z.string().optional(),
   priceCents: z
@@ -403,7 +321,7 @@ export const CreateAddOnDtoSchema = z.object({
 export type CreateAddOnDto = z.infer<typeof CreateAddOnDtoSchema>;
 
 export const UpdateAddOnDtoSchema = z.object({
-  packageId: z.string().min(1).optional(),
+  tierId: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   description: z.string().optional(),
   priceCents: z
@@ -478,88 +396,19 @@ export const CreateBlackoutDtoSchema = z.object({
 
 export type CreateBlackoutDto = z.infer<typeof CreateBlackoutDtoSchema>;
 
-// Package Photo DTOs
-export const PackagePhotoDtoSchema = z.object({
+// Photo DTO (shared by Tier photos)
+export const TierPhotoDtoSchema = z.object({
   url: z.string().url(),
   filename: z.string(),
   size: z.number(),
   order: z.number().int(),
 });
 
-export type PackagePhotoDto = z.infer<typeof PackagePhotoDtoSchema>;
+export type TierPhotoDto = z.infer<typeof TierPhotoDtoSchema>;
 
-// Package with Photos DTO (for tenant admin)
-export const PackageWithPhotosDtoSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  description: z.string(),
-  priceCents: z.number().int(),
-  photoUrl: z.string().url().optional(),
-  photos: z.array(PackagePhotoDtoSchema).optional(),
-});
-
-export type PackageWithPhotosDto = z.infer<typeof PackageWithPhotosDtoSchema>;
-
-// ============================================================================
-// Visual Editor Draft DTOs
-// ============================================================================
-
-// Package with Draft fields (for visual editor)
-export const PackageWithDraftDtoSchema = PackageDtoSchema.extend({
-  draftTitle: z.string().nullable(),
-  draftDescription: z.string().nullable(),
-  draftPriceCents: z.number().int().nullable(),
-  draftPhotos: z.array(PackagePhotoDtoSchema).nullable(),
-  hasDraft: z.boolean(),
-  draftUpdatedAt: z.string().datetime().nullable(),
-});
-
-export type PackageWithDraftDto = z.infer<typeof PackageWithDraftDtoSchema>;
-
-// Update Package Draft DTO (for autosave)
-export const UpdatePackageDraftDtoSchema = z.object({
-  title: z.string().max(100).optional(),
-  description: z.string().max(500).optional(),
-  priceCents: z
-    .number()
-    .int()
-    .min(0)
-    .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
-    .optional(),
-  photos: z.array(PackagePhotoDtoSchema).optional(),
-});
-
-export type UpdatePackageDraftDto = z.infer<typeof UpdatePackageDraftDtoSchema>;
-
-// Publish Drafts DTO
-export const PublishDraftsDtoSchema = z.object({
-  packageIds: z.array(z.string()).optional(), // Empty = publish all
-});
-
-export type PublishDraftsDto = z.infer<typeof PublishDraftsDtoSchema>;
-
-// Publish Drafts Response DTO
-export const PublishDraftsResponseDtoSchema = z.object({
-  published: z.number().int(),
-  packages: z.array(PackageDtoSchema),
-});
-
-export type PublishDraftsResponseDto = z.infer<typeof PublishDraftsResponseDtoSchema>;
-
-// Discard Drafts DTO
-export const DiscardDraftsDtoSchema = z.object({
-  packageIds: z.array(z.string()).optional(), // Empty = discard all
-});
-
-export type DiscardDraftsDto = z.infer<typeof DiscardDraftsDtoSchema>;
-
-// Discard Drafts Response DTO
-export const DiscardDraftsResponseDtoSchema = z.object({
-  discarded: z.number().int(),
-});
-
-export type DiscardDraftsResponseDto = z.infer<typeof DiscardDraftsResponseDtoSchema>;
+// Package Photo/Draft/Publish/Discard DTOs — DELETED in Phase 2 (Package→Tier migration)
+// Draft system replaced by AI agent + SectionContent pattern
+// Tier photos use TierDtoSchema.photos field directly
 
 // Stripe Connect DTOs
 export const StripeConnectDtoSchema = z.object({
@@ -607,7 +456,7 @@ export const TenantDtoSchema = z.object({
   createdAt: z.string(), // ISO date string
   updatedAt: z.string(), // ISO date string
   // Stats
-  packageCount: z.number().optional(),
+  tierCount: z.number().optional(),
   bookingCount: z.number().optional(),
 });
 
@@ -826,7 +675,7 @@ export type UpdateTenantDto = z.infer<typeof UpdateTenantDtoSchema>;
 export const TenantDetailDtoSchema = TenantDtoSchema.extend({
   stats: z.object({
     bookings: z.number().int(),
-    packages: z.number().int(),
+    tiers: z.number().int(),
     addOns: z.number().int(),
     segments: z.number().int(),
     blackoutDates: z.number().int(),
@@ -1025,7 +874,7 @@ export const AppointmentDtoSchema = z.object({
   tenantId: z.string(),
   customerId: z.string(),
   serviceId: z.string(),
-  packageId: z.string().nullable(),
+  tierId: z.string().nullable(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // Date component
   startTime: z.string().datetime(), // Full UTC datetime
   endTime: z.string().datetime(), // Full UTC datetime
@@ -1105,7 +954,7 @@ export const ALLOWED_FONT_FAMILIES = [
  * Tier display names - tenant customization for tier labels
  * Structure: {"basic": "Essential", "standard": "Popular", "premium": "Elite", "custom": "Signature"}
  * Keys match tier values (lowercased): basic, standard, premium, custom
- * If not provided, defaults to package title
+ * If not provided, defaults to tier name
  */
 export const TierDisplayNamesSchema = z.object({
   basic: z.string().max(50).optional(),
@@ -1194,7 +1043,7 @@ export const PublicBookingDetailsDtoSchema = z.object({
   booking: BookingManagementDtoSchema,
   canReschedule: z.boolean(),
   canCancel: z.boolean(),
-  packageTitle: z.string(),
+  tierName: z.string(),
   addOnTitles: z.array(z.string()),
 });
 

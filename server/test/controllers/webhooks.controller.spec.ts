@@ -12,7 +12,7 @@ import {
   FakeCatalogRepository,
   FakeEventEmitter,
   FakeWebhookRepository,
-  buildPackage,
+  buildTier,
   buildMockConfig,
 } from '../helpers/fakes';
 import { BookingService } from '../../src/services/booking.service';
@@ -84,8 +84,8 @@ describe('WebhooksController', () => {
   describe('handleStripeWebhook', () => {
     it('should process valid checkout.session.completed webhook', async () => {
       // Arrange: Add package to catalog
-      const pkg = buildPackage({ id: 'pkg_test_123', slug: 'pkg_test_123', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_test_123', slug: 'pkg_test_123', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       // Mock Stripe event
       const stripeEvent: Stripe.Event = {
@@ -97,7 +97,7 @@ describe('WebhooksController', () => {
             id: 'cs_test_session_123',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'couple@example.com',
               coupleName: 'John & Jane',
@@ -130,8 +130,8 @@ describe('WebhooksController', () => {
 
     it('should ignore duplicate webhook gracefully (idempotency)', async () => {
       // Arrange: Process webhook first time
-      const pkg = buildPackage({ id: 'pkg_dup_test', slug: 'pkg_dup_test', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_dup_test', slug: 'pkg_dup_test', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       const stripeEvent: Stripe.Event = {
         id: 'evt_test_duplicate',
@@ -142,7 +142,7 @@ describe('WebhooksController', () => {
             id: 'cs_test_session_dup',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_dup_test',
+              tierId: 'pkg_dup_test',
               eventDate: '2025-06-20',
               email: 'couple@example.com',
               coupleName: 'John & Jane',
@@ -209,7 +209,7 @@ describe('WebhooksController', () => {
             id: 'cs_test_session_malformed',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_malformed',
+              tierId: 'pkg_malformed',
               // Missing eventDate, email, coupleName
             },
             amount_total: 100000,
@@ -238,8 +238,8 @@ describe('WebhooksController', () => {
 
     it('should handle database failure and mark webhook as failed', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_db_test', slug: 'pkg_db_test', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_db_test', slug: 'pkg_db_test', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       // Mock repository to throw error
       bookingRepo.create = async () => {
@@ -255,7 +255,7 @@ describe('WebhooksController', () => {
             id: 'cs_test_session_db',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_db_test',
+              tierId: 'pkg_db_test',
               eventDate: '2025-07-01',
               email: 'couple@example.com',
               coupleName: 'John & Jane',
@@ -315,15 +315,15 @@ describe('WebhooksController', () => {
 
     it('should process webhook with add-ons correctly', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_addon_test',
         slug: 'pkg_addon_test',
         priceCents: 100000,
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
       catalogRepo.addAddOn({
         id: 'addon_1',
-        packageId: 'pkg_addon_test',
+        tierId: 'pkg_addon_test',
         title: 'Extra Hour',
         priceCents: 20000,
       });
@@ -337,7 +337,7 @@ describe('WebhooksController', () => {
             id: 'cs_test_session_addons',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_addon_test',
+              tierId: 'pkg_addon_test',
               eventDate: '2025-08-01',
               email: 'couple@example.com',
               coupleName: 'John & Jane',
@@ -368,13 +368,13 @@ describe('WebhooksController', () => {
 
     it('should emit BookingPaid event after successful processing', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_event_test',
         slug: 'pkg_event_test',
         priceCents: 100000,
         title: 'Basic Package',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       const stripeEvent: Stripe.Event = {
         id: 'evt_test_event_emission',
@@ -385,7 +385,7 @@ describe('WebhooksController', () => {
             id: 'cs_test_session_event',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_event_test',
+              tierId: 'pkg_event_test',
               eventDate: '2025-09-01',
               email: 'couple@example.com',
               coupleName: 'John & Jane',
@@ -413,7 +413,7 @@ describe('WebhooksController', () => {
         email: 'couple@example.com',
         coupleName: 'John & Jane',
         eventDate: '2025-09-01',
-        packageTitle: 'Basic Package',
+        tierName: 'Basic Package',
       });
     });
   });

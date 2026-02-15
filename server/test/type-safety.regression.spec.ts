@@ -17,7 +17,7 @@ describe('Type Safety Regression Tests', () => {
     it('should validate Stripe metadata with proper types', () => {
       const MetadataSchema = z.object({
         tenantId: z.string(),
-        packageId: z.string(),
+        tierId: z.string(),
         eventDate: z.string(),
         email: z.string().email(),
         coupleName: z.string(),
@@ -26,7 +26,7 @@ describe('Type Safety Regression Tests', () => {
 
       const validMetadata = {
         tenantId: 'tenant_123',
-        packageId: 'pkg_456',
+        tierId: 'pkg_456',
         eventDate: '2025-06-15',
         email: 'test@example.com',
         coupleName: 'John & Jane',
@@ -150,17 +150,17 @@ describe('Type Safety Regression Tests', () => {
     it('should enforce tenantId in service method signatures', () => {
       // Mock service interface
       interface CatalogService {
-        getAllPackages(tenantId: string): Promise<unknown[]>;
-        getPackageBySlug(tenantId: string, slug: string): Promise<unknown>;
+        getAllTiers(tenantId: string): Promise<unknown[]>;
+        getTierBySlug(tenantId: string, slug: string): Promise<unknown>;
       }
 
       const mockService: CatalogService = {
-        getAllPackages: async (tenantId: string) => {
+        getAllTiers: async (tenantId: string) => {
           expect(tenantId).toBeDefined();
           expect(typeof tenantId).toBe('string');
           return [];
         },
-        getPackageBySlug: async (tenantId: string, slug: string) => {
+        getTierBySlug: async (tenantId: string, slug: string) => {
           expect(tenantId).toBeDefined();
           expect(slug).toBeDefined();
           return {};
@@ -168,8 +168,8 @@ describe('Type Safety Regression Tests', () => {
       };
 
       // TypeScript enforces tenantId parameter
-      mockService.getAllPackages('tenant_123');
-      mockService.getPackageBySlug('tenant_123', 'basic');
+      mockService.getAllTiers('tenant_123');
+      mockService.getTierBySlug('tenant_123', 'basic');
     });
   });
 

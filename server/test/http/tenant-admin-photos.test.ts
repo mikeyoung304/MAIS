@@ -1,10 +1,10 @@
 /**
- * HTTP Integration Tests for Package Photo Upload/Delete Endpoints
+ * HTTP Integration Tests for Tier Photo Upload/Delete Endpoints
  * Tests both upload and delete endpoints with security and business logic validation
  *
  * Endpoints tested:
- * - POST /v1/tenant-admin/packages/:id/photos
- * - DELETE /v1/tenant-admin/packages/:id/photos/:filename
+ * - POST /v1/tenant-admin/tiers/:id/photos
+ * - DELETE /v1/tenant-admin/tiers/:id/photos/:filename
  */
 
 // Force local storage for tests (not Supabase) - must be before any imports
@@ -21,14 +21,16 @@ import fs from 'fs';
 import path from 'path';
 import { getTestPrisma } from '../helpers/global-prisma';
 
-describe('Package Photo Upload/Delete Endpoints', () => {
+describe('Tier Photo Upload/Delete Endpoints', () => {
   let app: Express;
   // Use singleton to prevent connection pool exhaustion
   const prisma = getTestPrisma();
   let testTenant1Id: string;
   let testTenant2Id: string;
-  let testPackage1Id: string;
-  let testPackage2Id: string;
+  let testSegment1Id: string;
+  let testSegment2Id: string;
+  let testTier1Id: string;
+  let testTier2Id: string;
   let testToken1: string;
   let testToken2: string;
   const uploadDir = path.join(process.cwd(), 'uploads', 'packages');
@@ -113,51 +115,90 @@ describe('Package Photo Upload/Delete Endpoints', () => {
     });
     testTenant2Id = tenant2.id;
 
-    // Create test package for tenant 1
-    const package1 = await prisma.package.upsert({
-      where: { id: 'pkg_test_1' },
-      update: {
-        tenantId: testTenant1Id,
-        slug: 'test-package-1',
-        name: 'Test Package 1',
-        description: 'Test package for photo upload',
-        basePrice: 10000,
-        photos: [],
-      },
+    // Create segments (required for Tier — segmentId is non-nullable)
+    const segment1 = await prisma.segment.upsert({
+      where: { id: 'seg_test_1' },
+      update: { tenantId: testTenant1Id },
       create: {
-        id: 'pkg_test_1',
+        id: 'seg_test_1',
         tenantId: testTenant1Id,
-        slug: 'test-package-1',
-        name: 'Test Package 1',
-        description: 'Test package for photo upload',
-        basePrice: 10000,
-        photos: [],
+        slug: 'test-segment-1',
+        name: 'Test Segment 1',
+        heroTitle: 'Test Segment',
       },
     });
-    testPackage1Id = package1.id;
+    testSegment1Id = segment1.id;
 
-    // Create test package for tenant 2
-    const package2 = await prisma.package.upsert({
-      where: { id: 'pkg_test_2' },
-      update: {
+    const segment2 = await prisma.segment.upsert({
+      where: { id: 'seg_test_2' },
+      update: { tenantId: testTenant2Id },
+      create: {
+        id: 'seg_test_2',
         tenantId: testTenant2Id,
-        slug: 'test-package-2',
-        name: 'Test Package 2',
-        description: 'Test package for authorization checks',
-        basePrice: 10000,
+        slug: 'test-segment-2',
+        name: 'Test Segment 2',
+        heroTitle: 'Test Segment',
+      },
+    });
+    testSegment2Id = segment2.id;
+
+    // Create test tier for tenant 1
+    const tier1 = await prisma.tier.upsert({
+      where: { id: 'tier_test_1' },
+      update: {
+        tenantId: testTenant1Id,
+        segmentId: testSegment1Id,
+        slug: 'test-tier-1',
+        name: 'Test Tier 1',
+        description: 'Test tier for photo upload',
+        priceCents: 10000,
+        sortOrder: 1,
+        features: [],
         photos: [],
       },
       create: {
-        id: 'pkg_test_2',
-        tenantId: testTenant2Id,
-        slug: 'test-package-2',
-        name: 'Test Package 2',
-        description: 'Test package for authorization checks',
-        basePrice: 10000,
+        id: 'tier_test_1',
+        tenantId: testTenant1Id,
+        segmentId: testSegment1Id,
+        slug: 'test-tier-1',
+        name: 'Test Tier 1',
+        description: 'Test tier for photo upload',
+        priceCents: 10000,
+        sortOrder: 1,
+        features: [],
         photos: [],
       },
     });
-    testPackage2Id = package2.id;
+    testTier1Id = tier1.id;
+
+    // Create test tier for tenant 2
+    const tier2 = await prisma.tier.upsert({
+      where: { id: 'tier_test_2' },
+      update: {
+        tenantId: testTenant2Id,
+        segmentId: testSegment2Id,
+        slug: 'test-tier-2',
+        name: 'Test Tier 2',
+        description: 'Test tier for authorization checks',
+        priceCents: 10000,
+        sortOrder: 1,
+        features: [],
+        photos: [],
+      },
+      create: {
+        id: 'tier_test_2',
+        tenantId: testTenant2Id,
+        segmentId: testSegment2Id,
+        slug: 'test-tier-2',
+        name: 'Test Tier 2',
+        description: 'Test tier for authorization checks',
+        priceCents: 10000,
+        sortOrder: 1,
+        features: [],
+        photos: [],
+      },
+    });
+    testTier2Id = tier2.id;
 
     // Generate JWT tokens
     testToken1 = generateTestToken(testTenant1Id, 'test-tenant-1', 'admin1@test.com');
@@ -176,9 +217,9 @@ describe('Package Photo Upload/Delete Endpoints', () => {
   });
 
   afterEach(async () => {
-    // Reset package photos to empty array after each test
-    await prisma.package.updateMany({
-      where: { id: { in: [testPackage1Id, testPackage2Id] } },
+    // Reset tier photos to empty array after each test
+    await prisma.tier.updateMany({
+      where: { id: { in: [testTier1Id, testTier2Id] } },
       data: { photos: [] },
     });
 
@@ -192,12 +233,20 @@ describe('Package Photo Upload/Delete Endpoints', () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
-    if (testPackage1Id || testPackage2Id) {
-      const packageIds = [testPackage1Id, testPackage2Id].filter(Boolean);
-      if (packageIds.length > 0) {
-        await prisma.package.deleteMany({
-          where: { id: { in: packageIds } },
+    // Clean up test data (tiers first due to FK constraints)
+    if (testTier1Id || testTier2Id) {
+      const tierIds = [testTier1Id, testTier2Id].filter(Boolean);
+      if (tierIds.length > 0) {
+        await prisma.tier.deleteMany({
+          where: { id: { in: tierIds } },
+        });
+      }
+    }
+    if (testSegment1Id || testSegment2Id) {
+      const segmentIds = [testSegment1Id, testSegment2Id].filter(Boolean);
+      if (segmentIds.length > 0) {
+        await prisma.segment.deleteMany({
+          where: { id: { in: segmentIds } },
         });
       }
     }
@@ -216,12 +265,12 @@ describe('Package Photo Upload/Delete Endpoints', () => {
   // Upload Tests
   // ============================================================================
 
-  describe('POST /v1/tenant-admin/packages/:id/photos', () => {
-    it('should upload a valid photo to package', async () => {
+  describe('POST /v1/tenant-admin/tiers/:id/photos', () => {
+    it('should upload a valid photo to tier', async () => {
       const imageBuffer = createTestImageBuffer(1024 * 500); // 500KB
 
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'test-image.jpg',
@@ -241,11 +290,11 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       expect(fs.existsSync(filePath)).toBe(true);
 
       // Verify database was updated
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(1);
-      expect((pkg?.photos as any[])[0]).toMatchObject({
+      expect(tier?.photos).toHaveLength(1);
+      expect((tier?.photos as any[])[0]).toMatchObject({
         url: res.body.url,
         filename: res.body.filename,
         size: res.body.size,
@@ -258,7 +307,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
       // Upload first photo
       const res1 = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'test-image-1.jpg',
@@ -270,7 +319,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
       // Upload second photo
       const res2 = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'test-image-2.jpg',
@@ -281,19 +330,19 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       expect(res2.body.order).toBe(1);
 
       // Verify database has both photos in correct order
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(2);
-      expect((pkg?.photos as any[])[0].order).toBe(0);
-      expect((pkg?.photos as any[])[1].order).toBe(1);
+      expect(tier?.photos).toHaveLength(2);
+      expect((tier?.photos as any[])[0].order).toBe(0);
+      expect((tier?.photos as any[])[1].order).toBe(1);
     });
 
     it('should reject file over 5MB limit', async () => {
       const largeBuffer = createTestImageBuffer(6 * 1024 * 1024); // 6MB
 
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', largeBuffer, {
           filename: 'large-image.jpg',
@@ -304,19 +353,19 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       expect(res.body.error).toContain('File too large');
 
       // Verify no file was saved
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(0);
+      expect(tier?.photos).toHaveLength(0);
     });
 
-    it('should enforce 5-photo maximum per package', { timeout: 30000 }, async () => {
+    it('should enforce 5-photo maximum per tier', { timeout: 30000 }, async () => {
       const imageBuffer = createTestImageBuffer(1024 * 500);
 
       // Upload 5 photos successfully
       for (let i = 0; i < 5; i++) {
         await request(app)
-          .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+          .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
           .set('Authorization', `Bearer ${testToken1}`)
           .attach('photo', imageBuffer, {
             filename: `test-image-${i}.jpg`,
@@ -327,7 +376,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
       // 6th photo should be rejected
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'test-image-6.jpg',
@@ -335,20 +384,20 @@ describe('Package Photo Upload/Delete Endpoints', () => {
         })
         .expect(400);
 
-      expect(res.body.error).toContain('Maximum 5 photos per package');
+      expect(res.body.error).toContain('Maximum 5 photos per tier');
 
       // Verify database still has only 5 photos
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(5);
+      expect(tier?.photos).toHaveLength(5);
     });
 
-    it('should return 404 for non-existent package', async () => {
+    it('should return 404 for non-existent tier', async () => {
       const imageBuffer = createTestImageBuffer(1024 * 500);
 
       const res = await request(app)
-        .post('/v1/tenant-admin/packages/nonexistent-package-id/photos')
+        .post('/v1/tenant-admin/tiers/nonexistent-tier-id/photos')
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'test-image.jpg',
@@ -356,17 +405,17 @@ describe('Package Photo Upload/Delete Endpoints', () => {
         })
         .expect(404);
 
-      expect(res.body.error).toContain('Package not found');
+      expect(res.body.error).toContain('Tier not found');
     });
 
-    it('should return 404 when package belongs to different tenant (tenant isolation)', async () => {
+    it('should return 404 when tier belongs to different tenant (tenant isolation)', async () => {
       const imageBuffer = createTestImageBuffer(1024 * 500);
 
-      // Tenant 1 trying to upload to Tenant 2's package
+      // Tenant 1 trying to upload to Tenant 2's tier
       // Due to tenant-scoped lookup, this returns 404 (not 403)
       // This is correct - tenants should never know about other tenants' resources
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage2Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier2Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'test-image.jpg',
@@ -374,20 +423,20 @@ describe('Package Photo Upload/Delete Endpoints', () => {
         })
         .expect(404);
 
-      expect(res.body.error).toContain('Package not found');
+      expect(res.body.error).toContain('Tier not found');
 
       // Verify no file was saved
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage2Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier2Id },
       });
-      expect(pkg?.photos).toHaveLength(0);
+      expect(tier?.photos).toHaveLength(0);
     });
 
     it('should reject invalid file types', async () => {
       const textBuffer = Buffer.from('This is a text file, not an image');
 
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', textBuffer, {
           filename: 'test-file.txt',
@@ -398,10 +447,10 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       expect(res.body.message).toContain('Invalid file type');
 
       // Verify no file was saved
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(0);
+      expect(tier?.photos).toHaveLength(0);
     });
 
     it('should accept all valid image MIME types', async () => {
@@ -496,13 +545,13 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
       for (const { ext, mime, buffer } of validMimeTypes) {
         // Reset photos before each upload
-        await prisma.package.update({
-          where: { id: testPackage1Id },
+        await prisma.tier.update({
+          where: { id: testTier1Id },
           data: { photos: [] },
         });
 
         const res = await request(app)
-          .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+          .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
           .set('Authorization', `Bearer ${testToken1}`)
           .attach('photo', buffer, {
             filename: `test-image.${ext}`,
@@ -516,7 +565,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
     it('should return 400 when no file is uploaded', async () => {
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(400);
 
@@ -525,7 +574,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
     it('should return 401 without authentication', async () => {
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .field('test', 'value'); // Send form data without auth
 
       expect(res.status).toBe(401);
@@ -533,7 +582,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
     it('should return 401 with invalid JWT token', async () => {
       const res = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', 'Bearer invalid-token-here')
         .field('test', 'value'); // Send form data with invalid auth
 
@@ -545,14 +594,14 @@ describe('Package Photo Upload/Delete Endpoints', () => {
   // Delete Tests
   // ============================================================================
 
-  describe('DELETE /v1/tenant-admin/packages/:id/photos/:filename', () => {
+  describe('DELETE /v1/tenant-admin/tiers/:id/photos/:filename', () => {
     let uploadedFilename: string;
 
     beforeAll(async () => {
       // Upload a test photo to use in delete tests
       const imageBuffer = createTestImageBuffer(1024 * 500);
       const uploadRes = await request(app)
-        .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+        .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
         .set('Authorization', `Bearer ${testToken1}`)
         .attach('photo', imageBuffer, {
           filename: 'delete-test-image.jpg',
@@ -562,20 +611,20 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       uploadedFilename = uploadRes.body.filename;
     });
 
-    it('should delete photo from package and filesystem', async () => {
+    it('should delete photo from tier and filesystem', async () => {
       // Verify file exists before deletion
       const filePath = path.join(uploadDir, uploadedFilename);
       expect(fs.existsSync(filePath)).toBe(true);
 
       // Verify photo is in database
-      let pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      let tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(1);
+      expect(tier?.photos).toHaveLength(1);
 
       // Delete photo
       await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage1Id}/photos/${uploadedFilename}`)
+        .delete(`/v1/tenant-admin/tiers/${testTier1Id}/photos/${uploadedFilename}`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(204);
 
@@ -583,46 +632,46 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       expect(fs.existsSync(filePath)).toBe(false);
 
       // Verify photo was removed from database
-      pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(0);
+      expect(tier?.photos).toHaveLength(0);
     });
 
-    it('should return 404 for non-existent package', async () => {
+    it('should return 404 for non-existent tier', async () => {
       const res = await request(app)
-        .delete(`/v1/tenant-admin/packages/nonexistent-package-id/photos/${uploadedFilename}`)
+        .delete(`/v1/tenant-admin/tiers/nonexistent-tier-id/photos/${uploadedFilename}`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(404);
 
-      expect(res.body.error).toContain('Package not found');
+      expect(res.body.error).toContain('Tier not found');
     });
 
-    it('should return 404 when package belongs to different tenant (tenant isolation)', async () => {
-      // Tenant 1 trying to delete photo from Tenant 2's package
+    it('should return 404 when tier belongs to different tenant (tenant isolation)', async () => {
+      // Tenant 1 trying to delete photo from Tenant 2's tier
       // Due to tenant-scoped lookup, this returns 404 (not 403)
       // This is correct - tenants should never know about other tenants' resources
       const res = await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage2Id}/photos/some-filename.jpg`)
+        .delete(`/v1/tenant-admin/tiers/${testTier2Id}/photos/some-filename.jpg`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(404);
 
-      expect(res.body.error).toContain('Package not found');
+      expect(res.body.error).toContain('Tier not found');
     });
 
-    it('should return 404 when photo not in package photos array', async () => {
+    it('should return 404 when photo not in tier photos array', async () => {
       const res = await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage1Id}/photos/nonexistent-photo.jpg`)
+        .delete(`/v1/tenant-admin/tiers/${testTier1Id}/photos/nonexistent-photo.jpg`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(404);
 
-      expect(res.body.error).toContain('Photo not found in package');
+      expect(res.body.error).toContain('Photo not found in tier');
     });
 
     it('should handle file not found gracefully', async () => {
       // Add photo to database but don't create file
-      await prisma.package.update({
-        where: { id: testPackage1Id },
+      await prisma.tier.update({
+        where: { id: testTier1Id },
         data: {
           photos: [
             {
@@ -637,26 +686,26 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
       // Delete should succeed even if file doesn't exist
       await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage1Id}/photos/missing-file.jpg`)
+        .delete(`/v1/tenant-admin/tiers/${testTier1Id}/photos/missing-file.jpg`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(204);
 
       // Verify photo was removed from database
-      const pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      const tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(0);
+      expect(tier?.photos).toHaveLength(0);
     });
 
     it('should return 401 without authentication', async () => {
       await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage1Id}/photos/${uploadedFilename}`)
+        .delete(`/v1/tenant-admin/tiers/${testTier1Id}/photos/${uploadedFilename}`)
         .expect(401);
     });
 
     it('should return 401 with invalid JWT token', async () => {
       await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage1Id}/photos/${uploadedFilename}`)
+        .delete(`/v1/tenant-admin/tiers/${testTier1Id}/photos/${uploadedFilename}`)
         .set('Authorization', 'Bearer invalid-token-here')
         .expect(401);
     });
@@ -668,7 +717,7 @@ describe('Package Photo Upload/Delete Endpoints', () => {
 
       for (let i = 0; i < 3; i++) {
         const res = await request(app)
-          .post(`/v1/tenant-admin/packages/${testPackage1Id}/photos`)
+          .post(`/v1/tenant-admin/tiers/${testTier1Id}/photos`)
           .set('Authorization', `Bearer ${testToken1}`)
           .attach('photo', imageBuffer, {
             filename: `multi-${i}.jpg`,
@@ -680,23 +729,23 @@ describe('Package Photo Upload/Delete Endpoints', () => {
       }
 
       // Verify 3 photos in database
-      let pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      let tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(3);
+      expect(tier?.photos).toHaveLength(3);
 
       // Delete middle photo
       await request(app)
-        .delete(`/v1/tenant-admin/packages/${testPackage1Id}/photos/${filenames[1]}`)
+        .delete(`/v1/tenant-admin/tiers/${testTier1Id}/photos/${filenames[1]}`)
         .set('Authorization', `Bearer ${testToken1}`)
         .expect(204);
 
       // Verify only 2 photos remain and correct ones
-      pkg = await prisma.package.findUnique({
-        where: { id: testPackage1Id },
+      tier = await prisma.tier.findUnique({
+        where: { id: testTier1Id },
       });
-      expect(pkg?.photos).toHaveLength(2);
-      const photoFilenames = (pkg?.photos as any[]).map((p) => p.filename);
+      expect(tier?.photos).toHaveLength(2);
+      const photoFilenames = (tier?.photos as any[]).map((p) => p.filename);
       expect(photoFilenames).toContain(filenames[0]);
       expect(photoFilenames).toContain(filenames[2]);
       expect(photoFilenames).not.toContain(filenames[1]);

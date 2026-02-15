@@ -10,13 +10,14 @@ import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import { PrismaBookingRepository } from '../../src/adapters/prisma/booking.repository';
 import { BookingConflictError, BookingLockTimeoutError } from '../../src/lib/errors';
 import type { Booking } from '../../src/lib/entities';
-import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
+import { setupCompleteIntegrationTest, createTestSegment } from '../helpers/integration-setup';
 
 describe.sequential('PrismaBookingRepository - Integration Tests', () => {
   const ctx = setupCompleteIntegrationTest('booking-repository');
   let repository: PrismaBookingRepository;
   let testTenantId: string;
-  let testPackageId: string;
+  let testSegmentId: string;
+  let testTierId: string;
   let testAddOnId: string;
 
   beforeEach(async () => {
@@ -24,6 +25,9 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
     await ctx.tenants.cleanupTenants();
     await ctx.tenants.tenantA.create();
     testTenantId = ctx.tenants.tenantA.id;
+
+    const segment = await createTestSegment(ctx.prisma, testTenantId);
+    testSegmentId = segment.id;
 
     // Initialize repository with ReadCommitted isolation for tests
     // Production uses Serializable, but tests use ReadCommitted to avoid deadlocks
@@ -37,19 +41,23 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
     );
     const catalogRepo = new PrismaCatalogRepository(ctx.prisma);
 
-    const pkg = ctx.factories.package.create({ title: 'Test Package', priceCents: 250000 });
-    const createdPkg = await catalogRepo.createPackage(testTenantId, pkg);
-    testPackageId = createdPkg.id;
+    const pkg = ctx.factories.tier.create({
+      title: 'Test Package',
+      priceCents: 250000,
+      segmentId: testSegmentId,
+    });
+    const createdPkg = await catalogRepo.createTier(testTenantId, pkg);
+    testTierId = createdPkg.id;
 
     // Create test add-on
     const addOn = ctx.factories.addOn.create({
       title: 'Test Add-On',
       priceCents: 5000,
-      packageId: testPackageId,
+      tierId: testTierId,
     });
     const createdAddOn = await catalogRepo.createAddOn(testTenantId, {
       ...addOn,
-      packageId: testPackageId,
+      tierId: testTierId,
     });
     testAddOnId = createdAddOn.id;
   });
@@ -69,7 +77,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       // FIXED: Changed to ReadCommitted isolation level for tests (prevents Serializable deadlocks)
       const booking: Booking = {
         id: 'test-booking-1',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'John & Jane Doe',
         email: 'john.jane@example.com',
         eventDate: '2025-12-25',
@@ -90,7 +98,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       // FIXED: ReadCommitted isolation resolves deadlock, this test should now pass
       const booking1: Booking = {
         id: 'test-booking-1',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'First Couple',
         email: 'first@example.com',
         eventDate: '2025-12-31',
@@ -120,7 +128,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       const date = '2026-01-15';
       const booking1: Booking = {
         id: 'concurrent-1',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Concurrent Test 1',
         email: 'concurrent1@test.com',
         eventDate: date,
@@ -178,7 +186,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       const bookings: Booking[] = [
         {
           id: 'rapid-1',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Rapid Test 1',
           email: 'rapid1@test.com',
           eventDate: date,
@@ -189,7 +197,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
         },
         {
           id: 'rapid-2',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Rapid Test 2',
           email: 'rapid2@test.com',
           eventDate: date,
@@ -200,7 +208,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
         },
         {
           id: 'rapid-3',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Rapid Test 3',
           email: 'rapid3@test.com',
           eventDate: date,
@@ -238,7 +246,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
     it('should rollback on error (no partial data)', async () => {
       const booking: Booking = {
         id: 'rollback-test',
-        packageId: 'invalid-package', // Will cause FK constraint error
+        tierId: 'invalid-package', // Will cause FK constraint error
         coupleName: 'Rollback Test',
         email: 'rollback@test.com',
         eventDate: '2026-02-14',
@@ -270,7 +278,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       // FIXED: ReadCommitted isolation + proper beforeEach setup resolves FK issues
       const booking: Booking = {
         id: 'addon-test',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Addon Test',
         email: 'addon@test.com',
         eventDate: '2026-03-01',
@@ -326,7 +334,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       // First booking creates customer
       const booking1: Booking = {
         id: 'upsert-1',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Original Name',
         email: 'upsert@test.com',
         phone: '555-1111',
@@ -342,7 +350,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       // Second booking with same email updates customer
       const booking2: Booking = {
         id: 'upsert-2',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Updated Name',
         email: 'upsert@test.com',
         phone: '555-2222',
@@ -399,7 +407,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
           id: 'find-test',
           tenantId: testTenantId,
           customerId: customer.id,
-          packageId: testPackageId,
+          tierId: testTierId,
           date: new Date('2026-06-01'),
           totalPrice: 250000,
           commissionAmount: 0,
@@ -429,7 +437,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       // FIXED: ReadCommitted isolation resolves deadlock issues
       const booking: Booking = {
         id: 'check-date-test',
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Check Date Test',
         email: 'checkdate@test.com',
         eventDate: '2026-07-01',
@@ -454,7 +462,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
       const bookings: Booking[] = [
         {
           id: 'all-1',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'First',
           email: 'first@test.com',
           eventDate: '2026-08-01',
@@ -465,7 +473,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
         },
         {
           id: 'all-2',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Second',
           email: 'second@test.com',
           eventDate: '2026-08-02',
@@ -476,7 +484,7 @@ describe.sequential('PrismaBookingRepository - Integration Tests', () => {
         },
         {
           id: 'all-3',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Third',
           email: 'third@test.com',
           eventDate: '2026-08-03',

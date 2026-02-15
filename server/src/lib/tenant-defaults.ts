@@ -25,7 +25,7 @@ export const DEFAULT_SEGMENT = {
  *
  * All prices start at 0 - tenants customize their own pricing
  */
-export const DEFAULT_PACKAGE_TIERS = {
+export const DEFAULT_TIERS = {
   BASIC: {
     slug: 'basic-package',
     name: 'Basic Package',
@@ -49,11 +49,11 @@ export const DEFAULT_PACKAGE_TIERS = {
   },
 } as const;
 
-/** Type for accessing package tier keys */
-export type PackageTierKey = keyof typeof DEFAULT_PACKAGE_TIERS;
+/** Type for accessing default tier keys */
+export type DefaultTierKey = keyof typeof DEFAULT_TIERS;
 
-/** Type for a single package tier configuration */
-export type PackageTierConfig = (typeof DEFAULT_PACKAGE_TIERS)[PackageTierKey];
+/** Type for a single default tier configuration */
+export type DefaultTierConfig = (typeof DEFAULT_TIERS)[DefaultTierKey];
 
 // ============================================
 // Semantic Storefront Defaults

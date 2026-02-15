@@ -12,14 +12,14 @@ import {
   FakeCatalogRepository,
   FakeEventEmitter,
   FakePaymentProvider,
-  buildPackage,
+  buildTier,
   buildMockConfig,
 } from '../helpers/fakes';
 import {
   NotFoundError,
   BookingConflictError,
   InvalidBookingTypeError,
-  PackageNotAvailableError,
+  TierNotAvailableError,
 } from '../../src/lib/errors';
 
 describe('BookingService.createDateBooking', () => {
@@ -107,7 +107,7 @@ describe('BookingService.createDateBooking', () => {
       // Act & Assert
       await expect(
         service.createDateBooking(tenantId, {
-          packageId: 'nonexistent-package',
+          tierId: 'nonexistent-package',
           date: '2025-06-15',
           customerName: 'Test Couple',
           customerEmail: 'test@example.com',
@@ -117,18 +117,18 @@ describe('BookingService.createDateBooking', () => {
 
     it('throws InvalidBookingTypeError for TIMESLOT package', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_timeslot',
         slug: 'appointment-service',
         priceCents: 15000,
         bookingType: 'TIMESLOT',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       // Act & Assert
       await expect(
         service.createDateBooking(tenantId, {
-          packageId: 'pkg_timeslot',
+          tierId: 'pkg_timeslot',
           date: '2025-06-15',
           customerName: 'Test Client',
           customerEmail: 'test@example.com',
@@ -136,37 +136,37 @@ describe('BookingService.createDateBooking', () => {
       ).rejects.toThrow(InvalidBookingTypeError);
     });
 
-    it('throws PackageNotAvailableError for inactive package', async () => {
+    it('throws TierNotAvailableError for inactive package', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_inactive',
         slug: 'inactive-wedding-package',
         priceCents: 250000,
         bookingType: 'DATE',
         active: false,
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       // Act & Assert
       await expect(
         service.createDateBooking(tenantId, {
-          packageId: 'pkg_inactive',
+          tierId: 'pkg_inactive',
           date: '2025-06-15',
           customerName: 'Test Couple',
           customerEmail: 'test@example.com',
         })
-      ).rejects.toThrow(PackageNotAvailableError);
+      ).rejects.toThrow(TierNotAvailableError);
     });
 
     it('throws BookingConflictError when date is unavailable (booked)', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_wedding',
         slug: 'wedding-package',
         priceCents: 250000,
         bookingType: 'DATE',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
       availabilityService.checkAvailability.mockResolvedValue({
         date: '2025-06-15',
         available: false,
@@ -176,7 +176,7 @@ describe('BookingService.createDateBooking', () => {
       // Act & Assert
       await expect(
         service.createDateBooking(tenantId, {
-          packageId: 'pkg_wedding',
+          tierId: 'pkg_wedding',
           date: '2025-06-15',
           customerName: 'Test Couple',
           customerEmail: 'test@example.com',
@@ -186,13 +186,13 @@ describe('BookingService.createDateBooking', () => {
 
     it('throws BookingConflictError when date is blackout', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_wedding',
         slug: 'wedding-package',
         priceCents: 250000,
         bookingType: 'DATE',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
       availabilityService.checkAvailability.mockResolvedValue({
         date: '2025-12-25',
         available: false,
@@ -202,7 +202,7 @@ describe('BookingService.createDateBooking', () => {
       // Act & Assert
       await expect(
         service.createDateBooking(tenantId, {
-          packageId: 'pkg_wedding',
+          tierId: 'pkg_wedding',
           date: '2025-12-25',
           customerName: 'Test Couple',
           customerEmail: 'test@example.com',
@@ -214,17 +214,17 @@ describe('BookingService.createDateBooking', () => {
   describe('Happy Path', () => {
     it('creates checkout for valid DATE booking', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_wedding',
         slug: 'intimate-ceremony',
         priceCents: 250000,
         bookingType: 'DATE',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       // Act
       const result = await service.createDateBooking(tenantId, {
-        packageId: 'pkg_wedding',
+        tierId: 'pkg_wedding',
         date: '2025-06-15',
         customerName: 'Jane & John',
         customerEmail: 'couple@example.com',
@@ -237,17 +237,17 @@ describe('BookingService.createDateBooking', () => {
 
     it('passes add-on IDs to createCheckout', async () => {
       // Arrange
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_wedding',
         slug: 'grand-celebration',
         priceCents: 500000,
         bookingType: 'DATE',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       // Act
       const result = await service.createDateBooking(tenantId, {
-        packageId: 'pkg_wedding',
+        tierId: 'pkg_wedding',
         date: '2025-08-20',
         customerName: 'Emma & Oliver',
         customerEmail: 'couple@example.com',
@@ -260,18 +260,18 @@ describe('BookingService.createDateBooking', () => {
 
     it('handles package without explicit bookingType (defaults to undefined, fails validation)', async () => {
       // Arrange - package without bookingType set
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_legacy',
         slug: 'legacy-package',
         priceCents: 100000,
         // No bookingType set
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       // Act & Assert - should throw because bookingType !== 'DATE'
       await expect(
         service.createDateBooking(tenantId, {
-          packageId: 'pkg_legacy',
+          tierId: 'pkg_legacy',
           date: '2025-06-15',
           customerName: 'Test Couple',
           customerEmail: 'test@example.com',
@@ -295,17 +295,17 @@ describe('BookingService.createDateBooking', () => {
         // availabilityService not provided - should be skipped
       });
 
-      const pkg = buildPackage({
+      const pkg = buildTier({
         id: 'pkg_wedding',
         slug: 'simple-ceremony',
         priceCents: 100000,
         bookingType: 'DATE',
       });
-      catalogRepo.addPackage(pkg);
+      catalogRepo.addTier(pkg);
 
       // Act
       const result = await serviceWithoutAvailability.createDateBooking(tenantId, {
-        packageId: 'pkg_wedding',
+        tierId: 'pkg_wedding',
         date: '2025-06-15',
         customerName: 'Test Couple',
         customerEmail: 'test@example.com',

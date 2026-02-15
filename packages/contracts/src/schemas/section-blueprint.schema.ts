@@ -238,19 +238,19 @@ export const DISCOVERY_FACT_LABELS: Readonly<Record<string, string>> = {
 };
 
 // ============================================================================
-// Seed Package Names (Shared Constant)
+// Seed Tier Names (Shared Constant)
 // ============================================================================
 
 /**
- * Default seed package names used during onboarding.
+ * Default seed tier names used during onboarding.
  *
- * These packages are created with $0 price when a tenant signs up.
+ * These tiers are created with $0 price when a tenant signs up.
  * Agent tools and frontend filters exclude them from public display.
  *
- * Single source of truth. Derived from DEFAULT_PACKAGE_TIERS in server/src/lib/tenant-defaults.ts.
+ * Single source of truth. Derived from DEFAULT_TIERS in server/src/lib/tenant-defaults.ts.
  *
- * @see server/src/lib/tenant-defaults.ts (canonical source: DEFAULT_PACKAGE_TIERS)
- * @see apps/web/src/components/tenant/SegmentPackagesSection.tsx (consumer)
+ * @see server/src/lib/tenant-defaults.ts (canonical source: DEFAULT_TIERS)
+ * @see apps/web/src/components/tenant/SegmentTiersSection.tsx (consumer)
  * @see server/src/agent-v2/deploy/tenant/src/tools/first-draft.ts (hardcoded for Cloud Run)
  */
-export const SEED_PACKAGE_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;
+export const SEED_TIER_NAMES = ['Basic Package', 'Standard Package', 'Premium Package'] as const;

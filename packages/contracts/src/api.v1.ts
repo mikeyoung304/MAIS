@@ -5,7 +5,7 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 import {
-  PackageDtoSchema,
+  TierDtoSchema,
   AvailabilityDtoSchema,
   CreateCheckoutDtoSchema,
   CreateDateBookingDtoSchema,
@@ -17,9 +17,6 @@ import {
   EarlyAccessResponseDtoSchema,
   BookingDtoSchema,
   PlatformBookingsResponseSchema,
-  CreatePackageDtoSchema,
-  UpdatePackageDtoSchema,
-  PackageResponseDtoSchema,
   CreateAddOnDtoSchema,
   UpdateAddOnDtoSchema,
   AddOnDtoSchema,
@@ -28,8 +25,6 @@ import {
   LogoUploadResponseDtoSchema,
   BlackoutDtoSchema,
   CreateBlackoutDtoSchema,
-  PackagePhotoDtoSchema,
-  PackageWithPhotosDtoSchema,
   TenantDtoSchema,
   SegmentDtoSchema,
   CreateSegmentDtoSchema,
@@ -56,13 +51,6 @@ import {
   AppointmentCheckoutResponseDtoSchema,
   // Public tenant DTO (for storefront routing)
   TenantPublicDtoSchema,
-  // Visual Editor Draft DTOs
-  PackageWithDraftDtoSchema,
-  UpdatePackageDraftDtoSchema,
-  PublishDraftsDtoSchema,
-  PublishDraftsResponseDtoSchema,
-  DiscardDraftsDtoSchema,
-  DiscardDraftsResponseDtoSchema,
   // Booking Management DTOs (MVP Gaps Phase 1)
   RescheduleBookingDtoSchema,
   CancelBookingDtoSchema,
@@ -93,30 +81,30 @@ const c = initContract();
 
 export const Contracts = c.router({
   // Public endpoints
-  getPackages: {
+  getTiers: {
     method: 'GET',
-    path: '/v1/packages',
+    path: '/v1/tiers',
     responses: {
-      200: z.array(PackageDtoSchema),
+      200: z.array(TierDtoSchema),
       400: BadRequestErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get all packages',
+    summary: 'Get all tiers',
   },
 
-  getPackageBySlug: {
+  getTierBySlug: {
     method: 'GET',
-    path: '/v1/packages/:slug',
+    path: '/v1/tiers/:slug',
     pathParams: z.object({
       slug: z.string(),
     }),
     responses: {
-      200: PackageDtoSchema,
+      200: TierDtoSchema,
       400: BadRequestErrorSchema,
       404: NotFoundErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get package by slug',
+    summary: 'Get tier by slug',
   },
 
   getAvailability: {
@@ -345,191 +333,9 @@ export const Contracts = c.router({
     summary: 'Update tenant branding (requires tenant admin authentication)',
   },
 
-  // ============================================================================
-  // Tenant Admin Package Endpoints
-  // ============================================================================
-
-  tenantAdminGetPackages: {
-    method: 'GET',
-    path: '/v1/tenant-admin/packages',
-    responses: {
-      200: z.array(PackageWithPhotosDtoSchema),
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Get all packages for tenant (requires tenant admin authentication)',
-  },
-
-  tenantAdminCreatePackage: {
-    method: 'POST',
-    path: '/v1/tenant-admin/packages',
-    body: CreatePackageDtoSchema,
-    responses: {
-      201: PackageResponseDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      409: ConflictErrorSchema,
-      422: UnprocessableEntityErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Create new package (requires tenant admin authentication)',
-  },
-
-  tenantAdminUpdatePackage: {
-    method: 'PUT',
-    path: '/v1/tenant-admin/packages/:id',
-    pathParams: z.object({
-      id: z.string(),
-    }),
-    body: UpdatePackageDtoSchema,
-    responses: {
-      200: PackageResponseDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      409: ConflictErrorSchema,
-      422: UnprocessableEntityErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Update package (requires tenant admin authentication)',
-  },
-
-  tenantAdminDeletePackage: {
-    method: 'DELETE',
-    path: '/v1/tenant-admin/packages/:id',
-    pathParams: z.object({
-      id: z.string(),
-    }),
-    body: z.undefined(),
-    responses: {
-      204: z.void(),
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Delete package (requires tenant admin authentication)',
-  },
-
-  tenantAdminUploadPackagePhoto: {
-    method: 'POST',
-    path: '/v1/tenant-admin/packages/:id/photos',
-    pathParams: z.object({
-      id: z.string(),
-    }),
-    body: z.any(), // Multipart form data (file upload)
-    responses: {
-      201: PackagePhotoDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      422: UnprocessableEntityErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Upload photo for package (requires tenant admin authentication)',
-  },
-
-  tenantAdminDeletePackagePhoto: {
-    method: 'DELETE',
-    path: '/v1/tenant-admin/packages/:id/photos/:filename',
-    pathParams: z.object({
-      id: z.string(),
-      filename: z.string(),
-    }),
-    body: z.undefined(),
-    responses: {
-      204: z.void(),
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Delete package photo (requires tenant admin authentication)',
-  },
-
-  // ============================================================================
-  // Tenant Admin Visual Editor Draft Endpoints
-  // ============================================================================
-
-  /**
-   * Get all packages with draft fields for visual editor
-   * GET /v1/tenant-admin/packages/drafts
-   */
-  tenantAdminGetPackagesWithDrafts: {
-    method: 'GET',
-    path: '/v1/tenant-admin/packages/drafts',
-    responses: {
-      200: z.array(PackageWithDraftDtoSchema),
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary:
-      'Get all packages with draft fields for visual editor (requires tenant admin authentication)',
-  },
-
-  /**
-   * Update package draft (autosave target)
-   * PATCH /v1/tenant-admin/packages/:id/draft
-   */
-  tenantAdminUpdatePackageDraft: {
-    method: 'PATCH',
-    path: '/v1/tenant-admin/packages/:id/draft',
-    pathParams: z.object({
-      id: z.string(),
-    }),
-    body: UpdatePackageDraftDtoSchema,
-    responses: {
-      200: PackageWithDraftDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      422: UnprocessableEntityErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Update package draft for autosave (requires tenant admin authentication)',
-  },
-
-  /**
-   * Publish all package drafts
-   * POST /v1/tenant-admin/packages/publish
-   */
-  tenantAdminPublishDrafts: {
-    method: 'POST',
-    path: '/v1/tenant-admin/packages/publish',
-    body: PublishDraftsDtoSchema,
-    responses: {
-      200: PublishDraftsResponseDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Publish all package drafts to live (requires tenant admin authentication)',
-  },
-
-  /**
-   * Discard all package drafts
-   * DELETE /v1/tenant-admin/packages/drafts
-   */
-  tenantAdminDiscardDrafts: {
-    method: 'DELETE',
-    path: '/v1/tenant-admin/packages/drafts',
-    body: DiscardDraftsDtoSchema,
-    responses: {
-      200: DiscardDraftsResponseDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Discard all package drafts (requires tenant admin authentication)',
-  },
+  // Tenant Admin Package/Draft Endpoints — DELETED in Phase 2 (Package→Tier migration)
+  // Tier CRUD is handled by tenant-admin-tiers routes (already exist)
+  // Draft system replaced by AI agent + SectionContent pattern
 
   // ============================================================================
   // Tenant Admin Blackout Endpoints
@@ -781,66 +587,15 @@ export const Contracts = c.router({
     summary: 'Create a blackout date (requires authentication)',
   },
 
-  // Admin Package CRUD endpoints
-  adminCreatePackage: {
-    method: 'POST',
-    path: '/v1/admin/packages',
-    body: CreatePackageDtoSchema,
-    responses: {
-      200: PackageResponseDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      409: ConflictErrorSchema,
-      422: UnprocessableEntityErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Create a new package (requires authentication)',
-  },
-
-  adminUpdatePackage: {
-    method: 'PUT',
-    path: '/v1/admin/packages/:id',
-    pathParams: z.object({
-      id: z.string(),
-    }),
-    body: UpdatePackageDtoSchema,
-    responses: {
-      200: PackageResponseDtoSchema,
-      400: BadRequestErrorSchema,
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      409: ConflictErrorSchema,
-      422: UnprocessableEntityErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Update a package (requires authentication)',
-  },
-
-  adminDeletePackage: {
-    method: 'DELETE',
-    path: '/v1/admin/packages/:id',
-    pathParams: z.object({
-      id: z.string(),
-    }),
-    body: z.undefined(),
-    responses: {
-      204: z.void(),
-      401: UnauthorizedErrorSchema,
-      403: ForbiddenErrorSchema,
-      404: NotFoundErrorSchema,
-      500: InternalServerErrorSchema,
-    },
-    summary: 'Delete a package (requires authentication)',
-  },
+  // Admin Package CRUD endpoints — DELETED in Phase 2 (Package→Tier migration)
+  // Use tenant-admin tier endpoints instead
 
   // Admin AddOn CRUD endpoints
   adminCreateAddOn: {
     method: 'POST',
-    path: '/v1/admin/packages/:packageId/addons',
+    path: '/v1/admin/tiers/:tierId/addons',
     pathParams: z.object({
-      packageId: z.string(),
+      tierId: z.string(),
     }),
     body: CreateAddOnDtoSchema,
     responses: {
@@ -981,7 +736,7 @@ export const Contracts = c.router({
     }),
     responses: {
       200: z.object({
-        packageCount: z.number().int(),
+        tierCount: z.number().int(),
         addOnCount: z.number().int(),
       }),
       401: UnauthorizedErrorSchema,
@@ -1137,18 +892,18 @@ export const Contracts = c.router({
   },
 
   /**
-   * Get segment with packages and add-ons
-   * Used for segment landing page to display filtered packages
+   * Get segment with tiers and add-ons
+   * Used for segment landing page to display filtered tiers
    */
-  getSegmentWithPackages: {
+  getSegmentWithTiers: {
     method: 'GET',
-    path: '/v1/segments/:slug/packages',
+    path: '/v1/segments/:slug/tiers',
     pathParams: z.object({
       slug: z.string(),
     }),
     responses: {
       200: SegmentDtoSchema.extend({
-        packages: z.array(PackageDtoSchema),
+        tiers: z.array(TierDtoSchema),
         addOns: z.array(AddOnDtoSchema),
       }),
       400: BadRequestErrorSchema,
@@ -1156,7 +911,7 @@ export const Contracts = c.router({
       404: NotFoundErrorSchema,
       500: InternalServerErrorSchema,
     },
-    summary: 'Get segment with packages (public, requires X-Tenant-Key)',
+    summary: 'Get segment with tiers (public, requires X-Tenant-Key)',
   },
 
   // =========================================================================
@@ -1338,12 +1093,12 @@ export const Contracts = c.router({
   },
 
   /**
-   * Create a checkout session for DATE booking type packages
+   * Create a checkout session for DATE booking type tiers
    * POST /v1/public/bookings/date
    *
-   * Public endpoint for customers to book DATE packages (e.g., weddings).
+   * Public endpoint for customers to book DATE tiers (e.g., weddings).
    * Creates a Stripe checkout session and returns the checkout URL.
-   * Validates package is DATE type, date is available, and deposit is valid.
+   * Validates tier is DATE type, date is available, and deposit is valid.
    */
   createDateBooking: {
     method: 'POST',
@@ -1355,7 +1110,7 @@ export const Contracts = c.router({
       }),
       400: BadRequestErrorSchema,
       401: UnauthorizedErrorSchema, // Missing or invalid X-Tenant-Key
-      404: NotFoundErrorSchema, // Package not found
+      404: NotFoundErrorSchema, // Tier not found
       409: ConflictErrorSchema, // Date already booked
       500: InternalServerErrorSchema,
     },

@@ -177,9 +177,9 @@ export const ProjectDetailsSchema = z.object({
   booking: z.object({
     id: z.string(),
     eventDate: z.date(),
-    package: z.object({
+    tier: z.object({
       id: z.string(),
-      title: z.string(),
+      name: z.string(),
       priceCents: z.number().int(),
     }),
     customer: z.object({
@@ -213,8 +213,8 @@ export const ProjectRequestResponseSchema = z.object({
           name: z.string(),
           email: z.string(),
         }),
-        package: z.object({
-          title: z.string(),
+        tier: z.object({
+          name: z.string(),
         }),
       }),
     })

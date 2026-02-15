@@ -18,7 +18,7 @@ import {
  * - Replace [ServiceName]Service with your actual service class
  * - Replace [service-name] with the filename of your service
  * - Replace [Repository] with your repository name (e.g., Booking, Catalog)
- * - Replace [Entity] with your entity builder function (e.g., buildBooking, buildPackage)
+ * - Replace [Entity] with your entity builder function (e.g., buildBooking, buildTier)
  * - Add any additional dependencies your service requires
  */
 

@@ -313,7 +313,7 @@ describe.sequential('PrismaWebhookRepository - Integration Tests', () => {
             id: 'cs_test_123',
             amount_total: 250000,
             metadata: {
-              packageId: 'classic',
+              tierId: 'classic',
               eventDate: '2026-12-25',
             },
           },

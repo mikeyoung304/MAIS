@@ -209,9 +209,9 @@ export function createApp(
   app.use('/uploads/logos', express.static(logoUploadDir));
   logger.info({ uploadDir: logoUploadDir }, 'Serving uploaded logos from static directory');
 
-  const packagePhotoUploadDir = storageProvider.getPackagePhotoUploadDir();
-  app.use('/uploads/packages', express.static(packagePhotoUploadDir));
-  logger.info({ uploadDir: packagePhotoUploadDir }, 'Serving package photos from static directory');
+  const tierPhotoUploadDir = storageProvider.getTierPhotoUploadDir();
+  app.use('/uploads/packages', express.static(tierPhotoUploadDir));
+  logger.info({ uploadDir: tierPhotoUploadDir }, 'Serving tier photos from static directory');
 
   const segmentImageUploadDir = storageProvider.getSegmentImageUploadDir();
   app.use('/uploads/segments', express.static(segmentImageUploadDir));
@@ -276,7 +276,6 @@ export function createApp(
       segment: container.services.segment,
       stripeConnect: container.services.stripeConnect,
       schedulingAvailability: container.services.schedulingAvailability,
-      packageDraft: container.services.packageDraft,
       tenantOnboarding: container.services.tenantOnboarding,
       tenantProvisioning: container.services.tenantProvisioning,
       reminder: container.services.reminder,

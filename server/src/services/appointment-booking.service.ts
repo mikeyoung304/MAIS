@@ -254,7 +254,7 @@ export class AppointmentBookingService {
           tenantId,
           customerId: customer.id,
           serviceId: input.serviceId,
-          // packageId omitted - TIMESLOT bookings don't have packages (undefined by default)
+          // tierId omitted - TIMESLOT bookings don't have tiers (use serviceId instead)
           date: new Date(dateStr),
           totalPrice: input.totalCents,
           status: 'CONFIRMED',
@@ -275,7 +275,7 @@ export class AppointmentBookingService {
         tenantId: bookingData.tenantId,
         serviceId: bookingData.serviceId || undefined,
         customerId: bookingData.customerId,
-        packageId: bookingData.packageId || '',
+        tierId: bookingData.tierId || null,
         venueId: null,
         coupleName: input.clientName,
         email: input.clientEmail,

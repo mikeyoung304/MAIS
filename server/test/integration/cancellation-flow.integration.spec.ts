@@ -16,7 +16,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { CommissionService } from '../../src/services/commission.service';
 import { PrismaBookingRepository } from '../../src/adapters/prisma/booking.repository';
 import { PrismaCatalogRepository } from '../../src/adapters/prisma/catalog.repository';
-import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
+import { setupCompleteIntegrationTest, createTestSegment } from '../helpers/integration-setup';
 import {
   BookingScenarios,
   calculateExpectedCommission,
@@ -28,10 +28,11 @@ import { withDatabaseRetry } from '../helpers/retry';
 describe.sequential('Cancellation & Refund Flow Integration', () => {
   const ctx = setupCompleteIntegrationTest('cancellation-flow');
   let testTenantId: string;
+  let testSegmentId: string;
   let bookingRepo: PrismaBookingRepository;
   let catalogRepo: PrismaCatalogRepository;
   let commissionService: CommissionService;
-  let testPackageId: string;
+  let testTierId: string;
 
   // Mock payment provider with refund capability
   const mockPaymentProvider = {
@@ -79,18 +80,23 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
       data: { commissionPercent: 12.0 },
     });
 
+    // Create segment (Tier.segmentId is a non-nullable FK)
+    const segment = await createTestSegment(ctx.prisma, testTenantId);
+    testSegmentId = segment.id;
+
     // Initialize repositories
     bookingRepo = new PrismaBookingRepository(ctx.prisma);
     catalogRepo = new PrismaCatalogRepository(ctx.prisma);
     commissionService = new CommissionService(ctx.prisma);
 
     // Create test package
-    const pkg = ctx.factories.package.create({
+    const pkg = ctx.factories.tier.create({
       title: 'Cancellation Test Package',
       priceCents: 250000,
+      segmentId: testSegmentId,
     });
-    const createdPkg = await catalogRepo.createPackage(testTenantId, pkg);
-    testPackageId = createdPkg.id;
+    const createdPkg = await catalogRepo.createTier(testTenantId, pkg);
+    testTierId = createdPkg.id;
   });
 
   afterEach(async () => {
@@ -103,7 +109,7 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
       const bookingFixture = BookingScenarios.standard();
       const booking = await bookingRepo.create(testTenantId, {
         ...bookingFixture,
-        packageId: testPackageId,
+        tierId: testTierId,
       });
 
       // Verify initial booking
@@ -157,7 +163,7 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
       const bookingFixture = BookingScenarios.premium();
       const booking = await bookingRepo.create(testTenantId, {
         ...bookingFixture,
-        packageId: testPackageId,
+        tierId: testTierId,
       });
 
       // Verify initial booking
@@ -198,7 +204,7 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
       const bookingFixture = BookingScenarios.pastDeadline();
       const booking = await bookingRepo.create(testTenantId, {
         ...bookingFixture,
-        packageId: testPackageId,
+        tierId: testTierId,
       });
 
       // Verify booking is within no-refund window
@@ -284,7 +290,7 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
       const bookingFixture = BookingScenarios.standard();
       const booking = await bookingRepo.create(testTenantId, {
         ...bookingFixture,
-        packageId: testPackageId,
+        tierId: testTierId,
       });
 
       // Set tenant as Stripe Connect account
@@ -343,18 +349,18 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
         // Create add-ons
         const addOn1 = await catalogRepo.createAddOn(testTenantId, {
           ...ctx.factories.addOn.create({ priceCents: 30000 }),
-          packageId: testPackageId,
+          tierId: testTierId,
         });
         const addOn2 = await catalogRepo.createAddOn(testTenantId, {
           ...ctx.factories.addOn.create({ priceCents: 20000 }),
-          packageId: testPackageId,
+          tierId: testTierId,
         });
 
         // Create booking with add-ons
         const bookingFixture = BookingScenarios.withAddOns([addOn1.id, addOn2.id]);
         const booking = await bookingRepo.create(testTenantId, {
           ...bookingFixture,
-          packageId: testPackageId,
+          tierId: testTierId,
         });
 
         // Total: $2,500 + $300 + $200 = $3,000
@@ -379,7 +385,7 @@ describe.sequential('Cancellation & Refund Flow Integration', () => {
         // Create booking with odd amount
         const booking = await bookingRepo.create(testTenantId, {
           ...BookingScenarios.standard(),
-          packageId: testPackageId,
+          tierId: testTierId,
           totalCents: 123456, // $1,234.56
           commissionAmount: 14815, // 12% = $148.15 (rounded up)
         });

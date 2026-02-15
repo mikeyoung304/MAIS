@@ -21,7 +21,6 @@ import { TenantOnboardingService } from './services/tenant-onboarding.service';
 import { TenantProvisioningService } from './services/tenant-provisioning.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { SchedulingAvailabilityService } from './services/scheduling-availability.service';
-import { PackageDraftService } from './services/package-draft.service';
 import { ReminderService } from './services/reminder.service';
 import { SectionContentService } from './services/section-content.service';
 import { HealthCheckService } from './services/health-check.service';
@@ -32,7 +31,6 @@ import { ResearchService } from './services/research.service';
 import { createContextBuilderService } from './services/context-builder.service';
 import { UploadAdapter } from './adapters/upload.adapter';
 import { NodeFileSystemAdapter } from './adapters/filesystem.adapter';
-import { PackagesController } from './routes/packages.routes';
 import { AvailabilityController } from './routes/availability.routes';
 import { BookingsController } from './routes/bookings.routes';
 import { WebhooksController } from './routes/webhooks.routes';
@@ -40,7 +38,6 @@ import type { WebhookQueue } from './jobs/webhook-queue';
 import { createWebhookQueue } from './jobs/webhook-queue';
 import { AdminController } from './routes/admin.routes';
 import { BlackoutsController } from './routes/blackouts.routes';
-import { AdminPackagesController } from './routes/admin-packages.routes';
 import { TenantController } from './routes/tenant.routes';
 import { DevController } from './routes/dev.routes';
 import { PlatformAdminController } from './controllers/platform-admin.controller';
@@ -70,13 +67,11 @@ import path from 'path';
 
 export interface Container {
   controllers: {
-    packages: PackagesController;
     availability: AvailabilityController;
     bookings: BookingsController;
     webhooks: WebhooksController;
     admin: AdminController;
     blackouts: BlackoutsController;
-    adminPackages: AdminPackagesController;
     platformAdmin: PlatformAdminController;
     tenant: TenantController;
     dev?: DevController;
@@ -94,7 +89,6 @@ export interface Container {
     segment: SegmentService;
     tenantOnboarding: TenantOnboardingService;
     tenantProvisioning: TenantProvisioningService;
-    packageDraft: PackageDraftService;
     reminder: ReminderService;
     sectionContent: SectionContentService;
 
@@ -160,11 +154,11 @@ export function buildContainer(config: Config): Container {
     const storageProvider = new UploadAdapter(
       {
         logoUploadDir: path.join(process.cwd(), 'uploads', 'logos'),
-        packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
+        tierPhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
         segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
         landingPageImageUploadDir: path.join(process.cwd(), 'uploads', 'landing-pages'),
         maxFileSizeMB: 2,
-        maxPackagePhotoSizeMB: 5,
+        maxTierPhotoSizeMB: 5,
         allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
         baseUrl: config.API_BASE_URL || 'http://localhost:5000',
         isRealMode: false,
@@ -263,9 +257,6 @@ export function buildContainer(config: Config): Container {
     // Note: segmentRepo and tenantOnboardingService already created above for CatalogService (#631)
     const segmentService = new SegmentService(segmentRepo, cacheAdapter, storageProvider);
 
-    // Create PackageDraftService with mock catalog repository
-    const packageDraftService = new PackageDraftService(adapters.catalogRepo, cacheAdapter);
-
     // Create SectionContentService with mock repository
     const sectionContentRepo = new PrismaSectionContentRepository(mockPrisma);
     const sectionContentService = new SectionContentService(sectionContentRepo);
@@ -293,7 +284,6 @@ export function buildContainer(config: Config): Container {
     // Note: No webhook queue in mock mode - processing is always synchronous
     // This keeps mock mode simple and fast for testing
     const controllers = {
-      packages: new PackagesController(catalogService),
       availability: new AvailabilityController(availabilityService),
       bookings: new BookingsController(bookingService),
       webhooks: new WebhooksController(
@@ -305,10 +295,14 @@ export function buildContainer(config: Config): Container {
       ),
       admin: new AdminController(bookingService),
       blackouts: new BlackoutsController(adapters.blackoutRepo),
-      adminPackages: new AdminPackagesController(catalogService),
       platformAdmin: new PlatformAdminController(mockPrisma),
       tenant: new TenantController(mockTenantRepo),
-      dev: new DevController(bookingService, adapters.catalogRepo, adapters.bookingRepo),
+      dev: new DevController(
+        bookingService,
+        catalogService,
+        adapters.catalogRepo,
+        adapters.bookingRepo
+      ),
     };
 
     // Create ReminderService with mock adapters
@@ -334,7 +328,6 @@ export function buildContainer(config: Config): Container {
       tenantProvisioning: tenantProvisioningService,
       googleCalendar: googleCalendarService,
       schedulingAvailability: schedulingAvailabilityService,
-      packageDraft: packageDraftService,
       reminder: reminderService,
       sectionContent: sectionContentService,
       projectHub: projectHubService,
@@ -532,11 +525,11 @@ export function buildContainer(config: Config): Container {
   const storageProvider = new UploadAdapter(
     {
       logoUploadDir: process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'logos'),
-      packagePhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
+      tierPhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
       segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
       landingPageImageUploadDir: path.join(process.cwd(), 'uploads', 'landing-pages'),
       maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
-      maxPackagePhotoSizeMB: 5,
+      maxTierPhotoSizeMB: 5,
       allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
       baseUrl: config.API_BASE_URL || 'http://localhost:5000',
       isRealMode,
@@ -608,9 +601,6 @@ export function buildContainer(config: Config): Container {
     prisma,
   });
 
-  // Create PackageDraftService with real catalog repository
-  const packageDraftService = new PackageDraftService(catalogRepo, cacheAdapter);
-
   // Create SectionContentService with real repository
   const sectionContentRepo = new PrismaSectionContentRepository(prisma);
   const sectionContentService = new SectionContentService(sectionContentRepo);
@@ -653,7 +643,7 @@ export function buildContainer(config: Config): Container {
     try {
       await mailProvider.sendBookingConfirm(payload.email, {
         eventDate: payload.eventDate,
-        packageTitle: payload.packageTitle,
+        tierName: payload.tierName,
         totalCents: payload.totalCents,
         addOnTitles: payload.addOnTitles,
       });
@@ -671,7 +661,7 @@ export function buildContainer(config: Config): Container {
       await mailProvider.sendBookingReminder(payload.email, {
         coupleName: payload.coupleName,
         eventDate: payload.eventDate,
-        packageTitle: payload.packageTitle,
+        tierName: payload.tierName,
         daysUntilEvent: payload.daysUntilEvent,
         manageUrl: payload.manageUrl,
       });
@@ -742,7 +732,6 @@ export function buildContainer(config: Config): Container {
 
   // Build controllers
   const controllers = {
-    packages: new PackagesController(catalogService),
     availability: new AvailabilityController(availabilityService),
     bookings: new BookingsController(bookingService),
     webhooks: new WebhooksController(
@@ -754,7 +743,6 @@ export function buildContainer(config: Config): Container {
     ),
     admin: new AdminController(bookingService),
     blackouts: new BlackoutsController(blackoutRepo),
-    adminPackages: new AdminPackagesController(catalogService),
     platformAdmin: new PlatformAdminController(prisma),
     tenant: new TenantController(tenantRepo),
     // No dev controller in real mode
@@ -776,7 +764,6 @@ export function buildContainer(config: Config): Container {
     tenantProvisioning: tenantProvisioningService,
     googleCalendar: googleCalendarService,
     schedulingAvailability: schedulingAvailabilityService,
-    packageDraft: packageDraftService,
     reminder: reminderService,
     sectionContent: sectionContentService,
     webhookDelivery: webhookDeliveryService,

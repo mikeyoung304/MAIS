@@ -6,7 +6,7 @@ import type { BookingRepository } from '../../src/lib/ports';
 import type { Booking } from '../../src/lib/entities';
 import { BookingConflictError } from '../../src/lib/errors';
 import type { CatalogRepository } from '../../src/lib/ports';
-import type { Package, AddOn } from '../../src/lib/entities';
+import type { Tier, AddOn } from '../../src/lib/entities';
 import type { BlackoutRepository, CalendarProvider } from '../../src/lib/ports';
 import type { PaymentProvider, CheckoutSession } from '../../src/lib/ports';
 import type { EmailProvider } from '../../src/lib/ports';
@@ -128,65 +128,65 @@ export class FakeBookingRepository implements BookingRepository {
 }
 
 export class FakeCatalogRepository implements CatalogRepository {
-  private packages: Package[] = [];
+  private tiers: Tier[] = [];
   private addOns: AddOn[] = [];
 
-  async getAllPackages(tenantId: string): Promise<Package[]> {
-    return [...this.packages];
+  async getAllTiers(tenantId: string): Promise<Tier[]> {
+    return [...this.tiers];
   }
 
-  async getAllPackagesWithAddOns(tenantId: string): Promise<Array<Package & { addOns: AddOn[] }>> {
-    return this.packages.map((pkg) => ({
-      ...pkg,
-      addOns: this.addOns.filter((a) => a.packageId === pkg.id),
+  async getAllTiersWithAddOns(tenantId: string): Promise<Array<Tier & { addOns: AddOn[] }>> {
+    return this.tiers.map((tier) => ({
+      ...tier,
+      addOns: this.addOns.filter((a) => a.tierId === tier.id),
     }));
   }
 
-  async getPackageBySlug(tenantId: string, slug: string): Promise<Package | null> {
-    return this.packages.find((p) => p.slug === slug) || null;
+  async getTierBySlug(tenantId: string, slug: string): Promise<Tier | null> {
+    return this.tiers.find((t) => t.slug === slug) || null;
   }
 
-  async getPackageBySlugWithAddOns(
+  async getTierBySlugWithAddOns(
     tenantId: string,
     slug: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null> {
-    const pkg = this.packages.find((p) => p.slug === slug);
-    if (!pkg) {
+  ): Promise<(Tier & { addOns: AddOn[] }) | null> {
+    const tier = this.tiers.find((t) => t.slug === slug);
+    if (!tier) {
       return null;
     }
     return {
-      ...pkg,
-      addOns: this.addOns.filter((a) => a.packageId === pkg.id),
+      ...tier,
+      addOns: this.addOns.filter((a) => a.tierId === tier.id),
     };
   }
 
-  async getPackageById(tenantId: string, id: string): Promise<Package | null> {
-    return this.packages.find((p) => p.id === id) || null;
+  async getTierById(tenantId: string, id: string): Promise<Tier | null> {
+    return this.tiers.find((t) => t.id === id) || null;
   }
 
-  async getPackageByIdWithAddOns(
+  async getTierByIdWithAddOns(
     tenantId: string,
     id: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null> {
-    const pkg = this.packages.find((p) => p.id === id);
-    if (!pkg) {
+  ): Promise<(Tier & { addOns: AddOn[] }) | null> {
+    const tier = this.tiers.find((t) => t.id === id);
+    if (!tier) {
       return null;
     }
     return {
-      ...pkg,
-      addOns: this.addOns.filter((a) => a.packageId === pkg.id),
+      ...tier,
+      addOns: this.addOns.filter((a) => a.tierId === tier.id),
     };
   }
 
-  async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]> {
-    return this.addOns.filter((a) => a.packageId === packageId);
+  async getAddOnsByTierId(tenantId: string, tierId: string): Promise<AddOn[]> {
+    return this.addOns.filter((a) => a.tierId === tierId);
   }
 
   async getAddOnById(tenantId: string, id: string): Promise<AddOn | null> {
     return this.addOns.find((a) => a.id === id) || null;
   }
 
-  async createPackage(
+  async createTier(
     tenantId: string,
     data: {
       slug: string;
@@ -195,16 +195,18 @@ export class FakeCatalogRepository implements CatalogRepository {
       priceCents: number;
       photoUrl?: string;
     }
-  ): Promise<Package> {
-    const pkg: Package = {
-      id: `pkg_${Date.now()}_${Math.random()}`,
+  ): Promise<Tier> {
+    const tier: Tier = {
+      id: `tier_${Date.now()}_${Math.random()}`,
+      tenantId,
+      active: true,
       ...data,
     };
-    this.packages.push(pkg);
-    return pkg;
+    this.tiers.push(tier);
+    return tier;
   }
 
-  async updatePackage(
+  async updateTier(
     tenantId: string,
     id: string,
     data: {
@@ -214,34 +216,34 @@ export class FakeCatalogRepository implements CatalogRepository {
       priceCents?: number;
       photoUrl?: string;
     }
-  ): Promise<Package> {
-    const index = this.packages.findIndex((p) => p.id === id);
+  ): Promise<Tier> {
+    const index = this.tiers.findIndex((t) => t.id === id);
     if (index === -1) {
-      throw new Error(`Package with id "${id}" not found`);
+      throw new Error(`Tier with id "${id}" not found`);
     }
 
-    const updated: Package = {
-      ...this.packages[index],
+    const updated: Tier = {
+      ...this.tiers[index],
       ...data,
     };
-    this.packages[index] = updated;
+    this.tiers[index] = updated;
     return updated;
   }
 
-  async deletePackage(tenantId: string, id: string): Promise<void> {
-    const index = this.packages.findIndex((p) => p.id === id);
+  async deleteTier(tenantId: string, id: string): Promise<void> {
+    const index = this.tiers.findIndex((t) => t.id === id);
     if (index === -1) {
-      throw new Error(`Package with id "${id}" not found`);
+      throw new Error(`Tier with id "${id}" not found`);
     }
-    this.packages.splice(index, 1);
+    this.tiers.splice(index, 1);
     // Also delete associated add-ons
-    this.addOns = this.addOns.filter((a) => a.packageId !== id);
+    this.addOns = this.addOns.filter((a) => a.tierId !== id);
   }
 
   async createAddOn(
     tenantId: string,
     data: {
-      packageId: string;
+      tierId: string;
       title: string;
       priceCents: number;
       photoUrl?: string;
@@ -259,7 +261,7 @@ export class FakeCatalogRepository implements CatalogRepository {
     tenantId: string,
     id: string,
     data: {
-      packageId?: string;
+      tierId?: string;
       title?: string;
       priceCents?: number;
       photoUrl?: string;
@@ -287,8 +289,8 @@ export class FakeCatalogRepository implements CatalogRepository {
   }
 
   // Test helpers
-  addPackage(pkg: Package): void {
-    this.packages.push(pkg);
+  addTier(tier: Tier): void {
+    this.tiers.push(tier);
   }
 
   addAddOn(addOn: AddOn): void {
@@ -296,7 +298,7 @@ export class FakeCatalogRepository implements CatalogRepository {
   }
 
   clear(): void {
-    this.packages = [];
+    this.tiers = [];
     this.addOns = [];
   }
 }
@@ -463,9 +465,10 @@ export class FakeEventEmitter implements EventEmitter {
 
 // --- Builders ---
 
-export function buildPackage(overrides?: Partial<Package>): Package {
+export function buildTier(overrides?: Partial<Tier>): Tier {
   return {
     id: 'pkg_1',
+    tenantId: 'test-tenant',
     slug: 'basic-package',
     title: 'Basic Package',
     description: 'A basic photography package',
@@ -478,7 +481,7 @@ export function buildPackage(overrides?: Partial<Package>): Package {
 export function buildAddOn(overrides?: Partial<AddOn>): AddOn {
   return {
     id: 'addon_1',
-    packageId: 'pkg_1',
+    tierId: 'pkg_1',
     title: 'Extra Hour',
     priceCents: 20000,
     ...overrides,
@@ -488,7 +491,7 @@ export function buildAddOn(overrides?: Partial<AddOn>): AddOn {
 export function buildBooking(overrides?: Partial<Booking>): Booking {
   return {
     id: 'booking_1',
-    packageId: 'pkg_1',
+    tierId: 'pkg_1',
     coupleName: 'John & Jane',
     email: 'couple@example.com',
     eventDate: '2025-06-15',
@@ -663,7 +666,7 @@ export class FakeTenantOnboardingService {
 
   async createDefaultData(options: { tenantId: string }): Promise<{
     segment: Segment;
-    packages: Package[];
+    tiers: Tier[];
   }> {
     this.createDefaultDataCalls.push({ tenantId: options.tenantId });
 
@@ -680,7 +683,7 @@ export class FakeTenantOnboardingService {
 
     return {
       segment,
-      packages: [],
+      tiers: [],
     };
   }
 

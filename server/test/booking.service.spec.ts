@@ -10,7 +10,7 @@ import {
   FakeCatalogRepository,
   FakeEventEmitter,
   FakePaymentProvider,
-  buildPackage,
+  buildTier,
   buildAddOn,
   buildBooking,
   buildMockConfig,
@@ -79,12 +79,12 @@ describe('BookingService', () => {
   describe('createCheckout', () => {
     it('validates package exists and calculates total', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       // Act
       const result = await service.createCheckout('test-tenant', {
-        packageId: 'pkg_1', // Use package ID, not slug
+        tierId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -96,14 +96,14 @@ describe('BookingService', () => {
 
     it('includes add-on prices in total calculation', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
-      catalogRepo.addAddOn(buildAddOn({ id: 'addon_1', packageId: 'pkg_1', priceCents: 20000 }));
-      catalogRepo.addAddOn(buildAddOn({ id: 'addon_2', packageId: 'pkg_1', priceCents: 30000 }));
+      const pkg = buildTier({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
+      catalogRepo.addAddOn(buildAddOn({ id: 'addon_1', tierId: 'pkg_1', priceCents: 20000 }));
+      catalogRepo.addAddOn(buildAddOn({ id: 'addon_2', tierId: 'pkg_1', priceCents: 30000 }));
 
       // Act
       const result = await service.createCheckout('test-tenant', {
-        packageId: 'pkg_1', // Use package ID, not slug
+        tierId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -118,7 +118,7 @@ describe('BookingService', () => {
       // Act & Assert
       await expect(
         service.createCheckout('test-tenant', {
-          packageId: 'nonexistent',
+          tierId: 'nonexistent',
           coupleName: 'John & Jane',
           email: 'couple@example.com',
           eventDate: '2025-07-01',
@@ -130,13 +130,13 @@ describe('BookingService', () => {
   describe('onPaymentCompleted', () => {
     it('inserts a PAID booking and emits BookingPaid event', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'pkg_1', title: 'Test Package' });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'pkg_1', title: 'Test Package' });
+      catalogRepo.addTier(pkg);
 
       // Act
       const booking = await service.onPaymentCompleted('test-tenant', {
         sessionId: 'sess_123',
-        packageId: 'pkg_1',
+        tierId: 'pkg_1',
         eventDate: '2025-07-01',
         email: 'couple@example.com',
         coupleName: 'John & Jane',
@@ -161,8 +161,8 @@ describe('BookingService', () => {
 
     it('throws BookingConflictError if date is already booked (duplicate date)', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'pkg_1', title: 'Test Package' });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'pkg_1', title: 'Test Package' });
+      catalogRepo.addTier(pkg);
 
       // Arrange: pre-existing booking for same date
       bookingRepo.addBooking(buildBooking({ eventDate: '2025-07-01' }));
@@ -171,7 +171,7 @@ describe('BookingService', () => {
       await expect(
         service.onPaymentCompleted('test-tenant', {
           sessionId: 'sess_123',
-          packageId: 'pkg_1',
+          tierId: 'pkg_1',
           eventDate: '2025-07-01',
           email: 'another@example.com',
           coupleName: 'Another Couple',
@@ -182,15 +182,15 @@ describe('BookingService', () => {
 
     it('duplicate date error should map to 409 Conflict', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'pkg_1', title: 'Test Package' });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'pkg_1', title: 'Test Package' });
+      catalogRepo.addTier(pkg);
       bookingRepo.addBooking(buildBooking({ eventDate: '2025-07-01' }));
 
       // Act & Assert: verify BookingConflictError is thrown (maps to 409)
       try {
         await service.onPaymentCompleted('test-tenant', {
           sessionId: 'sess_123',
-          packageId: 'pkg_1',
+          tierId: 'pkg_1',
           eventDate: '2025-07-01',
           email: 'another@example.com',
           coupleName: 'Another Couple',

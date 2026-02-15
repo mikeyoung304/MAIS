@@ -229,7 +229,7 @@ export const HeroSectionSchema = z.object({
   type: z.literal('hero'),
   headline: z.string().min(1).max(60),
   subheadline: z.string().max(150).optional(),
-  ctaText: z.string().max(30).default('View Packages'),
+  ctaText: z.string().max(30).default('View Services'),
   backgroundImageUrl: SafeImageUrlOptionalSchema,
 });
 

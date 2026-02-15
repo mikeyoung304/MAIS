@@ -34,7 +34,7 @@ const StripeSessionSchema = z.object({
   amount_total: z.number().nullable(),
   metadata: z.object({
     tenantId: z.string(), // CRITICAL: Multi-tenant data isolation
-    packageId: z.string(),
+    tierId: z.string(),
     eventDate: z.string(),
     email: z.string().email(),
     coupleName: z.string(),
@@ -47,7 +47,7 @@ const StripeSessionSchema = z.object({
 // Zod schema for metadata validation
 const MetadataSchema = z.object({
   tenantId: z.string(), // CRITICAL: Multi-tenant data isolation
-  packageId: z.string().optional(), // Optional for balance payments
+  tierId: z.string().optional(), // Optional for balance payments
   eventDate: z.string().optional(), // Optional for balance payments
   email: z.string().email(),
   coupleName: z.string().optional(), // Optional for balance payments
@@ -224,7 +224,7 @@ export class WebhookProcessor {
 
     const {
       tenantId: validatedTenantId,
-      packageId,
+      tierId,
       eventDate,
       email,
       coupleName,
@@ -257,7 +257,7 @@ export class WebhookProcessor {
     } else {
       await this.processNewBooking(event, session, {
         validatedTenantId,
-        packageId: packageId!,
+        tierId: tierId!,
         eventDate: eventDate!,
         email,
         coupleName: coupleName!,
@@ -348,7 +348,7 @@ export class WebhookProcessor {
     session: z.infer<typeof StripeSessionSchema>,
     data: {
       validatedTenantId: string;
-      packageId: string;
+      tierId: string;
       eventDate: string;
       email: string;
       coupleName: string;
@@ -401,7 +401,7 @@ export class WebhookProcessor {
         eventId: event.id,
         sessionId: session.id,
         tenantId: data.validatedTenantId,
-        packageId: data.packageId,
+        tierId: data.tierId,
         eventDate: data.eventDate,
         email: data.email,
         isDeposit: data.isDeposit === 'true',
@@ -420,7 +420,7 @@ export class WebhookProcessor {
     // Create booking in database (tenant-scoped)
     await this.bookingService.onPaymentCompleted(data.validatedTenantId, {
       sessionId: session.id,
-      packageId: data.packageId,
+      tierId: data.tierId,
       eventDate: data.eventDate,
       email: data.email,
       coupleName: data.coupleName,

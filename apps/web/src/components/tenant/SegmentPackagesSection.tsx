@@ -24,7 +24,7 @@ import { getSegmentStockPhoto } from '@/lib/constants/stock-photos';
 import { formatPrice } from '@/lib/format';
 import { TIER_ORDER } from '@/lib/packages';
 import type { TenantStorefrontData, PackageData, SegmentData } from '@/lib/tenant.client';
-import { SEED_PACKAGE_NAMES } from '@macon/contracts';
+import { SEED_TIER_NAMES } from '@macon/contracts';
 
 interface SegmentPackagesSectionProps {
   data: TenantStorefrontData;
@@ -298,13 +298,13 @@ export function SegmentPackagesSection({
   }, [segments]);
 
   // Safety net: never show $0 seed packages to visitors.
-  // Cross-ref: @macon/contracts SEED_PACKAGE_NAMES (canonical source: server/src/lib/tenant-defaults.ts:28-50)
+  // Cross-ref: @macon/contracts SEED_TIER_NAMES (canonical source: server/src/lib/tenant-defaults.ts:28-50)
 
   // Filter active packages, excluding seed defaults
   const activePackages = packages.filter(
     (p) =>
       (p.isActive ?? p.active) &&
-      !(p.priceCents === 0 && (SEED_PACKAGE_NAMES as readonly string[]).includes(p.title))
+      !(p.priceCents === 0 && (SEED_TIER_NAMES as readonly string[]).includes(p.title))
   );
 
   // Group packages by segment (memoized to avoid recomputation on every render)

@@ -60,9 +60,9 @@ export interface TenantRequest extends Request {
  * router.use('/api/v1/catalog', resolveTenant, requireTenant, catalogRoutes);
  *
  * // Access in route handler
- * router.get('/packages', async (req: TenantRequest, res) => {
- *   const packages = await catalogService.getAllPackages(req.tenantId!);
- *   res.json({ packages });
+ * router.get('/tiers', async (req: TenantRequest, res) => {
+ *   const tiers = await catalogService.getAllTiers(req.tenantId!);
+ *   res.json({ tiers });
  * });
  */
 export function resolveTenant(prisma: PrismaClient) {
@@ -238,7 +238,7 @@ export function requireStripeOnboarded(
  * Use in route handlers to get tenant ID with TypeScript safety
  *
  * @example
- * const packages = await catalogService.getAllPackages(getTenantId(req));
+ * const tiers = await catalogService.getAllTiers(getTenantId(req));
  */
 export function getTenantId(req: TenantRequest): string {
   if (!req.tenantId) {

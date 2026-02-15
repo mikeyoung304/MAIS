@@ -17,7 +17,7 @@ import type { TenantAdminDeps } from './tenant-admin-shared';
  */
 const mapAddOnToDto = (addOn: AddOn) => ({
   id: addOn.id,
-  packageId: addOn.packageId,
+  tierId: addOn.tierId,
   title: addOn.title,
   description: addOn.description ?? null,
   priceCents: addOn.priceCents,
@@ -99,11 +99,11 @@ export function registerAddonRoutes(router: Router, deps: TenantAdminDeps): void
 
         const data = CreateAddOnDtoSchema.parse(req.body);
 
-        // SECURITY: Validate package ownership - ensure packageId belongs to tenant
-        const pkg = await catalogService.getPackageById(tenantId, data.packageId);
+        // SECURITY: Validate tier ownership - ensure tierId belongs to tenant
+        const pkg = await catalogService.getTierById(tenantId, data.tierId);
         if (!pkg) {
           res.status(404).json({
-            error: 'Invalid package: package not found or does not belong to this tenant',
+            error: 'Invalid tier: tier not found or does not belong to this tenant',
           });
           return;
         }
@@ -134,12 +134,12 @@ export function registerAddonRoutes(router: Router, deps: TenantAdminDeps): void
         const { id } = req.params;
         const data = UpdateAddOnDtoSchema.parse(req.body);
 
-        // SECURITY: If updating packageId, validate it belongs to tenant
-        if (data.packageId) {
-          const pkg = await catalogService.getPackageById(tenantId, data.packageId);
+        // SECURITY: If updating tierId, validate it belongs to tenant
+        if (data.tierId) {
+          const pkg = await catalogService.getTierById(tenantId, data.tierId);
           if (!pkg) {
             res.status(404).json({
-              error: 'Invalid package: package not found or does not belong to this tenant',
+              error: 'Invalid tier: tier not found or does not belong to this tenant',
             });
             return;
           }

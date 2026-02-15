@@ -10,6 +10,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { CatalogService } from './catalog.service';
 import { AuditService } from './audit.service';
 import { PrismaCatalogRepository } from '../adapters/prisma/catalog.repository';
+import { createTestSegment } from '../../test/helpers/integration-setup';
 
 // Prisma 7: Use driver adapter for PostgreSQL connections
 const adapter = process.env.DATABASE_URL
@@ -21,6 +22,7 @@ describe('CatalogService Integration - Audit Logging', () => {
   const testTenantId = 'test_tenant_integration';
   let catalogService: CatalogService;
   let auditService: AuditService;
+  let testSegmentId: string;
 
   beforeEach(async () => {
     // Create test tenant
@@ -39,6 +41,9 @@ describe('CatalogService Integration - Audit Logging', () => {
       },
     });
 
+    const segment = await createTestSegment(prisma, testTenantId);
+    testSegmentId = segment.id;
+
     const catalogRepo = new PrismaCatalogRepository(prisma);
     auditService = new AuditService({ prisma });
     catalogService = new CatalogService(catalogRepo, undefined, auditService);
@@ -50,27 +55,33 @@ describe('CatalogService Integration - Audit Logging', () => {
       where: { tenantId: testTenantId },
     });
 
-    // Clean up packages
-    await prisma.package.deleteMany({
+    // Clean up tiers
+    await prisma.tier.deleteMany({
+      where: { tenantId: testTenantId },
+    });
+
+    // Clean up segments
+    await prisma.segment.deleteMany({
       where: { tenantId: testTenantId },
     });
   });
 
-  describe('createPackage', () => {
-    it('should create package AND audit log when audit context provided', async () => {
+  describe('createTier', () => {
+    it('should create tier AND audit log when audit context provided', async () => {
       const auditCtx = {
         email: 'admin@test.com',
         role: 'TENANT_ADMIN' as const,
         userId: 'user_123',
       };
 
-      const result = await catalogService.createPackage(
+      const result = await catalogService.createTier(
         testTenantId,
         {
           slug: 'test-pkg-1',
-          title: 'Test Package 1',
+          title: 'Test Tier 1',
           description: 'Test description',
           priceCents: 10000,
+          segmentId: testSegmentId,
         },
         auditCtx
       );
@@ -81,7 +92,7 @@ describe('CatalogService Integration - Audit Logging', () => {
       const auditLogs = await prisma.configChangeLog.findMany({
         where: {
           tenantId: testTenantId,
-          entityType: 'Package',
+          entityType: 'Tier',
           entityId: result.id,
         },
       });
@@ -94,17 +105,18 @@ describe('CatalogService Integration - Audit Logging', () => {
       expect(auditLogs[0].beforeSnapshot).toBeNull();
       expect(auditLogs[0].afterSnapshot).toMatchObject({
         slug: 'test-pkg-1',
-        title: 'Test Package 1',
+        title: 'Test Tier 1',
         priceCents: 10000,
       });
     });
 
-    it('should create package WITHOUT audit log when audit context missing', async () => {
-      const result = await catalogService.createPackage(testTenantId, {
+    it('should create tier WITHOUT audit log when audit context missing', async () => {
+      const result = await catalogService.createTier(testTenantId, {
         slug: 'test-pkg-no-audit',
-        title: 'Test Package No Audit',
+        title: 'Test Tier No Audit',
         description: 'Test description',
         priceCents: 10000,
+        segmentId: testSegmentId,
       });
 
       expect(result.id).toBeDefined();
@@ -113,7 +125,7 @@ describe('CatalogService Integration - Audit Logging', () => {
       const auditLogs = await prisma.configChangeLog.findMany({
         where: {
           tenantId: testTenantId,
-          entityType: 'Package',
+          entityType: 'Tier',
           entityId: result.id,
         },
       });
@@ -122,14 +134,15 @@ describe('CatalogService Integration - Audit Logging', () => {
     });
   });
 
-  describe('updatePackage', () => {
-    it('should update package AND audit log with before/after snapshots', async () => {
-      // Create package first
-      const pkg = await catalogService.createPackage(testTenantId, {
+  describe('updateTier', () => {
+    it('should update tier AND audit log with before/after snapshots', async () => {
+      // Create tier first
+      const pkg = await catalogService.createTier(testTenantId, {
         slug: 'test-pkg-update',
         title: 'Original Title',
         description: 'Original description',
         priceCents: 10000,
+        segmentId: testSegmentId,
       });
 
       // Update with audit context
@@ -139,7 +152,7 @@ describe('CatalogService Integration - Audit Logging', () => {
         userId: 'user_123',
       };
 
-      const updated = await catalogService.updatePackage(
+      const updated = await catalogService.updateTier(
         testTenantId,
         pkg.id,
         {
@@ -156,7 +169,7 @@ describe('CatalogService Integration - Audit Logging', () => {
       const auditLogs = await prisma.configChangeLog.findMany({
         where: {
           tenantId: testTenantId,
-          entityType: 'Package',
+          entityType: 'Tier',
           entityId: pkg.id,
           operation: 'update',
         },
@@ -173,17 +186,18 @@ describe('CatalogService Integration - Audit Logging', () => {
       });
     });
 
-    it('should update package WITHOUT audit log when context missing', async () => {
-      // Create package
-      const pkg = await catalogService.createPackage(testTenantId, {
+    it('should update tier WITHOUT audit log when context missing', async () => {
+      // Create tier
+      const pkg = await catalogService.createTier(testTenantId, {
         slug: 'test-pkg-update-no-audit',
         title: 'Original Title',
         description: 'Original description',
         priceCents: 10000,
+        segmentId: testSegmentId,
       });
 
       // Update WITHOUT audit context
-      await catalogService.updatePackage(testTenantId, pkg.id, {
+      await catalogService.updateTier(testTenantId, pkg.id, {
         title: 'Updated Title No Audit',
         priceCents: 12000,
       });
@@ -192,7 +206,7 @@ describe('CatalogService Integration - Audit Logging', () => {
       const auditLogs = await prisma.configChangeLog.findMany({
         where: {
           tenantId: testTenantId,
-          entityType: 'Package',
+          entityType: 'Tier',
           entityId: pkg.id,
           operation: 'update',
         },
@@ -202,14 +216,15 @@ describe('CatalogService Integration - Audit Logging', () => {
     });
   });
 
-  describe('deletePackage', () => {
-    it('should delete package AND audit log with beforeSnapshot', async () => {
-      // Create package
-      const pkg = await catalogService.createPackage(testTenantId, {
+  describe('deleteTier', () => {
+    it('should delete tier AND audit log with beforeSnapshot', async () => {
+      // Create tier
+      const pkg = await catalogService.createTier(testTenantId, {
         slug: 'test-pkg-delete',
-        title: 'Package to Delete',
+        title: 'Tier to Delete',
         description: 'Will be deleted',
         priceCents: 10000,
+        segmentId: testSegmentId,
       });
 
       // Delete with audit context
@@ -219,10 +234,10 @@ describe('CatalogService Integration - Audit Logging', () => {
         userId: 'user_123',
       };
 
-      await catalogService.deletePackage(testTenantId, pkg.id, auditCtx);
+      await catalogService.deleteTier(testTenantId, pkg.id, auditCtx);
 
-      // Verify package deleted
-      const deletedPkg = await prisma.package.findUnique({
+      // Verify tier deleted
+      const deletedPkg = await prisma.tier.findUnique({
         where: { id: pkg.id },
       });
       expect(deletedPkg).toBeNull();
@@ -231,7 +246,7 @@ describe('CatalogService Integration - Audit Logging', () => {
       const auditLogs = await prisma.configChangeLog.findMany({
         where: {
           tenantId: testTenantId,
-          entityType: 'Package',
+          entityType: 'Tier',
           entityId: pkg.id,
           operation: 'delete',
         },
@@ -240,26 +255,27 @@ describe('CatalogService Integration - Audit Logging', () => {
       expect(auditLogs).toHaveLength(1);
       expect(auditLogs[0].beforeSnapshot).toMatchObject({
         slug: 'test-pkg-delete',
-        title: 'Package to Delete',
+        title: 'Tier to Delete',
         priceCents: 10000,
       });
       expect(auditLogs[0].afterSnapshot).toBeNull();
     });
 
-    it('should delete package WITHOUT audit log when context missing', async () => {
-      // Create package
-      const pkg = await catalogService.createPackage(testTenantId, {
+    it('should delete tier WITHOUT audit log when context missing', async () => {
+      // Create tier
+      const pkg = await catalogService.createTier(testTenantId, {
         slug: 'test-pkg-delete-no-audit',
-        title: 'Package to Delete No Audit',
+        title: 'Tier to Delete No Audit',
         description: 'Will be deleted',
         priceCents: 10000,
+        segmentId: testSegmentId,
       });
 
       // Delete WITHOUT audit context
-      await catalogService.deletePackage(testTenantId, pkg.id);
+      await catalogService.deleteTier(testTenantId, pkg.id);
 
-      // Verify package deleted
-      const deletedPkg = await prisma.package.findUnique({
+      // Verify tier deleted
+      const deletedPkg = await prisma.tier.findUnique({
         where: { id: pkg.id },
       });
       expect(deletedPkg).toBeNull();
@@ -268,7 +284,7 @@ describe('CatalogService Integration - Audit Logging', () => {
       const auditLogs = await prisma.configChangeLog.findMany({
         where: {
           tenantId: testTenantId,
-          entityType: 'Package',
+          entityType: 'Tier',
           entityId: pkg.id,
           operation: 'delete',
         },
@@ -280,6 +296,7 @@ describe('CatalogService Integration - Audit Logging', () => {
 
   describe('Tenant Isolation', () => {
     const otherTenantId = 'test_tenant_other';
+    let otherSegmentId: string;
 
     beforeEach(async () => {
       // Create second tenant
@@ -297,13 +314,19 @@ describe('CatalogService Integration - Audit Logging', () => {
           commissionPercent: 10,
         },
       });
+
+      const otherSegment = await createTestSegment(prisma, otherTenantId);
+      otherSegmentId = otherSegment.id;
     });
 
     afterEach(async () => {
       await prisma.configChangeLog.deleteMany({
         where: { tenantId: otherTenantId },
       });
-      await prisma.package.deleteMany({
+      await prisma.tier.deleteMany({
+        where: { tenantId: otherTenantId },
+      });
+      await prisma.segment.deleteMany({
         where: { tenantId: otherTenantId },
       });
       await prisma.tenant.delete({
@@ -318,26 +341,28 @@ describe('CatalogService Integration - Audit Logging', () => {
         userId: 'user_123',
       };
 
-      // Create package for tenant 1
-      await catalogService.createPackage(
+      // Create tier for tenant 1
+      await catalogService.createTier(
         testTenantId,
         {
           slug: 'pkg-tenant1',
-          title: 'Tenant 1 Package',
+          title: 'Tenant 1 Tier',
           description: 'Test',
           priceCents: 10000,
+          segmentId: testSegmentId,
         },
         auditCtx
       );
 
-      // Create package for tenant 2
-      await catalogService.createPackage(
+      // Create tier for tenant 2
+      await catalogService.createTier(
         otherTenantId,
         {
           slug: 'pkg-tenant2',
-          title: 'Tenant 2 Package',
+          title: 'Tenant 2 Tier',
           description: 'Test',
           priceCents: 10000,
+          segmentId: otherSegmentId,
         },
         auditCtx
       );
@@ -368,24 +393,25 @@ describe('CatalogService Integration - Audit Logging', () => {
         userId: 'user_123',
       };
 
-      // Create package
-      const pkg = await catalogService.createPackage(
+      // Create tier
+      const pkg = await catalogService.createTier(
         testTenantId,
         {
           slug: 'history-pkg',
           title: 'History Test',
           description: 'Test',
           priceCents: 10000,
+          segmentId: testSegmentId,
         },
         auditCtx
       );
 
       // Update multiple times
-      await catalogService.updatePackage(testTenantId, pkg.id, { priceCents: 11000 }, auditCtx);
-      await catalogService.updatePackage(testTenantId, pkg.id, { priceCents: 12000 }, auditCtx);
+      await catalogService.updateTier(testTenantId, pkg.id, { priceCents: 11000 }, auditCtx);
+      await catalogService.updateTier(testTenantId, pkg.id, { priceCents: 12000 }, auditCtx);
 
       // Get history
-      const history = await auditService.getEntityHistory(testTenantId, 'Package', pkg.id);
+      const history = await auditService.getEntityHistory(testTenantId, 'Tier', pkg.id);
 
       // Should have 3 entries (create + 2 updates)
       expect(history).toHaveLength(3);

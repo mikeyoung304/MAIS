@@ -41,7 +41,7 @@ describe('WebhooksController - payment_intent.payment_failed', () => {
       'pi_test_123',
       {
         tenantId: 'tenant_123',
-        packageId: 'package_abc',
+        tierId: 'package_abc',
         eventDate: '2025-06-15',
         email: 'customer@example.com',
         coupleName: 'John & Jane',
@@ -76,7 +76,7 @@ describe('WebhooksController - payment_intent.payment_failed', () => {
       'pi_test_456',
       {
         tenantId: 'tenant_123',
-        packageId: 'package_abc',
+        tierId: 'package_abc',
         eventDate: '2025-06-15',
         email: 'customer@example.com',
         coupleName: 'John & Jane',
@@ -111,7 +111,7 @@ describe('WebhooksController - payment_intent.payment_failed', () => {
         `pi_test_${errorCode}`,
         {
           tenantId: 'tenant_123',
-          packageId: 'package_abc',
+          tierId: 'package_abc',
           eventDate: '2025-06-15',
           email: 'customer@example.com',
           coupleName: 'John & Jane',
@@ -150,7 +150,7 @@ describe('WebhooksController - payment_intent.payment_failed', () => {
       'pi_test_error',
       {
         tenantId: 'tenant_123',
-        packageId: 'package_abc',
+        tierId: 'package_abc',
         eventDate: '2025-06-15',
         email: 'customer@example.com',
         coupleName: 'John & Jane',
@@ -180,7 +180,7 @@ describe('WebhooksController - payment_intent.payment_failed', () => {
       'pi_test_no_error',
       {
         tenantId: 'tenant_123',
-        packageId: 'package_abc',
+        tierId: 'package_abc',
         eventDate: '2025-06-15',
         email: 'customer@example.com',
         coupleName: 'John & Jane',
