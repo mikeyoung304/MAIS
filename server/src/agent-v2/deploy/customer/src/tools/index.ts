@@ -15,7 +15,7 @@ export {
   checkAvailabilityTool,
   getBusinessInfoTool,
   answerFaqTool,
-  recommendPackageTool,
+  recommendTierTool,
   createBookingTool,
 } from './booking.js';
 

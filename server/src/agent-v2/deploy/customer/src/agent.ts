@@ -31,7 +31,7 @@ import {
   checkAvailabilityTool,
   getBusinessInfoTool,
   answerFaqTool,
-  recommendPackageTool,
+  recommendTierTool,
   createBookingTool,
 
   // Project tools (T1 except submit_request for cancellation/refund)
@@ -95,7 +95,7 @@ export const customerAgent = new LlmAgent({
 
     // T1: Availability & Recommendations
     checkAvailabilityTool,
-    recommendPackageTool,
+    recommendTierTool,
 
     // T1: Questions
     answerFaqTool,

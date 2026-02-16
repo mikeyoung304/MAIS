@@ -3,9 +3,9 @@
 /**
  * DateBookingWizard Component
  *
- * Multi-step booking flow for DATE type packages (e.g., weddings, events).
+ * Multi-step booking flow for DATE type tiers (e.g., weddings, events).
  * Steps:
- * 1. Confirm - Review package details
+ * 1. Confirm - Review tier details
  * 2. Date - Select event date
  * 3. Details - Enter customer information
  * 4. Pay - Review and proceed to checkout
@@ -34,7 +34,7 @@ import {
   getUnavailableDates,
   checkDateAvailability,
   createDateBooking,
-  type PackageData,
+  type TierData,
 } from '@/lib/tenant.client';
 import 'react-day-picker/style.css';
 
@@ -54,8 +54,8 @@ interface CustomerDetails {
 }
 
 interface DateBookingWizardProps {
-  /** The package to book */
-  package: PackageData;
+  /** The tier to book */
+  tier: TierData;
   /** Tenant's public API key */
   tenantApiKey: string;
   /** Tenant slug for redirect */
@@ -87,7 +87,7 @@ const DAY_PICKER_STYLE = {
 // =============================================================================
 
 interface ConfirmStepProps {
-  pkg: PackageData;
+  pkg: TierData;
 }
 
 const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
@@ -96,7 +96,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
       <CardTitle className="text-2xl">Confirm Your Selection</CardTitle>
     </CardHeader>
     <CardContent className="space-y-6">
-      {/* Package Hero */}
+      {/* Tier Hero */}
       {pkg.photoUrl && (
         <div className="relative h-48 rounded-xl overflow-hidden">
           <Image
@@ -109,7 +109,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
         </div>
       )}
 
-      {/* Package Details */}
+      {/* Tier Details */}
       <div className="space-y-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-900">{pkg.title}</h3>
@@ -261,7 +261,7 @@ const DetailsStep = React.memo(
 DetailsStep.displayName = 'DetailsStep';
 
 interface ReviewStepProps {
-  pkg: PackageData;
+  pkg: TierData;
   selectedDate: Date;
   customerDetails: CustomerDetails;
 }
@@ -273,9 +273,9 @@ const ReviewStep = React.memo(({ pkg, selectedDate, customerDetails }: ReviewSte
     </CardHeader>
     <CardContent>
       <div className="space-y-6">
-        {/* Package Summary */}
+        {/* Service Summary */}
         <div className="border-b border-neutral-200 pb-4">
-          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Package</h3>
+          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Service</h3>
           <p className="text-lg font-semibold text-neutral-900">{pkg.title}</p>
         </div>
 
@@ -319,7 +319,7 @@ ReviewStep.displayName = 'ReviewStep';
 // =============================================================================
 
 export function DateBookingWizard({
-  package: pkg,
+  tier: pkg,
   tenantApiKey,
   tenantSlug: _tenantSlug,
   onBookingStart,
@@ -469,7 +469,7 @@ export function DateBookingWizard({
       const dateStr = selectedDate.toISOString().split('T')[0];
 
       const result = await createDateBooking(tenantApiKey, {
-        packageId: pkg.id,
+        tierId: pkg.id,
         date: dateStr,
         customerName: customerDetails.name.trim(),
         customerEmail: customerDetails.email.trim(),

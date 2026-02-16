@@ -4,9 +4,9 @@ import { useState, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 
 /**
- * Package photo data structure
+ * Tier photo data structure
  */
-export interface PackagePhoto {
+export interface TierPhoto {
   url: string;
   filename: string;
   size: number;
@@ -25,9 +25,9 @@ interface ApiErrorResponse {
  * Hook configuration
  */
 interface UsePhotoUploadProps {
-  packageId: string;
-  initialPhotos?: PackagePhoto[];
-  onPhotosChange?: (photos: PackagePhoto[]) => void;
+  tierId: string;
+  initialPhotos?: TierPhoto[];
+  onPhotosChange?: (photos: TierPhoto[]) => void;
 }
 
 /**
@@ -43,14 +43,14 @@ interface UploadProgress {
  * Photo upload state and operations hook
  *
  * Handles file validation, upload progress, and photo management
- * for package photos via the tenant-admin API proxy.
+ * for tier photos via the tenant-admin API proxy.
  */
 export function usePhotoUpload({
-  packageId,
+  tierId,
   initialPhotos = [],
   onPhotosChange,
 }: UsePhotoUploadProps) {
-  const [photos, setPhotos] = useState<PackagePhoto[]>(initialPhotos);
+  const [photos, setPhotos] = useState<TierPhoto[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function usePhotoUpload({
    * Update photos state and notify parent
    */
   const updatePhotos = useCallback(
-    (newPhotos: PackagePhoto[]) => {
+    (newPhotos: TierPhoto[]) => {
       setPhotos(newPhotos);
       onPhotosChange?.(newPhotos);
     },
@@ -99,7 +99,7 @@ export function usePhotoUpload({
 
       // Check photo count
       if (photos.length >= MAX_PHOTOS) {
-        return `Maximum ${MAX_PHOTOS} photos per package`;
+        return `Maximum ${MAX_PHOTOS} photos per tier`;
       }
 
       return null;
@@ -131,7 +131,7 @@ export function usePhotoUpload({
         formData.append('photo', file);
 
         // Upload via Next.js API proxy (handles auth automatically)
-        const response = await fetch(`/api/tenant-admin/packages/${packageId}/photos`, {
+        const response = await fetch(`/api/tenant-admin/tiers/${tierId}/photos`, {
           method: 'POST',
           body: formData,
         });
@@ -147,11 +147,9 @@ export function usePhotoUpload({
           if (response.status === 401) {
             throw new Error('Unauthorized: Please log in again');
           } else if (response.status === 403) {
-            throw new Error(
-              'Forbidden: You do not have permission to upload photos to this package'
-            );
+            throw new Error('Forbidden: You do not have permission to upload photos to this tier');
           } else if (response.status === 404) {
-            throw new Error('Package not found');
+            throw new Error('Tier not found');
           } else if (response.status === 413) {
             throw new Error('File too large (maximum 5MB)');
           } else if (response.status === 400) {
@@ -161,14 +159,14 @@ export function usePhotoUpload({
           }
         }
 
-        const uploadResult: PackagePhoto = await response.json();
+        const uploadResult: TierPhoto = await response.json();
         const newPhotos = [...photos, uploadResult];
         updatePhotos(newPhotos);
         showSuccess('Photo uploaded successfully');
       } catch (err) {
         logger.error('Upload error', {
           message: err instanceof Error ? err.message : 'Unknown error',
-          packageId,
+          tierId,
           component: 'usePhotoUpload',
         });
         setError(err instanceof Error ? err.message : 'An error occurred while uploading');
@@ -177,20 +175,20 @@ export function usePhotoUpload({
         setUploadProgress(null);
       }
     },
-    [packageId, photos, validateFile, updatePhotos, showSuccess]
+    [tierId, photos, validateFile, updatePhotos, showSuccess]
   );
 
   /**
    * Delete photo from server
    */
   const deletePhoto = useCallback(
-    async (photo: PackagePhoto) => {
+    async (photo: TierPhoto) => {
       setIsDeleting(true);
       setError(null);
 
       try {
         const response = await fetch(
-          `/api/tenant-admin/packages/${packageId}/photos/${encodeURIComponent(photo.filename)}`,
+          `/api/tenant-admin/tiers/${tierId}/photos/${encodeURIComponent(photo.filename)}`,
           {
             method: 'DELETE',
           }
@@ -205,7 +203,7 @@ export function usePhotoUpload({
             throw new Error('Unauthorized: Please log in again');
           } else if (response.status === 403) {
             throw new Error(
-              'Forbidden: You do not have permission to delete photos from this package'
+              'Forbidden: You do not have permission to delete photos from this tier'
             );
           } else if (response.status === 404) {
             throw new Error('Photo not found');
@@ -220,7 +218,7 @@ export function usePhotoUpload({
       } catch (err) {
         logger.error('Delete error', {
           message: err instanceof Error ? err.message : 'Unknown error',
-          packageId,
+          tierId,
           filename: photo.filename,
           component: 'usePhotoUpload',
         });
@@ -229,7 +227,7 @@ export function usePhotoUpload({
         setIsDeleting(false);
       }
     },
-    [packageId, photos, updatePhotos, showSuccess]
+    [tierId, photos, updatePhotos, showSuccess]
   );
 
   /**

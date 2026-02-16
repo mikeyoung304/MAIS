@@ -1,9 +1,7 @@
 /**
  * Prisma Catalog Repository Adapter
  *
- * Phase 2 Migration: All queries use prisma.tier.* instead of prisma.package.*
- * All method names use Tier nomenclature (no Package references).
- * The Package model still exists in schema.prisma (dropped in Phase 5) but is never queried.
+ * All queries use prisma.tier.* — Package model was dropped in Phase 3.1.
  */
 
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';

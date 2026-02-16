@@ -2,35 +2,45 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, AlertCircle } from 'lucide-react';
-import { getTenantBySlug, getTenantPackageBySlug, TenantNotFoundError } from '@/lib/tenant';
+import { getTenantByDomain, getTenantTierBySlug, TenantNotFoundError } from '@/lib/tenant';
 import { DateBookingWizard } from '@/components/booking/DateBookingWizard';
 
 interface BookingPageProps {
-  params: Promise<{ slug: string; packageSlug: string }>;
+  params: Promise<{ tierSlug: string }>;
+  searchParams: Promise<{ domain?: string }>;
 }
 
 /**
- * Date Booking Page
+ * Custom Domain Date Booking Page
  *
- * Displays the booking wizard for a specific package.
- * This page is public (no authentication required) to allow
- * visitors to book appointments on tenant storefronts.
+ * Handles booking for custom domain requests.
+ * The domain is passed via searchParams from middleware rewrite.
  *
- * Route: /t/[slug]/book/[packageSlug]
+ * Route: /t/_domain/book/[tierSlug]?domain=customdomain.com
  */
 
-// Generate SEO metadata
-export async function generateMetadata({ params }: BookingPageProps): Promise<Metadata> {
-  const { slug, packageSlug } = await params;
+export async function generateMetadata({
+  params,
+  searchParams,
+}: BookingPageProps): Promise<Metadata> {
+  const { tierSlug } = await params;
+  const { domain } = await searchParams;
+
+  if (!domain) {
+    return {
+      title: 'Invalid Request',
+      robots: { index: false, follow: false },
+    };
+  }
 
   try {
-    const tenant = await getTenantBySlug(slug);
-    const pkg = await getTenantPackageBySlug(tenant.apiKeyPublic, packageSlug);
+    const tenant = await getTenantByDomain(domain);
+    const pkg = await getTenantTierBySlug(tenant.apiKeyPublic, tierSlug);
 
     if (!pkg) {
       return {
-        title: 'Package Not Found',
-        description: 'The requested package could not be found.',
+        title: 'Service Not Found',
+        description: 'The requested service could not be found.',
         robots: { index: false, follow: false },
       };
     }
@@ -56,16 +66,20 @@ export async function generateMetadata({ params }: BookingPageProps): Promise<Me
   }
 }
 
-export default async function BookingPage({ params }: BookingPageProps) {
-  const { slug, packageSlug } = await params;
+export default async function DomainBookingPage({ params, searchParams }: BookingPageProps) {
+  const { tierSlug } = await params;
+  const { domain } = await searchParams;
 
-  // Fetch tenant and package data
+  if (!domain) {
+    notFound();
+  }
+
   let tenant;
   let pkg;
 
   try {
-    tenant = await getTenantBySlug(slug);
-    pkg = await getTenantPackageBySlug(tenant.apiKeyPublic, packageSlug);
+    tenant = await getTenantByDomain(domain);
+    pkg = await getTenantTierBySlug(tenant.apiKeyPublic, tierSlug);
   } catch (error) {
     if (error instanceof TenantNotFoundError) {
       notFound();
@@ -73,21 +87,17 @@ export default async function BookingPage({ params }: BookingPageProps) {
     throw error;
   }
 
-  // Package not found
   if (!pkg) {
     return (
       <div className="min-h-screen bg-neutral-50 py-12">
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Package Not Found</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Service Not Found</h1>
             <p className="text-neutral-600 mb-6">
-              The package you&apos;re looking for doesn&apos;t exist or has been removed.
+              The service you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
-            <Link
-              href={`/t/${slug}`}
-              className="inline-flex items-center text-sage hover:underline"
-            >
+            <Link href="/" className="inline-flex items-center text-sage hover:underline">
               <ChevronLeft className="w-4 h-4 mr-1" />
               Back to {tenant.name}
             </Link>
@@ -97,23 +107,20 @@ export default async function BookingPage({ params }: BookingPageProps) {
     );
   }
 
-  // Package not active (isActive is new, active is legacy)
+  // Check isActive (new) or active (legacy)
   if (!(pkg.isActive ?? pkg.active)) {
     return (
       <div className="min-h-screen bg-neutral-50 py-12">
         <div className="container max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Package Unavailable</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Service Unavailable</h1>
             <p className="text-neutral-600 mb-6">
-              This package is currently not available for booking.
+              This service is currently not available for booking.
             </p>
-            <Link
-              href={`/t/${slug}`}
-              className="inline-flex items-center text-sage hover:underline"
-            >
+            <Link href="/" className="inline-flex items-center text-sage hover:underline">
               <ChevronLeft className="w-4 h-4 mr-1" />
-              View Available Packages
+              View Available Services
             </Link>
           </div>
         </div>
@@ -121,7 +128,6 @@ export default async function BookingPage({ params }: BookingPageProps) {
     );
   }
 
-  // Check booking type - this wizard only handles DATE type
   const bookingType = pkg.bookingType || 'DATE';
   if (bookingType !== 'DATE') {
     return (
@@ -131,10 +137,10 @@ export default async function BookingPage({ params }: BookingPageProps) {
             <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-neutral-900 mb-2">Different Booking Type</h1>
             <p className="text-neutral-600 mb-6">
-              This package requires appointment scheduling. Please use the appointment booking flow.
+              This service requires appointment scheduling. Please use the appointment booking flow.
             </p>
             <Link
-              href={`/t/${slug}/book`}
+              href="/book"
               className="inline-flex items-center px-6 py-3 bg-sage text-white rounded-lg hover:bg-sage-hover transition-colors"
             >
               Go to Appointment Booking
@@ -147,11 +153,10 @@ export default async function BookingPage({ params }: BookingPageProps) {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
       <div className="bg-white border-b border-neutral-200 py-4">
         <div className="container mx-auto px-4">
           <Link
-            href={`/t/${slug}`}
+            href="/"
             className="inline-flex items-center text-neutral-600 hover:text-sage transition-colors"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
@@ -160,13 +165,11 @@ export default async function BookingPage({ params }: BookingPageProps) {
         </div>
       </div>
 
-      {/* Booking Wizard */}
       <div className="container mx-auto px-4 py-8">
-        <DateBookingWizard package={pkg} tenantApiKey={tenant.apiKeyPublic} tenantSlug={slug} />
+        <DateBookingWizard tier={pkg} tenantApiKey={tenant.apiKeyPublic} tenantSlug={tenant.slug} />
       </div>
     </div>
   );
 }
 
-// ISR: Revalidate every 60 seconds
 export const revalidate = 60;

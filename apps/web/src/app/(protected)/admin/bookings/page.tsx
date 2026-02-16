@@ -18,7 +18,7 @@ interface BookingWithTenant {
   status: 'PENDING' | 'DEPOSIT_PAID' | 'PAID' | 'CONFIRMED' | 'CANCELED' | 'REFUNDED' | 'FULFILLED';
   totalCents: number;
   createdAt: string;
-  packageId: string;
+  tierId: string;
   tenantName?: string;
   tenantSlug?: string;
 }

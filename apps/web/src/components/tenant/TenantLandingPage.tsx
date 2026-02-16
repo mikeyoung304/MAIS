@@ -2,7 +2,7 @@
  * TenantLandingPage - Main landing page component
  *
  * Uses SectionRenderer for flexible section display.
- * Packages are displayed through SegmentPackagesSection which provides
+ * Tiers are displayed through SegmentTiersSection which provides
  * a segment-first browsing experience.
  *
  * Layout:
@@ -15,7 +15,7 @@
 import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant.client';
 import { SectionRenderer } from './SectionRenderer';
-import { SegmentPackagesSection } from './SegmentPackagesSection';
+import { SegmentTiersSection } from './SegmentTiersSection';
 import type { Section, HeroSection, CTASection, PagesConfig } from '@macon/contracts';
 
 interface TenantLandingPageProps {
@@ -38,7 +38,7 @@ interface TenantLandingPageProps {
  *
  * Layout strategy:
  * - Pre-packages: hero + about/text sections (build trust first)
- * - Packages: injected by TenantLandingPage (SegmentPackagesSection)
+ * - Packages: injected by TenantLandingPage (SegmentTiersSection)
  * - Post-packages: testimonials, gallery, FAQ, contact (social proof after seeing offerings)
  * - Final CTA: call-to-action at the bottom
  */
@@ -52,7 +52,7 @@ function buildHomeSections(
     type: 'hero',
     headline: `Welcome to ${tenantName}`,
     subheadline: 'Book your session today.',
-    ctaText: 'View Packages',
+    ctaText: 'View Services',
   };
 
   const homeSections = pages.home.sections;
@@ -63,8 +63,8 @@ function buildHomeSections(
   // Find hero - first section of type 'hero'
   const heroSection = homeSections.find((s): s is HeroSection => s.type === 'hero');
 
-  // Section types that go after packages (social proof after seeing offerings)
-  const postPackageTypes = new Set([
+  // Section types that go after tiers (social proof after seeing offerings)
+  const postTierTypes = new Set([
     'testimonials',
     'gallery',
     'faq',
@@ -82,7 +82,7 @@ function buildHomeSections(
 
   // Build post-sections: everything else except hero, text, and CTA
   // These render after packages in config order
-  const postSections = homeSections.filter((s) => postPackageTypes.has(s.type));
+  const postSections = homeSections.filter((s) => postTierTypes.has(s.type));
 
   return { preSections, postSections, finalCta: ctaSection || null };
 }
@@ -118,7 +118,7 @@ export function TenantLandingPage({
 
       {/* ===== SEGMENT-FIRST PACKAGES SECTION ===== */}
       {/* Shows segments as entry points, expands to reveal tiers when clicked */}
-      <SegmentPackagesSection data={data} basePath={basePath} domainParam={domainParam} />
+      <SegmentTiersSection data={data} basePath={basePath} domainParam={domainParam} />
 
       {/* ===== POST-PACKAGES SECTIONS (Testimonials, Gallery, FAQ) ===== */}
       <SectionRenderer

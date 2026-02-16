@@ -16,7 +16,7 @@ import { API_URL } from '@/lib/config';
 import {
   TenantNotFoundError,
   TenantApiError,
-  type PackageData,
+  type TierData,
   type TenantStorefrontData,
 } from './tenant.client';
 
@@ -27,7 +27,7 @@ export {
   TenantNotFoundError,
   TenantApiError,
   InvalidDomainError,
-  type PackageData,
+  type TierData,
   type SegmentData,
   type TenantStorefrontData,
 } from './tenant.client';
@@ -111,16 +111,16 @@ export const getTenantByDomain = cache(async (domain: string): Promise<TenantPub
 });
 
 /**
- * Fetch tenant packages for storefront display
+ * Fetch tenant tiers for storefront display
  *
  * Requires X-Tenant-Key header for multi-tenant context.
  *
  * @param apiKeyPublic - Tenant's public API key
  * @param bypassCache - If true, skip ISR cache (for preview mode)
- * @returns Array of package DTOs
+ * @returns Array of tier DTOs
  */
-export async function getTenantPackages(apiKeyPublic: string, bypassCache = false) {
-  const url = `${API_URL}/v1/packages`;
+export async function getTenantTiers(apiKeyPublic: string, bypassCache = false) {
+  const url = `${API_URL}/v1/tiers`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -128,13 +128,13 @@ export async function getTenantPackages(apiKeyPublic: string, bypassCache = fals
       Accept: 'application/json',
       'X-Tenant-Key': apiKeyPublic,
     },
-    // P0-FIX: Preview mode needs fresh data to show agent-created packages immediately
+    // P0-FIX: Preview mode needs fresh data to show agent-created tiers immediately
     ...(bypassCache ? { cache: 'no-store' as const } : { next: { revalidate: 60 } }),
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new TenantApiError(`Failed to fetch packages: ${errorBody}`, response.status);
+    throw new TenantApiError(`Failed to fetch tiers: ${errorBody}`, response.status);
   }
 
   return response.json();
@@ -144,7 +144,7 @@ export async function getTenantPackages(apiKeyPublic: string, bypassCache = fals
  * Fetch tenant segments for storefront display
  *
  * Segments are customer types (e.g., "Families", "Corporate", "Personal").
- * Used for tier/package filtering on landing page.
+ * Used for tier filtering on landing page.
  *
  * @param apiKeyPublic - Tenant's public API key
  * @param bypassCache - If true, skip ISR cache (for preview mode)
@@ -174,7 +174,7 @@ export async function getTenantSegments(apiKeyPublic: string, bypassCache = fals
 /**
  * Fetch all storefront data for a tenant in parallel
  *
- * Optimized for SSR - fetches tenant, packages, and segments concurrently.
+ * Optimized for SSR - fetches tenant, tiers, and segments concurrently.
  * Wrapped with React's cache() to deduplicate calls within the same request.
  * This prevents duplicate API calls when both generateMetadata() and page
  * component call this function during the same render.
@@ -187,13 +187,13 @@ export const getTenantStorefrontData = cache(
     // First fetch tenant to get API key
     const tenant = await getTenantBySlug(slug);
 
-    // Then fetch packages and segments in parallel
-    const [packages, segments] = await Promise.all([
-      getTenantPackages(tenant.apiKeyPublic),
+    // Then fetch tiers and segments in parallel
+    const [tiers, segments] = await Promise.all([
+      getTenantTiers(tenant.apiKeyPublic),
       getTenantSegments(tenant.apiKeyPublic),
     ]);
 
-    return { tenant, packages, segments };
+    return { tenant, tiers, segments };
   }
 );
 
@@ -267,15 +267,15 @@ export async function getTenantStorefrontDataWithPreview(
     // Preview mode: fetch draft data
     const tenant = await getTenantPreviewData(slug, previewToken);
 
-    // P0-FIX: Bypass ISR cache in preview mode so agent-created packages/segments appear immediately
+    // P0-FIX: Bypass ISR cache in preview mode so agent-created tiers/segments appear immediately
     // Previously, this used cached functions which caused 60-second delays for showing new data.
     // See: MAIS Investigation Report - "Onboarding Service Updates Not Persisting"
-    const [packages, segments] = await Promise.all([
-      getTenantPackages(tenant.apiKeyPublic, true), // bypassCache=true for preview
+    const [tiers, segments] = await Promise.all([
+      getTenantTiers(tenant.apiKeyPublic, true), // bypassCache=true for preview
       getTenantSegments(tenant.apiKeyPublic, true), // bypassCache=true for preview
     ]);
 
-    return { tenant, packages, segments };
+    return { tenant, tiers, segments };
   }
 
   // Normal mode: use cached function
@@ -283,17 +283,17 @@ export async function getTenantStorefrontDataWithPreview(
 }
 
 /**
- * Fetch a single package by slug
+ * Fetch a single tier by slug
  *
  * @param apiKeyPublic - Tenant's public API key
- * @param packageSlug - Package slug
- * @returns Package data or null if not found
+ * @param tierSlug - Tier slug
+ * @returns Tier data or null if not found
  */
-export async function getTenantPackageBySlug(
+export async function getTenantTierBySlug(
   apiKeyPublic: string,
-  packageSlug: string
-): Promise<PackageData | null> {
-  const url = `${API_URL}/v1/packages/${encodeURIComponent(packageSlug)}`;
+  tierSlug: string
+): Promise<TierData | null> {
+  const url = `${API_URL}/v1/tiers/${encodeURIComponent(tierSlug)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -310,7 +310,7 @@ export async function getTenantPackageBySlug(
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new TenantApiError(`Failed to fetch package: ${errorBody}`, response.status);
+    throw new TenantApiError(`Failed to fetch tier: ${errorBody}`, response.status);
   }
 
   return response.json();
@@ -389,7 +389,7 @@ export async function checkDateAvailability(apiKeyPublic: string, date: string):
 export async function createDateBooking(
   apiKeyPublic: string,
   bookingData: {
-    packageId: string;
+    tierId: string;
     date: string;
     customerName: string;
     customerEmail: string;
@@ -535,7 +535,7 @@ export async function getProjectByIdForTenant(
     },
     booking: {
       eventDate: data.booking?.date || data.booking?.startTime || data.createdAt,
-      serviceName: data.booking?.package?.name || 'Service',
+      serviceName: data.booking?.tier?.name || 'Service',
       customerName: data.booking?.customer?.name || data.customerName || 'Customer',
     },
     pendingRequests: (data.requests || [])
@@ -688,7 +688,7 @@ export async function getBookingById(
   coupleName: string;
   email: string;
   eventDate: string;
-  packageId: string;
+  tierId: string;
   addOnIds: string[];
   totalCents: number;
   status: string;

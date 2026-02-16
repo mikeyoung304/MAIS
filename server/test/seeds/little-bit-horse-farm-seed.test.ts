@@ -3,9 +3,9 @@
  *
  * Tests:
  * - Segment creation (3 segments: Wellness, Elopements, Weekend Getaways)
- * - 9 packages (3 per segment, tier_1/tier_2/tier_3)
+ * - 9 tiers (3 per segment)
  * - 33 add-ons creation (segment-scoped)
- * - PackageAddOn links (99 total)
+ * - TierAddOn links (99 total)
  * - Idempotency (safe to run multiple times)
  */
 
@@ -79,58 +79,55 @@ describe('Little Bit Horse Farm Seed', () => {
     });
   });
 
-  describe('Package Creation (9 Total - 3 per segment)', () => {
-    it('should create 9 packages (3 per segment)', async () => {
+  describe('Tier Creation (9 Total - 3 per segment)', () => {
+    it('should create 9 tiers (3 per segment)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.package.upsert).toHaveBeenCalledTimes(9);
+      expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(9);
     });
 
-    it('should create Grounding Reset (tier_1) at $450', async () => {
+    it('should create Grounding Reset at $450', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      const calls = mockPrisma.package.upsert.mock.calls;
+      const calls = mockPrisma.tier.upsert.mock.calls;
       const groundingReset = calls.find((c) => c[0].where.tenantId_slug.slug === 'grounding-reset');
 
       expect(groundingReset).toBeDefined();
       expect(groundingReset![0].create.name).toBe('The Grounding Reset');
-      expect(groundingReset![0].create.basePrice).toBe(45000); // $450
-      expect(groundingReset![0].create.grouping).toBe('tier_1');
-      expect(groundingReset![0].create.groupingOrder).toBe(1);
+      expect(groundingReset![0].create.priceCents).toBe(45000); // $450
+      expect(groundingReset![0].create.sortOrder).toBe(1);
     });
 
-    it('should create Team Recharge (tier_2) at $650', async () => {
+    it('should create Team Recharge at $650', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      const calls = mockPrisma.package.upsert.mock.calls;
+      const calls = mockPrisma.tier.upsert.mock.calls;
       const teamRecharge = calls.find((c) => c[0].where.tenantId_slug.slug === 'team-recharge');
 
       expect(teamRecharge).toBeDefined();
       expect(teamRecharge![0].create.name).toBe('The Team Recharge');
-      expect(teamRecharge![0].create.basePrice).toBe(65000); // $650
-      expect(teamRecharge![0].create.grouping).toBe('tier_2');
-      expect(teamRecharge![0].create.groupingOrder).toBe(2);
+      expect(teamRecharge![0].create.priceCents).toBe(65000); // $650
+      expect(teamRecharge![0].create.sortOrder).toBe(2);
     });
 
-    it('should create Executive Reset (tier_3) at $950', async () => {
+    it('should create Executive Reset at $950', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      const calls = mockPrisma.package.upsert.mock.calls;
+      const calls = mockPrisma.tier.upsert.mock.calls;
       const executiveReset = calls.find((c) => c[0].where.tenantId_slug.slug === 'executive-reset');
 
       expect(executiveReset).toBeDefined();
       expect(executiveReset![0].create.name).toBe('The Executive Reset');
-      expect(executiveReset![0].create.basePrice).toBe(95000); // $950
-      expect(executiveReset![0].create.grouping).toBe('tier_3');
-      expect(executiveReset![0].create.groupingOrder).toBe(3);
+      expect(executiveReset![0].create.priceCents).toBe(95000); // $950
+      expect(executiveReset![0].create.sortOrder).toBe(3);
     });
   });
 
@@ -211,17 +208,17 @@ describe('Little Bit Horse Farm Seed', () => {
     });
   });
 
-  describe('PackageAddOn Links', () => {
-    it('should create 99 package-addon links (54 wellness + 12 elopement + 33 weekend)', async () => {
+  describe('TierAddOn Links', () => {
+    it('should create 99 tier-addon links (54 wellness + 12 elopement + 33 weekend)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      // 18 add-ons × 3 wellness packages = 54
-      // 4 add-ons × 3 elopement packages = 12
-      // 11 add-ons × 3 weekend packages = 33
+      // 18 add-ons × 3 wellness tiers = 54
+      // 4 add-ons × 3 elopement tiers = 12
+      // 11 add-ons × 3 weekend tiers = 33
       // Total = 99
-      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalledTimes(99);
+      expect(mockPrisma.tierAddOn.upsert).toHaveBeenCalledTimes(99);
     });
   });
 
@@ -231,9 +228,9 @@ describe('Little Bit Horse Farm Seed', () => {
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      // Should delete in order: packageAddOn, package, addOn, segment
-      expect(mockPrisma.packageAddOn.deleteMany).toHaveBeenCalled();
-      expect(mockPrisma.package.deleteMany).toHaveBeenCalled();
+      // Should delete in order: tierAddOn, tier, addOn, segment
+      expect(mockPrisma.tierAddOn.deleteMany).toHaveBeenCalled();
+      expect(mockPrisma.tier.deleteMany).toHaveBeenCalled();
       expect(mockPrisma.addOn.deleteMany).toHaveBeenCalled();
       expect(mockPrisma.segment.deleteMany).toHaveBeenCalled();
     });
@@ -333,8 +330,8 @@ function createMockPrisma(
     tenantId: mockTenant.id,
   };
 
-  const mockPackage = {
-    id: 'pkg-1',
+  const mockTier = {
+    id: 'tier-1',
     slug: 'grounding-reset',
     tenantId: mockTenant.id,
   };
@@ -354,16 +351,16 @@ function createMockPrisma(
       upsert: vi.fn().mockResolvedValue(mockSegment),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
-    package: {
-      upsert: vi.fn().mockResolvedValue(mockPackage),
+    tier: {
+      upsert: vi.fn().mockResolvedValue(mockTier),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     addOn: {
       upsert: vi.fn().mockResolvedValue(mockAddOn),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
-    packageAddOn: {
-      upsert: vi.fn().mockResolvedValue({ packageId: mockPackage.id, addOnId: mockAddOn.id }),
+    tierAddOn: {
+      upsert: vi.fn().mockResolvedValue({ tierId: mockTier.id, addOnId: mockAddOn.id }),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     blackoutDate: {

@@ -9,9 +9,9 @@ import type { PrismaClient } from '../../src/generated/prisma/client';
 import { logger } from '../../src/lib/core/logger';
 import {
   createOrUpdateTenant,
-  createOrUpdatePackages,
+  createOrUpdateTiers,
   createOrUpdateAddOns,
-  linkAddOnsToPackage,
+  linkAddOnsToTier,
 } from './utils';
 
 // Fixed keys for E2E tests - NEVER use in production
@@ -31,7 +31,7 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
   }
 
   // Wrap all seed operations in a transaction to prevent partial data on failure
-  logger.info({ slug: E2E_TENANT_SLUG, operations: 6 }, 'Starting seed transaction');
+  logger.info({ slug: E2E_TENANT_SLUG, operations: 7 }, 'Starting seed transaction');
   const startTime = Date.now();
 
   await prisma.$transaction(
@@ -52,23 +52,39 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
       logger.info(`E2E test tenant created: ${tenant.name} (${tenant.slug})`);
       logger.info(`Public Key: ${E2E_PUBLIC_KEY}`);
 
-      // Create minimal packages for E2E tests using shared utility
-      const [starter, growth] = await createOrUpdatePackages(tx, tenant.id, [
+      // Create a default segment for E2E tiers
+      const segment = await tx.segment.upsert({
+        where: { tenantId_slug: { tenantId: tenant.id, slug: 'general' } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          slug: 'general',
+          name: 'General',
+          heroTitle: 'Our Services',
+          sortOrder: 0,
+          active: true,
+        },
+      });
+
+      // Create minimal tiers for E2E tests using shared utility
+      const [starter, growth] = await createOrUpdateTiers(tx, tenant.id, segment.id, [
         {
           slug: 'starter',
-          name: 'Starter Package',
-          description: 'Basic package for E2E testing',
-          basePrice: 25000,
+          name: 'Starter',
+          description: 'Basic tier for E2E testing',
+          priceCents: 25000,
+          sortOrder: 1,
         },
         {
           slug: 'growth',
-          name: 'Growth Package',
-          description: 'Growth package for E2E testing',
-          basePrice: 50000,
+          name: 'Growth',
+          description: 'Growth tier for E2E testing',
+          priceCents: 50000,
+          sortOrder: 2,
         },
       ]);
 
-      logger.info(`E2E packages created: ${[starter, growth].length}`);
+      logger.info(`E2E tiers created: ${[starter, growth].length}`);
 
       // Create one add-on for testing using shared utility
       const [addOn] = await createOrUpdateAddOns(tx, tenant.id, [
@@ -80,10 +96,10 @@ export async function seedE2E(prisma: PrismaClient): Promise<void> {
         },
       ]);
 
-      // Link add-on to starter package using shared utility
-      await linkAddOnsToPackage(tx, starter.id, [addOn.id]);
+      // Link add-on to starter tier using shared utility
+      await linkAddOnsToTier(tx, starter.id, [addOn.id]);
 
-      logger.info('E2E add-on linked to starter package');
+      logger.info('E2E add-on linked to starter tier');
     },
     { timeout: 60000 }
   ); // 60 second timeout for large seed operations

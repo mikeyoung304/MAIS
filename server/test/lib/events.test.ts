@@ -19,7 +19,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: ['Album', 'Drone Shots'],
         totalCents: 250000,
       };
@@ -51,7 +51,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 150000,
       };
@@ -74,7 +74,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -97,7 +97,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -145,7 +145,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -176,7 +176,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -201,7 +201,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -229,7 +229,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -257,7 +257,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -309,7 +309,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -337,7 +337,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -364,7 +364,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };
@@ -386,7 +386,7 @@ describe('InProcessEventEmitter', () => {
         email: 'customer@example.com',
         coupleName: 'John & Jane Doe',
         eventDate: '2024-06-15',
-        packageTitle: 'Wedding Photography',
+        tierName: 'Wedding Photography',
         addOnTitles: [],
         totalCents: 250000,
       };

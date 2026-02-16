@@ -30,7 +30,7 @@ interface StickyMobileCTAProps {
  * />
  */
 export function StickyMobileCTA({
-  ctaText = 'View Packages',
+  ctaText = 'View Services',
   href = '#packages',
   observeElementId = 'main-content',
 }: StickyMobileCTAProps) {

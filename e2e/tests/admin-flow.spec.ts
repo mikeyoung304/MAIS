@@ -6,11 +6,11 @@ import { test, expect } from '@playwright/test';
  * Tests the admin dashboard functionality:
  * 1. Admin login
  * 2. View dashboard metrics
- * 3. Create a test package
- * 4. Edit the package
+ * 3. Create a test tier
+ * 4. Edit the tier
  * 5. Add an add-on
  * 6. Create a blackout date
- * 7. Clean up (delete package)
+ * 7. Clean up (delete tier)
  *
  * Environment Variables:
  * - E2E_ADMIN_EMAIL: Admin email (default: admin@example.com)
@@ -54,16 +54,16 @@ test.describe('Admin Flow', () => {
     // 6. Verify metrics cards are visible
     await expect(page.getByText('Total Bookings')).toBeVisible();
     await expect(page.getByText('Total Revenue')).toBeVisible();
-    await expect(page.getByText('Total Packages')).toBeVisible();
+    await expect(page.getByText('Total Tiers')).toBeVisible();
     await expect(page.getByText('Blackout Dates')).toBeVisible();
 
     // 7. Verify tabs are present
     await expect(page.getByRole('button', { name: 'Bookings' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Blackouts' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Packages' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Tiers' })).toBeVisible();
   });
 
-  test('admin can manage packages', async ({ page }) => {
+  test('admin can manage tiers', async ({ page }) => {
     // Login first
     await page.goto('/login');
     await page.fill('#email', ADMIN_EMAIL);
@@ -72,69 +72,66 @@ test.describe('Admin Flow', () => {
     await page.waitForURL('/admin/dashboard', { timeout: 10000 });
     await page.waitForLoadState('domcontentloaded');
 
-    // 1. Click "Packages" tab
-    await page.getByRole('button', { name: 'Packages' }).click();
+    // 1. Click "Tiers" tab
+    await page.getByRole('button', { name: 'Tiers' }).click();
 
-    // 2. Click "Create Package" button
-    await page.getByRole('button', { name: 'Create Package' }).click();
+    // 2. Click "Create Tier" button
+    await page.getByRole('button', { name: 'Create Tier' }).click();
 
-    // Verify package form is visible
-    await expect(page.getByRole('heading', { name: /Create New Package/i })).toBeVisible();
+    // Verify tier form is visible
+    await expect(page.getByRole('heading', { name: /Create New Tier/i })).toBeVisible();
 
-    // 3. Fill package form
-    await page.fill('#slug', 'e2e-test-package');
-    await page.fill('#title', 'E2E Test Package');
-    await page.fill(
-      'textarea#description',
-      'This is a test package created by E2E automation tests'
-    );
+    // 3. Fill tier form
+    await page.fill('#slug', 'e2e-test-tier');
+    await page.fill('#title', 'E2E Test Tier');
+    await page.fill('textarea#description', 'This is a test tier created by E2E automation tests');
     await page.fill('#priceCents', '50000'); // $500.00
 
-    // 4. Click "Create Package" button (submit form)
-    await page.getByRole('button', { name: /Create Package/i, exact: true }).click();
+    // 4. Click "Create Tier" button (submit form)
+    await page.getByRole('button', { name: /Create Tier/i, exact: true }).click();
 
     // 5. Wait for success message
-    await expect(page.getByText(/Package created successfully/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Tier created successfully/i)).toBeVisible({ timeout: 5000 });
 
-    // 6. Verify package appears in the list
-    await expect(page.getByText('E2E Test Package')).toBeVisible();
-    await expect(page.getByText('e2e-test-package')).toBeVisible();
+    // 6. Verify tier appears in the list
+    await expect(page.getByText('E2E Test Tier')).toBeVisible();
+    await expect(page.getByText('e2e-test-tier')).toBeVisible();
 
-    // 7. Test editing the package
-    // Find the Edit button near the E2E Test Package
-    const packageCard = page.locator('text=E2E Test Package').locator('../..');
-    await packageCard.getByRole('button', { name: 'Edit' }).click();
+    // 7. Test editing the tier
+    // Find the Edit button near the E2E Test Tier
+    const tierCard = page.locator('text=E2E Test Tier').locator('../..');
+    await tierCard.getByRole('button', { name: 'Edit' }).click();
 
     // Verify edit form loaded with data
-    await expect(page.getByRole('heading', { name: /Edit Package/i })).toBeVisible();
-    await expect(page.locator('#title')).toHaveValue('E2E Test Package');
+    await expect(page.getByRole('heading', { name: /Edit Tier/i })).toBeVisible();
+    await expect(page.locator('#title')).toHaveValue('E2E Test Tier');
 
     // Update the title
-    await page.fill('#title', 'E2E Test Package (Updated)');
-    await page.getByRole('button', { name: /Update Package/i }).click();
+    await page.fill('#title', 'E2E Test Tier (Updated)');
+    await page.getByRole('button', { name: /Update Tier/i }).click();
 
     // Wait for success message
-    await expect(page.getByText(/Package updated successfully/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Tier updated successfully/i)).toBeVisible({ timeout: 5000 });
 
-    // Verify updated package appears
-    await expect(page.getByText('E2E Test Package (Updated)')).toBeVisible();
+    // Verify updated tier appears
+    await expect(page.getByText('E2E Test Tier (Updated)')).toBeVisible();
 
     // 8. Test adding an add-on
-    // Find the package card again
-    const updatedPackageCard = page.locator('text=E2E Test Package (Updated)').locator('../..');
+    // Find the tier card again
+    const updatedTierCard = page.locator('text=E2E Test Tier (Updated)').locator('../..');
 
     // Click "Show" to expand add-ons section
-    await updatedPackageCard.getByRole('button', { name: 'Show' }).click();
+    await updatedTierCard.getByRole('button', { name: 'Show' }).click();
 
     // Click "Add Add-on" button
-    await updatedPackageCard.getByRole('button', { name: 'Add Add-on' }).click();
+    await updatedTierCard.getByRole('button', { name: 'Add Add-on' }).click();
 
     // Fill add-on form
     await page.fill('#addOnTitle', 'E2E Test Add-on');
     await page.fill('#addOnPrice', '10000'); // $100.00
 
     // Click "Add" button to create add-on
-    await updatedPackageCard.getByRole('button', { name: 'Add', exact: true }).click();
+    await updatedTierCard.getByRole('button', { name: 'Add', exact: true }).click();
 
     // Wait for success message
     await expect(page.getByText(/Add-on created successfully/i)).toBeVisible({ timeout: 5000 });
@@ -142,19 +139,19 @@ test.describe('Admin Flow', () => {
     // Verify add-on appears in the list
     await expect(page.getByText('E2E Test Add-on')).toBeVisible();
 
-    // 9. Delete the test package (cleanup)
+    // 9. Delete the test tier (cleanup)
     // Find the Delete button
-    const finalPackageCard = page.locator('text=E2E Test Package (Updated)').locator('../..');
+    const finalTierCard = page.locator('text=E2E Test Tier (Updated)').locator('../..');
 
     // Set up dialog handler before clicking delete
     page.on('dialog', (dialog) => dialog.accept());
-    await finalPackageCard.getByRole('button', { name: 'Delete' }).click();
+    await finalTierCard.getByRole('button', { name: 'Delete' }).click();
 
     // Wait for success message
-    await expect(page.getByText(/Package deleted successfully/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Tier deleted successfully/i)).toBeVisible({ timeout: 5000 });
 
-    // Verify package is removed from list
-    await expect(page.getByText('E2E Test Package (Updated)')).not.toBeVisible();
+    // Verify tier is removed from list
+    await expect(page.getByText('E2E Test Tier (Updated)')).not.toBeVisible();
   });
 
   test('admin can manage blackout dates', async ({ page }) => {
@@ -209,7 +206,7 @@ test.describe('Admin Flow', () => {
     // Verify table columns
     await expect(page.getByText('Couple')).toBeVisible();
     await expect(page.getByText('Date')).toBeVisible();
-    await expect(page.getByText('Package')).toBeVisible();
+    await expect(page.getByText('Tier')).toBeVisible();
     await expect(page.getByText('Total')).toBeVisible();
 
     // Verify Export CSV button exists

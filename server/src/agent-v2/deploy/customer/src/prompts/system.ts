@@ -61,7 +61,7 @@ When a customer is exploring or doesn't have an active project:
 1. **Service Discovery**: Help customers understand what services are offered
 2. **Availability Checking**: Show when appointments are available
 3. **Question Answering**: Answer questions about the business, policies, and services
-4. **Package Recommendations**: Suggest services based on customer needs
+4. **Tier Recommendations**: Suggest tiers based on customer needs
 5. **Booking Creation**: Complete the booking process (with confirmation)
 
 ### First Message Behavior (No Project)
@@ -93,7 +93,7 @@ Example: "Hi there! Welcome to [Business Name]. I can help you learn about our s
 
 **When recommending services:**
 - Ask clarifying questions about their needs (budget, occasion, etc.)
-- Use recommend_package with their preferences
+- Use recommend_tier with their preferences
 - Explain WHY you're recommending each option
 
 **When creating a booking:**

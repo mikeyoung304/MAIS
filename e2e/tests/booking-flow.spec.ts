@@ -3,10 +3,10 @@ import { test, expect } from '@playwright/test';
 /**
  * E2E Test: Complete Booking Flow
  *
- * Tests the happy path for a customer booking a wedding package:
+ * Tests the happy path for a customer booking a wedding tier:
  * 1. Visit homepage
- * 2. Navigate to package catalog
- * 3. Select a package
+ * 2. Navigate to tier catalog
+ * 3. Select a tier
  * 4. Choose a date
  * 5. Fill contact details
  * 6. Proceed to checkout
@@ -30,19 +30,19 @@ test.describe('Booking Flow', () => {
     // Wait for packages section to be visible
     await expect(page.locator('#packages')).toBeInViewport();
 
-    // 3. Wait for packages to load (API call completes)
+    // 3. Wait for tiers to load (API call completes)
     await page.waitForLoadState('networkidle');
 
-    // Wait for packages to be rendered
-    const firstPackageLink = page.locator('a[href*="/package/"]').first();
-    await expect(firstPackageLink).toBeVisible({ timeout: 10000 });
-    await firstPackageLink.click();
+    // Wait for tiers to be rendered
+    const firstTierLink = page.locator('a[href*="/book/"]').first();
+    await expect(firstTierLink).toBeVisible({ timeout: 10000 });
+    await firstTierLink.click();
 
-    // 4. Verify package details page loaded
-    await expect(page).toHaveURL(/\/package\/.+/);
+    // 4. Verify tier details page loaded
+    await expect(page).toHaveURL(/\/book\/.+/);
     await page.waitForLoadState('networkidle');
 
-    // Verify package title and details are visible
+    // Verify tier title and details are visible
     await expect(page.locator('h1').first()).toBeVisible();
 
     // 5. Select a date (7 days from now to avoid blackouts)
@@ -114,14 +114,14 @@ test.describe('Booking Flow', () => {
   });
 
   test('validation prevents checkout without required fields', async ({ page }) => {
-    // Navigate to a package page
+    // Navigate to a tier page
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Wait for packages to render
-    const firstPackageLink = page.locator('a[href*="/package/"]').first();
-    await expect(firstPackageLink).toBeVisible({ timeout: 10000 });
-    await firstPackageLink.click();
+    // Wait for tiers to render
+    const firstTierLink = page.locator('a[href*="/book/"]').first();
+    await expect(firstTierLink).toBeVisible({ timeout: 10000 });
+    await firstTierLink.click();
     await page.waitForLoadState('networkidle');
 
     // Verify checkout button is disabled without date and contact info

@@ -1,5 +1,5 @@
 /**
- * La Petit Mariage seed - Wedding & Elopement packages at Tanglewood Art Studios
+ * La Petit Mariage seed - Wedding & Elopement tiers at Tanglewood Art Studios
  *
  * Use for: Production tenant setup for La Petit Mariage wedding business
  *
@@ -12,7 +12,7 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Package, AddOn } from '../../src/generated/prisma/client';
+import type { PrismaClient, Segment, Tier, AddOn } from '../../src/generated/prisma/client';
 import { BookingType } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
@@ -91,9 +91,9 @@ async function createOrUpdateSegment(
 }
 
 /**
- * Create or update a package with segment association
+ * Create or update a tier with segment association
  */
-async function createOrUpdatePackageWithSegment(
+async function createOrUpdateTierWithSegment(
   prisma: PrismaOrTransaction,
   tenantId: string,
   segmentId: string,
@@ -101,20 +101,18 @@ async function createOrUpdatePackageWithSegment(
     slug: string;
     name: string;
     description: string;
-    basePrice: number; // in cents
-    grouping?: string;
-    groupingOrder?: number;
+    priceCents: number; // in cents
+    sortOrder: number;
     photos?: Array<{ url: string; filename: string; size: number; order: number }>;
     bookingType?: BookingType;
   }
-): Promise<Package> {
+): Promise<Tier> {
   const {
     slug,
     name,
     description,
-    basePrice,
-    grouping,
-    groupingOrder,
+    priceCents,
+    sortOrder,
     photos = [],
     bookingType = BookingType.DATE,
   } = options;
@@ -124,15 +122,15 @@ async function createOrUpdatePackageWithSegment(
     throw new Error(`Invalid bookingType: ${bookingType}`);
   }
 
-  return prisma.package.upsert({
+  return prisma.tier.upsert({
     where: { tenantId_slug: { slug, tenantId } },
     update: {
       name,
       description,
-      basePrice,
+      priceCents,
+      sortOrder,
       segmentId,
-      grouping,
-      groupingOrder,
+      features: JSON.stringify([]),
       photos: JSON.stringify(photos),
       bookingType,
     },
@@ -142,9 +140,9 @@ async function createOrUpdatePackageWithSegment(
       slug,
       name,
       description,
-      basePrice,
-      grouping,
-      groupingOrder,
+      priceCents,
+      sortOrder,
+      features: JSON.stringify([]),
       photos: JSON.stringify(photos),
       bookingType,
     },
@@ -187,19 +185,19 @@ async function createOrUpdateAddOnWithSegment(
 }
 
 /**
- * Link add-ons to a package
+ * Link add-ons to a tier
  */
-async function linkAddOnsToPackage(
+async function linkAddOnsToTier(
   prisma: PrismaOrTransaction,
-  packageId: string,
+  tierId: string,
   addOnIds: string[]
 ): Promise<void> {
   await Promise.all(
     addOnIds.map((addOnId) =>
-      prisma.packageAddOn.upsert({
-        where: { packageId_addOnId: { packageId, addOnId } },
+      prisma.tierAddOn.upsert({
+        where: { tierId_addOnId: { tierId, addOnId } },
         update: {},
-        create: { packageId, addOnId },
+        create: { tierId, addOnId },
       })
     )
   );
@@ -221,7 +219,7 @@ export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
   let secretKeyForLogging: string | null = null;
 
   logger.info(
-    { slug: TENANT_SLUG, operations: 'segments+packages+addons' },
+    { slug: TENANT_SLUG, operations: 'segments+tiers+addons' },
     'Starting La Petit Mariage seed transaction'
   );
   const startTime = Date.now();
@@ -280,28 +278,22 @@ meaningful ceremony that reflects your unique story. Simple, heartfelt, and unfo
 
       logger.info(`Segment created: ${elopementSegment.name}`);
 
-      // Elopement Packages
-      const simpleVows = await createOrUpdatePackageWithSegment(
-        tx,
-        tenant.id,
-        elopementSegment.id,
-        {
-          slug: 'simple-vows',
-          name: 'Simple Vows',
-          description: `A short, sweet "just us" ceremony.
+      // Elopement Tiers
+      const simpleVows = await createOrUpdateTierWithSegment(tx, tenant.id, elopementSegment.id, {
+        slug: 'simple-vows',
+        name: 'Simple Vows',
+        description: `A short, sweet "just us" ceremony.
 
 • 30-minute simple ceremony at Tanglewood Art Studios
 • Choice of secular or spiritual wording
 • Guidance on marriage license + quick timeline review
 
 Perfect for couples who want to keep it simple and meaningful.`,
-          basePrice: 20000, // $200
-          grouping: 'tier_1',
-          groupingOrder: 1,
-        }
-      );
+        priceCents: 20000, // $200
+        sortOrder: 1,
+      });
 
-      const essentialElopement = await createOrUpdatePackageWithSegment(
+      const essentialElopement = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         elopementSegment.id,
@@ -316,13 +308,12 @@ Perfect for couples who want to keep it simple and meaningful.`,
 • Marriage license + timeline support
 
 Everything you need for a beautiful, intimate celebration.`,
-          basePrice: 59500, // $595
-          grouping: 'tier_2',
-          groupingOrder: 2,
+          priceCents: 59500, // $595
+          sortOrder: 2,
         }
       );
 
-      const allInclusiveElopement = await createOrUpdatePackageWithSegment(
+      const allInclusiveElopement = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         elopementSegment.id,
@@ -338,14 +329,13 @@ Everything you need for a beautiful, intimate celebration.`,
 • Keepsake vow books + select prints
 
 The ultimate stress-free elopement experience.`,
-          basePrice: 79500, // $795
-          grouping: 'tier_3',
-          groupingOrder: 3,
+          priceCents: 79500, // $795
+          sortOrder: 3,
         }
       );
 
       logger.info(
-        `Elopement packages created: ${[simpleVows, essentialElopement, allInclusiveElopement].length}`
+        `Elopement tiers created: ${[simpleVows, essentialElopement, allInclusiveElopement].length}`
       );
 
       // =====================================================================
@@ -367,8 +357,8 @@ wedding, scaled down to focus on what matters most—your love story.`,
 
       logger.info(`Segment created: ${microWeddingSegment.name}`);
 
-      // Micro Wedding Packages
-      const ceremonyAndPortraits = await createOrUpdatePackageWithSegment(
+      // Micro Wedding Tiers
+      const ceremonyAndPortraits = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         microWeddingSegment.id,
@@ -383,13 +373,12 @@ wedding, scaled down to focus on what matters most—your love story.`,
 • Ceremony coordination and lineup
 
 Perfect for couples planning their own reception elsewhere.`,
-          basePrice: 150000, // $1,500
-          grouping: 'tier_1',
-          groupingOrder: 1,
+          priceCents: 150000, // $1,500
+          sortOrder: 1,
         }
       );
 
-      const microCelebration = await createOrUpdatePackageWithSegment(
+      const microCelebration = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         microWeddingSegment.id,
@@ -405,13 +394,12 @@ Perfect for couples planning their own reception elsewhere.`,
 • Timeline creation + day-of coordination
 
 All the magic of a wedding day, thoughtfully scaled down.`,
-          basePrice: 250000, // $2,500
-          grouping: 'tier_2',
-          groupingOrder: 2,
+          priceCents: 250000, // $2,500
+          sortOrder: 2,
         }
       );
 
-      const allInclusiveMicro = await createOrUpdatePackageWithSegment(
+      const allInclusiveMicro = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         microWeddingSegment.id,
@@ -427,14 +415,13 @@ All the magic of a wedding day, thoughtfully scaled down.`,
 • Full vendor coordination + day-of management
 
 Everything handled, so you can simply enjoy your day.`,
-          basePrice: 350000, // $3,500
-          grouping: 'tier_3',
-          groupingOrder: 3,
+          priceCents: 350000, // $3,500
+          sortOrder: 3,
         }
       );
 
       logger.info(
-        `Micro wedding packages created: ${[ceremonyAndPortraits, microCelebration, allInclusiveMicro].length}`
+        `Micro wedding tiers created: ${[ceremonyAndPortraits, microCelebration, allInclusiveMicro].length}`
       );
 
       // =====================================================================
@@ -456,8 +443,8 @@ handle the details while you focus on making memories.`,
 
       logger.info(`Segment created: ${fullWeddingSegment.name}`);
 
-      // Full Wedding Packages
-      const ceremonyPortraitsFull = await createOrUpdatePackageWithSegment(
+      // Full Wedding Tiers
+      const ceremonyPortraitsFull = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         fullWeddingSegment.id,
@@ -472,13 +459,12 @@ handle the details while you focus on making memories.`,
 • Ceremony planning + coordination
 
 A beautiful start to your celebration.`,
-          basePrice: 250000, // $2,500
-          grouping: 'tier_1',
-          groupingOrder: 1,
+          priceCents: 250000, // $2,500
+          sortOrder: 1,
         }
       );
 
-      const classicWeddingDay = await createOrUpdatePackageWithSegment(
+      const classicWeddingDay = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         fullWeddingSegment.id,
@@ -494,13 +480,12 @@ A beautiful start to your celebration.`,
 • Day-of coordinator on site
 
 Everything you need for your perfect day.`,
-          basePrice: 450000, // $4,500
-          grouping: 'tier_2',
-          groupingOrder: 2,
+          priceCents: 450000, // $4,500
+          sortOrder: 2,
         }
       );
 
-      const signatureAllInclusive = await createOrUpdatePackageWithSegment(
+      const signatureAllInclusive = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         fullWeddingSegment.id,
@@ -517,14 +502,13 @@ Everything you need for your perfect day.`,
 • Option to add engagement or day-after session
 
 The ultimate wedding experience, fully handled.`,
-          basePrice: 750000, // $7,500
-          grouping: 'tier_3',
-          groupingOrder: 3,
+          priceCents: 750000, // $7,500
+          sortOrder: 3,
         }
       );
 
       logger.info(
-        `Full wedding packages created: ${[ceremonyPortraitsFull, classicWeddingDay, signatureAllInclusive].length}`
+        `Full wedding tiers created: ${[ceremonyPortraitsFull, classicWeddingDay, signatureAllInclusive].length}`
       );
 
       // =====================================================================
@@ -680,18 +664,14 @@ The ultimate wedding experience, fully handled.`,
       logger.info('Global add-ons created: 21');
 
       // =====================================================================
-      // LINK ADD-ONS TO PACKAGES
+      // LINK ADD-ONS TO TIERS
       // =====================================================================
 
       // Simple Vows - minimal add-ons
-      await linkAddOnsToPackage(tx, simpleVows.id, [
-        unityCandle.id,
-        sandCeremony.id,
-        handfasting.id,
-      ]);
+      await linkAddOnsToTier(tx, simpleVows.id, [unityCandle.id, sandCeremony.id, handfasting.id]);
 
       // Essential Elopement - photography + rituals + dining
-      await linkAddOnsToPackage(tx, essentialElopement.id, [
+      await linkAddOnsToTier(tx, essentialElopement.id, [
         extraPhotoHour.id,
         ceremonyFilm.id,
         unityCandle.id,
@@ -703,7 +683,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // All-Inclusive Elopement - more comprehensive
-      await linkAddOnsToPackage(tx, allInclusiveElopement.id, [
+      await linkAddOnsToTier(tx, allInclusiveElopement.id, [
         extraPhotoHour.id,
         ceremonyFilm.id,
         fullVideoCoverage.id,
@@ -719,7 +699,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // Micro Wedding: Ceremony & Portraits
-      await linkAddOnsToPackage(tx, ceremonyAndPortraits.id, [
+      await linkAddOnsToTier(tx, ceremonyAndPortraits.id, [
         extraPhotoHour.id,
         secondPhotographer.id,
         ceremonyFilm.id,
@@ -734,7 +714,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // Micro Celebration - fuller set
-      await linkAddOnsToPackage(tx, microCelebration.id, [
+      await linkAddOnsToTier(tx, microCelebration.id, [
         extraPhotoHour.id,
         secondPhotographer.id,
         ceremonyFilm.id,
@@ -754,7 +734,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // All-Inclusive Micro - all add-ons
-      await linkAddOnsToPackage(tx, allInclusiveMicro.id, [
+      await linkAddOnsToTier(tx, allInclusiveMicro.id, [
         extraPhotoHour.id,
         secondPhotographer.id,
         fullVideoCoverage.id,
@@ -776,7 +756,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // Full Wedding: Ceremony & Portraits
-      await linkAddOnsToPackage(tx, ceremonyPortraitsFull.id, [
+      await linkAddOnsToTier(tx, ceremonyPortraitsFull.id, [
         extraPhotoHour.id,
         secondPhotographer.id,
         ceremonyFilm.id,
@@ -791,7 +771,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // Classic Wedding Day - comprehensive
-      await linkAddOnsToPackage(tx, classicWeddingDay.id, [
+      await linkAddOnsToTier(tx, classicWeddingDay.id, [
         extraPhotoHour.id,
         secondPhotographer.id,
         ceremonyFilm.id,
@@ -812,7 +792,7 @@ The ultimate wedding experience, fully handled.`,
       ]);
 
       // Signature All-Inclusive - all add-ons available
-      await linkAddOnsToPackage(tx, signatureAllInclusive.id, [
+      await linkAddOnsToTier(tx, signatureAllInclusive.id, [
         extraPhotoHour.id,
         secondPhotographer.id,
         fullVideoCoverage.id,
@@ -831,7 +811,7 @@ The ultimate wedding experience, fully handled.`,
         dayAfterSession.id,
       ]);
 
-      logger.info('Add-ons linked to packages');
+      logger.info('Add-ons linked to tiers');
 
       // =====================================================================
       // BLACKOUT DATES (holidays)
@@ -889,8 +869,8 @@ The ultimate wedding experience, fully handled.`,
   logger.info('LA PETIT MARIAGE SEED COMPLETE');
   logger.info('='.repeat(60));
   logger.info('Segments: 3 (Elopements, Micro Weddings, Full Weddings)');
-  logger.info('Packages: 9 (3 per segment)');
-  logger.info('Add-ons: 21 (global, linked to relevant packages)');
+  logger.info('Tiers: 9 (3 per segment)');
+  logger.info('Add-ons: 21 (global, linked to relevant tiers)');
   logger.info('Blackout dates: 9 (major holidays 2025-2026)');
   logger.info('='.repeat(60));
 }

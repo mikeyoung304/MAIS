@@ -5,7 +5,7 @@ import { CheckCircle, Calendar, Mail, Users, Package as PackageIcon, Home } from
 import {
   getTenantByDomain,
   getBookingById,
-  getTenantPackageBySlug,
+  getTenantTierBySlug,
   TenantNotFoundError,
 } from '@/lib/tenant';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -73,13 +73,12 @@ export default async function DomainSuccessPage({ searchParams }: SuccessPagePro
   }
 
   let booking = null;
-  let packageData = null;
+  let tierData = null;
 
   if (bookingId) {
     booking = await getBookingById(tenant.apiKeyPublic, bookingId);
     if (booking) {
-      const packages = await getTenantPackageBySlug(tenant.apiKeyPublic, booking.packageId);
-      packageData = packages;
+      tierData = await getTenantTierBySlug(tenant.apiKeyPublic, booking.tierId);
     }
   }
 
@@ -158,10 +157,10 @@ export default async function DomainSuccessPage({ searchParams }: SuccessPagePro
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-2 text-base text-white/90">
                       <PackageIcon className="w-5 h-5" />
-                      <span>Package</span>
+                      <span>Service</span>
                     </div>
                     <span className="text-base font-medium text-white text-right">
-                      {packageData?.title || booking.packageId}
+                      {tierData?.title || booking.tierId}
                     </span>
                   </div>
 

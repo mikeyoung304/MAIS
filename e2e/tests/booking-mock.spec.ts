@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  * E2E Test: Mock Mode Booking Happy Path
  *
  * This test verifies the complete booking flow in mock mode:
- * 1. Navigate from home to first package
+ * 1. Navigate from home to first tier
  * 2. Select a future date
  * 3. Choose an add-on
  * 4. Complete checkout (mock payment)
@@ -20,7 +20,7 @@ test.describe('Mock Booking Flow', () => {
   });
 
   test('complete booking with add-on and verify availability', async ({ page, request }) => {
-    // Step 1: Go to Home and click first package
+    // Step 1: Go to Home and click first tier
     await page.goto('/');
     await expect(page).toHaveURL('/');
 
@@ -35,18 +35,18 @@ test.describe('Mock Booking Flow', () => {
     // Wait for packages section to be visible
     await expect(page.locator('#packages')).toBeInViewport();
 
-    // Click first package card
-    const firstPackageLink = page.locator('a[href*="/package/"]').first();
-    await expect(firstPackageLink).toBeVisible();
-    await firstPackageLink.click();
+    // Click first tier card
+    const firstTierLink = page.locator('a[href*="/book/"]').first();
+    await expect(firstTierLink).toBeVisible();
+    await firstTierLink.click();
 
     // Step 2: Choose a future date
-    await expect(page).toHaveURL(/\/package\/.+/);
+    await expect(page).toHaveURL(/\/book\/.+/);
 
-    // Extract package slug from URL for later API check
+    // Extract tier slug from URL for later API check
     const url = page.url();
-    const packageSlug = url.split('/package/')[1];
-    expect(packageSlug).toBeTruthy();
+    const tierSlug = url.split('/book/')[1];
+    expect(tierSlug).toBeTruthy();
 
     // Click first available date in calendar (button inside non-disabled day cell)
     const dateButton = page
@@ -142,7 +142,7 @@ test.describe('Mock Booking Flow', () => {
   });
 
   test('validates required fields before checkout', async ({ page }) => {
-    // Navigate to first package
+    // Navigate to first tier
     await page.goto('/');
 
     // Click "View Packages" button
@@ -151,10 +151,10 @@ test.describe('Mock Booking Flow', () => {
     // Wait for packages section
     await expect(page.locator('#packages')).toBeInViewport();
 
-    const firstPackageLink = page.locator('a[href*="/package/"]').first();
-    await expect(firstPackageLink).toBeVisible();
-    await firstPackageLink.click();
-    await expect(page).toHaveURL(/\/package\/.+/);
+    const firstTierLink = page.locator('a[href*="/book/"]').first();
+    await expect(firstTierLink).toBeVisible();
+    await firstTierLink.click();
+    await expect(page).toHaveURL(/\/book\/.+/);
 
     // Verify checkout button is disabled initially
     const checkoutButton = page.getByRole('button', { name: /Select a date/i });

@@ -21,7 +21,7 @@ interface Booking {
   id: string;
   date: string;
   status: string;
-  packageName: string;
+  tierName: string;
   customerEmail: string | null;
 }
 
@@ -246,9 +246,7 @@ export default function TenantSchedulingPage() {
                         <Calendar className="h-4 w-4 text-sage" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-text-primary">
-                          {booking.packageName}
-                        </p>
+                        <p className="text-sm font-medium text-text-primary">{booking.tierName}</p>
                         <p className="text-xs text-text-muted">{formatDate(booking.date)}</p>
                       </div>
                     </div>

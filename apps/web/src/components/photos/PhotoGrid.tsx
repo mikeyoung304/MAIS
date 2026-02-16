@@ -3,11 +3,11 @@
 import Image from 'next/image';
 import { Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { PackagePhoto } from '@/hooks/usePhotoUpload';
+import type { TierPhoto } from '@/hooks/usePhotoUpload';
 
 interface PhotoGridProps {
-  photos: PackagePhoto[];
-  onDeleteClick: (photo: PackagePhoto) => void;
+  photos: TierPhoto[];
+  onDeleteClick: (photo: TierPhoto) => void;
   onTriggerUpload: () => void;
   isUploading: boolean;
   maxPhotos: number;
@@ -79,7 +79,7 @@ export function PhotoGrid({
             <div className="relative w-full h-full">
               <Image
                 src={photo.url}
-                alt={`Package photo ${index + 1}`}
+                alt={`Service photo ${index + 1}`}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
