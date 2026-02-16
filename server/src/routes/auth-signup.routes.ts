@@ -7,6 +7,7 @@
 
 import type { Router, Request, Response, NextFunction } from 'express';
 import type { UnifiedAuthRoutesOptions } from './auth-shared';
+import validator from 'validator';
 import { signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
 import { ConflictError, ValidationError, TenantProvisioningError } from '../lib/errors';
@@ -78,9 +79,15 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
         throw new ConflictError('Email already registered');
       }
 
-      // Generate unique slug from business name with timestamp
-      const baseSlug = businessName
+      // Undo global sanitize middleware's HTML encoding for business names
+      // (React auto-escapes on output, making server-side escaping redundant and harmful)
+      // e.g. "Ember &amp; Ash Photography" → "Ember & Ash Photography"
+      const cleanBusinessName = validator.unescape(businessName);
+
+      // Generate unique slug from clean business name with timestamp
+      const baseSlug = cleanBusinessName
         .toLowerCase()
+        .replace(/&/g, 'and') // & → and (human-readable)
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
         .slice(0, 50);
@@ -112,7 +119,7 @@ export function registerSignupRoutes(router: Router, options: UnifiedAuthRoutesO
 
       const provisionedTenant = await tenantProvisioningService.createFromSignup({
         slug,
-        businessName,
+        businessName: cleanBusinessName,
         email: normalizedEmail,
         passwordHash,
         city: typeof city === 'string' ? city.trim() : undefined,

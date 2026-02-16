@@ -7,6 +7,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
+import validator from 'validator';
 import { timingSafeCompare } from '../lib/timing-safe';
 import { logger } from '../lib/core/logger';
 import { ConcurrentModificationError, NotFoundError, ValidationError } from '../lib/errors';
@@ -60,8 +61,10 @@ export { DISCOVERY_FACT_KEYS } from '../shared/constants/discovery-facts';
 
 /** Convert text to URL-safe slug, max 50 chars */
 export function slugify(text: string): string {
-  return text
+  return validator
+    .unescape(text)
     .toLowerCase()
+    .replace(/&/g, 'and') // & → and (human-readable)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 50);
