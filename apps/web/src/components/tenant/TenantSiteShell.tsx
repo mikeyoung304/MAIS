@@ -10,6 +10,7 @@
 
 import { Suspense } from 'react';
 import type { TenantPublicDto, PagesConfig, HeroSection } from '@macon/contracts';
+import { FONT_PRESETS } from '@macon/contracts';
 import { TenantNav } from './TenantNav';
 import { TenantFooter } from './TenantFooter';
 import { TenantChatWidget } from '../chat/TenantChatWidget';
@@ -38,8 +39,28 @@ export function TenantSiteShell({
   const heroSection = pages?.home?.sections?.find((s): s is HeroSection => s.type === 'hero');
   const ctaText = heroSection?.ctaText || 'View Services';
 
+  // Resolve font preset — fall back to 'classic' for unknown values
+  const fontPreset = FONT_PRESETS[tenant.fontPreset || 'classic'] || FONT_PRESETS.classic;
+
+  // CSS custom properties for per-tenant theming
+  const themeVars = {
+    '--color-primary': tenant.primaryColor || '#2d3436',
+    '--color-secondary': tenant.secondaryColor || '#b8860b',
+    '--color-accent': tenant.accentColor || '#8B9E86',
+    '--color-background': tenant.backgroundColor || '#ffffff',
+    '--font-heading': `'${fontPreset.heading}', ${fontPreset.headingFallback}`,
+    '--font-body': `'${fontPreset.body}', ${fontPreset.bodyFallback}`,
+  } as React.CSSProperties;
+
   return (
-    <div className="flex min-h-screen flex-col bg-surface">
+    <div className="flex min-h-screen flex-col bg-background" style={themeVars}>
+      {/* Google Fonts — preconnect + stylesheet for the tenant's font preset */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link href={fontPreset.googleFontsUrl} rel="stylesheet" />
       {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
           Suspense required because useSearchParams() triggers client-side boundary. */}
       <Suspense>

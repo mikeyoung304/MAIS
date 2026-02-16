@@ -66,7 +66,7 @@ export function GallerySection({
       <section className="bg-surface-alt py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
-            <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+            <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
               {headline}
             </h2>
           </div>
@@ -79,7 +79,7 @@ export function GallerySection({
                 <button
                   key={i}
                   onClick={() => openLightbox(i)}
-                  className="group relative aspect-square overflow-hidden rounded-2xl focus:outline-none focus:ring-2 focus:ring-sage focus:ring-offset-2"
+                  className="group relative aspect-square overflow-hidden rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   aria-label={`View ${image.alt || `image ${i + 1}`} in fullscreen`}
                 >
                   {/* Loading skeleton */}
@@ -132,7 +132,7 @@ export function GallerySection({
                 href={`https://instagram.com/${instagramHandle}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sage hover:underline"
+                className="text-accent hover:underline"
               >
                 Follow @{instagramHandle} on Instagram
               </a>

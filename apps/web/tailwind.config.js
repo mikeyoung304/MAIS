@@ -101,13 +101,15 @@ module.exports = {
           600: '#16a34a',
           700: '#15803d',
         },
-        // Semantic tokens
+        // Semantic tokens — CSS var references for per-tenant theming
+        // Tenant storefronts set these via TenantSiteShell inline style.
+        // Platform pages (admin, login) fall back to the hardcoded defaults.
         primary: {
-          DEFAULT: '#1a365d',
+          DEFAULT: 'var(--color-primary, #2d3436)',
           foreground: '#FFFFFF',
         },
         secondary: {
-          DEFAULT: '#d97706',
+          DEFAULT: 'var(--color-secondary, #b8860b)',
           foreground: '#FFFFFF',
         },
         muted: {
@@ -115,17 +117,19 @@ module.exports = {
           foreground: '#6b7280',
         },
         accent: {
-          DEFAULT: '#0d9488',
+          DEFAULT: 'var(--color-accent, #8B9E86)',
           foreground: '#FFFFFF',
         },
         border: '#e5e7eb',
         input: '#e5e7eb',
-        background: '#ffffff',
+        background: 'var(--color-background, #ffffff)',
         foreground: '#111827',
       },
       fontFamily: {
-        heading: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        // CSS var references for per-tenant font presets.
+        // TenantSiteShell sets --font-heading and --font-body via inline style.
+        heading: 'var(--font-heading, Inter, system-ui, sans-serif)',
+        body: 'var(--font-body, Inter, system-ui, sans-serif)',
         serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       fontSize: {

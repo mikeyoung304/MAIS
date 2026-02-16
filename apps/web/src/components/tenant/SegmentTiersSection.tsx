@@ -66,7 +66,7 @@ function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
   return (
     <button
       onClick={onSelect}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-800 bg-surface-alt text-left motion-safe:transition-all motion-safe:duration-500 hover:border-sage/40 hover:shadow-2xl hover:shadow-sage/10 focus:outline-none focus:ring-2 focus:ring-sage/50 focus:ring-offset-2 focus:ring-offset-surface"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-800 bg-surface-alt text-left motion-safe:transition-all motion-safe:duration-500 hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-surface"
     >
       {/* Hero Image (from segment or stock photo) */}
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -83,7 +83,7 @@ function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-6">
-        <h3 className="font-serif text-2xl font-bold text-text-primary motion-safe:transition-colors motion-safe:duration-300 group-hover:text-sage">
+        <h3 className="font-heading text-2xl font-bold text-text-primary motion-safe:transition-colors motion-safe:duration-300 group-hover:text-accent">
           {segment.name}
         </h3>
 
@@ -96,8 +96,8 @@ function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
         )}
 
         <div className="mt-auto flex items-center justify-between pt-6">
-          <span className="text-sm font-medium text-sage">{priceRange}</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-text-muted motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:translate-x-1 group-hover:text-sage">
+          <span className="text-sm font-medium text-accent">{priceRange}</span>
+          <span className="flex items-center gap-1 text-sm font-medium text-text-muted motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:translate-x-1 group-hover:text-accent">
             Explore
             <svg
               className="h-4 w-4"
@@ -130,12 +130,12 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
     <div
       className={`relative flex flex-col rounded-3xl p-8 motion-safe:transition-all motion-safe:duration-300 ${
         isPopular
-          ? 'border-2 border-sage bg-surface-alt shadow-xl shadow-sage/10'
+          ? 'border-2 border-accent bg-surface-alt shadow-xl shadow-accent/10'
           : 'border border-neutral-800 bg-surface-alt motion-safe:hover:-translate-y-1 hover:border-neutral-700 hover:shadow-xl'
       }`}
     >
       {isPopular && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-sage px-4 py-1 text-sm font-medium text-white shadow-lg">
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent px-4 py-1 text-sm font-medium text-white shadow-lg">
           Most Popular
         </div>
       )}
@@ -162,7 +162,7 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
 
       {pkg.description && <p className="mt-4 flex-1 text-sm text-text-muted">{pkg.description}</p>}
 
-      <Button asChild variant={isPopular ? 'sage' : 'outline'} className="mt-8 w-full">
+      <Button asChild variant={isPopular ? 'accent' : 'outline'} className="mt-8 w-full">
         <Link href={bookHref}>Book {tierLabel}</Link>
       </Button>
     </div>
@@ -207,14 +207,14 @@ function TierGridSection({
         <h2
           ref={headingRef}
           tabIndex={headingRef ? -1 : undefined}
-          className={`font-serif text-3xl font-bold text-text-primary sm:text-4xl md:text-5xl${headingRef ? ' outline-none' : ''}`}
+          className={`font-heading text-3xl font-bold text-text-primary sm:text-4xl md:text-5xl${headingRef ? ' outline-none' : ''}`}
         >
           {segment.heroTitle || segment.name}
         </h2>
         {segment.heroSubtitle && (
           <p
             className={`mx-auto mt-4 max-w-2xl text-lg ${
-              showExtendedInfo ? 'font-light italic text-sage' : 'text-text-muted'
+              showExtendedInfo ? 'font-light italic text-accent' : 'text-text-muted'
             }`}
           >
             {segment.heroSubtitle}
@@ -396,7 +396,7 @@ export function SegmentTiersSection({
     return (
       <section id="packages" className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
             Services coming soon
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-text-muted">
@@ -439,7 +439,7 @@ export function SegmentTiersSection({
         {!selectedSegment && (
           <>
             <div className="text-center">
-              <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl md:text-5xl">
+              <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl md:text-5xl">
                 What brings you here?
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-lg text-text-muted">
@@ -472,7 +472,7 @@ export function SegmentTiersSection({
             {/* Back button */}
             <button
               onClick={handleBack}
-              className="group mb-8 flex items-center gap-2 text-sm font-medium text-text-muted motion-safe:transition-colors hover:text-sage"
+              className="group mb-8 flex items-center gap-2 text-sm font-medium text-text-muted motion-safe:transition-colors hover:text-accent"
             >
               <svg
                 className="h-4 w-4 motion-safe:transition-transform motion-safe:group-hover:-translate-x-1"

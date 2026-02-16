@@ -90,7 +90,7 @@ export function AboutPageSkeleton() {
       </section>
 
       {/* CTA Section Skeleton */}
-      <section className="bg-sage/50 py-32 md:py-40">
+      <section className="bg-accent/50 py-32 md:py-40">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <div className="mx-auto h-10 w-2/3 rounded-lg bg-white/30" />
           <div className="mx-auto mt-6 h-5 w-1/2 rounded bg-white/20" />
@@ -323,7 +323,7 @@ export function BookingPageSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50">
       <div className="text-center">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-sage" />
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-accent" />
         <p className="mt-4 text-lg text-neutral-600">Loading booking...</p>
       </div>
     </div>
@@ -338,7 +338,7 @@ export function BookingSuccessPageSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50">
       <div className="text-center">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-sage" />
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-accent" />
         <p className="mt-4 text-lg text-neutral-600">Loading confirmation...</p>
       </div>
     </div>

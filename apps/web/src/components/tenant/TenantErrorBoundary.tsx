@@ -40,7 +40,7 @@ export function TenantErrorBoundary({ error, reset, context }: TenantErrorBounda
       <div className="text-center space-y-4 p-8">
         <h1 className="text-2xl font-bold text-text-primary">Something went wrong</h1>
         <p className="text-text-muted">We couldn&apos;t load this page. Please try again.</p>
-        <Button onClick={reset} variant="sage">
+        <Button onClick={reset} variant="accent">
           Try again
         </Button>
       </div>

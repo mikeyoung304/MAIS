@@ -114,7 +114,7 @@ export function SectionCard({ section, index, onEdit, onRemove }: SectionCardPro
           variant="ghost"
           size="sm"
           onClick={onEdit}
-          className="h-8 w-8 p-0 text-text-muted hover:text-sage"
+          className="h-8 w-8 p-0 text-text-muted hover:text-accent"
         >
           <Pencil className="h-4 w-4" />
           <span className="sr-only">Edit section</span>

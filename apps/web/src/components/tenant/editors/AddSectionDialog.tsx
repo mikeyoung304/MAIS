@@ -146,7 +146,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, pageType }: AddSec
               <button
                 key={option.type}
                 onClick={() => handleSelect(option)}
-                className="group flex items-start gap-4 rounded-xl border border-neutral-200 bg-white p-4 text-left transition-all hover:border-sage hover:shadow-md"
+                className="group flex items-start gap-4 rounded-xl border border-neutral-200 bg-white p-4 text-left transition-all hover:border-accent hover:shadow-md"
               >
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${option.color}`}

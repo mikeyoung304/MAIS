@@ -23,9 +23,9 @@ export function CTASection({
   tenant: _tenant,
 }: CTASectionProps) {
   return (
-    <section className="bg-sage py-32 md:py-40">
+    <section className="bg-accent py-32 md:py-40">
       <div className="mx-auto max-w-4xl px-6 text-center">
-        <h2 className="font-serif text-3xl font-bold text-white sm:text-4xl">{headline}</h2>
+        <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">{headline}</h2>
         {subheadline && (
           <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">{subheadline}</p>
         )}
@@ -34,7 +34,7 @@ export function CTASection({
             asChild
             variant="outline"
             size="xl"
-            className="border-white bg-white text-sage hover:bg-white/90"
+            className="border-white bg-white text-accent hover:bg-white/90"
           >
             <a href={`${basePath}#packages`}>{ctaText}</a>
           </Button>

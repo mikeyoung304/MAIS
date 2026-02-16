@@ -74,6 +74,12 @@ const buttonVariants = cva(
           'bg-sage hover:bg-sage-hover text-white rounded-full shadow-lg ' +
           'hover:shadow-xl hover:-translate-y-0.5 ' +
           'transition-all duration-300',
+        // Theme-aware accent variant for tenant storefronts.
+        // Uses CSS var --color-accent set by TenantSiteShell.
+        accent:
+          'bg-accent text-white rounded-full shadow-lg ' +
+          'hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5 ' +
+          'transition-all duration-300',
         terracotta:
           'bg-terracotta hover:bg-terracotta-hover text-white rounded-full shadow-lg ' +
           'hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.02] ' +
@@ -116,6 +122,7 @@ export interface ButtonProps
     | 'teal'
     | 'success'
     | 'sage'
+    | 'accent'
     | 'terracotta'
     | 'forest';
   isLoading?: boolean;

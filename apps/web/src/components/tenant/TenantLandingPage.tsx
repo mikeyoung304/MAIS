@@ -131,9 +131,9 @@ export function TenantLandingPage({
 
       {/* ===== FINAL CTA ===== */}
       {finalCta && (
-        <section className="bg-sage py-32 md:py-40">
+        <section className="bg-accent py-32 md:py-40">
           <div className="mx-auto max-w-4xl px-6 text-center">
-            <h2 className="font-serif text-3xl font-bold text-white sm:text-4xl">
+            <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">
               {finalCta.headline}
             </h2>
             {finalCta.subheadline && (
@@ -144,7 +144,7 @@ export function TenantLandingPage({
                 asChild
                 variant="outline"
                 size="xl"
-                className="border-white bg-white text-sage hover:bg-white/90"
+                className="border-white bg-white text-accent hover:bg-white/90"
               >
                 <a href="#packages">{finalCta.ctaText}</a>
               </Button>

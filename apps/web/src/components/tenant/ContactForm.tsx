@@ -200,13 +200,13 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
         role="status"
         aria-live="polite"
       >
-        <CheckCircle2 className="mx-auto h-16 w-16 text-sage" aria-hidden="true" />
+        <CheckCircle2 className="mx-auto h-16 w-16 text-accent" aria-hidden="true" />
         <h2 className="mt-4 text-2xl font-bold text-text-primary">Message Sent!</h2>
         <p className="mt-2 text-text-muted">
           Thank you for reaching out. We&apos;ll get back to you soon.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <Button onClick={handleReset} variant="sage">
+          <Button onClick={handleReset} variant="accent">
             Send Another Message
           </Button>
           <Button asChild variant="outline">
@@ -230,7 +230,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
         <p className="mt-2 text-text-muted">
           We couldn&apos;t send your message. Please try again.
         </p>
-        <Button onClick={handleRetry} variant="sage" className="mt-8">
+        <Button onClick={handleRetry} variant="accent" className="mt-8">
           Try Again
         </Button>
       </div>
@@ -265,10 +265,10 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
           onBlur={handleBlur}
           required
           disabled={status === 'submitting'}
-          className={`w-full px-4 py-3 rounded-xl border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-sage/20 ${
+          className={`w-full px-4 py-3 rounded-xl border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
             errors.name
               ? 'border-red-300 focus:border-red-500'
-              : 'border-neutral-200 focus:border-sage'
+              : 'border-neutral-200 focus:border-accent'
           } disabled:bg-neutral-50 disabled:cursor-not-allowed`}
           aria-describedby={errors.name ? 'name-error' : undefined}
           aria-invalid={errors.name ? 'true' : 'false'}
@@ -299,10 +299,10 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
           onBlur={handleBlur}
           required
           disabled={status === 'submitting'}
-          className={`w-full px-4 py-3 rounded-xl border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-sage/20 ${
+          className={`w-full px-4 py-3 rounded-xl border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
             errors.email
               ? 'border-red-300 focus:border-red-500'
-              : 'border-neutral-200 focus:border-sage'
+              : 'border-neutral-200 focus:border-accent'
           } disabled:bg-neutral-50 disabled:cursor-not-allowed`}
           aria-describedby={errors.email ? 'email-error' : undefined}
           aria-invalid={errors.email ? 'true' : 'false'}
@@ -329,7 +329,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
           value={formData.phone}
           onChange={handleChange}
           disabled={status === 'submitting'}
-          className="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-sage/20 focus:border-sage disabled:bg-neutral-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent disabled:bg-neutral-50 disabled:cursor-not-allowed"
           autoComplete="tel"
           inputMode="tel"
         />
@@ -352,10 +352,10 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
           required
           rows={5}
           disabled={status === 'submitting'}
-          className={`w-full px-4 py-3 rounded-xl border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-sage/20 resize-none ${
+          className={`w-full px-4 py-3 rounded-xl border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 resize-none ${
             errors.message
               ? 'border-red-300 focus:border-red-500'
-              : 'border-neutral-200 focus:border-sage'
+              : 'border-neutral-200 focus:border-accent'
           } disabled:bg-neutral-50 disabled:cursor-not-allowed`}
           aria-describedby={errors.message ? 'message-error' : undefined}
           aria-invalid={errors.message ? 'true' : 'false'}
@@ -372,7 +372,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
       {/* Submit button */}
       <Button
         type="submit"
-        variant="sage"
+        variant="accent"
         size="xl"
         className="w-full"
         disabled={status === 'submitting'}

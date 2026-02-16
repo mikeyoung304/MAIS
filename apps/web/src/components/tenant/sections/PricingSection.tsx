@@ -38,7 +38,7 @@ export function PricingSection({
       <div className="max-w-3xl mx-auto text-center mb-16">
         <h2
           id="pricing-heading"
-          className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
+          className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
         >
           {headline}
         </h2>
@@ -60,13 +60,13 @@ export function PricingSection({
               key={tier.name}
               className={`bg-white rounded-3xl p-8 transition-all duration-300 ${
                 isPopular
-                  ? 'shadow-2xl border-2 border-sage relative lg:-mt-4 lg:mb-4'
+                  ? 'shadow-2xl border-2 border-accent relative lg:-mt-4 lg:mb-4'
                   : 'shadow-lg border border-neutral-100 hover:shadow-xl hover:-translate-y-1'
               }`}
             >
               {isPopular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-sage text-white text-sm font-medium px-4 py-1 rounded-full">
+                  <span className="bg-accent text-white text-sm font-medium px-4 py-1 rounded-full">
                     Most Popular
                   </span>
                 </div>
@@ -85,13 +85,13 @@ export function PricingSection({
               <ul className="mt-8 space-y-4">
                 {(tier.features ?? []).map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+                    <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                     <span className="text-text-muted">{feature}</span>
                   </li>
                 ))}
               </ul>
 
-              <Button variant={isPopular ? 'sage' : 'outline'} className="w-full mt-8" asChild>
+              <Button variant={isPopular ? 'accent' : 'outline'} className="w-full mt-8" asChild>
                 <Link href={tier.ctaHref || '/signup'}>
                   {tier.ctaText || (isEnterprise ? 'Contact Us' : 'Get Started')}
                 </Link>

@@ -43,7 +43,7 @@ export function BuildModeWrapper({ initialConfig, pageName, children }: BuildMod
   return (
     <div className={cn('relative', isEditMode && 'build-mode-active')}>
       {/* Subtle edit mode indicator — thin sage line instead of green banner */}
-      {isEditMode && <div className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-sage/40" />}
+      {isEditMode && <div className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-accent/40" />}
 
       {/* Render content with effective config */}
       <div>{children(effectiveConfig, isEditMode)}</div>

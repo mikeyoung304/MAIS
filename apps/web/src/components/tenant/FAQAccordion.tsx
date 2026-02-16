@@ -73,7 +73,7 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
       <section className="py-32 md:py-40">
         <div className="mx-auto max-w-3xl px-6">
           <div className="text-center">
-            <h1 className="font-serif text-4xl font-bold text-text-primary sm:text-5xl md:text-6xl leading-[1.1] tracking-tight">
+            <h1 className="font-heading text-4xl font-bold text-text-primary sm:text-5xl md:text-6xl leading-[1.1] tracking-tight">
               Frequently Asked Questions.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted md:text-xl">
@@ -85,7 +85,7 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
           {faqItems.length === 0 ? (
             <div className="mt-16 text-center py-16 rounded-3xl border border-neutral-100 bg-white">
               <p className="text-lg text-text-muted">No FAQs available yet. Have a question?</p>
-              <Button asChild variant="sage" className="mt-6">
+              <Button asChild variant="accent" className="mt-6">
                 <Link href={contactHref}>Contact Us</Link>
               </Button>
             </div>
@@ -109,7 +109,7 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
                       type="button"
                       onClick={() => handleToggle(index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
-                      className="flex w-full items-center justify-between px-6 py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-inset"
+                      className="flex w-full items-center justify-between px-6 py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
                       aria-expanded={isOpen}
                       aria-controls={panelId}
                     >
@@ -147,13 +147,13 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
       {/* CTA Section */}
       <section className="bg-surface-alt py-32 md:py-40">
         <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
             Still have questions?
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
             We&apos;re here to help. Reach out and we&apos;ll get back to you as soon as possible.
           </p>
-          <Button asChild variant="sage" size="xl" className="mt-10">
+          <Button asChild variant="accent" size="xl" className="mt-10">
             <Link href={contactHref}>Contact Us</Link>
           </Button>
         </div>

@@ -73,10 +73,10 @@ interface DateBookingWizardProps {
 const STEP_LABELS_WITH_GUESTS = ['Confirm', 'Guests', 'Date', 'Details', 'Pay'] as const;
 const STEP_LABELS_FLAT = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 
-// DayPicker styles
+// DayPicker styles — uses tenant accent color via CSS var
 const DAY_PICKER_MODIFIERS_STYLES = {
   selected: {
-    backgroundColor: '#45B37F', // sage
+    backgroundColor: 'var(--color-accent, #8B9E86)',
     color: 'white',
   },
 } as const;
@@ -84,8 +84,9 @@ const DAY_PICKER_MODIFIERS_STYLES = {
 // DayPicker custom CSS for WCAG 2.2 AAA touch targets (44x44px minimum)
 const DAY_PICKER_STYLE = {
   '--rdp-cell-size': '44px',
-  '--rdp-accent-color': '#45B37F',
-  '--rdp-accent-background-color': '#45B37F20',
+  '--rdp-accent-color': 'var(--color-accent, #8B9E86)',
+  '--rdp-accent-background-color':
+    'color-mix(in srgb, var(--color-accent, #8B9E86) 12%, transparent)',
 } as React.CSSProperties;
 
 // =============================================================================
@@ -119,7 +120,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
       <div className="space-y-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-900">{pkg.title}</h3>
-          <p className="text-3xl font-bold text-sage mt-2">{formatCurrency(pkg.priceCents)}</p>
+          <p className="text-3xl font-bold text-accent mt-2">{formatCurrency(pkg.priceCents)}</p>
         </div>
 
         {pkg.description && (
@@ -158,7 +159,7 @@ const GuestCountStep = React.memo(
       <Card className="border-neutral-200">
         <CardHeader>
           <CardTitle className="text-2xl">
-            <Users className="inline-block w-6 h-6 mr-2 text-sage" />
+            <Users className="inline-block w-6 h-6 mr-2 text-accent" />
             How Many Guests?
           </CardTitle>
           <p className="text-neutral-500 text-base mt-1">
@@ -171,7 +172,7 @@ const GuestCountStep = React.memo(
             <button
               onClick={() => onGuestCountChange(Math.max(minGuests, guestCount - 1))}
               disabled={guestCount <= minGuests}
-              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-300 text-neutral-600 transition-colors hover:border-sage hover:text-sage disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-300 text-neutral-600 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Decrease guest count"
             >
               <Minus className="w-5 h-5" />
@@ -185,7 +186,7 @@ const GuestCountStep = React.memo(
             <button
               onClick={() => onGuestCountChange(Math.min(maxGuests, guestCount + 1))}
               disabled={guestCount >= maxGuests}
-              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-300 text-neutral-600 transition-colors hover:border-sage hover:text-sage disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-300 text-neutral-600 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Increase guest count"
             >
               <Plus className="w-5 h-5" />
@@ -233,7 +234,7 @@ const GuestCountStep = React.memo(
               {/* Divider + Total */}
               <div className="border-t border-neutral-200 pt-4 flex items-center justify-between">
                 <span className="font-semibold text-neutral-900">Estimated Total</span>
-                <span className="text-2xl font-bold text-sage">
+                <span className="text-2xl font-bold text-accent">
                   {formatPrice(breakdown.totalCents)}
                 </span>
               </div>
@@ -258,7 +259,7 @@ const DateSelectionStep = React.memo(
     <Card className="border-neutral-200">
       <CardHeader>
         <CardTitle className="text-2xl">
-          <Calendar className="inline-block w-6 h-6 mr-2 text-sage" />
+          <Calendar className="inline-block w-6 h-6 mr-2 text-accent" />
           Choose Your Date
         </CardTitle>
         <p className="text-neutral-500 text-base mt-1">Select the date for your event</p>
@@ -267,7 +268,7 @@ const DateSelectionStep = React.memo(
         <div className="flex justify-center">
           {isLoadingDates ? (
             <div className="flex flex-col items-center py-8">
-              <Loader2 className="w-8 h-8 text-sage animate-spin" />
+              <Loader2 className="w-8 h-8 text-accent animate-spin" />
               <p className="mt-2 text-neutral-500">Loading available dates...</p>
             </div>
           ) : (
@@ -359,7 +360,7 @@ const DetailsStep = React.memo(
               value={customerDetails.notes}
               onChange={(e) => onUpdateField('notes', e.target.value)}
               placeholder="Any special requests or information..."
-              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-sage focus:outline-none focus:ring-4 focus:ring-sage/30 transition-all"
+              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/30 transition-all"
               maxLength={500}
             />
           </div>
@@ -430,7 +431,9 @@ const ReviewStep = React.memo(
             <div className="pt-4">
               <div className="flex items-baseline justify-between">
                 <span className="text-lg text-neutral-600">Total:</span>
-                <span className="text-3xl font-bold text-sage">{formatCurrency(displayTotal)}</span>
+                <span className="text-3xl font-bold text-accent">
+                  {formatCurrency(displayTotal)}
+                </span>
               </div>
               <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
             </div>
