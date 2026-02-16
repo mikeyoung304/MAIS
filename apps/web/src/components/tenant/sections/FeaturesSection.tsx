@@ -67,13 +67,14 @@ const iconMap: Record<string, LucideIcon> = {
 export function FeaturesSection({
   headline,
   subheadline,
-  features = [],
+  features,
   columns = 3,
   backgroundColor = 'white',
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: FeaturesSectionProps) {
-  if (features.length === 0) return null;
+  const safeFeatures = Array.isArray(features) ? features : [];
+  if (safeFeatures.length === 0) return null;
 
   const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
   const gridCols = {
@@ -99,7 +100,7 @@ export function FeaturesSection({
       </div>
 
       <div className={`max-w-5xl mx-auto grid gap-6 ${gridCols}`}>
-        {features.map((feature) => {
+        {safeFeatures.map((feature) => {
           const IconComponent = iconMap[feature.icon] || Globe;
 
           return (

@@ -1,4 +1,8 @@
+'use client';
+
+import React from 'react';
 import type { Section, TenantPublicDto } from '@macon/contracts';
+import { logger } from '@/lib/logger';
 import {
   HeroSection,
   TextSection,
@@ -31,6 +35,27 @@ const SECTION_TYPE_TO_ANCHOR_ID: Record<string, string> = {
   custom: 'custom',
   cta: 'cta',
 };
+
+/** Minimal error boundary to isolate section crashes */
+class SectionErrorBoundary extends React.Component<
+  { children: React.ReactNode; sectionType: string; sectionId?: string },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    logger.error('Section render failed', {
+      sectionType: this.props.sectionType,
+      sectionId: this.props.sectionId,
+      error: error.message,
+    });
+  }
+  render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
 
 interface SectionRendererProps {
   /** Array of sections to render */
@@ -125,6 +150,8 @@ export function SectionRenderer({
         // Get anchor ID for this section type (Issue #6: single-page navigation)
         const anchorId = SECTION_TYPE_TO_ANCHOR_ID[section.type];
 
+        const sectionId = 'id' in section && section.id ? section.id : undefined;
+
         // Wrap in a div with data attributes for Build Mode selection and highlighting
         if (isEditMode) {
           return (
@@ -134,9 +161,11 @@ export function SectionRenderer({
               data-section-index={absoluteIndex}
               data-section-type={section.type}
               // Add section ID for ID-based highlighting (preferred over index-based)
-              {...('id' in section && section.id ? { 'data-section-id': section.id } : {})}
+              {...(sectionId ? { 'data-section-id': sectionId } : {})}
             >
-              {sectionComponent}
+              <SectionErrorBoundary sectionType={section.type} sectionId={sectionId}>
+                {sectionComponent}
+              </SectionErrorBoundary>
             </div>
           );
         }
@@ -144,7 +173,9 @@ export function SectionRenderer({
         // Normal mode - include anchor ID for single-page navigation
         return (
           <div key={sectionKey} id={anchorId}>
-            {sectionComponent}
+            <SectionErrorBoundary sectionType={section.type} sectionId={sectionId}>
+              {sectionComponent}
+            </SectionErrorBoundary>
           </div>
         );
       })}

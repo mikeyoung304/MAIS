@@ -19,12 +19,13 @@ interface TestimonialsSectionProps extends TestimonialsSectionType {
  */
 export function TestimonialsSection({
   headline = 'What Clients Say',
-  items = [],
+  items,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: TestimonialsSectionProps) {
+  const safeItems = Array.isArray(items) ? items : [];
   // Don't render if no testimonials
-  if (items.length === 0) {
+  if (safeItems.length === 0) {
     return null;
   }
 
@@ -38,7 +39,7 @@ export function TestimonialsSection({
         </div>
 
         <div className="mt-16 grid gap-8 md:grid-cols-2">
-          {items.map((testimonial, i) => (
+          {safeItems.map((testimonial, i) => (
             <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
               <StarRating rating={testimonial.rating} />
               <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>

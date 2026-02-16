@@ -26,10 +26,11 @@ interface GallerySectionProps extends GallerySectionType {
  */
 export function GallerySection({
   headline = 'Our Work',
-  images = [],
+  images,
   instagramHandle,
   tenant,
 }: GallerySectionProps) {
+  const safeImages = Array.isArray(images) ? images : [];
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
@@ -51,12 +52,12 @@ export function GallerySection({
   }, []);
 
   // Don't render if no images (early return AFTER all hooks)
-  if (images.length === 0) {
+  if (safeImages.length === 0) {
     return null;
   }
 
   // Transform images for lightbox
-  const lightboxImages: LightboxImage[] = images.map((image) => ({
+  const lightboxImages: LightboxImage[] = safeImages.map((image) => ({
     src: image.url,
     alt: image.alt || `Work by ${tenant.name}`,
   }));
@@ -72,7 +73,7 @@ export function GallerySection({
           </div>
 
           <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {images.map((image, i) => {
+            {safeImages.map((image, i) => {
               const isLoaded = loadedImages.has(i);
 
               return (
