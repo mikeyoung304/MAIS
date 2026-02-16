@@ -33,14 +33,14 @@ export class PlatformAdminController {
         include: {
           _count: {
             select: {
-              packages: true,
+              tiers: true,
               bookings: true,
             },
           },
         },
       });
 
-      return tenants.map((tenant: Tenant & { _count: { packages: number; bookings: number } }) => ({
+      return tenants.map((tenant: Tenant & { _count: { tiers: number; bookings: number } }) => ({
         id: tenant.id,
         slug: tenant.slug,
         name: tenant.name,
@@ -53,7 +53,7 @@ export class PlatformAdminController {
         isTestTenant: tenant.isTestTenant,
         createdAt: tenant.createdAt.toISOString(),
         updatedAt: tenant.updatedAt.toISOString(),
-        tierCount: tenant._count.packages,
+        tierCount: tenant._count.tiers,
         bookingCount: tenant._count.bookings,
       }));
     } catch (error) {

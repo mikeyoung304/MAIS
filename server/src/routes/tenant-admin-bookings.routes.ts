@@ -141,7 +141,7 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
       }
 
       const dashboard = {
-        packages: stats.packageCount,
+        tiers: stats.tierCount,
         addOns: stats.addOnCount,
         bookings: {
           total: stats.bookingCount,

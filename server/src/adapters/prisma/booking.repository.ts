@@ -115,7 +115,7 @@ export class PrismaBookingRepository implements BookingRepository {
    * try {
    *   const booking = await repository.create('tenant_123', {
    *     id: 'booking_123',
-   *     packageId: 'pkg_abc',
+   *     tierId: 'tier_abc',
    *     eventDate: '2025-06-15',
    *     coupleName: 'Jane & John',
    *     email: 'couple@example.com',
@@ -782,7 +782,7 @@ export class PrismaBookingRepository implements BookingRepository {
       tenantId: b.tenantId,
       customerId: b.customerId,
       serviceId: b.serviceId,
-      tierId: b.tierId ?? b.packageId,
+      tierId: b.tierId,
       date: toISODate(b.date),
       startTime: b.startTime?.toISOString() || null,
       endTime: b.endTime?.toISOString() || null,
@@ -1003,8 +1003,7 @@ export class PrismaBookingRepository implements BookingRepository {
 
   private toDomainBooking(booking: {
     id: string;
-    packageId: string | null; // Legacy — nullable for TIMESLOT bookings
-    tierId?: string | null; // New: preferred over packageId during transition
+    tierId: string | null; // Nullable for TIMESLOT bookings (which use serviceId)
     date: Date;
     totalPrice: number;
     commissionAmount: number;
@@ -1062,7 +1061,7 @@ export class PrismaBookingRepository implements BookingRepository {
 
     const domainBooking: Booking = {
       id: booking.id,
-      tierId: booking.tierId ?? booking.packageId,
+      tierId: booking.tierId,
       coupleName: booking.customer.name,
       email: booking.customer.email || '',
       eventDate: toISODate(booking.date),

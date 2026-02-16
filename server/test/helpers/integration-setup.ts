@@ -30,7 +30,7 @@
  */
 
 import type { Tenant } from '../../src/generated/prisma/client';
-import { PrismaClient, Package, AddOn } from '../../src/generated/prisma/client';
+import { PrismaClient, AddOn } from '../../src/generated/prisma/client';
 import { InMemoryCacheAdapter } from '../../src/adapters/mock/cache.adapter';
 import type { CreateTierInput, CreateAddOnInput, CacheServicePort } from '../../src/lib/ports';
 import { getTestPrisma } from './global-prisma';
@@ -479,8 +479,8 @@ export function wait(ms: number): Promise<void> {
  * @example
  * ```typescript
  * const results = await runConcurrent([
- *   () => service.getPackages(tenantA_id),
- *   () => service.getPackages(tenantB_id),
+ *   () => service.getTiers(tenantA_id),
+ *   () => service.getTiers(tenantB_id),
  * ]);
  * ```
  */

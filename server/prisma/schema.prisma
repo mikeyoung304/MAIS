@@ -131,7 +131,6 @@ model Tenant {
   venues               Venue[] // Tenant-scoped venues
   segments             Segment[] // Tenant's business segments (e.g., "Wellness Retreat", "Micro-Wedding")
   tiers                Tier[] // Pricing tiers (bookable entities within segments)
-  packages             Package[]
   addOns               AddOn[]
   bookings             Booking[]
   payments             Payment[] // Tenant-scoped payments
@@ -250,7 +249,6 @@ model Segment {
 
   // Relations
   tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  packages       Package[] // Packages within this segment
   addOns         AddOn[] // Segment-specific add-ons
   services       Service[] // Segment-specific services (for scheduling)
   tiers          Tier[] // Pricing tiers (GOOD/BETTER/BEST) within this segment
@@ -265,8 +263,7 @@ model Segment {
 
 // ============================================
 // TIER: Bookable pricing tier within a segment
-// Replaces the old Package model as the bookable entity
-// sortOrder replaces TierLevel enum for flexible pricing structures
+// sortOrder provides flexible ordering within a segment
 // ============================================
 model Tier {
   id        String  @id @default(cuid())
@@ -290,7 +287,7 @@ model Tier {
   depositPercent  Int?        @default(0) // Deposit percentage (0-100)
   active          Boolean     @default(true)
 
-  // Photo gallery (migrated from Package)
+  // Photo gallery
   photos Json @default("[]") // [{url, filename, size, order}]
 
   // Relations
@@ -384,60 +381,6 @@ model VocabularyEmbedding {
   @@index([blockType])
 }
 
-model Package {
-  id          String  @id @default(cuid())
-  tenantId    String // Tenant isolation
-  slug        String
-  name        String
-  description String?
-  basePrice   Int
-  active      Boolean @default(true)
-
-  // Segment Relationship (nullable for backward compatibility)
-  segmentId String? // Which segment this package belongs to
-
-  // Optional Grouping within Segment (for flexible tiering)
-  // Examples: "Solo", "Couple", "Group" OR "Budget", "Premium", "Luxury"
-  // Leave null for flat package structure
-  grouping      String? // Optional tier/group label
-  groupingOrder Int? // Order within grouping (lower = first)
-
-  // Photo Gallery - Array of photo objects
-  // Structure: [{url: string, filename: string, size: number, order: number}]
-  // Max 5 photos per package, order determines display sequence
-  photos Json @default("[]")
-
-  // Draft fields for Visual Editor (null = no pending changes)
-  // Tenants can edit packages in draft mode, then publish all changes at once
-  draftTitle       String?
-  draftDescription String?
-  draftPriceCents  Int?
-  draftPhotos      Json? // Same structure as photos: [{url, filename, size, order}]
-  hasDraft         Boolean   @default(false)
-  draftUpdatedAt   DateTime?
-
-  // Booking configuration - determines which booking flow to use
-  // DATE: Simple date picker (weddings, events) - default
-  // TIMESLOT: Time slot scheduling (consultations, appointments)
-  bookingType BookingType @default(DATE)
-
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  segment   Segment?       @relation(fields: [segmentId], references: [id], onDelete: SetNull)
-  addOns    PackageAddOn[]
-  bookings  Booking[]
-
-  @@unique([tenantId, slug]) // Each tenant has unique package slugs
-  @@index([tenantId, active])
-  @@index([tenantId])
-  @@index([tenantId, hasDraft]) // Query packages with pending drafts
-  @@index([slug])
-  @@index([segmentId]) // Query packages by segment
-  @@index([segmentId, grouping]) // Query packages by segment and grouping
-  @@index([segmentId, active]) // Query active packages by segment (performance optimization)
-}
-
 model AddOn {
   id          String  @id @default(cuid())
   tenantId    String // Tenant isolation
@@ -448,13 +391,12 @@ model AddOn {
   active      Boolean @default(true)
 
   // Segment Scoping (nullable - null = available to all segments)
-  segmentId String? // If set, add-on only available for packages in this segment
+  segmentId String? // If set, add-on only available for tiers in this segment
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   segment     Segment?       @relation(fields: [segmentId], references: [id], onDelete: SetNull)
-  packages    PackageAddOn[]
   tiers       TierAddOn[] // Tier-based add-on associations
   bookingRefs BookingAddOn[]
 
@@ -464,23 +406,11 @@ model AddOn {
   @@index([tenantId, segmentId]) // Query add-ons by tenant and segment (null = global)
 }
 
-model PackageAddOn {
-  packageId String
-  addOnId   String
-  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  addOn     AddOn   @relation(fields: [addOnId], references: [id], onDelete: Cascade)
-
-  @@id([packageId, addOnId])
-  @@index([packageId])
-  @@index([addOnId])
-}
-
 model Booking {
   id         String  @id @default(cuid())
   tenantId   String // Tenant isolation
   customerId String
-  packageId  String? // Optional for TIMESLOT bookings (which use serviceId instead)
-  tierId     String? // New: nullable during Package→Tier transition
+  tierId     String? // Tier-based booking (null for TIMESLOT bookings using serviceId)
   venueId    String?
 
   // Customer-facing confirmation code for booking lookups (e.g., "BK-ABC123")
@@ -544,7 +474,6 @@ model Booking {
 
   tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer Customer       @relation(fields: [customerId], references: [id])
-  package  Package?       @relation(fields: [packageId], references: [id])
   tier     Tier?          @relation(fields: [tierId], references: [id], onDelete: Restrict)
   venue    Venue?         @relation(fields: [venueId], references: [id])
   service  Service?       @relation(fields: [serviceId], references: [id])
@@ -567,7 +496,6 @@ model Booking {
   @@index([tenantId, status, date])
   @@index([tenantId])
   @@index([customerId])
-  @@index([packageId])
   @@index([tierId])
   @@index([serviceId])
   @@index([venueId])
@@ -816,9 +744,9 @@ model ConfigChangeLog {
   tenantId String // Tenant isolation
 
   // Change metadata
-  changeType String // 'config_version', 'agent_proposal', 'package_crud', 'branding_update', 'blackout_change'
+  changeType String // 'config_version', 'agent_proposal', 'tier_crud', 'branding_update', 'blackout_change'
   operation  String // 'create', 'update', 'delete', 'publish', 'approve', 'reject'
-  entityType String // 'ConfigVersion', 'AgentProposal', 'Package', 'Tenant', 'BlackoutDate'
+  entityType String // 'ConfigVersion', 'AgentProposal', 'Tier', 'Tenant', 'BlackoutDate'
   entityId   String // ID of the entity being changed
 
   // Attribution (who made the change)

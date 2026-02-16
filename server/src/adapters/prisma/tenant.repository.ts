@@ -234,7 +234,7 @@ export class PrismaTenantRepository {
         _count: {
           select: {
             bookings: true,
-            packages: true,
+            tiers: true,
             addOns: true,
           },
         },
@@ -257,7 +257,7 @@ export class PrismaTenantRepository {
       updatedAt: t.updatedAt,
       stats: {
         bookings: t._count.bookings,
-        packages: t._count.packages,
+        tiers: t._count.tiers,
         addOns: t._count.addOns,
       },
     }));
@@ -276,7 +276,7 @@ export class PrismaTenantRepository {
         _count: {
           select: {
             bookings: true,
-            packages: true,
+            tiers: true,
             addOns: true,
             blackoutDates: true,
           },
@@ -303,7 +303,7 @@ export class PrismaTenantRepository {
       updatedAt: tenant.updatedAt,
       stats: {
         bookings: tenant._count.bookings,
-        packages: tenant._count.packages,
+        tiers: tenant._count.tiers,
         addOns: tenant._count.addOns,
         blackoutDates: tenant._count.blackoutDates,
       },
@@ -364,7 +364,7 @@ export class PrismaTenantRepository {
    */
   async getStats(id: string): Promise<{
     bookingCount: number;
-    packageCount: number;
+    tierCount: number;
     addOnCount: number;
   }> {
     const tenant = await this.prisma.tenant.findUnique({
@@ -373,7 +373,7 @@ export class PrismaTenantRepository {
         _count: {
           select: {
             bookings: true,
-            packages: true,
+            tiers: true,
             addOns: true,
           },
         },
@@ -386,7 +386,7 @@ export class PrismaTenantRepository {
 
     return {
       bookingCount: tenant._count.bookings,
-      packageCount: tenant._count.packages,
+      tierCount: tenant._count.tiers,
       addOnCount: tenant._count.addOns,
     };
   }
@@ -721,7 +721,7 @@ export interface TenantWithStats {
   updatedAt: Date;
   stats: {
     bookings: number;
-    packages: number;
+    tiers: number;
     addOns: number;
   };
 }
@@ -744,7 +744,7 @@ export interface TenantWithDetailStats {
   updatedAt: Date;
   stats: {
     bookings: number;
-    packages: number;
+    tiers: number;
     addOns: number;
     blackoutDates: number;
   };

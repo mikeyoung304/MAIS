@@ -28,7 +28,7 @@ describe('Schema Consistency Checks', () => {
       const requiredModels = [
         'model Tenant',
         'model User',
-        'model Package',
+        'model Tier',
         'model Booking',
         'model Service',
         'model AvailabilityRule',
@@ -150,7 +150,7 @@ describe('Schema Consistency Checks', () => {
       // These models MUST have tenantId for data isolation
       const multiTenantModels = [
         'Customer',
-        'Package',
+        'Tier',
         'Booking',
         'Service',
         'AvailabilityRule',
@@ -175,7 +175,7 @@ describe('Schema Consistency Checks', () => {
 
       // Key models that should have tenant-scoped unique constraints
       const expectedUnique = [
-        '@@unique([tenantId, slug])', // For Package, Segment, Service, etc.
+        '@@unique([tenantId, slug])', // For Tier, Segment, Service, etc.
         '@@unique([tenantId, date])', // For BlackoutDate
       ];
 
@@ -207,7 +207,7 @@ describe('Schema Consistency Checks', () => {
         'model User {',
         'model Customer {',
         'model Booking {',
-        'model Package {',
+        'model Tier {',
         'model Payment {',
         'model WebhookEvent {',
         'model Service {',

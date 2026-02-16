@@ -61,7 +61,6 @@ describe.runIf(hasDatabaseUrl)('TenantProvisioningService', () => {
         // Delete in correct order (respecting foreign keys)
         await prisma.tier.deleteMany({ where: { segmentId: { in: segmentIds } } });
         await prisma.sectionContent.deleteMany({ where: { tenantId: { in: tenantIds } } });
-        await prisma.package.deleteMany({ where: { tenantId: { in: tenantIds } } });
         await prisma.segment.deleteMany({ where: { tenantId: { in: tenantIds } } });
         await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
       }
