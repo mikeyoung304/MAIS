@@ -9,5 +9,5 @@ export default function ContactError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <TenantErrorBoundary error={error} reset={reset} context="contact (domain)" />;
+  return <TenantErrorBoundary error={error} reset={reset} context="contact" />;
 }

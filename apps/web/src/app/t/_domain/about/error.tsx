@@ -9,5 +9,5 @@ export default function AboutError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <TenantErrorBoundary error={error} reset={reset} context="about (domain)" />;
+  return <TenantErrorBoundary error={error} reset={reset} context="about" />;
 }

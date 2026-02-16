@@ -9,5 +9,5 @@ export default function TestimonialsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <TenantErrorBoundary error={error} reset={reset} context="testimonials (domain)" />;
+  return <TenantErrorBoundary error={error} reset={reset} context="testimonials" />;
 }
