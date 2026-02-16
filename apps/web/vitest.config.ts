@@ -12,6 +12,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@macon/contracts': path.resolve(__dirname, '../../packages/contracts/src'),
+      '@macon/shared': path.resolve(__dirname, '../../packages/shared/src'),
     },
   },
 });

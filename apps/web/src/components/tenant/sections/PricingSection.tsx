@@ -20,12 +20,13 @@ interface PricingSectionProps extends PricingSectionType {
 export function PricingSection({
   headline,
   subheadline,
-  tiers = [],
+  tiers,
   backgroundColor = 'white',
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: PricingSectionProps) {
-  if (tiers.length === 0) return null;
+  const safeTiers = Array.isArray(tiers) ? tiers : [];
+  if (safeTiers.length === 0) return null;
 
   const bgClass = backgroundColor === 'neutral' ? 'bg-neutral-50' : 'bg-white';
 
@@ -50,7 +51,7 @@ export function PricingSection({
       </div>
 
       <div className="max-w-5xl mx-auto grid gap-8 lg:grid-cols-3">
-        {tiers.map((tier) => {
+        {safeTiers.map((tier) => {
           const isPopular = tier.isPopular === true;
           const isEnterprise = tier.variant === 'enterprise';
           const displayPrice = typeof tier.price === 'number' ? `$${tier.price / 100}` : tier.price;

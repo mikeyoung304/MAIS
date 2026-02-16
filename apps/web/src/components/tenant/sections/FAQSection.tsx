@@ -13,12 +13,13 @@ interface FAQSectionProps extends FAQSectionType {
  */
 export function FAQSection({
   headline = 'FAQ',
-  items = [],
+  items,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: FAQSectionProps) {
+  const safeItems = Array.isArray(items) ? items : [];
   // Don't render if no FAQ items
-  if (items.length === 0) {
+  if (safeItems.length === 0) {
     return null;
   }
 
@@ -32,7 +33,7 @@ export function FAQSection({
         </div>
 
         <div className="mt-16 space-y-6">
-          {items.map((faq, i) => (
+          {safeItems.map((faq, i) => (
             <div key={i} className="rounded-2xl border border-neutral-100 bg-white p-6">
               <h3 className="font-semibold text-text-primary">{faq.question}</h3>
               <p className="mt-2 text-text-muted">{faq.answer}</p>

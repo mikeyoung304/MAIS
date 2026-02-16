@@ -46,6 +46,30 @@ export function createTenantAdminRoutes(deps: TenantAdminDeps): Router {
   registerTierPhotoRoutes(router, deps);
 
   // ============================================================================
+  // Tier Listing (kept in aggregator — GET only, used for dashboard count)
+  // ============================================================================
+
+  /**
+   * GET /v1/tenant-admin/tiers
+   * List all tiers for the tenant (used by dashboard for tier count)
+   * Full CRUD is not needed — tier management happens through agent tools.
+   */
+  router.get('/tiers', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
+        res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+        return;
+      }
+
+      const tiers = await deps.catalogService.getAllTiers(tenantId);
+      res.json(tiers);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ============================================================================
   // Profile Endpoint (kept in aggregator — small, doesn't fit a domain)
   // ============================================================================
 

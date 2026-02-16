@@ -81,6 +81,8 @@ export function TenantAgentChat({
     sendProgrammaticMessage,
     setInputValue,
     initializeSession,
+    cancelRequest,
+    loadingStartRef,
     messagesEndRef,
     inputRef: internalInputRef,
     handleKeyDown,
@@ -107,6 +109,21 @@ export function TenantAgentChat({
   });
 
   const inputRef = externalInputRef || internalInputRef;
+
+  // Show recovery button after 60s of continuous loading
+  const [showRecovery, setShowRecovery] = React.useState(false);
+  React.useEffect(() => {
+    if (!isLoading) {
+      setShowRecovery(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (loadingStartRef.current && Date.now() - loadingStartRef.current >= 60_000) {
+        setShowRecovery(true);
+      }
+    }, 60_000);
+    return () => clearTimeout(timer);
+  }, [isLoading, loadingStartRef]);
 
   // Register message sender for external components (SectionWidget)
   React.useEffect(() => {
@@ -232,6 +249,22 @@ export function TenantAgentChat({
                 />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Recovery button — shown after 60s of loading */}
+        {showRecovery && isLoading && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-950/50 border border-amber-800">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+            <span className="text-xs text-amber-400">Taking longer than expected.</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={cancelRequest}
+              className="ml-auto rounded-full text-xs h-6 px-2"
+            >
+              Cancel
+            </Button>
           </div>
         )}
 

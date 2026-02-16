@@ -538,27 +538,33 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         }
       }
 
-      const response = await fetchWithTimeout(`${agentUrl}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
+      // 120s timeout: multi-tool agent turns (manage_tiers x3 + build_first_draft + update_section x3)
+      // realistically take 20-45s. Matches Cloud Run max request timeout.
+      const response = await fetchWithTimeout(
+        `${agentUrl}/run`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({
+            // A2A protocol format (Pitfall #28 - must use camelCase)
+            appName: 'agent',
+            userId,
+            sessionId,
+            newMessage: {
+              role: 'user',
+              parts: [{ text: messageWithContext }],
+            },
+            // Pass tenant context in state for the agent to use
+            state: {
+              tenantId,
+            },
+          }),
         },
-        body: JSON.stringify({
-          // A2A protocol format (Pitfall #28 - must use camelCase)
-          appName: 'agent',
-          userId,
-          sessionId,
-          newMessage: {
-            role: 'user',
-            parts: [{ text: messageWithContext }],
-          },
-          // Pass tenant context in state for the agent to use
-          state: {
-            tenantId,
-          },
-        }),
-      });
+        120_000
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -799,8 +805,26 @@ function extractDashboardActions(
 // extractToolCalls imported from '../lib/adk-client'
 
 /**
+ * Strip [SESSION CONTEXT]...[END CONTEXT] prefix injected by context injection.
+ * The server injects this block into the first user message for the LLM to see,
+ * but it should never be displayed in chat history.
+ *
+ * Uses indexOf (not regex) for guaranteed O(n) with no backtracking.
+ */
+function stripSessionContext(content: string): string {
+  const startTag = '[SESSION CONTEXT]';
+  const endTag = '[END CONTEXT]';
+  const startIdx = content.indexOf(startTag);
+  if (startIdx === -1) return content;
+  const endIdx = content.indexOf(endTag, startIdx);
+  if (endIdx === -1) return content; // Malformed — return as-is
+  return content.slice(endIdx + endTag.length).trim();
+}
+
+/**
  * Extract messages from ADK session events.
  * Transforms ADK event format to our API message format.
+ * Strips [SESSION CONTEXT] blocks from user messages (injected by context injection).
  */
 function extractMessagesFromEvents(
   events: Array<{ content?: { role?: string; parts?: Array<{ text?: string }> } }>
@@ -811,10 +835,15 @@ function extractMessagesFromEvents(
     if (!event.content || !event.content.role || !event.content.parts) continue;
 
     const role = event.content.role === 'user' ? 'user' : 'assistant';
-    const content = event.content.parts
+    let content = event.content.parts
       .filter((p) => p.text)
       .map((p) => p.text)
       .join('');
+
+    // Strip context injection prefix from user messages
+    if (role === 'user') {
+      content = stripSessionContext(content);
+    }
 
     if (content) {
       messages.push({

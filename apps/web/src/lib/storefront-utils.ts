@@ -45,7 +45,7 @@ const BLOCK_TO_SECTION_TYPE: Record<string, SectionTypeName> = {
  * (title, body, items) but components expect semantic names
  * (headline, content, features). This function bridges that gap.
  */
-function transformContentForSection(
+export function transformContentForSection(
   sectionType: SectionTypeName,
   content: Record<string, unknown>
 ): Record<string, unknown> {
@@ -89,6 +89,27 @@ function transformContentForSection(
         delete transformed.items;
       }
       break;
+    case 'pricing':
+      if ('items' in content && !('tiers' in content)) {
+        transformed.tiers = content.items;
+        delete transformed.items;
+      }
+      // Ensure tiers is always an array (null defeats = [] defaults)
+      if (!Array.isArray(transformed.tiers)) {
+        transformed.tiers = [];
+      }
+      break;
+
+    // Catch-all: null-coalesce known array fields to prevent .map() on null
+    default: {
+      const arrayFields = ['items', 'tiers', 'features', 'images', 'testimonials', 'questions'];
+      for (const field of arrayFields) {
+        if (field in transformed && !Array.isArray(transformed[field])) {
+          transformed[field] = [];
+        }
+      }
+      break;
+    }
   }
 
   return transformed;
