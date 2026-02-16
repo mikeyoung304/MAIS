@@ -9,7 +9,7 @@
 
 import { FunctionTool, type ToolContext as _ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { getTenantId, callMaisApi, logger } from '../utils.js';
+import { callMaisApi, logger, wrapToolExecute, validateParams, requireTenantId } from '../utils.js';
 
 // =============================================================================
 // PARAMETER SCHEMAS
@@ -68,26 +68,18 @@ export const getServicesTool = new FunctionTool({
   description:
     'Get all available services for this business. Returns service names, descriptions, prices, and durations.',
   parameters: GetServicesParams,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = GetServicesParams.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available. Session may not be properly initialized.' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(GetServicesParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info({}, `[CustomerAgent] get_services called for tenant: ${tenantId}`);
-    const result = await callMaisApi('/services', tenantId, parsed.data);
+    const result = await callMaisApi('/services', tenantId, validParams);
 
     if (!result.ok) {
       return { success: false, error: result.error };
     }
     return { success: true, ...(result.data as object) };
-  },
+  }),
 });
 
 /**
@@ -98,29 +90,21 @@ export const getServiceDetailsTool = new FunctionTool({
   description:
     'Get detailed information about a specific service including full description and pricing.',
   parameters: GetServiceDetailsParams,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = GetServiceDetailsParams.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(GetServiceDetailsParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info(
       {},
-      `[CustomerAgent] get_service_details called for service: ${parsed.data.serviceId}`
+      `[CustomerAgent] get_service_details called for service: ${validParams.serviceId}`
     );
-    const result = await callMaisApi('/service-details', tenantId, parsed.data);
+    const result = await callMaisApi('/service-details', tenantId, validParams);
 
     if (!result.ok) {
       return { success: false, error: result.error };
     }
     return { success: true, ...(result.data as object) };
-  },
+  }),
 });
 
 /**
@@ -131,30 +115,22 @@ export const checkAvailabilityTool = new FunctionTool({
   description:
     'Check available time slots for a service within a date range. Returns a list of available and unavailable slots.',
   parameters: CheckAvailabilityParams,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = CheckAvailabilityParams.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(CheckAvailabilityParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info(
       {},
-      `[CustomerAgent] check_availability called for dates: ${parsed.data.startDate} to ${parsed.data.endDate}`
+      `[CustomerAgent] check_availability called for dates: ${validParams.startDate} to ${validParams.endDate}`
     );
 
-    const result = await callMaisApi('/availability', tenantId, parsed.data);
+    const result = await callMaisApi('/availability', tenantId, validParams);
 
     if (!result.ok) {
       return { success: false, error: result.error };
     }
     return { success: true, ...(result.data as object) };
-  },
+  }),
 });
 
 /**
@@ -165,11 +141,8 @@ export const getBusinessInfoTool = new FunctionTool({
   description:
     'Get business information including name, location, contact details, and hours of operation.',
   parameters: z.object({}),
-  execute: async (_params, context) => {
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (_params, context) => {
+    const tenantId = requireTenantId(context);
 
     logger.info({}, `[CustomerAgent] get_business_info called for tenant: ${tenantId}`);
     const result = await callMaisApi('/business-info', tenantId);
@@ -178,7 +151,7 @@ export const getBusinessInfoTool = new FunctionTool({
       return { success: false, error: result.error };
     }
     return { success: true, ...(result.data as object) };
-  },
+  }),
 });
 
 /**
@@ -189,30 +162,22 @@ export const answerFaqTool = new FunctionTool({
   description:
     'Look up an answer in the business FAQ database. Returns the answer and confidence level.',
   parameters: AnswerFaqParams,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = AnswerFaqParams.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(AnswerFaqParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info(
       {},
-      `[CustomerAgent] answer_faq called with question: ${parsed.data.question.substring(0, 50)}...`
+      `[CustomerAgent] answer_faq called with question: ${validParams.question.substring(0, 50)}...`
     );
 
-    const result = await callMaisApi('/faq', tenantId, parsed.data);
+    const result = await callMaisApi('/faq', tenantId, validParams);
 
     if (!result.ok) {
       return { success: false, error: result.error };
     }
     return { success: true, ...(result.data as object) };
-  },
+  }),
 });
 
 /**
@@ -223,29 +188,21 @@ export const recommendTierTool = new FunctionTool({
   description:
     'Recommend services based on customer preferences like budget, occasion, and group size.',
   parameters: RecommendTierParams,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = RecommendTierParams.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(RecommendTierParams, params);
+    const tenantId = requireTenantId(context);
 
     logger.info(
-      { preferences: parsed.data.preferences },
+      { preferences: validParams.preferences },
       '[CustomerAgent] recommend_tier called with preferences'
     );
-    const result = await callMaisApi('/recommend', tenantId, parsed.data);
+    const result = await callMaisApi('/recommend', tenantId, validParams);
 
     if (!result.ok) {
       return { success: false, error: result.error };
     }
     return { success: true, ...(result.data as object) };
-  },
+  }),
 });
 
 /**
@@ -261,15 +218,11 @@ export const createBookingTool = new FunctionTool({
   description:
     'Create a new booking for a service. T3 ACTION: Always show booking details and get explicit customer confirmation before calling. Requires confirmationReceived: true.',
   parameters: CreateBookingParams,
-  execute: async (params, context) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = CreateBookingParams.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
+  execute: wrapToolExecute(async (params, context) => {
+    const validParams = validateParams(CreateBookingParams, params);
 
     // T3 confirmation check (Pitfall #45)
-    if (!parsed.data.confirmationReceived) {
+    if (!validParams.confirmationReceived) {
       return {
         requiresConfirmation: true,
         confirmationType: 'T3_BOOKING',
@@ -280,17 +233,14 @@ export const createBookingTool = new FunctionTool({
       };
     }
 
-    const tenantId = getTenantId(context);
-    if (!tenantId) {
-      return { error: 'No tenant context available' };
-    }
+    const tenantId = requireTenantId(context);
 
     logger.info(
       {},
-      `[CustomerAgent] create_booking called for service: ${parsed.data.serviceId} at ${parsed.data.scheduledAt}`
+      `[CustomerAgent] create_booking called for service: ${validParams.serviceId} at ${validParams.scheduledAt}`
     );
 
-    const result = await callMaisApi('/create-booking', tenantId, parsed.data);
+    const result = await callMaisApi('/create-booking', tenantId, validParams);
 
     if (!result.ok) {
       return { success: false, error: result.error };
@@ -303,5 +253,5 @@ export const createBookingTool = new FunctionTool({
       bookingCreated: true,
       message: 'Booking confirmed! The customer will receive a confirmation email.',
     };
-  },
+  }),
 });

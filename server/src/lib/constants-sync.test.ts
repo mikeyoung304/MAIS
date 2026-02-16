@@ -22,12 +22,19 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 // Canonical sources (monorepo)
-import { MVP_REVEAL_SECTION_TYPES } from '@macon/contracts';
+import {
+  MVP_REVEAL_SECTION_TYPES,
+  SECTION_TYPES as CANONICAL_SECTION_TYPES,
+} from '@macon/contracts';
 import { DISCOVERY_FACT_KEYS as CANONICAL_DISCOVERY_FACT_KEYS } from '../shared/constants/discovery-facts';
 
 // Local copies (Cloud Run tenant agent)
 import { MVP_SECTION_TYPES as AGENT_MVP_SECTION_TYPES } from '../agent-v2/deploy/tenant/src/constants/shared';
 import { DISCOVERY_FACT_KEYS as AGENT_DISCOVERY_FACT_KEYS } from '../agent-v2/deploy/tenant/src/constants/discovery-facts';
+
+// SECTION_TYPES copies across the codebase
+import { SECTION_TYPES as AGENT_SHARED_SECTION_TYPES } from '../routes/internal-agent-shared';
+import { SECTION_TYPES as BLOCK_MAPPER_SECTION_TYPES } from './block-type-mapper';
 
 // ============================================================================
 // MVP_SECTION_TYPES
@@ -54,6 +61,42 @@ describe('DISCOVERY_FACT_KEYS sync', () => {
     const agent = [...AGENT_DISCOVERY_FACT_KEYS].sort();
 
     expect(agent).toEqual(canonical);
+  });
+});
+
+// ============================================================================
+// SECTION_TYPES (full 12-type list)
+// ============================================================================
+
+describe('SECTION_TYPES sync', () => {
+  const canonical = [...CANONICAL_SECTION_TYPES].sort();
+
+  it('internal-agent-shared.ts matches canonical contracts source', () => {
+    const agentShared = [...AGENT_SHARED_SECTION_TYPES].sort();
+    expect(agentShared).toEqual(canonical);
+  });
+
+  it('block-type-mapper.ts matches canonical contracts source', () => {
+    const blockMapper = [...BLOCK_MAPPER_SECTION_TYPES].sort();
+    expect(blockMapper).toEqual(canonical);
+  });
+
+  it('storefront-utils BLOCK_TO_SECTION_TYPE covers all canonical types', () => {
+    // storefront-utils uses uppercase keys mapping to SectionTypeName values
+    // Read the file and extract BLOCK_TO_SECTION_TYPE values
+    const storefrontUtilsPath = resolve(__dirname, '../../../apps/web/src/lib/storefront-utils.ts');
+    const content = readFileSync(storefrontUtilsPath, 'utf-8');
+
+    // Extract the values from the BLOCK_TO_SECTION_TYPE map (keys are unquoted: HERO: 'hero')
+    const valueRegex = /^\s+[A-Z]+: '([a-z]+)',?$/gm;
+    const values: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = valueRegex.exec(content)) !== null) {
+      if (match[1]) values.push(match[1]);
+    }
+
+    const storefrontTypes = values.sort();
+    expect(storefrontTypes).toEqual(canonical);
   });
 });
 

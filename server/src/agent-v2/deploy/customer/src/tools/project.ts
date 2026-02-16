@@ -9,7 +9,13 @@
 
 import { FunctionTool, type ToolContext } from '@google/adk';
 import { z } from 'zod';
-import { getSessionContext, callBackendAPI, logger } from '../utils.js';
+import {
+  getSessionContext,
+  callBackendAPI,
+  logger,
+  wrapToolExecute,
+  validateParams,
+} from '../utils.js';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -246,49 +252,33 @@ export const getProjectStatusTool = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID to check status for'),
   }),
-  execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = ProjectIdSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId } = parsed.data;
-
-    if (!ctx) {
-      return { error: 'Tool context is required' };
-    }
+  execute: wrapToolExecute(async (params, ctx) => {
+    const { projectId } = validateParams(ProjectIdSchema, params);
+    const session = getSessionContext(ctx);
 
     // P1 Security: Ownership verification
-    const session = getSessionContext(ctx);
     if (session.projectId && projectId !== session.projectId) {
       return { error: 'Unauthorized: Project does not match your session' };
     }
 
-    try {
-      const project = await callBackendAPI<Project>(`/project-hub/project-details`, 'POST', {
-        tenantId: session.tenantId,
-        projectId,
-      });
+    const project = await callBackendAPI<Project>(`/project-hub/project-details`, 'POST', {
+      tenantId: session.tenantId,
+      projectId,
+    });
 
-      return {
-        success: true,
-        project: {
-          status: project.status,
-          bookingDate: project.bookingDate,
-          serviceName: project.serviceName,
-          preferences: project.customerPreferences,
-        },
-        // State indicators for agent context (Pitfall #48)
-        projectStatus: project.status,
-        lastUpdated: new Date().toISOString(),
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get project status',
-      };
-    }
-  },
+    return {
+      success: true,
+      project: {
+        status: project.status,
+        bookingDate: project.bookingDate,
+        serviceName: project.serviceName,
+        preferences: project.customerPreferences,
+      },
+      // State indicators for agent context (Pitfall #48)
+      projectStatus: project.status,
+      lastUpdated: new Date().toISOString(),
+    };
+  }),
 });
 
 /**
@@ -301,44 +291,28 @@ export const getPrepChecklistTool = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = ProjectIdSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId } = parsed.data;
-
-    if (!ctx) {
-      return { error: 'Tool context is required' };
-    }
+  execute: wrapToolExecute(async (params, ctx) => {
+    const { projectId } = validateParams(ProjectIdSchema, params);
+    const session = getSessionContext(ctx);
 
     // P1 Security: Ownership verification
-    const session = getSessionContext(ctx);
     if (session.projectId && projectId !== session.projectId) {
       return { error: 'Unauthorized: Project does not match your session' };
     }
 
-    try {
-      const checklist = await callBackendAPI<{
-        items: Array<{ text: string; completed: boolean }>;
-      }>(`/project-hub/projects/${projectId}/checklist`, 'GET');
+    const checklist = await callBackendAPI<{
+      items: Array<{ text: string; completed: boolean }>;
+    }>(`/project-hub/projects/${projectId}/checklist`, 'GET');
 
-      return {
-        success: true,
-        checklist: checklist.items,
-        // State indicators for agent context (Pitfall #48)
-        checklistItemCount: checklist.items.length,
-        completedItemCount: checklist.items.filter((item) => item.completed).length,
-        lastUpdated: new Date().toISOString(),
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get checklist',
-      };
-    }
-  },
+    return {
+      success: true,
+      checklist: checklist.items,
+      // State indicators for agent context (Pitfall #48)
+      checklistItemCount: checklist.items.length,
+      completedItemCount: checklist.items.filter((item) => item.completed).length,
+      lastUpdated: new Date().toISOString(),
+    };
+  }),
 });
 
 /**
@@ -351,20 +325,11 @@ export const answerPrepQuestionTool = new FunctionTool({
     projectId: z.string().describe('The project ID'),
     question: z.string().describe('The customer question to answer'),
   }),
-  execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = ProjectIdWithQuestionSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId, question } = parsed.data;
-
-    if (!ctx) {
-      return { error: 'Tool context is required' };
-    }
+  execute: wrapToolExecute(async (params, ctx) => {
+    const { projectId, question } = validateParams(ProjectIdWithQuestionSchema, params);
+    const session = getSessionContext(ctx);
 
     // P1 Security: Ownership verification
-    const session = getSessionContext(ctx);
     if (session.projectId && projectId !== session.projectId) {
       return { error: 'Unauthorized: Project does not match your session' };
     }
@@ -387,60 +352,53 @@ export const answerPrepQuestionTool = new FunctionTool({
       };
     }
 
-    try {
-      const answer = await callBackendAPI<{ answer: string; confidence: number; source: string }>(
-        `/project-hub/projects/${projectId}/answer`,
-        'POST',
-        { question }
+    const answer = await callBackendAPI<{ answer: string; confidence: number; source: string }>(
+      `/project-hub/projects/${projectId}/answer`,
+      'POST',
+      { question }
+    );
+
+    // Mediation: Check confidence thresholds
+    if (answer.confidence < ESCALATE_THRESHOLD) {
+      logger.info(
+        { projectId, confidence: answer.confidence },
+        '[CustomerAgent] Low confidence answer - recommending escalation'
       );
-
-      // Mediation: Check confidence thresholds
-      if (answer.confidence < ESCALATE_THRESHOLD) {
-        logger.info(
-          { projectId, confidence: answer.confidence },
-          '[CustomerAgent] Low confidence answer - recommending escalation'
-        );
-        return {
-          success: true,
-          answer: answer.answer,
-          confidence: answer.confidence,
-          shouldEscalate: true,
-          escalationReason:
-            'Low confidence answer - consider escalating to provider for accurate response',
-          suggestedAction: 'Use submit_request tool to get provider input',
-        };
-      }
-
-      if (answer.confidence < AUTO_HANDLE_THRESHOLD) {
-        logger.info(
-          { projectId, confidence: answer.confidence },
-          '[CustomerAgent] Medium confidence answer - flagging for provider'
-        );
-        return {
-          success: true,
-          answer: answer.answer,
-          confidence: answer.confidence,
-          flaggedForProvider: true,
-          message: 'Answer provided but flagged for provider visibility',
-          questionAnswered: true,
-          lastUpdated: new Date().toISOString(),
-        };
-      }
-
       return {
         success: true,
         answer: answer.answer,
         confidence: answer.confidence,
+        shouldEscalate: true,
+        escalationReason:
+          'Low confidence answer - consider escalating to provider for accurate response',
+        suggestedAction: 'Use submit_request tool to get provider input',
+      };
+    }
+
+    if (answer.confidence < AUTO_HANDLE_THRESHOLD) {
+      logger.info(
+        { projectId, confidence: answer.confidence },
+        '[CustomerAgent] Medium confidence answer - flagging for provider'
+      );
+      return {
+        success: true,
+        answer: answer.answer,
+        confidence: answer.confidence,
+        flaggedForProvider: true,
+        message: 'Answer provided but flagged for provider visibility',
         questionAnswered: true,
         lastUpdated: new Date().toISOString(),
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to answer question',
-      };
     }
-  },
+
+    return {
+      success: true,
+      answer: answer.answer,
+      confidence: answer.confidence,
+      questionAnswered: true,
+      lastUpdated: new Date().toISOString(),
+    };
+  }),
 });
 
 /**
@@ -452,52 +410,36 @@ export const getTimelineTool = new FunctionTool({
   parameters: z.object({
     projectId: z.string().describe('The project ID'),
   }),
-  execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = ProjectIdSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId } = parsed.data;
-
-    if (!ctx) {
-      return { error: 'Tool context is required' };
-    }
+  execute: wrapToolExecute(async (params, ctx) => {
+    const { projectId } = validateParams(ProjectIdSchema, params);
+    const session = getSessionContext(ctx);
 
     // P1 Security: Ownership verification
-    const session = getSessionContext(ctx);
     if (session.projectId && projectId !== session.projectId) {
       return { error: 'Unauthorized: Project does not match your session' };
     }
 
-    try {
-      const result = await callBackendAPI<{ events: ProjectEvent[]; count: number }>(
-        `/project-hub/timeline`,
-        'POST',
-        { tenantId: session.tenantId, projectId, actor: 'customer' }
-      );
+    const result = await callBackendAPI<{ events: ProjectEvent[]; count: number }>(
+      `/project-hub/timeline`,
+      'POST',
+      { tenantId: session.tenantId, projectId, actor: 'customer' }
+    );
 
-      // Filter and format for customer view
-      const timeline = result.events.map((e) => ({
-        date: e.createdAt,
-        type: e.type,
-        description: (e.payload as Record<string, string>).description || e.type,
-      }));
+    // Filter and format for customer view
+    const timeline = result.events.map((e) => ({
+      date: e.createdAt,
+      type: e.type,
+      description: (e.payload as Record<string, string>).description || e.type,
+    }));
 
-      return {
-        success: true,
-        timeline,
-        eventCount: timeline.length,
-        hasEvents: timeline.length > 0,
-        lastUpdated: new Date().toISOString(),
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get timeline',
-      };
-    }
-  },
+    return {
+      success: true,
+      timeline,
+      eventCount: timeline.length,
+      hasEvents: timeline.length > 0,
+      lastUpdated: new Date().toISOString(),
+    };
+  }),
 });
 
 // =============================================================================
@@ -536,20 +478,14 @@ export const submitRequestTool = new FunctionTool({
         'Required for CANCELLATION/REFUND - must be true after customer explicitly confirms they want to proceed'
       ),
   }),
-  execute: async (params, ctx: ToolContext | undefined) => {
-    // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = SubmitRequestSchema.safeParse(params);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
-    }
-    const { projectId, requestType, details, urgency, confirmationReceived } = parsed.data;
-
-    if (!ctx) {
-      return { error: 'Tool context is required' };
-    }
+  execute: wrapToolExecute(async (params, ctx) => {
+    const { projectId, requestType, details, urgency, confirmationReceived } = validateParams(
+      SubmitRequestSchema,
+      params
+    );
+    const session = getSessionContext(ctx);
 
     // P1 Security: Ownership verification
-    const session = getSessionContext(ctx);
     if (session.projectId && projectId !== session.projectId) {
       return { error: 'Unauthorized: Project does not match your session' };
     }
@@ -577,34 +513,27 @@ export const submitRequestTool = new FunctionTool({
       effectiveUrgency = 'high';
     }
 
-    try {
-      const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
-        `/project-hub/create-request`,
-        'POST',
-        {
-          tenantId: session.tenantId,
-          projectId,
-          type: requestType,
-          requestData: { details, urgency: effectiveUrgency },
-        }
-      );
-      const request = result.request;
+    const result = await callBackendAPI<{ success: boolean; request: ProjectRequest }>(
+      `/project-hub/create-request`,
+      'POST',
+      {
+        tenantId: session.tenantId,
+        projectId,
+        type: requestType,
+        requestData: { details, urgency: effectiveUrgency },
+      }
+    );
+    const request = result.request;
 
-      return {
-        success: true,
-        requestId: request.id,
-        message: `Your ${requestType.toLowerCase().replace('_', ' ')} request has been submitted. The service provider typically responds within 24-48 hours.`,
-        expiresAt: request.expiresAt,
-        // State indicators for agent context (Pitfall #48)
-        hasPendingRequest: true,
-        requestStatus: 'PENDING' as const,
-        projectStatus: 'awaiting_provider_response',
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to submit request',
-      };
-    }
-  },
+    return {
+      success: true,
+      requestId: request.id,
+      message: `Your ${requestType.toLowerCase().replace('_', ' ')} request has been submitted. The service provider typically responds within 24-48 hours.`,
+      expiresAt: request.expiresAt,
+      // State indicators for agent context (Pitfall #48)
+      hasPendingRequest: true,
+      requestStatus: 'PENDING' as const,
+      projectStatus: 'awaiting_provider_response',
+    };
+  }),
 });
