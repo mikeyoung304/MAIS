@@ -24,6 +24,7 @@ import { getSegmentStockPhoto } from '@/lib/constants/stock-photos';
 import { formatPrice } from '@/lib/format';
 import { TIER_ORDER } from '@/lib/tiers';
 import type { TenantStorefrontData, TierData, SegmentData } from '@/lib/tenant.client';
+import { formatPriceDisplay, hasScalingPricing } from '@/lib/pricing';
 import { SEED_TIER_NAMES } from '@macon/contracts';
 
 interface SegmentTiersSectionProps {
@@ -42,13 +43,15 @@ interface SegmentCardProps {
 
 /**
  * Get the price range text for a segment's packages
+ * Uses display price when available, otherwise base price
  */
 function getPriceRange(tiers: TierData[]): string {
   if (tiers.length === 0) return '';
-  const prices = tiers.map((p) => p.priceCents).sort((a, b) => a - b);
+  const prices = tiers.map((p) => p.displayPriceCents ?? p.priceCents).sort((a, b) => a - b);
   const min = prices[0];
   const max = prices[prices.length - 1];
-  if (min === max) return formatPrice(min);
+  const hasScaling = tiers.some((t) => hasScalingPricing(t));
+  if (min === max && !hasScaling) return formatPrice(min);
   return `From ${formatPrice(min)}`;
 }
 
@@ -140,9 +143,22 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
       <h3 className="text-lg font-semibold text-text-primary">{tierLabel}</h3>
 
       <p className="mt-3 text-3xl font-bold text-text-primary">
-        {formatPrice(pkg.priceCents)}
-        <span className="text-base font-normal text-text-muted">/session</span>
+        {formatPriceDisplay(pkg)}
+        {!hasScalingPricing(pkg) && (
+          <span className="text-base font-normal text-text-muted">/session</span>
+        )}
       </p>
+
+      {/* Per-person pricing hint */}
+      {hasScalingPricing(pkg) && pkg.scalingRules && (
+        <p className="mt-1 text-sm text-text-muted">
+          {pkg.scalingRules.components.map((c) => (
+            <span key={c.name}>
+              +{formatPrice(c.perPersonCents)}/person beyond {c.includedGuests} guests
+            </span>
+          ))}
+        </p>
+      )}
 
       {pkg.description && <p className="mt-4 flex-1 text-sm text-text-muted">{pkg.description}</p>}
 

@@ -36,6 +36,23 @@ const ManageTiersSchema = TenantIdSchema.extend({
   bookingType: z.enum(['DATE', 'TIMESLOT']).optional(),
   durationMinutes: z.number().min(1).optional(),
   active: z.boolean().optional(),
+  // Per-person scaling pricing fields
+  maxGuests: z.number().int().min(1).max(100).optional(),
+  displayPriceCents: z.number().int().min(0).optional(),
+  scalingRules: z
+    .object({
+      components: z
+        .array(
+          z.object({
+            name: z.string().min(1),
+            includedGuests: z.number().int().min(0),
+            perPersonCents: z.number().int().min(0),
+            maxGuests: z.number().int().min(1).optional(),
+          })
+        )
+        .max(10),
+    })
+    .optional(),
 });
 
 // =============================================================================
@@ -93,6 +110,12 @@ export function registerTierRoutes(router: Router, deps: MarketingRoutesDeps): v
             features: t.features as unknown[],
             bookingType: t.bookingType,
             active: t.active,
+            maxGuests: t.maxGuests,
+            displayPriceCents: t.displayPriceCents,
+            displayPriceInDollars: t.displayPriceCents
+              ? Math.round(t.displayPriceCents / 100)
+              : null,
+            scalingRules: t.scalingRules,
           }));
 
           res.json({
@@ -162,6 +185,9 @@ export function registerTierRoutes(router: Router, deps: MarketingRoutesDeps): v
               bookingType: params.bookingType ?? 'DATE',
               durationMinutes: params.durationMinutes ?? null,
               active: params.active ?? true,
+              maxGuests: params.maxGuests ?? null,
+              displayPriceCents: params.displayPriceCents ?? null,
+              scalingRules: params.scalingRules ?? undefined,
             },
             include: { segment: { select: { name: true } } },
           });
@@ -188,6 +214,12 @@ export function registerTierRoutes(router: Router, deps: MarketingRoutesDeps): v
               features: newTier.features as unknown[],
               bookingType: newTier.bookingType,
               active: newTier.active,
+              maxGuests: newTier.maxGuests,
+              displayPriceCents: newTier.displayPriceCents,
+              displayPriceInDollars: newTier.displayPriceCents
+                ? Math.round(newTier.displayPriceCents / 100)
+                : null,
+              scalingRules: newTier.scalingRules,
             },
             totalCount: allTiers,
           });
@@ -231,6 +263,10 @@ export function registerTierRoutes(router: Router, deps: MarketingRoutesDeps): v
           if (params.durationMinutes !== undefined)
             updateData.durationMinutes = params.durationMinutes;
           if (params.active !== undefined) updateData.active = params.active;
+          if (params.maxGuests !== undefined) updateData.maxGuests = params.maxGuests;
+          if (params.displayPriceCents !== undefined)
+            updateData.displayPriceCents = params.displayPriceCents;
+          if (params.scalingRules !== undefined) updateData.scalingRules = params.scalingRules;
 
           const updated = await prisma.tier.update({
             where: { id: params.tierId },
@@ -260,6 +296,12 @@ export function registerTierRoutes(router: Router, deps: MarketingRoutesDeps): v
               features: updated.features as unknown[],
               bookingType: updated.bookingType,
               active: updated.active,
+              maxGuests: updated.maxGuests,
+              displayPriceCents: updated.displayPriceCents,
+              displayPriceInDollars: updated.displayPriceCents
+                ? Math.round(updated.displayPriceCents / 100)
+                : null,
+              scalingRules: updated.scalingRules,
             },
             totalCount: allTiers,
           });

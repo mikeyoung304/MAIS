@@ -248,8 +248,8 @@ scalingRules: z.object({
 
 **Files:**
 
-- [ ] `server/src/agent-v2/deploy/tenant/src/tools/tiers.ts` — Add scaling params
-- [ ] `server/src/routes/content-generation.routes.ts` — Accept new fields in tier CRUD
+- [x] `server/src/agent-v2/deploy/tenant/src/tools/tiers.ts` — Add scaling params
+- [x] `server/src/routes/internal-agent-content-tiers.routes.ts` — Accept new fields in tier CRUD
 
 ### 1.6 Frontend: Guest Count Step
 
@@ -283,15 +283,15 @@ export function formatPriceDisplay(tier: TierDto): string;
 
 **Files:**
 
-- [ ] `apps/web/src/components/booking/DateBookingWizard.tsx` — Add Guests step
-- [ ] `apps/web/src/lib/pricing.ts` — New: client-side price calculation + display formatting
-- [ ] `apps/web/src/components/tier/TierCard.tsx` (or equivalent) — Per-person price display
+- [x] `apps/web/src/components/booking/DateBookingWizard.tsx` — Add Guests step
+- [x] `apps/web/src/lib/pricing.ts` — New: client-side price calculation + display formatting
+- [x] `apps/web/src/components/tenant/SegmentTiersSection.tsx` — Per-person price display in TierCard
 
 ### 1.7 Tests
 
 **Unit tests:**
 
-- [ ] `server/src/services/scaling-price.service.test.ts` — Price calculations for all sample data scenarios:
+- [x] `server/src/services/scaling-price.service.test.ts` — Price calculations for all sample data scenarios:
   - Flat tier (no scaling rules) → returns base price
   - Single component (dinner $110/person, 2 included, 6 guests) → correct total
   - Multi-component (floral $60 + meal $90, 6 guests) → correct total
@@ -303,26 +303,26 @@ export function formatPriceDisplay(tier: TierDto): string;
 
 **Integration tests:**
 
-- [ ] Booking creation with guest count flows through to Stripe metadata
-- [ ] Booking record stores guestCount correctly
-- [ ] Tenant isolation: tier scaling rules scoped by tenantId
+- [x] Booking creation with guest count flows through to Stripe metadata
+- [x] Booking record stores guestCount correctly
+- [x] Tenant isolation: tier scaling rules scoped by tenantId
 
 **Constants sync test:**
 
-- [ ] Extend `server/src/lib/constants-sync.test.ts` — verify ScalingRulesSchema available in agent deploy
+- [x] N/A — ScalingRules schema is in contracts (server) and defined locally in agent tool (different units: dollars vs cents)
 
 ### 1.8 Acceptance Criteria (Phase 1)
 
-- [ ] Tier model supports `maxGuests`, `scalingRules`, `displayPriceCents` fields
-- [ ] Booking model stores `guestCount`
-- [ ] Agent can create tiers with per-person pricing via `manage_tiers` tool
-- [ ] Booking wizard shows Guests step when tier has scaling rules
-- [ ] Guest count drives live price calculation in wizard
-- [ ] Stripe checkout charges correct scaled amount
-- [ ] Booking record reflects guest count and correct total
-- [ ] Flat-price tiers skip the Guests step (no regression)
-- [ ] All sample data scenarios calculate correctly (elopement, retreat, getaway)
-- [ ] Both workspaces typecheck clean
+- [x] Tier model supports `maxGuests`, `scalingRules`, `displayPriceCents` fields
+- [x] Booking model stores `guestCount`
+- [x] Agent can create tiers with per-person pricing via `manage_tiers` tool
+- [x] Booking wizard shows Guests step when tier has scaling rules
+- [x] Guest count drives live price calculation in wizard
+- [x] Stripe checkout charges correct scaled amount
+- [x] Booking record reflects guest count and correct total
+- [x] Flat-price tiers skip the Guests step (no regression)
+- [x] All sample data scenarios calculate correctly (elopement, retreat, getaway)
+- [x] Both workspaces typecheck clean
 
 ---
 

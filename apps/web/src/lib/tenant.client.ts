@@ -115,6 +115,17 @@ export interface TierData {
     description: string | null;
     priceCents: number;
   }>;
+  // Per-person scaling pricing
+  maxGuests?: number | null;
+  displayPriceCents?: number | null;
+  scalingRules?: {
+    components: Array<{
+      name: string;
+      includedGuests: number;
+      perPersonCents: number;
+      maxGuests?: number;
+    }>;
+  } | null;
 }
 
 /**
@@ -228,6 +239,7 @@ export async function createDateBooking(
     customerEmail: string;
     customerPhone?: string;
     notes?: string;
+    guestCount?: number;
   }
 ): Promise<{ checkoutUrl: string } | { error: string; status: number }> {
   const url = `${getClientApiUrl()}/v1/public/bookings/date`;
