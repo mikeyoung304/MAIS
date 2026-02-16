@@ -12,6 +12,14 @@
 
 import { z } from 'zod';
 
+// Re-export scaling rules for co-location with tier schemas
+export {
+  ScalingComponentSchema,
+  ScalingRulesSchema,
+  type ScalingComponent,
+  type ScalingRules,
+} from './scaling-rules.schema';
+
 /**
  * Individual feature within a pricing tier
  *

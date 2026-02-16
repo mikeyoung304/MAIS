@@ -137,6 +137,7 @@ export function createPublicDateBookingRoutes(
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         addOnIds: input.addOnIds,
+        guestCount: input.guestCount,
       });
 
       const result: CachedCheckoutResponse = { checkoutUrl: checkout.checkoutUrl };

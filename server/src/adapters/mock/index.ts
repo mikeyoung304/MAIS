@@ -294,11 +294,14 @@ export class MockCatalogRepository implements CatalogRepository {
       title: data.title,
       description: data.description,
       priceCents: data.priceCents,
+      displayPriceCents: data.displayPriceCents ?? null,
       photos: data.photos || [],
       active: true,
       segmentId: data.segmentId ?? null,
       groupingOrder: data.groupingOrder ?? null,
       bookingType: 'DATE',
+      maxGuests: data.maxGuests ?? null,
+      scalingRules: data.scalingRules ?? null,
     };
     tiers.set(tier.id, tier);
     return tier;
@@ -324,9 +327,12 @@ export class MockCatalogRepository implements CatalogRepository {
       ...(data.title !== undefined && { title: data.title }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.priceCents !== undefined && { priceCents: data.priceCents }),
+      ...(data.displayPriceCents !== undefined && { displayPriceCents: data.displayPriceCents }),
       ...(data.segmentId !== undefined && { segmentId: data.segmentId }),
       ...(data.groupingOrder !== undefined && { groupingOrder: data.groupingOrder }),
       ...(data.photos !== undefined && { photos: data.photos }),
+      ...(data.maxGuests !== undefined && { maxGuests: data.maxGuests }),
+      ...(data.scalingRules !== undefined && { scalingRules: data.scalingRules }),
     };
     tiers.set(id, updated);
     return updated;

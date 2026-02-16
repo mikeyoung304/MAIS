@@ -17,6 +17,8 @@ import type {
   CreateCheckoutSessionInput,
 } from './checkout-session.factory';
 import type { WeddingDepositService } from './wedding-deposit.service';
+import { calculateScalingPrice } from './scaling-price.service';
+import type { ScalingRules } from '@macon/contracts';
 import {
   NotFoundError,
   InvalidBookingTypeError,
@@ -34,6 +36,7 @@ export interface CreateDateBookingInput {
   customerPhone?: string;
   notes?: string;
   addOnIds?: string[];
+  guestCount?: number;
 }
 
 /**
@@ -64,8 +67,14 @@ export class WeddingBookingOrchestrator {
    */
   async createCheckout(
     tenantId: string,
-    input: CreateBookingInput,
-    prefetchedTier?: { id: string; slug: string; priceCents: number }
+    input: CreateBookingInput & { guestCount?: number },
+    prefetchedTier?: {
+      id: string;
+      slug: string;
+      priceCents: number;
+      scalingRules?: ScalingRules | null;
+      maxGuests?: number | null;
+    }
   ): Promise<{ checkoutUrl: string }> {
     // Use pre-fetched tier if provided, otherwise fetch (avoids duplicate query)
     const tier = prefetchedTier ?? (await this.catalogRepo.getTierById(tenantId, input.tierId));
@@ -74,10 +83,29 @@ export class WeddingBookingOrchestrator {
       throw new NotFoundError('The requested resource was not found');
     }
 
-    // Calculate deposit and commission
+    // Calculate total with per-person scaling (if applicable)
+    // Backend ALWAYS recalculates — never trust client-submitted totals
+    const effectivePriceCents = (() => {
+      const scalingRules = (tier as { scalingRules?: ScalingRules | null }).scalingRules;
+      const maxGuests = (tier as { maxGuests?: number | null }).maxGuests;
+
+      if (scalingRules && scalingRules.components.length > 0) {
+        if (!input.guestCount) {
+          throw new Error('Guest count is required for tiers with per-person pricing');
+        }
+        const result = calculateScalingPrice(
+          { priceCents: tier.priceCents, scalingRules, maxGuests: maxGuests ?? null },
+          input.guestCount
+        );
+        return result.totalBeforeCommission;
+      }
+      return tier.priceCents;
+    })();
+
+    // Calculate deposit and commission using scaled price
     const calc = await this.weddingDepositService.calculateDeposit(
       tenantId,
-      tier.priceCents,
+      effectivePriceCents,
       input.addOnIds || []
     );
 
@@ -97,6 +125,7 @@ export class WeddingBookingOrchestrator {
       isDeposit: String(calc.isDeposit),
       totalCents: String(calc.subtotal),
       depositPercent: calc.depositPercent !== null ? String(calc.depositPercent) : '',
+      ...(input.guestCount ? { guestCount: String(input.guestCount) } : {}),
     };
 
     const checkoutInput: CreateCheckoutSessionInput = {
@@ -155,6 +184,19 @@ export class WeddingBookingOrchestrator {
       throw new BookingConflictError(input.date, reason);
     }
 
+    // Validate guest count against tier maxGuests
+    if (input.guestCount && tier.maxGuests && input.guestCount > tier.maxGuests) {
+      throw new Error(
+        `Guest count ${input.guestCount} exceeds maximum of ${tier.maxGuests} for this tier`
+      );
+    }
+
+    // Require guest count if tier has scaling rules
+    const scalingRules = (tier as { scalingRules?: ScalingRules | null }).scalingRules;
+    if (scalingRules && scalingRules.components?.length > 0 && !input.guestCount) {
+      throw new Error('Guest count is required for tiers with per-person pricing');
+    }
+
     // Delegate to createCheckout - pass pre-fetched tier to avoid duplicate DB query
     return this.createCheckout(
       tenantId,
@@ -165,6 +207,7 @@ export class WeddingBookingOrchestrator {
         coupleName: input.customerName,
         addOnIds: input.addOnIds,
         bookingType: 'DATE',
+        guestCount: input.guestCount,
       },
       tier // Pass pre-fetched tier
     );
