@@ -76,6 +76,49 @@ if (
 }
 
 // =============================================================================
+// RATE LIMITING (inline — standalone deploy, no main codebase imports)
+// =============================================================================
+
+/**
+ * In-memory sliding window rate limiter.
+ * Enforces the limits documented in the system prompt below.
+ * Resets on cold start (acceptable — Cloud Run instances are short-lived).
+ *
+ * @see server/src/agent-v2/shared/rate-limiter.ts (canonical, for non-standalone agents)
+ */
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+const rateLimits = new Map<string, RateLimitEntry>();
+const HOUR_MS = 60 * 60 * 1000;
+
+const RATE_LIMIT_CAPS = {
+  scraping: 100,
+  search: 200,
+} as const;
+
+function checkRateLimit(operation: string, maxPerHour: number): void {
+  const now = Date.now();
+  let entry = rateLimits.get(operation);
+
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + HOUR_MS };
+  }
+
+  if (entry.count >= maxPerHour) {
+    const minutesLeft = Math.ceil((entry.resetAt - now) / 60000);
+    throw new Error(
+      `Rate limit exceeded for ${operation} (${maxPerHour}/hr). Resets in ${minutesLeft} min.`
+    );
+  }
+
+  entry.count++;
+  rateLimits.set(operation, entry);
+}
+
+// =============================================================================
 // PROMPT INJECTION FILTERING
 // =============================================================================
 
@@ -481,6 +524,16 @@ This uses real-time Google Search data.`,
       return { error: 'No tenant context available' };
     }
 
+    try {
+      checkRateLimit('search', RATE_LIMIT_CAPS.search);
+    } catch (err) {
+      logger.warn(
+        { operation: 'search', tenantId },
+        `[ResearchAgent] ${err instanceof Error ? err.message : String(err)}`
+      );
+      return { error: err instanceof Error ? err.message : 'Rate limit exceeded' };
+    }
+
     logger.info(
       {},
       `[ResearchAgent] search_competitors called for ${params.industry} in ${params.location}`
@@ -505,6 +558,16 @@ Returns extracted data with confidence levels.`,
     const tenantId = getTenantId(context);
     if (!tenantId) {
       return { error: 'No tenant context available' };
+    }
+
+    try {
+      checkRateLimit('scraping', RATE_LIMIT_CAPS.scraping);
+    } catch (err) {
+      logger.warn(
+        { operation: 'scraping', tenantId },
+        `[ResearchAgent] ${err instanceof Error ? err.message : String(err)}`
+      );
+      return { error: err instanceof Error ? err.message : 'Rate limit exceeded' };
     }
 
     logger.info({}, `[ResearchAgent] scrape_competitor called for: ${params.url}`);

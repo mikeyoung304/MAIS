@@ -1,5 +1,5 @@
 ---
-status: deferred
+status: complete
 priority: p2
 issue_id: '5194'
 tags: [code-review, agent-v2, security, performance]
@@ -75,12 +75,13 @@ function checkRateLimit(operation: string, limit: number): void {
 
 ## Acceptance Criteria
 
-- [ ] Rate limits enforced per operation type
-- [ ] Clear error message when limit exceeded
-- [ ] Limits match what's documented in system prompt
+- [x] Rate limits enforced per operation type
+- [x] Clear error message when limit exceeded
+- [x] Limits match what's documented in system prompt
 
 ## Work Log
 
-| Date       | Action  | Notes                              |
-| ---------- | ------- | ---------------------------------- |
-| 2026-01-19 | Created | From performance + security review |
+| Date       | Action    | Notes                                                        |
+| ---------- | --------- | ------------------------------------------------------------ |
+| 2026-01-19 | Created   | From performance + security review                           |
+| 2026-02-15 | Completed | Option A implemented — in-memory sliding window rate limiter |

@@ -156,6 +156,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
   }
 
   async getTiersByIds(tenantId: string, ids: string[]): Promise<Tier[]> {
+    // Inherently bounded: `in: ids` limits results to the caller-provided ID array
     const tiers = await this.prisma.tier.findMany({
       where: { tenantId, id: { in: ids } },
     });
@@ -210,6 +211,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           },
         },
       },
+      take: MAX_PAGE_SIZE,
       orderBy: { createdAt: 'asc' },
     });
 

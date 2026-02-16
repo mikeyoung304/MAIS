@@ -192,6 +192,7 @@ export class PrismaBookingRepository implements BookingRepository {
             // Fetch actual add-on prices for accurate financial records
             const addOnPrices = new Map<string, number>();
             if (booking.addOnIds.length > 0) {
+              // Inherently bounded: `in: booking.addOnIds` limits results to the known-small add-on selection
               const addOns = await tx.addOn.findMany({
                 where: {
                   tenantId,
@@ -416,6 +417,7 @@ export class PrismaBookingRepository implements BookingRepository {
       orderBy: {
         date: 'asc',
       },
+      take: 500, // Safety net: date-range bounded but capped for protection
     });
 
     return bookings.map((b) => b.date);
@@ -510,6 +512,7 @@ export class PrismaBookingRepository implements BookingRepository {
         endTime: true,
         status: true,
       },
+      take: 500, // Safety net: single-day bounded but capped for protection
     });
 
     // Map to TimeslotBooking type (filter out nulls and type-narrow)
@@ -647,6 +650,7 @@ export class PrismaBookingRepository implements BookingRepository {
         endTime: true,
         status: true,
       },
+      take: 500, // Safety net: date-range bounded but capped for protection
     });
 
     // Map to TimeslotBooking type (filter out nulls and type-narrow)
