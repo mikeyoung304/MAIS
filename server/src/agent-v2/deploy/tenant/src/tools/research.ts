@@ -25,6 +25,7 @@ import {
   TTLCache,
 } from '../utils.js';
 import { GetResearchDataResponse } from '../types/api-responses.js';
+import { checkRateLimit, RATE_LIMITS } from '../../../../shared/rate-limiter.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
@@ -158,6 +159,12 @@ Examples:
       params
     );
     const tenantId = requireTenantId(context);
+
+    // Rate limit: research delegation is expensive (calls research-agent Cloud Run service)
+    checkRateLimit(
+      RATE_LIMITS.RESEARCH_DELEGATION.operation,
+      RATE_LIMITS.RESEARCH_DELEGATION.maxPerHour
+    );
 
     // Tier 1: Check in-memory TTL cache (instant)
     const cacheKey = `${tenantId}:${businessType.toLowerCase()}:${location.toLowerCase()}`;
