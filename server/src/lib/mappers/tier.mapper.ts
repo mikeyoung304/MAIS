@@ -3,7 +3,7 @@
  * Converts Tier Prisma records to TierDto
  */
 
-import type { TierDto, AddOnDto } from '@macon/contracts';
+import type { TierDto, AddOnDto, ScalingRules } from '@macon/contracts';
 import type { AddOn } from '../entities';
 
 /**
@@ -18,8 +18,11 @@ export interface TierRecord {
   name: string;
   description: string | null;
   priceCents: number;
+  displayPriceCents: number | null;
   currency: string;
   features: unknown; // JSON — validated downstream by TierFeaturesSchema
+  maxGuests: number | null;
+  scalingRules: unknown; // JSON — validated by ScalingRulesSchema
   bookingType: 'DATE' | 'TIMESLOT';
   durationMinutes: number | null;
   depositPercent: number | null;
@@ -83,8 +86,11 @@ export function mapTierToDto(tier: TierRecord): TierDto {
     name: tier.name,
     description: tier.description,
     priceCents: tier.priceCents,
+    displayPriceCents: tier.displayPriceCents,
     currency: tier.currency,
     features,
+    maxGuests: tier.maxGuests,
+    scalingRules: (tier.scalingRules as ScalingRules) ?? null,
     bookingType: tier.bookingType,
     durationMinutes: tier.durationMinutes,
     depositPercent: tier.depositPercent,

@@ -255,9 +255,12 @@ export class PrismaCatalogRepository implements CatalogRepository {
         name: data.title,
         description: data.description,
         priceCents: data.priceCents,
+        displayPriceCents: data.displayPriceCents ?? null,
         segmentId: data.segmentId ?? '',
         sortOrder: data.groupingOrder ?? 0,
         features: {},
+        maxGuests: data.maxGuests ?? null,
+        scalingRules: (data.scalingRules as unknown as Prisma.InputJsonValue) ?? undefined,
       },
     });
 
@@ -293,11 +296,15 @@ export class PrismaCatalogRepository implements CatalogRepository {
     if (data.title !== undefined) updateData.name = data.title;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.priceCents !== undefined) updateData.priceCents = data.priceCents;
+    if (data.displayPriceCents !== undefined) updateData.displayPriceCents = data.displayPriceCents;
     if (data.photos !== undefined)
       updateData.photos = data.photos as unknown as Prisma.InputJsonValue;
     if (data.segmentId !== undefined && data.segmentId !== null)
       updateData.segmentId = data.segmentId;
     if (data.groupingOrder !== undefined) updateData.sortOrder = data.groupingOrder;
+    if (data.maxGuests !== undefined) updateData.maxGuests = data.maxGuests;
+    if (data.scalingRules !== undefined)
+      updateData.scalingRules = data.scalingRules as unknown as Prisma.InputJsonValue;
 
     const tier = await this.prisma.tier.update({
       where: { id, tenantId },
@@ -535,11 +542,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
     name: string;
     description: string | null;
     priceCents: number;
+    displayPriceCents?: number | null;
     active: boolean;
     segmentId?: string | null;
     sortOrder?: number | null;
     photos?: Prisma.JsonValue;
     bookingType?: 'DATE' | 'TIMESLOT';
+    maxGuests?: number | null;
+    scalingRules?: Prisma.JsonValue;
   }): Tier {
     return {
       id: tier.id,
@@ -548,6 +558,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       title: tier.name,
       description: tier.description || '',
       priceCents: tier.priceCents,
+      displayPriceCents: tier.displayPriceCents ?? null,
       photoUrl: undefined,
       photos: this.parsePhotosJson(tier.photos),
       active: tier.active,
@@ -555,6 +566,8 @@ export class PrismaCatalogRepository implements CatalogRepository {
       grouping: null,
       groupingOrder: tier.sortOrder,
       bookingType: tier.bookingType || 'DATE',
+      maxGuests: tier.maxGuests ?? null,
+      scalingRules: tier.scalingRules as Tier['scalingRules'],
     };
   }
 

@@ -88,7 +88,7 @@ export function StickyMobileCTA({
 
       {/* CTA Button */}
       <div className="relative">
-        <Button asChild variant="sage" size="xl" className="w-full shadow-lg">
+        <Button asChild variant="accent" size="xl" className="w-full shadow-lg">
           <a href={href}>{ctaText}</a>
         </Button>
       </div>

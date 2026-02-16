@@ -776,9 +776,12 @@ export interface CreateTierInput {
   title: string;
   description: string;
   priceCents: number;
+  displayPriceCents?: number | null;
   segmentId?: string | null;
   groupingOrder?: number;
   photos?: TierPhoto[];
+  maxGuests?: number | null;
+  scalingRules?: import('@macon/contracts').ScalingRules | null;
 }
 
 /**
@@ -789,9 +792,12 @@ export interface UpdateTierInput {
   title?: string;
   description?: string;
   priceCents?: number;
+  displayPriceCents?: number | null;
   segmentId?: string | null;
   groupingOrder?: number;
   photos?: TierPhoto[];
+  maxGuests?: number | null;
+  scalingRules?: import('@macon/contracts').ScalingRules | null;
 }
 
 /**

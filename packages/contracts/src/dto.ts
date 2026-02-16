@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { ScalingRulesSchema } from './schemas/scaling-rules.schema';
 
 // ============================================================================
 // Constants
@@ -160,6 +161,7 @@ export const BookingDtoSchema = z.object({
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   addOnIds: z.array(z.string()),
   totalCents: z.number().int(),
+  guestCount: z.number().int().nullable(),
   status: z.enum([
     'PENDING',
     'DEPOSIT_PAID',
@@ -234,6 +236,7 @@ export const CreateDateBookingDtoSchema = z.object({
   customerPhone: z.string().optional(),
   notes: z.string().max(500).optional(),
   addOnIds: z.array(z.string()).max(20, 'Maximum 20 add-ons allowed').optional(),
+  guestCount: z.number().int().min(1).max(100).optional(),
   // Honeypot field for bot protection - should never be filled by real users
   // Named "website" as bots commonly auto-fill this field
   website: z.string().optional(),
@@ -365,7 +368,7 @@ export const UpdateBrandingDtoSchema = z.object({
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
-  fontFamily: z.string().optional(),
+  fontPreset: z.string().optional(),
 });
 
 export type UpdateBrandingDto = z.infer<typeof UpdateBrandingDtoSchema>;
@@ -480,6 +483,7 @@ export const TierDtoSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   priceCents: z.number().int(),
+  displayPriceCents: z.number().int().nullable(),
   currency: z.string(),
   features: z.array(
     z.object({
@@ -488,6 +492,8 @@ export const TierDtoSchema = z.object({
       icon: z.string().optional(),
     })
   ),
+  maxGuests: z.number().int().nullable(),
+  scalingRules: ScalingRulesSchema.nullable(),
   bookingType: BookingTypeSchema,
   durationMinutes: z.number().int().nullable(),
   depositPercent: z.number().int().nullable(),
@@ -523,6 +529,7 @@ export const CreateTierDtoSchema = z.object({
     .int()
     .min(0)
     .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' }),
+  displayPriceCents: z.number().int().min(0).max(MAX_PRICE_CENTS).optional(),
   features: z
     .array(
       z.object({
@@ -533,6 +540,8 @@ export const CreateTierDtoSchema = z.object({
     )
     .max(15)
     .default([]),
+  maxGuests: z.number().int().min(1).max(100).optional(),
+  scalingRules: ScalingRulesSchema.optional(),
   bookingType: BookingTypeSchema.default('DATE'),
   durationMinutes: z.number().int().positive().optional(),
   depositPercent: z.number().int().min(0).max(100).optional(),
@@ -557,6 +566,7 @@ export const UpdateTierDtoSchema = z.object({
     .min(0)
     .max(MAX_PRICE_CENTS, { message: 'Price exceeds maximum allowed value ($999,999.99)' })
     .optional(),
+  displayPriceCents: z.number().int().min(0).max(MAX_PRICE_CENTS).nullable().optional(),
   features: z
     .array(
       z.object({
@@ -567,6 +577,8 @@ export const UpdateTierDtoSchema = z.object({
     )
     .max(15)
     .optional(),
+  maxGuests: z.number().int().min(1).max(100).nullable().optional(),
+  scalingRules: ScalingRulesSchema.nullable().optional(),
   bookingType: BookingTypeSchema.optional(),
   durationMinutes: z.number().int().positive().nullable().optional(),
   depositPercent: z.number().int().min(0).max(100).nullable().optional(),
@@ -979,6 +991,7 @@ export const TenantPublicDtoSchema = z.object({
   secondaryColor: HexColorSchema.optional(),
   accentColor: HexColorSchema.optional(),
   backgroundColor: HexColorSchema.optional(),
+  fontPreset: z.string().optional(),
   // Customer chatbot toggle
   chatEnabled: z.boolean().optional().default(true),
   branding: z

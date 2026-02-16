@@ -44,7 +44,9 @@ export function TextSection({
           ) : (
             <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-sage/20 to-sage/5">
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-serif text-6xl text-sage/30">{tenant.name.charAt(0)}</span>
+                <span className="font-heading text-6xl text-accent/30">
+                  {tenant.name.charAt(0)}
+                </span>
               </div>
             </div>
           )}
@@ -52,7 +54,7 @@ export function TextSection({
           {/* Content */}
           <div>
             {headline && (
-              <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+              <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
                 {headline}
               </h2>
             )}

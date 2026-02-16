@@ -192,6 +192,11 @@ const TierSchema = z
     features: z.array(z.unknown()),
     bookingType: z.string(),
     active: z.boolean(),
+    // Per-person scaling pricing fields
+    maxGuests: z.number().nullable().optional(),
+    displayPriceCents: z.number().nullable().optional(),
+    displayPriceInDollars: z.number().nullable().optional(),
+    scalingRules: z.unknown().nullable().optional(),
   })
   .passthrough();
 

@@ -75,6 +75,37 @@ const ManageTiersParams = z.object({
     .describe(
       'List of included features (e.g., ["4 hours coverage", "Online gallery", "Print credits"]). Optional.'
     ),
+  // Per-person scaling pricing
+  maxGuests: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Maximum number of guests for this tier. Leave empty for no limit.'),
+  displayPriceInDollars: z
+    .number()
+    .optional()
+    .describe(
+      'Display price in DOLLARS if different from charge price (e.g., to show "from $X" when base includes venue costs).'
+    ),
+  scalingRules: z
+    .object({
+      components: z
+        .array(
+          z.object({
+            name: z.string().describe('Component name, e.g., "Private Chef Dinner"'),
+            includedGuests: z.number().int().describe('Guests included in base price'),
+            perPersonDollars: z.number().describe('Additional cost per person in DOLLARS'),
+            maxGuests: z.number().int().optional().describe('Max guests for this component'),
+          })
+        )
+        .max(10),
+    })
+    .optional()
+    .describe(
+      'Per-person pricing rules. Each component defines a per-guest charge above included guests.'
+    ),
   // For update/delete
   tierId: z
     .string()
@@ -117,7 +148,11 @@ Examples:
 - "Add features to the Premium tier"
   → manage_tiers(action: "update", tierId: "tier_xxx", features: ["8 hours", "Second shooter", "Album"])
 
-Price is in DOLLARS (e.g., 2500 = $2,500), not cents. After creating tiers, use manage_addons for optional extras.`,
+Price is in DOLLARS (e.g., 2500 = $2,500), not cents. After creating tiers, use manage_addons for optional extras.
+
+Per-person pricing: Set scalingRules with components to charge extra per guest beyond an included count.
+Example: "Private Chef Dinner — 2 included, $110/extra person"
+→ scalingRules: { components: [{ name: "Private Chef Dinner", includedGuests: 2, perPersonDollars: 110 }] }`,
 
   parameters: ManageTiersParams,
 
@@ -165,6 +200,9 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents. After creating tiers, use 
           priceInDollars: validParams.priceInDollars,
           bookingType: validParams.bookingType,
           features: validParams.features,
+          maxGuests: validParams.maxGuests,
+          displayPriceInDollars: validParams.displayPriceInDollars,
+          scalingRules: validParams.scalingRules,
         });
       }
 
@@ -190,6 +228,9 @@ Price is in DOLLARS (e.g., 2500 = $2,500), not cents. After creating tiers, use 
           priceInDollars: validParams.priceInDollars,
           bookingType: validParams.bookingType,
           features: validParams.features,
+          maxGuests: validParams.maxGuests,
+          displayPriceInDollars: validParams.displayPriceInDollars,
+          scalingRules: validParams.scalingRules,
         });
       }
 
@@ -258,10 +299,36 @@ async function handleCreateTier(
     priceInDollars: number;
     bookingType?: 'DATE' | 'TIMESLOT';
     features?: string[];
+    maxGuests?: number;
+    displayPriceInDollars?: number;
+    scalingRules?: {
+      components: {
+        name: string;
+        includedGuests: number;
+        perPersonDollars: number;
+        maxGuests?: number;
+      }[];
+    };
   }
 ) {
   // Convert dollars → cents for the server contract (server expects priceCents)
   const priceCents = Math.round(params.priceInDollars * 100);
+  const displayPriceCents =
+    params.displayPriceInDollars !== undefined
+      ? Math.round(params.displayPriceInDollars * 100)
+      : undefined;
+
+  // Convert scalingRules perPersonDollars → perPersonCents
+  const scalingRules = params.scalingRules
+    ? {
+        components: params.scalingRules.components.map((c) => ({
+          name: c.name,
+          includedGuests: c.includedGuests,
+          perPersonCents: Math.round(c.perPersonDollars * 100),
+          ...(c.maxGuests !== undefined ? { maxGuests: c.maxGuests } : {}),
+        })),
+      }
+    : undefined;
 
   const result = await callMaisApiTyped(
     '/content-generation/manage-tiers',
@@ -273,6 +340,9 @@ async function handleCreateTier(
       priceCents,
       bookingType: params.bookingType ?? 'DATE',
       features: params.features ?? [],
+      ...(params.maxGuests !== undefined ? { maxGuests: params.maxGuests } : {}),
+      ...(displayPriceCents !== undefined ? { displayPriceCents } : {}),
+      ...(scalingRules ? { scalingRules } : {}),
     },
     TierMutationResponse
   );
@@ -301,6 +371,16 @@ async function handleUpdateTier(
     priceInDollars?: number;
     bookingType?: 'DATE' | 'TIMESLOT';
     features?: string[];
+    maxGuests?: number;
+    displayPriceInDollars?: number;
+    scalingRules?: {
+      components: {
+        name: string;
+        includedGuests: number;
+        perPersonDollars: number;
+        maxGuests?: number;
+      }[];
+    };
   }
 ) {
   // Convert dollars → cents for the server contract (server expects priceCents)
@@ -308,6 +388,24 @@ async function handleUpdateTier(
     params.priceInDollars !== undefined
       ? { priceCents: Math.round(params.priceInDollars * 100) }
       : {};
+  const displayPriceCentsPayload =
+    params.displayPriceInDollars !== undefined
+      ? { displayPriceCents: Math.round(params.displayPriceInDollars * 100) }
+      : {};
+
+  // Convert scalingRules perPersonDollars → perPersonCents
+  const scalingRulesPayload = params.scalingRules
+    ? {
+        scalingRules: {
+          components: params.scalingRules.components.map((c) => ({
+            name: c.name,
+            includedGuests: c.includedGuests,
+            perPersonCents: Math.round(c.perPersonDollars * 100),
+            ...(c.maxGuests !== undefined ? { maxGuests: c.maxGuests } : {}),
+          })),
+        },
+      }
+    : {};
 
   const result = await callMaisApiTyped(
     '/content-generation/manage-tiers',
@@ -317,8 +415,11 @@ async function handleUpdateTier(
       tierId: params.tierId,
       ...(params.name !== undefined ? { name: params.name } : {}),
       ...priceCentsPayload,
+      ...displayPriceCentsPayload,
       ...(params.bookingType !== undefined ? { bookingType: params.bookingType } : {}),
       ...(params.features !== undefined ? { features: params.features } : {}),
+      ...(params.maxGuests !== undefined ? { maxGuests: params.maxGuests } : {}),
+      ...scalingRulesPayload,
     },
     TierMutationResponse
   );

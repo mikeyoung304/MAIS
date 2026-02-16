@@ -46,7 +46,7 @@ export function HeroSection({
       )}
       <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
         <h1
-          className={`font-serif text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl ${
+          className={`font-heading text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl ${
             hasBackground ? 'text-white' : 'text-text-primary'
           }`}
         >
@@ -62,7 +62,7 @@ export function HeroSection({
           </p>
         )}
         <div className="mt-10">
-          <Button asChild variant="sage" size="xl">
+          <Button asChild variant="accent" size="xl">
             <a href={`${basePath}#packages`}>{ctaText}</a>
           </Button>
         </div>

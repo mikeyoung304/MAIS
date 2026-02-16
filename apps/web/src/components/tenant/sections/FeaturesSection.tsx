@@ -87,7 +87,7 @@ export function FeaturesSection({
       <div className="max-w-3xl mx-auto text-center mb-16">
         <h2
           id="features-heading"
-          className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
+          className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
         >
           {headline}
         </h2>
@@ -107,8 +107,8 @@ export function FeaturesSection({
               key={feature.title}
               className="bg-white rounded-3xl p-8 shadow-lg border border-neutral-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
             >
-              <div className="w-12 h-12 rounded-2xl bg-sage/10 flex items-center justify-center mb-6">
-                <IconComponent className="h-6 w-6 text-sage" />
+              <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-6">
+                <IconComponent className="h-6 w-6 text-accent" />
               </div>
               <h3 className="font-semibold text-lg text-text-primary mb-2">{feature.title}</h3>
               <p className="text-text-muted">{feature.description}</p>

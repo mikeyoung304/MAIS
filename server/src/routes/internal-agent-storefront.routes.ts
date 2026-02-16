@@ -74,7 +74,7 @@ const UpdateBrandingSchema = TenantIdSchema.extend({
   secondaryColor: z.string().optional(),
   accentColor: z.string().optional(),
   backgroundColor: z.string().optional(),
-  fontFamily: z.string().optional(),
+  fontPreset: z.string().optional(),
   logoUrl: z.string().optional(),
 });
 
@@ -366,21 +366,24 @@ export function createInternalAgentStorefrontRoutes(deps: StorefrontRoutesDeps):
         return;
       }
 
-      // Branding is stored in tenant.branding JSON column
-      const currentBranding = (tenant.branding || {}) as Record<string, unknown>;
-      const updatedBranding = { ...currentBranding };
+      // Write to dedicated columns (powers CSS vars in TenantSiteShell)
+      const updateData: Record<string, string> = {};
+      if (branding.primaryColor) updateData.primaryColor = branding.primaryColor;
+      if (branding.secondaryColor) updateData.secondaryColor = branding.secondaryColor;
+      if (branding.accentColor) updateData.accentColor = branding.accentColor;
+      if (branding.backgroundColor) updateData.backgroundColor = branding.backgroundColor;
+      if (branding.fontPreset) updateData.fontPreset = branding.fontPreset;
 
-      // Only update provided fields
-      if (branding.primaryColor) updatedBranding.primaryColor = branding.primaryColor;
-      if (branding.secondaryColor) updatedBranding.secondaryColor = branding.secondaryColor;
-      if (branding.accentColor) updatedBranding.accentColor = branding.accentColor;
-      if (branding.backgroundColor) updatedBranding.backgroundColor = branding.backgroundColor;
-      if (branding.fontFamily) updatedBranding.fontFamily = branding.fontFamily;
-      if (branding.logoUrl) updatedBranding.logoUrl = branding.logoUrl;
+      // Logo goes to branding JSON blob (not a dedicated column)
+      if (branding.logoUrl) {
+        const currentBranding = (tenant.branding || {}) as Record<string, unknown>;
+        (updateData as Record<string, unknown>).branding = {
+          ...currentBranding,
+          logoUrl: branding.logoUrl,
+        };
+      }
 
-      await tenantRepo.update(tenantId, {
-        branding: updatedBranding,
-      });
+      await tenantRepo.update(tenantId, updateData);
 
       res.json({
         success: true,

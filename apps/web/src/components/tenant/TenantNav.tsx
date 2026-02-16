@@ -203,14 +203,14 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                   aria-current={isActiveLink(item.href) ? 'page' : undefined}
                   className={`text-sm font-medium transition-colors ${
                     isActiveLink(item.href)
-                      ? 'text-sage'
+                      ? 'text-accent'
                       : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
                   {item.label}
                 </Link>
               ))}
-              <Button asChild variant="sage" size="sm">
+              <Button asChild variant="accent" size="sm">
                 <a href={`${basePath}#packages`}>Book Now</a>
               </Button>
             </div>
@@ -253,7 +253,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                   aria-current={isActiveLink(item.href) ? 'page' : undefined}
                   className={`rounded-lg px-4 py-3 text-lg font-medium transition-colors ${
                     isActiveLink(item.href)
-                      ? 'bg-sage/10 text-sage'
+                      ? 'bg-accent/10 text-accent'
                       : 'text-text-primary hover:bg-neutral-50'
                   }`}
                   tabIndex={isOpen ? 0 : -1}
@@ -265,7 +265,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
             <div className="mt-8">
               <Button
                 asChild
-                variant="sage"
+                variant="accent"
                 size="xl"
                 className="w-full"
                 tabIndex={isOpen ? 0 : -1}

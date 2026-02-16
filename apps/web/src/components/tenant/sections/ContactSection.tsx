@@ -27,7 +27,7 @@ export function ContactSection({
     <section className="py-32 md:py-40">
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
-          <h2 className="font-serif text-3xl font-bold text-text-primary sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
             {headline}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-text-muted">
@@ -40,12 +40,12 @@ export function ContactSection({
             <div className="grid gap-6 md:grid-cols-2">
               {email && (
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10">
-                    <Mail className="h-5 w-5 text-sage" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                    <Mail className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Email</p>
-                    <a href={`mailto:${email}`} className="text-sage hover:underline">
+                    <a href={`mailto:${email}`} className="text-accent hover:underline">
                       {email}
                     </a>
                   </div>
@@ -54,12 +54,12 @@ export function ContactSection({
 
               {phone && (
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10">
-                    <Phone className="h-5 w-5 text-sage" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                    <Phone className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Phone</p>
-                    <a href={`tel:${phone}`} className="text-sage hover:underline">
+                    <a href={`tel:${phone}`} className="text-accent hover:underline">
                       {phone}
                     </a>
                   </div>
@@ -68,8 +68,8 @@ export function ContactSection({
 
               {address && (
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10">
-                    <MapPin className="h-5 w-5 text-sage" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                    <MapPin className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Address</p>
@@ -80,8 +80,8 @@ export function ContactSection({
 
               {hours && (
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10">
-                    <Clock className="h-5 w-5 text-sage" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                    <Clock className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Hours</p>

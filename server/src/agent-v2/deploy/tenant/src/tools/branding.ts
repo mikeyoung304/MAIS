@@ -17,6 +17,7 @@ import {
   logger,
 } from '../utils.js';
 import { UpdateBrandingResponse } from '../types/api-responses.js';
+import { FONT_PRESET_NAMES } from '../constants/font-presets.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter Schema
@@ -27,10 +28,12 @@ const UpdateBrandingParams = z.object({
   secondaryColor: z.string().optional().describe('Secondary color (hex)'),
   accentColor: z.string().optional().describe('Accent color (hex)'),
   backgroundColor: z.string().optional().describe('Background color (hex)'),
-  fontFamily: z
-    .string()
+  fontPreset: z
+    .enum(FONT_PRESET_NAMES as unknown as [string, ...string[]])
     .optional()
-    .describe('Font family name (e.g., "Inter", "Playfair Display")'),
+    .describe(
+      `Font preset: ${FONT_PRESET_NAMES.join(', ')}. Each preset includes curated heading + body font pairing.`
+    ),
   logoUrl: z.string().optional().describe('Logo image URL'),
 });
 
@@ -57,14 +60,14 @@ export const updateBrandingTool = new FunctionTool({
 This is different from section edits which go to draft.
 
 Editable branding:
-- primaryColor: Main brand color (hex, e.g., "#1a365d")
+- primaryColor: Main brand color (hex, e.g., "#2d3436")
 - secondaryColor: Secondary brand color (hex)
 - accentColor: Accent/highlight color (hex)
 - backgroundColor: Site background color (hex)
-- fontFamily: Font for headings (e.g., "Inter", "Playfair Display")
+- fontPreset: Font pairing preset (classic, modern, warm, editorial, minimal, luxury, rustic, playful)
 - logoUrl: URL to logo image
 
-Color format: hex with # (e.g., "#1a365d", "#ffffff")
+Color format: hex with # (e.g., "#2d3436", "#ffffff")
 
 This is a T2 tool - executes and shows result.`,
   parameters: UpdateBrandingParams,
@@ -73,14 +76,14 @@ This is a T2 tool - executes and shows result.`,
     const tenantId = requireTenantId(context);
 
     // Check that at least one field is being updated
-    const { primaryColor, secondaryColor, accentColor, backgroundColor, fontFamily, logoUrl } =
+    const { primaryColor, secondaryColor, accentColor, backgroundColor, fontPreset, logoUrl } =
       validatedParams;
     if (
       !primaryColor &&
       !secondaryColor &&
       !accentColor &&
       !backgroundColor &&
-      !fontFamily &&
+      !fontPreset &&
       !logoUrl
     ) {
       return {
@@ -92,7 +95,7 @@ This is a T2 tool - executes and shows result.`,
     logger.info(
       {
         hasColors: !!(primaryColor || secondaryColor || accentColor || backgroundColor),
-        hasFont: !!fontFamily,
+        hasFont: !!fontPreset,
         hasLogo: !!logoUrl,
       },
       '[TenantAgent] update_branding called'

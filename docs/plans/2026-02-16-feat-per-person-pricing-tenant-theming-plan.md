@@ -2,6 +2,7 @@
 title: 'Per-Person Scaling Pricing + Per-Tenant Visual Theming'
 type: feat
 date: 2026-02-16
+status: completed
 brainstorm: docs/brainstorms/2026-02-16-segment-tier-pricing-theming-brainstorm.md
 ---
 
@@ -248,8 +249,8 @@ scalingRules: z.object({
 
 **Files:**
 
-- [ ] `server/src/agent-v2/deploy/tenant/src/tools/tiers.ts` — Add scaling params
-- [ ] `server/src/routes/content-generation.routes.ts` — Accept new fields in tier CRUD
+- [x] `server/src/agent-v2/deploy/tenant/src/tools/tiers.ts` — Add scaling params
+- [x] `server/src/routes/internal-agent-content-tiers.routes.ts` — Accept new fields in tier CRUD
 
 ### 1.6 Frontend: Guest Count Step
 
@@ -283,15 +284,15 @@ export function formatPriceDisplay(tier: TierDto): string;
 
 **Files:**
 
-- [ ] `apps/web/src/components/booking/DateBookingWizard.tsx` — Add Guests step
-- [ ] `apps/web/src/lib/pricing.ts` — New: client-side price calculation + display formatting
-- [ ] `apps/web/src/components/tier/TierCard.tsx` (or equivalent) — Per-person price display
+- [x] `apps/web/src/components/booking/DateBookingWizard.tsx` — Add Guests step
+- [x] `apps/web/src/lib/pricing.ts` — New: client-side price calculation + display formatting
+- [x] `apps/web/src/components/tenant/SegmentTiersSection.tsx` — Per-person price display in TierCard
 
 ### 1.7 Tests
 
 **Unit tests:**
 
-- [ ] `server/src/services/scaling-price.service.test.ts` — Price calculations for all sample data scenarios:
+- [x] `server/src/services/scaling-price.service.test.ts` — Price calculations for all sample data scenarios:
   - Flat tier (no scaling rules) → returns base price
   - Single component (dinner $110/person, 2 included, 6 guests) → correct total
   - Multi-component (floral $60 + meal $90, 6 guests) → correct total
@@ -303,26 +304,26 @@ export function formatPriceDisplay(tier: TierDto): string;
 
 **Integration tests:**
 
-- [ ] Booking creation with guest count flows through to Stripe metadata
-- [ ] Booking record stores guestCount correctly
-- [ ] Tenant isolation: tier scaling rules scoped by tenantId
+- [x] Booking creation with guest count flows through to Stripe metadata
+- [x] Booking record stores guestCount correctly
+- [x] Tenant isolation: tier scaling rules scoped by tenantId
 
 **Constants sync test:**
 
-- [ ] Extend `server/src/lib/constants-sync.test.ts` — verify ScalingRulesSchema available in agent deploy
+- [x] N/A — ScalingRules schema is in contracts (server) and defined locally in agent tool (different units: dollars vs cents)
 
 ### 1.8 Acceptance Criteria (Phase 1)
 
-- [ ] Tier model supports `maxGuests`, `scalingRules`, `displayPriceCents` fields
-- [ ] Booking model stores `guestCount`
-- [ ] Agent can create tiers with per-person pricing via `manage_tiers` tool
-- [ ] Booking wizard shows Guests step when tier has scaling rules
-- [ ] Guest count drives live price calculation in wizard
-- [ ] Stripe checkout charges correct scaled amount
-- [ ] Booking record reflects guest count and correct total
-- [ ] Flat-price tiers skip the Guests step (no regression)
-- [ ] All sample data scenarios calculate correctly (elopement, retreat, getaway)
-- [ ] Both workspaces typecheck clean
+- [x] Tier model supports `maxGuests`, `scalingRules`, `displayPriceCents` fields
+- [x] Booking model stores `guestCount`
+- [x] Agent can create tiers with per-person pricing via `manage_tiers` tool
+- [x] Booking wizard shows Guests step when tier has scaling rules
+- [x] Guest count drives live price calculation in wizard
+- [x] Stripe checkout charges correct scaled amount
+- [x] Booking record reflects guest count and correct total
+- [x] Flat-price tiers skip the Guests step (no regression)
+- [x] All sample data scenarios calculate correctly (elopement, retreat, getaway)
+- [x] Both workspaces typecheck clean
 
 ---
 
@@ -630,25 +631,25 @@ Rejected a `priceAdjustments` deduction engine because it adds calculation compl
 
 ### Phase 1: Per-Person Scaling Pricing
 
-- [ ] 1.1 Schema migration (Tier: maxGuests, scalingRules, displayPriceCents; Booking: guestCount)
-- [ ] 1.2 Contracts (ScalingRulesSchema, updated DTOs)
-- [ ] 1.3 Pricing engine service + unit tests
-- [ ] 1.4 Backend booking flow updates (orchestrator, checkout, webhook)
-- [ ] 1.5 Agent tool: manage_tiers with scaling params
-- [ ] 1.6 Frontend: Guests step in wizard + per-person price display
-- [ ] 1.7 All tests pass, both workspaces typecheck clean
+- [x] 1.1 Schema migration (Tier: maxGuests, scalingRules, displayPriceCents; Booking: guestCount)
+- [x] 1.2 Contracts (ScalingRulesSchema, updated DTOs)
+- [x] 1.3 Pricing engine service + unit tests
+- [x] 1.4 Backend booking flow updates (orchestrator, checkout, webhook)
+- [x] 1.5 Agent tool: manage_tiers with scaling params
+- [x] 1.6 Frontend: Guests step in wizard + per-person price display
+- [x] 1.7 All tests pass, both workspaces typecheck clean
 
 ### Phase 2: Per-Tenant Visual Theming
 
-- [ ] 2.1 Schema migration (fontPreset column)
-- [ ] 2.2 Contracts (FONT_PRESETS constant, updated DTOs)
-- [ ] 2.3 CSS custom properties injection in TenantSiteShell
-- [ ] 2.4 Tailwind config: semantic tokens → CSS vars
-- [ ] 2.5 Component migration (priority storefront components)
-- [ ] 2.6 Default theme palette + migration for existing tenants
-- [ ] 2.7 Agent tool: update_branding with fontPreset
-- [ ] 2.8 Constants sync test for font presets
-- [ ] 2.9 All tests pass, both workspaces typecheck clean
+- [x] 2.1 Schema migration (fontPreset column)
+- [x] 2.2 Contracts (FONT_PRESETS constant, updated DTOs)
+- [x] 2.3 CSS custom properties injection in TenantSiteShell
+- [x] 2.4 Tailwind config: semantic tokens → CSS vars
+- [x] 2.5 Component migration (priority storefront components)
+- [x] 2.6 Default theme palette + migration for existing tenants
+- [x] 2.7 Agent tool: update_branding with fontPreset
+- [x] 2.8 Constants sync test for font presets
+- [x] 2.9 All tests pass, both workspaces typecheck clean
 
 ---
 

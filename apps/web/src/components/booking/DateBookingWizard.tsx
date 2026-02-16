@@ -28,14 +28,19 @@ import {
   CheckCircle,
   Loader2,
   AlertCircle,
+  Users,
+  Minus,
+  Plus,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatPrice } from '@/lib/format';
 import {
   getUnavailableDates,
   checkDateAvailability,
   createDateBooking,
   type TierData,
 } from '@/lib/tenant.client';
+import { hasScalingPricing, calculateClientPrice, formatPerPersonRate } from '@/lib/pricing';
 import 'react-day-picker/style.css';
 
 // Zod schema for customer form validation
@@ -64,13 +69,14 @@ interface DateBookingWizardProps {
   onBookingStart?: () => void;
 }
 
-// Step labels for the booking wizard
-const STEP_LABELS = ['Confirm', 'Date', 'Details', 'Pay'] as const;
+// Step labels — conditional Guests step for tiers with per-person pricing
+const STEP_LABELS_WITH_GUESTS = ['Confirm', 'Guests', 'Date', 'Details', 'Pay'] as const;
+const STEP_LABELS_FLAT = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 
-// DayPicker styles
+// DayPicker styles — uses tenant accent color via CSS var
 const DAY_PICKER_MODIFIERS_STYLES = {
   selected: {
-    backgroundColor: '#45B37F', // sage
+    backgroundColor: 'var(--color-accent, #8B9E86)',
     color: 'white',
   },
 } as const;
@@ -78,8 +84,9 @@ const DAY_PICKER_MODIFIERS_STYLES = {
 // DayPicker custom CSS for WCAG 2.2 AAA touch targets (44x44px minimum)
 const DAY_PICKER_STYLE = {
   '--rdp-cell-size': '44px',
-  '--rdp-accent-color': '#45B37F',
-  '--rdp-accent-background-color': '#45B37F20',
+  '--rdp-accent-color': 'var(--color-accent, #8B9E86)',
+  '--rdp-accent-background-color':
+    'color-mix(in srgb, var(--color-accent, #8B9E86) 12%, transparent)',
 } as React.CSSProperties;
 
 // =============================================================================
@@ -113,7 +120,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
       <div className="space-y-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-900">{pkg.title}</h3>
-          <p className="text-3xl font-bold text-sage mt-2">{formatCurrency(pkg.priceCents)}</p>
+          <p className="text-3xl font-bold text-accent mt-2">{formatCurrency(pkg.priceCents)}</p>
         </div>
 
         {pkg.description && (
@@ -136,6 +143,110 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
 ));
 ConfirmStep.displayName = 'ConfirmStep';
 
+interface GuestCountStepProps {
+  tier: TierData;
+  guestCount: number;
+  onGuestCountChange: (count: number) => void;
+}
+
+const GuestCountStep = React.memo(
+  ({ tier, guestCount, onGuestCountChange }: GuestCountStepProps) => {
+    const minGuests = 1;
+    const maxGuests = tier.maxGuests ?? 100;
+    const breakdown = calculateClientPrice(tier, guestCount);
+
+    return (
+      <Card className="border-neutral-200">
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            <Users className="inline-block w-6 h-6 mr-2 text-accent" />
+            How Many Guests?
+          </CardTitle>
+          <p className="text-neutral-500 text-base mt-1">
+            Select your guest count for accurate pricing
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Guest Count Stepper */}
+          <div className="flex items-center justify-center gap-6">
+            <button
+              onClick={() => onGuestCountChange(Math.max(minGuests, guestCount - 1))}
+              disabled={guestCount <= minGuests}
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-300 text-neutral-600 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Decrease guest count"
+            >
+              <Minus className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <span className="text-5xl font-bold text-neutral-900">{guestCount}</span>
+              <p className="text-sm text-neutral-500 mt-1">
+                {guestCount === 1 ? 'guest' : 'guests'}
+              </p>
+            </div>
+            <button
+              onClick={() => onGuestCountChange(Math.min(maxGuests, guestCount + 1))}
+              disabled={guestCount >= maxGuests}
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-neutral-300 text-neutral-600 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Increase guest count"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+
+          {tier.maxGuests && (
+            <p className="text-center text-sm text-neutral-500">Maximum {tier.maxGuests} guests</p>
+          )}
+
+          {/* Price Breakdown */}
+          {breakdown.components.length > 0 && (
+            <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-6 space-y-4">
+              {/* Base price */}
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-600">Base price</span>
+                <span className="font-medium text-neutral-900">
+                  {formatPrice(breakdown.basePriceCents)}
+                </span>
+              </div>
+
+              {/* Per-person components */}
+              {breakdown.components.map((comp) => (
+                <div key={comp.name} className="flex items-center justify-between">
+                  <span className="text-neutral-600">
+                    {comp.name}
+                    {comp.additionalGuests > 0 && (
+                      <span className="text-neutral-400 text-sm ml-1">
+                        ({comp.additionalGuests} extra ×{' '}
+                        {formatPerPersonRate(comp.perPersonCents).replace('+', '')})
+                      </span>
+                    )}
+                    {comp.additionalGuests === 0 && (
+                      <span className="text-neutral-400 text-sm ml-1">
+                        ({comp.includedGuests} included)
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium text-neutral-900">
+                    {comp.subtotalCents > 0 ? `+${formatPrice(comp.subtotalCents)}` : 'Included'}
+                  </span>
+                </div>
+              ))}
+
+              {/* Divider + Total */}
+              <div className="border-t border-neutral-200 pt-4 flex items-center justify-between">
+                <span className="font-semibold text-neutral-900">Estimated Total</span>
+                <span className="text-2xl font-bold text-accent">
+                  {formatPrice(breakdown.totalCents)}
+                </span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+);
+GuestCountStep.displayName = 'GuestCountStep';
+
 interface DateSelectionStepProps {
   selectedDate: Date | null;
   isLoadingDates: boolean;
@@ -148,7 +259,7 @@ const DateSelectionStep = React.memo(
     <Card className="border-neutral-200">
       <CardHeader>
         <CardTitle className="text-2xl">
-          <Calendar className="inline-block w-6 h-6 mr-2 text-sage" />
+          <Calendar className="inline-block w-6 h-6 mr-2 text-accent" />
           Choose Your Date
         </CardTitle>
         <p className="text-neutral-500 text-base mt-1">Select the date for your event</p>
@@ -157,7 +268,7 @@ const DateSelectionStep = React.memo(
         <div className="flex justify-center">
           {isLoadingDates ? (
             <div className="flex flex-col items-center py-8">
-              <Loader2 className="w-8 h-8 text-sage animate-spin" />
+              <Loader2 className="w-8 h-8 text-accent animate-spin" />
               <p className="mt-2 text-neutral-500">Loading available dates...</p>
             </div>
           ) : (
@@ -249,7 +360,7 @@ const DetailsStep = React.memo(
               value={customerDetails.notes}
               onChange={(e) => onUpdateField('notes', e.target.value)}
               placeholder="Any special requests or information..."
-              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-sage focus:outline-none focus:ring-4 focus:ring-sage/30 transition-all"
+              className="w-full h-24 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-base text-neutral-900 placeholder:text-neutral-500 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/30 transition-all"
               maxLength={500}
             />
           </div>
@@ -264,54 +375,74 @@ interface ReviewStepProps {
   pkg: TierData;
   selectedDate: Date;
   customerDetails: CustomerDetails;
+  guestCount?: number;
+  effectiveTotal?: number;
 }
 
-const ReviewStep = React.memo(({ pkg, selectedDate, customerDetails }: ReviewStepProps) => (
-  <Card className="border-neutral-200">
-    <CardHeader>
-      <CardTitle className="text-2xl">Review & Pay</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-6">
-        {/* Service Summary */}
-        <div className="border-b border-neutral-200 pb-4">
-          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Service</h3>
-          <p className="text-lg font-semibold text-neutral-900">{pkg.title}</p>
-        </div>
+const ReviewStep = React.memo(
+  ({ pkg, selectedDate, customerDetails, guestCount, effectiveTotal }: ReviewStepProps) => {
+    const displayTotal = effectiveTotal ?? pkg.priceCents;
 
-        {/* Date Summary */}
-        <div className="border-b border-neutral-200 pb-4">
-          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Event Date</h3>
-          <p className="text-lg font-semibold text-neutral-900">{formatDate(selectedDate)}</p>
-        </div>
+    return (
+      <Card className="border-neutral-200">
+        <CardHeader>
+          <CardTitle className="text-2xl">Review & Pay</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Service Summary */}
+            <div className="border-b border-neutral-200 pb-4">
+              <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Service</h3>
+              <p className="text-lg font-semibold text-neutral-900">{pkg.title}</p>
+            </div>
 
-        {/* Customer Info Summary */}
-        <div className="border-b border-neutral-200 pb-4">
-          <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">
-            Contact Information
-          </h3>
-          <p className="text-neutral-900 font-medium">{customerDetails.name}</p>
-          <p className="text-neutral-600">{customerDetails.email}</p>
-          {customerDetails.phone && <p className="text-neutral-600">{customerDetails.phone}</p>}
-          {customerDetails.notes && (
-            <p className="text-neutral-600 mt-2 text-sm italic">
-              &quot;{customerDetails.notes}&quot;
-            </p>
-          )}
-        </div>
+            {/* Guest Count (if applicable) */}
+            {guestCount && guestCount > 0 && (
+              <div className="border-b border-neutral-200 pb-4">
+                <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Guests</h3>
+                <p className="text-lg font-semibold text-neutral-900">
+                  {guestCount} {guestCount === 1 ? 'guest' : 'guests'}
+                </p>
+              </div>
+            )}
 
-        {/* Total */}
-        <div className="pt-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-lg text-neutral-600">Total:</span>
-            <span className="text-3xl font-bold text-sage">{formatCurrency(pkg.priceCents)}</span>
+            {/* Date Summary */}
+            <div className="border-b border-neutral-200 pb-4">
+              <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Event Date</h3>
+              <p className="text-lg font-semibold text-neutral-900">{formatDate(selectedDate)}</p>
+            </div>
+
+            {/* Customer Info Summary */}
+            <div className="border-b border-neutral-200 pb-4">
+              <h3 className="text-sm font-semibold text-neutral-500 uppercase mb-2">
+                Contact Information
+              </h3>
+              <p className="text-neutral-900 font-medium">{customerDetails.name}</p>
+              <p className="text-neutral-600">{customerDetails.email}</p>
+              {customerDetails.phone && <p className="text-neutral-600">{customerDetails.phone}</p>}
+              {customerDetails.notes && (
+                <p className="text-neutral-600 mt-2 text-sm italic">
+                  &quot;{customerDetails.notes}&quot;
+                </p>
+              )}
+            </div>
+
+            {/* Total */}
+            <div className="pt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-lg text-neutral-600">Total:</span>
+                <span className="text-3xl font-bold text-accent">
+                  {formatCurrency(displayTotal)}
+                </span>
+              </div>
+              <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
+            </div>
           </div>
-          <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-));
+        </CardContent>
+      </Card>
+    );
+  }
+);
 ReviewStep.displayName = 'ReviewStep';
 
 // =============================================================================
@@ -324,9 +455,23 @@ export function DateBookingWizard({
   tenantSlug: _tenantSlug,
   onBookingStart,
 }: DateBookingWizardProps) {
+  // Determine if this tier needs a Guests step
+  const needsGuestsStep = hasScalingPricing(pkg) || Boolean(pkg.maxGuests);
+  const stepLabels = needsGuestsStep ? STEP_LABELS_WITH_GUESTS : STEP_LABELS_FLAT;
+  const lastStepIndex = stepLabels.length - 1;
+
+  // Map logical step names to indices (shifts based on Guests step presence)
+  const stepIndices = useMemo(() => {
+    if (needsGuestsStep) {
+      return { confirm: 0, guests: 1, date: 2, details: 3, pay: 4 };
+    }
+    return { confirm: 0, guests: -1, date: 1, details: 2, pay: 3 };
+  }, [needsGuestsStep]);
+
   // State management
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [guestCount, setGuestCount] = useState(needsGuestsStep ? 2 : 1); // Default 2 for scaling tiers
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: '',
     email: '',
@@ -369,7 +514,7 @@ export function DateBookingWizard({
   // Steps for stepper
   const steps: Step[] = useMemo(
     () =>
-      STEP_LABELS.map((label, index) => ({
+      stepLabels.map((label, index) => ({
         label,
         status:
           index < currentStepIndex
@@ -378,12 +523,12 @@ export function DateBookingWizard({
               ? ('current' as const)
               : ('upcoming' as const),
       })),
-    [currentStepIndex]
+    [currentStepIndex, stepLabels]
   );
 
   // Navigation handlers
   const goToNextStep = () => {
-    if (currentStepIndex < 3) {
+    if (currentStepIndex < lastStepIndex) {
       setCurrentStepIndex(currentStepIndex + 1);
     }
   };
@@ -394,10 +539,12 @@ export function DateBookingWizard({
     }
   };
 
-  // Step 1: Package confirmed
-  const canProceedFromStep0 = true;
+  // Guest count handler
+  const handleGuestCountChange = useCallback((count: number) => {
+    setGuestCount(count);
+  }, []);
 
-  // Step 2: Date Selection
+  // Date Selection
   const handleDateSelect = useCallback(
     async (date: Date | undefined) => {
       if (!date) {
@@ -426,9 +573,10 @@ export function DateBookingWizard({
     [tenantApiKey]
   );
 
-  const canProceedFromStep1 = selectedDate !== null;
+  const canProceedFromDate = selectedDate !== null;
+  const canProceedFromGuests = guestCount >= 1;
 
-  // Step 3: Customer Details
+  // Customer Details
   const updateCustomerDetails = useCallback((field: keyof CustomerDetails, value: string) => {
     setCustomerDetails((prev) => ({
       ...prev,
@@ -452,9 +600,9 @@ export function DateBookingWizard({
     return { isValid: false, errors };
   }, [customerDetails]);
 
-  const canProceedFromStep2 = formValidation.isValid;
+  const canProceedFromDetails = formValidation.isValid;
 
-  // Step 4: Submit to Checkout
+  // Submit to Checkout
   const handleCheckout = async () => {
     if (!selectedDate) {
       setSubmitError('Please select an event date');
@@ -475,12 +623,13 @@ export function DateBookingWizard({
         customerEmail: customerDetails.email.trim(),
         customerPhone: customerDetails.phone.trim() || undefined,
         notes: customerDetails.notes.trim() || undefined,
+        ...(needsGuestsStep ? { guestCount } : {}),
       });
 
       if ('error' in result) {
         if (result.status === 409) {
           setSubmitError('This date is already booked. Please select a different date.');
-          setCurrentStepIndex(1); // Go back to date selection
+          setCurrentStepIndex(stepIndices.date); // Go back to date selection
         } else {
           setSubmitError(result.error);
         }
@@ -500,58 +649,70 @@ export function DateBookingWizard({
     }
   };
 
-  // Render current step content
-  const renderStepContent = () => {
-    switch (currentStepIndex) {
-      case 0:
-        return <ConfirmStep pkg={pkg} />;
-
-      case 1:
-        return (
-          <DateSelectionStep
-            selectedDate={selectedDate}
-            isLoadingDates={isLoadingDates}
-            unavailableDates={unavailableDates}
-            onDateSelect={handleDateSelect}
-          />
-        );
-
-      case 2:
-        return (
-          <DetailsStep
-            customerDetails={customerDetails}
-            formValidation={formValidation}
-            onUpdateField={updateCustomerDetails}
-          />
-        );
-
-      case 3:
-        if (!selectedDate) {
-          return null;
-        }
-        return (
-          <ReviewStep pkg={pkg} selectedDate={selectedDate} customerDetails={customerDetails} />
-        );
-
-      default:
-        return null;
+  // Compute effective total for review step (display only — backend recalculates)
+  const effectiveTotal = useMemo(() => {
+    if (needsGuestsStep) {
+      return calculateClientPrice(pkg, guestCount).totalCents;
     }
+    return pkg.priceCents;
+  }, [needsGuestsStep, pkg, guestCount]);
+
+  // Render current step content using logical step names
+  const renderStepContent = () => {
+    if (currentStepIndex === stepIndices.confirm) {
+      return <ConfirmStep pkg={pkg} />;
+    }
+    if (currentStepIndex === stepIndices.guests && needsGuestsStep) {
+      return (
+        <GuestCountStep
+          tier={pkg}
+          guestCount={guestCount}
+          onGuestCountChange={handleGuestCountChange}
+        />
+      );
+    }
+    if (currentStepIndex === stepIndices.date) {
+      return (
+        <DateSelectionStep
+          selectedDate={selectedDate}
+          isLoadingDates={isLoadingDates}
+          unavailableDates={unavailableDates}
+          onDateSelect={handleDateSelect}
+        />
+      );
+    }
+    if (currentStepIndex === stepIndices.details) {
+      return (
+        <DetailsStep
+          customerDetails={customerDetails}
+          formValidation={formValidation}
+          onUpdateField={updateCustomerDetails}
+        />
+      );
+    }
+    if (currentStepIndex === stepIndices.pay) {
+      if (!selectedDate) return null;
+      return (
+        <ReviewStep
+          pkg={pkg}
+          selectedDate={selectedDate}
+          customerDetails={customerDetails}
+          guestCount={needsGuestsStep ? guestCount : undefined}
+          effectiveTotal={effectiveTotal}
+        />
+      );
+    }
+    return null;
   };
 
   // Determine if can proceed from current step
   const canProceed = () => {
-    switch (currentStepIndex) {
-      case 0:
-        return canProceedFromStep0;
-      case 1:
-        return canProceedFromStep1;
-      case 2:
-        return canProceedFromStep2;
-      case 3:
-        return true;
-      default:
-        return false;
-    }
+    if (currentStepIndex === stepIndices.confirm) return true;
+    if (currentStepIndex === stepIndices.guests) return canProceedFromGuests;
+    if (currentStepIndex === stepIndices.date) return canProceedFromDate;
+    if (currentStepIndex === stepIndices.details) return canProceedFromDetails;
+    if (currentStepIndex === stepIndices.pay) return true;
+    return false;
   };
 
   return (
@@ -585,7 +746,7 @@ export function DateBookingWizard({
           Back
         </Button>
 
-        {currentStepIndex < 3 ? (
+        {currentStepIndex < lastStepIndex ? (
           <Button
             onClick={goToNextStep}
             disabled={!canProceed() || isSubmitting}

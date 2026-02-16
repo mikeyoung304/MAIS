@@ -64,6 +64,8 @@ const MetadataSchema = z.object({
   isBalancePayment: z.string().optional(),
   bookingId: z.string().optional(),
   balanceAmountCents: z.string().optional(),
+  // Per-person pricing fields
+  guestCount: z.string().optional(), // Number of guests for per-person scaling
   // Chatbot booking fields
   source: z.string().optional(), // 'customer_chatbot' for chatbot-created bookings
   confirmationCode: z.string().optional(), // Confirmation code for chatbot bookings
@@ -235,6 +237,7 @@ export class WebhookProcessor {
       isDeposit,
       totalCents: metadataTotalCents,
       depositPercent,
+      guestCount,
       isBalancePayment,
       bookingId,
       balanceAmountCents,
@@ -268,6 +271,7 @@ export class WebhookProcessor {
         isDeposit,
         metadataTotalCents,
         depositPercent,
+        guestCount,
       });
     }
   }
@@ -359,6 +363,7 @@ export class WebhookProcessor {
       isDeposit?: string;
       metadataTotalCents?: string;
       depositPercent?: string;
+      guestCount?: string;
     }
   ): Promise<void> {
     // Parse add-on IDs with Zod validation
@@ -426,6 +431,7 @@ export class WebhookProcessor {
       coupleName: data.coupleName,
       addOnIds: parsedAddOnIds,
       totalCents,
+      guestCount: data.guestCount ? parseInt(data.guestCount, 10) : undefined,
       commissionAmount: commissionAmountNum,
       commissionPercent: commissionPercentNum,
       bookingType: data.bookingType || 'DATE',

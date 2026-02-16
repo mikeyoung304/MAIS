@@ -17,8 +17,12 @@ export * from './schemas/project-hub.schema';
 
 // Semantic Storefront Schemas
 export * from './schemas/tier.schema';
+export * from './schemas/scaling-rules.schema';
 export * from './schemas/section-content.schema';
 export * from './schemas/version-history.schema';
 
 // Section Blueprint (canonical section list for onboarding)
 export * from './schemas/section-blueprint.schema';
+
+// Font Presets (per-tenant theming)
+export * from './constants/font-presets';

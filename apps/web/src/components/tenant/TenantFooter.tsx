@@ -88,7 +88,7 @@ export function TenantFooter({
               href="https://gethandled.ai"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline transition-colors hover:text-sage"
+              className="underline transition-colors hover:text-accent"
             >
               HANDLED
             </a>

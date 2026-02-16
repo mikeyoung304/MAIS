@@ -227,6 +227,8 @@ export class PrismaBookingRepository implements BookingRepository {
                 refundAmount: booking.refundAmount ?? null,
                 refundedAt: booking.refundedAt ? new Date(booking.refundedAt) : null,
                 stripeRefundId: booking.stripeRefundId ?? null,
+                // Per-person pricing fields
+                guestCount: booking.guestCount ?? null,
                 // Deposit fields (optional on create)
                 depositPaidAmount: booking.depositPaidAmount ?? null,
                 balanceDueDate: booking.balanceDueDate ? new Date(booking.balanceDueDate) : null,
@@ -1035,6 +1037,7 @@ export class PrismaBookingRepository implements BookingRepository {
     stripeRefundId?: string | null;
     reminderDueDate?: Date | null;
     reminderSentAt?: Date | null;
+    guestCount?: number | null;
     depositPaidAmount?: number | null;
     balanceDueDate?: Date | null;
     balancePaidAmount?: number | null;
@@ -1071,6 +1074,7 @@ export class PrismaBookingRepository implements BookingRepository {
       eventDate: toISODate(booking.date),
       addOnIds: booking.addOns.map((a) => a.addOnId),
       totalCents: booking.totalPrice,
+      guestCount: booking.guestCount ?? null,
       commissionAmount: booking.commissionAmount,
       commissionPercent: Number(booking.commissionPercent),
       status: mapStatus(booking.status),

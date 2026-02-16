@@ -481,14 +481,14 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
   // Endpoint was deleted from internal-agent.routes.ts
 
   describe('POST /storefront/update-branding', () => {
-    it('should update branding colors', async () => {
+    it('should update branding colors via dedicated columns', async () => {
       const response = await request(app)
         .post('/v1/internal/agent/storefront/update-branding')
         .set('X-Internal-Secret', INTERNAL_SECRET)
         .send({
           tenantId: 'tenant-123',
           primaryColor: '#336699',
-          fontFamily: 'Serif',
+          fontPreset: 'modern',
         });
 
       expect(response.status).toBe(200);
@@ -497,10 +497,8 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(mockTenantRepo.update).toHaveBeenCalledWith(
         'tenant-123',
         expect.objectContaining({
-          branding: expect.objectContaining({
-            primaryColor: '#336699',
-            fontFamily: 'Serif',
-          }),
+          primaryColor: '#336699',
+          fontPreset: 'modern',
         })
       );
     });

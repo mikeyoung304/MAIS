@@ -38,6 +38,7 @@ export class BookingsController {
       eventDate: booking.eventDate,
       addOnIds: booking.addOnIds,
       totalCents: booking.totalCents,
+      guestCount: booking.guestCount ?? null,
       status: booking.status,
       createdAt: booking.createdAt,
     };

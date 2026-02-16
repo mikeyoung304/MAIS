@@ -57,6 +57,7 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
         eventDate: booking.eventDate,
         addOnIds: booking.addOnIds,
         totalCents: booking.totalCents,
+        guestCount: booking.guestCount ?? null,
         status: booking.status,
         createdAt: booking.createdAt,
       }));
@@ -197,6 +198,7 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
         eventDate: booking.eventDate,
         addOnIds: booking.addOnIds,
         totalCents: booking.totalCents,
+        guestCount: booking.guestCount ?? null,
         status: booking.status,
         // Deposit/balance fields
         depositPaidAmount: booking.depositPaidAmount,

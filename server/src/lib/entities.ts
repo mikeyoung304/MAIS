@@ -31,6 +31,7 @@ export interface Tier {
   title: string;
   description: string;
   priceCents: number;
+  displayPriceCents?: number | null;
   photoUrl?: string;
   photos?: TierPhoto[];
   active: boolean;
@@ -41,6 +42,8 @@ export interface Tier {
   depositPercent?: number;
   depositAmount?: number;
   durationMinutes?: number;
+  maxGuests?: number | null;
+  scalingRules?: import('@macon/contracts').ScalingRules | null;
 }
 
 export interface AddOn {
@@ -68,6 +71,7 @@ export interface Booking {
   eventDate: string; // YYYY-MM-DD format
   addOnIds: string[];
   totalCents: number;
+  guestCount?: number | null;
   // Scheduling fields - supports both date-only (legacy) and time-slot bookings
   startTime?: string; // ISO 8601 format - for timeslot bookings
   endTime?: string; // ISO 8601 format - for timeslot bookings

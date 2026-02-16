@@ -375,6 +375,7 @@ export class BookingService {
       eventDate: string;
       addOnIds: string[];
       totalCents: number;
+      guestCount: number | null;
       status:
         | 'PENDING'
         | 'DEPOSIT_PAID'
@@ -460,6 +461,7 @@ export class BookingService {
         eventDate: b.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD
         addOnIds: b.addOns.map((a) => a.addOnId),
         totalCents: b.totalPrice, // Prisma uses totalPrice, DTO uses totalCents
+        guestCount: b.guestCount ?? null,
         status: b.status as
           | 'PENDING'
           | 'DEPOSIT_PAID'
@@ -595,6 +597,7 @@ export class BookingService {
       coupleName: string;
       addOnIds?: string[];
       totalCents: number;
+      guestCount?: number;
       commissionAmount?: number;
       commissionPercent?: number;
       bookingType?: 'DATE' | 'TIMESLOT';
@@ -664,6 +667,7 @@ export class BookingService {
       eventDate: input.eventDate,
       addOnIds: input.addOnIds || [],
       totalCents: input.totalCents,
+      guestCount: input.guestCount ?? null,
       commissionAmount: input.commissionAmount,
       commissionPercent: input.commissionPercent,
       bookingType: input.bookingType || 'DATE',

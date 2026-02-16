@@ -235,6 +235,7 @@ export class TenantAdminController {
       eventDate: booking.eventDate,
       addOnIds: booking.addOnIds,
       totalCents: booking.totalCents,
+      guestCount: booking.guestCount ?? null,
       status: booking.status,
       createdAt: booking.createdAt,
     }));

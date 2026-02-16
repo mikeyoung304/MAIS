@@ -153,7 +153,7 @@ export function BookingSuccessContent({
 
           {/* Footer with Action Buttons */}
           <CardFooter className="flex-col gap-4 pt-6">
-            <Button asChild variant="sage" size="xl">
+            <Button asChild variant="accent" size="xl">
               <Link href={homeUrl} className="flex items-center gap-2">
                 <Home className="w-5 h-5" />
                 Back to {tenant.name}
@@ -166,7 +166,7 @@ export function BookingSuccessContent({
         <div className="mt-8 text-center text-neutral-600 text-sm">
           <p>
             Questions about your booking?{' '}
-            <Link href={contactUrl} className="text-sage hover:underline">
+            <Link href={contactUrl} className="text-accent hover:underline">
               Contact us
             </Link>
           </p>
