@@ -23,6 +23,7 @@ import {
   createProjectHubAgentService,
   type ContextType,
 } from '../services/project-hub-agent.service';
+import type { ProjectHubService } from '../services/project-hub.service';
 
 // ============================================================================
 // Request Schemas
@@ -60,13 +61,19 @@ const publicProjectRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+interface PublicProjectRoutesDeps {
+  prisma: PrismaClient;
+  projectHub?: ProjectHubService;
+}
+
 /**
  * Create public project routes
  *
- * @param prisma - Database client
+ * @param deps - Dependencies (prisma, optional projectHub service)
  * @returns Express router
  */
-export function createPublicProjectRoutes(prisma: PrismaClient): Router {
+export function createPublicProjectRoutes(deps: PublicProjectRoutesDeps): Router {
+  const { prisma, projectHub } = deps;
   const router = Router();
 
   // Apply rate limiting to all routes
@@ -99,18 +106,12 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
       }
 
       // Find project by booking ID (tenant-scoped)
-      const project = await prisma.project.findFirst({
-        where: {
-          bookingId,
-          tenantId, // CRITICAL: tenant-scoped
-        },
-        select: {
-          id: true,
-          status: true,
-          createdAt: true,
-          customerId: true,
-        },
-      });
+      const project = projectHub
+        ? await projectHub.findProjectByBooking(tenantId, bookingId)
+        : await prisma.project.findFirst({
+            where: { bookingId, tenantId },
+            select: { id: true, status: true, createdAt: true, customerId: true },
+          });
 
       if (!project) {
         res.status(404).json({ error: 'Project not found for this booking' });
@@ -161,44 +162,28 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      // Find payment by Stripe session ID (tenant-scoped)
-      // Payment.processorId stores the Stripe checkout session ID
-      const payment = await prisma.payment.findFirst({
-        where: {
-          processorId: sessionId,
-          tenantId, // CRITICAL: tenant-scoped
-        },
-        select: {
-          bookingId: true,
-        },
-      });
+      // Find project by Stripe checkout session ID (chains: session → payment → booking → project)
+      let project: { id: string; status: string; createdAt: Date; customerId: string } | null =
+        null;
 
-      if (!payment) {
-        // Payment not found - webhook may not have processed yet
-        // Return 404 so client can retry with polling
-        res.status(404).json({
-          error: 'Payment not found for this session',
-          retryable: true,
+      if (projectHub) {
+        project = await projectHub.findProjectByPaymentSession(tenantId, sessionId);
+      } else {
+        // Fallback: direct Prisma queries
+        const payment = await prisma.payment.findFirst({
+          where: { processorId: sessionId, tenantId },
+          select: { bookingId: true },
         });
-        return;
+        if (payment) {
+          project = await prisma.project.findFirst({
+            where: { bookingId: payment.bookingId, tenantId },
+            select: { id: true, status: true, createdAt: true, customerId: true },
+          });
+        }
       }
 
-      // Find project by booking ID
-      const project = await prisma.project.findFirst({
-        where: {
-          bookingId: payment.bookingId,
-          tenantId, // CRITICAL: tenant-scoped
-        },
-        select: {
-          id: true,
-          status: true,
-          createdAt: true,
-          customerId: true,
-        },
-      });
-
       if (!project) {
-        // Booking exists but project doesn't - creation may be pending
+        // Payment or project not found - webhook may not have processed yet
         res.status(404).json({
           error: 'Project not found for this session',
           retryable: true,
@@ -315,10 +300,12 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
       }
 
       // Get tenant info for branding
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { name: true, branding: true },
-      });
+      const tenantInfo = projectHub
+        ? await projectHub.getTenantPublicInfo(tenantId)
+        : await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { name: true, branding: true },
+          });
 
       // Build public response (no sensitive data)
       const eventDate = project.booking.date ?? project.booking.startTime ?? new Date();
@@ -341,8 +328,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         })),
         hasPendingRequests: project.requests.length > 0,
         tenant: {
-          name: tenant?.name ?? 'Business',
-          branding: tenant?.branding ?? null,
+          name: tenantInfo?.name ?? 'Business',
+          branding: tenantInfo?.branding ?? null,
         },
       });
     } catch (error) {
@@ -508,14 +495,16 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         }
 
         // Get tenant name
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { name: true },
-        });
+        const tenantInfo = projectHub
+          ? await projectHub.getTenantPublicInfo(tenantId)
+          : await prisma.tenant.findUnique({
+              where: { id: tenantId },
+              select: { name: true, branding: true },
+            });
 
         const customerName = project.booking.customer?.name ?? 'there';
         const serviceName = project.booking.tier?.name ?? 'your service';
-        const businessName = tenant?.name ?? 'us';
+        const businessName = tenantInfo?.name ?? 'us';
 
         // SECURITY: contextType is 'customer' because token auth = customer access
         const contextType: ContextType = 'customer';

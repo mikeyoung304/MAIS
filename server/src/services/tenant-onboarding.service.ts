@@ -26,6 +26,29 @@ export interface DefaultDataResult {
 }
 
 /**
+ * Tenant chat info for health checks
+ */
+export interface TenantChatInfo {
+  chatEnabled: boolean;
+  name: string | null;
+}
+
+/**
+ * Result of skipOnboarding operation
+ */
+export interface SkipOnboardingResult {
+  previousPhase: string;
+  phase: 'SKIPPED';
+}
+
+/**
+ * Result of completeReveal operation
+ */
+export interface CompleteRevealResult {
+  alreadyCompleted: boolean;
+}
+
+/**
  * Service for tenant onboarding operations
  *
  * Handles initial setup tasks that should be performed atomically
@@ -95,5 +118,115 @@ export class TenantOnboardingService {
 
       return { segment, tiers };
     });
+  }
+
+  // ==========================================================================
+  // Chat Feature Flag
+  // ==========================================================================
+
+  /**
+   * Check if chat is enabled for a tenant.
+   * Used by public customer chat middleware.
+   */
+  async isChatEnabled(tenantId: string): Promise<boolean> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { chatEnabled: true },
+    });
+    return tenant?.chatEnabled ?? false;
+  }
+
+  /**
+   * Get tenant chat info (chatEnabled + name).
+   * Used by health check and session creation.
+   *
+   * @returns null if tenant not found
+   */
+  async getTenantChatInfo(tenantId: string): Promise<TenantChatInfo | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { chatEnabled: true, name: true },
+    });
+    if (!tenant) return null;
+    return { chatEnabled: tenant.chatEnabled, name: tenant.name };
+  }
+
+  /**
+   * Get tenant display name.
+   * Returns null if tenant not found.
+   */
+  async getTenantName(tenantId: string): Promise<string | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+    return tenant?.name ?? null;
+  }
+
+  // ==========================================================================
+  // Onboarding State Operations
+  // ==========================================================================
+
+  /**
+   * Skip the onboarding flow for a tenant.
+   *
+   * @returns result with previousPhase, or null if tenant not found
+   * @throws Error if onboarding already completed or skipped (409 conflict)
+   */
+  async skipOnboarding(tenantId: string): Promise<SkipOnboardingResult> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { onboardingPhase: true },
+    });
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    const currentPhase = tenant.onboardingPhase || 'NOT_STARTED';
+
+    if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
+      const error = new Error('Onboarding already finished') as Error & { phase: string };
+      error.phase = currentPhase;
+      throw error;
+    }
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        onboardingPhase: 'SKIPPED',
+        onboardingCompletedAt: new Date(),
+      },
+    });
+
+    return { previousPhase: currentPhase, phase: 'SKIPPED' };
+  }
+
+  /**
+   * Mark the reveal animation as completed (idempotent).
+   *
+   * @returns whether it was already completed
+   * @throws Error if tenant not found
+   */
+  async completeReveal(tenantId: string): Promise<CompleteRevealResult> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { revealCompletedAt: true },
+    });
+
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    if (tenant.revealCompletedAt) {
+      return { alreadyCompleted: true };
+    }
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { revealCompletedAt: new Date() },
+    });
+
+    return { alreadyCompleted: false };
   }
 }

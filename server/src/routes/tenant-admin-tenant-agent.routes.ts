@@ -147,6 +147,7 @@ const AdkResponseSchema = z.array(
 interface TenantAgentRoutesDeps {
   prisma: PrismaClient;
   contextBuilder: ContextBuilderService;
+  tenantOnboarding?: import('../services/tenant-onboarding.service').TenantOnboardingService;
 }
 
 /**
@@ -157,7 +158,7 @@ interface TenantAgentRoutesDeps {
  */
 export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps): Router {
   const router = Router();
-  const { prisma, contextBuilder } = deps;
+  const { prisma, contextBuilder, tenantOnboarding } = deps;
 
   // ===========================================================================
   // POST /session - Create a new ADK session with bootstrap context
@@ -677,49 +678,36 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
       const { tenantId } = tenantAuth;
       const { reason } = req.body as { reason?: string };
 
-      // Get current tenant state
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: {
-          onboardingPhase: true,
-        },
-      });
-
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
+      if (!tenantOnboarding) {
+        res.status(503).json({ error: 'Onboarding service unavailable' });
         return;
       }
 
-      const currentPhase = tenant.onboardingPhase || 'NOT_STARTED';
+      try {
+        const result = await tenantOnboarding.skipOnboarding(tenantId);
 
-      // Check if already completed or skipped
-      if (currentPhase === 'COMPLETED' || currentPhase === 'SKIPPED') {
-        res.status(409).json({
-          error: 'Onboarding already finished',
-          phase: currentPhase,
+        logger.info(
+          { tenantId, previousPhase: result.previousPhase, reason },
+          '[TenantAgent] Onboarding skipped'
+        );
+
+        res.json({
+          success: true,
+          phase: result.phase,
+          message: 'Onboarding skipped. You can set up your business manually.',
         });
-        return;
+      } catch (serviceError) {
+        const err = serviceError as Error & { phase?: string };
+        if (err.message === 'Tenant not found') {
+          res.status(404).json({ error: 'Tenant not found' });
+          return;
+        }
+        if (err.message === 'Onboarding already finished') {
+          res.status(409).json({ error: 'Onboarding already finished', phase: err.phase });
+          return;
+        }
+        throw serviceError;
       }
-
-      // Direct state update
-      await prisma.tenant.update({
-        where: { id: tenantId },
-        data: {
-          onboardingPhase: 'SKIPPED',
-          onboardingCompletedAt: new Date(),
-        },
-      });
-
-      logger.info(
-        { tenantId, previousPhase: currentPhase, reason },
-        '[TenantAgent] Onboarding skipped'
-      );
-
-      res.json({
-        success: true,
-        phase: 'SKIPPED',
-        message: 'Onboarding skipped. You can set up your business manually.',
-      });
     } catch (error) {
       next(error);
     }
@@ -742,29 +730,25 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 
         const { tenantId } = tenantAuth;
 
-        // Idempotent: only write if not already set
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { revealCompletedAt: true },
-        });
-
-        if (!tenant) {
-          res.status(404).json({ success: false, error: 'Tenant not found' });
+        if (!tenantOnboarding) {
+          res.status(503).json({ error: 'Onboarding service unavailable' });
           return;
         }
 
-        if (tenant.revealCompletedAt) {
-          res.json({ success: true, alreadyCompleted: true });
-          return;
+        try {
+          const result = await tenantOnboarding.completeReveal(tenantId);
+
+          if (!result.alreadyCompleted) {
+            logger.info({ tenantId }, '[TenantAgent] revealCompletedAt written (frontend trigger)');
+          }
+          res.json({ success: true, alreadyCompleted: result.alreadyCompleted });
+        } catch (serviceError) {
+          if ((serviceError as Error).message === 'Tenant not found') {
+            res.status(404).json({ success: false, error: 'Tenant not found' });
+            return;
+          }
+          throw serviceError;
         }
-
-        await prisma.tenant.update({
-          where: { id: tenantId },
-          data: { revealCompletedAt: new Date() },
-        });
-
-        logger.info({ tenantId }, '[TenantAgent] revealCompletedAt written (frontend trigger)');
-        res.json({ success: true, alreadyCompleted: false });
       } catch (error) {
         next(error);
       }

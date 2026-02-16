@@ -256,6 +256,74 @@ export class ProjectHubService {
   }
 
   // ==========================================================================
+  // Project Lookups (used by public routes)
+  // ==========================================================================
+
+  /**
+   * Find a project by its associated booking ID.
+   * Used by success page to link to Project Hub after payment.
+   *
+   * @returns Project summary with customerId for token generation, or null
+   */
+  async findProjectByBooking(
+    tenantId: string,
+    bookingId: string
+  ): Promise<{ id: string; status: ProjectStatus; createdAt: Date; customerId: string } | null> {
+    return this.prisma.project.findFirst({
+      where: { bookingId, tenantId },
+      select: { id: true, status: true, createdAt: true, customerId: true },
+    });
+  }
+
+  /**
+   * Find a project by Stripe checkout session ID.
+   * Chains: sessionId → Payment.processorId → Booking → Project.
+   *
+   * @returns Project summary with customerId for token generation, or null
+   */
+  async findProjectByPaymentSession(
+    tenantId: string,
+    sessionId: string
+  ): Promise<{ id: string; status: ProjectStatus; createdAt: Date; customerId: string } | null> {
+    const payment = await this.prisma.payment.findFirst({
+      where: { processorId: sessionId, tenantId },
+      select: { bookingId: true },
+    });
+
+    if (!payment) return null;
+
+    return this.prisma.project.findFirst({
+      where: { bookingId: payment.bookingId, tenantId },
+      select: { id: true, status: true, createdAt: true, customerId: true },
+    });
+  }
+
+  /**
+   * Lightweight project existence + ownership check for auth validation.
+   * Returns only the fields needed for token verification.
+   */
+  async findProjectForAuth(
+    tenantId: string,
+    projectId: string
+  ): Promise<{ id: string; customerId: string } | null> {
+    return this.prisma.project.findFirst({
+      where: { id: projectId, tenantId },
+      select: { id: true, customerId: true },
+    });
+  }
+
+  /**
+   * Get tenant display info for public-facing pages.
+   */
+  async getTenantPublicInfo(tenantId: string): Promise<{ name: string; branding: unknown } | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true, branding: true },
+    });
+    return tenant ? { name: tenant.name, branding: tenant.branding } : null;
+  }
+
+  // ==========================================================================
   // Bootstrap Operations
   // ==========================================================================
 

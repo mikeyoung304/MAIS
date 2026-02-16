@@ -21,9 +21,9 @@ import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
 import { CustomerAgentService } from '../services/customer-agent.service';
+import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 
 // ============================================================================
 // Request Body Schemas (TS-4: Typed request validation)
@@ -64,7 +64,7 @@ const publicChatRateLimiter = rateLimit({
  * Middleware factory to require chat to be enabled for tenant.
  * Returns 403 if chat is disabled or tenant not found.
  */
-function createRequireChatEnabled(prisma: PrismaClient) {
+function createRequireChatEnabled(tenantOnboarding: TenantOnboardingService) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const tenantId = req.tenantId ?? null;
 
@@ -73,12 +73,8 @@ function createRequireChatEnabled(prisma: PrismaClient) {
       return;
     }
 
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { chatEnabled: true },
-    });
-
-    if (!tenant?.chatEnabled) {
+    const enabled = await tenantOnboarding.isChatEnabled(tenantId);
+    if (!enabled) {
       res.status(403).json({ error: 'Chat is not enabled for this business' });
       return;
     }
@@ -87,15 +83,21 @@ function createRequireChatEnabled(prisma: PrismaClient) {
   };
 }
 
+interface PublicCustomerChatDeps {
+  prisma: import('../generated/prisma/client').PrismaClient;
+  tenantOnboarding: TenantOnboardingService;
+}
+
 /**
  * Create public customer chat routes
  */
-export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
+export function createPublicCustomerChatRoutes(deps: PublicCustomerChatDeps): Router {
+  const { prisma, tenantOnboarding } = deps;
   const router = Router();
   // CustomerAgentService routes chat to Booking Agent on Cloud Run
   // Guardrails are handled by the Booking Agent and AI quota limits
   const agentService = new CustomerAgentService(prisma);
-  const requireChatEnabled = createRequireChatEnabled(prisma);
+  const requireChatEnabled = createRequireChatEnabled(tenantOnboarding);
 
   // Apply IP rate limiting to all routes
   router.use(publicChatRateLimiter);
@@ -125,12 +127,9 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
       const apiKeyConfigured = !!process.env.GOOGLE_VERTEX_PROJECT;
 
       // Check if tenant has chat enabled
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { chatEnabled: true, name: true },
-      });
+      const chatInfo = await tenantOnboarding.getTenantChatInfo(tenantId);
 
-      if (!tenant) {
+      if (!chatInfo) {
         res.json({
           available: false,
           reason: 'tenant_not_found',
@@ -139,7 +138,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         return;
       }
 
-      if (!tenant.chatEnabled) {
+      if (!chatInfo.chatEnabled) {
         res.json({
           available: false,
           reason: 'chat_disabled',
@@ -159,7 +158,7 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
 
       res.json({
         available: true,
-        businessName: tenant.name,
+        businessName: chatInfo.name,
       });
     } catch (error) {
       logger.error({ error }, 'Customer chat health check error');
@@ -213,15 +212,12 @@ export function createPublicCustomerChatRoutes(prisma: PrismaClient): Router {
         const greeting = await agentService.getGreeting(tenantId);
 
         // Get business name from tenant (not stored in session)
-        const tenantInfo = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { name: true },
-        });
+        const businessName = await tenantOnboarding.getTenantName(tenantId);
 
         res.json({
           sessionId: session.sessionId,
           greeting,
-          businessName: tenantInfo?.name ?? null,
+          businessName,
           messageCount: session.messageCount,
         });
       } catch (error) {

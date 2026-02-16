@@ -109,17 +109,19 @@ interface Controllers {
 }
 
 interface Services {
+  // Core services (always available — match Container.services required fields)
   catalog: CatalogService;
   booking: BookingService;
   availability: AvailabilityService;
   tenantAuth: TenantAuthService;
   segment: SegmentService;
+  tenantOnboarding: TenantOnboardingService;
+  sectionContent: SectionContentService;
+  // Feature services (optional — check before use)
   stripeConnect?: StripeConnectService;
   schedulingAvailability?: SchedulingAvailabilityService;
-  tenantOnboarding?: TenantOnboardingService;
   tenantProvisioning?: TenantProvisioningService;
   reminder?: ReminderService;
-  sectionContent?: SectionContentService;
   webhookDelivery?: WebhookDeliveryService;
   projectHub?: ProjectHubService;
   discovery?: DiscoveryService;
@@ -630,6 +632,7 @@ export function createV1Router(
     const tenantAdminTenantAgentRoutes = createTenantAdminTenantAgentRoutes({
       prisma: prismaClient,
       contextBuilder: tenantAgentContextBuilder,
+      tenantOnboarding: services.tenantOnboarding,
     });
     app.use(
       '/v1/tenant-admin/agent/tenant',
@@ -651,7 +654,10 @@ export function createV1Router(
     // Register public customer chat routes (for customer-facing chatbot)
     // NO authentication required - uses tenant context from X-Tenant-Key header
     // Rate limited to 20 messages per minute per IP to protect Claude API costs
-    const customerChatRoutes = createPublicCustomerChatRoutes(prismaClient);
+    const customerChatRoutes = createPublicCustomerChatRoutes({
+      prisma: prismaClient,
+      tenantOnboarding: services.tenantOnboarding,
+    });
     app.use(
       '/v1/public/chat',
       tenantMiddleware,
@@ -664,7 +670,10 @@ export function createV1Router(
     // Register public project routes (for customer project view page)
     // NO authentication required - uses tenant context from X-Tenant-Key header
     // Provides project details and Project Hub agent chat integration
-    const publicProjectRoutes = createPublicProjectRoutes(prismaClient);
+    const publicProjectRoutes = createPublicProjectRoutes({
+      prisma: prismaClient,
+      projectHub: services.projectHub,
+    });
     app.use('/v1/public/projects', tenantMiddleware, requireTenant, publicProjectRoutes);
     logger.info('✅ Public project routes mounted at /v1/public/projects');
 
