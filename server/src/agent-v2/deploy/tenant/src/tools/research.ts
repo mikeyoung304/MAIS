@@ -25,7 +25,7 @@ import {
   TTLCache,
 } from '../utils.js';
 import { GetResearchDataResponse } from '../types/api-responses.js';
-import { checkRateLimit, RATE_LIMITS } from '../../../../shared/rate-limiter.js';
+import { checkRateLimit, RATE_LIMITS } from '../rate-limiter.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Environment Configuration
