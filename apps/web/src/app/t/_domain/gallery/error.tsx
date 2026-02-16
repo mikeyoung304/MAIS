@@ -9,5 +9,5 @@ export default function GalleryError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <TenantErrorBoundary error={error} reset={reset} context="gallery (domain)" />;
+  return <TenantErrorBoundary error={error} reset={reset} context="gallery" />;
 }

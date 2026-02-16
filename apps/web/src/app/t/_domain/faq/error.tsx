@@ -9,5 +9,5 @@ export default function FAQError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <TenantErrorBoundary error={error} reset={reset} context="faq (domain)" />;
+  return <TenantErrorBoundary error={error} reset={reset} context="faq" />;
 }

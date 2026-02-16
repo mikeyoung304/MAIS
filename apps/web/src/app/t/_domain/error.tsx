@@ -13,7 +13,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log error to monitoring service
-    logger.error('Domain storefront error boundary caught error', error);
+    logger.error('Storefront error boundary caught error', error);
   }, [error]);
 
   return (

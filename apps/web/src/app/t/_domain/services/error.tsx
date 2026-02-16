@@ -9,5 +9,5 @@ export default function ServicesError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <TenantErrorBoundary error={error} reset={reset} context="services (domain)" />;
+  return <TenantErrorBoundary error={error} reset={reset} context="services" />;
 }
