@@ -139,6 +139,10 @@ export interface UseTenantAgentChatReturn {
   setInputValue: (value: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<TenantAgentMessage[]>>;
   initializeSession: () => Promise<void>;
+  cancelRequest: () => void;
+
+  // Recovery
+  loadingStartRef: React.RefObject<number | null>;
 
   // Refs
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -205,6 +209,12 @@ export function useTenantAgentChat({
   // React Strict Mode double-invokes effects, and callback deps change on every render —
   // this ref ensures session init runs exactly once per mount.
   const hasInitializedRef = useRef(false);
+
+  // Active fetch controller for cancellation (recovery button, unmount)
+  const activeFetchControllerRef = useRef<AbortController | null>(null);
+
+  // Track how long we've been loading for recovery UI
+  const loadingStartRef = useRef<number | null>(null);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
@@ -288,14 +298,20 @@ export function useTenantAgentChat({
           onDashboardActions?.(dashboardActions);
         }
       } catch (err) {
-        // If we can't get the agent greeting, show a fallback
+        // If we can't get the agent greeting, show a fallback and retry session init
         setMessages([
           {
             role: 'assistant',
-            content: "Hey, I'm your AI assistant. What can I help you with today?",
+            content:
+              "Hey, I'm your AI assistant. Having trouble connecting — try sending a message or refresh the page.",
             timestamp: new Date(),
           },
         ]);
+        // Generate a placeholder sessionId so the input isn't permanently disabled.
+        // The next message to /chat without a valid sessionId will trigger inline session creation.
+        if (!newSessionId) {
+          setSessionId('pending-retry');
+        }
         logger.error('Failed to fetch agent greeting', err instanceof Error ? err : undefined);
       }
     },
@@ -423,6 +439,7 @@ export function useTenantAgentChat({
 
       setError(null);
       setIsLoading(true);
+      loadingStartRef.current = Date.now();
 
       // Add user message optimistically
       const userMessage: TenantAgentMessage = {
@@ -432,15 +449,21 @@ export function useTenantAgentChat({
       };
       setMessages((prev) => [...prev, userMessage]);
 
+      // Frontend fetch timeout: 150s (exceeds backend 120s to avoid masking backend errors)
+      const controller = new AbortController();
+      activeFetchControllerRef.current = controller;
+      const timeout = setTimeout(() => controller.abort(), 150_000);
+
       try {
         const response = await fetch(`${API_URL}/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
           body: JSON.stringify({
             message,
-            sessionId,
+            sessionId: sessionId === 'pending-retry' ? undefined : sessionId,
             version, // Required for optimistic locking (Pitfall #62)
           }),
         });
@@ -451,6 +474,16 @@ export function useTenantAgentChat({
         }
 
         const data = await response.json();
+
+        // If session was pending-retry, extract real sessionId from response
+        if (sessionId === 'pending-retry' && data.sessionId) {
+          setSessionId(data.sessionId);
+          try {
+            localStorage.setItem(SESSION_KEY, data.sessionId);
+          } catch {
+            // Ignore localStorage errors
+          }
+        }
 
         // Update version for optimistic locking (Pitfall #62)
         if (data.version !== undefined) {
@@ -488,8 +521,15 @@ export function useTenantAgentChat({
           onDashboardActions?.(dashboardActions);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to send message');
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          setError('Request timed out. Please try again.');
+        } else {
+          setError(err instanceof Error ? err.message : 'Failed to send message');
+        }
       } finally {
+        clearTimeout(timeout);
+        activeFetchControllerRef.current = null;
+        loadingStartRef.current = null;
         setIsLoading(false);
       }
     },
@@ -522,6 +562,20 @@ export function useTenantAgentChat({
    */
   const sendProgrammaticMessage = sendMessageCore;
 
+  /**
+   * Cancel the currently pending request (for recovery button).
+   * Aborts the fetch and resets loading state.
+   */
+  const cancelRequest = useCallback(() => {
+    if (activeFetchControllerRef.current) {
+      activeFetchControllerRef.current.abort();
+      activeFetchControllerRef.current = null;
+    }
+    loadingStartRef.current = null;
+    setIsLoading(false);
+    setError('Request cancelled. Try again when ready.');
+  }, []);
+
   // Handle textarea enter key
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -553,6 +607,10 @@ export function useTenantAgentChat({
     setInputValue,
     setMessages,
     initializeSession,
+    cancelRequest,
+
+    // Recovery
+    loadingStartRef,
 
     // Refs
     messagesEndRef,

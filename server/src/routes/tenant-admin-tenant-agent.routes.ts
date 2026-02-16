@@ -538,27 +538,33 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         }
       }
 
-      const response = await fetchWithTimeout(`${agentUrl}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
+      // 120s timeout: multi-tool agent turns (manage_tiers x3 + build_first_draft + update_section x3)
+      // realistically take 20-45s. Matches Cloud Run max request timeout.
+      const response = await fetchWithTimeout(
+        `${agentUrl}/run`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({
+            // A2A protocol format (Pitfall #28 - must use camelCase)
+            appName: 'agent',
+            userId,
+            sessionId,
+            newMessage: {
+              role: 'user',
+              parts: [{ text: messageWithContext }],
+            },
+            // Pass tenant context in state for the agent to use
+            state: {
+              tenantId,
+            },
+          }),
         },
-        body: JSON.stringify({
-          // A2A protocol format (Pitfall #28 - must use camelCase)
-          appName: 'agent',
-          userId,
-          sessionId,
-          newMessage: {
-            role: 'user',
-            parts: [{ text: messageWithContext }],
-          },
-          // Pass tenant context in state for the agent to use
-          state: {
-            tenantId,
-          },
-        }),
-      });
+        120_000
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
