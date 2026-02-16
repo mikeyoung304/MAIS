@@ -56,10 +56,10 @@ model Tenant {
   branding Json @default("{}") // Widget branding settings (non-color)
 
   // Theme Colors - Dedicated fields for runtime CSS variable updates
-  // Defaults to Macon brand colors (rebuild-6.0 design system)
-  primaryColor    String @default("#1a365d") // Macon Navy - main brand color (buttons, headers)
-  secondaryColor  String @default("#fb923c") // Macon Orange - accent color (CTAs, highlights)
-  accentColor     String @default("#38b2ac") // Macon Teal - success/positive actions
+  // Defaults to neutral-elegant palette (per-tenant theming)
+  primaryColor    String @default("#2d3436") // Charcoal - main brand color (buttons, headers)
+  secondaryColor  String @default("#b8860b") // Dark Goldenrod - accent color (CTAs, highlights)
+  accentColor     String @default("#8B9E86") // Sage Green - success/positive actions
   backgroundColor String @default("#ffffff") // White - page background
   fontPreset      String @default("classic") // Font preset name (see FONT_PRESETS constant)
 

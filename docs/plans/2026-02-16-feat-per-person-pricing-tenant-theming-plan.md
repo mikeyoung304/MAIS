@@ -2,6 +2,7 @@
 title: 'Per-Person Scaling Pricing + Per-Tenant Visual Theming'
 type: feat
 date: 2026-02-16
+status: completed
 brainstorm: docs/brainstorms/2026-02-16-segment-tier-pricing-theming-brainstorm.md
 ---
 
@@ -630,25 +631,25 @@ Rejected a `priceAdjustments` deduction engine because it adds calculation compl
 
 ### Phase 1: Per-Person Scaling Pricing
 
-- [ ] 1.1 Schema migration (Tier: maxGuests, scalingRules, displayPriceCents; Booking: guestCount)
-- [ ] 1.2 Contracts (ScalingRulesSchema, updated DTOs)
-- [ ] 1.3 Pricing engine service + unit tests
-- [ ] 1.4 Backend booking flow updates (orchestrator, checkout, webhook)
-- [ ] 1.5 Agent tool: manage_tiers with scaling params
-- [ ] 1.6 Frontend: Guests step in wizard + per-person price display
-- [ ] 1.7 All tests pass, both workspaces typecheck clean
+- [x] 1.1 Schema migration (Tier: maxGuests, scalingRules, displayPriceCents; Booking: guestCount)
+- [x] 1.2 Contracts (ScalingRulesSchema, updated DTOs)
+- [x] 1.3 Pricing engine service + unit tests
+- [x] 1.4 Backend booking flow updates (orchestrator, checkout, webhook)
+- [x] 1.5 Agent tool: manage_tiers with scaling params
+- [x] 1.6 Frontend: Guests step in wizard + per-person price display
+- [x] 1.7 All tests pass, both workspaces typecheck clean
 
 ### Phase 2: Per-Tenant Visual Theming
 
-- [ ] 2.1 Schema migration (fontPreset column)
-- [ ] 2.2 Contracts (FONT_PRESETS constant, updated DTOs)
-- [ ] 2.3 CSS custom properties injection in TenantSiteShell
-- [ ] 2.4 Tailwind config: semantic tokens → CSS vars
-- [ ] 2.5 Component migration (priority storefront components)
-- [ ] 2.6 Default theme palette + migration for existing tenants
-- [ ] 2.7 Agent tool: update_branding with fontPreset
-- [ ] 2.8 Constants sync test for font presets
-- [ ] 2.9 All tests pass, both workspaces typecheck clean
+- [x] 2.1 Schema migration (fontPreset column)
+- [x] 2.2 Contracts (FONT_PRESETS constant, updated DTOs)
+- [x] 2.3 CSS custom properties injection in TenantSiteShell
+- [x] 2.4 Tailwind config: semantic tokens → CSS vars
+- [x] 2.5 Component migration (priority storefront components)
+- [x] 2.6 Default theme palette + migration for existing tenants
+- [x] 2.7 Agent tool: update_branding with fontPreset
+- [x] 2.8 Constants sync test for font presets
+- [x] 2.9 All tests pass, both workspaces typecheck clean
 
 ---
 

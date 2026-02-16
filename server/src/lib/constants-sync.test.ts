@@ -25,12 +25,14 @@ import { resolve } from 'node:path';
 import {
   MVP_REVEAL_SECTION_TYPES,
   SECTION_TYPES as CANONICAL_SECTION_TYPES,
+  FONT_PRESET_NAMES as CANONICAL_FONT_PRESET_NAMES,
 } from '@macon/contracts';
 import { DISCOVERY_FACT_KEYS as CANONICAL_DISCOVERY_FACT_KEYS } from '../shared/constants/discovery-facts';
 
 // Local copies (Cloud Run tenant agent)
 import { MVP_SECTION_TYPES as AGENT_MVP_SECTION_TYPES } from '../agent-v2/deploy/tenant/src/constants/shared';
 import { DISCOVERY_FACT_KEYS as AGENT_DISCOVERY_FACT_KEYS } from '../agent-v2/deploy/tenant/src/constants/discovery-facts';
+import { FONT_PRESET_NAMES as AGENT_FONT_PRESET_NAMES } from '../agent-v2/deploy/tenant/src/constants/font-presets';
 
 // SECTION_TYPES copies across the codebase
 import { SECTION_TYPES as AGENT_SHARED_SECTION_TYPES } from '../routes/internal-agent-shared';
@@ -97,6 +99,19 @@ describe('SECTION_TYPES sync', () => {
 
     const storefrontTypes = values.sort();
     expect(storefrontTypes).toEqual(canonical);
+  });
+});
+
+// ============================================================================
+// FONT_PRESET_NAMES
+// ============================================================================
+
+describe('FONT_PRESET_NAMES sync', () => {
+  it('agent copy matches canonical contracts source', () => {
+    const canonical = [...CANONICAL_FONT_PRESET_NAMES].sort();
+    const agent = [...AGENT_FONT_PRESET_NAMES].sort();
+
+    expect(agent).toEqual(canonical);
   });
 });
 

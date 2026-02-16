@@ -368,7 +368,6 @@ export const UpdateBrandingDtoSchema = z.object({
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
-  fontFamily: z.string().optional(),
   fontPreset: z.string().optional(),
 });
 

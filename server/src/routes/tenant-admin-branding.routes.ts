@@ -123,36 +123,30 @@ export class TenantAdminController {
         return;
       }
 
-      // Merge with existing branding (preserve logo URL)
-      // Type the branding object to include all possible fields including logo
-      interface BrandingData {
-        primaryColor?: string;
-        secondaryColor?: string;
-        accentColor?: string;
-        backgroundColor?: string;
-        fontFamily?: string;
-        logo?: string;
-      }
-      const currentBranding = (tenant.branding as BrandingData) || {};
-      const updatedBranding: BrandingData = {
-        ...currentBranding,
-        ...validation.data,
-      };
+      // Write colors + fontPreset to dedicated columns (powers CSS vars in TenantSiteShell)
+      const { fontPreset, ...colorFields } = validation.data;
+      const updateData: Record<string, unknown> = {};
+      if (colorFields.primaryColor) updateData.primaryColor = colorFields.primaryColor;
+      if (colorFields.secondaryColor) updateData.secondaryColor = colorFields.secondaryColor;
+      if (colorFields.accentColor) updateData.accentColor = colorFields.accentColor;
+      if (colorFields.backgroundColor) updateData.backgroundColor = colorFields.backgroundColor;
+      if (fontPreset) updateData.fontPreset = fontPreset;
 
-      // Update tenant
-      await this.tenantRepository.update(tenantId, {
-        branding: updatedBranding,
-      });
+      await this.tenantRepository.update(tenantId, updateData);
 
-      logger.info({ tenantId, branding: updatedBranding }, 'Tenant branding updated');
+      // Re-read tenant to return current state
+      const updated = await this.tenantRepository.findById(tenantId);
+      const branding = (updated?.branding as Record<string, unknown>) || {};
+
+      logger.info({ tenantId, updateData }, 'Tenant branding updated');
 
       res.status(200).json({
-        primaryColor: updatedBranding.primaryColor,
-        secondaryColor: updatedBranding.secondaryColor,
-        accentColor: updatedBranding.accentColor,
-        backgroundColor: updatedBranding.backgroundColor,
-        fontFamily: updatedBranding.fontFamily,
-        logo: updatedBranding.logo,
+        primaryColor: updated?.primaryColor,
+        secondaryColor: updated?.secondaryColor,
+        accentColor: updated?.accentColor,
+        backgroundColor: updated?.backgroundColor,
+        fontPreset: updated?.fontPreset,
+        logo: branding.logo,
       });
     } catch (error) {
       logger.error({ error }, 'Error updating branding');
@@ -182,11 +176,11 @@ export class TenantAdminController {
       const branding = (tenant.branding as Record<string, unknown>) || {};
 
       res.status(200).json({
-        primaryColor: branding.primaryColor,
-        secondaryColor: branding.secondaryColor,
-        accentColor: branding.accentColor,
-        backgroundColor: branding.backgroundColor,
-        fontFamily: branding.fontFamily,
+        primaryColor: tenant.primaryColor,
+        secondaryColor: tenant.secondaryColor,
+        accentColor: tenant.accentColor,
+        backgroundColor: tenant.backgroundColor,
+        fontPreset: tenant.fontPreset,
         logo: branding.logo,
       });
     } catch (error) {
