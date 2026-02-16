@@ -73,6 +73,7 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
     const subscriptions = await this.prisma.webhookSubscription.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
+      take: 100,
       select: {
         id: true,
         tenantId: true,
@@ -143,6 +144,7 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
           has: eventType, // Array contains check
         },
       },
+      take: 100,
       select: {
         id: true,
         url: true,

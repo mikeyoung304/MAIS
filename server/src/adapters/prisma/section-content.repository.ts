@@ -104,6 +104,7 @@ export class PrismaSectionContentRepository implements ISectionContentRepository
     const sections = await this.prisma.sectionContent.findMany({
       where,
       orderBy: { order: 'asc' },
+      take: 100, // Safety net: sections per tenant are bounded by page structure
     });
 
     return sections.map(this.toEntity);
@@ -275,6 +276,7 @@ export class PrismaSectionContentRepository implements ISectionContentRepository
           tenantId,
           isDraft: true,
         },
+        take: 500, // Safety net: drafts per tenant bounded by page structure
       });
 
       if (drafts.length === 0) {
@@ -351,6 +353,7 @@ export class PrismaSectionContentRepository implements ISectionContentRepository
           tenantId,
           isDraft: true,
         },
+        take: 500, // Safety net: drafts per tenant bounded by page structure
       });
 
       if (drafts.length === 0) {

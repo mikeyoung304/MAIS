@@ -21,6 +21,7 @@ export class PrismaBlackoutRepository implements BlackoutRepository {
     const blackouts = await this.prisma.blackoutDate.findMany({
       where: { tenantId },
       orderBy: { date: 'asc' },
+      take: 500, // Safety net: blackout dates per tenant are bounded config data
     });
 
     return blackouts.map((b) => ({
