@@ -1,5 +1,5 @@
 /**
- * HTTP Contract Tests for /v1/packages
+ * HTTP Contract Tests for /v1/tiers
  * P0/P1 Implementation with Vitest + Supertest
  */
 
@@ -14,7 +14,7 @@ import { getTestPrisma } from '../helpers/global-prisma';
 // Use singleton to prevent connection pool exhaustion
 const prisma = getTestPrisma();
 
-describe('GET /v1/packages', () => {
+describe('GET /v1/tiers', () => {
   let app: Express;
   let testTenantApiKey: string;
 
@@ -47,9 +47,9 @@ describe('GET /v1/packages', () => {
     app = createApp(config, container, startTime);
   });
 
-  it('returns packages list with contract shape', async () => {
+  it('returns tiers list with contract shape', async () => {
     const res = await request(app)
-      .get('/v1/packages')
+      .get('/v1/tiers')
       .set('X-Tenant-Key', testTenantApiKey)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -57,15 +57,15 @@ describe('GET /v1/packages', () => {
     expect(Array.isArray(res.body)).toBe(true);
 
     if (res.body.length > 0) {
-      const pkg = res.body[0];
-      expect(pkg).toHaveProperty('id');
-      expect(pkg).toHaveProperty('slug');
-      expect(pkg).toHaveProperty('title');
-      expect(pkg).toHaveProperty('priceCents');
-      expect(typeof pkg.id).toBe('string');
-      expect(typeof pkg.slug).toBe('string');
-      expect(typeof pkg.title).toBe('string');
-      expect(typeof pkg.priceCents).toBe('number');
+      const tier = res.body[0];
+      expect(tier).toHaveProperty('id');
+      expect(tier).toHaveProperty('slug');
+      expect(tier).toHaveProperty('title');
+      expect(tier).toHaveProperty('priceCents');
+      expect(typeof tier.id).toBe('string');
+      expect(typeof tier.slug).toBe('string');
+      expect(typeof tier.title).toBe('string');
+      expect(typeof tier.priceCents).toBe('number');
     }
   });
 
@@ -74,7 +74,7 @@ describe('GET /v1/packages', () => {
   });
 });
 
-describe('GET /v1/packages/:slug', () => {
+describe('GET /v1/tiers/:slug', () => {
   let app: Express;
   let testTenantApiKey: string;
 
@@ -107,11 +107,10 @@ describe('GET /v1/packages/:slug', () => {
     app = createApp(config, container, startTime);
   });
 
-  it('returns single package by slug', async () => {
+  it('returns single tier by slug', async () => {
     // Uses 'starter' slug which matches both mock adapter and demo.ts seed
-    // See TODO #396 for context on slug alignment between mock and real modes
     const res = await request(app)
-      .get('/v1/packages/starter')
+      .get('/v1/tiers/starter')
       .set('X-Tenant-Key', testTenantApiKey)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -121,9 +120,9 @@ describe('GET /v1/packages/:slug', () => {
     expect(res.body.slug).toBe('starter');
   });
 
-  it('returns 404 for non-existent package', async () => {
+  it('returns 404 for non-existent tier', async () => {
     await request(app)
-      .get('/v1/packages/nonexistent-slug')
+      .get('/v1/tiers/nonexistent-slug')
       .set('X-Tenant-Key', testTenantApiKey)
       .expect(404);
   });

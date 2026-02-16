@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { PackagePhoto } from '@/hooks/usePhotoUpload';
+import type { TierPhoto } from '@/hooks/usePhotoUpload';
 
 interface PhotoDeleteDialogProps {
-  photo: PackagePhoto | null;
+  photo: TierPhoto | null;
   isDeleting: boolean;
   onConfirm: () => void;
   onCancel: () => void;

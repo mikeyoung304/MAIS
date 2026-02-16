@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * SegmentPackagesSection - Segment-first service browsing
+ * SegmentTiersSection - Segment-first service browsing
  *
  * Displays segments as clickable entry points. When a segment is selected,
- * expands to reveal the tiers/packages within that segment.
+ * expands to reveal the tiers within that segment.
  *
  * UX Flow:
  * 1. Customer sees segment cards (e.g., "Corporate Wellness", "Elopements")
@@ -22,11 +22,11 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { getSegmentStockPhoto } from '@/lib/constants/stock-photos';
 import { formatPrice } from '@/lib/format';
-import { TIER_ORDER } from '@/lib/packages';
-import type { TenantStorefrontData, PackageData, SegmentData } from '@/lib/tenant.client';
-import { SEED_PACKAGE_NAMES } from '@macon/contracts';
+import { TIER_ORDER } from '@/lib/tiers';
+import type { TenantStorefrontData, TierData, SegmentData } from '@/lib/tenant.client';
+import { SEED_TIER_NAMES } from '@macon/contracts';
 
-interface SegmentPackagesSectionProps {
+interface SegmentTiersSectionProps {
   data: TenantStorefrontData;
   /** Base path for booking links */
   basePath?: string;
@@ -36,16 +36,16 @@ interface SegmentPackagesSectionProps {
 
 interface SegmentCardProps {
   segment: SegmentData;
-  packages: PackageData[];
+  tiers: TierData[];
   onSelect: () => void;
 }
 
 /**
  * Get the price range text for a segment's packages
  */
-function getPriceRange(packages: PackageData[]): string {
-  if (packages.length === 0) return '';
-  const prices = packages.map((p) => p.priceCents).sort((a, b) => a - b);
+function getPriceRange(tiers: TierData[]): string {
+  if (tiers.length === 0) return '';
+  const prices = tiers.map((p) => p.priceCents).sort((a, b) => a - b);
   const min = prices[0];
   const max = prices[prices.length - 1];
   if (min === max) return formatPrice(min);
@@ -55,8 +55,8 @@ function getPriceRange(packages: PackageData[]): string {
 /**
  * Segment Card - Entry point for a service category
  */
-function SegmentCard({ segment, packages, onSelect }: SegmentCardProps) {
-  const priceRange = getPriceRange(packages);
+function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
+  const priceRange = getPriceRange(tiers);
   // Use heroImage if set, otherwise use stock photo based on keywords
   const imageUrl = segment.heroImage || getSegmentStockPhoto(segment);
 
@@ -113,7 +113,7 @@ function SegmentCard({ segment, packages, onSelect }: SegmentCardProps) {
 }
 
 interface TierCardProps {
-  pkg: PackageData;
+  pkg: TierData;
   tierLabel: string;
   bookHref: string;
   isPopular: boolean;
@@ -155,7 +155,7 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
 
 interface TierGridSectionProps {
   segment: SegmentData;
-  packages: PackageData[];
+  tiers: TierData[];
   tenant: TenantStorefrontData['tenant'];
   getBookHref: (slug: string) => string;
   /** Optional ref for the heading element (used for focus management) */
@@ -170,18 +170,18 @@ interface TierGridSectionProps {
  */
 function TierGridSection({
   segment,
-  packages,
+  tiers,
   tenant,
   getBookHref,
   headingRef,
   showExtendedInfo = false,
 }: TierGridSectionProps) {
-  const midIndex = Math.floor(packages.length / 2);
+  const midIndex = Math.floor(tiers.length / 2);
 
   const gridClasses =
-    packages.length === 1
+    tiers.length === 1
       ? 'mx-auto max-w-md md:grid-cols-1'
-      : packages.length === 2
+      : tiers.length === 2
         ? 'mx-auto max-w-2xl md:grid-cols-2'
         : 'md:grid-cols-3';
 
@@ -210,8 +210,8 @@ function TierGridSection({
       </div>
 
       <div className={`mt-16 grid gap-8 ${gridClasses}`}>
-        {packages.map((pkg, index) => {
-          const isPopular = packages.length > 2 && index === midIndex;
+        {tiers.map((pkg, index) => {
+          const isPopular = tiers.length > 2 && index === midIndex;
           const tierLabel =
             tenant.tierDisplayNames?.[
               pkg.tier.toLowerCase() as keyof typeof tenant.tierDisplayNames
@@ -235,12 +235,12 @@ function TierGridSection({
 /**
  * Main Component - Segment-first service browsing
  */
-export function SegmentPackagesSection({
+export function SegmentTiersSection({
   data,
   basePath = '',
   domainParam = '',
-}: SegmentPackagesSectionProps) {
-  const { tenant, packages, segments } = data;
+}: SegmentTiersSectionProps) {
+  const { tenant, tiers, segments } = data;
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   // Live region announcement for screen readers (WCAG 4.1.3 Status Messages)
   const [announcement, setAnnouncement] = useState('');
@@ -298,43 +298,43 @@ export function SegmentPackagesSection({
   }, [segments]);
 
   // Safety net: never show $0 seed packages to visitors.
-  // Cross-ref: @macon/contracts SEED_PACKAGE_NAMES (canonical source: server/src/lib/tenant-defaults.ts:28-50)
+  // Cross-ref: @macon/contracts SEED_TIER_NAMES (canonical source: server/src/lib/tenant-defaults.ts:28-50)
 
-  // Filter active packages, excluding seed defaults
-  const activePackages = packages.filter(
+  // Filter active tiers, excluding seed defaults
+  const activeTiers = tiers.filter(
     (p) =>
       (p.isActive ?? p.active) &&
-      !(p.priceCents === 0 && (SEED_PACKAGE_NAMES as readonly string[]).includes(p.title))
+      !(p.priceCents === 0 && (SEED_TIER_NAMES as readonly string[]).includes(p.title))
   );
 
-  // Group packages by segment (memoized to avoid recomputation on every render)
-  const packagesBySegment = useMemo(() => {
-    const map = new Map<string, PackageData[]>();
+  // Group tiers by segment (memoized to avoid recomputation on every render)
+  const tiersBySegment = useMemo(() => {
+    const map = new Map<string, TierData[]>();
     segments.forEach((segment) => {
-      const segmentPackages = activePackages
+      const segmentTiers = activeTiers
         .filter((p) => p.segmentId === segment.id)
         .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99));
-      if (segmentPackages.length > 0) {
-        map.set(segment.id, segmentPackages);
+      if (segmentTiers.length > 0) {
+        map.set(segment.id, segmentTiers);
       }
     });
     return map;
-  }, [segments, activePackages]);
+  }, [segments, activeTiers]);
 
-  // Only show segments that have packages (memoized to avoid recomputation on every render)
-  const segmentsWithPackages = useMemo(
+  // Only show segments that have tiers (memoized to avoid recomputation on every render)
+  const segmentsWithTiers = useMemo(
     () =>
-      segments.filter((s) => packagesBySegment.has(s.id)).sort((a, b) => a.sortOrder - b.sortOrder),
-    [segments, packagesBySegment]
+      segments.filter((s) => tiersBySegment.has(s.id)).sort((a, b) => a.sortOrder - b.sortOrder),
+    [segments, tiersBySegment]
   );
 
   // Get booking link - must be before any conditional returns (React Rules of Hooks)
   const getBookHref = useCallback(
-    (packageSlug: string) => {
+    (tierSlug: string) => {
       if (domainParam) {
-        return `/t/${tenant.slug}/book/${packageSlug}`;
+        return `/t/${tenant.slug}/book/${tierSlug}`;
       }
-      return `${basePath}/book/${packageSlug}`;
+      return `${basePath}/book/${tierSlug}`;
     },
     [basePath, domainParam, tenant.slug]
   );
@@ -349,7 +349,7 @@ export function SegmentPackagesSection({
         window.history.pushState(null, '', `#segment-${segment.slug}`);
         setSelectedSegmentId(segmentId);
         // Announce to screen readers (WCAG 4.1.3 Status Messages)
-        setAnnouncement(`Viewing ${segment.name} packages`);
+        setAnnouncement(`Viewing ${segment.name} services`);
         // Move focus to expanded heading after React renders (WCAG 2.4.3 Focus Order)
         requestAnimationFrame(() => {
           expandedHeadingRef.current?.focus();
@@ -372,11 +372,11 @@ export function SegmentPackagesSection({
   const selectedSegment = selectedSegmentId
     ? segments.find((s) => s.id === selectedSegmentId)
     : null;
-  const selectedPackages = selectedSegmentId ? packagesBySegment.get(selectedSegmentId) || [] : [];
+  const selectedTiers = selectedSegmentId ? tiersBySegment.get(selectedSegmentId) || [] : [];
 
   // Empty state - no segments have active packages
   // This must come AFTER all hooks are called (React Rules of Hooks)
-  if (segmentsWithPackages.length === 0) {
+  if (segmentsWithTiers.length === 0) {
     return (
       <section id="packages" className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6 text-center">
@@ -392,16 +392,16 @@ export function SegmentPackagesSection({
   }
 
   // If only one segment, skip segment selection and show tiers directly
-  if (segmentsWithPackages.length === 1) {
-    const segment = segmentsWithPackages[0];
-    const segmentPackages = packagesBySegment.get(segment.id) || [];
+  if (segmentsWithTiers.length === 1) {
+    const segment = segmentsWithTiers[0];
+    const segmentTiers = tiersBySegment.get(segment.id) || [];
 
     return (
       <section id="packages" className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
           <TierGridSection
             segment={segment}
-            packages={segmentPackages}
+            tiers={segmentTiers}
             tenant={tenant}
             getBookHref={getBookHref}
           />
@@ -433,16 +433,16 @@ export function SegmentPackagesSection({
 
             <div
               className={`mt-16 grid gap-8 ${
-                segmentsWithPackages.length === 2
+                segmentsWithTiers.length === 2
                   ? 'mx-auto max-w-3xl md:grid-cols-2'
                   : 'md:grid-cols-3'
               }`}
             >
-              {segmentsWithPackages.map((segment) => (
+              {segmentsWithTiers.map((segment) => (
                 <SegmentCard
                   key={segment.id}
                   segment={segment}
-                  packages={packagesBySegment.get(segment.id) || []}
+                  tiers={tiersBySegment.get(segment.id) || []}
                   onSelect={() => handleSelectSegment(segment.id)}
                 />
               ))}
@@ -477,7 +477,7 @@ export function SegmentPackagesSection({
 
             <TierGridSection
               segment={selectedSegment}
-              packages={selectedPackages}
+              tiers={selectedTiers}
               tenant={tenant}
               getBookHref={getBookHref}
               headingRef={expandedHeadingRef}

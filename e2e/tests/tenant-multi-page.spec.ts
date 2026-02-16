@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
  * Prerequisites:
  * - Next.js app running at port 3000
  * - API server running at port 3001
- * - Test tenant "handled-e2e" exists with packages
+ * - Test tenant "handled-e2e" exists with tiers
  *
  * Run: NEXTJS_E2E=1 npx playwright test tenant-multi-page.spec.ts
  */
@@ -408,8 +408,8 @@ test.describe('Booking Flow Isolation', () => {
     await expect(siteNav).toBeVisible();
 
     // Now navigate to booking flow
-    // We need to find a valid package slug from the E2E tenant
-    await page.goto(`${BASE_PATH}/book/starter-package`);
+    // We need to find a valid tier slug from the E2E tenant
+    await page.goto(`${BASE_PATH}/book/starter`);
     await page.waitForLoadState('domcontentloaded');
 
     // Booking flow should NOT have the main TenantNav

@@ -32,11 +32,11 @@ describe.sequential('Catalog Segment Integration Tests', () => {
   });
 
   // ============================================================================
-  // SEGMENT-SCOPED PACKAGE QUERIES
+  // SEGMENT-SCOPED TIER QUERIES
   // ============================================================================
 
-  describe('Segment-scoped package queries', () => {
-    it('should return packages for specific segment only', async () => {
+  describe('Segment-scoped tier queries', () => {
+    it('should return tiers for specific segment only', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       // Create two segments
@@ -58,56 +58,62 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create packages for segment A
-      await ctx.prisma.package.create({
+      // Create tiers for segment A
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segmentA.id,
           slug: 'wellness-pkg-1',
           name: 'Wellness Package 1',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segmentA.id,
           slug: 'wellness-pkg-2',
           name: 'Wellness Package 2',
           description: 'Description',
-          basePrice: 20000,
+          priceCents: 20000,
+          sortOrder: 2,
+          features: [],
           active: true,
         },
       });
 
-      // Create package for segment B
-      await ctx.prisma.package.create({
+      // Create tier for segment B
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segmentB.id,
           slug: 'wedding-pkg-1',
           name: 'Wedding Package 1',
           description: 'Description',
-          basePrice: 30000,
+          priceCents: 30000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
 
-      // Query packages for segment A - should only return 2 packages
-      const packagesA = await catalogService.getPackagesBySegment(tenant.id, segmentA.id);
-      expect(packagesA).toHaveLength(2);
-      expect(packagesA.every((p) => p.title.startsWith('Wellness'))).toBe(true);
+      // Query tiers for segment A - should only return 2 tiers
+      const tiersA = await catalogService.getTiersBySegment(tenant.id, segmentA.id);
+      expect(tiersA).toHaveLength(2);
+      expect(tiersA.every((p) => p.title.startsWith('Wellness'))).toBe(true);
 
-      // Query packages for segment B - should only return 1 package
-      const packagesB = await catalogService.getPackagesBySegment(tenant.id, segmentB.id);
-      expect(packagesB).toHaveLength(1);
-      expect(packagesB[0].title).toBe('Wedding Package 1');
+      // Query tiers for segment B - should only return 1 tier
+      const tiersB = await catalogService.getTiersBySegment(tenant.id, segmentB.id);
+      expect(tiersB).toHaveLength(1);
+      expect(tiersB[0].title).toBe('Wedding Package 1');
     });
 
-    it('should order packages by groupingOrder then createdAt', async () => {
+    it('should order tiers by sortOrder then createdAt', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await segmentRepo.create({
@@ -119,58 +125,58 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create packages with different groupingOrders
-      await ctx.prisma.package.create({
+      // Create tiers with different sortOrders
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'couple-pkg',
           name: 'Couple Package',
           description: 'Description',
-          basePrice: 20000,
-          grouping: 'Couple',
-          groupingOrder: 1,
+          priceCents: 20000,
+          sortOrder: 2,
+          features: [],
           active: true,
         },
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'solo-pkg',
           name: 'Solo Package',
           description: 'Description',
-          basePrice: 10000,
-          grouping: 'Solo',
-          groupingOrder: 0,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'group-pkg',
           name: 'Group Package',
           description: 'Description',
-          basePrice: 30000,
-          grouping: 'Group',
-          groupingOrder: 2,
+          priceCents: 30000,
+          sortOrder: 3,
+          features: [],
           active: true,
         },
       });
 
-      const packages = await catalogService.getPackagesBySegment(tenant.id, segment.id);
+      const tiers = await catalogService.getTiersBySegment(tenant.id, segment.id);
 
-      expect(packages).toHaveLength(3);
-      expect(packages[0].title).toBe('Solo Package');
-      expect(packages[1].title).toBe('Couple Package');
-      expect(packages[2].title).toBe('Group Package');
+      expect(tiers).toHaveLength(3);
+      expect(tiers[0].title).toBe('Solo Package');
+      expect(tiers[1].title).toBe('Couple Package');
+      expect(tiers[2].title).toBe('Group Package');
     });
 
-    it('should only return active packages', async () => {
+    it('should only return active tiers', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await segmentRepo.create({
@@ -182,36 +188,40 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create active package
-      await ctx.prisma.package.create({
+      // Create active tier
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'active-pkg',
           name: 'Active Package',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
 
-      // Create inactive package
-      await ctx.prisma.package.create({
+      // Create inactive tier
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'inactive-pkg',
           name: 'Inactive Package',
           description: 'Description',
-          basePrice: 20000,
+          priceCents: 20000,
+          sortOrder: 2,
+          features: [],
           active: false,
         },
       });
 
-      const packages = await catalogService.getPackagesBySegment(tenant.id, segment.id);
+      const tiers = await catalogService.getTiersBySegment(tenant.id, segment.id);
 
-      expect(packages).toHaveLength(1);
-      expect(packages[0].title).toBe('Active Package');
+      expect(tiers).toHaveLength(1);
+      expect(tiers[0].title).toBe('Active Package');
     });
   });
 
@@ -232,15 +242,17 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create a package to link add-ons to (required - all add-ons must have at least one package)
-      const pkg = await ctx.prisma.package.create({
+      // Create a tier to link add-ons to (required - all add-ons must have at least one tier)
+      const tier = await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'wellness-pkg',
           name: 'Wellness Package',
           description: 'Test package',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -257,10 +269,10 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link yoga add-on to package
-      await ctx.prisma.packageAddOn.create({
+      // Link yoga add-on to tier
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: yogaAddOn.id,
         },
       });
@@ -277,10 +289,10 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link meals add-on to package (global means available to all packages, not packageless)
-      await ctx.prisma.packageAddOn.create({
+      // Link meals add-on to tier (global means available to all tiers, not tierless)
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: mealsAddOn.id,
         },
       });
@@ -295,15 +307,17 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create package for other segment
-      const otherPkg = await ctx.prisma.package.create({
+      // Create tier for other segment
+      const otherTier = await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: otherSegment.id,
           slug: 'wedding-pkg',
           name: 'Wedding Package',
           description: 'Test package',
-          basePrice: 20000,
+          priceCents: 20000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -319,10 +333,10 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link photography add-on to wedding package
-      await ctx.prisma.packageAddOn.create({
+      // Link photography add-on to wedding tier
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: otherPkg.id,
+          tierId: otherTier.id,
           addOnId: photoAddOn.id,
         },
       });
@@ -336,7 +350,7 @@ describe.sequential('Catalog Segment Integration Tests', () => {
       expect(addOns.find((a) => a.title === 'Photography')).toBeUndefined();
     });
 
-    it('should filter packages with add-ons to show only relevant add-ons', async () => {
+    it('should filter tiers with add-ons to show only relevant add-ons', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await segmentRepo.create({
@@ -348,15 +362,17 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create package
-      const pkg = await ctx.prisma.package.create({
+      // Create tier
+      const tier = await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'weekend-detox',
           name: 'Weekend Detox',
           description: 'Description',
-          basePrice: 79900,
+          priceCents: 79900,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -384,27 +400,27 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link add-ons to package
-      await ctx.prisma.packageAddOn.create({
+      // Link add-ons to tier
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: yogaAddOn.id,
         },
       });
 
-      await ctx.prisma.packageAddOn.create({
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: mealsAddOn.id,
         },
       });
 
-      const packages = await catalogService.getPackagesBySegmentWithAddOns(tenant.id, segment.id);
+      const tiers = await catalogService.getTiersBySegmentWithAddOns(tenant.id, segment.id);
 
-      expect(packages).toHaveLength(1);
-      expect(packages[0].addOns).toHaveLength(2);
-      expect(packages[0].addOns.find((a) => a.title === 'Yoga Session')).toBeTruthy();
-      expect(packages[0].addOns.find((a) => a.title === 'Farm Meals')).toBeTruthy();
+      expect(tiers).toHaveLength(1);
+      expect(tiers[0].addOns).toHaveLength(2);
+      expect(tiers[0].addOns.find((a) => a.title === 'Yoga Session')).toBeTruthy();
+      expect(tiers[0].addOns.find((a) => a.title === 'Farm Meals')).toBeTruthy();
     });
 
     it('should not include inactive add-ons', async () => {
@@ -419,15 +435,17 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create a package to link add-ons to (required - all add-ons must have at least one package)
-      const pkg = await ctx.prisma.package.create({
+      // Create a tier to link add-ons to (required - all add-ons must have at least one tier)
+      const tier = await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'wellness-pkg',
           name: 'Wellness Package',
           description: 'Test package',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -444,10 +462,10 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link active add-on to package
-      await ctx.prisma.packageAddOn.create({
+      // Link active add-on to tier
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: activeAddOn.id,
         },
       });
@@ -464,10 +482,10 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link inactive add-on to package (still needs package association even if inactive)
-      await ctx.prisma.packageAddOn.create({
+      // Link inactive add-on to tier (still needs tier association even if inactive)
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: inactiveAddOn.id,
         },
       });
@@ -484,7 +502,7 @@ describe.sequential('Catalog Segment Integration Tests', () => {
   // ============================================================================
 
   describe('Segment catalog cache behavior', () => {
-    it('should cache getPackagesBySegment with tenantId + segmentId key', async () => {
+    it('should cache getTiersBySegment with tenantId + segmentId key', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await segmentRepo.create({
@@ -496,14 +514,16 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'test-pkg',
           name: 'Test Package',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -511,22 +531,22 @@ describe.sequential('Catalog Segment Integration Tests', () => {
       ctx.cache.resetStats();
 
       // First call - cache miss
-      await catalogService.getPackagesBySegment(tenant.id, segment.id);
+      await catalogService.getTiersBySegment(tenant.id, segment.id);
       expect((await ctx.cache.getStats()).misses).toBe(1);
       expect((await ctx.cache.getStats()).hits).toBe(0);
 
       // Second call - cache hit
-      await catalogService.getPackagesBySegment(tenant.id, segment.id);
+      await catalogService.getTiersBySegment(tenant.id, segment.id);
       expect((await ctx.cache.getStats()).misses).toBe(1);
       expect((await ctx.cache.getStats()).hits).toBe(1);
 
       // Verify cache key format
-      const cacheKey = `catalog:${tenant.id}:segment:${segment.id}:packages`;
+      const cacheKey = `catalog:${tenant.id}:segment:${segment.id}:tiers`;
       const cached = await ctx.cache.cache.get(cacheKey);
       expect(cached).toBeTruthy();
     });
 
-    it('should cache getPackagesBySegmentWithAddOns separately', async () => {
+    it('should cache getTiersBySegmentWithAddOns separately', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await segmentRepo.create({
@@ -538,14 +558,16 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      await ctx.prisma.package.create({
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'test-pkg',
           name: 'Test Package',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -553,14 +575,14 @@ describe.sequential('Catalog Segment Integration Tests', () => {
       ctx.cache.resetStats();
 
       // Call both methods
-      await catalogService.getPackagesBySegment(tenant.id, segment.id);
-      await catalogService.getPackagesBySegmentWithAddOns(tenant.id, segment.id);
+      await catalogService.getTiersBySegment(tenant.id, segment.id);
+      await catalogService.getTiersBySegmentWithAddOns(tenant.id, segment.id);
 
       // Should have different cache keys
-      const packagesKey = `catalog:${tenant.id}:segment:${segment.id}:packages`;
-      const withAddOnsKey = `catalog:${tenant.id}:segment:${segment.id}:packages-with-addons`;
+      const tiersKey = `catalog:${tenant.id}:segment:${segment.id}:tiers`;
+      const withAddOnsKey = `catalog:${tenant.id}:segment:${segment.id}:tiers-with-addons`;
 
-      expect(await ctx.cache.cache.get(packagesKey)).toBeTruthy();
+      expect(await ctx.cache.cache.get(tiersKey)).toBeTruthy();
       expect(await ctx.cache.cache.get(withAddOnsKey)).toBeTruthy();
     });
 
@@ -576,15 +598,17 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create a package to link add-on to (required - all add-ons must have at least one package)
-      const pkg = await ctx.prisma.package.create({
+      // Create a tier to link add-on to (required - all add-ons must have at least one tier)
+      const tier = await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'wellness-pkg',
           name: 'Wellness Package',
           description: 'Test package',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
@@ -600,10 +624,10 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         },
       });
 
-      // Link add-on to package
-      await ctx.prisma.packageAddOn.create({
+      // Link add-on to tier
+      await ctx.prisma.tierAddOn.create({
         data: {
-          packageId: pkg.id,
+          tierId: tier.id,
           addOnId: addOn.id,
         },
       });
@@ -629,7 +653,7 @@ describe.sequential('Catalog Segment Integration Tests', () => {
   // ============================================================================
 
   describe('Multi-tenant isolation for segment catalog', () => {
-    it('should isolate packages between tenants even with same segment structure', async () => {
+    it('should isolate tiers between tenants even with same segment structure', async () => {
       const tenantA = await ctx.tenants.tenantA.create();
       const tenantB = await ctx.tenants.tenantB.create();
 
@@ -652,43 +676,47 @@ describe.sequential('Catalog Segment Integration Tests', () => {
         active: true,
       });
 
-      // Create package for tenant A
-      await ctx.prisma.package.create({
+      // Create tier for tenant A
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenantA.id,
           segmentId: segmentA.id,
           slug: 'pkg-a',
           name: 'Package A',
           description: 'Description',
-          basePrice: 10000,
+          priceCents: 10000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
 
-      // Create package for tenant B
-      await ctx.prisma.package.create({
+      // Create tier for tenant B
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenantB.id,
           segmentId: segmentB.id,
           slug: 'pkg-b',
           name: 'Package B',
           description: 'Description',
-          basePrice: 20000,
+          priceCents: 20000,
+          sortOrder: 1,
+          features: [],
           active: true,
         },
       });
 
-      // Query packages for each tenant
-      const packagesA = await catalogService.getPackagesBySegment(tenantA.id, segmentA.id);
-      const packagesB = await catalogService.getPackagesBySegment(tenantB.id, segmentB.id);
+      // Query tiers for each tenant
+      const tiersA = await catalogService.getTiersBySegment(tenantA.id, segmentA.id);
+      const tiersB = await catalogService.getTiersBySegment(tenantB.id, segmentB.id);
 
-      // Each tenant should only see their own packages
-      expect(packagesA).toHaveLength(1);
-      expect(packagesB).toHaveLength(1);
-      expect(packagesA[0].title).toBe('Package A');
-      expect(packagesB[0].title).toBe('Package B');
-      expect(packagesA[0].tenantId).toBe(tenantA.id);
-      expect(packagesB[0].tenantId).toBe(tenantB.id);
+      // Each tenant should only see their own tiers
+      expect(tiersA).toHaveLength(1);
+      expect(tiersB).toHaveLength(1);
+      expect(tiersA[0].title).toBe('Package A');
+      expect(tiersB[0].title).toBe('Package B');
+      expect(tiersA[0].tenantId).toBe(tenantA.id);
+      expect(tiersB[0].tenantId).toBe(tenantB.id);
     });
 
     it('should isolate cache between tenants for segment catalog', async () => {
@@ -714,12 +742,12 @@ describe.sequential('Catalog Segment Integration Tests', () => {
       });
 
       // Populate caches for both tenants
-      await catalogService.getPackagesBySegment(tenantA.id, segmentA.id);
-      await catalogService.getPackagesBySegment(tenantB.id, segmentB.id);
+      await catalogService.getTiersBySegment(tenantA.id, segmentA.id);
+      await catalogService.getTiersBySegment(tenantB.id, segmentB.id);
 
       // Cache keys should be different
-      const cacheKeyA = `catalog:${tenantA.id}:segment:${segmentA.id}:packages`;
-      const cacheKeyB = `catalog:${tenantB.id}:segment:${segmentB.id}:packages`;
+      const cacheKeyA = `catalog:${tenantA.id}:segment:${segmentA.id}:tiers`;
+      const cacheKeyB = `catalog:${tenantB.id}:segment:${segmentB.id}:tiers`;
 
       expect(cacheKeyA).not.toBe(cacheKeyB);
 

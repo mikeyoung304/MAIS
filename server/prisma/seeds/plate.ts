@@ -23,7 +23,7 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Package, AddOn } from '../../src/generated/prisma/client';
+import type { PrismaClient, Segment, Tier, AddOn } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
 import { createOrUpdateTenant } from './utils';
@@ -100,9 +100,9 @@ async function createOrUpdateSegment(
 }
 
 /**
- * Create or update a package with segment association
+ * Create or update a tier with segment association
  */
-async function createOrUpdatePackageWithSegment(
+async function createOrUpdateTierWithSegment(
   prisma: PrismaOrTransaction,
   tenantId: string,
   segmentId: string,
@@ -110,23 +110,21 @@ async function createOrUpdatePackageWithSegment(
     slug: string;
     name: string;
     description: string;
-    basePrice: number; // in cents
-    grouping?: string;
-    groupingOrder?: number;
+    priceCents: number;
+    sortOrder: number;
     photos?: Array<{ url: string; filename: string; size: number; order: number }>;
   }
-): Promise<Package> {
-  const { slug, name, description, basePrice, grouping, groupingOrder, photos = [] } = options;
+): Promise<Tier> {
+  const { slug, name, description, priceCents, sortOrder, photos = [] } = options;
 
-  return prisma.package.upsert({
+  return prisma.tier.upsert({
     where: { tenantId_slug: { slug, tenantId } },
     update: {
       name,
       description,
-      basePrice,
+      priceCents,
       segmentId,
-      grouping,
-      groupingOrder,
+      sortOrder,
       photos: JSON.stringify(photos),
     },
     create: {
@@ -135,9 +133,9 @@ async function createOrUpdatePackageWithSegment(
       slug,
       name,
       description,
-      basePrice,
-      grouping,
-      groupingOrder,
+      priceCents,
+      sortOrder,
+      features: JSON.stringify([]),
       photos: JSON.stringify(photos),
     },
   });
@@ -178,19 +176,19 @@ async function createOrUpdateAddOn(
 }
 
 /**
- * Link add-ons to a package
+ * Link add-ons to a tier
  */
-async function linkAddOnsToPackage(
+async function linkAddOnsToTier(
   prisma: PrismaOrTransaction,
-  packageId: string,
+  tierId: string,
   addOnIds: string[]
 ): Promise<void> {
   await Promise.all(
     addOnIds.map((addOnId) =>
-      prisma.packageAddOn.upsert({
-        where: { packageId_addOnId: { packageId, addOnId } },
+      prisma.tierAddOn.upsert({
+        where: { tierId_addOnId: { tierId, addOnId } },
         update: {},
-        create: { packageId, addOnId },
+        create: { tierId, addOnId },
       })
     )
   );
@@ -212,7 +210,7 @@ export async function seedPlate(prisma: PrismaClient): Promise<void> {
   let secretKeyForLogging: string | null = null;
 
   logger.info(
-    { slug: TENANT_SLUG, operations: 'segments+packages+addons' },
+    { slug: TENANT_SLUG, operations: 'segments+tiers+addons' },
     'Starting Plate seed transaction'
   );
   const startTime = Date.now();
@@ -254,12 +252,12 @@ export async function seedPlate(prisma: PrismaClient): Promise<void> {
       logger.info(`Tenant ${existingTenant ? 'updated' : 'created'}: ${tenant.name}`);
 
       // =====================================================================
-      // Delete existing packages, add-ons, and segments for clean slate
+      // Delete existing tiers, add-ons, and segments for clean slate
       // =====================================================================
-      await tx.packageAddOn.deleteMany({
-        where: { package: { tenantId: tenant.id } },
+      await tx.tierAddOn.deleteMany({
+        where: { tier: { tenantId: tenant.id } },
       });
-      await tx.package.deleteMany({
+      await tx.tier.deleteMany({
         where: { tenantId: tenant.id },
       });
       await tx.addOn.deleteMany({
@@ -269,7 +267,7 @@ export async function seedPlate(prisma: PrismaClient): Promise<void> {
         where: { tenantId: tenant.id },
       });
 
-      logger.info('Cleared existing Plate packages, add-ons, and segments');
+      logger.info('Cleared existing Plate tiers, add-ons, and segments');
 
       // =====================================================================
       // SEGMENT 1: WEDDINGS
@@ -290,15 +288,11 @@ export async function seedPlate(prisma: PrismaClient): Promise<void> {
 
       logger.info(`Segment created: ${weddingsSegment.name}`);
 
-      // Wedding packages (3 tiers)
-      const ceremonyBite = await createOrUpdatePackageWithSegment(
-        tx,
-        tenant.id,
-        weddingsSegment.id,
-        {
-          slug: 'ceremony-bite',
-          name: 'The Ceremony Bite',
-          description: `An elegant cocktail reception for couples who want memorable bites without a formal sit-down.
+      // Wedding tiers (3 tiers)
+      const ceremonyBite = await createOrUpdateTierWithSegment(tx, tenant.id, weddingsSegment.id, {
+        slug: 'ceremony-bite',
+        name: 'The Ceremony Bite',
+        description: `An elegant cocktail reception for couples who want memorable bites without a formal sit-down.
 
 Includes:
 • Pre-event consultation with Chef Mike
@@ -310,21 +304,19 @@ Includes:
 
 Perfect for: Cocktail receptions, rehearsal dinners, or post-ceremony celebrations.
 Minimum 25 guests. Pricing is per person.`,
-          basePrice: 5500, // $55/person
-          grouping: 'tier_1',
-          groupingOrder: 1,
-          photos: [
-            {
-              url: 'https://images.unsplash.com/photo-1530062845289-9109b2c9c868',
-              filename: 'ceremony-bite.jpg',
-              size: 0,
-              order: 0,
-            },
-          ],
-        }
-      );
+        priceCents: 5500, // $55/person
+        sortOrder: 1,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1530062845289-9109b2c9c868',
+            filename: 'ceremony-bite.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
+      });
 
-      const reception = await createOrUpdatePackageWithSegment(tx, tenant.id, weddingsSegment.id, {
+      const reception = await createOrUpdateTierWithSegment(tx, tenant.id, weddingsSegment.id, {
         slug: 'reception',
         name: 'The Reception',
         description: `Full dinner service that brings restaurant-quality dining to your venue.
@@ -339,9 +331,8 @@ Everything in The Ceremony Bite, plus:
 
 Perfect for: Traditional wedding receptions, anniversary celebrations.
 Minimum 50 guests. Pricing is per person.`,
-        basePrice: 12500, // $125/person
-        grouping: 'tier_2',
-        groupingOrder: 2,
+        priceCents: 12500, // $125/person
+        sortOrder: 2,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed',
@@ -352,14 +343,10 @@ Minimum 50 guests. Pricing is per person.`,
         ],
       });
 
-      const grandAffair = await createOrUpdatePackageWithSegment(
-        tx,
-        tenant.id,
-        weddingsSegment.id,
-        {
-          slug: 'grand-affair',
-          name: 'The Grand Affair',
-          description: `The ultimate culinary celebration for couples who want nothing but the best.
+      const grandAffair = await createOrUpdateTierWithSegment(tx, tenant.id, weddingsSegment.id, {
+        slug: 'grand-affair',
+        name: 'The Grand Affair',
+        description: `The ultimate culinary celebration for couples who want nothing but the best.
 
 Everything in The Reception, plus:
 • 5-course plated dinner with wine pairings
@@ -372,22 +359,20 @@ Everything in The Reception, plus:
 
 Perfect for: Luxury weddings, milestone celebrations.
 Minimum 75 guests. Pricing is per person.`,
-          basePrice: 19500, // $195/person
-          grouping: 'tier_3',
-          groupingOrder: 3,
-          photos: [
-            {
-              url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
-              filename: 'grand-affair.jpg',
-              size: 0,
-              order: 0,
-            },
-          ],
-        }
-      );
+        priceCents: 19500, // $195/person
+        sortOrder: 3,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
+            filename: 'grand-affair.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
+      });
 
       logger.info(
-        `Wedding packages created: ${[ceremonyBite, reception, grandAffair].map((p) => p.name).join(', ')}`
+        `Wedding tiers created: ${[ceremonyBite, reception, grandAffair].map((p) => p.name).join(', ')}`
       );
 
       // =====================================================================
@@ -409,8 +394,8 @@ Minimum 75 guests. Pricing is per person.`,
 
       logger.info(`Segment created: ${socialSegment.name}`);
 
-      // Social event packages (3 tiers)
-      const gathering = await createOrUpdatePackageWithSegment(tx, tenant.id, socialSegment.id, {
+      // Social event tiers (3 tiers)
+      const gathering = await createOrUpdateTierWithSegment(tx, tenant.id, socialSegment.id, {
         slug: 'gathering',
         name: 'The Gathering',
         description: `Light bites and passed appetizers for casual yet elegant entertaining.
@@ -425,9 +410,8 @@ Includes:
 
 Perfect for: Cocktail parties, open houses, after-work gatherings.
 Minimum 15 guests. Pricing is per person.`,
-        basePrice: 4500, // $45/person
-        grouping: 'tier_1',
-        groupingOrder: 1,
+        priceCents: 4500, // $45/person
+        sortOrder: 1,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0',
@@ -438,7 +422,7 @@ Minimum 15 guests. Pricing is per person.`,
         ],
       });
 
-      const celebration = await createOrUpdatePackageWithSegment(tx, tenant.id, socialSegment.id, {
+      const celebration = await createOrUpdateTierWithSegment(tx, tenant.id, socialSegment.id, {
         slug: 'celebration',
         name: 'The Celebration',
         description: `Full buffet service with chef-curated stations for memorable entertaining.
@@ -453,9 +437,8 @@ Everything in The Gathering, plus:
 
 Perfect for: Birthday parties, anniversaries, holiday parties.
 Minimum 30 guests. Pricing is per person.`,
-        basePrice: 8500, // $85/person
-        grouping: 'tier_2',
-        groupingOrder: 2,
+        priceCents: 8500, // $85/person
+        sortOrder: 2,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1555244162-803834f70033',
@@ -466,7 +449,7 @@ Minimum 30 guests. Pricing is per person.`,
         ],
       });
 
-      const experience = await createOrUpdatePackageWithSegment(tx, tenant.id, socialSegment.id, {
+      const experience = await createOrUpdateTierWithSegment(tx, tenant.id, socialSegment.id, {
         slug: 'experience',
         name: 'The Experience',
         description: `An immersive culinary journey with chef-attended stations and plated courses.
@@ -482,9 +465,8 @@ Everything in The Celebration, plus:
 
 Perfect for: Milestone birthdays, engagement parties, fundraising galas.
 Minimum 40 guests. Pricing is per person.`,
-        basePrice: 15000, // $150/person
-        grouping: 'tier_3',
-        groupingOrder: 3,
+        priceCents: 15000, // $150/person
+        sortOrder: 3,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
@@ -496,7 +478,7 @@ Minimum 40 guests. Pricing is per person.`,
       });
 
       logger.info(
-        `Social packages created: ${[gathering, celebration, experience].map((p) => p.name).join(', ')}`
+        `Social tiers created: ${[gathering, celebration, experience].map((p) => p.name).join(', ')}`
       );
 
       // =====================================================================
@@ -509,7 +491,7 @@ Minimum 40 guests. Pricing is per person.`,
         heroSubtitle:
           'Full-service catering designed to complement your business agenda while impressing every guest.',
         description:
-          "Board meetings, client dinners, product launches, and corporate retreats. We understand that business dining is about more than food—it's about creating an environment for success.",
+          "Board meetings, client dinners, product launches, and corporate retreats. We understand that business dining is about more than food\u2014it's about creating an environment for success.",
         metaTitle: 'Corporate Catering | Plate. Macon',
         metaDescription:
           'Corporate event catering in Macon. Business lunches, client dinners, product launches, and executive retreats. Professional service that reflects your brand.',
@@ -518,8 +500,8 @@ Minimum 40 guests. Pricing is per person.`,
 
       logger.info(`Segment created: ${corporateSegment.name}`);
 
-      // Corporate event packages (3 tiers)
-      const businessLunch = await createOrUpdatePackageWithSegment(
+      // Corporate event tiers (3 tiers)
+      const businessLunch = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         corporateSegment.id,
@@ -538,9 +520,8 @@ Includes:
 
 Perfect for: Working lunches, team meetings, training sessions.
 Minimum 10 guests. Pricing is per person.`,
-          basePrice: 3500, // $35/person
-          grouping: 'tier_1',
-          groupingOrder: 1,
+          priceCents: 3500, // $35/person
+          sortOrder: 1,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1567521464027-f127ff144326',
@@ -552,7 +533,7 @@ Minimum 10 guests. Pricing is per person.`,
         }
       );
 
-      const executiveSpread = await createOrUpdatePackageWithSegment(
+      const executiveSpread = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         corporateSegment.id,
@@ -572,9 +553,8 @@ Everything in The Business Lunch, plus:
 
 Perfect for: Client meetings, board lunches, department celebrations.
 Minimum 20 guests. Pricing is per person.`,
-          basePrice: 7500, // $75/person
-          grouping: 'tier_2',
-          groupingOrder: 2,
+          priceCents: 7500, // $75/person
+          sortOrder: 2,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
@@ -586,7 +566,7 @@ Minimum 20 guests. Pricing is per person.`,
         }
       );
 
-      const boardroom = await createOrUpdatePackageWithSegment(tx, tenant.id, corporateSegment.id, {
+      const boardroom = await createOrUpdateTierWithSegment(tx, tenant.id, corporateSegment.id, {
         slug: 'boardroom',
         name: 'The Boardroom',
         description: `Premium plated service for executive-level entertaining.
@@ -603,9 +583,8 @@ Everything in The Executive Spread, plus:
 
 Perfect for: Client dinners, executive retreats, investor meetings.
 Minimum 12 guests. Pricing is per person.`,
-        basePrice: 14000, // $140/person
-        grouping: 'tier_3',
-        groupingOrder: 3,
+        priceCents: 14000, // $140/person
+        sortOrder: 3,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43',
@@ -617,11 +596,11 @@ Minimum 12 guests. Pricing is per person.`,
       });
 
       logger.info(
-        `Corporate packages created: ${[businessLunch, executiveSpread, boardroom].map((p) => p.name).join(', ')}`
+        `Corporate tiers created: ${[businessLunch, executiveSpread, boardroom].map((p) => p.name).join(', ')}`
       );
 
       // =====================================================================
-      // ADD-ONS: 15 Total (Global - available to all packages)
+      // ADD-ONS: 15 Total (Global - available to all tiers)
       // =====================================================================
 
       // Bar Services (4)
@@ -736,7 +715,7 @@ Minimum 12 guests. Pricing is per person.`,
       logger.info('Add-ons created: 15');
 
       // =====================================================================
-      // LINK ALL ADD-ONS TO ALL PACKAGES
+      // LINK ALL ADD-ONS TO ALL TIERS
       // =====================================================================
       const allAddOnIds = [
         beerWineBar.id,
@@ -756,7 +735,7 @@ Minimum 12 guests. Pricing is per person.`,
         kidsMenu.id,
       ];
 
-      const allPackageIds = [
+      const allTierIds = [
         ceremonyBite.id,
         reception.id,
         grandAffair.id,
@@ -768,12 +747,10 @@ Minimum 12 guests. Pricing is per person.`,
         boardroom.id,
       ];
 
-      await Promise.all(
-        allPackageIds.map((packageId) => linkAddOnsToPackage(tx, packageId, allAddOnIds))
-      );
+      await Promise.all(allTierIds.map((tierId) => linkAddOnsToTier(tx, tierId, allAddOnIds)));
 
       logger.info(
-        `Add-ons linked: ${allAddOnIds.length} add-ons × ${allPackageIds.length} packages = ${allAddOnIds.length * allPackageIds.length} links`
+        `Add-ons linked: ${allAddOnIds.length} add-ons x ${allTierIds.length} tiers = ${allAddOnIds.length * allTierIds.length} links`
       );
 
       // =====================================================================
@@ -826,9 +803,9 @@ Minimum 12 guests. Pricing is per person.`,
   logger.info('PLATE CATERING SEED COMPLETE');
   logger.info('='.repeat(60));
   logger.info('Segments: 3 (Weddings, Social Events, Corporate Events)');
-  logger.info('Packages: 9 (3 tiers × 3 segments)');
-  logger.info('Add-ons: 15 (global, linked to all packages)');
-  logger.info('PackageAddOn links: 135');
+  logger.info('Tiers: 9 (3 tiers x 3 segments)');
+  logger.info('Add-ons: 15 (global, linked to all tiers)');
+  logger.info('TierAddOn links: 135');
   logger.info('Blackout dates: 6 (major holidays 2025-2026)');
   logger.info('='.repeat(60));
 }

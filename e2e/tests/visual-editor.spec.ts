@@ -3,7 +3,7 @@
  *
  * Tests the visual editor functionality for tenant admins:
  * 1. Load visual editor dashboard
- * 2. Edit package title/description/price inline
+ * 2. Edit tier title/description/price inline
  * 3. Auto-save draft functionality
  * 4. Publish all drafts
  * 5. Discard all drafts
@@ -65,22 +65,22 @@ async function waitForAutoSave(page: Page): Promise<void> {
 }
 
 test.describe('Visual Editor', () => {
-  test('loads visual editor dashboard with packages', async ({ authenticatedPage }) => {
+  test('loads visual editor dashboard with tiers', async ({ authenticatedPage }) => {
     await goToVisualEditor(authenticatedPage);
 
     // Verify page loaded with expected elements
-    await expect(authenticatedPage.getByText(/Edit your packages directly/i)).toBeVisible();
+    await expect(authenticatedPage.getByText(/Edit your tiers directly/i)).toBeVisible();
 
     // Back to dashboard link should exist
     await expect(authenticatedPage.locator('a[href="/tenant/dashboard"]')).toBeVisible();
   });
 
-  test('edits package title inline and shows draft indicator', async ({ authenticatedPage }) => {
+  test('edits tier title inline and shows draft indicator', async ({ authenticatedPage }) => {
     await goToVisualEditor(authenticatedPage);
     await discardDraftsIfAny(authenticatedPage);
 
     // Find the first editable title
-    const titleField = authenticatedPage.locator('[aria-label="Package title"]').first();
+    const titleField = authenticatedPage.locator('[aria-label="Tier title"]').first();
     await expect(titleField).toBeVisible({ timeout: 10000 });
 
     // Click to enter edit mode and type
@@ -96,11 +96,11 @@ test.describe('Visual Editor', () => {
     });
   });
 
-  test('edits package price inline', async ({ authenticatedPage }) => {
+  test('edits tier price inline', async ({ authenticatedPage }) => {
     await goToVisualEditor(authenticatedPage);
     await discardDraftsIfAny(authenticatedPage);
 
-    const priceField = authenticatedPage.locator('[aria-label="Package price"]').first();
+    const priceField = authenticatedPage.locator('[aria-label="Tier price"]').first();
     await expect(priceField).toBeVisible({ timeout: 10000 });
 
     await priceField.click();
@@ -114,11 +114,11 @@ test.describe('Visual Editor', () => {
     });
   });
 
-  test('edits package description inline (multiline)', async ({ authenticatedPage }) => {
+  test('edits tier description inline (multiline)', async ({ authenticatedPage }) => {
     await goToVisualEditor(authenticatedPage);
     await discardDraftsIfAny(authenticatedPage);
 
-    const descField = authenticatedPage.locator('[aria-label="Package description"]').first();
+    const descField = authenticatedPage.locator('[aria-label="Tier description"]').first();
     await expect(descField).toBeVisible({ timeout: 10000 });
 
     await descField.click();
@@ -137,7 +137,7 @@ test.describe('Visual Editor', () => {
     await discardDraftsIfAny(authenticatedPage);
 
     // Edit title
-    const titleField = authenticatedPage.locator('[aria-label="Package title"]').first();
+    const titleField = authenticatedPage.locator('[aria-label="Tier title"]').first();
     await titleField.click();
     const input = titleField.locator('input');
     const uniqueTitle = `AutoSave Test ${Date.now()}`;
@@ -166,7 +166,7 @@ test.describe('Visual Editor', () => {
     await discardDraftsIfAny(authenticatedPage);
 
     // Make an edit
-    const titleField = authenticatedPage.locator('[aria-label="Package title"]').first();
+    const titleField = authenticatedPage.locator('[aria-label="Tier title"]').first();
     await titleField.click();
     const input = titleField.locator('input');
     await input.fill('To Be Published');
@@ -195,7 +195,7 @@ test.describe('Visual Editor', () => {
     await discardDraftsIfAny(authenticatedPage);
 
     // Get original title
-    const titleField = authenticatedPage.locator('[aria-label="Package title"]').first();
+    const titleField = authenticatedPage.locator('[aria-label="Tier title"]').first();
     await titleField.click();
     const input = titleField.locator('input');
     const originalTitle = await input.inputValue();
@@ -244,7 +244,7 @@ test.describe('Visual Editor', () => {
     await discardDraftsIfAny(authenticatedPage);
 
     // Make an edit
-    const titleField = authenticatedPage.locator('[aria-label="Package title"]').first();
+    const titleField = authenticatedPage.locator('[aria-label="Tier title"]').first();
     await titleField.click();
     const input = titleField.locator('input');
     await input.fill('Loading State Test');
@@ -272,7 +272,7 @@ test.describe('Visual Editor', () => {
     await discardDraftsIfAny(authenticatedPage);
 
     // Get original title
-    const titleField = authenticatedPage.locator('[aria-label="Package title"]').first();
+    const titleField = authenticatedPage.locator('[aria-label="Tier title"]').first();
     await titleField.click();
     const input = titleField.locator('input');
     const originalTitle = await input.inputValue();

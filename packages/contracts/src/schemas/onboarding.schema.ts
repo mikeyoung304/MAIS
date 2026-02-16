@@ -173,13 +173,13 @@ export function isMarketResearchFallback(data: MarketResearchData): boolean {
 export const ServiceConfigSchema = z.object({
   segmentName: z.string(),
   segmentSlug: z.string(),
-  packages: z.array(
+  tiers: z.array(
     z.object({
       name: z.string(),
       slug: z.string(),
       description: z.string().optional(),
       priceCents: z.number().int().min(0),
-      groupingOrder: z.number().int().min(0),
+      sortOrder: z.number().int().min(0),
     })
   ),
 });
@@ -191,7 +191,7 @@ export type ServiceConfig = z.infer<typeof ServiceConfigSchema>;
  */
 export const ServicesDataSchema = z.object({
   segments: z.array(ServiceConfigSchema).min(1),
-  createdPackageIds: z.array(z.string()),
+  createdTierIds: z.array(z.string()),
   createdSegmentIds: z.array(z.string()),
 });
 
@@ -320,7 +320,7 @@ export type UpdateOnboardingStateResult = z.infer<typeof UpdateOnboardingStateRe
 const UpsertServicesSuccessSchema = z.object({
   success: z.literal(true),
   segmentId: z.string(),
-  packages: z.array(
+  tiers: z.array(
     z.object({
       id: z.string(),
       name: z.string(),

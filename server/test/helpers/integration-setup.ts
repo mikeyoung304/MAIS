@@ -30,9 +30,9 @@
  */
 
 import type { Tenant } from '../../src/generated/prisma/client';
-import { PrismaClient, Package, AddOn } from '../../src/generated/prisma/client';
+import { PrismaClient, AddOn } from '../../src/generated/prisma/client';
 import { InMemoryCacheAdapter } from '../../src/adapters/mock/cache.adapter';
-import type { CreatePackageInput, CreateAddOnInput, CacheServicePort } from '../../src/lib/ports';
+import type { CreateTierInput, CreateAddOnInput, CacheServicePort } from '../../src/lib/ports';
 import { getTestPrisma } from './global-prisma';
 
 /**
@@ -315,60 +315,57 @@ export function createCacheTestUtils(ttlSeconds = 60): CacheTestUtils {
 }
 
 /**
- * Package factory for creating test packages
+ * Tier factory for creating test tiers
  * Generates unique slugs to avoid conflicts in concurrent tests
  */
-export class PackageFactory {
+export class TierFactory {
   private counter = 0;
 
   /**
-   * Create package input with unique slug
+   * Create tier input with unique slug
    *
-   * @param overrides - Optional overrides for package data
-   * @returns Package input ready for repository.createPackage()
+   * @param overrides - Optional overrides for tier data
+   * @returns Tier input ready for repository.createTier()
    *
    * @example
    * ```typescript
-   * const factory = new PackageFactory();
+   * const factory = new TierFactory();
    * const pkg = factory.create({ priceCents: 150000 });
-   * await repository.createPackage(tenantId, pkg);
+   * await repository.createTier(tenantId, pkg);
    * ```
    */
-  create(overrides: Partial<CreatePackageInput> = {}): CreatePackageInput {
+  create(overrides: Partial<CreateTierInput> = {}): CreateTierInput {
     this.counter++;
     const timestamp = Date.now();
-    const uniqueSlug = overrides.slug || `test-package-${this.counter}-${timestamp}`;
+    const uniqueSlug = overrides.slug || `test-tier-${this.counter}-${timestamp}`;
 
     return {
       slug: uniqueSlug,
-      title: overrides.title || `Test Package ${this.counter}`,
-      description: overrides.description || `Test package description ${this.counter}`,
+      title: overrides.title || `Test Tier ${this.counter}`,
+      description: overrides.description || `Test tier description ${this.counter}`,
       priceCents: overrides.priceCents ?? 100000,
-      durationMinutes: overrides.durationMinutes ?? 60,
-      maxGuests: overrides.maxGuests ?? 50,
-      depositCents: overrides.depositCents,
-      imageUrl: overrides.imageUrl,
-      isActive: overrides.isActive ?? true,
+      segmentId: overrides.segmentId,
+      groupingOrder: overrides.groupingOrder,
     };
   }
 
   /**
-   * Create multiple packages with incremental naming
+   * Create multiple tiers with incremental naming
    *
-   * @param count - Number of packages to create
-   * @param baseOverrides - Base overrides applied to all packages
-   * @returns Array of package inputs
+   * @param count - Number of tiers to create
+   * @param baseOverrides - Base overrides applied to all tiers
+   * @returns Array of tier inputs
    *
    * @example
    * ```typescript
-   * const factory = new PackageFactory();
-   * const packages = factory.createMany(3, { priceCents: 150000 });
-   * for (const pkg of packages) {
-   *   await repository.createPackage(tenantId, pkg);
+   * const factory = new TierFactory();
+   * const tiers = factory.createMany(3, { priceCents: 150000 });
+   * for (const tier of tiers) {
+   *   await repository.createTier(tenantId, tier);
    * }
    * ```
    */
-  createMany(count: number, baseOverrides: Partial<CreatePackageInput> = {}): CreatePackageInput[] {
+  createMany(count: number, baseOverrides: Partial<CreateTierInput> = {}): CreateTierInput[] {
     return Array.from({ length: count }, () => this.create(baseOverrides));
   }
 }
@@ -430,6 +427,34 @@ export class AddOnFactory {
 }
 
 /**
+ * Create a test segment for a given tenant.
+ * Many tests need a segment because Tier.segmentId is a non-nullable FK.
+ *
+ * @param prisma - PrismaClient instance
+ * @param tenantId - Tenant that owns the segment
+ * @param slug - Unique slug for the segment (defaults to 'test-segment-{timestamp}')
+ * @returns Created segment with id
+ */
+export async function createTestSegment(
+  prisma: PrismaClient,
+  tenantId: string,
+  slug?: string
+): Promise<{ id: string; slug: string }> {
+  const segmentSlug = slug || `test-segment-${Date.now()}`;
+  return prisma.segment.create({
+    data: {
+      tenantId,
+      slug: segmentSlug,
+      name: `Test Segment (${segmentSlug})`,
+      heroTitle: 'Test Segment',
+      sortOrder: 0,
+      active: true,
+    },
+    select: { id: true, slug: true },
+  });
+}
+
+/**
  * Wait for a specified duration (useful for timing-sensitive tests)
  *
  * @param ms - Milliseconds to wait
@@ -454,8 +479,8 @@ export function wait(ms: number): Promise<void> {
  * @example
  * ```typescript
  * const results = await runConcurrent([
- *   () => service.getPackages(tenantA_id),
- *   () => service.getPackages(tenantB_id),
+ *   () => service.getTiers(tenantA_id),
+ *   () => service.getTiers(tenantB_id),
  * ]);
  * ```
  */
@@ -535,7 +560,7 @@ export function setupCompleteIntegrationTest(
     cache,
     cleanup,
     factories: {
-      package: new PackageFactory(),
+      tier: new TierFactory(),
       addOn: new AddOnFactory(),
     },
   };

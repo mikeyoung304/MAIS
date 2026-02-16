@@ -11,7 +11,7 @@
  */
 
 import type { BookingRepository, CatalogRepository } from '../lib/ports';
-import type { Booking, Package } from '../lib/entities';
+import type { Booking } from '../lib/entities';
 import type { EventEmitter } from '../lib/core/events';
 import { BookingEvents } from '../lib/core/events';
 import { logger } from '../lib/core/logger';
@@ -77,21 +77,19 @@ export class ReminderService {
 
       logger.info({ tenantId, count: bookingsToRemind.length }, 'Processing overdue reminders');
 
-      // Batch fetch all packages to avoid N+1 query (filter out null packageIds for TIMESLOT bookings)
-      const packageIds = [
-        ...new Set(
-          bookingsToRemind.map((b) => b.packageId).filter((id): id is string => id !== null)
-        ),
+      // Batch fetch all tiers to avoid N+1 query (filter out null tierIds for TIMESLOT bookings)
+      const tierIds = [
+        ...new Set(bookingsToRemind.map((b) => b.tierId).filter((id): id is string => id !== null)),
       ];
-      const packages =
-        packageIds.length > 0 ? await this.catalogRepo.getPackagesByIds(tenantId, packageIds) : [];
-      const packageMap = new Map(packages.map((p) => [p.id, p]));
+      const tiers =
+        tierIds.length > 0 ? await this.catalogRepo.getTiersByIds(tenantId, tierIds) : [];
+      const tierMap = new Map(tiers.map((t) => [t.id, t]));
 
       // Process each reminder
       for (const booking of bookingsToRemind) {
         try {
-          const pkg = booking.packageId ? packageMap.get(booking.packageId) : undefined;
-          await this.sendReminderForBooking(tenantId, booking, pkg);
+          const tier = booking.tierId ? tierMap.get(booking.tierId) : undefined;
+          await this.sendReminderForBooking(tenantId, booking, tier);
 
           // Mark reminder as sent
           await this.bookingRepo.markReminderSent(tenantId, booking.id);
@@ -135,10 +133,10 @@ export class ReminderService {
   private async sendReminderForBooking(
     tenantId: string,
     booking: Booking,
-    pkg?: Package
+    tier?: { id: string; title: string }
   ): Promise<void> {
-    // Use provided package (batch-fetched) or default
-    const packageTitle = pkg?.title || 'Your Booking';
+    // Use provided tier (batch-fetched) or default
+    const tierName = tier?.title || 'Your Booking';
 
     // Calculate days until event
     const eventDate = new Date(booking.eventDate + 'T00:00:00Z');
@@ -156,7 +154,7 @@ export class ReminderService {
       email: booking.email,
       coupleName: booking.coupleName,
       eventDate: booking.eventDate,
-      packageTitle,
+      tierName: tierName,
       daysUntilEvent,
       manageUrl,
     });

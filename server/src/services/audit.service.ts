@@ -6,7 +6,7 @@
  *
  * Usage:
  * - trackChange() - For new config system (ConfigVersion, AgentProposal)
- * - trackLegacyChange() - For legacy CRUD during migration (Package, Tenant, BlackoutDate)
+ * - trackLegacyChange() - For legacy CRUD during migration (Tier, Tenant, BlackoutDate)
  */
 
 import { Prisma, type PrismaClient } from '../generated/prisma/client';
@@ -47,7 +47,7 @@ export interface TrackLegacyChangeInput {
   tenantId: string;
   changeType: 'package_crud' | 'branding_update' | 'blackout_change';
   operation: 'create' | 'update' | 'delete';
-  entityType: 'Package' | 'Tenant' | 'BlackoutDate';
+  entityType: 'Tier' | 'Tenant' | 'BlackoutDate';
   entityId: string;
 
   // Attribution (who made the change)
@@ -153,7 +153,7 @@ export class AuditService {
   /**
    * Track legacy CRUD operations during migration period
    *
-   * Used for Package, Tenant.branding, BlackoutDate changes while both
+   * Used for Tier, Tenant.branding, BlackoutDate changes while both
    * old and new systems are active. Once fully migrated, these operations
    * should use trackChange() instead.
    *
@@ -164,13 +164,13 @@ export class AuditService {
    *   tenantId: 'tenant_123',
    *   changeType: 'package_crud',
    *   operation: 'update',
-   *   entityType: 'Package',
-   *   entityId: 'pkg_456',
+   *   entityType: 'Tier',
+   *   entityId: 'tier_456',
    *   userId: 'user_789',
    *   email: 'admin@example.com',
    *   role: 'TENANT_ADMIN',
-   *   beforeSnapshot: { name: 'Basic Package', basePrice: 10000 },
-   *   afterSnapshot: { name: 'Basic Package', basePrice: 12000 },
+   *   beforeSnapshot: { name: 'Basic Tier', basePrice: 10000 },
+   *   afterSnapshot: { name: 'Basic Tier', basePrice: 12000 },
    *   reason: 'Price increase for 2025',
    * });
    */

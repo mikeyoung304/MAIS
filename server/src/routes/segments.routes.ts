@@ -1,6 +1,6 @@
 /**
  * Public Segment Routes
- * Endpoints for customers to browse segments and their packages
+ * Endpoints for customers to browse segments and their tiers
  * Requires tenant context via X-Tenant-Key header
  */
 
@@ -52,7 +52,7 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
   /**
    * GET /v1/segments/:slug
    * Get single segment by slug
-   * Returns segment metadata without packages
+   * Returns segment metadata without tiers
    *
    * @param slug - URL-safe segment identifier (e.g., "wellness-retreat")
    * @returns 200 - Segment object
@@ -82,23 +82,23 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
   });
 
   /**
-   * GET /v1/segments/:slug/packages
-   * Get segment with packages and add-ons
+   * GET /v1/segments/:slug/tiers
+   * Get segment with tiers and add-ons
    * Used for segment landing pages
    *
    * Returns:
    * - Segment metadata (hero, description, SEO)
-   * - Packages grouped by optional `grouping` field
+   * - Tiers grouped by optional `grouping` field
    * - Both global add-ons (segmentId = null) and segment-specific add-ons
    *
    * @param slug - URL-safe segment identifier
-   * @returns 200 - Segment with packages and add-ons
+   * @returns 200 - Segment with tiers and add-ons
    * @returns 400 - Invalid slug format
    * @returns 401 - Missing or invalid tenant key
    * @returns 404 - Segment not found
    * @returns 500 - Internal server error
    */
-  router.get('/:slug/packages', async (req: TenantRequest, res: Response, next: NextFunction) => {
+  router.get('/:slug/tiers', async (req: TenantRequest, res: Response, next: NextFunction) => {
     try {
       const tenantId = req.tenantId;
       if (!tenantId) {
@@ -113,48 +113,40 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
       const segment = await segmentService.getSegmentWithRelations(tenantId, slug);
 
       logger.info(
-        { tenantId, slug, packageCount: segment.packages?.length || 0 },
+        { tenantId, slug, tierCount: segment.tiers?.length || 0 },
         'Segment landing page accessed'
       );
 
-      // Transform packages to match PackageDto format for client consumption
-      const transformedPackages =
-        segment.packages?.map((pkg) => {
-          // Parse photos JSON to get first photo URL
-          let photoUrl: string | undefined;
-          if (pkg.photos) {
-            try {
-              const photosArray =
-                typeof pkg.photos === 'string' ? JSON.parse(pkg.photos) : pkg.photos;
-              if (Array.isArray(photosArray) && photosArray.length > 0) {
-                photoUrl = photosArray[0]?.url;
-              }
-            } catch {
-              // Ignore JSON parse errors
-            }
-          }
+      // Transform tiers to match TierDto format for client consumption
+      // Note: segment.tiers are Prisma Tier types (name, sortOrder, photos JSON)
+      // mapped to client DTO fields (title, groupingOrder, photoUrl)
+      const transformedTiers =
+        segment.tiers?.map((tier) => {
+          // Extract first photo URL from JSON photos array
+          const photos = tier.photos as Array<{ url?: string }> | null;
+          const photoUrl = Array.isArray(photos) ? photos[0]?.url : undefined;
 
           return {
-            id: pkg.id,
-            slug: pkg.slug,
-            title: pkg.name, // Map name -> title
-            description: pkg.description || '',
-            priceCents: pkg.basePrice, // Map basePrice -> priceCents
-            photoUrl,
-            // Include tier grouping fields for storefront display
-            grouping: pkg.grouping || null,
-            groupingOrder: pkg.groupingOrder ?? null,
+            id: tier.id,
+            slug: tier.slug,
+            title: tier.name,
+            description: tier.description || '',
+            priceCents: tier.priceCents,
+            photoUrl: photoUrl || undefined,
+            grouping: null,
+            groupingOrder: tier.sortOrder ?? null,
             addOns:
-              pkg.addOns?.map((pa) => ({
-                id: pa.addOn.id,
-                title: pa.addOn.name,
-                description: pa.addOn.description || '',
-                priceCents: pa.addOn.price,
+              tier.addOns?.map((ta) => ({
+                id: ta.addOn.id,
+                title: ta.addOn.name,
+                description: ta.addOn.description || '',
+                priceCents: ta.addOn.price,
               })) || [],
           };
         }) || [];
 
       // Transform add-ons to match AddOnDto format
+      // Note: segment.addOns are Prisma AddOn types (name, price)
       const transformedAddOns =
         segment.addOns?.map((addOn) => ({
           id: addOn.id,
@@ -165,7 +157,7 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
 
       res.json({
         ...segment,
-        packages: transformedPackages,
+        tiers: transformedTiers,
         addOns: transformedAddOns,
       });
     } catch (error) {

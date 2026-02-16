@@ -23,7 +23,7 @@ import {
   FakeCatalogRepository,
   FakeEventEmitter,
   FakeWebhookRepository,
-  buildPackage,
+  buildTier,
   buildMockConfig,
 } from '../helpers/fakes';
 import { BookingService } from '../../src/services/booking.service';
@@ -103,7 +103,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_test',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: customerEmail, // Customer email must not leak
               coupleName: 'John Doe',
@@ -151,7 +151,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_pattern',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'not-an-email', // Invalid email
               coupleName: 'Test',
@@ -196,7 +196,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_name_test',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'couple@example.com',
               coupleName: coupleName, // Customer name - must not leak
@@ -244,7 +244,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_fullname',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'couple@example.com',
               coupleName: 'Mr. John Anderson & Mrs. Sarah Anderson', // Full name with titles
@@ -294,7 +294,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_zod_test',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'invalid-email', // Will trigger validation failure
               coupleName: 'Test',
@@ -348,7 +348,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_fields',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               // Missing eventDate - should trigger validation error
               email: 'couple@example.com',
               coupleName: 'Test',
@@ -373,9 +373,9 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
       expect(failedEvent?.lastError).toBeDefined();
 
       // CRITICAL: Field names should not appear in error
-      // This would reveal schema structure: eventDate, packageId, etc.
+      // This would reveal schema structure: eventDate, tierId, etc.
       expect(failedEvent?.lastError).not.toContain('eventDate');
-      expect(failedEvent?.lastError).not.toContain('packageId');
+      expect(failedEvent?.lastError).not.toContain('tierId');
       expect(failedEvent?.lastError).not.toContain('tenantId');
       expect(failedEvent?.lastError).not.toMatch(/required|missing|invalid field/i);
     });
@@ -392,7 +392,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_keywords',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'not-an-email', // Invalid format
               coupleName: 'Test',
@@ -441,7 +441,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
             id: 'cs_security_abstract',
             metadata: {
               tenantId: 'test-tenant',
-              packageId: 'pkg_test_123',
+              tierId: 'pkg_test_123',
               eventDate: '2025-06-15',
               email: 'invalid', // Invalid email
               coupleName: '', // Invalid empty name
@@ -545,7 +545,7 @@ describe('SECURITY: Webhook Error Logging - PII Leak Detection', () => {
 
       const originalMetadata = {
         tenantId: 'test-tenant',
-        packageId: 'pkg_test_123',
+        tierId: 'pkg_test_123',
         eventDate: '2025-06-15',
         email: 'couple@example.com',
         coupleName: 'John & Jane Smith',

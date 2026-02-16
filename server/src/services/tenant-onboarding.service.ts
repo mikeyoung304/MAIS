@@ -2,13 +2,13 @@
  * Tenant Onboarding Service
  *
  * Handles initial setup for new tenants after signup.
- * Creates default segment and packages in a transaction to ensure
+ * Creates default segment and tiers in a transaction to ensure
  * data consistency (no partial failures).
  */
 
-import type { PrismaClient, Segment, Package } from '../generated/prisma/client';
+import type { PrismaClient, Segment, Tier } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
-import { DEFAULT_SEGMENT, DEFAULT_PACKAGE_TIERS } from '../lib/tenant-defaults';
+import { DEFAULT_SEGMENT, DEFAULT_TIERS } from '../lib/tenant-defaults';
 
 /**
  * Options for createDefaultData
@@ -22,7 +22,7 @@ export interface CreateDefaultDataOptions {
  */
 export interface DefaultDataResult {
   segment: Segment;
-  packages: Package[];
+  tiers: Tier[];
 }
 
 /**
@@ -35,23 +35,23 @@ export class TenantOnboardingService {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**
-   * Create default segment and packages for a new tenant
+   * Create default segment and tiers for a new tenant
    *
    * Uses a database transaction to ensure atomicity:
    * - Either all default data is created successfully
    * - Or nothing is created (rollback on failure)
    *
-   * Package creation is parallelized within the transaction for performance.
+   * Tier creation is parallelized within the transaction for performance.
    *
    * @param options - Tenant ID and optional configuration
-   * @returns Created segment and packages
+   * @returns Created segment and tiers
    * @throws If transaction fails (caller should handle gracefully)
    */
   async createDefaultData(options: CreateDefaultDataOptions): Promise<DefaultDataResult> {
     const { tenantId } = options;
 
     return this.prisma.$transaction(async (tx) => {
-      // Create default segment first (packages depend on it)
+      // Create default segment first (tiers depend on it)
       const segment = await tx.segment.create({
         data: {
           tenantId,
@@ -64,34 +64,36 @@ export class TenantOnboardingService {
         },
       });
 
-      // Create all 3 default packages in parallel within the transaction
-      const packagePromises = Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
-        tx.package.create({
+      // Create all 3 default tiers in parallel within the transaction
+      const tierPromises = Object.values(DEFAULT_TIERS).map((tier) =>
+        tx.tier.create({
           data: {
             tenantId,
             segmentId: segment.id,
             slug: tier.slug,
             name: tier.name,
             description: tier.description,
-            basePrice: tier.basePrice,
-            groupingOrder: tier.groupingOrder,
+            priceCents: tier.basePrice,
+            sortOrder: tier.groupingOrder,
+            features: [],
+            bookingType: 'DATE',
             active: true,
           },
         })
       );
 
-      const packages = await Promise.all(packagePromises);
+      const tiers = await Promise.all(tierPromises);
 
       logger.info(
         {
           tenantId,
           segmentId: segment.id,
-          packagesCreated: packages.length,
+          tiersCreated: tiers.length,
         },
-        'Created default segment and packages for new tenant'
+        'Created default segment and tiers for new tenant'
       );
 
-      return { segment, packages };
+      return { segment, tiers };
     });
   }
 }

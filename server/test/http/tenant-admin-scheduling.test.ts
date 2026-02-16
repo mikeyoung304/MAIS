@@ -438,21 +438,43 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
 
   describe('GET /v1/tenant-admin/appointments (P1 #276 - Pagination)', () => {
     let appointmentIds: string[] = [];
-    let testPackageId: string;
+    let testTierId: string;
 
     beforeAll(async () => {
-      // Create a test package (required for bookings)
-      const pkg = await prisma.package.create({
-        data: {
+      // Create a segment first (required for tiers)
+      const segment = await prisma.segment.upsert({
+        where: {
+          tenantId_slug: {
+            tenantId: testTenantId,
+            slug: 'scheduling-test-segment',
+          },
+        },
+        update: {},
+        create: {
           tenantId: testTenantId,
-          slug: 'test-appointment-package',
-          name: 'Test Appointment Package',
-          description: 'Package for appointment testing',
-          basePrice: 5000,
+          slug: 'scheduling-test-segment',
+          name: 'Scheduling Test Segment',
+          heroTitle: 'Test',
+          sortOrder: 0,
           active: true,
         },
       });
-      testPackageId = pkg.id;
+
+      // Create a test tier (required for bookings)
+      const tier = await prisma.tier.create({
+        data: {
+          tenantId: testTenantId,
+          segmentId: segment.id,
+          slug: 'test-appointment-tier',
+          name: 'Test Appointment Tier',
+          description: 'Tier for appointment testing',
+          priceCents: 5000,
+          active: true,
+          sortOrder: 1,
+          features: [],
+        },
+      });
+      testTierId = tier.id;
 
       // Create a customer for appointments
       const customer = await prisma.customer.create({
@@ -474,7 +496,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
             data: {
               tenantId: testTenantId,
               customerId: customer.id,
-              packageId: testPackageId,
+              tierId: testTierId,
               serviceId: testServiceId,
               bookingType: 'TIMESLOT',
               status: 'CONFIRMED',
@@ -508,10 +530,16 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         },
       });
 
-      // Cleanup package
-      await prisma.package.deleteMany({
+      // Cleanup tier and segment
+      await prisma.tier.deleteMany({
         where: {
-          id: testPackageId,
+          id: testTierId,
+        },
+      });
+      await prisma.segment.deleteMany({
+        where: {
+          tenantId: testTenantId,
+          slug: 'scheduling-test-segment',
         },
       });
     });

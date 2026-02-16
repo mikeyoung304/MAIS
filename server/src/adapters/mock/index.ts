@@ -1,10 +1,13 @@
 /**
  * Mock adapters for local development without external services
+ *
+ * Phase 2 Migration: All Package references renamed to Tier.
+ * In-memory storage uses `tiers` Map instead of `packages` Map.
  */
 
 import { toUtcMidnight } from '@macon/shared';
-import type { Package, AddOn } from '../../lib/entities';
-import type { CatalogRepository, PackageWithDraft, UpdatePackageDraftInput } from '../../lib/ports';
+import type { Tier, AddOn } from '../../lib/entities';
+import type { CatalogRepository, CreateTierInput, UpdateTierInput } from '../../lib/ports';
 import type { Booking } from '../../lib/entities';
 import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../../lib/ports';
 import type { BlackoutRepository, CalendarProvider, WebhookRepository } from '../../lib/ports';
@@ -21,7 +24,7 @@ import { logger } from '../../lib/core/logger';
 const DEFAULT_TENANT = 'tenant_default_legacy';
 
 // In-memory storage
-const packages = new Map<string, Package>();
+const tiers = new Map<string, Tier>();
 const addOns = new Map<string, AddOn>();
 const bookings = new Map<string, Booking>(); // keyed by booking ID
 const bookingsByDate = new Map<string, string>(); // date -> booking ID
@@ -98,21 +101,20 @@ function seedTenants(): void {
 }
 
 // Seed data on module load
-// NOTE: Package slugs MUST match demo.ts seed slugs (starter, growth, enterprise)
+// NOTE: Tier slugs MUST match demo.ts seed slugs (starter, growth, enterprise)
 // to ensure booking links work correctly across mock and real modes.
-// See TODO #396 for context on this alignment requirement.
 function seedData(): void {
-  if (packages.size > 0) return; // Already seeded
+  if (tiers.size > 0) return; // Already seeded
 
   // Seed tenants first (for tenant isolation in mock mode)
   seedTenants();
 
-  // Packages - aligned with demo.ts seed slugs for consistency
-  packages.set('pkg_starter', {
-    id: 'pkg_starter',
+  // Tiers - aligned with demo.ts seed slugs for consistency
+  tiers.set('tier_starter', {
+    id: 'tier_starter',
     tenantId: DEFAULT_TENANT,
     slug: 'starter',
-    title: 'Starter Package',
+    title: 'Starter Tier',
     description:
       'Essential business services to get you started. Perfect for solopreneurs ready to focus on their craft.',
     priceCents: 25000, // $250
@@ -122,13 +124,14 @@ function seedData(): void {
     segmentId: null,
     grouping: null,
     groupingOrder: null,
+    bookingType: 'DATE',
   });
 
-  packages.set('pkg_growth', {
-    id: 'pkg_growth',
+  tiers.set('tier_growth', {
+    id: 'tier_growth',
     tenantId: DEFAULT_TENANT,
     slug: 'growth',
-    title: 'Growth Package',
+    title: 'Growth Tier',
     description: 'Full-service support for growing businesses. Scale with confidence.',
     priceCents: 50000, // $500
     photoUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop',
@@ -137,13 +140,14 @@ function seedData(): void {
     segmentId: null,
     grouping: null,
     groupingOrder: null,
+    bookingType: 'DATE',
   });
 
-  packages.set('pkg_enterprise', {
-    id: 'pkg_enterprise',
+  tiers.set('tier_enterprise', {
+    id: 'tier_enterprise',
     tenantId: DEFAULT_TENANT,
     slug: 'enterprise',
-    title: 'Enterprise Package',
+    title: 'Enterprise Tier',
     description: 'Comprehensive solutions for established businesses. Your complete back office.',
     priceCents: 100000, // $1,000
     photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop',
@@ -152,12 +156,13 @@ function seedData(): void {
     segmentId: null,
     grouping: null,
     groupingOrder: null,
+    bookingType: 'DATE',
   });
 
   // Add-ons - aligned with demo.ts seed add-ons for consistency
   addOns.set('addon_social_media', {
     id: 'addon_social_media',
-    packageId: 'pkg_starter',
+    tierId: 'tier_starter',
     title: 'Social Media Management',
     description: 'Monthly social media content and posting',
     priceCents: 15000, // $150
@@ -166,7 +171,7 @@ function seedData(): void {
 
   addOns.set('addon_email_marketing', {
     id: 'addon_email_marketing',
-    packageId: 'pkg_starter',
+    tierId: 'tier_starter',
     title: 'Email Marketing',
     description: 'Automated email sequences and campaigns',
     priceCents: 10000, // $100
@@ -175,7 +180,7 @@ function seedData(): void {
 
   addOns.set('addon_crm_setup', {
     id: 'addon_crm_setup',
-    packageId: 'pkg_growth',
+    tierId: 'tier_growth',
     title: 'CRM Setup & Training',
     description: 'Custom CRM configuration and onboarding',
     priceCents: 25000, // $250
@@ -184,7 +189,7 @@ function seedData(): void {
 
   addOns.set('addon_dedicated_manager', {
     id: 'addon_dedicated_manager',
-    packageId: 'pkg_enterprise',
+    tierId: 'tier_enterprise',
     title: 'Dedicated Account Manager',
     description: 'Personal point of contact for all your needs',
     priceCents: 50000, // $500
@@ -201,7 +206,7 @@ function seedData(): void {
     role: 'admin',
   });
 
-  logger.debug('Mock data seeded: 3 packages, 4 add-ons, 1 admin user');
+  logger.debug('Mock data seeded: 3 tiers, 4 add-ons, 1 admin user');
 }
 
 // Initialize seed data
@@ -209,167 +214,150 @@ seedData();
 
 // Mock Catalog Repository
 export class MockCatalogRepository implements CatalogRepository {
-  async getAllPackages(_tenantId: string, _options?: { take?: number }): Promise<Package[]> {
-    // Mock mode: Ignore tenantId, return all packages
-    return Array.from(packages.values());
+  async getAllTiers(_tenantId: string, _options?: { take?: number }): Promise<Tier[]> {
+    return Array.from(tiers.values());
   }
 
-  async getAllPackagesWithAddOns(
+  async getAllTiersWithAddOns(
     _tenantId: string,
     _options?: { take?: number }
-  ): Promise<Array<Package & { addOns: AddOn[] }>> {
-    // Mock mode: Ignore tenantId, return all packages
-    const allPackages = Array.from(packages.values());
-    return allPackages.map((pkg) => ({
-      ...pkg,
-      addOns: Array.from(addOns.values()).filter((a) => a.packageId === pkg.id),
+  ): Promise<Array<Tier & { addOns: AddOn[] }>> {
+    const allTiers = Array.from(tiers.values());
+    return allTiers.map((tier) => ({
+      ...tier,
+      addOns: Array.from(addOns.values()).filter((a) => a.tierId === tier.id),
     }));
   }
 
-  async getPackageBySlug(_tenantId: string, slug: string): Promise<Package | null> {
-    // Mock mode: Ignore tenantId
-    const pkg = Array.from(packages.values()).find((p) => p.slug === slug);
-    return pkg || null;
+  async getTierBySlug(_tenantId: string, slug: string): Promise<Tier | null> {
+    const tier = Array.from(tiers.values()).find((t) => t.slug === slug);
+    return tier || null;
   }
 
-  async getPackageBySlugWithAddOns(
+  async getTierBySlugWithAddOns(
     _tenantId: string,
     slug: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null> {
-    // Mock mode: Ignore tenantId
-    const pkg = Array.from(packages.values()).find((p) => p.slug === slug);
-    if (!pkg) {
+  ): Promise<(Tier & { addOns: AddOn[] }) | null> {
+    const tier = Array.from(tiers.values()).find((t) => t.slug === slug);
+    if (!tier) {
       return null;
     }
     return {
-      ...pkg,
-      addOns: Array.from(addOns.values()).filter((a) => a.packageId === pkg.id),
+      ...tier,
+      addOns: Array.from(addOns.values()).filter((a) => a.tierId === tier.id),
     };
   }
 
-  async getPackageById(_tenantId: string, id: string): Promise<Package | null> {
-    // Mock mode: Ignore tenantId
-    return packages.get(id) || null;
+  async getTierById(_tenantId: string, id: string): Promise<Tier | null> {
+    return tiers.get(id) || null;
   }
 
-  async getPackageByIdWithAddOns(
+  async getTierByIdWithAddOns(
     _tenantId: string,
     id: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null> {
-    // Mock mode: Ignore tenantId
-    const pkg = packages.get(id);
-    if (!pkg) return null;
+  ): Promise<(Tier & { addOns: AddOn[] }) | null> {
+    const tier = tiers.get(id);
+    if (!tier) return null;
     return {
-      ...pkg,
-      addOns: Array.from(addOns.values()).filter((a) => a.packageId === pkg.id),
+      ...tier,
+      addOns: Array.from(addOns.values()).filter((a) => a.tierId === tier.id),
     };
   }
 
-  async getPackagesByIds(_tenantId: string, ids: string[]): Promise<Package[]> {
-    // Mock mode: Ignore tenantId
-    return ids.map((id) => packages.get(id)).filter((pkg): pkg is Package => pkg !== undefined);
+  async getTiersByIds(_tenantId: string, ids: string[]): Promise<Tier[]> {
+    return ids.map((id) => tiers.get(id)).filter((tier): tier is Tier => tier !== undefined);
   }
 
   async getAllAddOns(_tenantId: string, _options?: { take?: number }): Promise<AddOn[]> {
-    // Mock mode: Ignore tenantId, return all add-ons
     return Array.from(addOns.values());
   }
 
-  async getAddOnsByPackageId(_tenantId: string, packageId: string): Promise<AddOn[]> {
-    // Mock mode: Ignore tenantId
-    return Array.from(addOns.values()).filter((a) => a.packageId === packageId);
+  async getAddOnsByTierId(_tenantId: string, tierId: string): Promise<AddOn[]> {
+    return Array.from(addOns.values()).filter((a) => a.tierId === tierId);
   }
 
   async getAddOnById(_tenantId: string, id: string): Promise<AddOn | null> {
-    // Mock mode: Ignore tenantId
     return addOns.get(id) || null;
   }
 
-  async createPackage(
-    tenantId: string,
-    data: {
-      slug: string;
-      title: string;
-      description: string;
-      priceCents: number;
-      photoUrl?: string;
-    }
-  ): Promise<Package> {
+  async createTier(tenantId: string, data: CreateTierInput): Promise<Tier> {
     // Check slug uniqueness
-    const existing = await this.getPackageBySlug(tenantId, data.slug);
+    const existing = await this.getTierBySlug(tenantId, data.slug);
     if (existing) {
-      throw new Error(`Package with slug "${data.slug}" already exists`);
+      throw new Error(`Tier with slug "${data.slug}" already exists`);
     }
 
-    const pkg: Package = {
-      id: `pkg_${Date.now()}`,
+    const tier: Tier = {
+      id: `tier_${Date.now()}`,
       tenantId,
-      ...data,
-      photos: [],
+      slug: data.slug,
+      title: data.title,
+      description: data.description,
+      priceCents: data.priceCents,
+      photos: data.photos || [],
+      active: true,
+      segmentId: data.segmentId ?? null,
+      groupingOrder: data.groupingOrder ?? null,
+      bookingType: 'DATE',
     };
-    packages.set(pkg.id, pkg);
-    return pkg;
+    tiers.set(tier.id, tier);
+    return tier;
   }
 
-  async updatePackage(
-    tenantId: string,
-    id: string,
-    data: {
-      slug?: string;
-      title?: string;
-      description?: string;
-      priceCents?: number;
-      photoUrl?: string;
-    }
-  ): Promise<Package> {
-    const pkg = packages.get(id);
-    if (!pkg) {
-      throw new Error(`Package with id "${id}" not found`);
+  async updateTier(tenantId: string, id: string, data: UpdateTierInput): Promise<Tier> {
+    const tier = tiers.get(id);
+    if (!tier) {
+      throw new Error(`Tier with id "${id}" not found`);
     }
 
     // Check slug uniqueness if updating slug
-    if (data.slug && data.slug !== pkg.slug) {
-      const existing = await this.getPackageBySlug(tenantId, data.slug);
+    if (data.slug && data.slug !== tier.slug) {
+      const existing = await this.getTierBySlug(tenantId, data.slug);
       if (existing) {
-        throw new Error(`Package with slug "${data.slug}" already exists`);
+        throw new Error(`Tier with slug "${data.slug}" already exists`);
       }
     }
 
-    const updated: Package = {
-      ...pkg,
-      ...data,
+    const updated: Tier = {
+      ...tier,
+      ...(data.slug !== undefined && { slug: data.slug }),
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.priceCents !== undefined && { priceCents: data.priceCents }),
+      ...(data.segmentId !== undefined && { segmentId: data.segmentId }),
+      ...(data.groupingOrder !== undefined && { groupingOrder: data.groupingOrder }),
+      ...(data.photos !== undefined && { photos: data.photos }),
     };
-    packages.set(id, updated);
+    tiers.set(id, updated);
     return updated;
   }
 
-  async deletePackage(_tenantId: string, id: string): Promise<void> {
-    // Mock mode: Ignore tenantId
-    const pkg = packages.get(id);
-    if (!pkg) {
-      throw new Error(`Package with id "${id}" not found`);
+  async deleteTier(_tenantId: string, id: string): Promise<void> {
+    const tier = tiers.get(id);
+    if (!tier) {
+      throw new Error(`Tier with id "${id}" not found`);
     }
 
     // Also delete associated add-ons
-    const packageAddOns = Array.from(addOns.values()).filter((a) => a.packageId === id);
-    packageAddOns.forEach((addOn) => addOns.delete(addOn.id));
+    const tierAddOns = Array.from(addOns.values()).filter((a) => a.tierId === id);
+    tierAddOns.forEach((addOn) => addOns.delete(addOn.id));
 
-    packages.delete(id);
+    tiers.delete(id);
   }
 
   async createAddOn(
     _tenantId: string,
     data: {
-      packageId: string;
+      tierId: string;
       title: string;
       priceCents: number;
       photoUrl?: string;
     }
   ): Promise<AddOn> {
-    // Verify package exists
-    const pkg = packages.get(data.packageId);
-    if (!pkg) {
-      throw new Error(`Package with id "${data.packageId}" not found`);
+    // Verify tier exists
+    const tier = tiers.get(data.tierId);
+    if (!tier) {
+      throw new Error(`Tier with id "${data.tierId}" not found`);
     }
 
     const addOn: AddOn = {
@@ -384,7 +372,7 @@ export class MockCatalogRepository implements CatalogRepository {
     _tenantId: string,
     id: string,
     data: {
-      packageId?: string;
+      tierId?: string;
       title?: string;
       priceCents?: number;
       photoUrl?: string;
@@ -395,11 +383,11 @@ export class MockCatalogRepository implements CatalogRepository {
       throw new Error(`AddOn with id "${id}" not found`);
     }
 
-    // Verify package exists if updating packageId
-    if (data.packageId && data.packageId !== addOn.packageId) {
-      const pkg = packages.get(data.packageId);
-      if (!pkg) {
-        throw new Error(`Package with id "${data.packageId}" not found`);
+    // Verify tier exists if updating tierId
+    if (data.tierId && data.tierId !== addOn.tierId) {
+      const tier = tiers.get(data.tierId);
+      if (!tier) {
+        throw new Error(`Tier with id "${data.tierId}" not found`);
       }
     }
 
@@ -412,7 +400,6 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   async deleteAddOn(_tenantId: string, id: string): Promise<void> {
-    // Mock mode: Ignore tenantId
     const addOn = addOns.get(id);
     if (!addOn) {
       throw new Error(`AddOn with id "${id}" not found`);
@@ -420,26 +407,24 @@ export class MockCatalogRepository implements CatalogRepository {
     addOns.delete(id);
   }
 
-  // Segment-scoped methods (Phase A - Segment Implementation)
-  async getPackagesBySegment(
+  // Segment-scoped methods
+  async getTiersBySegment(
     _tenantId: string,
     segmentId: string,
     _options?: { take?: number }
-  ): Promise<Package[]> {
-    // Mock mode: Return all packages (mock doesn't support segments)
-    return Array.from(packages.values()).filter((p) => p.segmentId === segmentId);
+  ): Promise<Tier[]> {
+    return Array.from(tiers.values()).filter((t) => t.segmentId === segmentId);
   }
 
-  async getPackagesBySegmentWithAddOns(
-    tenantId: string,
+  async getTiersBySegmentWithAddOns(
+    _tenantId: string,
     segmentId: string,
     _options?: { take?: number }
-  ): Promise<Array<Package & { addOns: AddOn[] }>> {
-    // Mock mode: Return packages with their add-ons
-    const segmentPackages = await this.getPackagesBySegment(tenantId, segmentId);
-    return segmentPackages.map((pkg) => ({
-      ...pkg,
-      addOns: Array.from(addOns.values()).filter((a) => a.packageId === pkg.id),
+  ): Promise<Array<Tier & { addOns: AddOn[] }>> {
+    const segmentTiers = Array.from(tiers.values()).filter((t) => t.segmentId === segmentId);
+    return segmentTiers.map((tier) => ({
+      ...tier,
+      addOns: Array.from(addOns.values()).filter((a) => a.tierId === tier.id),
     }));
   }
 
@@ -448,88 +433,9 @@ export class MockCatalogRepository implements CatalogRepository {
     segmentId: string,
     _options?: { take?: number }
   ): Promise<AddOn[]> {
-    // Mock mode: Return all add-ons for packages in segment
-    const segmentPackages = await this.getPackagesBySegment(_tenantId, segmentId);
-    const packageIds = new Set(segmentPackages.map((p) => p.id));
-    return Array.from(addOns.values()).filter((a) => packageIds.has(a.packageId));
-  }
-
-  // Draft methods (Visual Editor)
-  async getAllPackagesWithDrafts(
-    _tenantId: string,
-    _options?: { take?: number }
-  ): Promise<PackageWithDraft[]> {
-    // Mock mode: Return packages with draft fields (all null since mock doesn't persist drafts)
-    return Array.from(packages.values()).map((pkg) => ({
-      id: pkg.id,
-      tenantId: pkg.tenantId,
-      slug: pkg.slug,
-      name: pkg.title, // Map title to name for compatibility
-      description: pkg.description,
-      basePrice: pkg.priceCents, // Map priceCents to basePrice for compatibility
-      active: pkg.active ?? true,
-      segmentId: pkg.segmentId ?? null,
-      grouping: pkg.grouping ?? null,
-      groupingOrder: pkg.groupingOrder ?? null,
-      photos: pkg.photos ?? [],
-      draftTitle: null,
-      draftDescription: null,
-      draftPriceCents: null,
-      draftPhotos: null,
-      hasDraft: false,
-      draftUpdatedAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-  }
-
-  async updateDraft(
-    _tenantId: string,
-    packageId: string,
-    draft: UpdatePackageDraftInput
-  ): Promise<PackageWithDraft> {
-    const pkg = packages.get(packageId);
-    if (!pkg) {
-      throw new Error(`Package with id "${packageId}" not found`);
-    }
-
-    // Mock mode: Just return the package with draft fields set
-    return {
-      id: pkg.id,
-      tenantId: pkg.tenantId,
-      slug: pkg.slug,
-      name: pkg.title,
-      description: pkg.description,
-      basePrice: pkg.priceCents,
-      active: pkg.active ?? true,
-      segmentId: pkg.segmentId ?? null,
-      grouping: pkg.grouping ?? null,
-      groupingOrder: pkg.groupingOrder ?? null,
-      photos: pkg.photos ?? [],
-      draftTitle: draft.title ?? null,
-      draftDescription: draft.description ?? null,
-      draftPriceCents: draft.priceCents ?? null,
-      draftPhotos: draft.photos ?? null,
-      hasDraft: true,
-      draftUpdatedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
-  async publishDrafts(_tenantId: string, _packageIds?: string[]): Promise<Package[]> {
-    // Mock mode: Return empty array (no drafts to publish)
-    return [];
-  }
-
-  async discardDrafts(_tenantId: string, _packageIds?: string[]): Promise<number> {
-    // Mock mode: Return 0 (no drafts to discard)
-    return 0;
-  }
-
-  async countDrafts(_tenantId: string): Promise<number> {
-    // Mock mode: Return 0 (no drafts)
-    return 0;
+    const segmentTiers = Array.from(tiers.values()).filter((t) => t.segmentId === segmentId);
+    const tierIds = new Set(segmentTiers.map((t) => t.id));
+    return Array.from(addOns.values()).filter((a) => tierIds.has(a.tierId));
   }
 }
 
@@ -573,7 +479,6 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async findById(_tenantId: string, id: string): Promise<Booking | null> {
-    // Mock mode: Ignore tenantId
     return bookings.get(id) || null;
   }
 
@@ -581,7 +486,6 @@ export class MockBookingRepository implements BookingRepository {
     _tenantId: string,
     options?: { limit?: number; offset?: number }
   ): Promise<Booking[]> {
-    // Mock mode: Ignore tenantId
     const all = Array.from(bookings.values());
     const offset = options?.offset ?? 0;
     const limit = options?.limit ?? 100;
@@ -589,28 +493,22 @@ export class MockBookingRepository implements BookingRepository {
   }
 
   async isDateBooked(_tenantId: string, date: string): Promise<boolean> {
-    // Mock mode: Ignore tenantId
     const dateKey = toUtcMidnight(date);
     return bookingsByDate.has(dateKey);
   }
 
   async getUnavailableDates(_tenantId: string, startDate: Date, endDate: Date): Promise<Date[]> {
-    // Mock mode: Ignore tenantId
     const unavailable: Date[] = [];
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Iterate through all bookings
     for (const booking of bookings.values()) {
       const bookingDate = new Date(booking.eventDate);
-
-      // Check if booking is within date range and not canceled/refunded
       if (bookingDate >= start && bookingDate <= end && booking.status === 'PAID') {
         unavailable.push(bookingDate);
       }
     }
 
-    // Sort by date
     return unavailable.sort((a, b) => a.getTime() - b.getTime());
   }
 
@@ -619,10 +517,8 @@ export class MockBookingRepository implements BookingRepository {
     bookingId: string,
     googleEventId: string
   ): Promise<void> {
-    // Mock mode: Ignore tenantId
     const booking = bookings.get(bookingId);
     if (booking) {
-      // Store googleEventId in mock booking (extend Booking type if needed)
       (booking as any).googleEventId = googleEventId;
       logger.debug({ bookingId, googleEventId }, 'Updated booking with Google event ID');
     }
@@ -648,9 +544,7 @@ export class MockBookingRepository implements BookingRepository {
       throw new Error(`Booking ${bookingId} not found`);
     }
 
-    // Apply updates
     if (data.eventDate !== undefined) {
-      // Update date mapping
       const oldDateKey = toUtcMidnight(booking.eventDate);
       const newDateKey = toUtcMidnight(data.eventDate);
       bookingsByDate.delete(oldDateKey);
@@ -661,7 +555,6 @@ export class MockBookingRepository implements BookingRepository {
       booking.status = data.status;
     }
 
-    // Store extra fields in mock
     if (data.cancelledAt !== undefined) {
       (booking as any).cancelledAt = data.cancelledAt;
     }
@@ -700,7 +593,6 @@ export class MockBookingRepository implements BookingRepository {
 
     const newDateKey = toUtcMidnight(newDate);
 
-    // Check if new date is taken by a different booking
     const existingId = bookingsByDate.get(newDateKey);
     if (existingId && existingId !== bookingId) {
       const existingBooking = bookings.get(existingId);
@@ -709,14 +601,11 @@ export class MockBookingRepository implements BookingRepository {
       }
     }
 
-    // Update date
     const oldDateKey = toUtcMidnight(booking.eventDate);
     bookingsByDate.delete(oldDateKey);
     bookingsByDate.set(newDateKey, bookingId);
     booking.eventDate = newDate;
 
-    // TODO-154 FIX: Calculate new reminder due date (7 days before new event date)
-    // Only set if the event is more than 7 days away
     const eventDate = new Date(newDate + 'T00:00:00Z');
     const now = new Date();
     const daysUntilEvent = Math.floor(
@@ -727,7 +616,6 @@ export class MockBookingRepository implements BookingRepository {
         ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         : undefined;
 
-    // TODO-154 FIX: Reset reminderSentAt so new reminder will be sent
     (booking as any).reminderSentAt = undefined;
 
     logger.debug({ bookingId, newDate }, 'Mock booking rescheduled');
@@ -739,9 +627,6 @@ export class MockBookingRepository implements BookingRepository {
     date: Date,
     serviceId?: string
   ): Promise<TimeslotBooking[]> {
-    // Mock mode: Return empty array for now
-    // Real TIMESLOT bookings would need to be stored with startTime/endTime
-    // This mock implementation is sufficient for basic testing
     logger.debug(
       { date: date.toISOString(), serviceId: serviceId || 'all' },
       'findTimeslotBookings called'
@@ -755,9 +640,6 @@ export class MockBookingRepository implements BookingRepository {
     endDate: Date,
     serviceId?: string
   ): Promise<TimeslotBooking[]> {
-    // Mock mode: Return empty array for now
-    // Real TIMESLOT bookings would need to be stored with startTime/endTime
-    // This mock implementation is sufficient for basic testing
     logger.debug(
       {
         startDate: startDate.toISOString(),
@@ -774,8 +656,6 @@ export class MockBookingRepository implements BookingRepository {
     serviceId: string,
     date: Date
   ): Promise<number> {
-    // Mock mode: Count TIMESLOT bookings for this service on this date
-    // Since mock mode doesn't store TIMESLOT bookings properly, return 0
     logger.debug(
       {
         serviceId,
@@ -797,15 +677,12 @@ export class MockBookingRepository implements BookingRepository {
       offset?: number;
     }
   ): Promise<AppointmentDto[]> {
-    // P2 #052 FIX: Mock implementation respects pagination parameters
     const MAX_LIMIT = 500;
     const DEFAULT_LIMIT = 100;
 
     const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const offset = Math.max(filters?.offset ?? 0, 0);
 
-    // Mock mode: Return empty array for now
-    // Mock bookings don't have TIMESLOT type
     logger.debug({ tenantId, filters, limit, offset }, 'findAppointments called');
     return [];
   }
@@ -814,7 +691,6 @@ export class MockBookingRepository implements BookingRepository {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Find bookings where reminderDueDate is in the past and reminderSentAt is not set
     const result: Booking[] = [];
     for (const booking of bookings.values()) {
       if (booking.status !== 'PAID') continue;
@@ -878,24 +754,20 @@ export class MockBookingRepository implements BookingRepository {
 // Mock Blackout Repository
 export class MockBlackoutRepository implements BlackoutRepository {
   async isBlackoutDate(_tenantId: string, date: string): Promise<boolean> {
-    // Mock mode: Ignore tenantId
     const dateKey = toUtcMidnight(date);
     return blackouts.has(dateKey);
   }
 
   async getAllBlackouts(_tenantId: string): Promise<Array<{ date: string; reason?: string }>> {
-    // Mock mode: Ignore tenantId
     return Array.from(blackouts.values());
   }
 
   async addBlackout(_tenantId: string, date: string, reason?: string): Promise<void> {
-    // Mock mode: Ignore tenantId
     const dateKey = toUtcMidnight(date);
     blackouts.set(dateKey, { date: dateKey, reason });
   }
 
   async deleteBlackout(_tenantId: string, id: string): Promise<void> {
-    // Mock mode: Ignore tenantId, use date as ID
     const dateKey = toUtcMidnight(id);
     blackouts.delete(dateKey);
   }
@@ -904,7 +776,6 @@ export class MockBlackoutRepository implements BlackoutRepository {
     _tenantId: string,
     id: string
   ): Promise<{ id: string; date: string; reason?: string } | null> {
-    // Mock mode: Ignore tenantId, use date as ID
     const dateKey = toUtcMidnight(id);
     const blackout = blackouts.get(dateKey);
     if (!blackout) return null;
@@ -939,9 +810,6 @@ export class MockCalendarProvider implements CalendarProvider {
     calendarBusyDates.add(dateKey);
   }
 
-  /**
-   * Create a mock calendar event (for testing Google Calendar sync)
-   */
   async createEvent(input: {
     tenantId: string;
     summary: string;
@@ -975,9 +843,6 @@ export class MockCalendarProvider implements CalendarProvider {
     return { eventId };
   }
 
-  /**
-   * Delete a mock calendar event (for testing Google Calendar sync)
-   */
   async deleteEvent(_tenantId: string, eventId: string): Promise<boolean> {
     const event = this.mockEvents.get(eventId);
 
@@ -998,9 +863,6 @@ export class MockCalendarProvider implements CalendarProvider {
     return true;
   }
 
-  /**
-   * Get all mock events (for testing/debugging)
-   */
   getMockEvents(): Array<{ eventId: string; summary: string; startTime: Date; endTime: Date }> {
     return Array.from(this.mockEvents.values());
   }
@@ -1008,11 +870,6 @@ export class MockCalendarProvider implements CalendarProvider {
 
 // Mock Payment Provider
 export class MockPaymentProvider implements PaymentProvider {
-  /**
-   * Idempotency cache for checkout sessions
-   * Simulates real Stripe behavior: same idempotency key returns same session
-   * Cache is instance-scoped (cleared when new instance is created)
-   */
   private idempotencyCache = new Map<string, CheckoutSession>();
 
   async createCheckoutSession(input: {
@@ -1023,13 +880,11 @@ export class MockPaymentProvider implements PaymentProvider {
     successUrl: string;
     cancelUrl: string;
   }): Promise<CheckoutSession> {
-    // Check idempotency cache first (simulates real Stripe behavior)
     if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
       return this.idempotencyCache.get(input.idempotencyKey)!;
     }
 
     const sessionId = `mock_session_${Date.now()}`;
-    // Replace Stripe's {CHECKOUT_SESSION_ID} placeholder with the session ID
     const checkoutUrl = input.successUrl.replace('{CHECKOUT_SESSION_ID}', sessionId);
 
     const session: CheckoutSession = {
@@ -1037,7 +892,6 @@ export class MockPaymentProvider implements PaymentProvider {
       sessionId,
     };
 
-    // Store in cache if idempotency key provided
     if (input.idempotencyKey) {
       this.idempotencyCache.set(input.idempotencyKey, session);
     }
@@ -1055,13 +909,11 @@ export class MockPaymentProvider implements PaymentProvider {
     successUrl: string;
     cancelUrl: string;
   }): Promise<CheckoutSession> {
-    // Check idempotency cache first (simulates real Stripe behavior)
     if (input.idempotencyKey && this.idempotencyCache.has(input.idempotencyKey)) {
       return this.idempotencyCache.get(input.idempotencyKey)!;
     }
 
     const sessionId = `mock_connect_session_${Date.now()}`;
-    // Replace Stripe's {CHECKOUT_SESSION_ID} placeholder with the session ID
     const checkoutUrl = input.successUrl.replace('{CHECKOUT_SESSION_ID}', sessionId);
 
     const session: CheckoutSession = {
@@ -1069,7 +921,6 @@ export class MockPaymentProvider implements PaymentProvider {
       sessionId,
     };
 
-    // Store in cache if idempotency key provided
     if (input.idempotencyKey) {
       this.idempotencyCache.set(input.idempotencyKey, session);
     }
@@ -1078,7 +929,6 @@ export class MockPaymentProvider implements PaymentProvider {
   }
 
   async verifyWebhook(_payload: string, _signature: string): Promise<Stripe.Event> {
-    // Mock webhook verification - always succeeds
     return {
       id: 'evt_mock_123',
       object: 'event',
@@ -1106,11 +956,10 @@ export class MockPaymentProvider implements PaymentProvider {
     status: string;
     amountCents: number;
   }> {
-    // Mock refund - always succeeds
     return {
       refundId: `mock_refund_${Date.now()}`,
       status: 'succeeded',
-      amountCents: input.amountCents || 100000, // Default to $1000 if not specified
+      amountCents: input.amountCents || 100000,
     };
   }
 }
@@ -1139,7 +988,6 @@ export class MockUserRepository implements UserRepository {
 // Mock Webhook Repository
 export class MockWebhookRepository implements WebhookRepository {
   async isDuplicate(_tenantId: string, eventId: string): Promise<boolean> {
-    // Mock mode: Ignore tenantId
     const existing = webhookEvents.get(eventId);
     if (existing) {
       existing.status = 'DUPLICATE';
@@ -1154,21 +1002,18 @@ export class MockWebhookRepository implements WebhookRepository {
     eventType: string;
     rawPayload: string;
   }): Promise<boolean> {
-    // Mock mode: Ignore tenantId
-    // Check if already exists (duplicate)
     if (webhookEvents.has(input.eventId)) {
-      return false; // Duplicate
+      return false;
     }
     webhookEvents.set(input.eventId, {
       eventId: input.eventId,
       eventType: input.eventType,
       status: 'PENDING',
     });
-    return true; // New record
+    return true;
   }
 
   async markProcessed(_tenantId: string, eventId: string): Promise<void> {
-    // Mock mode: Ignore tenantId
     const event = webhookEvents.get(eventId);
     if (event) {
       event.status = 'PROCESSED';
@@ -1176,7 +1021,6 @@ export class MockWebhookRepository implements WebhookRepository {
   }
 
   async markFailed(_tenantId: string, eventId: string, errorMessage: string): Promise<void> {
-    // Mock mode: Ignore tenantId
     const event = webhookEvents.get(eventId);
     if (event) {
       event.status = 'FAILED';
@@ -1195,13 +1039,11 @@ export class MockEarlyAccessRepository implements EarlyAccessRepository {
     const now = new Date();
 
     if (existing) {
-      // Update timestamp
       existing.updatedAt = now;
       logger.debug({ email }, 'Mock early access request updated');
       return { request: existing, isNew: false };
     }
 
-    // Create new
     const request: EarlyAccessRequest = {
       id: `ear_${Date.now()}`,
       email,
@@ -1301,9 +1143,6 @@ export class MockTenantRepository {
     return Array.from(tenants.values());
   }
 
-  /**
-   * Get the default mock tenant ID for testing
-   */
   getDefaultTenantId(): string {
     return DEFAULT_TENANT;
   }
@@ -1330,7 +1169,7 @@ export function buildMockAdapters() {
  */
 export function getMockState() {
   return {
-    packages: Array.from(packages.values()),
+    tiers: Array.from(tiers.values()),
     addOns: Array.from(addOns.values()),
     blackouts: Array.from(blackouts.values()),
     bookings: Array.from(bookings.values()),
@@ -1341,7 +1180,6 @@ export function getMockState() {
  * Reset mock state to initial seeded state (E2E test determinism)
  */
 export function resetMockState() {
-  // Clear dynamic data (bookings, blackouts, calendar, webhooks, early access)
   bookings.clear();
   bookingsByDate.clear();
   blackouts.clear();

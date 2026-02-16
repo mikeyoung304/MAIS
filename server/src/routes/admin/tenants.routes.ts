@@ -4,7 +4,7 @@
  *
  * Endpoints:
  * - GET    /api/v1/admin/tenants       - List all tenants
- * - POST   /api/v1/admin/tenants       - Create new tenant (atomic, includes segment + packages)
+ * - POST   /api/v1/admin/tenants       - Create new tenant (atomic, includes segment + tiers)
  * - GET    /api/v1/admin/tenants/:id   - Get tenant details
  * - PUT    /api/v1/admin/tenants/:id   - Update tenant
  * - DELETE /api/v1/admin/tenants/:id   - Deactivate tenant
@@ -54,7 +54,7 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
           createdAt: t.createdAt.toISOString(),
           updatedAt: t.updatedAt.toISOString(),
           stripeConnected: t.stripeOnboarded,
-          packageCount: t.stats.packages,
+          tierCount: t.stats.tiers,
           // Additional fields for detail view
           apiKeyPublic: t.apiKeyPublic,
           commissionPercent: t.commissionPercent,
@@ -69,10 +69,10 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
 
   /**
    * POST /api/v1/admin/tenants
-   * Create new tenant with API keys, default segment, and default packages
+   * Create new tenant with API keys, default segment, and default tiers
    *
    * This is an ATOMIC operation - either all data is created or none.
-   * Prevents orphaned tenants without segments/packages.
+   * Prevents orphaned tenants without segments/tiers.
    *
    * Body:
    * - slug: string (required, URL-safe identifier)
@@ -83,7 +83,7 @@ export function createAdminTenantsRoutes(options: AdminTenantsRoutesOptions): Ro
    * - tenant: Created tenant object
    * - secretKey: SECRET API KEY (shown ONCE, never stored in plaintext)
    * - segment: Default "General" segment
-   * - packages: Default packages (Basic/Standard/Premium)
+   * - tiers: Default tiers (Basic/Standard/Premium)
    */
   router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {

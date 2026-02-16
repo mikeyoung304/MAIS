@@ -6,42 +6,46 @@
 // Catalog Entities
 // ============================================================================
 
-export interface PackagePhoto {
-  url: string;
-  filename?: string;
-  size?: number;
-  order?: number;
-  altText?: string; // Alt text for accessibility
-}
-
 export type BookingType = 'DATE' | 'TIMESLOT';
 
-export interface Package {
+/**
+ * Photo attached to a Tier (or legacy Package)
+ */
+export interface TierPhoto {
+  url: string;
+  filename: string;
+  size: number;
+  order: number;
+}
+
+/**
+ * Tier - a bookable offering within a segment
+ *
+ * Replaces the legacy `Package` entity. Tiers represent different service
+ * levels or pricing options (e.g., "Essential", "Signature", "Premier").
+ */
+export interface Tier {
   id: string;
-  tenantId: string; // Multi-tenant isolation
+  tenantId: string;
   slug: string;
   title: string;
   description: string;
   priceCents: number;
   photoUrl?: string;
-  photos?: PackagePhoto[]; // Photo gallery
-  // Segment and grouping fields
+  photos?: TierPhoto[];
+  active: boolean;
   segmentId?: string | null;
   grouping?: string | null;
   groupingOrder?: number | null;
-  active?: boolean; // Package active status (maps to DB 'active' field)
-  // Booking configuration
-  bookingType?: BookingType; // DATE for weddings, TIMESLOT for appointments
-  // Additional Prisma model fields (for backward compatibility)
-  name?: string; // Alias for title
-  basePrice?: number; // Alias for priceCents
-  depositAmount?: number | null; // Deposit amount in cents
-  sortOrder?: number; // Display sort order
+  bookingType: BookingType;
+  depositPercent?: number;
+  depositAmount?: number;
+  durationMinutes?: number;
 }
 
 export interface AddOn {
   id: string;
-  packageId: string;
+  tierId: string;
   title: string;
   description?: string | null;
   priceCents: number;
@@ -55,7 +59,7 @@ export interface AddOn {
 export interface Booking {
   id: string;
   tenantId?: string; // Tenant isolation (optional for backward compatibility)
-  packageId: string | null; // Nullable for TIMESLOT bookings (which use serviceId instead)
+  tierId: string | null; // Nullable for TIMESLOT bookings (which use serviceId instead)
   customerId?: string; // Customer reference (for timeslot bookings)
   venueId?: string | null; // Venue reference
   coupleName: string;
@@ -104,7 +108,7 @@ export interface Booking {
  * Input for creating a booking (before payment)
  */
 export interface CreateBookingInput {
-  packageId: string;
+  tierId: string;
   eventDate: string;
   email: string;
   coupleName: string;

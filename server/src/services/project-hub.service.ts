@@ -73,10 +73,10 @@ export interface ProjectWithBooking {
   booking: {
     id: string;
     eventDate: Date;
-    package: {
+    tier: {
       id: string;
       name: string;
-      basePrice: number;
+      priceCents: number;
     } | null;
     customer: {
       id: string;
@@ -106,7 +106,7 @@ export interface ProjectRequestWithContext {
         name: string;
         email: string;
       };
-      package: {
+      tier: {
         name: string;
       } | null;
     };
@@ -296,7 +296,7 @@ export class ProjectHubService {
       include: {
         booking: {
           include: {
-            package: {
+            tier: {
               select: { name: true },
             },
             customer: {
@@ -318,7 +318,7 @@ export class ProjectHubService {
     }
 
     const customerName = project.booking.customer?.name || 'there';
-    const serviceName = project.booking.package?.name || 'your service';
+    const serviceName = project.booking.tier?.name || 'your service';
     const bookingDate = project.booking.date ?? project.booking.startTime ?? new Date();
 
     return {
@@ -405,8 +405,8 @@ export class ProjectHubService {
       include: {
         booking: {
           include: {
-            package: {
-              select: { id: true, name: true, basePrice: true },
+            tier: {
+              select: { id: true, name: true, priceCents: true },
             },
             customer: {
               select: { id: true, name: true, email: true },
@@ -435,11 +435,11 @@ export class ProjectHubService {
       booking: {
         id: project.booking.id,
         eventDate,
-        package: project.booking.package
+        tier: project.booking.tier
           ? {
-              id: project.booking.package.id,
-              name: project.booking.package.name,
-              basePrice: project.booking.package.basePrice,
+              id: project.booking.tier.id,
+              name: project.booking.tier.name,
+              priceCents: project.booking.tier.priceCents,
             }
           : null,
         customer: {
@@ -533,7 +533,7 @@ export class ProjectHubService {
             booking: {
               include: {
                 customer: { select: { name: true, email: true } },
-                package: { select: { name: true } },
+                tier: { select: { name: true } },
               },
             },
           },
@@ -564,7 +564,7 @@ export class ProjectHubService {
               name: r.project.booking.customer?.name ?? 'Unknown',
               email: r.project.booking.customer?.email ?? '',
             },
-            package: r.project.booking.package ? { name: r.project.booking.package.name } : null,
+            tier: r.project.booking.tier ? { name: r.project.booking.tier.name } : null,
           },
         },
       })),
@@ -819,7 +819,7 @@ export class ProjectHubService {
       include: {
         booking: {
           include: {
-            package: { select: { id: true, name: true, basePrice: true } },
+            tier: { select: { id: true, name: true, priceCents: true } },
             customer: { select: { id: true, name: true, email: true } },
           },
         },
@@ -846,11 +846,11 @@ export class ProjectHubService {
       booking: {
         id: p.booking.id,
         eventDate: p.booking.date ?? p.booking.startTime ?? new Date(),
-        package: p.booking.package
+        tier: p.booking.tier
           ? {
-              id: p.booking.package.id,
-              name: p.booking.package.name,
-              basePrice: p.booking.package.basePrice,
+              id: p.booking.tier.id,
+              name: p.booking.tier.name,
+              priceCents: p.booking.tier.priceCents,
             }
           : null,
         customer: {

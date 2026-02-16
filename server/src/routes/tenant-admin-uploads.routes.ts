@@ -134,12 +134,12 @@ export function registerUploadRoutes(router: Router, deps: TenantAdminDeps): voi
       // For now, return instructions for direct upload endpoint
       const uploadInfo = {
         method: 'POST',
-        endpoint: `/v1/tenant-admin/${fileType === 'logo' ? 'logo' : fileType === 'segment' ? 'segment-image' : 'packages/{packageId}/photos'}`,
+        endpoint: `/v1/tenant-admin/${fileType === 'logo' ? 'logo' : fileType === 'segment' ? 'segment-image' : 'tiers/{tierId}/photos'}`,
         fieldName: fileType === 'logo' ? 'logo' : fileType === 'segment' ? 'file' : 'photo',
         maxSizeMB: fileType === 'logo' ? 2 : 5,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
         instructions:
-          'Upload file using multipart/form-data to the endpoint above. For package photos, replace {packageId} with the actual package ID.',
+          'Upload file using multipart/form-data to the endpoint above. For tier photos, replace {tierId} with the actual tier ID.',
       };
 
       res.json(uploadInfo);
@@ -170,23 +170,23 @@ export function registerUploadRoutes(router: Router, deps: TenantAdminDeps): voi
         filename?: string;
       }> = [];
 
-      // 1. Get package photos
-      const packages = await catalogService.getAllPackages(tenantId);
-      for (const pkg of packages) {
-        if (pkg.photoUrl) {
+      // 1. Get tier photos
+      const tiers = await catalogService.getAllTiers(tenantId);
+      for (const tier of tiers) {
+        if (tier.photoUrl) {
           images.push({
-            url: pkg.photoUrl,
+            url: tier.photoUrl,
             type: 'package',
-            source: `Package: ${pkg.title}`,
+            source: `Tier: ${tier.title}`,
           });
         }
-        if (pkg.photos && Array.isArray(pkg.photos)) {
-          for (const photo of pkg.photos) {
+        if (tier.photos && Array.isArray(tier.photos)) {
+          for (const photo of tier.photos) {
             if (photo.url) {
               images.push({
                 url: photo.url,
                 type: 'package',
-                source: `Package: ${pkg.title}`,
+                source: `Tier: ${tier.title}`,
                 filename: photo.filename,
               });
             }

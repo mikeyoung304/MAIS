@@ -50,7 +50,7 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
       // Map to DTO
       const bookingsDto = bookings.map((booking) => ({
         id: booking.id,
-        packageId: booking.packageId,
+        tierId: booking.tierId,
         coupleName: booking.coupleName,
         email: booking.email,
         phone: booking.phone,
@@ -141,7 +141,7 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
       }
 
       const dashboard = {
-        packages: stats.packageCount,
+        tiers: stats.tierCount,
         addOns: stats.addOnCount,
         bookings: {
           total: stats.bookingCount,
@@ -182,15 +182,15 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
         return;
       }
 
-      // Get package details for context (only for DATE bookings with packageId)
-      const pkg = booking.packageId
-        ? await catalogService.getPackageById(tenantId, booking.packageId)
+      // Get tier details for context (only for DATE bookings with tierId)
+      const tier = booking.tierId
+        ? await catalogService.getTierById(tenantId, booking.tierId)
         : null;
 
       const bookingDto = {
         id: booking.id,
-        packageId: booking.packageId,
-        packageTitle: pkg?.title || 'Unknown Package',
+        tierId: booking.tierId,
+        tierTitle: tier?.title || 'Unknown Tier',
         coupleName: booking.coupleName,
         email: booking.email,
         phone: booking.phone,

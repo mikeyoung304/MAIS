@@ -13,7 +13,6 @@ import type { CatalogService } from '../services/catalog.service';
 import type { BookingService } from '../services/booking.service';
 import type { BlackoutRepository, StorageProvider } from '../lib/ports';
 import type { SegmentService } from '../services/segment.service';
-import type { PackageDraftService } from '../services/package-draft.service';
 import type { SectionContentService } from '../services/section-content.service';
 
 /**
@@ -26,7 +25,6 @@ export interface TenantAdminDeps {
   blackoutRepo: BlackoutRepository;
   storageProvider: StorageProvider;
   segmentService?: SegmentService;
-  packageDraftService?: PackageDraftService;
   sectionContentService?: SectionContentService;
 }
 

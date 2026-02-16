@@ -1,11 +1,11 @@
 /**
- * Package Utilities
+ * Tier Utilities
  *
- * Shared utilities for package sorting and grouping.
+ * Shared utilities for tier sorting and grouping.
  */
 
 /**
- * Tier ordering for package display
+ * Tier ordering for display
  *
  * Lower numbers appear first. Used for consistent sorting
  * across services page and landing page.

@@ -264,7 +264,7 @@ export class BookingService {
     bookingId: string,
     amountPaidCents: number
   ): Promise<Booking> {
-    // Fetch the booking with package details for the event payload
+    // Fetch the booking with tier details for the event payload
     const booking = await this.bookingRepo.findById(tenantId, bookingId);
     if (!booking) {
       throw new Error(`Booking ${bookingId} not found for tenant ${tenantId}`);
@@ -276,17 +276,17 @@ export class BookingService {
       balancePaidAt: new Date(), // P1 fix: Set payment timestamp for reporting queries
     });
 
-    // Fetch package title for the event payload (only for DATE bookings with packageId)
-    let packageTitle = 'Package';
-    if (booking.packageId) {
-      const pkg = await this.catalogRepo.getPackageById(tenantId, booking.packageId);
-      packageTitle = pkg?.title || 'Package';
+    // Fetch tier title for the event payload (only for DATE bookings with tierId)
+    let tierName = 'Tier';
+    if (booking.tierId) {
+      const tier = await this.catalogRepo.getTierById(tenantId, booking.tierId);
+      tierName = tier?.title || 'Tier';
     }
 
-    // Fetch add-on titles if any (only for DATE bookings with packageId)
+    // Fetch add-on titles if any (only for DATE bookings with tierId)
     const addOnTitles: string[] = [];
-    if (booking.packageId && booking.addOnIds && booking.addOnIds.length > 0) {
-      const addOns = await this.catalogRepo.getAddOnsByPackageId(tenantId, booking.packageId);
+    if (booking.tierId && booking.addOnIds && booking.addOnIds.length > 0) {
+      const addOns = await this.catalogRepo.getAddOnsByTierId(tenantId, booking.tierId);
       for (const addOn of addOns) {
         if (booking.addOnIds.includes(addOn.id)) {
           addOnTitles.push(addOn.title);
@@ -300,7 +300,7 @@ export class BookingService {
       email: booking.email,
       coupleName: booking.coupleName,
       eventDate: booking.eventDate,
-      packageTitle,
+      tierName: tierName,
       totalCents: amountPaidCents,
       addOnTitles,
     });
@@ -368,7 +368,7 @@ export class BookingService {
   async getAllPlatformBookings(options?: { cursor?: string; limit?: number }): Promise<{
     bookings: Array<{
       id: string;
-      packageId: string | null;
+      tierId: string | null;
       coupleName: string;
       email: string;
       phone?: string;
@@ -386,7 +386,7 @@ export class BookingService {
       createdAt: string;
       tenantName: string;
       tenantSlug: string;
-      packageName?: string;
+      tierName?: string;
     }>;
     hasMore: boolean;
     nextCursor?: string;
@@ -405,7 +405,7 @@ export class BookingService {
       ? { id: { lt: options.cursor } } // Cursor-based pagination (newer first)
       : {};
 
-    // Query bookings with tenant, customer, package, and add-ons
+    // Query bookings with tenant, customer, tier, and add-ons
     // Exclude test tenants (same filter used by platform stats)
     const bookings = await this.prisma.booking.findMany({
       where: {
@@ -428,7 +428,7 @@ export class BookingService {
             phone: true,
           },
         },
-        package: {
+        tier: {
           select: {
             name: true,
           },
@@ -453,7 +453,7 @@ export class BookingService {
     return {
       bookings: resultBookings.map((b) => ({
         id: b.id,
-        packageId: b.packageId,
+        tierId: b.tierId,
         coupleName: b.customer.name ?? '', // Customer name as "coupleName" for wedding context
         email: b.customer.email ?? '', // Customer email (nullable in Prisma, required in DTO)
         phone: b.customer.phone ?? undefined,
@@ -471,7 +471,7 @@ export class BookingService {
         createdAt: b.createdAt.toISOString(),
         tenantName: b.tenant.name,
         tenantSlug: b.tenant.slug,
-        packageName: b.package?.name ?? undefined,
+        tierName: b.tier?.name ?? undefined,
       })),
       hasMore,
       nextCursor,
@@ -589,7 +589,7 @@ export class BookingService {
     tenantId: string,
     input: {
       sessionId: string;
-      packageId: string;
+      tierId: string;
       eventDate: string;
       email: string;
       coupleName: string;
@@ -602,21 +602,17 @@ export class BookingService {
       depositPercent?: number;
     }
   ): Promise<Booking> {
-    // PERFORMANCE FIX: Fetch package with add-ons in single query (eliminates N+1)
-    // FIX: Use getPackageByIdWithAddOns since input.packageId is a CUID, not a slug
-    const pkg = await this.catalogRepo.getPackageByIdWithAddOns(tenantId, input.packageId);
-    if (!pkg) {
-      logger.warn(
-        { tenantId, packageId: input.packageId },
-        'Package not found in payment completion flow'
-      );
+    // PERFORMANCE FIX: Fetch tier with add-ons in single query (eliminates N+1)
+    const tier = await this.catalogRepo.getTierByIdWithAddOns(tenantId, input.tierId);
+    if (!tier) {
+      logger.warn({ tenantId, tierId: input.tierId }, 'Tier not found in payment completion flow');
       throw new NotFoundError('The requested resource was not found');
     }
 
     // Extract add-on titles from the already-fetched add-ons
     const addOnTitles: string[] = [];
     if (input.addOnIds && input.addOnIds.length > 0) {
-      const selectedAddOns = pkg.addOns.filter((a) => input.addOnIds?.includes(a.id));
+      const selectedAddOns = tier.addOns.filter((a) => input.addOnIds?.includes(a.id));
       addOnTitles.push(...selectedAddOns.map((a) => a.title));
     }
 
@@ -654,7 +650,7 @@ export class BookingService {
 
     if (this.config.AUTO_CONFIRM_BOOKINGS && !input.isDeposit) {
       logger.info(
-        { tenantId, packageId: input.packageId, email: input.email },
+        { tenantId, tierId: input.tierId, email: input.email },
         'Auto-confirming booking (AUTO_CONFIRM_BOOKINGS enabled)'
       );
     }
@@ -662,7 +658,7 @@ export class BookingService {
     // Create booking with commission data and reminder
     const booking: Booking = {
       id: `booking_${Date.now()}`,
-      packageId: pkg.id,
+      tierId: tier.id,
       coupleName: input.coupleName,
       email: input.email,
       eventDate: input.eventDate,
@@ -708,7 +704,7 @@ export class BookingService {
             actor: 'SYSTEM',
             payload: {
               bookingId: created.id,
-              packageTitle: pkg.title,
+              tierName: tier.title,
               eventDate: created.eventDate,
             },
             visibleToCustomer: true,
@@ -739,7 +735,7 @@ export class BookingService {
       email: created.email,
       coupleName: created.coupleName,
       eventDate: created.eventDate,
-      packageTitle: pkg.title,
+      tierName: tier.title,
       addOnTitles,
       totalCents: input.totalCents,
     });

@@ -4,7 +4,7 @@
  * Tests:
  * - Production environment guard (security critical)
  * - Tenant creation with fixed keys
- * - Package creation
+ * - Tier creation
  * - Idempotency (safe to run multiple times)
  */
 
@@ -146,27 +146,27 @@ describe('E2E Seed', () => {
     });
   });
 
-  describe('E2E Package Creation', () => {
+  describe('E2E Tier Creation', () => {
     beforeEach(() => {
       process.env.NODE_ENV = 'test';
     });
 
-    it('should create starter and growth packages', async () => {
+    it('should create starter and growth tiers', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedE2E(mockPrisma);
 
       // Should be called twice (starter and growth)
-      expect(mockPrisma.package.upsert).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(2);
 
-      const slugs = mockPrisma.package.upsert.mock.calls.map(
+      const slugs = mockPrisma.tier.upsert.mock.calls.map(
         (call) => call[0].where.tenantId_slug.slug
       );
       expect(slugs).toContain('starter');
       expect(slugs).toContain('growth');
     });
 
-    it('should create add-on and link to starter package', async () => {
+    it('should create add-on and link to starter tier', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedE2E(mockPrisma);
@@ -181,7 +181,7 @@ describe('E2E Seed', () => {
         })
       );
 
-      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalled();
+      expect(mockPrisma.tierAddOn.upsert).toHaveBeenCalled();
     });
   });
 
@@ -201,14 +201,14 @@ describe('E2E Seed', () => {
       expect(mockPrisma.tenant.upsert).toHaveBeenCalledTimes(2);
     });
 
-    it('should use upsert for packages (safe to run multiple times)', async () => {
+    it('should use upsert for tiers (safe to run multiple times)', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedE2E(mockPrisma);
 
-      // Verify all package operations use upsert
-      expect(mockPrisma.package.upsert).toHaveBeenCalled();
-      mockPrisma.package.upsert.mock.calls.forEach((call) => {
+      // Verify all tier operations use upsert
+      expect(mockPrisma.tier.upsert).toHaveBeenCalled();
+      mockPrisma.tier.upsert.mock.calls.forEach((call) => {
         expect(call[0]).toHaveProperty('where');
         expect(call[0]).toHaveProperty('update');
         expect(call[0]).toHaveProperty('create');
@@ -221,7 +221,7 @@ describe('E2E Seed', () => {
       await seedE2E(mockPrisma);
 
       expect(mockPrisma.addOn.upsert).toHaveBeenCalled();
-      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalled();
+      expect(mockPrisma.tierAddOn.upsert).toHaveBeenCalled();
     });
   });
 
@@ -250,8 +250,14 @@ function createMockPrisma(): PrismaClient {
     name: 'Handled E2E Test Tenant',
   };
 
-  const mockPackage = {
-    id: 'pkg-1',
+  const mockSegment = {
+    id: 'segment-general-123',
+    slug: 'general',
+    tenantId: mockTenant.id,
+  };
+
+  const mockTier = {
+    id: 'tier-1',
     slug: 'starter',
     tenantId: mockTenant.id,
   };
@@ -266,14 +272,17 @@ function createMockPrisma(): PrismaClient {
     tenant: {
       upsert: vi.fn().mockResolvedValue(mockTenant),
     },
-    package: {
-      upsert: vi.fn().mockResolvedValue(mockPackage),
+    segment: {
+      upsert: vi.fn().mockResolvedValue(mockSegment),
+    },
+    tier: {
+      upsert: vi.fn().mockResolvedValue(mockTier),
     },
     addOn: {
       upsert: vi.fn().mockResolvedValue(mockAddOn),
     },
-    packageAddOn: {
-      upsert: vi.fn().mockResolvedValue({ packageId: mockPackage.id, addOnId: mockAddOn.id }),
+    tierAddOn: {
+      upsert: vi.fn().mockResolvedValue({ tierId: mockTier.id, addOnId: mockAddOn.id }),
     },
   };
 

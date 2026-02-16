@@ -19,7 +19,7 @@ export interface EnrichedAppointment {
   tenantId: string;
   customerId: string;
   serviceId: string;
-  packageId: string | null;
+  tierId: string | null;
   date: string;
   startTime: string;
   endTime: string;

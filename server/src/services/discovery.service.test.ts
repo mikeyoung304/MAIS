@@ -43,7 +43,7 @@ function createMockResearchService(overrides: Record<string, unknown> = {}) {
 
 function createMockCatalogService(overrides: Record<string, unknown> = {}) {
   return {
-    getAllPackages: vi.fn(),
+    getAllTiers: vi.fn(),
     countTiers: vi.fn(),
     ...overrides,
   };

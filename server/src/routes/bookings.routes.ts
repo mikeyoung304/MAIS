@@ -14,7 +14,7 @@ export class BookingsController {
     input: CreateCheckoutDto
   ): Promise<{ checkoutUrl: string }> {
     return this.bookingService.createCheckout(tenantId, {
-      packageId: input.packageId,
+      tierId: input.tierId,
       coupleName: input.coupleName,
       email: input.email,
       eventDate: input.eventDate,
@@ -31,7 +31,7 @@ export class BookingsController {
     // Map domain entity to DTO
     return {
       id: booking.id,
-      packageId: booking.packageId,
+      tierId: booking.tierId,
       coupleName: booking.coupleName,
       email: booking.email,
       phone: booking.phone,

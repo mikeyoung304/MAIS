@@ -23,7 +23,7 @@ import { PrismaWebhookRepository } from '../../src/adapters/prisma/webhook.repos
 import { WebhooksController } from '../../src/routes/webhooks.routes';
 import { BookingEvents } from '../../src/lib/core/events';
 import { FakeEventEmitter, buildMockConfig } from '../helpers/fakes';
-import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
+import { setupCompleteIntegrationTest, createTestSegment } from '../helpers/integration-setup';
 import {
   createCheckoutSessionCompletedEvent,
   createPaymentFailedEvent,
@@ -36,6 +36,7 @@ import type Stripe from 'stripe';
 describe.sequential('Payment Flow - End-to-End Integration', () => {
   const ctx = setupCompleteIntegrationTest('payment-flow');
   let testTenantId: string;
+  let testSegmentId: string;
   let bookingRepo: PrismaBookingRepository;
   let catalogRepo: PrismaCatalogRepository;
   let tenantRepo: PrismaTenantRepository;
@@ -45,8 +46,8 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
   let bookingService: BookingService;
   let webhooksController: WebhooksController;
   let eventEmitter: FakeEventEmitter;
-  let testPackageId: string;
-  let testPackageSlug: string;
+  let testTierId: string;
+  let testTierSlug: string;
   let testAddOnIds: string[] = [];
 
   // Mock payment provider with verification
@@ -111,6 +112,9 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     await ctx.tenants.tenantA.create();
     testTenantId = ctx.tenants.tenantA.id;
 
+    const segment = await createTestSegment(ctx.prisma, testTenantId);
+    testSegmentId = segment.id;
+
     // Update tenant with commission rate
     await ctx.prisma.tenant.update({
       where: { id: testTenantId },
@@ -142,13 +146,14 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     webhooksController = new WebhooksController(mockPaymentProvider, bookingService, webhookRepo);
 
     // Create test package
-    const pkg = ctx.factories.package.create({
+    const pkg = ctx.factories.tier.create({
       title: 'Classic Wedding Package',
       priceCents: 250000,
+      segmentId: testSegmentId,
     });
-    const createdPkg = await catalogRepo.createPackage(testTenantId, pkg);
-    testPackageId = createdPkg.id;
-    testPackageSlug = createdPkg.slug;
+    const createdPkg = await catalogRepo.createTier(testTenantId, pkg);
+    testTierId = createdPkg.id;
+    testTierSlug = createdPkg.slug;
 
     // Create test add-ons
     const addOn1 = ctx.factories.addOn.create({
@@ -162,11 +167,11 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
 
     const createdAddOn1 = await catalogRepo.createAddOn(testTenantId, {
       ...addOn1,
-      packageId: testPackageId,
+      tierId: testTierId,
     });
     const createdAddOn2 = await catalogRepo.createAddOn(testTenantId, {
       ...addOn2,
-      packageId: testPackageId,
+      tierId: testTierId,
     });
 
     testAddOnIds = [createdAddOn1.id, createdAddOn2.id];
@@ -180,7 +185,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     it('should complete flow: createCheckout → webhook → booking created', async () => {
       // Step 1: Create checkout session
       const checkoutResponse = await bookingService.createCheckout(testTenantId, {
-        packageId: testPackageId,
+        tierId: testTierId,
         eventDate: '2025-06-15',
         email: 'couple@example.com',
         coupleName: 'Jane & John',
@@ -194,7 +199,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'cs_test_payment_success',
         {
           tenantId: testTenantId,
-          packageId: testPackageId,
+          tierId: testTierId,
           eventDate: '2025-06-15',
           email: 'couple@example.com',
           coupleName: 'Jane & John',
@@ -232,7 +237,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'pi_test_failed',
         {
           tenantId: testTenantId,
-          packageId: testPackageId,
+          tierId: testTierId,
           eventDate: '2025-06-20',
           email: 'failed@example.com',
           coupleName: 'Failed Payment',
@@ -267,7 +272,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     it('should enforce idempotency: duplicate checkout request returns same URL', async () => {
       // Create checkout session twice with same data
       const input = {
-        packageId: testPackageId,
+        tierId: testTierId,
         eventDate: '2025-07-01',
         email: 'idempotent@example.com',
         coupleName: 'Idempotent Test',
@@ -292,7 +297,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'cs_test_commission',
         {
           tenantId: testTenantId,
-          packageId: testPackageId,
+          tierId: testTierId,
           eventDate: '2025-08-01',
           email: 'commission@example.com',
           coupleName: 'Commission Test',
@@ -324,7 +329,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
     it('should validate Stripe application fee matches commission amount', async () => {
       // Create checkout with commission
       const checkoutResponse = await bookingService.createCheckout(testTenantId, {
-        packageId: testPackageId,
+        tierId: testTierId,
         eventDate: '2025-08-15',
         email: 'appfee@example.com',
         coupleName: 'App Fee Test',
@@ -357,7 +362,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
 
       // Create checkout session (should use Connect)
       const checkoutResponse = await bookingService.createCheckout(testTenantId, {
-        packageId: testPackageId,
+        tierId: testTierId,
         eventDate: '2025-09-01',
         email: 'connect@example.com',
         coupleName: 'Connect Test',
@@ -371,7 +376,7 @@ describe.sequential('Payment Flow - End-to-End Integration', () => {
         'cs_test_connect',
         {
           tenantId: testTenantId,
-          packageId: testPackageId,
+          tierId: testTierId,
           eventDate: '2025-09-01',
           email: 'connect@example.com',
           coupleName: 'Connect Test',

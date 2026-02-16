@@ -165,8 +165,8 @@ export const MOCK_RESPONSES = {
   /**
    * Response that triggers check_availability tool
    */
-  checkAvailability: (packageId: string) =>
-    createToolUseResponse('check_availability', { packageId }, 'Let me check the available dates.'),
+  checkAvailability: (tierId: string) =>
+    createToolUseResponse('check_availability', { tierId }, 'Let me check the available dates.'),
 
   /**
    * Response after checking availability
@@ -179,7 +179,7 @@ export const MOCK_RESPONSES = {
    * Response that triggers book_service tool
    */
   bookService: (params: {
-    packageId: string;
+    tierId: string;
     date: string;
     customerName: string;
     customerEmail: string;

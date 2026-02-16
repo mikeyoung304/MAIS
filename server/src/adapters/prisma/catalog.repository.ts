@@ -1,19 +1,18 @@
 /**
  * Prisma Catalog Repository Adapter
+ *
+ * All queries use prisma.tier.* — Package model was dropped in Phase 3.1.
  */
 
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 import type {
   CatalogRepository,
-  CreatePackageInput,
-  UpdatePackageInput,
+  CreateTierInput,
+  UpdateTierInput,
   CreateAddOnInput,
   UpdateAddOnInput,
-  PackagePhoto,
-  PackageWithDraft,
-  UpdatePackageDraftInput,
 } from '../../lib/ports';
-import type { Package, AddOn } from '../../lib/entities';
+import type { Tier, TierPhoto, AddOn } from '../../lib/entities';
 import { DomainError } from '../../lib/errors';
 import { NotFoundError } from '../../lib/errors/http';
 
@@ -23,21 +22,21 @@ const MAX_PAGE_SIZE = 100;
 export class PrismaCatalogRepository implements CatalogRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async getAllPackages(tenantId: string, options?: { take?: number }): Promise<Package[]> {
-    const packages = await this.prisma.package.findMany({
+  async getAllTiers(tenantId: string, options?: { take?: number }): Promise<Tier[]> {
+    const tiers = await this.prisma.tier.findMany({
       where: { tenantId },
       take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       orderBy: { createdAt: 'asc' },
     });
 
-    return packages.map((pkg) => this.toDomainPackage(pkg));
+    return tiers.map((tier) => this.toDomainTier(tier));
   }
 
-  async getAllPackagesWithAddOns(
+  async getAllTiersWithAddOns(
     tenantId: string,
     options?: { take?: number }
-  ): Promise<Array<Package & { addOns: AddOn[] }>> {
-    const packages = await this.prisma.package.findMany({
+  ): Promise<Array<Tier & { addOns: AddOn[] }>> {
+    const tiers = await this.prisma.tier.findMany({
       where: { tenantId },
       include: {
         addOns: {
@@ -50,43 +49,39 @@ export class PrismaCatalogRepository implements CatalogRepository {
       orderBy: { createdAt: 'asc' },
     });
 
-    return packages.map((pkg) => ({
-      ...this.toDomainPackage(pkg),
-      addOns: pkg.addOns.map((pa) =>
+    return tiers.map((tier) => ({
+      ...this.toDomainTier(tier),
+      addOns: tier.addOns.map((ta) =>
         this.toDomainAddOn({
-          id: pa.addOn.id,
-          name: pa.addOn.name,
-          description: pa.addOn.description,
-          price: pa.addOn.price,
-          packages: [{ packageId: pkg.id }],
+          id: ta.addOn.id,
+          name: ta.addOn.name,
+          description: ta.addOn.description,
+          price: ta.addOn.price,
+          tiers: [{ tierId: tier.id }],
         })
       ),
     }));
   }
 
-  async getPackageBySlug(tenantId: string, slug: string): Promise<Package | null> {
-    const pkg = await this.prisma.package.findUnique({
+  async getTierBySlug(tenantId: string, slug: string): Promise<Tier | null> {
+    const tier = await this.prisma.tier.findUnique({
       where: { tenantId_slug: { tenantId, slug } },
     });
 
-    return pkg ? this.toDomainPackage(pkg) : null;
+    return tier ? this.toDomainTier(tier) : null;
   }
 
   /**
-   * Get package by slug with add-ons in a single query
+   * Get tier by slug with add-ons in a single query
    *
-   * PERFORMANCE FIX: Eliminates N+1 query pattern by fetching package and add-ons together.
-   * Used by onPaymentCompleted to avoid separate getPackageBySlug + getAddOnsByPackageId calls.
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param slug - Package slug identifier
-   * @returns Package with add-ons, or null if not found
+   * PERFORMANCE FIX: Eliminates N+1 query pattern by fetching tier and add-ons together.
+   * Used by onPaymentCompleted to avoid separate getTierBySlug + getAddOnsByTierId calls.
    */
-  async getPackageBySlugWithAddOns(
+  async getTierBySlugWithAddOns(
     tenantId: string,
     slug: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null> {
-    const pkg = await this.prisma.package.findUnique({
+  ): Promise<(Tier & { addOns: AddOn[] }) | null> {
+    const tier = await this.prisma.tier.findUnique({
       where: { tenantId_slug: { tenantId, slug } },
       include: {
         addOns: {
@@ -97,41 +92,41 @@ export class PrismaCatalogRepository implements CatalogRepository {
       },
     });
 
-    if (!pkg) {
+    if (!tier) {
       return null;
     }
 
     return {
-      ...this.toDomainPackage(pkg),
-      addOns: pkg.addOns.map((pa) =>
+      ...this.toDomainTier(tier),
+      addOns: tier.addOns.map((ta) =>
         this.toDomainAddOn({
-          id: pa.addOn.id,
-          name: pa.addOn.name,
-          description: pa.addOn.description,
-          price: pa.addOn.price,
-          packages: [{ packageId: pkg.id }],
+          id: ta.addOn.id,
+          name: ta.addOn.name,
+          description: ta.addOn.description,
+          price: ta.addOn.price,
+          tiers: [{ tierId: tier.id }],
         })
       ),
     };
   }
 
-  async getPackageById(tenantId: string, id: string): Promise<Package | null> {
-    const pkg = await this.prisma.package.findFirst({
+  async getTierById(tenantId: string, id: string): Promise<Tier | null> {
+    const tier = await this.prisma.tier.findFirst({
       where: { tenantId, id },
     });
 
-    return pkg ? this.toDomainPackage(pkg) : null;
+    return tier ? this.toDomainTier(tier) : null;
   }
 
   /**
-   * Get package by ID with add-ons in a single query.
-   * Used by onPaymentCompleted when we have package ID from Stripe metadata.
+   * Get tier by ID with add-ons in a single query.
+   * Used by onPaymentCompleted when we have tier ID from Stripe metadata.
    */
-  async getPackageByIdWithAddOns(
+  async getTierByIdWithAddOns(
     tenantId: string,
     id: string
-  ): Promise<(Package & { addOns: AddOn[] }) | null> {
-    const pkg = await this.prisma.package.findFirst({
+  ): Promise<(Tier & { addOns: AddOn[] }) | null> {
+    const tier = await this.prisma.tier.findFirst({
       where: { tenantId, id },
       include: {
         addOns: {
@@ -142,39 +137,39 @@ export class PrismaCatalogRepository implements CatalogRepository {
       },
     });
 
-    if (!pkg) {
+    if (!tier) {
       return null;
     }
 
     return {
-      ...this.toDomainPackage(pkg),
-      addOns: pkg.addOns.map((pa) =>
+      ...this.toDomainTier(tier),
+      addOns: tier.addOns.map((ta) =>
         this.toDomainAddOn({
-          id: pa.addOn.id,
-          name: pa.addOn.name,
-          description: pa.addOn.description,
-          price: pa.addOn.price,
-          packages: [{ packageId: pkg.id }],
+          id: ta.addOn.id,
+          name: ta.addOn.name,
+          description: ta.addOn.description,
+          price: ta.addOn.price,
+          tiers: [{ tierId: tier.id }],
         })
       ),
     };
   }
 
-  async getPackagesByIds(tenantId: string, ids: string[]): Promise<Package[]> {
-    const packages = await this.prisma.package.findMany({
+  async getTiersByIds(tenantId: string, ids: string[]): Promise<Tier[]> {
+    const tiers = await this.prisma.tier.findMany({
       where: { tenantId, id: { in: ids } },
     });
 
-    return packages.map((pkg) => this.toDomainPackage(pkg));
+    return tiers.map((tier) => this.toDomainTier(tier));
   }
 
   async getAllAddOns(tenantId: string, options?: { take?: number }): Promise<AddOn[]> {
     const addOns = await this.prisma.addOn.findMany({
       where: { tenantId },
       include: {
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -185,33 +180,33 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return addOns.map(this.toDomainAddOn);
   }
 
-  async getAddOnsByPackageId(tenantId: string, packageId: string): Promise<AddOn[]> {
-    // CRITICAL: Verify package belongs to tenant before querying add-ons
+  async getAddOnsByTierId(tenantId: string, tierId: string): Promise<AddOn[]> {
+    // CRITICAL: Verify tier belongs to tenant before querying add-ons
     // This prevents cross-tenant reference attacks where an attacker
-    // provides a packageId from another tenant
-    const pkg = await this.prisma.package.findFirst({
-      where: { tenantId, id: packageId },
+    // provides a tierId from another tenant
+    const tier = await this.prisma.tier.findFirst({
+      where: { tenantId, id: tierId },
       select: { id: true },
     });
 
-    if (!pkg) {
-      throw new NotFoundError('Package not found or unauthorized');
+    if (!tier) {
+      throw new NotFoundError('Tier not found or unauthorized');
     }
 
-    // Now safe to query add-ons - package ownership verified
+    // Now safe to query add-ons - tier ownership verified
     const addOns = await this.prisma.addOn.findMany({
       where: {
         tenantId,
-        packages: {
+        tiers: {
           some: {
-            packageId: packageId,
+            tierId: tierId,
           },
         },
       },
       include: {
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -225,9 +220,9 @@ export class PrismaCatalogRepository implements CatalogRepository {
     const addOn = await this.prisma.addOn.findFirst({
       where: { tenantId, id },
       include: {
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -240,104 +235,100 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return this.toDomainAddOn(addOn);
   }
 
-  async createPackage(tenantId: string, data: CreatePackageInput): Promise<Package> {
-    // Check for slug uniqueness within tenant - use select to minimize data transfer
-    const existing = await this.prisma.package.findUnique({
+  async createTier(tenantId: string, data: CreateTierInput): Promise<Tier> {
+    // Check for slug uniqueness within tenant
+    const existing = await this.prisma.tier.findUnique({
       where: { tenantId_slug: { tenantId, slug: data.slug } },
       select: { id: true },
     });
 
     if (existing) {
-      throw new DomainError('DUPLICATE_SLUG', `Package with slug '${data.slug}' already exists`);
+      throw new DomainError('DUPLICATE_SLUG', `Tier with slug '${data.slug}' already exists`);
     }
 
-    const pkg = await this.prisma.package.create({
+    const tier = await this.prisma.tier.create({
       data: {
         tenantId,
         slug: data.slug,
         name: data.title,
         description: data.description,
-        basePrice: data.priceCents,
-        // Tier/segment organization fields
-        segmentId: data.segmentId ?? null,
-        grouping: data.grouping ?? null,
-        groupingOrder: data.groupingOrder ?? null,
+        priceCents: data.priceCents,
+        segmentId: data.segmentId ?? '',
+        sortOrder: data.groupingOrder ?? 0,
+        features: {},
       },
     });
 
-    return this.toDomainPackage(pkg);
+    return this.toDomainTier(tier);
   }
 
-  async updatePackage(tenantId: string, id: string, data: UpdatePackageInput): Promise<Package> {
-    // Check if package exists for this tenant AND validate slug uniqueness in a single query
-    // This reduces database roundtrips from 3 queries to 1 query + 1 update
-    const existing = await this.prisma.package.findFirst({
+  async updateTier(tenantId: string, id: string, data: UpdateTierInput): Promise<Tier> {
+    const existing = await this.prisma.tier.findFirst({
       where: { tenantId, id },
       select: { id: true, slug: true },
     });
 
     if (!existing) {
-      throw new DomainError('NOT_FOUND', `Package with id '${id}' not found`);
+      throw new DomainError('NOT_FOUND', `Tier with id '${id}' not found`);
     }
 
     // If updating slug, check for uniqueness within tenant
     if (data.slug && data.slug !== existing.slug) {
-      const duplicateSlug = await this.prisma.package.findUnique({
+      const duplicateSlug = await this.prisma.tier.findUnique({
         where: { tenantId_slug: { tenantId, slug: data.slug } },
         select: { id: true },
       });
 
       if (duplicateSlug) {
-        throw new DomainError('DUPLICATE_SLUG', `Package with slug '${data.slug}' already exists`);
+        throw new DomainError('DUPLICATE_SLUG', `Tier with slug '${data.slug}' already exists`);
       }
     }
 
-    const pkg = await this.prisma.package.update({
+    // Build update data as TierUncheckedUpdateInput to avoid Prisma 7
+    // discriminated union conflict between checked/unchecked update paths
+    const updateData: Prisma.TierUncheckedUpdateInput = {};
+    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.title !== undefined) updateData.name = data.title;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.priceCents !== undefined) updateData.priceCents = data.priceCents;
+    if (data.photos !== undefined)
+      updateData.photos = data.photos as unknown as Prisma.InputJsonValue;
+    if (data.segmentId !== undefined && data.segmentId !== null)
+      updateData.segmentId = data.segmentId;
+    if (data.groupingOrder !== undefined) updateData.sortOrder = data.groupingOrder;
+
+    const tier = await this.prisma.tier.update({
       where: { id, tenantId },
-      data: {
-        ...(data.slug !== undefined && { slug: data.slug }),
-        ...(data.title !== undefined && { name: data.title }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.priceCents !== undefined && { basePrice: data.priceCents }),
-        ...(data.photos !== undefined && {
-          photos: data.photos as unknown as Prisma.InputJsonValue,
-        }),
-        // Tier/segment organization fields
-        ...(data.segmentId !== undefined && { segmentId: data.segmentId }),
-        ...(data.grouping !== undefined && { grouping: data.grouping }),
-        ...(data.groupingOrder !== undefined && { groupingOrder: data.groupingOrder }),
-      },
+      data: updateData,
     });
 
-    return this.toDomainPackage(pkg);
+    return this.toDomainTier(tier);
   }
 
-  async deletePackage(tenantId: string, id: string): Promise<void> {
-    // Check if package exists for this tenant - optimize with select
-    const existing = await this.prisma.package.findFirst({
+  async deleteTier(tenantId: string, id: string): Promise<void> {
+    const existing = await this.prisma.tier.findFirst({
       where: { tenantId, id },
       select: { id: true },
     });
 
     if (!existing) {
-      throw new DomainError('NOT_FOUND', `Package with id '${id}' not found`);
+      throw new DomainError('NOT_FOUND', `Tier with id '${id}' not found`);
     }
 
-    // Prisma will cascade delete add-ons automatically
-    await this.prisma.package.delete({
+    await this.prisma.tier.delete({
       where: { id, tenantId },
     });
   }
 
   async createAddOn(tenantId: string, data: CreateAddOnInput): Promise<AddOn> {
-    // Verify package exists for this tenant - optimize with select
-    const pkg = await this.prisma.package.findFirst({
-      where: { tenantId, id: data.packageId },
+    // Verify tier exists for this tenant
+    const tier = await this.prisma.tier.findFirst({
+      where: { tenantId, id: data.tierId },
       select: { id: true },
     });
 
-    if (!pkg) {
-      throw new DomainError('NOT_FOUND', `Package with id '${data.packageId}' not found`);
+    if (!tier) {
+      throw new DomainError('NOT_FOUND', `Tier with id '${data.tierId}' not found`);
     }
 
     const addOn = await this.prisma.addOn.create({
@@ -346,16 +337,16 @@ export class PrismaCatalogRepository implements CatalogRepository {
         slug: `${data.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
         name: data.title,
         price: data.priceCents,
-        packages: {
+        tiers: {
           create: {
-            packageId: data.packageId,
+            tierId: data.tierId,
           },
         },
       },
       include: {
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -365,14 +356,13 @@ export class PrismaCatalogRepository implements CatalogRepository {
   }
 
   async updateAddOn(tenantId: string, id: string, data: UpdateAddOnInput): Promise<AddOn> {
-    // Check if add-on exists for this tenant - optimize with select
     const existing = await this.prisma.addOn.findFirst({
       where: { tenantId, id },
       select: {
         id: true,
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -382,15 +372,15 @@ export class PrismaCatalogRepository implements CatalogRepository {
       throw new DomainError('NOT_FOUND', `AddOn with id '${id}' not found`);
     }
 
-    // If updating packageId, verify new package exists for this tenant - optimize with select
-    if (data.packageId && data.packageId !== existing.packages[0]?.packageId) {
-      const pkg = await this.prisma.package.findFirst({
-        where: { tenantId, id: data.packageId },
+    // If updating tierId, verify new tier exists for this tenant
+    if (data.tierId && data.tierId !== existing.tiers[0]?.tierId) {
+      const tier = await this.prisma.tier.findFirst({
+        where: { tenantId, id: data.tierId },
         select: { id: true },
       });
 
-      if (!pkg) {
-        throw new DomainError('NOT_FOUND', `Package with id '${data.packageId}' not found`);
+      if (!tier) {
+        throw new DomainError('NOT_FOUND', `Tier with id '${data.tierId}' not found`);
       }
     }
 
@@ -399,19 +389,19 @@ export class PrismaCatalogRepository implements CatalogRepository {
       data: {
         ...(data.title !== undefined && { name: data.title }),
         ...(data.priceCents !== undefined && { price: data.priceCents }),
-        ...(data.packageId !== undefined && {
-          packages: {
+        ...(data.tierId !== undefined && {
+          tiers: {
             deleteMany: {},
             create: {
-              packageId: data.packageId,
+              tierId: data.tierId,
             },
           },
         }),
       },
       include: {
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -421,7 +411,6 @@ export class PrismaCatalogRepository implements CatalogRepository {
   }
 
   async deleteAddOn(tenantId: string, id: string): Promise<void> {
-    // Check if add-on exists for this tenant - optimize with select
     const existing = await this.prisma.addOn.findFirst({
       where: { tenantId, id },
       select: { id: true },
@@ -437,50 +426,40 @@ export class PrismaCatalogRepository implements CatalogRepository {
   }
 
   /**
-   * Get packages for a specific segment
+   * Get tiers for a specific segment
    *
    * MULTI-TENANT: Scoped by tenantId and segmentId
-   * Used for segment landing pages
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param segmentId - Segment ID to filter packages
-   * @returns Array of packages ordered by groupingOrder then createdAt
    */
-  async getPackagesBySegment(
+  async getTiersBySegment(
     tenantId: string,
     segmentId: string,
     options?: { take?: number }
-  ): Promise<Package[]> {
-    const packages = await this.prisma.package.findMany({
+  ): Promise<Tier[]> {
+    const tiers = await this.prisma.tier.findMany({
       where: {
         tenantId,
         segmentId,
         active: true,
       },
       take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
-      orderBy: [{ groupingOrder: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    return packages.map((pkg) => this.toDomainPackage(pkg));
+    return tiers.map((tier) => this.toDomainTier(tier));
   }
 
   /**
-   * Get packages with add-ons for a specific segment
+   * Get tiers with add-ons for a specific segment
    *
    * MULTI-TENANT: Scoped by tenantId and segmentId
-   * Returns packages with both segment-specific and global add-ons
-   * Used for segment landing pages
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param segmentId - Segment ID to filter packages
-   * @returns Array of packages with add-ons, ordered by grouping
+   * Returns tiers with both segment-specific and global add-ons
    */
-  async getPackagesBySegmentWithAddOns(
+  async getTiersBySegmentWithAddOns(
     tenantId: string,
     segmentId: string,
     options?: { take?: number }
-  ): Promise<Array<Package & { addOns: AddOn[] }>> {
-    const packages = await this.prisma.package.findMany({
+  ): Promise<Array<Tier & { addOns: AddOn[] }>> {
+    const tiers = await this.prisma.tier.findMany({
       where: {
         tenantId,
         segmentId,
@@ -494,25 +473,23 @@ export class PrismaCatalogRepository implements CatalogRepository {
         },
       },
       take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
-      orderBy: [{ groupingOrder: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    // Filter add-ons to include only those that are segment-specific or global
-    return packages.map((pkg) => ({
-      ...this.toDomainPackage(pkg),
-      addOns: pkg.addOns
-        .filter((pa: any) => {
-          // Include add-ons that are either segment-specific OR global (null segmentId)
-          const addOn = pa.addOn;
+    return tiers.map((tier) => ({
+      ...this.toDomainTier(tier),
+      addOns: tier.addOns
+        .filter((ta: any) => {
+          const addOn = ta.addOn;
           return addOn.active && (addOn.segmentId === segmentId || addOn.segmentId === null);
         })
-        .map((pa: any) =>
+        .map((ta: any) =>
           this.toDomainAddOn({
-            id: pa.addOn.id,
-            name: pa.addOn.name,
-            description: pa.addOn.description,
-            price: pa.addOn.price,
-            packages: [{ packageId: pkg.id }],
+            id: ta.addOn.id,
+            name: ta.addOn.name,
+            description: ta.addOn.description,
+            price: ta.addOn.price,
+            tiers: [{ tierId: tier.id }],
           })
         ),
     }));
@@ -521,15 +498,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
   /**
    * Get add-ons available for a segment
    *
-   * Returns both:
-   * - Add-ons scoped to this specific segment (segmentId = specified)
-   * - Global add-ons available to all segments (segmentId = null)
-   *
-   * Used for segment landing pages and package detail pages
-   *
-   * @param tenantId - Tenant ID for isolation
-   * @param segmentId - Segment ID to filter add-ons
-   * @returns Array of add-ons ordered by createdAt
+   * Returns both segment-specific and global add-ons
    */
   async getAddOnsForSegment(
     tenantId: string,
@@ -539,14 +508,13 @@ export class PrismaCatalogRepository implements CatalogRepository {
     const addOns = await this.prisma.addOn.findMany({
       where: {
         tenantId,
-        // Include add-ons that are either segment-specific OR global
         OR: [{ segmentId }, { segmentId: null }],
         active: true,
       },
       include: {
-        packages: {
+        tiers: {
           select: {
-            packageId: true,
+            tierId: true,
           },
         },
       },
@@ -557,182 +525,47 @@ export class PrismaCatalogRepository implements CatalogRepository {
     return addOns.map(this.toDomainAddOn);
   }
 
-  // ============================================================================
-  // DRAFT METHODS (Visual Editor)
-  // ============================================================================
-
-  /**
-   * Get all packages with draft fields for visual editor
-   */
-  async getAllPackagesWithDrafts(
-    tenantId: string,
-    options?: { take?: number }
-  ): Promise<PackageWithDraft[]> {
-    const packages = await this.prisma.package.findMany({
-      where: { tenantId },
-      take: Math.min(options?.take ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
-      orderBy: { createdAt: 'asc' },
-    });
-
-    return packages.map((pkg) => this.toDomainPackageWithDraft(pkg));
-  }
-
-  /**
-   * Update draft fields for a package (autosave)
-   */
-  async updateDraft(
-    tenantId: string,
-    packageId: string,
-    draft: UpdatePackageDraftInput
-  ): Promise<PackageWithDraft> {
-    const pkg = await this.prisma.package.update({
-      where: { id: packageId, tenantId },
-      data: {
-        ...(draft.title !== undefined && { draftTitle: draft.title }),
-        ...(draft.description !== undefined && { draftDescription: draft.description }),
-        ...(draft.priceCents !== undefined && { draftPriceCents: draft.priceCents }),
-        ...(draft.photos !== undefined && {
-          draftPhotos: draft.photos as unknown as Prisma.InputJsonValue,
-        }),
-        hasDraft: true,
-        draftUpdatedAt: new Date(),
-      },
-    });
-
-    return this.toDomainPackageWithDraft(pkg);
-  }
-
-  /**
-   * Publish all drafts to live values atomically
-   */
-  async publishDrafts(tenantId: string, packageIds?: string[]): Promise<Package[]> {
-    // Get packages with drafts
-    const where: Prisma.PackageWhereInput = {
-      tenantId,
-      hasDraft: true,
-      ...(packageIds && { id: { in: packageIds } }),
-    };
-
-    const packagesWithDrafts = await this.prisma.package.findMany({ where });
-
-    if (packagesWithDrafts.length === 0) {
-      return [];
-    }
-
-    // Apply drafts to live fields in a transaction
-    // IMPORTANT: Use explicit null checks (not ??) to preserve intentional field clearing
-    // When draftField is "" (empty string), we WANT to apply it, not fall back to live value
-    // nullish coalescing (??) treats empty strings correctly, but explicit checks are clearer
-    const publishedPackages = await this.prisma.$transaction(
-      packagesWithDrafts.map((pkg) =>
-        this.prisma.package.update({
-          where: { id: pkg.id, tenantId },
-          data: {
-            // Apply draft values - use draft if edited (not null), else keep current live value
-            // Empty strings are valid edits and should NOT fall back to live values
-            name: pkg.draftTitle !== null ? pkg.draftTitle : pkg.name,
-            description: pkg.draftDescription !== null ? pkg.draftDescription : pkg.description,
-            basePrice: pkg.draftPriceCents !== null ? pkg.draftPriceCents : pkg.basePrice,
-            photos:
-              pkg.draftPhotos !== null
-                ? (pkg.draftPhotos as Prisma.InputJsonValue)
-                : (pkg.photos as Prisma.InputJsonValue),
-            // Clear all draft fields
-            draftTitle: null,
-            draftDescription: null,
-            draftPriceCents: null,
-            draftPhotos: Prisma.JsonNull,
-            hasDraft: false,
-            draftUpdatedAt: null,
-          },
-        })
-      )
-    );
-
-    return publishedPackages.map((pkg) => this.toDomainPackage(pkg));
-  }
-
-  /**
-   * Discard all drafts without publishing
-   */
-  async discardDrafts(tenantId: string, packageIds?: string[]): Promise<number> {
-    const where: Prisma.PackageWhereInput = {
-      tenantId,
-      hasDraft: true,
-      ...(packageIds && { id: { in: packageIds } }),
-    };
-
-    const result = await this.prisma.package.updateMany({
-      where,
-      data: {
-        draftTitle: null,
-        draftDescription: null,
-        draftPriceCents: null,
-        draftPhotos: Prisma.JsonNull,
-        hasDraft: false,
-        draftUpdatedAt: null,
-      },
-    });
-
-    return result.count;
-  }
-
-  /**
-   * Count packages with unpublished drafts
-   */
-  async countDrafts(tenantId: string): Promise<number> {
-    return this.prisma.package.count({
-      where: { tenantId, hasDraft: true },
-    });
-  }
-
   // Mappers
-  private toDomainPackage(pkg: {
+  private toDomainTier(tier: {
     id: string;
     tenantId: string;
     slug: string;
     name: string;
     description: string | null;
-    basePrice: number;
+    priceCents: number;
     active: boolean;
     segmentId?: string | null;
-    grouping?: string | null;
-    groupingOrder?: number | null;
+    sortOrder?: number | null;
     photos?: Prisma.JsonValue;
     bookingType?: 'DATE' | 'TIMESLOT';
-  }): Package {
+  }): Tier {
     return {
-      id: pkg.id,
-      tenantId: pkg.tenantId,
-      slug: pkg.slug,
-      title: pkg.name,
-      description: pkg.description || '',
-      priceCents: pkg.basePrice,
+      id: tier.id,
+      tenantId: tier.tenantId,
+      slug: tier.slug,
+      title: tier.name,
+      description: tier.description || '',
+      priceCents: tier.priceCents,
       photoUrl: undefined,
-      photos: this.parsePhotosJson(pkg.photos),
-      active: pkg.active,
-      segmentId: pkg.segmentId,
-      grouping: pkg.grouping,
-      groupingOrder: pkg.groupingOrder,
-      bookingType: pkg.bookingType || 'DATE',
+      photos: this.parsePhotosJson(tier.photos),
+      active: tier.active,
+      segmentId: tier.segmentId,
+      grouping: null,
+      groupingOrder: tier.sortOrder,
+      bookingType: tier.bookingType || 'DATE',
     };
   }
 
   /**
-   * Safely parse photos JSON field which may be:
-   * - An actual array (from Prisma JSON deserialization)
-   * - A JSON string (from default value "[]" or legacy data)
-   * - null/undefined
+   * Safely parse photos JSON field
    */
-  private parsePhotosJson(photos: Prisma.JsonValue | undefined): PackagePhoto[] {
+  private parsePhotosJson(photos: Prisma.JsonValue | undefined): TierPhoto[] {
     if (!photos) return [];
 
-    // If it's already an array, use it directly
     if (Array.isArray(photos)) {
-      return photos as unknown as PackagePhoto[];
+      return photos as unknown as TierPhoto[];
     }
 
-    // If it's a string, try to parse it
     if (typeof photos === 'string') {
       try {
         const parsed = JSON.parse(photos);
@@ -750,66 +583,19 @@ export class PrismaCatalogRepository implements CatalogRepository {
     name: string;
     description?: string | null;
     price: number;
-    packages: { packageId: string }[];
+    tiers: { tierId: string }[];
   }): AddOn {
-    if (addOn.packages.length === 0 || !addOn.packages[0]?.packageId) {
-      throw new Error(`AddOn ${addOn.id} has no associated package`);
+    if (addOn.tiers.length === 0 || !addOn.tiers[0]?.tierId) {
+      throw new Error(`AddOn ${addOn.id} has no associated tier`);
     }
 
     return {
       id: addOn.id,
-      packageId: addOn.packages[0].packageId,
+      tierId: addOn.tiers[0].tierId,
       title: addOn.name,
       description: addOn.description ?? null,
       priceCents: addOn.price,
       photoUrl: undefined,
-    };
-  }
-
-  /**
-   * Map Prisma package to domain PackageWithDraft
-   */
-  private toDomainPackageWithDraft(pkg: {
-    id: string;
-    tenantId: string;
-    slug: string;
-    name: string;
-    description: string | null;
-    basePrice: number;
-    active: boolean;
-    segmentId: string | null;
-    grouping: string | null;
-    groupingOrder: number | null;
-    photos: Prisma.JsonValue;
-    draftTitle: string | null;
-    draftDescription: string | null;
-    draftPriceCents: number | null;
-    draftPhotos: Prisma.JsonValue;
-    hasDraft: boolean;
-    draftUpdatedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): PackageWithDraft {
-    return {
-      id: pkg.id,
-      tenantId: pkg.tenantId,
-      slug: pkg.slug,
-      name: pkg.name,
-      description: pkg.description,
-      basePrice: pkg.basePrice,
-      active: pkg.active,
-      segmentId: pkg.segmentId,
-      grouping: pkg.grouping,
-      groupingOrder: pkg.groupingOrder,
-      photos: this.parsePhotosJson(pkg.photos),
-      draftTitle: pkg.draftTitle,
-      draftDescription: pkg.draftDescription,
-      draftPriceCents: pkg.draftPriceCents,
-      draftPhotos: pkg.draftPhotos ? this.parsePhotosJson(pkg.draftPhotos) : null,
-      hasDraft: pkg.hasDraft,
-      draftUpdatedAt: pkg.draftUpdatedAt,
-      createdAt: pkg.createdAt,
-      updatedAt: pkg.updatedAt,
     };
   }
 }

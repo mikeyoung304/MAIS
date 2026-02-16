@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
  * - Grid layout responsiveness
  *
  * Note: The E2E test tenant (handled-e2e) is configured in apps/web/.env.local
- * and has minimal seed data (starter/growth packages, no segments).
+ * and has minimal seed data (starter/growth tiers, no segments).
  */
 test.describe('Storefront Navigation', () => {
   test.describe('Segment Navigation Logic', () => {
@@ -27,8 +27,8 @@ test.describe('Storefront Navigation', () => {
       await page.goto('/tiers');
       await page.waitForLoadState('networkidle');
 
-      // Should see tier cards (packages from E2E seed)
-      // E2E seed creates starter and growth packages
+      // Should see tier cards (tiers from E2E seed)
+      // E2E seed creates starter and growth tiers
       const tierCards = page.locator('[data-testid^="tier-card-"]');
 
       // Wait for cards to load
@@ -87,17 +87,17 @@ test.describe('Storefront Navigation', () => {
   });
 
   test.describe('Tier Display', () => {
-    test('tier cards show package information', async ({ page }) => {
+    test('tier cards show tier information', async ({ page }) => {
       await page.goto('/tiers');
       await page.waitForLoadState('networkidle');
 
       const firstTierCard = page.locator('[data-testid^="tier-card-"]').first();
       await expect(firstTierCard).toBeVisible({ timeout: 10000 });
 
-      // Card should contain package name (from E2E seed)
-      // E2E seed creates "Starter Package" and "Growth Package"
-      const hasPackageName = await firstTierCard.locator('text=/Starter|Growth/i').isVisible();
-      expect(hasPackageName).toBe(true);
+      // Card should contain tier name (from E2E seed)
+      // E2E seed creates "Starter" and "Growth" tiers
+      const hasTierName = await firstTierCard.locator('text=/Starter|Growth/i').isVisible();
+      expect(hasTierName).toBe(true);
     });
 
     test('tier cards display prices', async ({ page }) => {
@@ -108,7 +108,7 @@ test.describe('Storefront Navigation', () => {
       await expect(firstTierCard).toBeVisible({ timeout: 10000 });
 
       // Should show price (formatted as currency)
-      // E2E seed prices: $250 starter, $500 growth
+      // E2E seed prices: $250 starter tier, $500 growth tier
       const priceElement = firstTierCard.locator('text=/\\$/');
       await expect(priceElement).toBeVisible();
     });
@@ -163,7 +163,7 @@ test.describe('Storefront Navigation', () => {
 });
 
 test.describe('Tier Detail Page', () => {
-  test('displays package details', async ({ page }) => {
+  test('displays tier details', async ({ page }) => {
     // Navigate to tiers first
     await page.goto('/tiers');
     await page.waitForLoadState('networkidle');
@@ -178,7 +178,7 @@ test.describe('Tier Detail Page', () => {
     // Wait for detail page to load
     await page.waitForLoadState('networkidle');
 
-    // Should show package title
+    // Should show tier title
     const heading = page.locator('h1');
     await expect(heading).toBeVisible();
 
@@ -241,17 +241,17 @@ test.describe('Tier Detail Page', () => {
 
 test.describe('Responsive Layout', () => {
   test('single tier shows centered layout', async ({ page }) => {
-    // Mock API to return single package
-    await page.route('**/v1/packages*', (route) =>
+    // Mock API to return single tier
+    await page.route('**/v1/tiers*', (route) =>
       route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify([
           {
             id: '1',
-            slug: 'single-package',
-            title: 'Single Package',
-            description: 'Only one package',
+            slug: 'single-tier',
+            title: 'Single Tier',
+            description: 'Only one tier',
             priceCents: 50000,
             photos: [],
           },
@@ -342,26 +342,26 @@ test.describe('Legacy Tier URL Redirects', () => {
 
 test.describe('Image Handling', () => {
   test('shows fallback gradient when no image URL', async ({ page }) => {
-    // Mock API to return package without photos
-    await page.route('**/v1/packages*', (route) =>
+    // Mock API to return tier without photos
+    await page.route('**/v1/tiers*', (route) =>
       route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify([
           {
             id: '1',
-            slug: 'no-image-package',
-            title: 'No Image Package',
-            description: 'Package without images',
+            slug: 'no-image-tier',
+            title: 'No Image Tier',
+            description: 'Tier without images',
             priceCents: 50000,
             photos: [],
             photoUrl: null,
           },
           {
             id: '2',
-            slug: 'another-package',
-            title: 'Another Package',
-            description: 'Second package',
+            slug: 'another-tier',
+            title: 'Another Tier',
+            description: 'Second tier',
             priceCents: 75000,
             photos: [],
             photoUrl: null,
@@ -383,17 +383,17 @@ test.describe('Image Handling', () => {
   });
 
   test('handles broken image URL gracefully', async ({ page }) => {
-    // Mock API to return package with broken image URL
-    await page.route('**/v1/packages*', (route) =>
+    // Mock API to return tier with broken image URL
+    await page.route('**/v1/tiers*', (route) =>
       route.fulfill({
         status: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify([
           {
             id: '1',
-            slug: 'broken-image-package',
-            title: 'Broken Image Package',
-            description: 'Package with broken image',
+            slug: 'broken-image-tier',
+            title: 'Broken Image Tier',
+            description: 'Tier with broken image',
             priceCents: 50000,
             photos: [{ url: 'https://invalid-url-that-will-404.com/image.jpg' }],
           },

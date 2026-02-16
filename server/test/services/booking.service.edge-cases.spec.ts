@@ -14,7 +14,7 @@ import {
   FakeCatalogRepository,
   FakeEventEmitter,
   FakePaymentProvider,
-  buildPackage,
+  buildTier,
   buildMockConfig,
 } from '../helpers/fakes';
 import { NotFoundError } from '../../src/lib/errors';
@@ -77,8 +77,8 @@ describe('BookingService - Edge Cases', () => {
   describe('Error Handling', () => {
     it('createCheckout - handles tenant not found', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       // Mock tenant not found
       tenantRepo.findById.mockResolvedValue(null);
@@ -86,7 +86,7 @@ describe('BookingService - Edge Cases', () => {
       // Act & Assert
       await expect(
         service.createCheckout('nonexistent_tenant', {
-          packageId: 'basic',
+          tierId: 'basic',
           coupleName: 'John & Jane',
           email: 'couple@example.com',
           eventDate: '2025-07-01',
@@ -96,7 +96,7 @@ describe('BookingService - Edge Cases', () => {
       // P1-172 FIX: Generic error message to prevent tenant ID disclosure
       await expect(
         service.createCheckout('nonexistent_tenant', {
-          packageId: 'basic',
+          tierId: 'basic',
           coupleName: 'John & Jane',
           email: 'couple@example.com',
           eventDate: '2025-07-01',
@@ -116,7 +116,7 @@ describe('BookingService - Edge Cases', () => {
       // Act & Assert
       await expect(
         service.createCheckout('tenant_123', {
-          packageId: 'nonexistent_package',
+          tierId: 'nonexistent_package',
           coupleName: 'John & Jane',
           email: 'couple@example.com',
           eventDate: '2025-07-01',
@@ -126,7 +126,7 @@ describe('BookingService - Edge Cases', () => {
       // P2-349: Error message now generic to prevent ID enumeration
       await expect(
         service.createCheckout('tenant_123', {
-          packageId: 'nonexistent_package',
+          tierId: 'nonexistent_package',
           coupleName: 'John & Jane',
           email: 'couple@example.com',
           eventDate: '2025-07-01',
@@ -138,8 +138,8 @@ describe('BookingService - Edge Cases', () => {
   describe('Idempotency Integration', () => {
     it('createCheckout - returns cached response on duplicate', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       tenantRepo.findById.mockResolvedValue({
         id: 'tenant_123',
@@ -160,7 +160,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_123', {
-        packageId: 'pkg_1', // Use package ID, not slug
+        tierId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -177,8 +177,8 @@ describe('BookingService - Edge Cases', () => {
 
     it('createCheckout - handles race condition in cache check', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       tenantRepo.findById.mockResolvedValue({
         id: 'tenant_123',
@@ -206,7 +206,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_123', {
-        packageId: 'pkg_1', // Use package ID, not slug
+        tierId: 'pkg_1', // Use package ID, not slug
         coupleName: 'John & Jane',
         email: 'couple@example.com',
         eventDate: '2025-07-01',
@@ -227,8 +227,8 @@ describe('BookingService - Edge Cases', () => {
   describe('Stripe Connect Branching', () => {
     it('createCheckout - uses Connect API when tenant onboarded', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'premium', priceCents: 200000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'premium', priceCents: 200000 });
+      catalogRepo.addTier(pkg);
 
       // Mock tenant with Stripe Connect account (onboarded)
       tenantRepo.findById.mockResolvedValue({
@@ -244,7 +244,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_connect', {
-        packageId: 'pkg_1', // Use package ID, not slug
+        tierId: 'pkg_1', // Use package ID, not slug
         coupleName: 'Jane & Bob',
         email: 'couple@example.com',
         eventDate: '2025-08-15',
@@ -268,8 +268,8 @@ describe('BookingService - Edge Cases', () => {
 
     it('createCheckout - uses standard API when tenant not onboarded', async () => {
       // Arrange
-      const pkg = buildPackage({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
-      catalogRepo.addPackage(pkg);
+      const pkg = buildTier({ id: 'pkg_1', slug: 'basic', priceCents: 100000 });
+      catalogRepo.addTier(pkg);
 
       // Mock tenant without Stripe Connect (not onboarded)
       tenantRepo.findById.mockResolvedValue({
@@ -285,7 +285,7 @@ describe('BookingService - Edge Cases', () => {
 
       // Act
       const result = await service.createCheckout('tenant_standard', {
-        packageId: 'pkg_1', // Use package ID, not slug
+        tierId: 'pkg_1', // Use package ID, not slug
         coupleName: 'Alice & Charlie',
         email: 'couple@example.com',
         eventDate: '2025-09-20',
@@ -298,7 +298,7 @@ describe('BookingService - Edge Cases', () => {
           email: 'couple@example.com',
           metadata: expect.objectContaining({
             tenantId: 'tenant_standard',
-            packageId: 'pkg_1',
+            tierId: 'pkg_1',
           }),
           applicationFeeAmount: 12000,
           idempotencyKey: 'checkout_test_key_123',

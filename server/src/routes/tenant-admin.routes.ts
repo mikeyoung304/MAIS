@@ -13,7 +13,6 @@ import type { TenantAdminDeps } from './tenant-admin-shared';
 
 // Domain-specific route registrars
 import { registerBrandingRoutes, TenantAdminController } from './tenant-admin-branding.routes';
-import { registerPackageRoutes } from './tenant-admin-packages.routes';
 import { registerBlackoutRoutes } from './tenant-admin-blackouts.routes';
 import { registerBookingRoutes } from './tenant-admin-bookings.routes';
 import { registerAddonRoutes } from './tenant-admin-addons.routes';
@@ -21,6 +20,7 @@ import { registerUploadRoutes } from './tenant-admin-uploads.routes';
 import { registerTrialRoutes } from './tenant-admin-trial.routes';
 import { registerSectionRoutes } from './tenant-admin-sections.routes';
 import { registerPreviewRoutes } from './tenant-admin-preview.routes';
+import { registerTierPhotoRoutes } from './tenant-admin-tier-photos.routes';
 
 // Re-export shared types for external consumers
 export type { TenantAdminDeps } from './tenant-admin-shared';
@@ -36,7 +36,6 @@ export function createTenantAdminRoutes(deps: TenantAdminDeps): Router {
 
   // Register all domain-specific routes
   registerBrandingRoutes(router, deps);
-  registerPackageRoutes(router, deps);
   registerBlackoutRoutes(router, deps);
   registerBookingRoutes(router, deps);
   registerAddonRoutes(router, deps);
@@ -44,6 +43,7 @@ export function createTenantAdminRoutes(deps: TenantAdminDeps): Router {
   registerTrialRoutes(router, deps);
   registerSectionRoutes(router, deps);
   registerPreviewRoutes(router, deps);
+  registerTierPhotoRoutes(router, deps);
 
   // ============================================================================
   // Profile Endpoint (kept in aggregator — small, doesn't fit a domain)

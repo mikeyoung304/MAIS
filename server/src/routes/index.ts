@@ -6,13 +6,11 @@ import type { Application } from 'express';
 import type { Config } from '../lib/core/config';
 import { createExpressEndpoints, initServer } from '@ts-rest/express';
 import { Contracts } from '@macon/contracts';
-import type { PackagesController } from './packages.routes';
 import type { AvailabilityController } from './availability.routes';
 import type { BookingsController } from './bookings.routes';
 import type { WebhooksController } from './webhooks.routes';
 import type { AdminController } from './admin.routes';
 import type { BlackoutsController } from './blackouts.routes';
-import type { AdminPackagesController } from './admin-packages.routes';
 import type { TenantController } from './tenant.routes';
 import type { PlatformAdminController } from '../controllers/platform-admin.controller';
 import { createAuthMiddleware } from '../middleware/auth';
@@ -90,7 +88,6 @@ import { logger } from '../lib/core/logger';
 import type { StripeConnectService } from '../services/stripe-connect.service';
 import type { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';
-import type { PackageDraftService } from '../services/package-draft.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 import type { ReminderService } from '../services/reminder.service';
 import type { SectionContentService } from '../services/section-content.service';
@@ -102,13 +99,11 @@ import type { ResearchService } from '../services/research.service';
 import { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 
 interface Controllers {
-  packages: PackagesController;
   availability: AvailabilityController;
   bookings: BookingsController;
   webhooks: WebhooksController;
   admin: AdminController;
   blackouts: BlackoutsController;
-  adminPackages: AdminPackagesController;
   platformAdmin: PlatformAdminController;
   tenant: TenantController;
 }
@@ -121,7 +116,6 @@ interface Services {
   segment: SegmentService;
   stripeConnect?: StripeConnectService;
   schedulingAvailability?: SchedulingAvailabilityService;
-  packageDraft?: PackageDraftService;
   tenantOnboarding?: TenantOnboardingService;
   tenantProvisioning?: TenantProvisioningService;
   reminder?: ReminderService;
@@ -179,16 +173,18 @@ export function createV1Router(
   createExpressEndpoints(
     Contracts,
     s.router(Contracts, {
-      getPackages: async ({ req }: { req: any }) => {
+      getTiers: async ({ req }: { req: any }) => {
         const tenantId = getTenantId(req as TenantRequest);
-        const data = await controllers.packages.getPackages(tenantId);
-        return { status: 200 as const, body: data };
+        if (!services) throw new Error('Services not initialized');
+        const tiers = await services.catalog.getAllTiers(tenantId);
+        return { status: 200 as const, body: tiers };
       },
 
-      getPackageBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
+      getTierBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
         const tenantId = getTenantId(req as TenantRequest);
-        const data = await controllers.packages.getPackageBySlug(tenantId, params.slug);
-        return { status: 200 as const, body: data };
+        if (!services) throw new Error('Services not initialized');
+        const tier = await services.catalog.getTierBySlug(tenantId, params.slug);
+        return { status: 200 as const, body: tier };
       },
 
       getAvailability: async ({ req, query }: { req: any; query: { date: string } }) => {
@@ -219,7 +215,7 @@ export function createV1Router(
       }: {
         req: any;
         body: {
-          packageId: string;
+          tierId: string;
           eventDate: string;
           coupleName: string;
           email: string;
@@ -316,56 +312,29 @@ export function createV1Router(
         return { status: 200 as const, body: data };
       },
 
-      adminCreatePackage: async ({
-        body,
-      }: {
-        body: {
-          slug: string;
-          title: string;
-          description: string;
-          priceCents: number;
-          photoUrl?: string;
-        };
-      }) => {
-        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-        const data = await controllers.adminPackages.createPackage(body);
-        return { status: 200 as const, body: data };
-      },
-
-      adminUpdatePackage: async ({
-        params,
-        body,
-      }: {
-        params: { id: string };
-        body: {
-          slug?: string;
-          title?: string;
-          description?: string;
-          priceCents?: number;
-          photoUrl?: string;
-        };
-      }) => {
-        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-        const data = await controllers.adminPackages.updatePackage(params.id, body);
-        return { status: 200 as const, body: data };
-      },
-
-      adminDeletePackage: async ({ params }: { params: { id: string } }) => {
-        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-        await controllers.adminPackages.deletePackage(params.id);
-        return { status: 204 as const, body: undefined };
-      },
-
       adminCreateAddOn: async ({
         params,
         body,
       }: {
-        params: { packageId: string };
-        body: { packageId: string; title: string; priceCents: number; photoUrl?: string };
+        params: { tierId: string };
+        body: { tierId: string; title: string; priceCents: number; photoUrl?: string };
       }) => {
-        // Auth middleware applied via app.use('/v1/admin/packages', authMiddleware)
-        const data = await controllers.adminPackages.createAddOn(params.packageId, body);
-        return { status: 200 as const, body: data };
+        // Auth middleware applied via app.use('/v1/admin/tiers', authMiddleware)
+        if (!services) throw new Error('Services not initialized');
+        const addOn = await services.catalog.createAddOn('tenant_default_legacy', {
+          ...body,
+          tierId: params.tierId,
+        });
+        return {
+          status: 200 as const,
+          body: {
+            id: addOn.id,
+            tierId: addOn.tierId,
+            title: addOn.title,
+            priceCents: addOn.priceCents,
+            photoUrl: addOn.photoUrl,
+          },
+        };
       },
 
       adminUpdateAddOn: async ({
@@ -373,16 +342,27 @@ export function createV1Router(
         body,
       }: {
         params: { id: string };
-        body: { packageId?: string; title?: string; priceCents?: number; photoUrl?: string };
+        body: { tierId?: string; title?: string; priceCents?: number; photoUrl?: string };
       }) => {
         // Auth middleware applied via app.use('/v1/admin/addons', authMiddleware)
-        const data = await controllers.adminPackages.updateAddOn(params.id, body);
-        return { status: 200 as const, body: data };
+        if (!services) throw new Error('Services not initialized');
+        const addOn = await services.catalog.updateAddOn('tenant_default_legacy', params.id, body);
+        return {
+          status: 200 as const,
+          body: {
+            id: addOn.id,
+            tierId: addOn.tierId,
+            title: addOn.title,
+            priceCents: addOn.priceCents,
+            photoUrl: addOn.photoUrl,
+          },
+        };
       },
 
       adminDeleteAddOn: async ({ params }: { params: { id: string } }) => {
         // Auth middleware applied via app.use('/v1/admin/addons', authMiddleware)
-        await controllers.adminPackages.deleteAddOn(params.id);
+        if (!services) throw new Error('Services not initialized');
+        await services.catalog.deleteAddOn('tenant_default_legacy', params.id);
         return { status: 204 as const, body: undefined };
       },
     } as any),
@@ -392,9 +372,9 @@ export function createV1Router(
       globalMiddleware: [
         (req, res, next) => {
           // Rate limiting for login is handled by the unified /v1/auth routes (auth.routes.ts)
-          // Public API routes (packages, bookings, availability, tenant) require tenant
+          // Public API routes (tiers, bookings, availability, tenant) require tenant
           if (
-            req.path.startsWith('/v1/packages') ||
+            req.path.startsWith('/v1/tiers') ||
             req.path.startsWith('/v1/bookings') ||
             req.path.startsWith('/v1/availability') ||
             req.path.startsWith('/v1/tenant')
@@ -464,7 +444,6 @@ export function createV1Router(
       blackoutRepo,
       storageProvider,
       segmentService: services.segment,
-      packageDraftService: services.packageDraft,
       sectionContentService: services.sectionContent,
     });
     app.use('/v1/tenant-admin', tenantAuthMiddleware, tenantAdminRoutes);

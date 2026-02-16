@@ -3,7 +3,7 @@
  * Handles business logic for tenant segments (e.g., "Wellness Retreat", "Micro-Wedding")
  */
 
-import type { Segment, Package, AddOn } from '../generated/prisma/client';
+import type { Segment, Tier, AddOn } from '../generated/prisma/client';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import type { CacheServicePort, StorageProvider } from '../lib/ports';
 import {
@@ -18,14 +18,14 @@ import type {
 } from '../adapters/prisma/segment.repository';
 import { logger } from '../lib/core/logger';
 
-export interface PackageWithAddOns extends Package {
+export interface TierWithAddOns extends Tier {
   addOns?: {
     addOn: AddOn;
   }[];
 }
 
 export interface SegmentWithRelations extends Segment {
-  packages?: PackageWithAddOns[];
+  tiers?: TierWithAddOns[];
   addOns?: AddOn[];
 }
 
@@ -248,7 +248,7 @@ export class SegmentService {
    * Delete segment with tenant isolation
    *
    * MULTI-TENANT: Scoped to tenantId to prevent cross-tenant deletion
-   * Note: Packages will have segmentId set to null (onDelete: SetNull)
+   * Note: Tiers will have segmentId set to null (onDelete: SetNull)
    * Invalidates cache
    *
    * @param tenantId - Tenant ID for data isolation (CRITICAL: prevents cross-tenant deletion)
@@ -292,7 +292,7 @@ export class SegmentService {
    *
    * @param tenantId - Tenant ID for data isolation (CRITICAL: prevents cross-tenant access)
    * @param id - Segment ID
-   * @returns Package and add-on counts
+   * @returns Tier and add-on counts
    * @throws {NotFoundError} If segment doesn't exist or access denied
    */
   async getSegmentStats(

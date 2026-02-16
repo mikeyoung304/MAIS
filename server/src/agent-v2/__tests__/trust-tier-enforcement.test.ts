@@ -5,7 +5,7 @@
  *
  * Trust Tiers (from Prisma schema):
  * - T1: No confirm needed - blackouts, branding, visibility toggles, read ops
- * - T2: Soft confirm - package changes, landing page updates, pricing
+ * - T2: Soft confirm - tier changes, landing page updates, pricing
  * - T3: Hard confirm - cancellations, refunds, deletes with existing bookings
  *
  * Key Security Requirements:
@@ -45,15 +45,15 @@ const TOOL_CLASSIFICATION = {
     'check_availability',
     'get_business_info',
     'answer_faq',
-    'recommend_package',
-    'get_packages',
+    'recommend_tier',
+    'get_tiers',
     'get_branding',
     'get_landing_page',
   ],
 
   // T2: Write operations with soft confirmation
   T2: [
-    'upsert_package',
+    'manage_tiers',
     'update_branding',
     'update_landing_page',
     'update_pricing',
@@ -66,7 +66,7 @@ const TOOL_CLASSIFICATION = {
     'create_booking', // Creates financial commitment
     'cancel_booking', // Affects existing booking
     'process_refund', // Moves money
-    'delete_package', // Permanent deletion
+    'delete_tier', // Permanent deletion
     'delete_service', // Permanent deletion
   ],
 } as const;
@@ -178,7 +178,7 @@ describe('Trust Tier Classification', () => {
       const t2Tools = TOOL_CLASSIFICATION.T2;
 
       // T2 tools should be "update", "set", "toggle", "upsert" operations
-      const writePrefixes = ['update_', 'set_', 'toggle_', 'upsert_'];
+      const writePrefixes = ['update_', 'set_', 'toggle_', 'upsert_', 'manage_'];
       t2Tools.forEach((tool) => {
         const isWriteOp = writePrefixes.some((prefix) => tool.startsWith(prefix));
         expect(isWriteOp).toBe(true);
@@ -483,7 +483,7 @@ describe('Tool Tier Mapping', () => {
   });
 
   it('critical operations are properly classified as T3', () => {
-    const criticalOps = ['cancel_booking', 'process_refund', 'delete_package'];
+    const criticalOps = ['cancel_booking', 'process_refund', 'delete_tier'];
 
     criticalOps.forEach((op) => {
       expect(TOOL_CLASSIFICATION.T3).toContain(op);

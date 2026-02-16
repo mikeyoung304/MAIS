@@ -36,7 +36,7 @@ export function TenantSiteShell({
 }: TenantSiteShellProps) {
   // Extract CTA text from hero section in pages config
   const heroSection = pages?.home?.sections?.find((s): s is HeroSection => s.type === 'hero');
-  const ctaText = heroSection?.ctaText || 'View Packages';
+  const ctaText = heroSection?.ctaText || 'View Services';
 
   return (
     <div className="flex min-h-screen flex-col bg-surface">

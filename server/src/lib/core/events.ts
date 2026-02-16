@@ -22,7 +22,7 @@
  *   email: 'customer@example.com',
  *   coupleName: 'John & Jane Doe',
  *   eventDate: '2024-06-15',
- *   packageTitle: 'Wedding Photography',
+ *   tierName: 'Wedding Photography',
  *   addOnTitles: ['Album', 'Drone Shots'],
  *   totalCents: 250000,
  * });
@@ -101,7 +101,7 @@ export interface BookingEventPayloads {
     email: string;
     coupleName: string;
     eventDate: string; // YYYY-MM-DD format
-    packageTitle: string;
+    tierName: string;
     addOnTitles: string[];
     totalCents: number;
   };
@@ -141,7 +141,7 @@ export interface BookingEventPayloads {
     email: string;
     coupleName: string;
     eventDate: string; // YYYY-MM-DD format
-    packageTitle: string;
+    tierName: string;
     daysUntilEvent: number;
     manageUrl: string;
   };

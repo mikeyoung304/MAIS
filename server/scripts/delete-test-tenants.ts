@@ -129,7 +129,7 @@ async function getTestTenants(
           users: true,
           customers: true,
           bookings: true,
-          packages: true,
+          tiers: true,
         },
       },
     },
@@ -219,7 +219,7 @@ Safety:
       console.log(`   Users:     ${tenant._count.users}`);
       console.log(`   Customers: ${tenant._count.customers}`);
       console.log(`   Bookings:  ${tenant._count.bookings}`);
-      console.log(`   Packages:  ${tenant._count.packages}`);
+      console.log(`   Tiers:     ${tenant._count.tiers}`);
       console.log(`   Created:   ${tenant.createdAt.toISOString()}`);
       if (hasData) {
         console.log(`   ⚠️  HAS CUSTOMER DATA`);
@@ -238,7 +238,7 @@ Safety:
       console.log('🔍 DRY RUN MODE - No changes will be made');
       console.log(`   Would delete ${testTenants.length} tenant(s) listed above`);
       console.log(
-        '   This will CASCADE DELETE all related data (bookings, customers, packages, etc.)\n'
+        '   This will CASCADE DELETE all related data (bookings, customers, tiers, etc.)\n'
       );
       process.exit(0);
     }
@@ -246,7 +246,7 @@ Safety:
     // Ask for confirmation unless --confirm flag is present
     if (!confirm) {
       console.log('⚠️  WARNING: This will CASCADE DELETE all related data!');
-      console.log('   - All bookings, customers, packages, venues, etc. for these tenants\n');
+      console.log('   - All bookings, customers, tiers, venues, etc. for these tenants\n');
 
       const confirmed = await askConfirmation(
         `Are you sure you want to DELETE ${testTenants.length} tenant(s) and ALL their data?`

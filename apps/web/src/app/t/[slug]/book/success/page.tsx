@@ -5,7 +5,7 @@ import { CheckCircle, Calendar, Mail, Users, Package as PackageIcon, Home } from
 import {
   getTenantBySlug,
   getBookingById,
-  getTenantPackageBySlug,
+  getTenantTierBySlug,
   getProjectBySessionId,
   TenantNotFoundError,
 } from '@/lib/tenant';
@@ -65,7 +65,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
 
   // Fetch booking details if we have an ID
   let booking = null;
-  let packageData = null;
+  let tierData = null;
   let projectData = null;
 
   // Stripe redirects with session_id, but we also support booking_id for backward compatibility
@@ -85,8 +85,8 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
     if (bookingId) {
       booking = await getBookingById(tenant.apiKeyPublic, bookingId);
       if (booking) {
-        // Fetch package details to display title
-        packageData = await getTenantPackageBySlug(tenant.apiKeyPublic, booking.packageId);
+        // Fetch tier details to display title
+        tierData = await getTenantTierBySlug(tenant.apiKeyPublic, booking.tierId);
       }
     }
   }
@@ -170,14 +170,14 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
                     </span>
                   </div>
 
-                  {/* Package */}
+                  {/* Service */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-2 text-base text-white/90">
                       <PackageIcon className="w-5 h-5" />
-                      <span>Package</span>
+                      <span>Service</span>
                     </div>
                     <span className="text-base font-medium text-white text-right">
-                      {packageData?.title || booking.packageId}
+                      {tierData?.title || booking.tierId}
                     </span>
                   </div>
 

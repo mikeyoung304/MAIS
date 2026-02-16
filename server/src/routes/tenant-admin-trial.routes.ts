@@ -40,9 +40,9 @@ export function registerTrialRoutes(router: Router, deps: TenantAdminDeps): void
         return;
       }
 
-      // Check if tenant has packages
-      const packages = await catalogService.getAllPackages(tenantId);
-      const hasPackages = packages.length > 0;
+      // Check if tenant has tiers
+      const tiers = await catalogService.getAllTiers(tenantId);
+      const hasPackages = tiers.length > 0;
 
       // Determine status and days remaining
       let status = tenant.subscriptionStatus || 'NONE';
@@ -115,11 +115,11 @@ export function registerTrialRoutes(router: Router, deps: TenantAdminDeps): void
         return;
       }
 
-      // Check if tenant has at least one package
-      const packages = await catalogService.getAllPackages(tenantId);
-      if (packages.length === 0) {
+      // Check if tenant has at least one tier
+      const tiers = await catalogService.getAllTiers(tenantId);
+      if (tiers.length === 0) {
         res.status(400).json({
-          error: 'Create at least one package before starting your trial',
+          error: 'Create at least one tier before starting your trial',
         });
         return;
       }

@@ -1,11 +1,11 @@
 /**
- * Shared seed utilities for tenant and package creation
+ * Shared seed utilities for tenant and tier creation
  *
- * Provides reusable functions for creating tenants, packages, and add-ons
+ * Provides reusable functions for creating tenants, tiers, and add-ons
  * across E2E and demo seeds.
  */
 
-import type { PrismaClient, Tenant, Package, AddOn } from '../../src/generated/prisma/client';
+import type { PrismaClient, Tenant, Tier, AddOn } from '../../src/generated/prisma/client';
 import { Prisma } from '../../src/generated/prisma/client';
 import { apiKeyService } from '../../src/lib/api-key.service';
 
@@ -37,20 +37,23 @@ export interface TenantSeedOptions {
 }
 
 /**
- * Options for creating/updating a package
+ * Options for creating/updating a tier
  */
-export interface PackageSeedOptions {
+export interface TierSeedOptions {
   tenantId: string;
+  segmentId: string;
   slug: string;
   name: string;
   description: string;
-  basePrice: number;
+  priceCents: number;
+  sortOrder: number;
   photos?: Array<{
     url: string;
     filename: string;
     size: number;
     order: number;
   }>;
+  features?: Array<{ name: string; included: boolean }>;
 }
 
 /**
@@ -122,24 +125,37 @@ export async function createOrUpdateTenant(
 }
 
 /**
- * Create or update a package with the provided options
+ * Create or update a tier with the provided options
  */
-export async function createOrUpdatePackage(
+export async function createOrUpdateTier(
   prisma: PrismaOrTransaction,
-  options: PackageSeedOptions
-): Promise<Package> {
-  const { tenantId, slug, name, description, basePrice, photos = [] } = options;
+  options: TierSeedOptions
+): Promise<Tier> {
+  const {
+    tenantId,
+    segmentId,
+    slug,
+    name,
+    description,
+    priceCents,
+    sortOrder,
+    photos = [],
+    features = [],
+  } = options;
 
-  return prisma.package.upsert({
+  return prisma.tier.upsert({
     where: { tenantId_slug: { slug, tenantId } },
     update: {},
     create: {
       slug,
       name,
       description,
-      basePrice,
+      priceCents,
+      sortOrder,
       photos: JSON.stringify(photos),
+      features: JSON.stringify(features),
       tenantId,
+      segmentId,
     },
   });
 }
@@ -167,30 +183,31 @@ export async function createOrUpdateAddOn(
 }
 
 /**
- * Link an add-on to a package
+ * Link an add-on to a tier
  */
-export async function linkAddOnToPackage(
+export async function linkAddOnToTier(
   prisma: PrismaOrTransaction,
-  packageId: string,
+  tierId: string,
   addOnId: string
 ): Promise<void> {
-  await prisma.packageAddOn.upsert({
-    where: { packageId_addOnId: { packageId, addOnId } },
+  await prisma.tierAddOn.upsert({
+    where: { tierId_addOnId: { tierId, addOnId } },
     update: {},
-    create: { packageId, addOnId },
+    create: { tierId, addOnId },
   });
 }
 
 /**
- * Create multiple packages concurrently
+ * Create multiple tiers concurrently
  */
-export async function createOrUpdatePackages(
+export async function createOrUpdateTiers(
   prisma: PrismaOrTransaction,
   tenantId: string,
-  packageOptions: Array<Omit<PackageSeedOptions, 'tenantId'>>
-): Promise<Package[]> {
+  segmentId: string,
+  tierOptions: Array<Omit<TierSeedOptions, 'tenantId' | 'segmentId'>>
+): Promise<Tier[]> {
   return Promise.all(
-    packageOptions.map((opts) => createOrUpdatePackage(prisma, { ...opts, tenantId }))
+    tierOptions.map((opts) => createOrUpdateTier(prisma, { ...opts, tenantId, segmentId }))
   );
 }
 
@@ -208,12 +225,12 @@ export async function createOrUpdateAddOns(
 }
 
 /**
- * Link multiple add-ons to a package concurrently
+ * Link multiple add-ons to a tier concurrently
  */
-export async function linkAddOnsToPackage(
+export async function linkAddOnsToTier(
   prisma: PrismaOrTransaction,
-  packageId: string,
+  tierId: string,
   addOnIds: string[]
 ): Promise<void> {
-  await Promise.all(addOnIds.map((addOnId) => linkAddOnToPackage(prisma, packageId, addOnId)));
+  await Promise.all(addOnIds.map((addOnId) => linkAddOnToTier(prisma, tierId, addOnId)));
 }

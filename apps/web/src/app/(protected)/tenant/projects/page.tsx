@@ -32,7 +32,7 @@ interface Project {
   booking: {
     id: string;
     eventDate: string;
-    package: {
+    tier: {
       title: string;
     } | null;
     customer: {
@@ -57,7 +57,7 @@ interface PendingRequest {
         name: string;
         email: string;
       };
-      package: {
+      tier: {
         title: string;
       } | null;
     };
@@ -388,7 +388,7 @@ export default function TenantProjectsPage() {
                           {request.project.booking.customer.name}
                         </p>
                         <p className="text-sm text-text-muted">
-                          {request.project.booking.package?.title || 'Service'} •{' '}
+                          {request.project.booking.tier?.title || 'Service'} •{' '}
                           {formatDate(request.project.booking.eventDate)}
                         </p>
                         <p className="text-xs text-text-muted mt-1">
@@ -489,7 +489,7 @@ export default function TenantProjectsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-text-primary">
-                        {project.booking.package?.title || 'Service'}
+                        {project.booking.tier?.title || 'Service'}
                       </td>
                       <td className="px-6 py-4 text-text-primary">
                         {formatDate(project.booking.eventDate)}

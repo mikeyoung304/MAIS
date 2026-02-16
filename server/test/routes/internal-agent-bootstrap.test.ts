@@ -86,19 +86,19 @@ describe('Internal Agent Bootstrap Endpoint', () => {
     };
 
     mockCatalogService = {
-      getAllPackages: vi
+      getAllTiers: vi
         .fn()
         .mockResolvedValue([
           { id: 'pkg-1', title: 'Test Package', priceCents: 10000, active: true },
         ]),
       countTiers: vi.fn().mockResolvedValue(3),
-      getPackageById: vi.fn().mockResolvedValue({
+      getTierById: vi.fn().mockResolvedValue({
         id: 'pkg-1',
         slug: 'test-package',
         title: 'Test Package',
         priceCents: 10000,
       }),
-      getPackageBySlug: vi.fn().mockResolvedValue({
+      getTierBySlug: vi.fn().mockResolvedValue({
         id: 'pkg-1',
         slug: 'test-package',
         title: 'Test Package',
@@ -573,11 +573,11 @@ describe('Internal Agent Bootstrap Endpoint', () => {
       expect(response.status).toBe(200);
       expect(response.body.services).toBeDefined();
       expect(Array.isArray(response.body.services)).toBe(true);
-      expect(mockCatalogService.getAllPackages).toHaveBeenCalledWith('tenant-123');
+      expect(mockCatalogService.getAllTiers).toHaveBeenCalledWith('tenant-123');
     });
 
     it('should filter inactive services by default', async () => {
-      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([
+      mockCatalogService.getAllTiers = vi.fn().mockResolvedValue([
         { id: 'pkg-1', title: 'Active', active: true, priceCents: 10000 },
         { id: 'pkg-2', title: 'Inactive', active: false, priceCents: 5000 },
       ]);
@@ -609,7 +609,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
     });
 
     it('should return 404 for missing service', async () => {
-      mockCatalogService.getPackageById = vi.fn().mockResolvedValue(null);
+      mockCatalogService.getTierById = vi.fn().mockResolvedValue(null);
 
       const response = await request(app)
         .post('/v1/internal/agent/service-details')
@@ -686,7 +686,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
 
   describe('POST /recommend (P1-4)', () => {
     it('should return recommendations based on budget', async () => {
-      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([
+      mockCatalogService.getAllTiers = vi.fn().mockResolvedValue([
         { id: 'pkg-1', title: 'Basic', priceCents: 10000, active: true },
         { id: 'pkg-2', title: 'Standard', priceCents: 25000, active: true },
         { id: 'pkg-3', title: 'Premium', priceCents: 50000, active: true },
@@ -706,7 +706,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
     });
 
     it('should handle no packages gracefully', async () => {
-      mockCatalogService.getAllPackages = vi.fn().mockResolvedValue([]);
+      mockCatalogService.getAllTiers = vi.fn().mockResolvedValue([]);
 
       const response = await request(app)
         .post('/v1/internal/agent/recommend')

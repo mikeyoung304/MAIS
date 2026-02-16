@@ -158,7 +158,7 @@ describe('POST /v1/webhooks/stripe - HTTP Tests', () => {
             },
             metadata: {
               tenantId: 'tenant_123',
-              packageId: 'package_xyz',
+              tierId: 'package_xyz',
               email: 'customer@example.com',
             },
           },

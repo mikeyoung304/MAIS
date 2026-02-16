@@ -154,7 +154,7 @@ function createMockPrisma(overrides?: {
           tenantId: args.data.tenantId,
           serviceId: args.data.serviceId,
           customerId: args.data.customerId,
-          packageId: null,
+          tierId: null,
           date: args.data.date,
           totalPrice: args.data.totalPrice,
           status: args.data.status,

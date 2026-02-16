@@ -13,7 +13,7 @@ import type { Booking } from '../../src/lib/entities';
 export function createBookingFixture(overrides: Partial<Booking> = {}): Booking {
   return {
     id: `booking_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-    packageId: 'pkg_test_classic',
+    tierId: 'pkg_test_classic',
     coupleName: 'Jane & John Doe',
     email: 'couple@example.com',
     eventDate: '2025-06-15',
@@ -78,7 +78,7 @@ export const BookingScenarios = {
    */
   standard: () =>
     createBookingWithCommission(250000, 12.0, {
-      packageId: 'pkg_classic',
+      tierId: 'pkg_classic',
       coupleName: 'Alice & Bob',
       email: 'alice.bob@example.com',
       eventDate: '2025-07-15',
@@ -89,7 +89,7 @@ export const BookingScenarios = {
    */
   premium: () =>
     createBookingWithCommission(500000, 10.0, {
-      packageId: 'pkg_premium',
+      tierId: 'pkg_premium',
       coupleName: 'Carol & Dave',
       email: 'carol.dave@example.com',
       eventDate: '2025-08-20',
@@ -105,7 +105,7 @@ export const BookingScenarios = {
       addOnIds,
       12.0,
       {
-        packageId: 'pkg_classic',
+        tierId: 'pkg_classic',
         coupleName: 'Eve & Frank',
         email: 'eve.frank@example.com',
         eventDate: '2025-09-10',
@@ -117,7 +117,7 @@ export const BookingScenarios = {
    */
   lowCost: () =>
     createBookingWithCommission(10000, 12.0, {
-      packageId: 'pkg_starter',
+      tierId: 'pkg_starter',
       coupleName: 'Grace & Henry',
       email: 'grace.henry@example.com',
       eventDate: '2025-10-05',
@@ -132,7 +132,7 @@ export const BookingScenarios = {
     eventDate.setDate(eventDate.getDate() + 8);
 
     return createBookingWithCommission(250000, 12.0, {
-      packageId: 'pkg_classic',
+      tierId: 'pkg_classic',
       coupleName: 'Ivy & Jack',
       email: 'ivy.jack@example.com',
       eventDate: eventDate.toISOString().split('T')[0],
@@ -148,7 +148,7 @@ export const BookingScenarios = {
     eventDate.setDate(eventDate.getDate() + 5);
 
     return createBookingWithCommission(250000, 12.0, {
-      packageId: 'pkg_classic',
+      tierId: 'pkg_classic',
       coupleName: 'Kate & Leo',
       email: 'kate.leo@example.com',
       eventDate: eventDate.toISOString().split('T')[0],

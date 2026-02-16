@@ -34,7 +34,7 @@ const AnswerFaqParams = z.object({
   question: z.string().min(1).describe('The customer question to answer'),
 });
 
-const RecommendPackageParams = z.object({
+const RecommendTierParams = z.object({
   preferences: z
     .object({
       budget: z.enum(['low', 'medium', 'high']).optional(),
@@ -216,16 +216,16 @@ export const answerFaqTool = new FunctionTool({
 });
 
 /**
- * T1: Recommend packages based on preferences
+ * T1: Recommend tiers based on preferences
  */
-export const recommendPackageTool = new FunctionTool({
-  name: 'recommend_package',
+export const recommendTierTool = new FunctionTool({
+  name: 'recommend_tier',
   description:
     'Recommend services based on customer preferences like budget, occasion, and group size.',
-  parameters: RecommendPackageParams,
+  parameters: RecommendTierParams,
   execute: async (params, context) => {
     // P1 Security: Validate params FIRST (Pitfall #56)
-    const parsed = RecommendPackageParams.safeParse(params);
+    const parsed = RecommendTierParams.safeParse(params);
     if (!parsed.success) {
       return { success: false, error: parsed.error.errors[0]?.message || 'Invalid parameters' };
     }
@@ -237,7 +237,7 @@ export const recommendPackageTool = new FunctionTool({
 
     logger.info(
       { preferences: parsed.data.preferences },
-      '[CustomerAgent] recommend_package called with preferences'
+      '[CustomerAgent] recommend_tier called with preferences'
     );
     const result = await callMaisApi('/recommend', tenantId, parsed.data);
 

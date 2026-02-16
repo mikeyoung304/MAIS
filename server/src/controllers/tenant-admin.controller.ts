@@ -1,6 +1,6 @@
 /**
  * Tenant Admin Controller
- * Handles tenant-scoped admin operations for packages, blackouts, bookings, and branding
+ * Handles tenant-scoped admin operations for tiers, blackouts, bookings, and branding
  *
  * SECURITY: All methods receive tenantId from JWT token, not from request body
  * Multi-tenant isolation enforced at service layer
@@ -10,9 +10,8 @@ import type { CatalogService } from '../services/catalog.service';
 import type { BookingService } from '../services/booking.service';
 import type { BlackoutRepository } from '../lib/ports';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
+import type { CreateTierInput, UpdateTierInput } from '../lib/ports';
 import type {
-  CreatePackageInput,
-  UpdatePackageInput,
   CreateBlackoutInput,
   BookingQueryParams,
   UpdateBrandingInput,
@@ -20,9 +19,9 @@ import type {
 import { NotFoundError } from '../lib/errors';
 
 /**
- * Package response DTO
+ * Tier response DTO
  */
-interface PackageDto {
+interface TierDto {
   id: string;
   slug: string;
   title: string;
@@ -36,7 +35,7 @@ interface PackageDto {
  */
 interface BookingDto {
   id: string;
-  packageId: string | null; // Nullable for TIMESLOT bookings
+  tierId: string | null; // Nullable for TIMESLOT bookings
   coupleName: string;
   email: string;
   phone?: string;
@@ -77,69 +76,69 @@ export class TenantAdminController {
   ) {}
 
   // ============================================================================
-  // Package Management
+  // Tier Management
   // ============================================================================
 
   /**
-   * Get all packages for tenant
+   * Get all tiers for tenant
    * @param tenantId - Tenant ID from JWT token
    */
-  async getPackages(tenantId: string): Promise<PackageDto[]> {
-    const packages = await this.catalogService.getAllPackages(tenantId);
-    return packages.map((pkg) => ({
-      id: pkg.id,
-      slug: pkg.slug,
-      title: pkg.title,
-      description: pkg.description,
-      priceCents: pkg.priceCents,
-      photoUrl: pkg.photoUrl,
+  async getTiers(tenantId: string): Promise<TierDto[]> {
+    const tiers = await this.catalogService.getAllTiers(tenantId);
+    return tiers.map((tier) => ({
+      id: tier.id,
+      slug: tier.slug,
+      title: tier.title,
+      description: tier.description,
+      priceCents: tier.priceCents,
+      photoUrl: tier.photoUrl,
     }));
   }
 
   /**
-   * Create new package for tenant
+   * Create new tier for tenant
    * @param tenantId - Tenant ID from JWT token
-   * @param data - Package creation data
+   * @param data - Tier creation data
    */
-  async createPackage(tenantId: string, data: CreatePackageInput): Promise<PackageDto> {
-    const pkg = await this.catalogService.createPackage(tenantId, data);
+  async createTier(tenantId: string, data: CreateTierInput): Promise<TierDto> {
+    const tier = await this.catalogService.createTier(tenantId, data);
     return {
-      id: pkg.id,
-      slug: pkg.slug,
-      title: pkg.title,
-      description: pkg.description,
-      priceCents: pkg.priceCents,
-      photoUrl: pkg.photoUrl,
+      id: tier.id,
+      slug: tier.slug,
+      title: tier.title,
+      description: tier.description,
+      priceCents: tier.priceCents,
+      photoUrl: tier.photoUrl,
     };
   }
 
   /**
-   * Update package (verifies ownership)
+   * Update tier (verifies ownership)
    * @param tenantId - Tenant ID from JWT token
-   * @param id - Package ID
-   * @param data - Package update data
+   * @param id - Tier ID
+   * @param data - Tier update data
    */
-  async updatePackage(tenantId: string, id: string, data: UpdatePackageInput): Promise<PackageDto> {
+  async updateTier(tenantId: string, id: string, data: UpdateTierInput): Promise<TierDto> {
     // Service layer will verify ownership and throw NotFoundError if not owned by tenant
-    const pkg = await this.catalogService.updatePackage(tenantId, id, data);
+    const tier = await this.catalogService.updateTier(tenantId, id, data);
     return {
-      id: pkg.id,
-      slug: pkg.slug,
-      title: pkg.title,
-      description: pkg.description,
-      priceCents: pkg.priceCents,
-      photoUrl: pkg.photoUrl,
+      id: tier.id,
+      slug: tier.slug,
+      title: tier.title,
+      description: tier.description,
+      priceCents: tier.priceCents,
+      photoUrl: tier.photoUrl,
     };
   }
 
   /**
-   * Delete package (verifies ownership)
+   * Delete tier (verifies ownership)
    * @param tenantId - Tenant ID from JWT token
-   * @param id - Package ID
+   * @param id - Tier ID
    */
-  async deletePackage(tenantId: string, id: string): Promise<void> {
+  async deleteTier(tenantId: string, id: string): Promise<void> {
     // Service layer will verify ownership and throw NotFoundError if not owned by tenant
-    await this.catalogService.deletePackage(tenantId, id);
+    await this.catalogService.deleteTier(tenantId, id);
   }
 
   // ============================================================================
@@ -229,7 +228,7 @@ export class TenantAdminController {
     // Map to DTO
     return bookings.map((booking) => ({
       id: booking.id,
-      packageId: booking.packageId,
+      tierId: booking.tierId,
       coupleName: booking.coupleName,
       email: booking.email,
       phone: booking.phone,

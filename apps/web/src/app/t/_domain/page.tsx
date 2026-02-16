@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { TenantLandingPageClient } from '@/components/tenant';
 import {
   getTenantByDomain,
-  getTenantPackages,
+  getTenantTiers,
   getTenantSegments,
   TenantNotFoundError,
   InvalidDomainError,
@@ -86,9 +86,9 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
   try {
     const tenant = await getTenantByDomain(validatedDomain);
 
-    // Fetch packages, segments, and sections in parallel
-    const [packages, segments, sections] = await Promise.all([
-      getTenantPackages(tenant.apiKeyPublic),
+    // Fetch tiers, segments, and sections in parallel
+    const [tiers, segments, sections] = await Promise.all([
+      getTenantTiers(tenant.apiKeyPublic),
       getTenantSegments(tenant.apiKeyPublic),
       getPublishedSections(tenant.slug).catch((err) => {
         if (!(err instanceof SectionsNotFoundError)) {
@@ -101,7 +101,7 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
       }),
     ]);
 
-    const data = { tenant, packages, segments };
+    const data = { tenant, tiers, segments };
     const pages = sectionsToPages(sections);
     const domainParam = `?domain=${validatedDomain}`;
 

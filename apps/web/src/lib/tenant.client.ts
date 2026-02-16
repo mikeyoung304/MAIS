@@ -94,10 +94,10 @@ export function validateDomain(domain: string | undefined): string {
 }
 
 /**
- * Type for package data
+ * Type for tier data (bookable pricing offering)
  * Note: Backend returns `isActive`, frontend uses `active` as alias
  */
-export interface PackageData {
+export interface TierData {
   id: string;
   slug: string;
   title: string;
@@ -127,11 +127,11 @@ export type SegmentData = SegmentDto;
 
 /**
  * Type for the complete tenant storefront data
- * Combines tenant info, packages, and segments
+ * Combines tenant info, tiers, and segments
  */
 export interface TenantStorefrontData {
   tenant: TenantPublicDto;
-  packages: PackageData[];
+  tiers: TierData[];
   segments: SegmentData[];
 }
 
@@ -222,7 +222,7 @@ export async function checkDateAvailability(apiKeyPublic: string, date: string):
 export async function createDateBooking(
   apiKeyPublic: string,
   bookingData: {
-    packageId: string;
+    tierId: string;
     date: string;
     customerName: string;
     customerEmail: string;

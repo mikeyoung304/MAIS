@@ -36,14 +36,17 @@ vi.mock('../../src/generated/prisma/client', () => ({
       create: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
       update: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
     },
-    package: {
-      upsert: vi.fn().mockResolvedValue({ id: 'pkg-1', slug: 'starter' }),
+    segment: {
+      upsert: vi.fn().mockResolvedValue({ id: 'segment-1', slug: 'general' }),
+    },
+    tier: {
+      upsert: vi.fn().mockResolvedValue({ id: 'tier-1', slug: 'starter' }),
     },
     addOn: {
       upsert: vi.fn().mockResolvedValue({ id: 'addon-1', slug: 'test-addon' }),
     },
-    packageAddOn: {
-      upsert: vi.fn().mockResolvedValue({ packageId: 'pkg-1', addOnId: 'addon-1' }),
+    tierAddOn: {
+      upsert: vi.fn().mockResolvedValue({ tierId: 'tier-1', addOnId: 'addon-1' }),
     },
     blackoutDate: {
       upsert: vi.fn().mockResolvedValue({ id: 'blackout-1' }),

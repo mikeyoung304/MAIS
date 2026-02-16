@@ -17,7 +17,7 @@ export const openApiSpec: OpenAPIV3.Document = {
     description: `
 # MAIS API
 
-API for managing business growth packages, bookings, add-ons, and payments.
+API for managing business growth tiers, bookings, add-ons, and payments.
 
 ## Authentication
 
@@ -104,14 +104,14 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         type: 'object',
         properties: {
           id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174000' },
-          packageId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
+          tierId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
           title: { type: 'string', example: 'Professional Photography' },
           priceCents: { type: 'integer', example: 50000, description: 'Price in cents' },
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
         },
-        required: ['id', 'packageId', 'title', 'priceCents'],
+        required: ['id', 'tierId', 'title', 'priceCents'],
       },
-      Package: {
+      Tier: {
         type: 'object',
         properties: {
           id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
@@ -145,7 +145,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         type: 'object',
         properties: {
           id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174002' },
-          packageId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
+          tierId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
           coupleName: { type: 'string', example: 'John & Jane Doe' },
           email: { type: 'string', format: 'email', example: 'john@example.com' },
           phone: { type: 'string', example: '+1-555-123-4567' },
@@ -162,7 +162,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
         required: [
           'id',
-          'packageId',
+          'tierId',
           'coupleName',
           'email',
           'eventDate',
@@ -175,7 +175,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       CreateCheckoutRequest: {
         type: 'object',
         properties: {
-          packageId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
+          tierId: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
           eventDate: {
             type: 'string',
             format: 'date',
@@ -186,7 +186,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
           email: { type: 'string', format: 'email', example: 'john@example.com' },
           addOnIds: { type: 'array', items: { type: 'string' } },
         },
-        required: ['packageId', 'eventDate', 'coupleName', 'email'],
+        required: ['tierId', 'eventDate', 'coupleName', 'email'],
       },
       CheckoutResponse: {
         type: 'object',
@@ -227,7 +227,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
         required: ['date'],
       },
-      CreatePackageRequest: {
+      CreateTierRequest: {
         type: 'object',
         properties: {
           slug: { type: 'string', example: 'intimate-ceremony', minLength: 1 },
@@ -242,7 +242,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
         required: ['slug', 'title', 'description', 'priceCents'],
       },
-      UpdatePackageRequest: {
+      UpdateTierRequest: {
         type: 'object',
         properties: {
           slug: { type: 'string', example: 'intimate-ceremony', minLength: 1 },
@@ -256,7 +256,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
         },
       },
-      PackageResponse: {
+      TierResponse: {
         type: 'object',
         properties: {
           id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174001' },
@@ -271,7 +271,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
       CreateAddOnRequest: {
         type: 'object',
         properties: {
-          packageId: {
+          tierId: {
             type: 'string',
             example: '123e4567-e89b-12d3-a456-426614174001',
             minLength: 1,
@@ -280,12 +280,12 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
           priceCents: { type: 'integer', example: 50000, minimum: 0 },
           photoUrl: { type: 'string', format: 'uri', example: 'https://example.com/photo.jpg' },
         },
-        required: ['packageId', 'title', 'priceCents'],
+        required: ['tierId', 'title', 'priceCents'],
       },
       UpdateAddOnRequest: {
         type: 'object',
         properties: {
-          packageId: {
+          tierId: {
             type: 'string',
             example: '123e4567-e89b-12d3-a456-426614174001',
             minLength: 1,
@@ -298,19 +298,19 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
     },
   },
   paths: {
-    '/v1/packages': {
+    '/v1/tiers': {
       get: {
-        operationId: 'getPackages',
-        summary: 'Get all packages',
-        tags: ['Packages'],
+        operationId: 'getTiers',
+        summary: 'Get all tiers',
+        tags: ['Tiers'],
         responses: {
           '200': {
-            description: 'List of all packages',
+            description: 'List of all tiers',
             content: {
               'application/json': {
                 schema: {
                   type: 'array',
-                  items: { $ref: '#/components/schemas/Package' },
+                  items: { $ref: '#/components/schemas/Tier' },
                 },
               },
             },
@@ -326,11 +326,11 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
       },
     },
-    '/v1/packages/{slug}': {
+    '/v1/tiers/{slug}': {
       get: {
-        operationId: 'getPackageBySlug',
-        summary: 'Get package by slug',
-        tags: ['Packages'],
+        operationId: 'getTierBySlug',
+        summary: 'Get tier by slug',
+        tags: ['Tiers'],
         parameters: [
           {
             name: 'slug',
@@ -342,15 +342,15 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         ],
         responses: {
           '200': {
-            description: 'Package details',
+            description: 'Tier details',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Package' },
+                schema: { $ref: '#/components/schemas/Tier' },
               },
             },
           },
           '404': {
-            description: 'Package not found',
+            description: 'Tier not found',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -680,26 +680,26 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
       },
     },
-    '/v1/admin/packages': {
+    '/v1/admin/tiers': {
       post: {
-        operationId: 'adminCreatePackage',
-        summary: 'Create a new package',
+        operationId: 'adminCreateTier',
+        summary: 'Create a new tier',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/CreatePackageRequest' },
+              schema: { $ref: '#/components/schemas/CreateTierRequest' },
             },
           },
         },
         responses: {
           '200': {
-            description: 'Package created',
+            description: 'Tier created',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/PackageResponse' },
+                schema: { $ref: '#/components/schemas/TierResponse' },
               },
             },
           },
@@ -730,10 +730,10 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
       },
     },
-    '/v1/admin/packages/{id}': {
+    '/v1/admin/tiers/{id}': {
       put: {
-        operationId: 'adminUpdatePackage',
-        summary: 'Update a package',
+        operationId: 'adminUpdateTier',
+        summary: 'Update a tier',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -749,16 +749,16 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/UpdatePackageRequest' },
+              schema: { $ref: '#/components/schemas/UpdateTierRequest' },
             },
           },
         },
         responses: {
           '200': {
-            description: 'Package updated',
+            description: 'Tier updated',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/PackageResponse' },
+                schema: { $ref: '#/components/schemas/TierResponse' },
               },
             },
           },
@@ -779,7 +779,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
             },
           },
           '404': {
-            description: 'Package not found',
+            description: 'Tier not found',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -797,8 +797,8 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
       },
       delete: {
-        operationId: 'adminDeletePackage',
-        summary: 'Delete a package',
+        operationId: 'adminDeleteTier',
+        summary: 'Delete a tier',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -812,7 +812,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         ],
         responses: {
           '204': {
-            description: 'Package deleted',
+            description: 'Tier deleted',
           },
           '401': {
             description: 'Unauthorized',
@@ -823,7 +823,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
             },
           },
           '404': {
-            description: 'Package not found',
+            description: 'Tier not found',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -841,15 +841,15 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
         },
       },
     },
-    '/v1/admin/packages/{packageId}/addons': {
+    '/v1/admin/tiers/{tierId}/addons': {
       post: {
         operationId: 'adminCreateAddOn',
-        summary: 'Create a new add-on for a package',
+        summary: 'Create a new add-on for a tier',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
         parameters: [
           {
-            name: 'packageId',
+            name: 'tierId',
             in: 'path',
             required: true,
             schema: { type: 'string' },
@@ -890,7 +890,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
             },
           },
           '404': {
-            description: 'Package not found',
+            description: 'Tier not found',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
@@ -1021,7 +1021,7 @@ The \`POST /v1/webhooks/stripe\` endpoint handles Stripe payment events. It requ
     },
   },
   tags: [
-    { name: 'Packages', description: 'Wedding package management' },
+    { name: 'Tiers', description: 'Service tier management' },
     { name: 'Availability', description: 'Date availability checking' },
     { name: 'Bookings', description: 'Booking and checkout operations' },
     { name: 'Webhooks', description: 'External webhook handlers' },

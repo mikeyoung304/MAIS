@@ -14,7 +14,7 @@ import { BookingEvents } from '../../src/lib/core/events';
 import { BookingConflictError, BookingLockTimeoutError } from '../../src/lib/errors';
 import { FakeEventEmitter, FakePaymentProvider, buildMockConfig } from '../helpers/fakes';
 import type { Booking } from '../../src/lib/entities';
-import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
+import { setupCompleteIntegrationTest, createTestSegment } from '../helpers/integration-setup';
 import {
   withConcurrencyRetry,
   withDatabaseRetry,
@@ -25,13 +25,14 @@ import {
 describe.sequential('Booking Race Conditions - Integration Tests', () => {
   const ctx = setupCompleteIntegrationTest('booking-race');
   let testTenantId: string;
+  let testSegmentId: string;
   let bookingRepo: PrismaBookingRepository;
   let catalogRepo: PrismaCatalogRepository;
   let bookingService: BookingService;
   let eventEmitter: FakeEventEmitter;
   let paymentProvider: FakePaymentProvider;
-  let testPackageId: string;
-  let testPackageSlug: string;
+  let testTierId: string;
+  let testTierSlug: string;
   let testAddOnId: string;
 
   beforeEach(async () => {
@@ -39,6 +40,9 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     await ctx.tenants.cleanupTenants();
     await ctx.tenants.tenantA.create();
     testTenantId = ctx.tenants.tenantA.id;
+
+    const segment = await createTestSegment(ctx.prisma, testTenantId);
+    testSegmentId = segment.id;
 
     // Initialize repositories
     bookingRepo = new PrismaBookingRepository(ctx.prisma);
@@ -83,20 +87,24 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
     });
 
     // Create test package using catalog repository
-    const pkg = ctx.factories.package.create({ title: 'Test Package Race', priceCents: 250000 });
-    const createdPkg = await catalogRepo.createPackage(testTenantId, pkg);
-    testPackageId = createdPkg.id;
-    testPackageSlug = createdPkg.slug;
+    const pkg = ctx.factories.tier.create({
+      title: 'Test Package Race',
+      priceCents: 250000,
+      segmentId: testSegmentId,
+    });
+    const createdPkg = await catalogRepo.createTier(testTenantId, pkg);
+    testTierId = createdPkg.id;
+    testTierSlug = createdPkg.slug;
 
     // Create test add-on
     const addOn = ctx.factories.addOn.create({
       title: 'Test Add-On Race',
       priceCents: 5000,
-      packageId: testPackageId,
+      tierId: testTierId,
     });
     const createdAddOn = await catalogRepo.createAddOn(testTenantId, {
       ...addOn,
-      packageId: testPackageId,
+      tierId: testTierId,
     });
     testAddOnId = createdAddOn.id;
   });
@@ -114,7 +122,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking1: Booking = {
           id: `concurrent-booking-1-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'First Couple',
           email: `first-${uniqueSuffix}@example.com`,
           eventDate,
@@ -126,7 +134,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking2: Booking = {
           id: `concurrent-booking-2-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Second Couple',
           email: `second-${uniqueSuffix}@example.com`,
           eventDate,
@@ -171,7 +179,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         const bookingRequests = Array.from({ length: 10 }, (_, i) => {
           const booking: Booking = {
             id: `high-concurrency-${uniqueSuffix}-${i}`,
-            packageId: testPackageId,
+            tierId: testTierId,
             coupleName: `Couple ${i}`,
             email: `couple${i}-${uniqueSuffix}@example.com`,
             eventDate,
@@ -213,7 +221,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
       const uniqueSuffix = Date.now();
       const bookings = Array.from({ length: 5 }, (_, i) => ({
         id: `different-date-${uniqueSuffix}-${i}`,
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: `Couple ${i}`,
         email: `couple${i}-${uniqueSuffix}@example.com`,
         eventDate: `2025-07-${String(i + 1).padStart(2, '0')}`,
@@ -255,7 +263,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
       // Create a booking
       const booking1: Booking = {
         id: `isolation-test-1-${uniqueSuffix}`,
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Isolation Test',
         email: `isolation-${uniqueSuffix}@example.com`,
         eventDate,
@@ -270,7 +278,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
       // Try to create another booking with same date
       const booking2: Booking = {
         id: `isolation-test-2-${uniqueSuffix}`,
-        packageId: testPackageId,
+        tierId: testTierId,
         coupleName: 'Isolation Test 2',
         email: `isolation2-${uniqueSuffix}@example.com`,
         eventDate,
@@ -297,7 +305,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
       const eventDate = '2025-08-15';
       const invalidBooking: Booking = {
         id: 'rollback-test',
-        packageId: 'invalid-package-id', // This will cause FK constraint error
+        tierId: 'invalid-package-id', // This will cause FK constraint error
         coupleName: 'Rollback Test',
         email: 'rollback@example.com',
         eventDate,
@@ -335,7 +343,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const payment1 = {
           sessionId: `sess_1_${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           eventDate,
           email: `payment1-${uniqueSuffix}@example.com`,
           coupleName: 'Payment Test 1',
@@ -345,7 +353,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const payment2 = {
           sessionId: `sess_2_${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           eventDate,
           email: `payment2-${uniqueSuffix}@example.com`,
           coupleName: 'Payment Test 2',
@@ -390,7 +398,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           try {
             await bookingService.onPaymentCompleted(testTenantId, {
               sessionId: `sess_rapid_${i}`,
-              packageId: testPackageId,
+              tierId: testTierId,
               eventDate,
               email: `rapid${i}@example.com`,
               coupleName: `Rapid Test ${i}`,
@@ -429,7 +437,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking1: Booking = {
           id: 'lock-test-1',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Lock Test 1',
           email: 'lock1@example.com',
           eventDate,
@@ -445,7 +453,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         // Try to create second booking (should fail due to conflict detection)
         const booking2: Booking = {
           id: 'lock-test-2',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Lock Test 2',
           email: 'lock2@example.com',
           eventDate,
@@ -466,7 +474,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking1: Booking = {
           id: 'lock-release-1',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Lock Release Test',
           email: 'lockrelease@example.com',
           eventDate,
@@ -495,7 +503,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const invalidBooking: Booking = {
           id: 'lock-release-fail',
-          packageId: 'invalid-package',
+          tierId: 'invalid-package',
           coupleName: 'Lock Release Fail',
           email: 'lockfail@example.com',
           eventDate,
@@ -515,7 +523,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         // Create valid booking on same date (should succeed)
         const validBooking: Booking = {
           id: 'lock-release-valid',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Lock Release Valid',
           email: 'lockvalid@example.com',
           eventDate,
@@ -539,7 +547,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         // First booking succeeds
         const booking1: Booking = {
           id: `date-type-1-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Wedding Couple 1',
           email: `wedding1-${uniqueSuffix}@example.com`,
           eventDate,
@@ -557,7 +565,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         // Second DATE booking for same date should fail
         const booking2: Booking = {
           id: `date-type-2-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Wedding Couple 2',
           email: `wedding2-${uniqueSuffix}@example.com`,
           eventDate,
@@ -592,7 +600,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         // Create DATE booking first
         const dateBooking: Booking = {
           id: `date-timeslot-date-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Wedding Couple',
           email: `wedding-${uniqueSuffix}@example.com`,
           eventDate,
@@ -608,7 +616,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         // TIMESLOT booking on same date should succeed
         const timeslotBooking: Booking = {
           id: `date-timeslot-slot-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Appointment Client',
           email: `appt-${uniqueSuffix}@example.com`,
           eventDate,
@@ -644,7 +652,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking1: Booking = {
           id: `concurrent-date-1-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Concurrent Wedding 1',
           email: `concurrent1-${uniqueSuffix}@example.com`,
           eventDate,
@@ -657,7 +665,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking2: Booking = {
           id: `concurrent-date-2-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Concurrent Wedding 2',
           email: `concurrent2-${uniqueSuffix}@example.com`,
           eventDate,
@@ -701,7 +709,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking1: Booking = {
           id: 'addon-race-1',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Add-on Race 1',
           email: 'addonrace1@example.com',
           eventDate,
@@ -713,7 +721,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         const booking2: Booking = {
           id: 'addon-race-2',
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Add-on Race 2',
           email: 'addonrace2@example.com',
           eventDate,
@@ -759,7 +767,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         const uniqueSuffix = Date.now();
         await bookingRepo.create(testTenantId, {
           id: `mixed-pre-2-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Pre Booking 2',
           email: 'pre2@example.com',
           eventDate: '2025-11-22',
@@ -771,7 +779,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
 
         await bookingRepo.create(testTenantId, {
           id: `mixed-pre-3-${uniqueSuffix}`,
-          packageId: testPackageId,
+          tierId: testTierId,
           coupleName: 'Pre Booking 3',
           email: 'pre3@example.com',
           eventDate: '2025-11-23',
@@ -785,7 +793,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
         const results = await Promise.allSettled([
           bookingRepo.create(testTenantId, {
             id: 'mixed-1',
-            packageId: testPackageId,
+            tierId: testTierId,
             coupleName: 'Mixed 1',
             email: 'mixed1@example.com',
             eventDate: '2025-11-21',
@@ -796,7 +804,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           }),
           bookingRepo.create(testTenantId, {
             id: 'mixed-2',
-            packageId: testPackageId,
+            tierId: testTierId,
             coupleName: 'Mixed 2',
             email: 'mixed2@example.com',
             eventDate: '2025-11-22',
@@ -807,7 +815,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           }),
           bookingRepo.create(testTenantId, {
             id: 'mixed-3',
-            packageId: testPackageId,
+            tierId: testTierId,
             coupleName: 'Mixed 3',
             email: 'mixed3@example.com',
             eventDate: '2025-11-23',
@@ -818,7 +826,7 @@ describe.sequential('Booking Race Conditions - Integration Tests', () => {
           }),
           bookingRepo.create(testTenantId, {
             id: 'mixed-4',
-            packageId: testPackageId,
+            tierId: testTierId,
             coupleName: 'Mixed 4',
             email: 'mixed4@example.com',
             eventDate: '2025-11-24',

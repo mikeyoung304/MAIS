@@ -16,7 +16,7 @@ import { FakeEventEmitter, FakePaymentProvider, buildMockConfig } from '../helpe
 import { CommissionService } from '../../src/services/commission.service';
 import { PrismaTenantRepository } from '../../src/adapters/prisma/tenant.repository';
 import type Stripe from 'stripe';
-import { setupCompleteIntegrationTest } from '../helpers/integration-setup';
+import { setupCompleteIntegrationTest, createTestSegment } from '../helpers/integration-setup';
 
 describe.sequential('Webhook Race Conditions - Integration Tests', () => {
   const ctx = setupCompleteIntegrationTest('webhook-race');
@@ -28,8 +28,9 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
   let paymentProvider: FakePaymentProvider;
   let eventEmitter: FakeEventEmitter;
   let testTenantId: string;
-  let testPackageId: string;
-  let testPackageSlug: string;
+  let testSegmentId: string;
+  let testTierId: string;
+  let testTierSlug: string;
   let tenantRepo: PrismaTenantRepository;
 
   beforeEach(async () => {
@@ -37,6 +38,9 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
     await ctx.tenants.cleanupTenants();
     await ctx.tenants.tenantA.create();
     testTenantId = ctx.tenants.tenantA.id;
+
+    const segment = await createTestSegment(ctx.prisma, testTenantId);
+    testSegmentId = segment.id;
 
     // Initialize repositories
     webhookRepo = new PrismaWebhookRepository(ctx.prisma);
@@ -69,10 +73,14 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
     webhooksController = new WebhooksController(paymentProvider, bookingService, webhookRepo);
 
     // Create test package using catalog repository
-    const pkg = ctx.factories.package.create({ title: 'Test Package Webhook', priceCents: 250000 });
-    const createdPkg = await catalogRepo.createPackage(testTenantId, pkg);
-    testPackageId = createdPkg.id;
-    testPackageSlug = createdPkg.slug;
+    const pkg = ctx.factories.tier.create({
+      title: 'Test Package Webhook',
+      priceCents: 250000,
+      segmentId: testSegmentId,
+    });
+    const createdPkg = await catalogRepo.createTier(testTenantId, pkg);
+    testTierId = createdPkg.id;
+    testTierSlug = createdPkg.slug;
   });
 
   afterEach(async () => {
@@ -96,7 +104,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
           amount_total: 250000,
           metadata: {
             tenantId: testTenantId,
-            packageId: testPackageId, // CUID - booking service queries by id, not slug
+            tierId: testTierId, // CUID - booking service queries by id, not slug
             eventDate,
             email: `test-${eventId}@example.com`,
             coupleName: `Test Couple ${eventId}`,
@@ -512,8 +520,8 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
           tenant: {
             connect: { id: testTenantId },
           },
-          package: {
-            connect: { id: testPackageId },
+          tier: {
+            connect: { id: testTierId },
           },
           date: new Date(eventDate),
           totalPrice: 250000,
@@ -595,7 +603,7 @@ describe.sequential('Webhook Race Conditions - Integration Tests', () => {
             amount_total: 250000,
             metadata: {
               tenantId: testTenantId,
-              packageId: 'invalid-package-id',
+              tierId: 'invalid-package-id',
               eventDate: '2025-11-01',
               email: 'invalid@example.com',
               coupleName: 'Invalid Test',

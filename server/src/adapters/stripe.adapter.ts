@@ -49,8 +49,8 @@ export class StripePaymentAdapter implements PaymentProvider {
               currency: 'usd',
               unit_amount: input.amountCents,
               product_data: {
-                name: 'Wedding Package',
-                description: 'Elopement/Micro-Wedding Package',
+                name: 'Service Booking',
+                description: 'Service tier booking',
               },
             },
             quantity: 1,
@@ -126,8 +126,8 @@ export class StripePaymentAdapter implements PaymentProvider {
               currency: 'usd',
               unit_amount: input.amountCents,
               product_data: {
-                name: 'Wedding Package',
-                description: 'Elopement/Micro-Wedding Package',
+                name: 'Service Booking',
+                description: 'Service tier booking',
               },
             },
             quantity: 1,

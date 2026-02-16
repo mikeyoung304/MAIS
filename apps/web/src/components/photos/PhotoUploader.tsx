@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { CheckCircle, AlertCircle, Upload, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { usePhotoUpload, type PackagePhoto } from '@/hooks/usePhotoUpload';
+import { usePhotoUpload, type TierPhoto } from '@/hooks/usePhotoUpload';
 import { PhotoGrid } from './PhotoGrid';
 import { PhotoDeleteDialog } from './PhotoDeleteDialog';
 import { cn } from '@/lib/utils';
@@ -13,24 +13,20 @@ import { cn } from '@/lib/utils';
  * Props for PhotoUploader component
  */
 export interface PhotoUploaderProps {
-  packageId: string;
-  initialPhotos?: PackagePhoto[];
-  onPhotosChange?: (photos: PackagePhoto[]) => void;
+  tierId: string;
+  initialPhotos?: TierPhoto[];
+  onPhotosChange?: (photos: TierPhoto[]) => void;
 }
 
 /**
  * PhotoUploader Component
  *
- * Main component for managing package photos.
- * Allows tenant admins to upload, view, and delete package photos (max 5).
+ * Main component for managing tier photos.
+ * Allows tenant admins to upload, view, and delete service photos (max 5).
  * Supports both drag & drop and file input selection.
  */
-export function PhotoUploader({
-  packageId,
-  initialPhotos = [],
-  onPhotosChange,
-}: PhotoUploaderProps) {
-  const [deleteTarget, setDeleteTarget] = useState<PackagePhoto | null>(null);
+export function PhotoUploader({ tierId, initialPhotos = [], onPhotosChange }: PhotoUploaderProps) {
+  const [deleteTarget, setDeleteTarget] = useState<TierPhoto | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,7 +45,7 @@ export function PhotoUploader({
     setError,
     validateFile,
   } = usePhotoUpload({
-    packageId,
+    tierId,
     initialPhotos,
     onPhotosChange,
   });
@@ -124,7 +120,7 @@ export function PhotoUploader({
   /**
    * Handle delete button click
    */
-  const handleDeleteClick = useCallback((photo: PackagePhoto) => {
+  const handleDeleteClick = useCallback((photo: TierPhoto) => {
     setDeleteTarget(photo);
   }, []);
 
@@ -171,7 +167,7 @@ export function PhotoUploader({
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">
-              Package Photos ({photos.length}/{MAX_PHOTOS})
+              Service Photos ({photos.length}/{MAX_PHOTOS})
             </CardTitle>
             {canUpload && (
               <Button

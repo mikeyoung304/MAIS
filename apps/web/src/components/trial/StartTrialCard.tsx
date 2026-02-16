@@ -56,7 +56,7 @@ export function StartTrialCard({ onTrialStarted }: StartTrialCardProps) {
           Ready to go live?
         </CardTitle>
         <CardDescription>
-          You&apos;ve set up your first package. Start your 14-day free trial to unlock all
+          You&apos;ve set up your first service. Start your 14-day free trial to unlock all
           features.
         </CardDescription>
       </CardHeader>

@@ -4,13 +4,13 @@
 
 import type {
   CatalogRepository,
-  CreatePackageInput,
-  UpdatePackageInput,
+  CreateTierInput,
+  UpdateTierInput,
   CreateAddOnInput,
   UpdateAddOnInput,
   CacheServicePort,
 } from '../lib/ports';
-import type { Package, AddOn } from '../lib/entities';
+import type { Tier, AddOn } from '../lib/entities';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import {
   cachedOperation,
@@ -26,13 +26,12 @@ import type { PrismaClient } from '../generated/prisma/client';
 import { resolveOrCreateGeneralSegment, validateSegmentOwnership } from '../lib/segment-utils';
 import { logger } from '../lib/core/logger';
 
-export interface PackageWithAddOns extends Package {
+export interface TierWithAddOns extends Tier {
   addOns: AddOn[];
 }
 
 /**
  * Optional audit context for tracking who made changes
- * TODO: Replace with proper auth context from middleware in Sprint 3
  */
 export interface AuditContext {
   userId?: string;
@@ -50,32 +49,20 @@ export class CatalogService {
   ) {}
 
   /**
-   * Retrieves all wedding packages with their add-ons for a tenant
+   * Retrieves all tiers with their add-ons for a tenant
    *
-   * MULTI-TENANT: Filters packages by tenantId for data isolation
-   * Uses optimized single-query method to avoid N+1 problem (91% query reduction).
-   * Implements application-level caching with 15-minute TTL for performance.
-   * Cache keys include tenantId to prevent cross-tenant cache leaks.
-   * Critical for catalog page performance.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @returns Array of packages with nested add-ons
-   *
-   * @example
-   * ```typescript
-   * const packages = await catalogService.getAllPackages('tenant_123');
-   * // Returns: [{ id: 'pkg1', title: 'Intimate', addOns: [...] }, ...]
-   * ```
+   * MULTI-TENANT: Filters tiers by tenantId for data isolation
+   * Uses optimized single-query method to avoid N+1 problem.
    */
-  async getAllPackages(tenantId: string): Promise<PackageWithAddOns[]> {
+  async getAllTiers(tenantId: string): Promise<TierWithAddOns[]> {
     return cachedOperation(
       this.cache,
       {
         prefix: 'catalog',
-        keyParts: [tenantId, 'all-packages'],
-        ttl: 900, // 15 minutes
+        keyParts: [tenantId, 'all-tiers'],
+        ttl: 900,
       },
-      () => this.repository.getAllPackagesWithAddOns(tenantId)
+      () => this.repository.getAllTiersWithAddOns(tenantId)
     );
   }
 
@@ -93,82 +80,41 @@ export class CatalogService {
   }
 
   /**
-   * Retrieves a single package by slug with its add-ons for a tenant
+   * Retrieves a single tier by slug with its add-ons
    *
    * MULTI-TENANT: Scoped to tenantId to prevent cross-tenant access
-   * Uses application-level caching with 15-minute TTL.
-   * Used for package detail pages and checkout flow.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param slug - Package URL slug (e.g., "intimate-ceremony")
-   *
-   * @returns Package with nested add-ons array
-   *
-   * @throws {NotFoundError} If package doesn't exist for this tenant
-   *
-   * @example
-   * ```typescript
-   * const pkg = await catalogService.getPackageBySlug('tenant_123', 'intimate-ceremony');
-   * console.log(`${pkg.title}: $${pkg.priceCents / 100}`);
-   * ```
    */
-  async getPackageBySlug(tenantId: string, slug: string): Promise<PackageWithAddOns> {
+  async getTierBySlug(tenantId: string, slug: string): Promise<TierWithAddOns> {
     return cachedOperation(
       this.cache,
       {
         prefix: 'catalog',
-        keyParts: [tenantId, 'package', slug],
-        ttl: 900, // 15 minutes
+        keyParts: [tenantId, 'tier', slug],
+        ttl: 900,
       },
       async () => {
-        // Use getPackageBySlugWithAddOns to avoid N+1 query
-        const pkg = await this.repository.getPackageBySlugWithAddOns(tenantId, slug);
-        if (!pkg) {
-          throw new NotFoundError(`Package with slug "${slug}" not found`);
+        const tier = await this.repository.getTierBySlugWithAddOns(tenantId, slug);
+        if (!tier) {
+          throw new NotFoundError(`Tier with slug "${slug}" not found`);
         }
-        return pkg;
+        return tier;
       }
     );
   }
 
   /**
-   * Retrieves a single package by ID for a tenant
+   * Retrieves a single tier by ID
    *
    * MULTI-TENANT: Scoped to tenantId to prevent cross-tenant access
-   * Used for tenant admin operations (photo upload, editing).
-   * Returns package without add-ons for performance.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param id - Package ID
-   *
-   * @returns Package or null if not found for this tenant
-   *
-   * @example
-   * ```typescript
-   * const pkg = await catalogService.getPackageById('tenant_123', 'pkg_abc');
-   * if (!pkg) throw new Error('Not found');
-   * console.log(`Found: ${pkg.title}`);
-   * ```
    */
-  async getPackageById(tenantId: string, id: string): Promise<Package | null> {
-    return this.repository.getPackageById(tenantId, id);
+  async getTierById(tenantId: string, id: string): Promise<Tier | null> {
+    return this.repository.getTierById(tenantId, id);
   }
 
   /**
    * Retrieves all add-ons for a tenant
    *
    * MULTI-TENANT: Scoped to tenantId for data isolation
-   * Used for tenant admin add-on management.
-   * Implements application-level caching with 15-minute TTL.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @returns Array of all add-ons for the tenant
-   *
-   * @example
-   * ```typescript
-   * const addOns = await catalogService.getAllAddOns('tenant_123');
-   * // Returns: [{ id: 'addon1', title: 'Video Recording', priceCents: 50000, ... }, ...]
-   * ```
    */
   async getAllAddOns(tenantId: string): Promise<AddOn[]> {
     return cachedOperation(
@@ -176,56 +122,41 @@ export class CatalogService {
       {
         prefix: 'catalog',
         keyParts: [tenantId, 'all-addons'],
-        ttl: 900, // 15 minutes
+        ttl: 900,
       },
       () => this.repository.getAllAddOns(tenantId)
     );
   }
 
   /**
-   * Retrieves an add-on by ID for a tenant
+   * Retrieves an add-on by ID
    *
    * MULTI-TENANT: Scoped to tenantId to prevent cross-tenant access
-   * Used for tenant admin add-on management.
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param id - Add-on ID
-   * @returns Add-on or null if not found for this tenant
    */
   async getAddOnById(tenantId: string, id: string): Promise<AddOn | null> {
     return this.repository.getAddOnById(tenantId, id);
   }
 
-  // Package CRUD operations
-  // NOTE: These methods will need tenantId parameter and repository updates
-  // after multi-tenant migration is applied
+  // Tier CRUD operations
 
-  async createPackage(
+  async createTier(
     tenantId: string,
-    data: CreatePackageInput,
+    data: CreateTierInput,
     auditCtx?: AuditContext
-  ): Promise<Package> {
-    // Validate required fields
-    validateRequiredFields(data, ['slug', 'title', 'description'], 'Package');
+  ): Promise<Tier> {
+    validateRequiredFields(data, ['slug', 'title', 'description'], 'Tier');
     validatePrice(data.priceCents, 'priceCents');
 
     // Check slug uniqueness within tenant
-    const existing = await this.repository.getPackageBySlug(tenantId, data.slug);
+    const existing = await this.repository.getTierBySlug(tenantId, data.slug);
     if (existing) {
-      throw new ValidationError(`Package with slug "${data.slug}" already exists`);
+      throw new ValidationError(`Tier with slug "${data.slug}" already exists`);
     }
 
-    // =========================================================================
-    // SEGMENT VALIDATION & AUTO-ASSIGNMENT (Defense-in-depth for #631)
-    // =========================================================================
-    // All packages must be linked to a segment. This service-layer validation
-    // catches orphaned packages from any code path (API, agent, scripts).
-    // Uses shared utility from segment-utils.ts to prevent logic duplication (#635).
-    // =========================================================================
+    // Segment validation & auto-assignment
     let resolvedSegmentId = data.segmentId;
 
     if (resolvedSegmentId) {
-      // Verify provided segmentId belongs to this tenant (security + tenant isolation)
       if (this.prisma) {
         const segment = await validateSegmentOwnership(this.prisma, tenantId, resolvedSegmentId);
         if (!segment) {
@@ -235,12 +166,10 @@ export class CatalogService {
         }
         logger.debug(
           { tenantId, segmentId: resolvedSegmentId, segmentName: segment.name },
-          'Package linked to existing segment'
+          'Tier linked to existing segment'
         );
       }
     } else {
-      // Auto-assign to "General" segment if no segmentId provided
-      // Uses shared utility that finds or creates the General segment
       if (this.prisma) {
         const { segmentId, wasCreated } = await resolveOrCreateGeneralSegment(
           this.prisma,
@@ -250,83 +179,75 @@ export class CatalogService {
         if (wasCreated) {
           logger.info(
             { tenantId, segmentId: resolvedSegmentId },
-            'Created General segment and assigned package'
+            'Created General segment and assigned tier'
           );
         } else if (segmentId) {
           logger.debug(
             { tenantId, segmentId: resolvedSegmentId },
-            'Package auto-assigned to General segment'
+            'Tier auto-assigned to General segment'
           );
         }
       } else {
-        // No prisma client available - log warning but allow null segmentId
-        // for backward compatibility during migration
-        logger.warn({ tenantId }, 'No Prisma client available - package created without segment');
+        logger.warn({ tenantId }, 'No Prisma client available - tier created without segment');
       }
     }
 
-    // Create package with resolved segment ID
-    const result = await this.repository.createPackage(tenantId, {
+    const result = await this.repository.createTier(tenantId, {
       ...data,
       segmentId: resolvedSegmentId ?? null,
     });
 
-    // Audit log (Sprint 2.1 - legacy CRUD tracking during migration)
+    // Audit log
     if (this.auditService && auditCtx) {
       await this.auditService.trackLegacyChange({
         tenantId,
         changeType: 'package_crud',
         operation: 'create',
-        entityType: 'Package',
+        entityType: 'Tier',
         entityId: result.id,
         userId: auditCtx.userId,
         email: auditCtx.email,
         role: auditCtx.role,
-        beforeSnapshot: null, // No previous state for creates
+        beforeSnapshot: null,
         afterSnapshot: result,
       });
     }
 
-    // Invalidate catalog cache for this tenant
     await this.invalidateCatalogCache(tenantId);
 
     return result;
   }
 
-  async updatePackage(
+  async updateTier(
     tenantId: string,
     id: string,
-    data: UpdatePackageInput,
+    data: UpdateTierInput,
     auditCtx?: AuditContext
-  ): Promise<Package> {
-    // Check if package exists
-    const existing = await this.repository.getPackageById(tenantId, id);
+  ): Promise<Tier> {
+    const existing = await this.repository.getTierById(tenantId, id);
     if (!existing) {
-      throw new NotFoundError(`Package with id "${id}" not found`);
+      throw new NotFoundError(`Tier with id "${id}" not found`);
     }
 
-    // Validate price if provided
     if (data.priceCents !== undefined) {
       validatePrice(data.priceCents, 'priceCents');
     }
 
-    // Check slug uniqueness if slug is being updated
     if (data.slug && data.slug !== existing.slug) {
-      const slugTaken = await this.repository.getPackageBySlug(tenantId, data.slug);
+      const slugTaken = await this.repository.getTierBySlug(tenantId, data.slug);
       if (slugTaken) {
-        throw new ValidationError(`Package with slug "${data.slug}" already exists`);
+        throw new ValidationError(`Tier with slug "${data.slug}" already exists`);
       }
     }
 
-    const result = await this.repository.updatePackage(tenantId, id, data);
+    const result = await this.repository.updateTier(tenantId, id, data);
 
-    // Audit log (Sprint 2.1 - legacy CRUD tracking during migration)
     if (this.auditService && auditCtx) {
       await this.auditService.trackLegacyChange({
         tenantId,
         changeType: 'package_crud',
         operation: 'update',
-        entityType: 'Package',
+        entityType: 'Tier',
         entityId: result.id,
         userId: auditCtx.userId,
         email: auditCtx.email,
@@ -336,116 +257,99 @@ export class CatalogService {
       });
     }
 
-    // Targeted cache invalidation
-    // PERFORMANCE: Only invalidate specific package cache(s), not all-packages
-    // Updating package details (price, title) doesn't affect the package list itself
-    // Must invalidate all-packages ONLY when it might appear in cached list differently
-    await this.invalidateCatalogCache(tenantId); // all-packages contains package summaries
-    await this.invalidatePackageCache(tenantId, existing.slug);
+    await this.invalidateCatalogCache(tenantId);
+    await this.invalidateTierCache(tenantId, existing.slug);
     if (data.slug && data.slug !== existing.slug) {
-      await this.invalidatePackageCache(tenantId, data.slug);
+      await this.invalidateTierCache(tenantId, data.slug);
     }
 
     return result;
   }
 
-  async deletePackage(tenantId: string, id: string, auditCtx?: AuditContext): Promise<void> {
-    // Check if package exists
-    const existing = await this.repository.getPackageById(tenantId, id);
+  async deleteTier(tenantId: string, id: string, auditCtx?: AuditContext): Promise<void> {
+    const existing = await this.repository.getTierById(tenantId, id);
     if (!existing) {
-      throw new NotFoundError(`Package with id "${id}" not found`);
+      throw new NotFoundError(`Tier with id "${id}" not found`);
     }
 
-    await this.repository.deletePackage(tenantId, id);
+    await this.repository.deleteTier(tenantId, id);
 
-    // Audit log (Sprint 2.1 - legacy CRUD tracking during migration)
     if (this.auditService && auditCtx) {
       await this.auditService.trackLegacyChange({
         tenantId,
         changeType: 'package_crud',
         operation: 'delete',
-        entityType: 'Package',
+        entityType: 'Tier',
         entityId: id,
         userId: auditCtx.userId,
         email: auditCtx.email,
         role: auditCtx.role,
         beforeSnapshot: existing,
-        afterSnapshot: null, // Entity no longer exists
+        afterSnapshot: null,
       });
     }
 
-    // Invalidate all-packages cache (package removed from list)
     await this.invalidateCatalogCache(tenantId);
-    // Also invalidate the specific package cache
-    await this.invalidatePackageCache(tenantId, existing.slug);
+    await this.invalidateTierCache(tenantId, existing.slug);
   }
 
   // AddOn CRUD operations
 
   async createAddOn(tenantId: string, data: CreateAddOnInput): Promise<AddOn> {
-    // Validate required fields
-    validateRequiredFields(data, ['packageId', 'title'], 'AddOn');
+    validateRequiredFields(data, ['tierId', 'title'], 'AddOn');
     validatePrice(data.priceCents, 'priceCents');
 
-    // Verify package exists
-    const pkg = await this.repository.getPackageById(tenantId, data.packageId);
-    if (!pkg) {
-      throw new NotFoundError(`Package with id "${data.packageId}" not found`);
+    // Verify tier exists
+    const tier = await this.repository.getTierById(tenantId, data.tierId);
+    if (!tier) {
+      throw new NotFoundError(`Tier with id "${data.tierId}" not found`);
     }
 
     const result = await this.repository.createAddOn(tenantId, data);
 
-    // Targeted cache invalidation - only invalidate affected package and all-addons cache
-    // Add-on creation doesn't affect all-packages list, just the specific package's add-ons
-    await this.invalidatePackageCache(tenantId, pkg.slug);
+    await this.invalidateTierCache(tenantId, tier.slug);
     await this.invalidateAddOnsCache(tenantId);
 
     return result;
   }
 
   async updateAddOn(tenantId: string, id: string, data: UpdateAddOnInput): Promise<AddOn> {
-    // Fetch existing add-on to know which package cache to invalidate
     const existing = await this.repository.getAddOnById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`AddOn with id "${id}" not found`);
     }
 
-    // Validate price if provided
     if (data.priceCents !== undefined) {
       validatePrice(data.priceCents, 'priceCents');
     }
 
-    // Verify package exists if packageId is being updated
-    let newPackage;
-    if (data.packageId) {
-      newPackage = await this.repository.getPackageById(tenantId, data.packageId);
-      if (!newPackage) {
-        throw new NotFoundError(`Package with id "${data.packageId}" not found`);
+    // Verify tier exists if tierId is being updated
+    let newTier;
+    if (data.tierId) {
+      newTier = await this.repository.getTierById(tenantId, data.tierId);
+      if (!newTier) {
+        throw new NotFoundError(`Tier with id "${data.tierId}" not found`);
       }
     }
 
     const result = await this.repository.updateAddOn(tenantId, id, data);
 
-    // Targeted cache invalidation - only invalidate affected packages
-    // No need to invalidate all-packages since add-on updates don't affect package list
-    const oldPackage = await this.repository.getPackageById(tenantId, existing.packageId);
-    if (oldPackage) {
-      await this.invalidatePackageCache(tenantId, oldPackage.slug);
+    // Targeted cache invalidation - only invalidate affected tiers
+    const oldTier = await this.repository.getTierById(tenantId, existing.tierId);
+    if (oldTier) {
+      await this.invalidateTierCache(tenantId, oldTier.slug);
     }
 
-    // If package changed, also invalidate new package cache
-    if (newPackage && newPackage.id !== existing.packageId) {
-      await this.invalidatePackageCache(tenantId, newPackage.slug);
+    if (newTier && newTier.id !== existing.tierId) {
+      await this.invalidateTierCache(tenantId, newTier.slug);
     }
 
-    // Also invalidate all-addons cache
     await this.invalidateAddOnsCache(tenantId);
 
     return result;
   }
 
   async deleteAddOn(tenantId: string, id: string): Promise<void> {
-    // Fetch add-on first to know which package cache to invalidate
     const existing = await this.repository.getAddOnById(tenantId, id);
     if (!existing) {
       throw new NotFoundError(`AddOn with id "${id}" not found`);
@@ -453,188 +357,81 @@ export class CatalogService {
 
     await this.repository.deleteAddOn(tenantId, id);
 
-    // Targeted cache invalidation - only invalidate affected package and all-addons cache
-    // No need to invalidate all-packages since add-on deletion doesn't affect package list
-    const pkg = await this.repository.getPackageById(tenantId, existing.packageId);
-    if (pkg) {
-      await this.invalidatePackageCache(tenantId, pkg.slug);
+    const tier = await this.repository.getTierById(tenantId, existing.tierId);
+    if (tier) {
+      await this.invalidateTierCache(tenantId, tier.slug);
     }
     await this.invalidateAddOnsCache(tenantId);
   }
 
   // ============================================================================
-  // SEGMENT-SCOPED CATALOG METHODS (Phase A - Segment Implementation)
+  // SEGMENT-SCOPED CATALOG METHODS
   // ============================================================================
 
-  /**
-   * Get packages for a specific segment
-   *
-   * MULTI-TENANT: Scoped by tenantId and segmentId
-   * Used for segment landing pages
-   * Implements application-level caching with 15-minute TTL
-   * Packages ordered by groupingOrder for proper display (e.g., Solo/Couple/Group)
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param segmentId - Segment ID to filter packages
-   * @returns Array of packages ordered by groupingOrder then createdAt
-   *
-   * @example
-   * ```typescript
-   * const packages = await catalogService.getPackagesBySegment('tenant_123', 'wellness-retreat-id');
-   * // Returns: [{ id: 'pkg1', title: 'Weekend Detox', grouping: 'Solo', ... }, ...]
-   * ```
-   */
-  async getPackagesBySegment(tenantId: string, segmentId: string): Promise<Package[]> {
-    // CRITICAL: Cache key includes tenantId AND segmentId
-    const cacheKey = `catalog:${tenantId}:segment:${segmentId}:packages`;
+  async getTiersBySegment(tenantId: string, segmentId: string): Promise<Tier[]> {
+    const cacheKey = `catalog:${tenantId}:segment:${segmentId}:tiers`;
 
-    // Try cache first
-    const cached = await this.cache?.get<Package[]>(cacheKey);
+    const cached = await this.cache?.get<Tier[]>(cacheKey);
     if (cached) {
       return cached;
     }
 
-    // Cache miss - fetch from repository
-    const packages = await this.repository.getPackagesBySegment(tenantId, segmentId);
+    const tiers = await this.repository.getTiersBySegment(tenantId, segmentId);
 
-    // Cache for 15 minutes (900 seconds)
-    await this.cache?.set(cacheKey, packages, 900);
+    await this.cache?.set(cacheKey, tiers, 900);
 
-    return packages;
+    return tiers;
   }
 
-  /**
-   * Get packages with add-ons for a specific segment
-   *
-   * MULTI-TENANT: Scoped by tenantId and segmentId
-   * Returns packages with both segment-specific and global add-ons
-   * Used for segment landing pages to display complete offering
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param segmentId - Segment ID to filter packages
-   * @returns Array of packages with add-ons, ordered by grouping
-   *
-   * @example
-   * ```typescript
-   * const packages = await catalogService.getPackagesBySegmentWithAddOns('tenant_123', 'wellness-retreat-id');
-   * // Returns: [
-   * //   { id: 'pkg1', title: 'Weekend Detox', addOns: [
-   * //     { title: 'Farm-Fresh Meals' },      // Global add-on (segmentId = null)
-   * //     { title: 'Yoga Session' }            // Wellness-specific add-on
-   * //   ]},
-   * //   ...
-   * // ]
-   * ```
-   */
-  async getPackagesBySegmentWithAddOns(
+  async getTiersBySegmentWithAddOns(
     tenantId: string,
     segmentId: string
-  ): Promise<PackageWithAddOns[]> {
-    // CRITICAL: Cache key includes tenantId AND segmentId
-    const cacheKey = `catalog:${tenantId}:segment:${segmentId}:packages-with-addons`;
+  ): Promise<TierWithAddOns[]> {
+    const cacheKey = `catalog:${tenantId}:segment:${segmentId}:tiers-with-addons`;
 
-    // Try cache first
-    const cached = await this.cache?.get<PackageWithAddOns[]>(cacheKey);
+    const cached = await this.cache?.get<TierWithAddOns[]>(cacheKey);
     if (cached) {
       return cached;
     }
 
-    // Cache miss - fetch from repository
-    const packages = await this.repository.getPackagesBySegmentWithAddOns(tenantId, segmentId);
+    const tiers = await this.repository.getTiersBySegmentWithAddOns(tenantId, segmentId);
 
-    // Cache for 15 minutes (900 seconds)
-    await this.cache?.set(cacheKey, packages, 900);
+    await this.cache?.set(cacheKey, tiers, 900);
 
-    return packages;
+    return tiers;
   }
 
-  /**
-   * Get add-ons available for a segment
-   *
-   * Returns both:
-   * - Add-ons scoped to this specific segment (segmentId = specified)
-   * - Global add-ons available to all segments (segmentId = null)
-   *
-   * Used for segment landing pages and package detail pages within a segment
-   *
-   * @param tenantId - Tenant ID for data isolation
-   * @param segmentId - Segment ID to filter add-ons
-   * @returns Array of add-ons ordered by createdAt
-   *
-   * @example
-   * ```typescript
-   * const addOns = await catalogService.getAddOnsForSegment('tenant_123', 'wellness-retreat-id');
-   * // Returns: [
-   * //   { title: 'Farm-Fresh Meals', priceCents: 15000 },  // Global
-   * //   { title: 'Yoga Session', priceCents: 7500 }        // Wellness-specific
-   * // ]
-   * ```
-   */
   async getAddOnsForSegment(tenantId: string, segmentId: string): Promise<AddOn[]> {
-    // CRITICAL: Cache key includes tenantId AND segmentId
     const cacheKey = `catalog:${tenantId}:segment:${segmentId}:addons`;
 
-    // Try cache first
     const cached = await this.cache?.get<AddOn[]>(cacheKey);
     if (cached) {
       return cached;
     }
 
-    // Cache miss - fetch from repository
     const addOns = await this.repository.getAddOnsForSegment(tenantId, segmentId);
 
-    // Cache for 15 minutes (900 seconds)
     await this.cache?.set(cacheKey, addOns, 900);
 
     return addOns;
   }
 
-  /**
-   * Invalidate all catalog-related cache entries for a tenant
-   * MULTI-TENANT: Only invalidates cache for the specified tenant
-   *
-   * NOTE: This does NOT invalidate segment-scoped caches. Use
-   * invalidateSegmentCatalogCache() for segment-specific invalidation.
-   *
-   * @param tenantId - Tenant whose cache should be invalidated
-   */
+  // ============================================================================
+  // Cache helpers
+  // ============================================================================
+
   private async invalidateCatalogCache(tenantId: string): Promise<void> {
     await invalidateCacheKeys(this.cache, getCatalogInvalidationKeys(tenantId));
   }
 
-  /**
-   * Invalidate specific package cache entry
-   *
-   * @param tenantId - Tenant ID
-   * @param slug - Package slug
-   */
-  private async invalidatePackageCache(tenantId: string, slug: string): Promise<void> {
+  private async invalidateTierCache(tenantId: string, slug: string): Promise<void> {
     await invalidateCacheKeys(this.cache, getCatalogInvalidationKeys(tenantId, slug));
   }
 
-  /**
-   * Invalidate segment-scoped catalog cache entries
-   *
-   * Called when packages or add-ons are updated/deleted within a segment
-   * Invalidates all segment-related caches for proper cache consistency
-   *
-   * @param tenantId - Tenant ID
-   * @param segmentId - Segment ID whose cache should be invalidated
-   *
-   * @private
-   */
   private async invalidateSegmentCatalogCache(tenantId: string, segmentId: string): Promise<void> {
     await invalidateCacheKeys(this.cache, getSegmentCatalogInvalidationKeys(tenantId, segmentId));
   }
 
-  /**
-   * Invalidate all-addons cache entry
-   *
-   * Called when add-ons are created, updated, or deleted
-   *
-   * @param tenantId - Tenant ID
-   * @private
-   */
   private async invalidateAddOnsCache(tenantId: string): Promise<void> {
     await invalidateCacheKeys(this.cache, getAddOnInvalidationKeys(tenantId));
   }

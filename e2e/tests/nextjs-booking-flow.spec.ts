@@ -5,14 +5,14 @@ import { test, expect, Page } from '@playwright/test';
  *
  * Tests the booking flow on the Next.js tenant storefront:
  * 1. Visit tenant storefront at /t/[slug]
- * 2. View package details
+ * 2. View tier details
  * 3. Complete booking wizard
  * 4. Verify success page
  *
  * Prerequisites:
  * - Next.js app running at port 3000
  * - Express API running at port 3001
- * - Test tenant "handled-e2e" exists with packages
+ * - Test tenant "handled-e2e" exists with tiers
  *
  * Run: NEXTJS_E2E=1 npx playwright test nextjs-booking-flow.spec.ts
  */
@@ -44,17 +44,17 @@ test.describe('Next.js Tenant Storefront Booking Flow', () => {
     // Verify tenant name is displayed
     await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
 
-    // Verify packages are displayed
-    const packageCards = page.locator('[data-testid="package-card"]');
+    // Verify tiers are displayed
+    const tierCards = page.locator('[data-testid="tier-card"]');
     // If no test IDs, try finding by common patterns
-    if ((await packageCards.count()) === 0) {
-      // Look for package-like elements (cards with prices)
+    if ((await tierCards.count()) === 0) {
+      // Look for tier-like elements (cards with prices)
       const priceElements = page.locator('text=$');
       await expect(priceElements.first()).toBeVisible({ timeout: 5000 });
     }
   });
 
-  test('can navigate to package booking page', async ({ page }) => {
+  test('can navigate to tier booking page', async ({ page }) => {
     await page.goto(`${NEXTJS_BASE_URL}/t/${TEST_TENANT_SLUG}`);
     await page.waitForLoadState('domcontentloaded');
 

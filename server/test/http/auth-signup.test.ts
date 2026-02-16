@@ -48,9 +48,6 @@ afterAll(async () => {
       await prisma.tier.deleteMany({
         where: { tenantId: { in: tenantIds } },
       });
-      await prisma.package.deleteMany({
-        where: { tenantId: { in: tenantIds } },
-      });
       await prisma.sectionContent.deleteMany({
         where: { tenantId: { in: tenantIds } },
       });

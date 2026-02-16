@@ -37,7 +37,7 @@ const AnswerFaqSchema = TenantIdSchema.extend({
   question: z.string().min(1, 'question is required'),
 });
 
-const RecommendPackageSchema = TenantIdSchema.extend({
+const RecommendTierSchema = TenantIdSchema.extend({
   preferences: z.object({
     budget: z.enum(['low', 'medium', 'high']).optional(),
     occasion: z.string().optional(),
@@ -64,9 +64,9 @@ const CreateBookingSchema = TenantIdSchema.extend({
 function getBudgetReason(
   budget: 'low' | 'medium' | 'high' | undefined,
   priceCents: number,
-  allPackages: Array<{ priceCents: number }>
+  allTiers: Array<{ priceCents: number }>
 ): string {
-  const prices = allPackages.map((p) => p.priceCents);
+  const prices = allTiers.map((p) => p.priceCents);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
@@ -127,23 +127,23 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
 
       logger.info({ tenantId, endpoint: '/services' }, '[Agent] Fetching services');
 
-      // Get packages (which are services in HANDLED terminology)
-      const packages = await catalogService.getAllPackages(tenantId);
+      // Get tiers (which are services in HANDLED terminology)
+      const tiers = await catalogService.getAllTiers(tenantId);
 
       // Filter inactive if requested
-      const filtered = activeOnly ? packages.filter((p) => p.active !== false) : packages;
+      const filtered = activeOnly ? tiers.filter((p) => p.active !== false) : tiers;
 
       // Map to agent-friendly format
-      const services = filtered.map((pkg) => ({
-        id: pkg.id,
-        slug: pkg.slug,
-        name: pkg.title,
-        description: pkg.description,
-        priceCents: pkg.priceCents,
-        bookingType: pkg.bookingType || 'DATE',
-        photoUrl: pkg.photoUrl || null,
+      const services = filtered.map((tier) => ({
+        id: tier.id,
+        slug: tier.slug,
+        name: tier.title,
+        description: tier.description,
+        priceCents: tier.priceCents,
+        bookingType: tier.bookingType || 'DATE',
+        photoUrl: tier.photoUrl || null,
         addOns:
-          pkg.addOns?.map((addon) => ({
+          tier.addOns?.map((addon) => ({
             id: addon.id,
             name: addon.title,
             priceCents: addon.priceCents,
@@ -166,28 +166,28 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
         '[Agent] Fetching service details'
       );
 
-      // Try to get package by ID
-      const pkg = await catalogService.getPackageById(tenantId, serviceId);
+      // Try to get tier by ID
+      const tier = await catalogService.getTierById(tenantId, serviceId);
 
-      if (!pkg) {
+      if (!tier) {
         res.status(404).json({ error: 'Service not found' });
         return;
       }
 
-      // Get full package with add-ons
-      const fullPackage = await catalogService.getPackageBySlug(tenantId, pkg.slug);
+      // Get full tier with add-ons
+      const fullTier = await catalogService.getTierBySlug(tenantId, tier.slug);
 
       res.json({
-        id: fullPackage.id,
-        slug: fullPackage.slug,
-        name: fullPackage.title,
-        description: fullPackage.description,
-        priceCents: fullPackage.priceCents,
-        photoUrl: fullPackage.photoUrl || null,
-        bookingType: fullPackage.bookingType || 'DATE',
-        depositAmount: fullPackage.depositAmount || null,
+        id: fullTier.id,
+        slug: fullTier.slug,
+        name: fullTier.title,
+        description: fullTier.description,
+        priceCents: fullTier.priceCents,
+        photoUrl: fullTier.photoUrl || null,
+        bookingType: fullTier.bookingType || 'DATE',
+        depositAmount: fullTier.depositAmount || null,
         addOns:
-          fullPackage.addOns?.map((addon) => ({
+          fullTier.addOns?.map((addon) => ({
             id: addon.id,
             name: addon.title,
             description: addon.description || null,
@@ -371,34 +371,34 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
     }
   });
 
-  // POST /recommend - Recommend packages based on preferences
+  // POST /recommend - Recommend tiers based on preferences
   router.post('/recommend', async (req: Request, res: Response) => {
     try {
-      const { tenantId, preferences } = RecommendPackageSchema.parse(req.body);
+      const { tenantId, preferences } = RecommendTierSchema.parse(req.body);
 
       logger.info(
         { tenantId, preferences, endpoint: '/recommend' },
         '[Agent] Getting recommendations'
       );
 
-      const packages = await catalogService.getAllPackages(tenantId);
+      const tiers = await catalogService.getAllTiers(tenantId);
 
-      // Filter active packages
-      const activePackages = packages.filter((p) => p.active !== false);
+      // Filter active tiers
+      const activeTiers = tiers.filter((p) => p.active !== false);
 
-      if (activePackages.length === 0) {
+      if (activeTiers.length === 0) {
         res.json({
           recommendations: [],
-          message: 'No packages available for recommendation.',
+          message: 'No tiers available for recommendation.',
         });
         return;
       }
 
       // Simple recommendation logic based on budget
-      let recommendations = [...activePackages];
+      let recommendations = [...activeTiers];
 
       if (preferences.budget) {
-        const prices = activePackages.map((p) => p.priceCents);
+        const prices = activeTiers.map((p) => p.priceCents);
         const minPrice = Math.min(...prices);
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
@@ -410,13 +410,13 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
         };
 
         const range = budgetRanges[preferences.budget];
-        recommendations = activePackages.filter(
+        recommendations = activeTiers.filter(
           (p) => p.priceCents >= range.min && p.priceCents <= range.max
         );
 
         // If no exact matches, return closest options
         if (recommendations.length === 0) {
-          recommendations = activePackages.slice(0, 3);
+          recommendations = activeTiers.slice(0, 3);
         }
       }
 
@@ -427,14 +427,14 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
 
       // Return top 3 recommendations
       res.json({
-        recommendations: recommendations.slice(0, 3).map((pkg) => ({
-          id: pkg.id,
-          slug: pkg.slug,
-          name: pkg.title,
-          description: pkg.description,
-          priceCents: pkg.priceCents,
-          photoUrl: pkg.photoUrl || null,
-          reason: getBudgetReason(preferences.budget, pkg.priceCents, activePackages),
+        recommendations: recommendations.slice(0, 3).map((tier) => ({
+          id: tier.id,
+          slug: tier.slug,
+          name: tier.title,
+          description: tier.description,
+          priceCents: tier.priceCents,
+          photoUrl: tier.photoUrl || null,
+          reason: getBudgetReason(preferences.budget, tier.priceCents, activeTiers),
         })),
       });
     } catch (error) {
@@ -462,9 +462,9 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
       );
 
       // Get service details to determine booking type
-      const pkg = await catalogService.getPackageById(tenantId, serviceId);
+      const tier = await catalogService.getTierById(tenantId, serviceId);
 
-      if (!pkg) {
+      if (!tier) {
         res.status(404).json({ error: 'Service not found' });
         return;
       }
@@ -475,7 +475,7 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
       // Create a date booking through the wedding booking orchestrator
       // This creates a Stripe checkout session for payment
       const result = await bookingService.createDateBooking(tenantId, {
-        packageId: serviceId,
+        tierId: serviceId,
         date: eventDate,
         customerName,
         customerEmail,
@@ -488,11 +488,11 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
         success: true,
         checkoutUrl: result.checkoutUrl,
         booking: {
-          serviceName: pkg.title,
+          serviceName: tier.title,
           customerName,
           customerEmail,
           scheduledAt: eventDate,
-          totalCents: pkg.priceCents,
+          totalCents: tier.priceCents,
         },
         message: `Booking initiated! Please complete payment to confirm your booking.`,
       });

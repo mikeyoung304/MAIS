@@ -23,7 +23,7 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Package, AddOn } from '../../src/generated/prisma/client';
+import type { PrismaClient, Segment, Tier, AddOn } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
 import { createOrUpdateTenant } from './utils';
@@ -100,9 +100,9 @@ async function createOrUpdateSegment(
 }
 
 /**
- * Create or update a package with segment association
+ * Create or update a tier with segment association
  */
-async function createOrUpdatePackageWithSegment(
+async function createOrUpdateTierWithSegment(
   prisma: PrismaOrTransaction,
   tenantId: string,
   segmentId: string,
@@ -110,23 +110,21 @@ async function createOrUpdatePackageWithSegment(
     slug: string;
     name: string;
     description: string;
-    basePrice: number; // in cents
-    grouping?: string;
-    groupingOrder?: number;
+    priceCents: number; // in cents
+    sortOrder: number;
     photos?: Array<{ url: string; filename: string; size: number; order: number }>;
   }
-): Promise<Package> {
-  const { slug, name, description, basePrice, grouping, groupingOrder, photos = [] } = options;
+): Promise<Tier> {
+  const { slug, name, description, priceCents, sortOrder, photos = [] } = options;
 
-  return prisma.package.upsert({
+  return prisma.tier.upsert({
     where: { tenantId_slug: { slug, tenantId } },
     update: {
       name,
       description,
-      basePrice,
+      priceCents,
       segmentId,
-      grouping,
-      groupingOrder,
+      sortOrder,
       photos: JSON.stringify(photos),
     },
     create: {
@@ -135,10 +133,10 @@ async function createOrUpdatePackageWithSegment(
       slug,
       name,
       description,
-      basePrice,
-      grouping,
-      groupingOrder,
+      priceCents,
+      sortOrder,
       photos: JSON.stringify(photos),
+      features: JSON.stringify([]),
     },
   });
 }
@@ -179,19 +177,19 @@ async function createOrUpdateAddOn(
 }
 
 /**
- * Link add-ons to a package
+ * Link add-ons to a tier
  */
-async function linkAddOnsToPackage(
+async function linkAddOnsToTier(
   prisma: PrismaOrTransaction,
-  packageId: string,
+  tierId: string,
   addOnIds: string[]
 ): Promise<void> {
   await Promise.all(
     addOnIds.map((addOnId) =>
-      prisma.packageAddOn.upsert({
-        where: { packageId_addOnId: { packageId, addOnId } },
+      prisma.tierAddOn.upsert({
+        where: { tierId_addOnId: { tierId, addOnId } },
         update: {},
-        create: { packageId, addOnId },
+        create: { tierId, addOnId },
       })
     )
   );
@@ -213,7 +211,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
   let secretKeyForLogging: string | null = null;
 
   logger.info(
-    { slug: TENANT_SLUG, operations: 'segment+packages+addons' },
+    { slug: TENANT_SLUG, operations: 'segment+tiers+addons' },
     'Starting Little Bit Horse Farm seed transaction'
   );
   const startTime = Date.now();
@@ -246,12 +244,6 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         secondaryColor: '#68d391', // Sage green
         accentColor: '#9f7aea', // Soft purple
         backgroundColor: '#faf5f0', // Warm cream
-        // Tier display names - customize how tiers appear in storefront
-        tierDisplayNames: {
-          tier_1: 'The Grounding Reset',
-          tier_2: 'The Team Recharge',
-          tier_3: 'The Executive Reset',
-        },
       });
 
       publicKeyForLogging = publicKey;
@@ -260,12 +252,12 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       logger.info(`Tenant ${existingTenant ? 'updated' : 'created'}: ${tenant.name}`);
 
       // =====================================================================
-      // Delete existing packages and add-ons for clean slate
+      // Delete existing tiers and add-ons for clean slate
       // =====================================================================
-      await tx.packageAddOn.deleteMany({
-        where: { package: { tenantId: tenant.id } },
+      await tx.tierAddOn.deleteMany({
+        where: { tier: { tenantId: tenant.id } },
       });
-      await tx.package.deleteMany({
+      await tx.tier.deleteMany({
         where: { tenantId: tenant.id },
       });
       await tx.addOn.deleteMany({
@@ -275,7 +267,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         where: { tenantId: tenant.id },
       });
 
-      logger.info('Cleared existing LBHF packages, add-ons, and segments');
+      logger.info('Cleared existing LBHF tiers, add-ons, and segments');
 
       // =====================================================================
       // SEGMENT: CORPORATE WELLNESS RETREAT
@@ -297,11 +289,11 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       logger.info(`Segment created: ${wellnessSegment.name}`);
 
       // =====================================================================
-      // PACKAGES: 3-Tier Corporate Wellness (Good / Better / Best)
+      // TIERS: 3-Tier Corporate Wellness (Good / Better / Best)
       // =====================================================================
 
       // Good: The Grounding Reset
-      const groundingReset = await createOrUpdatePackageWithSegment(
+      const groundingReset = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         wellnessSegment.id,
@@ -320,9 +312,8 @@ Includes:
 
 Minimum 4 participants. Pricing is per person.
 Duration: 3.5-4 hours`,
-          basePrice: 45000, // $450
-          grouping: 'tier_1',
-          groupingOrder: 1,
+          priceCents: 45000, // $450
+          sortOrder: 1,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a',
@@ -335,14 +326,10 @@ Duration: 3.5-4 hours`,
       );
 
       // Better: The Team Recharge
-      const teamRecharge = await createOrUpdatePackageWithSegment(
-        tx,
-        tenant.id,
-        wellnessSegment.id,
-        {
-          slug: 'team-recharge',
-          name: 'The Team Recharge',
-          description: `A real retreat without overnight logistics.
+      const teamRecharge = await createOrUpdateTierWithSegment(tx, tenant.id, wellnessSegment.id, {
+        slug: 'team-recharge',
+        name: 'The Team Recharge',
+        description: `A real retreat without overnight logistics.
 
 Everything in The Grounding Reset, plus:
 • Yoga + Breathwork (two distinct modalities)
@@ -352,22 +339,20 @@ Everything in The Grounding Reset, plus:
 
 Minimum 4 participants. Pricing is per person.
 Duration: 6-7 hours`,
-          basePrice: 65000, // $650
-          grouping: 'tier_2',
-          groupingOrder: 2,
-          photos: [
-            {
-              url: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2',
-              filename: 'team-recharge.jpg',
-              size: 0,
-              order: 0,
-            },
-          ],
-        }
-      );
+        priceCents: 65000, // $650
+        sortOrder: 2,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2',
+            filename: 'team-recharge.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
+      });
 
       // Best: The Executive Reset
-      const executiveReset = await createOrUpdatePackageWithSegment(
+      const executiveReset = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         wellnessSegment.id,
@@ -385,9 +370,8 @@ Everything in The Team Recharge, plus:
 
 Minimum 4 participants. Pricing is per person.
 Duration: 7-8 hours + prep/recap`,
-          basePrice: 95000, // $950
-          grouping: 'tier_3',
-          groupingOrder: 3,
+          priceCents: 95000, // $950
+          sortOrder: 3,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1450052590821-8bf91254a353',
@@ -400,7 +384,7 @@ Duration: 7-8 hours + prep/recap`,
       );
 
       logger.info(
-        `Packages created: ${[groundingReset, teamRecharge, executiveReset].map((p) => p.name).join(', ')}`
+        `Tiers created: ${[groundingReset, teamRecharge, executiveReset].map((p) => p.name).join(', ')}`
       );
 
       // =====================================================================
@@ -558,7 +542,7 @@ Duration: 7-8 hours + prep/recap`,
       logger.info('Corporate Wellness add-ons created: 18 (segment-scoped)');
 
       // =====================================================================
-      // LINK CORPORATE WELLNESS ADD-ONS TO WELLNESS PACKAGES
+      // LINK CORPORATE WELLNESS ADD-ONS TO WELLNESS TIERS
       // =====================================================================
       const wellnessAddOnIds = [
         pastryBar.id,
@@ -582,13 +566,13 @@ Duration: 7-8 hours + prep/recap`,
       ];
 
       await Promise.all([
-        linkAddOnsToPackage(tx, groundingReset.id, wellnessAddOnIds),
-        linkAddOnsToPackage(tx, teamRecharge.id, wellnessAddOnIds),
-        linkAddOnsToPackage(tx, executiveReset.id, wellnessAddOnIds),
+        linkAddOnsToTier(tx, groundingReset.id, wellnessAddOnIds),
+        linkAddOnsToTier(tx, teamRecharge.id, wellnessAddOnIds),
+        linkAddOnsToTier(tx, executiveReset.id, wellnessAddOnIds),
       ]);
 
       logger.info(
-        `Wellness add-ons linked: ${wellnessAddOnIds.length} add-ons × 3 packages = 54 links`
+        `Wellness add-ons linked: ${wellnessAddOnIds.length} add-ons x 3 tiers = 54 links`
       );
 
       // =====================================================================
@@ -610,11 +594,11 @@ Duration: 7-8 hours + prep/recap`,
       logger.info(`Segment created: ${elopementsSegment.name}`);
 
       // =====================================================================
-      // PACKAGES: 3-Tier Elopements (Simple / Sweet / Intimate)
+      // TIERS: 3-Tier Elopements (Simple / Sweet / Intimate)
       // =====================================================================
 
       // Tier 1: Just Us
-      const justUs = await createOrUpdatePackageWithSegment(tx, tenant.id, elopementsSegment.id, {
+      const justUs = await createOrUpdateTierWithSegment(tx, tenant.id, elopementsSegment.id, {
         slug: 'just-us',
         name: 'Just Us',
         description: `Pure elope. No guests. No stress.
@@ -632,9 +616,8 @@ Rules:
 • No setup / no lingering
 
 Perfect for: couples who want to get married, beautifully, without turning it into a production.`,
-        basePrice: 39500, // $395
-        grouping: 'tier_1',
-        groupingOrder: 1,
+        priceCents: 39500, // $395
+        sortOrder: 1,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1519741497674-611481863552',
@@ -646,7 +629,7 @@ Perfect for: couples who want to get married, beautifully, without turning it in
       });
 
       // Tier 2: Just Us + Moments (Most Popular)
-      const justUsMoments = await createOrUpdatePackageWithSegment(
+      const justUsMoments = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         elopementsSegment.id,
@@ -668,9 +651,8 @@ Notes:
 • No reception, no vendors beyond officiant
 
 Perfect for: couples who want a few loved ones and time to breathe it in.`,
-          basePrice: 89500, // $895
-          grouping: 'tier_2',
-          groupingOrder: 2,
+          priceCents: 89500, // $895
+          sortOrder: 2,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92',
@@ -683,14 +665,10 @@ Perfect for: couples who want a few loved ones and time to breathe it in.`,
       );
 
       // Tier 3: Tiny Circle
-      const tinyCircle = await createOrUpdatePackageWithSegment(
-        tx,
-        tenant.id,
-        elopementsSegment.id,
-        {
-          slug: 'tiny-circle',
-          name: 'Tiny Circle',
-          description: `An intimate celebration—without becoming a wedding.
+      const tinyCircle = await createOrUpdateTierWithSegment(tx, tenant.id, elopementsSegment.id, {
+        slug: 'tiny-circle',
+        name: 'Tiny Circle',
+        description: `An intimate celebration—without becoming a wedding.
 
 Includes:
 • Up to 12 guests (hard cap)
@@ -707,22 +685,20 @@ Notes:
 • Designed for photos + presence, not production
 
 Perfect for: couples who want a small circle, great photos, and zero chaos.`,
-          basePrice: 159500, // $1,595
-          grouping: 'tier_3',
-          groupingOrder: 3,
-          photos: [
-            {
-              url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6',
-              filename: 'tiny-circle.jpg',
-              size: 0,
-              order: 0,
-            },
-          ],
-        }
-      );
+        priceCents: 159500, // $1,595
+        sortOrder: 3,
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6',
+            filename: 'tiny-circle.jpg',
+            size: 0,
+            order: 0,
+          },
+        ],
+      });
 
       logger.info(
-        `Elopement packages created: ${[justUs, justUsMoments, tinyCircle].map((p) => p.name).join(', ')}`
+        `Elopement tiers created: ${[justUs, justUsMoments, tinyCircle].map((p) => p.name).join(', ')}`
       );
 
       // =====================================================================
@@ -764,7 +740,7 @@ Perfect for: couples who want a small circle, great photos, and zero chaos.`,
       logger.info('Elopement add-ons created: 4 (segment-scoped)');
 
       // =====================================================================
-      // LINK ELOPEMENT ADD-ONS TO ELOPEMENT PACKAGES
+      // LINK ELOPEMENT ADD-ONS TO ELOPEMENT TIERS
       // =====================================================================
       const elopementAddOnIds = [
         photography30.id,
@@ -774,13 +750,13 @@ Perfect for: couples who want a small circle, great photos, and zero chaos.`,
       ];
 
       await Promise.all([
-        linkAddOnsToPackage(tx, justUs.id, elopementAddOnIds),
-        linkAddOnsToPackage(tx, justUsMoments.id, elopementAddOnIds),
-        linkAddOnsToPackage(tx, tinyCircle.id, elopementAddOnIds),
+        linkAddOnsToTier(tx, justUs.id, elopementAddOnIds),
+        linkAddOnsToTier(tx, justUsMoments.id, elopementAddOnIds),
+        linkAddOnsToTier(tx, tinyCircle.id, elopementAddOnIds),
       ]);
 
       logger.info(
-        `Elopement add-ons linked: ${elopementAddOnIds.length} add-ons × 3 packages = 12 links`
+        `Elopement add-ons linked: ${elopementAddOnIds.length} add-ons x 3 tiers = 12 links`
       );
 
       // =====================================================================
@@ -803,11 +779,11 @@ Perfect for: couples who want a small circle, great photos, and zero chaos.`,
       logger.info(`Segment created: ${weekendSegment.name}`);
 
       // =====================================================================
-      // PACKAGES: 3-Tier Weekend Getaway (Entry / Popular / Premium)
+      // TIERS: 3-Tier Weekend Getaway (Entry / Popular / Premium)
       // =====================================================================
 
       // Tier 1: Farm Reset
-      const farmReset = await createOrUpdatePackageWithSegment(tx, tenant.id, weekendSegment.id, {
+      const farmReset = await createOrUpdateTierWithSegment(tx, tenant.id, weekendSegment.id, {
         slug: 'farm-reset',
         name: 'Farm Reset',
         description: `Light touch. Easy yes.
@@ -823,9 +799,8 @@ Group size:
 • Additional guests +$35/person (cap at 8)
 
 Perfect for: Airbnb guests, first-time visitors, or anyone who wants a taste of farm life.`,
-        basePrice: 19500, // $195
-        grouping: 'tier_1',
-        groupingOrder: 1,
+        priceCents: 19500, // $195
+        sortOrder: 1,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1534773728080-33d31da27ae5',
@@ -837,7 +812,7 @@ Perfect for: Airbnb guests, first-time visitors, or anyone who wants a taste of 
       });
 
       // Tier 2: Farm Flow (Most Popular)
-      const farmFlow = await createOrUpdatePackageWithSegment(tx, tenant.id, weekendSegment.id, {
+      const farmFlow = await createOrUpdateTierWithSegment(tx, tenant.id, weekendSegment.id, {
         slug: 'farm-flow',
         name: 'Farm Flow',
         description: `Enough structure to feel special. Our most popular weekend package.
@@ -855,9 +830,8 @@ Group size:
 • Additional guests +$45/person (cap at 10)
 
 Perfect for: friends, families, couples who want to mix animals + movement + food.`,
-        basePrice: 49500, // $495
-        grouping: 'tier_2',
-        groupingOrder: 2,
+        priceCents: 49500, // $495
+        sortOrder: 2,
         photos: [
           {
             url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64',
@@ -869,7 +843,7 @@ Perfect for: friends, families, couples who want to mix animals + movement + foo
       });
 
       // Tier 3: Signature Farm Day
-      const signatureFarmDay = await createOrUpdatePackageWithSegment(
+      const signatureFarmDay = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         weekendSegment.id,
@@ -892,9 +866,8 @@ Group size:
 • Additional guests +$65/person (cap at 12)
 
 Perfect for: birthdays, reunions, friend trips—anyone who wants a "luxury" feel without luxury logistics.`,
-          basePrice: 89500, // $895
-          grouping: 'tier_3',
-          groupingOrder: 3,
+          priceCents: 89500, // $895
+          sortOrder: 3,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1568736772245-26914aae0b09',
@@ -907,7 +880,7 @@ Perfect for: birthdays, reunions, friend trips—anyone who wants a "luxury" fee
       );
 
       logger.info(
-        `Weekend packages created: ${[farmReset, farmFlow, signatureFarmDay].map((p) => p.name).join(', ')}`
+        `Weekend tiers created: ${[farmReset, farmFlow, signatureFarmDay].map((p) => p.name).join(', ')}`
       );
 
       // =====================================================================
@@ -1009,7 +982,7 @@ Perfect for: birthdays, reunions, friend trips—anyone who wants a "luxury" fee
       logger.info('Weekend Getaway add-ons created: 11 (segment-scoped)');
 
       // =====================================================================
-      // LINK WEEKEND GETAWAY ADD-ONS TO WEEKEND PACKAGES
+      // LINK WEEKEND GETAWAY ADD-ONS TO WEEKEND TIERS
       // =====================================================================
       const weekendAddOnIds = [
         wkndCoffeePastries.id,
@@ -1026,14 +999,12 @@ Perfect for: birthdays, reunions, friend trips—anyone who wants a "luxury" fee
       ];
 
       await Promise.all([
-        linkAddOnsToPackage(tx, farmReset.id, weekendAddOnIds),
-        linkAddOnsToPackage(tx, farmFlow.id, weekendAddOnIds),
-        linkAddOnsToPackage(tx, signatureFarmDay.id, weekendAddOnIds),
+        linkAddOnsToTier(tx, farmReset.id, weekendAddOnIds),
+        linkAddOnsToTier(tx, farmFlow.id, weekendAddOnIds),
+        linkAddOnsToTier(tx, signatureFarmDay.id, weekendAddOnIds),
       ]);
 
-      logger.info(
-        `Weekend add-ons linked: ${weekendAddOnIds.length} add-ons × 3 packages = 33 links`
-      );
+      logger.info(`Weekend add-ons linked: ${weekendAddOnIds.length} add-ons x 3 tiers = 33 links`);
 
       // =====================================================================
       // BLACKOUT DATES (holidays)
@@ -1086,18 +1057,18 @@ Perfect for: birthdays, reunions, friend trips—anyone who wants a "luxury" fee
   logger.info('LITTLE BIT HORSE FARM SEED COMPLETE');
   logger.info('='.repeat(60));
   logger.info('Segments: 3');
-  logger.info('  • Corporate Wellness Retreats (4+ guests, per-person pricing)');
-  logger.info('  • Elopements on the Farm (couples + small parties, flat-rate)');
-  logger.info('  • Weekend Getaway Packages (groups, flat-rate + per-person overflow)');
-  logger.info('Packages: 9 total');
-  logger.info('  • Wellness: Grounding Reset, Team Recharge, Executive Reset');
-  logger.info('  • Elopements: Just Us, Just Us + Moments, Tiny Circle');
-  logger.info('  • Weekends: Farm Reset, Farm Flow, Signature Farm Day');
+  logger.info('  - Corporate Wellness Retreats (4+ guests, per-person pricing)');
+  logger.info('  - Elopements on the Farm (couples + small parties, flat-rate)');
+  logger.info('  - Weekend Getaway Packages (groups, flat-rate + per-person overflow)');
+  logger.info('Tiers: 9 total');
+  logger.info('  - Wellness: Grounding Reset, Team Recharge, Executive Reset');
+  logger.info('  - Elopements: Just Us, Just Us + Moments, Tiny Circle');
+  logger.info('  - Weekends: Farm Reset, Farm Flow, Signature Farm Day');
   logger.info('Add-ons: 33 total (segment-scoped)');
-  logger.info('  • Wellness: 18 add-ons (food, bar, wellness, corporate polish)');
-  logger.info('  • Elopements: 4 add-ons (photography, florals, extra time)');
-  logger.info('  • Weekends: 11 add-ons (comfort, wellness, horses, food)');
-  logger.info('PackageAddOn links: 99 (54 wellness + 12 elopement + 33 weekend)');
+  logger.info('  - Wellness: 18 add-ons (food, bar, wellness, corporate polish)');
+  logger.info('  - Elopements: 4 add-ons (photography, florals, extra time)');
+  logger.info('  - Weekends: 11 add-ons (comfort, wellness, horses, food)');
+  logger.info('TierAddOn links: 99 (54 wellness + 12 elopement + 33 weekend)');
   logger.info('Blackout dates: 6 (major holidays 2025-2026)');
   logger.info('='.repeat(60));
 }

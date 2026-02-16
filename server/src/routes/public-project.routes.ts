@@ -285,8 +285,8 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         include: {
           booking: {
             include: {
-              package: {
-                select: { id: true, name: true, basePrice: true },
+              tier: {
+                select: { id: true, name: true, priceCents: true },
               },
               customer: {
                 select: { id: true, name: true, email: true },
@@ -331,7 +331,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         },
         booking: {
           eventDate: eventDate.toISOString(),
-          serviceName: project.booking.package?.name ?? 'Service',
+          serviceName: project.booking.tier?.name ?? 'Service',
           customerName: project.booking.customer?.name ?? 'Customer',
         },
         pendingRequests: project.requests.map((r) => ({
@@ -490,7 +490,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
             booking: {
               include: {
                 customer: { select: { id: true, name: true } },
-                package: { select: { name: true } },
+                tier: { select: { name: true } },
               },
             },
           },
@@ -514,7 +514,7 @@ export function createPublicProjectRoutes(prisma: PrismaClient): Router {
         });
 
         const customerName = project.booking.customer?.name ?? 'there';
-        const serviceName = project.booking.package?.name ?? 'your service';
+        const serviceName = project.booking.tier?.name ?? 'your service';
         const businessName = tenant?.name ?? 'us';
 
         // SECURITY: contextType is 'customer' because token auth = customer access

@@ -518,7 +518,7 @@ describe.sequential('SegmentService Integration Tests', () => {
   // ============================================================================
 
   describe('Segment with relations', () => {
-    it('should return segment with packages and add-ons', async () => {
+    it('should return segment with tiers and add-ons', async () => {
       const tenant = await ctx.tenants.tenantA.create();
 
       const segment = await service.createSegment({
@@ -530,16 +530,18 @@ describe.sequential('SegmentService Integration Tests', () => {
         active: true,
       });
 
-      // Create package for segment
-      await ctx.prisma.package.create({
+      // Create tier for segment
+      await ctx.prisma.tier.create({
         data: {
           tenantId: tenant.id,
           segmentId: segment.id,
           slug: 'weekend-detox',
           name: 'Weekend Detox',
           description: 'Description',
-          basePrice: 79900,
+          priceCents: 79900,
           active: true,
+          sortOrder: 1,
+          features: [],
         },
       });
 
@@ -570,9 +572,9 @@ describe.sequential('SegmentService Integration Tests', () => {
       const result = await service.getSegmentWithRelations(tenant.id, 'wellness-retreat');
 
       expect(result.id).toBe(segment.id);
-      expect(result.packages).toBeDefined();
+      expect(result.tiers).toBeDefined();
       expect(result.addOns).toBeDefined();
-      expect(result.packages).toHaveLength(1);
+      expect(result.tiers).toHaveLength(1);
       expect(result.addOns).toHaveLength(2); // Segment-specific + global
     });
   });

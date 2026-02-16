@@ -62,18 +62,18 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     };
 
     mockCatalogService = {
-      getAllPackages: vi
+      getAllTiers: vi
         .fn()
         .mockResolvedValue([
           { id: 'pkg-1', title: 'Wedding Package', priceCents: 250000, active: true },
         ]),
-      getPackageById: vi.fn().mockResolvedValue({
+      getTierById: vi.fn().mockResolvedValue({
         id: 'pkg-1',
         slug: 'wedding-package',
         title: 'Wedding Package',
         priceCents: 250000,
       }),
-      getPackageBySlug: vi.fn().mockResolvedValue({
+      getTierBySlug: vi.fn().mockResolvedValue({
         id: 'pkg-1',
         slug: 'wedding-package',
         title: 'Wedding Package',
@@ -748,7 +748,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
       expect(mockBookingService.createDateBooking).toHaveBeenCalledWith(
         'tenant-123',
         expect.objectContaining({
-          packageId: 'pkg-1',
+          tierId: 'pkg-1',
           date: '2024-06-15',
           customerName: 'John Smith',
           customerEmail: 'john@example.com',
@@ -757,7 +757,7 @@ describe('Internal Agent Storefront & Booking Endpoints', () => {
     });
 
     it('should return 404 for missing service', async () => {
-      mockCatalogService.getPackageById = vi.fn().mockResolvedValue(null);
+      mockCatalogService.getTierById = vi.fn().mockResolvedValue(null);
 
       const response = await request(app)
         .post('/v1/internal/agent/create-booking')

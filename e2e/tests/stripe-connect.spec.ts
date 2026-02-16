@@ -177,10 +177,10 @@ test.describe('Stripe Connect Flow', () => {
     await expect(tabList).toBeVisible();
 
     // Verify tabs are accessible
-    const packagesTab = authenticatedPage.getByRole('tab', { name: 'Packages' });
+    const tiersTab = authenticatedPage.getByRole('tab', { name: 'Tiers' });
     const paymentsTab = authenticatedPage.getByRole('tab', { name: 'Payments' });
 
-    await expect(packagesTab).toBeVisible();
+    await expect(tiersTab).toBeVisible();
     await expect(paymentsTab).toBeVisible();
 
     // Click Payments tab

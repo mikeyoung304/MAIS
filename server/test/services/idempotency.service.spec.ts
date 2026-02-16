@@ -226,32 +226,14 @@ describe('IdempotencyService', () => {
       // Arrange
       const tenantId = 'tenant_123';
       const email = 'john@example.com';
-      const packageId = 'pkg_starter';
+      const tierId = 'pkg_starter';
       const eventDate = '2025-07-01';
 
       // Act - Generate keys with different timestamps (or no timestamp)
-      const key1 = service.generateCheckoutKey(
-        tenantId,
-        email,
-        packageId,
-        eventDate,
-        1700000000000
-      );
-      const key2 = service.generateCheckoutKey(
-        tenantId,
-        email,
-        packageId,
-        eventDate,
-        1700000005000
-      );
-      const key3 = service.generateCheckoutKey(
-        tenantId,
-        email,
-        packageId,
-        eventDate,
-        1700000015000
-      );
-      const keyNoTimestamp = service.generateCheckoutKey(tenantId, email, packageId, eventDate);
+      const key1 = service.generateCheckoutKey(tenantId, email, tierId, eventDate, 1700000000000);
+      const key2 = service.generateCheckoutKey(tenantId, email, tierId, eventDate, 1700000005000);
+      const key3 = service.generateCheckoutKey(tenantId, email, tierId, eventDate, 1700000015000);
+      const keyNoTimestamp = service.generateCheckoutKey(tenantId, email, tierId, eventDate);
 
       // Assert - ALL keys should be identical because timestamp is DEPRECATED and ignored
       // This prevents double-charge risk when requests straddle time boundaries
@@ -264,7 +246,7 @@ describe('IdempotencyService', () => {
       const keyDifferentEmail = service.generateCheckoutKey(
         tenantId,
         'different@example.com',
-        packageId,
+        tierId,
         eventDate
       );
       expect(keyDifferentEmail).not.toBe(key1);

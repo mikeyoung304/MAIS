@@ -23,14 +23,14 @@ export interface CacheOptions {
  *
  * @example
  * ```typescript
- * const packages = await cachedOperation(
+ * const tiers = await cachedOperation(
  *   this.cache,
  *   {
  *     prefix: 'catalog',
- *     keyParts: [tenantId, 'all-packages'],
+ *     keyParts: [tenantId, 'all-tiers'],
  *     ttl: 900
  *   },
- *   () => this.repository.getAllPackages(tenantId)
+ *   () => this.repository.getAllTiers(tenantId)
  * );
  * ```
  *
@@ -70,8 +70,8 @@ export async function cachedOperation<T>(
  *
  * @example
  * ```typescript
- * const key = buildCacheKey('catalog', tenantId, 'packages');
- * // Returns: "catalog:tenant_123:packages"
+ * const key = buildCacheKey('catalog', tenantId, 'all-tiers');
+ * // Returns: "catalog:tenant_123:all-tiers"
  * ```
  *
  * @param prefix - Cache key prefix (e.g., 'catalog', 'segments')
@@ -90,8 +90,8 @@ export function buildCacheKey(prefix: string, tenantId: string, ...parts: string
  * @example
  * ```typescript
  * await invalidateCacheKeys(this.cache, [
- *   buildCacheKey('catalog', tenantId, 'all-packages'),
- *   buildCacheKey('catalog', tenantId, 'package', slug)
+ *   buildCacheKey('catalog', tenantId, 'all-tiers'),
+ *   buildCacheKey('catalog', tenantId, 'tier', slug)
  * ]);
  * ```
  *
@@ -118,10 +118,10 @@ export async function invalidateCacheKeys(
  *
  * @example
  * ```typescript
- * // Invalidate all packages (e.g., after creating new package)
+ * // Invalidate all tiers (e.g., after creating new tier)
  * const keys = getCatalogInvalidationKeys(tenantId);
  *
- * // Invalidate only specific package (e.g., after updating package)
+ * // Invalidate only specific tier (e.g., after updating tier)
  * const keys = getCatalogInvalidationKeys(tenantId, 'intimate-ceremony');
  * invalidateCacheKeys(this.cache, keys);
  * ```
@@ -131,13 +131,13 @@ export async function invalidateCacheKeys(
  * @returns Array of cache keys to invalidate
  */
 export function getCatalogInvalidationKeys(tenantId: string, slug?: string): string[] {
-  // If slug provided, only invalidate that specific package (granular invalidation)
+  // If slug provided, only invalidate that specific tier (granular invalidation)
   if (slug) {
-    return [buildCacheKey('catalog', tenantId, 'package', slug)];
+    return [buildCacheKey('catalog', tenantId, 'tier', slug)];
   }
 
-  // No slug - invalidate all packages (e.g., new package created)
-  return [buildCacheKey('catalog', tenantId, 'all-packages')];
+  // No slug - invalidate all tiers (e.g., new tier created)
+  return [buildCacheKey('catalog', tenantId, 'all-tiers')];
 }
 
 /**
@@ -172,8 +172,8 @@ export function getSegmentInvalidationKeys(tenantId: string, slug?: string): str
  */
 export function getSegmentCatalogInvalidationKeys(tenantId: string, segmentId: string): string[] {
   return [
-    buildCacheKey('catalog', tenantId, 'segment', segmentId, 'packages'),
-    buildCacheKey('catalog', tenantId, 'segment', segmentId, 'packages-with-addons'),
+    buildCacheKey('catalog', tenantId, 'segment', segmentId, 'tiers'),
+    buildCacheKey('catalog', tenantId, 'segment', segmentId, 'tiers-with-addons'),
     buildCacheKey('catalog', tenantId, 'segment', segmentId, 'addons'),
   ];
 }

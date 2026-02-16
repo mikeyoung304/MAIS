@@ -154,12 +154,12 @@ class MockIdempotencyService {
   generateCheckoutKey(
     tenantId: string,
     email: string,
-    packageId: string,
+    tierId: string,
     eventDate: string,
     timestamp?: number
   ): string {
-    this.generateCheckoutKeyCalls.push([tenantId, email, packageId, eventDate, timestamp]);
-    const keyParts = `${tenantId}|${email}|${packageId}|${eventDate}`;
+    this.generateCheckoutKeyCalls.push([tenantId, email, tierId, eventDate, timestamp]);
+    const keyParts = `${tenantId}|${email}|${tierId}|${eventDate}`;
     const generatedKey =
       this.generatedKeys.get(keyParts) ?? `checkout_${keyParts.replace(/\|/g, '_')}`;
     return generatedKey;
@@ -225,7 +225,7 @@ function buildCheckoutInput(
     amountCents: 100000, // $1000
     email: 'customer@example.com',
     metadata: {
-      packageId: 'pkg_123',
+      tierId: 'pkg_123',
       eventDate: '2025-06-15',
       coupleName: 'John & Jane',
     },
@@ -516,7 +516,7 @@ describe('CheckoutSessionFactory', () => {
 
       const input = buildCheckoutInput({
         metadata: {
-          packageId: 'pkg_test',
+          tierId: 'pkg_test',
           eventDate: '2025-06-15',
           customField: 'custom-value',
         },
@@ -526,7 +526,7 @@ describe('CheckoutSessionFactory', () => {
 
       const call = paymentProvider.createCheckoutSessionCalls[0];
       expect(call.metadata).toEqual({
-        packageId: 'pkg_test',
+        tierId: 'pkg_test',
         eventDate: '2025-06-15',
         customField: 'custom-value',
         tenantSlug: 'enriched-tenant',
@@ -569,7 +569,7 @@ describe('CheckoutSessionFactory', () => {
         tenantId: 'tenant_connect',
         email: 'connect@example.com',
         metadata: {
-          packageId: 'pkg_connect',
+          tierId: 'pkg_connect',
           eventDate: '2025-07-20',
         },
         idempotencyKeyParts: [

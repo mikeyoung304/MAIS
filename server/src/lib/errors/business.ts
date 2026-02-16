@@ -183,34 +183,34 @@ export class InsufficientFundsError extends PaymentError {
 }
 
 /**
- * Catalog/Package errors
+ * Catalog/Tier errors
  */
-export class PackageError extends AppError {
+export class TierError extends AppError {
   constructor(message: string, code?: string) {
-    super(message, code || 'PACKAGE_ERROR', 422, true);
-    this.name = 'PackageError';
+    super(message, code || 'TIER_ERROR', 422, true);
+    this.name = 'TierError';
   }
 }
 
 /**
- * Package not available
- * P2-344 FIX: Generic message to prevent package ID enumeration
+ * Tier not available
+ * P2-344 FIX: Generic message to prevent tier ID enumeration
  */
-export class PackageNotAvailableError extends PackageError {
+export class TierNotAvailableError extends TierError {
   constructor() {
-    super('The requested package is not available for booking', 'PACKAGE_NOT_AVAILABLE');
-    this.name = 'PackageNotAvailableError';
+    super('The requested tier is not available for booking', 'TIER_NOT_AVAILABLE');
+    this.name = 'TierNotAvailableError';
   }
 }
 
 /**
- * Invalid booking type for package
- * Use when a package doesn't support the requested booking type (DATE vs TIMESLOT)
+ * Invalid booking type for tier
+ * Use when a tier doesn't support the requested booking type (DATE vs TIMESLOT)
  */
-export class InvalidBookingTypeError extends PackageError {
-  constructor(packageTitle: string, expectedType: string) {
+export class InvalidBookingTypeError extends TierError {
+  constructor(tierTitle: string, expectedType: string) {
     super(
-      `Package "${packageTitle}" does not support ${expectedType} booking type`,
+      `Tier "${tierTitle}" does not support ${expectedType} booking type`,
       'INVALID_BOOKING_TYPE'
     );
     this.name = 'InvalidBookingTypeError';
@@ -218,12 +218,12 @@ export class InvalidBookingTypeError extends PackageError {
 }
 
 /**
- * Package quota exceeded
+ * Tier quota exceeded
  */
-export class PackageQuotaExceededError extends PackageError {
-  constructor(packageId: string) {
-    super(`Package ${packageId} quota has been exceeded`, 'PACKAGE_QUOTA_EXCEEDED');
-    this.name = 'PackageQuotaExceededError';
+export class TierQuotaExceededError extends TierError {
+  constructor(tierId: string) {
+    super(`Tier ${tierId} quota has been exceeded`, 'TIER_QUOTA_EXCEEDED');
+    this.name = 'TierQuotaExceededError';
   }
 }
 

@@ -5,7 +5,7 @@
  * - Random key generation (security) on first create
  * - Key preservation on subsequent seeds (idempotency)
  * - Tenant creation with demo data
- * - Package and add-on creation
+ * - Tier and add-on creation
  * - Blackout date creation
  * - Idempotency (safe to run multiple times)
  */
@@ -188,16 +188,16 @@ describe('Demo Seed', () => {
     });
   });
 
-  describe('Demo Package Creation', () => {
-    it('should create starter, growth, and enterprise packages', async () => {
+  describe('Demo Tier Creation', () => {
+    it('should create starter, growth, and enterprise tiers', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedDemo(mockPrisma);
 
       // Should be called 3 times (starter, growth, enterprise)
-      expect(mockPrisma.package.upsert).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(3);
 
-      const slugs = mockPrisma.package.upsert.mock.calls.map(
+      const slugs = mockPrisma.tier.upsert.mock.calls.map(
         (call) => call[0].where.tenantId_slug.slug
       );
       expect(slugs).toContain('starter');
@@ -205,12 +205,12 @@ describe('Demo Seed', () => {
       expect(slugs).toContain('enterprise');
     });
 
-    it('should set realistic prices for packages', async () => {
+    it('should set realistic prices for tiers', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedDemo(mockPrisma);
 
-      const prices = mockPrisma.package.upsert.mock.calls.map((call) => call[0].create.basePrice);
+      const prices = mockPrisma.tier.upsert.mock.calls.map((call) => call[0].create.priceCents);
 
       // Verify prices are in cents and reasonable
       prices.forEach((price) => {
@@ -219,12 +219,12 @@ describe('Demo Seed', () => {
       });
     });
 
-    it('should include photo URLs for packages', async () => {
+    it('should include photo URLs for tiers', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedDemo(mockPrisma);
 
-      mockPrisma.package.upsert.mock.calls.forEach((call) => {
+      mockPrisma.tier.upsert.mock.calls.forEach((call) => {
         const photos = call[0].create.photos;
         expect(photos).toBeDefined();
         // Photos is stored as JSON string
@@ -259,14 +259,14 @@ describe('Demo Seed', () => {
       expect(slugs).toContain('dedicated-account-manager');
     });
 
-    it('should link add-ons to appropriate packages', async () => {
+    it('should link add-ons to appropriate tiers', async () => {
       const mockPrisma = createMockPrisma();
 
       await seedDemo(mockPrisma);
 
-      // Should create package-addon links
-      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalled();
-      expect(mockPrisma.packageAddOn.upsert.mock.calls.length).toBeGreaterThan(0);
+      // Should create tier-addon links
+      expect(mockPrisma.tierAddOn.upsert).toHaveBeenCalled();
+      expect(mockPrisma.tierAddOn.upsert.mock.calls.length).toBeGreaterThan(0);
     });
   });
 
@@ -303,7 +303,7 @@ describe('Demo Seed', () => {
   });
 
   describe('Idempotency', () => {
-    it('should be safe to run multiple times (upserts for packages/add-ons)', async () => {
+    it('should be safe to run multiple times (upserts for tiers/add-ons)', async () => {
       const mockPrisma = createMockPrisma();
 
       // Run twice
@@ -311,9 +311,9 @@ describe('Demo Seed', () => {
       await seedDemo(mockPrisma);
 
       // All operations except tenant should use upsert
-      expect(mockPrisma.package.upsert).toHaveBeenCalled();
+      expect(mockPrisma.tier.upsert).toHaveBeenCalled();
       expect(mockPrisma.addOn.upsert).toHaveBeenCalled();
-      expect(mockPrisma.packageAddOn.upsert).toHaveBeenCalled();
+      expect(mockPrisma.tierAddOn.upsert).toHaveBeenCalled();
       expect(mockPrisma.blackoutDate.upsert).toHaveBeenCalled();
     });
 
@@ -427,8 +427,14 @@ function createMockPrisma(
     apiKeySecret: 'hashed-secret-key',
   };
 
-  const mockPackage = {
-    id: 'pkg-1',
+  const mockSegment = {
+    id: 'segment-general-123',
+    slug: 'general',
+    tenantId: mockTenant.id,
+  };
+
+  const mockTier = {
+    id: 'tier-1',
     slug: 'starter',
     tenantId: mockTenant.id,
   };
@@ -446,14 +452,17 @@ function createMockPrisma(
       update: vi.fn().mockResolvedValue(mockTenant),
       upsert: vi.fn().mockResolvedValue(mockTenant),
     },
-    package: {
-      upsert: vi.fn().mockResolvedValue(mockPackage),
+    segment: {
+      upsert: vi.fn().mockResolvedValue(mockSegment),
+    },
+    tier: {
+      upsert: vi.fn().mockResolvedValue(mockTier),
     },
     addOn: {
       upsert: vi.fn().mockResolvedValue(mockAddOn),
     },
-    packageAddOn: {
-      upsert: vi.fn().mockResolvedValue({ packageId: mockPackage.id, addOnId: mockAddOn.id }),
+    tierAddOn: {
+      upsert: vi.fn().mockResolvedValue({ tierId: mockTier.id, addOnId: mockAddOn.id }),
     },
     blackoutDate: {
       upsert: vi.fn().mockResolvedValue({ id: 'blackout-1' }),

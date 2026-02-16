@@ -30,7 +30,7 @@ export const AUTH_COOKIES = {
  * Usage in Server Component:
  * ```ts
  * const api = await createServerApiClient();
- * const packages = await api.getPackages();
+ * const tiers = await api.getTiers();
  * ```
  */
 export async function createServerApiClient() {

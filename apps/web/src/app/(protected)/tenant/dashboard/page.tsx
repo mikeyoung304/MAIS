@@ -24,7 +24,7 @@ import { StartTrialCard, TrialBanner } from '@/components/trial';
 import { agentUIActions, useAgentUIStore, selectIsInitialized } from '@/stores/agent-ui-store';
 
 interface DashboardStats {
-  packagesCount: number;
+  tiersCount: number;
   bookingsCount: number;
   blackoutsCount: number;
   hasStripeConnected: boolean;
@@ -34,7 +34,7 @@ interface TrialStatus {
   status: 'NONE' | 'TRIALING' | 'ACTIVE' | 'EXPIRED';
   daysRemaining: number | null;
   canStartTrial: boolean;
-  hasPackages: boolean;
+  hasTiers: boolean;
 }
 
 /**
@@ -90,23 +90,23 @@ export default function TenantDashboardPage() {
       }
 
       // Fetch all data in parallel (including trial status)
-      const [packagesResponse, bookingsResponse, blackoutsResponse, stripeResponse, trialResponse] =
+      const [tiersResponse, bookingsResponse, blackoutsResponse, stripeResponse, trialResponse] =
         await Promise.all([
-          fetch('/api/tenant-admin/packages'),
+          fetch('/api/tenant-admin/tiers'),
           fetch('/api/tenant-admin/bookings'),
           fetch('/api/tenant-admin/blackouts'),
           fetch('/api/tenant-admin/stripe/status'),
           fetch('/api/tenant-admin/trial/status'),
         ]);
 
-      const packages = packagesResponse.ok ? await packagesResponse.json() : [];
+      const tiers = tiersResponse.ok ? await tiersResponse.json() : [];
       const bookings = bookingsResponse.ok ? await bookingsResponse.json() : [];
       const blackouts = blackoutsResponse.ok ? await blackoutsResponse.json() : [];
       const stripeStatus = stripeResponse.ok ? await stripeResponse.json() : null;
       const trial = trialResponse.ok ? await trialResponse.json() : null;
 
       setStats({
-        packagesCount: Array.isArray(packages) ? packages.length : 0,
+        tiersCount: Array.isArray(tiers) ? tiers.length : 0,
         bookingsCount: Array.isArray(bookings) ? bookings.length : 0,
         blackoutsCount: Array.isArray(blackouts) ? blackouts.length : 0,
         hasStripeConnected: stripeStatus?.chargesEnabled || false,
@@ -133,10 +133,10 @@ export default function TenantDashboardPage() {
 
   const statCards = [
     {
-      title: 'Packages',
-      value: stats?.packagesCount ?? 0,
+      title: 'Services',
+      value: stats?.tiersCount ?? 0,
       icon: <Package className="h-5 w-5" />,
-      href: '/tenant/packages',
+      href: '/tenant/website',
       color: 'text-sage',
     },
     {

@@ -38,7 +38,7 @@ test.describe('Booking Management', () => {
       // Create a booking and get management token
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate: getTomorrowDate(),
           email: 'test@example.com',
           coupleName: 'Test Couple',
@@ -87,7 +87,7 @@ test.describe('Booking Management', () => {
 
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate: originalDate,
           email: 'reschedule@example.com',
           coupleName: 'Reschedule Test',
@@ -140,7 +140,7 @@ test.describe('Booking Management', () => {
 
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate,
           email: 'samedate@example.com',
           coupleName: 'Same Date Test',
@@ -171,7 +171,7 @@ test.describe('Booking Management', () => {
       // Create a booking
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate: getTomorrowDate(),
           email: 'cancel@example.com',
           coupleName: 'Cancel Test',
@@ -217,7 +217,7 @@ test.describe('Booking Management', () => {
     test('requires confirmation text to cancel', async ({ page, request }) => {
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate: getTomorrowDate(),
           email: 'confirm@example.com',
           coupleName: 'Confirm Test',
@@ -244,7 +244,7 @@ test.describe('Booking Management', () => {
     test('can close cancel dialog without cancelling', async ({ page, request }) => {
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate: getTomorrowDate(),
           email: 'keep@example.com',
           coupleName: 'Keep Booking Test',
@@ -272,7 +272,7 @@ test.describe('Booking Management', () => {
       // Create and cancel a booking via API
       const createResponse = await request.post(`${API_BASE}/v1/dev/create-booking-with-token`, {
         data: {
-          packageId: 'pkg_001',
+          tierId: 'tier_001',
           eventDate: getTomorrowDate(),
           email: 'precancelled@example.com',
           coupleName: 'Pre-cancelled Test',

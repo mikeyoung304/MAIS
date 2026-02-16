@@ -2,7 +2,7 @@
  * Demo seed - Creates rich demo data for local development
  *
  * Use for: Local development, demos, screenshots
- * Creates realistic looking data with multiple packages, add-ons, etc.
+ * Creates realistic looking data with multiple tiers, add-ons, etc.
  *
  * IMPORTANT: API keys are only generated once on first seed. Re-running this seed
  * will preserve existing keys to avoid breaking local development environments.
@@ -14,9 +14,9 @@ import bcrypt from 'bcryptjs';
 import { logger } from '../../src/lib/core/logger';
 import {
   createOrUpdateTenant,
-  createOrUpdatePackages,
+  createOrUpdateTiers,
   createOrUpdateAddOns,
-  linkAddOnsToPackage,
+  linkAddOnsToTier,
 } from './utils';
 
 // Fixed slug for demo tenant
@@ -86,14 +86,30 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
         logger.info(`Demo tenant created: ${tenant.name}`);
       }
 
-      // Create realistic packages using shared utility
-      const [starter, growth, enterprise] = await createOrUpdatePackages(tx, tenant.id, [
+      // Create a default segment for demo tiers
+      const segment = await tx.segment.upsert({
+        where: { tenantId_slug: { tenantId: tenant.id, slug: 'general' } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          slug: 'general',
+          name: 'General',
+          heroTitle: 'Our Services',
+          description: 'Business growth services for entrepreneurs',
+          sortOrder: 0,
+          active: true,
+        },
+      });
+
+      // Create realistic tiers using shared utility
+      const [starter, growth, enterprise] = await createOrUpdateTiers(tx, tenant.id, segment.id, [
         {
           slug: 'starter',
-          name: 'Starter Package',
+          name: 'Starter',
           description:
             'Essential business services to get you started. Perfect for solopreneurs ready to focus on their craft.',
-          basePrice: 25000,
+          priceCents: 25000,
+          sortOrder: 1,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1553877522-43269d4ea984',
@@ -105,9 +121,10 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
         },
         {
           slug: 'growth',
-          name: 'Growth Package',
+          name: 'Growth',
           description: 'Full-service support for growing businesses. Scale with confidence.',
-          basePrice: 50000,
+          priceCents: 50000,
+          sortOrder: 2,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f',
@@ -119,10 +136,11 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
         },
         {
           slug: 'enterprise',
-          name: 'Enterprise Package',
+          name: 'Enterprise',
           description:
             'Comprehensive solutions for established businesses. Your complete back office.',
-          basePrice: 100000,
+          priceCents: 100000,
+          sortOrder: 3,
           photos: [
             {
               url: 'https://images.unsplash.com/photo-1497366216548-37526070297c',
@@ -134,7 +152,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
         },
       ]);
 
-      logger.info(`Demo packages created: ${[starter, growth, enterprise].length}`);
+      logger.info(`Demo tiers created: ${[starter, growth, enterprise].length}`);
 
       // Create add-ons using shared utility
       const [socialMedia, emailMarketing, crmSetup, dedicatedManager] = await createOrUpdateAddOns(
@@ -168,11 +186,11 @@ export async function seedDemo(prisma: PrismaClient): Promise<void> {
         ]
       );
 
-      // Link add-ons to packages using shared utility
+      // Link add-ons to tiers using shared utility
       await Promise.all([
-        linkAddOnsToPackage(tx, starter.id, [socialMedia.id, emailMarketing.id]),
-        linkAddOnsToPackage(tx, growth.id, [socialMedia.id, crmSetup.id]),
-        linkAddOnsToPackage(tx, enterprise.id, [dedicatedManager.id, crmSetup.id]),
+        linkAddOnsToTier(tx, starter.id, [socialMedia.id, emailMarketing.id]),
+        linkAddOnsToTier(tx, growth.id, [socialMedia.id, crmSetup.id]),
+        linkAddOnsToTier(tx, enterprise.id, [dedicatedManager.id, crmSetup.id]),
       ]);
 
       logger.info(

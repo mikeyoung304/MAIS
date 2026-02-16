@@ -24,20 +24,42 @@ import { filterPromptInjection } from '../../shared/security';
 import type { ToolContext } from '@google/adk';
 
 // =============================================================================
-// PACKAGE HELPER
+// TIER HELPER
 // =============================================================================
 
+let tierCounter = 0;
+
 /**
- * Create test package data matching actual Prisma schema
+ * Create test tier data matching actual Prisma schema.
+ * Requires a segmentId since Tier belongs to a Segment.
  */
-function createTestPackage(overrides: { title: string; tenantId: string }) {
+function createTestTier(overrides: { name: string; tenantId: string; segmentId: string }) {
+  tierCounter++;
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
   return {
-    slug: `test-pkg-${timestamp}-${random}`,
-    name: overrides.title,
-    basePrice: 10000, // $100.00 in cents
+    slug: `test-tier-${timestamp}-${random}`,
+    name: overrides.name,
+    priceCents: 10000, // $100.00 in cents
     tenantId: overrides.tenantId,
+    segmentId: overrides.segmentId,
+    sortOrder: tierCounter,
+    features: [],
+    active: true,
+  };
+}
+
+/**
+ * Create a test segment for tier creation
+ */
+function createTestSegment(overrides: { name: string; tenantId: string }) {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return {
+    slug: `test-seg-${timestamp}-${random}`,
+    name: overrides.name,
+    tenantId: overrides.tenantId,
+    heroTitle: overrides.name,
     active: true,
   };
 }
@@ -84,10 +106,25 @@ describe.runIf(hasDatabaseUrl)('Tenant Isolation - Agent Tools', () => {
   const { prisma, cleanup } = setupIntegrationTest();
   const { tenantA, tenantB, cleanupTenants } = createMultiTenantSetup(prisma, 'agent-isolation');
 
+  // Segment IDs for tier creation
+  let segmentAId: string;
+  let segmentBId: string;
+
   beforeEach(async () => {
+    tierCounter = 0;
     await cleanupTenants();
     await tenantA.create();
     await tenantB.create();
+
+    // Create segments for each tenant (required by Tier model)
+    const segA = await prisma.segment.create({
+      data: createTestSegment({ name: 'Segment A', tenantId: tenantA.id }),
+    });
+    const segB = await prisma.segment.create({
+      data: createTestSegment({ name: 'Segment B', tenantId: tenantB.id }),
+    });
+    segmentAId = segA.id;
+    segmentBId = segB.id;
   });
 
   afterEach(async () => {
@@ -96,46 +133,58 @@ describe.runIf(hasDatabaseUrl)('Tenant Isolation - Agent Tools', () => {
   });
 
   describe('Database Query Isolation', () => {
-    it('tenant A query does not return tenant B packages', async () => {
-      // Create packages for both tenants
-      await prisma.package.create({
-        data: createTestPackage({ title: 'Tenant A Package', tenantId: tenantA.id }),
+    it('tenant A query does not return tenant B tiers', async () => {
+      // Create tiers for both tenants
+      await prisma.tier.create({
+        data: createTestTier({
+          name: 'Tenant A Tier',
+          tenantId: tenantA.id,
+          segmentId: segmentAId,
+        }),
       });
 
-      await prisma.package.create({
-        data: createTestPackage({ title: 'Tenant B Package', tenantId: tenantB.id }),
+      await prisma.tier.create({
+        data: createTestTier({
+          name: 'Tenant B Tier',
+          tenantId: tenantB.id,
+          segmentId: segmentBId,
+        }),
       });
 
       // Query as tenant A
-      const tenantAPackages = await prisma.package.findMany({
+      const tenantATiers = await prisma.tier.findMany({
         where: { tenantId: tenantA.id },
       });
 
       // Query as tenant B
-      const tenantBPackages = await prisma.package.findMany({
+      const tenantBTiers = await prisma.tier.findMany({
         where: { tenantId: tenantB.id },
       });
 
-      // Verify isolation - Package model uses `name` field, not `title`
-      expect(tenantAPackages.length).toBe(1);
-      expect(tenantAPackages[0].name).toBe('Tenant A Package');
-      expect(tenantAPackages.some((p) => p.name === 'Tenant B Package')).toBe(false);
+      // Verify isolation
+      expect(tenantATiers.length).toBe(1);
+      expect(tenantATiers[0].name).toBe('Tenant A Tier');
+      expect(tenantATiers.some((t) => t.name === 'Tenant B Tier')).toBe(false);
 
-      expect(tenantBPackages.length).toBe(1);
-      expect(tenantBPackages[0].name).toBe('Tenant B Package');
-      expect(tenantBPackages.some((p) => p.name === 'Tenant A Package')).toBe(false);
+      expect(tenantBTiers.length).toBe(1);
+      expect(tenantBTiers[0].name).toBe('Tenant B Tier');
+      expect(tenantBTiers.some((t) => t.name === 'Tenant A Tier')).toBe(false);
     });
 
     it('tenant A cannot update tenant B data', async () => {
-      // Create package for tenant B
-      const pkgB = await prisma.package.create({
-        data: createTestPackage({ title: 'Original Title', tenantId: tenantB.id }),
+      // Create tier for tenant B
+      const tierB = await prisma.tier.create({
+        data: createTestTier({
+          name: 'Original Title',
+          tenantId: tenantB.id,
+          segmentId: segmentBId,
+        }),
       });
 
       // Attempt to update with wrong tenant ID
-      const updateResult = await prisma.package.updateMany({
+      const updateResult = await prisma.tier.updateMany({
         where: {
-          id: pkgB.id,
+          id: tierB.id,
           tenantId: tenantA.id, // Wrong tenant!
         },
         data: {
@@ -147,22 +196,22 @@ describe.runIf(hasDatabaseUrl)('Tenant Isolation - Agent Tools', () => {
       expect(updateResult.count).toBe(0);
 
       // Verify original data unchanged
-      const unchanged = await prisma.package.findUnique({
-        where: { id: pkgB.id },
+      const unchanged = await prisma.tier.findUnique({
+        where: { id: tierB.id },
       });
       expect(unchanged?.name).toBe('Original Title');
     });
 
     it('tenant A cannot delete tenant B data', async () => {
-      // Create package for tenant B
-      const pkgB = await prisma.package.create({
-        data: createTestPackage({ title: 'To Delete', tenantId: tenantB.id }),
+      // Create tier for tenant B
+      const tierB = await prisma.tier.create({
+        data: createTestTier({ name: 'To Delete', tenantId: tenantB.id, segmentId: segmentBId }),
       });
 
       // Attempt to delete with wrong tenant ID
-      const deleteResult = await prisma.package.deleteMany({
+      const deleteResult = await prisma.tier.deleteMany({
         where: {
-          id: pkgB.id,
+          id: tierB.id,
           tenantId: tenantA.id, // Wrong tenant!
         },
       });
@@ -171,8 +220,8 @@ describe.runIf(hasDatabaseUrl)('Tenant Isolation - Agent Tools', () => {
       expect(deleteResult.count).toBe(0);
 
       // Verify data still exists
-      const stillExists = await prisma.package.findUnique({
-        where: { id: pkgB.id },
+      const stillExists = await prisma.tier.findUnique({
+        where: { id: tierB.id },
       });
       expect(stillExists).not.toBeNull();
     });
@@ -221,28 +270,32 @@ describe.runIf(hasDatabaseUrl)('Tenant Isolation - Agent Tools', () => {
 
   describe('Tenant Data Ownership Verification', () => {
     it('verifies resource belongs to tenant before access', async () => {
-      // Create package for tenant B
-      const pkgB = await prisma.package.create({
-        data: createTestPackage({ title: 'B Secret Package', tenantId: tenantB.id }),
+      // Create tier for tenant B
+      const tierB = await prisma.tier.create({
+        data: createTestTier({
+          name: 'B Secret Tier',
+          tenantId: tenantB.id,
+          segmentId: segmentBId,
+        }),
       });
 
       // Simulate agent tool that verifies ownership
-      const verifyOwnership = async (packageId: string, requestingTenantId: string) => {
-        const pkg = await prisma.package.findFirst({
+      const verifyOwnership = async (tierId: string, requestingTenantId: string) => {
+        const tier = await prisma.tier.findFirst({
           where: {
-            id: packageId,
+            id: tierId,
             tenantId: requestingTenantId, // Must match!
           },
         });
-        return pkg !== null;
+        return tier !== null;
       };
 
-      // Tenant A tries to access tenant B's package
-      const canAccessA = await verifyOwnership(pkgB.id, tenantA.id);
+      // Tenant A tries to access tenant B's tier
+      const canAccessA = await verifyOwnership(tierB.id, tenantA.id);
       expect(canAccessA).toBe(false);
 
-      // Tenant B can access their own package
-      const canAccessB = await verifyOwnership(pkgB.id, tenantB.id);
+      // Tenant B can access their own tier
+      const canAccessB = await verifyOwnership(tierB.id, tenantB.id);
       expect(canAccessB).toBe(true);
     });
   });
@@ -259,13 +312,13 @@ describe('Cache Key Isolation', () => {
     it('cache key includes tenant ID in middle position', async () => {
       // verifyCacheKey expects format: prefix:tenantId:resource
       const tenantId = 'tenant-cache-test';
-      const key = `catalog:${tenantId}:packages:list`;
+      const key = `catalog:${tenantId}:tiers:list`;
 
       expect(verifyCacheKey(key, tenantId)).toBe(true);
     });
 
     it('rejects cache keys without tenant ID', () => {
-      const key = 'packages:list'; // Missing tenant scope!
+      const key = 'tiers:list'; // Missing tenant scope!
       const tenantId = 'tenant-123';
 
       expect(verifyCacheKey(key, tenantId)).toBe(false);
@@ -273,8 +326,8 @@ describe('Cache Key Isolation', () => {
 
     it('different tenants have different cache keys', () => {
       // Format: prefix:tenantId:resource
-      const keyA = 'catalog:tenant-A:packages:list';
-      const keyB = 'catalog:tenant-B:packages:list';
+      const keyA = 'catalog:tenant-A:tiers:list';
+      const keyB = 'catalog:tenant-B:tiers:list';
 
       expect(keyA).not.toBe(keyB);
       expect(verifyCacheKey(keyA, 'tenant-A')).toBe(true);
@@ -285,11 +338,11 @@ describe('Cache Key Isolation', () => {
 
   describe('cache data isolation', () => {
     it('tenant A cached data not accessible to tenant B', async () => {
-      const keyA = 'catalog:tenant-A:packages:list';
-      const keyB = 'catalog:tenant-B:packages:list';
+      const keyA = 'catalog:tenant-A:tiers:list';
+      const keyB = 'catalog:tenant-B:tiers:list';
 
       // Cache data for tenant A
-      await cache.set(keyA, [{ id: 'pkg-1', title: 'A Package' }], 60);
+      await cache.set(keyA, [{ id: 'tier-1', title: 'A Tier' }], 60);
 
       // Tenant B queries their key
       const tenantBData = await cache.get(keyB);
@@ -299,16 +352,16 @@ describe('Cache Key Isolation', () => {
 
       // Tenant A can still get their data
       const tenantAData = await cache.get(keyA);
-      expect(tenantAData).toEqual([{ id: 'pkg-1', title: 'A Package' }]);
+      expect(tenantAData).toEqual([{ id: 'tier-1', title: 'A Tier' }]);
     });
 
     it('cache invalidation is tenant-scoped', async () => {
-      const keyA = 'catalog:tenant-A:packages:list';
-      const keyB = 'catalog:tenant-B:packages:list';
+      const keyA = 'catalog:tenant-A:tiers:list';
+      const keyB = 'catalog:tenant-B:tiers:list';
 
       // Cache data for both tenants
-      await cache.set(keyA, [{ id: 'pkg-a' }], 60);
-      await cache.set(keyB, [{ id: 'pkg-b' }], 60);
+      await cache.set(keyA, [{ id: 'tier-a' }], 60);
+      await cache.set(keyB, [{ id: 'tier-b' }], 60);
 
       // Invalidate tenant A's cache (method is 'del' not 'delete')
       await cache.del(keyA);
@@ -317,7 +370,7 @@ describe('Cache Key Isolation', () => {
       expect(await cache.get(keyA)).toBeNull();
 
       // Tenant B's data still exists
-      expect(await cache.get(keyB)).toEqual([{ id: 'pkg-b' }]);
+      expect(await cache.get(keyB)).toEqual([{ id: 'tier-b' }]);
     });
   });
 });
@@ -354,10 +407,23 @@ describe.runIf(hasDatabaseUrl)('Concurrent Tenant Access', () => {
   const { prisma, cleanup } = setupIntegrationTest();
   const { tenantA, tenantB, cleanupTenants } = createMultiTenantSetup(prisma, 'concurrent-access');
 
+  let segmentAId: string;
+  let segmentBId: string;
+
   beforeEach(async () => {
+    tierCounter = 0;
     await cleanupTenants();
     await tenantA.create();
     await tenantB.create();
+
+    const segA = await prisma.segment.create({
+      data: createTestSegment({ name: 'Concurrent Seg A', tenantId: tenantA.id }),
+    });
+    const segB = await prisma.segment.create({
+      data: createTestSegment({ name: 'Concurrent Seg B', tenantId: tenantB.id }),
+    });
+    segmentAId = segA.id;
+    segmentBId = segB.id;
   });
 
   afterEach(async () => {
@@ -366,22 +432,22 @@ describe.runIf(hasDatabaseUrl)('Concurrent Tenant Access', () => {
   });
 
   it('concurrent queries for different tenants are isolated', async () => {
-    // Create packages for both tenants
-    await prisma.package.create({
-      data: createTestPackage({ title: 'Concurrent A', tenantId: tenantA.id }),
+    // Create tiers for both tenants
+    await prisma.tier.create({
+      data: createTestTier({ name: 'Concurrent A', tenantId: tenantA.id, segmentId: segmentAId }),
     });
 
-    await prisma.package.create({
-      data: createTestPackage({ title: 'Concurrent B', tenantId: tenantB.id }),
+    await prisma.tier.create({
+      data: createTestTier({ name: 'Concurrent B', tenantId: tenantB.id, segmentId: segmentBId }),
     });
 
     // Run concurrent queries
     const [resultsA, resultsB] = await Promise.all([
-      prisma.package.findMany({ where: { tenantId: tenantA.id } }),
-      prisma.package.findMany({ where: { tenantId: tenantB.id } }),
+      prisma.tier.findMany({ where: { tenantId: tenantA.id } }),
+      prisma.tier.findMany({ where: { tenantId: tenantB.id } }),
     ]);
 
-    // Verify isolation - Package model uses `name` field
+    // Verify isolation
     expect(resultsA.length).toBe(1);
     expect(resultsA[0].name).toBe('Concurrent A');
     expect(resultsB.length).toBe(1);
@@ -389,13 +455,13 @@ describe.runIf(hasDatabaseUrl)('Concurrent Tenant Access', () => {
   });
 
   it('rapid sequential queries maintain isolation', async () => {
-    // Create packages
-    await prisma.package.create({
-      data: createTestPackage({ title: 'Rapid A', tenantId: tenantA.id }),
+    // Create tiers
+    await prisma.tier.create({
+      data: createTestTier({ name: 'Rapid A', tenantId: tenantA.id, segmentId: segmentAId }),
     });
 
-    await prisma.package.create({
-      data: createTestPackage({ title: 'Rapid B', tenantId: tenantB.id }),
+    await prisma.tier.create({
+      data: createTestTier({ name: 'Rapid B', tenantId: tenantB.id, segmentId: segmentBId }),
     });
 
     // Rapid sequential queries
@@ -403,16 +469,16 @@ describe.runIf(hasDatabaseUrl)('Concurrent Tenant Access', () => {
 
     for (let i = 0; i < 10; i++) {
       const targetTenant = i % 2 === 0 ? tenantA.id : tenantB.id;
-      const packages = await prisma.package.findMany({
+      const tiers = await prisma.tier.findMany({
         where: { tenantId: targetTenant },
       });
       results.push({
         tenant: targetTenant,
-        count: packages.length,
+        count: tiers.length,
       });
     }
 
-    // All queries should return exactly 1 package for their tenant
+    // All queries should return exactly 1 tier for their tenant
     expect(results.every((r) => r.count === 1)).toBe(true);
   });
 });

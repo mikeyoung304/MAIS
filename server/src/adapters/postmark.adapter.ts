@@ -146,18 +146,18 @@ export class PostmarkMailAdapter implements EmailProvider {
     to: string,
     payload: {
       eventDate: string;
-      packageTitle: string;
+      tierName: string;
       totalCents: number;
       addOnTitles: string[];
     }
   ): Promise<void> {
-    const subject = `Your micro-wedding is booked for ${payload.eventDate}`;
+    const subject = `Your booking is confirmed for ${payload.eventDate}`;
     const body = [
       `Hi,`,
       ``,
       `You're confirmed!`,
       `Date: ${payload.eventDate}`,
-      `Package: ${payload.packageTitle}`,
+      `Service: ${payload.tierName}`,
       `Add-ons: ${payload.addOnTitles.join(', ') || 'None'}`,
       `Total: ${(payload.totalCents / 100).toFixed(2)}`,
       ``,
@@ -278,7 +278,7 @@ export class PostmarkMailAdapter implements EmailProvider {
     payload: {
       coupleName: string;
       eventDate: string;
-      packageTitle: string;
+      tierName: string;
       daysUntilEvent: number;
       manageUrl: string;
     }
@@ -307,7 +307,7 @@ export class PostmarkMailAdapter implements EmailProvider {
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #1e3a5f;">Event Details</h3>
               <p><strong>Date:</strong> ${formattedDate}</p>
-              <p><strong>Package:</strong> ${payload.packageTitle}</p>
+              <p><strong>Service:</strong> ${payload.tierName}</p>
             </div>
 
             <p>Need to make any changes? You can manage your booking online:</p>
@@ -342,7 +342,7 @@ export class PostmarkMailAdapter implements EmailProvider {
       ``,
       `Event Details:`,
       `Date: ${formattedDate}`,
-      `Package: ${payload.packageTitle}`,
+      `Service: ${payload.tierName}`,
       ``,
       `Need to make any changes? Manage your booking here:`,
       payload.manageUrl,
