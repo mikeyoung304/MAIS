@@ -1,75 +1,19 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle } from 'lucide-react';
 import { TenantAgentChat, type TenantAgentUIAction } from './TenantAgentChat';
-import type { DashboardAction, TenantAgentToolCall } from '@/hooks/useTenantAgentChat';
+import { AgentPanelChrome, CollapseButton } from './AgentPanelChrome';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
-import { agentUIActions, useAgentUIStore } from '@/stores/agent-ui-store';
-import {
-  refinementActions,
-  useRefinementStore,
-  selectIsReviewing,
-} from '@/stores/refinement-store';
-import { ReviewProgress } from './ReviewProgress';
-import { getDraftConfigQueryKey } from '@/hooks/useDraftConfig';
-import { queryKeys } from '@/lib/query-client';
-
-import { SECTION_BLUEPRINT, MVP_REVEAL_SECTION_COUNT } from '@macon/contracts';
+import { useDashboardActionDispatch } from '@/hooks/useDashboardActionDispatch';
+import { useAgentPanelState } from '@/hooks/useAgentPanelState';
+import { agentUIActions } from '@/stores/agent-ui-store';
+import { useRefinementStore, selectIsReviewing } from '@/stores/refinement-store';
 import { Drawer } from 'vaul';
 import { useIsMobile } from '@/hooks/useBreakpoint';
-import { z } from 'zod';
-
-// Zod schema for validating dashboardAction from agent tool results (Fix #5203)
-const DashboardActionSchema = z.object({
-  type: z.enum([
-    'NAVIGATE',
-    'SCROLL_TO_SECTION',
-    'SHOW_PREVIEW',
-    'REFRESH',
-    'REFRESH_PREVIEW',
-    'REVEAL_SITE',
-    'SHOW_VARIANT_WIDGET',
-    'SHOW_PUBLISH_READY',
-    'HIGHLIGHT_NEXT_SECTION',
-    'PUBLISH_SITE',
-  ]),
-  section: z.string().optional(),
-  blockType: z.string().optional(),
-  sectionId: z.string().optional(),
-  sectionType: z.string().optional(),
-});
-
-// Module-scoped counter for section writes during first draft.
-// Persists across tool-complete batches (agent may send 1+1+1 or 2+1).
-// Resets on page refresh — correct behavior (re-shows Coming Soon, count rebuilds).
-let firstDraftWriteCount = 0;
-
-// LocalStorage keys for panel state
-const PANEL_OPEN_KEY = 'agent-panel-open';
-const WELCOMED_KEY = 'agent-panel-welcomed';
-
-/**
- * SkipSetupLink - Reusable skip button for onboarding mode
- * Used in both desktop (aside) and mobile (drawer) layouts
- */
-function SkipSetupLink({ onSkip, isSkipping }: { onSkip: () => void; isSkipping: boolean }) {
-  return (
-    <div className="flex justify-end px-4 py-1 border-b border-neutral-700 bg-surface-alt shrink-0">
-      <button
-        onClick={onSkip}
-        disabled={isSkipping}
-        className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-        aria-label="Skip onboarding setup"
-      >
-        {isSkipping ? 'Skipping...' : 'Skip setup'}
-      </button>
-    </div>
-  );
-}
 
 interface AgentPanelProps {
   /** Additional CSS classes */
@@ -77,107 +21,70 @@ interface AgentPanelProps {
 }
 
 /**
- * AgentPanel - Right-side AI assistant panel (formerly GrowthAssistantPanel)
+ * AgentPanel - Right-side AI assistant panel
  *
- * Agent-first architecture: The AI chatbot is THE central interface for tenant dashboard.
- * - Always visible by default (fixed position on right)
- * - Persists open/closed state to localStorage
- * - Handles UI actions from agent tools (show preview, navigate, etc.)
- * - Onboarding progress indicator when in onboarding mode
+ * Thin orchestrator composing:
+ * - `useAgentPanelState()` for open/closed + first-visit state
+ * - `useDashboardActionDispatch()` for dashboard action handling + tool completion
+ * - `AgentPanelChrome` for shared header/skip/progress layout
+ * - `TenantAgentChat` for chat UI
  *
- * Onboarding Mode:
- * - Shows progress dots indicating current phase
- * - Provides "View storefront" link for previewing changes
- * - Offers "Skip setup" option for manual configuration
- * - Uses personalized welcome messages for returning users
+ * Renders desktop fixed aside or mobile Vaul drawer based on viewport.
  */
 export function AgentPanel({ className }: AgentPanelProps) {
-  // Use React Query client directly instead of module singleton (fixes race condition)
-  const queryClient = useQueryClient();
-
-  // Guided review mode — show progress indicator when reviewing sections
   const isReviewing = useRefinementStore(selectIsReviewing);
-
-  // Mobile/desktop detection
   const isMobileQuery = useIsMobile();
-  const isMobile = isMobileQuery ?? false; // Fallback to false during SSR
+  const isMobile = isMobileQuery ?? false;
 
-  // Panel open/closed state (persisted to localStorage)
-  const [isOpen, setIsOpenState] = useState(true); // Default open on desktop
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  // Panel state (open/closed, first-visit, SSR hydration)
+  const { isOpen, setIsOpen, isFirstVisit, isMounted, markWelcomed } = useAgentPanelState();
 
-  // Mobile-specific state for Vaul drawer
+  // Mobile drawer state
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Refs for accessibility (focus management)
+  // Refs for accessibility
   const announcerRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // Fix for #743: Focus timer race condition - shared ref for cleanup
   const focusTimerRef = useRef<number | null>(null);
 
   // Onboarding state
   const { isOnboarding, skipOnboarding, isSkipping } = useOnboardingState();
 
+  // Dashboard action dispatch (handles tool completion + dashboard actions)
+  const { handleDashboardActions, handleToolComplete } = useDashboardActionDispatch({
+    isMobile,
+    setIsMobileOpen,
+  });
+
   // WCAG 4.1.3: Screen reader announcement helper
   const announce = useCallback((message: string) => {
-    if (announcerRef.current) {
-      announcerRef.current.textContent = message;
-    }
+    if (announcerRef.current) announcerRef.current.textContent = message;
   }, []);
 
-  // Fix for #743: Cleanup focus timer on unmount to prevent race conditions
+  // Fix for #743: Cleanup focus timer on unmount
   useEffect(() => {
     return () => {
       if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
     };
   }, []);
 
-  // Load persisted state from localStorage on mount
-  useEffect(() => {
-    setIsMounted(true);
-
-    const storedOpen = localStorage.getItem(PANEL_OPEN_KEY);
-    const welcomed = localStorage.getItem(WELCOMED_KEY);
-
-    // Check if this is first visit
-    if (!welcomed) {
-      setIsFirstVisit(true);
-      setIsOpenState(true); // Auto-open for first-time visitors (desktop only)
-    } else {
-      // Use stored preference or default to open
-      setIsOpenState(storedOpen === null ? true : storedOpen === 'true');
-    }
-  }, []);
-
-  // Persist open state to localStorage
-  const setIsOpen = useCallback((open: boolean) => {
-    setIsOpenState(open);
-    localStorage.setItem(PANEL_OPEN_KEY, String(open));
-  }, []);
-
   // WCAG 2.4.3: Background inert management for mobile drawer
   useEffect(() => {
-    if (!isMobile) return; // Desktop doesn't need inert management
-
+    if (!isMobile) return;
     const main = document.getElementById('main-content');
     if (isMobileOpen && main) {
       main.setAttribute('inert', 'true');
     } else if (main) {
       main.removeAttribute('inert');
     }
-
-    // Cleanup on unmount
     return () => {
-      if (main) {
-        main.removeAttribute('inert');
-      }
+      if (main) main.removeAttribute('inert');
     };
   }, [isMobileOpen, isMobile]);
 
   // Handle UI actions from tenant-agent tool calls (legacy - from tool name matching)
-  const handleTenantAgentUIAction = useCallback((action: TenantAgentUIAction) => {
+  const handleUIAction = useCallback((action: TenantAgentUIAction) => {
     switch (action.type) {
       case 'SHOW_PREVIEW':
         agentUIActions.showPreview();
@@ -186,9 +93,7 @@ export function AgentPanel({ className }: AgentPanelProps) {
         agentUIActions.showDashboard();
         break;
       case 'HIGHLIGHT_SECTION':
-        if (action.sectionId) {
-          agentUIActions.highlightSection(action.sectionId);
-        }
+        if (action.sectionId) agentUIActions.highlightSection(action.sectionId);
         break;
       case 'REFRESH_PREVIEW':
         agentUIActions.refreshPreview();
@@ -196,278 +101,30 @@ export function AgentPanel({ className }: AgentPanelProps) {
     }
   }, []);
 
-  // Handle dashboard actions from agent navigation tools (new - from backend extraction)
-  // Fix #819: Add cache invalidation to SHOW_PREVIEW and REFRESH actions
-  // Guided Refinement: Handle SHOW_VARIANT_WIDGET, SHOW_PUBLISH_READY, HIGHLIGHT_NEXT_SECTION
-  const handleDashboardActions = useCallback(
-    async (actions: DashboardAction[]) => {
-      for (const action of actions) {
-        switch (action.type) {
-          case 'NAVIGATE':
-            // Navigate to a dashboard section - "website" means show preview
-            if (action.section === 'website') {
-              agentUIActions.showPreview();
-            }
-            // Other sections could be handled here (bookings, projects, settings, analytics)
-            break;
-          case 'SCROLL_TO_SECTION':
-            // Scroll to and highlight a specific website section
-            // Supports both formats:
-            // - blockType: legacy format (e.g., "HERO" → "home-HERO-primary")
-            // - sectionId: new format from storefront tools (e.g., "home-hero-abc123")
-            if (action.sectionId) {
-              agentUIActions.highlightSection(action.sectionId);
-            } else if (action.blockType) {
-              // Convert HERO → home-HERO-primary format for highlightSection
-              const sectionId = `home-${action.blockType}-primary`;
-              agentUIActions.highlightSection(sectionId);
-            }
-            break;
-          case 'SHOW_PREVIEW':
-            // Fix #819: Invalidate cache before showing preview (with timing fix from #818)
-            // Wait for backend transaction to commit (Pitfall #26)
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            queryClient.invalidateQueries({
-              queryKey: getDraftConfigQueryKey(),
-              refetchType: 'active',
-            });
-            agentUIActions.showPreview();
-            break;
-          case 'REFRESH':
-          case 'REFRESH_PREVIEW':
-            // Fix #819: Invalidate cache before refreshing preview
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            queryClient.invalidateQueries({
-              queryKey: getDraftConfigQueryKey(),
-              refetchType: 'active',
-            });
-            agentUIActions.refreshPreview();
-            break;
-
-          // ========== Guided Review Actions ==========
-          // These power the agent-driven section-by-section review
-
-          case 'SHOW_VARIANT_WIDGET':
-            // Legacy: agent generated variants. In the new flow, agent drives
-            // review via chat. Still enter reviewing mode and highlight.
-            if (action.sectionId) {
-              refinementActions.setCurrentSection(action.sectionId, action.sectionType);
-              refinementActions.setMode('reviewing');
-              agentUIActions.highlightSection(action.sectionId);
-              agentUIActions.showPreview();
-            }
-            break;
-
-          case 'SHOW_PUBLISH_READY':
-            // All sections are complete, ready to publish
-            refinementActions.setMode('publish_ready');
-            break;
-
-          case 'HIGHLIGHT_NEXT_SECTION': {
-            // Highlight and scroll to the next section to review.
-            // Fix #5203: When sectionId is not provided by the agent tool,
-            // compute the next incomplete section from SECTION_BLUEPRINT order.
-            let nextId = action.sectionId;
-            let nextType = action.sectionType;
-
-            if (!nextId) {
-              const { completedSections } = useRefinementStore.getState();
-              const nextEntry = SECTION_BLUEPRINT.find(
-                (entry) => !completedSections.includes(entry.sectionType)
-              );
-              if (nextEntry) {
-                nextId = nextEntry.sectionType;
-                nextType = nextEntry.sectionType;
-              }
-            }
-
-            if (nextId) {
-              refinementActions.setCurrentSection(nextId, nextType);
-              agentUIActions.highlightSection(nextId);
-              agentUIActions.showPreview();
-            }
-            // If all sections are complete, no-op (publish_ready handles that)
-            break;
-          }
-
-          case 'REVEAL_SITE':
-            // One-shot reveal animation — mobile: dismiss drawer first, blur keyboard
-            if (isMobile) {
-              (document.activeElement as HTMLElement)?.blur();
-              setIsMobileOpen(false);
-              await new Promise((r) => setTimeout(r, 300)); // Wait for drawer dismiss
-            }
-            agentUIActions.revealSite();
-            break;
-
-          case 'PUBLISH_SITE':
-            // Publish already completed on backend (publish_draft tool).
-            // Frontend: update state, invalidate caches, show celebration modal.
-            if (isMobile) {
-              (document.activeElement as HTMLElement)?.blur();
-              setIsMobileOpen(false);
-              await new Promise((r) => setTimeout(r, 300));
-            }
-            refinementActions.setPublishStatus('published');
-            // Wait for backend transaction to commit (Pitfall #26)
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            queryClient.invalidateQueries({
-              queryKey: getDraftConfigQueryKey(),
-              refetchType: 'active',
-            });
-            // Refresh onboarding state (phase may advance to COMPLETED)
-            queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
-            // Switch to live preview
-            agentUIActions.showPreview();
-            break;
-
-          default: {
-            // Exhaustive check — compile error if a new DashboardAction type is added
-            // but not handled here (mirrors ContentArea.tsx pattern)
-            const _exhaustive: never = action.type;
-            void _exhaustive;
-          }
-        }
-      }
-    },
-    [queryClient, isMobile]
-  );
-
-  // Handle tenant-agent tool completion (triggers preview refresh for storefront changes)
-  // Note: Navigation actions are now handled by handleDashboardActions via onDashboardActions
-  // Fix #818: Make async and add 100ms delay before invalidation to allow transaction commit
-  // Fix #818 (Pitfall #82): Extract dashboardAction from tool results for UI navigation
-  const handleTenantAgentToolComplete = useCallback(
-    async (toolCalls: TenantAgentToolCall[]) => {
-      // FIRST: Extract dashboard actions from tool results (Fix #818 / Pitfall #82)
-      // Tool results may contain dashboardAction objects like:
-      // { type: 'SCROLL_TO_SECTION', sectionId: 'home-hero-abc123' }
-      // { type: 'SHOW_PREVIEW', page: 'home' }
-      const dashboardActions = toolCalls
-        .map((call) => {
-          const result = call.result as Record<string, unknown> | undefined;
-          const parsed = DashboardActionSchema.safeParse(result?.dashboardAction);
-          return parsed.success ? (parsed.data as DashboardAction) : undefined;
-        })
-        .filter((action): action is DashboardAction => Boolean(action));
-
-      // Process extracted dashboard actions BEFORE cache invalidation
-      // This ensures UI navigation (scroll, highlight, show preview) happens
-      // when agent says "Take a look" after updating a section
-      if (dashboardActions.length > 0) {
-        await handleDashboardActions(dashboardActions);
-      }
-
-      // THEN: Check if any tool call modified storefront content (existing logic)
-      const modifiedStorefront = toolCalls.some(
-        (call) =>
-          call.name.includes('storefront') ||
-          call.name.includes('section') ||
-          call.name.includes('layout') ||
-          call.name.includes('branding') ||
-          call.name.includes('update_section') ||
-          call.name.includes('add_section')
-      );
-
-      if (modifiedStorefront) {
-        // Fix #818: Wait for backend transaction to commit (Pitfall #26)
-        // The 100ms delay ensures the database write is visible before we refetch
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        // Invalidate and AWAIT refetch so fresh data is available before we push to iframe
-        // Without await, refreshPreview() sends stale draftConfig via PostMessage
-        await queryClient.invalidateQueries({
-          queryKey: getDraftConfigQueryKey(),
-          refetchType: 'active',
-        });
-        // Push fresh draft data to the preview iframe via PostMessage
-        agentUIActions.refreshPreview();
-
-        // Auto-reveal: count cumulative section writes during Coming Soon.
-        // Reveal only after MVP section count is reached (currently 3: HERO, ABOUT, SERVICES).
-        // Derived from SECTION_BLUEPRINT.isRevealMVP — no magic number.
-        const contentWriteCount = toolCalls.filter(
-          (call) => call.name === 'update_section' || call.name === 'add_section'
-        ).length;
-        const currentView = useAgentUIStore.getState().view;
-        if (currentView.status === 'coming_soon' && contentWriteCount > 0) {
-          firstDraftWriteCount += contentWriteCount;
-          if (firstDraftWriteCount >= MVP_REVEAL_SECTION_COUNT) {
-            agentUIActions.revealSite();
-          }
-        }
-      }
-
-      // Check if marketing content was generated (headlines, etc.)
-      const generatedMarketing = toolCalls.some(
-        (call) =>
-          call.name.includes('marketing') ||
-          call.name.includes('headline') ||
-          call.name.includes('copy')
-      );
-
-      if (generatedMarketing) {
-        // Show preview to display the generated content
-        agentUIActions.showPreview();
-        // Fix #818: Wait for backend transaction to commit
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        await queryClient.invalidateQueries({
-          queryKey: getDraftConfigQueryKey(),
-          refetchType: 'active',
-        });
-        agentUIActions.refreshPreview();
-      }
-
-      // Invalidate onboarding state when discovery facts are stored
-      // This ensures the stepper UI updates immediately after phase advancement
-      const storedFact = toolCalls.find((call) => call.name === 'store_discovery_fact');
-      if (storedFact) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.state });
-
-        // Pipe fact key + slotMetrics to ComingSoonDisplay via agent-ui-store (<200ms update)
-        const factResult = storedFact.result as
-          | {
-              key?: string;
-              slotMetrics?: { filled: number; total: number };
-            }
-          | undefined;
-        if (factResult?.key && factResult?.slotMetrics) {
-          agentUIActions.addDiscoveredFact(factResult.key, factResult.slotMetrics);
-        }
-      }
-
-      // Wire mark_section_complete tool results → refinement store
-      // Updates the progress bar and auto-advances to publish_ready if all complete
-      const completedSection = toolCalls.find((call) => call.name === 'mark_section_complete');
-      if (completedSection) {
-        const result = completedSection.result as
-          | { sectionId?: string; completedSections?: string[]; totalSections?: number }
-          | undefined;
-        if (result?.sectionId) {
-          refinementActions.markComplete(result.sectionId);
-        }
-        if (result?.totalSections !== undefined) {
-          refinementActions.setTotalSections(result.totalSections);
-        }
-      }
-    },
-    [queryClient, handleDashboardActions]
-  );
-
-  // Handle first message sent - mark user as welcomed
-  const handleFirstMessage = useCallback(() => {
-    if (isFirstVisit) {
-      localStorage.setItem(WELCOMED_KEY, 'true');
-      setIsFirstVisit(false);
-    }
-  }, [isFirstVisit]);
-
-  // Handle skip onboarding
   const handleSkip = async () => {
     await skipOnboarding('User skipped from assistant panel');
   };
 
-  // Return skeleton during SSR to prevent hydration flash
-  // On mobile, skeleton is hidden (panel is hidden by default on mobile)
+  const showNewBadge = isFirstVisit && !isOnboarding;
+
+  // Shared chat props for desktop and mobile
+  const chatProps = {
+    onFirstMessage: markWelcomed,
+    onUIAction: handleUIAction,
+    onToolComplete: handleToolComplete,
+    onDashboardActions: handleDashboardActions,
+  } as const;
+
+  // Shared chrome props for desktop and mobile
+  const chromeProps = {
+    isOnboarding,
+    isReviewing,
+    onSkip: handleSkip,
+    isSkipping,
+    showNewBadge,
+  } as const;
+
+  // SSR skeleton to prevent hydration flash
   if (!isMounted || isMobileQuery === undefined) {
     return (
       <aside
@@ -475,7 +132,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
           'fixed right-0 top-0 h-screen z-40',
           'w-[400px] max-w-full',
           'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
-          // Hidden on mobile during SSR
           'hidden lg:flex',
           className
         )}
@@ -483,7 +139,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
         aria-label="AI Assistant"
         aria-busy="true"
       >
-        {/* Skeleton header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-neutral-700 animate-pulse" />
@@ -493,7 +148,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
             </div>
           </div>
         </div>
-        {/* Skeleton chat area */}
         <div className="flex-1 p-4 space-y-3">
           <div className="h-16 bg-neutral-700 rounded-lg animate-pulse" />
           <div className="h-12 bg-neutral-700 rounded-lg animate-pulse" />
@@ -502,11 +156,10 @@ export function AgentPanel({ className }: AgentPanelProps) {
     );
   }
 
-  // Desktop: Use fixed aside panel (unchanged from before)
+  // Desktop: Fixed aside panel
   if (!isMobile) {
     return (
       <>
-        {/* Desktop collapsed state toggle button */}
         {!isOpen && (
           <Button
             onClick={() => setIsOpen(true)}
@@ -526,12 +179,9 @@ export function AgentPanel({ className }: AgentPanelProps) {
             <ChevronLeft className="w-4 h-4" />
           </Button>
         )}
-
-        {/* Fixed side panel (desktop) */}
         <aside
           className={cn(
-            'fixed right-0 top-0 h-screen z-40',
-            'w-[400px]',
+            'fixed right-0 top-0 h-screen z-40 w-[400px]',
             'flex flex-col bg-surface-alt border-l border-neutral-700 shadow-lg',
             'transition-transform duration-300 ease-in-out',
             isOpen ? 'translate-x-0' : 'translate-x-full',
@@ -541,64 +191,20 @@ export function AgentPanel({ className }: AgentPanelProps) {
           aria-label="AI Assistant"
           data-testid="agent-panel"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-sage/10 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-sage" />
-              </div>
-              <div>
-                <h2 className="text-base font-serif font-semibold text-text-primary">
-                  AI Assistant
-                </h2>
-                <p className="text-xs text-text-muted">Powered by AI</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-              className="rounded-lg hover:bg-neutral-700"
-              aria-label="Collapse panel"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Minimal skip link (when in onboarding mode) */}
-          {isOnboarding && <SkipSetupLink onSkip={handleSkip} isSkipping={isSkipping} />}
-
-          {/* Review Progress (when agent is walking through sections) */}
-          {isReviewing && <ReviewProgress />}
-
-          {/* Chat content - TenantAgentChat (agent speaks first based on session state) */}
-          <div className="flex-1 overflow-hidden">
-            <TenantAgentChat
-              onFirstMessage={handleFirstMessage}
-              onUIAction={handleTenantAgentUIAction}
-              onToolComplete={handleTenantAgentToolComplete}
-              onDashboardActions={handleDashboardActions}
-              className="h-full"
-            />
-          </div>
-
-          {/* First-time badge (only when not in onboarding) */}
-          {isFirstVisit && !isOnboarding && (
-            <div className="absolute top-16 right-4 z-10">
-              <div className="bg-sage text-white text-xs font-medium px-2 py-1 rounded-full shadow-md animate-pulse">
-                New
-              </div>
-            </div>
-          )}
+          <AgentPanelChrome
+            headerTrailingAction={<CollapseButton onClick={() => setIsOpen(false)} />}
+            {...chromeProps}
+          >
+            <TenantAgentChat {...chatProps} className="h-full" />
+          </AgentPanelChrome>
         </aside>
       </>
     );
   }
 
-  // Mobile: Vaul bottom sheet with full accessibility
+  // Mobile: Vaul bottom sheet
   return (
     <>
-      {/* WCAG: Screen reader announcer (persistent, hidden) */}
       <div
         ref={announcerRef}
         role="status"
@@ -606,7 +212,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
         aria-atomic="true"
         className="sr-only"
       />
-
       <Drawer.Root
         open={isMobileOpen}
         onOpenChange={(open) => {
@@ -617,18 +222,16 @@ export function AgentPanel({ className }: AgentPanelProps) {
               : 'AI Assistant drawer closed.'
           );
         }}
-        repositionInputs={false} // iOS Safari fix for issue #574
-        dismissible={true} // Allow dismissing with swipe-down gesture
-        modal={true} // Trap focus within drawer
+        repositionInputs={false}
+        dismissible={true}
+        modal={true}
       >
-        {/* Mobile FAB trigger button - bottom right */}
         <Drawer.Trigger asChild>
           <Button
             ref={fabRef}
             variant="sage"
             className={cn(
-              'fixed right-6 bottom-6 z-50',
-              'h-14 w-14 rounded-full',
+              'fixed right-6 bottom-6 z-50 h-14 w-14 rounded-full',
               'shadow-lg hover:shadow-xl transition-all duration-300',
               'flex items-center justify-center'
             )}
@@ -637,7 +240,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
             <Sparkles className="w-6 h-6" />
           </Button>
         </Drawer.Trigger>
-
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
           <Drawer.Content
@@ -645,13 +247,10 @@ export function AgentPanel({ className }: AgentPanelProps) {
             aria-modal="true"
             aria-label="AI Assistant Chat"
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-50',
-              'h-[85vh]',
-              'flex flex-col',
-              'rounded-t-3xl bg-surface-alt shadow-xl'
+              'fixed bottom-0 left-0 right-0 z-50 h-[85vh]',
+              'flex flex-col rounded-t-3xl bg-surface-alt shadow-xl'
             )}
             onOpenAutoFocus={(e) => {
-              // Focus input when drawer opens (Fix #743: Cancel previous timer to prevent race)
               e.preventDefault();
               if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
               focusTimerRef.current = window.setTimeout(() => {
@@ -660,7 +259,6 @@ export function AgentPanel({ className }: AgentPanelProps) {
               }, 100);
             }}
             onCloseAutoFocus={(e) => {
-              // Focus FAB when drawer closes (Fix #743: Cancel previous timer to prevent race)
               e.preventDefault();
               if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
               focusTimerRef.current = window.setTimeout(() => {
@@ -669,63 +267,31 @@ export function AgentPanel({ className }: AgentPanelProps) {
               }, 100);
             }}
           >
-            {/* WCAG 2.5.8: Drag handle (24px minimum touch target) */}
             <div className="flex justify-center py-3 shrink-0">
               <div className="w-12 h-6 rounded-full bg-neutral-300" aria-hidden="true" />
             </div>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700 bg-surface-alt shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-sage/10 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-sage" />
-                </div>
-                <div>
-                  <h2 className="text-base font-serif font-semibold text-text-primary">
-                    AI Assistant
-                  </h2>
-                  <p className="text-xs text-text-muted">Powered by AI</p>
-                </div>
-              </div>
-              <Drawer.Close asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-lg hover:bg-neutral-700"
-                  aria-label="Close drawer"
-                >
-                  <ChevronRight className="w-4 h-4 rotate-90" />
-                </Button>
-              </Drawer.Close>
-            </div>
-
-            {/* Minimal skip link (when in onboarding mode) */}
-            {isOnboarding && <SkipSetupLink onSkip={handleSkip} isSkipping={isSkipping} />}
-
-            {/* Review Progress (when agent is walking through sections) */}
-            {isReviewing && <ReviewProgress />}
-
-            {/* Chat content - TenantAgentChat (agent speaks first based on session state) */}
-            <div className="flex-1 overflow-hidden">
+            <AgentPanelChrome
+              headerTrailingAction={
+                <Drawer.Close asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-lg hover:bg-neutral-700"
+                    aria-label="Close drawer"
+                  >
+                    <ChevronRight className="w-4 h-4 rotate-90" />
+                  </Button>
+                </Drawer.Close>
+              }
+              {...chromeProps}
+            >
               <TenantAgentChat
-                onFirstMessage={handleFirstMessage}
-                onUIAction={handleTenantAgentUIAction}
-                onToolComplete={handleTenantAgentToolComplete}
-                onDashboardActions={handleDashboardActions}
+                {...chatProps}
                 inputRef={inputRef}
                 messagesRole="log"
                 className="h-full"
               />
-            </div>
-
-            {/* First-time badge (only when not in onboarding) */}
-            {isFirstVisit && !isOnboarding && (
-              <div className="absolute top-16 right-4 z-10">
-                <div className="bg-sage text-white text-xs font-medium px-2 py-1 rounded-full shadow-md animate-pulse">
-                  New
-                </div>
-              </div>
-            )}
+            </AgentPanelChrome>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
