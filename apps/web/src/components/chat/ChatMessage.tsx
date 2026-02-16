@@ -6,6 +6,20 @@ import { CheckCircle, XCircle, Bot, User } from 'lucide-react';
 import { ProposalCard } from './ProposalCard';
 
 /**
+ * Defense-in-depth: strip [SESSION CONTEXT] blocks that may slip through
+ * from server-side filtering. Defined at module level to avoid re-creation per render.
+ */
+function stripSessionContext(content: string): string {
+  const startTag = '[SESSION CONTEXT]';
+  const endTag = '[END CONTEXT]';
+  const startIdx = content.indexOf(startTag);
+  if (startIdx === -1) return content;
+  const endIdx = content.indexOf(endTag, startIdx);
+  if (endIdx === -1) return content;
+  return content.slice(endIdx + endTag.length).trim();
+}
+
+/**
  * Chat message type for the ChatMessage component
  * Simplified from the legacy useAgentChat - now supports Vertex AI messages
  */
@@ -112,6 +126,8 @@ export function ChatMessage({
 }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const styles = variantStyles[variant];
+  // Strip context injection prefix from user messages (defense-in-depth)
+  const displayContent = isUser ? stripSessionContext(message.content) : message.content;
 
   return (
     <div className={cn('flex', styles.container, isUser && 'flex-row-reverse')}>
@@ -139,7 +155,7 @@ export function ChatMessage({
             isUser ? styles.bubbleUser : styles.bubbleAssistant
           )}
         >
-          <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+          <p className="whitespace-pre-wrap leading-relaxed">{displayContent}</p>
         </div>
 
         {/* Tool Results */}
