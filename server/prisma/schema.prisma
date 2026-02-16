@@ -61,6 +61,7 @@ model Tenant {
   secondaryColor  String @default("#fb923c") // Macon Orange - accent color (CTAs, highlights)
   accentColor     String @default("#38b2ac") // Macon Teal - success/positive actions
   backgroundColor String @default("#ffffff") // White - page background
+  fontPreset      String @default("classic") // Font preset name (see FONT_PRESETS constant)
 
   // Stripe Connect
   stripeAccountId String? @unique // Stripe Connected Account ID

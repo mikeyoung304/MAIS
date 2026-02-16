@@ -369,6 +369,7 @@ export const UpdateBrandingDtoSchema = z.object({
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
   fontFamily: z.string().optional(),
+  fontPreset: z.string().optional(),
 });
 
 export type UpdateBrandingDto = z.infer<typeof UpdateBrandingDtoSchema>;
@@ -991,6 +992,7 @@ export const TenantPublicDtoSchema = z.object({
   secondaryColor: HexColorSchema.optional(),
   accentColor: HexColorSchema.optional(),
   backgroundColor: HexColorSchema.optional(),
+  fontPreset: z.string().optional(),
   // Customer chatbot toggle
   chatEnabled: z.boolean().optional().default(true),
   branding: z
