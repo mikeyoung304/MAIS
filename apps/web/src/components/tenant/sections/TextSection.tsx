@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import type { TextSection as TextSectionType, TenantPublicDto } from '@macon/contracts';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface TextSectionProps extends TextSectionType {
   tenant: TenantPublicDto;
@@ -9,9 +12,11 @@ interface TextSectionProps extends TextSectionType {
  * Text section component for content blocks with optional image
  *
  * Features:
- * - Headline and content text
+ * - Headline and content text (headline falls back to "About {tenant}")
  * - Optional image with configurable position (left/right)
  * - Markdown-like paragraph support (split on double newlines)
+ * - Scroll-reveal animation via IntersectionObserver
+ * - Empty content guard: returns null if no meaningful content
  */
 export function TextSection({
   headline,
@@ -20,12 +25,19 @@ export function TextSection({
   imagePosition = 'left',
   tenant,
 }: TextSectionProps) {
+  const revealRef = useScrollReveal();
+  const hasContent = content && content.trim().length > 0;
+
+  if (!hasContent && !headline) return null;
+
+  const displayHeadline = headline || `About ${tenant.name}`;
   const showImage = Boolean(imageUrl);
 
   return (
     <section className="py-32 md:py-40">
       <div className="mx-auto max-w-6xl px-6">
         <div
+          ref={revealRef}
           className={`grid gap-12 md:grid-cols-2 md:items-center ${
             imagePosition === 'right' ? 'md:[&>*:first-child]:order-2' : ''
           }`}
@@ -35,7 +47,7 @@ export function TextSection({
             <div className="relative aspect-[4/3] overflow-hidden rounded-3xl">
               <Image
                 src={imageUrl!}
-                alt={headline || `About ${tenant.name}`}
+                alt={displayHeadline}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -53,18 +65,18 @@ export function TextSection({
 
           {/* Content */}
           <div>
-            {headline && (
-              <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">
-                {headline}
-              </h2>
+            <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">
+              {displayHeadline}
+            </h2>
+            {hasContent && (
+              <div className="mt-6 space-y-4">
+                {content.split('\n\n').map((paragraph, i) => (
+                  <p key={i} className="text-lg text-muted-foreground leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             )}
-            <div className={headline ? 'mt-6 space-y-4' : 'space-y-4'}>
-              {(content ?? '').split('\n\n').map((paragraph, i) => (
-                <p key={i} className="text-lg text-muted-foreground leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -33,38 +34,25 @@ interface SegmentTiersSectionProps {
   basePath?: string;
   /** Domain query parameter for custom domain routes */
   domainParam?: string;
+  /** Override heading from SERVICES SectionContent */
+  servicesHeading?: { title?: string; subtitle?: string } | null;
 }
 
 interface SegmentCardProps {
   segment: SegmentData;
-  tiers: TierData[];
   onSelect: () => void;
-}
-
-/**
- * Get the price range text for a segment's packages
- * Uses display price when available, otherwise base price
- */
-function getPriceRange(tiers: TierData[]): string {
-  if (tiers.length === 0) return '';
-  const prices = tiers.map((p) => p.displayPriceCents ?? p.priceCents).sort((a, b) => a - b);
-  const min = prices[0];
-  const max = prices[prices.length - 1];
-  const hasScaling = tiers.some((t) => hasScalingPricing(t));
-  if (min === max && !hasScaling) return formatPrice(min);
-  return `From ${formatPrice(min)}`;
 }
 
 /**
  * Segment Card - Entry point for a service category
  */
-function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
-  const priceRange = getPriceRange(tiers);
+function SegmentCard({ segment, onSelect }: SegmentCardProps) {
   // Use heroImage if set, otherwise use stock photo based on keywords
   const imageUrl = segment.heroImage || getSegmentStockPhoto(segment);
 
   return (
     <button
+      type="button"
       onClick={onSelect}
       className="group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-100 bg-white shadow-lg text-left motion-safe:transition-all motion-safe:duration-500 hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background"
     >
@@ -97,8 +85,7 @@ function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
           <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{segment.description}</p>
         )}
 
-        <div className="mt-auto flex items-center justify-between pt-6">
-          <span className="text-sm font-medium text-accent">{priceRange}</span>
+        <div className="mt-auto flex items-center justify-end pt-6">
           <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:translate-x-1 group-hover:text-accent">
             Explore
             <svg
@@ -184,6 +171,8 @@ interface TierGridSectionProps {
   headingRef?: React.RefObject<HTMLHeadingElement>;
   /** Whether to show extended segment info (subtitle with different styling, description) */
   showExtendedInfo?: boolean;
+  /** Skip rendering the heading (when parent already renders its own heading) */
+  skipHeading?: boolean;
 }
 
 /**
@@ -197,7 +186,9 @@ function TierGridSection({
   getBookHref,
   headingRef,
   showExtendedInfo = false,
+  skipHeading = false,
 }: TierGridSectionProps) {
+  const tierRevealRef = useScrollReveal();
   const midIndex = Math.floor(tiers.length / 2);
 
   const gridClasses =
@@ -209,29 +200,33 @@ function TierGridSection({
 
   return (
     <>
-      <div className="text-center">
-        <h2
-          ref={headingRef}
-          tabIndex={headingRef ? -1 : undefined}
-          className={`font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl${headingRef ? ' outline-none' : ''}`}
-        >
-          {segment.heroTitle || segment.name}
-        </h2>
-        {segment.heroSubtitle && (
-          <p
-            className={`mx-auto mt-4 max-w-2xl text-lg ${
-              showExtendedInfo ? 'font-light italic text-accent' : 'text-muted-foreground'
-            }`}
+      {!skipHeading && (
+        <div className="text-center">
+          <h2
+            ref={headingRef}
+            tabIndex={headingRef ? -1 : undefined}
+            className={`font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl${headingRef ? ' outline-none' : ''}`}
           >
-            {segment.heroSubtitle}
-          </p>
-        )}
-        {showExtendedInfo && segment.description && (
-          <p className="mx-auto mt-6 max-w-3xl text-muted-foreground">{segment.description}</p>
-        )}
-      </div>
+            {segment.heroTitle || segment.name}
+          </h2>
+          {segment.heroSubtitle && (
+            <p
+              className={`mx-auto mt-4 max-w-2xl text-lg ${
+                showExtendedInfo ? 'font-light italic text-accent' : 'text-muted-foreground'
+              }`}
+            >
+              {segment.heroSubtitle}
+            </p>
+          )}
+          {showExtendedInfo && segment.description && (
+            <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+              {segment.description}
+            </p>
+          )}
+        </div>
+      )}
 
-      <div className={`mt-16 grid gap-8 ${gridClasses}`}>
+      <div ref={tierRevealRef} className={`reveal-on-scroll mt-16 grid gap-8 ${gridClasses}`}>
         {tiers.map((pkg, index) => {
           const isPopular = tiers.length > 2 && index === midIndex;
           const tierLabel =
@@ -261,6 +256,7 @@ export function SegmentTiersSection({
   data,
   basePath = '',
   domainParam = '',
+  servicesHeading,
 }: SegmentTiersSectionProps) {
   const { tenant, tiers, segments } = data;
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
@@ -310,7 +306,7 @@ export function SegmentTiersSection({
         if (segment) {
           setSelectedSegmentId(segment.id);
         }
-      } else if (newHash === 'packages' || newHash === '') {
+      } else if (newHash === 'services' || newHash === '') {
         setSelectedSegmentId(null);
       }
     };
@@ -384,11 +380,14 @@ export function SegmentTiersSection({
   // Handle back to segments - must be before any conditional returns (React Rules of Hooks)
   const handleBack = useCallback(() => {
     // Push to history so browser forward works
-    window.history.pushState(null, '', '#packages');
+    window.history.pushState(null, '', '#services');
     setSelectedSegmentId(null);
     // Announce to screen readers (WCAG 4.1.3 Status Messages)
     setAnnouncement('Returned to service categories');
   }, []);
+
+  // Scroll reveal for segment cards grid (must be before conditional returns - React Rules of Hooks)
+  const segmentGridRevealRef = useScrollReveal();
 
   // Get selected segment and its packages (derived state, not a hook)
   const selectedSegment = selectedSegmentId
@@ -400,7 +399,7 @@ export function SegmentTiersSection({
   // This must come AFTER all hooks are called (React Rules of Hooks)
   if (segmentsWithTiers.length === 0) {
     return (
-      <section id="packages" className="py-32 md:py-40">
+      <section id="services" className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">
             Services coming soon
@@ -419,13 +418,24 @@ export function SegmentTiersSection({
     const segmentTiers = tiersBySegment.get(segment.id) || [];
 
     return (
-      <section id="packages" className="py-32 md:py-40">
+      <section id="services" className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
+          <div className="mb-16 text-center">
+            <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl">
+              {servicesHeading?.title || segment.heroTitle || segment.name}
+            </h2>
+            {(servicesHeading?.subtitle || segment.heroSubtitle) && (
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+                {servicesHeading?.subtitle || segment.heroSubtitle}
+              </p>
+            )}
+          </div>
           <TierGridSection
             segment={segment}
             tiers={segmentTiers}
             tenant={tenant}
             getBookHref={getBookHref}
+            skipHeading
           />
         </div>
       </section>
@@ -434,7 +444,7 @@ export function SegmentTiersSection({
 
   // Multiple segments - show segment selection or expanded view
   return (
-    <section id="packages" className="py-32 md:py-40">
+    <section id="services" className="py-32 md:py-40">
       {/* Live region for screen reader announcements (WCAG 4.1.3 Status Messages) */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
@@ -442,43 +452,50 @@ export function SegmentTiersSection({
 
       <div className="mx-auto max-w-6xl px-6">
         {/* Segment Selection View */}
-        {!selectedSegment && (
-          <>
-            <div className="text-center">
-              <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl">
-                What brings you here?
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-                Choose the experience that fits your needs.
-              </p>
-            </div>
-
-            <div
-              className={`mt-16 grid gap-8 ${
-                segmentsWithTiers.length === 2
+        {!selectedSegment &&
+          (() => {
+            const segmentGridClasses =
+              segmentsWithTiers.length === 1
+                ? 'mx-auto max-w-2xl md:grid-cols-1'
+                : segmentsWithTiers.length === 2
                   ? 'mx-auto max-w-3xl md:grid-cols-2'
-                  : 'md:grid-cols-3'
-              }`}
-            >
-              {segmentsWithTiers.map((segment) => (
-                <SegmentCard
-                  key={segment.id}
-                  segment={segment}
-                  tiers={tiersBySegment.get(segment.id) || []}
-                  onSelect={() => handleSelectSegment(segment.id)}
-                />
-              ))}
-            </div>
-          </>
-        )}
+                  : 'md:grid-cols-3';
+
+            return (
+              <>
+                <div className="text-center">
+                  <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl">
+                    {servicesHeading?.title || 'What brings you here?'}
+                  </h2>
+                  <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+                    {servicesHeading?.subtitle || 'Choose the experience that fits your needs.'}
+                  </p>
+                </div>
+
+                <div
+                  ref={segmentGridRevealRef}
+                  className={`reveal-on-scroll mt-16 grid gap-8 ${segmentGridClasses}`}
+                >
+                  {segmentsWithTiers.map((segment) => (
+                    <SegmentCard
+                      key={segment.id}
+                      segment={segment}
+                      onSelect={() => handleSelectSegment(segment.id)}
+                    />
+                  ))}
+                </div>
+              </>
+            );
+          })()}
 
         {/* Expanded Segment View */}
         {selectedSegment && (
           <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-500">
             {/* Back button */}
             <button
+              type="button"
               onClick={handleBack}
-              className="group mb-8 flex items-center gap-2 text-sm font-medium text-muted-foreground motion-safe:transition-colors hover:text-accent"
+              className="group mb-8 flex items-center gap-2 py-2 px-3 -ml-3 text-sm font-medium text-muted-foreground motion-safe:transition-colors hover:text-accent"
             >
               <svg
                 className="h-4 w-4 motion-safe:transition-transform motion-safe:group-hover:-translate-x-1"

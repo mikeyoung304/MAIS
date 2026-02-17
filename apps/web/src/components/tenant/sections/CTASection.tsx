@@ -36,7 +36,7 @@ export function CTASection({
             size="xl"
             className="border-white bg-white text-accent hover:bg-white/90"
           >
-            <a href={`${basePath}#packages`}>{ctaText}</a>
+            <a href={`${basePath}#services`}>{ctaText}</a>
           </Button>
         </div>
       </div>

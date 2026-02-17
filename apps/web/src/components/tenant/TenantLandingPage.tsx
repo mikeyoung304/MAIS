@@ -6,17 +6,15 @@
  * a segment-first browsing experience.
  *
  * Layout:
- * 1. Pre-packages sections (hero, text, etc.)
- * 2. Segment-first packages section (shows segments → tiers within)
- * 3. Post-packages sections (testimonials, gallery, faq, contact)
- * 4. Final CTA
+ * 1. Pre-tier sections (hero, about/text)
+ * 2. Segment-first tiers section (shows segments, expands to reveal tiers)
+ * 3. Post-tier sections (testimonials, gallery, faq, contact, cta)
  */
 
-import { Button } from '@/components/ui/button';
 import type { TenantStorefrontData } from '@/lib/tenant.client';
 import { SectionRenderer } from './SectionRenderer';
 import { SegmentTiersSection } from './SegmentTiersSection';
-import type { Section, HeroSection, CTASection, PagesConfig } from '@macon/contracts';
+import type { Section, HeroSection, PagesConfig } from '@macon/contracts';
 
 interface TenantLandingPageProps {
   data: TenantStorefrontData;
@@ -33,19 +31,22 @@ interface TenantLandingPageProps {
 /**
  * Build sections for the home page from PagesConfig.
  *
- * Returns sections split into pre-packages and post-packages groups
- * so packages can be rendered in between with special handling.
+ * Returns sections split into pre-tier and post-tier groups
+ * so tiers can be rendered in between with special handling.
  *
  * Layout strategy:
- * - Pre-packages: hero + about/text sections (build trust first)
- * - Packages: injected by TenantLandingPage (SegmentTiersSection)
- * - Post-packages: testimonials, gallery, FAQ, contact (social proof after seeing offerings)
- * - Final CTA: call-to-action at the bottom
+ * - Pre-tier: hero + about/text sections (build trust first)
+ * - Tiers: injected by TenantLandingPage (SegmentTiersSection)
+ * - Post-tier: testimonials, gallery, FAQ, contact, CTA (social proof + closing CTA)
  */
 function buildHomeSections(
   pages: PagesConfig,
   tenantName: string
-): { preSections: Section[]; postSections: Section[]; finalCta: CTASection | null } {
+): {
+  preSections: Section[];
+  postSections: Section[];
+  servicesHeading: { title?: string; subtitle?: string } | null;
+} {
   // Default hero if nothing configured
   const defaultHero: HeroSection = {
     id: 'home-hero-main',
@@ -56,9 +57,6 @@ function buildHomeSections(
   };
 
   const homeSections = pages.home.sections;
-
-  // Find CTA section (usually rendered separately at the bottom)
-  const ctaSection = homeSections.find((s): s is CTASection => s.type === 'cta');
 
   // Find hero - first section of type 'hero'
   const heroSection = homeSections.find((s): s is HeroSection => s.type === 'hero');
@@ -71,20 +69,29 @@ function buildHomeSections(
     'contact',
     'features',
     'pricing',
+    'cta', // CTA renders through SectionRenderer after tiers
   ]);
 
   // Build pre-sections: hero + text sections (respecting config order)
   const preSections: Section[] = heroSection ? [heroSection] : [defaultHero];
 
-  // Add text sections that appear before packages (typically About)
-  const textSections = homeSections.filter((s) => s.type === 'text');
+  // Add text/about sections that appear before tiers (typically About)
+  const textSections = homeSections.filter((s) => s.type === 'text' || s.type === 'about');
   preSections.push(...textSections);
 
-  // Build post-sections: everything else except hero, text, and CTA
-  // These render after packages in config order
+  // Extract services section heading metadata (not rendered as FeaturesSection)
+  const servicesMeta = homeSections.find((s) => s.type === 'services');
+  const servicesHeading = servicesMeta
+    ? {
+        title: (servicesMeta as { headline?: string }).headline,
+        subtitle: (servicesMeta as { subheadline?: string }).subheadline,
+      }
+    : null;
+
+  // Build post-sections: everything after tiers in config order
   const postSections = homeSections.filter((s) => postTierTypes.has(s.type));
 
-  return { preSections, postSections, finalCta: ctaSection || null };
+  return { preSections, postSections, servicesHeading };
 }
 
 /**
@@ -103,11 +110,11 @@ export function TenantLandingPage({
   const { tenant } = data;
 
   // Build sections for rendering
-  const { preSections, postSections, finalCta } = buildHomeSections(pages, tenant.name);
+  const { preSections, postSections, servicesHeading } = buildHomeSections(pages, tenant.name);
 
   return (
     <>
-      {/* ===== PRE-PACKAGES SECTIONS (Hero, etc.) ===== */}
+      {/* ===== PRE-TIER SECTIONS (Hero, About) ===== */}
       <SectionRenderer
         sections={preSections}
         tenant={tenant}
@@ -116,11 +123,15 @@ export function TenantLandingPage({
         indexOffset={0}
       />
 
-      {/* ===== SEGMENT-FIRST PACKAGES SECTION ===== */}
-      {/* Shows segments as entry points, expands to reveal tiers when clicked */}
-      <SegmentTiersSection data={data} basePath={basePath} domainParam={domainParam} />
+      {/* ===== SEGMENT-FIRST TIERS SECTION ===== */}
+      <SegmentTiersSection
+        data={data}
+        basePath={basePath}
+        domainParam={domainParam}
+        servicesHeading={servicesHeading}
+      />
 
-      {/* ===== POST-PACKAGES SECTIONS (Testimonials, Gallery, FAQ) ===== */}
+      {/* ===== POST-TIER SECTIONS (Testimonials, Gallery, FAQ, CTA) ===== */}
       <SectionRenderer
         sections={postSections}
         tenant={tenant}
@@ -128,30 +139,6 @@ export function TenantLandingPage({
         isEditMode={isEditMode}
         indexOffset={preSections.length}
       />
-
-      {/* ===== FINAL CTA ===== */}
-      {finalCta && (
-        <section className="bg-accent py-32 md:py-40">
-          <div className="mx-auto max-w-4xl px-6 text-center">
-            <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">
-              {finalCta.headline}
-            </h2>
-            {finalCta.subheadline && (
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">{finalCta.subheadline}</p>
-            )}
-            <div className="mt-10">
-              <Button
-                asChild
-                variant="outline"
-                size="xl"
-                className="border-white bg-white text-accent hover:bg-white/90"
-              >
-                <a href="#packages">{finalCta.ctaText}</a>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
     </>
   );
 }
