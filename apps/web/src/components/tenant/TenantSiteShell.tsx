@@ -55,11 +55,8 @@ export function TenantSiteShell({
   return (
     <div className="flex min-h-screen flex-col bg-background" style={themeVars}>
       {/* Google Fonts — preconnect + stylesheet for the tenant's font preset */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link href={fontPreset.googleFontsUrl} rel="stylesheet" />
       {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
           Suspense required because useSearchParams() triggers client-side boundary. */}
