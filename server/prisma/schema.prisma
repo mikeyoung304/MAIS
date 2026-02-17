@@ -56,11 +56,12 @@ model Tenant {
   branding Json @default("{}") // Widget branding settings (non-color)
 
   // Theme Colors - Dedicated fields for runtime CSS variable updates
-  // Defaults to neutral-elegant palette (per-tenant theming)
-  primaryColor    String @default("#2d3436") // Charcoal - main brand color (buttons, headers)
-  secondaryColor  String @default("#b8860b") // Dark Goldenrod - accent color (CTAs, highlights)
-  accentColor     String @default("#8B9E86") // Sage Green - success/positive actions
-  backgroundColor String @default("#ffffff") // White - page background
+  // Defaults to warm luxury palette (per-tenant theming)
+  // WCAG AA: accent #5A7C65 on white text = 4.67:1 contrast ratio ✓
+  primaryColor    String @default("#1C1917") // Warm stone-black - headings and primary text
+  secondaryColor  String @default("#A78B5A") // Muted gold - luxury accent signal
+  accentColor     String @default("#5A7C65") // Deep sage - CTAs, badges (WCAG AA with white)
+  backgroundColor String @default("#FAFAF7") // Warm ivory - page background
   fontPreset      String @default("classic") // Font preset name (see FONT_PRESETS constant)
 
   // Stripe Connect

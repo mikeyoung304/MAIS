@@ -1,12 +1,12 @@
 /**
- * Unit tests for Little Bit Horse Farm seed (seeds/little-bit-horse-farm.ts)
+ * Unit tests for littlebit.farm seed (seeds/little-bit-horse-farm.ts)
  *
  * Tests:
- * - Segment creation (3 segments: Wellness, Elopements, Weekend Getaways)
- * - 9 tiers (3 per segment)
- * - 33 add-ons creation (segment-scoped)
- * - TierAddOn links (99 total)
+ * - Segment creation (3 segments: Elopements, Corporate Retreats, Weekend Getaway)
+ * - 9 tiers (3 per segment) with displayPriceCents + Airbnb split
+ * - Section content (HERO, ABOUT, SERVICES)
  * - Idempotency (safe to run multiple times)
+ * - Production guard
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -47,35 +47,47 @@ vi.mock('crypto', async (importOriginal) => {
 import { seedLittleBitHorseFarm } from '../../prisma/seeds/little-bit-horse-farm';
 import type { PrismaClient } from '../../src/generated/prisma/client';
 
-describe('Little Bit Horse Farm Seed', () => {
+describe('littlebit.farm Seed', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('Segment Creation', () => {
-    it('should create 3 segments (Wellness, Elopements, Weekend Getaways)', async () => {
+    it('should create 3 segments (Elopements, Corporate Retreats, Weekend Getaway)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
       expect(mockPrisma.segment.upsert).toHaveBeenCalledTimes(3);
       const slugs = mockPrisma.segment.upsert.mock.calls.map((c) => c[0].where.tenantId_slug.slug);
-      expect(slugs).toContain('corporate-wellness-retreat');
       expect(slugs).toContain('elopements');
-      expect(slugs).toContain('weekend-getaways');
+      expect(slugs).toContain('corporate_retreats');
+      expect(slugs).toContain('weekend_getaway');
     });
 
-    it('should create Corporate Wellness Retreat segment with correct hero', async () => {
+    it('should create Elopements segment with correct hero', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      const wellnessCall = mockPrisma.segment.upsert.mock.calls.find(
-        (c) => c[0].where.tenantId_slug.slug === 'corporate-wellness-retreat'
+      const call = mockPrisma.segment.upsert.mock.calls.find(
+        (c) => c[0].where.tenantId_slug.slug === 'elopements'
       );
-      expect(wellnessCall).toBeDefined();
-      expect(wellnessCall![0].create.name).toBe('Corporate Wellness Retreats');
-      expect(wellnessCall![0].create.heroTitle).toBe('Reset. Reconnect. Return Stronger.');
+      expect(call).toBeDefined();
+      expect(call![0].create.name).toBe('Elopements & Vow Renewals');
+      expect(call![0].create.heroTitle).toBe('Simple. Calm. Beautiful.');
+    });
+
+    it('should include Airbnb pricing note in segment descriptions', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      mockPrisma.segment.upsert.mock.calls.forEach((call) => {
+        const desc = call[0].create.description as string;
+        expect(desc).toContain('Airbnb accommodation ($200/night)');
+        expect(desc).toContain('House rules');
+      });
     });
   });
 
@@ -88,137 +100,117 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(9);
     });
 
-    it('should create Grounding Reset at $450', async () => {
+    it('should create Simple Ceremony with correct Airbnb split pricing', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
       const calls = mockPrisma.tier.upsert.mock.calls;
-      const groundingReset = calls.find((c) => c[0].where.tenantId_slug.slug === 'grounding-reset');
+      const tier = calls.find((c) => c[0].where.tenantId_slug.slug === 'simple-ceremony');
 
-      expect(groundingReset).toBeDefined();
-      expect(groundingReset![0].create.name).toBe('The Grounding Reset');
-      expect(groundingReset![0].create.priceCents).toBe(45000); // $450
-      expect(groundingReset![0].create.sortOrder).toBe(1);
+      expect(tier).toBeDefined();
+      expect(tier![0].create.name).toBe('Simple Ceremony');
+      expect(tier![0].create.priceCents).toBe(80000); // $800 experience
+      expect(tier![0].create.displayPriceCents).toBe(100000); // $1,000 all-in
+      expect(tier![0].create.maxGuests).toBe(6); // Elopement T1 max 6
+      expect(tier![0].create.sortOrder).toBe(1);
     });
 
-    it('should create Team Recharge at $650', async () => {
+    it('should enforce max 6 guests only on elopement tier 1', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
       const calls = mockPrisma.tier.upsert.mock.calls;
-      const teamRecharge = calls.find((c) => c[0].where.tenantId_slug.slug === 'team-recharge');
 
-      expect(teamRecharge).toBeDefined();
-      expect(teamRecharge![0].create.name).toBe('The Team Recharge');
-      expect(teamRecharge![0].create.priceCents).toBe(65000); // $650
-      expect(teamRecharge![0].create.sortOrder).toBe(2);
+      // Simple Ceremony (elopement T1) = 6
+      const simpleCeremony = calls.find((c) => c[0].where.tenantId_slug.slug === 'simple-ceremony');
+      expect(simpleCeremony![0].create.maxGuests).toBe(6);
+
+      // All others = 10
+      const otherTiers = calls.filter((c) => c[0].where.tenantId_slug.slug !== 'simple-ceremony');
+      otherTiers.forEach((call) => {
+        expect(call[0].create.maxGuests).toBe(10);
+      });
     });
 
-    it('should create Executive Reset at $950', async () => {
+    it('should set scaling rules on tiers with per-person pricing', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
       const calls = mockPrisma.tier.upsert.mock.calls;
-      const executiveReset = calls.find((c) => c[0].where.tenantId_slug.slug === 'executive-reset');
 
-      expect(executiveReset).toBeDefined();
-      expect(executiveReset![0].create.name).toBe('The Executive Reset');
-      expect(executiveReset![0].create.priceCents).toBe(95000); // $950
-      expect(executiveReset![0].create.sortOrder).toBe(3);
+      // Celebration Ceremony has grazing board scaling
+      const celebration = calls.find(
+        (c) => c[0].where.tenantId_slug.slug === 'celebration-ceremony'
+      );
+      const celebrationRules = celebration![0].create.scalingRules;
+      expect(celebrationRules.components).toHaveLength(1);
+      expect(celebrationRules.components[0].name).toBe('Grazing Board');
+      expect(celebrationRules.components[0].perPersonCents).toBe(2500);
+
+      // Curated Weekend has 2 scaling components
+      const curated = calls.find((c) => c[0].where.tenantId_slug.slug === 'curated-weekend');
+      const curatedRules = curated![0].create.scalingRules;
+      expect(curatedRules.components).toHaveLength(2);
     });
-  });
 
-  describe('Add-on Creation (33 Total - segment-scoped)', () => {
-    it('should create 33 add-ons (18 wellness + 4 elopements + 11 weekends)', async () => {
+    it('should set displayPriceCents on all tiers (Airbnb-inclusive)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.addOn.upsert).toHaveBeenCalledTimes(33);
-    });
+      const calls = mockPrisma.tier.upsert.mock.calls;
 
-    it('should create food & hospitality add-ons', async () => {
-      const mockPrisma = createMockPrisma(null);
-
-      await seedLittleBitHorseFarm(mockPrisma);
-
-      const slugs = mockPrisma.addOn.upsert.mock.calls.map((c) => c[0].where.tenantId_slug.slug);
-
-      expect(slugs).toContain('pastry-bar');
-      expect(slugs).toContain('coffee-tea');
-      expect(slugs).toContain('hydration-station');
-      expect(slugs).toContain('hospitality-essentials');
-      expect(slugs).toContain('lunch-boxed');
-      expect(slugs).toContain('lunch-buffet');
-      expect(slugs).toContain('lunch-chef');
-      expect(slugs).toContain('dinner-chef');
-    });
-
-    it('should create wellness upgrade add-ons', async () => {
-      const mockPrisma = createMockPrisma(null);
-
-      await seedLittleBitHorseFarm(mockPrisma);
-
-      const slugs = mockPrisma.addOn.upsert.mock.calls.map((c) => c[0].where.tenantId_slug.slug);
-
-      expect(slugs).toContain('extra-yoga');
-      expect(slugs).toContain('extra-breathwork');
-      expect(slugs).toContain('meditation-sound-bath');
-      expect(slugs).toContain('extended-pemf');
-    });
-
-    it('should create corporate polish add-ons', async () => {
-      const mockPrisma = createMockPrisma(null);
-
-      await seedLittleBitHorseFarm(mockPrisma);
-
-      const slugs = mockPrisma.addOn.upsert.mock.calls.map((c) => c[0].where.tenantId_slug.slug);
-
-      expect(slugs).toContain('photo-recap');
-      expect(slugs).toContain('meeting-kit');
-      expect(slugs).toContain('welcome-gifts-basic');
-      expect(slugs).toContain('welcome-gifts-premium');
-    });
-
-    it('should create consolidated mocktail bar add-on', async () => {
-      const mockPrisma = createMockPrisma(null);
-
-      await seedLittleBitHorseFarm(mockPrisma);
-
-      const calls = mockPrisma.addOn.upsert.mock.calls;
-      const mocktailBar = calls.find((c) => c[0].where.tenantId_slug.slug === 'mocktail-bar');
-
-      expect(mocktailBar).toBeDefined();
-      expect(mocktailBar![0].create.name).toBe('Signature Mocktail Bar');
-      expect(mocktailBar![0].create.price).toBe(25000); // $250 base
-    });
-
-    it('should set all add-ons as segment-scoped (not global)', async () => {
-      const mockPrisma = createMockPrisma(null);
-
-      await seedLittleBitHorseFarm(mockPrisma);
-
-      // All add-ons should have a segmentId (not null)
-      mockPrisma.addOn.upsert.mock.calls.forEach((call) => {
-        expect(call[0].create.segmentId).not.toBeNull();
+      // Every tier should have displayPriceCents > priceCents (by $200 = 20000 cents)
+      calls.forEach((call) => {
+        const displayPrice = call[0].create.displayPriceCents;
+        const chargePrice = call[0].create.priceCents;
+        expect(displayPrice).toBe(chargePrice + 20000);
       });
     });
   });
 
-  describe('TierAddOn Links', () => {
-    it('should create 99 tier-addon links (54 wellness + 12 elopement + 33 weekend)', async () => {
+  describe('Section Content', () => {
+    it('should create 3 section content blocks (HERO, ABOUT, SERVICES)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      // 18 add-ons × 3 wellness tiers = 54
-      // 4 add-ons × 3 elopement tiers = 12
-      // 11 add-ons × 3 weekend tiers = 33
-      // Total = 99
-      expect(mockPrisma.tierAddOn.upsert).toHaveBeenCalledTimes(99);
+      expect(mockPrisma.sectionContent.create).toHaveBeenCalledTimes(3);
+      const blockTypes = mockPrisma.sectionContent.create.mock.calls.map(
+        (c) => c[0].data.blockType
+      );
+      expect(blockTypes).toContain('HERO');
+      expect(blockTypes).toContain('ABOUT');
+      expect(blockTypes).toContain('SERVICES');
+    });
+
+    it('should create ABOUT section with Airbnb "How It Works" copy', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      const aboutCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'ABOUT'
+      );
+      expect(aboutCall).toBeDefined();
+      const content = aboutCall![0].data.content as Record<string, unknown>;
+      expect(content.title).toBe('How It Works');
+      expect(content.body).toContain('Airbnb accommodation ($200/night)');
+      expect(content.body).toContain('experience portion only');
+    });
+
+    it('should publish all section content (isDraft: false)', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      mockPrisma.sectionContent.create.mock.calls.forEach((call) => {
+        expect(call[0].data.isDraft).toBe(false);
+        expect(call[0].data.publishedAt).toBeDefined();
+      });
     });
   });
 
@@ -228,19 +220,19 @@ describe('Little Bit Horse Farm Seed', () => {
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      // Should delete in order: tierAddOn, tier, addOn, segment
       expect(mockPrisma.tierAddOn.deleteMany).toHaveBeenCalled();
       expect(mockPrisma.tier.deleteMany).toHaveBeenCalled();
       expect(mockPrisma.addOn.deleteMany).toHaveBeenCalled();
+      expect(mockPrisma.sectionContent.deleteMany).toHaveBeenCalled();
       expect(mockPrisma.segment.deleteMany).toHaveBeenCalled();
     });
 
     it('should preserve API keys on update', async () => {
       const existingTenant = {
-        id: 'tenant-lbhf-123',
-        slug: 'little-bit-farm',
-        name: 'Little Bit Horse Farm',
-        apiKeyPublic: 'pk_live_little-bit-farm_existing1234',
+        id: 'tenant-lbf-123',
+        slug: 'littlebit-farm',
+        name: 'littlebit.farm',
+        apiKeyPublic: 'pk_live_littlebit-farm_existing1234',
         apiKeySecret: 'hashed-existing-secret',
       };
       const mockPrisma = createMockPrisma(existingTenant);
@@ -265,7 +257,7 @@ describe('Little Bit Horse Farm Seed', () => {
       expect(reasons).toContain('Christmas Eve');
       expect(reasons).toContain('Christmas Day');
       expect(reasons).toContain("New Year's Eve");
-      expect(reasons).toContain("New Year's Day");
+      expect(reasons).toContain('Thanksgiving');
     });
   });
 
@@ -317,28 +309,22 @@ function createMockPrisma(
   } | null
 ): PrismaClient {
   const mockTenant = existingTenant || {
-    id: 'tenant-lbhf-123',
-    slug: 'little-bit-farm',
-    name: 'Little Bit Horse Farm',
-    apiKeyPublic: 'pk_live_little-bit-farm_0000000000000000',
+    id: 'tenant-lbf-123',
+    slug: 'littlebit-farm',
+    name: 'littlebit.farm',
+    apiKeyPublic: 'pk_live_littlebit-farm_0000000000000000',
     apiKeySecret: 'hashed-secret-key',
   };
 
   const mockSegment = {
-    id: 'segment-wellness-123',
-    slug: 'corporate-wellness-retreat',
+    id: 'segment-elopements-123',
+    slug: 'elopements',
     tenantId: mockTenant.id,
   };
 
   const mockTier = {
     id: 'tier-1',
-    slug: 'grounding-reset',
-    tenantId: mockTenant.id,
-  };
-
-  const mockAddOn = {
-    id: 'addon-1',
-    slug: 'pastry-bar',
+    slug: 'simple-ceremony',
     tenantId: mockTenant.id,
   };
 
@@ -356,11 +342,15 @@ function createMockPrisma(
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     addOn: {
-      upsert: vi.fn().mockResolvedValue(mockAddOn),
+      upsert: vi.fn().mockResolvedValue({ id: 'addon-1' }),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     tierAddOn: {
-      upsert: vi.fn().mockResolvedValue({ tierId: mockTier.id, addOnId: mockAddOn.id }),
+      upsert: vi.fn().mockResolvedValue({ tierId: mockTier.id, addOnId: 'addon-1' }),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    sectionContent: {
+      create: vi.fn().mockResolvedValue({ id: 'section-1' }),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     blackoutDate: {

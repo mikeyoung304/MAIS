@@ -88,12 +88,12 @@ export function FeaturesSection({
       <div className="max-w-3xl mx-auto text-center mb-16">
         <h2
           id="features-heading"
-          className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
+          className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-[1.15] tracking-tight"
         >
           {headline}
         </h2>
         {subheadline && (
-          <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-text-muted">
+          <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-muted-foreground">
             {subheadline}
           </p>
         )}
@@ -111,8 +111,8 @@ export function FeaturesSection({
               <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-6">
                 <IconComponent className="h-6 w-6 text-accent" />
               </div>
-              <h3 className="font-semibold text-lg text-text-primary mb-2">{feature.title}</h3>
-              <p className="text-text-muted">{feature.description}</p>
+              <h3 className="font-semibold text-lg text-primary mb-2">{feature.title}</h3>
+              <p className="text-muted-foreground">{feature.description}</p>
             </div>
           );
         })}

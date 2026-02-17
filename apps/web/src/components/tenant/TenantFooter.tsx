@@ -57,7 +57,7 @@ export function TenantFooter({
                 />
               </div>
             )}
-            <span className="text-lg font-semibold text-text-primary">{tenant.name}</span>
+            <span className="text-lg font-semibold text-primary">{tenant.name}</span>
           </div>
 
           {/* Navigation links */}
@@ -67,7 +67,7 @@ export function TenantFooter({
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-sm text-text-muted transition-colors hover:text-text-primary"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {item.label}
                   </Link>
@@ -79,10 +79,10 @@ export function TenantFooter({
 
         {/* Bottom section: Copyright and attribution */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-neutral-100 pt-8 md:flex-row">
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-muted-foreground">
             &copy; {currentYear} {tenant.name}. All rights reserved.
           </p>
-          <p className="text-xs text-text-muted">
+          <p className="text-xs text-muted-foreground">
             Powered by{' '}
             <a
               href="https://gethandled.ai"

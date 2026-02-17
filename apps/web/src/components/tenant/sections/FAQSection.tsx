@@ -27,16 +27,14 @@ export function FAQSection({
     <section className="py-32 md:py-40">
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
-          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-            {headline}
-          </h2>
+          <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">{headline}</h2>
         </div>
 
         <div className="mt-16 space-y-6">
           {safeItems.map((faq, i) => (
             <div key={i} className="rounded-2xl border border-neutral-100 bg-white p-6">
-              <h3 className="font-semibold text-text-primary">{faq.question}</h3>
-              <p className="mt-2 text-text-muted">{faq.answer}</p>
+              <h3 className="font-semibold text-primary">{faq.question}</h3>
+              <p className="mt-2 text-muted-foreground">{faq.answer}</p>
             </div>
           ))}
         </div>

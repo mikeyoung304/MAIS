@@ -27,10 +27,8 @@ export function ContactSection({
     <section className="py-32 md:py-40">
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
-          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-            {headline}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-text-muted">
+          <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">{headline}</h2>
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
             We&apos;d love to hear from you. Reach out to {tenant.name} using the information below.
           </p>
         </div>
@@ -44,7 +42,7 @@ export function ContactSection({
                     <Mail className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Email</p>
+                    <p className="font-medium text-primary">Email</p>
                     <a href={`mailto:${email}`} className="text-accent hover:underline">
                       {email}
                     </a>
@@ -58,7 +56,7 @@ export function ContactSection({
                     <Phone className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Phone</p>
+                    <p className="font-medium text-primary">Phone</p>
                     <a href={`tel:${phone}`} className="text-accent hover:underline">
                       {phone}
                     </a>
@@ -72,8 +70,8 @@ export function ContactSection({
                     <MapPin className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Address</p>
-                    <p className="text-text-muted">{address}</p>
+                    <p className="font-medium text-primary">Address</p>
+                    <p className="text-muted-foreground">{address}</p>
                   </div>
                 </div>
               )}
@@ -84,8 +82,8 @@ export function ContactSection({
                     <Clock className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Hours</p>
-                    <p className="text-text-muted whitespace-pre-line">{hours}</p>
+                    <p className="font-medium text-primary">Hours</p>
+                    <p className="text-muted-foreground whitespace-pre-line">{hours}</p>
                   </div>
                 </div>
               )}
@@ -93,7 +91,9 @@ export function ContactSection({
           </div>
         ) : (
           <div className="mt-16 rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg text-center">
-            <p className="text-text-muted">Contact information coming soon. Check back later!</p>
+            <p className="text-muted-foreground">
+              Contact information coming soon. Check back later!
+            </p>
           </div>
         )}
       </div>

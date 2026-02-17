@@ -105,25 +105,25 @@ module.exports = {
         // Tenant storefronts set these via TenantSiteShell inline style.
         // Platform pages (admin, login) fall back to the hardcoded defaults.
         primary: {
-          DEFAULT: 'var(--color-primary, #2d3436)',
+          DEFAULT: 'var(--color-primary, #1C1917)',
           foreground: '#FFFFFF',
         },
         secondary: {
-          DEFAULT: 'var(--color-secondary, #b8860b)',
+          DEFAULT: 'var(--color-secondary, #A78B5A)',
           foreground: '#FFFFFF',
         },
         muted: {
-          DEFAULT: '#f3f4f6',
-          foreground: '#6b7280',
+          DEFAULT: '#f5f5f4', // stone-100 (warm)
+          foreground: '#78716C', // stone-500 (warm muted text)
         },
         accent: {
-          DEFAULT: 'var(--color-accent, #8B9E86)',
+          DEFAULT: 'var(--color-accent, #5A7C65)',
           foreground: '#FFFFFF',
         },
-        border: '#e5e7eb',
-        input: '#e5e7eb',
-        background: 'var(--color-background, #ffffff)',
-        foreground: '#111827',
+        border: '#e7e5e4', // stone-200 (warm)
+        input: '#e7e5e4',
+        background: 'var(--color-background, #FAFAF7)',
+        foreground: '#292524', // stone-800 (warm body text)
       },
       fontFamily: {
         // CSS var references for per-tenant font presets.

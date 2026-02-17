@@ -44,10 +44,10 @@ export function TenantSiteShell({
 
   // CSS custom properties for per-tenant theming
   const themeVars = {
-    '--color-primary': tenant.primaryColor || '#2d3436',
-    '--color-secondary': tenant.secondaryColor || '#b8860b',
-    '--color-accent': tenant.accentColor || '#8B9E86',
-    '--color-background': tenant.backgroundColor || '#ffffff',
+    '--color-primary': tenant.primaryColor || '#1C1917',
+    '--color-secondary': tenant.secondaryColor || '#A78B5A',
+    '--color-accent': tenant.accentColor || '#5A7C65',
+    '--color-background': tenant.backgroundColor || '#FAFAF7',
     '--font-heading': `'${fontPreset.heading}', ${fontPreset.headingFallback}`,
     '--font-body': `'${fontPreset.body}', ${fontPreset.bodyFallback}`,
   } as React.CSSProperties;

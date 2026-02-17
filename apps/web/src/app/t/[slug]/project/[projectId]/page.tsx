@@ -138,7 +138,7 @@ export default async function CustomerProjectPage({ params, searchParams }: Proj
 
   // Extract branding colors
   const branding = tenant.branding as { primaryColor?: string } | null;
-  const primaryColor = branding?.primaryColor || '#8B9E86';
+  const primaryColor = branding?.primaryColor || '#5A7C65';
 
   return (
     <div className="min-h-screen bg-neutral-50">

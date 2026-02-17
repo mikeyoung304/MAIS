@@ -201,8 +201,8 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
         aria-live="polite"
       >
         <CheckCircle2 className="mx-auto h-16 w-16 text-accent" aria-hidden="true" />
-        <h2 className="mt-4 text-2xl font-bold text-text-primary">Message Sent!</h2>
-        <p className="mt-2 text-text-muted">
+        <h2 className="mt-4 text-2xl font-bold text-primary">Message Sent!</h2>
+        <p className="mt-2 text-muted-foreground">
           Thank you for reaching out. We&apos;ll get back to you soon.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
@@ -226,8 +226,8 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
         aria-live="assertive"
       >
         <AlertCircle className="mx-auto h-16 w-16 text-red-500" aria-hidden="true" />
-        <h2 className="mt-4 text-2xl font-bold text-text-primary">Something went wrong</h2>
-        <p className="mt-2 text-text-muted">
+        <h2 className="mt-4 text-2xl font-bold text-primary">Something went wrong</h2>
+        <p className="mt-2 text-muted-foreground">
           We couldn&apos;t send your message. Please try again.
         </p>
         <Button onClick={handleRetry} variant="accent" className="mt-8">
@@ -246,11 +246,11 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
       noValidate
       aria-busy={status === 'submitting'}
     >
-      <h2 className="text-xl font-bold text-text-primary mb-6">Send us a message</h2>
+      <h2 className="text-xl font-bold text-primary mb-6">Send us a message</h2>
 
       {/* Name field */}
       <div className="mb-6">
-        <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-2">
+        <label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
           Name{' '}
           <span className="text-red-500" aria-hidden="true">
             *
@@ -284,7 +284,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
 
       {/* Email field */}
       <div className="mb-6">
-        <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
+        <label htmlFor="email" className="block text-sm font-medium text-primary mb-2">
           Email{' '}
           <span className="text-red-500" aria-hidden="true">
             *
@@ -319,8 +319,8 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
 
       {/* Phone field (optional) */}
       <div className="mb-6">
-        <label htmlFor="phone" className="block text-sm font-medium text-text-primary mb-2">
-          Phone <span className="text-text-muted text-xs">(optional)</span>
+        <label htmlFor="phone" className="block text-sm font-medium text-primary mb-2">
+          Phone <span className="text-muted-foreground text-xs">(optional)</span>
         </label>
         <input
           type="tel"
@@ -337,7 +337,7 @@ export function ContactForm({ tenantName: _tenantName, basePath, domainParam }: 
 
       {/* Message field */}
       <div className="mb-6">
-        <label htmlFor="message" className="block text-sm font-medium text-text-primary mb-2">
+        <label htmlFor="message" className="block text-sm font-medium text-primary mb-2">
           Message{' '}
           <span className="text-red-500" aria-hidden="true">
             *

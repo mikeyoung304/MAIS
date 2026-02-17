@@ -33,16 +33,14 @@ export function TestimonialsSection({
     <section className="py-32 md:py-40">
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
-          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-            {headline}
-          </h2>
+          <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">{headline}</h2>
         </div>
 
         <div className="mt-16 grid gap-8 md:grid-cols-2">
           {safeItems.map((testimonial, i) => (
             <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
               <StarRating rating={testimonial.rating} />
-              <p className="mt-4 text-text-muted">&ldquo;{testimonial.quote}&rdquo;</p>
+              <p className="mt-4 text-muted-foreground">&ldquo;{testimonial.quote}&rdquo;</p>
               <div className="mt-4 flex items-center gap-3">
                 {testimonial.authorPhotoUrl && (
                   <div className="relative h-10 w-10 flex-shrink-0">
@@ -56,9 +54,9 @@ export function TestimonialsSection({
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-text-primary">{testimonial.authorName}</p>
+                  <p className="font-semibold text-primary">{testimonial.authorName}</p>
                   {testimonial.authorRole && (
-                    <p className="text-sm text-text-muted">{testimonial.authorRole}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.authorRole}</p>
                   )}
                 </div>
               </div>

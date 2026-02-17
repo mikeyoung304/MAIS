@@ -191,7 +191,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                   />
                 </div>
               )}
-              <span className="font-semibold text-text-primary">{tenant.name}</span>
+              <span className="font-semibold text-primary">{tenant.name}</span>
             </Link>
 
             {/* Desktop navigation */}
@@ -204,7 +204,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                   className={`text-sm font-medium transition-colors ${
                     isActiveLink(item.href)
                       ? 'text-accent'
-                      : 'text-text-muted hover:text-text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {item.label}
@@ -220,7 +220,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
               ref={menuButtonRef}
               type="button"
               onClick={toggleMenu}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-neutral-100 md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-neutral-100 md:hidden"
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
@@ -254,7 +254,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                   className={`rounded-lg px-4 py-3 text-lg font-medium transition-colors ${
                     isActiveLink(item.href)
                       ? 'bg-accent/10 text-accent'
-                      : 'text-text-primary hover:bg-neutral-50'
+                      : 'text-foreground hover:bg-neutral-50'
                   }`}
                   tabIndex={isOpen ? 0 : -1}
                 >

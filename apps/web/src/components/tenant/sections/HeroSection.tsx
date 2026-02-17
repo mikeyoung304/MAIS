@@ -47,7 +47,7 @@ export function HeroSection({
       <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
         <h1
           className={`font-heading text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl ${
-            hasBackground ? 'text-white' : 'text-text-primary'
+            hasBackground ? 'text-white' : 'text-primary'
           }`}
         >
           {headline}
@@ -55,7 +55,7 @@ export function HeroSection({
         {subheadline && (
           <p
             className={`mx-auto mt-6 max-w-2xl text-lg md:text-xl ${
-              hasBackground ? 'text-white/90' : 'text-text-muted'
+              hasBackground ? 'text-white/90' : 'text-muted-foreground'
             }`}
           >
             {subheadline}

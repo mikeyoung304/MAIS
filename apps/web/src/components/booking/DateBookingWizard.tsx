@@ -76,7 +76,7 @@ const STEP_LABELS_FLAT = ['Confirm', 'Date', 'Details', 'Pay'] as const;
 // DayPicker styles — uses tenant accent color via CSS var
 const DAY_PICKER_MODIFIERS_STYLES = {
   selected: {
-    backgroundColor: 'var(--color-accent, #8B9E86)',
+    backgroundColor: 'var(--color-accent, #5A7C65)',
     color: 'white',
   },
 } as const;
@@ -84,9 +84,9 @@ const DAY_PICKER_MODIFIERS_STYLES = {
 // DayPicker custom CSS for WCAG 2.2 AAA touch targets (44x44px minimum)
 const DAY_PICKER_STYLE = {
   '--rdp-cell-size': '44px',
-  '--rdp-accent-color': 'var(--color-accent, #8B9E86)',
+  '--rdp-accent-color': 'var(--color-accent, #5A7C65)',
   '--rdp-accent-background-color':
-    'color-mix(in srgb, var(--color-accent, #8B9E86) 12%, transparent)',
+    'color-mix(in srgb, var(--color-accent, #5A7C65) 12%, transparent)',
 } as React.CSSProperties;
 
 // =============================================================================

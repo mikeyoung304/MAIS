@@ -39,12 +39,12 @@ export function PricingSection({
       <div className="max-w-3xl mx-auto text-center mb-16">
         <h2
           id="pricing-heading"
-          className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary leading-[1.15] tracking-tight"
+          className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-[1.15] tracking-tight"
         >
           {headline}
         </h2>
         {subheadline && (
-          <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-text-muted">
+          <p className="mt-8 text-xl md:text-2xl font-light leading-relaxed text-muted-foreground">
             {subheadline}
           </p>
         )}
@@ -73,21 +73,23 @@ export function PricingSection({
                 </div>
               )}
 
-              <h3 className="font-semibold text-lg text-text-primary">{tier.name}</h3>
+              <h3 className="font-semibold text-lg text-primary">{tier.name}</h3>
               {tier.description && (
-                <p className="mt-2 text-text-muted text-sm">{tier.description}</p>
+                <p className="mt-2 text-muted-foreground text-sm">{tier.description}</p>
               )}
 
               <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-text-primary">{displayPrice}</span>
-                {tier.priceSubtext && <span className="text-text-muted">{tier.priceSubtext}</span>}
+                <span className="text-4xl font-bold text-primary">{displayPrice}</span>
+                {tier.priceSubtext && (
+                  <span className="text-muted-foreground">{tier.priceSubtext}</span>
+                )}
               </div>
 
               <ul className="mt-8 space-y-4">
                 {(tier.features ?? []).map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                    <span className="text-text-muted">{feature}</span>
+                    <span className="text-muted-foreground">{feature}</span>
                   </li>
                 ))}
               </ul>

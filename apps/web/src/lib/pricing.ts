@@ -82,17 +82,23 @@ export function calculateClientPrice(tier: TierData, guestCount: number): PriceB
 /**
  * Format the display price for a tier card.
  * - Flat pricing: "$2,500"
- * - Display price override: "From $1,000"
- * - Scaling pricing: "From $2,500" (base price)
+ * - Display price override (no scaling): "$1,000" (all-in price, e.g. Airbnb-inclusive)
+ * - Display price override (with scaling): "From $1,000"
+ * - Scaling pricing (no display override): "From $2,500" (base price)
  */
 export function formatPriceDisplay(tier: TierData): string {
+  const hasScaling = hasScalingPricing(tier);
+
   // If tier has a display price, use it
   if (tier.displayPriceCents) {
-    return `From ${formatPrice(tier.displayPriceCents)}`;
+    // Only add "From" prefix when there's per-person scaling
+    return hasScaling
+      ? `From ${formatPrice(tier.displayPriceCents)}`
+      : formatPrice(tier.displayPriceCents);
   }
 
   // If tier has scaling rules, show "From" prefix
-  if (hasScalingPricing(tier)) {
+  if (hasScaling) {
     return `From ${formatPrice(tier.priceCents)}`;
   }
 

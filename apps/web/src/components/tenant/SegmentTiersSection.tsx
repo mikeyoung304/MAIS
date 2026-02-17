@@ -160,7 +160,9 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
         </p>
       )}
 
-      {pkg.description && <p className="mt-4 flex-1 text-sm text-text-muted">{pkg.description}</p>}
+      {pkg.description && (
+        <p className="mt-4 flex-1 whitespace-pre-line text-sm text-text-muted">{pkg.description}</p>
+      )}
 
       <Button asChild variant={isPopular ? 'accent' : 'outline'} className="mt-8 w-full">
         <Link href={bookHref}>Book {tierLabel}</Link>
@@ -207,21 +209,21 @@ function TierGridSection({
         <h2
           ref={headingRef}
           tabIndex={headingRef ? -1 : undefined}
-          className={`font-heading text-3xl font-bold text-text-primary sm:text-4xl md:text-5xl${headingRef ? ' outline-none' : ''}`}
+          className={`font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl${headingRef ? ' outline-none' : ''}`}
         >
           {segment.heroTitle || segment.name}
         </h2>
         {segment.heroSubtitle && (
           <p
             className={`mx-auto mt-4 max-w-2xl text-lg ${
-              showExtendedInfo ? 'font-light italic text-accent' : 'text-text-muted'
+              showExtendedInfo ? 'font-light italic text-accent' : 'text-muted-foreground'
             }`}
           >
             {segment.heroSubtitle}
           </p>
         )}
         {showExtendedInfo && segment.description && (
-          <p className="mx-auto mt-6 max-w-3xl text-text-muted">{segment.description}</p>
+          <p className="mx-auto mt-6 max-w-3xl text-muted-foreground">{segment.description}</p>
         )}
       </div>
 
@@ -396,10 +398,10 @@ export function SegmentTiersSection({
     return (
       <section id="packages" className="py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">
             Services coming soon
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-text-muted">
+          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
             We&apos;re preparing something special for you. Check back soon!
           </p>
         </div>
@@ -439,10 +441,10 @@ export function SegmentTiersSection({
         {!selectedSegment && (
           <>
             <div className="text-center">
-              <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl md:text-5xl">
+              <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl md:text-5xl">
                 What brings you here?
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-lg text-text-muted">
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
                 Choose the experience that fits your needs.
               </p>
             </div>
@@ -472,7 +474,7 @@ export function SegmentTiersSection({
             {/* Back button */}
             <button
               onClick={handleBack}
-              className="group mb-8 flex items-center gap-2 text-sm font-medium text-text-muted motion-safe:transition-colors hover:text-accent"
+              className="group mb-8 flex items-center gap-2 text-sm font-medium text-muted-foreground motion-safe:transition-colors hover:text-accent"
             >
               <svg
                 className="h-4 w-4 motion-safe:transition-transform motion-safe:group-hover:-translate-x-1"

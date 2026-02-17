@@ -133,7 +133,7 @@ interface CustomerChatWidgetProps {
 export function CustomerChatWidget({
   tenantApiKey,
   businessName,
-  primaryColor = '#8B9E86', // Default HANDLED sage
+  primaryColor = '#5A7C65', // Default deep sage (WCAG AA with white)
   onBookingConfirmed,
 }: CustomerChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
