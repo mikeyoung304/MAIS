@@ -99,3 +99,6 @@ export { useDashboardActionDispatch } from './useDashboardActionDispatch';
 
 // Agent Panel State
 export { useAgentPanelState } from './useAgentPanelState';
+
+// Scroll Reveal (storefront animations)
+export { useScrollReveal } from './useScrollReveal';

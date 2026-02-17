@@ -90,8 +90,32 @@
   animation: bounce-once 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
 }
 
+/* Storefront scroll-reveal animation (used by useScrollReveal hook) */
+@keyframes storefront-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-visible {
+  animation: storefront-reveal 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.reveal-delay-1 { animation-delay: 150ms; }
+.reveal-delay-2 { animation-delay: 300ms; }
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
+  .reveal-visible {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
   .animate-fade-slide-up {
     animation: none;
     opacity: 1;

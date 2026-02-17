@@ -82,7 +82,7 @@ export function TenantSiteShell({
             primaryColor={tenant.primaryColor}
             chatEnabled={tenant.chatEnabled}
           />
-          <StickyMobileCTA ctaText={ctaText} href="#packages" observeElementId="main-content" />
+          <StickyMobileCTA ctaText={ctaText} href="#services" observeElementId="main-content" />
         </EditModeGate>
       </Suspense>
     </div>

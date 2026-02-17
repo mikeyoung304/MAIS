@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 interface StickyMobileCTAProps {
   /** Text to display on the CTA button */
   ctaText?: string;
-  /** Anchor link target (e.g., "#packages") */
+  /** Anchor link target (e.g., "#services") */
   href?: string;
   /** ID of the element to observe for visibility (e.g., "hero-section") */
   observeElementId?: string;
@@ -24,14 +24,14 @@ interface StickyMobileCTAProps {
  *
  * @example
  * <StickyMobileCTA
- *   ctaText="View Packages"
- *   href="#packages"
+ *   ctaText="View Services"
+ *   href="#services"
  *   observeElementId="hero-section"
  * />
  */
 export function StickyMobileCTA({
   ctaText = 'View Services',
-  href = '#packages',
+  href = '#services',
   observeElementId = 'main-content',
 }: StickyMobileCTAProps) {
   const [isMounted, setIsMounted] = useState(false);
