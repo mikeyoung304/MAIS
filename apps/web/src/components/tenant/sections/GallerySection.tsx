@@ -64,12 +64,10 @@ export function GallerySection({
 
   return (
     <>
-      <section className="bg-surface-alt py-32 md:py-40">
+      <section className="bg-neutral-50 py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center">
-            <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-              {headline}
-            </h2>
+            <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">{headline}</h2>
           </div>
 
           <div className="mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

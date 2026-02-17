@@ -12,7 +12,7 @@ import { Loader2 } from 'lucide-react';
  */
 export function HomePageSkeleton() {
   return (
-    <div className="min-h-screen animate-pulse bg-surface">
+    <div className="min-h-screen animate-pulse bg-background">
       {/* Hero skeleton */}
       <section className="py-32 md:py-40">
         <div className="mx-auto max-w-4xl px-6 text-center">
@@ -23,7 +23,7 @@ export function HomePageSkeleton() {
       </section>
 
       {/* Trust bar skeleton */}
-      <section className="border-y border-neutral-100 bg-surface-alt py-8">
+      <section className="border-y border-neutral-100 bg-neutral-50 py-8">
         <div className="mx-auto flex max-w-5xl justify-center gap-16 px-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="text-center">
@@ -188,7 +188,7 @@ export function FAQPageSkeleton() {
       </section>
 
       {/* CTA Section Skeleton */}
-      <section className="bg-surface-alt py-32 md:py-40">
+      <section className="bg-accent/50 py-32 md:py-40">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <div className="mx-auto h-10 w-1/2 rounded-lg bg-neutral-200" />
           <div className="mx-auto mt-6 h-5 w-2/3 rounded bg-neutral-100" />
@@ -217,7 +217,7 @@ export function ServicesPageSkeleton() {
       </section>
 
       {/* Packages Section Skeleton */}
-      <section className="bg-surface-alt py-32 md:py-40">
+      <section className="bg-neutral-50 py-32 md:py-40">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (

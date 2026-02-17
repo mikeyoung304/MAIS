@@ -147,12 +147,12 @@ export function FAQAccordion({ faqItems, basePath, domainParam }: FAQAccordionPr
       </section>
 
       {/* CTA Section */}
-      <section className="bg-surface-alt py-32 md:py-40">
+      <section className="bg-accent py-32 md:py-40">
         <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="font-heading text-3xl font-bold text-text-primary sm:text-4xl">
+          <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">
             Still have questions?
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80">
             We&apos;re here to help. Reach out and we&apos;ll get back to you as soon as possible.
           </p>
           <Button asChild variant="accent" size="xl" className="mt-10">

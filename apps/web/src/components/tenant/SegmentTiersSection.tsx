@@ -11,7 +11,7 @@
  * 2. Clicks a segment → animates to show tiers within that segment
  * 3. Can click "← All Services" or browser back to return to segment selection
  *
- * Design: Dark graphite theme with Electric Sage accents per BRAND_VOICE_GUIDE.md
+ * Design: Light luxury theme with warm ivory + sage accents per BRAND_VOICE_GUIDE.md
  *
  * Accessibility: All animations respect prefers-reduced-motion via motion-safe: variants
  */
@@ -66,7 +66,7 @@ function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
   return (
     <button
       onClick={onSelect}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-800 bg-surface-alt text-left motion-safe:transition-all motion-safe:duration-500 hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-surface"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-neutral-100 bg-white shadow-lg text-left motion-safe:transition-all motion-safe:duration-500 hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background"
     >
       {/* Hero Image (from segment or stock photo) */}
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -78,26 +78,28 @@ function SegmentCard({ segment, tiers, onSelect }: SegmentCardProps) {
           className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-105"
         />
         {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface-alt via-surface-alt/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-transparent" />
       </div>
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-6">
-        <h3 className="font-heading text-2xl font-bold text-text-primary motion-safe:transition-colors motion-safe:duration-300 group-hover:text-accent">
+        <h3 className="font-heading text-2xl font-bold text-primary motion-safe:transition-colors motion-safe:duration-300 group-hover:text-accent">
           {segment.name}
         </h3>
 
         {segment.heroSubtitle && (
-          <p className="mt-2 text-sm font-light italic text-text-muted">{segment.heroSubtitle}</p>
+          <p className="mt-2 text-sm font-light italic text-muted-foreground">
+            {segment.heroSubtitle}
+          </p>
         )}
 
         {segment.description && (
-          <p className="mt-3 line-clamp-2 text-sm text-text-muted">{segment.description}</p>
+          <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{segment.description}</p>
         )}
 
         <div className="mt-auto flex items-center justify-between pt-6">
           <span className="text-sm font-medium text-accent">{priceRange}</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-text-muted motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:translate-x-1 group-hover:text-accent">
+          <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:translate-x-1 group-hover:text-accent">
             Explore
             <svg
               className="h-4 w-4"
@@ -130,8 +132,8 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
     <div
       className={`relative flex flex-col rounded-3xl p-8 motion-safe:transition-all motion-safe:duration-300 ${
         isPopular
-          ? 'border-2 border-accent bg-surface-alt shadow-xl shadow-accent/10'
-          : 'border border-neutral-800 bg-surface-alt motion-safe:hover:-translate-y-1 hover:border-neutral-700 hover:shadow-xl'
+          ? 'border-2 border-accent bg-white shadow-xl shadow-accent/10'
+          : 'border border-neutral-100 bg-white shadow-lg motion-safe:hover:-translate-y-1 hover:border-neutral-200 hover:shadow-xl'
       }`}
     >
       {isPopular && (
@@ -140,18 +142,18 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
         </div>
       )}
 
-      <h3 className="text-lg font-semibold text-text-primary">{tierLabel}</h3>
+      <h3 className="text-lg font-semibold text-primary">{tierLabel}</h3>
 
-      <p className="mt-3 text-3xl font-bold text-text-primary">
+      <p className="mt-3 text-3xl font-bold text-primary">
         {formatPriceDisplay(pkg)}
         {!hasScalingPricing(pkg) && (
-          <span className="text-base font-normal text-text-muted">/session</span>
+          <span className="text-base font-normal text-muted-foreground">/session</span>
         )}
       </p>
 
       {/* Per-person pricing hint */}
       {hasScalingPricing(pkg) && pkg.scalingRules && (
-        <p className="mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           {pkg.scalingRules.components.map((c) => (
             <span key={c.name}>
               +{formatPrice(c.perPersonCents)}/person beyond {c.includedGuests} guests
@@ -161,7 +163,9 @@ function TierCard({ pkg, tierLabel, bookHref, isPopular }: TierCardProps) {
       )}
 
       {pkg.description && (
-        <p className="mt-4 flex-1 whitespace-pre-line text-sm text-text-muted">{pkg.description}</p>
+        <p className="mt-4 flex-1 whitespace-pre-line text-sm text-muted-foreground">
+          {pkg.description}
+        </p>
       )}
 
       <Button asChild variant={isPopular ? 'accent' : 'outline'} className="mt-8 w-full">

@@ -4,8 +4,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // HANDLED Landing Page Palette - GRAPHITE DARK MODE PREVIEW
-        // Dark graphite backgrounds with Electric Sage accent
+        // ─── HANDLED MARKETING DARK PALETTE ──────────────────────────────
+        // ONLY for: /components/home/, /app/page.tsx, admin dark panels
+        // NEVER for: /components/tenant/ (storefront) — use semantic tokens below
+        // Enforcement: storefront-token-boundary.test.ts
+        // ─────────────────────────────────────────────────────────────────
         surface: '#18181B', // Dark graphite background
         'surface-alt': '#27272A', // Slightly lighter graphite for sections
 
