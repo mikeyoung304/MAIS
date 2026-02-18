@@ -298,29 +298,29 @@ A 6-phase implementation that builds on the existing component architecture:
 
 **Testimonials Enhancement (`TestimonialsSection.tsx`):**
 
-- [ ] Add `'use client'` directive
-- [ ] Add `useScrollReveal` with staggered card entrance
-- [ ] Add hover effect: `hover:shadow-xl hover:-translate-y-1 transition-all duration-300`
-- [ ] Add `line-clamp-4` on quote text to manage card height variance in the 2-column grid
-- [ ] Maintain empty-state guard: return `null` if no testimonials
+- [x] Add `'use client'` directive
+- [x] Add `useScrollReveal` with staggered card entrance
+- [x] Add hover effect: `hover:shadow-xl hover:-translate-y-1 transition-all duration-300`
+- [x] Add `line-clamp-4` on quote text to manage card height variance in the 2-column grid
+- [x] Maintain empty-state guard: return `null` if no testimonials
 
 **Footer Upgrade (`TenantFooter.tsx`):**
 
-- [ ] Add `bg-neutral-50` background for visual separation from page content
-- [ ] Improve layout spacing and visual hierarchy
-- [ ] **Defer social links and contact info** — `TenantPublicDto` has no social media fields; footer stays minimal for now
-- [ ] Add TODO comment: `// TODO: Add social links when Tenant model gains socialLinks field`
+- [x] Add `bg-neutral-50` background for visual separation from page content
+- [x] Improve layout spacing and visual hierarchy
+- [x] **Defer social links and contact info** — `TenantPublicDto` has no social media fields; footer stays minimal for now
+- [x] Add TODO comment: `// TODO: Add social links when Tenant model gains socialLinks field`
 
 **CTA Section (`CTASection.tsx`):**
 
-- [ ] Add `'use client'` directive
-- [ ] Add `useScrollReveal` for fade-up animation
-- [ ] Verify CTA anchor links to `#services` (from existing implementation)
+- [x] Add `'use client'` directive
+- [x] Add `useScrollReveal` for fade-up animation
+- [x] Verify CTA anchor links to `#services` (from existing implementation)
 
 **FAQ Section scroll-reveal:**
 
-- [ ] Verify `useScrollReveal` is applied (from Phase 3 rewrite)
-- [ ] Confirm accordion animation is separate from section-level scroll-reveal
+- [x] Verify `useScrollReveal` is applied (from Phase 3 rewrite)
+- [x] Confirm accordion animation is separate from section-level scroll-reveal
 
 **Acceptance criteria:**
 

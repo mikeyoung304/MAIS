@@ -1,9 +1,12 @@
+'use client';
+
 import Image from 'next/image';
 import type {
   TestimonialsSection as TestimonialsSectionType,
   TenantPublicDto,
 } from '@macon/contracts';
 import { StarRating } from '@/components/ui/star-rating';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 interface TestimonialsSectionProps extends TestimonialsSectionType {
   tenant: TenantPublicDto;
@@ -23,6 +26,7 @@ export function TestimonialsSection({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tenant: _tenant,
 }: TestimonialsSectionProps) {
+  const sectionRef = useScrollReveal();
   const safeItems = Array.isArray(items) ? items : [];
   // Don't render if no testimonials
   if (safeItems.length === 0) {
@@ -30,7 +34,7 @@ export function TestimonialsSection({
   }
 
   return (
-    <section className="py-32 md:py-40">
+    <section ref={sectionRef} className="reveal-on-scroll py-32 md:py-40">
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">{headline}</h2>
@@ -38,9 +42,14 @@ export function TestimonialsSection({
 
         <div className="mt-16 grid gap-8 md:grid-cols-2">
           {safeItems.map((testimonial, i) => (
-            <div key={i} className="rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg">
+            <div
+              key={i}
+              className={`rounded-3xl border border-neutral-100 bg-white p-8 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none reveal-delay-${i % 2 === 0 ? '1' : '2'}`}
+            >
               <StarRating rating={testimonial.rating} />
-              <p className="mt-4 text-muted-foreground">&ldquo;{testimonial.quote}&rdquo;</p>
+              <p className="mt-4 line-clamp-4 text-muted-foreground">
+                &ldquo;{testimonial.quote}&rdquo;
+              </p>
               <div className="mt-4 flex items-center gap-3">
                 {testimonial.authorPhotoUrl && (
                   <div className="relative h-10 w-10 flex-shrink-0">
