@@ -320,6 +320,7 @@ jobs:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_DEFAULT_PASSWORD: ${{ secrets.ADMIN_DEFAULT_PASSWORD }}
+          ALLOW_PRODUCTION_SEED: 'true'
 
   # Job 5: Deploy API to Render (Production)
   deploy-api-production:

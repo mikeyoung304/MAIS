@@ -91,8 +91,9 @@ async function main() {
   try {
     switch (mode) {
       case 'production':
-        // Production: Only platform admin, requires env vars
+        // Production: Platform admin + real tenant seeds
         await seedPlatform(prisma);
+        await seedLittleBitHorseFarm(prisma);
         break;
 
       case 'e2e':
