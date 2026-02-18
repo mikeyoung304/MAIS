@@ -275,6 +275,41 @@ describe('littlebit.farm Seed', () => {
     });
   });
 
+  describe('Booking Safety Guard (#11002)', () => {
+    it('should skip destructive deleteMany when bookings exist', async () => {
+      const mockPrisma = createMockPrisma(null);
+      // Simulate existing bookings
+      (
+        mockPrisma as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>
+      ).booking.count = vi.fn().mockResolvedValue(3);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      // deleteMany should NOT be called on tier/addOn/segment (FK Restrict would fail)
+      expect(mockPrisma.tier.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrisma.addOn.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrisma.segment.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrisma.tierAddOn.deleteMany).not.toHaveBeenCalled();
+
+      // sectionContent deleteMany IS safe (no FK from bookings)
+      expect(mockPrisma.sectionContent.deleteMany).toHaveBeenCalled();
+
+      // Upserts should still run (tiers, segments created via upsert)
+      expect(mockPrisma.segment.upsert).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(8);
+    });
+
+    it('should use clean slate deleteMany when no bookings exist', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      expect(mockPrisma.tier.deleteMany).toHaveBeenCalled();
+      expect(mockPrisma.addOn.deleteMany).toHaveBeenCalled();
+      expect(mockPrisma.segment.deleteMany).toHaveBeenCalled();
+    });
+  });
+
   describe('Blackout Dates', () => {
     it('should create holiday blackout dates', async () => {
       const mockPrisma = createMockPrisma(null);
@@ -382,6 +417,9 @@ function createMockPrisma(
     sectionContent: {
       create: vi.fn().mockResolvedValue({ id: 'section-1' }),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    booking: {
+      count: vi.fn().mockResolvedValue(0),
     },
     blackoutDate: {
       upsert: vi.fn().mockResolvedValue({ id: 'blackout-1' }),

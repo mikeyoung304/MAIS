@@ -190,11 +190,6 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
     throw new Error('Production seed blocked. Set ALLOW_PRODUCTION_SEED=true to override.');
   }
 
-  // Check if tenant already exists (outside transaction for read-only check)
-  const existingTenant = await prisma.tenant.findUnique({
-    where: { slug: TENANT_SLUG },
-  });
-
   // Variables to capture keys for logging after successful commit
   let publicKeyForLogging: string;
   let secretKeyForLogging: string | null = null;
@@ -207,7 +202,12 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
 
   await prisma.$transaction(
     async (tx) => {
-      // Generate or reuse API keys INSIDE transaction
+      // Read existing tenant INSIDE transaction to prevent stale reads (#11006)
+      const existingTenant = await tx.tenant.findUnique({
+        where: { slug: TENANT_SLUG },
+      });
+
+      // Generate or reuse API keys
       let publicKey: string;
       let secretKey: string | null = null;
 
@@ -241,16 +241,32 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       logger.info(`Tenant ${existingTenant ? 'updated' : 'created'}: ${tenant.name}`);
 
       // =====================================================================
-      // Clean slate — delete existing data
+      // Clean slate — delete existing data (with booking safety guard)
+      // Booking.tierId has onDelete: Restrict, BookingAddOn.addOnId has onDelete: Restrict.
+      // If bookings exist, deleteMany on Tier/AddOn throws FK constraint P2003,
+      // which would halt the entire deploy pipeline (#11002).
       // =====================================================================
-      await tx.tierAddOn.deleteMany({ where: { tier: { tenantId: tenant.id } } });
-      await tx.tier.deleteMany({ where: { tenantId: tenant.id } });
-      await tx.addOn.deleteMany({ where: { tenantId: tenant.id } });
-      // Delete section content before segments (FK constraint)
-      await tx.sectionContent.deleteMany({ where: { tenantId: tenant.id } });
-      await tx.segment.deleteMany({ where: { tenantId: tenant.id } });
+      const bookingCount = await tx.booking.count({
+        where: { tier: { tenantId: tenant.id } },
+      });
 
-      logger.info('Cleared existing data for clean slate');
+      if (bookingCount > 0) {
+        logger.warn(
+          { bookingCount, tenantId: tenant.id },
+          'Bookings exist — skipping destructive deleteMany, using upsert-only mode'
+        );
+        // In upsert-only mode, we skip deletes and let the upserts below handle updates.
+        // Orphaned tiers/segments from previous seeds will persist but are harmless.
+        // Section content is safe to delete (no FK from bookings).
+        await tx.sectionContent.deleteMany({ where: { tenantId: tenant.id } });
+      } else {
+        await tx.tierAddOn.deleteMany({ where: { tier: { tenantId: tenant.id } } });
+        await tx.tier.deleteMany({ where: { tenantId: tenant.id } });
+        await tx.addOn.deleteMany({ where: { tenantId: tenant.id } });
+        await tx.sectionContent.deleteMany({ where: { tenantId: tenant.id } });
+        await tx.segment.deleteMany({ where: { tenantId: tenant.id } });
+        logger.info('Cleared existing data for clean slate');
+      }
 
       // =====================================================================
       // SEGMENT 1: ELOPEMENTS & VOW RENEWALS
@@ -831,13 +847,15 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
   );
 
   // Log keys AFTER successful transaction commit
-  if (existingTenant) {
-    logger.info(`Public Key: ${publicKeyForLogging}`);
-    logger.info('Secret key unchanged - using existing value');
-  } else {
+  if (secretKeyForLogging) {
+    // New tenant — keys were just generated
     logger.info(`Public Key: ${publicKeyForLogging}`);
     logger.warn(`Secret Key: ${secretKeyForLogging}`);
     logger.warn('SAVE THESE KEYS - they will not be regenerated on subsequent seeds!');
+  } else {
+    // Existing tenant — keys preserved
+    logger.info(`Public Key: ${publicKeyForLogging}`);
+    logger.info('Secret key unchanged - using existing value');
   }
 
   // Summary

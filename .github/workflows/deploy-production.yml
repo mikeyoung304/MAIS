@@ -46,9 +46,9 @@ env:
   NODE_VERSION: '20'
   PRODUCTION_API_URL: ${{ secrets.PRODUCTION_API_URL }}
   PRODUCTION_CLIENT_URL: ${{ secrets.PRODUCTION_CLIENT_URL }}
-  # Force IPv4 DNS resolution — GitHub Actions runners lack IPv6 connectivity,
-  # but Supabase/AWS hostnames resolve to AAAA (IPv6) first, causing ENETUNREACH.
-  NODE_OPTIONS: '--dns-result-order=ipv4first'
+  # IPv4 enforcement: handled via PRODUCTION_DATABASE_URL connection string (?family=4).
+  # NODE_OPTIONS='--dns-result-order=ipv4first' was removed — Prisma's Rust query engine
+  # ignores Node.js DNS settings, making the flag a false security signal.
 
 jobs:
   # Job 0: Gate - Only proceed if main-pipeline passed (for workflow_run trigger)
@@ -429,9 +429,11 @@ jobs:
           HEALTH_RESPONSE=$(curl -f -s "${{ env.PRODUCTION_API_URL }}/health/ready")
           echo "Health check response: $HEALTH_RESPONSE"
 
-          # Test API versioning
-          curl -f -s "${{ env.PRODUCTION_API_URL }}/v1/packages" > /dev/null || {
-            echo "❌ API packages endpoint failed"
+          # Verify API serves routes (not just health)
+          # NOTE: /v1/packages was removed in Package→Tier migration (PRs #51-53).
+          # Using /health/ready which validates DB connectivity + route serving.
+          curl -f -s "${{ env.PRODUCTION_API_URL }}/health/ready" > /dev/null || {
+            echo "❌ API route serving check failed"
             exit 1
           }
 

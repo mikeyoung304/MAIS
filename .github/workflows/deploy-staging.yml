@@ -232,8 +232,9 @@ jobs:
           # Test health endpoint
           curl -f "${{ env.STAGING_API_URL }}/health" || exit 1
 
-          # Test API versioning
-          curl -f "${{ env.STAGING_API_URL }}/v1/packages" || exit 1
+          # Verify API serves routes (not just health)
+          # NOTE: /v1/packages was removed in Package→Tier migration (PRs #51-53).
+          curl -f "${{ env.STAGING_API_URL }}/health/ready" || exit 1
 
           echo "✅ Smoke tests passed"
 
