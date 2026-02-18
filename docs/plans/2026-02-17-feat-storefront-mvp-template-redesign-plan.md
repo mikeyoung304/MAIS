@@ -4,9 +4,12 @@ type: feat
 status: complete
 date: 2026-02-17
 brainstorm: docs/brainstorms/2026-02-17-storefront-mvp-template-redesign-brainstorm.md
+superseded_by: docs/plans/2026-02-18-feat-storefront-full-template-redesign-plan.md
 ---
 
 # Storefront MVP Template Redesign
+
+> **Note:** This MVP (4-section: Hero → Services → About → CTA) was extended to a production 7-section template on 2026-02-18. See [full template redesign plan](../2026-02-18-feat-storefront-full-template-redesign-plan.md) for the current layout: Hero → How It Works → Services → About → Testimonials → FAQ → CTA.
 
 ## Overview
 

@@ -1,7 +1,7 @@
 # Storefront MVP Template Redesign
 
 **Date:** 2026-02-17
-**Status:** Complete
+**Status:** Complete (extended by [full template redesign](../plans/2026-02-18-feat-storefront-full-template-redesign-plan.md))
 **Participants:** Mike + Claude
 
 ## What We're Building
