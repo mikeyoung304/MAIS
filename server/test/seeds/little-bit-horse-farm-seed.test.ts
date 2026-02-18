@@ -3,8 +3,8 @@
  *
  * Tests:
  * - Segment creation (3 segments: Elopements, Corporate Retreats, Weekend Getaway)
- * - 9 tiers (3 per segment) with displayPriceCents + Airbnb split
- * - Section content (HERO, ABOUT, SERVICES)
+ * - 8 tiers (3 + 3 + 2) with displayPriceCents + Airbnb split
+ * - Section content (HERO, FEATURES, ABOUT, SERVICES, FAQ, CTA)
  * - Idempotency (safe to run multiple times)
  * - Production guard
  */
@@ -91,13 +91,13 @@ describe('littlebit.farm Seed', () => {
     });
   });
 
-  describe('Tier Creation (9 Total - 3 per segment)', () => {
-    it('should create 9 tiers (3 per segment)', async () => {
+  describe('Tier Creation (8 Total - 3+3+2)', () => {
+    it('should create 8 tiers (3 elopement + 3 corporate + 2 weekend)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(9);
+      expect(mockPrisma.tier.upsert).toHaveBeenCalledTimes(8);
     });
 
     it('should create Simple Ceremony with correct Airbnb split pricing', async () => {
@@ -150,10 +150,19 @@ describe('littlebit.farm Seed', () => {
       expect(celebrationRules.components[0].name).toBe('Grazing Board');
       expect(celebrationRules.components[0].perPersonCents).toBe(2500);
 
-      // Curated Weekend has 2 scaling components
-      const curated = calls.find((c) => c[0].where.tenantId_slug.slug === 'curated-weekend');
-      const curatedRules = curated![0].create.scalingRules;
-      expect(curatedRules.components).toHaveLength(2);
+      // All dinner tiers use consistent $75/person scaling
+      const dinnerTiers = calls.filter((c) =>
+        ['ceremony-open-fire-dinner', 'retreat-fireside-dinner', 'girls-weekend-dinner'].includes(
+          c[0].where.tenantId_slug.slug
+        )
+      );
+      expect(dinnerTiers).toHaveLength(3);
+      dinnerTiers.forEach((call) => {
+        const rules = call[0].create.scalingRules;
+        expect(rules.components).toHaveLength(1);
+        expect(rules.components[0].name).toBe('Open Fire Dinner');
+        expect(rules.components[0].perPersonCents).toBe(7500); // $75/person
+      });
     });
 
     it('should set displayPriceCents on all tiers (Airbnb-inclusive)', async () => {
@@ -173,33 +182,54 @@ describe('littlebit.farm Seed', () => {
   });
 
   describe('Section Content', () => {
-    it('should create 3 section content blocks (HERO, ABOUT, SERVICES)', async () => {
+    it('should create 6 section content blocks (HERO, FEATURES, ABOUT, SERVICES, FAQ, CTA)', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      expect(mockPrisma.sectionContent.create).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.sectionContent.create).toHaveBeenCalledTimes(6);
       const blockTypes = mockPrisma.sectionContent.create.mock.calls.map(
         (c) => c[0].data.blockType
       );
       expect(blockTypes).toContain('HERO');
+      expect(blockTypes).toContain('FEATURES');
       expect(blockTypes).toContain('ABOUT');
       expect(blockTypes).toContain('SERVICES');
+      expect(blockTypes).toContain('FAQ');
+      expect(blockTypes).toContain('CTA');
     });
 
-    it('should create ABOUT section with Airbnb "How It Works" copy', async () => {
+    it('should create FEATURES section with How It Works content', async () => {
       const mockPrisma = createMockPrisma(null);
 
       await seedLittleBitHorseFarm(mockPrisma);
 
-      const aboutCall = mockPrisma.sectionContent.create.mock.calls.find(
-        (c) => c[0].data.blockType === 'ABOUT'
+      const featuresCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'FEATURES'
       );
-      expect(aboutCall).toBeDefined();
-      const content = aboutCall![0].data.content as Record<string, unknown>;
+      expect(featuresCall).toBeDefined();
+      const content = featuresCall![0].data.content as Record<string, unknown>;
       expect(content.title).toBe('How It Works');
-      expect(content.body).toContain('Airbnb accommodation ($200/night)');
-      expect(content.body).toContain('experience portion only');
+      const items = content.items as Array<{ title: string; description: string }>;
+      expect(items).toHaveLength(4);
+      expect(items[2].description).toContain('Airbnb accommodation');
+    });
+
+    it('should create FAQ section with parking and Airbnb questions', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      const faqCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'FAQ'
+      );
+      expect(faqCall).toBeDefined();
+      const content = faqCall![0].data.content as Record<string, unknown>;
+      const items = content.items as Array<{ question: string; answer: string }>;
+      expect(items.length).toBeGreaterThanOrEqual(6);
+      const questions = items.map((i) => i.question);
+      expect(questions).toContain('How does pricing work?');
+      expect(questions).toContain('How many cars can we bring?');
     });
 
     it('should publish all section content (isDraft: false)', async () => {

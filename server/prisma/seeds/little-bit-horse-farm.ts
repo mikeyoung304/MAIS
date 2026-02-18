@@ -1,7 +1,7 @@
 /**
- * littlebit.farm seed — Elopements, Corporate Retreats & Weekend Getaways
+ * Little Bit Farm seed — Elopements, Corporate Retreats & Weekend Getaways
  *
- * Use for: Production tenant setup for littlebit.farm
+ * Use for: Production tenant setup for Little Bit Farm (littlebit.farm)
  *
  * Pricing model:
  *   Displayed prices are "all-in" and INCLUDE Airbnb accommodation ($200/night).
@@ -10,21 +10,21 @@
  *
  * Segments:
  * 1. Elopements & Vow Renewals
- *    - Simple Ceremony ($1,000 all-in, $800 experience) — max 6
- *    - Celebration Ceremony ($1,700 all-in, $1,500 experience) — max 10
- *    - Ceremony + Private Chef Dinner ($2,500 all-in, $2,300 experience) — max 10
+ *    - Simple Ceremony ($1,000 all-in, $800 experience) — max 6, flat
+ *    - Celebration Ceremony (From $1,700 all-in, $1,500 experience) — max 10, grazing +$25/pp
+ *    - Ceremony + Open Fire Dinner (From $2,200 all-in, $2,000 experience) — max 10, dinner +$75/pp
  *
  * 2. Corporate Retreats
- *    - Focused Day ($600 all-in, $400 experience) — max 10
- *    - Hosted Day Retreat ($1,200 all-in, $1,000 experience) — max 10
- *    - Retreat + Meal ($1,800 all-in, $1,600 experience) — max 10
+ *    - Focused Day ($600 all-in, $400 experience) — max 10, flat
+ *    - Hosted Day Retreat ($1,200 all-in, $1,000 experience) — max 10, flat
+ *    - Retreat + Fireside Dinner (From $1,800 all-in, $1,600 experience) — max 10, dinner +$75/pp
  *
- * 3. Weekend Getaway
- *    - Hosted Stay ($500 all-in, $300 experience) — max 10
- *    - Guided Getaway ($1,000 all-in, $800 experience) — max 10
- *    - Curated Weekend ($1,600 all-in, $1,400 experience) — max 10
+ * 3. Weekend Getaway (Girls Weekend positioning)
+ *    - Girls Weekend ($800 all-in, $600 experience) — max 10, flat
+ *    - Girls Weekend + Dinner (From $1,200 all-in, $1,000 experience) — max 10, dinner +$75/pp
  *
  * House Rules: No parties, no amplified music, no horse riding.
+ * Parking: Max 4 cars — shuttle available for larger groups.
  *
  * IMPORTANT: API keys are only generated once on first seed. Re-running this seed
  * will preserve existing keys to avoid breaking environments.
@@ -40,6 +40,9 @@ const TENANT_SLUG = 'littlebit-farm';
 
 // Airbnb cost in cents (fixed $200/night)
 const AIRBNB_COST_CENTS = 20000;
+
+// Dinner per-person rate (consistent across all segments)
+const DINNER_PER_PERSON_CENTS = 7500; // $75/person
 
 /**
  * Transaction client type for seed operations
@@ -174,6 +177,13 @@ async function createOrUpdateTierWithSegment(
   });
 }
 
+// Shared house rules + parking text for all segment descriptions
+const HOUSE_RULES =
+  'House rules: No parties, no amplified music, no horse riding. Max 4 cars on the property — we arrange nearby parking and a shuttle for larger groups.';
+
+const AIRBNB_PRICING_NOTE =
+  'All-in pricing includes Airbnb accommodation ($200/night). At checkout, you pay only the experience portion — Airbnb is booked separately via link after purchase.';
+
 export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void> {
   // Production guard - prevent accidental data destruction
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
@@ -190,8 +200,8 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
   let secretKeyForLogging: string | null = null;
 
   logger.info(
-    { slug: TENANT_SLUG, operations: 'segment+tiers' },
-    'Starting littlebit.farm seed transaction'
+    { slug: TENANT_SLUG, operations: 'segment+tiers+sections' },
+    'Starting Little Bit Farm seed transaction'
   );
   const startTime = Date.now();
 
@@ -203,22 +213,22 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
 
       if (existingTenant) {
         publicKey = existingTenant.apiKeyPublic;
-        logger.info('littlebit.farm tenant exists - updating within transaction');
+        logger.info('Little Bit Farm tenant exists - updating within transaction');
       } else {
         publicKey = `pk_live_${TENANT_SLUG}_${crypto.randomBytes(8).toString('hex')}`;
         secretKey = `sk_live_${TENANT_SLUG}_${crypto.randomBytes(16).toString('hex')}`;
-        logger.info('Creating new littlebit.farm tenant with generated keys');
+        logger.info('Creating new Little Bit Farm tenant with generated keys');
       }
 
       // Create or update tenant
       const tenant = await createOrUpdateTenant(tx, {
         slug: TENANT_SLUG,
-        name: 'littlebit.farm',
+        name: 'Little Bit Farm',
         email: 'Adele502@gmail.com',
         commissionPercent: 5.0,
         apiKeyPublic: publicKey,
         apiKeySecret: secretKey ?? undefined,
-        // Brand colors - luxury warm palette (uses new defaults showcase)
+        // Brand colors - luxury warm palette
         primaryColor: '#1C1917', // Warm stone-black
         secondaryColor: '#A78B5A', // Muted gold
         accentColor: '#5A7C65', // Deep sage (WCAG AA)
@@ -251,9 +261,8 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         heroTitle: 'Simple. Calm. Beautiful.',
         heroSubtitle:
           'Intimate ceremonies on the farm — just you, your person, and a beautiful moment.',
-        description:
-          'All-in pricing includes Airbnb accommodation ($200/night). At checkout, you pay only the experience portion — Airbnb is booked separately via link after purchase.\n\nHouse rules: No parties, no amplified music, no horse riding.',
-        metaTitle: 'Elopements & Vow Renewals | littlebit.farm',
+        description: `${AIRBNB_PRICING_NOTE}\n\n${HOUSE_RULES}`,
+        metaTitle: 'Elopements & Vow Renewals | Little Bit Farm',
         metaDescription:
           'Intimate elopement ceremonies on our farm. All-in pricing from $1,000 including accommodation. Max 10 guests.',
         sortOrder: 0,
@@ -261,7 +270,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
 
       logger.info(`Segment created: ${elopementsSegment.name}`);
 
-      // Tier 1: Simple Ceremony — $1,000 all-in, max 6
+      // Tier 1: Simple Ceremony — $1,000 all-in, max 6, flat
       const simpleCeremony = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
@@ -271,9 +280,9 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
           name: 'Simple Ceremony',
           description: [
             'Includes:',
-            '• Quiet ceremony on the property',
+            '• Quiet ceremony in the pasture with horses nearby',
             '• Officiant',
-            '• Simple floral setup (ceremony arch + minimal florals)',
+            '• Simple floral setup — archway with minimal florals and 1 bouquet',
             '• Champagne toast for the couple',
             '',
             'Max 6 guests.',
@@ -282,16 +291,19 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
           displayPriceCents: 100000, // $1,000 all-in
           maxGuests: 6,
           features: [
-            { text: 'Quiet ceremony on the property', highlighted: false },
+            { text: 'Quiet ceremony in the pasture with horses nearby', highlighted: false },
             { text: 'Officiant', highlighted: false },
-            { text: 'Simple floral setup (ceremony arch + minimal florals)', highlighted: false },
+            {
+              text: 'Simple floral setup — archway with minimal florals and 1 bouquet',
+              highlighted: false,
+            },
             { text: 'Champagne toast for the couple', highlighted: false },
           ],
           sortOrder: 1,
         }
       );
 
-      // Tier 2: Celebration Ceremony — $1,700 all-in, max 10
+      // Tier 2: Celebration Ceremony — From $1,700 all-in, max 10, grazing +$25/pp
       const celebrationCeremony = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
@@ -301,9 +313,10 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
           name: 'Celebration Ceremony',
           description: [
             'Includes:',
-            '• Everything in Simple Ceremony',
-            '• Champagne + grazing board for your group',
-            '• Enhanced floral design (fuller ceremony arch + upgraded personal florals)',
+            '• Quiet ceremony in the pasture with horses nearby',
+            '• Officiant',
+            '• Enhanced florals and 2 bouquets',
+            '• Grazing board and 3 bottles of champagne',
             '',
             'Grazing includes 2 people, +$25 per additional guest (up to 10).',
             'Max 10 guests.',
@@ -322,48 +335,61 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
             ],
           },
           features: [
-            { text: 'Everything in Simple Ceremony', highlighted: false },
-            { text: 'Champagne + grazing board for your group', highlighted: true },
-            { text: 'Enhanced floral design (fuller arch + upgraded florals)', highlighted: true },
+            { text: 'Quiet ceremony in the pasture with horses nearby', highlighted: false },
+            { text: 'Officiant', highlighted: false },
+            { text: 'Enhanced florals and 2 bouquets', highlighted: true },
+            { text: 'Grazing board and 3 bottles of champagne', highlighted: true },
           ],
           sortOrder: 2,
         }
       );
 
-      // Tier 3: Ceremony + Private Chef Dinner — $2,500 all-in, max 10
+      // Tier 3: Ceremony + Open Fire Dinner — From $2,200 all-in, max 10, dinner +$75/pp
       const ceremonyDinner = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
         elopementsSegment.id,
         {
-          slug: 'ceremony-chef-dinner',
-          name: 'Ceremony + Private Chef Dinner',
+          slug: 'ceremony-open-fire-dinner',
+          name: 'Ceremony + Open Fire Dinner',
           description: [
             'Includes:',
-            '• Everything in Celebration Ceremony',
-            '• Private chef dinner',
-            '• Guests may bring their own photographer (photography not included)',
+            '• Quiet ceremony in the pasture with horses nearby',
+            '• Officiant',
+            '• Enhanced florals and 3 bouquets',
+            '• Champagne toast and charcuterie',
+            '• Open fire dinner for 2 — choice of protein, salad, and veggies',
+            '• Table setup with linens, flowers, candles, and dinnerware',
             '',
-            'Dinner is priced per person (defaults to 2 people). $110/person for 2–10.',
+            'Additional dinner guests $75 each (up to 10).',
             'Max 10 guests.',
           ].join('\n'),
-          priceCents: 250000 - AIRBNB_COST_CENTS, // $2,300 experience
-          displayPriceCents: 250000, // $2,500 all-in
+          priceCents: 220000 - AIRBNB_COST_CENTS, // $2,000 experience
+          displayPriceCents: 220000, // $2,200 all-in
           maxGuests: 10,
           scalingRules: {
             components: [
               {
-                name: 'Private Chef Dinner',
+                name: 'Open Fire Dinner',
                 includedGuests: 2,
-                perPersonCents: 11000, // $110/person
+                perPersonCents: DINNER_PER_PERSON_CENTS, // $75/person
                 maxGuests: 10,
               },
             ],
           },
           features: [
-            { text: 'Everything in Celebration Ceremony', highlighted: false },
-            { text: 'Private chef dinner', highlighted: true },
-            { text: 'BYO photographer welcome (photography not included)', highlighted: false },
+            { text: 'Quiet ceremony in the pasture with horses nearby', highlighted: false },
+            { text: 'Officiant', highlighted: false },
+            { text: 'Enhanced florals and 3 bouquets', highlighted: true },
+            { text: 'Champagne toast and charcuterie', highlighted: true },
+            {
+              text: 'Open fire dinner for 2 — choice of protein, salad, and veggies',
+              highlighted: true,
+            },
+            {
+              text: 'Table setup with linens, flowers, candles, and dinnerware',
+              highlighted: true,
+            },
           ],
           sortOrder: 3,
         }
@@ -381,17 +407,16 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         name: 'Corporate Retreats',
         heroTitle: 'Reset. Reconnect. Return Stronger.',
         heroSubtitle: 'Day retreats on the farm — horses, yoga, nature, and great food.',
-        description:
-          'All-in pricing includes Airbnb accommodation ($200/night). At checkout, you pay only the experience portion — Airbnb is booked separately via link after purchase.\n\nHouse rules: No parties, no amplified music, no horse riding.',
-        metaTitle: 'Corporate Retreats | littlebit.farm',
+        description: `${AIRBNB_PRICING_NOTE}\n\n${HOUSE_RULES}`,
+        metaTitle: 'Corporate Retreats | Little Bit Farm',
         metaDescription:
-          'Corporate day retreats on our farm. Meeting setup, yoga, guided horse experiences, and private chef meals. All-in pricing from $600.',
+          'Corporate day retreats on our farm. Meeting setup, yoga, guided horse experiences, and fireside meals. All-in pricing from $600.',
         sortOrder: 1,
       });
 
       logger.info(`Segment created: ${corporateSegment.name}`);
 
-      // Tier 1: Focused Day — $600 all-in, max 10
+      // Tier 1: Focused Day — $600 all-in, max 10, flat
       const focusedDay = await createOrUpdateTierWithSegment(tx, tenant.id, corporateSegment.id, {
         slug: 'focused-day',
         name: 'Focused Day',
@@ -416,7 +441,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         sortOrder: 1,
       });
 
-      // Tier 2: Hosted Day Retreat — $1,200 all-in, max 10
+      // Tier 2: Hosted Day Retreat — $1,200 all-in, max 10, flat
       const hostedDayRetreat = await createOrUpdateTierWithSegment(
         tx,
         tenant.id,
@@ -447,165 +472,141 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         }
       );
 
-      // Tier 3: Retreat + Meal — $1,800 all-in, max 10
-      const retreatMeal = await createOrUpdateTierWithSegment(tx, tenant.id, corporateSegment.id, {
-        slug: 'retreat-meal',
-        name: 'Retreat + Meal',
-        description: [
-          'Includes:',
-          '• Everything in Hosted Day Retreat',
-          '• Private chef lunch or dinner',
-          '',
-          'Meal priced per person (defaults to 2 people). $90/person for 2; $70–$120/person for 3–10 (menu dependent).',
-          'Max 10 guests.',
-        ].join('\n'),
-        priceCents: 180000 - AIRBNB_COST_CENTS, // $1,600 experience
-        displayPriceCents: 180000, // $1,800 all-in
-        maxGuests: 10,
-        scalingRules: {
-          components: [
-            {
-              name: 'Private Chef Meal',
-              includedGuests: 2,
-              perPersonCents: 9000, // $90/person (base rate)
-              maxGuests: 10,
-            },
+      // Tier 3: Retreat + Fireside Dinner — From $1,800 all-in, max 10, dinner +$75/pp
+      const retreatDinner = await createOrUpdateTierWithSegment(
+        tx,
+        tenant.id,
+        corporateSegment.id,
+        {
+          slug: 'retreat-fireside-dinner',
+          name: 'Retreat + Fireside Dinner',
+          description: [
+            'Includes:',
+            '• Everything in Hosted Day Retreat',
+            '• Open fire dinner prepared tableside',
+            '',
+            'Dinner for 2 included. Additional guests $75/person (up to 10).',
+            'Max 10 guests.',
+          ].join('\n'),
+          priceCents: 180000 - AIRBNB_COST_CENTS, // $1,600 experience
+          displayPriceCents: 180000, // $1,800 all-in
+          maxGuests: 10,
+          scalingRules: {
+            components: [
+              {
+                name: 'Open Fire Dinner',
+                includedGuests: 2,
+                perPersonCents: DINNER_PER_PERSON_CENTS, // $75/person
+                maxGuests: 10,
+              },
+            ],
+          },
+          features: [
+            { text: 'Everything in Hosted Day Retreat', highlighted: false },
+            { text: 'Open fire dinner prepared tableside', highlighted: true },
           ],
-        },
-        features: [
-          { text: 'Everything in Hosted Day Retreat', highlighted: false },
-          { text: 'Private chef lunch or dinner', highlighted: true },
-        ],
-        sortOrder: 3,
-      });
+          sortOrder: 3,
+        }
+      );
 
       logger.info(
-        `Corporate tiers: ${[focusedDay, hostedDayRetreat, retreatMeal].map((t) => t.name).join(', ')}`
+        `Corporate tiers: ${[focusedDay, hostedDayRetreat, retreatDinner].map((t) => t.name).join(', ')}`
       );
 
       // =====================================================================
-      // SEGMENT 3: WEEKEND GETAWAY
+      // SEGMENT 3: WEEKEND GETAWAY (Girls Weekend positioning)
       // =====================================================================
       const weekendSegment = await createOrUpdateSegment(tx, tenant.id, {
         slug: 'weekend_getaway',
         name: 'Weekend Getaway',
         heroTitle: 'Escape. Experience. Exhale.',
-        heroSubtitle: 'Farm experiences for families, friends, and couples who need a reset.',
-        description:
-          'All-in pricing includes Airbnb accommodation ($200/night). At checkout, you pay only the experience portion — Airbnb is booked separately via link after purchase.\n\nHouse rules: No parties, no amplified music, no horse riding.',
-        metaTitle: 'Weekend Getaway | littlebit.farm',
+        heroSubtitle:
+          'A weekend on the farm with your favorite people — flowers, yoga, horses, and good food.',
+        description: `${AIRBNB_PRICING_NOTE}\n\n${HOUSE_RULES}`,
+        metaTitle: 'Weekend Getaway | Little Bit Farm',
         metaDescription:
-          'Weekend farm getaways with guided experiences, horse interactions, yoga, and private chef meals. All-in pricing from $500.',
+          'Weekend farm getaways with flowers, yoga, horse interactions, and open fire dinners. All-in pricing from $800.',
         sortOrder: 2,
       });
 
       logger.info(`Segment created: ${weekendSegment.name}`);
 
-      // Tier 1: Hosted Stay — $500 all-in, max 10
-      const hostedStay = await createOrUpdateTierWithSegment(tx, tenant.id, weekendSegment.id, {
-        slug: 'hosted-stay',
-        name: 'Hosted Stay',
+      // Tier 1: Girls Weekend — $800 all-in, max 10, flat
+      const girlsWeekend = await createOrUpdateTierWithSegment(tx, tenant.id, weekendSegment.id, {
+        slug: 'girls-weekend',
+        name: 'Girls Weekend',
         description: [
           'Includes:',
-          '• Welcome experience',
-          '• One horse experience: grooming + guided horse walk',
-          '• Light hosting and arrival curation',
+          '• Welcome coffee, pastries, and fruit',
+          '• Interaction with horses if desired',
+          '• Floral design class with fresh flowers to take home OR 2 yoga classes',
+          '• Light lunch',
+          '• Free time for hiking or relaxing',
           '',
           'Max 10 guests.',
         ].join('\n'),
-        priceCents: 50000 - AIRBNB_COST_CENTS, // $300 experience
-        displayPriceCents: 50000, // $500 all-in
+        priceCents: 80000 - AIRBNB_COST_CENTS, // $600 experience
+        displayPriceCents: 80000, // $800 all-in
         maxGuests: 10,
         features: [
-          { text: 'Welcome experience', highlighted: false },
-          { text: 'One horse experience: grooming + guided horse walk', highlighted: false },
-          { text: 'Light hosting and arrival curation', highlighted: false },
+          { text: 'Welcome coffee, pastries, and fruit', highlighted: false },
+          { text: 'Interaction with horses', highlighted: false },
+          { text: 'Floral design class OR 2 yoga classes', highlighted: true },
+          { text: 'Light lunch', highlighted: false },
+          { text: 'Free time for hiking or relaxing', highlighted: false },
         ],
         sortOrder: 1,
       });
 
-      // Tier 2: Guided Getaway — $1,000 all-in, max 10
-      const guidedGetaway = await createOrUpdateTierWithSegment(tx, tenant.id, weekendSegment.id, {
-        slug: 'guided-getaway',
-        name: 'Guided Getaway',
-        description: [
-          'Includes:',
-          '• Everything in Hosted Stay',
-          '• Two guided experiences (choose any two): yoga, trail hike, extended horse time, wreath making OR bouquet design',
-          '',
-          'Floral workshop includes materials for 2 people, +$60 per additional participant.',
-          'Max 10 guests.',
-        ].join('\n'),
-        priceCents: 100000 - AIRBNB_COST_CENTS, // $800 experience
-        displayPriceCents: 100000, // $1,000 all-in
-        maxGuests: 10,
-        scalingRules: {
-          components: [
+      // Tier 2: Girls Weekend + Dinner — From $1,200 all-in, max 10, dinner +$75/pp
+      const girlsWeekendDinner = await createOrUpdateTierWithSegment(
+        tx,
+        tenant.id,
+        weekendSegment.id,
+        {
+          slug: 'girls-weekend-dinner',
+          name: 'Girls Weekend + Dinner',
+          description: [
+            'Includes:',
+            '• Everything in Girls Weekend',
+            '• Open fire dinner — choice of protein, salad, veggies, and wine',
+            '',
+            'Dinner for 2 included. Additional guests $75/person (up to 10).',
+            'Max 10 guests.',
+          ].join('\n'),
+          priceCents: 120000 - AIRBNB_COST_CENTS, // $1,000 experience
+          displayPriceCents: 120000, // $1,200 all-in
+          maxGuests: 10,
+          scalingRules: {
+            components: [
+              {
+                name: 'Open Fire Dinner',
+                includedGuests: 2,
+                perPersonCents: DINNER_PER_PERSON_CENTS, // $75/person
+                maxGuests: 10,
+              },
+            ],
+          },
+          features: [
+            { text: 'Everything in Girls Weekend', highlighted: false },
             {
-              name: 'Floral Workshop',
-              includedGuests: 2,
-              perPersonCents: 6000, // $60/person
-              maxGuests: 10,
+              text: 'Open fire dinner — choice of protein, salad, veggies, and wine',
+              highlighted: true,
             },
           ],
-        },
-        features: [
-          { text: 'Everything in Hosted Stay', highlighted: false },
-          { text: 'Two guided experiences (choose any two)', highlighted: true },
-        ],
-        sortOrder: 2,
-      });
-
-      // Tier 3: Curated Weekend — $1,600 all-in, max 10
-      const curatedWeekend = await createOrUpdateTierWithSegment(tx, tenant.id, weekendSegment.id, {
-        slug: 'curated-weekend',
-        name: 'Curated Weekend',
-        description: [
-          'Includes:',
-          '• Everything in Guided Getaway',
-          '• Curated weekend flow planned for you',
-          '• One premium floral workshop (wreath OR bouquet design)',
-          '• Private chef lunch or dinner',
-          '',
-          'Floral workshop includes materials for 2 people, +$60 per additional participant.',
-          'Meal priced per person (defaults to 2 people). $90/person for 2; $60–$150/person for 3–10 (menu dependent).',
-          'Max 10 guests.',
-        ].join('\n'),
-        priceCents: 160000 - AIRBNB_COST_CENTS, // $1,400 experience
-        displayPriceCents: 160000, // $1,600 all-in
-        maxGuests: 10,
-        scalingRules: {
-          components: [
-            {
-              name: 'Floral Workshop',
-              includedGuests: 2,
-              perPersonCents: 6000, // $60/person
-              maxGuests: 10,
-            },
-            {
-              name: 'Private Chef Meal',
-              includedGuests: 2,
-              perPersonCents: 9000, // $90/person (base rate)
-              maxGuests: 10,
-            },
-          ],
-        },
-        features: [
-          { text: 'Everything in Guided Getaway', highlighted: false },
-          { text: 'Curated weekend flow planned for you', highlighted: true },
-          { text: 'One premium floral workshop (wreath OR bouquet design)', highlighted: true },
-          { text: 'Private chef lunch or dinner', highlighted: true },
-        ],
-        sortOrder: 3,
-      });
+          sortOrder: 2,
+        }
+      );
 
       logger.info(
-        `Weekend tiers: ${[hostedStay, guidedGetaway, curatedWeekend].map((t) => t.name).join(', ')}`
+        `Weekend tiers: ${[girlsWeekend, girlsWeekendDinner].map((t) => t.name).join(', ')}`
       );
 
       // =====================================================================
       // SECTION CONTENT — Storefront blocks
       // =====================================================================
+
+      // --- HERO (order 0) ---
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
@@ -616,18 +617,21 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
           publishedAt: new Date(),
           content: {
             visible: true,
-            headline: 'littlebit.farm',
-            subheadline: 'Ceremonies, retreats, and getaways on a quiet farm.',
+            headline: 'Where the noise stops.',
+            subheadline: 'A quiet horse farm for ceremonies, retreats, and weekends away.',
             ctaText: 'Explore Experiences',
             alignment: 'center',
+            backgroundImage:
+              'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=1920&h=1080&fit=crop&q=80',
           },
         },
       });
 
+      // --- HOW IT WORKS (order 1) ---
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'ABOUT',
+          blockType: 'FEATURES',
           pageName: 'home',
           order: 1,
           isDraft: false,
@@ -635,18 +639,76 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
           content: {
             visible: true,
             title: 'How It Works',
-            body: "All prices shown are all-in and include Airbnb accommodation ($200/night). At checkout, you book and pay for the experience portion only. After checkout, you'll receive a link to book the Airbnb separately.\n\nMax group size is 10 (6 for Simple Ceremony elopements). House rules: no parties, no amplified music, no horse riding.",
+            subtitle: 'Four steps to your perfect farm experience',
+            layout: 'cards',
+            columns: 4,
+            items: [
+              {
+                id: 'step-1',
+                title: 'Choose Your Experience',
+                description:
+                  'Browse our ceremonies, retreats, and weekend getaways to find the right fit for your group.',
+                icon: 'Sparkles',
+              },
+              {
+                id: 'step-2',
+                title: 'Book With Us',
+                description:
+                  'Reserve your date and experience. We handle everything on-site — setup, hosting, and coordination.',
+                icon: 'CreditCard',
+              },
+              {
+                id: 'step-3',
+                title: 'Reserve Your Stay',
+                description:
+                  'Book your Airbnb accommodation via the link we send. The $200/night stay covers property access and insurance.',
+                icon: 'Calendar',
+              },
+              {
+                id: 'step-4',
+                title: 'Show Up and Exhale',
+                description:
+                  'Arrive, meet the horses, and let the farm do the rest. We keep things small so it feels like yours.',
+                icon: 'Star',
+              },
+            ],
+          },
+        },
+      });
+
+      // --- ABOUT (order 2) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'ABOUT',
+          pageName: 'home',
+          order: 2,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            title: 'The Story',
+            body: [
+              "Little Bit Farm started with a simple idea — share the horses and the property with people who'd appreciate it.",
+              "The owner spent years in sales, dreaming up creative ideas for other people's businesses. Eventually she asked the obvious question: why not build something of her own?",
+              "The farm is small by design. Natural. A little bit different. First-timers always say the same thing — it's the quiet that gets you. Then the horses walk over, and you realize you can actually touch them.",
+              'Today the farm hosts ceremonies, retreats, and weekend getaways for people from all walks of life. The one thing they tend to have in common: a love for nature and animals, and a need to slow down.',
+              "We keep things small — small groups, quiet land, no rush. It's what makes this place feel like yours.",
+            ].join('\n\n'),
+            image:
+              'https://images.unsplash.com/photo-1598974357801-cbca100e65d3?w=800&h=600&fit=crop&q=80',
             imagePosition: 'right',
           },
         },
       });
 
+      // --- SERVICES / Experiences (order 3) ---
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
           blockType: 'SERVICES',
           pageName: 'home',
-          order: 2,
+          order: 3,
           isDraft: false,
           publishedAt: new Date(),
           content: {
@@ -659,7 +721,82 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
         },
       });
 
-      logger.info('Section content created: HERO, ABOUT (How It Works), SERVICES');
+      // --- FAQ (order 4) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'FAQ',
+          pageName: 'home',
+          order: 4,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            title: 'Common Questions',
+            items: [
+              {
+                id: 'faq-pricing',
+                question: 'How does pricing work?',
+                answer:
+                  "Our prices are all-in and include an Airbnb stay ($200/night) that covers property access, insurance, and overnight accommodation if you'd like. You book the experience with us, then reserve your Airbnb stay via the link we send. At checkout, you pay only the experience portion.",
+              },
+              {
+                id: 'faq-stay',
+                question: 'Where do we stay?',
+                answer:
+                  "The farm has a cozy Airbnb that sleeps 2-3. You'll book it through Airbnb after purchasing your experience. The booking covers property access, insurance, and overnight accommodation.",
+              },
+              {
+                id: 'faq-horses',
+                question: 'Can we ride the horses?',
+                answer:
+                  "The horses are here to enjoy, not ride. You can groom them, walk alongside them, and spend as much time near them as you'd like. They're friendly and curious — they'll come to you.",
+              },
+              {
+                id: 'faq-parking',
+                question: 'How many cars can we bring?',
+                answer:
+                  "We keep the property quiet with a maximum of 4 cars in the driveway. For larger groups, we'll arrange nearby parking and a shuttle so everyone arrives stress-free.",
+              },
+              {
+                id: 'faq-wear',
+                question: 'What should I wear?',
+                answer:
+                  'Comfortable clothes and closed-toe shoes for walking near the horses. The farm is casual — come as you are.',
+              },
+              {
+                id: 'faq-weather',
+                question: 'What happens if it rains?',
+                answer:
+                  'We have covered areas on the property. Most experiences can be adapted for weather, and sometimes the rain makes it even more beautiful.',
+              },
+            ],
+          },
+        },
+      });
+
+      // --- CTA (order 5) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'CTA',
+          pageName: 'home',
+          order: 5,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            headline: 'Ready to visit?',
+            subheadline: "Pick your experience and we'll handle the rest.",
+            buttonText: 'Browse Experiences',
+            style: 'primary',
+          },
+        },
+      });
+
+      logger.info(
+        'Section content created: HERO, FEATURES (How It Works), ABOUT (The Story), SERVICES, FAQ, CTA'
+      );
 
       // =====================================================================
       // BLACKOUT DATES (holidays)
@@ -690,7 +827,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
 
   logger.info(
     { slug: TENANT_SLUG, durationMs: Date.now() - startTime },
-    'littlebit.farm seed transaction committed successfully'
+    'Little Bit Farm seed transaction committed successfully'
   );
 
   // Log keys AFTER successful transaction commit
@@ -705,16 +842,17 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
 
   // Summary
   logger.info('='.repeat(60));
-  logger.info('LITTLEBIT.FARM SEED COMPLETE');
+  logger.info('LITTLE BIT FARM SEED COMPLETE');
   logger.info('='.repeat(60));
   logger.info('Segments: 3');
-  logger.info('  - Elopements & Vow Renewals (max 6–10, flat + scaling)');
-  logger.info('  - Corporate Retreats (max 10, flat + scaling)');
-  logger.info('  - Weekend Getaway (max 10, flat + scaling)');
-  logger.info('Tiers: 9 total (3 per segment)');
+  logger.info('  - Elopements & Vow Renewals (3 tiers: flat + grazing + dinner scaling)');
+  logger.info('  - Corporate Retreats (3 tiers: flat + flat + dinner scaling)');
+  logger.info('  - Weekend Getaway / Girls Weekend (2 tiers: flat + dinner scaling)');
+  logger.info('Tiers: 8 total (3 + 3 + 2)');
   logger.info('Pricing: All-in (includes Airbnb $200/night)');
+  logger.info('  Dinner scaling: $75/person beyond 2 included');
   logger.info('  Checkout charges experience portion only');
-  logger.info('Section content: HERO, ABOUT (How It Works), SERVICES');
+  logger.info('Section content: HERO, FEATURES (How It Works), ABOUT, SERVICES, FAQ, CTA');
   logger.info(`Blackout dates: ${6}`);
   logger.info('='.repeat(60));
 }
