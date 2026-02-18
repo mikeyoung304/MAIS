@@ -1,210 +1,86 @@
-# Solutions & Prevention Strategies
+# Solutions Index
 
-This directory contains problem-solution documentation, prevention strategies, and quick reference guides for common issues encountered in the MAIS platform. All solutions follow the Diátaxis "How-to Guide" pattern: task-oriented, problem-solving documentation.
+Institutional knowledge captured via `/workflows:compound`.
+Searched automatically by `learnings-researcher` agent via YAML frontmatter Grep.
 
-## Quick Navigation
+## Key Reference Docs
 
-**Looking for a specific problem?** Use these navigation guides:
+- **[PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md)** — Daily patterns cheat sheet (referenced in CLAUDE.md)
+- **[PREVENTION-STRATEGIES-INDEX.md](./PREVENTION-STRATEGIES-INDEX.md)** — Master prevention strategies index
 
-- **[PREVENTION-STRATEGIES-INDEX.md](./PREVENTION-STRATEGIES-INDEX.md)** - Master index of all prevention strategies
-- **[PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md)** - Quick reference cheat sheet (print and pin!)
-- **[TESTING-STRATEGIES-INDEX.md](./TESTING-STRATEGIES-INDEX.md)** - Testing patterns and strategies
+## Categories (31 subdirectories, 380 files)
 
-## Solutions by Category
+| Category | Files | Description |
+|---|---:|---|
+| [patterns/](./patterns/) | 85 | Cross-cutting patterns and conventions |
+| [code-review-patterns/](./code-review-patterns/) | 57 | Code review findings and recurring patterns |
+| [database-issues/](./database-issues/) | 39 | Database, Prisma, and data integrity issues |
+| [agent-issues/](./agent-issues/) | 21 | ADK agent runtime and tool errors |
+| [agent-design/](./agent-design/) | 21 | Agent architecture and design decisions |
+| [build-errors/](./build-errors/) | 19 | TypeScript/Next.js build failures |
+| [react-performance/](./react-performance/) | 15 | React rendering and performance issues |
+| [security-issues/](./security-issues/) | 13 | Security vulnerabilities and fixes |
+| [dev-workflow/](./dev-workflow/) | 13 | Development workflow and tooling |
+| [ui-bugs/](./ui-bugs/) | 12 | Frontend and UI rendering bugs |
+| [deployment-issues/](./deployment-issues/) | 10 | Deployment, CI/CD, and production issues |
+| [methodology/](./methodology/) | 9 | Development methodology and process |
+| [best-practices/](./best-practices/) | 9 | Established best practices |
+| [typescript-build-errors/](./typescript-build-errors/) | 7 | TypeScript-specific compilation errors |
+| [logic-errors/](./logic-errors/) | 7 | Business logic bugs and fixes |
+| [integration-issues/](./integration-issues/) | 7 | Third-party integration problems |
+| [architecture/](./architecture/) | 6 | Architectural decisions and patterns |
+| [test-failures/](./test-failures/) | 5 | Test failure investigations |
+| [authentication-issues/](./authentication-issues/) | 4 | Auth and authorization problems |
+| [workflow/](./workflow/) | 3 | Workflow automation patterns |
+| [ci-cd/](./ci-cd/) | 3 | CI/CD pipeline issues |
+| [testing-patterns/](./testing-patterns/) | 2 | Domain-specific testing patterns |
+| [testing-gaps/](./testing-gaps/) | 2 | Missing test coverage analysis |
+| [runtime-errors/](./runtime-errors/) | 2 | Runtime error investigations |
+| [performance-issues/](./performance-issues/) | 2 | Performance bottleneck analysis |
+| [incidents/](./incidents/) | 2 | Production incident post-mortems |
+| [debugging-reports/](./debugging-reports/) | 2 | Debugging session reports |
+| [test-infrastructure/](./test-infrastructure/) | 1 | Test infra setup and maintenance |
+| [performance/](./performance/) | 1 | Performance optimization guides |
+| [data-issues/](./data-issues/) | 1 | Data quality and migration issues |
+| [build-issues/](./build-issues/) | 1 | Build system configuration |
 
-### Authentication & Authorization
+## Top-Level Docs (174 files)
 
-| Document                                       | Purpose                                                         |
-| ---------------------------------------------- | --------------------------------------------------------------- |
-| [CLIENT_AUTH_GUIDE.md](./CLIENT_AUTH_GUIDE.md) | Complete client authentication guide (consolidated from 6 docs) |
+Top-level `.md` files are organized by prefix convention:
 
-**Subdirectory:** [authentication-issues/](./authentication-issues/)
+| Prefix | Purpose |
+|---|---|
+| `PREVENTION-*` | Prevention strategy indices and cheat sheets |
+| `ADK_*` | ADK/agent development patterns and fixes |
+| `E2E-TESTING-*` | End-to-end testing guides |
+| `DATABASE-*` | Database client and schema patterns |
+| `FILE_UPLOAD_*` | Secure file upload patterns |
+| `WEBHOOK-*` | Webhook idempotency patterns |
+| `EMAIL-*` | Email handling patterns |
+| `ESM_CJS_*` | Module system compatibility |
+| `COMPONENT-*` / `STOREFRONT-*` | UI component patterns |
+| `TEST-*` / `TESTING-*` | Testing strategies and references |
+| `ADVANCED-FEATURES-*` | Advanced platform patterns |
+| `DEPLOYMENT-*` | Deployment verification fixes |
 
-### Database & Data Integrity
+## How Solutions Are Discovered
 
-| Document                                                                                                 | Purpose                                      |
-| -------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| [database-issues/migration-system-consolidation.md](./database-issues/migration-system-consolidation.md) | **NEW:** Prisma-only migration consolidation |
-| [DATABASE-CLIENT-PREVENTION-INDEX.md](./DATABASE-CLIENT-PREVENTION-INDEX.md)                             | Database client usage patterns               |
-| [DATABASE-CLIENT-QUICK-REFERENCE.md](./DATABASE-CLIENT-QUICK-REFERENCE.md)                               | Quick DB patterns reference                  |
-| [DATABASE-SCHEMA-DRIFT-SOLUTION.md](./DATABASE-SCHEMA-DRIFT-SOLUTION.md)                                 | Fix schema drift issues                      |
-| [DATABASE-VERIFICATION-FIX.md](./DATABASE-VERIFICATION-FIX.md)                                           | Database verification procedures             |
-| [SCHEMA_DRIFT_PREVENTION.md](./SCHEMA_DRIFT_PREVENTION.md)                                               | ~~Prevent schema drift~~ (superseded)        |
-| [TENANT-SCOPED-QUERIES-CHECKLIST.md](./TENANT-SCOPED-QUERIES-CHECKLIST.md)                               | Ensure tenant isolation                      |
+The `learnings-researcher` agent discovers solutions via **Grep on YAML frontmatter** in `docs/solutions/**/*.md`. It does NOT navigate this README or follow links.
 
-**New:** Network & Connection Issues
+**Important for contributors:**
+1. Always include YAML frontmatter with descriptive `title`, `category`, and `tags` fields
+2. Place files in the appropriate subdirectory by problem type
+3. Use `/workflows:compound` to create properly formatted solution docs
+4. Do NOT restructure `docs/solutions/` paths — they are hardcoded in the agent
 
-| Document                                                                                                           | Purpose                         |
-| ------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| [database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md](./database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md) | Supabase IPv6 connection issues |
-| [database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md](./database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md)             | Quick fix for IPv6 errors       |
+## Related
 
-**Subdirectory:** [database-issues/](./database-issues/)
-
-### E2E Testing
-
-| Document                                                                       | Purpose                      |
-| ------------------------------------------------------------------------------ | ---------------------------- |
-| [E2E-TESTING-INDEX.md](./E2E-TESTING-INDEX.md)                                 | Master E2E testing guide     |
-| [E2E-TESTING-QUICK-REFERENCE.md](./E2E-TESTING-QUICK-REFERENCE.md)             | Quick E2E patterns reference |
-| [E2E-TESTING-ADVANCED-PATTERNS.md](./E2E-TESTING-ADVANCED-PATTERNS.md)         | Advanced E2E techniques      |
-| [E2E-TESTING-PREVENTION-STRATEGIES.md](./E2E-TESTING-PREVENTION-STRATEGIES.md) | Prevent E2E test failures    |
-| [visual-editor-e2e-testing.md](./visual-editor-e2e-testing.md)                 | Visual editor E2E patterns   |
-| [visual-editor-e2e-quick-reference.md](./visual-editor-e2e-quick-reference.md) | Visual editor E2E quick ref  |
-
-**Subdirectory:** [testing-gaps/](./testing-gaps/)
-
-### File Uploads & Security
-
-| Document                                                               | Purpose                          |
-| ---------------------------------------------------------------------- | -------------------------------- |
-| [FILE_UPLOAD_SECURITY_INDEX.md](./FILE_UPLOAD_SECURITY_INDEX.md)       | Secure file upload patterns      |
-| [FILE_UPLOAD_QUICK_REFERENCE.md](./FILE_UPLOAD_QUICK_REFERENCE.md)     | Quick upload security ref        |
-| [SECURE_UPLOAD_QUICK_REFERENCE.md](./SECURE_UPLOAD_QUICK_REFERENCE.md) | Secure upload checklist          |
-| [CODE_REFERENCE_SECURE_UPLOADS.md](./CODE_REFERENCE_SECURE_UPLOADS.md) | Code examples for secure uploads |
-
-**Subdirectory:** [security-issues/](./security-issues/)
-
-### Webhooks & Event Processing
-
-| Document                                                                                 | Purpose                      |
-| ---------------------------------------------------------------------------------------- | ---------------------------- |
-| [WEBHOOK-IDEMPOTENCY-PREVENTION-INDEX.md](./WEBHOOK-IDEMPOTENCY-PREVENTION-INDEX.md)     | Webhook idempotency patterns |
-| [WEBHOOK-IDEMPOTENCY-QUICK-REFERENCE.md](./WEBHOOK-IDEMPOTENCY-QUICK-REFERENCE.md)       | Quick webhook patterns       |
-| [WEBHOOK-IDEMPOTENCY-PREVENTION-SUMMARY.md](./WEBHOOK-IDEMPOTENCY-PREVENTION-SUMMARY.md) | Webhook prevention summary   |
-
-### Email & Communication
-
-| Document                                                                             | Purpose                      |
-| ------------------------------------------------------------------------------------ | ---------------------------- |
-| [EMAIL-CASE-SENSITIVITY-INDEX.md](./EMAIL-CASE-SENSITIVITY-INDEX.md)                 | Email case handling patterns |
-| [POSTMARK-EMAIL-INTEGRATION-CHECKLIST.md](./POSTMARK-EMAIL-INTEGRATION-CHECKLIST.md) | Email integration checklist  |
-
-### Module System (ESM/CJS)
-
-| Document                                                                 | Purpose                     |
-| ------------------------------------------------------------------------ | --------------------------- |
-| [ESM_CJS_COMPATIBILITY_INDEX.md](./ESM_CJS_COMPATIBILITY_INDEX.md)       | ESM/CJS compatibility guide |
-| [ESM_CJS_QUICK_REFERENCE.md](./ESM_CJS_QUICK_REFERENCE.md)               | Quick module system ref     |
-| [ESM_CJS_IMPLEMENTATION_SUMMARY.md](./ESM_CJS_IMPLEMENTATION_SUMMARY.md) | Implementation summary      |
-
-### Component Refactoring
-
-| Document                                                                               | Purpose                       |
-| -------------------------------------------------------------------------------------- | ----------------------------- |
-| [COMPONENT-DUPLICATION-PREVENTION.md](./COMPONENT-DUPLICATION-PREVENTION.md)           | Prevent component duplication |
-| [COMPONENT-TEST-STRATEGIES.md](./COMPONENT-TEST-STRATEGIES.md)                         | Component testing patterns    |
-| [REACT-COMPONENT-REVIEW-QUICK-REF.md](./REACT-COMPONENT-REVIEW-QUICK-REF.md)           | React component review guide  |
-| [STOREFRONT-COMPONENT-PREVENTION-INDEX.md](./STOREFRONT-COMPONENT-PREVENTION-INDEX.md) | Storefront patterns           |
-| [STOREFRONT-REFACTORING-SUMMARY.md](./STOREFRONT-REFACTORING-SUMMARY.md)               | Storefront refactoring guide  |
-
-### Test Failures & Debugging
-
-| Document                                                               | Purpose                      |
-| ---------------------------------------------------------------------- | ---------------------------- |
-| [TEST-FAILURE-PATTERNS-SUMMARY.md](./TEST-FAILURE-PATTERNS-SUMMARY.md) | Common test failure patterns |
-| [TESTING-QUICK-REFERENCE.md](./TESTING-QUICK-REFERENCE.md)             | Quick testing reference      |
-| [TEST_ISOLATION_PATTERNS.md](./TEST_ISOLATION_PATTERNS.md)             | Test isolation techniques    |
-
-**Subdirectory:** [test-failures/](./test-failures/)
-
-### Payment Service Testing
-
-| Document                                                                                                                     | Purpose                          |
-| ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| [testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md](./testing-patterns/PAYMENT_SERVICE_TESTING_QUICK_REFERENCE.md) | Payment service testing patterns |
-
-**Subdirectory:** [testing-patterns/](./testing-patterns/)
-
-### Advanced Features & Patterns
-
-| Document                                                                     | Purpose                           |
-| ---------------------------------------------------------------------------- | --------------------------------- |
-| [ADVANCED-FEATURES-INDEX.md](./ADVANCED-FEATURES-INDEX.md)                   | Advanced MAIS patterns index      |
-| [ADVANCED-FEATURES-QUICK-START.md](./ADVANCED-FEATURES-QUICK-START.md)       | Quick start for advanced features |
-| [ADVANCED-FEATURES-BEST-PRACTICES.md](./ADVANCED-FEATURES-BEST-PRACTICES.md) | Best practices guide              |
-| [ADVANCED-FEATURES-MAIS-PATTERNS.md](./ADVANCED-FEATURES-MAIS-PATTERNS.md)   | MAIS-specific patterns            |
-| [ADVANCED-FEATURES-SUMMARY.md](./ADVANCED-FEATURES-SUMMARY.md)               | Summary of advanced features      |
-
-### Pull Request Solutions
-
-| Document                                                   | Purpose                   |
-| ---------------------------------------------------------- | ------------------------- |
-| [PR-12-PREVENTION-INDEX.md](./PR-12-PREVENTION-INDEX.md)   | PR-12 specific prevention |
-| [PR-12-QUICK-REFERENCE.md](./PR-12-QUICK-REFERENCE.md)     | PR-12 quick reference     |
-| [PR12-RESOLUTION-SUMMARY.md](./PR12-RESOLUTION-SUMMARY.md) | PR-12 resolution summary  |
-
-### Deployment
-
-| Document                                                                             | Purpose                        |
-| ------------------------------------------------------------------------------------ | ------------------------------ |
-| [DEPLOYMENT-DATABASE-VERIFICATION-FIX.md](./DEPLOYMENT-DATABASE-VERIFICATION-FIX.md) | Fix deployment DB verification |
-
-**Subdirectory:** [deployment-issues/](./deployment-issues/)
-
-## Subdirectories
-
-Solutions are also organized by problem type:
-
-- **[authentication-issues/](./authentication-issues/)** - Authentication and authorization problems
-- **[build-errors/](./build-errors/)** - Build and compilation issues
-- **[code-review-patterns/](./code-review-patterns/)** - Code review findings and patterns
-- **[database-issues/](./database-issues/)** - Database-related problems
-- **[deployment-issues/](./deployment-issues/)** - Deployment and production issues
-- **[logic-errors/](./logic-errors/)** - Business logic bugs
-- **[methodology/](./methodology/)** - Development methodology and process
-- **[security-issues/](./security-issues/)** - Security vulnerabilities and fixes
-- **[test-failures/](./test-failures/)** - Test failure investigations
-- **[testing-gaps/](./testing-gaps/)** - Missing test coverage
-- **[testing-patterns/](./testing-patterns/)** - Testing patterns for specific domains
-- **[ui-bugs/](./ui-bugs/)** - Frontend and UI issues
-
-## How to Use This Directory
-
-### Finding a Solution
-
-1. **Start with the master index:** [PREVENTION-STRATEGIES-INDEX.md](./PREVENTION-STRATEGIES-INDEX.md)
-2. **Check the quick reference:** [PREVENTION-QUICK-REFERENCE.md](./PREVENTION-QUICK-REFERENCE.md)
-3. **Browse by category:** Use the tables above to find topic-specific guides
-4. **Search by problem type:** Check the subdirectories for similar issues
-
-### Contributing a Solution
-
-When you solve a problem that might help others:
-
-1. Follow the `/codify` workflow or use [/workflows:codify](../../.claude/commands/workflows/codify.sh)
-2. Place the solution in the appropriate subdirectory
-3. Create or update the relevant INDEX file
-4. Add an entry to [PREVENTION-STRATEGIES-INDEX.md](./PREVENTION-STRATEGIES-INDEX.md)
-5. Update this README if adding a new category
-
-### Solution Document Structure
-
-Each solution document should include:
-
-- **Problem Statement:** What issue does this solve?
-- **Context:** When does this issue occur?
-- **Solution Steps:** Step-by-step resolution
-- **Prevention:** How to avoid this in the future
-- **Testing:** How to verify the fix
-- **Related:** Links to related solutions
-
-## Related Documentation
-
-- **[../TESTING.md](../../TESTING.md)** - Testing strategy overview
-- **[../ARCHITECTURE.md](../../ARCHITECTURE.md)** - System architecture
-- **[../security/](../security/)** - Security best practices
-- **[../operations/INCIDENT_RESPONSE.md](../operations/INCIDENT_RESPONSE.md)** - Production incident handling
-
-## Statistics
-
-- **Total Solution Documents:** 90 markdown files
-- **Total Categories:** 12 subdirectories
-- **Index Files:** 37 navigation indexes
-- **Quick References:** 17 cheat sheets
+- [../../TESTING.md](../../TESTING.md) — Testing strategy overview
+- [../../ARCHITECTURE.md](../../ARCHITECTURE.md) — System architecture
+- [../security/](../security/) — Security documentation
+- [../operations/INCIDENT_RESPONSE.md](../operations/INCIDENT_RESPONSE.md) — Incident handling
 
 ---
 
-**Last Updated:** 2026-01-24
-**Maintainer:** Technical Lead
-**Purpose:** Problem-solution documentation following Diátaxis "How-to Guide" pattern
+**Last Updated:** 2026-02-18
+**Total:** 174 top-level + 380 in subdirectories = 554 solution documents

@@ -2,7 +2,7 @@
 
 # Documentation Standards Validation Script
 # Version: 1.0
-# Purpose: Validate documentation files against standards defined in DOCUMENTATION_STANDARDS.md
+# Purpose: Validate documentation files against directory structure and naming conventions
 
 set -e
 
@@ -37,16 +37,49 @@ echo -e "${BLUE}[CHECK 1]${NC} Checking for files in unapproved locations..."
 CHECKS=$((CHECKS + 1))
 
 APPROVED_DIRS=(
+    "docs/adrs"
+    "docs/analysis"
     "docs/api"
     "docs/architecture"
     "docs/archive"
+    "docs/audits"
+    "docs/brainstorms"
+    "docs/code-review"
+    "docs/code-review-checklists"
+    "docs/codify-templates"
+    "docs/deployment"
+    "docs/design"
+    "docs/design-system"
+    "docs/examples"
+    "docs/features"
+    "docs/guides"
+    "docs/handoff"
+    "docs/handoffs"
+    "docs/issues"
+    "docs/maintenance"
+    "docs/marketing"
     "docs/multi-tenant"
     "docs/operations"
-    "docs/phases"
+    "docs/patterns"
+    "docs/performance"
+    "docs/plans"
+    "docs/prevention-strategies"
+    "docs/quality"
+    "docs/reference"
+    "docs/reports"
+    "docs/research"
+    "docs/reviews"
+    "docs/roadmap"
     "docs/roadmaps"
+    "docs/routing"
     "docs/security"
+    "docs/sessions"
     "docs/setup"
-    "docs/sprints"
+    "docs/solutions"
+    "docs/spikes"
+    "docs/test-reports"
+    "docs/ui-ux-implementation"
+    "docs/user-flows"
 )
 
 # Find all .md files in docs/
