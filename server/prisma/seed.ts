@@ -11,10 +11,11 @@
  *   SEED_MODE=little-bit-farm npm exec prisma db seed   # Little Bit Horse Farm tenant
  *   SEED_MODE=plate npm exec prisma db seed              # Plate catering tenant
  *   SEED_MODE=handled npm exec prisma db seed             # HANDLED "Tenant Zero" (dogfooding)
+ *   SEED_MODE=macon-headshots npm exec prisma db seed     # Macon Headshots tenant
  *   SEED_MODE=upgrade-tenant-pages npm exec prisma db seed  # Upgrade tenant landing pages
  *
  * Environment Variables:
- *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm' | 'plate' | 'handled'
+ *   SEED_MODE: 'production' | 'e2e' | 'demo' | 'dev' | 'all' | 'la-petit-mariage' | 'little-bit-farm' | 'plate' | 'handled' | 'macon-headshots'
  *   NODE_ENV: Used as fallback if SEED_MODE not set
  *   PLATFORM_ADMIN_EMAIL: Required for production/dev seeds (also accepts legacy ADMIN_EMAIL)
  *   PLATFORM_ADMIN_PASSWORD: Required for production/dev seeds, min 12 chars (also accepts legacy ADMIN_DEFAULT_PASSWORD)
@@ -32,6 +33,7 @@ import { seedLaPetitMarriage } from './seeds/la-petit-mariage';
 import { seedLittleBitHorseFarm } from './seeds/little-bit-horse-farm';
 import { seedPlate } from './seeds/plate';
 import { seedHandled } from './seeds/handled';
+import { seedMaconHeadshots } from './seeds/macon-headshots';
 import { upgradeTenantPages } from './seeds/upgrade-tenant-pages';
 import { logger } from '../src/lib/core/logger';
 
@@ -48,6 +50,7 @@ type SeedMode =
   | 'little-bit-farm'
   | 'plate'
   | 'handled'
+  | 'macon-headshots'
   | 'upgrade-tenant-pages';
 
 function getSeedMode(): SeedMode {
@@ -65,6 +68,7 @@ function getSeedMode(): SeedMode {
       'little-bit-farm',
       'plate',
       'handled',
+      'macon-headshots',
       'upgrade-tenant-pages',
     ].includes(explicitMode)
   ) {
@@ -94,6 +98,7 @@ async function main() {
         // Production: Platform admin + real tenant seeds
         await seedPlatform(prisma);
         await seedLittleBitHorseFarm(prisma);
+        await seedMaconHeadshots(prisma);
         break;
 
       case 'e2e':
@@ -121,6 +126,7 @@ async function main() {
         await seedLittleBitHorseFarm(prisma);
         await seedPlate(prisma);
         await seedHandled(prisma);
+        await seedMaconHeadshots(prisma);
         break;
 
       case 'la-petit-mariage':
@@ -141,6 +147,11 @@ async function main() {
       case 'handled':
         // HANDLED: Tenant Zero - dogfooding our own platform
         await seedHandled(prisma);
+        break;
+
+      case 'macon-headshots':
+        // Macon Headshots: Headshot photography tenant
+        await seedMaconHeadshots(prisma);
         break;
 
       case 'upgrade-tenant-pages':
