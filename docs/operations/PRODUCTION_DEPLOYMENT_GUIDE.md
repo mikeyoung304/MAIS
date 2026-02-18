@@ -42,8 +42,8 @@
 
 ### Environment Variables
 
-| Key                | Value                           |
-| ------------------ | ------------------------------- |
+| Key                       | Value                           |
+| ------------------------- | ------------------------------- |
 | `NEXT_PUBLIC_API_URL`     | `https://mais-api.onrender.com` |
 | `NEXT_PUBLIC_APP_MODE`    | `real`                          |
 | `NEXT_PUBLIC_ENVIRONMENT` | `production`                    |
