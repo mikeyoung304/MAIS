@@ -203,6 +203,9 @@ jobs:
           npm run vercel-build
         env:
           NODE_ENV: production
+          # NextAuth v5 requires AUTH_SECRET at build time for page data collection.
+          # This is a dummy value for production builds; real secret is used at runtime.
+          AUTH_SECRET: production-build-placeholder-not-used-at-runtime
 
       - name: Upload server build
         uses: actions/upload-artifact@v4
