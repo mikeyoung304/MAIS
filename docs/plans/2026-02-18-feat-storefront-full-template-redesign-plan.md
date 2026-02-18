@@ -139,7 +139,7 @@ A 6-phase implementation that builds on the existing component architecture:
 
 **Goal:** Create a new numbered-steps component and integrate it into the storefront template.
 
-- [ ] **Create `HowItWorksSection.tsx`** in `apps/web/src/components/tenant/sections/`
+- [x] **Create `HowItWorksSection.tsx`** in `apps/web/src/components/tenant/sections/`
   - `'use client'` directive (needs `useScrollReveal`)
   - Props: `tenant: TenantPublicDto` (for potential future per-tenant customization)
   - 3 numbered steps as a component constant (not DB-stored):
@@ -158,9 +158,9 @@ A 6-phase implementation that builds on the existing component architecture:
   - Section heading: `<h2>` with "How It Works" (not `<h1>` — nested inside page)
   - Generous whitespace: `py-24 md:py-32` section padding, `gap-8` between cards
 
-- [ ] **Export from barrel** in `apps/web/src/components/tenant/sections/index.ts`
+- [x] **Export from barrel** in `apps/web/src/components/tenant/sections/index.ts`
 
-- [ ] **Integrate into `TenantLandingPage.tsx`**
+- [x] **Integrate into `TenantLandingPage.tsx`**
   - Insert `<HowItWorksSection tenant={tenant} />` after Hero section(s) and before `SegmentTiersSection`
   - Position between `preSections` render and `SegmentTiersSection` render
   - **Document:** This static component is always slot 2, invisible to Build Mode editor, and independent of DB section ordering
@@ -196,7 +196,7 @@ A 6-phase implementation that builds on the existing component architecture:
 
 **Goal:** Replace flat FAQ cards with an interactive accordion + add FAQ JSON-LD for SEO.
 
-- [ ] **Rewrite `FAQSection.tsx`** with accordion interaction pattern from `FAQAccordion.tsx`
+- [x] **Rewrite `FAQSection.tsx`** with accordion interaction pattern from `FAQAccordion.tsx`
   - Add `'use client'` directive
   - Extract ONLY the interaction logic (NOT the page-level hero/CTA from `FAQAccordion.tsx`):
     - `useState` for open item index (first item open by default)
@@ -212,7 +212,7 @@ A 6-phase implementation that builds on the existing component architecture:
   - Touch target: minimum 44px height on accordion buttons
   - `useScrollReveal` on the section wrapper
 
-- [ ] **Add `generateFAQSchema()` to `storefront-utils.ts`**
+- [x] **Add `generateFAQSchema()` to `storefront-utils.ts`**
 
   ```typescript
   export function generateFAQSchema(sections: Section[]): object | null {
@@ -231,11 +231,11 @@ A 6-phase implementation that builds on the existing component architecture:
   }
   ```
 
-- [ ] **Inject FAQ JSON-LD in both page.tsx files**
+- [x] **Inject FAQ JSON-LD in both page.tsx files**
   - `apps/web/src/app/t/[slug]/(site)/page.tsx`: add second `<script type="application/ld+json">` block (only when `generateFAQSchema` returns non-null)
   - `apps/web/src/app/t/_domain/page.tsx`: mirror the same injection
 
-- [ ] **Evaluate `FAQAccordion.tsx` for deletion**
+- [x] **Evaluate `FAQAccordion.tsx` for deletion** (deleted — no routes used it)
   - Check if the standalone `/faq` sub-page route still uses it
   - If yes: keep it but add a comment noting `FAQSection.tsx` is the landing-page version
   - If no: delete it (project principle: no debt)
@@ -256,7 +256,7 @@ A 6-phase implementation that builds on the existing component architecture:
 
 **Goal:** Add section scroll links with active link highlighting to the sticky nav.
 
-- [ ] **Create `useActiveSection` hook** in `apps/web/src/hooks/`
+- [x] **Create `useActiveSection` hook** in `apps/web/src/hooks/`
   - Single shared `IntersectionObserver` watching all section anchor IDs
   - Threshold: `0.3` (section must be ~30% visible to be "active")
   - `rootMargin: '-80px 0px 0px 0px'` (offset for sticky nav height)
@@ -265,20 +265,20 @@ A 6-phase implementation that builds on the existing component architecture:
   - Cleans up observer on unmount
   - SSR-safe: returns `null` during SSR
 
-- [ ] **Export from hooks barrel** in `apps/web/src/hooks/index.ts`
+- [x] **Export from hooks barrel** in `apps/web/src/hooks/index.ts`
 
-- [ ] **Extend `TenantNav.tsx` section links**
+- [x] **Extend `TenantNav.tsx` section links**
   - Desktop nav items: Home | Services | About | FAQ | Book Now
   - Derive nav items from available sections (only show links for sections that exist in the tenant's content)
   - Active link styling: `text-accent font-semibold` (or `border-b-2 border-accent`) on the currently active section
   - Smooth scroll: `<a href="#services">` (native smooth scrolling via `scroll-behavior: smooth` in CSS)
   - Mobile hamburger: same section links + `onClick={() => setIsOpen(false)}` on each (from Phase 1 fix)
 
-- [ ] **Add anchor IDs to How It Works wrapper**
+- [x] **Add anchor IDs to How It Works wrapper**
   - Verify `id="how-it-works"` is set on the HowItWorksSection wrapper (from Phase 2)
   - Optional: include "How It Works" in nav if space permits, or omit for cleaner nav
 
-- [ ] **Verify all section anchor IDs are consistent**
+- [x] **Verify all section anchor IDs are consistent**
   - Check `SECTION_TYPE_TO_ANCHOR_ID` in `SectionRenderer.tsx` matches the actual section wrapper IDs
   - Ensure no duplicate IDs (especially `id="services"` — only on `SegmentTiersSection`, not in `SectionRenderer` postSections)
 

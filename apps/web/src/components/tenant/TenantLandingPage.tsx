@@ -7,13 +7,15 @@
  *
  * Layout:
  * 1. Pre-tier sections (hero, about/text)
- * 2. Segment-first tiers section (shows segments, expands to reveal tiers)
- * 3. Post-tier sections (testimonials, gallery, faq, contact, cta)
+ * 2. How It Works (static numbered steps)
+ * 3. Segment-first tiers section (shows segments, expands to reveal tiers)
+ * 4. Post-tier sections (testimonials, gallery, faq, contact, cta)
  */
 
 import type { TenantStorefrontData } from '@/lib/tenant.client';
 import { SectionRenderer } from './SectionRenderer';
 import { SegmentTiersSection } from './SegmentTiersSection';
+import { HowItWorksSection } from './sections';
 import type { Section, HeroSection, PagesConfig } from '@macon/contracts';
 
 interface TenantLandingPageProps {
@@ -122,6 +124,9 @@ export function TenantLandingPage({
         isEditMode={isEditMode}
         indexOffset={0}
       />
+
+      {/* ===== HOW IT WORKS (static, always slot 2) ===== */}
+      <HowItWorksSection tenant={tenant} />
 
       {/* ===== SEGMENT-FIRST TIERS SECTION ===== */}
       <SegmentTiersSection

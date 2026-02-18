@@ -102,3 +102,6 @@ export { useAgentPanelState } from './useAgentPanelState';
 
 // Scroll Reveal (storefront animations)
 export { useScrollReveal } from './useScrollReveal';
+
+// Active Section (storefront nav highlighting)
+export { useActiveSection } from './useActiveSection';

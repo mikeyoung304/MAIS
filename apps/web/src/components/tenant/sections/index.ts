@@ -7,3 +7,4 @@ export { ContactSection } from './ContactSection';
 export { CTASection } from './CTASection';
 export { PricingSection } from './PricingSection';
 export { FeaturesSection } from './FeaturesSection';
+export { HowItWorksSection } from './HowItWorksSection';

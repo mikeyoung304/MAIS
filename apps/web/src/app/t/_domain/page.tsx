@@ -16,6 +16,7 @@ import {
   sectionsToPages,
   getHeroFromSections,
   generateLocalBusinessSchema,
+  generateFAQSchema,
   safeJsonLd,
 } from '@/lib/storefront-utils';
 
@@ -115,6 +116,7 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
     // Use custom domain as canonical URL
     const canonicalUrl = `https://${validatedDomain}`;
     const localBusinessSchema = generateLocalBusinessSchema(data.tenant, canonicalUrl, sections);
+    const faqSchema = generateFAQSchema(sections);
 
     return (
       <>
@@ -122,6 +124,12 @@ export default async function DomainPage({ searchParams }: DomainPageProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
         />
+        {faqSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(faqSchema) }}
+          />
+        )}
         <TenantLandingPageClient data={data} pages={pages} basePath="" domainParam={domainParam} />
       </>
     );
