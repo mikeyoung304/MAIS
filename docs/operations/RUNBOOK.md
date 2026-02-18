@@ -134,7 +134,7 @@ See `SECRETS.md` for the complete environment variable reference.
 ```bash
 # Mock mode default
 npm run dev:api
-npm run dev:client
+npm run dev:web
 ```
 
 ### Dev simulators (mock mode only)

@@ -35,18 +35,18 @@
 | Setting              | Value                                                                                                                           |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **Root Directory**   | _(empty - repo root)_                                                                                                           |
-| **Framework Preset** | Vite                                                                                                                            |
+| **Framework Preset** | Next.js                                                                                                                         |
 | **Build Command**    | `npm run build --workspace=@macon/contracts && npm run build --workspace=@macon/shared && npm run build --workspace=@macon/web` |
-| **Output Directory** | `client/dist`                                                                                                                   |
+| **Output Directory** | `apps/web/.next`                                                                                                                |
 | **Install Command**  | `npm ci --workspaces --include-workspace-root`                                                                                  |
 
 ### Environment Variables
 
 | Key                | Value                           |
 | ------------------ | ------------------------------- |
-| `VITE_API_URL`     | `https://mais-api.onrender.com` |
-| `VITE_APP_MODE`    | `real`                          |
-| `VITE_ENVIRONMENT` | `production`                    |
+| `NEXT_PUBLIC_API_URL`     | `https://mais-api.onrender.com` |
+| `NEXT_PUBLIC_APP_MODE`    | `real`                          |
+| `NEXT_PUBLIC_ENVIRONMENT` | `production`                    |
 
 ### Custom Domain
 

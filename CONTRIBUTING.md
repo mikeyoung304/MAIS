@@ -110,8 +110,8 @@ Before you begin, ensure you have the following installed:
    # Terminal 1: Start API server (mock mode)
    npm run dev:api
 
-   # Terminal 2: Start web client
-   npm run dev:client
+   # Terminal 2: Start Next.js frontend
+   npm run dev:web
 
    # Or run both together (with Stripe webhook listener)
    npm run dev:all
@@ -168,16 +168,13 @@ mais/
 │   ├── prisma/                     # Database schema & migrations
 │   └── test/                       # Unit & integration tests
 │
-├── client/                         # React 18 + Vite + TailwindCSS
+├── apps/web/                       # Next.js 14 App Router + TailwindCSS
 │   ├── src/
-│   │   ├── features/               # Feature modules
-│   │   │   ├── catalog/            # Package/add-on catalog
-│   │   │   ├── booking/            # Booking flow
-│   │   │   └── admin/              # Admin dashboard
-│   │   ├── pages/                  # Route pages
-│   │   ├── ui/                     # Reusable components (shadcn/ui)
-│   │   ├── lib/                    # Utilities & API client
-│   │   └── app/                    # App shell & routing
+│   │   ├── app/                    # App Router pages
+│   │   ├── components/             # React components
+│   │   │   ├── ui/                 # Shared UI (shadcn/ui)
+│   │   │   └── tenant/             # Tenant-specific components
+│   │   └── lib/                    # Utilities (auth, tenant, api, logger)
 │   └── public/                     # Static assets
 │
 └── packages/                       # Shared packages
@@ -192,7 +189,7 @@ mais/
 - **`server/src/adapters/`**: External service integrations (Prisma, Stripe, Postmark, Google Calendar)
 - **`server/src/lib/ports.ts`**: Interfaces for repositories and providers (dependency inversion)
 - **`server/src/di.ts`**: Dependency injection container (wires services with adapters)
-- **`client/src/features/`**: Feature-based organization (catalog, booking, admin)
+- **`apps/web/src/`**: Next.js App Router pages, components, and lib utilities
 - **`packages/contracts/`**: Single source of truth for API contracts (shared between FE/BE)
 
 ## Development Workflow
@@ -644,7 +641,7 @@ When requesting a feature, include:
 - [DEVELOPING.md](./DEVELOPING.md) - Development workflow and commands
 - [TESTING.md](./TESTING.md) - Detailed testing guide
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture overview
-- [CODING_GUIDELINES.md](./CODING_GUIDELINES.md) - Coding standards and patterns
+- [CODING_GUIDELINES.md](./docs/CODING_GUIDELINES.md) - Coding standards and patterns
 - [SUPABASE.md](./docs/setup/SUPABASE.md) - Database setup and management
 - [DECISIONS.md](./DECISIONS.md) - Architectural decision records (ADRs)
 
