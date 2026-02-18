@@ -317,6 +317,32 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
+  # Job 4b: Seed production database (no approval gate — seeds are idempotent)
+  seed-database-production:
+    name: Seed Production Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build-production, migrate-database-production]
+    if: always() && (needs.build-production.result == 'success') && (needs.migrate-database-production.result == 'success' || needs.migrate-database-production.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run --workspace=server prisma:generate
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
       - name: Seed production database
         run: npm run --workspace=server db:seed:production
         env:
@@ -330,8 +356,8 @@ jobs:
     name: Deploy API to Production (Render)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [migrate-database-production]
-    if: always() && (needs.migrate-database-production.result == 'success' || needs.migrate-database-production.result == 'skipped')
+    needs: [seed-database-production]
+    if: always() && (needs.seed-database-production.result == 'success' || needs.seed-database-production.result == 'skipped')
     environment:
       name: production
       url: ${{ env.PRODUCTION_API_URL }}
