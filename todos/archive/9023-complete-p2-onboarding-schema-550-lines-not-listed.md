@@ -29,7 +29,7 @@ This file is NOT listed in any phase's files-to-modify. After Phase 3 simplifies
 ### Option A: Add to Phase 3 file list (Recommended)
 
 - Simplify discriminated unions to match 4-value enum
-- Remove DISCOVERY*\*, MARKET_RESEARCH*_, SERVICES\__, MARKETING\_\* event types
+- Remove DISCOVERY*\*, MARKET_RESEARCH*\_, SERVICES\_\_, MARKETING\_\* event types
 - Add BUILDING_STARTED, BUILDING_COMPLETED events
 - **Effort:** Medium (~550 lines to refactor)
 
