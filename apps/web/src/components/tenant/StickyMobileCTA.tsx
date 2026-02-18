@@ -32,7 +32,7 @@ interface StickyMobileCTAProps {
 export function StickyMobileCTA({
   ctaText = 'View Services',
   href = '#services',
-  observeElementId = 'main-content',
+  observeElementId = 'hero',
 }: StickyMobileCTAProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);

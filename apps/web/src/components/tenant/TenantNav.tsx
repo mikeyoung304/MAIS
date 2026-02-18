@@ -211,7 +211,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                 </Link>
               ))}
               <Button asChild variant="accent" size="sm">
-                <a href={`${basePath}#packages`}>Book Now</a>
+                <a href={`${basePath}#services`}>Book Now</a>
               </Button>
             </div>
 
@@ -257,6 +257,10 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                       : 'text-foreground hover:bg-neutral-50'
                   }`}
                   tabIndex={isOpen ? 0 : -1}
+                  onClick={() => {
+                    document.body.style.overflow = '';
+                    setIsOpen(false);
+                  }}
                 >
                   {item.label}
                 </Link>
@@ -270,7 +274,15 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                 className="w-full"
                 tabIndex={isOpen ? 0 : -1}
               >
-                <a href={`${basePath}#packages`}>Book Now</a>
+                <a
+                  href={`${basePath}#services`}
+                  onClick={() => {
+                    document.body.style.overflow = '';
+                    setIsOpen(false);
+                  }}
+                >
+                  Book Now
+                </a>
               </Button>
             </div>
           </div>

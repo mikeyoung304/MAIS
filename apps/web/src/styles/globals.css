@@ -12,7 +12,7 @@
 
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 120px;
+    scroll-padding-top: 80px; /* 64px nav (h-16) + 16px buffer */
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -39,9 +39,7 @@
   h2 { @apply text-h2; }
   h3 { @apply text-h3; }
 
-  [id] {
-    scroll-margin-top: 2rem;
-  }
+  /* scroll-padding-top on html handles scroll offset for anchor navigation */
 }
 
 /* Apple-style fade-slide-up animation */
@@ -108,6 +106,7 @@
 
 .reveal-delay-1 { animation-delay: 150ms; }
 .reveal-delay-2 { animation-delay: 300ms; }
+.reveal-delay-3 { animation-delay: 450ms; }
 
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
