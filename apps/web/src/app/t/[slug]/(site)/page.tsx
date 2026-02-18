@@ -18,6 +18,7 @@ import {
   sectionsToPages,
   getHeroFromSections,
   generateLocalBusinessSchema,
+  generateFAQSchema,
   safeJsonLd,
 } from '@/lib/storefront-utils';
 
@@ -107,6 +108,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
 
     const canonicalUrl = `https://gethandled.ai/t/${slug}`;
     const localBusinessSchema = generateLocalBusinessSchema(data.tenant, canonicalUrl, sections);
+    const faqSchema = generateFAQSchema(sections);
 
     return (
       <>
@@ -114,6 +116,12 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
+          />
+        )}
+        {!isPreviewMode && faqSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(faqSchema) }}
           />
         )}
         <TenantLandingPageClient data={data} pages={pages} basePath={`/t/${slug}`} />
@@ -137,12 +145,19 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
         canonicalUrl,
         fallbackSections
       );
+      const fallbackFaqSchema = generateFAQSchema(fallbackSections);
       return (
         <>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessSchema) }}
           />
+          {fallbackFaqSchema && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: safeJsonLd(fallbackFaqSchema) }}
+            />
+          )}
           <TenantLandingPageClient data={fallbackData} pages={pages} basePath={`/t/${slug}`} />
         </>
       );

@@ -226,7 +226,7 @@ function TierGridSection({
         </div>
       )}
 
-      <div ref={tierRevealRef} className={`reveal-on-scroll mt-16 grid gap-8 ${gridClasses}`}>
+      <div ref={tierRevealRef} className={`mt-16 grid gap-8 ${gridClasses}`}>
         {tiers.map((pkg, index) => {
           const isPopular = tiers.length > 2 && index === midIndex;
           const tierLabel =
@@ -474,7 +474,7 @@ export function SegmentTiersSection({
 
                 <div
                   ref={segmentGridRevealRef}
-                  className={`reveal-on-scroll mt-16 grid gap-8 ${segmentGridClasses}`}
+                  className={`mt-16 grid gap-8 ${segmentGridClasses}`}
                 >
                   {segmentsWithTiers.map((segment) => (
                     <SegmentCard

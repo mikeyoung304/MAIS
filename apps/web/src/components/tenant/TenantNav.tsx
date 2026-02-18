@@ -9,6 +9,7 @@ import { Menu, X } from 'lucide-react';
 import type { TenantPublicDto, PagesConfig } from '@macon/contracts';
 import { getAnchorNavigationItems, buildAnchorNavHref } from './navigation';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useActiveSection } from '@/hooks/useActiveSection';
 
 interface TenantNavProps {
   tenant: TenantPublicDto;
@@ -53,6 +54,20 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
       })),
     [basePath, pages]
   );
+
+  // Section IDs for active nav highlighting via Intersection Observer
+  const sectionIds = useMemo(
+    () =>
+      navItems
+        .map((item) => {
+          const hash = item.href.split('#')[1];
+          return hash || null;
+        })
+        .filter((id): id is string => id !== null),
+    [navItems]
+  );
+
+  const activeSection = useActiveSection(sectionIds);
 
   // Close menu on route change
   useEffect(() => {
@@ -143,30 +158,33 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
   });
 
   /**
-   * Determines if a navigation link is active based on current pathname.
+   * Determines if a navigation link is active based on current scroll position.
    *
-   * Issue #6 Fix: For single-page mode with anchor links, "Home" is always active
-   * since all content is on the same page. Hash-based highlighting would require
-   * scroll position tracking which is deferred to multi-page implementation.
+   * Uses Intersection Observer (via useActiveSection) to track which section
+   * is most visible in the viewport and highlights the corresponding nav link.
    *
    * @param href - The navigation link href to check
    * @returns true if the link should be styled as active
    */
   const isActiveLink = useCallback(
     (href: string) => {
-      // For anchor links (#section), only mark Home as active on the landing page
-      // All other anchor links are not marked active (hash tracking is complex)
-      if (href.includes('#')) {
-        return false; // Don't highlight anchor links as "active"
+      // For anchor links, check against activeSection from IO
+      const hash = href.split('#')[1];
+      if (hash) {
+        return activeSection === hash;
       }
 
-      // For home link (no anchor), check if we're on the landing page
-      const hrefPath = href.split('?')[0] || '/';
-      const homeHref = basePath || '/';
+      // For home link (no anchor), active when no section is highlighted
+      // or when we're at the top of the page
+      if (!activeSection) {
+        const hrefPath = href.split('?')[0] || '/';
+        const homeHref = basePath || '/';
+        return pathname === hrefPath || pathname === homeHref || pathname === '/';
+      }
 
-      return pathname === hrefPath || pathname === homeHref || pathname === '/';
+      return false;
     },
-    [basePath, pathname]
+    [basePath, pathname, activeSection]
   );
 
   return (
@@ -211,7 +229,7 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                 </Link>
               ))}
               <Button asChild variant="accent" size="sm">
-                <a href={`${basePath}#packages`}>Book Now</a>
+                <a href={`${basePath}#services`}>Book Now</a>
               </Button>
             </div>
 
@@ -257,6 +275,10 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                       : 'text-foreground hover:bg-neutral-50'
                   }`}
                   tabIndex={isOpen ? 0 : -1}
+                  onClick={() => {
+                    document.body.style.overflow = '';
+                    setIsOpen(false);
+                  }}
                 >
                   {item.label}
                 </Link>
@@ -270,7 +292,15 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
                 className="w-full"
                 tabIndex={isOpen ? 0 : -1}
               >
-                <a href={`${basePath}#packages`}>Book Now</a>
+                <a
+                  href={`${basePath}#services`}
+                  onClick={() => {
+                    document.body.style.overflow = '';
+                    setIsOpen(false);
+                  }}
+                >
+                  Book Now
+                </a>
               </Button>
             </div>
           </div>

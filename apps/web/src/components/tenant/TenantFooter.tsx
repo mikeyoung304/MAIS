@@ -40,8 +40,9 @@ export function TenantFooter({
   }));
 
   return (
-    <footer role="contentinfo" className="border-t border-neutral-100 bg-white py-12">
+    <footer role="contentinfo" className="border-t border-neutral-100 bg-neutral-50 py-12">
       <div className="mx-auto max-w-6xl px-6">
+        {/* TODO: Add social links when Tenant model gains socialLinks field */}
         {/* Top section: Logo and navigation */}
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           {/* Logo and name */}

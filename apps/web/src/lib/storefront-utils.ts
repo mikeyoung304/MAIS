@@ -304,3 +304,30 @@ export function generateLocalBusinessSchema(
 
   return schema;
 }
+
+/**
+ * Generate FAQ JSON-LD structured data for SEO.
+ *
+ * Extracts FAQ items from sections and generates Schema.org FAQPage markup.
+ * Returns null if no FAQ items exist (caller should skip injection).
+ *
+ * @see https://schema.org/FAQPage
+ */
+export function generateFAQSchema(sections: SectionContentDto[]): object | null {
+  const faqSection = sections.find((s) => s.blockType === 'FAQ');
+  if (!faqSection) return null;
+
+  const content = faqSection.content as Record<string, unknown>;
+  const items = content.items as Array<{ question: string; answer: string }> | undefined;
+  if (!items?.length) return null;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
+  };
+}
