@@ -48,15 +48,7 @@ export interface UpdateTenantInput {
   aiMessagesUsed?: number;
   aiMessagesResetAt?: Date;
   // Onboarding state fields (Session Bootstrap Protocol)
-  onboardingPhase?:
-    | 'NOT_STARTED'
-    | 'DISCOVERY'
-    | 'MARKET_RESEARCH'
-    | 'SERVICES'
-    | 'MARKETING'
-    | 'BUILDING'
-    | 'COMPLETED'
-    | 'SKIPPED';
+  onboardingPhase?: 'NOT_STARTED' | 'BUILDING' | 'COMPLETED' | 'SKIPPED';
   onboardingCompletedAt?: Date | null;
   // Reveal animation one-shot guard (Phase 3 — Dashboard Rebuild)
   revealCompletedAt?: Date | null;
