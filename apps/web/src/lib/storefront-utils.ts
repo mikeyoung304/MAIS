@@ -99,6 +99,23 @@ export function transformContentForSection(
         transformed.tiers = [];
       }
       break;
+    case 'testimonials':
+      // Map seed field names to component field names (name → authorName, role → authorRole)
+      if (Array.isArray(transformed.items)) {
+        transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
+          const out = { ...item };
+          if (out.name && !out.authorName) {
+            out.authorName = out.name;
+            delete out.name;
+          }
+          if (out.role && !out.authorRole) {
+            out.authorRole = out.role;
+            delete out.role;
+          }
+          return out;
+        });
+      }
+      break;
 
     // Catch-all: null-coalesce known array fields to prevent .map() on null
     default: {

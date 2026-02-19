@@ -4,10 +4,12 @@
  * Shared navigation items and utilities for TenantNav and TenantFooter.
  * Single source of truth for navigation structure.
  *
- * Derives navigation from PagesConfig — only enabled pages appear in nav.
+ * Two derivation modes:
+ * - getNavigationItems(): Multi-page mode — uses page-level `enabled` flags (TenantFooter)
+ * - getNavItemsFromHomeSections(): Single-page scroll — derives from section types on home page (TenantNav)
  */
 
-import type { PagesConfig, PageName } from '@macon/contracts';
+import type { PagesConfig, PageName, SectionTypeName } from '@macon/contracts';
 
 /**
  * Navigation item definition
@@ -124,26 +126,49 @@ export function buildNavHref(basePath: string, item: NavItem, domainParam?: stri
 }
 
 /**
- * Get anchor-based navigation items for single landing page mode
+ * Section types that map to nav items when present on the home page.
  *
- * Returns anchor links (#about, #services, etc.) instead of
- * separate page paths (/about, /services, etc.).
- *
- * @param pages - Pages configuration from SectionContent
- * @returns Array of navigation items with anchor-based paths
+ * Intentionally excluded:
+ * - hero: always at top, no anchor nav needed
+ * - cta: closing section, not a nav destination
+ * - features: process steps (e.g. "How It Works"), not service offerings
+ *   (SegmentTiersSection already renders at #services anchor)
+ * - custom: no canonical nav label
+ * - pricing: rendered through tiers, not standalone
  */
-export function getAnchorNavigationItems(pages?: PagesConfig | null): NavItem[] {
-  if (!pages) {
+const SECTION_TYPE_TO_PAGE: Partial<Record<SectionTypeName, PageName>> = {
+  about: 'about',
+  text: 'about',
+  services: 'services',
+  gallery: 'gallery',
+  testimonials: 'testimonials',
+  faq: 'faq',
+  contact: 'contact',
+};
+
+/**
+ * Derive anchor navigation items from home page sections.
+ *
+ * For single-page storefronts where all sections live on the home page,
+ * this scans the actual section types present and generates nav items
+ * with anchor links. Iterates PAGE_ORDER for deterministic ordering.
+ */
+export function getNavItemsFromHomeSections(pages?: PagesConfig | null): NavItem[] {
+  if (!pages?.home?.sections?.length) {
     return [{ label: 'Home', path: '' }];
   }
 
-  return PAGE_ORDER.filter((page) => {
-    const pageConfig = pages[page];
-    return pageConfig?.enabled !== false;
-  }).map((page) => ({
-    label: PAGE_LABELS[page],
-    path: PAGE_ANCHORS[page],
-  }));
+  const items: NavItem[] = [{ label: 'Home', path: '' }];
+  for (const page of PAGE_ORDER) {
+    if (page === 'home') continue;
+    const hasSection = pages.home.sections.some(
+      (s) => SECTION_TYPE_TO_PAGE[s.type as SectionTypeName] === page
+    );
+    if (hasSection) {
+      items.push({ label: PAGE_LABELS[page], path: PAGE_ANCHORS[page] });
+    }
+  }
+  return items;
 }
 
 /**

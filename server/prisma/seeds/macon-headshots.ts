@@ -6,8 +6,8 @@
  * Pricing model:
  *   1 Segment: Headshot Photography
  *   3 Tiers:
- *     - Individual Session ($200, TIMESLOT 60min, flat)
- *     - Group In-Studio ($500 base for 3 people, TIMESLOT 120min, +$100/person)
+ *     - Individual Session ($200, DATE 60min, flat)
+ *     - Group In-Studio ($500 base for 3 people, DATE 120min, +$100/person)
  *     - On-Location ($1,500 minimum, DATE, 10 headshots included, +$100/headshot)
  *
  * Single-segment mode — frontend auto-skips segment selection.
@@ -241,7 +241,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
       logger.info(`Segment created: ${headshotsSegment.name}`);
 
       // =====================================================================
-      // TIER 1: Individual Session — $200, TIMESLOT 60min, flat
+      // TIER 1: Individual Session — $200, DATE 60min, flat
       // =====================================================================
       const individualTier = await createOrUpdateTierWithSegment(
         tx,
@@ -261,7 +261,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
             '• Images purchased separately ($100 each)',
           ].join('\n'),
           priceCents: 20000, // $200
-          bookingType: 'TIMESLOT',
+          bookingType: 'DATE',
           durationMinutes: 60,
           features: [
             { text: 'No time limit', highlighted: false },
@@ -276,7 +276,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
       );
 
       // =====================================================================
-      // TIER 2: Group In-Studio — $500 base (3 people), TIMESLOT 120min, +$100/person
+      // TIER 2: Group In-Studio — $500 base (3 people), DATE 120min, +$100/person
       // =====================================================================
       const groupTier = await createOrUpdateTierWithSegment(tx, tenant.id, headshotsSegment.id, {
         slug: 'group',
@@ -292,7 +292,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
           '• Live review & expression coaching',
         ].join('\n'),
         priceCents: 50000, // $500
-        bookingType: 'TIMESLOT',
+        bookingType: 'DATE',
         durationMinutes: 120,
         scalingRules: {
           components: [
@@ -379,6 +379,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
             subheadline: 'Serving Macon, Middle Georgia, and Beyond',
             ctaText: 'See Options',
             alignment: 'center',
+            backgroundImage:
+              'https://images.unsplash.com/photo-1604881991720-f91add269bed?w=1920&h=1080&fit=crop&q=80',
           },
         },
       });
@@ -395,6 +397,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
           content: {
             visible: true,
             title: 'Your Hype Man Behind the Camera',
+            image:
+              'https://images.unsplash.com/photo-1576694040684-77a8e3a9e89f?w=800&h=600&fit=crop&q=80',
             body: [
               'Most people walk in saying the same thing: "I\'m not photogenic." That\'s where I come in.',
               "I'm Mike — a headshot photographer who specializes in transforming the un-photogenic into unforgettable. My job isn't just to take your photo. It's to coach you through every expression, every angle, until we land on the shot that makes you say \"that's me.\"",
@@ -580,8 +584,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
   logger.info('Segments: 1');
   logger.info('  - Headshot Photography (3 tiers)');
   logger.info('Tiers: 3 total');
-  logger.info('  - Individual Session: $200 (TIMESLOT, 60min, flat)');
-  logger.info('  - Group In-Studio: From $500 (TIMESLOT, 120min, +$100/person beyond 3)');
+  logger.info('  - Individual Session: $200 (DATE, 60min, flat)');
+  logger.info('  - Group In-Studio: From $500 (DATE, 120min, +$100/person beyond 3)');
   logger.info('  - On-Location: From $1,500 (DATE, +$100/headshot beyond 10)');
   logger.info('Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, CONTACT');
   logger.info(`Blackout dates: ${3}`);

@@ -1,4 +1,137 @@
-# Architecture Strategist -- Plan Review Findings
+# Architecture Strategist -- Plan Review Findings (2026-02-18)
+
+Date: 2026-02-18
+Plan: `docs/plans/2026-02-18-fix-production-storefront-hardening-plan.md`
+Focus: Issue 6 — Nav derivation approach and broader architectural implications
+
+## Summary
+
+1 P1, 5 P2, 1 P3. The plan is sound for its stated goal but the Issue 6 nav fix has a critical factual error (anchor IDs already exist), introduces a fourth section-type mapping table without consolidating the three that exist, and embeds a semantic mismatch (`features → 'Services'` label) that will be wrong for every future "How It Works" section. The biggest architectural risk is treating the nav fix as a one-time patch rather than resolving the fundamental mismatch between the page-enabled-flag navigation design and the single-page scroll reality.
+
+---
+
+## Findings
+
+### P1: Anchor IDs Already Exist — Plan's Phase 2c Premise Is Wrong
+
+**File:** `apps/web/src/components/tenant/SectionRenderer.tsx:24-37, 151-180`
+
+The plan states anchor `id` attributes need to be added for nav to work. They already exist. `SectionRenderer.tsx` defines `SECTION_TYPE_TO_ANCHOR_ID` and applies `id={anchorId}` to every section wrapper `<div>` in both normal and edit mode. The anchors `#about`, `#services`, `#gallery`, `#testimonials`, `#faq`, `#contact` are already rendered in the DOM.
+
+```typescript
+// Already in SectionRenderer.tsx:24-37
+const SECTION_TYPE_TO_ANCHOR_ID: Record<string, string> = {
+  hero: 'hero',
+  text: 'about',
+  about: 'about',
+  features: 'services', // same mapping as the plan proposes
+  services: 'services',
+  // ... all others
+};
+```
+
+The fix is purely in `TenantNav.tsx` — switching `getAnchorNavigationItems()` (which filters by page-level `enabled` flags) to a new function that scans `pages.home.sections`. The DOM anchor targets are not missing. Remove the claim about missing anchor IDs from Phase 2c prose before executing, or you risk adding redundant code that conflicts with the existing anchor system.
+
+---
+
+### P2-A: Two Nav Functions With Same Output Format Creates Dead Code Risk
+
+**Files:** `apps/web/src/components/tenant/navigation.ts:135-147`, `apps/web/src/components/tenant/TenantNav.tsx:10, 51`
+
+After the fix, `getAnchorNavigationItems()` will be unreferenced — `TenantNav` will import and call `getNavItemsFromHomeSections()` instead. The function will remain as misleading dead code with an actively wrong file-level docstring ("Derives navigation from PagesConfig — only enabled pages appear in nav"). Future developers will see two anchor-nav derivation functions and reach for the wrong one.
+
+`getNavigationItems()` (the multi-page path function returning `/about`, `/services`) should also be audited — it may be dead code in the current single-page architecture.
+
+**Action:** Delete `getAnchorNavigationItems()` in the same commit as the fix. Add `@deprecated` JSDoc if a grace period is needed. Update the file-level docstring to reflect the single-page scroll architecture.
+
+---
+
+### P2-B: Root Cause Is Architecture Mismatch, Not a Nav Bug — Must Be Documented
+
+**Files:** `apps/web/src/lib/storefront-utils.ts:170-200`, `packages/contracts/src/landing-page.ts:527, 613-647`
+
+`sectionsToPages()` correctly reports `about.enabled = false` because no `about` page entry exists in the DB — all sections have `pageName: 'home'`. The `DEFAULT_PAGES_CONFIG` explicitly documents this as the intended single-page scroll design with other pages `enabled: false`. `getAnchorNavigationItems()` was designed for a multi-page architecture that was never fully implemented.
+
+The fix is permanent architectural alignment, not a temporary workaround: MAIS is a single-page scroll storefront. Nav derives from sections present on home, not from page-level toggles. This should be captured as a compound doc or ADR, otherwise the next developer to touch nav will reintroduce `getAnchorNavigationItems()` because the old function looks more "correct" from the naming.
+
+Fixing seeds (moving sections to `pageName: 'about'` etc.) is not viable — `TenantLandingPage` only renders `pages.home.sections`. Moving sections to other pages would break all rendering without building a full multi-page routing system.
+
+---
+
+### P2-C: SECTION_TYPE_TO_PAGE Creates a Fourth Mapping Table Without Consolidation
+
+**Files:** `apps/web/src/lib/storefront-utils.ts:26-39`, `apps/web/src/components/tenant/SectionRenderer.tsx:24-37`, `apps/web/src/components/tenant/navigation.ts` (proposed)
+
+Three mapping tables already exist:
+
+1. `BLOCK_TO_SECTION_TYPE` (storefront-utils.ts) — DB `UPPER_CASE` blockType → lowercase section type
+2. `SECTION_TYPE_TO_ANCHOR_ID` (SectionRenderer.tsx) — section type → DOM anchor `id` value
+3. Proposed `SECTION_TYPE_TO_PAGE` (navigation.ts) — section type → `PageName` for nav label lookup
+
+Tables 2 and 3 are semantically identical. `SECTION_TYPE_TO_ANCHOR_ID` already encodes `features → 'services'`. The proposed mapping duplicates this knowledge in a fourth location.
+
+If a new section type is added to `SECTION_TYPES` in `landing-page.ts`, a developer must now update four files with no TypeScript enforcement. `Partial<Record<string, PageName>>` means missing types silently produce no nav item — correct behavior, but invisible to the type system.
+
+**Recommendation:** Extract `SECTION_TYPE_TO_ANCHOR_ID` from `SectionRenderer.tsx` to `navigation.ts`. Use it as the shared source of truth for both anchor ID assignment in the renderer and nav item derivation. This eliminates the duplication and keeps all section-type-to-nav mapping co-located.
+
+---
+
+### P2-D: `features → 'Services'` Nav Label Is Semantically Wrong for Template Redesign
+
+**File:** `apps/web/src/components/tenant/navigation.ts` (proposed `SECTION_TYPE_TO_PAGE`)
+
+The plan maps `features` section type to `'services'` `PageName`, producing the label "Services" in nav. For current seeds this is tolerable (Macon's FEATURES section is titled "How It Works: Schedule, Shoot, Select"). But the brainstorm (`docs/brainstorms/2026-02-18-storefront-full-template-redesign-brainstorm.md`) plans a 7-section template with both a FEATURES section ("How It Works" — process steps) and a Services section (segment tiers, auto-injected by `TenantLandingPage`). In that world, `features → 'services'` produces two items both claiming to be "Services" in the nav.
+
+The label mismatch is also wrong today: a user clicking "Services" in the Macon nav expects pricing/offerings, not "Step 1: Schedule, Step 2: Shoot, Step 3: Select." Process steps and service offerings are different things.
+
+**Options (must choose one before shipping):**
+
+- Exclude `features` from `SECTION_TYPE_TO_PAGE` entirely (process steps are not nav-worthy)
+- Map `features` to a new nav concept separate from `'services'` (requires adding a non-`PageName` entry, or a new `PageName`)
+- Use the section's actual `headline` field as nav label rather than a static page-name label
+
+The safest option for this fix: exclude `features` from the mapping. Macon nav becomes: Home | About | Testimonials | Contact — still correct, and avoids the semantic mismatch.
+
+---
+
+### P2-E: Proposed Nav Function's Section Inclusion Conflicts With Phase 3 Brainstorm
+
+**File:** `apps/web/src/components/tenant/TenantNav.tsx` (proposed usage), `docs/brainstorms/2026-02-18-storefront-full-template-redesign-brainstorm.md`
+
+The brainstorm specifies a curated nav: `Home | Services | About | FAQ | Book Now`. It does NOT include Testimonials or Contact. The proposed `getNavItemsFromHomeSections()` would include testimonials and contact sections because they exist in the home sections array.
+
+The brainstorm also specifies section order: Hero → How It Works → Services → About → Testimonials → FAQ → CTA. The nav items derived from this order would appear as: About | Services | Testimonials | FAQ | Contact — but the desired nav order is Services | About | FAQ (no Testimonials, no Contact).
+
+The proposed implementation iterates sections in array order and includes all mapped types. This produces a different nav than the Phase 3 template intends. Deciding which sections appear in nav (and in what order) needs to be explicit, not emergent from section order.
+
+**Action before Phase 3:** Add a `NAV_EXCLUDED_SECTION_TYPES` set (containing at minimum `hero`, `cta`) and consider excluding `testimonials` and `contact` as well. Make this an explicit list rather than an emergent property of which sections happen to be present.
+
+---
+
+### P3: `getAnchorNavigationItems()` Must Be Deleted in the Same Commit
+
+**File:** `apps/web/src/components/tenant/navigation.ts:135-147`
+
+Per Pitfall #14 (orphan imports after deletions) and the project's "No Debt" principle: after `TenantNav.tsx` switches to `getNavItemsFromHomeSections()`, `getAnchorNavigationItems()` must be deleted — not left as dead code. It must be removed in the same commit as the fix. If left, future search results will surface it as the "correct" function since its name is more descriptive than the new one.
+
+---
+
+## Architectural Summary
+
+The `getNavItemsFromHomeSections()` approach is architecturally correct for a single-page scroll storefront. The execution needs these adjustments before merging:
+
+1. Remove the false claim about missing anchor IDs from Phase 2c prose
+2. Delete `getAnchorNavigationItems()` in the same commit
+3. Consolidate `SECTION_TYPE_TO_ANCHOR_ID` (SectionRenderer) into `navigation.ts` to eliminate the fourth mapping table
+4. Decide whether `features` maps to "Services" nav item — it does not for the Phase 3 template
+5. Add explicit `NAV_EXCLUDED_SECTION_TYPES` rather than relying on emergent section inclusion
+6. Compound-doc this as the definitive architectural decision: single-page scroll = nav from home sections, not page-level flags
+
+---
+
+---
+
+# Architecture Strategist -- Plan Review Findings (2026-02-12)
 
 Date: 2026-02-12
 Plan: `docs/plans/2026-02-11-feat-onboarding-conversation-redesign-plan.md`

@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import type { TenantPublicDto, PagesConfig } from '@macon/contracts';
-import { getAnchorNavigationItems, buildAnchorNavHref } from './navigation';
+import { getNavItemsFromHomeSections, buildAnchorNavHref } from './navigation';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useActiveSection } from '@/hooks/useActiveSection';
 
@@ -45,10 +45,10 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
   // Use provided basePath or default to slug-based path
   const basePath = basePathProp ?? `/t/${tenant.slug}`;
 
-  // Memoize navItems — uses anchor navigation for single-page scroll
+  // Memoize navItems — derives from home sections for single-page scroll
   const navItems = useMemo<NavItemWithHref[]>(
     () =>
-      getAnchorNavigationItems(pages).map((item) => ({
+      getNavItemsFromHomeSections(pages).map((item) => ({
         label: item.label,
         href: buildAnchorNavHref(basePath, item),
       })),
