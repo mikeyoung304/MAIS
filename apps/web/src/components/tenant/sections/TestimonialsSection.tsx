@@ -34,7 +34,7 @@ export function TestimonialsSection({
   }
 
   return (
-    <section ref={sectionRef} className="reveal-on-scroll py-32 md:py-40">
+    <section ref={sectionRef} className="py-32 md:py-40">
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <h2 className="font-heading text-3xl font-bold text-primary sm:text-4xl">{headline}</h2>

@@ -435,6 +435,14 @@ const ReviewStep = React.memo(
                   {formatCurrency(displayTotal)}
                 </span>
               </div>
+              {/* Price explanation — only shown when storefront price differs from charge */}
+              {pkg.displayPriceCents && pkg.displayPriceCents !== displayTotal && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {pkg.displayPriceCents > displayTotal
+                    ? 'Additional costs may be arranged separately after booking.'
+                    : null}
+                </p>
+              )}
               <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
             </div>
           </div>
