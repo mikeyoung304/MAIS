@@ -4,6 +4,7 @@
  */
 
 import type { PrismaClient, Segment } from '../../generated/prisma/client';
+import { QueryLimits } from '../../lib/core/query-limits';
 
 /**
  * Decode HTML entities in a URL string
@@ -105,7 +106,7 @@ export class PrismaSegmentRepository {
         ...(onlyActive ? { active: true } : {}),
       },
       orderBy: { sortOrder: 'asc' },
-      take: 100, // Safety net: segments per tenant are bounded
+      take: QueryLimits.CATALOG_MAX, // Safety net: segments per tenant are bounded
     });
   }
 
@@ -266,7 +267,7 @@ export class PrismaSegmentRepository {
           segmentId: null,
           active: true,
         },
-        take: 100, // Safety net: global add-ons per tenant are bounded
+        take: QueryLimits.CATALOG_MAX, // Safety net: global add-ons per tenant are bounded
       }),
     ]);
 

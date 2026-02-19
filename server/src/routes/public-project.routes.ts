@@ -17,6 +17,7 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import { QueryLimits } from '../lib/core/query-limits';
 import { validateProjectAccessToken, generateProjectAccessToken } from '../lib/project-tokens';
 import { projectHubSessionLimiter, projectHubChatLimiter } from '../middleware/rateLimiter';
 import {
@@ -406,7 +407,7 @@ export function createPublicProjectRoutes(deps: PublicProjectRoutesDeps): Router
           visibleToCustomer: true,
         },
         orderBy: { createdAt: 'desc' },
-        take: 50,
+        take: QueryLimits.PROJECTS_MAX,
       });
 
       res.json({

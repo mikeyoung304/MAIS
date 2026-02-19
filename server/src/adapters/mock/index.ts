@@ -19,6 +19,7 @@ import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import bcrypt from 'bcryptjs';
 import type Stripe from 'stripe';
 import { logger } from '../../lib/core/logger';
+import { QueryLimits } from '../../lib/core/query-limits';
 
 // Default tenant ID for mock mode (single-tenant simulation)
 const DEFAULT_TENANT = 'tenant_default_legacy';
@@ -683,10 +684,9 @@ export class MockBookingRepository implements BookingRepository {
       offset?: number;
     }
   ): Promise<AppointmentDto[]> {
-    const MAX_LIMIT = 500;
-    const DEFAULT_LIMIT = 100;
+    const DEFAULT_LIMIT = QueryLimits.MAX_PAGE_SIZE;
 
-    const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+    const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, QueryLimits.BOOKINGS_MAX);
     const offset = Math.max(filters?.offset ?? 0, 0);
 
     logger.debug({ tenantId, filters, limit, offset }, 'findAppointments called');

@@ -20,6 +20,7 @@
 
 import type { PrismaClient, Prisma } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import { QueryLimits } from '../lib/core/query-limits';
 import { NotFoundError, ValidationError, ConcurrentModificationError } from '../lib/errors';
 import type {
   ProjectStatus,
@@ -585,8 +586,7 @@ export class ProjectHubService {
     limit: number = 25
   ): Promise<{ requests: ProjectRequestWithContext[]; hasMore: boolean }> {
     // Enforce maximum limit to prevent unbounded queries (Pitfall #60)
-    const MAX_LIMIT = 50;
-    const effectiveLimit = Math.min(limit, MAX_LIMIT);
+    const effectiveLimit = Math.min(limit, QueryLimits.PROJECTS_MAX);
 
     logger.info({ tenantId, limit: effectiveLimit }, '[ProjectHub] Getting pending requests');
 
@@ -872,8 +872,7 @@ export class ProjectHubService {
     limit: number = 50
   ): Promise<{ projects: Array<ProjectWithBooking>; nextCursor?: string; hasMore: boolean }> {
     // Enforce maximum limit to prevent unbounded queries (Pitfall #60)
-    const MAX_LIMIT = 100;
-    const effectiveLimit = Math.min(limit, MAX_LIMIT);
+    const effectiveLimit = Math.min(limit, QueryLimits.MAX_PAGE_SIZE);
 
     logger.info(
       { tenantId, status, cursor, limit: effectiveLimit },

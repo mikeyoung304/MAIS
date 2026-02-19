@@ -29,6 +29,7 @@ import type { IdempotencyService } from './idempotency.service';
 import type { SchedulingAvailabilityService } from './scheduling-availability.service';
 import type { AvailabilityService } from './availability.service';
 import { logger } from '../lib/core/logger';
+import { QueryLimits } from '../lib/core/query-limits';
 import type { PrismaClient } from '../generated/prisma/client';
 import type { Config } from '../lib/core/config';
 
@@ -397,9 +398,10 @@ export class BookingService {
     }
 
     // Enforce pagination limits (Pitfall #60)
-    const MAX_LIMIT = 100;
-    const DEFAULT_LIMIT = 50;
-    const limit = Math.min(options?.limit || DEFAULT_LIMIT, MAX_LIMIT);
+    const limit = Math.min(
+      options?.limit || QueryLimits.DEFAULT_PAGE_SIZE,
+      QueryLimits.MAX_PAGE_SIZE
+    );
 
     // Build cursor condition
     const cursorCondition = options?.cursor

@@ -10,6 +10,7 @@ import type { BookingRepository, TimeslotBooking, AppointmentDto } from '../../l
 import type { Booking } from '../../lib/entities';
 import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/core/logger';
+import { QueryLimits } from '../../lib/core/query-limits';
 import { toISODate } from '../../lib/date-utils';
 import { hashTenantDate, hashTenantBooking } from '../../lib/advisory-locks';
 
@@ -419,7 +420,7 @@ export class PrismaBookingRepository implements BookingRepository {
       orderBy: {
         date: 'asc',
       },
-      take: 500, // Safety net: date-range bounded but capped for protection
+      take: QueryLimits.BOOKINGS_MAX, // Safety net: date-range bounded but capped for protection
     });
 
     return bookings.map((b) => b.date);
@@ -514,7 +515,7 @@ export class PrismaBookingRepository implements BookingRepository {
         endTime: true,
         status: true,
       },
-      take: 500, // Safety net: single-day bounded but capped for protection
+      take: QueryLimits.BOOKINGS_MAX, // Safety net: single-day bounded but capped for protection
     });
 
     // Map to TimeslotBooking type (filter out nulls and type-narrow)
@@ -652,7 +653,7 @@ export class PrismaBookingRepository implements BookingRepository {
         endTime: true,
         status: true,
       },
-      take: 500, // Safety net: date-range bounded but capped for protection
+      take: QueryLimits.BOOKINGS_MAX, // Safety net: date-range bounded but capped for protection
     });
 
     // Map to TimeslotBooking type (filter out nulls and type-narrow)
@@ -710,12 +711,11 @@ export class PrismaBookingRepository implements BookingRepository {
     }
   ): Promise<AppointmentDto[]> {
     // P2 #052 FIX: Pagination constants to prevent DoS via unbounded queries
-    const MAX_LIMIT = 500;
-    const DEFAULT_LIMIT = 100;
+    const DEFAULT_LIMIT = QueryLimits.MAX_PAGE_SIZE;
     const MAX_DATE_RANGE_DAYS = 90;
 
     // Apply pagination with safe defaults
-    const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+    const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, QueryLimits.BOOKINGS_MAX);
     const offset = Math.max(filters?.offset ?? 0, 0);
 
     // Validate date range to prevent excessive queries
