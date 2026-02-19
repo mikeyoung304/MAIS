@@ -54,10 +54,14 @@ describe('GET /v1/tiers', () => {
       .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(Array.isArray(res.body)).toBe(true);
+    // Response is now paginated: { items, total, hasMore }
+    expect(res.body).toHaveProperty('items');
+    expect(res.body).toHaveProperty('total');
+    expect(res.body).toHaveProperty('hasMore');
+    expect(Array.isArray(res.body.items)).toBe(true);
 
-    if (res.body.length > 0) {
-      const tier = res.body[0];
+    if (res.body.items.length > 0) {
+      const tier = res.body.items[0];
       expect(tier).toHaveProperty('id');
       expect(tier).toHaveProperty('slug');
       expect(tier).toHaveProperty('title');

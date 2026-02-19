@@ -17,6 +17,7 @@ import type { SchedulingAvailabilityService } from '../services/scheduling-avail
 import { AvailableSlotsQuerySchema } from '@macon/contracts';
 import type { TimeSlotDto } from '@macon/contracts';
 import { logger } from '../lib/core/logger';
+import { paginateArray } from '../lib/pagination';
 import { NotFoundError } from '../lib/errors';
 import { z } from 'zod';
 import { publicSchedulingLimiter } from '../middleware/rateLimiter';
@@ -68,6 +69,9 @@ export function createPublicSchedulingRoutes(
         return;
       }
 
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
+
       // Get all active services for tenant
       const services = await serviceRepo.getActiveServices(tenantId);
 
@@ -90,7 +94,7 @@ export function createPublicSchedulingRoutes(
 
       logger.info({ tenantId, serviceCount: serviceDtos.length }, 'Public services list accessed');
 
-      res.json(serviceDtos);
+      res.json(paginateArray(serviceDtos, skip, take));
     } catch (error) {
       next(error);
     }

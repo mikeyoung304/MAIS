@@ -370,10 +370,12 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         .set('Authorization', `Bearer ${validToken}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBeGreaterThan(0);
-      expect(response.body[0]).toHaveProperty('id');
-      expect(response.body[0]).toHaveProperty('dayOfWeek');
+      // Response is now paginated: { items, total, hasMore }
+      expect(response.body).toHaveProperty('items');
+      expect(Array.isArray(response.body.items)).toBe(true);
+      expect(response.body.items.length).toBeGreaterThan(0);
+      expect(response.body.items[0]).toHaveProperty('id');
+      expect(response.body.items[0]).toHaveProperty('dayOfWeek');
     });
 
     it('should filter by serviceId', async () => {
@@ -382,8 +384,8 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         .set('Authorization', `Bearer ${validToken}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      response.body.forEach((rule: any) => {
+      expect(Array.isArray(response.body.items)).toBe(true);
+      response.body.items.forEach((rule: any) => {
         expect(rule.serviceId).toBe(testServiceId);
       });
     });
@@ -394,9 +396,9 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         .set('Authorization', `Bearer ${anotherTenantToken}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(Array.isArray(response.body.items)).toBe(true);
       // Should not see rules from testTenantId
-      response.body.forEach((rule: any) => {
+      response.body.items.forEach((rule: any) => {
         expect(rule.tenantId).not.toBe(testTenantId);
       });
     });
@@ -415,7 +417,7 @@ describe('Tenant Admin Scheduling - Availability Rules', () => {
         .get('/v1/tenant-admin/availability-rules')
         .set('Authorization', `Bearer ${validToken}`);
 
-      const deletedRule = getResponse.body.find((r: any) => r.id === testRuleId);
+      const deletedRule = getResponse.body.items.find((r: any) => r.id === testRuleId);
       expect(deletedRule).toBeUndefined();
     });
 

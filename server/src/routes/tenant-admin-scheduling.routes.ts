@@ -20,6 +20,8 @@ import type {
 } from '../lib/ports';
 import type { BookingService } from '../services/booking.service';
 import { logger } from '../lib/core/logger';
+import { QueryLimits } from '../lib/core/query-limits';
+import { paginateArray } from '../lib/pagination';
 import { NotFoundError } from '../lib/errors';
 
 /**
@@ -53,7 +55,7 @@ export function createTenantAdminSchedulingRoutes(
    * @returns 401 - Missing or invalid authentication
    * @returns 500 - Internal server error
    */
-  router.get('/services', async (_req: Request, res: Response, next: NextFunction) => {
+  router.get('/services', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -62,10 +64,13 @@ export function createTenantAdminSchedulingRoutes(
       }
       const tenantId = tenantAuth.tenantId;
 
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
+
       // Include inactive services for admin view
       const services = await serviceRepo.getAll(tenantId, true);
 
-      res.json(services);
+      res.json(paginateArray(services, skip, take));
     } catch (error) {
       next(error);
     }
@@ -278,6 +283,9 @@ export function createTenantAdminSchedulingRoutes(
       }
       const tenantId = tenantAuth.tenantId;
 
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
+
       const { serviceId } = req.query;
 
       let rules;
@@ -303,7 +311,7 @@ export function createTenantAdminSchedulingRoutes(
         updatedAt: rule.updatedAt.toISOString(),
       }));
 
-      res.json(rulesDto);
+      res.json(paginateArray(rulesDto, skip, take));
     } catch (error) {
       next(error);
     }
@@ -546,8 +554,8 @@ export function createTenantAdminSchedulingRoutes(
       const tenantId = tenantAuth.tenantId;
 
       // P1 #276: Pagination constants - aligned with repository layer (defense-in-depth)
-      const DEFAULT_LIMIT = 50;
-      const MAX_LIMIT = 500;
+      const DEFAULT_LIMIT = QueryLimits.DEFAULT_PAGE_SIZE;
+      const MAX_LIMIT = QueryLimits.BOOKINGS_MAX;
 
       const { status, serviceId, startDate, endDate, limit, offset } = req.query;
 

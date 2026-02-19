@@ -9,6 +9,7 @@ import { Router } from 'express';
 import type { TenantRequest } from '../middleware/tenant';
 import type { SegmentService } from '../services/segment.service';
 import { segmentSlugSchema, segmentQuerySchema } from '../validation/segment.schemas';
+import { paginateArray } from '../lib/pagination';
 import { logger } from '../lib/core/logger';
 
 /**
@@ -37,13 +38,16 @@ export function createSegmentsRouter(segmentService: SegmentService): Router {
         return;
       }
 
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
+
       // Parse query params (onlyActive defaults to true for public API)
       const query = segmentQuerySchema.parse(req.query);
       const onlyActive = query.onlyActive !== false; // Default true
 
       const segments = await segmentService.getSegments(tenantId, onlyActive);
 
-      res.json(segments);
+      res.json(paginateArray(segments, skip, take));
     } catch (error) {
       next(error);
     }

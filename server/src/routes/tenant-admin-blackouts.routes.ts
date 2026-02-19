@@ -6,6 +6,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { Router } from 'express';
 import { createBlackoutSchema } from '../validation/tenant-admin.schemas';
+import { paginateArray } from '../lib/pagination';
 import type { TenantAdminDeps } from './tenant-admin-shared';
 
 export function registerBlackoutRoutes(router: Router, deps: TenantAdminDeps): void {
@@ -19,7 +20,7 @@ export function registerBlackoutRoutes(router: Router, deps: TenantAdminDeps): v
    * GET /v1/tenant-admin/blackouts
    * List all blackout dates for authenticated tenant
    */
-  router.get('/blackouts', async (_req: Request, res: Response, next: NextFunction) => {
+  router.get('/blackouts', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -27,6 +28,9 @@ export function registerBlackoutRoutes(router: Router, deps: TenantAdminDeps): v
         return;
       }
       const tenantId = tenantAuth.tenantId;
+
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
 
       // Need to fetch full records with IDs
       // Type assertion needed because BlackoutRepository interface doesn't expose prisma
@@ -56,7 +60,7 @@ export function registerBlackoutRoutes(router: Router, deps: TenantAdminDeps): v
         ...(b.reason && { reason: b.reason }),
       }));
 
-      res.json(blackouts);
+      res.json(paginateArray(blackouts, skip, take));
     } catch (error) {
       next(error);
     }

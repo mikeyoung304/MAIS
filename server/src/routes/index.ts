@@ -84,6 +84,7 @@ import {
   agentSessionLimiter,
   customerChatLimiter,
 } from '../middleware/rateLimiter';
+import { paginateArray } from '../lib/pagination';
 import { logger } from '../lib/core/logger';
 import type { StripeConnectService } from '../services/stripe-connect.service';
 import type { StripePaymentAdapter } from '../adapters/stripe.adapter';
@@ -175,11 +176,14 @@ export function createV1Router(
   createExpressEndpoints(
     Contracts,
     s.router(Contracts, {
-      getTiers: async ({ req }: { req: any }) => {
+      getTiers: async ({ req, query }: { req: any; query: { skip?: number; take?: number } }) => {
         const tenantId = getTenantId(req as TenantRequest);
         if (!services) throw new Error('Services not initialized');
         const tiers = await services.catalog.getAllTiers(tenantId);
-        return { status: 200 as const, body: tiers };
+        return {
+          status: 200 as const,
+          body: paginateArray(tiers, query?.skip ?? 0, query?.take ?? 50),
+        };
       },
 
       getTierBySlug: async ({ req, params }: { req: any; params: { slug: string } }) => {
@@ -253,11 +257,18 @@ export function createV1Router(
         return { status: 204 as const, body: undefined };
       },
 
-      platformGetAllTenants: async ({ query }: { query?: { includeTest?: 'true' | 'false' } }) => {
+      platformGetAllTenants: async ({
+        query,
+      }: {
+        query?: { includeTest?: 'true' | 'false'; skip?: number; take?: number };
+      }) => {
         // Auth middleware applied via app.use('/v1/admin/tenants', authMiddleware)
         const includeTestTenants = query?.includeTest === 'true';
         const data = await controllers.platformAdmin.getAllTenants(includeTestTenants);
-        return { status: 200 as const, body: { tenants: data } };
+        return {
+          status: 200 as const,
+          body: paginateArray(data, query?.skip ?? 0, query?.take ?? 50),
+        };
       },
 
       platformCreateTenant: async ({ body: _body }: { body: unknown }) => {
@@ -302,16 +313,19 @@ export function createV1Router(
         return { status: 200 as const, body: data };
       },
 
-      adminGetBlackouts: async () => {
+      adminGetBlackouts: async ({ query }: { query: { skip?: number; take?: number } }) => {
         // Auth middleware applied via app.use('/v1/admin/blackouts', authMiddleware)
         const data = await controllers.blackouts.getBlackouts();
-        return { status: 200 as const, body: data };
+        return {
+          status: 200 as const,
+          body: paginateArray(data, query?.skip ?? 0, query?.take ?? 50),
+        };
       },
 
       adminCreateBlackout: async ({ body }: { body: { date: string; reason?: string } }) => {
         // Auth middleware applied via app.use('/v1/admin/blackouts', authMiddleware)
         const data = await controllers.blackouts.createBlackout(body);
-        return { status: 200 as const, body: data };
+        return { status: 201 as const, body: data };
       },
 
       adminCreateAddOn: async ({
@@ -328,7 +342,7 @@ export function createV1Router(
           tierId: params.tierId,
         });
         return {
-          status: 200 as const,
+          status: 201 as const,
           body: {
             id: addOn.id,
             tierId: addOn.tierId,

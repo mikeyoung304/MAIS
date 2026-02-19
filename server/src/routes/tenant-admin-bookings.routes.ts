@@ -7,6 +7,7 @@ import type { Request, Response, NextFunction } from 'express';
 import type { Router } from 'express';
 import { logger } from '../lib/core/logger';
 import { bookingQuerySchema } from '../validation/tenant-admin.schemas';
+import { paginateArray } from '../lib/pagination';
 import { getTenantId } from './tenant-admin-shared';
 import type { TenantAdminDeps } from './tenant-admin-shared';
 
@@ -30,6 +31,9 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
         return;
       }
       const tenantId = tenantAuth.tenantId;
+
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
 
       const query = bookingQuerySchema.parse(req.query);
       let bookings = await bookingService.getAllBookings(tenantId);
@@ -62,7 +66,7 @@ export function registerBookingRoutes(router: Router, deps: TenantAdminDeps): vo
         createdAt: booking.createdAt,
       }));
 
-      res.json(bookingsDto);
+      res.json(paginateArray(bookingsDto, skip, take));
     } catch (error) {
       next(error);
     }
