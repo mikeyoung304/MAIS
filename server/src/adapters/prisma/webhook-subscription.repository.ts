@@ -6,6 +6,7 @@
 import type { PrismaClient } from '../../generated/prisma/client';
 import type { WebhookSubscriptionRepository } from '../../lib/ports';
 import { logger } from '../../lib/core/logger';
+import { QueryLimits } from '../../lib/core/query-limits';
 import { NotFoundError } from '../../lib/errors';
 
 export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionRepository {
@@ -73,7 +74,7 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
     const subscriptions = await this.prisma.webhookSubscription.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      take: QueryLimits.CATALOG_MAX,
       select: {
         id: true,
         tenantId: true,
@@ -144,7 +145,7 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
           has: eventType, // Array contains check
         },
       },
-      take: 100,
+      take: QueryLimits.CATALOG_MAX,
       select: {
         id: true,
         url: true,

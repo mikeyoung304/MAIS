@@ -1,23 +1,24 @@
 # Supabase Integration Guide
 
-**Last Updated:** October 29, 2025
-**Status:** ✅ Production Ready
-**Project:** MAIS Wedding Booking Platform
+**Last Updated:** February 18, 2026
+**Status:** Production Ready
+**Plan:** Pro (Build2 org)
+**Project:** MAIS — Multi-Tenant Membership Platform
 
 ---
 
 ## Overview
 
-MAIS uses **Supabase** as its production PostgreSQL database with built-in connection pooling, automatic backups, and high availability.
+MAIS uses **Supabase Pro** as its production PostgreSQL database with connection pooling, automatic backups, storage, and high availability.
 
-**Integration Type:** Database Only (Simple)
+**Integration Type:** Database + Storage
 
-- ✅ PostgreSQL database with connection pooling
-- ✅ Automatic backups (7-day point-in-time recovery)
-- ✅ SSL/TLS encryption enforced
-- ❌ Not using Supabase Auth (keeping JWT)
-- ❌ Not using Supabase Storage (future enhancement)
-- ❌ Not using Supabase Realtime (future enhancement)
+- PostgreSQL database with PgBouncer connection pooling (200 pooler connections)
+- Automatic daily backups (7-day point-in-time recovery)
+- SSL/TLS encryption enforced
+- Storage: `images` bucket for tenant storefront assets
+- Not using Supabase Auth (keeping JWT)
+- Not using Supabase Realtime
 
 ---
 
@@ -26,20 +27,26 @@ MAIS uses **Supabase** as its production PostgreSQL database with built-in conne
 ### Environment Variables
 
 ```bash
-# Supabase Database
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres"
-DIRECT_URL="postgresql://postgres:[PASSWORD]@db.gpyvdknhmevcfdbgtqir.supabase.co:5432/postgres"
+# Supabase Database (Transaction Mode pooler — port 5432)
+DATABASE_URL="postgresql://postgres.[REF]:[PASSWORD]@aws-1-us-east-2.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=5"
 
-# Supabase API (optional - for future features)
-SUPABASE_URL="https://gpyvdknhmevcfdbgtqir.supabase.co"
+# Direct connection (for Prisma migrations — requires IPv4 add-on or IPv6 network)
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres"
+
+# Supabase API
+SUPABASE_URL="https://[REF].supabase.co"
 SUPABASE_ANON_KEY="eyJhbGc..."
 SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."
+
+# Connection limit per Prisma instance (default: 5)
+DATABASE_CONNECTION_LIMIT=5
 ```
 
 **Important:**
 
 - Password special characters must be URL-encoded (@ = %40)
-- Both DATABASE_URL and DIRECT_URL use port 5432 (transaction mode)
+- `DATABASE_URL` uses the Transaction Mode pooler (port 5432, `?pgbouncer=true`)
+- `DIRECT_URL` uses the direct connection (for migrations only)
 - Never commit `.env` file to git
 
 ### Prisma Configuration
@@ -52,41 +59,84 @@ datasource db {
 }
 ```
 
-The `directUrl` is required for migrations to work correctly with Supabase's connection pooling.
+The `directUrl` is required for migrations — Prisma uses it to bypass the connection pooler for DDL operations.
+
+---
+
+## Connection Pooling
+
+### Supabase Pro Limits
+
+| Connection Type           | Limit   | Port | Use Case                          |
+| ------------------------- | ------- | ---- | --------------------------------- |
+| Pooler (Transaction Mode) | **200** | 5432 | Application queries via Prisma    |
+| Pooler (Session Mode)     | 200     | 6543 | Long-lived connections (not used) |
+| Direct                    | **60**  | 5432 | Migrations, `prisma db push`      |
+
+### Application Configuration
+
+```
+DATABASE_CONNECTION_LIMIT=5  (per Prisma instance)
+```
+
+With 200 pooler connections available, even 10 Render instances x 5 connections = 50, well within limits. Increase to 10 for high-concurrency workloads.
+
+**Monitoring:** Dashboard > Reports > Database to check active connection counts.
+
+---
+
+## Storage
+
+### `images` Bucket
+
+Used for tenant storefront images (hero photos, about section, gallery).
+
+**Access pattern:**
+
+- **Uploads:** Server-side only via `SUPABASE_SERVICE_ROLE_KEY` in `upload.adapter.ts`
+- **Reads:** Public via signed URLs (1-year expiry)
+- **File size limit:** 5 MB (increase to 10 MB for high-res hero images via Dashboard)
+
+### RLS Policies (apply via SQL Editor)
+
+```sql
+-- Only service_role can INSERT (server-side uploads only)
+CREATE POLICY "Service role uploads only"
+ON storage.objects FOR INSERT
+TO service_role
+WITH CHECK (bucket_id = 'images');
+
+-- Only service_role can DELETE
+CREATE POLICY "Service role deletes only"
+ON storage.objects FOR DELETE
+TO service_role
+USING (bucket_id = 'images');
+
+-- Public read (signed URLs handle time-limited auth)
+CREATE POLICY "Public read via signed URLs"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'images');
+```
 
 ---
 
 ## Schema Deployment
 
-### Initial Setup
-
-**Method 1: Manual (SQL Editor)**
-
-1. Go to Supabase Dashboard → SQL Editor
-2. Run `/server/prisma/migrations/00_supabase_reset.sql`
-3. Run `/server/prisma/seed.sql`
-
-**Method 2: Prisma Migrate (when CLI access works)**
+### Prisma Migrate (preferred)
 
 ```bash
 cd server
-npx prisma migrate deploy
-npm run db:seed
+npx prisma migrate deploy    # Apply pending migrations
+npm run db:seed              # Seed initial data
 ```
 
-### Schema Features
+Requires `DIRECT_URL` to be accessible (IPv4 add-on or IPv6-capable network).
 
-**Critical Constraints:**
+### Manual (SQL Editor fallback)
 
-- ✅ `Booking.date` - **UNIQUE** constraint prevents double-booking
-- ✅ `Payment.processorId` - **UNIQUE** constraint prevents duplicate webhook processing
-- ✅ `User.passwordHash` - **NOT NULL** for admin authentication
-
-**Performance Indexes:**
-
-- `Booking.date` - Fast availability lookups
-- `Payment.processorId` - Fast Stripe webhook verification
-- `BlackoutDate.date` - Fast blackout checking
+1. Go to Supabase Dashboard > SQL Editor
+2. Run the migration SQL files in order from `server/prisma/migrations/`
 
 ---
 
@@ -94,89 +144,29 @@ npm run db:seed
 
 ### From Application
 
-The app connects via Prisma Client:
-
 ```typescript
 import { PrismaClient } from '@/generated/prisma';
 const prisma = new PrismaClient();
 
-// All queries go through Supabase connection pooling
-const packages = await prisma.package.findMany();
+// All queries go through Supabase PgBouncer pooling
+// CRITICAL: Always filter by tenantId (multi-tenant isolation)
+const tiers = await prisma.tier.findMany({
+  where: { tenantId, active: true },
+  take: 100,
+});
 ```
 
 ### From Supabase Dashboard
 
-**SQL Editor:**
-
-- Run ad-hoc queries
-- View data directly
-- Execute migrations manually
-
-**Table Editor:**
-
-- Visual data browsing
-- Quick edits (use cautiously)
-- Export data as CSV
-
----
-
-## Seeded Data
-
-The seed script creates:
-
-| Resource            | Count | Details                                            |
-| ------------------- | ----- | -------------------------------------------------- |
-| Admin User          | 1     | `admin@example.com` / `admin`                      |
-| Packages            | 3     | Classic ($2,500), Garden ($3,500), Luxury ($5,500) |
-| Add-Ons             | 4     | Photography, Officiant, Bouquet, Violinist         |
-| Package-AddOn Links | 8     | All addons linked to Classic & Garden              |
-| Blackout Dates      | 1     | Christmas 2025                                     |
-
----
-
-## Connection Pooling
-
-**Supabase provides:**
-
-- **Transaction Mode** (port 5432) - Used by default
-- **Session Mode** (port 6543) - Available but not used
-
-**Current Setup:**
-
-- Uses port 5432 (transaction mode)
-- Supports up to 100 concurrent connections (free tier)
-- No additional pgBouncer setup required
+- **SQL Editor:** Ad-hoc queries, manual migrations
+- **Table Editor:** Visual data browsing (use cautiously in production)
 
 ---
 
 ## Backups
 
-**Automatic Backups:**
-
-- Daily full backups
-- 7-day retention (free tier)
-- Point-in-time recovery available
-
-**Manual Backup:**
-
-```bash
-# Via Supabase Dashboard → Database → Backups
-# Or via pg_dump:
-pg_dump $DATABASE_URL > backup.sql
-```
-
----
-
-## Monitoring
-
-**Supabase Dashboard provides:**
-
-- ✅ Query performance metrics
-- ✅ Connection pool usage
-- ✅ Database size tracking
-- ✅ Active queries view
-
-**Access:** Project Dashboard → Reports
+- **Automatic:** Daily full backups, 7-day point-in-time recovery (Pro plan)
+- **Manual:** Dashboard > Database > Backups, or `pg_dump $DIRECT_URL > backup.sql`
 
 ---
 
@@ -184,166 +174,115 @@ pg_dump $DATABASE_URL > backup.sql
 
 ### Creating New Migrations
 
-**Manual Method (Recommended for Supabase):**
-
-1. Create SQL file: `server/prisma/migrations/YYYYMMDD_description.sql`
-2. Test in Supabase SQL Editor
-3. Deploy via SQL Editor
-4. Update Prisma schema to match
-5. Run `npx prisma generate`
-
-**Prisma Method (when CLI works):**
-
 ```bash
-npx prisma migrate dev --name add_feature
-npx prisma migrate deploy
+# Standard — generates and applies migration
+npx prisma migrate dev --name descriptive_name --schema server/prisma/schema.prisma
+
+# Custom SQL — generates migration file for manual editing
+npx prisma migrate dev --create-only --name descriptive_name --schema server/prisma/schema.prisma
 ```
 
 ### Migration Best Practices
 
 ```sql
--- Always use IF EXISTS / IF NOT EXISTS
-ALTER TABLE "Booking"
-  ADD COLUMN IF NOT EXISTS "newField" TEXT;
+-- Always use IF EXISTS / IF NOT EXISTS for idempotency
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "newField" TEXT;
 
--- Use transactions for multiple changes
+-- Use transactions for multi-step changes
 BEGIN;
   -- changes here
 COMMIT;
 
--- Add indexes after table creation
-CREATE INDEX IF NOT EXISTS "idx_name" ON "Table"("column");
+-- Add indexes concurrently for zero-downtime on large tables
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_name" ON "Table"("column");
 ```
 
 ---
 
 ## Security
 
-### Credentials Management
+### Credentials
 
-**Production:**
-
-- ❌ Never hardcode credentials
-- ✅ Use environment variables only
-- ✅ Rotate passwords quarterly
-- ✅ Use separate credentials per environment
-
-**Local Development:**
-
-- Keep separate `.env` file (not committed)
-- Use Supabase test project (not production)
+- Never hardcode credentials — use environment variables only
+- Rotate passwords quarterly
+- Separate credentials per environment (dev/staging/prod)
 
 ### Access Control
 
-**Database Level:**
+- Supabase enforces SSL/TLS on all connections
+- Prisma queries run as `postgres` role
+- Multi-tenant isolation enforced at application layer (all queries scoped by `tenantId`)
+- Storage bucket protected by RLS policies (service_role only for writes)
 
-- Supabase enforces SSL/TLS
-- IP restrictions available (paid tiers)
-- Role-based access via Supabase dashboard
+---
 
-**Application Level:**
+## Monitoring
 
-- Prisma queries run as postgres role
-- No Row-Level Security (RLS) used (single-tenant app)
-- JWT authentication in app layer
+**Supabase Dashboard provides:**
+
+- Query performance metrics (Dashboard > Reports)
+- Connection pool usage
+- Database size tracking
+- Active queries view
+- Performance Advisor (index recommendations)
+- Security Advisor (extension placement, RLS gaps)
 
 ---
 
 ## Troubleshooting
 
-### Connection Issues
+### "Can't reach database server" / P1001
 
-**"Can't reach database server" / P1001 Error**
-
-- Check Supabase project status (paused?)
-- Verify password URL-encoding (@ = %40)
-- Test connection in SQL Editor first
-- **Most common cause: IPv6 not supported on your network**
-
-**IPv6 Connection Fix (RECOMMENDED):**
-
-Supabase direct connections (`db.*.supabase.co`) are **IPv6-only**. If your network doesn't support IPv6, use the **Session Pooler** instead:
-
-1. Go to Supabase Dashboard → Connect → Session Pooler
-2. Update your `.env`:
-
-```bash
-# Before (IPv6-only - fails on many networks)
-DATABASE_URL=postgresql://postgres:[PASS]@db.[REF].supabase.co:5432/postgres
-
-# After (IPv4 + IPv6 - works everywhere)
-DATABASE_URL=postgresql://postgres.[REF]:[PASS]@aws-1-us-east-2.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=5
-```
-
-**Key differences:**
-
-- Hostname: `db.[REF].supabase.co` → `aws-1-[REGION].pooler.supabase.com`
-- Username: `postgres` → `postgres.[REF]`
-- Add: `?pgbouncer=true&connection_limit=5`
+1. Check Supabase project status (paused?)
+2. Verify password URL-encoding (@ = %40)
+3. Test connection in SQL Editor first
+4. If using direct connection: dedicated IPv4 was enabled Feb 2026, resolving most direct connection issues. If still failing, ensure the IPv4 add-on is active or that your network supports IPv6
 
 See full guide: [docs/solutions/database-issues/supabase-ipv6-session-pooler-connection.md](../solutions/database-issues/supabase-ipv6-session-pooler-connection.md)
 
-**"Too many connections"**
+### "Too many connections"
 
-- Increase connection pool limit in DATABASE_URL
-- Check for connection leaks in code
-- Use `prisma.$disconnect()` properly
+- Check `DATABASE_CONNECTION_LIMIT` in `.env` (default: 5)
+- Monitor pool usage in Dashboard > Reports > Database
+- Ensure `prisma.$disconnect()` is called on shutdown
 
 ### Migration Issues
 
-**"Migration already applied"**
-
-- Supabase tracks migrations in `_prisma_migrations` table
+- Prisma tracks migrations in `_prisma_migrations` table
+- If CLI can't connect, apply via SQL Editor manually
 - Use `--skip-seed` if data already exists
-- Run migrations via SQL Editor manually
 
 ---
 
-## Future Enhancements
+## Performance Tuning
 
-### Phase 3: Storage Integration
+### Recommended Compute
 
-```typescript
-// Photo uploads for wedding packages
-import { createClient } from '@supabase/supabase-js';
+| Setting   | Value                        | Notes                       |
+| --------- | ---------------------------- | --------------------------- |
+| Compute   | Micro (1 GB RAM, 2-core ARM) | Included in Pro             |
+| IPv4      | Dedicated ($4/mo)            | Eliminates IPv6 workarounds |
+| Spend Cap | User's choice                | Enables disk auto-scaling   |
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+### Indexes
 
-await supabase.storage.from('package-photos').upload(`${packageId}/hero.jpg`, file);
-```
-
-### Phase 4: Realtime (Optional)
-
-```typescript
-// Live booking updates for admin dashboard
-supabase
-  .channel('bookings')
-  .on(
-    'postgres_changes',
-    {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'Booking',
-    },
-    (payload) => {
-      console.log('New booking!', payload);
-    }
-  )
-  .subscribe();
-```
+FK indexes are maintained in `schema.prisma`. The Performance Advisor may flag additional opportunities — always add indexes via Prisma migrations (not raw SQL) to keep schema in sync.
 
 ---
 
-## Support
+## Vector Extension
 
-**Supabase Documentation:** https://supabase.com/docs
-**Prisma + Supabase Guide:** https://www.prisma.io/docs/guides/database/supabase
+The `vector` extension (pgvector) is used for vocabulary embeddings (semantic phrase matching to BlockType). As of February 2026, it resides in the `extensions` schema per Supabase Security Advisor recommendation.
 
-**Internal Docs:**
+```sql
+-- Verify placement
+SELECT extname, nspname FROM pg_extension e
+JOIN pg_namespace n ON e.extnamespace = n.oid
+WHERE extname = 'vector';
+-- Expected: vector | extensions
+```
 
-- `ENVIRONMENT.md` - Environment variables
-- `ARCHITECTURE.md` - System architecture
-- `DEVELOPING.md` - Development workflow
+The `VocabularyEmbedding.embedding` column uses `extensions.vector(768)`. Data is regenerable via `npx tsx scripts/seed-vocabulary.ts`.
 
 ---
 
@@ -351,9 +290,20 @@ supabase
 
 **Supabase Project:**
 
-- **Project Ref:** `gpyvdknhmevcfdbgtqir`
+- **Organization:** Build2
+- **Plan:** Pro
 - **Region:** US East (N. Virginia)
-- **Database:** PostgreSQL 15
-- **Plan:** Free Tier (500MB, upgradeable)
+- **Database:** PostgreSQL 15+
+- **Compute:** Micro (1 GB RAM, 2-core ARM) — upgrade via Settings > Compute and Disk
+- **Pooler Connections:** 200 (Transaction Mode)
+- **Direct Connections:** 60
 
 **Dashboard:** https://supabase.com/dashboard/project/gpyvdknhmevcfdbgtqir
+
+---
+
+## Support
+
+- **Supabase Docs:** https://supabase.com/docs
+- **Prisma + Supabase:** https://www.prisma.io/docs/guides/database/supabase
+- **Internal:** `DEVELOPING.md`, `ARCHITECTURE.md`

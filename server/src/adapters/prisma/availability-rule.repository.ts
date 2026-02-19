@@ -9,6 +9,7 @@ import type {
   CreateAvailabilityRuleData,
   UpdateAvailabilityRuleData,
 } from '../../lib/ports';
+import { QueryLimits } from '../../lib/core/query-limits';
 
 export class PrismaAvailabilityRuleRepository implements AvailabilityRuleRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -17,7 +18,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     const rules = await this.prisma.availabilityRule.findMany({
       where: { tenantId },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
-      take: 500, // Safety net: config data, bounded per tenant
+      take: QueryLimits.SCHEDULING_CONFIG_MAX, // Safety net: config data, bounded per tenant
     });
 
     return rules.map((rule) => this.mapToEntity(rule));
@@ -30,7 +31,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
         serviceId,
       },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
-      take: 500, // Safety net: config data, bounded per tenant+service
+      take: QueryLimits.SCHEDULING_CONFIG_MAX, // Safety net: config data, bounded per tenant+service
     });
 
     return rules.map((rule) => this.mapToEntity(rule));
@@ -54,7 +55,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     const rules = await this.prisma.availabilityRule.findMany({
       where,
       orderBy: { startTime: 'asc' },
-      take: 500, // Safety net: config data, bounded per tenant+day
+      take: QueryLimits.SCHEDULING_CONFIG_MAX, // Safety net: config data, bounded per tenant+day
     });
 
     return rules.map((rule) => this.mapToEntity(rule));
@@ -79,7 +80,7 @@ export class PrismaAvailabilityRuleRepository implements AvailabilityRuleReposit
     const rules = await this.prisma.availabilityRule.findMany({
       where,
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
-      take: 500, // Safety net: config data, bounded per tenant+date range
+      take: QueryLimits.SCHEDULING_CONFIG_MAX, // Safety net: config data, bounded per tenant+date range
     });
 
     return rules.map((rule) => this.mapToEntity(rule));

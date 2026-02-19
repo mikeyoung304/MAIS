@@ -12,6 +12,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 
 let supabaseServiceClient: SupabaseClient | null = null;
 let supabaseAnonClient: SupabaseClient | null = null;
@@ -28,8 +29,9 @@ let supabaseAnonClient: SupabaseClient | null = null;
  */
 export function getSupabaseClient(): SupabaseClient {
   if (!supabaseServiceClient) {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY;
+    const cfg = getConfig();
+    const url = cfg.SUPABASE_URL;
+    const key = cfg.SUPABASE_SERVICE_KEY;
 
     if (!url || !key) {
       throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY required for service client');
@@ -64,8 +66,9 @@ export function getSupabaseClient(): SupabaseClient {
  */
 export function getSupabaseAuthClient(): SupabaseClient {
   if (!supabaseAnonClient) {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_ANON_KEY;
+    const cfg = getConfig();
+    const url = cfg.SUPABASE_URL;
+    const key = cfg.SUPABASE_ANON_KEY;
 
     if (!url || !key) {
       throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY required for auth client');

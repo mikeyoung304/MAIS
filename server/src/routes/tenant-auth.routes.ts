@@ -27,7 +27,10 @@ export function createTenantAuthRoutes(tenantAuthService: TenantAuthService): Ro
     tenantAuthMiddleware,
     async (_req: Request, res: Response, next: NextFunction) => {
       try {
-        const tenantAuth = (res.locals as any).tenantAuth;
+        // tenantAuth is set by tenantAuthMiddleware on res.locals
+        const tenantAuth = res.locals.tenantAuth as
+          | { tenantId: string; slug: string; email: string }
+          | undefined;
 
         // Middleware guarantees tenantAuth exists, but check for safety
         if (!tenantAuth) {

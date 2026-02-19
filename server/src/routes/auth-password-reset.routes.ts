@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import type { UnifiedAuthRoutesOptions } from './auth-shared';
 import { signupLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { ValidationError } from '../lib/errors';
 
 export function registerPasswordResetRoutes(
@@ -61,7 +62,7 @@ export function registerPasswordResetRoutes(
           });
 
           // Generate reset URL for frontend
-          const resetUrl = `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+          const resetUrl = `${getConfig().CORS_ORIGIN}/reset-password?token=${resetToken}`;
 
           // Send password reset email
           if (mailProvider) {
@@ -94,7 +95,7 @@ export function registerPasswordResetRoutes(
                 event: 'password_reset_requested',
                 tenantId: tenant.id,
                 email: tenant.email,
-                resetUrl: process.env.NODE_ENV === 'development' ? resetUrl : '[redacted]',
+                resetUrl: getConfig().NODE_ENV === 'development' ? resetUrl : '[redacted]',
               },
               'Password reset requested (no mail provider configured)'
             );

@@ -9,6 +9,7 @@
 
 import type { Express, Request, Response } from 'express';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import type { PrismaClient } from '../generated/prisma/client';
 import type { Config } from '../lib/core/config';
 import type { HealthCheckService } from '../services/health-check.service';
@@ -34,7 +35,7 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
       timestamp: new Date().toISOString(),
       uptime,
       service: 'handled-api',
-      version: process.env.npm_package_version || 'unknown',
+      version: getConfig().npm_package_version || 'unknown',
     });
   });
 
@@ -47,6 +48,7 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
     const mode = deps.config.ADAPTERS_PRESET;
     const checks: {
       database?: { status: string; latency?: number; error?: string };
+      redis?: { status: string; latency?: number; error?: string };
       config?: { status: string; missing?: string[] };
       mode: string;
     } = { mode };
@@ -84,6 +86,17 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
           error: error instanceof Error ? error.message : 'Unknown error',
         };
         logger.error({ error }, 'Database health check failed');
+      }
+    }
+
+    // Check Redis connectivity (non-blocking — degraded Redis shouldn't block readiness)
+    if (deps.healthCheckService) {
+      try {
+        const redisResult = await deps.healthCheckService.checkRedis();
+        checks.redis = { status: redisResult.status, latency: redisResult.latency };
+        if (redisResult.error) checks.redis.error = redisResult.error;
+      } catch {
+        checks.redis = { status: 'unhealthy', error: 'Check threw unexpectedly' };
       }
     }
 
@@ -147,16 +160,21 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
     }
 
     // Run all external service checks in parallel
-    const [stripeCheck, postmarkCheck, calendarCheck] = await Promise.all([
-      deps.healthCheckService.checkStripe(),
-      deps.healthCheckService.checkPostmark(),
-      deps.healthCheckService.checkGoogleCalendar(),
-    ]);
+    const [stripeCheck, postmarkCheck, calendarCheck, redisCheck, supabaseCheck] =
+      await Promise.all([
+        deps.healthCheckService.checkStripe(),
+        deps.healthCheckService.checkPostmark(),
+        deps.healthCheckService.checkGoogleCalendar(),
+        deps.healthCheckService.checkRedis(),
+        deps.healthCheckService.checkSupabaseStorage(),
+      ]);
 
     const checks = {
       stripe: stripeCheck,
       postmark: postmarkCheck,
       googleCalendar: calendarCheck,
+      redis: redisCheck,
+      supabaseStorage: supabaseCheck,
     };
 
     // Determine overall health (unhealthy if ANY service is unhealthy)

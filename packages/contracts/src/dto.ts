@@ -21,6 +21,45 @@ const MAX_PRICE_CENTS = 99999999;
 // ============================================================================
 
 /**
+ * Hex color validation — matches #000000 through #FFFFFF (case insensitive).
+ * Used consistently across all branding schemas.
+ */
+export const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color format');
+
+/**
+ * Standard slug validation — used for all URL-safe identifiers.
+ * Rules:
+ * - Lowercase alphanumeric with hyphens only
+ * - No leading/trailing/consecutive hyphens (strict DNS-label-safe regex)
+ * - Max 63 characters (RFC 1035 DNS label limit)
+ * - Min 1 character
+ *
+ * @example Valid: "wedding-photography", "tier-1", "basic"
+ * @example Invalid: "-leading", "trailing-", "double--hyphen", "UPPER", "has spaces"
+ */
+export const SlugSchema = z
+  .string()
+  .min(1, 'Slug is required')
+  .max(63, 'Slug must be 63 characters or less')
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    'Slug must be lowercase alphanumeric with hyphens, no leading/trailing hyphens'
+  );
+
+/**
+ * Tenant slug — stricter minimum for tenant-level identifiers.
+ * Same rules as SlugSchema but requires at least 2 characters.
+ */
+export const TenantSlugSchema = z
+  .string()
+  .min(2, 'Slug must be at least 2 characters')
+  .max(63, 'Slug must be 63 characters or less')
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    'Slug must be lowercase alphanumeric with hyphens, no leading/trailing hyphens'
+  );
+
+/**
  * Customer/Couple Name Validation Schema
  * Used for all customer-facing name inputs (bookings, appointments, checkouts)
  *
@@ -41,6 +80,35 @@ const CustomerNameSchema = z
   .min(2, 'Name must be at least 2 characters')
   .max(100, 'Name must be less than 100 characters')
   .regex(/^[\p{L}\p{M}\p{Zs}'\-.]+$/u, 'Name contains invalid characters');
+
+// ============================================================================
+// Pagination Schemas
+// ============================================================================
+
+/**
+ * Standard pagination query parameters for list endpoints.
+ * All list endpoints MUST use this to prevent unbounded queries (Pitfall #13).
+ *
+ * @example GET /v1/tenant-admin/segments?skip=0&take=50
+ */
+export const PaginatedQuerySchema = z.object({
+  skip: z.coerce.number().int().min(0).default(0),
+  take: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+export type PaginatedQuery = z.infer<typeof PaginatedQuerySchema>;
+
+/**
+ * Creates a paginated response schema wrapping the given item schema.
+ * All list endpoints return this shape instead of bare arrays.
+ */
+export function createPaginatedResponseSchema<T extends z.ZodTypeAny>(itemSchema: T) {
+  return z.object({
+    items: z.array(itemSchema),
+    total: z.number().int(),
+    hasMore: z.boolean(),
+  });
+}
 
 // ============================================================================
 // Error Response Schemas
@@ -338,36 +406,37 @@ export const UpdateAddOnDtoSchema = z.object({
 
 export type UpdateAddOnDto = z.infer<typeof UpdateAddOnDtoSchema>;
 
-// Tenant Branding DTO
-export const TenantBrandingDtoSchema = z.object({
-  primaryColor: z.string().optional(),
-  secondaryColor: z.string().optional(),
-  accentColor: z.string().optional(),
-  backgroundColor: z.string().optional(),
+// ============================================================================
+// Branding Schemas (unified)
+// ============================================================================
+
+/**
+ * Shared branding color fields — used by both read and write DTOs.
+ * All colors are validated as hex (#000000-#FFFFFF).
+ */
+const BrandingColorsSchema = z.object({
+  primaryColor: HexColorSchema.optional(),
+  secondaryColor: HexColorSchema.optional(),
+  accentColor: HexColorSchema.optional(),
+  backgroundColor: HexColorSchema.optional(),
+});
+
+/**
+ * Tenant branding DTO (read) — returned when fetching branding config.
+ * `logo` is the legacy field name for the logo URL.
+ */
+export const TenantBrandingDtoSchema = BrandingColorsSchema.extend({
   fontFamily: z.string().optional(),
   logo: z.string().url().optional(),
 });
 
 export type TenantBrandingDto = z.infer<typeof TenantBrandingDtoSchema>;
 
-// Update Tenant Branding DTO (for tenant admin)
-export const UpdateBrandingDtoSchema = z.object({
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/)
-    .optional(),
-  secondaryColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/)
-    .optional(),
-  accentColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/)
-    .optional(),
-  backgroundColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/)
-    .optional(),
+/**
+ * Update branding DTO (write) — sent when updating branding config.
+ * `fontPreset` selects from predefined font families.
+ */
+export const UpdateBrandingDtoSchema = BrandingColorsSchema.extend({
   fontPreset: z.string().optional(),
 });
 
@@ -517,11 +586,7 @@ export type TierDto = z.infer<typeof TierDtoSchema>;
 export const CreateTierDtoSchema = z.object({
   segmentId: z.string().min(1),
   sortOrder: z.number().int().min(1).max(10),
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  slug: SlugSchema,
   name: z.string().min(1).max(100),
   description: z.string().max(2000).optional(),
   priceCents: z
@@ -552,12 +617,7 @@ export type CreateTierDto = z.infer<typeof CreateTierDtoSchema>;
 
 export const UpdateTierDtoSchema = z.object({
   sortOrder: z.number().int().min(1).max(10).optional(),
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only')
-    .optional(),
+  slug: SlugSchema.optional(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(2000).optional(),
   priceCents: z
@@ -608,11 +668,7 @@ export const SegmentDtoSchema = z.object({
 export type SegmentDto = z.infer<typeof SegmentDtoSchema>;
 
 export const CreateSegmentDtoSchema = z.object({
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  slug: SlugSchema,
   name: z.string().min(1).max(100),
   heroTitle: z.string().min(1).max(200),
   heroSubtitle: z.string().max(300).optional(),
@@ -627,12 +683,7 @@ export const CreateSegmentDtoSchema = z.object({
 export type CreateSegmentDto = z.infer<typeof CreateSegmentDtoSchema>;
 
 export const UpdateSegmentDtoSchema = z.object({
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only')
-    .optional(),
+  slug: SlugSchema.optional(),
   name: z.string().min(1).max(100).optional(),
   heroTitle: z.string().min(1).max(200).optional(),
   heroSubtitle: z.string().max(300).optional(),
@@ -649,11 +700,7 @@ export type UpdateSegmentDto = z.infer<typeof UpdateSegmentDtoSchema>;
 // Platform Admin - Tenant Management DTOs
 
 export const CreateTenantDtoSchema = z.object({
-  slug: z
-    .string()
-    .min(2, 'Slug must be at least 2 characters')
-    .max(50, 'Slug must be less than 50 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  slug: TenantSlugSchema,
   name: z.string().min(2, 'Name is required').max(100, 'Name must be less than 100 characters'),
   email: z.string().email('Invalid email format').optional(),
   commissionPercent: z
@@ -676,7 +723,10 @@ export const UpdateTenantDtoSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   email: z.string().email().optional(),
   commissionPercent: z.number().min(0).max(100).optional(),
-  branding: z.record(z.string(), z.any()).optional(), // JSON object
+  branding: BrandingColorsSchema.extend({
+    fontFamily: z.string().optional(),
+    logoUrl: z.string().url().optional(),
+  }).optional(),
   isActive: z.boolean().optional(),
   stripeAccountId: z.string().optional(),
   stripeOnboarded: z.boolean().optional(),
@@ -759,11 +809,7 @@ export const PublicServiceDtoSchema = ServiceDtoSchema.omit({ tenantId: true });
 export type PublicServiceDto = z.infer<typeof PublicServiceDtoSchema>;
 
 export const CreateServiceDtoSchema = z.object({
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only'),
+  slug: SlugSchema,
   name: z.string().min(1).max(100),
   description: z.string().max(2000).optional(),
   durationMinutes: z.number().int().positive().min(5).max(480), // 5 min to 8 hours
@@ -781,12 +827,7 @@ export const CreateServiceDtoSchema = z.object({
 export type CreateServiceDto = z.infer<typeof CreateServiceDtoSchema>;
 
 export const UpdateServiceDtoSchema = z.object({
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric + hyphens only')
-    .optional(),
+  slug: SlugSchema.optional(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(2000).optional(),
   durationMinutes: z.number().int().positive().min(5).max(480).optional(),
@@ -936,10 +977,7 @@ export type AppointmentCheckoutResponseDto = z.infer<typeof AppointmentCheckoutR
 // Public Tenant DTOs (for storefront routing)
 // ============================================================================
 
-/**
- * Hex color validation regex - matches #000000 through #FFFFFF (case insensitive)
- */
-const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color format');
+// HexColorSchema is defined in the Shared Validation Schemas section above.
 
 /**
  * Allowed font families for tenant branding

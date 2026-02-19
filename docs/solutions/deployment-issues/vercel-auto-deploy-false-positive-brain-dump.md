@@ -231,6 +231,6 @@ cat .github/workflows/deploy-production.yml | grep -A 5 "on:"
 5. **Verify git log matches production behavior** - `git log main --online -n 10` shows what SHOULD be deployed, test production to confirm it IS deployed
 6. **Disabled GitHub Actions ≠ disabled auto-deploy** - Workflow file on/off is separate from Vercel/Render integration
 7. **Hard refresh + clear localStorage before declaring feature broken** - Many "broken" features are just stale client state
-8. **Read error messages for feature names** - Error mentioning "slot machine" when slot machine was deleted 3 commits ago = stale error, ignore it
+8. **Read error messages for feature names** - Error mentioning "slot machine" when slot machine was deleted in early February 2026 = stale error, ignore it
 9. **Network tab > Console tab for API verification** - Console may lie (cached errors), network tab shows actual requests/responses
 10. **When GitHub Actions fails: check if alternative deploy method exists** - Vercel GitHub integration, Render auto-deploy, manual scripts in package.json

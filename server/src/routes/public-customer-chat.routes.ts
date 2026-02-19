@@ -22,6 +22,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { CustomerAgentService } from '../services/customer-agent.service';
 import type { TenantOnboardingService } from '../services/tenant-onboarding.service';
 
@@ -124,7 +125,7 @@ export function createPublicCustomerChatRoutes(deps: PublicCustomerChatDeps): Ro
       }
 
       // Check if LLM API is configured (Vertex AI via ADC)
-      const apiKeyConfigured = !!process.env.GOOGLE_VERTEX_PROJECT;
+      const apiKeyConfigured = !!getConfig().GOOGLE_VERTEX_PROJECT;
 
       // Check if tenant has chat enabled
       const chatInfo = await tenantOnboarding.getTenantChatInfo(tenantId);

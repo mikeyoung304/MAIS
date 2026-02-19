@@ -15,6 +15,7 @@
 import type { Express, Request, Response, NextFunction } from 'express';
 import { register, collectDefaultMetrics, Counter, Gauge } from 'prom-client';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { timingSafeCompare } from '../lib/timing-safe';
 
 /**
@@ -29,7 +30,7 @@ import { timingSafeCompare } from '../lib/timing-safe';
  * - In development: Allows access with a warning log
  */
 function metricsAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const expectedToken = process.env.METRICS_BEARER_TOKEN;
+  const expectedToken = getConfig().METRICS_BEARER_TOKEN;
 
   // If token is configured, require it
   if (expectedToken) {
@@ -62,7 +63,7 @@ function metricsAuthMiddleware(req: Request, res: Response, next: NextFunction):
   }
 
   // Token not configured
-  if (process.env.NODE_ENV === 'production') {
+  if (getConfig().NODE_ENV === 'production') {
     // In production, refuse to expose metrics without auth
     logger.error('METRICS_BEARER_TOKEN not configured - metrics endpoint disabled in production');
     res.status(403).json({
@@ -170,7 +171,7 @@ export function registerMetricsRoutes(app: Express, deps: MetricsDeps): void {
 
         // Service metadata
         service: 'handled-api',
-        version: process.env.npm_package_version || 'unknown',
+        version: getConfig().npm_package_version || 'unknown',
         node_version: process.version,
       };
 

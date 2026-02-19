@@ -15,9 +15,10 @@ import type {
 import type { Tier, TierPhoto, AddOn } from '../../lib/entities';
 import { DomainError } from '../../lib/errors';
 import { NotFoundError } from '../../lib/errors/http';
+import { QueryLimits } from '../../lib/core/query-limits';
 
-const DEFAULT_PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = QueryLimits.DEFAULT_PAGE_SIZE;
+const MAX_PAGE_SIZE = QueryLimits.CATALOG_MAX;
 
 export class PrismaCatalogRepository implements CatalogRepository {
   constructor(private readonly prisma: PrismaClient) {}

@@ -348,21 +348,6 @@ export const selectCompletionPercentage = (state: RefinementState) =>
   state.totalSections > 0 ? (state.completedSections.length / state.totalSections) * 100 : 0;
 
 /**
- * Select completion progress as an object.
- *
- * @deprecated Returns a new object on every call, causing unnecessary re-renders
- * with Zustand's default === equality check (Pitfall #87). Use the individual
- * primitive selectors instead: selectCompletedCount, selectTotalSections,
- * selectCompletionPercentage.
- */
-export const selectProgress = (state: RefinementState) => ({
-  completed: state.completedSections.length,
-  total: state.totalSections,
-  percentage:
-    state.totalSections > 0 ? (state.completedSections.length / state.totalSections) * 100 : 0,
-});
-
-/**
  * Select loading state
  */
 export const selectIsLoading = (state: RefinementState) => state.isLoading;

@@ -10,6 +10,7 @@ import type { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { logger } from '../lib/core/logger';
+import { QueryLimits } from '../lib/core/query-limits';
 import { handleError, TenantIdSchema, slugify } from './internal-agent-shared';
 import type { MarketingRoutesDeps } from './internal-agent-shared';
 
@@ -95,7 +96,7 @@ export function registerTierRoutes(router: Router, deps: MarketingRoutesDeps): v
             where,
             include: { segment: { select: { name: true } } },
             orderBy: [{ segmentId: 'asc' }, { sortOrder: 'asc' }],
-            take: 100, // pitfall #13: bounded query
+            take: QueryLimits.CATALOG_MAX, // pitfall #13: bounded query
           });
 
           const formatted = tiers.map((t) => ({

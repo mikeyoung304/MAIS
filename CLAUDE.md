@@ -44,12 +44,12 @@ packages/
 
 ```typescript
 // CORRECT - Tenant-scoped
-const packages = await prisma.package.findMany({
+const tiers = await prisma.tier.findMany({
   where: { tenantId, active: true },
 });
 
 // WRONG - Security vulnerability
-const packages = await prisma.package.findMany({
+const tiers = await prisma.tier.findMany({
   where: { active: true },
 });
 ```
@@ -102,6 +102,18 @@ For detailed architecture documentation, search or read these files when working
 | research-agent | `research-agent`  | —     | Web research (unchanged)                                        |
 
 **Key Files:** Service registry at `server/src/agent-v2/deploy/SERVICE_REGISTRY.md`
+
+### SectionContent BlockType Enum
+
+The `BlockType` enum defines the types of content sections available for storefronts:
+
+`HERO` | `ABOUT` | `SERVICES` | `PRICING` | `TESTIMONIALS` | `FAQ` | `CONTACT` | `CTA` | `GALLERY` | `CUSTOM`
+
+### Build Mode vs Customer Mode
+
+- **Build mode** = storefront editor (tenant-agent). Tenant sees draft sections and can edit via AI chat.
+- **Customer mode** = public storefront view. Visitors see only published sections.
+- `SectionContent.isDraft` controls visibility: `true` = draft (build mode only), `false` = published (public).
 
 ## Development Workflow
 
@@ -201,7 +213,7 @@ server/src/
 
 ## Environment
 
-Required: `JWT_SECRET`, `TENANT_SECRETS_ENCRYPTION_KEY`, `DATABASE_URL`
+Required: `JWT_SECRET`, `TENANT_SECRETS_ENCRYPTION_KEY`, `DATABASE_URL`, `DIRECT_URL` (bypasses connection pooler for Prisma migrations)
 
 Optional: `POSTMARK_SERVER_TOKEN`, `STRIPE_SECRET_KEY`
 

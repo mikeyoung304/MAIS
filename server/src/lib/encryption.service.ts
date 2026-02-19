@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { getConfig } from './core/config';
 
 /**
  * Encryption service for tenant secrets (Stripe keys, API secrets, etc.)
@@ -22,7 +23,7 @@ export class EncryptionService {
   private readonly key: Buffer;
 
   constructor() {
-    const masterKey = process.env.TENANT_SECRETS_ENCRYPTION_KEY;
+    const masterKey = getConfig().TENANT_SECRETS_ENCRYPTION_KEY;
 
     if (!masterKey) {
       throw new Error(

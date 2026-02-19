@@ -54,6 +54,9 @@ vi.mock('google-auth-library', () => ({
   })),
 }));
 
+// Import config reset for singleton invalidation after process.env changes
+import { resetConfig } from '../../src/lib/core/config';
+
 // Import after mocks
 import {
   CustomerAgentService,
@@ -180,8 +183,9 @@ describe('CustomerAgentService', () => {
     // Setup mock fetch for ADK
     global.fetch = vi.fn().mockResolvedValue(mockFetchResponse({ id: 'adk_session_123' }));
 
-    // Set required env var
+    // Set required env var and reset config singleton so getConfig() picks it up
     process.env.CUSTOMER_AGENT_URL = 'https://customer-agent.example.com';
+    resetConfig();
 
     // Create service
     service = createCustomerAgentService(mockPrisma);
@@ -190,6 +194,7 @@ describe('CustomerAgentService', () => {
   afterEach(() => {
     global.fetch = originalFetch;
     delete process.env.CUSTOMER_AGENT_URL;
+    resetConfig();
   });
 
   // ===========================================================================

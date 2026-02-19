@@ -6,6 +6,7 @@
  */
 
 import type { SubscriptionTier } from '../generated/prisma/client';
+import { getConfig } from '../lib/core/config';
 
 /**
  * Tier limits configuration
@@ -27,11 +28,17 @@ export const TIER_LIMITS = {
  * 2. Create "Handled Starter" product with $49/month recurring price
  * 3. Create "Handled Growth" product with $150/month recurring price
  * 4. Copy price IDs (price_xxx) to .env
+ *
+ * Uses getter to avoid module-level process.env read — reads from validated config on access.
  */
-export const STRIPE_PRICES = {
-  STARTER: process.env.STRIPE_STARTER_PRICE_ID ?? '',
-  PRO: process.env.STRIPE_PRO_PRICE_ID ?? '',
-} as const;
+export const STRIPE_PRICES: Record<'STARTER' | 'PRO', string> = {
+  get STARTER() {
+    return getConfig().STRIPE_STARTER_PRICE_ID ?? '';
+  },
+  get PRO() {
+    return getConfig().STRIPE_PRO_PRICE_ID ?? '';
+  },
+};
 
 /**
  * Type alias for tier names

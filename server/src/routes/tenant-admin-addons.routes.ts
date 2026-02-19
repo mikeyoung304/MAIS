@@ -8,6 +8,7 @@ import type { Router } from 'express';
 import { CreateAddOnDtoSchema, UpdateAddOnDtoSchema } from '@macon/contracts';
 import type { AddOn } from '../lib/entities';
 import { addonReadLimiter, addonWriteLimiter } from '../middleware/rateLimiter';
+import { paginateArray } from '../lib/pagination';
 import { getTenantId, requireAuth } from './tenant-admin-shared';
 import type { TenantAdminDeps } from './tenant-admin-shared';
 
@@ -38,7 +39,7 @@ export function registerAddonRoutes(router: Router, deps: TenantAdminDeps): void
   router.get(
     '/addons',
     addonReadLimiter,
-    async (_req: Request, res: Response, next: NextFunction) => {
+    async (req: Request, res: Response, next: NextFunction) => {
       try {
         const tenantId = getTenantId(res);
         if (!tenantId) {
@@ -46,8 +47,11 @@ export function registerAddonRoutes(router: Router, deps: TenantAdminDeps): void
           return;
         }
 
+        const skip = Number(req.query.skip) || 0;
+        const take = Math.min(Number(req.query.take) || 50, 100);
+
         const addOns = await catalogService.getAllAddOns(tenantId);
-        res.json(addOns.map(mapAddOnToDto));
+        res.json(paginateArray(addOns.map(mapAddOnToDto), skip, take));
       } catch (error) {
         next(error);
       }

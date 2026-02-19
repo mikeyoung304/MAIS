@@ -24,6 +24,7 @@ import { execSync } from 'child_process';
 import { z } from 'zod';
 import { JWT } from 'google-auth-library';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 
 interface CachedToken {
   token: string;
@@ -45,7 +46,7 @@ export class CloudRunAuthService {
   private tokenCache = new Map<string, CachedToken>();
 
   constructor() {
-    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    const serviceAccountJson = getConfig().GOOGLE_SERVICE_ACCOUNT_JSON;
     if (serviceAccountJson) {
       try {
         const parsed = JSON.parse(serviceAccountJson);
@@ -99,7 +100,7 @@ export class CloudRunAuthService {
 
   private async fetchIdentityToken(audience: string): Promise<string | null> {
     // Priority 1: Cloud Run metadata service (fastest when on GCP)
-    if (process.env.K_SERVICE) {
+    if (getConfig().K_SERVICE) {
       try {
         const metadataUrl =
           'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity';

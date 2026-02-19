@@ -7,7 +7,8 @@
 
 import type { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import type { PostmarkMailAdapter } from '../adapters/postmark.adapter';
-import type { CalendarProvider } from '../lib/ports';
+import type { CalendarProvider, CacheServicePort } from '../lib/ports';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '../lib/core/logger';
 
 interface HealthCheckResult {
@@ -32,6 +33,8 @@ export class HealthCheckService {
       stripeAdapter?: StripePaymentAdapter;
       mailAdapter?: PostmarkMailAdapter;
       calendarAdapter?: CalendarProvider;
+      cacheAdapter?: CacheServicePort;
+      supabaseClient?: SupabaseClient;
     }
   ) {}
 
@@ -52,11 +55,15 @@ export class HealthCheckService {
 
     const startTime = Date.now();
     try {
-      // Use timeout wrapper to prevent hanging
+      // Health check needs direct adapter access to verify external service connectivity.
+      // The port interface intentionally doesn't expose implementation details;
+      // this cast is the pragmatic tradeoff vs. adding health-check methods to every adapter port.
       await this.withTimeout(
-        // Access Stripe instance directly via adapter's private property
-        // This is safe because we own both the adapter and this service
-        (this.deps.stripeAdapter as any).stripe.balance.retrieve(),
+        (
+          this.deps.stripeAdapter as unknown as {
+            stripe: { balance: { retrieve: () => Promise<unknown> } };
+          }
+        ).stripe.balance.retrieve(),
         this.CHECK_TIMEOUT_MS
       );
 
@@ -92,8 +99,11 @@ export class HealthCheckService {
       });
     }
 
-    // Check if using file sink fallback (no server token)
-    const serverToken = (this.deps.mailAdapter as any).cfg.serverToken;
+    // Health check needs direct adapter access to verify external service connectivity.
+    // The port interface intentionally doesn't expose implementation details;
+    // this cast is the pragmatic tradeoff vs. adding health-check methods to every adapter port.
+    const serverToken = (this.deps.mailAdapter as unknown as { cfg: { serverToken?: string } }).cfg
+      .serverToken;
     if (!serverToken) {
       return this.cacheResult('postmark', {
         status: 'healthy',
@@ -166,8 +176,14 @@ export class HealthCheckService {
       });
     }
 
-    // For real Google Calendar adapter, check if config exists
-    const config = (this.deps.calendarAdapter as any).config;
+    // Health check needs direct adapter access to verify external service connectivity.
+    // The port interface intentionally doesn't expose implementation details;
+    // this cast is the pragmatic tradeoff vs. adding health-check methods to every adapter port.
+    const config = (
+      this.deps.calendarAdapter as unknown as {
+        config?: { calendarId?: string; serviceAccountJsonBase64?: string };
+      }
+    ).config;
     if (!config?.calendarId || !config?.serviceAccountJsonBase64) {
       return this.cacheResult('googleCalendar', {
         status: 'unhealthy',
@@ -179,6 +195,93 @@ export class HealthCheckService {
     return this.cacheResult('googleCalendar', {
       status: 'healthy',
     });
+  }
+
+  /**
+   * Check Redis connectivity via PING
+   * Uses CacheServicePort.isConnected() which issues a Redis PING
+   */
+  async checkRedis(): Promise<HealthCheckResult> {
+    const cached = this.getCached('redis');
+    if (cached) return cached;
+
+    if (!this.deps.cacheAdapter) {
+      return this.cacheResult('redis', {
+        status: 'unhealthy',
+        error: 'Cache adapter not configured',
+      });
+    }
+
+    const startTime = Date.now();
+    try {
+      const connected = await this.withTimeout(
+        this.deps.cacheAdapter.isConnected(),
+        this.CHECK_TIMEOUT_MS
+      );
+
+      const latency = Date.now() - startTime;
+      return this.cacheResult('redis', {
+        status: connected ? 'healthy' : 'unhealthy',
+        latency,
+        error: connected ? undefined : 'Redis PING returned false',
+      });
+    } catch (error) {
+      const latency = Date.now() - startTime;
+      logger.error({ error }, 'Redis health check failed');
+
+      return this.cacheResult('redis', {
+        status: 'unhealthy',
+        latency,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Check Supabase Storage connectivity via bucket list
+   * Uses a lightweight listBuckets() call to verify Storage API access
+   */
+  async checkSupabaseStorage(): Promise<HealthCheckResult> {
+    const cached = this.getCached('supabaseStorage');
+    if (cached) return cached;
+
+    if (!this.deps.supabaseClient) {
+      return this.cacheResult('supabaseStorage', {
+        status: 'unhealthy',
+        error: 'Supabase client not configured',
+      });
+    }
+
+    const startTime = Date.now();
+    try {
+      const { error } = await this.withTimeout(
+        this.deps.supabaseClient.storage.listBuckets(),
+        this.CHECK_TIMEOUT_MS
+      );
+
+      const latency = Date.now() - startTime;
+      if (error) {
+        return this.cacheResult('supabaseStorage', {
+          status: 'unhealthy',
+          latency,
+          error: error.message,
+        });
+      }
+
+      return this.cacheResult('supabaseStorage', {
+        status: 'healthy',
+        latency,
+      });
+    } catch (error) {
+      const latency = Date.now() - startTime;
+      logger.error({ error }, 'Supabase Storage health check failed');
+
+      return this.cacheResult('supabaseStorage', {
+        status: 'unhealthy',
+        latency,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   /**

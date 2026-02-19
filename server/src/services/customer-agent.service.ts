@@ -24,6 +24,7 @@
 
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
 import { TIER_LIMITS, isOverQuota, getRemainingMessages } from '../config/tiers';
 import { cloudRunAuth } from './cloud-run-auth.service';
@@ -39,17 +40,9 @@ import {
 // CONFIGURATION
 // =============================================================================
 
-function _getRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}. Set this in your .env file.`);
-  }
-  return value;
-}
-
 // Phase 4 Update: Unified customer-agent (booking + project-hub customer view)
 function getCustomerAgentUrl(): string {
-  const url = process.env.CUSTOMER_AGENT_URL;
+  const url = getConfig().CUSTOMER_AGENT_URL;
   if (!url) {
     throw new Error('Missing required environment variable: CUSTOMER_AGENT_URL');
   }

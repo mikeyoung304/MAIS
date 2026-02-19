@@ -13,9 +13,12 @@ import { Router } from 'express';
 import type { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { TIER_LIMITS, STRIPE_PRICES, type TierName } from '../config/tiers';
 
-const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+function getAppBaseUrl(): string {
+  return getConfig().NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+}
 
 /**
  * Create tenant admin billing routes
@@ -83,8 +86,8 @@ export function createTenantAdminBillingRoutes(
         tenantId,
         email: tenant.email,
         priceId,
-        successUrl: `${APP_BASE_URL}/tenant/settings/billing?success=true`,
-        cancelUrl: `${APP_BASE_URL}/tenant/settings/billing?canceled=true`,
+        successUrl: `${getAppBaseUrl()}/tenant/settings/billing?success=true`,
+        cancelUrl: `${getAppBaseUrl()}/tenant/settings/billing?canceled=true`,
         metadata: { tier: paidTier },
       });
 

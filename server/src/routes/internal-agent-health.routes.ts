@@ -18,6 +18,7 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { verifyInternalSecret } from './internal-agent-shared';
 
 // =============================================================================
@@ -45,11 +46,14 @@ interface HealthResponse {
 // - customer-agent: booking + project-hub (customer view)
 // - tenant-agent: concierge + storefront + marketing + project-hub (tenant view)
 // - research-agent: unchanged
-const AGENT_URLS = {
-  customer: process.env.CUSTOMER_AGENT_URL,
-  tenant: process.env.TENANT_AGENT_URL,
-  research: process.env.RESEARCH_AGENT_URL,
-} as const;
+function getAgentUrls() {
+  const cfg = getConfig();
+  return {
+    customer: cfg.CUSTOMER_AGENT_URL,
+    tenant: cfg.TENANT_AGENT_URL,
+    research: cfg.RESEARCH_AGENT_URL,
+  };
+}
 
 // =============================================================================
 // Route Factory
@@ -88,7 +92,7 @@ export function createInternalAgentHealthRoutes(deps: InternalAgentHealthRoutesD
   router.get('/agents/health', async (_req: Request, res: Response) => {
     const results: AgentHealth[] = [];
 
-    for (const [name, url] of Object.entries(AGENT_URLS)) {
+    for (const [name, url] of Object.entries(getAgentUrls())) {
       if (!url) {
         results.push({
           name,

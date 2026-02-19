@@ -118,8 +118,9 @@ export class PrismaWebhookRepository implements WebhookRepository {
     } catch (error) {
       // Only ignore unique constraint violations (duplicate eventId)
       // Use duck typing instead of instanceof due to module resolution issues
-      const errorCode = (error as any)?.code;
-      const errorName = (error as any)?.constructor?.name;
+      const err = error as { code?: string; constructor?: { name?: string } };
+      const errorCode = err?.code;
+      const errorName = err?.constructor?.name;
 
       // Check for P2002 (unique constraint) via error code and name
       if (errorCode === 'P2002' && errorName === 'PrismaClientKnownRequestError') {

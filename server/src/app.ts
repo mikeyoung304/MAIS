@@ -18,7 +18,7 @@ import { skipIfHealth, adminLimiter, webhookLimiter } from './middleware/rateLim
 import { openApiSpec } from './api-docs';
 import { sentryRequestHandler, sentryErrorHandler } from './lib/errors/sentry';
 import { registerHealthRoutes } from './routes/health.routes';
-import { registerMetricsRoutes } from './routes/metrics.routes';
+import { registerMetricsRoutes, createMetricsMiddleware } from './routes/metrics.routes';
 import { sanitizeInput } from './middleware/sanitize';
 import { cspViolationsRouter } from './routes/csp-violations.routes';
 import { createStripeConnectWebhookRoutes } from './routes/stripe-connect-webhooks.routes';
@@ -141,7 +141,7 @@ export function createApp(
         if (VERCEL_PREVIEW_RE.test(origin)) return callback(null, true);
 
         // In development, allow all localhost ports
-        if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost:')) {
+        if (config.NODE_ENV !== 'production' && origin.startsWith('http://localhost:')) {
           return callback(null, true);
         }
 
@@ -187,6 +187,10 @@ export function createApp(
 
   // Request ID + logging middleware (for non-webhook routes)
   app.use(requestLogger);
+
+  // HTTP metrics middleware — records request count and duration per endpoint
+  // Must be after requestLogger (for correlation) but before route handlers
+  app.use(createMetricsMiddleware());
 
   // Apply input sanitization globally (except webhooks and internal agent routes)
   app.use((req, res, next) => {
@@ -296,13 +300,13 @@ export function createApp(
   if (
     config.ADAPTERS_PRESET === 'real' &&
     config.STRIPE_SECRET_KEY &&
-    process.env.STRIPE_CONNECT_WEBHOOK_SECRET &&
+    config.STRIPE_CONNECT_WEBHOOK_SECRET &&
     container.prisma
   ) {
     const connectWebhookHandler = createStripeConnectWebhookRoutes(
       container.prisma,
       config.STRIPE_SECRET_KEY,
-      process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+      config.STRIPE_CONNECT_WEBHOOK_SECRET!
     );
     app.post('/v1/webhooks/stripe/connect', connectWebhookHandler);
     logger.info('✅ Stripe Connect webhook endpoint registered at /v1/webhooks/stripe/connect');

@@ -34,7 +34,7 @@
 1. ✅ Database schema (13-field Segment model)
 2. ✅ 6 verified API endpoints
 3. ✅ Frontend segment management UI (6 components)
-4. ✅ Package & Add-On integration
+4. ✅ Tier & Add-On integration
 5. ✅ Dashboard metrics card
 6. ✅ Production build successful
 
@@ -62,11 +62,11 @@
    - SEO field optimization
    - Status management
 
-3. **Package Manager** (`/tenant/dashboard`)
-   - Create/edit/delete packages
-   - Optional segment assignment
+3. **Tier Manager** (`/tenant/dashboard`)
+   - Create/edit/delete tiers
+   - Segment assignment
    - Photo management (JSON array)
-   - Add-on management per package
+   - Add-on management per tier
 
 ### Authentication
 

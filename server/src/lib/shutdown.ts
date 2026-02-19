@@ -12,6 +12,7 @@
 import type { Server } from 'http';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from './core/logger';
+import { getConfig } from './core/config';
 
 export interface ShutdownManager {
   server: Server;
@@ -47,8 +48,8 @@ export interface ShutdownManager {
  * ```
  */
 export function registerGracefulShutdown(manager: ShutdownManager): void {
-  // Priority: 1. Explicit parameter, 2. Environment variable, 3. Default 60s
-  const defaultTimeout = parseInt(process.env.GRACEFUL_SHUTDOWN_TIMEOUT_MS || '60000', 10);
+  // Priority: 1. Explicit parameter, 2. Config (env var), 3. Default 60s
+  const defaultTimeout = getConfig().GRACEFUL_SHUTDOWN_TIMEOUT_MS ?? 60000;
   const { server, prisma, cleanup, onShutdown, timeoutMs = defaultTimeout } = manager;
 
   let isShuttingDown = false;
@@ -64,10 +65,7 @@ export function registerGracefulShutdown(manager: ShutdownManager): void {
 
     // Set shutdown timeout (configurable via GRACEFUL_SHUTDOWN_TIMEOUT_MS, default 60 seconds)
     const shutdownTimeout = setTimeout(() => {
-      logger.warn(
-        { timeout: timeoutMs, env: process.env.GRACEFUL_SHUTDOWN_TIMEOUT_MS },
-        'Graceful shutdown timeout exceeded, forcing exit'
-      );
+      logger.warn({ timeout: timeoutMs }, 'Graceful shutdown timeout exceeded, forcing exit');
       process.exit(1);
     }, timeoutMs);
 

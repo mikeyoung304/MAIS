@@ -19,6 +19,7 @@ import { BookingConflictError, NotFoundError } from '../../lib/errors';
 import bcrypt from 'bcryptjs';
 import type Stripe from 'stripe';
 import { logger } from '../../lib/core/logger';
+import { QueryLimits } from '../../lib/core/query-limits';
 
 // Default tenant ID for mock mode (single-tenant simulation)
 const DEFAULT_TENANT = 'tenant_default_legacy';
@@ -525,7 +526,7 @@ export class MockBookingRepository implements BookingRepository {
   ): Promise<void> {
     const booking = bookings.get(bookingId);
     if (booking) {
-      (booking as any).googleEventId = googleEventId;
+      Object.assign(booking, { googleEventId });
       logger.debug({ bookingId, googleEventId }, 'Updated booking with Google event ID');
     }
   }
@@ -561,27 +562,19 @@ export class MockBookingRepository implements BookingRepository {
       booking.status = data.status;
     }
 
-    if (data.cancelledAt !== undefined) {
-      (booking as any).cancelledAt = data.cancelledAt;
-    }
-    if (data.cancelledBy !== undefined) {
-      (booking as any).cancelledBy = data.cancelledBy;
-    }
-    if (data.cancellationReason !== undefined) {
-      (booking as any).cancellationReason = data.cancellationReason;
-    }
-    if (data.refundStatus !== undefined) {
-      (booking as any).refundStatus = data.refundStatus;
-    }
-    if (data.refundAmount !== undefined) {
-      (booking as any).refundAmount = data.refundAmount;
-    }
-    if (data.refundedAt !== undefined) {
-      (booking as any).refundedAt = data.refundedAt;
-    }
-    if (data.stripeRefundId !== undefined) {
-      (booking as any).stripeRefundId = data.stripeRefundId;
-    }
+    // Cancellation and refund fields are optional on the Booking entity.
+    // Object.assign is type-safe for partial updates on the domain entity.
+    const optionalUpdates: Partial<Booking> = {};
+    if (data.cancelledAt !== undefined)
+      optionalUpdates.cancelledAt = data.cancelledAt.toISOString();
+    if (data.cancelledBy !== undefined) optionalUpdates.cancelledBy = data.cancelledBy;
+    if (data.cancellationReason !== undefined)
+      optionalUpdates.cancellationReason = data.cancellationReason;
+    if (data.refundStatus !== undefined) optionalUpdates.refundStatus = data.refundStatus;
+    if (data.refundAmount !== undefined) optionalUpdates.refundAmount = data.refundAmount;
+    if (data.refundedAt !== undefined) optionalUpdates.refundedAt = data.refundedAt.toISOString();
+    if (data.stripeRefundId !== undefined) optionalUpdates.stripeRefundId = data.stripeRefundId;
+    Object.assign(booking, optionalUpdates);
 
     logger.debug({ bookingId, data }, 'Mock booking updated');
     return booking;
@@ -617,12 +610,13 @@ export class MockBookingRepository implements BookingRepository {
     const daysUntilEvent = Math.floor(
       (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
-    (booking as any).reminderDueDate =
-      daysUntilEvent > 7
-        ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        : undefined;
-
-    (booking as any).reminderSentAt = undefined;
+    Object.assign(booking, {
+      reminderDueDate:
+        daysUntilEvent > 7
+          ? new Date(eventDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          : undefined,
+      reminderSentAt: undefined,
+    });
 
     logger.debug({ bookingId, newDate }, 'Mock booking rescheduled');
     return booking;
@@ -683,10 +677,9 @@ export class MockBookingRepository implements BookingRepository {
       offset?: number;
     }
   ): Promise<AppointmentDto[]> {
-    const MAX_LIMIT = 500;
-    const DEFAULT_LIMIT = 100;
+    const DEFAULT_LIMIT = QueryLimits.MAX_PAGE_SIZE;
 
-    const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+    const limit = Math.min(filters?.limit ?? DEFAULT_LIMIT, QueryLimits.BOOKINGS_MAX);
     const offset = Math.max(filters?.offset ?? 0, 0);
 
     logger.debug({ tenantId, filters, limit, offset }, 'findAppointments called');
@@ -701,8 +694,8 @@ export class MockBookingRepository implements BookingRepository {
     for (const booking of bookings.values()) {
       if (booking.status !== 'PAID') continue;
 
-      const reminderDueDate = (booking as any).reminderDueDate;
-      const reminderSentAt = (booking as any).reminderSentAt;
+      const reminderDueDate = booking.reminderDueDate;
+      const reminderSentAt = booking.reminderSentAt;
 
       if (reminderDueDate && !reminderSentAt) {
         const dueDate = new Date(reminderDueDate);
@@ -724,7 +717,7 @@ export class MockBookingRepository implements BookingRepository {
   async markReminderSent(_tenantId: string, bookingId: string): Promise<void> {
     const booking = bookings.get(bookingId);
     if (booking) {
-      (booking as any).reminderSentAt = new Date().toISOString();
+      Object.assign(booking, { reminderSentAt: new Date().toISOString() });
       logger.debug({ bookingId }, 'Reminder marked as sent');
     }
   }
@@ -744,14 +737,16 @@ export class MockBookingRepository implements BookingRepository {
     }
 
     // Idempotent: If balance already paid, return null
-    if ((booking as any).balancePaidAt) {
+    if (booking.balancePaidAt) {
       return null;
     }
 
     // Update booking with balance paid
-    (booking as any).balancePaidAmount = balanceAmountCents;
-    (booking as any).balancePaidAt = new Date().toISOString();
-    booking.status = 'PAID';
+    Object.assign(booking, {
+      balancePaidAmount: balanceAmountCents,
+      balancePaidAt: new Date().toISOString(),
+      status: 'PAID' as const,
+    });
 
     return booking;
   }

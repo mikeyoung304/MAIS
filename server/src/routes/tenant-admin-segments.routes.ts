@@ -12,6 +12,7 @@ import {
   updateSegmentSchema,
   segmentIdSchema,
 } from '../validation/segment.schemas';
+import { paginateArray } from '../lib/pagination';
 import { logger } from '../lib/core/logger';
 
 /**
@@ -33,7 +34,7 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
    * @returns 401 - Missing or invalid authentication
    * @returns 500 - Internal server error
    */
-  router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantAuth = res.locals.tenantAuth;
       if (!tenantAuth) {
@@ -42,10 +43,13 @@ export function createTenantAdminSegmentsRouter(segmentService: SegmentService):
       }
       const { tenantId } = tenantAuth;
 
+      const skip = Number(req.query.skip) || 0;
+      const take = Math.min(Number(req.query.take) || 50, 100);
+
       // Include inactive segments for admin view
       const segments = await segmentService.getSegments(tenantId, false);
 
-      res.json(segments);
+      res.json(paginateArray(segments, skip, take));
     } catch (error) {
       next(error);
     }

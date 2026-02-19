@@ -357,6 +357,7 @@ model SectionContent {
   @@index([tenantId, segmentId])
   @@index([tenantId, isDraft]) // Query draft vs published content
   @@index([tenantId, pageName, order]) // Query by page with ordering
+  @@index([segmentId]) // Standalone FK index for Segment deletion/update constraint checks
 }
 
 enum BlockType {
@@ -412,6 +413,7 @@ model AddOn {
   @@index([tenantId, active])
   @@index([tenantId])
   @@index([tenantId, segmentId]) // Query add-ons by tenant and segment (null = global)
+  @@index([segmentId]) // Standalone FK index for Segment deletion/update constraint checks
 }
 
 model Booking {
@@ -991,14 +993,10 @@ enum SessionType {
   CUSTOMER // Customer using the public booking chatbot
 }
 
-/// Onboarding phase enum (legacy values kept until Phase 7 migration recreates enum)
+/// Onboarding phase enum — tracks tenant onboarding progress
 enum OnboardingPhase {
   NOT_STARTED // Initial state - no onboarding interaction yet
-  DISCOVERY // (legacy) Collecting business info
-  MARKET_RESEARCH // (legacy) Analyzing market
-  SERVICES // (legacy) Creating service packages
-  MARKETING // (legacy) Configuring landing page
-  BUILDING // NEW: Replaces DISCOVERY/MARKET_RESEARCH/SERVICES/MARKETING
+  BUILDING // Active onboarding (replaces legacy DISCOVERY/MARKET_RESEARCH/SERVICES/MARKETING)
   COMPLETED // Onboarding finished
   SKIPPED // User opted to skip onboarding
 }

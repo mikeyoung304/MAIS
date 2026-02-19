@@ -169,13 +169,13 @@ describe('Booking Tokens', () => {
     it('should generate manage booking URL with token', async () => {
       const url = generateManageBookingUrl('booking_123', 'tenant_abc');
       expect(url).toContain('/bookings/manage?token=');
-      expect(url).toMatch(/^http:\/\/localhost:5173\/bookings\/manage\?token=.+/);
+      expect(url).toMatch(/^http:\/\/localhost:3000\/bookings\/manage\?token=.+/);
     });
 
     it('should generate balance payment URL with token', async () => {
       const url = generateBalancePaymentUrl('booking_123', 'tenant_abc');
       expect(url).toContain('/bookings/pay-balance?token=');
-      expect(url).toMatch(/^http:\/\/localhost:5173\/bookings\/pay-balance\?token=.+/);
+      expect(url).toMatch(/^http:\/\/localhost:3000\/bookings\/pay-balance\?token=.+/);
     });
 
     it('should use custom base URL when provided', async () => {

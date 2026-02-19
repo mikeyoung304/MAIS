@@ -24,6 +24,7 @@
  */
 
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { cloudRunAuth } from './cloud-run-auth.service';
 import {
   AdkSessionResponseSchema,
@@ -43,7 +44,7 @@ import {
  * Throws clear error if not configured (Pitfall #41: fail-fast on missing config).
  */
 function getCustomerAgentUrl(): string {
-  const url = process.env.CUSTOMER_AGENT_URL;
+  const url = getConfig().CUSTOMER_AGENT_URL;
   if (!url) {
     throw new Error('Missing required environment variable: CUSTOMER_AGENT_URL');
   }
@@ -163,7 +164,7 @@ export class ProjectHubAgentService {
       }
 
       // Generate fallback session ID for local dev/testing
-      if (process.env.NODE_ENV === 'development') {
+      if (getConfig().NODE_ENV === 'development') {
         const fallbackId = `local:${tenantId}:${projectId}:${Date.now()}`;
         logger.warn(
           { tenantId, projectId, fallbackId, error },

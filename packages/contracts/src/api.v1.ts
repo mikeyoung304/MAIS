@@ -66,6 +66,10 @@ import {
   // Deposit DTOs (MVP Gaps Phase 4)
   DepositSettingsDtoSchema,
   UpdateDepositSettingsDtoSchema,
+  // Shared validation schemas
+  SlugSchema,
+  PaginatedQuerySchema,
+  createPaginatedResponseSchema,
   // Error response schemas
   BadRequestErrorSchema,
   UnauthorizedErrorSchema,
@@ -84,8 +88,9 @@ export const Contracts = c.router({
   getTiers: {
     method: 'GET',
     path: '/v1/tiers',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(TierDtoSchema),
+      200: createPaginatedResponseSchema(TierDtoSchema),
       400: BadRequestErrorSchema,
       500: InternalServerErrorSchema,
     },
@@ -185,7 +190,8 @@ export const Contracts = c.router({
   stripeWebhook: {
     method: 'POST',
     path: '/v1/webhooks/stripe',
-    body: z.any(), // Raw body
+    // z.any() justified: Stripe webhook requires raw body for signature verification — ts-rest doesn't support Buffer types
+    body: z.any(),
     responses: {
       204: z.void(),
       400: BadRequestErrorSchema,
@@ -268,14 +274,7 @@ export const Contracts = c.router({
     method: 'GET',
     path: '/v1/public/tenants/:slug',
     pathParams: z.object({
-      slug: z
-        .string()
-        .min(1, 'Slug is required')
-        .max(63, 'Slug must be 63 characters or less')
-        .regex(
-          /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-          'Invalid slug format: must be lowercase alphanumeric with hyphens'
-        ),
+      slug: SlugSchema,
     }),
     responses: {
       200: TenantPublicDtoSchema,
@@ -293,7 +292,8 @@ export const Contracts = c.router({
   tenantAdminUploadLogo: {
     method: 'POST',
     path: '/v1/tenant-admin/logo',
-    body: z.any(), // Multipart form data (file upload)
+    // z.any() justified: File upload requires multipart/form-data — ts-rest doesn't handle multipart parsing
+    body: z.any(),
     responses: {
       200: LogoUploadResponseDtoSchema,
       400: BadRequestErrorSchema,
@@ -344,8 +344,9 @@ export const Contracts = c.router({
   tenantAdminGetBlackouts: {
     method: 'GET',
     path: '/v1/tenant-admin/blackouts',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(BlackoutDtoSchema),
+      200: createPaginatedResponseSchema(BlackoutDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
@@ -417,9 +418,10 @@ export const Contracts = c.router({
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
       })
+      .merge(PaginatedQuerySchema)
       .optional(),
     responses: {
-      200: z.array(BookingDtoSchema),
+      200: createPaginatedResponseSchema(BookingDtoSchema),
       400: BadRequestErrorSchema,
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
@@ -436,9 +438,10 @@ export const Contracts = c.router({
       .object({
         includeTest: z.enum(['true', 'false']).optional().default('false'),
       })
+      .merge(PaginatedQuerySchema)
       .optional(),
     responses: {
-      200: z.object({ tenants: z.array(TenantDtoSchema) }),
+      200: createPaginatedResponseSchema(TenantDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
@@ -552,8 +555,9 @@ export const Contracts = c.router({
   adminGetBlackouts: {
     method: 'GET',
     path: '/v1/admin/blackouts',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(
+      200: createPaginatedResponseSchema(
         z.object({
           date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
           reason: z.string().optional(),
@@ -574,7 +578,7 @@ export const Contracts = c.router({
       reason: z.string().optional(),
     }),
     responses: {
-      200: z.object({
+      201: z.object({
         ok: z.literal(true),
       }),
       400: BadRequestErrorSchema,
@@ -599,7 +603,7 @@ export const Contracts = c.router({
     }),
     body: CreateAddOnDtoSchema,
     responses: {
-      200: AddOnDtoSchema,
+      201: AddOnDtoSchema,
       400: BadRequestErrorSchema,
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
@@ -650,8 +654,9 @@ export const Contracts = c.router({
   tenantAdminGetSegments: {
     method: 'GET',
     path: '/v1/tenant-admin/segments',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(SegmentDtoSchema),
+      200: createPaginatedResponseSchema(SegmentDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
@@ -664,7 +669,7 @@ export const Contracts = c.router({
     path: '/v1/tenant-admin/segments',
     body: CreateSegmentDtoSchema,
     responses: {
-      200: SegmentDtoSchema,
+      201: SegmentDtoSchema,
       400: BadRequestErrorSchema,
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
@@ -758,8 +763,9 @@ export const Contracts = c.router({
   tenantAdminGetAddOns: {
     method: 'GET',
     path: '/v1/tenant-admin/addons',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(AddOnDtoSchema),
+      200: createPaginatedResponseSchema(AddOnDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
@@ -863,8 +869,9 @@ export const Contracts = c.router({
   getSegments: {
     method: 'GET',
     path: '/v1/segments',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(SegmentDtoSchema),
+      200: createPaginatedResponseSchema(SegmentDtoSchema),
       401: UnauthorizedErrorSchema,
       500: InternalServerErrorSchema,
     },
@@ -1017,8 +1024,9 @@ export const Contracts = c.router({
   getServices: {
     method: 'GET',
     path: '/v1/public/services',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(PublicServiceDtoSchema),
+      200: createPaginatedResponseSchema(PublicServiceDtoSchema),
       400: BadRequestErrorSchema,
       401: UnauthorizedErrorSchema,
       500: InternalServerErrorSchema,
@@ -1129,8 +1137,9 @@ export const Contracts = c.router({
   tenantAdminGetServices: {
     method: 'GET',
     path: '/v1/tenant-admin/services',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(ServiceDtoSchema),
+      200: createPaginatedResponseSchema(ServiceDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
@@ -1214,9 +1223,10 @@ export const Contracts = c.router({
       .object({
         serviceId: z.string().optional(), // Filter by service
       })
+      .merge(PaginatedQuerySchema)
       .optional(),
     responses: {
-      200: z.array(AvailabilityRuleDtoSchema),
+      200: createPaginatedResponseSchema(AvailabilityRuleDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,
@@ -1341,8 +1351,9 @@ export const Contracts = c.router({
   tenantAdminGetCustomers: {
     method: 'GET',
     path: '/v1/tenant-admin/customers',
+    query: PaginatedQuerySchema,
     responses: {
-      200: z.array(CustomerDtoSchema),
+      200: createPaginatedResponseSchema(CustomerDtoSchema),
       401: UnauthorizedErrorSchema,
       403: ForbiddenErrorSchema,
       500: InternalServerErrorSchema,

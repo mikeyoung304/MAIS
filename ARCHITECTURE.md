@@ -49,7 +49,7 @@ Starting Sprint 2 (January 2025), MAIS is transitioning to a **config-driven, ag
 Every visual element, workflow, and business logic setting is controlled by central, versioned configuration:
 
 - **Branding**: Colors, fonts, logos (existing, to be moved to ConfigVersion)
-- **Package Display**: Visibility, ordering, featured status, custom descriptions
+- **Tier Display**: Visibility, ordering, featured status, custom descriptions
 - **Display Rules**: Conditional visibility, tier grouping, seasonal promotions
 - **Widget Layout**: Component ordering, feature toggles, customization
 
@@ -286,7 +286,7 @@ The middleware maintains a list of MAIS domains that bypass custom domain resolu
 - **middleware/** — Auth, error handling, request logging, rate limiting, **tenant resolution**
 - **lib/core/** — config (zod‑parsed env), logger, error mapping, event bus
 - **lib/ports.ts** — Repository and provider interfaces
-- **lib/entities.ts** — Domain entities (Package, AddOn, Booking, Blackout, Tenant)
+- **lib/entities.ts** — Domain entities (Tier, Segment, AddOn, Booking, Blackout, Tenant)
 - **lib/errors.ts** — Domain-specific errors
 - **di.ts** — composition root: choose mock vs real adapters via env and wire services
 
@@ -300,7 +300,7 @@ DTOs, money/date helpers, small types.
 
 ## Service map
 
-- **Catalog** — packages & add‑ons. Uses: `CatalogRepository`. **All queries scoped by tenantId**.
+- **Catalog** — tiers, segments & add‑ons. Uses: `CatalogRepository`. **All queries scoped by tenantId**.
 - **Availability** — `isDateAvailable`: bookings + blackout + Google busy. Uses: `BookingRepository`, `BlackoutRepository`, `CalendarProvider`. **All queries scoped by tenantId**.
 - **Booking** — create checkout, handle payment completion, unique‑per‑date guarantee. Uses: `PaymentProvider`, `BookingRepository`, `EmailProvider`, `CommissionService`; emits `BookingPaid`, `BookingFailed`. **Commission calculated server-side per tenant**.
 - **Commission** — calculate platform commission based on tenant's commission rate (10-15%). Uses: `TenantRepository`. **Always rounds UP to protect platform revenue**.
@@ -497,11 +497,11 @@ The platform supports up to 50 independent wedding businesses with complete data
 
 **File:** `server/src/middleware/tenant.ts`
 
-All public API routes (`/v1/packages`, `/v1/bookings`, `/v1/availability`) require the `X-Tenant-Key` header:
+All public API routes (`/v1/tiers`, `/v1/bookings`, `/v1/availability`) require the `X-Tenant-Key` header:
 
 ```typescript
 // Example request
-GET /v1/packages
+GET /v1/tiers
 X-Tenant-Key: pk_live_bella-weddings_abc123xyz
 ```
 
@@ -528,12 +528,12 @@ All database queries are automatically scoped by `tenantId`:
 
 ```typescript
 // CORRECT - Tenant-scoped query
-const packages = await prisma.package.findMany({
+const tiers = await prisma.tier.findMany({
   where: { tenantId, active: true },
 });
 
 // WRONG - Would return data from all tenants (security vulnerability)
-const packages = await prisma.package.findMany({
+const tiers = await prisma.tier.findMany({
   where: { active: true },
 });
 ```
@@ -541,7 +541,7 @@ const packages = await prisma.package.findMany({
 **Repository Pattern:**
 
 - All repository methods require `tenantId` as first parameter
-- Example: `catalogRepo.getPackageBySlug(tenantId, slug)`
+- Example: `catalogRepo.getTierBySlug(tenantId, slug)`
 - Impossible to query cross-tenant data without explicit tenantId
 
 ### API Key Format
@@ -602,8 +602,8 @@ const paymentIntent = await stripe.paymentIntents.create(
 
 **Public Endpoints (Require X-Tenant-Key header):**
 
-- `GET /v1/packages` — List packages for tenant
-- `GET /v1/packages/:slug` — Get package details for tenant
+- `GET /v1/tiers` — List tiers for tenant
+- `GET /v1/tiers/:slug` — Get tier details for tenant
 - `GET /v1/availability?date=YYYY‑MM‑DD` — Check availability for tenant
 - `POST /v1/bookings/checkout` → `{ checkoutUrl }` — Create checkout for tenant
 
@@ -616,8 +616,8 @@ const paymentIntent = await stripe.paymentIntents.create(
 - `POST /v1/admin/login` → `{ token }` — Admin authentication
 - `GET /v1/admin/bookings` — List all bookings
 - `GET|POST /v1/admin/blackouts` — Manage blackout dates
-- `GET|POST|PATCH|DELETE /v1/admin/packages` — Manage packages
-- `POST|PATCH|DELETE /v1/admin/packages/:id/addons` — Manage add-ons
+- `GET|POST|PATCH|DELETE /v1/admin/tiers` — Manage tiers
+- `POST|PATCH|DELETE /v1/admin/tiers/:id/addons` — Manage add-ons
 - `GET|POST|PATCH /v1/admin/tenants` — Manage tenants (platform admin)
 
 ## Events (in‑proc)
@@ -628,10 +628,11 @@ const paymentIntent = await stripe.paymentIntents.create(
 ## Data model (Multi-Tenant)
 
 - **Tenant**(id, name, slug\*, apiKeyPublic\*, apiKeySecret [encrypted], commissionPercent, stripeAccountId?, isActive, createdAt)
-- **Package**(id, tenantId, slug, name, description, basePrice, active, photoUrl) — **Unique constraint: [tenantId, slug]**
+- **Segment**(id, tenantId, slug, name, description, heroTitle?, active, sortOrder) — **Unique constraint: [tenantId, slug]**
+- **Tier**(id, tenantId, segmentId, slug, name, description, basePrice, active, photoUrl?) — **Unique constraint: [tenantId, slug]**
 - **AddOn**(id, tenantId, slug, name, description, price, active, photoUrl?)
 - **BlackoutDate**(id, tenantId, date [UTC midnight]) — **Unique constraint: [tenantId, date]**
-- **Booking**(id, tenantId, customerId, packageId, venueId?, date [UTC midnight], status, totalPrice, commissionAmount, commissionPercent, notes?) — **Unique constraint: [tenantId, date]**
+- **Booking**(id, tenantId, customerId, tierId, venueId?, date [UTC midnight], status, totalPrice, commissionAmount, commissionPercent, notes?) — **Unique constraint: [tenantId, date]**
 - **Customer**(id, tenantId, email, name, phone?)
 - **User**(id, email\*, passwordHash, role)
 - **WebhookEvent**(id, tenantId, eventId\*, eventType, payload, status, attempts, lastError?, processedAt?)
@@ -803,7 +804,7 @@ curl https://app.maconaisolutions.com/health
 curl https://app.maconaisolutions.com/health/cache
 
 # Database connectivity
-curl https://app.maconaisolutions.com/v1/packages \
+curl https://app.maconaisolutions.com/v1/tiers \
   -H "X-Tenant-Key: pk_live_demo_..."
 ```
 
@@ -835,7 +836,7 @@ curl https://app.maconaisolutions.com/v1/packages \
 
 1. Create demo tenant via admin CLI: `npm run create-tenant`
 2. Configure branding (colors, logo) via tenant admin dashboard
-3. Add 3-5 packages with photos
+3. Add service tiers with photos
 4. Configure Stripe Connect for payment processing
 5. Test booking flow end-to-end
 

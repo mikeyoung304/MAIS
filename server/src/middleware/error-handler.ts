@@ -6,6 +6,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { DomainError, AppError } from '../lib/errors';
 import { captureException } from '../lib/errors/sentry';
 
@@ -114,7 +115,7 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   });
 
   // Hide error details in production
-  const isDev = process.env.NODE_ENV !== 'production';
+  const isDev = getConfig().NODE_ENV !== 'production';
 
   res.status(500).json({
     status: 'error',

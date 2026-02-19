@@ -5,6 +5,7 @@
 
 import type { TenantBrandingDto } from '@macon/contracts';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
+import type { BrandingConfig, PrismaJson } from '../types/prisma-json';
 
 export class TenantController {
   constructor(private readonly tenantRepository: PrismaTenantRepository) {}
@@ -25,7 +26,7 @@ export class TenantController {
 
     // Colors come from dedicated database columns
     // fontFamily and logo still come from branding JSON
-    const branding = (tenant.branding as any) || {};
+    const branding = (tenant.branding as PrismaJson<BrandingConfig>) || {};
 
     return {
       primaryColor: tenant.primaryColor,

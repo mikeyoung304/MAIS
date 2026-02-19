@@ -14,6 +14,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import {
   verifyInternalSecret,
   handleError,
@@ -81,7 +82,7 @@ export function createInternalAgentDiscoveryRoutes(deps: DiscoveryRoutesDeps): R
   } else {
     // Fallback: construct locally (backward compatibility for tests)
     const { tenantRepo, contextBuilder, catalogService } = deps;
-    researchService = new ResearchService(tenantRepo, process.env.RESEARCH_AGENT_URL);
+    researchService = new ResearchService(tenantRepo, getConfig().RESEARCH_AGENT_URL);
     discoveryService = new DiscoveryService(
       tenantRepo,
       contextBuilder,

@@ -11,7 +11,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { loadConfig, getBookingTokenSecret } from './core/config';
+import { loadConfig, getBookingTokenSecret, getConfig } from './core/config';
 import { logger } from './core/logger';
 
 /**
@@ -214,7 +214,7 @@ export function generateProjectAccessUrl(
   tenantId: string,
   customerId: string,
   tenantSlug: string,
-  baseUrl: string = process.env.CLIENT_URL || 'http://localhost:3000'
+  baseUrl: string = getConfig().CLIENT_URL ?? 'http://localhost:3000'
 ): string {
   const token = generateProjectAccessToken(projectId, tenantId, customerId, 'view');
   return `${baseUrl}/t/${tenantSlug}/projects/${projectId}?token=${token}`;

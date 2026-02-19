@@ -14,7 +14,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { loadConfig, getBookingTokenSecret } from './core/config';
+import { loadConfig, getBookingTokenSecret, getConfig } from './core/config';
 import { logger } from './core/logger';
 import type { BookingRepository } from './ports';
 
@@ -361,7 +361,7 @@ export async function validateBookingToken(
 export function generateManageBookingUrl(
   bookingId: string,
   tenantId: string,
-  baseUrl: string = process.env.CLIENT_URL || 'http://localhost:5173'
+  baseUrl: string = getConfig().CLIENT_URL ?? 'http://localhost:5173'
 ): string {
   const token = generateBookingToken(bookingId, tenantId, 'manage');
   return `${baseUrl}/bookings/manage?token=${token}`;
@@ -386,7 +386,7 @@ export function generateManageBookingUrl(
 export function generateBalancePaymentUrl(
   bookingId: string,
   tenantId: string,
-  baseUrl: string = process.env.CLIENT_URL || 'http://localhost:5173'
+  baseUrl: string = getConfig().CLIENT_URL ?? 'http://localhost:5173'
 ): string {
   const token = generateBookingToken(bookingId, tenantId, 'pay_balance');
   return `${baseUrl}/bookings/pay-balance?token=${token}`;

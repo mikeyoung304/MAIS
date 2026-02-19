@@ -79,21 +79,23 @@ export class TenantProvisioningService {
         },
       });
 
-      // 3. Create default packages (parallel within transaction)
-      const packages = await Promise.all(
-        Object.values(DEFAULT_PACKAGE_TIERS).map((tier) =>
-          tx.package.create({
+      // 3. Create default tiers (parallel within transaction)
+      // Note: This example predates the Package→Tier migration (Feb 2026).
+      // Current code uses tx.tier.create instead of tx.package.create.
+      const tiers = await Promise.all(
+        Object.values(DEFAULT_TIER_DEFINITIONS).map((tierDef) =>
+          tx.tier.create({
             data: {
               tenantId: tenant.id,
               segmentId: segment.id, // Critical: links to segment
-              ...tier,
+              ...tierDef,
               active: true,
             },
           })
         )
       );
 
-      return { tenant, segment, packages };
+      return { tenant, segment, tiers };
     });
 
     return { ...result, secretKey: keys.secretKey };
