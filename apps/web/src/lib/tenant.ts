@@ -137,7 +137,9 @@ export async function getTenantTiers(apiKeyPublic: string, bypassCache = false) 
     throw new TenantApiError(`Failed to fetch tiers: ${errorBody}`, response.status);
   }
 
-  return response.json();
+  // API returns paginated shape { items, total, hasMore } — unwrap to plain array
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
 /**
@@ -168,7 +170,9 @@ export async function getTenantSegments(apiKeyPublic: string, bypassCache = fals
     return [];
   }
 
-  return response.json();
+  // API returns paginated shape { items, total, hasMore } — unwrap to plain array
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data?.items ?? []);
 }
 
 /**
