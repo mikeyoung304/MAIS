@@ -68,8 +68,6 @@ const PAGE_ANCHORS: Record<PageName, string> = {
  * Intentionally excluded:
  * - hero: always at top, no anchor nav needed
  * - cta: closing section, not a nav destination
- * - features: maps to DOM anchor 'services' in SectionRenderer.SECTION_TYPE_TO_ANCHOR_ID —
- *   adding here would produce a conflicting 'Services' nav item. See SectionRenderer.tsx.
  * - custom: no canonical nav label
  * - pricing: rendered through tiers, not standalone
  */
@@ -77,6 +75,7 @@ const SECTION_TYPE_TO_PAGE: Partial<Record<SectionTypeName, PageName>> = {
   about: 'about',
   text: 'about',
   services: 'services',
+  features: 'services', // Features shares #services anchor (SectionRenderer.SECTION_TYPE_TO_ANCHOR_ID)
   gallery: 'gallery',
   testimonials: 'testimonials',
   faq: 'faq',

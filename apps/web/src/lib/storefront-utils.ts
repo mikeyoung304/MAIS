@@ -116,10 +116,11 @@ export function transformContentForSection(
               out.authorRole = out.role;
               delete out.role;
             }
-            if ((out.photo || out.photoUrl) && !out.authorPhotoUrl) {
-              out.authorPhotoUrl = out.photo ?? out.photoUrl;
+            if ((out.photo || out.photoUrl || out.image) && !out.authorPhotoUrl) {
+              out.authorPhotoUrl = out.photo ?? out.photoUrl ?? out.image;
               delete out.photo;
               delete out.photoUrl;
+              delete out.image;
             }
             return out;
           });

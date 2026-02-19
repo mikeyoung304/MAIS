@@ -54,33 +54,36 @@ export function TenantSiteShell({ tenant, pages, basePath, children }: TenantSit
   } as React.CSSProperties;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background" style={themeVars}>
-      {/* Google Fonts — preconnect + stylesheet for the tenant's font preset */}
+    <>
+      {/* Google Fonts — preconnect + stylesheet for the tenant's font preset.
+          Placed as fragment siblings so React 18.3+ Float hoists them to <head>. */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href={fontPreset.googleFontsUrl} rel="stylesheet" />
-      {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
+      <div className="flex min-h-screen flex-col bg-background" style={themeVars}>
+        {/* EditModeGate: returns null when in edit iframe (edit + token + iframe).
           Suspense required because useSearchParams() triggers client-side boundary. */}
-      <Suspense>
-        <EditModeGate>
-          <TenantNav tenant={tenant} navItems={navItems} basePath={resolvedBasePath} />
-        </EditModeGate>
-      </Suspense>
+        <Suspense>
+          <EditModeGate>
+            <TenantNav tenant={tenant} navItems={navItems} basePath={resolvedBasePath} />
+          </EditModeGate>
+        </Suspense>
 
-      <div className="flex-1">{children}</div>
+        <div className="flex-1">{children}</div>
 
-      <Suspense>
-        <EditModeGate>
-          <TenantFooter tenant={tenant} pages={pages} basePath={basePath} />
-          <TenantChatWidget
-            tenantApiKey={tenant.apiKeyPublic}
-            businessName={tenant.name}
-            primaryColor={tenant.primaryColor}
-            chatEnabled={tenant.chatEnabled}
-          />
-          <StickyMobileCTA ctaText={ctaText} href="#services" observeElementId="main-content" />
-        </EditModeGate>
-      </Suspense>
-    </div>
+        <Suspense>
+          <EditModeGate>
+            <TenantFooter tenant={tenant} pages={pages} basePath={basePath} />
+            <TenantChatWidget
+              tenantApiKey={tenant.apiKeyPublic}
+              businessName={tenant.name}
+              primaryColor={tenant.primaryColor}
+              chatEnabled={tenant.chatEnabled}
+            />
+            <StickyMobileCTA ctaText={ctaText} href="#services" observeElementId="main-content" />
+          </EditModeGate>
+        </Suspense>
+      </div>
+    </>
   );
 }

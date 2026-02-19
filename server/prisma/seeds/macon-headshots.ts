@@ -368,6 +368,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
                 id: 'testimonial-comfort',
                 authorName: 'Sarah M.',
                 authorRole: 'Real Estate Agent',
+                image:
+                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&q=80',
                 quote:
                   "I've avoided professional photos my entire career. Mike made it painless — actually fun. The coaching made all the difference.",
                 rating: 5,
@@ -376,6 +378,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
                 id: 'testimonial-quality',
                 authorName: 'James T.',
                 authorRole: 'Attorney',
+                image:
+                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
                 quote:
                   'The live review during the shoot was a game-changer. I could see exactly what we were getting and left confident in every shot.',
                 rating: 5,
@@ -384,6 +388,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
                 id: 'testimonial-turnaround',
                 authorName: 'Dr. Priya K.',
                 authorRole: 'Physician',
+                image:
+                  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&q=80',
                 quote:
                   'Booked on Monday, shot on Wednesday, retouched images by the following Tuesday. Fast, professional, and the results speak for themselves.',
                 rating: 5,

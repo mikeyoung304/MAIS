@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { formatPrice } from '@/lib/format';
 import type { PricingSection as PricingSectionType, TenantPublicDto } from '@macon/contracts';
 
 interface PricingSectionProps extends PricingSectionType {
@@ -54,7 +55,8 @@ export function PricingSection({
         {safeTiers.map((tier) => {
           const isPopular = tier.isPopular === true;
           const isEnterprise = tier.variant === 'enterprise';
-          const displayPrice = typeof tier.price === 'number' ? `$${tier.price / 100}` : tier.price;
+          const displayPrice =
+            typeof tier.price === 'number' ? formatPrice(tier.price) : tier.price;
 
           return (
             <div

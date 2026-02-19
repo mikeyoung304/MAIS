@@ -439,8 +439,8 @@ const ReviewStep = React.memo(
               {pkg.displayPriceCents && pkg.displayPriceCents !== displayTotal && (
                 <p className="mt-2 text-sm text-muted-foreground">
                   {pkg.displayPriceCents > displayTotal
-                    ? 'Additional costs may be arranged separately after booking.'
-                    : null}
+                    ? `Listed price of ${formatCurrency(pkg.displayPriceCents)} includes items arranged separately (e.g., accommodation).`
+                    : `Booking total reflects guest count and add-ons.`}
                 </p>
               )}
               <p className="text-sm text-neutral-500 mt-2">Secure payment powered by Stripe</p>
