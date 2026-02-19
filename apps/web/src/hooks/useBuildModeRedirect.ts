@@ -7,7 +7,7 @@ import type { OnboardingPhase } from '@macon/contracts';
 const STORAGE_KEY_PREFIX = 'handled:buildmode:redirected:';
 
 /**
- * Hook to auto-redirect to Build Mode when tenant reaches MARKETING phase
+ * Hook to auto-redirect to Build Mode when tenant reaches BUILDING phase
  *
  * Features:
  * - Only redirects ONCE per tenant (persisted in localStorage)
@@ -38,8 +38,8 @@ export function useBuildModeRedirect(
       // Check if we've already redirected this tenant
       const hasRedirected = localStorage.getItem(storageKey) === 'true';
 
-      // Redirect to Build Mode when tenant reaches MARKETING or BUILDING phase (once only)
-      if ((currentPhase === 'MARKETING' || currentPhase === 'BUILDING') && !hasRedirected) {
+      // Redirect to Build Mode when tenant reaches BUILDING phase (once only)
+      if (currentPhase === 'BUILDING' && !hasRedirected) {
         localStorage.setItem(storageKey, 'true');
         router.push('/tenant/build');
       }

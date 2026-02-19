@@ -87,7 +87,7 @@ function TenantLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [publishStatus]);
 
-  // Auto-redirect to Build Mode when reaching MARKETING phase
+  // Auto-redirect to Build Mode when reaching BUILDING phase
   useBuildModeRedirect(tenantId, currentPhase, onboardingLoading);
 
   // ========== Widget Callbacks ==========

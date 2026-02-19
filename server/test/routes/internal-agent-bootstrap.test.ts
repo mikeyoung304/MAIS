@@ -199,7 +199,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         businessName: 'Jane Photo',
         slug: 'jane-photo',
         onboardingComplete: false,
-        onboardingPhase: 'DISCOVERY',
+        onboardingPhase: 'BUILDING',
         discoveryFacts: {
           businessType: 'wedding photographer',
           businessName: 'Jane Photo',
@@ -234,7 +234,7 @@ describe('Internal Agent Bootstrap Endpoint', () => {
         businessName: 'Test Business',
         slug: 'test-business',
         onboardingComplete: false,
-        onboardingPhase: 'DISCOVERY',
+        onboardingPhase: 'BUILDING',
         discoveryFacts: {
           businessType: 'life coach',
           yearsInBusiness: 3,

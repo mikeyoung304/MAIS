@@ -156,7 +156,7 @@ describe('DiscoveryService', () => {
       // Tenant already past NOT_STARTED — phase should stay unchanged
       tenantRepo.findById.mockResolvedValue(
         makeTenant({
-          onboardingPhase: 'SERVICES',
+          onboardingPhase: 'BUILDING',
           branding: {
             discoveryFacts: { businessType: 'Photography', location: 'NYC', servicesOffered: 'y' },
           },
@@ -165,8 +165,8 @@ describe('DiscoveryService', () => {
 
       const result = await service.storeFact('tenant-1', 'businessName', 'Acme');
 
-      // Phase stays SERVICES — we only advance NOT_STARTED → BUILDING
-      expect(result.currentPhase).toBe('SERVICES');
+      // Phase stays BUILDING — we only advance NOT_STARTED → BUILDING
+      expect(result.currentPhase).toBe('BUILDING');
     });
   });
 
@@ -327,7 +327,7 @@ describe('DiscoveryService', () => {
 
   describe('completeOnboarding', () => {
     it('completes onboarding when tiers exist', async () => {
-      tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingPhase: 'MARKETING' }));
+      tenantRepo.findById.mockResolvedValue(makeTenant({ onboardingPhase: 'BUILDING' }));
       catalogService.countTiers.mockResolvedValue(1);
 
       const result = await service.completeOnboarding('tenant-1', {

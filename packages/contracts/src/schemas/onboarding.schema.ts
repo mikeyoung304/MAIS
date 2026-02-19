@@ -19,16 +19,7 @@ import { z } from 'zod';
 /**
  * Onboarding phase enum - matches Prisma OnboardingPhase
  */
-export const OnboardingPhaseSchema = z.enum([
-  'NOT_STARTED',
-  'DISCOVERY',
-  'MARKET_RESEARCH',
-  'SERVICES',
-  'MARKETING',
-  'BUILDING',
-  'COMPLETED',
-  'SKIPPED',
-]);
+export const OnboardingPhaseSchema = z.enum(['NOT_STARTED', 'BUILDING', 'COMPLETED', 'SKIPPED']);
 
 export type OnboardingPhase = z.infer<typeof OnboardingPhaseSchema>;
 
@@ -89,11 +80,11 @@ export const TargetMarketSchema = z.enum([
 export type TargetMarket = z.infer<typeof TargetMarketSchema>;
 
 // ============================================================================
-// Phase Data Schemas (Discriminated Union Components)
+// Business Data Schemas (used during onboarding discovery + research)
 // ============================================================================
 
 /**
- * Discovery phase data - initial business information
+ * Discovery data - initial business information gathered during onboarding
  */
 export const DiscoveryDataSchema = z.object({
   businessType: BusinessTypeSchema,
@@ -222,29 +213,12 @@ export type MarketingData = z.infer<typeof MarketingDataSchema>;
  * Ensures phase and data types are correctly paired at compile time.
  *
  * @example
- * // TypeScript knows `data` is DiscoveryData when phase is 'DISCOVERY'
  * const input: UpdateOnboardingStateInput = {
- *   phase: 'DISCOVERY',
- *   data: { businessType: 'photographer', ... }
+ *   phase: 'BUILDING',
+ *   data: { startedAt: new Date().toISOString() }
  * };
  */
 export const UpdateOnboardingStateInputSchema = z.discriminatedUnion('phase', [
-  z.object({
-    phase: z.literal('DISCOVERY'),
-    data: DiscoveryDataSchema,
-  }),
-  z.object({
-    phase: z.literal('MARKET_RESEARCH'),
-    data: MarketResearchDataSchema,
-  }),
-  z.object({
-    phase: z.literal('SERVICES'),
-    data: ServicesDataSchema,
-  }),
-  z.object({
-    phase: z.literal('MARKETING'),
-    data: MarketingDataSchema,
-  }),
   z.object({
     phase: z.literal('BUILDING'),
     data: z.object({
@@ -372,14 +346,7 @@ const BaseEventSchema = z.object({
  * Event type enum
  */
 export const OnboardingEventTypeSchema = z.enum([
-  'DISCOVERY_STARTED',
-  'DISCOVERY_COMPLETED',
-  'MARKET_RESEARCH_STARTED',
-  'MARKET_RESEARCH_COMPLETED',
-  'SERVICES_STARTED',
-  'SERVICES_CONFIGURED',
-  'MARKETING_STARTED',
-  'MARKETING_CONFIGURED',
+  'ONBOARDING_STARTED',
   'ONBOARDING_COMPLETED',
   'ONBOARDING_SKIPPED',
   'PHASE_REVERTED', // For going back to fix something
@@ -391,34 +358,9 @@ export type OnboardingEventType = z.infer<typeof OnboardingEventTypeSchema>;
  * Event payload schemas - one for each event type
  */
 export const EventPayloadSchemas = {
-  DISCOVERY_STARTED: z.object({
+  ONBOARDING_STARTED: z.object({
     startedAt: z.string().datetime(),
     sessionId: z.string(),
-  }),
-  DISCOVERY_COMPLETED: DiscoveryDataSchema.extend({
-    completedAt: z.string().datetime(),
-  }),
-  MARKET_RESEARCH_STARTED: z.object({
-    startedAt: z.string().datetime(),
-    businessType: BusinessTypeSchema,
-    location: z.object({
-      city: z.string(),
-      state: z.string(),
-    }),
-  }),
-  MARKET_RESEARCH_COMPLETED: MarketResearchDataSchema,
-  SERVICES_STARTED: z.object({
-    startedAt: z.string().datetime(),
-    recommendedTierCount: z.number().int(),
-  }),
-  SERVICES_CONFIGURED: ServicesDataSchema.extend({
-    configuredAt: z.string().datetime(),
-  }),
-  MARKETING_STARTED: z.object({
-    startedAt: z.string().datetime(),
-  }),
-  MARKETING_CONFIGURED: MarketingDataSchema.extend({
-    configuredAt: z.string().datetime(),
   }),
   ONBOARDING_COMPLETED: z.object({
     completedAt: z.string().datetime(),
@@ -450,36 +392,8 @@ export type OnboardingEventPayloads = {
  */
 export const OnboardingEventSchema = z.discriminatedUnion('eventType', [
   BaseEventSchema.extend({
-    eventType: z.literal('DISCOVERY_STARTED'),
-    payload: EventPayloadSchemas.DISCOVERY_STARTED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('DISCOVERY_COMPLETED'),
-    payload: EventPayloadSchemas.DISCOVERY_COMPLETED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('MARKET_RESEARCH_STARTED'),
-    payload: EventPayloadSchemas.MARKET_RESEARCH_STARTED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('MARKET_RESEARCH_COMPLETED'),
-    payload: EventPayloadSchemas.MARKET_RESEARCH_COMPLETED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('SERVICES_STARTED'),
-    payload: EventPayloadSchemas.SERVICES_STARTED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('SERVICES_CONFIGURED'),
-    payload: EventPayloadSchemas.SERVICES_CONFIGURED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('MARKETING_STARTED'),
-    payload: EventPayloadSchemas.MARKETING_STARTED,
-  }),
-  BaseEventSchema.extend({
-    eventType: z.literal('MARKETING_CONFIGURED'),
-    payload: EventPayloadSchemas.MARKETING_CONFIGURED,
+    eventType: z.literal('ONBOARDING_STARTED'),
+    payload: EventPayloadSchemas.ONBOARDING_STARTED,
   }),
   BaseEventSchema.extend({
     eventType: z.literal('ONBOARDING_COMPLETED'),
@@ -508,10 +422,6 @@ export type OnboardingEvent = z.infer<typeof OnboardingEventSchema>;
 export const AdvisorMemorySchema = z.object({
   tenantId: z.string(),
   currentPhase: OnboardingPhaseSchema,
-  discoveryData: DiscoveryDataSchema.optional(),
-  marketResearchData: MarketResearchDataSchema.optional(),
-  servicesData: ServicesDataSchema.optional(),
-  marketingData: MarketingDataSchema.optional(),
   lastEventVersion: z.number().int(),
   lastEventTimestamp: z.string().datetime(),
   conversationSummary: z.string().optional(),
@@ -529,10 +439,6 @@ export type AdvisorMemory = z.infer<typeof AdvisorMemorySchema>;
 export const OnboardingContextSchema = z.object({
   tenantId: z.string(),
   sessionId: z.string(),
-  discovery: DiscoveryDataSchema.optional(),
-  marketResearch: MarketResearchDataSchema.optional(),
-  services: ServicesDataSchema.optional(),
-  marketing: MarketingDataSchema.optional(),
   eventVersion: z.number().int().default(0),
   error: z.string().optional(),
 });
@@ -544,12 +450,8 @@ export type OnboardingContext = z.infer<typeof OnboardingContextSchema>;
  */
 export const OnboardingMachineEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('START') }),
-  z.object({ type: z.literal('COMPLETE_DISCOVERY'), data: DiscoveryDataSchema }),
-  z.object({ type: z.literal('COMPLETE_MARKET_RESEARCH'), data: MarketResearchDataSchema }),
-  z.object({ type: z.literal('COMPLETE_SERVICES'), data: ServicesDataSchema }),
-  z.object({ type: z.literal('COMPLETE_MARKETING'), data: MarketingDataSchema }),
+  z.object({ type: z.literal('COMPLETE') }),
   z.object({ type: z.literal('SKIP'), reason: z.string().optional() }),
-  z.object({ type: z.literal('GO_BACK') }),
   z.object({ type: z.literal('ERROR'), error: z.string() }),
   z.object({ type: z.literal('RETRY') }),
 ]);
