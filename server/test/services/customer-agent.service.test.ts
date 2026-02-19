@@ -73,6 +73,10 @@ function createMockPrisma(
       findUnique: MockedFunction<any>;
       update: MockedFunction<any>;
     };
+    agentSession: {
+      findUnique: MockedFunction<any>;
+      update: MockedFunction<any>;
+    };
   }> = {}
 ): PrismaClient {
   return {
@@ -80,6 +84,12 @@ function createMockPrisma(
       findUnique: vi.fn(),
       update: vi.fn(),
       ...overrides.tenant,
+    },
+    agentSession: {
+      // Default: return a session with an adkSessionId so chat() uses it
+      findUnique: vi.fn().mockResolvedValue({ adkSessionId: 'adk_session_123' }),
+      update: vi.fn(),
+      ...overrides.agentSession,
     },
   } as unknown as PrismaClient;
 }
@@ -602,17 +612,17 @@ describe('CustomerAgentService', () => {
     it('falls back to local session ID when ADK unreachable', async () => {
       // Arrange
       (global.fetch as MockedFunction<any>).mockRejectedValue(new Error('Network error'));
-      (mockSessionService.getOrCreateSession as MockedFunction<any>).mockImplementation(
-        async (_tenantId, sessionId) => createMockSession({ id: sessionId })
+      (mockSessionService.getOrCreateSession as MockedFunction<any>).mockResolvedValue(
+        createMockSession({ id: 'session_fallback' })
       );
 
       // Act
       const sessionId = await service.createSession('tenant_A');
 
-      // Assert - should use local: prefix fallback
+      // Assert - always passes null now; fresh DB session created regardless of ADK outcome
       expect(mockSessionService.getOrCreateSession).toHaveBeenCalledWith(
         'tenant_A',
-        expect.stringMatching(/^local:customer:tenant_A:\d+$/),
+        null,
         'CUSTOMER',
         undefined
       );

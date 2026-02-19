@@ -162,16 +162,23 @@ export class CustomerAgentService {
       );
     }
 
-    // Persist to database
+    // Persist to database (creates new session with auto-generated CUID)
     const dbSession = await this.sessionService.getOrCreateSession(
       tenantId,
-      adkSessionId,
+      null, // always create fresh — customer sessions are never resumed by ID
       'CUSTOMER',
       customerId
     );
 
+    // Store adkSessionId on the session for later correlation.
+    // CRITICAL: chat() must use this field for ADK calls, not the local CUID session ID.
+    await this.prisma.agentSession.update({
+      where: { id: dbSession.id },
+      data: { adkSessionId },
+    });
+
     logger.info(
-      { sessionId: dbSession.id, tenantId, customerId },
+      { sessionId: dbSession.id, tenantId, customerId, adkSessionId },
       '[CustomerAgent] Customer session created'
     );
 
@@ -243,8 +250,16 @@ export class CustomerAgentService {
       throw new Error('Session not found');
     }
 
+    // Get adkSessionId — CRITICAL: use this for ADK calls, not the local DB session ID.
+    // The local CUID (sessionId) is unknown to the ADK; the ADK only tracks its own UUIDs.
+    const sessionWithAdk = await this.prisma.agentSession.findUnique({
+      where: { id: sessionId },
+      select: { adkSessionId: true },
+    });
+    let adkSessionId = sessionWithAdk?.adkSessionId;
+
     logger.info(
-      { tenantId, sessionId, messageLength: userMessage.length },
+      { tenantId, sessionId, adkSessionId, messageLength: userMessage.length },
       '[CustomerAgent] Sending message'
     );
 
@@ -263,11 +278,47 @@ export class CustomerAgentService {
     const currentVersion = userMsgResult.newVersion!;
 
     try {
-      // 4. Send to Booking Agent
+      // 4. Send to Customer Agent
       const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
       const adkUserId = dbSession.customerId
         ? `${tenantId}:customer:${dbSession.customerId}`
         : `${tenantId}:anonymous`;
+
+      // If no adkSessionId, create a new ADK session before sending.
+      // This handles sessions created before the adkSessionId fix was deployed.
+      if (!adkSessionId) {
+        logger.warn(
+          { tenantId, sessionId },
+          '[CustomerAgent] No adkSessionId found, creating new ADK session'
+        );
+        try {
+          const sessionToken = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
+          const sessionRes = await fetchWithTimeout(
+            `${getCustomerAgentUrl()}/apps/agent/users/${encodeURIComponent(adkUserId)}/sessions`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(sessionToken && { Authorization: `Bearer ${sessionToken}` }),
+              },
+              body: JSON.stringify({ state: { tenantId } }),
+            }
+          );
+          if (sessionRes.ok) {
+            const raw = await sessionRes.json();
+            const parsed = AdkSessionResponseSchema.safeParse(raw);
+            if (parsed.success) {
+              adkSessionId = parsed.data.id;
+              await this.prisma.agentSession.update({
+                where: { id: sessionId },
+                data: { adkSessionId },
+              });
+            }
+          }
+        } catch {
+          // fall through — will get 404 and retry
+        }
+      }
 
       const response = await fetchWithTimeout(`${getCustomerAgentUrl()}/run`, {
         method: 'POST',
@@ -278,7 +329,7 @@ export class CustomerAgentService {
         body: JSON.stringify({
           appName: 'agent',
           userId: adkUserId,
-          sessionId: sessionId,
+          sessionId: adkSessionId ?? sessionId, // prefer ADK UUID; fall back for legacy sessions
           newMessage: {
             role: 'user',
             parts: [{ text: userMessage }],
