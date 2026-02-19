@@ -23,176 +23,19 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Tier, AddOn } from '../../src/generated/prisma/client';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
-import { createOrUpdateTenant } from './utils';
+import {
+  createOrUpdateTenant,
+  createOrUpdateSegment,
+  createOrUpdateTierWithSegment,
+  createOrUpdateAddOn,
+  linkAddOnsToTier,
+} from './utils';
 
 // Fixed slug for Plate tenant
 const TENANT_SLUG = 'plate';
-
-/**
- * Transaction client type for seed operations
- */
-type PrismaOrTransaction =
-  | PrismaClient
-  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>;
-
-/**
- * Create or update a segment
- */
-async function createOrUpdateSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  options: {
-    slug: string;
-    name: string;
-    heroTitle: string;
-    heroSubtitle?: string;
-    heroImage?: string;
-    description?: string;
-    metaTitle?: string;
-    metaDescription?: string;
-    sortOrder?: number;
-    active?: boolean;
-  }
-): Promise<Segment> {
-  const {
-    slug,
-    name,
-    heroTitle,
-    heroSubtitle,
-    heroImage,
-    description,
-    metaTitle,
-    metaDescription,
-    sortOrder = 0,
-    active = true,
-  } = options;
-
-  return prisma.segment.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      heroTitle,
-      heroSubtitle,
-      heroImage,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-    create: {
-      tenantId,
-      slug,
-      name,
-      heroTitle,
-      heroSubtitle,
-      heroImage,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-  });
-}
-
-/**
- * Create or update a tier with segment association
- */
-async function createOrUpdateTierWithSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  segmentId: string,
-  options: {
-    slug: string;
-    name: string;
-    description: string;
-    priceCents: number;
-    sortOrder: number;
-    photos?: Array<{ url: string; filename: string; size: number; order: number }>;
-  }
-): Promise<Tier> {
-  const { slug, name, description, priceCents, sortOrder, photos = [] } = options;
-
-  return prisma.tier.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      description,
-      priceCents,
-      segmentId,
-      sortOrder,
-      photos: JSON.stringify(photos),
-    },
-    create: {
-      tenantId,
-      segmentId,
-      slug,
-      name,
-      description,
-      priceCents,
-      sortOrder,
-      features: JSON.stringify([]),
-      photos: JSON.stringify(photos),
-    },
-  });
-}
-
-/**
- * Create or update an add-on (global - no segment scoping)
- */
-async function createOrUpdateAddOn(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  options: {
-    slug: string;
-    name: string;
-    description: string;
-    price: number; // in cents
-  }
-): Promise<AddOn> {
-  const { slug, name, description, price } = options;
-
-  return prisma.addOn.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      description,
-      price,
-      segmentId: null, // Global - available to all segments
-    },
-    create: {
-      tenantId,
-      segmentId: null, // Global - available to all segments
-      slug,
-      name,
-      description,
-      price,
-    },
-  });
-}
-
-/**
- * Link add-ons to a tier
- */
-async function linkAddOnsToTier(
-  prisma: PrismaOrTransaction,
-  tierId: string,
-  addOnIds: string[]
-): Promise<void> {
-  await Promise.all(
-    addOnIds.map((addOnId) =>
-      prisma.tierAddOn.upsert({
-        where: { tierId_addOnId: { tierId, addOnId } },
-        update: {},
-        create: { tierId, addOnId },
-      })
-    )
-  );
-}
 
 export async function seedPlate(prisma: PrismaClient): Promise<void> {
   // Production guard - prevent accidental data destruction
@@ -604,28 +447,32 @@ Minimum 12 guests. Pricing is per person.`,
       // =====================================================================
 
       // Bar Services (4)
-      const beerWineBar = await createOrUpdateAddOn(tx, tenant.id, {
+      const beerWineBar = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'beer-wine-bar',
         name: 'Beer & Wine Bar',
         description: 'Curated selection of wines and craft beers with bartender service',
         price: 2500, // $25/person
       });
 
-      const fullBar = await createOrUpdateAddOn(tx, tenant.id, {
+      const fullBar = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'full-bar',
         name: 'Full Bar Service',
         description: 'Complete bar with premium spirits, mixers, and professional bartenders',
         price: 4500, // $45/person
       });
 
-      const signatureCocktails = await createOrUpdateAddOn(tx, tenant.id, {
+      const signatureCocktails = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'signature-cocktails',
         name: 'Signature Cocktail Menu',
         description: 'Two custom cocktails designed for your event, named for your occasion',
         price: 1200, // $12/person
       });
 
-      const champagneToast = await createOrUpdateAddOn(tx, tenant.id, {
+      const champagneToast = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'champagne-toast',
         name: 'Champagne Toast',
         description: 'Premium champagne service for toasts and celebrations',
@@ -633,21 +480,24 @@ Minimum 12 guests. Pricing is per person.`,
       });
 
       // Desserts & Sweets (3)
-      const dessertStation = await createOrUpdateAddOn(tx, tenant.id, {
+      const dessertStation = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'dessert-station',
         name: 'Dessert Station',
         description: 'Artisan dessert display with mini pastries, truffles, and petit fours',
         price: 1800, // $18/person
       });
 
-      const lateNightSnacks = await createOrUpdateAddOn(tx, tenant.id, {
+      const lateNightSnacks = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'late-night-snacks',
         name: 'Late Night Snack Station',
         description: 'Sliders, tacos, or comfort food served late in the evening',
         price: 2200, // $22/person
       });
 
-      const customCake = await createOrUpdateAddOn(tx, tenant.id, {
+      const customCake = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'custom-cake',
         name: 'Custom Cake Design',
         description: 'Wedding or celebration cake from our partner bakery (priced per serving)',
@@ -655,28 +505,32 @@ Minimum 12 guests. Pricing is per person.`,
       });
 
       // Service Upgrades (4)
-      const premiumLinens = await createOrUpdateAddOn(tx, tenant.id, {
+      const premiumLinens = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'premium-linens',
         name: 'Premium Linens & China',
         description: 'Upgraded table linens, fine china, and crystal glassware',
         price: 1500, // $15/person
       });
 
-      const additionalStaff = await createOrUpdateAddOn(tx, tenant.id, {
+      const additionalStaff = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'additional-staff',
         name: 'Additional Service Staff',
         description: 'Extra servers for higher-touch service (per server for 4 hours)',
         price: 25000, // $250 flat
       });
 
-      const valetCoordination = await createOrUpdateAddOn(tx, tenant.id, {
+      const valetCoordination = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'valet-coordination',
         name: 'Valet Coordination',
         description: 'We coordinate with local valet services for seamless arrivals',
         price: 50000, // $500 flat
       });
 
-      const menuTasting = await createOrUpdateAddOn(tx, tenant.id, {
+      const menuTasting = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'menu-tasting',
         name: 'Private Menu Tasting',
         description: 'In-home or at-venue tasting experience for up to 4 guests',
@@ -684,28 +538,32 @@ Minimum 12 guests. Pricing is per person.`,
       });
 
       // Dietary & Special (4)
-      const kosherMenu = await createOrUpdateAddOn(tx, tenant.id, {
+      const kosherMenu = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'kosher-menu',
         name: 'Kosher Menu Options',
         description: 'Kosher-certified menu items prepared according to dietary laws',
         price: 2000, // $20/person
       });
 
-      const veganMenu = await createOrUpdateAddOn(tx, tenant.id, {
+      const veganMenu = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'vegan-menu',
         name: 'Full Vegan Menu',
         description: 'Complete plant-based menu designed by Chef Mike',
         price: 0, // Included in base
       });
 
-      const allergenMenu = await createOrUpdateAddOn(tx, tenant.id, {
+      const allergenMenu = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'allergen-menu',
         name: 'Allergen-Free Adaptations',
         description: 'Custom adaptations for gluten-free, nut-free, or other allergen needs',
         price: 0, // Included in base
       });
 
-      const kidsMenu = await createOrUpdateAddOn(tx, tenant.id, {
+      const kidsMenu = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
         slug: 'kids-menu',
         name: "Kids' Menu",
         description: 'Child-friendly menu options for guests under 12',

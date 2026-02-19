@@ -13,6 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Professional websites, booking, and AI chatbots for service professionals',
     start_url: '/',
     display: 'standalone',
+    // Note: hardcoded to HANDLED marketing dark. Tenant storefronts added to
+    // homescreen will show this splash color. Low priority — few users install PWA.
     background_color: '#18181B', // graphite dark
     theme_color: '#45B37F', // Electric Sage
     orientation: 'portrait-primary',

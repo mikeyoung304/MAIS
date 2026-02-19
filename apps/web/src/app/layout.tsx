@@ -74,6 +74,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
+      {/* bg-background resolves to var(--color-background, #FAFAF7).
+          TenantSiteShell overrides --color-background per-tenant via inline CSS vars.
+          If the default changes, verify tenant storefronts are not affected. */}
       <body className="min-h-screen bg-background font-body antialiased">
         <a href="#main-content" className="skip-link">
           Skip to main content

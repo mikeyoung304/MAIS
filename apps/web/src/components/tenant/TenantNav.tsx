@@ -6,22 +6,21 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
-import type { TenantPublicDto, PagesConfig } from '@macon/contracts';
-import { getNavItemsFromHomeSections, buildAnchorNavHref } from './navigation';
+import type { TenantPublicDto } from '@macon/contracts';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useActiveSection } from '@/hooks/useActiveSection';
-
-interface TenantNavProps {
-  tenant: TenantPublicDto;
-  /** Pages configuration from SectionContent */
-  pages?: PagesConfig | null;
-  /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
-  basePath?: string;
-}
 
 interface NavItemWithHref {
   label: string;
   href: string;
+}
+
+interface TenantNavProps {
+  tenant: TenantPublicDto;
+  /** Pre-derived nav items (computed server-side in TenantSiteShell) */
+  navItems: NavItemWithHref[];
+  /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
+  basePath?: string;
 }
 
 /**
@@ -35,7 +34,7 @@ interface NavItemWithHref {
  * - Route change closes mobile menu
  * - Respects prefers-reduced-motion
  */
-export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavProps) {
+export function TenantNav({ tenant, navItems, basePath: basePathProp }: TenantNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -44,16 +43,6 @@ export function TenantNav({ tenant, pages, basePath: basePathProp }: TenantNavPr
 
   // Use provided basePath or default to slug-based path
   const basePath = basePathProp ?? `/t/${tenant.slug}`;
-
-  // Memoize navItems — derives from home sections for single-page scroll
-  const navItems = useMemo<NavItemWithHref[]>(
-    () =>
-      getNavItemsFromHomeSections(pages).map((item) => ({
-        label: item.label,
-        href: buildAnchorNavHref(basePath, item),
-      })),
-    [basePath, pages]
-  );
 
   // Section IDs for active nav highlighting via Intersection Observer
   const sectionIds = useMemo(

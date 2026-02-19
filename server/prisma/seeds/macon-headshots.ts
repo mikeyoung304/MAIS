@@ -16,137 +16,16 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Tier } from '../../src/generated/prisma/client';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
-import { createOrUpdateTenant } from './utils';
+import {
+  createOrUpdateTenant,
+  createOrUpdateSegment,
+  createOrUpdateTierWithSegment,
+} from './utils';
 
 const TENANT_SLUG = 'maconheadshots';
-
-/**
- * Transaction client type for seed operations
- */
-type PrismaOrTransaction =
-  | PrismaClient
-  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>;
-
-/**
- * Create or update a segment
- */
-async function createOrUpdateSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  options: {
-    slug: string;
-    name: string;
-    heroTitle: string;
-    heroSubtitle?: string;
-    description?: string;
-    metaTitle?: string;
-    metaDescription?: string;
-    sortOrder?: number;
-    active?: boolean;
-  }
-): Promise<Segment> {
-  const {
-    slug,
-    name,
-    heroTitle,
-    heroSubtitle,
-    description,
-    metaTitle,
-    metaDescription,
-    sortOrder = 0,
-    active = true,
-  } = options;
-
-  return prisma.segment.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      heroTitle,
-      heroSubtitle,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-    create: {
-      tenantId,
-      slug,
-      name,
-      heroTitle,
-      heroSubtitle,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-  });
-}
-
-/**
- * Create or update a tier with full field support
- */
-async function createOrUpdateTierWithSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  segmentId: string,
-  options: {
-    slug: string;
-    name: string;
-    description: string;
-    priceCents: number;
-    bookingType: 'DATE' | 'TIMESLOT';
-    durationMinutes?: number | null;
-    scalingRules?: {
-      components: Array<{
-        name: string;
-        includedGuests: number;
-        perPersonCents: number;
-        maxGuests?: number;
-      }>;
-    } | null;
-    features?: Array<{ text: string; highlighted: boolean }>;
-    sortOrder: number;
-  }
-): Promise<Tier> {
-  const {
-    slug,
-    name,
-    description,
-    priceCents,
-    bookingType,
-    durationMinutes,
-    scalingRules,
-    features = [],
-    sortOrder,
-  } = options;
-
-  const data = {
-    name,
-    description,
-    priceCents,
-    bookingType,
-    durationMinutes: durationMinutes ?? null,
-    scalingRules: scalingRules ?? undefined,
-    segmentId,
-    sortOrder,
-    features,
-  };
-
-  return prisma.tier.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: data,
-    create: {
-      tenantId,
-      slug,
-      ...data,
-    },
-  });
-}
 
 export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
   // Production guard - prevent accidental data destruction
@@ -487,24 +366,24 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
             items: [
               {
                 id: 'testimonial-comfort',
-                name: 'Sarah M.',
-                role: 'Real Estate Agent',
+                authorName: 'Sarah M.',
+                authorRole: 'Real Estate Agent',
                 quote:
                   "I've avoided professional photos my entire career. Mike made it painless — actually fun. The coaching made all the difference.",
                 rating: 5,
               },
               {
                 id: 'testimonial-quality',
-                name: 'James T.',
-                role: 'Attorney',
+                authorName: 'James T.',
+                authorRole: 'Attorney',
                 quote:
                   'The live review during the shoot was a game-changer. I could see exactly what we were getting and left confident in every shot.',
                 rating: 5,
               },
               {
                 id: 'testimonial-turnaround',
-                name: 'Dr. Priya K.',
-                role: 'Physician',
+                authorName: 'Dr. Priya K.',
+                authorRole: 'Physician',
                 quote:
                   'Booked on Monday, shot on Wednesday, retouched images by the following Tuesday. Fast, professional, and the results speak for themselves.',
                 rating: 5,

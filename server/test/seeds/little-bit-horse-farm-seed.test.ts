@@ -179,6 +179,31 @@ describe('littlebit.farm Seed', () => {
         expect(displayPrice).toBe(chargePrice + 20000);
       });
     });
+
+    it('should assign tiers to their correct segments', async () => {
+      const mockPrisma = createMockPrisma(null);
+
+      await seedLittleBitHorseFarm(mockPrisma);
+
+      const tierCalls = mockPrisma.tier.upsert.mock.calls;
+
+      // Elopements segment tiers should reference segment-elopements
+      const simpleCeremony = tierCalls.find(
+        (c) => c[0].where.tenantId_slug.slug === 'simple-ceremony'
+      );
+      expect(simpleCeremony).toBeDefined();
+      expect(simpleCeremony![0].create.segmentId).toBe('segment-elopements');
+
+      // Corporate Retreats segment tiers should reference segment-corporate_retreats
+      const focusedDay = tierCalls.find((c) => c[0].where.tenantId_slug.slug === 'focused-day');
+      expect(focusedDay).toBeDefined();
+      expect(focusedDay![0].create.segmentId).toBe('segment-corporate_retreats');
+
+      // Weekend Getaway segment tiers should reference segment-weekend_getaway
+      const girlsWeekend = tierCalls.find((c) => c[0].where.tenantId_slug.slug === 'girls-weekend');
+      expect(girlsWeekend).toBeDefined();
+      expect(girlsWeekend![0].create.segmentId).toBe('segment-weekend_getaway');
+    });
   });
 
   describe('Section Content', () => {
@@ -230,6 +255,55 @@ describe('littlebit.farm Seed', () => {
       const questions = items.map((i) => i.question);
       expect(questions).toContain('How does pricing work?');
       expect(questions).toContain('How many cars can we bring?');
+    });
+
+    it('should create HERO section with background and CTA', async () => {
+      const mockPrisma = createMockPrisma(null);
+      await seedLittleBitHorseFarm(mockPrisma);
+      const heroCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'HERO'
+      );
+      expect(heroCall).toBeDefined();
+      const content = heroCall![0].data.content as Record<string, unknown>;
+      expect(content.headline).toBeDefined();
+      expect(content.alignment).toBe('center');
+    });
+
+    it('should create ABOUT section with story content and image', async () => {
+      const mockPrisma = createMockPrisma(null);
+      await seedLittleBitHorseFarm(mockPrisma);
+      const aboutCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'ABOUT'
+      );
+      expect(aboutCall).toBeDefined();
+      const content = aboutCall![0].data.content as Record<string, unknown>;
+      expect(content.title).toBe('The Story');
+      expect(content.imagePosition).toBe('right');
+    });
+
+    it('should create CTA section with booking prompt', async () => {
+      const mockPrisma = createMockPrisma(null);
+      await seedLittleBitHorseFarm(mockPrisma);
+      const ctaCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'CTA'
+      );
+      expect(ctaCall).toBeDefined();
+      const content = ctaCall![0].data.content as Record<string, unknown>;
+      expect(content.headline).toBeDefined();
+      expect(content.buttonText).toBeDefined();
+      expect(content.style).toBeDefined();
+    });
+
+    it('should create SERVICES section with pricing cards', async () => {
+      const mockPrisma = createMockPrisma(null);
+      await seedLittleBitHorseFarm(mockPrisma);
+      const servicesCall = mockPrisma.sectionContent.create.mock.calls.find(
+        (c) => c[0].data.blockType === 'SERVICES'
+      );
+      expect(servicesCall).toBeDefined();
+      const content = servicesCall![0].data.content as Record<string, unknown>;
+      expect(content.showPricing).toBe(true);
+      expect(content.layout).toBe('cards');
     });
 
     it('should publish all section content (isDraft: false)', async () => {
@@ -381,12 +455,6 @@ function createMockPrisma(
     apiKeySecret: 'hashed-secret-key',
   };
 
-  const mockSegment = {
-    id: 'segment-elopements-123',
-    slug: 'elopements',
-    tenantId: mockTenant.id,
-  };
-
   const mockTier = {
     id: 'tier-1',
     slug: 'simple-ceremony',
@@ -399,7 +467,15 @@ function createMockPrisma(
       upsert: vi.fn().mockResolvedValue(mockTenant),
     },
     segment: {
-      upsert: vi.fn().mockResolvedValue(mockSegment),
+      upsert: vi.fn().mockImplementation((args) => {
+        const slug = args.where.tenantId_slug.slug;
+        return Promise.resolve({
+          id: `segment-${slug}`,
+          slug,
+          name: `Segment ${slug}`,
+          tenantId: mockTenant.id,
+        });
+      }),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     tier: {

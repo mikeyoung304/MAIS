@@ -5,17 +5,18 @@
  * across E2E and demo seeds.
  */
 
-import type { PrismaClient, Tenant, Tier, AddOn } from '../../src/generated/prisma/client';
-import { Prisma } from '../../src/generated/prisma/client';
+import type { PrismaClient, Tenant, Tier, AddOn, Segment } from '../../src/generated/prisma/client';
+import { BookingType } from '../../src/generated/prisma/client';
 import { apiKeyService } from '../../src/lib/api-key.service';
 
 /**
  * Transaction client type for seed operations
- * Allows functions to work with both PrismaClient and transaction clients
+ * Allows functions to work with both PrismaClient and transaction clients.
+ * Includes $extends exclusion required for Prisma 7 compatibility.
  */
-type PrismaOrTransaction =
+export type PrismaOrTransaction =
   | PrismaClient
-  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use'>;
+  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>;
 
 /**
  * Options for creating/updating a tenant
@@ -37,7 +38,24 @@ export interface TenantSeedOptions {
 }
 
 /**
- * Options for creating/updating a tier
+ * Options for creating/updating a segment
+ */
+export interface SegmentSeedOptions {
+  slug: string;
+  name: string;
+  heroTitle: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  description?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  sortOrder?: number;
+  active?: boolean;
+}
+
+/**
+ * Options for creating/updating a tier.
+ * All optional fields are absent from the simpler seed files — defaults apply.
  */
 export interface TierSeedOptions {
   tenantId: string;
@@ -47,17 +65,42 @@ export interface TierSeedOptions {
   description: string;
   priceCents: number;
   sortOrder: number;
+  /** Display price shown to customers (e.g., all-in price including accommodation). */
+  displayPriceCents?: number;
+  /** Max guests for this tier (null = no limit / flat pricing). */
+  maxGuests?: number;
+  /**
+   * Per-person scaling pricing rules.
+   * null explicitly clears any existing scaling; undefined leaves field unchanged on update.
+   */
+  scalingRules?: {
+    components: Array<{
+      name: string;
+      includedGuests: number;
+      perPersonCents: number;
+      maxGuests?: number;
+    }>;
+  } | null;
   photos?: Array<{
     url: string;
     filename: string;
     size: number;
     order: number;
   }>;
-  features?: Array<{ name: string; included: boolean }>;
+  /**
+   * Tier features.
+   * Accepts `{text, highlighted}` shape.
+   */
+  features?: Array<{ text: string; highlighted: boolean }>;
+  /** Booking model for this tier — defaults to DATE. */
+  bookingType?: BookingType;
+  /** Service duration in minutes for TIMESLOT-based tiers. */
+  durationMinutes?: number | null;
 }
 
 /**
- * Options for creating/updating an add-on
+ * Options for creating/updating an add-on.
+ * segmentId is optional — null means global (available to all segments).
  */
 export interface AddOnSeedOptions {
   tenantId: string;
@@ -65,6 +108,8 @@ export interface AddOnSeedOptions {
   name: string;
   description: string;
   price: number;
+  /** null = global add-on available to all segments; omit for same behaviour. */
+  segmentId?: string | null;
 }
 
 /**
@@ -125,55 +170,150 @@ export async function createOrUpdateTenant(
 }
 
 /**
- * Create or update a tier with the provided options
+ * Create or update a segment with the provided options.
+ * Promoted from individual seed files — all three had identical implementations.
  */
-export async function createOrUpdateTier(
+export async function createOrUpdateSegment(
   prisma: PrismaOrTransaction,
-  options: TierSeedOptions
-): Promise<Tier> {
+  tenantId: string,
+  options: SegmentSeedOptions
+): Promise<Segment> {
   const {
-    tenantId,
-    segmentId,
     slug,
     name,
+    heroTitle,
+    heroSubtitle,
+    heroImage,
     description,
-    priceCents,
-    sortOrder,
-    photos = [],
-    features = [],
+    metaTitle,
+    metaDescription,
+    sortOrder = 0,
+    active = true,
   } = options;
 
-  return prisma.tier.upsert({
+  return prisma.segment.upsert({
     where: { tenantId_slug: { slug, tenantId } },
-    update: {},
+    update: {
+      name,
+      heroTitle,
+      heroSubtitle,
+      heroImage,
+      description,
+      metaTitle,
+      metaDescription,
+      sortOrder,
+      active,
+    },
     create: {
+      tenantId,
       slug,
       name,
+      heroTitle,
+      heroSubtitle,
+      heroImage,
       description,
-      priceCents,
+      metaTitle,
+      metaDescription,
       sortOrder,
-      photos: JSON.stringify(photos),
-      features: JSON.stringify(features),
-      tenantId,
-      segmentId,
+      active,
     },
   });
 }
 
 /**
- * Create or update an add-on with the provided options
+ * Create or update a tier with full field support.
+ * Supports displayPriceCents, maxGuests, scalingRules, bookingType, and the
+ * {text, highlighted} feature shape used by all current seed files.
+ *
+ * Replaces the local createOrUpdateTierWithSegment helpers that were duplicated
+ * across little-bit-horse-farm.ts, plate.ts, and la-petit-mariage.ts.
+ */
+export async function createOrUpdateTierWithSegment(
+  prisma: PrismaOrTransaction,
+  tenantId: string,
+  segmentId: string,
+  options: Omit<TierSeedOptions, 'tenantId' | 'segmentId'>
+): Promise<Tier> {
+  const {
+    slug,
+    name,
+    description,
+    priceCents,
+    displayPriceCents,
+    maxGuests,
+    scalingRules,
+    features = [],
+    sortOrder,
+    photos = [],
+    bookingType = BookingType.DATE,
+    durationMinutes,
+  } = options;
+
+  // Runtime validation: guard against invalid bookingType values passed at runtime
+  if (!Object.values(BookingType).includes(bookingType)) {
+    throw new Error(`Invalid bookingType: ${bookingType}`);
+  }
+
+  const data = {
+    name,
+    description,
+    priceCents,
+    displayPriceCents: displayPriceCents ?? null,
+    maxGuests: maxGuests ?? null,
+    scalingRules: scalingRules ?? undefined,
+    durationMinutes: durationMinutes ?? null,
+    segmentId,
+    sortOrder,
+    photos,
+    features,
+    bookingType,
+  };
+
+  return prisma.tier.upsert({
+    where: { tenantId_slug: { slug, tenantId } },
+    update: data,
+    create: {
+      tenantId,
+      slug,
+      ...data,
+    },
+  });
+}
+
+/**
+ * @deprecated Use createOrUpdateTierWithSegment instead — it supports all fields
+ * and takes tenantId + segmentId as positional params matching the seed pattern.
+ * Kept for backwards compatibility; remove once all callers are migrated.
+ */
+export async function createOrUpdateTier(
+  prisma: PrismaOrTransaction,
+  options: TierSeedOptions
+): Promise<Tier> {
+  const { tenantId, segmentId, ...rest } = options;
+  return createOrUpdateTierWithSegment(prisma, tenantId, segmentId, rest);
+}
+
+/**
+ * Create or update an add-on with the provided options.
+ * segmentId is optional — null means the add-on is global (available to all segments).
  */
 export async function createOrUpdateAddOn(
   prisma: PrismaOrTransaction,
   options: AddOnSeedOptions
 ): Promise<AddOn> {
-  const { tenantId, slug, name, description, price } = options;
+  const { tenantId, slug, name, description, price, segmentId = null } = options;
 
   return prisma.addOn.upsert({
     where: { tenantId_slug: { slug, tenantId } },
-    update: {},
+    update: {
+      name,
+      description,
+      price,
+      segmentId,
+    },
     create: {
       tenantId,
+      segmentId,
       slug,
       name,
       description,

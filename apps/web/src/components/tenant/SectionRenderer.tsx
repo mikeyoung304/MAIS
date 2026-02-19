@@ -20,6 +20,9 @@ import {
  *
  * Issue #6 Fix: These IDs enable #about, #services, etc. anchor links
  * to scroll to the correct section on the landing page.
+ *
+ * NOTE: 'features' intentionally aliases to 'services' anchor (same scroll target as SegmentTiersSection).
+ * navigation.ts SECTION_TYPE_TO_PAGE excludes 'features' to prevent duplicate nav items.
  */
 const SECTION_TYPE_TO_ANCHOR_ID: Record<string, string> = {
   hero: 'hero',
@@ -97,6 +100,11 @@ export function SectionRenderer({
     return null;
   }
 
+  // Track assigned anchor IDs so that duplicate section types only receive an
+  // id attribute on their first occurrence. Subsequent occurrences of the same
+  // type get undefined, preventing duplicate DOM ids (HTML validity violation).
+  const assignedAnchorIds = new Set<string>();
+
   return (
     <>
       {sections.map((section, index) => {
@@ -147,8 +155,15 @@ export function SectionRenderer({
           }
         })();
 
-        // Get anchor ID for this section type (Issue #6: single-page navigation)
-        const anchorId = SECTION_TYPE_TO_ANCHOR_ID[section.type];
+        // Get anchor ID for this section type (Issue #6: single-page navigation).
+        // Only assign to the first occurrence of each anchor ID to avoid duplicate
+        // DOM ids when a tenant has multiple sections of the same type.
+        const candidateAnchorId = SECTION_TYPE_TO_ANCHOR_ID[section.type];
+        const anchorId =
+          candidateAnchorId && !assignedAnchorIds.has(candidateAnchorId)
+            ? candidateAnchorId
+            : undefined;
+        if (anchorId) assignedAnchorIds.add(anchorId);
 
         const sectionId = 'id' in section && section.id ? section.id : undefined;
 

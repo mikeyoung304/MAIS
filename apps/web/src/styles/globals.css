@@ -155,11 +155,13 @@
 
 /* Chrome autofill override for dark theme
  * Uses CSS variables from Tailwind config for maintainability:
- * - --autofill-bg: matches surface color (#18181B)
+ * - --autofill-bg: falls back to HANDLED marketing dark (#18181B) when
+ *   --color-background is not set (platform pages). Tenant storefronts that
+ *   set --color-background via TenantSiteShell will use their own bg instead.
  * - --autofill-text: matches text-primary color (#FAFAFA)
  */
 :root {
-  --autofill-bg: #18181B;
+  --autofill-bg: var(--color-background, #18181B);
   --autofill-text: #FAFAFA;
 }
 

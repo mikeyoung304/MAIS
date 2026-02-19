@@ -30,10 +30,14 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Tier } from '../../src/generated/prisma/client';
+import type { PrismaClient, BlockType } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
-import { createOrUpdateTenant } from './utils';
+import {
+  createOrUpdateTenant,
+  createOrUpdateSegment,
+  createOrUpdateTierWithSegment,
+} from './utils';
 
 // Fixed slug for littlebit.farm tenant
 const TENANT_SLUG = 'littlebit-farm';
@@ -44,138 +48,8 @@ const AIRBNB_COST_CENTS = 20000;
 // Dinner per-person rate (consistent across all segments)
 const DINNER_PER_PERSON_CENTS = 7500; // $75/person
 
-/**
- * Transaction client type for seed operations
- */
-type PrismaOrTransaction =
-  | PrismaClient
-  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>;
-
-/**
- * Create or update a segment
- */
-async function createOrUpdateSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  options: {
-    slug: string;
-    name: string;
-    heroTitle: string;
-    heroSubtitle?: string;
-    heroImage?: string;
-    description?: string;
-    metaTitle?: string;
-    metaDescription?: string;
-    sortOrder?: number;
-    active?: boolean;
-  }
-): Promise<Segment> {
-  const {
-    slug,
-    name,
-    heroTitle,
-    heroSubtitle,
-    heroImage,
-    description,
-    metaTitle,
-    metaDescription,
-    sortOrder = 0,
-    active = true,
-  } = options;
-
-  return prisma.segment.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      heroTitle,
-      heroSubtitle,
-      heroImage,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-    create: {
-      tenantId,
-      slug,
-      name,
-      heroTitle,
-      heroSubtitle,
-      heroImage,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-  });
-}
-
-/**
- * Create or update a tier with full field support
- * Supports displayPriceCents, maxGuests, scalingRules, and features
- */
-async function createOrUpdateTierWithSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  segmentId: string,
-  options: {
-    slug: string;
-    name: string;
-    description: string;
-    priceCents: number;
-    displayPriceCents?: number;
-    maxGuests?: number;
-    scalingRules?: {
-      components: Array<{
-        name: string;
-        includedGuests: number;
-        perPersonCents: number;
-        maxGuests?: number;
-      }>;
-    } | null;
-    features?: Array<{ text: string; highlighted: boolean }>;
-    sortOrder: number;
-    photos?: Array<{ url: string; filename: string; size: number; order: number }>;
-  }
-): Promise<Tier> {
-  const {
-    slug,
-    name,
-    description,
-    priceCents,
-    displayPriceCents,
-    maxGuests,
-    scalingRules,
-    features = [],
-    sortOrder,
-    photos = [],
-  } = options;
-
-  const data = {
-    name,
-    description,
-    priceCents,
-    displayPriceCents: displayPriceCents ?? null,
-    maxGuests: maxGuests ?? null,
-    scalingRules: scalingRules ?? undefined,
-    segmentId,
-    sortOrder,
-    photos,
-    features,
-  };
-
-  return prisma.tier.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: data,
-    create: {
-      tenantId,
-      slug,
-      ...data,
-    },
-  });
-}
+// Grazing board per-person rate (Celebration Ceremony)
+const GRAZING_PER_PERSON_CENTS = 2500; // $25/person
 
 // Shared house rules + parking text for all segment descriptions
 const HOUSE_RULES =
@@ -345,7 +219,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
               {
                 name: 'Grazing Board',
                 includedGuests: 2,
-                perPersonCents: 2500, // $25/person
+                perPersonCents: GRAZING_PER_PERSON_CENTS, // $25/person
                 maxGuests: 10,
               },
             ],
@@ -626,7 +500,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'HERO',
+          blockType: 'HERO' satisfies BlockType,
           pageName: 'home',
           order: 0,
           isDraft: false,
@@ -647,7 +521,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'FEATURES',
+          blockType: 'FEATURES' satisfies BlockType,
           pageName: 'home',
           order: 1,
           isDraft: false,
@@ -696,7 +570,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'ABOUT',
+          blockType: 'ABOUT' satisfies BlockType,
           pageName: 'home',
           order: 2,
           isDraft: false,
@@ -722,7 +596,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'SERVICES',
+          blockType: 'SERVICES' satisfies BlockType,
           pageName: 'home',
           order: 3,
           isDraft: false,
@@ -741,7 +615,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'FAQ',
+          blockType: 'FAQ' satisfies BlockType,
           pageName: 'home',
           order: 4,
           isDraft: false,
@@ -795,7 +669,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
-          blockType: 'CTA',
+          blockType: 'CTA' satisfies BlockType,
           pageName: 'home',
           order: 5,
           isDraft: false,
@@ -817,6 +691,7 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
       // =====================================================================
       // BLACKOUT DATES (holidays)
       // =====================================================================
+      // Placeholder blackout dates — tenant manages their own via dashboard
       const holidays = [
         { date: new Date('2026-03-01'), reason: 'Maintenance' },
         { date: new Date('2026-07-04'), reason: 'Independence Day' },
@@ -871,6 +746,6 @@ export async function seedLittleBitHorseFarm(prisma: PrismaClient): Promise<void
   logger.info('  Dinner scaling: $75/person beyond 2 included');
   logger.info('  Checkout charges experience portion only');
   logger.info('Section content: HERO, FEATURES (How It Works), ABOUT, SERVICES, FAQ, CTA');
-  logger.info(`Blackout dates: ${6}`);
+  logger.info('Blackout dates: 6');
   logger.info('='.repeat(60));
 }

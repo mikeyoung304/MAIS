@@ -12,196 +12,19 @@
  * will preserve existing keys to avoid breaking environments.
  */
 
-import type { PrismaClient, Segment, Tier, AddOn } from '../../src/generated/prisma/client';
-import { BookingType } from '../../src/generated/prisma/client';
+import type { PrismaClient } from '../../src/generated/prisma/client';
 import * as crypto from 'crypto';
 import { logger } from '../../src/lib/core/logger';
-import { createOrUpdateTenant } from './utils';
+import {
+  createOrUpdateTenant,
+  createOrUpdateSegment,
+  createOrUpdateTierWithSegment,
+  createOrUpdateAddOn,
+  linkAddOnsToTier,
+} from './utils';
 
 // Fixed slug for La Petit Mariage tenant
 const TENANT_SLUG = 'la-petit-mariage';
-
-/**
- * Transaction client type for seed operations
- * Matches the type from utils.ts for consistency
- */
-type PrismaOrTransaction =
-  | PrismaClient
-  | Omit<PrismaClient, '$transaction' | '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>;
-
-/**
- * Create or update a segment
- */
-async function createOrUpdateSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  options: {
-    slug: string;
-    name: string;
-    heroTitle: string;
-    heroSubtitle?: string;
-    heroImage?: string;
-    description?: string;
-    metaTitle?: string;
-    metaDescription?: string;
-    sortOrder?: number;
-    active?: boolean;
-  }
-): Promise<Segment> {
-  const {
-    slug,
-    name,
-    heroTitle,
-    heroSubtitle,
-    heroImage,
-    description,
-    metaTitle,
-    metaDescription,
-    sortOrder = 0,
-    active = true,
-  } = options;
-
-  return prisma.segment.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      heroTitle,
-      heroSubtitle,
-      heroImage,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-    create: {
-      tenantId,
-      slug,
-      name,
-      heroTitle,
-      heroSubtitle,
-      heroImage,
-      description,
-      metaTitle,
-      metaDescription,
-      sortOrder,
-      active,
-    },
-  });
-}
-
-/**
- * Create or update a tier with segment association
- */
-async function createOrUpdateTierWithSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  segmentId: string,
-  options: {
-    slug: string;
-    name: string;
-    description: string;
-    priceCents: number; // in cents
-    sortOrder: number;
-    photos?: Array<{ url: string; filename: string; size: number; order: number }>;
-    bookingType?: BookingType;
-  }
-): Promise<Tier> {
-  const {
-    slug,
-    name,
-    description,
-    priceCents,
-    sortOrder,
-    photos = [],
-    bookingType = BookingType.DATE,
-  } = options;
-
-  // Runtime validation: ensure bookingType is a valid enum member
-  if (!Object.values(BookingType).includes(bookingType)) {
-    throw new Error(`Invalid bookingType: ${bookingType}`);
-  }
-
-  return prisma.tier.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      description,
-      priceCents,
-      sortOrder,
-      segmentId,
-      features: JSON.stringify([]),
-      photos: JSON.stringify(photos),
-      bookingType,
-    },
-    create: {
-      tenantId,
-      segmentId,
-      slug,
-      name,
-      description,
-      priceCents,
-      sortOrder,
-      features: JSON.stringify([]),
-      photos: JSON.stringify(photos),
-      bookingType,
-    },
-  });
-}
-
-/**
- * Create or update an add-on with optional segment scoping
- */
-async function createOrUpdateAddOnWithSegment(
-  prisma: PrismaOrTransaction,
-  tenantId: string,
-  segmentId: string | null,
-  options: {
-    slug: string;
-    name: string;
-    description: string;
-    price: number; // in cents
-  }
-): Promise<AddOn> {
-  const { slug, name, description, price } = options;
-
-  return prisma.addOn.upsert({
-    where: { tenantId_slug: { slug, tenantId } },
-    update: {
-      name,
-      description,
-      price,
-      segmentId,
-    },
-    create: {
-      tenantId,
-      segmentId,
-      slug,
-      name,
-      description,
-      price,
-    },
-  });
-}
-
-/**
- * Link add-ons to a tier
- */
-async function linkAddOnsToTier(
-  prisma: PrismaOrTransaction,
-  tierId: string,
-  addOnIds: string[]
-): Promise<void> {
-  await Promise.all(
-    addOnIds.map((addOnId) =>
-      prisma.tierAddOn.upsert({
-        where: { tierId_addOnId: { tierId, addOnId } },
-        update: {},
-        create: { tierId, addOnId },
-      })
-    )
-  );
-}
 
 export async function seedLaPetitMarriage(prisma: PrismaClient): Promise<void> {
   // Production guard - prevent accidental data destruction
@@ -514,147 +337,189 @@ The ultimate wedding experience, fully handled.`,
       // =====================================================================
       // ADD-ONS: Global (available to all segments)
       // =====================================================================
-      const extraPhotoHour = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const extraPhotoHour = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'extra-photography-hour',
         name: 'Extra Photography Hour',
         description: 'Additional hour of professional photography coverage.',
         price: 30000, // $300
       });
 
-      const secondPhotographer = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const secondPhotographer = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'second-photographer',
         name: 'Second Photographer',
         description: 'A second photographer to capture every angle and moment.',
         price: 50000, // $500
       });
 
-      const fullVideoCoverage = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const fullVideoCoverage = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'full-video-coverage',
         name: 'Full Video Coverage',
         description: 'Comprehensive video coverage of your ceremony and celebration.',
         price: 200000, // $2,000
       });
 
-      const ceremonyFilm = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const ceremonyFilm = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'ceremony-only-film',
         name: 'Ceremony-Only Film',
         description: 'Beautiful cinematic coverage of your ceremony.',
         price: 75000, // $750
       });
 
-      const hairMakeup = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const hairMakeup = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'hair-and-makeup',
         name: 'Hair & Makeup Services',
         description: 'Professional hair and makeup for the couple.',
         price: 35000, // $350
       });
 
-      const additionalHairMakeup = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const additionalHairMakeup = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'additional-hair-makeup',
         name: 'Additional Hair & Makeup',
         description: 'Hair and makeup for bridesmaids, mothers, or other VIPs (per person).',
         price: 15000, // $150
       });
 
-      const enhancedFlorals = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const enhancedFlorals = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'enhanced-florals',
         name: 'Enhanced Florals',
         description: 'Upgraded floral arrangements including ceremony arch and centerpieces.',
         price: 80000, // $800
       });
 
-      const floralInstallation = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const floralInstallation = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'floral-installation',
         name: 'Floral Installation',
         description: 'Stunning floral installation piece for ceremony or reception.',
         price: 150000, // $1,500
       });
 
-      const liveMusicCeremony = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const liveMusicCeremony = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'live-music-ceremony',
         name: 'Live Music (Ceremony)',
         description: 'Live musician for your ceremony (guitar, violin, or harp).',
         price: 40000, // $400
       });
 
-      const djSoundSystem = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const djSoundSystem = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'dj-sound-system',
         name: 'DJ & Sound System',
         description: 'Professional DJ services and sound system for your reception.',
         price: 100000, // $1,000
       });
 
-      const unityCandle = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const unityCandle = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'unity-candle-ritual',
         name: 'Unity Candle Ritual',
         description: 'Beautiful unity candle ceremony with custom candles to keep.',
         price: 7500, // $75
       });
 
-      const sandCeremony = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const sandCeremony = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'sand-ceremony',
         name: 'Sand Ceremony',
         description: 'Symbolic sand ceremony with custom colors and keepsake vessel.',
         price: 7500, // $75
       });
 
-      const handfasting = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const handfasting = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'handfasting-ritual',
         name: 'Handfasting Ritual',
         description: 'Traditional handfasting ceremony with beautiful cords to keep.',
         price: 7500, // $75
       });
 
-      const dinnerReservation = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const dinnerReservation = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'dinner-reservation',
         name: 'Dinner Reservation Coordination',
         description: "We'll coordinate a special dinner reservation at a local restaurant.",
         price: 5000, // $50
       });
 
-      const picnicExperience = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const picnicExperience = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'picnic-experience',
         name: 'Picnic Experience',
         description: 'Beautiful curated picnic setup for an intimate celebration.',
         price: 25000, // $250
       });
 
-      const privateChef = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const privateChef = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'private-chef-experience',
         name: 'Private Chef Experience',
         description: 'Private chef to create a custom menu for your celebration.',
         price: 150000, // $1,500
       });
 
-      const heirloomAlbum = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const heirloomAlbum = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'heirloom-album',
         name: 'Heirloom Album',
         description: 'Beautifully crafted heirloom album with your wedding photos.',
         price: 75000, // $750
       });
 
-      const printSet = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const printSet = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'print-set',
         name: 'Print Set',
         description: 'Curated set of fine art prints from your wedding day.',
         price: 35000, // $350
       });
 
-      const wallArt = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const wallArt = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'wall-art-canvas',
         name: 'Wall Art / Canvas',
         description: 'Large format canvas or framed wall art of your favorite image.',
         price: 50000, // $500
       });
 
-      const engagementSession = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const engagementSession = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'engagement-session',
         name: 'Engagement Session',
         description: '1-hour engagement photo session at location of your choice.',
         price: 45000, // $450
       });
 
-      const dayAfterSession = await createOrUpdateAddOnWithSegment(tx, tenant.id, null, {
+      const dayAfterSession = await createOrUpdateAddOn(tx, {
+        tenantId: tenant.id,
+        segmentId: null,
         slug: 'day-after-session',
         name: 'Day-After Session',
         description: 'Relaxed photo session the day after your wedding.',

@@ -68,8 +68,8 @@ const PAGE_ANCHORS: Record<PageName, string> = {
  * Intentionally excluded:
  * - hero: always at top, no anchor nav needed
  * - cta: closing section, not a nav destination
- * - features: process steps (e.g. "How It Works"), not service offerings
- *   (SegmentTiersSection already renders at #services anchor)
+ * - features: maps to DOM anchor 'services' in SectionRenderer.SECTION_TYPE_TO_ANCHOR_ID —
+ *   adding here would produce a conflicting 'Services' nav item. See SectionRenderer.tsx.
  * - custom: no canonical nav label
  * - pricing: rendered through tiers, not standalone
  */
@@ -98,9 +98,7 @@ export function getNavItemsFromHomeSections(pages?: PagesConfig | null): NavItem
   const items: NavItem[] = [{ label: 'Home', path: '' }];
   for (const page of PAGE_ORDER) {
     if (page === 'home') continue;
-    const hasSection = pages.home.sections.some(
-      (s) => SECTION_TYPE_TO_PAGE[s.type as SectionTypeName] === page
-    );
+    const hasSection = pages.home.sections.some((s) => SECTION_TYPE_TO_PAGE[s.type] === page);
     if (hasSection) {
       items.push({ label: PAGE_LABELS[page], path: PAGE_ANCHORS[page] });
     }
