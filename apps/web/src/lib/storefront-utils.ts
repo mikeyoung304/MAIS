@@ -100,20 +100,29 @@ export function transformContentForSection(
       }
       break;
     case 'testimonials':
-      // Map seed field names to component field names (name → authorName, role → authorRole)
+      // Map legacy seed field names to component field names (name → authorName, role → authorRole, photo → authorPhotoUrl)
       if (Array.isArray(transformed.items)) {
-        transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
-          const out = { ...item };
-          if (out.name && !out.authorName) {
-            out.authorName = out.name;
-            delete out.name;
-          }
-          if (out.role && !out.authorRole) {
-            out.authorRole = out.role;
-            delete out.role;
-          }
-          return out;
-        });
+        transformed.items = (transformed.items as unknown[])
+          .filter(
+            (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
+          )
+          .map((item) => {
+            const out = { ...item };
+            if (out.name !== undefined && !out.authorName) {
+              out.authorName = out.name;
+              delete out.name;
+            }
+            if (out.role !== undefined && !out.authorRole) {
+              out.authorRole = out.role;
+              delete out.role;
+            }
+            if ((out.photo || out.photoUrl) && !out.authorPhotoUrl) {
+              out.authorPhotoUrl = out.photo ?? out.photoUrl;
+              delete out.photo;
+              delete out.photoUrl;
+            }
+            return out;
+          });
       }
       break;
 

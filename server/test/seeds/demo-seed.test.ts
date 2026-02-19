@@ -227,9 +227,8 @@ describe('Demo Seed', () => {
       mockPrisma.tier.upsert.mock.calls.forEach((call) => {
         const photos = call[0].create.photos;
         expect(photos).toBeDefined();
-        // Photos is stored as JSON string
-        const parsedPhotos = JSON.parse(photos);
-        expect(parsedPhotos).toBeInstanceOf(Array);
+        // Photos is passed as an array (Prisma handles JSON serialization)
+        expect(Array.isArray(photos)).toBe(true);
       });
     });
   });

@@ -1,3 +1,112 @@
+# Learnings Researcher Findings — Storefront Frontend Changes (2026-02-18, Second Run)
+
+**Date:** 2026-02-18 (second run — first run covered deploy pipeline issues)
+**Scope searched:** Nav derivation from section types, field name remapping in storefront-utils, domainParam removal, HowItWorksSection deletion, reveal-on-scroll removal, testimonials data transform
+**Solutions searched:** `docs/solutions/`, `docs/plans/`
+
+---
+
+## Finding 1: Nav from Section Types — EXACT MATCH IN COMPOUND DOC
+
+The bug this change fixes is fully documented in `docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md` (Issue 2, PR #62):
+
+> Two incompatible derivation functions: TenantNav used getNavItemsFromHomeSections() (section-type scanning); TenantFooter used getNavigationItems() (page-level enabled flags). In single-page mode, sectionsToPages() sets about.enabled = false. Footer showed only "Home".
+>
+> Fix: Unified footer to use getNavItemsFromHomeSections(). Deleted getNavigationItems(), buildNavHref(), PAGE_PATHS. Removed unused domainParam prop from TenantSiteShell.
+
+**Known pattern (enforced rule):** Both TenantNav and TenantFooter must use the same derivation function. Single-page rule — never derive nav from page.enabled flags when sections live on home.
+
+**Prevention test to add:**
+
+```typescript
+it('nav and footer derive identical items', () => {
+  const navItems = getNavItemsFromHomeSections(buildTestPagesConfig());
+  expect(navItems.length).toBeGreaterThan(1);
+});
+```
+
+---
+
+## Finding 2: Field Name Remapping — KNOWN PATTERN, RECURRING RISK
+
+`docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md` documents the canonical field mapping:
+
+| Seed / DB field      | Component prop       | Via                            |
+| -------------------- | -------------------- | ------------------------------ |
+| `image`              | `imageUrl`           | `transformContentForSection()` |
+| `backgroundImage`    | `backgroundImageUrl` | Same                           |
+| `body` / `content`   | `content`            | Same                           |
+| `headline` / `title` | `headline`           | Same                           |
+
+The doc warns explicitly: "Don't try to use prop names directly in the seed."
+
+`docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md` (Bug 1) documented the same pattern for pricing (`items` → `tiers`) — a missing transform case killed the entire React tree. The fix requires: explicit case in `transformContentForSection()` + `Array.isArray()` guard (NOT `= []` default; null defeats defaults per JS semantics). TestimonialsSection was one of the files updated with Array.isArray guards in that fix.
+
+**Flag for current change:** If testimonials field names were remapped (e.g., `name` → `authorName`), verify the `testimonials` case in `transformContentForSection()` exists and uses Array.isArray guards. A missing or incorrect case causes a silent React tree crash.
+
+---
+
+## Finding 3: domainParam Removal — DIRECTLY DOCUMENTED
+
+The same compound doc (`storefront-systemic-issues-seed-nav-cache-duplication-gap.md`, Issue 2 fix) explicitly states:
+
+> Removed unused domainParam prop from TenantSiteShell
+
+`docs/solutions/architecture/app-router-route-tree-deduplication-domain-vs-slug-pattern.md` (PR #55) documents the broader dedup via `tenant-redirect.ts` — the `_domain/` route tree resolves domain at the redirect layer, making threaded domainParam props redundant downstream.
+
+**Pitfall #14 check:** After removing the prop, run `grep -r "domainParam" apps/ --include="*.tsx" --include="*.ts"` to confirm no downstream consumers still reference it.
+
+---
+
+## Finding 4: HowItWorksSection Deletion — DOCUMENTED CONVENTION
+
+`docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md` (Issue 4):
+
+> TenantLandingPage.tsx had a hardcoded HowItWorksSection at a fixed slot AND seeds created a FEATURES section rendering via SectionRenderer. Both rendered — "How It Works" appeared twice.
+>
+> Fix: Deleted HowItWorksSection.tsx entirely. Convention: ALL sections render through SectionRenderer — no hardcoded section components in page layouts. If TenantLandingPage.tsx imports from ./sections/\*, that's a code smell.
+
+Deletion is the documented correct action. Verify no dead `case 'how-it-works':` remains in SectionRenderer, and no anchor ID entry persists for the old component.
+
+---
+
+## Finding 5: Reveal-on-Scroll Removal — REGRESSION RISK
+
+`docs/plans/2026-02-17-feat-storefront-mvp-template-redesign-plan.md` (Phase 1a/1b) documents the scroll animation system as intentionally designed:
+
+- `storefront-reveal` CSS keyframe in `globals.css` (DISTINCT from `fade-in-up` used for chat — do NOT remove both)
+- `useScrollReveal.ts` hook — Intersection Observer with progressive enhancement
+- `prefers-reduced-motion` compliance required for accessibility
+
+If the animations are being removed in the current changes, this reverses deliberate MVP template work. The prior session findings file (`learnings-researcher-findings.md`, Issue 5) also documents a CSS inline-style specificity trap in `useScrollReveal` that causes Playwright screenshots to fail — this is a known bug in the hook, not a reason to remove it.
+
+**If removal is intentional:** delete `useScrollReveal.ts` entirely (no orphan), clean `globals.css` keyframes, confirm `fade-in-up` (chat animation) is NOT removed. If keeping the hook: the Playwright specificity fix requires `el.style.opacity = ''` + `el.classList.add('reveal-visible')`, not just the class alone.
+
+---
+
+## Finding 6: Testimonials Data Transform — UNDOCUMENTED VARIANT, SAME PATTERN
+
+No dedicated compound doc exists for testimonials-specific field transforms. The pattern is identical to the documented pricing crash (Bug 1, smoke test compound doc). Required checklist:
+
+1. Explicit `case 'testimonials':` in `transformContentForSection()`
+2. `if (!Array.isArray(transformed.testimonials)) transformed.testimonials = [];` — never `= []` default
+3. Unit tests for the transform case (established pattern from pricing fix: 11 unit tests added)
+4. Verify no `JSON.stringify()` on testimonial items in seed files (Prisma Json columns auto-serialize)
+
+---
+
+## REPEAT OF KNOWN MISTAKES — FLAGS FOR CODE REVIEW
+
+| Change                   | Risk                                                     | Known Pattern In                                                             |
+| ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Testimonials field remap | Missing transform case → silent React crash              | `PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md`                       |
+| Reveal animation removal | Orphan CSS keyframe or accidental chat animation removal | `2026-02-17-feat-storefront-mvp-template-redesign-plan.md`                   |
+| domainParam removal      | Orphan references in downstream consumers                | `storefront-systemic-issues-seed-nav-cache-duplication-gap.md` + Pitfall #14 |
+
+All three nav/HowItWorks/domainParam changes are confirmed correct per compound docs — no known mistakes being repeated there.
+
+---
+
 # Learnings Researcher Findings — Production Storefront Hardening Plan
 
 **Date:** 2026-02-18

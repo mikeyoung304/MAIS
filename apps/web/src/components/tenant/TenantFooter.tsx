@@ -74,7 +74,8 @@ export function TenantFooter({ tenant, pages, basePath: basePathProp }: TenantFo
         {/* Bottom section: Copyright and attribution */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-neutral-100 pt-8 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} {tenant.name}. All rights reserved.
+            &copy; <time suppressHydrationWarning>{currentYear}</time> {tenant.name}. All rights
+            reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             Powered by{' '}

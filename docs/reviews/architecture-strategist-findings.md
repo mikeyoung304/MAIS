@@ -1,3 +1,155 @@
+# Architecture Strategist -- Code Review: Storefront Nav + Section Rendering Changes (2026-02-18)
+
+**Reviewer:** architecture-strategist
+**Date:** 2026-02-18
+**Scope:** Nav derivation strategy change (section-scan vs page-enabled), HowItWorksSection deletion, domainParam removal, testimonials field mapping
+
+---
+
+## Summary
+
+3 P2 issues, 2 P3 issues. No P1s. The core direction is correct — section-scan nav is semantically sound for a committed single-page architecture — but three patterns introduce silent failure modes that will surface as tenants diversify their content configurations.
+
+---
+
+## Finding 1 (P2): Duplicate section types silently collapse to one nav item but produce invalid duplicate anchor IDs in the DOM
+
+**File:** `apps/web/src/components/tenant/SectionRenderer.tsx:151-180`
+
+`getNavItemsFromHomeSections()` correctly produces only one nav item per page via `Array.prototype.some()`. However, `SectionRenderer` assigns `id={anchorId}` to the wrapper `<div>` for every section it renders regardless of whether that anchor ID has already been used:
+
+```typescript
+// Normal mode - include anchor ID for single-page navigation
+return (
+  <div key={sectionKey} id={anchorId}>
+    ...
+  </div>
+);
+```
+
+If a tenant has two `testimonials` sections on the home page (the schema allows it — no uniqueness constraint on `blockType + pageName` in `SectionContent`), two `<div id="testimonials">` elements are rendered. This violates the HTML spec (`id` must be unique per document). Browsers match only the first occurrence when resolving anchor links — the second testimonials section will be unreachable via `#testimonials`. This is currently a latent bug; no seed tenant has duplicate home-page section types. It becomes a real defect as soon as any AI agent or manual edit adds a second section of the same type.
+
+**Recommendation:** In `SectionRenderer`, track which anchor IDs have been assigned using a `Set<string>` scoped to the render call, and skip the `id` attribute for subsequent sections that would produce a duplicate.
+
+---
+
+## Finding 2 (P2): `domainParam` described as removed but is still functionally active — misleading commit description creates future deletion risk
+
+**Files:**
+
+- `apps/web/src/components/tenant/SegmentTiersSection.tsx:349–358`
+- `apps/web/src/components/tenant/ContactForm.tsx:59`
+- `apps/web/src/app/t/_domain/page.tsx:107, 133`
+
+Commit `b0c536ce` states "Remove unused domainParam from TenantSiteShell." It does correctly remove `domainParam` from `TenantSiteShell`'s prop interface. However, `domainParam` remains active in two downstream consumers via the `TenantLandingPage` prop chain:
+
+`SegmentTiersSection` (line 352): `getBookHref` uses `domainParam` to select between `/t/${tenant.slug}/book/${tierSlug}` (custom domain path with explicit slug) and `${basePath}/book/${tierSlug}` (slug-routed path). For domain-routed tenants `basePath` is `""`, so omitting this guard would produce broken `/book/${tierSlug}` booking links.
+
+`ContactForm` (line 59): `homeHref` uses `domainParam` to construct `/?domain=example.com` for domain-routed tenants. Without it, "Back to Home" navigates to `/` without the domain query parameter, losing tenant context.
+
+Both retentions are correct. The risk is that the commit description says it was removed, so a future developer reading `TenantSiteShell` (which no longer has the prop) will not expect to find `domainParam` three layers down in `SegmentTiersSection` and `ContactForm`, and may attempt to complete the "cleanup."
+
+**Recommendation:** Add a comment in `TenantLandingPage.tsx` near the `domainParam` prop documenting that it is intentionally retained for domain-routing link construction in `SegmentTiersSection` and `ContactForm`, and is distinct from the `TenantSiteShell` removal.
+
+---
+
+## Finding 3 (P2): Testimonials field name transform is a seed-layer defect masked at the read path — wrong layer for the fix
+
+**File:** `apps/web/src/lib/storefront-utils.ts:102–118`
+
+`transformContentForSection()` maps `name → authorName` and `role → authorRole` for testimonials:
+
+```typescript
+case 'testimonials':
+  if (Array.isArray(transformed.items)) {
+    transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
+      const out = { ...item };
+      if (out.name && !out.authorName) {
+        out.authorName = out.name;
+        delete out.name;
+      }
+      ...
+    });
+  }
+```
+
+The contract schema (`TestimonialsSectionSchema` in `landing-page.ts:300–301`) already defines `authorName` and `authorRole` as canonical. The seed (`macon-headshots.ts:490–507`) uses `name` and `role`. The seed is wrong; the transform papers over it.
+
+Consequences:
+
+1. Reading raw `SectionContent.content` JSON and validating against `TestimonialsSectionSchema` will fail — raw data has `name`/`role`.
+2. AI agent writes use `authorName`/`authorRole` (schema-compliant). Seed data uses `name`/`role`. Two formats now coexist across tenants, silently unified by the transform. Divergence will grow as more tenants are seeded or as the agent creates new testimonials for existing seed-data tenants (mix within the same tenant's `items` array is possible).
+3. The other transform cases in `storefront-utils.ts` are legitimate DB-to-component adapters (`items → features`, `items → images`, `backgroundImage → backgroundImageUrl`) — architectural shape mismatches. The testimonials case is different: it is a seed authoring mistake.
+
+**Recommendation:** Fix the seed files to use `authorName`/`authorRole`. Remove the `testimonials` case from `transformContentForSection`. Add a test to `storefront-utils.test.ts` that validates a testimonials item already in canonical form passes through unmodified (currently no such test exists).
+
+---
+
+## Finding 4 (P3): Ghost `reveal-on-scroll` class in `CTASection.tsx` — sibling cleanup missed one file
+
+**File:** `apps/web/src/components/tenant/sections/CTASection.tsx:31`
+
+```tsx
+<section ref={sectionRef} className="reveal-on-scroll bg-accent py-32 md:py-40">
+```
+
+`reveal-on-scroll` is not defined in `globals.css` and is not used by `useScrollReveal`. The hook works by setting `opacity: 0` inline and adding `.reveal-visible` via `IntersectionObserver`. The class is dead. Commit `24a37db7` removed this class from `TestimonialsSection.tsx` but missed `CTASection.tsx`.
+
+**Recommendation:** Remove `reveal-on-scroll` from the `CTASection` className.
+
+---
+
+## Finding 5 (P3): `features` exclusion from nav is correct but the dependency between nav exclusion and anchor ID alias is undocumented
+
+**Files:**
+
+- `apps/web/src/components/tenant/navigation.ts:67–84`
+- `apps/web/src/components/tenant/SectionRenderer.tsx:33–35`
+
+`SECTION_TYPE_TO_ANCHOR_ID` in `SectionRenderer` maps both `features` and `services` to the anchor ID `"services"`. `SECTION_TYPE_TO_PAGE` in `navigation.ts` excludes `features`. These two maps are mutually dependent: if `features` were added to `SECTION_TYPE_TO_PAGE`, it would produce a nav link to `#services` — an anchor already occupied by `SegmentTiersSection` — causing the nav to point to the wrong element. But the two maps live in separate files with no cross-reference.
+
+A developer adding a new section type must update both maps consistently. If they add it to `SECTION_TYPE_TO_PAGE` and assign it an anchor that conflicts with an existing DOM element, the nav produces a broken scroll target silently.
+
+**Recommendation:** Add a cross-reference comment in each map pointing to the other. Longer term, consolidate `SECTION_TYPE_TO_ANCHOR_ID` (currently in `SectionRenderer`) into `navigation.ts` alongside `SECTION_TYPE_TO_PAGE`, so both mappings are co-located and the relationship is visible.
+
+---
+
+## Architecture Assessment
+
+**Section-scan nav vs page-enabled nav:** The shift from `getNavigationItems()` (filter by `page.enabled` flag) to `getNavItemsFromHomeSections()` (scan section types on home page) is architecturally correct. Truth is now derived from what exists rather than from a flag that can drift. In `sectionsToPages()`, `page.enabled` is already derived from whether sections exist (`sortedPageMap.has(pageName)`), so the flag is vestigial for non-home pages anyway. The nav and the data are now consistent.
+
+**Multi-page route handling:** All sub-page routes (`/t/[slug]/about`, `_domain/about`, etc.) redirect permanently to the single-page anchor via `tenant-redirect.ts`. This is the correct implementation for the committed single-page architecture.
+
+**HowItWorksSection deletion:** Clean. `SectionRenderer.tsx:133–135` correctly maps both `features` and `services` types to `FeaturesSection`, with the `type="features"` override on the services case to satisfy TypeScript. One nuance: a `services` section on the home page has its feature items silently discarded — only `headline`/`subtitle` are extracted and passed to `SegmentTiersSection` as `servicesHeading`. If the AI agent writes features into a `services` section expecting them to render, they will not. No validation or warning exists for this case.
+
+---
+
+## Files Reviewed
+
+- `apps/web/src/components/tenant/navigation.ts`
+- `apps/web/src/components/tenant/TenantNav.tsx`
+- `apps/web/src/components/tenant/TenantFooter.tsx`
+- `apps/web/src/components/tenant/TenantSiteShell.tsx`
+- `apps/web/src/components/tenant/TenantLandingPage.tsx`
+- `apps/web/src/components/tenant/TenantLandingPageClient.tsx`
+- `apps/web/src/components/tenant/SectionRenderer.tsx`
+- `apps/web/src/components/tenant/SegmentTiersSection.tsx`
+- `apps/web/src/components/tenant/ContactForm.tsx`
+- `apps/web/src/components/tenant/sections/TestimonialsSection.tsx`
+- `apps/web/src/components/tenant/sections/FeaturesSection.tsx`
+- `apps/web/src/components/tenant/sections/CTASection.tsx`
+- `apps/web/src/lib/storefront-utils.ts`
+- `apps/web/src/lib/tenant-redirect.ts`
+- `apps/web/src/app/t/[slug]/(site)/page.tsx`
+- `apps/web/src/app/t/_domain/page.tsx`
+- `apps/web/src/app/t/_domain/layout.tsx`
+- `packages/contracts/src/landing-page.ts`
+- `server/prisma/seeds/macon-headshots.ts`
+
+---
+
+---
+
 # Architecture Strategist -- Plan Review Findings (2026-02-18)
 
 Date: 2026-02-18

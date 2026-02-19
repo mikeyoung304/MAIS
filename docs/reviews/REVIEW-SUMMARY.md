@@ -1,217 +1,329 @@
-# Plan Review Summary — Production Storefront Hardening
+# Consolidated Review Summary — Storefront Nav/Footer/Section Cleanup
 
 **Date:** 2026-02-18
-**Plan:** `docs/plans/2026-02-18-fix-production-storefront-hardening-plan.md`
-**Agents:** kieran-typescript-reviewer, code-simplicity-reviewer, architecture-strategist, learnings-researcher
+**Reviewers:** julik-frontend-races-reviewer, kieran-typescript-reviewer, code-simplicity-reviewer, architecture-strategist, learnings-researcher
+**Scope:** navigation.ts rewrite, TenantNav/TenantFooter/TenantSiteShell refactor, HowItWorksSection deletion, TestimonialsSection reveal-on-scroll removal, storefront-utils testimonials transform, domainParam removal
 
 ---
 
-## Verdict
+## Totals
 
-**Plan is sound and well-scoped.** 2 P1 corrections required before implementing Issue 6. 5 P2 improvements to apply during implementation. 4 P3 cleanup items. Phase ordering (data → components → polish) is correct. No over-engineering detected. The testimonials and HowItWorksSection fixes are minimal and correct. Risk is concentrated in Issue 6 (nav derivation).
-
----
-
-## Finding Counts
-
-| Severity | Count | Blocking?                                       |
-| -------- | ----- | ----------------------------------------------- |
-| P1       | 2     | Must fix before implementing Phase 2c (Issue 6) |
-| P2       | 5     | Apply during implementation                     |
-| P3       | 4     | Cleanup items                                   |
+| Severity  | Count  | Notes                                 |
+| --------- | ------ | ------------------------------------- |
+| P1        | 2      | Fix before merge                      |
+| P2        | 7      | Fix in this PR or immediate follow-up |
+| P3        | 6      | Low urgency, nice-to-have             |
+| **Total** | **15** | After de-duplication across 5 agents  |
 
 ---
 
-## P1 Findings (Must Fix)
+## P1 — Critical (Fix Before Merge)
 
-### P1-1: `SECTION_TYPE_TO_PAGE` key type must be `SectionTypeName`, not `string`
+### P1-01 — Hydration Mismatch: `new Date().getFullYear()` in TenantFooter
 
-**Source:** kieran-typescript-reviewer
+**Severity:** P1
+**Agents:** julik-frontend-races-reviewer (primary)
+**File:** `apps/web/src/components/tenant/TenantFooter.tsx:27`
 
-The plan declares:
+**Description:**
+`new Date().getFullYear()` is evaluated at request time on the server. If the page is served via ISR (`revalidate = 60`) and the cached HTML crosses a year boundary, or if `TenantFooter` is ever converted to a `'use client'` component, the server-computed year will diverge from the client-computed year, triggering React's hydration mismatch error and white-screening the footer. The component is currently rendered inside a `<Suspense>` boundary wrapping `<EditModeGate>` (a Client Component), which increases the future risk surface.
 
-```typescript
-const SECTION_TYPE_TO_PAGE: Partial<Record<string, PageName>> = { ... }
+**Recommended fix:**
+Use `suppressHydrationWarning` on the containing element, or replace with a build-time constant:
+
+```tsx
+// Option A — suppressHydrationWarning (safest for live year display)
+<time suppressHydrationWarning>{new Date().getFullYear()}</time>;
+
+// Option B — build-time constant (simplest, acceptable for footer year)
+const CURRENT_YEAR = new Date().getFullYear(); // evaluated at build time
 ```
 
-`string` as key type silently accepts typos and won't catch unhandled section types when new ones are added to contracts. Use `SectionTypeName` (the discriminated union from `@macon/contracts`):
+---
 
-```typescript
-import type { SectionTypeName } from '@macon/contracts';
-const SECTION_TYPE_TO_PAGE: Partial<Record<SectionTypeName, PageName>> = { ... }
+### P1-02 — Dead `reveal-on-scroll` CSS Class Left in CTASection
+
+**Severity:** P1
+**Agents:** code-simplicity-reviewer (P1 primary), architecture-strategist (confirmed P3 — escalated due to PR context: same class was removed from TestimonialsSection in this PR, making the CTASection omission a clear oversight)
+**File:** `apps/web/src/components/tenant/sections/CTASection.tsx:31`
+
+```tsx
+<section ref={sectionRef} className="reveal-on-scroll bg-accent py-32 md:py-40">
 ```
 
-Runtime impact: none. TypeScript impact: compile-time errors on typos + exhaustiveness signal on new section types.
+**Description:**
+`reveal-on-scroll` has no definition in `apps/web/src/styles/globals.css`. The file defines `.reveal-visible`, `.reveal-delay-1/2/3`, and the `storefront-reveal` keyframe — but not `reveal-on-scroll`. Commit `24a37db7` removed this class from `TestimonialsSection.tsx` but missed `CTASection.tsx`. The CTA section still animates correctly because `sectionRef` (from `useScrollReveal()`) is still attached and drives animation via `.reveal-visible`. The class is confirmed dead code with zero CSS definitions and one remaining DOM usage.
+
+**Recommended fix:**
+Remove `reveal-on-scroll` from the `className` on `CTASection.tsx:31`.
 
 ---
 
-### P1-2: Plan incorrectly claims anchor IDs are missing — they already exist
+## P2 — Important (Fix in This PR or Immediate Follow-Up)
 
-**Source:** architecture-strategist
+### P2-01 — Testimonials Transform: Seed Is the Bug Source, Presentation Layer Is the Wrong Fix
 
-`SectionRenderer.tsx:24-37` already defines `SECTION_TYPE_TO_ANCHOR_ID` and applies `id={anchorId}` to every section wrapper `<div>`. The anchors `#about`, `#services`, `#gallery`, `#testimonials`, `#faq`, `#contact` are already in the DOM.
+**Severity:** P2
+**Agents:** code-simplicity-reviewer, architecture-strategist, julik-frontend-races-reviewer, kieran-typescript-reviewer, learnings-researcher (5-way convergence — highest confidence finding)
+**Known Pattern:** `docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md` (pricing case), `docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md`
 
-The nav fix is purely changing the nav derivation function in `TenantNav.tsx`. No DOM changes needed. Remove any plan prose that implies anchor IDs need to be added.
+**Files:**
 
-**Corollary:** `SECTION_TYPE_TO_ANCHOR_ID` already maps `features → 'services'` — the deduplication intent is already encoded at the rendering layer.
+- `apps/web/src/lib/storefront-utils.ts:102-118`
+- `server/prisma/seeds/macon-headshots.ts:490-507`
+
+**Description:**
+The `testimonials` case in `transformContentForSection()` maps `name → authorName` and `role → authorRole`. This masks a seed authoring defect: the seed writes `name`/`role` but `TestimonialsSectionSchema` in `packages/contracts/src/landing-page.ts:300-301` requires `authorName`/`authorRole`. Consequences:
+
+1. Raw `SectionContent.content` JSON fails validation against the contract schema.
+2. AI agents write `authorName`/`authorRole` (correct); seed data writes `name`/`role` (wrong). Two formats coexist silently; the shim unifies them invisibly.
+3. Any future server-side consumer of testimonial content (email, export, PDF) will see `name`/`role`, not the canonical field names.
+
+The current transform also has two code-level bugs (from kieran-typescript-reviewer P2-2):
+
+- `as Record<string, unknown>[]` cast is unsafe — if DB returns `[null, {...}]`, `{ ...null }` throws `TypeError` at runtime.
+- `if (out.name && ...)` truthiness check skips remapping when `out.name === ""`, leaving the item with neither field name.
+
+Additionally, the `authorPhotoUrl` field used in `TestimonialsSection.tsx:54` has no remap — if seed stores it as `photo` or `photoUrl`, the image silently drops.
+
+**Recommended fix:**
+
+1. Fix the seed file: change `name`/`role` to `authorName`/`authorRole` in `macon-headshots.ts`.
+2. Add null-safety filter to the transform:
+   ```typescript
+   .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+   ```
+3. Change truthiness check to `if (out.name !== undefined && !out.authorName)`.
+4. Add `authorPhotoUrl` remap alongside `name` and `role`.
+5. Leave the shim with a comment: `// Safety net: seed data may use legacy field names; canonical names are authorName/authorRole/authorPhotoUrl`.
 
 ---
 
-## P2 Findings (Apply During Implementation)
+### P2-02 — Duplicate Section Types Produce Invalid Duplicate Anchor IDs in the DOM
 
-### P2-1: Delete `getAnchorNavigationItems()` in the same commit as the nav fix
+**Severity:** P2
+**Agents:** architecture-strategist (primary)
+**File:** `apps/web/src/components/tenant/SectionRenderer.tsx:151-180`
 
-**Source:** code-simplicity-reviewer, architecture-strategist
+**Description:**
+`getNavItemsFromHomeSections()` produces one nav item per page type via `Array.prototype.some()`. However, `SectionRenderer` assigns `id={anchorId}` to every section wrapper `<div>` unconditionally. If a tenant has two `testimonials` sections on the home page (the schema allows it — no uniqueness constraint on `blockType + pageName` in `SectionContent`), two `<div id="testimonials">` elements are rendered. The HTML spec requires unique IDs. Browsers resolve anchor links to the first matching element — the second section is unreachable via `#testimonials`. Currently latent (no seed tenant has duplicate home-page section types); becomes active as soon as any AI agent adds a second section of the same type.
 
-After `TenantNav.tsx` switches to `getNavItemsFromHomeSections()`, `getAnchorNavigationItems()` has zero callers. Per the "No Debt" principle, delete it in the same commit. Also update the file-level docstring (which says "only enabled pages appear in nav" — wrong for the new architecture).
-
-Also audit `getNavigationItems()` (multi-page path function) — likely dead code too.
+**Recommended fix:**
+Track assigned anchor IDs in a `Set<string>` scoped to the render call, and omit the `id` attribute for subsequent sections that would produce a duplicate.
 
 ---
 
-### P2-2: Nav loop should iterate `PAGE_ORDER` not `pages.home.sections` (fixes non-deterministic ordering)
+### P2-03 — `domainParam` Removal Is Partial-by-Design but Commit Description Is Misleading
 
-**Source:** code-simplicity-reviewer
+**Severity:** P2
+**Agents:** code-simplicity-reviewer, architecture-strategist, kieran-typescript-reviewer, learnings-researcher (4-way)
+**Known Pattern:** `docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md`, `docs/solutions/architecture/app-router-route-tree-deduplication-domain-vs-slug-pattern.md`
 
-The proposed loop iterates `pages.home.sections` in DB insertion order. Nav item order is non-deterministic across seed runs. Iterate `PAGE_ORDER` instead — guarantees canonical order, eliminates the `seen` Set, makes the `hero` skip check disappear:
+**Files:**
+
+- `apps/web/src/components/tenant/TenantLandingPage.tsx:26,107,130`
+- `apps/web/src/components/tenant/SegmentTiersSection.tsx:349-358`
+- `apps/web/src/components/tenant/ContactForm.tsx:59`
+
+**Description:**
+Commit `b0c536ce` says "Remove unused domainParam prop." It correctly removes the prop from `TenantSiteShell`, `TenantNav`, and `TenantFooter`. However, `domainParam` remains active in `SegmentTiersSection` (booking link routing — `basePath` is `""` on domain routes; without the guard, booking links become broken `/book/tier-slug`) and `ContactForm` ("Back to Home" href). Both retentions are correct and load-bearing. The risk: a future developer reading `TenantSiteShell` will not expect `domainParam` three layers down and may attempt to "complete the cleanup."
+
+**Recommended fix:**
+No code change needed. Add a comment in `TenantLandingPage.tsx` near the `domainParam` prop:
 
 ```typescript
-const items: NavItem[] = [{ label: 'Home', path: '' }];
-for (const page of PAGE_ORDER) {
-  if (page === 'home') continue;
-  const hasSection = pages.home.sections.some((s) => SECTION_TYPE_TO_PAGE[s.type] === page);
-  if (hasSection) {
-    items.push({ label: PAGE_LABELS[page], path: PAGE_ANCHORS[page] });
-  }
+/**
+ * domainParam is intentionally retained for domain-routing link construction
+ * in SegmentTiersSection (booking URLs) and ContactForm (home href).
+ * It was removed from TenantSiteShell/Nav/Footer only — those components
+ * use basePath for link construction. See PR #62.
+ */
+```
+
+---
+
+### P2-04 — `s.type as SectionTypeName` Cast Masks Future Type Drift
+
+**Severity:** P2
+**Agents:** julik-frontend-races-reviewer (P3-02), kieran-typescript-reviewer (P2-1) — escalated to P2 by independent flagging
+
+**File:** `apps/web/src/components/tenant/navigation.ts:102`
+
+```typescript
+(s) => SECTION_TYPE_TO_PAGE[s.type as SectionTypeName] === page;
+```
+
+**Description:**
+`s.type` is already typed as the exact union `SectionTypeName` — the cast is a no-op that TypeScript accepts silently. The risk is forward-compatibility: if a new section type is added to `SectionSchema` but not to `SectionTypeName` (or vice versa), TypeScript would normally surface a type error at this call site. The redundant cast papers over that divergence silently. Without the cast, TypeScript would flag the divergence at compile time — the desired behavior.
+
+**Recommended fix:**
+
+```typescript
+(s) => SECTION_TYPE_TO_PAGE[s.type] === page;
+```
+
+Remove the cast. `SECTION_TYPE_TO_PAGE` is correctly typed as `Partial<Record<SectionTypeName, PageName>>` — the cast at the call site is redundant.
+
+---
+
+### P2-05 — Testimonials Transform Missing `authorPhotoUrl` Field Remap
+
+**Severity:** P2
+**Agents:** julik-frontend-races-reviewer (P2-03 extension)
+
+**Files:**
+
+- `apps/web/src/lib/storefront-utils.ts:102-118`
+- `apps/web/src/components/tenant/sections/TestimonialsSection.tsx:54`
+
+**Description:**
+`TestimonialsSection.tsx:54` uses `item.authorPhotoUrl`. The transform maps `name → authorName` and `role → authorRole` but has no mapping for the photo field. If the seed or agent writes the photo URL as `photo` or `photoUrl`, the image silently drops from every testimonial card — no error, no console warning.
+
+**Recommended fix:**
+Audit the seed testimonials items for the actual photo field name. Add to the transform:
+
+```typescript
+if ((out.photo || out.photoUrl) && !out.authorPhotoUrl) {
+  out.authorPhotoUrl = out.photo ?? out.photoUrl;
+  delete out.photo;
+  delete out.photoUrl;
 }
 ```
 
-7 lines vs. 12. Ordering is provably correct and deterministic.
+---
+
+### P2-06 — `SECTION_TYPE_TO_ANCHOR_ID` and `SECTION_TYPE_TO_PAGE` Are Coupled Maps With No Cross-Reference
+
+**Severity:** P2
+**Agents:** architecture-strategist (P2-C, P3)
+
+**Files:**
+
+- `apps/web/src/components/tenant/SectionRenderer.tsx:24-37`
+- `apps/web/src/components/tenant/navigation.ts:76-84`
+
+**Description:**
+`SECTION_TYPE_TO_ANCHOR_ID` in `SectionRenderer` maps `features → "services"` (DOM anchor). `SECTION_TYPE_TO_PAGE` in `navigation.ts` excludes `features` from nav. These maps are semantically coupled: if someone adds `features` to `SECTION_TYPE_TO_PAGE`, the nav link would target `#services` (pointing to `SegmentTiersSection` instead of a features section) with no compile-time warning. The maps live in separate files with zero cross-references; a developer adding a new section type must update both correctly without any tooling enforcement.
+
+**Recommended fix (immediate):** Add cross-reference comments in each map pointing to the other. Longer-term: move `SECTION_TYPE_TO_ANCHOR_ID` from `SectionRenderer` into `navigation.ts` so both mappings are co-located.
 
 ---
 
-### P2-3: Testimonials transform should use `delete`, not `name: undefined`
+### P2-07 — `useMemo` Churn on Scroll Due to `pages` Object Identity
 
-**Source:** code-simplicity-reviewer, kieran-typescript-reviewer
+**Severity:** P2
+**Agents:** julik-frontend-races-reviewer (P2-02), kieran-typescript-reviewer (P3-2) — escalated by scroll-event frequency
 
-Spreading `{ name: undefined }` does NOT remove the key — it sets it to `undefined`. Every other case in `transformContentForSection()` uses `delete transformed.fieldName` (lines 57, 70, 77, 84, 88, 94). Match the existing pattern:
+**File:** `apps/web/src/components/tenant/TenantNav.tsx:49-56`
+
+**Description:**
+`useMemo([basePath, pages])` invalidates when `pages` reference changes. `pages` is a `PagesConfig` object passed from a Server Component via RSC serialization — on soft navigations or router refreshes, React may recreate the RSC tree and pass a new object reference even when the data is identical. `useMemo` uses `Object.is`; a new reference invalidates the memo. Since `TenantNav` re-renders on every scroll event (via `useActiveSection` IntersectionObserver), `getNavItemsFromHomeSections(pages)` — which iterates all sections for each page in `PAGE_ORDER` — runs on every scroll frame.
+
+**Recommended fix:**
+Hoist `getNavItemsFromHomeSections(pages)` to the Server Component and pass the derived `navItems` array directly to `TenantNav`. The array is stable when content is stable and avoids the object-identity problem entirely.
+
+---
+
+## P3 — Nice-to-Have (Low Urgency)
+
+### P3-01 — `text: 'about'` Legacy Alias Needs Inline Comment
+
+**File:** `apps/web/src/components/tenant/navigation.ts:78`
+
+The `text: 'about'` entry maps a legacy section type alias without explanation. A future reader will not know why `text` produces `about`.
+
+**Fix:** Add inline comment: `// 'text' is a legacy alias for 'about' — kept for backward compat with older seed data`.
+
+---
+
+### P3-02 — `custom` Section Type Exclusion Undocumented in Nav Map
+
+**File:** `apps/web/src/components/tenant/navigation.ts:65-75`
+
+The JSDoc exclusion list covers `hero`, `cta`, `features`, `pricing` but not `custom`. Todo #11005 shows `custom` was a prior source of confusion.
+
+**Fix:** Add `// custom: no canonical nav label or anchor target — agent-created sections only` to the exclusion comment block.
+
+---
+
+### P3-03 — Suspense Boundary Gives False Sense of Error Containment for Footer
+
+**File:** `apps/web/src/components/tenant/TenantSiteShell.tsx:63-74`
+
+The `<Suspense>` wrapping `<EditModeGate>` handles only async suspensions (`useSearchParams()`). It does not catch synchronous render errors from `TenantFooter`. No current throwing paths in `TenantFooter`, but no `ErrorBoundary` is co-located either.
+
+**Fix:** Add comment to the Suspense boundary clarifying its scope: `// Suspense required for useSearchParams() in EditModeGate — does NOT catch synchronous errors. Add ErrorBoundary if footer becomes data-dependent.`
+
+---
+
+### P3-04 — `buildAnchorNavHref` Has Unreachable `|| ''` Guard
+
+**File:** `apps/web/src/components/tenant/navigation.ts:124`
 
 ```typescript
-transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
-  const out = { ...item };
-  if (out.name && !out.authorName) {
-    out.authorName = out.name;
-    delete out.name;
-  }
-  if (out.role && !out.authorRole) {
-    out.authorRole = out.role;
-    delete out.role;
-  }
-  return out;
-});
+return `${basePath || ''}${item.path}`;
 ```
 
----
+Both callers guarantee a non-null `basePath`. The `|| ''` can never activate. Harmless defensive dead code.
 
-### P2-4: Exclude `features` from `SECTION_TYPE_TO_PAGE` (semantic mismatch)
-
-**Source:** architecture-strategist
-
-Mapping `features` → `'services'` nav item produces "Services" label for a "How It Works" process steps section. Macon's FEATURES section is titled "Schedule, Shoot, Select" — not service offerings. The brainstorm also plans both a FEATURES section AND a services/tiers area — both would produce "Services" nav items.
-
-**Recommended fix:** Exclude `features` from `SECTION_TYPE_TO_PAGE`. The `SegmentTiersSection` already renders at `#services` anchor — tiers ARE the services nav item, not the FEATURES process steps.
-
-Expected Macon nav result: Home | About | Testimonials | Contact ✓
+**Fix:** No action required.
 
 ---
 
-### P2-5: Document as architectural decision: single-page scroll = nav from home sections
+### P3-05 — `SECTION_TYPE_TO_PAGE` Would Benefit from `as const satisfies`
 
-**Source:** architecture-strategist
+**File:** `apps/web/src/components/tenant/navigation.ts:76`
 
-The root cause is that `getAnchorNavigationItems()` was designed for a multi-page architecture that was never built. `getNavItemsFromHomeSections()` is the correct permanent fix. After implementing, run `/workflows:compound` to document: "MAIS is single-page scroll. Nav derives from sections on home page, not page-level enabled flags." This prevents a future developer from reintroducing `getAnchorNavigationItems()` because its name looks more correct.
+`as const satisfies Partial<Record<SectionTypeName, PageName>>` would make the map immutable at the type level. Stylistic improvement only; no correctness issue.
 
----
-
-## P3 Findings (Cleanup)
-
-### P3-1: Remove unreachable `hero` skip — document in map comment instead
-
-`hero` is not in `SECTION_TYPE_TO_PAGE` so `!pageName` already skips it. The `if (section.type === 'hero') continue;` guard is dead code. Move the explanation to the map definition:
-
-```typescript
-const SECTION_TYPE_TO_PAGE = {
-  // hero intentionally excluded — always at top, no anchor nav needed
-  // cta intentionally excluded — closing section, not a nav destination
-  about: 'about',
-  ...
-}
-```
-
-(This naturally disappears if P2-2's `PAGE_ORDER` loop is adopted.)
+**Fix:** Optional.
 
 ---
 
-### P3-2: Price explanation wording encodes Little Bit Farm's business model
+### P3-06 — `features → 'Services'` Nav Label Is a Semantic Trap for Template Redesign
 
-The "Accommodation booked separately after purchase" wording is tenant-specific in a shared `DateBookingWizard`. Use a neutral phrase or store the explanation in `tier.priceNote` and render generically.
+**File:** `apps/web/src/components/tenant/navigation.ts:76-84`
 
----
+`features` is correctly excluded from `SECTION_TYPE_TO_PAGE`. However, the brainstorm at `docs/brainstorms/2026-02-18-storefront-full-template-redesign-brainstorm.md` plans a template with both a FEATURES ("How It Works") section and a Services section. If a future developer adds `features` to the map targeting `'services'`, the nav would show two "Services" items with no compile warning.
 
-### P3-3: Font `<link>` in body IS the accepted pattern — adjust investigation focus
-
-**Source:** learnings-researcher
-
-Compound doc `per-tenant-css-theming-semantic-tokens-and-branding-route-fix.md` already established: `<link>` in body is correct for data-driven per-tenant fonts — `next/font/google` only works for build-time-known fonts. Phase 3a investigation should focus on whether the `classic` preset's `googleFontsUrl` is valid and non-redundant with root layout's `next/font` load, NOT on moving the `<link>` tag.
+**Fix:** Add a comment in the exclusion JSDoc: `// features: maps to same DOM anchor as 'services' (see SECTION_TYPE_TO_ANCHOR_ID in SectionRenderer). Adding it here produces a conflicting 'Services' nav item.`
 
 ---
 
-### P3-4: Scroll-reveal fix requires clearing inline style, not just class removal
+## De-duplication Log
 
-**Source:** learnings-researcher
-
-From `scroll-reveal-playwright-inline-opacity-specificity.md`: `useScrollReveal` sets `el.style.opacity = '0'` inline (specificity 1000). Removing `reveal-on-scroll` class alone won't fix visibility — the inline style wins the cascade. If the testimonials opacity issue persists after class removal, the hook itself must clear `el.style.opacity` when the IntersectionObserver fires.
-
----
-
-## What the Plan Gets Right
-
-- Phase ordering (data → components → polish) minimizes test noise
-- `Array.isArray(transformed.items)` guard in testimonials is correctly load-bearing (null-defeats-defaults)
-- Deleting `HowItWorksSection.tsx` entirely — appropriately ruthless per "No Debt" principle
-- Risk matrix identifies "tenants without FEATURES" gap and correctly notes `build_first_draft` coverage
-- Both bugs in Issue 5 correctly identified (field mismatch AND ghost class)
-- Documented learnings from prior compound docs applied throughout
+| Finding                              | Agents That Flagged                                                           | Original Refs                              |
+| ------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------ |
+| P2-01 testimonials transform layer   | code-simplicity, architecture-strategist, julik, kieran, learnings-researcher | 5-way convergence; merged into one finding |
+| P2-03 domainParam commit description | code-simplicity, architecture-strategist, kieran, learnings-researcher        | 4-way; merged                              |
+| P2-04 SectionTypeName cast           | julik (P3-02), kieran (P2-1)                                                  | 2-way; escalated from P3 to P2             |
+| P2-07 useMemo churn                  | julik (P2-02), kieran (P3-2)                                                  | 2-way; escalated to P2 by scroll frequency |
+| P1-02 CTASection reveal-on-scroll    | code-simplicity (P1), architecture-strategist (P3)                            | 2-way; maintained P1 due to PR context     |
 
 ---
 
-## Confirmed Safe Assumptions (Agents Checked)
+## Confirmed Correct — No Action Required
 
-- **Anchor IDs:** Already in DOM via `SectionRenderer.tsx` — no DOM changes needed for nav
-- **`Array.isArray` guard:** Present in plan, correctly load-bearing for cast safety
-- **`buildAnchorNavHref` reuse:** No changes needed, `NavItem` interface is compatible
-- **`PAGE_LABELS`/`PAGE_ANCHORS` indexing:** Type-safe once P1-1 is applied
-- **HowItWorksSection callers:** Only `TenantLandingPage.tsx` — safe to delete
-
----
-
-## Implementation Checklist Amendments
-
-Add to plan's acceptance criteria:
-
-- [ ] `SECTION_TYPE_TO_PAGE` typed as `Partial<Record<SectionTypeName, PageName>>`
-- [ ] `getAnchorNavigationItems()` deleted in same commit as `TenantNav` switch
-- [ ] Nav loop iterates `PAGE_ORDER`, not `pages.home.sections`
-- [ ] Testimonials transform uses `delete` (matches existing pattern in the file)
-- [ ] `features` excluded from `SECTION_TYPE_TO_PAGE`
-- [ ] No plan prose claims anchor IDs are missing from the DOM
+| Item                                                                   | Confirmed By                                  | Result                                                                                  |
+| ---------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `sectionRef` in `TestimonialsSection` after `reveal-on-scroll` removal | code-simplicity, kieran                       | Live and functional — hook drives animation via IntersectionObserver, not the CSS class |
+| `HowItWorksSection` deletion completeness                              | code-simplicity, learnings-researcher         | Fully removed — zero live references in `apps/web/src/`                                 |
+| `domainParam` in `SegmentTiersSection` and `ContactForm`               | code-simplicity, architecture-strategist      | Load-bearing — correctly retained for custom domain booking/home link routing           |
+| `getNavItemsFromHomeSections` null safety                              | julik                                         | Optional chain guard handles all null/undefined cases correctly                         |
+| Server/Client boundary serialization                                   | julik                                         | No non-serializable values cross the RSC boundary                                       |
+| `storefront-utils.ts` mutation safety                                  | julik                                         | `{ ...content }` and `{ ...item }` spreads prevent original object mutation             |
+| Section-scan nav is architecturally correct                            | architecture-strategist, learnings-researcher | Single-page scroll storefront: nav from home sections, not page-level enabled flags     |
+| `buildAnchorNavHref` fragment href for domain routes                   | kieran                                        | Valid HTML for same-page anchor navigation; benign for current architecture             |
 
 ---
 
-## Todo Files Created
+## Known Pattern Tags
 
-- `todos/11009-pending-p1-nav-section-type-to-page-key-type.md` — P1 type fix
-- `todos/11010-pending-p2-delete-anchor-nav-items-dead-code.md` — delete dead function
-- `todos/11011-pending-p2-nav-loop-page-order-first.md` — ordering fix
-- `todos/11012-pending-p2-testimonials-transform-use-delete.md` — match existing pattern
-- `todos/11013-pending-p2-exclude-features-from-nav-mapping.md` — semantic fix
+| Finding                              | Pattern                                                                                                                | Doc                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| P2-01 (null defeats `= []` defaults) | Missing transform case kills React tree; use `Array.isArray()` not default params                                      | `docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md`       |
+| P2-01 (field aliasing layer)         | `transformContentForSection()` is the single seam for all field name aliasing                                          | `docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md`                  |
+| P2-03 (domainParam)                  | domainParam removed from Shell, retained in SegmentTiersSection for domain routing                                     | `docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md` |
+| P2-04 (SectionTypeName cast)         | Use `Record<SectionTypeName, ...>` for compile-time exhaustiveness; cast suppresses it                                 | `docs/solutions/patterns/CONSTANTS_DUPLICATION_TRAP_SECTION_TYPES.md`                      |
+| P2-06 (parallel maps)                | Section type constants duplication trap — 7+ locations, single source of truth needed                                  | `docs/solutions/patterns/SECTION_TYPES_CONSTANT_DRIFT_RESOLUTION.md`                       |
+| P1-01 (year hydration)               | ISR cache boundary + hydration mismatch — no prior doc; candidate for compounding if this causes a production incident | _(new — not yet documented)_                                                               |

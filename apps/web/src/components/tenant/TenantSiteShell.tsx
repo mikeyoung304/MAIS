@@ -16,6 +16,7 @@ import { TenantFooter } from './TenantFooter';
 import { TenantChatWidget } from '../chat/TenantChatWidget';
 import { StickyMobileCTA } from './StickyMobileCTA';
 import { EditModeGate } from './EditModeGate';
+import { getNavItemsFromHomeSections, buildAnchorNavHref } from './navigation';
 
 interface TenantSiteShellProps {
   tenant: TenantPublicDto;
@@ -30,6 +31,14 @@ export function TenantSiteShell({ tenant, pages, basePath, children }: TenantSit
   // Extract CTA text from hero section in pages config
   const heroSection = pages?.home?.sections?.find((s): s is HeroSection => s.type === 'hero');
   const ctaText = heroSection?.ctaText || 'View Services';
+
+  // Derive nav items on the server so TenantNav (a Client Component) never
+  // calls getNavItemsFromHomeSections on every scroll frame.
+  const resolvedBasePath = basePath ?? `/t/${tenant.slug}`;
+  const navItems = getNavItemsFromHomeSections(pages).map((item) => ({
+    label: item.label,
+    href: buildAnchorNavHref(resolvedBasePath, item),
+  }));
 
   // Resolve font preset — fall back to 'classic' for unknown values
   const fontPreset = FONT_PRESETS[tenant.fontPreset || 'classic'] || FONT_PRESETS.classic;
@@ -54,7 +63,7 @@ export function TenantSiteShell({ tenant, pages, basePath, children }: TenantSit
           Suspense required because useSearchParams() triggers client-side boundary. */}
       <Suspense>
         <EditModeGate>
-          <TenantNav tenant={tenant} pages={pages} basePath={basePath} />
+          <TenantNav tenant={tenant} navItems={navItems} basePath={resolvedBasePath} />
         </EditModeGate>
       </Suspense>
 

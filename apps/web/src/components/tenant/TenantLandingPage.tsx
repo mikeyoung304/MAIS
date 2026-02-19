@@ -22,7 +22,12 @@ interface TenantLandingPageProps {
   pages: PagesConfig;
   /** Base path for links (e.g., '/t/slug' for slug routes, '' for domain routes) */
   basePath?: string;
-  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
+  /**
+   * domainParam is intentionally retained for domain-routing link construction
+   * in SegmentTiersSection (booking URLs) and ContactForm (home href).
+   * It was removed from TenantSiteShell/Nav/Footer only — those components
+   * use basePath for link construction. See PR #62 + commit b0c536ce.
+   */
   domainParam?: string;
   /** Whether Build Mode is active (adds data attributes for section selection) */
   isEditMode?: boolean;
