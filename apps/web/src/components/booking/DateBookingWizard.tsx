@@ -40,7 +40,12 @@ import {
   createDateBooking,
   type TierData,
 } from '@/lib/tenant.client';
-import { hasScalingPricing, calculateClientPrice, formatPerPersonRate } from '@/lib/pricing';
+import {
+  hasScalingPricing,
+  calculateClientPrice,
+  formatPerPersonRate,
+  formatPriceDisplay,
+} from '@/lib/pricing';
 import 'react-day-picker/style.css';
 
 // Zod schema for customer form validation
@@ -120,7 +125,7 @@ const ConfirmStep = React.memo(({ pkg }: ConfirmStepProps) => (
       <div className="space-y-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-900">{pkg.title}</h3>
-          <p className="text-3xl font-bold text-accent mt-2">{formatCurrency(pkg.priceCents)}</p>
+          <p className="text-3xl font-bold text-accent mt-2">{formatPriceDisplay(pkg)}</p>
         </div>
 
         {pkg.description && (

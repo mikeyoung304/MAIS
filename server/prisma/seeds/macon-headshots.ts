@@ -111,6 +111,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         name: 'Headshot Photography',
         heroTitle: 'Premier Headshot Photography',
         heroSubtitle: 'Serving Macon, Middle Georgia, and Beyond',
+        heroImage:
+          'https://images.unsplash.com/photo-1604881991720-f91add269bed?w=1200&h=800&fit=crop&q=80',
         metaTitle: 'Headshot Photography | Macon Headshots',
         metaDescription:
           'Professional headshot photography in Macon, GA. Individual, group, and on-location sessions. Transform the un-photogenic into unforgettable.',
@@ -142,6 +144,14 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
           priceCents: 20000, // $200
           bookingType: 'DATE',
           durationMinutes: 60,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop&q=80',
+              filename: 'individual-session.jpg',
+              size: 120000,
+              order: 0,
+            },
+          ],
           features: [
             { text: 'No time limit', highlighted: false },
             { text: 'Live image review', highlighted: false },
@@ -182,6 +192,14 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
             },
           ],
         },
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=600&fit=crop&q=80',
+            filename: 'group-session.jpg',
+            size: 130000,
+            order: 0,
+          },
+        ],
         features: [
           { text: '3 people included', highlighted: true },
           { text: '+$100 per additional person', highlighted: false },
@@ -224,6 +242,14 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
               },
             ],
           },
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop&q=80',
+              filename: 'on-location.jpg',
+              size: 140000,
+              order: 0,
+            },
+          ],
           features: [
             { text: 'Professional studio brought to your location', highlighted: true },
             { text: '10 headshots included', highlighted: true },
@@ -399,13 +425,70 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         },
       });
 
-      // --- CONTACT (order 5) ---
+      // --- GALLERY (order 5) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'GALLERY',
+          pageName: 'home',
+          order: 5,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            title: 'Recent Work',
+            subtitle: 'A selection of headshots from recent sessions',
+            layout: 'grid',
+            columns: 3,
+            items: [
+              {
+                id: 'gallery-1',
+                image:
+                  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — corporate woman',
+              },
+              {
+                id: 'gallery-2',
+                image:
+                  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — business man',
+              },
+              {
+                id: 'gallery-3',
+                image:
+                  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — creative portrait',
+              },
+              {
+                id: 'gallery-4',
+                image:
+                  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — executive portrait',
+              },
+              {
+                id: 'gallery-5',
+                image:
+                  'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — natural light portrait',
+              },
+              {
+                id: 'gallery-6',
+                image:
+                  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — studio portrait',
+              },
+            ],
+          },
+        },
+      });
+
+      // --- CONTACT (order 6) ---
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
           blockType: 'CONTACT',
           pageName: 'home',
-          order: 5,
+          order: 6,
           isDraft: false,
           publishedAt: new Date(),
           content: {
@@ -420,7 +503,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
       });
 
       logger.info(
-        'Section content created: HERO, ABOUT, FEATURES (How It Works), SERVICES, TESTIMONIALS, CONTACT'
+        'Section content created: HERO, ABOUT, FEATURES (How It Works), SERVICES, TESTIMONIALS, GALLERY, CONTACT'
       );
 
       // =====================================================================
@@ -472,7 +555,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
   logger.info('  - Individual Session: $200 (DATE, 60min, flat)');
   logger.info('  - Group In-Studio: From $500 (DATE, 120min, +$100/person beyond 3)');
   logger.info('  - On-Location: From $1,500 (DATE, +$100/headshot beyond 10)');
-  logger.info('Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, CONTACT');
+  logger.info('Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, GALLERY, CONTACT');
   logger.info(`Blackout dates: ${3}`);
   logger.info('='.repeat(60));
 }
