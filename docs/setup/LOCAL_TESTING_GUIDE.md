@@ -26,7 +26,7 @@
 **Steps:**
 
 1. Open http://localhost:3000 in your browser
-2. You should see 6 elopement packages:
+2. You should see the available service tiers:
    - Basic MAISment ($999)
    - Micro Ceremony ($2,499)
    - Garden Romance ($4,499)
@@ -70,7 +70,7 @@
 
 **Admin Credentials (Mock Mode):**
 
-- Email: `admin@elope.com`
+- Email: `admin@example.com`
 - Password: `admin123`
 
 **Steps:**
@@ -164,7 +164,7 @@ curl http://localhost:3001/v1/availability/2025-12-25
 curl -X POST http://localhost:3001/v1/admin/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@elope.com",
+    "email": "admin@example.com",
     "password": "admin123"
   }'
 ```
@@ -190,8 +190,8 @@ lsof -ti:3001  # API server
 lsof -ti:3000  # Web client
 
 # View live logs
-tail -f /tmp/elope-server.log
-tail -f /tmp/elope-client.log
+tail -f /tmp/mais-server.log
+tail -f /tmp/mais-client.log
 ```
 
 ### Stop Services
@@ -214,10 +214,10 @@ lsof -ti:3001,3000 | xargs kill -9
 cd /Users/mikeyoung/CODING/MAIS
 
 # Start API server (in background)
-cd server && pnpm run dev > /tmp/elope-server.log 2>&1 &
+cd server && pnpm run dev > /tmp/mais-server.log 2>&1 &
 
 # Start web client (in another terminal or background)
-cd ../client && pnpm run dev > /tmp/elope-client.log 2>&1 &
+cd ../client && pnpm run dev > /tmp/mais-client.log 2>&1 &
 
 # Or use concurrently from root
 pnpm run dev  # If available
@@ -229,10 +229,10 @@ pnpm run dev  # If available
 
 ### Default Admin User
 
-- Email: `admin@elope.com`
+- Email: `admin@example.com`
 - Password: `admin123`
 
-### Seeded Packages (6 total)
+### Seeded Tiers
 
 1. **pkg_basic** - Basic MAISment ($999)
 2. **pkg_micro** - Micro Ceremony ($2,499)
@@ -273,7 +273,7 @@ lsof -ti:3000 | xargs kill -9
 curl http://localhost:3001/v1/packages
 
 # Check logs
-tail -20 /tmp/elope-server.log
+tail -20 /tmp/mais-server.log
 ```
 
 ### Issue: Packages Not Loading on Frontend
@@ -380,8 +380,8 @@ To test with actual Stripe payments and database:
 
 **Logs Location:**
 
-- API Server: `/tmp/elope-server.log`
-- Web Client: `/tmp/elope-client.log`
+- API Server: `/tmp/mais-server.log`
+- Web Client: `/tmp/mais-client.log`
 
 **Need Help?**
 

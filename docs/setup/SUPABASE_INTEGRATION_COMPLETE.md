@@ -1,14 +1,13 @@
 # Supabase Integration - Completion Report
 
-**Date:** October 29, 2025
-**Duration:** ~3 hours
-**Status:** ✅ **COMPLETE**
+**Date:** October 29, 2025 (initial), February 18, 2026 (Pro upgrade)
+**Status:** ✅ **COMPLETE — Pro Plan**
 
 ---
 
 ## Summary
 
-Successfully integrated Supabase as the production database for the MAIS wedding booking platform. The system now has a production-ready PostgreSQL database with connection pooling, automatic backups, and critical data integrity constraints.
+Supabase serves as the production PostgreSQL database for MAIS, a multi-tenant membership platform. Upgraded to **Pro plan** (Build2 org) in February 2026 with Micro compute, 200 pooler connections, and storage for tenant assets.
 
 ---
 
@@ -18,7 +17,7 @@ Successfully integrated Supabase as the production database for the MAIS wedding
 
 **Deployed Schema Includes:**
 
-- 11 tables (User, Customer, Package, AddOn, Booking, Payment, Venue, BlackoutDate, WebhookEvent, + join tables)
+- Current schema tables (Tenant, User, Customer, Tier, Segment, AddOn, Booking, BlackoutDate, WebhookEvent, SectionContent, VocabularyEmbedding, AvailabilityRule, and more)
 - 3 enums (UserRole, BookingStatus, PaymentStatus)
 - **Critical Constraints:**
   - `Booking.date @unique` - Prevents double-booking at database level
@@ -44,9 +43,9 @@ Successfully integrated Supabase as the production database for the MAIS wedding
 | Resource | Count | Details |
 |----------|-------|---------|
 | Admin Users | 1 | `admin@example.com` / password: `admin` |
-| Packages | 3 | Classic ($2,500), Garden ($3,500), Luxury ($5,500) |
+| Tiers | varies | Seeded per tenant via `db:seed` script |
 | Add-Ons | 4 | Photography (2hr), Officiant, Bouquet, Violinist |
-| PackageAddOn Links | 8 | All add-ons linked to Classic & Garden packages |
+| Add-On associations | varies | Linked to tiers via seed script |
 | Blackout Dates | 1 | Christmas 2025 |
 
 **Deployment Method:**
@@ -185,13 +184,17 @@ processorId String? @unique  // ✅ Prevents duplicate processing
 **Supabase Project:**
 
 - **Project Ref:** `gpyvdknhmevcfdbgtqir`
+- **Organization:** Build2
 - **Region:** US East (N. Virginia)
-- **Database:** PostgreSQL 15
-- **Plan:** Free Tier
-  - 500MB database storage
-  - 2GB file storage
-  - 1GB bandwidth
+- **Database:** PostgreSQL 15+
+- **Plan:** Pro
+  - 8 GB database storage (expandable)
+  - 100 GB bandwidth
+  - 200 pooler connections (Transaction Mode)
+  - 60 direct connections
   - 7-day point-in-time recovery
+  - Micro compute (1 GB RAM, 2-core ARM)
+- **Storage:** `images` bucket for tenant storefront assets
 
 **Dashboard:** https://supabase.com/dashboard/project/gpyvdknhmevcfdbgtqir
 
@@ -253,7 +256,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 
 ## Next Steps (Updated - Phase 2B Complete)
 
-### Immediate (P0) - Phase 2B Completed (2025-10-29)
+### Immediate (P0) - Phase 2B Completed (2025-10-29, historical)
 
 1. ✅ Fix TypeScript compilation error (`tsconfig.json` references old path)
 2. ⚠️ Rotate exposed secrets (JWT_SECRET, STRIPE keys in git history) - **Documented, Not Executed**
@@ -395,7 +398,7 @@ Error: P1001: Can't reach database server at db.gpyvdknhmevcfdbgtqir.supabase.co
 1. **Production deployment requires DATABASE_URL** - Supabase credentials required
 2. **No additional infrastructure needed** - Supabase handles pooling, backups, SSL
 3. **Monitor via Supabase dashboard** - Built-in metrics available
-4. **Backups are automatic** - 7-day point-in-time recovery on free tier
+4. **Backups are automatic** - 7-day point-in-time recovery (Pro plan)
 
 ### For QA
 

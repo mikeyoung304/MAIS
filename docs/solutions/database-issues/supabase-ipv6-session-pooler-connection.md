@@ -147,7 +147,7 @@ cd server && npx prisma db pull
 
 ### 1. Free Tier Connection Limits
 
-Supabase free tier has strict pool limits. When running many parallel integration tests:
+Supabase free tier (if used) has strict pool limits; the current setup uses Pro plan with 200 pooler connections. When running many parallel integration tests:
 
 ```
 FATAL: MaxClientsInSessionMode: max clients reached
