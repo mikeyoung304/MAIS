@@ -13,6 +13,7 @@ import type { Server } from 'http';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from './core/logger';
 import { getConfig } from './core/config';
+import { captureException, flushSentry } from './errors/sentry';
 
 export interface ShutdownManager {
   server: Server;
@@ -117,14 +118,18 @@ export function registerGracefulShutdown(manager: ShutdownManager): void {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 
-  // Handle uncaught errors
+  // Handle uncaught errors — capture to Sentry and flush before exit
+  // so no events are lost when the process terminates abruptly.
   process.on('uncaughtException', (error) => {
     logger.fatal({ error }, 'Uncaught exception, exiting');
-    process.exit(1);
+    captureException(error, { fatal: true, source: 'uncaughtException' });
+    void flushSentry(2000).finally(() => process.exit(1));
   });
 
   process.on('unhandledRejection', (reason, promise) => {
     logger.fatal({ reason, promise }, 'Unhandled promise rejection, exiting');
-    process.exit(1);
+    const error = reason instanceof Error ? reason : new Error(String(reason));
+    captureException(error, { fatal: true, source: 'unhandledRejection' });
+    void flushSentry(2000).finally(() => process.exit(1));
   });
 }

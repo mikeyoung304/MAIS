@@ -194,6 +194,18 @@ export function isSentryEnabled(): boolean {
   return sentryInitialized;
 }
 
+/**
+ * Flushes pending Sentry events to the server.
+ * Call this before process.exit() to ensure no events are lost.
+ *
+ * @param timeoutMs - Maximum ms to wait for flush (default 2000)
+ */
+export async function flushSentry(timeoutMs = 2000): Promise<void> {
+  if (sentryInitialized) {
+    await Sentry.flush(timeoutMs);
+  }
+}
+
 // ============================================================================
 // Express Middleware (for when Sentry is enabled)
 // ============================================================================

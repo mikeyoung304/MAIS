@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import type { PrismaClient } from '../generated/prisma/client';
 import { apiKeyService } from '../lib/api-key.service';
 import { logger } from '../lib/core/logger';
+import { setUser } from '../lib/errors/sentry';
 
 /**
  * Tenant branding configuration stored in Prisma Json field
@@ -143,6 +144,10 @@ export function resolveTenant(prisma: PrismaClient) {
         stripeOnboarded: tenant.stripeOnboarded,
       };
       req.tenantId = tenant.id;
+
+      // Tag Sentry scope with tenant identity — every error from this request
+      // will include tenantId and slug for fast multi-tenant debugging.
+      setUser({ id: tenant.id, username: tenant.slug });
 
       logger.info(
         {
