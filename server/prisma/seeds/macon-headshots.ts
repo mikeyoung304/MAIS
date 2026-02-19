@@ -482,13 +482,61 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         },
       });
 
-      // --- CONTACT (order 6) ---
+      // --- FAQ (order 6) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'FAQ',
+          pageName: 'home',
+          order: 6,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            title: 'Common Questions',
+            items: [
+              {
+                id: 'faq-what-to-wear',
+                question: 'What should I wear to my session?',
+                answer:
+                  'Solid colors photograph best — avoid busy patterns and large logos. Bring 2-3 outfit options and we can decide together on the day. Jewel tones, navy, and earth tones are always safe bets.',
+              },
+              {
+                id: 'faq-how-long',
+                question: 'How long does a session take?',
+                answer:
+                  'Individual sessions are about 60 minutes with no hard time limit — we shoot until we get the shot. Group sessions run about 120 minutes depending on headcount.',
+              },
+              {
+                id: 'faq-how-many-images',
+                question: 'How many final images do I get?',
+                answer:
+                  'The session fee covers the shoot and expression coaching. Retouched images are purchased separately at $100 each. Most clients pick 2-4 favorites. Group and on-location sessions include 1 retouched image per person.',
+              },
+              {
+                id: 'faq-turnaround',
+                question: 'How quickly will I get my retouched images?',
+                answer:
+                  'Standard turnaround is 5-7 business days. Rush delivery (2-3 business days) is available for an additional fee — just ask when booking.',
+              },
+              {
+                id: 'faq-not-photogenic',
+                question: "What if I'm not photogenic?",
+                answer:
+                  "That is literally my specialty. Every session includes real-time expression coaching — I'll guide you through angles, expressions, and posture until we find what works. Most clients are surprised by their own photos.",
+              },
+            ],
+          },
+        },
+      });
+
+      // --- CONTACT (order 7) ---
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
           blockType: 'CONTACT',
           pageName: 'home',
-          order: 6,
+          order: 7,
           isDraft: false,
           publishedAt: new Date(),
           content: {
@@ -502,8 +550,27 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         },
       });
 
+      // --- CTA (order 8) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'CTA',
+          pageName: 'home',
+          order: 8,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            headline: 'Ready for a Headshot You Actually Like?',
+            subheadline:
+              'Book your session today. Individual, group, and on-location options available.',
+            ctaText: 'See Options',
+          },
+        },
+      });
+
       logger.info(
-        'Section content created: HERO, ABOUT, FEATURES (How It Works), SERVICES, TESTIMONIALS, GALLERY, CONTACT'
+        'Section content created: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, GALLERY, FAQ, CONTACT, CTA'
       );
 
       // =====================================================================
@@ -555,7 +622,9 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
   logger.info('  - Individual Session: $200 (DATE, 60min, flat)');
   logger.info('  - Group In-Studio: From $500 (DATE, 120min, +$100/person beyond 3)');
   logger.info('  - On-Location: From $1,500 (DATE, +$100/headshot beyond 10)');
-  logger.info('Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, GALLERY, CONTACT');
+  logger.info(
+    'Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, GALLERY, FAQ, CONTACT, CTA'
+  );
   logger.info(`Blackout dates: ${3}`);
   logger.info('='.repeat(60));
 }
