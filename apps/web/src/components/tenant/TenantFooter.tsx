@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { TenantPublicDto, PagesConfig } from '@macon/contracts';
-import { getNavigationItems, buildNavHref } from './navigation';
+import { getNavItemsFromHomeSections, buildAnchorNavHref } from './navigation';
 
 interface TenantFooterProps {
   tenant: TenantPublicDto;
@@ -9,8 +9,6 @@ interface TenantFooterProps {
   pages?: PagesConfig | null;
   /** Base path for navigation links (e.g., '/t/jane-photography' or '') */
   basePath?: string;
-  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
-  domainParam?: string;
 }
 
 /**
@@ -23,20 +21,15 @@ interface TenantFooterProps {
  * - "Powered by HANDLED" attribution
  * - Proper ARIA labels and roles
  */
-export function TenantFooter({
-  tenant,
-  pages,
-  basePath: basePathProp,
-  domainParam,
-}: TenantFooterProps) {
+export function TenantFooter({ tenant, pages, basePath: basePathProp }: TenantFooterProps) {
   // Use provided basePath or default to slug-based path
   const basePath = basePathProp ?? `/t/${tenant.slug}`;
   const currentYear = new Date().getFullYear();
 
-  // Build nav items using dynamic navigation based on enabled pages
-  const navItems = getNavigationItems(pages).map((item) => ({
+  // Build nav items from home sections (same derivation as TenantNav)
+  const navItems = getNavItemsFromHomeSections(pages).map((item) => ({
     label: item.label,
-    href: buildNavHref(basePath, item, domainParam),
+    href: buildAnchorNavHref(basePath, item),
   }));
 
   return (

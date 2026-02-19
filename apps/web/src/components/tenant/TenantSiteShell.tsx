@@ -23,18 +23,10 @@ interface TenantSiteShellProps {
   pages?: PagesConfig | null;
   /** Base path for links (e.g., '/t/slug' for slug routes, '' for domain routes) */
   basePath?: string;
-  /** Domain query parameter for custom domain routes (e.g., '?domain=example.com') */
-  domainParam?: string;
   children: React.ReactNode;
 }
 
-export function TenantSiteShell({
-  tenant,
-  pages,
-  basePath,
-  domainParam,
-  children,
-}: TenantSiteShellProps) {
+export function TenantSiteShell({ tenant, pages, basePath, children }: TenantSiteShellProps) {
   // Extract CTA text from hero section in pages config
   const heroSection = pages?.home?.sections?.find((s): s is HeroSection => s.type === 'hero');
   const ctaText = heroSection?.ctaText || 'View Services';
@@ -70,12 +62,7 @@ export function TenantSiteShell({
 
       <Suspense>
         <EditModeGate>
-          <TenantFooter
-            tenant={tenant}
-            pages={pages}
-            basePath={basePath}
-            domainParam={domainParam}
-          />
+          <TenantFooter tenant={tenant} pages={pages} basePath={basePath} />
           <TenantChatWidget
             tenantApiKey={tenant.apiKeyPublic}
             businessName={tenant.name}
