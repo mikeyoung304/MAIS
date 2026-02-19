@@ -357,6 +357,7 @@ model SectionContent {
   @@index([tenantId, segmentId])
   @@index([tenantId, isDraft]) // Query draft vs published content
   @@index([tenantId, pageName, order]) // Query by page with ordering
+  @@index([segmentId]) // Standalone FK index for Segment deletion/update constraint checks
 }
 
 enum BlockType {
@@ -412,6 +413,7 @@ model AddOn {
   @@index([tenantId, active])
   @@index([tenantId])
   @@index([tenantId, segmentId]) // Query add-ons by tenant and segment (null = global)
+  @@index([segmentId]) // Standalone FK index for Segment deletion/update constraint checks
 }
 
 model Booking {
