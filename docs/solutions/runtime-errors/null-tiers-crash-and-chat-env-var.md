@@ -45,27 +45,36 @@ Two P1 production bugs fixed and verified together. Both affected the public-fac
 
 ## Root Cause Analysis
 
-### Bug 1: Null Tiers — `tiers.filter is not a function`
+### Bug 1: Paginated API Response Not Unwrapped — `d.forEach is not a function`
 
-**File:** `apps/web/src/components/tenant/storefront/sections/SegmentTiersSection.tsx`
+> **CORRECTION (2026-02-19):** Original diagnosis was wrong. The API does not return `null`.
+> The true root cause is that both `/v1/tiers` and `/v1/segments` use `paginateArray()` which
+> returns `{ items: T[], total, hasMore }` — a wrapper object, not a plain array. The fetch
+> functions in `tenant.ts` were passing this object directly to components expecting arrays.
+> The component-level `Array.isArray` guard masked the tiers bug (silently returning `[]`)
+> but left segments unguarded — causing a crash on the next storefront load.
+> Real fix: `tenant.ts` commit `5958fdc8` — unwrap `.items` at the fetch layer.
 
-The API endpoint `/v1/tiers` returns `null` when a tenant has no tiers configured. The component called `.filter()` directly on the response without null-safety:
+**File (root cause):** `apps/web/src/lib/tenant.ts`
+
+Both `getTenantTiers` and `getTenantSegments` returned the raw `response.json()` which is the
+paginated envelope `{ items: T[], total: number, hasMore: boolean }`:
 
 ```typescript
-// CRASHED — tiers was null, not undefined
-const activeTiers = tiers.filter((t) => t.active);
+// WRONG — returns { items: [...], total: N, hasMore: false }, not a plain array
+return response.json();
 ```
 
-**Why default params don't help:** JavaScript default parameters (`= []`) only activate for `undefined`, not `null`. When the API explicitly returns `null`, the default is bypassed:
+In `SegmentTiersSection`:
 
-```typescript
-// This does NOT protect against null
-function renderTiers(tiers = []) {
-  return tiers.filter((t) => t.active); // Still crashes if tiers is null
-}
-```
+- `tiers`: Partial fix `Array.isArray(tiers) ? tiers : []` treated the object as non-array
+  → silently returned `[]` → tiers appeared to work only because SectionContent independently
+  rendered pricing. SegmentTiersSection was always broken, just invisibly so.
+- `segments`: No guard → `segments.forEach(...)` crashed with `TypeError: d.forEach is not a function`
 
-This is the documented "null defeats `= []` defaults" pitfall (MEMORY.md, PITFALLS_INDEX.md).
+**Why original verification missed this:** The "3 pricing tiers display" check saw SectionContent-rendered
+pricing, not SegmentTiersSection output. The segment/tier system was silently returning empty
+arrays throughout — it only became visible when the `segments.forEach` crash triggered the error boundary.
 
 ### Bug 2: Missing CUSTOMER_AGENT_URL
 
@@ -78,18 +87,24 @@ The Render production environment was missing the `CUSTOMER_AGENT_URL` environme
 
 ## Solution
 
-### Fix 1: Array.isArray Guard
+### Fix 1: Unwrap Paginated Response at the Fetch Layer
+
+**File:** `apps/web/src/lib/tenant.ts` (commit `5958fdc8`)
 
 ```typescript
-// BEFORE (crashes when tiers is null)
-const activeTiers = tiers.filter((t) => t.active);
+// BEFORE (passes paginated wrapper object to components)
+return response.json();
 
-// AFTER (safe — handles null, undefined, and non-arrays)
-const safeTiers = Array.isArray(tiers) ? tiers : [];
-const activeTiers = safeTiers.filter((t) => t.active);
+// AFTER (unwraps .items — handles both raw arrays and paginated responses)
+const data = await response.json();
+return Array.isArray(data) ? data : (data?.items ?? []);
 ```
 
-`Array.isArray()` returns `false` for `null`, `undefined`, objects, strings — only `true` for actual arrays. This is the correct guard at API consumption boundaries.
+Applied to both `getTenantTiers` and `getTenantSegments`. This is the correct fix at the
+**API boundary** — normalizing the response shape before it reaches any component.
+
+The component-level `Array.isArray` guard in `SegmentTiersSection` remains as defense-in-depth
+but the root fix must be at the fetch layer where the shape mismatch originates.
 
 ### Fix 2: Configure CUSTOMER_AGENT_URL
 
