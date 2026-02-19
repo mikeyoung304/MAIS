@@ -51,10 +51,9 @@ export default async function DomainLayout({ children, searchParams }: DomainLay
     ]);
 
     const pages = sectionsToPages(sections);
-    const domainParam = `?domain=${validatedDomain}`;
 
     return (
-      <TenantSiteShell tenant={tenant} pages={pages} basePath="" domainParam={domainParam}>
+      <TenantSiteShell tenant={tenant} pages={pages} basePath="">
         {children}
       </TenantSiteShell>
     );

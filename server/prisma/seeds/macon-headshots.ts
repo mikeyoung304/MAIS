@@ -398,7 +398,7 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
             visible: true,
             title: 'Your Hype Man Behind the Camera',
             image:
-              'https://images.unsplash.com/photo-1576694040684-77a8e3a9e89f?w=800&h=600&fit=crop&q=80',
+              'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&h=600&fit=crop&q=80',
             body: [
               'Most people walk in saying the same thing: "I\'m not photogenic." That\'s where I come in.',
               "I'm Mike — a headshot photographer who specializes in transforming the un-photogenic into unforgettable. My job isn't just to take your photo. It's to coach you through every expression, every angle, until we land on the shot that makes you say \"that's me.\"",
