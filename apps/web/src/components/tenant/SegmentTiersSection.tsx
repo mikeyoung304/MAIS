@@ -319,7 +319,9 @@ export function SegmentTiersSection({
   // Cross-ref: @macon/contracts SEED_TIER_NAMES (canonical source: server/src/lib/tenant-defaults.ts:28-50)
 
   // Filter active tiers, excluding seed defaults
-  const activeTiers = tiers.filter(
+  // Defensive: API may return null for tiers (null defeats = [] defaults)
+  const safeTiers = Array.isArray(tiers) ? tiers : [];
+  const activeTiers = safeTiers.filter(
     (p) =>
       (p.isActive ?? p.active) &&
       !(p.priceCents === 0 && (SEED_TIER_NAMES as readonly string[]).includes(p.title))

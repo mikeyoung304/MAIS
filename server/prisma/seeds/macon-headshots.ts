@@ -111,6 +111,8 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         name: 'Headshot Photography',
         heroTitle: 'Premier Headshot Photography',
         heroSubtitle: 'Serving Macon, Middle Georgia, and Beyond',
+        heroImage:
+          'https://images.unsplash.com/photo-1604881991720-f91add269bed?w=1200&h=800&fit=crop&q=80',
         metaTitle: 'Headshot Photography | Macon Headshots',
         metaDescription:
           'Professional headshot photography in Macon, GA. Individual, group, and on-location sessions. Transform the un-photogenic into unforgettable.',
@@ -142,6 +144,14 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
           priceCents: 20000, // $200
           bookingType: 'DATE',
           durationMinutes: 60,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop&q=80',
+              filename: 'individual-session.jpg',
+              size: 120000,
+              order: 0,
+            },
+          ],
           features: [
             { text: 'No time limit', highlighted: false },
             { text: 'Live image review', highlighted: false },
@@ -182,6 +192,14 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
             },
           ],
         },
+        photos: [
+          {
+            url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=600&fit=crop&q=80',
+            filename: 'group-session.jpg',
+            size: 130000,
+            order: 0,
+          },
+        ],
         features: [
           { text: '3 people included', highlighted: true },
           { text: '+$100 per additional person', highlighted: false },
@@ -224,6 +242,14 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
               },
             ],
           },
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop&q=80',
+              filename: 'on-location.jpg',
+              size: 140000,
+              order: 0,
+            },
+          ],
           features: [
             { text: 'Professional studio brought to your location', highlighted: true },
             { text: '10 headshots included', highlighted: true },
@@ -399,13 +425,118 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         },
       });
 
-      // --- CONTACT (order 5) ---
+      // --- GALLERY (order 5) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'GALLERY',
+          pageName: 'home',
+          order: 5,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            title: 'Recent Work',
+            subtitle: 'A selection of headshots from recent sessions',
+            layout: 'grid',
+            columns: 3,
+            items: [
+              {
+                id: 'gallery-1',
+                image:
+                  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — corporate woman',
+              },
+              {
+                id: 'gallery-2',
+                image:
+                  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — business man',
+              },
+              {
+                id: 'gallery-3',
+                image:
+                  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — creative portrait',
+              },
+              {
+                id: 'gallery-4',
+                image:
+                  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — executive portrait',
+              },
+              {
+                id: 'gallery-5',
+                image:
+                  'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — natural light portrait',
+              },
+              {
+                id: 'gallery-6',
+                image:
+                  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&h=600&fit=crop&q=80',
+                alt: 'Professional headshot — studio portrait',
+              },
+            ],
+          },
+        },
+      });
+
+      // --- FAQ (order 6) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'FAQ',
+          pageName: 'home',
+          order: 6,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            title: 'Common Questions',
+            items: [
+              {
+                id: 'faq-what-to-wear',
+                question: 'What should I wear to my session?',
+                answer:
+                  'Solid colors photograph best — avoid busy patterns and large logos. Bring 2-3 outfit options and we can decide together on the day. Jewel tones, navy, and earth tones are always safe bets.',
+              },
+              {
+                id: 'faq-how-long',
+                question: 'How long does a session take?',
+                answer:
+                  'Individual sessions are about 60 minutes with no hard time limit — we shoot until we get the shot. Group sessions run about 120 minutes depending on headcount.',
+              },
+              {
+                id: 'faq-how-many-images',
+                question: 'How many final images do I get?',
+                answer:
+                  'The session fee covers the shoot and expression coaching. Retouched images are purchased separately at $100 each. Most clients pick 2-4 favorites. Group and on-location sessions include 1 retouched image per person.',
+              },
+              {
+                id: 'faq-turnaround',
+                question: 'How quickly will I get my retouched images?',
+                answer:
+                  'Standard turnaround is 5-7 business days. Rush delivery (2-3 business days) is available for an additional fee — just ask when booking.',
+              },
+              {
+                id: 'faq-not-photogenic',
+                question: "What if I'm not photogenic?",
+                answer:
+                  "That is literally my specialty. Every session includes real-time expression coaching — I'll guide you through angles, expressions, and posture until we find what works. Most clients are surprised by their own photos.",
+              },
+            ],
+          },
+        },
+      });
+
+      // --- CONTACT (order 7) ---
       await tx.sectionContent.create({
         data: {
           tenantId: tenant.id,
           blockType: 'CONTACT',
           pageName: 'home',
-          order: 5,
+          order: 7,
           isDraft: false,
           publishedAt: new Date(),
           content: {
@@ -419,8 +550,27 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
         },
       });
 
+      // --- CTA (order 8) ---
+      await tx.sectionContent.create({
+        data: {
+          tenantId: tenant.id,
+          blockType: 'CTA',
+          pageName: 'home',
+          order: 8,
+          isDraft: false,
+          publishedAt: new Date(),
+          content: {
+            visible: true,
+            headline: 'Ready for a Headshot You Actually Like?',
+            subheadline:
+              'Book your session today. Individual, group, and on-location options available.',
+            ctaText: 'See Options',
+          },
+        },
+      });
+
       logger.info(
-        'Section content created: HERO, ABOUT, FEATURES (How It Works), SERVICES, TESTIMONIALS, CONTACT'
+        'Section content created: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, GALLERY, FAQ, CONTACT, CTA'
       );
 
       // =====================================================================
@@ -472,7 +622,9 @@ export async function seedMaconHeadshots(prisma: PrismaClient): Promise<void> {
   logger.info('  - Individual Session: $200 (DATE, 60min, flat)');
   logger.info('  - Group In-Studio: From $500 (DATE, 120min, +$100/person beyond 3)');
   logger.info('  - On-Location: From $1,500 (DATE, +$100/headshot beyond 10)');
-  logger.info('Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, CONTACT');
+  logger.info(
+    'Section content: HERO, ABOUT, FEATURES, SERVICES, TESTIMONIALS, GALLERY, FAQ, CONTACT, CTA'
+  );
   logger.info(`Blackout dates: ${3}`);
   logger.info('='.repeat(60));
 }
