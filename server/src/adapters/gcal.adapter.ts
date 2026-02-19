@@ -7,6 +7,7 @@ import { createGServiceAccountJWT } from './gcal.jwt';
 import { logger } from '../lib/core/logger';
 import type { PrismaTenantRepository } from './prisma/tenant.repository';
 import { encryptionService } from '../lib/encryption.service';
+import type { TenantSecrets, PrismaJson } from '../types/prisma-json';
 
 interface CacheEntry {
   available: boolean;
@@ -56,7 +57,8 @@ export class GoogleCalendarAdapter implements CalendarProvider {
       try {
         const tenant = await this.tenantRepo.findById(tenantId);
         if (tenant?.secrets && typeof tenant.secrets === 'object') {
-          const secrets = tenant.secrets as any;
+          // Guard above ensures secrets is non-null object
+          const secrets = tenant.secrets as TenantSecrets;
 
           // Check if calendar config exists in secrets
           if (secrets.calendar?.ciphertext && secrets.calendar?.iv && secrets.calendar?.authTag) {

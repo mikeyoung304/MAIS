@@ -26,6 +26,7 @@
 
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { createSessionService, type SessionService, type SessionWithMessages } from './session';
 import type { ContextBuilderService } from './context-builder.service';
 import { createContextBuilderService, type BootstrapData } from './context-builder.service';
@@ -42,22 +43,10 @@ import {
 // CONFIGURATION
 // =============================================================================
 
-/**
- * Get required environment variable, throwing clear error if missing.
- * Validation deferred to first access to avoid breaking test imports (CLAUDE.md pitfall #34, #41).
- */
-function getRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}. Set this in your .env file.`);
-  }
-  return value;
-}
-
 // Agent URLs - no hardcoded fallbacks with project numbers
 // Validation happens at first use, not at import time (to allow test imports)
 function getTenantAgentUrl(): string {
-  const url = process.env.TENANT_AGENT_URL;
+  const url = getConfig().TENANT_AGENT_URL;
   if (url) return url;
 
   throw new Error(
@@ -65,12 +54,6 @@ function getTenantAgentUrl(): string {
       'Set this in your .env file or Render dashboard.'
   );
 }
-
-function _getGoogleCloudProject(): string {
-  return getRequiredEnv('GOOGLE_CLOUD_PROJECT');
-}
-
-const _GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
 // =============================================================================
 // TYPES

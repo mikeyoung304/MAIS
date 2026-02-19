@@ -6,6 +6,7 @@
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { logger } from '../core/logger';
+import { getConfig } from '../core/config';
 
 // ============================================================================
 // Sentry Configuration
@@ -30,10 +31,11 @@ export interface SentryConfig {
  * @returns Object indicating if Sentry is enabled
  */
 export function initSentry(config?: SentryConfig): { enabled: boolean } {
-  const dsn = config?.dsn || process.env.SENTRY_DSN;
+  const appConfig = getConfig();
+  const dsn = config?.dsn || appConfig.SENTRY_DSN;
 
   // Fail fast in production if Sentry not configured
-  if (process.env.NODE_ENV === 'production' && !dsn) {
+  if (appConfig.NODE_ENV === 'production' && !dsn) {
     throw new Error(
       'SENTRY_DSN is required in production. ' +
         'Set SENTRY_DSN environment variable or use NODE_ENV=development.'
@@ -48,8 +50,8 @@ export function initSentry(config?: SentryConfig): { enabled: boolean } {
   try {
     Sentry.init({
       dsn,
-      environment: config?.environment || process.env.NODE_ENV || 'development',
-      release: config?.release || process.env.APP_VERSION,
+      environment: config?.environment || appConfig.NODE_ENV,
+      release: config?.release || appConfig.APP_VERSION,
       tracesSampleRate: config?.tracesSampleRate || 0.5, // 50% (increased from 10%)
       profilesSampleRate: config?.profilesSampleRate || 0.1,
 
@@ -72,7 +74,8 @@ export function initSentry(config?: SentryConfig): { enabled: boolean } {
         }
 
         // Filter out operational errors (already logged)
-        const error = hint.originalException as any;
+        // originalException may be any throwable; check for isOperational property
+        const error = hint.originalException as Record<string, unknown> | undefined;
         if (error && error.isOperational === true) {
           return null;
         }
@@ -179,7 +182,7 @@ export function addBreadcrumb(
   }
 
   // Log breadcrumb for development
-  if (process.env.NODE_ENV !== 'production') {
+  if (getConfig().NODE_ENV !== 'production') {
     logger.debug({ message, category, data }, 'Breadcrumb');
   }
 }

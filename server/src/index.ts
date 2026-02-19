@@ -81,7 +81,7 @@ async function main(): Promise<void> {
 
     // Initialize scheduled tasks (only in real mode with database)
     if (config.ADAPTERS_PRESET === 'real' && container.prisma) {
-      const cronSchedule = process.env.REMINDER_CRON_SCHEDULE || '0 9 * * *';
+      const cronSchedule = config.REMINDER_CRON_SCHEDULE;
       initializeScheduler(container, cronSchedule);
       logger.info('⏰ Scheduled tasks initialized');
 
@@ -93,7 +93,7 @@ async function main(): Promise<void> {
     // Initialize webhook queue for async processing (only in real mode)
     if (config.ADAPTERS_PRESET === 'real' && container.webhookQueue) {
       const processor = container.controllers.webhooks.getProcessor();
-      await initializeWebhookQueue(container.webhookQueue, processor, process.env.REDIS_URL);
+      await initializeWebhookQueue(container.webhookQueue, processor, config.REDIS_URL);
 
       if (container.webhookQueue.isAsyncAvailable()) {
         logger.info('📨 Webhook queue initialized (async mode)');

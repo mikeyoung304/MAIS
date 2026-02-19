@@ -17,6 +17,7 @@ import type {
   UpdateBrandingInput,
 } from '../validation/tenant-admin.schemas';
 import { NotFoundError } from '../lib/errors';
+import type { BrandingConfig, PrismaJson } from '../types/prisma-json';
 
 /**
  * Tier response DTO
@@ -157,7 +158,12 @@ export class TenantAdminController {
     // Need to fetch full records with IDs
     // This is a workaround since getAllBlackouts doesn't return IDs
     // In production, we'd update the repository method
-    const prisma = (this.blackoutRepo as any).prisma;
+    // Controller needs direct Prisma access for queries not exposed by the port interface.
+    // The BlackoutRepository port intentionally doesn't expose findMany with full IDs;
+    // this cast is the pragmatic tradeoff vs. adding admin-specific methods to the port.
+    const prisma = (
+      this.blackoutRepo as unknown as { prisma: import('../generated/prisma/client').PrismaClient }
+    ).prisma;
     const fullBlackouts = await prisma.blackoutDate.findMany({
       where: { tenantId },
       orderBy: { date: 'asc' },
@@ -168,7 +174,7 @@ export class TenantAdminController {
       },
     });
 
-    return fullBlackouts.map((b: any) => ({
+    return fullBlackouts.map((b: { id: string; date: Date; reason: string | null }) => ({
       id: b.id,
       date: b.date.toISOString().split('T')[0],
       ...(b.reason && { reason: b.reason }),
@@ -258,7 +264,7 @@ export class TenantAdminController {
 
     // Colors come from dedicated database columns
     // fontFamily and logo still come from branding JSON
-    const branding = (tenant.branding as any) || {};
+    const branding = (tenant.branding as PrismaJson<BrandingConfig>) || {};
 
     return {
       primaryColor: tenant.primaryColor,
@@ -293,14 +299,14 @@ export class TenantAdminController {
     } = data;
 
     // Update color fields at database column level
-    const colorUpdates: any = {};
+    const colorUpdates: Record<string, string | undefined> = {};
     if (primaryColor !== undefined) colorUpdates.primaryColor = primaryColor;
     if (secondaryColor !== undefined) colorUpdates.secondaryColor = secondaryColor;
     if (accentColor !== undefined) colorUpdates.accentColor = accentColor;
     if (backgroundColor !== undefined) colorUpdates.backgroundColor = backgroundColor;
 
     // Update non-color fields in branding JSON
-    const currentBranding = (tenant.branding as any) || {};
+    const currentBranding = (tenant.branding as PrismaJson<BrandingConfig>) || {};
     const updatedBrandingJson = {
       ...currentBranding,
       ...(fontFamily !== undefined && { fontFamily }),
@@ -315,7 +321,7 @@ export class TenantAdminController {
 
     // Return updated branding
     const updatedTenant = await this.tenantRepo.findById(tenantId);
-    const finalBranding = (updatedTenant!.branding as any) || {};
+    const finalBranding = (updatedTenant!.branding as PrismaJson<BrandingConfig>) || {};
 
     return {
       primaryColor: updatedTenant!.primaryColor,

@@ -9,6 +9,7 @@
 
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { getConfig } from './core/config';
 
 /**
  * Creates a new PrismaClient instance with PostgreSQL driver adapter
@@ -17,7 +18,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
  * @returns Configured PrismaClient instance
  */
 export function createPrismaClient(connectionString?: string): PrismaClient {
-  const databaseUrl = connectionString || process.env.DATABASE_URL;
+  const databaseUrl = connectionString || getConfig().DATABASE_URL;
 
   if (!databaseUrl) {
     throw new Error('DATABASE_URL environment variable is required');
@@ -27,6 +28,6 @@ export function createPrismaClient(connectionString?: string): PrismaClient {
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error', 'warn'], // Quiet logs for seeding
+    log: getConfig().NODE_ENV === 'production' ? ['error', 'warn'] : ['error', 'warn'], // Quiet logs for seeding
   });
 }

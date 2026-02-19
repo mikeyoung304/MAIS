@@ -9,6 +9,7 @@
 
 import type { Express, Request, Response } from 'express';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import type { PrismaClient } from '../generated/prisma/client';
 import type { Config } from '../lib/core/config';
 import type { HealthCheckService } from '../services/health-check.service';
@@ -34,7 +35,7 @@ export function registerHealthRoutes(app: Express, deps: HealthCheckDeps): void 
       timestamp: new Date().toISOString(),
       uptime,
       service: 'handled-api',
-      version: process.env.npm_package_version || 'unknown',
+      version: getConfig().npm_package_version || 'unknown',
     });
   });
 

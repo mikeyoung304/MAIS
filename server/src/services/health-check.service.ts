@@ -55,11 +55,15 @@ export class HealthCheckService {
 
     const startTime = Date.now();
     try {
-      // Use timeout wrapper to prevent hanging
+      // Health check needs direct adapter access to verify external service connectivity.
+      // The port interface intentionally doesn't expose implementation details;
+      // this cast is the pragmatic tradeoff vs. adding health-check methods to every adapter port.
       await this.withTimeout(
-        // Access Stripe instance directly via adapter's private property
-        // This is safe because we own both the adapter and this service
-        (this.deps.stripeAdapter as any).stripe.balance.retrieve(),
+        (
+          this.deps.stripeAdapter as unknown as {
+            stripe: { balance: { retrieve: () => Promise<unknown> } };
+          }
+        ).stripe.balance.retrieve(),
         this.CHECK_TIMEOUT_MS
       );
 
@@ -95,8 +99,11 @@ export class HealthCheckService {
       });
     }
 
-    // Check if using file sink fallback (no server token)
-    const serverToken = (this.deps.mailAdapter as any).cfg.serverToken;
+    // Health check needs direct adapter access to verify external service connectivity.
+    // The port interface intentionally doesn't expose implementation details;
+    // this cast is the pragmatic tradeoff vs. adding health-check methods to every adapter port.
+    const serverToken = (this.deps.mailAdapter as unknown as { cfg: { serverToken?: string } }).cfg
+      .serverToken;
     if (!serverToken) {
       return this.cacheResult('postmark', {
         status: 'healthy',
@@ -169,8 +176,14 @@ export class HealthCheckService {
       });
     }
 
-    // For real Google Calendar adapter, check if config exists
-    const config = (this.deps.calendarAdapter as any).config;
+    // Health check needs direct adapter access to verify external service connectivity.
+    // The port interface intentionally doesn't expose implementation details;
+    // this cast is the pragmatic tradeoff vs. adding health-check methods to every adapter port.
+    const config = (
+      this.deps.calendarAdapter as unknown as {
+        config?: { calendarId?: string; serviceAccountJsonBase64?: string };
+      }
+    ).config;
     if (!config?.calendarId || !config?.serviceAccountJsonBase64) {
       return this.cacheResult('googleCalendar', {
         status: 'unhealthy',

@@ -135,9 +135,9 @@ export function buildContainer(config: Config): Container {
 
   // Initialize cache adapter (Redis for real mode, in-memory for mock)
   let cacheAdapter: CacheServicePort;
-  if (config.ADAPTERS_PRESET === 'real' && process.env.REDIS_URL) {
+  if (config.ADAPTERS_PRESET === 'real' && config.REDIS_URL) {
     logger.info('🔴 Using Redis cache adapter');
-    cacheAdapter = new RedisCacheAdapter(process.env.REDIS_URL);
+    cacheAdapter = new RedisCacheAdapter(config.REDIS_URL);
   } else {
     logger.info('🧪 Using in-memory cache adapter');
     cacheAdapter = new InMemoryCacheAdapter();
@@ -169,7 +169,7 @@ export function buildContainer(config: Config): Container {
 
     // Mock PrismaClient for CommissionService (uses in-memory mock data)
     // Prisma 7: Use driver adapter - DATABASE_URL is required even in mock mode
-    const mockDatabaseUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_TEST;
+    const mockDatabaseUrl = config.DATABASE_URL || config.DATABASE_URL_TEST;
     if (!mockDatabaseUrl) {
       throw new Error(
         'DATABASE_URL or DATABASE_URL_TEST must be set. Prisma 7 requires a database connection.'
@@ -263,7 +263,7 @@ export function buildContainer(config: Config): Container {
 
     // Create DiscoveryService + ResearchService (setter injection breaks circular dep)
     const mockContextBuilder = createContextBuilderService(mockPrisma, sectionContentService);
-    const researchService = new ResearchService(mockTenantRepo, process.env.RESEARCH_AGENT_URL);
+    const researchService = new ResearchService(mockTenantRepo, config.RESEARCH_AGENT_URL);
     const discoveryService = new DiscoveryService(
       mockTenantRepo,
       mockContextBuilder,
@@ -339,9 +339,10 @@ export function buildContainer(config: Config): Container {
     const repositories = {
       service: serviceRepo,
       availabilityRule: availabilityRuleRepo,
-      booking: adapters.bookingRepo as any, // Mock booking repo - type compatibility
-      catalog: adapters.catalogRepo as any, // Mock catalog repo
-      earlyAccess: adapters.earlyAccessRepo as any, // Mock early access repo
+      // Mock adapters implement the same behavior but have wider types; cast is safe.
+      booking: adapters.bookingRepo as unknown as PrismaBookingRepository,
+      catalog: adapters.catalogRepo as unknown as PrismaCatalogRepository,
+      earlyAccess: adapters.earlyAccessRepo as unknown as PrismaEarlyAccessRepository,
       sectionContent: sectionContentRepo,
     };
 
@@ -361,8 +362,10 @@ export function buildContainer(config: Config): Container {
         }
 
         // 3. Disconnect cache adapter (in-memory or Redis)
+        // CacheServicePort doesn't expose disconnect(); only RedisCacheAdapter has it.
+        // The 'in' guard narrows the type at runtime; the cast is safe after the guard.
         if (cacheAdapter && 'disconnect' in cacheAdapter) {
-          await (cacheAdapter as any).disconnect();
+          await (cacheAdapter as unknown as { disconnect: () => Promise<void> }).disconnect();
           logger.info('Cache adapter disconnected');
         }
 
@@ -423,7 +426,7 @@ export function buildContainer(config: Config): Container {
   const adapter = new PrismaPg({ connectionString: databaseUrl.toString() });
   const prisma = new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['query', 'error', 'warn'],
+    log: config.NODE_ENV === 'production' ? ['error', 'warn'] : ['query', 'error', 'warn'],
   });
 
   logger.info(
@@ -431,7 +434,7 @@ export function buildContainer(config: Config): Container {
   );
 
   // Add slow query monitoring
-  if (process.env.NODE_ENV !== 'production') {
+  if (config.NODE_ENV !== 'production') {
     prisma.$on(
       'query' as never,
       ((e: { duration: number; query: string }) => {
@@ -507,10 +510,8 @@ export function buildContainer(config: Config): Container {
   // 2. STORAGE_MODE=supabase is explicitly set
   // This allows integration tests to use real DB with local storage by not setting STORAGE_MODE
   if (
-    process.env.STORAGE_MODE === 'supabase' ||
-    (config.ADAPTERS_PRESET === 'real' &&
-      process.env.SUPABASE_URL &&
-      process.env.STORAGE_MODE !== 'local')
+    config.STORAGE_MODE === 'supabase' ||
+    (config.ADAPTERS_PRESET === 'real' && config.SUPABASE_URL && config.STORAGE_MODE !== 'local')
   ) {
     try {
       supabaseClient = getSupabaseClient();
@@ -525,11 +526,11 @@ export function buildContainer(config: Config): Container {
 
   const storageProvider = new UploadAdapter(
     {
-      logoUploadDir: process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'logos'),
+      logoUploadDir: config.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'logos'),
       tierPhotoUploadDir: path.join(process.cwd(), 'uploads', 'packages'),
       segmentImageUploadDir: path.join(process.cwd(), 'uploads', 'segments'),
       landingPageImageUploadDir: path.join(process.cwd(), 'uploads', 'landing-pages'),
-      maxFileSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '2', 10),
+      maxFileSizeMB: config.MAX_UPLOAD_SIZE_MB ?? 2,
       maxTierPhotoSizeMB: 5,
       allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'],
       baseUrl: config.API_BASE_URL || 'http://localhost:5000',
@@ -611,7 +612,7 @@ export function buildContainer(config: Config): Container {
 
   // Create DiscoveryService + ResearchService (setter injection breaks circular dep)
   const realContextBuilder = createContextBuilderService(prisma, sectionContentService);
-  const researchService = new ResearchService(tenantRepo, process.env.RESEARCH_AGENT_URL);
+  const researchService = new ResearchService(tenantRepo, config.RESEARCH_AGENT_URL);
   const discoveryService = new DiscoveryService(
     tenantRepo,
     realContextBuilder,
@@ -810,8 +811,10 @@ export function buildContainer(config: Config): Container {
       }
 
       // 4. Disconnect cache adapter (Redis or in-memory)
+      // CacheServicePort doesn't expose disconnect(); only RedisCacheAdapter has it.
+      // The 'in' guard narrows the type at runtime; the cast is safe after the guard.
       if (cacheAdapter && 'disconnect' in cacheAdapter) {
-        await (cacheAdapter as any).disconnect();
+        await (cacheAdapter as unknown as { disconnect: () => Promise<void> }).disconnect();
         logger.info('Cache adapter disconnected');
       }
 

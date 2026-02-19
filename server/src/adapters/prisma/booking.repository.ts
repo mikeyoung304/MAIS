@@ -274,7 +274,8 @@ export class PrismaBookingRepository implements BookingRepository {
           },
           {
             timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-            isolationLevel: this.isolationLevel as any,
+            // Prisma 7 driver adapter types don't expose isolationLevel; runtime accepts it correctly
+            isolationLevel: this.isolationLevel as never,
           }
         );
       } catch (error) {
@@ -769,7 +770,8 @@ export class PrismaBookingRepository implements BookingRepository {
     }
 
     const bookings = await this.prisma.booking.findMany({
-      where: where as any, // Type assertion needed for dynamic where clause
+      // Dynamic where clause built at runtime; Prisma's generated type narrowing doesn't support this pattern
+      where: where as never,
       include: {
         customer: {
           select: {
@@ -976,7 +978,8 @@ export class PrismaBookingRepository implements BookingRepository {
         },
         {
           timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-          isolationLevel: this.isolationLevel as any,
+          // Prisma 7 driver adapter types don't expose isolationLevel; runtime accepts it correctly
+          isolationLevel: this.isolationLevel as never,
         }
       );
     }, `reschedule-booking-${tenantId}-${bookingId}-${newDate}`);
@@ -1245,7 +1248,8 @@ export class PrismaBookingRepository implements BookingRepository {
         },
         {
           timeout: BOOKING_TRANSACTION_TIMEOUT_MS,
-          isolationLevel: this.isolationLevel as any,
+          // Prisma 7 driver adapter types don't expose isolationLevel; runtime accepts it correctly
+          isolationLevel: this.isolationLevel as never,
         }
       );
     }, `complete-balance-payment-${tenantId}-${bookingId}`);

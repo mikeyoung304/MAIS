@@ -1,10 +1,13 @@
 import rateLimit from 'express-rate-limit';
 import type { Request, Response, NextFunction } from 'express';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 
 // Check if we're in a test environment (unit tests OR E2E tests)
-// Must be defined before rate limiters that use it
-const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === '1';
+// Must be defined before rate limiters that use it.
+// Uses getConfig() for validated env access; safe at module level because config
+// is loaded (loadConfig()) before Express middleware is registered.
+const isTestEnvironment = getConfig().NODE_ENV === 'test' || getConfig().E2E_TEST === '1';
 
 /**
  * Helper to normalize IP addresses for rate limiting

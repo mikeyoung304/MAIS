@@ -141,7 +141,7 @@ export function createApp(
         if (VERCEL_PREVIEW_RE.test(origin)) return callback(null, true);
 
         // In development, allow all localhost ports
-        if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost:')) {
+        if (config.NODE_ENV !== 'production' && origin.startsWith('http://localhost:')) {
           return callback(null, true);
         }
 
@@ -300,13 +300,13 @@ export function createApp(
   if (
     config.ADAPTERS_PRESET === 'real' &&
     config.STRIPE_SECRET_KEY &&
-    process.env.STRIPE_CONNECT_WEBHOOK_SECRET &&
+    config.STRIPE_CONNECT_WEBHOOK_SECRET &&
     container.prisma
   ) {
     const connectWebhookHandler = createStripeConnectWebhookRoutes(
       container.prisma,
       config.STRIPE_SECRET_KEY,
-      process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+      config.STRIPE_CONNECT_WEBHOOK_SECRET!
     );
     app.post('/v1/webhooks/stripe/connect', connectWebhookHandler);
     logger.info('✅ Stripe Connect webhook endpoint registered at /v1/webhooks/stripe/connect');

@@ -31,6 +31,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { PrismaClient } from '../generated/prisma/client';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import type { ContextBuilderService, BootstrapData } from '../services/context-builder.service';
 import { cloudRunAuth } from '../services/cloud-run-auth.service';
 import {
@@ -49,7 +50,7 @@ import {
  * Uses environment variable - no hardcoded fallbacks per Pitfall #34.
  */
 function getTenantAgentUrl(): string {
-  const envUrl = process.env.TENANT_AGENT_URL;
+  const envUrl = getConfig().TENANT_AGENT_URL;
   if (!envUrl) {
     throw new Error('TENANT_AGENT_URL environment variable is required');
   }
@@ -254,7 +255,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         res.status(502).json({
           success: false,
           error: 'Agent temporarily unavailable',
-          details: process.env.NODE_ENV === 'development' ? errorText : undefined,
+          details: getConfig().NODE_ENV === 'development' ? errorText : undefined,
         });
         return;
       }
@@ -575,7 +576,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         res.status(502).json({
           success: false,
           error: 'Agent temporarily unavailable',
-          details: process.env.NODE_ENV === 'development' ? errorText : undefined,
+          details: getConfig().NODE_ENV === 'development' ? errorText : undefined,
         });
         return;
       }

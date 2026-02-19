@@ -13,6 +13,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
 import { z, ZodError } from 'zod';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import { timingSafeCompare } from '../lib/timing-safe';
 
 // Validation schema for revalidation request
@@ -104,8 +105,9 @@ export function createInternalRoutes(config: { internalApiSecret?: string }): Ro
       const pathsToRevalidate = paths.length > 0 ? paths : defaultPaths;
 
       // Get Next.js app URL from environment
-      const nextjsUrl = process.env.NEXTJS_APP_URL || 'http://localhost:3000';
-      const revalidateSecret = process.env.NEXTJS_REVALIDATE_SECRET;
+      const cfg = getConfig();
+      const nextjsUrl = cfg.NEXTJS_APP_URL;
+      const revalidateSecret = cfg.NEXTJS_REVALIDATE_SECRET;
 
       if (!revalidateSecret) {
         logger.warn('NEXTJS_REVALIDATE_SECRET not configured');

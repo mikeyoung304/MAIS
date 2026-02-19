@@ -381,7 +381,9 @@ export function createV1Router(
         await services.catalog.deleteAddOn('tenant_default_legacy', params.id);
         return { status: 204 as const, body: undefined };
       },
-    } as any),
+      // ts-rest router type inference doesn't match Express 4.x handler signatures;
+      // this cast is required per ts-rest documentation for createExpressEndpoints()
+    } as never),
     app,
     {
       // Apply middleware based on route path

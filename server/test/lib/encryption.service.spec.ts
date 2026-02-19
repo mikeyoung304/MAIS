@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EncryptionService } from '../../src/lib/encryption.service';
+import { resetConfig } from '../../src/lib/core/config';
 import crypto from 'crypto';
 
 describe('EncryptionService', () => {
@@ -15,6 +16,8 @@ describe('EncryptionService', () => {
 
   beforeEach(() => {
     originalEnv = process.env.TENANT_SECRETS_ENCRYPTION_KEY;
+    // Reset config singleton so each test starts fresh with current process.env
+    resetConfig();
   });
 
   afterEach(() => {
@@ -23,6 +26,8 @@ describe('EncryptionService', () => {
     } else {
       delete process.env.TENANT_SECRETS_ENCRYPTION_KEY;
     }
+    // Reset config singleton so next test re-reads process.env
+    resetConfig();
   });
 
   describe('Constructor & Validation', () => {
@@ -462,9 +467,10 @@ describe('EncryptionService', () => {
       const service1 = new EncryptionService();
       const encrypted = service1.encrypt('test');
 
-      // Different key
+      // Different key — must reset config singleton so getConfig() picks up new value
       process.env.TENANT_SECRETS_ENCRYPTION_KEY =
         'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
+      resetConfig();
       const service2 = new EncryptionService();
 
       expect(() => service2.decrypt(encrypted)).toThrow();

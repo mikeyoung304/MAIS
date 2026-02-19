@@ -18,6 +18,7 @@ import Stripe from 'stripe';
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
 import { encryptionService, type EncryptedData } from '../lib/encryption.service';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 
 // TenantSecrets type - Stripe encrypted secret storage
 interface TenantSecrets {
@@ -32,7 +33,7 @@ export class StripeConnectService {
   private stripe: Stripe;
 
   constructor(private readonly prisma: PrismaClient) {
-    const apiKey = process.env.STRIPE_SECRET_KEY;
+    const apiKey = getConfig().STRIPE_SECRET_KEY;
     if (!apiKey) {
       throw new Error('STRIPE_SECRET_KEY environment variable is required');
     }

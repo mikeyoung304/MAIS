@@ -12,6 +12,7 @@
 
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { logger } from '../lib/core/logger';
+import { getConfig } from '../lib/core/config';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -30,12 +31,13 @@ import * as path from 'path';
  * so the SDK can find it.
  */
 function setupServiceAccountFromEnv(): void {
+  const cfg = getConfig();
   // Skip if already configured or if JSON env var not set
-  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  if (cfg.GOOGLE_APPLICATION_CREDENTIALS) {
     return;
   }
 
-  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  const serviceAccountJson = cfg.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!serviceAccountJson) {
     // No service account JSON provided - will rely on ADC (local dev)
     return;
@@ -50,7 +52,7 @@ function setupServiceAccountFromEnv(): void {
     const credentialsPath = path.join(tempDir, 'gcp-service-account.json');
     fs.writeFileSync(credentialsPath, serviceAccountJson, { mode: 0o600 });
 
-    // Set env var for SDK to find
+    // Must write directly to process.env for Google Auth library consumption
     process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
     logger.info({ credentialsPath }, 'Service account credentials loaded from env');
   } catch (error) {
@@ -147,8 +149,9 @@ export function createVertexClient(config: VertexClientConfig = {}): GoogleGenAI
   // Setup service account from env if provided (for Render/production)
   setupServiceAccountFromEnv();
 
-  const project = config.project || process.env.GOOGLE_VERTEX_PROJECT;
-  const location = config.location || process.env.GOOGLE_VERTEX_LOCATION || 'global';
+  const cfg = getConfig();
+  const project = config.project || cfg.GOOGLE_VERTEX_PROJECT;
+  const location = config.location || cfg.GOOGLE_VERTEX_LOCATION || 'global';
 
   if (!project) {
     throw new Error(

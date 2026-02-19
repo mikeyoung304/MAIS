@@ -10,6 +10,7 @@ import { logger } from '../lib/core/logger';
 import { encryptionService } from '../lib/encryption.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { TenantCalendarConfig } from '../adapters/gcal.adapter';
+import type { TenantSecrets, PrismaJson } from '../types/prisma-json';
 
 // Constants
 const MAX_JSON_SIZE = 50 * 1024; // 50KB - service account JSON files are typically ~2KB
@@ -47,14 +48,15 @@ export function createTenantAdminCalendarRoutes(
       }
 
       // Check if calendar config exists in secrets
-      const secrets = tenant.secrets as any;
+      const secrets = (tenant.secrets as PrismaJson<TenantSecrets>) ?? {};
+      const calendarSecret = secrets.calendar;
       const hasConfig = !!(
-        secrets?.calendar?.ciphertext &&
-        secrets?.calendar?.iv &&
-        secrets?.calendar?.authTag
+        calendarSecret?.ciphertext &&
+        calendarSecret?.iv &&
+        calendarSecret?.authTag
       );
 
-      if (!hasConfig) {
+      if (!hasConfig || !calendarSecret) {
         res.json({
           configured: false,
           calendarId: null,
@@ -64,7 +66,7 @@ export function createTenantAdminCalendarRoutes(
 
       // Decrypt to get calendar ID (mask it for security)
       try {
-        const decrypted = encryptionService.decryptObject<TenantCalendarConfig>(secrets.calendar);
+        const decrypted = encryptionService.decryptObject<TenantCalendarConfig>(calendarSecret);
         const maskedCalendarId = maskCalendarId(decrypted.calendarId);
 
         res.json({
@@ -138,7 +140,7 @@ export function createTenantAdminCalendarRoutes(
       const encrypted = encryptionService.encryptObject(calendarConfig);
 
       // Update tenant secrets
-      const currentSecrets = (tenant.secrets as any) || {};
+      const currentSecrets = (tenant.secrets as PrismaJson<TenantSecrets>) || {};
       const updatedSecrets = {
         ...currentSecrets,
         calendar: encrypted,
@@ -181,7 +183,7 @@ export function createTenantAdminCalendarRoutes(
       }
 
       // Remove calendar config from secrets
-      const currentSecrets = (tenant.secrets as any) || {};
+      const currentSecrets = (tenant.secrets as PrismaJson<TenantSecrets>) || {};
       const { calendar: _calendar, ...remainingSecrets } = currentSecrets;
 
       await tenantRepo.update(tenantId, {
@@ -218,14 +220,15 @@ export function createTenantAdminCalendarRoutes(
       }
 
       // Check if calendar config exists
-      const secrets = tenant.secrets as any;
+      const secrets = (tenant.secrets as PrismaJson<TenantSecrets>) ?? {};
+      const calendarSecretTest = secrets.calendar;
       const hasConfig = !!(
-        secrets?.calendar?.ciphertext &&
-        secrets?.calendar?.iv &&
-        secrets?.calendar?.authTag
+        calendarSecretTest?.ciphertext &&
+        calendarSecretTest?.iv &&
+        calendarSecretTest?.authTag
       );
 
-      if (!hasConfig) {
+      if (!hasConfig || !calendarSecretTest) {
         res.status(404).json({ error: 'No calendar configuration found' });
         return;
       }
@@ -233,7 +236,7 @@ export function createTenantAdminCalendarRoutes(
       // Decrypt config
       let calendarConfig: TenantCalendarConfig;
       try {
-        calendarConfig = encryptionService.decryptObject<TenantCalendarConfig>(secrets.calendar);
+        calendarConfig = encryptionService.decryptObject<TenantCalendarConfig>(calendarSecretTest);
       } catch (error) {
         logger.error({ tenantId, error }, 'Failed to decrypt calendar config');
         res.status(500).json({ error: 'Failed to read calendar configuration' });

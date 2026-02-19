@@ -6,8 +6,9 @@
  */
 
 import { z } from 'zod';
+import { getConfig } from '../../lib/core/config';
 
-// Environment variable schema with validation
+// Environment variable schema with validation (vertex-specific subset)
 const envSchema = z.object({
   GOOGLE_CLOUD_PROJECT: z.string().min(1),
   GOOGLE_CLOUD_LOCATION: z.string().default('us-central1'),
@@ -18,16 +19,17 @@ const envSchema = z.object({
   MEDIA_COST_CRITICAL_PERCENT: z.coerce.number().default(95),
 });
 
-// Parse and validate environment
-function loadConfig() {
+// Parse and validate vertex-specific config from the centralized config
+function loadVertexConfig() {
+  const cfg = getConfig();
   const result = envSchema.safeParse({
-    GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT || process.env.GOOGLE_VERTEX_PROJECT,
-    GOOGLE_CLOUD_LOCATION: process.env.GOOGLE_CLOUD_LOCATION || process.env.GOOGLE_VERTEX_LOCATION,
-    AGENT_ENGINE_ID: process.env.AGENT_ENGINE_ID,
-    AGENT_STAGING_BUCKET: process.env.AGENT_STAGING_BUCKET,
-    MEDIA_BUCKET: process.env.MEDIA_BUCKET,
-    MEDIA_COST_WARN_PERCENT: process.env.MEDIA_COST_WARN_PERCENT,
-    MEDIA_COST_CRITICAL_PERCENT: process.env.MEDIA_COST_CRITICAL_PERCENT,
+    GOOGLE_CLOUD_PROJECT: cfg.GOOGLE_CLOUD_PROJECT || cfg.GOOGLE_VERTEX_PROJECT,
+    GOOGLE_CLOUD_LOCATION: cfg.GOOGLE_CLOUD_LOCATION || cfg.GOOGLE_VERTEX_LOCATION,
+    AGENT_ENGINE_ID: cfg.AGENT_ENGINE_ID,
+    AGENT_STAGING_BUCKET: cfg.AGENT_STAGING_BUCKET,
+    MEDIA_BUCKET: cfg.MEDIA_BUCKET,
+    MEDIA_COST_WARN_PERCENT: cfg.MEDIA_COST_WARN_PERCENT,
+    MEDIA_COST_CRITICAL_PERCENT: cfg.MEDIA_COST_CRITICAL_PERCENT,
   });
 
   if (!result.success) {
@@ -38,11 +40,11 @@ function loadConfig() {
 }
 
 // Lazy-loaded config (only validates when accessed)
-let _config: ReturnType<typeof loadConfig> | null = null;
+let _config: ReturnType<typeof loadVertexConfig> | null = null;
 
 export function getVertexConfig() {
   if (!_config) {
-    _config = loadConfig();
+    _config = loadVertexConfig();
   }
   return _config;
 }

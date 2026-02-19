@@ -37,15 +37,17 @@ vi.mock('../../lib/core/logger', () => ({
 
 // We need to import after mocks are set up
 import { CloudRunAuthService } from '../cloud-run-auth.service';
+import { resetConfig } from '../../lib/core/config';
 
 describe('CloudRunAuthService', () => {
   const TEST_AUDIENCE = 'https://tenant-agent-123.us-central1.run.app';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset env vars
+    // Reset env vars and config singleton so getConfig() re-reads process.env
     delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     delete process.env.K_SERVICE;
+    resetConfig();
   });
 
   describe('JWT token + cache hit', () => {

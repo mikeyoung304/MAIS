@@ -4,8 +4,12 @@
  * Extracts only safe fields from error objects for logging.
  * Prevents sensitive data (API keys, headers, request bodies) from being logged.
  *
+ * NOTE: This file uses getConfig() for NODE_ENV checks instead of process.env directly.
+ *
  * @see docs/solutions/patterns/phase-5-testing-and-caching-prevention-MAIS-20251231.md
  */
+
+import { getConfig } from './config';
 
 /**
  * Safe fields extracted from an error for logging
@@ -57,7 +61,7 @@ export function sanitizeError(error: unknown): SanitizedError {
     };
 
     // Include stack only in development
-    if (process.env.NODE_ENV === 'development' && error.stack) {
+    if (getConfig().NODE_ENV === 'development' && error.stack) {
       result.stack = error.stack;
     }
 
