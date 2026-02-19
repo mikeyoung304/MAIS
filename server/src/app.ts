@@ -18,7 +18,7 @@ import { skipIfHealth, adminLimiter, webhookLimiter } from './middleware/rateLim
 import { openApiSpec } from './api-docs';
 import { sentryRequestHandler, sentryErrorHandler } from './lib/errors/sentry';
 import { registerHealthRoutes } from './routes/health.routes';
-import { registerMetricsRoutes } from './routes/metrics.routes';
+import { registerMetricsRoutes, createMetricsMiddleware } from './routes/metrics.routes';
 import { sanitizeInput } from './middleware/sanitize';
 import { cspViolationsRouter } from './routes/csp-violations.routes';
 import { createStripeConnectWebhookRoutes } from './routes/stripe-connect-webhooks.routes';
@@ -187,6 +187,10 @@ export function createApp(
 
   // Request ID + logging middleware (for non-webhook routes)
   app.use(requestLogger);
+
+  // HTTP metrics middleware — records request count and duration per endpoint
+  // Must be after requestLogger (for correlation) but before route handlers
+  app.use(createMetricsMiddleware());
 
   // Apply input sanitization globally (except webhooks and internal agent routes)
   app.use((req, res, next) => {

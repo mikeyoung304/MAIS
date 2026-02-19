@@ -279,6 +279,7 @@ export function buildContainer(config: Config): Container {
       stripeAdapter: undefined, // Mock mode doesn't use real adapters
       mailAdapter: undefined,
       calendarAdapter: undefined,
+      cacheAdapter,
     });
 
     // Note: No webhook queue in mock mode - processing is always synchronous
@@ -629,6 +630,8 @@ export function buildContainer(config: Config): Container {
     stripeAdapter: paymentProvider,
     mailAdapter: mailProvider,
     calendarAdapter: calendarProvider,
+    cacheAdapter,
+    supabaseClient,
   });
 
   // ============================================================================
