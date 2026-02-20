@@ -6,13 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CalendarSettingsCard } from '@/components/tenant/CalendarSettingsCard';
-import { User, Building2, Key, AlertTriangle, Copy, CheckCircle } from 'lucide-react';
+import { StripeConnectCard } from '@/components/tenant/StripeConnectCard';
+import { WebhookSubscriptionsCard } from '@/components/tenant/WebhookSubscriptionsCard';
+import { User, Building2, Key, AlertTriangle, Copy, CheckCircle, Plug } from 'lucide-react';
 import { useState } from 'react';
 
 /**
  * Tenant Settings Page
  *
- * Account settings and API key management.
+ * Organized into sections:
+ * - Account Information
+ * - API Keys
+ * - Integrations (Calendar, Stripe, Webhooks)
+ * - Business Settings
+ * - Danger Zone
  */
 export default function TenantSettingsPage() {
   const { user, tenantId } = useAuth();
@@ -36,7 +43,7 @@ export default function TenantSettingsPage() {
       {/* Header */}
       <div>
         <h1 className="font-serif text-3xl font-bold text-text-primary">Settings</h1>
-        <p className="mt-2 text-text-muted">Manage your account and API keys</p>
+        <p className="mt-2 text-text-muted">Manage your account, integrations, and API keys</p>
       </div>
 
       {/* Account Information */}
@@ -121,8 +128,20 @@ export default function TenantSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Integrations — Google Calendar */}
-      <CalendarSettingsCard />
+      {/* Integrations Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Plug className="h-5 w-5 text-sage" />
+          <h2 className="font-serif text-xl font-bold text-text-primary">Integrations</h2>
+        </div>
+        <p className="text-sm text-text-muted">
+          Connect external services to automate your workflow
+        </p>
+
+        <CalendarSettingsCard />
+        <StripeConnectCard />
+        <WebhookSubscriptionsCard />
+      </div>
 
       {/* Business Settings */}
       <Card colorScheme="dark">

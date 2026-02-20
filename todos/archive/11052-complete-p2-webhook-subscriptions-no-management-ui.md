@@ -1,6 +1,6 @@
 ---
 issue_id: 11052
-status: pending
+status: complete
 priority: p2
 tags: [frontend, webhooks, integrations]
 effort: Medium
@@ -44,4 +44,4 @@ Available event types to expose in the UI (derive from contract): `booking.creat
 
 ## Work Log
 
-_(empty)_
+- 2026-02-20: Resolved. WebhookSubscriptionsCard component: list existing webhooks, create with URL + event multi-select, toggle active/inactive via Switch, delete with AlertDialog confirmation, one-time secret reveal with copy-to-clipboard. All API calls via /api/tenant-admin/webhooks proxy. Typecheck passes.

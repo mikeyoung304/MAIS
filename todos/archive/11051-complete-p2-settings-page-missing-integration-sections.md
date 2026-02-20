@@ -1,6 +1,6 @@
 ---
 issue_id: 11051
-status: pending
+status: complete
 priority: p2
 tags: [frontend, ux, settings]
 effort: Medium
@@ -51,4 +51,4 @@ Follow the established design system: `rounded-3xl shadow-lg` cards, sage accent
 
 ## Work Log
 
-_(empty)_
+- 2026-02-20: Resolved. Settings page reorganized with "Integrations" section header grouping CalendarSettingsCard, StripeConnectCard, and WebhookSubscriptionsCard. New StripeConnectCard component: fetch status, connect/onboard, open dashboard. Typecheck passes.
