@@ -242,9 +242,18 @@ jobs:
           ENV_ARGS="${ENV_ARGS%,}"
 
           if [ -n "$ENV_ARGS" ]; then
+            # Tenant agent gets min-instances=1 to prevent cold start session loss
+            # Customer and research agents stay at scale-to-zero (ephemeral sessions)
+            MIN_INSTANCES_FLAG=""
+            if [ "${{ matrix.agent }}" = "tenant" ]; then
+              MIN_INSTANCES_FLAG="--min-instances=1"
+              echo "🔒 Setting min-instances=1 for tenant-agent (session persistence)"
+            fi
+
             gcloud run services update ${{ matrix.agent }}-agent \
               --region=${{ env.GOOGLE_CLOUD_REGION }} \
               --update-env-vars="$ENV_ARGS" \
+              $MIN_INSTANCES_FLAG \
               --quiet
             echo "✅ Runtime env vars set on Cloud Run"
           fi

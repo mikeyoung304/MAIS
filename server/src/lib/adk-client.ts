@@ -59,9 +59,12 @@ export const AdkContentSchema = z.object({
 
 /**
  * Schema for a single ADK event in the response array.
+ * Content is optional — ADK error events have errorCode/errorMessage but no content.
  */
 export const AdkEventSchema = z.object({
   content: AdkContentSchema.optional(),
+  errorCode: z.string().optional(),
+  errorMessage: z.string().optional(),
 });
 
 /**
@@ -83,13 +86,48 @@ export const AdkRunResponseSchema = z.union([
   }),
 ]);
 
+/**
+ * Schema for ADK session GET response.
+ * GET /apps/{appName}/users/{userId}/sessions/{sessionId}
+ * Returns session with events history.
+ */
+export const AdkSessionDataSchema = z.object({
+  id: z.string(),
+  userId: z.string().optional(),
+  appName: z.string().optional(),
+  state: z.record(z.unknown()).optional(),
+  events: z
+    .array(
+      z.object({
+        content: z
+          .object({
+            role: z.string().optional(),
+            parts: z
+              .array(
+                z.object({
+                  text: z.string().optional(),
+                })
+              )
+              .optional(),
+          })
+          .optional(),
+      })
+    )
+    .optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 // =============================================================================
 // TYPES
 // =============================================================================
 
 export type AdkRunResponse = z.infer<typeof AdkRunResponseSchema>;
+export type AdkEvent = z.infer<typeof AdkEventSchema>;
+export type AdkSessionData = z.infer<typeof AdkSessionDataSchema>;
 export type AdkPart = z.infer<typeof AdkPartSchema>;
 export type AdkToolCall = { name: string; args: Record<string, unknown>; result?: unknown };
+export type DashboardAction = { type: string; payload: unknown };
 
 // =============================================================================
 // FETCH WITH TIMEOUT
@@ -225,4 +263,36 @@ export function extractToolCalls(data: AdkRunResponse): AdkToolCall[] {
   }
 
   return toolCalls;
+}
+
+/**
+ * Extract dashboard actions from ADK response.
+ * Looks for functionResponse parts that return a `dashboardAction` field.
+ * Used by tenant agent to trigger frontend UI updates (e.g., section refresh).
+ */
+export function extractDashboardActions(data: AdkRunResponse): DashboardAction[] {
+  const actions: DashboardAction[] = [];
+
+  // Only array format carries function responses with dashboard actions
+  if (!Array.isArray(data)) return actions;
+
+  for (const event of data) {
+    if (!event.content?.parts) continue;
+    for (const part of event.content.parts) {
+      if (part.functionResponse) {
+        const response = part.functionResponse.response;
+        if (
+          response &&
+          typeof response === 'object' &&
+          'dashboardAction' in response &&
+          (response as Record<string, unknown>).dashboardAction
+        ) {
+          const action = (response as Record<string, unknown>).dashboardAction as DashboardAction;
+          actions.push(action);
+        }
+      }
+    }
+  }
+
+  return actions;
 }

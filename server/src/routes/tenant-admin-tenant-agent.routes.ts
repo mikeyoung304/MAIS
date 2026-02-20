@@ -36,9 +36,13 @@ import type { ContextBuilderService, BootstrapData } from '../services/context-b
 import { cloudRunAuth } from '../services/cloud-run-auth.service';
 import {
   AdkSessionResponseSchema,
+  AdkSessionDataSchema,
+  AdkRunResponseSchema,
   fetchWithTimeout,
   extractAgentResponse,
   extractToolCalls,
+  extractDashboardActions,
+  type AdkRunResponse,
 } from '../lib/adk-client';
 
 // =============================================================================
@@ -70,76 +74,7 @@ const SessionIdSchema = z.object({
   id: z.string().min(1),
 });
 
-// AdkSessionResponseSchema imported from '../lib/adk-client'
-
-/**
- * ADK session GET response format.
- * Used when fetching session history.
- */
-const AdkSessionDataSchema = z.object({
-  id: z.string(),
-  userId: z.string().optional(),
-  appName: z.string().optional(),
-  state: z.record(z.unknown()).optional(),
-  events: z
-    .array(
-      z.object({
-        content: z
-          .object({
-            role: z.string().optional(),
-            parts: z
-              .array(
-                z.object({
-                  text: z.string().optional(),
-                })
-              )
-              .optional(),
-          })
-          .optional(),
-      })
-    )
-    .optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-});
-
-/**
- * ADK A2A protocol response format.
- * Must handle both array and object formats (Pitfall #35).
- */
-/**
- * ADK A2A protocol response format (array variant).
- * Content is optional — ADK error events have errorCode/errorMessage but no content.
- * Uses shared part schema from adk-client (Pitfall #18).
- */
-const AdkResponseSchema = z.array(
-  z.object({
-    content: z
-      .object({
-        role: z.string(),
-        parts: z.array(
-          z.object({
-            text: z.string().optional(),
-            functionCall: z
-              .object({
-                name: z.string(),
-                args: z.record(z.unknown()),
-              })
-              .optional(),
-            functionResponse: z
-              .object({
-                name: z.string(),
-                response: z.record(z.unknown()),
-              })
-              .optional(),
-          })
-        ),
-      })
-      .optional(),
-    errorCode: z.string().optional(),
-    errorMessage: z.string().optional(),
-  })
-);
+// AdkSessionResponseSchema, AdkSessionDataSchema, AdkRunResponseSchema imported from '../lib/adk-client'
 
 // =============================================================================
 // ROUTE FACTORY
@@ -581,9 +516,9 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
         return;
       }
 
-      // Parse ADK response (Pitfall #35 - handle array format)
+      // Parse ADK response (Pitfall #35 - handle both array and legacy formats)
       const rawData = await response.json();
-      const parseResult = AdkResponseSchema.safeParse(rawData);
+      const parseResult = AdkRunResponseSchema.safeParse(rawData);
       if (!parseResult.success) {
         logger.error(
           { tenantId, sessionId, error: parseResult.error.message, rawData },
@@ -769,41 +704,7 @@ export function createTenantAdminTenantAgentRoutes(deps: TenantAgentRoutesDeps):
 // HELPER FUNCTIONS
 // =============================================================================
 
-// extractAgentResponse imported from '../lib/adk-client'
-
-/**
- * Extract dashboard actions from ADK response.
- * Looks for function calls that return DashboardAction results.
- */
-function extractDashboardActions(
-  data: z.infer<typeof AdkResponseSchema>
-): Array<{ type: string; payload: unknown }> {
-  const actions: Array<{ type: string; payload: unknown }> = [];
-
-  for (const item of data) {
-    // Skip error events with no content
-    if (!item.content?.parts) continue;
-    for (const part of item.content.parts) {
-      // Look for function responses that contain dashboard actions
-      if (part.functionResponse) {
-        const response = part.functionResponse.response;
-        if (
-          response &&
-          typeof response === 'object' &&
-          'dashboardAction' in response &&
-          response.dashboardAction
-        ) {
-          const action = response.dashboardAction as { type: string; payload: unknown };
-          actions.push(action);
-        }
-      }
-    }
-  }
-
-  return actions;
-}
-
-// extractToolCalls imported from '../lib/adk-client'
+// extractAgentResponse, extractDashboardActions, extractToolCalls imported from '../lib/adk-client'
 
 /**
  * Strip [SESSION CONTEXT]...[END CONTEXT] prefix injected by context injection.
