@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '11041'
 tags: [code-review, google-calendar, oauth, token-refresh, reliability]
@@ -49,3 +49,7 @@ Option B immediately (safe failure mode); Option A as follow-up.
 ## Work Log
 
 - 2026-02-20: Flagged by 3 agents. Fail-open is dangerous on booking critical path.
+- 2026-02-20: Resolved as part of 11030 (OAuth sprint Wave 2). All 3 acceptance criteria met:
+  - 401 → available=false (fail-closed) in both gcal.adapter.ts and google-calendar-oauth.adapter.ts
+  - OAuth access token refresh in GoogleCalendarOAuthService.refreshAccessToken()
+  - Refreshed tokens re-encrypted and persisted via storeTokens()

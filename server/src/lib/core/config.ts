@@ -75,9 +75,15 @@ const ConfigSchema = z.object({
   // Admin notification for tenant signups - receives email when new tenant registers
   ADMIN_NOTIFICATION_EMAIL: z.string().email().optional().default('mike@maconheadshots.com'),
 
-  // --- Google Calendar ---
+  // --- Google Calendar (Service Account — legacy) ---
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().optional(),
+
+  // --- Google Calendar OAuth 2.0 ---
+  GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_OAUTH_REDIRECT_URI: z.string().url().optional(),
+  GOOGLE_OAUTH_STATE_SECRET: z.string().min(32).optional(),
 
   // --- Agent URLs (Cloud Run) ---
   CUSTOMER_AGENT_URL: z.string().url().optional(),

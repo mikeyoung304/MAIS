@@ -61,6 +61,7 @@ import {
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { PostmarkMailAdapter } from './adapters/postmark.adapter';
 import { GoogleCalendarSyncAdapter } from './adapters/google-calendar-sync.adapter';
+import { GoogleCalendarOAuthService } from './services/google-calendar-oauth.service';
 import { getSupabaseClient } from './config/database';
 import { logger } from './lib/core/logger';
 import path from 'path';
@@ -94,7 +95,8 @@ export interface Container {
 
     // FEATURE SERVICES - Return 503 if missing (check in routes with `if (!service)`)
     // These enable specific features but application can start without them
-    googleCalendar?: GoogleCalendarService; // Calendar sync feature
+    googleCalendar?: GoogleCalendarService; // Calendar sync feature (service account)
+    googleCalendarOAuth?: GoogleCalendarOAuthService; // Calendar OAuth 2.0 flow
     schedulingAvailability?: SchedulingAvailabilityService; // Scheduling slot generation
     webhookDelivery?: WebhookDeliveryService; // Outbound webhook delivery (TODO-278)
     projectHub?: ProjectHubService; // Project Hub dual-faced communication
@@ -264,6 +266,24 @@ export function buildContainer(config: Config): Container {
     const sectionContentRepo = new PrismaSectionContentRepository(mockPrisma);
     const sectionContentService = new SectionContentService(sectionContentRepo);
 
+    // Create Google Calendar OAuth service (feature service — optional)
+    let googleCalendarOAuth: GoogleCalendarOAuthService | undefined;
+    if (
+      config.GOOGLE_OAUTH_CLIENT_ID &&
+      config.GOOGLE_OAUTH_CLIENT_SECRET &&
+      config.GOOGLE_OAUTH_REDIRECT_URI &&
+      config.GOOGLE_OAUTH_STATE_SECRET
+    ) {
+      googleCalendarOAuth = new GoogleCalendarOAuthService(
+        mockPrisma,
+        config.GOOGLE_OAUTH_CLIENT_ID,
+        config.GOOGLE_OAUTH_CLIENT_SECRET,
+        config.GOOGLE_OAUTH_REDIRECT_URI,
+        config.GOOGLE_OAUTH_STATE_SECRET,
+        cacheAdapter
+      );
+    }
+
     // Create DiscoveryService + ResearchService (setter injection breaks circular dep)
     const mockContextBuilder = createContextBuilderService(mockPrisma, sectionContentService);
     const researchService = new ResearchService(mockTenantRepo, config.RESEARCH_AGENT_URL);
@@ -331,6 +351,7 @@ export function buildContainer(config: Config): Container {
       tenantOnboarding: tenantOnboardingService,
       tenantProvisioning: tenantProvisioningService,
       googleCalendar: googleCalendarService,
+      googleCalendarOAuth,
       schedulingAvailability: schedulingAvailabilityService,
       reminder: reminderService,
       sectionContent: sectionContentService,
@@ -613,6 +634,24 @@ export function buildContainer(config: Config): Container {
   // Create ReminderService with real adapters
   const reminderService = new ReminderService(bookingRepo, catalogRepo, eventEmitter);
 
+  // Create Google Calendar OAuth service (feature service — optional)
+  let googleCalendarOAuth: GoogleCalendarOAuthService | undefined;
+  if (
+    config.GOOGLE_OAUTH_CLIENT_ID &&
+    config.GOOGLE_OAUTH_CLIENT_SECRET &&
+    config.GOOGLE_OAUTH_REDIRECT_URI &&
+    config.GOOGLE_OAUTH_STATE_SECRET
+  ) {
+    googleCalendarOAuth = new GoogleCalendarOAuthService(
+      prisma,
+      config.GOOGLE_OAUTH_CLIENT_ID,
+      config.GOOGLE_OAUTH_CLIENT_SECRET,
+      config.GOOGLE_OAUTH_REDIRECT_URI,
+      config.GOOGLE_OAUTH_STATE_SECRET,
+      cacheAdapter
+    );
+  }
+
   // Create DiscoveryService + ResearchService (setter injection breaks circular dep)
   const realContextBuilder = createContextBuilderService(prisma, sectionContentService);
   const researchService = new ResearchService(tenantRepo, config.RESEARCH_AGENT_URL);
@@ -770,6 +809,7 @@ export function buildContainer(config: Config): Container {
     tenantOnboarding: tenantOnboardingService,
     tenantProvisioning: tenantProvisioningService,
     googleCalendar: googleCalendarService,
+    googleCalendarOAuth,
     schedulingAvailability: schedulingAvailabilityService,
     reminder: reminderService,
     sectionContent: sectionContentService,

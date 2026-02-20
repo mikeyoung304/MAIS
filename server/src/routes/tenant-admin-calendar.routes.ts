@@ -51,16 +51,29 @@ export function createTenantAdminCalendarRoutes(
         return;
       }
 
-      // Check if calendar config exists in secrets
+      // Check for OAuth connection first (preferred method)
+      const isOAuthConnected = !!(tenant as Record<string, unknown>).googleCalendarConnected;
+
+      // Check if legacy service account config exists in secrets
       const secrets = (tenant.secrets as PrismaJson<TenantSecrets>) ?? {};
       const calendarSecret = secrets.calendar;
-      const hasConfig = !!(
+      const hasServiceAccountConfig = !!(
         calendarSecret?.ciphertext &&
         calendarSecret?.iv &&
         calendarSecret?.authTag
       );
 
-      if (!hasConfig || !calendarSecret) {
+      // OAuth connection takes priority
+      if (isOAuthConnected) {
+        res.json({
+          configured: true,
+          method: 'oauth',
+          calendarId: 'primary', // OAuth uses the user's primary calendar
+        });
+        return;
+      }
+
+      if (!hasServiceAccountConfig || !calendarSecret) {
         res.json({
           configured: false,
           calendarId: null,
@@ -68,13 +81,14 @@ export function createTenantAdminCalendarRoutes(
         return;
       }
 
-      // Decrypt to get calendar ID (mask it for security)
+      // Decrypt legacy service account config to get calendar ID (mask it for security)
       try {
         const decrypted = encryptionService.decryptObject<TenantCalendarConfig>(calendarSecret);
         const maskedCalendarId = maskCalendarId(decrypted.calendarId);
 
         res.json({
           configured: true,
+          method: 'service_account',
           calendarId: maskedCalendarId,
         });
       } catch (error) {

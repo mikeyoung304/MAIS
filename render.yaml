@@ -66,3 +66,11 @@ services:
         sync: false  # GCP project ID (e.g., handled-484216)
       - key: GOOGLE_CLOUD_LOCATION
         sync: false  # GCP region (e.g., us-central1)
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false  # Google OAuth 2.0 client ID for calendar integration
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false  # Google OAuth 2.0 client secret (sensitive)
+      - key: GOOGLE_OAUTH_REDIRECT_URI
+        sync: false  # OAuth callback URL (e.g., https://api.gethandled.ai/v1/tenant-admin/calendar/oauth/callback)
+      - key: GOOGLE_OAUTH_STATE_SECRET
+        sync: false  # HMAC key for signing OAuth state parameter (min 32 chars, openssl rand -hex 32)

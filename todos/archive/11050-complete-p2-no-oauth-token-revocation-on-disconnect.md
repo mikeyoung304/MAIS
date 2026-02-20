@@ -1,6 +1,6 @@
 ---
 issue_id: 11050
-status: pending
+status: complete
 priority: p2
 tags: [security, google-calendar, oauth]
 effort: Small
@@ -39,4 +39,4 @@ On calendar config deletion:
 
 ## Work Log
 
-_(empty)_
+- 2026-02-20: Resolved in GoogleCalendarOAuthService.disconnect(). Calls Google revocation endpoint (best-effort), invalidates Redis cache, then clears local tokens.

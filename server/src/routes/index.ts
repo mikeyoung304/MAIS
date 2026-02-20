@@ -46,6 +46,7 @@ import { createTenantAdminStripeRoutes } from './tenant-admin-stripe.routes';
 import { createTenantAdminBillingRoutes } from './tenant-admin-billing.routes';
 import { createTenantAdminReminderRoutes } from './tenant-admin-reminders.routes';
 import { createTenantAdminCalendarRoutes } from './tenant-admin-calendar.routes';
+import { createCalendarOAuthRoutes } from './tenant-admin-calendar-oauth.routes';
 import { createTenantAdminDepositRoutes } from './tenant-admin-deposits.routes';
 import { createTenantAdminTenantAgentRoutes } from './tenant-admin-tenant-agent.routes';
 import { createTenantAdminProjectRoutes } from './tenant-admin-projects.routes';
@@ -98,6 +99,7 @@ import type { ProjectHubService } from '../services/project-hub.service';
 import type { DiscoveryService } from '../services/discovery.service';
 import type { ResearchService } from '../services/research.service';
 import type { GoogleCalendarService } from '../services/google-calendar.service';
+import type { GoogleCalendarOAuthService } from '../services/google-calendar-oauth.service';
 import { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 
 interface Controllers {
@@ -129,6 +131,7 @@ interface Services {
   discovery?: DiscoveryService;
   research?: ResearchService;
   googleCalendar?: GoogleCalendarService;
+  googleCalendarOAuth?: GoogleCalendarOAuthService;
 }
 
 interface Repositories {
@@ -581,6 +584,24 @@ export function createV1Router(
     );
     app.use('/v1/tenant-admin/calendar', tenantAuthMiddleware, tenantAdminCalendarRoutes);
     logger.info('✅ Tenant admin calendar routes mounted at /v1/tenant-admin/calendar');
+
+    // Register Google Calendar OAuth routes (for OAuth 2.0 "Connect with Google" flow)
+    // Callback is PUBLIC (Google redirects here without tenant JWT — uses HMAC state)
+    // Start + disconnect require tenant admin authentication
+    if (services.googleCalendarOAuth) {
+      const calendarOAuth = createCalendarOAuthRoutes(services.googleCalendarOAuth);
+      // Mount callback BEFORE auth middleware (it's public, HMAC state is the auth)
+      app.use('/v1/tenant-admin/calendar/oauth', calendarOAuth.callbackRouter);
+      // Mount start + disconnect behind tenant auth
+      app.use(
+        '/v1/tenant-admin/calendar/oauth',
+        tenantAuthMiddleware,
+        calendarOAuth.protectedRouter
+      );
+      logger.info(
+        '✅ Google Calendar OAuth routes mounted at /v1/tenant-admin/calendar/oauth'
+      );
+    }
 
     // Register tenant admin deposit settings routes (for deposit configuration)
     // Requires tenant admin authentication

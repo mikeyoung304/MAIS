@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '11062'
 tags: [security, google-calendar, oauth-scopes]
@@ -62,3 +62,4 @@ Small
 ## Work Log
 
 - 2026-02-20: Security finding from integration review. Principle of least privilege violation.
+- 2026-02-20: Resolved by design in OAuth adapter. OAUTH_SCOPES = ['calendar.readonly', 'calendar.events'] (not broad 'calendar'). Service account adapter unchanged (separate code path).

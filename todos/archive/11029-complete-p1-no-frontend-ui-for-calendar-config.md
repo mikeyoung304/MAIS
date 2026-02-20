@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '11029'
 tags: [code-review, google-calendar, settings, frontend, ux]

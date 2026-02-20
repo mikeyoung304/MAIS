@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '11030'
 decision: oauth
@@ -68,3 +68,9 @@ Build Option A — OAuth 2.0. Service account path is too complex for target use
 ## Work Log
 
 - 2026-02-20: Architecture strategist flagged as wrong UX for target users. Decision required before P1-01 is built.
+- 2026-02-20: OAuth 2.0 decision locked in by user.
+- 2026-02-20: Wave 2 implementation complete. Files created:
+  - `server/src/services/google-calendar-oauth.service.ts` — OAuth flow, token refresh, Redis caching, token revocation
+  - `server/src/routes/tenant-admin-calendar-oauth.routes.ts` — /oauth/start (protected), /oauth/callback (public)
+  - `server/src/adapters/google-calendar-oauth.adapter.ts` — CalendarProvider impl using OAuth tokens
+  - Modified: config.ts (4 env vars), di.ts (DI wiring), routes/index.ts (route registration), render.yaml (env vars), tenant-admin-calendar.routes.ts (status includes OAuth)

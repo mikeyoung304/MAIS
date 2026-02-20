@@ -1,6 +1,6 @@
 ---
 issue_id: 11042
-status: pending
+status: complete
 priority: p2
 tags: [performance, google-calendar, caching]
 effort: Small
@@ -36,4 +36,4 @@ Suggested cache key format: `tenant:{tenantId}:gcal:access_token`
 
 ## Work Log
 
-_(empty)_
+- 2026-02-20: Resolved in GoogleCalendarOAuthService.getValidAccessToken(). Redis cache with key `tenant:{tenantId}:gcal:access_token`, TTL = min(55 min, token expiry - 5 min buffer). Cache invalidated on disconnect.
