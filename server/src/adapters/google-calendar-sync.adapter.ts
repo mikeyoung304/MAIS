@@ -5,6 +5,9 @@
  * - Event creation and deletion (one-way sync: MAIS → Google)
  * - FreeBusy API integration (two-way sync: reads Google Calendar busy times)
  * Uses Google Calendar API v3 with service account authentication.
+ *
+ * Per-tenant credentials are resolved via getConfigForTenant() on every call,
+ * so this adapter is fully stateless with respect to credentials.
  */
 
 import type { CalendarProvider, BusyTimeBlock } from '../lib/ports';
@@ -58,11 +61,9 @@ interface FreeBusyResponse {
  *
  * Inherits date availability checking from GoogleCalendarAdapter.
  * Supports per-tenant calendar configuration via tenant secrets.
+ * All credential lookups are done per-request via getConfigForTenant().
  */
 export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements CalendarProvider {
-  private readonly calendarId: string;
-  private readonly serviceAccountJsonBase64: string;
-
   constructor(
     config: {
       calendarId: string;
@@ -79,19 +80,16 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
       },
       tenantRepo
     );
-
-    this.calendarId = config.calendarId;
-    this.serviceAccountJsonBase64 = config.serviceAccountJsonBase64;
   }
 
   /**
    * Create a calendar event
    *
-   * Uses Google Calendar API v3 events.insert endpoint.
-   * Stores booking metadata in extendedProperties for future reference.
+   * Resolves per-tenant credentials via getConfigForTenant(). If no config
+   * is found for the tenant, the sync is skipped gracefully.
    *
-   * @param input - Event details
-   * @returns Google Calendar event ID or null if creation fails
+   * @param input - Event details including tenantId for credential lookup
+   * @returns Google Calendar event ID or null if creation fails / no config
    */
   async createEvent(input: {
     tenantId: string;
@@ -104,9 +102,19 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
     timezone?: string;
   }): Promise<{ eventId: string } | null> {
     try {
+      // Resolve per-tenant credentials
+      const calendarConfig = await this.getConfigForTenant(input.tenantId);
+      if (!calendarConfig) {
+        logger.warn(
+          { tenantId: input.tenantId },
+          'No Google Calendar config for tenant; skipping event creation'
+        );
+        return null;
+      }
+
       // Parse service account JSON from base64
       const serviceAccountJson = JSON.parse(
-        Buffer.from(this.serviceAccountJsonBase64, 'base64').toString('utf8')
+        Buffer.from(calendarConfig.serviceAccountJsonBase64, 'base64').toString('utf8')
       );
 
       // Get access token via JWT
@@ -144,8 +152,9 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
 
       // Create event via Google Calendar API
       const response = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events`,
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarConfig.calendarId)}/events`,
         {
+          signal: AbortSignal.timeout(10_000),
           method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -198,17 +207,28 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
   /**
    * Delete a calendar event
    *
-   * Uses Google Calendar API v3 events.delete endpoint.
+   * Resolves per-tenant credentials via getConfigForTenant(). If no config
+   * is found for the tenant, the sync is skipped gracefully.
    *
-   * @param tenantId - Tenant ID (for logging/auditing)
+   * @param tenantId - Tenant ID for credential lookup and logging
    * @param eventId - Google Calendar event ID to delete
    * @returns True if successfully deleted, false otherwise
    */
   async deleteEvent(tenantId: string, eventId: string): Promise<boolean> {
     try {
+      // Resolve per-tenant credentials
+      const calendarConfig = await this.getConfigForTenant(tenantId);
+      if (!calendarConfig) {
+        logger.warn(
+          { tenantId, eventId },
+          'No Google Calendar config for tenant; skipping event deletion'
+        );
+        return false;
+      }
+
       // Parse service account JSON from base64
       const serviceAccountJson = JSON.parse(
-        Buffer.from(this.serviceAccountJsonBase64, 'base64').toString('utf8')
+        Buffer.from(calendarConfig.serviceAccountJsonBase64, 'base64').toString('utf8')
       );
 
       // Get access token via JWT
@@ -218,8 +238,9 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
 
       // Delete event via Google Calendar API
       const response = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events/${encodeURIComponent(eventId)}`,
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarConfig.calendarId)}/events/${encodeURIComponent(eventId)}`,
         {
+          signal: AbortSignal.timeout(10_000),
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -262,35 +283,29 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
   /**
    * Get busy time blocks from Google Calendar
    *
-   * Uses Google Calendar API v3 freebusy.query endpoint to fetch busy times.
-   * This enables two-way sync by preventing MAIS from offering slots that
-   * conflict with existing Google Calendar events.
+   * Resolves per-tenant credentials via getConfigForTenant(). If no config
+   * is found for the tenant, returns an empty array (graceful degradation).
    *
-   * Gracefully degrades on error - returns empty array to allow booking to continue.
-   *
-   * @param tenantId - Tenant ID (for logging/auditing)
+   * @param tenantId - Tenant ID for credential lookup and logging
    * @param startDate - Start of time range to check
    * @param endDate - End of time range to check
-   * @returns Array of busy time blocks, or empty array on error
-   *
-   * @example
-   * ```typescript
-   * const busyTimes = await adapter.getBusyTimes(
-   *   'tenant_123',
-   *   new Date('2025-06-15T00:00:00Z'),
-   *   new Date('2025-06-15T23:59:59Z')
-   * );
-   * // Returns: [
-   * //   { start: Date('2025-06-15T14:00:00Z'), end: Date('2025-06-15T15:00:00Z') },
-   * //   { start: Date('2025-06-15T16:30:00Z'), end: Date('2025-06-15T17:30:00Z') }
-   * // ]
-   * ```
+   * @returns Array of busy time blocks, or empty array on error / no config
    */
   async getBusyTimes(tenantId: string, startDate: Date, endDate: Date): Promise<BusyTimeBlock[]> {
     try {
+      // Resolve per-tenant credentials
+      const calendarConfig = await this.getConfigForTenant(tenantId);
+      if (!calendarConfig) {
+        logger.warn(
+          { tenantId, startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+          'No Google Calendar config for tenant; returning empty busy times'
+        );
+        return [];
+      }
+
       // Parse service account JSON from base64
       const serviceAccountJson = JSON.parse(
-        Buffer.from(this.serviceAccountJsonBase64, 'base64').toString('utf8')
+        Buffer.from(calendarConfig.serviceAccountJsonBase64, 'base64').toString('utf8')
       );
 
       // Get access token via JWT
@@ -302,11 +317,12 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
       const requestBody: FreeBusyRequest = {
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
-        items: [{ id: this.calendarId }],
+        items: [{ id: calendarConfig.calendarId }],
       };
 
       // Query FreeBusy API
       const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -333,7 +349,7 @@ export class GoogleCalendarSyncAdapter extends GoogleCalendarAdapter implements 
       const data = (await response.json()) as FreeBusyResponse;
 
       // Extract busy times for our calendar
-      const calendarBusyTimes = data.calendars[this.calendarId]?.busy || [];
+      const calendarBusyTimes = data.calendars[calendarConfig.calendarId]?.busy || [];
 
       // Convert to BusyTimeBlock format
       const busyBlocks: BusyTimeBlock[] = calendarBusyTimes.map((busy) => ({

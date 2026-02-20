@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { CreditCard, Receipt } from 'lucide-react';
@@ -36,6 +36,20 @@ const TABS: { id: RevenueTab; label: string; icon: React.ReactNode; description:
  * @see AdminSidebar.tsx for navigation mapping
  */
 export default function RevenuePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600" />
+        </div>
+      }
+    >
+      <RevenuePageInner />
+    </Suspense>
+  );
+}
+
+function RevenuePageInner() {
   const searchParams = useSearchParams();
   // Default to billing if coming from a billing redirect (success/canceled params)
   const hasStripeParams = searchParams.get('success') || searchParams.get('canceled');

@@ -50,9 +50,10 @@ export class AvailabilityService {
     // Parallelize the remaining checks for 50-70% latency reduction
     // - Booking check: local DB query
     // - Calendar check: external API call (slower)
+    // MULTI-TENANT: Pass tenantId to ensure per-tenant calendar config and cache isolation
     const [isBooked, isCalendarAvailable] = await Promise.all([
       this.bookingRepo.isDateBooked(tenantId, date),
-      this.calendarProvider.isDateAvailable(date),
+      this.calendarProvider.isDateAvailable(date, tenantId),
     ]);
 
     if (isBooked) {

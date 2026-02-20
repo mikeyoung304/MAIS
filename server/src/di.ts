@@ -218,7 +218,10 @@ export function buildContainer(config: Config): Container {
     const availabilityRuleRepo = new PrismaAvailabilityRuleRepository(mockPrisma);
 
     // Create GoogleCalendarService with mock calendar provider (needed by SchedulingAvailabilityService)
-    const googleCalendarService = new GoogleCalendarService(adapters.calendarProvider);
+    const googleCalendarService = new GoogleCalendarService(
+      adapters.calendarProvider,
+      mockTenantRepo
+    );
 
     const schedulingAvailabilityService = new SchedulingAvailabilityService(
       serviceRepo,
@@ -571,8 +574,8 @@ export function buildContainer(config: Config): Container {
   // Create SegmentService with real Prisma segment repo and storage provider
   const segmentService = new SegmentService(segmentRepo, cacheAdapter, storageProvider);
 
-  // Create GoogleCalendarService with real calendar provider
-  const googleCalendarService = new GoogleCalendarService(calendarProvider);
+  // Create GoogleCalendarService with real calendar provider and tenant repo for testConnection()
+  const googleCalendarService = new GoogleCalendarService(calendarProvider, tenantRepo);
 
   // Create scheduling repositories and service with real Prisma
   const serviceRepo = new PrismaServiceRepository(prisma);

@@ -7,11 +7,11 @@ import { createGServiceAccountJWT } from './gcal.jwt';
 import { logger } from '../lib/core/logger';
 import type { PrismaTenantRepository } from './prisma/tenant.repository';
 import { encryptionService } from '../lib/encryption.service';
-import type { TenantSecrets, PrismaJson } from '../types/prisma-json';
+import type { TenantSecrets } from '../types/prisma-json';
 
 interface CacheEntry {
   available: boolean;
-  timestamp: number;
+  expiresAt: number;
 }
 
 interface FreeBusyResponse {
@@ -30,9 +30,41 @@ export interface TenantCalendarConfig {
   serviceAccountJson: string; // JSON string (not base64)
 }
 
+/**
+ * Retry a Google API call with exponential backoff.
+ * Retries on 5xx errors and AbortErrors (timeouts).
+ * Non-retryable errors (4xx, network errors other than timeout) are thrown immediately.
+ */
+async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isServerError =
+        err instanceof Error &&
+        'status' in err &&
+        typeof (err as { status: unknown }).status === 'number' &&
+        (err as { status: number }).status >= 500;
+      const isTimeoutError = err instanceof Error && err.name === 'AbortError';
+      const isRetryable = isServerError || isTimeoutError;
+
+      if (attempt === maxAttempts - 1 || !isRetryable) throw err;
+
+      const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 100, 10_000);
+      logger.warn(
+        { attempt: attempt + 1, maxAttempts, delay: Math.round(delay) },
+        'Google Calendar API retry'
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('unreachable');
+}
+
 export class GoogleCalendarAdapter implements CalendarProvider {
   private cache = new Map<string, CacheEntry>();
-  private readonly CACHE_TTL_MS = 60_000; // 60 seconds
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_MAX_SIZE = 1000; // Max entries — evict oldest on overflow
 
   constructor(
     private readonly config: {
@@ -105,14 +137,34 @@ export class GoogleCalendarAdapter implements CalendarProvider {
     return null;
   }
 
+  /**
+   * Set a cache entry with TTL and max-size eviction.
+   * Evicts the oldest entry (first key in insertion order) when the cache is full.
+   */
+  private setCacheEntry(key: string, value: boolean): void {
+    // Evict oldest entry if at max capacity
+    if (this.cache.size >= this.CACHE_MAX_SIZE) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.cache.delete(oldestKey);
+      }
+    }
+    this.cache.set(key, { available: value, expiresAt: Date.now() + this.CACHE_TTL_MS });
+  }
+
   async isDateAvailable(dateUtc: string, tenantId?: string): Promise<boolean> {
-    // Use tenant-specific cache key if tenantId provided
-    const cacheKey = tenantId ? `${tenantId}:${dateUtc}` : dateUtc;
+    // MULTI-TENANT: Include tenantId in cache key to prevent cross-tenant cache pollution
+    const cacheKey = tenantId ? `tenant:${tenantId}:availability:${dateUtc}` : dateUtc;
     const cached = this.cache.get(cacheKey);
 
-    // Return cached result if still valid
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+    // Return cached result if not expired
+    if (cached && Date.now() < cached.expiresAt) {
       return cached.available;
+    }
+
+    // Remove stale entry if present
+    if (cached) {
+      this.cache.delete(cacheKey);
     }
 
     // Get calendar config (tenant-specific or global)
@@ -129,14 +181,8 @@ export class GoogleCalendarAdapter implements CalendarProvider {
 
     // Check if credentials are missing
     if (!calendarConfig) {
-      if (!cached) {
-        logger.warn(
-          { tenantId },
-          'Google Calendar credentials missing; treating date as available'
-        );
-      }
-      const result = { available: true, timestamp: Date.now() };
-      this.cache.set(cacheKey, result);
+      logger.warn({ tenantId }, 'Google Calendar credentials missing; treating date as available');
+      this.setCacheEntry(cacheKey, true);
       return true;
     }
 
@@ -155,27 +201,39 @@ export class GoogleCalendarAdapter implements CalendarProvider {
       const timeMin = `${dateUtc}T00:00:00.000Z`;
       const timeMax = `${dateUtc}T23:59:59.999Z`;
 
-      const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeMin,
-          timeMax,
-          items: [{ id: calendarConfig.calendarId }],
-        }),
-      });
+      const response = await withRetry(() =>
+        fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+          signal: AbortSignal.timeout(10_000),
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            timeMin,
+            timeMax,
+            items: [{ id: calendarConfig!.calendarId }],
+          }),
+        })
+      );
 
       if (!response.ok) {
+        // 401 Unauthorized: credentials invalid — treat as unavailable (fail closed)
+        if (response.status === 401) {
+          logger.warn(
+            { status: 401, date: dateUtc, tenantId },
+            'Google Calendar freeBusy API returned 401; treating date as unavailable'
+          );
+          this.setCacheEntry(cacheKey, false);
+          return false;
+        }
+
         const errorText = await response.text().catch(() => '');
         logger.warn(
           { status: response.status, error: errorText, date: dateUtc, tenantId },
           'Google Calendar freeBusy API failed; assuming date is available'
         );
-        const result = { available: true, timestamp: Date.now() };
-        this.cache.set(cacheKey, result);
+        this.setCacheEntry(cacheKey, true);
         return true;
       }
 
@@ -184,18 +242,26 @@ export class GoogleCalendarAdapter implements CalendarProvider {
       const isBusy = Array.isArray(busySlots) && busySlots.length > 0;
       const isAvailable = !isBusy;
 
-      // Cache the result
-      const result = { available: isAvailable, timestamp: Date.now() };
-      this.cache.set(cacheKey, result);
+      // Cache the result with TTL and bounded size
+      this.setCacheEntry(cacheKey, isAvailable);
 
       return isAvailable;
     } catch (error) {
+      // Timeout: don't block bookings on Google outage
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.warn(
+          { date: dateUtc, tenantId },
+          'Google Calendar freeBusy API timed out; assuming date is available'
+        );
+        this.setCacheEntry(cacheKey, true);
+        return true;
+      }
+
       logger.warn(
         { error, date: dateUtc },
         'Error checking Google Calendar availability; assuming date is available'
       );
-      const result = { available: true, timestamp: Date.now() };
-      this.cache.set(cacheKey, result);
+      this.setCacheEntry(cacheKey, true);
       return true;
     }
   }

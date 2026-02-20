@@ -9,6 +9,7 @@
  * - PRO: $150/month (5000 AI messages)
  */
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,20 @@ const TIERS: TierInfo[] = [
 ];
 
 export default function BillingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600" />
+        </div>
+      }
+    >
+      <BillingPageInner />
+    </Suspense>
+  );
+}
+
+function BillingPageInner() {
   const searchParams = useSearchParams();
   const {
     tier,

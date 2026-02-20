@@ -1,329 +1,722 @@
-# Consolidated Review Summary — Storefront Nav/Footer/Section Cleanup
+# Integration Review — Google Calendar & Tenant Settings
 
-**Date:** 2026-02-18
-**Reviewers:** julik-frontend-races-reviewer, kieran-typescript-reviewer, code-simplicity-reviewer, architecture-strategist, learnings-researcher
-**Scope:** navigation.ts rewrite, TenantNav/TenantFooter/TenantSiteShell refactor, HowItWorksSection deletion, TestimonialsSection reveal-on-scroll removal, storefront-utils testimonials transform, domainParam removal
-
----
-
-## Totals
-
-| Severity  | Count  | Notes                                 |
-| --------- | ------ | ------------------------------------- |
-| P1        | 2      | Fix before merge                      |
-| P2        | 7      | Fix in this PR or immediate follow-up |
-| P3        | 6      | Low urgency, nice-to-have             |
-| **Total** | **15** | After de-duplication across 5 agents  |
+**Date:** 2026-02-20
+**Scope:** Google Calendar integration, tenant settings UI/UX, missing integrations, deploy pipeline health
+**Agents:** agent-native-reviewer, architecture-strategist (x2), chatbot-deep-dive, code-simplicity-reviewer (x2), data-integrity-guardian (x2), git-history-analyzer, julik-frontend-races-reviewer, kieran-typescript-reviewer, learnings-researcher, pattern-recognition-specialist, performance-oracle, security-sentinel
 
 ---
 
-## P1 — Critical (Fix Before Merge)
+## TL;DR
 
-### P1-01 — Hydration Mismatch: `new Date().getFullYear()` in TenantFooter
-
-**Severity:** P1
-**Agents:** julik-frontend-races-reviewer (primary)
-**File:** `apps/web/src/components/tenant/TenantFooter.tsx:27`
-
-**Description:**
-`new Date().getFullYear()` is evaluated at request time on the server. If the page is served via ISR (`revalidate = 60`) and the cached HTML crosses a year boundary, or if `TenantFooter` is ever converted to a `'use client'` component, the server-computed year will diverge from the client-computed year, triggering React's hydration mismatch error and white-screening the footer. The component is currently rendered inside a `<Suspense>` boundary wrapping `<EditModeGate>` (a Client Component), which increases the future risk surface.
-
-**Recommended fix:**
-Use `suppressHydrationWarning` on the containing element, or replace with a build-time constant:
-
-```tsx
-// Option A — suppressHydrationWarning (safest for live year display)
-<time suppressHydrationWarning>{new Date().getFullYear()}</time>;
-
-// Option B — build-time constant (simplest, acceptable for footer year)
-const CURRENT_YEAR = new Date().getFullYear(); // evaluated at build time
-```
+The backend Google Calendar integration is largely complete (routes, adapters, services, port abstraction, event-driven sync), but the frontend UI is entirely absent — no tenant can configure calendar integration from the dashboard. The integration uses a service account model that is inappropriate for non-technical users (photographers, coaches, therapists). A strategic decision must be made: stay with service accounts (add a form UI) or move to OAuth (the right UX, but requires significant new backend work). Separately, the deployment blueprint (`render.yaml`) is missing 8+ required environment variables, the chatbot's health check lies, and a cross-tenant cache collision in availability checks can cause incorrect "date available" responses.
 
 ---
 
-### P1-02 — Dead `reveal-on-scroll` CSS Class Left in CTASection
+## Finding Counts
 
-**Severity:** P1
-**Agents:** code-simplicity-reviewer (P1 primary), architecture-strategist (confirmed P3 — escalated due to PR context: same class was removed from TestimonialsSection in this PR, making the CTASection omission a clear oversight)
-**File:** `apps/web/src/components/tenant/sections/CTASection.tsx:31`
-
-```tsx
-<section ref={sectionRef} className="reveal-on-scroll bg-accent py-32 md:py-40">
-```
-
-**Description:**
-`reveal-on-scroll` has no definition in `apps/web/src/styles/globals.css`. The file defines `.reveal-visible`, `.reveal-delay-1/2/3`, and the `storefront-reveal` keyframe — but not `reveal-on-scroll`. Commit `24a37db7` removed this class from `TestimonialsSection.tsx` but missed `CTASection.tsx`. The CTA section still animates correctly because `sectionRef` (from `useScrollReveal()`) is still attached and drives animation via `.reveal-visible`. The class is confirmed dead code with zero CSS definitions and one remaining DOM usage.
-
-**Recommended fix:**
-Remove `reveal-on-scroll` from the `className` on `CTASection.tsx:31`.
+- P1 Critical: 17
+- P2 Important: 27
+- P3 Nice-to-have: 19
+- Total unique findings: 63
 
 ---
 
-## P2 — Important (Fix in This PR or Immediate Follow-Up)
-
-### P2-01 — Testimonials Transform: Seed Is the Bug Source, Presentation Layer Is the Wrong Fix
-
-**Severity:** P2
-**Agents:** code-simplicity-reviewer, architecture-strategist, julik-frontend-races-reviewer, kieran-typescript-reviewer, learnings-researcher (5-way convergence — highest confidence finding)
-**Known Pattern:** `docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md` (pricing case), `docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md`
-
-**Files:**
-
-- `apps/web/src/lib/storefront-utils.ts:102-118`
-- `server/prisma/seeds/macon-headshots.ts:490-507`
-
-**Description:**
-The `testimonials` case in `transformContentForSection()` maps `name → authorName` and `role → authorRole`. This masks a seed authoring defect: the seed writes `name`/`role` but `TestimonialsSectionSchema` in `packages/contracts/src/landing-page.ts:300-301` requires `authorName`/`authorRole`. Consequences:
-
-1. Raw `SectionContent.content` JSON fails validation against the contract schema.
-2. AI agents write `authorName`/`authorRole` (correct); seed data writes `name`/`role` (wrong). Two formats coexist silently; the shim unifies them invisibly.
-3. Any future server-side consumer of testimonial content (email, export, PDF) will see `name`/`role`, not the canonical field names.
-
-The current transform also has two code-level bugs (from kieran-typescript-reviewer P2-2):
-
-- `as Record<string, unknown>[]` cast is unsafe — if DB returns `[null, {...}]`, `{ ...null }` throws `TypeError` at runtime.
-- `if (out.name && ...)` truthiness check skips remapping when `out.name === ""`, leaving the item with neither field name.
-
-Additionally, the `authorPhotoUrl` field used in `TestimonialsSection.tsx:54` has no remap — if seed stores it as `photo` or `photoUrl`, the image silently drops.
-
-**Recommended fix:**
-
-1. Fix the seed file: change `name`/`role` to `authorName`/`authorRole` in `macon-headshots.ts`.
-2. Add null-safety filter to the transform:
-   ```typescript
-   .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-   ```
-3. Change truthiness check to `if (out.name !== undefined && !out.authorName)`.
-4. Add `authorPhotoUrl` remap alongside `name` and `role`.
-5. Leave the shim with a comment: `// Safety net: seed data may use legacy field names; canonical names are authorName/authorRole/authorPhotoUrl`.
+## P1 — Critical
 
 ---
 
-### P2-02 — Duplicate Section Types Produce Invalid Duplicate Anchor IDs in the DOM
+### [P1-01] No Frontend UI for Calendar Configuration — Backend API Is Unreachable
 
-**Severity:** P2
-**Agents:** architecture-strategist (primary)
-**File:** `apps/web/src/components/tenant/SectionRenderer.tsx:151-180`
-
-**Description:**
-`getNavItemsFromHomeSections()` produces one nav item per page type via `Array.prototype.some()`. However, `SectionRenderer` assigns `id={anchorId}` to every section wrapper `<div>` unconditionally. If a tenant has two `testimonials` sections on the home page (the schema allows it — no uniqueness constraint on `blockType + pageName` in `SectionContent`), two `<div id="testimonials">` elements are rendered. The HTML spec requires unique IDs. Browsers resolve anchor links to the first matching element — the second section is unreachable via `#testimonials`. Currently latent (no seed tenant has duplicate home-page section types); becomes active as soon as any AI agent adds a second section of the same type.
-
-**Recommended fix:**
-Track assigned anchor IDs in a `Set<string>` scoped to the render call, and omit the `id` attribute for subsequent sections that would produce a duplicate.
+- **Type:** UX / architecture
+- **Flagged by:** code-simplicity-reviewer, architecture-strategist, kieran-typescript-reviewer, julik-frontend-races-reviewer
+- **Effort:** Medium (1-2 days)
+- **Details:** The backend calendar routes (`GET /v1/tenant-admin/calendar/status`, `POST /v1/tenant-admin/calendar/config`, `DELETE /v1/tenant-admin/calendar/config`, `POST /v1/tenant-admin/calendar/test`) have been implemented but there is zero frontend surface to call them. No page exists at `/tenant/scheduling/calendar` or any equivalent. Zero occurrences of `tenant-admin/calendar` exist in `apps/web/src/`. The backend integration is inaccessible from the product. The scheduling sub-nav in `apps/web/src/app/(protected)/tenant/scheduling/layout.tsx` should gain a "Calendar Sync" entry pointing to a new `calendar/page.tsx`. Contract types are already defined in `@macon/contracts` (`CalendarStatusResponse`, `CalendarConfigInput`, `CalendarTestResponse`) — only the frontend page is missing.
+- **Known Pattern:** Pattern matches `docs/solutions/integration-issues/project-hub-chat-adk-session-and-auth-integration.md` — creating a service/adapter file without wiring it to the UI is a documented pitfall.
 
 ---
 
-### P2-03 — `domainParam` Removal Is Partial-by-Design but Commit Description Is Misleading
+### [P1-02] Service Account UX Is Unsuitable for Target Users (Photographers, Coaches, Therapists)
 
-**Severity:** P2
-**Agents:** code-simplicity-reviewer, architecture-strategist, kieran-typescript-reviewer, learnings-researcher (4-way)
-**Known Pattern:** `docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md`, `docs/solutions/architecture/app-router-route-tree-deduplication-domain-vs-slug-pattern.md`
-
-**Files:**
-
-- `apps/web/src/components/tenant/TenantLandingPage.tsx:26,107,130`
-- `apps/web/src/components/tenant/SegmentTiersSection.tsx:349-358`
-- `apps/web/src/components/tenant/ContactForm.tsx:59`
-
-**Description:**
-Commit `b0c536ce` says "Remove unused domainParam prop." It correctly removes the prop from `TenantSiteShell`, `TenantNav`, and `TenantFooter`. However, `domainParam` remains active in `SegmentTiersSection` (booking link routing — `basePath` is `""` on domain routes; without the guard, booking links become broken `/book/tier-slug`) and `ContactForm` ("Back to Home" href). Both retentions are correct and load-bearing. The risk: a future developer reading `TenantSiteShell` will not expect `domainParam` three layers down and may attempt to "complete the cleanup."
-
-**Recommended fix:**
-No code change needed. Add a comment in `TenantLandingPage.tsx` near the `domainParam` prop:
-
-```typescript
-/**
- * domainParam is intentionally retained for domain-routing link construction
- * in SegmentTiersSection (booking URLs) and ContactForm (home href).
- * It was removed from TenantSiteShell/Nav/Footer only — those components
- * use basePath for link construction. See PR #62.
- */
-```
+- **Type:** UX / architecture (strategic)
+- **Flagged by:** architecture-strategist (gcal-oauth-findings), code-simplicity-reviewer
+- **Effort:** Large (3-5 days for OAuth path)
+- **Details:** The current Google Calendar configuration requires tenants to: (1) create a Google Cloud project, (2) create a service account in GCP Console, (3) download a service account JSON (~2 KB RSA private key), (4) manually share their Google Calendar with the service account's email, and (5) paste the JSON into the UI. This is a developer-grade operation. Non-technical service professionals cannot complete this. The OAuth 2.0 "Connect Google Calendar" button is the appropriate consumer UX. The `CalendarProvider` port abstraction in `server/src/lib/ports/calendar.port.ts` is already correct — a `GoogleOAuthCalendarAdapter` can be added without changing the service layer. Decision required: build service account UI (fast, wrong UX) or build OAuth (correct UX, 3-5 days).
 
 ---
 
-### P2-04 — `s.type as SectionTypeName` Cast Masks Future Type Drift
+### [P1-03] DATE Booking Availability Never Checks Google Calendar Via Agent
 
-**Severity:** P2
-**Agents:** julik-frontend-races-reviewer (P3-02), kieran-typescript-reviewer (P2-1) — escalated to P2 by independent flagging
-
-**File:** `apps/web/src/components/tenant/navigation.ts:102`
-
-```typescript
-(s) => SECTION_TYPE_TO_PAGE[s.type as SectionTypeName] === page;
-```
-
-**Description:**
-`s.type` is already typed as the exact union `SectionTypeName` — the cast is a no-op that TypeScript accepts silently. The risk is forward-compatibility: if a new section type is added to `SectionSchema` but not to `SectionTypeName` (or vice versa), TypeScript would normally surface a type error at this call site. The redundant cast papers over that divergence silently. Without the cast, TypeScript would flag the divergence at compile time — the desired behavior.
-
-**Recommended fix:**
-
-```typescript
-(s) => SECTION_TYPE_TO_PAGE[s.type] === page;
-```
-
-Remove the cast. `SECTION_TYPE_TO_PAGE` is correctly typed as `Partial<Record<SectionTypeName, PageName>>` — the cast at the call site is redundant.
+- **Type:** architecture / quality
+- **Flagged by:** agent-native-reviewer, performance-oracle
+- **Effort:** Small (30 min)
+- **Details:** `server/src/routes/internal-agent-booking.routes.ts` lines 252-264 contains an explicit `TODO` and returns `available: true` for all DATE-type bookings without calling `AvailabilityService.checkAvailability()`. When a customer agent calls `check_availability` for a wedding or event date, Google Calendar busy status is silently ignored. The TIMESLOT path correctly threads through Google Calendar. Fix: wire `AvailabilityService.checkAvailability()` into the DATE branch of the `/availability` internal route.
 
 ---
 
-### P2-05 — Testimonials Transform Missing `authorPhotoUrl` Field Remap
+### [P1-04] `GoogleCalendarSyncAdapter` Uses Global Credentials for All Tenant Mutations
 
-**Severity:** P2
-**Agents:** julik-frontend-races-reviewer (P2-03 extension)
-
-**Files:**
-
-- `apps/web/src/lib/storefront-utils.ts:102-118`
-- `apps/web/src/components/tenant/sections/TestimonialsSection.tsx:54`
-
-**Description:**
-`TestimonialsSection.tsx:54` uses `item.authorPhotoUrl`. The transform maps `name → authorName` and `role → authorRole` but has no mapping for the photo field. If the seed or agent writes the photo URL as `photo` or `photoUrl`, the image silently drops from every testimonial card — no error, no console warning.
-
-**Recommended fix:**
-Audit the seed testimonials items for the actual photo field name. Add to the transform:
-
-```typescript
-if ((out.photo || out.photoUrl) && !out.authorPhotoUrl) {
-  out.authorPhotoUrl = out.photo ?? out.photoUrl;
-  delete out.photo;
-  delete out.photoUrl;
-}
-```
+- **Type:** architecture / security
+- **Flagged by:** agent-native-reviewer, architecture-strategist, data-integrity-guardian, performance-oracle, security-sentinel (5 agents)
+- **Effort:** Medium (2 hours)
+- **Details:** `server/src/adapters/google-calendar-sync.adapter.ts` lines 63-85 and 96-196 store `this.calendarId` and `this.serviceAccountJsonBase64` as constructor-initialized instance variables from global env vars. All `createEvent()` and `deleteEvent()` operations use these global credentials regardless of which tenant initiated the booking. Only `isDateAvailable()` (via the parent class `getConfigForTenant()`) performs per-tenant config lookup. Tenants who configured their own calendar credentials via `POST /v1/tenant-admin/calendar/config` will have booking events written to the platform's global calendar. Fix: call `this.getConfigForTenant(input.tenantId)` at the start of each mutation method and use the returned config instead of `this.serviceAccountJsonBase64`.
 
 ---
 
-### P2-06 — `SECTION_TYPE_TO_ANCHOR_ID` and `SECTION_TYPE_TO_PAGE` Are Coupled Maps With No Cross-Reference
+### [P1-05] No OAuth Callback Route Exists
 
-**Severity:** P2
-**Agents:** architecture-strategist (P2-C, P3)
-
-**Files:**
-
-- `apps/web/src/components/tenant/SectionRenderer.tsx:24-37`
-- `apps/web/src/components/tenant/navigation.ts:76-84`
-
-**Description:**
-`SECTION_TYPE_TO_ANCHOR_ID` in `SectionRenderer` maps `features → "services"` (DOM anchor). `SECTION_TYPE_TO_PAGE` in `navigation.ts` excludes `features` from nav. These maps are semantically coupled: if someone adds `features` to `SECTION_TYPE_TO_PAGE`, the nav link would target `#services` (pointing to `SegmentTiersSection` instead of a features section) with no compile-time warning. The maps live in separate files with zero cross-references; a developer adding a new section type must update both correctly without any tooling enforcement.
-
-**Recommended fix (immediate):** Add cross-reference comments in each map pointing to the other. Longer-term: move `SECTION_TYPE_TO_ANCHOR_ID` from `SectionRenderer` into `navigation.ts` so both mappings are co-located.
+- **Type:** architecture
+- **Flagged by:** architecture-strategist (gcal-oauth-findings)
+- **Effort:** Large (required if OAuth path chosen)
+- **Details:** There is no `GET /v1/tenant-admin/calendar/oauth/callback` route in `server/src/routes/index.ts`. Without this, the OAuth authorization code can never be exchanged for tokens. This is the single most critical missing piece for any OAuth implementation. The Stripe Connect architecture (`tenant-admin-stripe.routes.ts` + `stripe-connect.service.ts`) is the correct reference pattern to follow for building the OAuth initiation and callback routes.
 
 ---
 
-### P2-07 — `useMemo` Churn on Scroll Due to `pages` Object Identity
+### [P1-06] No HTTP Timeout on Any Google API Call — Event Loop Can Hang Indefinitely
 
-**Severity:** P2
-**Agents:** julik-frontend-races-reviewer (P2-02), kieran-typescript-reviewer (P3-2) — escalated by scroll-event frequency
-
-**File:** `apps/web/src/components/tenant/TenantNav.tsx:49-56`
-
-**Description:**
-`useMemo([basePath, pages])` invalidates when `pages` reference changes. `pages` is a `PagesConfig` object passed from a Server Component via RSC serialization — on soft navigations or router refreshes, React may recreate the RSC tree and pass a new object reference even when the data is identical. `useMemo` uses `Object.is`; a new reference invalidates the memo. Since `TenantNav` re-renders on every scroll event (via `useActiveSection` IntersectionObserver), `getNavItemsFromHomeSections(pages)` — which iterates all sections for each page in `PAGE_ORDER` — runs on every scroll frame.
-
-**Recommended fix:**
-Hoist `getNavItemsFromHomeSections(pages)` to the Server Component and pass the derived `navItems` array directly to `TenantNav`. The array is stable when content is stable and avoids the object-identity problem entirely.
+- **Type:** performance
+- **Flagged by:** performance-oracle
+- **Effort:** Small (30 min, ~5 fetch() call sites)
+- **Details:** Every `fetch()` call in `server/src/adapters/gcal.adapter.ts` (line 158), `server/src/adapters/google-calendar-sync.adapter.ts` (lines 146, 220, 309), `server/src/adapters/gcal.jwt.ts` (line 54), and `server/src/routes/tenant-admin-calendar.routes.ts` (line 259) has no timeout. Node.js default `fetch()` timeout is infinite. A Google API brownout causes booking availability checks to hang indefinitely, blocking HTTP responses. For the agent availability range loop (7-day range), one hanging call blocks the entire range response. Fix: add `signal: AbortSignal.timeout(10_000)` to all 5 call sites.
 
 ---
 
-## P3 — Nice-to-Have (Low Urgency)
+### [P1-07] `render.yaml` Blueprint Missing 8+ Required Environment Variables
 
-### P3-01 — `text: 'about'` Legacy Alias Needs Inline Comment
+- **Type:** architecture / quality
+- **Flagged by:** chatbot-deep-dive, git-history-analyzer
+- **Effort:** Small (30 min)
+- **Details:** The `render.yaml` blueprint is missing the following variables required or critical for production:
 
-**File:** `apps/web/src/components/tenant/navigation.ts:78`
+  | Env Var                       | Required?                             | Impact if missing              |
+  | ----------------------------- | ------------------------------------- | ------------------------------ |
+  | `BOOKING_TOKEN_SECRET`        | REQUIRED (Zod min 32)                 | Server crash at startup        |
+  | `CUSTOMER_AGENT_URL`          | Required for chat                     | Chat completely offline        |
+  | `TENANT_AGENT_URL`            | Required for tenant chat              | Tenant agent offline           |
+  | `RESEARCH_AGENT_URL`          | Required for research                 | Research agent offline         |
+  | `GOOGLE_SERVICE_ACCOUNT_JSON` | Required for Cloud Run auth on Render | All agent calls get 403        |
+  | `ALLOWED_ORIGINS`             | Required for multi-origin CORS        | Cross-origin requests blocked  |
+  | `INTERNAL_API_SECRET`         | Service-to-service auth               | Internal calls unauthenticated |
+  | `NEXTJS_REVALIDATE_SECRET`    | Required for ISR cache invalidation   | Frontend cache never purges    |
 
-The `text: 'about'` entry maps a legacy section type alias without explanation. A future reader will not know why `text` produces `about`.
-
-**Fix:** Add inline comment: `// 'text' is a legacy alias for 'about' — kept for backward compat with older seed data`.
-
----
-
-### P3-02 — `custom` Section Type Exclusion Undocumented in Nav Map
-
-**File:** `apps/web/src/components/tenant/navigation.ts:65-75`
-
-The JSDoc exclusion list covers `hero`, `cta`, `features`, `pricing` but not `custom`. Todo #11005 shows `custom` was a prior source of confusion.
-
-**Fix:** Add `// custom: no canonical nav label or anchor target — agent-created sections only` to the exclusion comment block.
-
----
-
-### P3-03 — Suspense Boundary Gives False Sense of Error Containment for Footer
-
-**File:** `apps/web/src/components/tenant/TenantSiteShell.tsx:63-74`
-
-The `<Suspense>` wrapping `<EditModeGate>` handles only async suspensions (`useSearchParams()`). It does not catch synchronous render errors from `TenantFooter`. No current throwing paths in `TenantFooter`, but no `ErrorBoundary` is co-located either.
-
-**Fix:** Add comment to the Suspense boundary clarifying its scope: `// Suspense required for useSearchParams() in EditModeGate — does NOT catch synchronous errors. Add ErrorBoundary if footer becomes data-dependent.`
+  `CUSTOMER_AGENT_URL` was the confirmed root cause of the chatbot being completely offline. The fix was a manual Render dashboard override documented in `docs/solutions/runtime-errors/null-tiers-crash-and-chat-env-var.md` that will be wiped on any blueprint re-sync.
 
 ---
 
-### P3-04 — `buildAnchorNavHref` Has Unreachable `|| ''` Guard
+### [P1-08] Chat Health Endpoint Reports `available: true` When `CUSTOMER_AGENT_URL` Is Absent
 
-**File:** `apps/web/src/components/tenant/navigation.ts:124`
-
-```typescript
-return `${basePath || ''}${item.path}`;
-```
-
-Both callers guarantee a non-null `basePath`. The `|| ''` can never activate. Harmless defensive dead code.
-
-**Fix:** No action required.
+- **Type:** quality
+- **Flagged by:** chatbot-deep-dive
+- **Effort:** Small (1-line fix)
+- **Details:** `server/src/routes/public-customer-chat.routes.ts` line 128 checks `!!getConfig().GOOGLE_VERTEX_PROJECT` for the health check, not `CUSTOMER_AGENT_URL`. When `CUSTOMER_AGENT_URL` is unset, the health endpoint reports `available: true`, the widget opens, and the first real message fails with "Connection issue." Fix: change the health check to `!!getConfig().CUSTOMER_AGENT_URL`.
 
 ---
 
-### P3-05 — `SECTION_TYPE_TO_PAGE` Would Benefit from `as const satisfies`
+### [P1-09] `appName: 'agent'` Mismatch — Agent Deployed as `name: 'customer'`
 
-**File:** `apps/web/src/components/tenant/navigation.ts:76`
-
-`as const satisfies Partial<Record<SectionTypeName, PageName>>` would make the map immutable at the type level. Stylistic improvement only; no correctness issue.
-
-**Fix:** Optional.
-
----
-
-### P3-06 — `features → 'Services'` Nav Label Is a Semantic Trap for Template Redesign
-
-**File:** `apps/web/src/components/tenant/navigation.ts:76-84`
-
-`features` is correctly excluded from `SECTION_TYPE_TO_PAGE`. However, the brainstorm at `docs/brainstorms/2026-02-18-storefront-full-template-redesign-brainstorm.md` plans a template with both a FEATURES ("How It Works") section and a Services section. If a future developer adds `features` to the map targeting `'services'`, the nav would show two "Services" items with no compile warning.
-
-**Fix:** Add a comment in the exclusion JSDoc: `// features: maps to same DOM anchor as 'services' (see SECTION_TYPE_TO_ANCHOR_ID in SectionRenderer). Adding it here produces a conflicting 'Services' nav item.`
+- **Type:** quality
+- **Flagged by:** chatbot-deep-dive
+- **Effort:** Small
+- **Details:** `server/src/services/customer-agent.service.ts` lines 330 and 515 hardcode `appName: 'agent'` in all `/run` requests and session URL paths (`/apps/agent/...`). The Cloud Run customer-agent is defined with `name: 'customer'` in `server/src/agent-v2/deploy/customer/src/agent.ts` line 66. ADK routes requests by `appName`. If ADK enforces this field, every message and session call targets the wrong app name. Fix: change all occurrences of `appName: 'agent'` and `/apps/agent/` URL paths in `customer-agent.service.ts` to `'customer'`.
 
 ---
 
-## De-duplication Log
+### [P1-10] No Agent Tools Exist for Calendar Operations
 
-| Finding                              | Agents That Flagged                                                           | Original Refs                              |
-| ------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------ |
-| P2-01 testimonials transform layer   | code-simplicity, architecture-strategist, julik, kieran, learnings-researcher | 5-way convergence; merged into one finding |
-| P2-03 domainParam commit description | code-simplicity, architecture-strategist, kieran, learnings-researcher        | 4-way; merged                              |
-| P2-04 SectionTypeName cast           | julik (P3-02), kieran (P2-1)                                                  | 2-way; escalated from P3 to P2             |
-| P2-07 useMemo churn                  | julik (P2-02), kieran (P3-2)                                                  | 2-way; escalated to P2 by scroll frequency |
-| P1-02 CTASection reveal-on-scroll    | code-simplicity (P1), architecture-strategist (P3)                            | 2-way; maintained P1 due to PR context     |
+- **Type:** architecture
+- **Flagged by:** agent-native-reviewer
+- **Effort:** Large
+- **Details:** Both `tenant-agent` (36 tools, `server/src/agent-v2/deploy/tenant/src/tools/`) and `customer-agent` (13 tools, `server/src/agent-v2/deploy/customer/src/tools/`) have zero calendar-specific tools. The tenant cannot ask their AI assistant "Is my Google Calendar connected?" There is no internal API route for calendar management accessible to agents (no file at `server/src/routes/internal-agent-calendar.routes.ts`). Suggested new tenant-agent tools: `get_calendar_status` (T1), `configure_calendar` (T3, modifies secrets), `test_calendar_connection` (T1), `remove_calendar` (T3). New internal route file required using `INTERNAL_API_SECRET` auth.
 
 ---
 
-## Confirmed Correct — No Action Required
+### [P1-11] `TenantSecrets` Missing Explicit `calendar` and `googleOAuth` Fields — Type Safety Gap
 
-| Item                                                                   | Confirmed By                                  | Result                                                                                  |
-| ---------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `sectionRef` in `TestimonialsSection` after `reveal-on-scroll` removal | code-simplicity, kieran                       | Live and functional — hook drives animation via IntersectionObserver, not the CSS class |
-| `HowItWorksSection` deletion completeness                              | code-simplicity, learnings-researcher         | Fully removed — zero live references in `apps/web/src/`                                 |
-| `domainParam` in `SegmentTiersSection` and `ContactForm`               | code-simplicity, architecture-strategist      | Load-bearing — correctly retained for custom domain booking/home link routing           |
-| `getNavItemsFromHomeSections` null safety                              | julik                                         | Optional chain guard handles all null/undefined cases correctly                         |
-| Server/Client boundary serialization                                   | julik                                         | No non-serializable values cross the RSC boundary                                       |
-| `storefront-utils.ts` mutation safety                                  | julik                                         | `{ ...content }` and `{ ...item }` spreads prevent original object mutation             |
-| Section-scan nav is architecturally correct                            | architecture-strategist, learnings-researcher | Single-page scroll storefront: nav from home sections, not page-level enabled flags     |
-| `buildAnchorNavHref` fragment href for domain routes                   | kieran                                        | Valid HTML for same-page anchor navigation; benign for current architecture             |
+- **Type:** quality / architecture
+- **Flagged by:** code-simplicity-reviewer, data-integrity-guardian, kieran-typescript-reviewer, architecture-strategist, security-sentinel (5 agents)
+- **Effort:** Small
+- **Details:** `server/src/types/prisma-json.ts` line 116:
+  ```typescript
+  export interface TenantSecrets {
+    stripe?: EncryptedData;
+    [key: string]: EncryptedData | undefined; // calendar accessed via index signature
+  }
+  ```
+  The `calendar` key is used in 3 places but not explicitly typed. TypeScript cannot catch `'calender'` or `'Calendar'` misspellings. A second `TenantSecrets` definition exists in `server/src/services/stripe-connect.service.ts` (line 24) with a weaker `[key: string]: unknown` index signature — the two can evolve independently and diverge. Fix: add `calendar?: EncryptedData` and `googleOAuth?: EncryptedData` as explicit named properties; delete the duplicate local interface in `stripe-connect.service.ts` and import from `../types/prisma-json`.
 
 ---
 
-## Known Pattern Tags
+### [P1-12] `AvailabilityService.checkAvailability` Drops `tenantId` from Calendar Call — Cross-Tenant Cache Pollution
 
-| Finding                              | Pattern                                                                                                                | Doc                                                                                        |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| P2-01 (null defeats `= []` defaults) | Missing transform case kills React tree; use `Array.isArray()` not default params                                      | `docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md`       |
-| P2-01 (field aliasing layer)         | `transformContentForSection()` is the single seam for all field name aliasing                                          | `docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md`                  |
-| P2-03 (domainParam)                  | domainParam removed from Shell, retained in SegmentTiersSection for domain routing                                     | `docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md` |
-| P2-04 (SectionTypeName cast)         | Use `Record<SectionTypeName, ...>` for compile-time exhaustiveness; cast suppresses it                                 | `docs/solutions/patterns/CONSTANTS_DUPLICATION_TRAP_SECTION_TYPES.md`                      |
-| P2-06 (parallel maps)                | Section type constants duplication trap — 7+ locations, single source of truth needed                                  | `docs/solutions/patterns/SECTION_TYPES_CONSTANT_DRIFT_RESOLUTION.md`                       |
-| P1-01 (year hydration)               | ISR cache boundary + hydration mismatch — no prior doc; candidate for compounding if this causes a production incident | _(new — not yet documented)_                                                               |
+- **Type:** security / performance
+- **Flagged by:** performance-oracle
+- **Effort:** Small
+- **Details:** `server/src/services/availability.service.ts` line 55:
+  ```typescript
+  this.calendarProvider.isDateAvailable(date); // missing tenantId
+  ```
+  When `tenantId` is omitted: (1) the in-process cache key is just `dateUtc` — tenant A's cached result for "2025-06-15" is served to tenant B, and (2) the global `GOOGLE_CALENDAR_ID` env var is used for all tenants instead of their configured calendar. This only affects DATE bookings (wedding-style); TIMESLOT correctly passes `tenantId`. Fix: update `CalendarProvider` port signature in `server/src/lib/ports/calendar.port.ts` to `isDateAvailable(date: string, tenantId?: string)` and pass `tenantId` from `AvailabilityService.checkAvailability`.
+
+---
+
+### [P1-13] `deleteConnectedAccount` Clears ALL Secrets Including Calendar — Silent Data Loss
+
+- **Type:** security / architecture
+- **Flagged by:** security-sentinel
+- **Effort:** Small
+- **Details:** `server/src/services/stripe-connect.service.ts` line 354 sets `secrets: {}` when a tenant disconnects Stripe. This silently deletes `secrets.calendar` (Google Calendar service account JSON) without warning or any recovery path. After OAuth is added, this will also silently delete OAuth refresh tokens. Fix: perform a scoped delete that removes only `secrets.stripe`, preserving other keys. The calendar DELETE route (line 187) demonstrates the correct pattern using destructuring.
+
+---
+
+### [P1-14] Encryption Key Validation Accepts 32-char Strings at Schema Level but Requires 64-char at Runtime
+
+- **Type:** security
+- **Flagged by:** security-sentinel
+- **Effort:** Small
+- **Details:** `server/src/config/env.schema.ts` validates `TENANT_SECRETS_ENCRYPTION_KEY` with `.min(32)` but `server/src/lib/encryption.service.ts` lines 35-48 requires exactly a 64-character hex string (32 bytes). A 32-63 character value passes schema validation and throws a runtime `Error` only when the first encryption is attempted — a confusing startup failure. `server/src/lib/core/config.ts` declares it with only `z.string().optional()` — no length constraint. Fix: tighten to `.length(64).regex(/^[0-9a-f]{64}$/i)` in both files.
+
+---
+
+### [P1-15] Webhook HMAC Secret Stored in Plaintext in PostgreSQL
+
+- **Type:** security
+- **Flagged by:** security-sentinel
+- **Effort:** Medium
+- **Details:** `server/prisma/schema.prisma` line 817: `WebhookSubscription.secret` is a plain `String` column. This is a cryptographic HMAC signing secret generated via `crypto.randomBytes(32).toString('hex')`. A database read — via SQL injection, accidental log exposure, or backup access — exposes it directly, enabling forgery of webhook payloads for any tenant. Stripe restricted keys and calendar service account JSON are both AES-256-GCM encrypted. Fix: encrypt the `secret` field using `EncryptionService` before persistence and decrypt on retrieval.
+
+---
+
+### [P1-16] `getNextAvailableSlot()` Does Not Apply Google Calendar Filtering
+
+- **Type:** architecture / quality
+- **Flagged by:** agent-native-reviewer
+- **Effort:** Medium
+- **Details:** `server/src/services/scheduling-availability.service.ts` lines 564-644: `getNextAvailableSlot()` does not call `filterGoogleCalendarConflicts()`. Only `getAvailableSlots()` applies Google Calendar busy-time filtering. If a slot is blocked on Google Calendar but not in the MAIS database, "book next available" logic may offer that slot, producing double-bookings against the tenant's existing Google Calendar events.
+
+---
+
+### [P1-17] No Token Refresh Infrastructure — OAuth Calendar Sync Silently Fails After 1 Hour
+
+- **Type:** architecture
+- **Flagged by:** architecture-strategist, data-integrity-guardian, performance-oracle (3 agents)
+- **Effort:** Large (required if OAuth is adopted)
+- **Details:** No infrastructure exists for detecting when an OAuth access token is expired, refreshing via `POST https://oauth2.googleapis.com/token`, re-encrypting, and persisting the new token. The adapter's fail-open pattern in `server/src/adapters/gcal.adapter.ts` lines 171-180 returns `available: true` on any API error including 401 (token expired). Double-bookings can occur silently after OAuth token expiry. Service account tokens are indefinitely valid so this does not affect the current implementation — but must be designed before OAuth is adopted.
+
+---
+
+## P2 — Important
+
+---
+
+### [P2-01] No `get_calendar_status` or `configure_calendar` Agent Tools
+
+- **Type:** architecture / UX
+- **Flagged by:** agent-native-reviewer
+- **Effort:** Large (part of P1-10)
+- **Details:** Even if the calendar settings UI exists, the tenant-agent has no awareness of calendar integration status. Suggested tools: `get_calendar_status` (T1, calls new internal route), `configure_calendar` (T3, modifies secrets), `test_calendar_connection` (T1), `remove_calendar` (T3). Trust tier guidance: status/test = T1 (read-only), configure/remove = T3 (modifies secrets).
+
+---
+
+### [P2-02] Calendar Route Accepts Raw `PrismaTenantRepository` — Should Accept a Service
+
+- **Type:** architecture / quality
+- **Flagged by:** code-simplicity-reviewer, kieran-typescript-reviewer
+- **Effort:** Medium
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` line 24 accepts `tenantRepo: PrismaTenantRepository` directly, bypassing the service layer. Stripe routes correctly accept `stripeConnectService: StripeConnectService`. Adding OAuth (token refresh, state parameter validation, token storage) directly in the route file would create a 400-line god handler. Fix: extract `CalendarConfigService` class and inject it into the route factory.
+
+---
+
+### [P2-03] `/test` Handler Inlines JWT Generation and Raw HTTP — Should Delegate to a Service
+
+- **Type:** quality / architecture
+- **Flagged by:** code-simplicity-reviewer, architecture-strategist, security-sentinel (3 agents)
+- **Effort:** Small
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` lines 206-300: the `/test` endpoint imports `createGServiceAccountJWT` directly, constructs an OAuth bearer token, and fires a raw `fetch()` to the Google Calendar API inline in a route handler. This duplicates adapter logic, is not testable without a running HTTP server, uses a dynamic `await import('../adapters/gcal.jwt')`, and does not exercise the actual adapter path used in production. Fix: extract `GoogleCalendarService.testConnection(tenantId)` and have the route call it.
+
+---
+
+### [P2-04] Calendar Route Auth Pattern Inconsistent — Inline Guard Repeated 4x When Shared Helper Exists
+
+- **Type:** quality
+- **Flagged by:** code-simplicity-reviewer
+- **Effort:** Small
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` repeats the same inline auth check 4 times:
+  ```typescript
+  const tenantAuth = res.locals.tenantAuth;
+  if (!tenantAuth) { ... }
+  const tenantId = tenantAuth.tenantId;
+  ```
+  `server/src/routes/tenant-admin-shared.ts` already exports `requireAuth` middleware and `getTenantId(res)` helper to eliminate this. Fix: apply `requireAuth` middleware at the router level and replace all inline reads with `getTenantId(res)`.
+
+---
+
+### [P2-05] No Audit Trail for Calendar Credential Changes
+
+- **Type:** security
+- **Flagged by:** security-sentinel
+- **Effort:** Small
+- **Details:** `POST /config` and `DELETE /config` calendar routes write and delete encrypted service account credentials with no `ConfigChangeLog` entry. Only application logger output exists. Branding and tier changes use `ConfigChangeLog` for audit attribution. Fix: add `ConfigChangeLog` entries for calendar config save and delete operations, including `entityType: 'CalendarConfig'`, with credential ciphertext explicitly omitted from the snapshot.
+
+---
+
+### [P2-06] Service Account JSON Missing Structural Validation at API Boundary
+
+- **Type:** security / quality
+- **Flagged by:** security-sentinel, data-integrity-guardian, kieran-typescript-reviewer (3 agents)
+- **Effort:** Small
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` lines 119-126 validates only JSON syntax and size, not that the payload contains `type: "service_account"`, `client_email`, and `private_key`. Invalid service account JSON is encrypted and stored successfully, then silently fails at the first calendar API call. Fix:
+  ```typescript
+  const parsed = JSON.parse(serviceAccountJson);
+  if (parsed.type !== 'service_account' || !parsed.client_email || !parsed.private_key) {
+    return res.status(400).json({ error: 'Invalid service account JSON: missing required fields' });
+  }
+  ```
+
+---
+
+### [P2-07] OAuth Access Token Fetched Per-Call With No Caching — Double RTT on Every Operation
+
+- **Type:** performance
+- **Flagged by:** performance-oracle, architecture-strategist (2 agents)
+- **Effort:** Small (1-2 hours)
+- **Details:** `server/src/adapters/gcal.jwt.ts`: `createGServiceAccountJWT()` makes a fresh network round trip to `oauth2.googleapis.com/token` on every invocation. The returned access token (valid 3600 seconds) is never cached. For the agent 7-day availability range loop on cold cache: 14 network RTTs where 7 are unnecessary token fetches. Fix: cache the access token in-process keyed by service account email with a 55-minute TTL (early-refresh buffer). The adapter already has a private `Map` cache for availability results — extend the same pattern.
+
+---
+
+### [P2-08] No Retry/Backoff for Google API 429 or 5xx — Failures Cache as "Available"
+
+- **Type:** performance / quality
+- **Flagged by:** performance-oracle
+- **Effort:** Medium
+- **Details:** `server/src/adapters/gcal.adapter.ts` lines 171-199: on any non-2xx response, the adapter caches the failure as `{ available: true }` with the full 60s TTL and returns `true`. Rate-limit 429s, transient 503s, and token 401s all produce silent false-positive availability. `PostmarkMailAdapter` correctly implements retry with exponential backoff — apply the same pattern. Fix: retry once for 429 (honoring `Retry-After` header) and transient 5xx; never cache error responses.
+
+---
+
+### [P2-09] Duplicate `CalendarConfigInputSchema` at Contract vs Route Level
+
+- **Type:** quality
+- **Flagged by:** kieran-typescript-reviewer
+- **Effort:** Small
+- **Details:** `packages/contracts/src/dto.ts` lines 1197-1202 and `server/src/routes/tenant-admin-calendar.routes.ts` lines 19-22 define identical Zod schemas for the calendar config input. If validation rules diverge, the route will not enforce contract changes. Fix: import `CalendarConfigInputSchema` from `@macon/contracts` into the route instead of defining a local duplicate.
+
+---
+
+### [P2-10] `TenantCalendarConfig` Type Leaks From Adapter Layer Into Route Handler
+
+- **Type:** architecture / quality
+- **Flagged by:** kieran-typescript-reviewer
+- **Effort:** Small
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` imports `TenantCalendarConfig` from `../adapters/gcal.adapter` — an adapter-layer type used directly in a route handler. Per the ports-and-adapters architecture, types should flow from port layer outward. Fix: move `TenantCalendarConfig` to `server/src/lib/ports/calendar.port.ts` and re-export from `server/src/lib/ports/index.ts`.
+
+---
+
+### [P2-11] `isDateAvailable` Port Signature Lacks `tenantId` — Per-Tenant Lookup Impossible Via Port Interface
+
+- **Type:** quality / architecture
+- **Flagged by:** performance-oracle, kieran-typescript-reviewer (2 agents)
+- **Effort:** Small
+- **Details:** `server/src/lib/ports/calendar.port.ts` line 17: `isDateAvailable(date: string)` — no `tenantId`. The concrete `GoogleCalendarAdapter.isDateAvailable(dateUtc, tenantId?)` accepts it as an optional override, but code holding a `CalendarProvider` reference cannot pass `tenantId` type-safely. Fix: add `tenantId?: string` to the `isDateAvailable` signature in the port interface and update the mock implementation to accept and ignore it.
+
+---
+
+### [P2-12] Over-Broad Calendar Scope — `getBusyTimes` Requests Full Write Scope
+
+- **Type:** security
+- **Flagged by:** security-sentinel
+- **Effort:** Small
+- **Details:** `server/src/adapters/google-calendar-sync.adapter.ts` lines 113, 215, 297: `getBusyTimes()` requests `https://www.googleapis.com/auth/calendar` (full write access). The method only needs `calendar.readonly`. The `/test` endpoint in the same file's route correctly uses `calendar.readonly`. For OAuth, the broader scope is baked into the refresh token at consent time and cannot be narrowed without re-authorization. Fix: change `getBusyTimes()` in the sync adapter to use `calendar.readonly`; define scope constants to prevent future drift.
+
+---
+
+### [P2-13] No OAuth Token Revocation on Calendar Disconnect
+
+- **Type:** security
+- **Flagged by:** architecture-strategist, security-sentinel (2 agents)
+- **Effort:** Small
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` lines 169-200: `DELETE /config` removes credentials from `Tenant.secrets` locally but does not call `https://oauth2.googleapis.com/revoke`. For OAuth, leaving the token active on Google's side violates least privilege. Fix: add a revoke call before clearing local state, wrapped in try/catch so revocation failure logs a warning but does not block local cleanup.
+
+---
+
+### [P2-14] Three Triplicated Service Account Decode Blocks in Sync Adapter
+
+- **Type:** quality
+- **Flagged by:** kieran-typescript-reviewer
+- **Effort:** Small
+- **Details:** The same 3-line decode-and-parse pattern appears in `server/src/adapters/google-calendar-sync.adapter.ts` at lines 108-113, 210-215, and 292-297. Each returns `any` from `JSON.parse`. Extract into a private `getAccessToken(scopes: string[]): Promise<string>` method to eliminate duplication and reduce the `any` surface.
+
+---
+
+### [P2-15] `useSearchParams` Called Without Suspense in Billing and Revenue Pages
+
+- **Type:** quality / UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/billing/page.tsx` line 67 and `apps/web/src/app/(protected)/tenant/revenue/page.tsx` line 39 call `useSearchParams()` without a Suspense boundary. In Next.js 14 App Router, this can fail static rendering during production builds. The reset-password page correctly wraps the inner component in `<Suspense>`. Any new calendar OAuth callback page reading `?code=...` or `?state=...` query params will need this pattern applied from the start.
+
+---
+
+### [P2-16] Stripe Dialog "Continue" Button Not Disabled During In-Flight Requests — Double-Submit Race
+
+- **Type:** quality / UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/payments/page.tsx` line 321: the dialog `Continue to Stripe` button disables only when fields are empty (`disabled={!dialogEmail || !dialogBusinessName}`), not when `isCreating` is true. On slow networks, clicking multiple times submits multiple account creation requests. Additionally, `handleOnboard()` is called immediately after `fetchStatus()` without awaiting the committed React state update. Fix: add `|| isCreating` to the disabled guard.
+
+---
+
+### [P2-17] Settings Page Shows Fabricated Mock API Key Instead of Fetched Real Data
+
+- **Type:** UX / quality
+- **Flagged by:** julik-frontend-races-reviewer, code-simplicity-reviewer (2 agents)
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/settings/page.tsx` line 25:
+  ```typescript
+  const apiKeyPublic = tenantId ? `pk_live_${tenantId.slice(0, 8)}...` : 'Not available';
+  ```
+  This is a fabricated placeholder that looks like a real API key. It does not match the valid format (`pk_live_{slug}_{random}`). Tenants may copy and attempt to use it. No fetch from the API occurs. Fix: fetch the real (server-masked) key from the API, or show a clear "Not yet generated" state.
+
+---
+
+### [P2-18] In-Process `Map` Cache for `isDateAvailable` Not Shared Across Replicas
+
+- **Type:** performance
+- **Flagged by:** performance-oracle
+- **Effort:** Medium
+- **Details:** `server/src/adapters/gcal.adapter.ts` lines 34-35: `private cache = new Map<string, CacheEntry>()`. Each server replica has an independent cache. Under horizontal scaling, replicas independently call Google Calendar for the same `{tenantId}:{date}` key. The TIMESLOT path via `SchedulingAvailabilityService.filterGoogleCalendarConflicts` correctly uses `CacheServicePort` (Redis). Fix: inject `CacheServicePort` into `GoogleCalendarAdapter` and use it for `isDateAvailable` caching with key `gcal-avail:{tenantId}:{dateUtc}` and 60s TTL.
+
+---
+
+### [P2-19] `EmailProvider` Port Only Declares `sendEmail()` — Booking Emails Bypass the Port
+
+- **Type:** architecture
+- **Flagged by:** pattern-recognition-specialist
+- **Effort:** Medium
+- **Details:** `server/src/di.ts` event handlers call `mailProvider.sendBookingConfirm(...)` and `mailProvider.sendBookingReminder(...)` directly on the concrete `PostmarkMailAdapter`, not through the `EmailProvider` port. Any email provider swap requires modifying `di.ts` event subscriptions, not just swapping the adapter class. The port provides zero abstraction for the most critical email flows. Fix: extend `EmailProvider` with typed methods matching the concrete adapter's booking email methods.
+
+---
+
+### [P2-20] `StripeConnectService` Bypasses `PaymentProvider` Port — Not Testable via Mock
+
+- **Type:** architecture
+- **Flagged by:** pattern-recognition-specialist
+- **Effort:** Medium
+- **Details:** `server/src/services/stripe-connect.service.ts` holds its own `Stripe` SDK instance directly. The existing `MockPaymentProvider` does not cover Connect/subscription operations. Mocking subscription management in tests requires real Stripe or a manual override. Fix: extend `PaymentProvider` with subscription/Connect methods, or create a separate `SubscriptionProvider` port; document the architectural split either way.
+
+---
+
+### [P2-21] `_calendarProvider?: unknown` Parameter in Route Factory Is a Deferred Design Smell
+
+- **Type:** quality
+- **Flagged by:** code-simplicity-reviewer, kieran-typescript-reviewer (2 agents)
+- **Effort:** Small (minutes)
+- **Details:** `server/src/routes/tenant-admin-calendar.routes.ts` line 26: `_calendarProvider?: unknown` — an `unknown`-typed parameter with a comment explaining what it should be but never used. The `/test` endpoint re-implements Google Calendar connection testing inline instead of delegating to this parameter. Fix: either type it as `CalendarProvider | undefined` and use it, or remove it entirely.
+
+---
+
+### [P2-22] `navigator.clipboard.writeText` Promise Ignored — False-Positive Copy Success
+
+- **Type:** quality / UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/settings/page.tsx` line 28 calls `navigator.clipboard.writeText(key)` without awaiting or catching. If the write fails silently (non-HTTPS, denied permission), the UI shows a checkmark indicating success but nothing was copied. Fix: wrap in `async`/`await`/`try`-`catch` and show an error state on failure.
+
+---
+
+### [P2-23] Agent Booking Range Loop Is Sequential — Cold Cache Adds N x RTT to Response
+
+- **Type:** performance
+- **Flagged by:** performance-oracle
+- **Effort:** Medium
+- **Details:** `server/src/routes/internal-agent-booking.routes.ts` lines 229-244: the agent availability endpoint iterates a date range in a sequential `for` loop. Each `getAvailableSlots` call may trigger `getBusyTimes` to Google Calendar on cache miss. For a 7-day range on cold cache: 7 sequential Google API round trips. Fix: use `Promise.all` to parallelize `getBusyTimes` calls across the date range, pre-warming the cache for all dates, then generate slots in memory.
+
+---
+
+### [P2-24] `getConfigForTenant` DB Query on Every Calendar Cache Miss — No Config Caching
+
+- **Type:** performance
+- **Flagged by:** performance-oracle
+- **Effort:** Small
+- **Details:** `server/src/adapters/gcal.adapter.ts` lines 52-106: on every `isDateAvailable` cache miss, `getConfigForTenant(tenantId)` calls `this.tenantRepo.findById(tenantId)` — a database round trip — to load encrypted calendar config. The tenant's calendar config changes only when explicitly updated. Fix: cache the `getConfigForTenant` result with a 5-minute in-process TTL keyed by `tenant-cal-config:{tenantId}`, invalidated on `POST /config` and `DELETE /config`.
+
+---
+
+### [P2-25] Revenue Page Mounts Full Page Components as Tab Children — Remount Churn
+
+- **Type:** performance / quality
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/revenue/page.tsx` lines 80-82 mounts `<PaymentsContent />` and `<BillingContent />` conditionally with no CSS visibility preservation. Full remount on tab switch causes re-fetches — `BillingPage` calls `useSubscription()` on mount. Fix: use CSS visibility toggling or a stable shared QueryClient cache key so re-mounting reads from cache.
+
+---
+
+### [P2-26] Seed Writes `SectionContent` Directly as Published — Bypasses LRU Cache Invalidation
+
+- **Type:** architecture / quality
+- **Flagged by:** deploy-pipeline review
+- **Effort:** Medium
+- **Details:** The production seed (`server/prisma/seed.ts`) writes `SectionContent` rows with `isDraft: false` directly, bypassing `SectionContentService.publishAll()`. The in-memory LRU cache is never invalidated. If the API server is running when the seed completes, old published sections remain cached for up to 5 minutes post-seed. Fix: call `SectionContentService.publishAll()` as part of the seed process, or flush the relevant cache keys after direct writes.
+
+---
+
+### [P2-27] OAuth Token Refresh Concurrency Risk — No Lock Around Refresh Flow
+
+- **Type:** security / architecture
+- **Flagged by:** security-sentinel
+- **Effort:** Small
+- **Details:** For OAuth token management, concurrent requests may all attempt to refresh simultaneously when an access token expires, causing token invalidation race conditions. One request stores a newly-issued token; another stores the stale (now-revoked) previous token. Fix: implement a Redis-based lock around the refresh flow per tenant (`gcal-oauth-refresh:{tenantId}` with short TTL) to ensure only one refresh runs at a time.
+
+---
+
+## P3 — Nice-to-Have
+
+---
+
+### [P3-01] Agent System Prompts Do Not Mention Calendar Capabilities
+
+- **Type:** quality / UX
+- **Flagged by:** agent-native-reviewer
+- **Effort:** Small
+- **Details:** Neither `TENANT_AGENT_SYSTEM_PROMPT` nor `CUSTOMER_AGENT_SYSTEM_PROMPT` mentions Google Calendar integration. Once calendar tools are added, both prompts must be updated. The tenant prompt needs vocabulary guidance (e.g., use "your calendar credentials" not "service account JSON").
+
+---
+
+### [P3-02] `checkAvailabilityTool` Does Not Surface Reason for Unavailability
+
+- **Type:** UX
+- **Flagged by:** agent-native-reviewer
+- **Effort:** Small
+- **Details:** The tool returns `available: true/false` but not why a slot is unavailable. `AvailabilityService.checkAvailability()` returns a `reason` field (`booked`, `calendar`, `blackout`). Surfacing this would let the agent say "That date is already on your Google Calendar" vs "That date is already booked by a client."
+
+---
+
+### [P3-03] `Booking.googleEventId` Lacks Composite Tenant Index
+
+- **Type:** performance
+- **Flagged by:** data-integrity-guardian
+- **Effort:** Small
+- **Details:** `server/prisma/schema.prisma` line 514: `@@index([googleEventId])` — global index. A future query "find booking by calendar event ID" (e.g., for Google push notification webhooks) would need `@@index([tenantId, googleEventId])` to be efficient and enforce tenant isolation at the query level.
+
+---
+
+### [P3-04] In-Memory Availability Cache Grows Unboundedly
+
+- **Type:** performance
+- **Flagged by:** data-integrity-guardian
+- **Effort:** Small
+- **Details:** `server/src/adapters/gcal.adapter.ts` lines 34-36: `private cache = new Map<string, CacheEntry>()` with no eviction. With many tenants each checking many dates, the cache can hold O(tenants x days) entries permanently in memory. Fix: use `lru-cache` with a `max` entry count and `ttl` option, or add periodic `setInterval` cleanup.
+
+---
+
+### [P3-05] `Tenant.secrets` JSON Column Has No Size Bound at Database Level
+
+- **Type:** architecture
+- **Flagged by:** data-integrity-guardian
+- **Effort:** Small (document only)
+- **Details:** The `Tenant.secrets` JSON column has no size constraint at the database layer. Current payloads: Stripe key ~200 bytes encrypted, service account JSON ~4 KB encrypted. As integrations grow (Google Calendar OAuth, Zoom, QuickBooks), consider a normalized `TenantIntegration` table if more than 5-6 integrations are stored.
+
+---
+
+### [P3-06] `logger?: any` in Express `Locals` Type — Unjustified `any`
+
+- **Type:** quality
+- **Flagged by:** kieran-typescript-reviewer
+- **Effort:** Small
+- **Details:** `server/src/types/express.d.ts` line 16: `logger?: any` has no justification comment unlike other `any` usages in the codebase. Fix: type as the project's logger type from `../lib/core/logger`.
+
+---
+
+### [P3-07] No `loading.tsx` for Billing or Revenue Route Segments
+
+- **Type:** UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/billing/` and `tenant/revenue/` have `error.tsx` but no `loading.tsx`. Without it, there is no skeleton shown during initial load. The new calendar settings page should include a `loading.tsx` from the start given the async decrypt-from-DB latency on config fetch.
+
+---
+
+### [P3-08] Prometheus Metrics Are Default Only — No Business Counters
+
+- **Type:** quality
+- **Flagged by:** pattern-recognition-specialist
+- **Effort:** Medium
+- **Details:** `prom-client` is installed and `server/src/routes/metrics.routes.ts` exists, but only Node.js default metrics are emitted. No custom counters for `bookings_created_total`, `payments_failed_total`, `ai_messages_used_total`, `calendar_sync_latency_ms`, or `calendar_api_errors_total`. Makes SLA monitoring and capacity planning difficult.
+
+---
+
+### [P3-09] Ghost `reveal-on-scroll` Class Remains in `CTASection.tsx`
+
+- **Type:** quality
+- **Flagged by:** architecture-strategist
+- **Effort:** Small (1-line delete)
+- **Details:** `apps/web/src/components/tenant/sections/CTASection.tsx` line 31 has `reveal-on-scroll` class not defined in `globals.css` and not used by `useScrollReveal`. The class was removed from `TestimonialsSection.tsx` in commit `24a37db7` but `CTASection.tsx` was missed.
+
+---
+
+### [P3-10] Duplicate Anchor ID Risk When Multiple Sections of Same Type Exist
+
+- **Type:** quality
+- **Flagged by:** architecture-strategist
+- **Effort:** Small
+- **Details:** `apps/web/src/components/tenant/SectionRenderer.tsx`: if a tenant has two `testimonials` sections, two `<div id="testimonials">` elements are rendered, violating HTML spec. Browsers match only the first. Fix: track assigned anchor IDs in a `Set<string>` scoped to the render call and skip the `id` attribute for subsequent duplicate anchors.
+
+---
+
+### [P3-11] Testimonials Seed Uses `name`/`role` While Schema Canonical Form Is `authorName`/`authorRole`
+
+- **Type:** quality / architecture
+- **Flagged by:** architecture-strategist
+- **Effort:** Small
+- **Details:** `server/prisma/seeds/macon-headshots.ts` uses `name`/`role` for testimonial items while `TestimonialsSectionSchema` defines `authorName`/`authorRole` as canonical. A transform in `apps/web/src/lib/storefront-utils.ts` papers over this at the read path — the wrong layer for the fix. Fix: correct the seed files; remove the testimonials case from `transformContentForSection`.
+
+---
+
+### [P3-12] Section Type Mappings Are Spread Across 4 Files With No TypeScript Enforcement
+
+- **Type:** architecture
+- **Flagged by:** architecture-strategist
+- **Effort:** Small
+- **Details:** `BLOCK_TO_SECTION_TYPE` (storefront-utils), `SECTION_TYPE_TO_ANCHOR_ID` (SectionRenderer), `SECTION_TYPE_TO_PAGE` (navigation), and a proposed fourth table exist independently. Adding a new section type requires updating 4 files. Fix: consolidate `SECTION_TYPE_TO_ANCHOR_ID` from `SectionRenderer.tsx` into `navigation.ts` alongside `SECTION_TYPE_TO_PAGE`.
+
+---
+
+### [P3-13] Nav Excluded Section Types Should Be an Explicit Set
+
+- **Type:** architecture
+- **Flagged by:** architecture-strategist
+- **Effort:** Small
+- **Details:** `hero` and `cta` are excluded from nav only by not appearing in the mapping — not by explicit exclusion. Add `NAV_EXCLUDED_SECTION_TYPES = new Set(['hero', 'cta'])` to make the exclusion intentional and documented.
+
+---
+
+### [P3-14] Nav Item Order Should Derive From `PAGE_ORDER`, Not DB Insertion Order
+
+- **Type:** quality
+- **Flagged by:** code-simplicity-reviewer
+- **Effort:** Small
+- **Details:** The current `getNavItemsFromHomeSections()` iterates `pages.home.sections` in DB insertion order, so nav order varies by when sections were created. Iterating `PAGE_ORDER` instead guarantees canonical order regardless of DB insertion order, eliminates the `seen` Set, and reduces the function from 12 to 7 lines.
+
+---
+
+### [P3-15] Supabase Auth Variables Collected but Unused — Operational Confusion
+
+- **Type:** architecture
+- **Flagged by:** pattern-recognition-specialist
+- **Effort:** Small (document only)
+- **Details:** `SUPABASE_ANON_KEY` and `SUPABASE_JWT_SECRET` are validated and required in real mode but Supabase Auth is not used — the platform uses its own JWT system. This creates operational confusion. Consider removing these env var requirements or documenting clearly that Supabase is used only for blob storage.
+
+---
+
+### [P3-16] Revenue Page Tab Remount Churn — Covered in P2-25
+
+- **Type:** performance
+- **Flagged by:** julik-frontend-races-reviewer
+- **Details:** Merged with P2-25 above.
+
+---
+
+### [P3-17] No `loading.tsx` for Calendar Settings Page
+
+- **Type:** UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** When the calendar settings page is built, it must include a `loading.tsx` skeleton given the async decrypt-from-DB latency when fetching calendar config status. Covered in P3-07.
+
+---
+
+### [P3-18] Schedule Sub-Nav Missing "Calendar Sync" Entry
+
+- **Type:** UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small
+- **Details:** `apps/web/src/app/(protected)/tenant/scheduling/layout.tsx` `schedulingSubNav` array has no "Calendar Sync" entry. When the calendar page is created, add:
+  ```tsx
+  { href: '/tenant/scheduling/calendar', label: 'Calendar Sync', icon: <CalendarCheck className="h-4 w-4" /> }
+  ```
+
+---
+
+### [P3-19] Service Account JSON Input Should Use Textarea or File Upload, Not Text Input
+
+- **Type:** UX
+- **Flagged by:** julik-frontend-races-reviewer
+- **Effort:** Small (design guidance)
+- **Details:** The service account JSON is ~2 KB of text. The calendar settings form should use `<textarea>` or a file upload input with show/hide toggle (private key semantics), not a standard `<Input>`. Client-side JSON parse validation before submit prevents unnecessary round-trips. The 50 KB server-side size guard should be mirrored client-side (`serviceAccountJson.length > 50 * 1024`).
+
+---
+
+## Missing Integrations (Strategic)
+
+Based on pattern-recognition-specialist findings. The platform covers approximately 25% of integrations typical for a service professional membership platform.
+
+| Integration                              | Priority           | Gap                               | Implementation Path                                                                                                   | Why It Matters                                                                                         |
+| ---------------------------------------- | ------------------ | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **SMS / Twilio**                         | P1 — Before Launch | Entirely missing                  | New `SMSProvider` port + `TwilioSMSAdapter`; wire to `BookingEvents.REMINDER_DUE`; `Customer.phone` already collected | No-shows are the #1 service professional pain; 98% SMS open rate vs 20% email                          |
+| **Contract / eSignature (DocuSign)**     | P1 — Before Launch | Entirely missing                  | New `ContractProvider` port; add `AWAITING_SIGNATURE` booking state; `FileCategory.CONTRACT` schema exists            | Photographers and therapists require signed contracts; competitors HoneyBook/Dubsado lead with this    |
+| **Branded Invoice / PDF**                | P1 — Before Launch | Entirely missing                  | Stripe hosted billing portal or `pdfkit` PDF generation; trigger on `BookingEvents.PAID`                              | Therapists with HSA/FSA clients and coaches with corporate clients require formal invoices             |
+| **Google Calendar OAuth**                | P1 — Strategic     | Auth model wrong for target users | `GoogleOAuthCalendarAdapter implements CalendarProvider`; OAuth routes; token storage in `tenant.secrets.googleOAuth` | Current service account UX requires GCP knowledge; target users are photographers and coaches          |
+| **Outlook / Microsoft 365 Calendar**     | P2 — Post-Launch   | Entirely missing                  | `OutlookCalendarAdapter implements CalendarProvider`; Microsoft Graph API; `calendar.port.ts` already supports it     | Many therapists and corporate-adjacent planners use Outlook                                            |
+| **Video Meetings (Zoom / Google Meet)**  | P2 — Post-Launch   | Entirely missing                  | New `VideoProvider` port; `ZoomVideoAdapter`; `meetingUrl String?` on Booking; hook into `AppointmentEvents.BOOKED`   | Coaches and therapists require unique per-booking video links; static Zoom links are a privacy problem |
+| **Deliverable Delivery**                 | P2 — Post-Launch   | Schema exists, no delivery        | Shareable project link `/project/{token}`; `ProjectFile`/`FileCategory.DELIVERABLE` schema exists                     | Photographers' final step: delivering edited photos to clients                                         |
+| **Review / Testimonial Automation**      | P2 — Post-Launch   | Partially missing                 | Trigger review request 3 days after `Project.status = COMPLETED`; new `Testimonial` model                             | Photographers live on Google reviews; manual process today                                             |
+| **CRM / HubSpot via Webhook**            | P2 — Partial       | No UI                             | Add webhook subscription management UI; add `customer.created` event type                                             | Webhook infra is built (`WebhookDeliveryService`) but inaccessible without UI                          |
+| **HoneyBook / Dubsado Migration Import** | P2 — Strategic     | Entirely missing                  | Import service; `MigrationJob` model for async processing                                                             | Most new tenants are migrating from HoneyBook/Dubsado; painless migration = acquisition                |
+| **QuickBooks / Xero Accounting**         | P3 — Roadmap       | Entirely missing                  | New `AccountingProvider` port; OAuth; event listener on `BookingEvents.PAYMENT_CONFIRMED`                             | Payment reconciliation into accounting software                                                        |
+| **Apple Calendar / iCal Export**         | P3 — Roadmap       | Entirely missing                  | Optional `exportICS()` on `CalendarProvider`; near-zero implementation cost                                           | Creative professionals use Apple Calendar; `.ics` export is low-effort                                 |
+| **Email Marketing (ConvertKit)**         | P3 — Roadmap       | Entirely missing                  | Separate from transactional Postmark; nurture sequences and campaigns                                                 | Coaches who run email nurture sequences; seasonal promotions                                           |
+| **Pre-Booking Intake Questionnaires**    | P3 — Roadmap       | Schema gap                        | New `IntakeForm` model; attach to booking flow pre-confirmation                                                       | Therapists require clinical intake; coaches need discovery info before first session                   |
+
+---
+
+## Architectural Decision Required
+
+### Service Account vs. OAuth for Google Calendar
+
+**Current state:** The Google Calendar integration uses service account credentials. Tenants must: (1) create a Google Cloud project, (2) create a service account in GCP Console, (3) download a service account JSON (~2 KB RSA private key), (4) manually share their Google Calendar with a machine email address, and (5) paste the JSON into the UI.
+
+**The UX problem:** This is a developer-grade operation. A wedding photographer, therapist, or life coach cannot be expected to navigate Google Cloud Console. The target persona does not have the technical background for this workflow.
+
+**The right UX:** OAuth 2.0 with a "Connect Google Calendar" button. The tenant clicks, is redirected to Google's consent screen, grants access, and is redirected back. No JSON files, no cloud console.
+
+**What already works — no changes needed at these layers:**
+
+- `CalendarProvider` port (`server/src/lib/ports/calendar.port.ts`) — already correctly abstracted; a `GoogleOAuthCalendarAdapter` can implement it without changing the service layer
+- `Tenant.secrets` + `EncryptionService` (AES-256-GCM) — correct storage mechanism for OAuth tokens
+- `StripeConnectService` + `tenant-admin-stripe.routes.ts` — exact architectural reference pattern to follow
+
+**What must be built for OAuth:**
+
+1. `GoogleOAuthCalendarAdapter` — reads from `Tenant.secrets.googleOAuth`, auto-refreshes access tokens, handles `getBusyTimes`, `createEvent`, `deleteEvent`
+2. `GET /v1/tenant-admin/calendar/oauth/start` — generates Google OAuth URL with HMAC-signed `state` parameter (CSRF prevention)
+3. `GET /v1/tenant-admin/calendar/oauth/callback` — exchanges code for tokens, stores encrypted in `secrets.googleOAuth`, redirects to settings page
+4. Token refresh logic with concurrency protection (Redis lock per tenant per P2-27)
+5. Explicit `googleOAuth?: EncryptedData` field in `TenantSecrets` (P1-11)
+6. New env vars: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `GOOGLE_OAUTH_STATE_SECRET`
+
+**Effort comparison:**
+
+- Service account form UI (wrong UX, faster): 1-2 days, minimal new backend
+- OAuth implementation (correct UX): 4-6 days, significant new backend
+
+**Recommendation:** Build the OAuth path. The service account form can be offered as an "Advanced" escape hatch for enterprise/technical tenants. The `CalendarProvider` port abstraction means both adapters can coexist in `di.ts`.
+
+**Known patterns from `docs/solutions/` (learnings-researcher findings):**
+
+- `docs/solutions/integration-issues/multi-tenant-stripe-checkout-url-routing.md` — OAuth callback URLs must be tenant-scoped at request time, not static env vars
+- `docs/solutions/JWT_ID_TOKEN_FOR_CLOUD_RUN_AUTH.md` — correct JWT pattern for Google auth from Render
+- `docs/archive/2025-11/phases/PHASE_3_STRIPE_CONNECT_COMPLETION_REPORT.md` — reference for per-tenant credential encryption using `tenant.secrets` + AES-256-GCM
+- `docs/solutions/growth-assistant-error-messaging-stripe-onboarding-MAIS-20251228.md` — agent tool pattern for initiating third-party OAuth (T2 trust tier, early exit if already connected)
+
+---
+
+## Deduplication Notes
+
+The following findings were flagged by 3 or more agents and counted once:
+
+- **`GoogleCalendarSyncAdapter` uses global credentials** — flagged by agent-native-reviewer, architecture-strategist, data-integrity-guardian, performance-oracle, security-sentinel (5 agents) — counted as P1-04
+- **`TenantSecrets` missing explicit `calendar` field** — flagged by code-simplicity-reviewer, data-integrity-guardian, kieran-typescript-reviewer, architecture-strategist, security-sentinel (5 agents) — counted as P1-11
+- **No frontend UI for calendar configuration** — flagged by code-simplicity-reviewer, architecture-strategist, kieran-typescript-reviewer, julik-frontend-races-reviewer (4 agents) — counted as P1-01
+- **`/test` handler inlines business logic** — flagged by code-simplicity-reviewer, architecture-strategist, security-sentinel (3 agents) — counted as P2-03
+- **Duplicate `TenantSecrets` in `stripe-connect.service.ts`** — flagged by code-simplicity-reviewer, data-integrity-guardian, kieran-typescript-reviewer (3 agents) — merged into P1-11
+
+---
+
+_Report written to `docs/reviews/REVIEW-SUMMARY.md`_

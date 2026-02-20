@@ -14,7 +14,7 @@ export interface BusyTimeBlock {
  * Calendar Provider - External calendar integration
  */
 export interface CalendarProvider {
-  isDateAvailable(date: string): Promise<boolean>;
+  isDateAvailable(date: string, tenantId?: string): Promise<boolean>;
 
   /**
    * Create a calendar event (optional - for one-way sync)

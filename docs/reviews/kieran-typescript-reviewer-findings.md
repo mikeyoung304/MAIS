@@ -1,177 +1,344 @@
-# TypeScript Review: Storefront Nav/Footer/HowItWorks Refactor
+# Kieran TypeScript Reviewer — Google Calendar Integration Findings
 
+**Date:** 2026-02-20
+**Scope:** TypeScript type safety audit focused on Google Calendar integration readiness
 **Reviewer:** kieran-typescript-reviewer
-**Date:** 2026-02-18
-**Scope:** navigation.ts rewrite, TenantNav/TenantFooter/TenantSiteShell prop cleanup, HowItWorksSection deletion, TestimonialsSection reveal-on-scroll removal, storefront-utils testimonials transform
+
+---
+
+## Executive Summary
+
+The codebase uses a **service account** approach (not OAuth user tokens) for Google Calendar integration. The server-side type system is largely sound — the `CalendarProvider` port, adapters, and DTOs are well-typed. However, there are four distinct type-safety issues that will cause problems when building the Google Calendar integration: a mistyped `_calendarProvider` parameter in the route factory, a `TenantSecrets` type that is missing an explicit `calendar` property, a duplicate local `TenantSecrets` interface in `stripe-connect.service.ts` with a looser index signature, and a complete absence of any frontend page or type consumer for the calendar settings endpoints.
+
+---
+
+## Findings
+
+### P1 Findings (Block Correctness)
+
+#### P1-1: `_calendarProvider` parameter is typed as `unknown` instead of `CalendarProvider`
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-calendar.routes.ts`, line 26
+
+```typescript
+export function createTenantAdminCalendarRoutes(
+  tenantRepo: PrismaTenantRepository,
+  _calendarProvider?: unknown // GoogleCalendarAdapter instance for testing connection
+): Router {
+```
+
+**Problem:** The second parameter is typed `unknown` with a comment admitting it should be `GoogleCalendarAdapter`. The `/test` endpoint re-implements Google Calendar connection testing inline (lines 248-295) by doing its own JWT creation and fetch calls instead of delegating to the `CalendarProvider` interface. This is a type-safety bypass and a duplication of behaviour already implemented in `gcal.adapter.ts` and `gcal.jwt.ts`.
+
+**Impact:** If this parameter were properly typed as `CalendarProvider`, the test route could use the interface correctly. As-is, `unknown` prevents any type-safe calls, forcing the inline reimplementation. Any future refactor of the test logic will diverge silently.
+
+**Fix Required:** Type the parameter as `CalendarProvider | undefined` (imported from `../lib/ports`) and delegate the test logic to the injected provider.
+
+---
+
+#### P1-2: `TenantSecrets` in `prisma-json.ts` does not declare `calendar` as a typed property
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/types/prisma-json.ts`, lines 116-119
+
+```typescript
+export interface TenantSecrets {
+  stripe?: EncryptedData;
+  [key: string]: EncryptedData | undefined;
+}
+```
+
+**Problem:** The `calendar` key is accessed in three separate places:
+
+- `server/src/routes/tenant-admin-calendar.routes.ts` lines 52, 64 — accesses `secrets.calendar`
+- `server/src/adapters/gcal.adapter.ts` line 64 — accesses `secrets.calendar?.ciphertext`
+
+All of these accesses rely on the index signature `[key: string]: EncryptedData | undefined` rather than an explicit `calendar?: EncryptedData` property. While TypeScript allows this, it is a type-safety gap: there is no single authoritative declaration that the `calendar` property holds `EncryptedData`. If `TenantCalendarConfig` were ever stored differently (e.g., with additional top-level fields), the type would not catch it.
+
+Additionally, the `@property stripe` JSDoc comment in the type's documentation section says nothing about `calendar`, meaning the type's contract is undocumented for the calendar secret.
+
+**Fix Required:** Add `calendar?: EncryptedData;` as an explicit named property to `TenantSecrets` alongside `stripe`. Update the JSDoc.
+
+---
+
+### P2 Findings (Significant Risk)
+
+#### P2-1: Duplicate `TenantSecrets` interface in `stripe-connect.service.ts` has a different (weaker) index signature
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/services/stripe-connect.service.ts`, lines 23-27
+
+```typescript
+// TenantSecrets type - Stripe encrypted secret storage
+interface TenantSecrets {
+  stripe?: EncryptedData; // Encrypted Stripe restricted key
+  [key: string]: unknown; // <-- index signature is 'unknown', not 'EncryptedData | undefined'
+}
+```
+
+**Canonical type in `prisma-json.ts`:**
+
+```typescript
+export interface TenantSecrets {
+  stripe?: EncryptedData;
+  [key: string]: EncryptedData | undefined;
+}
+```
+
+**Problem:** `stripe-connect.service.ts` defines its own local `TenantSecrets` with `[key: string]: unknown` instead of importing from `../types/prisma-json`. This means secrets written through the Stripe service are less strictly typed, and the two places can evolve independently and diverge. When the `calendar` property is added to the canonical type, the Stripe service's casting remains incompatible.
+
+**Fix Required:** Delete the local `TenantSecrets` interface and import `TenantSecrets` from `../types/prisma-json` in `stripe-connect.service.ts`. The `[key: string]: unknown` vs `[key: string]: EncryptedData | undefined` discrepancy must be reconciled before changing how secrets are structured.
+
+---
+
+#### P2-2: `CalendarConfigInputSchema` in the contract duplicates `calendarConfigSchema` in the route handler
+
+**Files:**
+
+- Contract: `/Users/mikeyoung/CODING/MAIS/packages/contracts/src/dto.ts`, lines 1197-1202
+- Route: `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-calendar.routes.ts`, lines 19-22
+
+Contract schema:
+
+```typescript
+export const CalendarConfigInputSchema = z.object({
+  calendarId: z.string().min(1, 'Calendar ID is required'),
+  serviceAccountJson: z.string().min(1, 'Service account JSON is required'),
+});
+```
+
+Route-local schema (identical):
+
+```typescript
+const calendarConfigSchema = z.object({
+  calendarId: z.string().min(1, 'Calendar ID is required'),
+  serviceAccountJson: z.string().min(1, 'Service account JSON is required'),
+});
+```
+
+**Problem:** The route defines and validates against its own locally-defined schema rather than importing and reusing `CalendarConfigInputSchema` from the shared contracts package. This is the codebase's own Pitfall — constants duplication trap. If validation rules diverge (e.g., the contract adds `.max(255)` to `calendarId`), the route will not enforce it.
+
+The route handler also does not use ts-rest contract validation at all — it uses raw `Router.post()` with manual `safeParse`. The schema duplication is the concrete type-safety issue regardless of whether ts-rest is used.
+
+**Fix Required:** Either import `CalendarConfigInputSchema` from `@macon/contracts` into the route and validate against it, or annotate the code with a clear comment explaining why the route is exempt from ts-rest contract enforcement and referencing the shared schema as the authoritative source.
+
+---
+
+#### P2-3: `TenantCalendarConfig` interface is private to the adapter and not exported from ports
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/gcal.adapter.ts`, lines 28-31
+
+```typescript
+export interface TenantCalendarConfig {
+  calendarId: string;
+  serviceAccountJson: string; // JSON string (not base64)
+}
+```
+
+**Problem:** `TenantCalendarConfig` is exported from `gcal.adapter.ts` and imported in `tenant-admin-calendar.routes.ts`:
+
+```typescript
+import type { TenantCalendarConfig } from '../adapters/gcal.adapter';
+```
+
+This is an adapter-layer type bleeding into a route handler. Following the ports-and-adapters architecture of this codebase, the type should live in the calendar port (`server/src/lib/ports/calendar.port.ts`) or in `types/prisma-json.ts` (since it is the decrypted form of the `TenantSecrets.calendar` field). Routes should not import from adapters.
+
+**Fix Required:** Move `TenantCalendarConfig` to `server/src/lib/ports/calendar.port.ts` and re-export it from `server/src/lib/ports/index.ts`. Update imports in the route and adapter.
+
+---
+
+#### P2-4: Untyped `JSON.parse` of service account JSON at four call sites
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/gcal.jwt.ts`, lines 7-10
+
+```typescript
+interface ServiceAccountJson {
+  client_email: string;
+  private_key: string;
+}
+```
+
+**Problem:** Three places parse the service account JSON from base64 and then pass the result to `createGServiceAccountJWT`:
+
+1. `server/src/adapters/gcal.adapter.ts` line 145 — result is untyped `any`
+2. `server/src/adapters/google-calendar-sync.adapter.ts` lines 108, 210, 292 — same pattern repeated three times, result is untyped `any`
+3. `server/src/routes/tenant-admin-calendar.routes.ts` line 248 — direct `JSON.parse(calendarConfig.serviceAccountJson)` — result is untyped `any`
+
+In all four call sites, the result of `JSON.parse(...)` is `any`, passed directly to `createGServiceAccountJWT` which expects `ServiceAccountJson`. TypeScript accepts this because `JSON.parse` returns `any`, but there is no runtime validation that `client_email` and `private_key` actually exist. An invalid service account JSON would cause a runtime exception deep inside `crypto.createSign`, not a clear validation error.
+
+**Fix Required:**
+
+1. Export `ServiceAccountJson` from `gcal.jwt.ts`
+2. Add a type guard or `zod` parse for the service account JSON at each parse site
+3. Return a typed `ServiceAccountJson` so `createGServiceAccountJWT` can enforce its contract
+
+---
+
+### P3 Findings (Improvements / Future Risk)
+
+#### P3-1: No frontend types or pages exist for calendar settings
+
+**Gap:** The API contracts for calendar configuration (`tenantAdminGetCalendarStatus`, `tenantAdminSaveCalendarConfig`, `tenantAdminTestCalendar`, `tenantAdminDeleteCalendarConfig`) exist and are registered in the Express router. However:
+
+- No Next.js page at `/tenant/scheduling/calendar` or similar
+- No React Query hooks or fetch calls referencing these endpoints
+- The scheduling layout (`/apps/web/src/app/(protected)/tenant/scheduling/layout.tsx`) does not include a "Calendar" nav item in `schedulingSubNav`
+- No usage of `CalendarStatusResponse`, `CalendarConfigInput`, or `CalendarTestResponse` types from `@macon/contracts` anywhere in `apps/web/src/`
+
+**What will need to be created for Google Calendar integration — the contract types are already complete:**
+
+```typescript
+// Types automatically available from @macon/contracts:
+import type {
+  CalendarStatusResponse, // { configured: boolean; calendarId: string | null }
+  CalendarConfigInput, // { calendarId: string; serviceAccountJson: string }
+  CalendarTestResponse, // { success: boolean; calendarId?: string; calendarName?: string; error?: string }
+} from '@macon/contracts';
+
+// Contracts already wired:
+// Contracts.tenantAdminGetCalendarStatus    -> GET    /v1/tenant-admin/calendar/status
+// Contracts.tenantAdminSaveCalendarConfig   -> POST   /v1/tenant-admin/calendar/config
+// Contracts.tenantAdminTestCalendar         -> POST   /v1/tenant-admin/calendar/test
+// Contracts.tenantAdminDeleteCalendarConfig -> DELETE /v1/tenant-admin/calendar/config
+```
+
+The contract layer is complete. No new DTOs are needed. The frontend page is the only missing type consumer.
+
+---
+
+#### P3-2: `express.d.ts` declares `logger?: any` in `Locals`
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/types/express.d.ts`, line 16
+
+```typescript
+interface Locals {
+  tenantAuth?: TenantTokenPayload;
+  logger?: any; // <-- violates strict-mode intent, no justification comment
+}
+```
+
+**Problem:** This `any` is not justified with a comment (unlike the `z.any()` cases in the contracts which have documented justifications). The `logger` in `Locals` should be typed as the project's logger type from `../lib/core/logger`. While unrelated to the calendar feature itself, any new route code accessing `res.locals.logger` would bypass type checking.
+
+---
+
+#### P3-3: `isDateAvailable` port signature does not accept `tenantId`
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports/calendar.port.ts`, line 17
+
+```typescript
+export interface CalendarProvider {
+  isDateAvailable(date: string): Promise<boolean>;  // No tenantId parameter
+```
+
+**Implementation in `gcal.adapter.ts`:**
+
+```typescript
+async isDateAvailable(dateUtc: string, tenantId?: string): Promise<boolean> {
+```
+
+**Problem:** The concrete `GoogleCalendarAdapter.isDateAvailable` accepts an optional `tenantId` for per-tenant config lookup, but the `CalendarProvider` interface only declares `isDateAvailable(date: string)`. Code that holds a `CalendarProvider` reference cannot pass `tenantId` type-safely. Any new consumer that uses the port interface will silently skip per-tenant lookup.
+
+**Fix Required:** Add `tenantId?: string` to the `isDateAvailable` signature in `CalendarProvider`, and update the mock implementation to accept (and ignore) it.
+
+---
+
+#### P3-4: Three duplicated service account decode-and-parse blocks in `google-calendar-sync.adapter.ts`
+
+**File:** `/Users/mikeyoung/CODING/MAIS/server/src/adapters/google-calendar-sync.adapter.ts`, lines 108-113, 210-215, 292-297
+
+The same three-line pattern appears three times:
+
+```typescript
+const serviceAccountJson = JSON.parse(
+  Buffer.from(this.serviceAccountJsonBase64, 'base64').toString('utf8')
+);
+const accessToken = await createGServiceAccountJWT(serviceAccountJson, [...]);
+```
+
+Each repeated `JSON.parse` returns `any` (see P2-4). Extracting this into a private `getAccessToken(scopes: string[]): Promise<string>` method would eliminate the duplication, reduce the `any` surface, and make future scope changes a single-point change.
+
+---
+
+## Interface Types Needed for OAuth Token Flow
+
+The current integration uses **service accounts**, not OAuth user tokens. If a future enhancement adds per-user OAuth (allowing tenants to connect their personal Google Calendar via "Sign in with Google"), the following types would need to be added:
+
+```typescript
+// In server/src/types/prisma-json.ts
+export interface GoogleOAuthTokens {
+  access_token: string;
+  refresh_token: string;
+  expiry_date: number; // Unix timestamp in milliseconds
+  token_type: 'Bearer';
+  scope: string;
+}
+
+// Updated TenantSecrets:
+export interface TenantSecrets {
+  stripe?: EncryptedData;
+  calendar?: EncryptedData; // Service account config (current)
+  googleOauth?: EncryptedData; // OAuth tokens (future, if user-oauth is added)
+}
+```
+
+The OAuth flow would also require new contract endpoints that do not exist yet:
+
+```typescript
+// These do NOT exist and would need to be added to packages/contracts/src/api.v1.ts:
+tenantAdminInitiateCalendarOAuth; // GET    /v1/tenant-admin/calendar/oauth/start
+tenantAdminCalendarOAuthCallback; // GET    /v1/tenant-admin/calendar/oauth/callback
+tenantAdminRevokeCalendarOAuth; // DELETE /v1/tenant-admin/calendar/oauth/revoke
+```
+
+For the service account flow (current approach), no OAuth token types are needed. `TenantCalendarConfig` adequately represents what is stored.
+
+---
+
+## How Tenant Settings Data Flows Through the Type System
+
+```
+Request body (CalendarConfigInput from contracts)
+    |
+    v
+route: calendarConfigSchema.safeParse(req.body)   [local schema -- see P2-2]
+    |
+    v
+TenantCalendarConfig { calendarId, serviceAccountJson }  [adapter type -- see P2-3]
+    |
+    v
+encryptionService.encryptObject<TenantCalendarConfig>()  -> EncryptedData
+    |
+    v
+TenantSecrets.calendar = EncryptedData            [via index signature -- see P1-2]
+    |
+    v
+prisma.tenant.update({ data: { secrets: updatedSecrets } })
+    |
+    v  (retrieval)
+tenant.secrets as PrismaJson<TenantSecrets>       [cast -- no runtime validation]
+    |
+    v
+encryptionService.decryptObject<TenantCalendarConfig>()  -> TenantCalendarConfig
+    |
+    v
+GoogleCalendarAdapter.getConfigForTenant()        [converts to base64 for internal use]
+    |
+    v
+GoogleCalendarSyncAdapter.createEvent / deleteEvent / getBusyTimes
+```
+
+**Key type-safety gaps in this flow:**
+
+1. `JSON.parse` at decode sites returns `any` (P2-4)
+2. `tenant.secrets` cast assumes shape without runtime validation (P1-2)
+3. `TenantCalendarConfig` is not a port-level type (P2-3)
+4. Duplicate validation schemas at contract vs route boundary (P2-2)
 
 ---
 
 ## Summary
 
-| Priority | Count | Description                                                                                     |
-| -------- | ----- | ----------------------------------------------------------------------------------------------- |
-| **P1**   | 0     | None                                                                                            |
-| **P2**   | 3     | Redundant cast masks drift; unsafe array element cast; domainParam prop boundary                |
-| **P3**   | 4     | `as const satisfies`; useMemo identity; reveal-on-scroll removal correct; anchor href edge case |
+| Severity | Count | Issues                                                                                                                                                                     |
+| -------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1       | 2     | `_calendarProvider: unknown` in route factory; missing explicit `calendar` key in `TenantSecrets`                                                                          |
+| P2       | 4     | Duplicate `TenantSecrets` in stripe service; duplicate validation schemas; `TenantCalendarConfig` not in ports; untyped `JSON.parse` of service account JSON at four sites |
+| P3       | 4     | No frontend page or type consumers; `logger?: any` in express.d.ts; `isDateAvailable` port signature missing `tenantId`; triplicated decode blocks in sync adapter         |
 
-**Overall Assessment:** The refactor is structurally sound. The core goals — unifying nav derivation through `getNavItemsFromHomeSections`, deleting `HowItWorksSection`, and removing `domainParam` from the shell — are correctly executed. Three P2 issues exist: the `as SectionTypeName` cast on `s.type` is redundant and will mask future type drift; the testimonials item array cast does not defend against non-object elements or empty-string `name` fields; and the `domainParam` prop removal is incomplete at the `TenantSiteShell` boundary.
-
----
-
-## P2 Findings
-
-### P2-1: `s.type as SectionTypeName` is a redundant cast that will mask future type drift
-
-**File:** `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/navigation.ts` — line 102
-
-```typescript
-(s) => SECTION_TYPE_TO_PAGE[s.type as SectionTypeName] === page;
-```
-
-`s` is typed as `Section`, which is `z.infer<typeof SectionSchema>` — a discriminated union. Its `.type` field is already typed as the exact union `'hero' | 'text' | 'about' | 'gallery' | 'testimonials' | 'faq' | 'contact' | 'cta' | 'pricing' | 'services' | 'features' | 'custom'`, which is identical to `SectionTypeName`. The cast is a no-op: TypeScript accepts it silently.
-
-The real risk is forward-compatibility. If a new section type is ever added to `SectionSchema` but not to `SECTION_TYPES` (or vice versa), TypeScript would normally surface a type error at this index site. The redundant cast papers over that divergence silently. The correct fix:
-
-```typescript
-(s) => SECTION_TYPE_TO_PAGE[s.type] === page;
-```
-
-Without the cast, if `Section['type']` ever diverges from `SectionTypeName`, the compiler will error at this line — which is the desired signal. The cast should be removed.
-
-**Note:** The `SECTION_TYPE_TO_PAGE` map itself is correctly typed as `Partial<Record<SectionTypeName, PageName>>` (line 76). This is the right type. The cast at the call site is the problem.
-
----
-
-### P2-2: Testimonials `items` cast to `Record<string, unknown>[]` does not guard against non-object array elements; truthiness check misses empty-string `name`
-
-**File:** `/Users/mikeyoung/CODING/MAIS/apps/web/src/lib/storefront-utils.ts` — lines 104–116
-
-```typescript
-case 'testimonials':
-  if (Array.isArray(transformed.items)) {
-    transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
-      const out = { ...item };
-      if (out.name && !out.authorName) {
-        out.authorName = out.name;
-        delete out.name;
-      }
-      if (out.role && !out.authorRole) {
-        out.authorRole = out.role;
-        delete out.role;
-      }
-      return out;
-    });
-  }
-  break;
-```
-
-Two issues:
-
-**Issue A — unsafe cast on array elements.** `Array.isArray(transformed.items)` only confirms the outer container is an array. The cast `as Record<string, unknown>[]` assumes every element is a non-null object. If the DB returns `[null, { ... }]` or `[42, { ... }]`, `{ ...item }` on `null` throws `TypeError: null is not iterable` at runtime; on a primitive it silently produces an empty object `{}`. The safe pattern:
-
-```typescript
-.filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-.map((item) => { ... })
-```
-
-**Issue B — truthiness check misses `name: ""`**. The condition `if (out.name && !out.authorName)` will skip the remap when `out.name` is an empty string. That leaves the testimonial item with neither `name` nor `authorName`, causing the component to silently render a blank author. The stricter check is `if ('name' in out && out.name !== undefined)` or simply `if (out.name !== undefined && !out.authorName)`.
-
----
-
-### P2-3: `domainParam` prop removal is incomplete — `TenantSiteShell` boundary leaves a forward-compatibility gap
-
-**Files:**
-
-- `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/TenantSiteShell.tsx`
-- `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/TenantLandingPage.tsx` — line 26
-- `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/TenantLandingPageClient.tsx` — line 25
-- `/Users/mikeyoung/CODING/MAIS/apps/web/src/app/t/_domain/layout.tsx`
-
-`domainParam` was removed from `TenantSiteShell` and `TenantFooter` — correct. However, `TenantLandingPage` and `TenantLandingPageClient` still declare and pass `domainParam` to `SegmentTiersSection` and `ContactForm`. Those uses are legitimate (booking URLs and contact form return links need the domain query param).
-
-The forward-compatibility gap: `TenantSiteShell` now has no `domainParam` context, but it is the layout shell for domain routes (where `basePath=""`). Any future feature added to the shell that constructs a URL (e.g., a CTA button in the nav, a chat widget deep-link, a social share link) will silently produce a wrong URL for domain-based routes — it will omit the `?domain=` parameter needed for round-trip navigation.
-
-Recommended action: document the omission explicitly in `TenantSiteShellProps`:
-
-```typescript
-interface TenantSiteShellProps {
-  // ...
-  /**
-   * NOTE: domainParam is intentionally NOT threaded through TenantSiteShell.
-   * Nav and footer use anchor links only (no domain-qualified page URLs).
-   * If a shell feature ever needs domain-aware URLs, add domainParam here.
-   */
-}
-```
-
-This is not a current bug but is a latent trap for the next contributor.
-
----
-
-## P3 Findings
-
-### P3-1: `SECTION_TYPE_TO_PAGE` would benefit from `as const satisfies` for immutability
-
-**File:** `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/navigation.ts` — line 76
-
-```typescript
-const SECTION_TYPE_TO_PAGE: Partial<Record<SectionTypeName, PageName>> = { ... };
-```
-
-`Partial<Record<SectionTypeName, PageName>>` is the correct type. Minor improvement: using `as const satisfies Partial<Record<SectionTypeName, PageName>>` would make the object immutable at the type level (preventing accidental mutation) while preserving the compiler's exhaustiveness check. Stylistic improvement only — no correctness issue.
-
----
-
-### P3-2: `useMemo` deps `[basePath, pages]` are correct; `pages` object identity may cause spurious recomputes
-
-**File:** `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/TenantNav.tsx` — lines 49–56
-
-Both values used inside the memo are in the dep array. No missing or stale deps. The minor note: if the parent re-renders with a new `pages` object reference (e.g., after a build-mode update or ISR revalidation), `useMemo` will recompute. `getNavItemsFromHomeSections` is a simple scan — the recompute is cheap. Not a performance bug; no action required unless profiling shows it as a hotspot.
-
----
-
-### P3-3: `reveal-on-scroll` class removal from `TestimonialsSection` is correct; tests unaffected
-
-**File:** `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/sections/TestimonialsSection.tsx`
-
-The `useScrollReveal` hook is still imported and its ref is still attached to the outer `<section>` at line 37. The hook drives animation via `IntersectionObserver` directly — the `reveal-on-scroll` CSS class was a redundant selector from an older pattern. The `reveal-delay-1`/`reveal-delay-2` classes remain on individual card `div` elements (line 47), which is correct.
-
-Test file `storefront-redesign.test.tsx` lines 237–238 asserts for `reveal-delay-1`/`reveal-delay-2` — those assertions still pass since those classes are on the card divs, not the removed outer class. No test breakage.
-
----
-
-### P3-4: `buildAnchorNavHref` with `basePath=""` produces a fragment-only href — benign today, edge case for multi-page domain routes
-
-**File:** `/Users/mikeyoung/CODING/MAIS/apps/web/src/components/tenant/navigation.ts` — lines 117–125
-
-When `basePath=""` (domain routes) and `item.path="#about"`, the result is `"#about"` — a fragment-only href. This is valid HTML for same-page anchor navigation and works correctly for the single-page scroll architecture.
-
-The edge case: if the footer is ever rendered on a sub-path of a domain route (e.g., `/about`) and the user clicks `#services`, the browser navigates to `/about#services` instead of `/#services`. This is not the current architecture, but worth noting if separate page routes are added for domain tenants in the future.
-
----
-
-## Summary Table
-
-| ID   | Priority | File                                           | Issue                                                                     |
-| ---- | -------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| P2-1 | P2       | `navigation.ts:102`                            | Redundant `as SectionTypeName` cast masks future type drift               |
-| P2-2 | P2       | `storefront-utils.ts:104–116`                  | Unsafe array element cast; truthiness check misses `name: ""`             |
-| P2-3 | P2       | `TenantSiteShell.tsx`, `TenantLandingPage.tsx` | Incomplete `domainParam` removal — forward-compatibility gap in shell     |
-| P3-1 | P3       | `navigation.ts:76`                             | `as const satisfies` would improve immutability of `SECTION_TYPE_TO_PAGE` |
-| P3-2 | P3       | `TenantNav.tsx:55`                             | `pages` object identity may cause spurious `useMemo` recomputes           |
-| P3-3 | P3       | `TestimonialsSection.tsx`                      | `reveal-on-scroll` removal is correct; tests unaffected                   |
-| P3-4 | P3       | `navigation.ts:124`                            | Fragment-only href for domain routes — benign today                       |
-
----
-
-## Positive Observations
-
-1. `Partial<Record<SectionTypeName, PageName>>` is the correct type for `SECTION_TYPE_TO_PAGE`. The intentional exclusions (hero, cta, features, custom, pricing) are well-documented in the JSDoc comment.
-
-2. `PAGE_ORDER` iteration for nav construction is deterministic and independent of section array ordering in `PagesConfig` — the right approach.
-
-3. `pages?.home?.sections?.length` optional chain correctly short-circuits for the null/undefined case.
-
-4. The `Array.isArray` guard on testimonials items correctly follows the established "null defeats = [] defaults" pattern (Pitfall #11 in the project pitfalls list).
-
-5. `HowItWorksSection` deletion is clean — the export was removed from `sections/index.ts`, the static injection in `TenantLandingPage` was removed, and the file was deleted. No orphan imports detected.
+**Priority fix order for calendar integration launch:** P1-2 then P1-1 then P2-3 then P2-4 then P2-2 then P2-1, then build the frontend page using the already-correct contract types.

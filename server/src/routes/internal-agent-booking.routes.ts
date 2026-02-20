@@ -115,6 +115,7 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
     bookingService,
     tenantRepo,
     serviceRepo,
+    availabilityService,
     internalApiSecret,
   } = deps;
 
@@ -249,17 +250,25 @@ export function createInternalAgentBookingRoutes(deps: BookingRoutesDeps): Route
       }
 
       // Default: DATE-based availability (weddings, events)
-      // For now, return simplified availability
-      // TODO: Integrate with AvailabilityService for DATE bookings
+      // Check against blackouts, existing bookings, and Google Calendar (if configured)
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const dates: Array<{ date: string; available: boolean }> = [];
+      const dates: Array<{ date: string; available: boolean; reason?: string }> = [];
 
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dates.push({
-          date: d.toISOString().split('T')[0],
-          available: true, // TODO: Check against bookings and blackouts
-        });
+        const dateStr = d.toISOString().split('T')[0];
+
+        if (availabilityService) {
+          const check = await availabilityService.checkAvailability(tenantId, dateStr);
+          dates.push({
+            date: dateStr,
+            available: check.available,
+            ...(check.reason ? { reason: check.reason } : {}),
+          });
+        } else {
+          // Availability service not configured — skip check, default to available
+          dates.push({ date: dateStr, available: true });
+        }
       }
 
       res.json({ bookingType: 'DATE', dates });

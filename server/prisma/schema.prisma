@@ -68,6 +68,9 @@ model Tenant {
   stripeAccountId String? @unique // Stripe Connected Account ID
   stripeOnboarded Boolean @default(false) // Has completed Stripe onboarding
 
+  // Google Calendar OAuth
+  googleCalendarConnected Boolean @default(false) // Has connected Google Calendar via OAuth
+
   // Trial & Subscription (Product-Led Growth)
   trialEndsAt        DateTime? // When 14-day trial expires (null = no trial started)
   subscriptionStatus SubscriptionStatus @default(NONE) // Current subscription state
@@ -512,6 +515,7 @@ model Booking {
   @@index([venueId])
   @@index([stripePaymentIntentId])
   @@index([googleEventId])
+  @@index([tenantId, googleEventId]) // Google Calendar webhook callbacks O(1) lookup
   @@index([createdAt])
   @@index([tenantId, confirmedAt])
   @@index([tenantId, reminderDueDate, reminderSentAt, status]) // For reminder queries (TODO-153)

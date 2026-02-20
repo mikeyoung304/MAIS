@@ -1,210 +1,214 @@
-# Code Simplicity Review — Storefront Navigation + Section Cleanup
+# Code Simplicity Review — Settings/Integrations + Google Calendar OAuth Readiness
 
 **Reviewer:** code-simplicity-reviewer
-**Date:** 2026-02-18
-**Scope:** navigation.ts consolidation, domainParam removal, HowItWorksSection deletion, TestimonialsSection sectionRef, storefront-utils testimonials transform
+**Date:** 2026-02-20
+**Scope:** Tenant settings/integrations area; Stripe Connect implementation as integration pattern; Google Calendar service-account integration; readiness for Google Calendar OAuth.
 
 ---
 
 ## Summary
 
-1 P1 (dangling dead CSS class), 2 P2 (wrong transform layer, overstated commit scope), 3 P3 (minor). The consolidation from 3→2 navigation functions is clean. The `domainParam` removal from Nav/Footer/Shell is complete. `HowItWorksSection` is fully gone from the codebase. The `sectionRef` in `TestimonialsSection` is correctly attached to the `<section>` element and live. The main issue is a `reveal-on-scroll` CSS class in `CTASection.tsx` that has no definition anywhere in the stylesheet.
+2 P1, 3 P2, 4 P3. The settings architecture is in two fundamentally different styles that do not compose: Stripe uses a dedicated service class with proper DI injection; Calendar uses raw `res.locals.tenantAuth` repeated 4× per file with no helper abstraction. Both are functional but the Calendar route is the pattern future integrations will copy — and it is the worse of the two. Google Calendar OAuth can be added without refactoring the service layer (the `CalendarProvider` port is already in place), but the **route and UI layers need work before it is clean**. There is no frontend settings page for Calendar configuration at all; the API exists but is completely unreachable from the UI.
 
 ---
 
-## P1 — Dangling Dead CSS Class: `reveal-on-scroll` in CTASection
+## P1 — Calendar Route Uses Inconsistent Auth Pattern (vs. All Other Routes)
 
-**File:** `apps/web/src/components/tenant/sections/CTASection.tsx`, line 31
+**Files:**
 
-```tsx
-<section ref={sectionRef} className="reveal-on-scroll bg-accent py-32 md:py-40">
-```
+- `server/src/routes/tenant-admin-calendar.routes.ts` (all 4 handlers)
+- `server/src/routes/tenant-admin-stripe.routes.ts` (all 4 handlers)
+- `server/src/routes/tenant-admin-shared.ts` (`requireAuth` + `getTenantId`)
 
-`reveal-on-scroll` has no definition in `apps/web/src/styles/globals.css`. The file defines `.reveal-visible`, `.reveal-delay-1/2/3`, and the `storefront-reveal` keyframe animation — but not `reveal-on-scroll`. This was apparently a pre-`useScrollReveal` class name that was never cleaned up when the hook-based approach replaced it.
-
-The `CTASection` still animates correctly because:
-
-1. `sectionRef` (from `useScrollReveal()`) IS attached to the `<section>` element.
-2. The `IntersectionObserver` adds `.reveal-visible` dynamically when the element scrolls into view.
-3. `.reveal-visible` triggers the `storefront-reveal` keyframe.
-
-The `reveal-on-scroll` class is harmless noise — an unrecognized class silently ignored by both CSS and Tailwind — but it is dead code from a prior implementation pattern.
-
-**Fix:** Remove `reveal-on-scroll` from the `className` on `CTASection.tsx:31`.
-
-This is the only place in the entire codebase where `reveal-on-scroll` appears as a class on a DOM element. Confirmed via grep: zero CSS definitions, one usage site.
-
----
-
-## P1 Clarification: `sectionRef` in TestimonialsSection Is NOT Dead
-
-The prompt asked whether `sectionRef` became unused after `reveal-on-scroll` was removed from `TestimonialsSection`. It did not.
-
-**File:** `apps/web/src/components/tenant/sections/TestimonialsSection.tsx`, line 37
-
-```tsx
-<section ref={sectionRef} className="py-32 md:py-40">
-```
-
-The ref IS attached to the `<section>` wrapper. The `useScrollReveal` hook works by attaching an `IntersectionObserver` to whatever element receives the ref callback — no `reveal-on-scroll` class is required on that element. When the `<section>` enters the viewport, the observer adds `.reveal-visible` to the `<section>`, triggering the CSS animation. The hook and ref are both live and functional.
-
-The individual testimonial cards use `reveal-delay-1` / `reveal-delay-2` (line 47) for stagger animation, which also have valid CSS definitions. These are correct.
-
-**No action needed here.**
-
----
-
-## P2 — Wrong Layer for Testimonials Field Remapping
-
-**File:** `apps/web/src/lib/storefront-utils.ts`, lines 102–118
+The Stripe route file and the Calendar route file were written by two different hands at different times. The calendar routes repeat the same inline auth check 4 times:
 
 ```typescript
-case 'testimonials':
-  if (Array.isArray(transformed.items)) {
-    transformed.items = (transformed.items as Record<string, unknown>[]).map((item) => {
-      const out = { ...item };
-      if (out.name && !out.authorName) {
-        out.authorName = out.name;
-        delete out.name;
-      }
-      if (out.role && !out.authorRole) {
-        out.authorRole = out.role;
-        delete out.role;
-      }
-      return out;
-    });
-  }
-  break;
+// tenant-admin-calendar.routes.ts — repeated in every handler
+const tenantAuth = res.locals.tenantAuth;
+if (!tenantAuth) {
+  res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
+  return;
+}
+const tenantId = tenantAuth.tenantId;
 ```
 
-**The problem:** This is a silent runtime shim correcting `name`/`role` → `authorName`/`authorRole` at the presentation layer. The contract (`TestimonialsSectionSchema` in `packages/contracts/src/landing-page.ts:300-301`) requires `authorName` and `authorRole`. If the agent or seed data writes `name` and `role` instead, the data is wrong at its source — and this transform masks it permanently.
+The `tenant-admin-shared.ts` file already exports `requireAuth` middleware and `getTenantId(res)` helper specifically to eliminate this duplication. Stripe routes also inline the same pattern (4×) instead of using the shared helpers. Between the two files there are 8 instances of this boilerplate that could be 1 middleware application + 1 `getTenantId` call.
 
-**Why this matters:**
+**The compounding problem:** When a third integration (Google Calendar OAuth) is added, it will copy whichever pattern the author sees first. If they copy Calendar, the inline-auth pattern spreads further.
 
-1. The mismatch is invisible in logs and tests. Data passes the frontend component but the underlying SectionContent rows contain non-canonical field names.
-2. Any future server-side consumer of testimonial content (API export, email generation, PDF summary) will see `name`/`role`, not `authorName`/`authorRole`, because the remap only happens in the frontend layer.
-3. If the contract ever renames `authorName` again, there are now two places to update: the contract AND this shim.
-
-**Root cause is upstream.** The agent `add_section` tool in `server/src/agent-v2/deploy/tenant/src/tools/storefront-write.ts` does not provide field name guidance for testimonials items. The `tenant-defaults.ts` TESTIMONIALS default (line 165–173) uses `items: []` with no field name hints. The agent is writing `name`/`role` because nothing in its context establishes `authorName`/`authorRole` as the canonical names.
-
-**The transform is in the wrong place.** It belongs either:
-
-- In the agent tool's default content/description so the agent writes canonical names from the start, OR
-- In a data migration that updates existing rows to use canonical field names.
-
-`storefront-utils.ts` should only do structural remapping (field renames like `title → headline`, `body → content`), not content field name correction that should have been right at write time.
-
-**Recommended action:** Open a P2 todo to audit the agent testimonials write path. Ensure the `add_section` tool description (for `testimonials` type) explicitly names `authorName` and `authorRole` as the field names. The shim in `storefront-utils.ts` can stay as a forward-compatibility safety net with a comment noting it is temporary, but it should not be the primary fix.
+**Fix:** Apply `requireAuth` middleware at the router level (before registering handlers), and replace all inline `res.locals.tenantAuth` reads with `getTenantId(res)`. This is a mechanical change, not a logic change.
 
 ---
 
-## P2 — `domainParam` Removal Is Partial — Commit Description Overstates Scope
+## P1 — No Frontend UI for Calendar Configuration: The Backend API Is Unreachable
 
-**Files where `domainParam` persists (and correctly so):**
+**Evidence:**
 
-- `apps/web/src/components/tenant/TenantLandingPage.tsx` (lines 26, 107, 130)
-- `apps/web/src/components/tenant/TenantLandingPageClient.tsx` (lines 25, 32, 44, 58)
-- `apps/web/src/app/t/_domain/page.tsx` (lines 107, 133)
-- `apps/web/src/components/tenant/ContactForm.tsx` (lines 12, 43, 59)
-- `apps/web/src/components/tenant/SegmentTiersSection.tsx` (lines 36, 258, 352, 357)
+- `server/src/routes/tenant-admin-calendar.routes.ts` — full backend: GET /status, POST /config, DELETE /config, POST /test
+- `apps/web/src/app/(protected)/tenant/` — no calendar settings page anywhere in the tree
+- Zero occurrences of `tenant-admin/calendar` in `apps/web/src/`
 
-**What was removed:** `domainParam` from `TenantNav`, `TenantFooter`, and `TenantSiteShell`. Those three components only needed it for link construction, which is now correctly handled via `basePath` alone.
+The backend calendar route has been registered since whenever it was written, but there is no UI surface that calls it. A tenant who wants to configure Google Calendar integration has no path to do so from the dashboard. The service account JSON upload flow, the calendar ID input, and the connection test button do not exist on the frontend.
 
-**What was NOT removed (correctly):** `domainParam` in `SegmentTiersSection` is load-bearing. The `getBookHref` callback at line 350–358 uses it to switch booking link construction:
+**Impact for Google Calendar OAuth:** If the intent is to add OAuth instead of service-account auth, the absence of a frontend settings page is the first blocker — not the backend. An OAuth flow requires UI to initiate the redirect and receive the callback. There is nowhere to put that button.
 
-```typescript
-const getBookHref = useCallback(
-  (tierSlug: string) => {
-    if (domainParam) {
-      return `/t/${tenant.slug}/book/${tierSlug}`;
-    }
-    return `${basePath}/book/${tierSlug}`;
-  },
-  [basePath, domainParam, tenant.slug]
-);
-```
-
-For custom domain routes, `basePath` is `''` (empty string). Without this guard, booking links would be `/book/tier-slug` (missing tenant path). The `domainParam` check correctly routes to the slug-based path when on a custom domain.
-
-**The chain is correct:** `_domain/page.tsx` constructs `domainParam = ?domain=...` → passes to `TenantLandingPageClient` → passes to `TenantLandingPage` → passes to `SegmentTiersSection`. This is intentional and necessary.
-
-**The issue is clarity, not correctness.** The commit message "Removed domainParam prop" is ambiguous — it implies full removal when it was partial-by-design. If someone reads the commit and then tries to trace `domainParam` through the codebase, the inconsistency looks like an incomplete refactor rather than an intentional boundary.
-
-**Recommended action:** No code fix needed. If a follow-up commit message or PR description references this change, clarify "Removed domainParam from Nav/Footer/Shell — retained in SegmentTiersSection for custom domain booking link routing."
+**Fix:** Create `apps/web/src/app/(protected)/tenant/scheduling/calendar/page.tsx` with the configuration UI. This can be a simple page with a `Calendar ID` input + `Service Account JSON` upload (current) OR an `Connect with Google` OAuth button (future). The page structure should mirror `payments/page.tsx`.
 
 ---
 
-## P3 — `SECTION_TYPE_TO_PAGE` Design Is Cleaner Than Previous Approach
+## P2 — `TenantSecrets` Type in `prisma-json.ts` Does Not Declare `calendar` Field
 
-**File:** `apps/web/src/components/tenant/navigation.ts`, lines 76–84
+**Files:**
 
-```typescript
-const SECTION_TYPE_TO_PAGE: Partial<Record<SectionTypeName, PageName>> = {
-  about: 'about',
-  text: 'about', // 'text' is legacy alias for 'about'
-  services: 'services',
-  gallery: 'gallery',
-  testimonials: 'testimonials',
-  faq: 'faq',
-  contact: 'contact',
-};
-```
+- `server/src/types/prisma-json.ts` (lines 116–119)
+- `server/src/routes/tenant-admin-calendar.routes.ts` (lines 51–57, 224–230)
+- `server/src/adapters/gcal.adapter.ts` (lines 63–64)
 
-This is cleaner than the previous filter-by-enabled-pages approach. The lookup table is declarative, type-safe, and easily extended. The comment block (lines 65–75) correctly documents why `hero`, `cta`, `features`, `custom`, and `pricing` are excluded.
-
-**One minor omission:** `text: 'about'` maps the legacy alias without a comment. The `text` type is not self-evident to a future reader — they may wonder why a mapping named `text` produces `about`. An inline comment `// 'text' is a legacy alias for 'about'` on line 78 would prevent future confusion.
-
-**No simplification needed** for the `PAGE_ORDER` iteration in `getNavItemsFromHomeSections` (O(pages × sections)). At 7 pages and <15 sections per storefront, this is irrelevant to performance. The current loop is readable. A Set-based alternative exists but offers no practical benefit.
-
----
-
-## P3 — `buildAnchorNavHref` Has Redundant Guard
-
-**File:** `apps/web/src/components/tenant/navigation.ts`, lines 117–125
+The canonical `TenantSecrets` type in `prisma-json.ts`:
 
 ```typescript
-export function buildAnchorNavHref(basePath: string, item: NavItem): string {
-  if (item.path === '') {
-    return basePath || '/';
-  }
-  return `${basePath || ''}${item.path}`;
+export interface TenantSecrets {
+  stripe?: EncryptedData;
+  [key: string]: EncryptedData | undefined;
 }
 ```
 
-The `basePath || ''` on line 124 is redundant. Both callers (`TenantNav` line 46, `TenantFooter` line 26) guarantee a non-null `basePath` before calling this function via `basePathProp ?? '/t/${tenant.slug}'`. The `|| ''` default on line 124 can never activate.
+There is no `calendar` field typed. The calendar routes access `secrets.calendar` via the index signature `[key: string]`, which means TypeScript cannot catch mistyped key names (`'calender'`, `'Calendar'`) at the call site. The `StripeConnectService` has its own private `TenantSecrets` interface in `stripe-connect.service.ts` (lines 23–27) that also omits `calendar`.
 
-Not worth changing — it is a defensive guard that costs nothing. But it is technically dead.
+There are two independent `TenantSecrets` definitions in the codebase:
+
+1. `server/src/types/prisma-json.ts` — public canonical type
+2. `server/src/services/stripe-connect.service.ts` — private duplicate
+
+The calendar key is accessed through the catch-all index signature in both. This is not type-safe for the integration key name.
+
+**Fix:** Add `calendar?: EncryptedData` to the canonical `TenantSecrets` in `prisma-json.ts`, delete the duplicate in `stripe-connect.service.ts` and import the canonical one.
 
 ---
 
-## P3 — HowItWorksSection Fully Eliminated From Source
+## P2 — Calendar `test` Route Inlines Business Logic That Belongs in a Service
 
-Confirmed via grep across all of `apps/web/src/`: zero live references to `HowItWorksSection` remain. The deletion is complete. References in `docs/plans/` and `docs/reviews/` are historical documentation, not source code.
+**File:** `server/src/routes/tenant-admin-calendar.routes.ts` (lines 206–300)
+
+The `/test` endpoint decrypts credentials, imports `createGServiceAccountJWT`, constructs an OAuth bearer token, and fires a raw `fetch()` call to the Google Calendar API — all inline in a route handler. This is the only place in the codebase where a route handler contains this level of API integration logic.
+
+Compare to Stripe: `createLoginLink` is one line in the route — it delegates entirely to `StripeConnectService`. The business logic (API interaction, error handling, retry) lives in the service.
+
+The calendar test logic:
+
+1. Is not testable without a running HTTP server
+2. Cannot be reused if a cron job or agent tool wants to verify calendar connectivity
+3. Uses a dynamic `await import('../adapters/gcal.jwt')` instead of a static import, which makes the dependency graph opaque
+
+**Fix:** Extract into a `calendarConfigService.testConnection(tenantId)` method (or add `testConnection` to the existing `GoogleCalendarService`), inject the service into the route factory, and replace the inline logic with a single call.
 
 ---
 
-## Confirmation: Correctly Deleted/Removed Items
+## P2 — `createTenantAdminCalendarRoutes` Takes `PrismaTenantRepository` Directly; Stripe Takes a Service
 
-| Item                                                       | Verification                                                |
-| ---------------------------------------------------------- | ----------------------------------------------------------- |
-| `HowItWorksSection.tsx`                                    | File absent from `apps/web/src/components/tenant/sections/` |
-| `HowItWorksSection` barrel export from `sections/index.ts` | No export found                                             |
-| `domainParam` from `TenantNav`                             | Not in file                                                 |
-| `domainParam` from `TenantFooter`                          | Not in file                                                 |
-| `domainParam` from `TenantSiteShell`                       | Not in file                                                 |
-| `PAGE_PATHS` constant                                      | Zero references in `apps/web/src/`                          |
-| `getNavigationItems` function                              | Zero references in `apps/web/src/`                          |
-| `getAnchorNavigationItems` function                        | Zero references in `apps/web/src/`                          |
+**File:** `server/src/routes/tenant-admin-calendar.routes.ts` (line 24)
+
+```typescript
+export function createTenantAdminCalendarRoutes(
+  tenantRepo: PrismaTenantRepository,
+  _calendarProvider?: unknown
+): Router {
+```
+
+**File:** `server/src/routes/tenant-admin-stripe.routes.ts` (line 26)
+
+```typescript
+export function createTenantAdminStripeRoutes(stripeConnectService: StripeConnectService): Router {
+```
+
+The Stripe route accepts a service (the right pattern for layered architecture). The Calendar route directly accepts a Prisma repository, bypassing the service layer entirely. The route file then manually does what a service would do: fetch tenant, decrypt secrets, validate, update. This is not consistent with how every other domain in the codebase is structured.
+
+**Impact for Google Calendar OAuth:** OAuth adds token refresh, state parameter validation, and token storage. If these are added directly in the route file, it will become a god handler. A `GoogleCalendarOAuthService` class would be the correct home.
+
+**Fix:** Extract the read/write logic from the calendar routes into a `CalendarConfigService` (distinct from `GoogleCalendarService` which handles sync operations). The route file should only validate input and delegate.
+
+---
+
+## P3 — `_calendarProvider?: unknown` Parameter Is a Smell
+
+**File:** `server/src/routes/tenant-admin-calendar.routes.ts` (line 26)
+
+```typescript
+_calendarProvider?: unknown // GoogleCalendarAdapter instance for testing connection
+```
+
+An `unknown`-typed parameter with a leading underscore and a comment explaining what it would be is a deferred design decision masquerading as code. Either the parameter is used (give it a real type and use it) or it is not needed (remove it). Currently it is present but serves no purpose and is never accessed.
+
+**Fix:** Remove the parameter from the function signature until it is actually needed with a concrete type.
+
+---
+
+## P3 — Global Settings Page (`/tenant/settings`) Is a Stub With Mock Data
+
+**File:** `apps/web/src/app/(protected)/tenant/settings/page.tsx` (lines 25–26)
+
+```typescript
+// Mock API keys for display (in production these would come from the API)
+const apiKeyPublic = tenantId ? `pk_live_${tenantId.slice(0, 8)}...` : 'Not available';
+```
+
+The Settings page constructs a fake public API key from the tenant ID without fetching from the API. The Business Settings section is a placeholder with "coming soon" copy. The page is primarily a Danger Zone wrapper for logout.
+
+For Google Calendar OAuth specifically: the Settings page is the natural home for an "Integrations" section (Google Calendar, Stripe, future providers). Currently the page has no integration section and no data fetching pattern to follow.
+
+**No immediate fix needed**, but this context informs where the calendar UI should live: either a new `scheduling/calendar/` page or an Integrations card on the Settings page.
+
+---
+
+## P3 — `maskCalendarId` Is a Module-Private Function That Duplicates No Logic
+
+**File:** `server/src/routes/tenant-admin-calendar.routes.ts` (lines 306–317)
+
+The `maskCalendarId` helper is a reasonable utility, but it is currently only used in this one file. If the masking logic ever needs to change (different mask lengths, different separator), it is a local change. This is fine as-is — noted because it is the right place for it and does not need to move.
+
+---
+
+## Answering the Core Question: Is Google Calendar OAuth Addable Cleanly?
+
+**Short answer:** The service layer is ready. The route and UI layers need work first.
+
+### What works well and does not need changing
+
+1. **`CalendarProvider` port** (`server/src/lib/ports.ts`) — the interface supports `createEvent`, `deleteEvent`, `getBusyTimes`, `isDateAvailable`. An OAuth-based adapter could implement this same port.
+2. **`GoogleCalendarService`** — thin delegation layer that wraps `CalendarProvider`. Adding OAuth does not require changing this file.
+3. **`gcal.jwt.ts`** — the service-account JWT helper is clean and isolated. OAuth would replace this at the adapter level only.
+4. **Encrypted secrets storage pattern** — `TenantSecrets` in `prisma-json.ts` and `encryptionService.encryptObject()` are the right primitives for storing OAuth tokens. The pattern is proven by the service-account approach.
+5. **`TenantAdminDeps` / `requireAuth` / `getTenantId` in `tenant-admin-shared.ts`** — the right infrastructure exists; it just is not used consistently.
+
+### What needs to change before OAuth is added cleanly
+
+1. **Missing frontend settings page** (P1) — Without a UI page, there is nowhere to put the "Connect with Google" button or the OAuth callback handler.
+2. **Calendar route needs a service layer** (P2) — OAuth adds state management (auth code, refresh tokens) that should not live in a route handler. Create `CalendarConfigService` first.
+3. **`TenantSecrets` type needs `calendar` field typed** (P2) — OAuth stores access + refresh tokens, not just a service account blob. The type needs `oauthTokens` (or similar) as a first-class named field.
+4. **Auth pattern inconsistency** (P1) — Before adding a new integration file, fix the copy-paste auth guard problem so the new OAuth route uses `requireAuth` middleware from the start.
+
+### Effort estimate
+
+Google Calendar OAuth is a **medium addition** (1–2 days), not a large refactor, if the P1/P2 items above are addressed first. The backend infrastructure (service port, encryption, event emission) is already wired. The work is:
+
+- `CalendarConfigService` class (~100 lines)
+- OAuth callback route in `tenant-admin-calendar.routes.ts` (exchange code, store tokens)
+- Updated `GoogleCalendarSyncAdapter` to use OAuth tokens instead of service-account JSON
+- Frontend calendar settings page (~150 lines, mirrors `payments/page.tsx`)
+
+If the P1/P2 items are skipped and OAuth is bolted onto the existing calendar route file, the result will be a 400-line route handler mixing auth, business logic, API calls, and token storage.
 
 ---
 
 ## Findings Index
 
-| Priority | Finding                                                                                           | File                                               | Action Required                               |
-| -------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------- | ------------------- | ------------------------------------ |
-| P1       | `reveal-on-scroll` class has no CSS definition — dead leftover from pre-hook era                  | `CTASection.tsx:31`                                | Remove the class from `className`             |
-| P2       | Testimonials `name`/`role` → `authorName`/`authorRole` remap is at the wrong layer (presentation) | `storefront-utils.ts:102-118`                      | Audit agent write path; open P2 todo          |
-| P2       | `domainParam` removal is partial-by-design but commit description is ambiguous                    | `TenantLandingPage.tsx`, `SegmentTiersSection.tsx` | Clarify in follow-up description; no code fix |
-| P3       | `text: 'about'` alias in `SECTION_TYPE_TO_PAGE` needs inline comment                              | `navigation.ts:78`                                 | Optional inline comment                       |
-| P3       | `buildAnchorNavHref` has unreachable `                                                            |                                                    | ''` guard on line 124                         | `navigation.ts:124` | No action — harmless defensive guard |
-| P3       | `sectionRef` in `TestimonialsSection` is correctly live — not dead                                | `TestimonialsSection.tsx:29,37`                    | No action needed                              |
+| Priority | Finding                                                                                  | File                                                                       | Action                                                   |
+| -------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------- |
+| P1       | Inline auth guard repeated 4× in calendar routes; `requireAuth` helper exists but unused | `tenant-admin-calendar.routes.ts` (all handlers)                           | Apply `requireAuth` middleware at router level           |
+| P1       | No frontend UI for calendar configuration — backend API is unreachable from dashboard    | `apps/web/src/app/(protected)/tenant/scheduling/` (missing)                | Create `calendar/page.tsx`                               |
+| P2       | `TenantSecrets` type missing `calendar` field; two independent definitions exist         | `prisma-json.ts:116`, `stripe-connect.service.ts:24`                       | Add `calendar` field; delete duplicate type              |
+| P2       | `/test` handler inlines JWT generation + raw HTTP — should delegate to a service         | `tenant-admin-calendar.routes.ts:206–300`                                  | Extract to `CalendarConfigService.testConnection()`      |
+| P2       | Calendar route accepts raw `PrismaTenantRepository`; Stripe route accepts a service      | `tenant-admin-calendar.routes.ts:24` vs `tenant-admin-stripe.routes.ts:26` | Extract `CalendarConfigService`, inject it               |
+| P3       | `_calendarProvider?: unknown` is an unused deferred-design smell                         | `tenant-admin-calendar.routes.ts:26`                                       | Remove until concretely needed                           |
+| P3       | `/tenant/settings` page constructs mock API keys client-side                             | `settings/page.tsx:25–26`                                                  | Not urgent; but note as future Integrations section home |
+| P3       | `maskCalendarId` is correctly local; no action needed                                    | `tenant-admin-calendar.routes.ts:306–317`                                  | None                                                     |

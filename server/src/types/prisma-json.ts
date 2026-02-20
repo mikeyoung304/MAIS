@@ -104,17 +104,40 @@ export interface EncryptedData {
 }
 
 /**
+ * Google Calendar OAuth token set stored encrypted in TenantSecrets.googleCalendar
+ *
+ * The entire token object is JSON-serialized then encrypted with EncryptionService
+ * before being stored in the Tenant.secrets JSON column.
+ *
+ * @property accessToken  - Short-lived OAuth 2.0 access token
+ * @property refreshToken - Long-lived refresh token (never expires unless revoked)
+ * @property expiresAt    - Unix timestamp in ms when accessToken expires
+ * @property scope        - Space-separated OAuth scopes granted
+ * @property tokenType    - Always "Bearer" for Google OAuth 2.0
+ */
+export interface GoogleCalendarOAuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number; // Unix timestamp in ms
+  scope: string;
+  tokenType: string;
+}
+
+/**
  * Encrypted secrets stored in Tenant.secrets JSON field
  *
  * Used by:
  * - Tenant model (secrets column)
  * - Stripe Connect integration
+ * - Google Calendar OAuth integration
  * - Encrypted API keys and credentials
  *
- * @property stripe - Encrypted Stripe restricted key
+ * @property stripe         - Encrypted Stripe restricted key
+ * @property googleCalendar - Encrypted GoogleCalendarOAuthTokens JSON blob
  */
 export interface TenantSecrets {
   stripe?: EncryptedData;
+  googleCalendar?: EncryptedData;
   [key: string]: EncryptedData | undefined;
 }
 

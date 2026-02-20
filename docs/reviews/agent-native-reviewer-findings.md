@@ -1,347 +1,279 @@
-# Agent-Native Reviewer -- Plan Review Findings
+# Agent-Native Reviewer Findings: Google Calendar Integration
 
-**Plan:** `docs/plans/2026-02-11-feat-onboarding-conversation-redesign-plan.md`
-**Reviewer:** Agent-Native Architecture Reviewer
-**Date:** 2026-02-12
-**Verdict:** Generally strong plan with 5 P1 issues, 9 P2 issues, and 4 P3 issues that should be addressed before implementation begins.
-
----
-
-## P1 -- Must Fix Before Implementation
-
-### P1-1: Price Conversion Happens in Agent Tool (Dollars to Cents) but Plan Creates a NEW Price Path Without Documenting the Conversion Layer
-
-**Location:** Plan Phase 4b, `manage_tiers` tool description (line 422)
-**Cross-ref:** Current `packages.ts:251` -- `const priceCents = Math.round(params.priceInDollars * 100)`
-
-The plan says: "agent prompt should tell LLM to ask in dollars and convert: `priceCents: dollars * 100`". This implies the LLM itself does the conversion before calling the tool. This is dangerous -- LLMs are unreliable at math.
-
-**Current pattern (correct):** `manage_packages` accepts `priceInDollars` as a tool param and the tool's `handleCreatePackage()` converts to cents in TypeScript: `const priceCents = Math.round(params.priceInDollars * 100)`. The LLM never sees cents.
-
-**Risk:** If `manage_tiers` accepts `priceCents` directly (as the Prisma schema shows `priceCents Int`), the LLM must multiply by 100 before calling the tool. LLMs frequently get this wrong -- they might pass `2500` (meaning $2,500) as `priceCents`, creating a $25 tier.
-
-**Fix:** `manage_tiers` tool parameter schema MUST accept `priceInDollars` (like `manage_packages` does today), and the tool handler MUST convert to cents in TypeScript code. Never delegate arithmetic to the LLM. Add explicit validation: `if (priceCents < 100) return { error: 'Price seems too low...' }`.
+**Date:** 2026-02-20
+**Reviewer:** agent-native-reviewer
+**Scope:** 3-agent AI architecture review for Google Calendar integration readiness
 
 ---
 
-### P1-2: Reveal Trigger Has No Deterministic Section Content Validation
+## Executive Summary
 
-**Location:** Plan Phase 3, `computeOnboardingState()` (lines 308-325)
-**Cross-ref:** Design spec line 51 -- "Reveal trigger (MVP sections complete -> show site)"
-
-The plan's `computeOnboardingState()` checks only two booleans: `hasSegment` and `hasTiers`. It explicitly says "Section content checked separately via SectionContentService" but never specifies WHERE or WHEN that check happens, or what tool/endpoint triggers it.
-
-**Current system:** The slot machine returns `BUILD_FIRST_DRAFT` as a nextAction, and the frontend triggers the reveal animation when all MVP sections are updated. The plan removes the slot machine but doesn't replace this deterministic gate.
-
-**Gap:** With the slot machine removed, what prevents the agent from saying "here's your site" when:
-
-- Tiers are configured but section content is still placeholder?
-- `build_first_draft` was called but `update_section` failed silently?
-- HERO is updated but ABOUT/SERVICES still have "[Your Business]" placeholders?
-
-**Fix:** The `build_first_draft` tool (or a new `check_reveal_readiness` tool) MUST call `SectionContentService.isPlaceholderContent()` for all 3 MVP sections and return a boolean `readyForReveal`. The system prompt must instruct the agent to check this BEFORE announcing the reveal. Make it a deterministic backend check, not an LLM judgment call.
+The backend infrastructure for Google Calendar integration is **largely complete**. The `CalendarProvider` port, `GoogleCalendarAdapter`, `GoogleCalendarSyncAdapter`, `GoogleCalendarService`, and event-driven sync are all implemented and wired in `di.ts`. However, **zero agent tools exist** for calendar operations — neither tenant-agent nor customer-agent can read, write, or manage calendar state through conversation. Adding Google Calendar to the agent layer requires new tools in both agents plus new internal API routes to bridge them.
 
 ---
 
-### P1-3: `store_discovery_fact` Currently Returns Slot Machine Fields That Are Removed -- No Replacement State Contract
+## Part 1: Existing Calendar Infrastructure
 
-**Location:** Plan Phase 3 (lines 276-368) + Phase 4 tool updates (line 435)
-**Cross-ref:** Current `discovery.ts:105-119` returns `nextAction`, `readySections`, `missingForNext`, `slotMetrics`
+### 1.1 Backend Calendar Stack (Already Implemented)
 
-The plan says to remove the slot machine, but the entire tenant agent prompt (system.ts lines 182-197) is built around following `nextAction` deterministically: `ASK`, `BUILD_FIRST_DRAFT`, `TRIGGER_RESEARCH`, etc. The plan's Phase 4 says "Remove slot machine nextAction. Return simple state object." but never defines what that state object looks like.
+**Port:**
 
-**Impact:** Without a defined response contract for `store_discovery_fact`, the agent has no signal for when to:
+- `/Users/mikeyoung/CODING/MAIS/server/src/lib/ports/calendar.port.ts`
+- `CalendarProvider` interface defines: `isDateAvailable()`, optional `createEvent()`, optional `deleteEvent()`, optional `getBusyTimes()`
 
-- Stop asking questions and start building
-- Check if MVP is complete
-- Transition from Phase 1 to Phase 2
+**Adapters:**
 
-The plan says the LLM decides, but there's no structured data for it to decide WITH. The current agent is trained on specific response fields (`nextAction`, `missingForNext`). Removing these without a replacement contract means the agent will hallucinate next steps.
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/gcal.adapter.ts` — `GoogleCalendarAdapter`
+  - Reads FreeBusy API (read-only, per-tenant config, 60s cache)
+  - Supports per-tenant calendar config decrypted from `tenant.secrets.calendar`
+  - Falls back to global env var config, then gracefully degrades to "available" on missing creds
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/google-calendar-sync.adapter.ts` — `GoogleCalendarSyncAdapter` (extends `GoogleCalendarAdapter`)
+  - Adds `createEvent()` — creates Google Calendar events with booking metadata
+  - Adds `deleteEvent()` — deletes Google Calendar events
+  - Adds `getBusyTimes()` — FreeBusy range queries for two-way sync
 
-**Fix:** Define an explicit `StoreFactResponse` contract:
+**Service:**
 
-```typescript
-{
-  stored: true,
-  key: string,
-  totalFactsKnown: number,
-  knownFactKeys: string[],
-  currentPhase: 'NOT_STARTED' | 'BUILDING' | 'COMPLETED',
-  mvpReadiness: {
-    hasSegment: boolean,
-    hasTiers: boolean,
-    mvpSectionsReady: boolean, // from SectionContentService
-    missingItems: string[], // human-readable
-  }
-}
-```
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/google-calendar.service.ts` — `GoogleCalendarService`
+  - `createAppointmentEvent()` — wraps `createEvent()` with graceful degradation
+  - `cancelAppointmentEvent()` — wraps `deleteEvent()`
+  - `getBusyTimes()` — wraps `getBusyTimes()` with graceful degradation
 
----
+**Mock:**
 
-### P1-4: Customer Agent Tool Inventory Incomplete -- 7 Tools Need Package-to-Tier Migration
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/mock/calendar.provider.ts` — `MockCalendarProvider`
+  - Fully implements `CalendarProvider` including `createEvent()` and `deleteEvent()`
+  - In-memory event store with `markBusy()` helper for tests
 
-**Location:** Plan Phase 8 (lines 825-858)
-**Cross-ref:** `server/src/agent-v2/deploy/customer/src/tools/booking.ts` (7 tools), `agent.ts` (13 total tools)
+**Wiring (DI):**
 
-The plan says "Update package browsing tools to use Tier" but only mentions files generically. The actual customer agent has these Package-dependent tools that each need specific changes:
+- `/Users/mikeyoung/CODING/MAIS/server/src/di.ts` lines 480-501, 678-731
+- Real mode: `GoogleCalendarSyncAdapter` instantiated when `GOOGLE_CALENDAR_ID` + `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` env vars are set
+- Event-driven sync: `AppointmentEvents.BOOKED` triggers `createAppointmentEvent()`, `BookingEvents.CANCELLED` triggers `cancelAppointmentEvent()`
+- Google Calendar event IDs stored in booking records via `bookingRepo.updateGoogleEventId()`
 
-| Tool                  | Current Behavior                          | Required Change                            |
-| --------------------- | ----------------------------------------- | ------------------------------------------ |
-| `get_services`        | Calls `/services` -- returns Package list | Must return Segment->Tier hierarchy        |
-| `get_service_details` | Calls `/service-details` with `serviceId` | Must accept `tierId`, return Tier+AddOns   |
-| `recommend_package`   | Accepts `budget: low/medium/high`         | Must recommend Tiers within a Segment      |
-| `create_booking`      | Accepts `serviceId`                       | Must accept `tierId` + optional `addOnIds` |
-| `check_availability`  | Accepts `serviceId`                       | Must accept `tierId` (duration from Tier)  |
-| `answer_faq`          | Unchanged                                 | Unchanged                                  |
-| `get_business_info`   | Unchanged                                 | Should include Segment list                |
+**Availability Integration:**
 
-**Critical:** The `recommend_package` tool name itself must change (per ADK, tool names are part of the LLM's function calling interface). The customer-agent system prompt also references packages extensively.
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/scheduling-availability.service.ts`
+  - `SchedulingAvailabilityService.filterGoogleCalendarConflicts()` queries `getBusyTimes()` with 5-minute cache when generating TIMESLOT slots
+  - Gracefully degrades if Google Calendar unavailable
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/availability.service.ts`
+  - `AvailabilityService.checkAvailability()` calls `calendarProvider.isDateAvailable()` for DATE-based bookings (wedding-style)
 
-**Fix:** Plan Phase 8 needs a tool-by-tool migration table like the one above, plus explicit note that `recommend_package` -> `recommend_tier` is a breaking name change requiring customer-agent prompt update.
+**Tenant Calendar Settings (HTTP API, NOT agent-accessible):**
 
----
+- `/Users/mikeyoung/CODING/MAIS/server/src/routes/tenant-admin-calendar.routes.ts`
+  - `GET /v1/tenant-admin/calendar/status` — check if calendar configured
+  - `POST /v1/tenant-admin/calendar/config` — save calendar ID + service account JSON (encrypted)
+  - `DELETE /v1/tenant-admin/calendar/config` — remove calendar config
+  - `POST /v1/tenant-admin/calendar/test` — verify connection to Google Calendar API
+  - Protected by `tenantAuthMiddleware` — only direct HTTP callers (dashboard frontend) can use these
 
-### P1-5: A2A Commerce JSON Uses `price` (Dollars) but Tier Stores `priceCents` (Cents) -- No Conversion Specified
+**Environment:**
 
-**Location:** Plan Phase 8, A2A Commerce Structure (lines 837-852)
-**Cross-ref:** Plan Phase 1 schema (line 132) -- `priceCents Int`
-
-The A2A commerce JSON example shows:
-
-```json
-{ "name": "Essential", "price": 3500, "features": [...] }
-```
-
-Is `price: 3500` dollars or cents? The Tier model stores `priceCents` (cents). If this is dollars, where does the conversion happen? If it's cents, the customer-agent LLM might tell a customer "The Essential tier is 3500" without knowing the unit.
-
-**Fix:** The A2A serialization endpoint MUST convert `priceCents` to `priceInDollars` (or `priceCents` with explicit unit) before returning to the customer-agent. The JSON contract must document the unit. Recommend: `{ "name": "Essential", "priceCents": 350000, "priceFormatted": "$3,500" }` -- give the LLM a human-readable string.
+- `/Users/mikeyoung/CODING/MAIS/server/src/config/env.schema.ts` — Tier 3 (optional) vars:
+  - `GOOGLE_CALENDAR_ID` — global fallback calendar ID
+  - `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` — global service account credentials
 
 ---
 
-## P2 -- Should Fix Before Implementation
+## Part 2: Agent Tool Inventory
 
-### P2-1: System Prompt Brain Dump Parsing Has No Structured Fallback for Empty Brain Dump
+### 2.1 Tenant-Agent Tools (36 total)
 
-**Location:** Plan Phase 5, System Prompt (lines 496-508)
-**Cross-ref:** Current system.ts lines 131-149 (scripted Q1/Q2)
+Source: `/Users/mikeyoung/CODING/MAIS/server/src/agent-v2/deploy/tenant/src/tools/`
 
-The plan's experience adaptation table (lines 500-502) assumes a brain dump exists. What happens when `tenant.brainDump` is null or empty string?
+**Calendar-related tools:** NONE
 
-- New tenants with empty brain dump get no context-aware greeting
-- The agent has nothing to adapt to -- but the plan removes Q1 ("what city and state") and Q2 ("what do you do") because the signup form collects those
-- If city/state/brainDump are all optional (Plan Phase 2, line 245-246), a tenant could register with ONLY email+password+businessName
+Relevant context: the `navigateToDashboardSectionTool` mentions "bookings (calendar & appointments)" as a navigation target, but this only navigates the frontend UI — it performs no calendar data operations.
 
-**Fix:** Add explicit fallback path in system prompt: "If brain dump is empty AND city/state are missing, fall back to Q1 (location) and Q2 (what do you do). If brain dump is empty but city/state exist, skip to segment discovery." The plan mentions this in Open Question #6 but doesn't codify it into the Phase 5 prompt spec.
+All 36 tenant-agent tools are:
 
----
+- Navigation (3): `navigate_to_dashboard_section`, `scroll_to_website_section`, `show_preview`
+- Vocabulary (1): `resolve_vocabulary`
+- Storefront read (2): `get_page_structure`, `get_section_content`
+- Storefront write (6): `update_section`, `add_section`, `remove_section`, `reorder_sections`, `publish_section`, `discard_section`
+- Branding (1): `update_branding`
+- Draft management (3): `preview_draft`, `publish_draft`, `discard_draft`
+- Marketing copy (2): `generate_copy`, `improve_section_copy`
+- Project management (7): `get_pending_requests`, `get_customer_activity`, `get_project_details`, `approve_request`, `deny_request`, `send_message_to_customer`, `update_project_status`
+- Discovery/onboarding (3): `store_discovery_fact`, `get_known_facts`, `build_first_draft`
+- Catalog management (3): `manage_segments`, `manage_tiers`, `manage_addons`
+- Guided refinement (4): `generate_section_variants`, `apply_section_variant`, `mark_section_complete`, `get_next_incomplete_section`
+- Research (1): `delegate_to_research`
 
-### P2-2: State Management -- 2 Discovery Fact Keys (`primarySegment`, `tiersConfigured`) Are Insufficient for Session Recovery
+### 2.2 Customer-Agent Tools (13 total)
 
-**Location:** Plan Phase 3, `computeOnboardingState()` (lines 308-325)
-**Cross-ref:** Current `discovery-facts.ts` has 15 keys
+Source: `/Users/mikeyoung/CODING/MAIS/server/src/agent-v2/deploy/customer/src/tools/`
 
-The plan reduces state tracking to 2 fact keys: `primarySegment` and `tiersConfigured`. But session recovery needs more:
+**Calendar-related tools:** NONE
 
-- Has the brain dump been processed? (Prevents re-processing on session restart)
-- Has the agent already greeted? (Prevents re-greeting on page refresh)
-- Which MVP sections have been built? (Prevents rebuilding HERO when only ABOUT is missing)
-- Has research been offered/completed? (Prevents re-offering)
-- Is the tenant in Phase 1 or Phase 2? (Post-reveal state)
+The `checkAvailabilityTool` calls the `/availability` internal route which queries `SchedulingAvailabilityService` (which does use Google Calendar busy times for TIMESLOT bookings), but the agent has no direct awareness of the calendar integration — it receives available/unavailable slots.
 
-The current system tracks 15 facts which is too many, but 2 is too few. The plan says "Agent maintains this mentally via `get_known_facts` + `get_page_structure`" but this creates a cold-start problem: a new agent session must make 2 tool calls before it can say anything.
+All 13 customer-agent tools are:
 
-**Fix:** Track at least 5 state signals in `discoveryFacts`: `primarySegment`, `tiersConfigured`, `mvpSectionsBuilt`, `revealShown`, `currentPhase`. These are the minimum for deterministic session recovery without requiring tool calls.
+- Booking (7): `get_services`, `get_service_details`, `check_availability`, `get_business_info`, `answer_faq`, `recommend_tier`, `create_booking`
+- Project (6): `bootstrap_customer_session`, `get_project_status`, `get_prep_checklist`, `answer_prep_question`, `get_timeline`, `submit_request`
 
----
+### 2.3 Internal API Routes Available to Agents
 
-### P2-3: Research On-Demand Detection -- "Stuck" Is Undefined
+Source: `/Users/mikeyoung/CODING/MAIS/server/src/routes/internal-agent-booking.routes.ts`
 
-**Location:** Plan Phase 5, Research section (lines 519-524)
-**Cross-ref:** Current `research.ts` description (line 131): "WHEN TO CALL: As soon as you have businessType + location"
+The `/availability` route (POST) does query `schedulingAvailabilityService.getAvailableSlots()`, which internally uses Google Calendar busy times. However:
 
-The plan says the agent should offer research when "Tenant is stuck on pricing." But "stuck" is a subjective LLM judgment. What counts as stuck?
-
-- Tenant says "I don't know what to charge" -- clearly stuck
-- Tenant says "hmm, let me think" -- maybe thinking, not stuck
-- Tenant gives no response for 30 seconds -- browser doesn't detect silence
-- Tenant says "that seems expensive" -- stuck on THEIR pricing, not needing research
-
-The current system auto-fires research deterministically (after businessType + location). The new system relies entirely on LLM judgment for a $0.03-0.10 API call.
-
-**Fix:** Add specific trigger phrases to the system prompt: "Offer research when tenant says any of: 'don't know what to charge', 'no idea about pricing', 'what should I charge', 'what do others charge'. Do NOT offer research for: 'let me think', 'I'll figure it out', general hesitation."
+- Line 254 contains an explicit `TODO`: "Integrate with AvailabilityService for DATE bookings" — DATE-based bookings always return `available: true` without checking Google Calendar
+- The TIMESLOT path correctly threads through Google Calendar conflict filtering
+- There is no internal agent route for calendar configuration management
 
 ---
 
-### P2-4: `manage_tiers` Tool Missing `segmentId` Flow -- How Does the Agent Know Which Segment to Create Tiers For?
+## Part 3: Gap Analysis for Google Calendar Integration
 
-**Location:** Plan Phase 4b, `manage_tiers` tool (lines 418-428)
-**Cross-ref:** Current schema `Tier.segmentId` is required (line 266)
+### P1 Findings (Breaking / Blocking)
 
-The plan shows `manage_tiers` accepts `segmentId` as a parameter. But during the MVP flow (1 segment), the agent must:
+**P1-CAL-01: DATE booking availability never checks Google Calendar via agent**
 
-1. Create a segment first via `manage_segments`
-2. Get back the `segmentId`
-3. Pass it to `manage_tiers` for each of the 3 tiers
+- File: `/Users/mikeyoung/CODING/MAIS/server/src/routes/internal-agent-booking.routes.ts`, lines 252-264
+- The `/availability` internal route has a `TODO` and returns `available: true` for all DATE-type bookings without querying `AvailabilityService` (which does check Google Calendar via `calendarProvider.isDateAvailable()`). When a customer-agent calls `check_availability` for a wedding/event date booking, Google Calendar busy status is silently ignored.
+- Fix: Wire `AvailabilityService.checkAvailability()` into the DATE branch of the `/availability` route.
 
-The plan doesn't specify whether `segmentId` is required or optional on `manage_tiers`. If optional, how does the tool know which segment? If the tenant has only 1 segment, should the tool auto-detect it?
+**P1-CAL-02: No agent tool exists for tenant to manage calendar connection**
 
-**Fix:** Document the tool interaction flow explicitly:
+- The tenant-admin calendar config routes are HTTP-only, protected by `tenantAuthMiddleware`. They are not accessible from tenant-agent, which uses `INTERNAL_API_SECRET` authentication.
+- If a tenant asks their AI assistant "Can you connect my Google Calendar?" — the agent has no tool to perform or guide this operation.
+- Fix: Either expose calendar config management via internal agent routes with new tenant-agent tools, or make tenant-agent aware that it should navigate the user to the settings page via `navigate_to_dashboard_section`.
 
-- If `segmentId` is omitted AND tenant has exactly 1 segment, auto-resolve to that segment
-- If `segmentId` is omitted AND tenant has multiple segments, return error with segment list
-- This prevents the agent from needing to call `manage_segments(action: 'list')` before every `manage_tiers` call
+**P1-CAL-03: No internal API route for calendar status or config accessible to agents**
 
----
+- The internal agent API at `/v1/internal/agent/*` has no calendar management endpoints at all.
+- New tools added to tenant-agent would have no backend routes to call.
 
-### P2-5: Stripe Transition Window Risk Underspecified -- "48 Hours" Is Arbitrary
+### P2 Findings (Significant Gaps)
 
-**Location:** Plan Risk Analysis (line 981)
-**Cross-ref:** `server/src/services/checkout-session.factory.ts`, `server/test/fixtures/stripe-events.ts`
+**P2-CAL-01: No `get_calendar_status` tool for tenant-agent**
 
-The plan says keep both `metadata.tierId` AND `metadata.packageId` for "48 hours." But:
+- A tenant should be able to ask "Is my Google Calendar connected?" and get an answer in chat.
+- Currently there is no tool for this. The tenant-admin HTTP API exists but is not agent-accessible.
+- Suggested new tool: `get_calendar_status` (T1) calling an internal route that checks `tenantRepo.findById()` and inspects `tenant.secrets.calendar`.
 
-- Stripe checkout sessions can remain open for up to 24 hours (configurable)
-- Customers can receive booking confirmation emails with packageId references long after
-- The `checkout-session.factory.ts` uses a generic `metadata: Record<string, string>` -- the actual metadata is constructed by callers (`booking.service.ts`, `appointment-booking.service.ts`, `wedding-booking.orchestrator.ts`)
+**P2-CAL-02: No `configure_calendar` or `connect_google_calendar` tool**
 
-**Fix:** The plan should:
+- Connecting Google Calendar requires providing a calendar ID and service account JSON — a multi-step, sensitive operation.
+- The existing HTTP route (`POST /v1/tenant-admin/calendar/config`) handles encryption and storage, but is not callable by the agent.
+- Options: (a) New T3 agent tool proxying to admin calendar config logic via a new internal route, or (b) agent navigates tenant to settings page via `navigate_to_dashboard_section`.
 
-1. Identify all callers that pass metadata to `CheckoutSessionFactory` (there are at least 3 services)
-2. Specify the exact dual-read pattern: `const tierId = metadata.tierId ?? tierLookupCache.get(metadata.packageId)`
-3. Set the transition window to 7 days (not 48h) since customers may revisit stale confirmation pages
+**P2-CAL-03: Customer-agent returns incomplete availability data for DATE bookings**
 
----
+- Even when Google Calendar is configured, the `/availability` route's DATE branch ignores it (P1-CAL-01). The customer-agent cannot surface calendar-based conflicts to the customer.
+- Once P1-CAL-01 is fixed, this should work transparently since the tool already presents available/unavailable dates.
 
-### P2-6: Constants Drift Risk -- Plan Adds New Constants But Only Has ONE Drift Test
+**P2-CAL-04: No `get_calendar_busy_times` or upcoming events tool for tenant-agent**
 
-**Location:** Plan Phase 9 (lines 890-898)
-**Cross-ref:** Current `shared.ts` syncs `MVP_SECTION_TYPES`, `SEED_PACKAGE_NAMES`, `TOTAL_SECTIONS`
+- Tenant cannot ask "What's on my calendar next week?" or "Show me my blocked days."
+- The `GoogleCalendarSyncAdapter.getBusyTimes()` could support this but no tool or internal route exists.
 
-The plan proposes a constants drift test for `MVP_SECTION_TYPES`. But the redesign introduces NEW constants that also need sync:
+**P2-CAL-05: `getNextAvailableSlot()` does not apply Google Calendar filtering**
 
-- Max segments per tenant (5) -- where is the canonical source?
-- Max tiers per segment (plan says 5 but design says 3 default) -- which is it?
-- Tier features JSON schema -- who validates it?
-- Phase names (NOT_STARTED, BUILDING, COMPLETED, SKIPPED)
+- File: `/Users/mikeyoung/CODING/MAIS/server/src/services/scheduling-availability.service.ts`, lines 564-644
+- `getNextAvailableSlot()` does not call `filterGoogleCalendarConflicts()` — only `getAvailableSlots()` applies it. If a slot is blocked on Google Calendar but not in the MAIS DB, "book next available" logic may offer that slot.
 
-These are all values that exist in both the backend (Prisma/services) and the Cloud Run agent (constants/shared.ts).
+### P3 Findings (Improvements / Nice-to-Have)
 
-**Fix:** Create a comprehensive constants sync test that covers ALL synced values, not just MVP section types. Include: max segments, default tier count, phase names, and the features JSON schema.
+**P3-CAL-01: System prompts do not mention calendar capabilities**
 
----
+- Neither `TENANT_AGENT_SYSTEM_PROMPT` nor `CUSTOMER_AGENT_SYSTEM_PROMPT` mentions Google Calendar integration, what it does, or how to guide users through setup.
+- Once calendar tools are added, both prompts must be updated. The tenant prompt needs a forbidden-word equivalent (e.g., "service account JSON" → "your calendar credentials" or "a key file from Google").
 
-### P2-7: `wrapToolExecute` Used in Tenant Agent but Not in Customer Agent -- Inconsistent Error Handling
+**P3-CAL-02: Availability tool does not distinguish reason for unavailability**
 
-**Location:** Plan Phase 8 (customer agent updates)
-**Cross-ref:** Tenant tools use `wrapToolExecute` (e.g., `packages.ts:129`), Customer tools use raw `safeParse` (e.g., `booking.ts:73`)
+- `checkAvailabilityTool` returns `available: true/false` but not why a slot/date is unavailable.
+- `AvailabilityService.checkAvailability()` returns a `reason` field (`booked`, `calendar`, `blackout`). Surfacing this would let the agent say "That date is already on your Google Calendar" vs "That date is already booked by a client."
 
-The tenant-agent tools use `wrapToolExecute()` which provides structured error handling, logging, and the `requireTenantId()` guard. The customer-agent tools (`booking.ts`) use manual `safeParse` + `getTenantId` (nullable return, no throw).
+**P3-CAL-03: `GoogleCalendarSyncAdapter` does not use per-tenant config for `createEvent`/`deleteEvent`**
 
-When migrating customer-agent tools for Phase 8, the plan doesn't specify whether to also upgrade to `wrapToolExecute`. This means the new tier-based customer tools will inherit the old inconsistent pattern.
+- File: `/Users/mikeyoung/CODING/MAIS/server/src/adapters/google-calendar-sync.adapter.ts`
+- `GoogleCalendarSyncAdapter` uses constructor-injected `this.calendarId` and `this.serviceAccountJsonBase64` (global config) for `createEvent()` and `deleteEvent()`. The per-tenant config lookup (`getConfigForTenant()`) is only used in the inherited `isDateAvailable()`. Tenants who configure their own Google Calendar credentials via `POST /v1/tenant-admin/calendar/config` will have their events written to the global calendar, not their personal one.
+- This is a backend service bug independent of agent tools but would be triggered by any booking created through the agent.
 
-**Fix:** Phase 8 should explicitly include: "Upgrade customer-agent tools to use `wrapToolExecute` pattern from tenant-agent (includes structured error handling, `requireTenantId` guard, and `validateParams`)."
+**P3-CAL-04: Agent tool architecture for new calendar tools is well-established**
 
----
+- The pattern for adding calendar tools is clear: (1) create `tools/calendar.ts` with `FunctionTool` instances using `wrapToolExecute` + `validateParams` + `requireTenantId`, (2) export from `tools/index.ts`, (3) import and register in `agent.ts`, (4) add corresponding route in a new `internal-agent-calendar.routes.ts`.
+- Trust tier guidance: `get_calendar_status` / `test_calendar_connection` → T1; `configure_calendar` / `remove_calendar` → T3 (modifies secrets).
 
-### P2-8: `build_first_draft` Currently Cleans Up Seed Packages -- Tier Equivalent Not Specified
+**P3-CAL-05: Agent comment in navigate.ts suggests calendar is a bookings dashboard section**
 
-**Location:** Plan Phase 4 (line 437): "Replace seed package cleanup with seed tier check"
-**Cross-ref:** Current `first-draft.ts:203-233` deletes `$0 packages named Basic/Standard/Premium`
-
-The plan says to update `build_first_draft` to "replace seed package cleanup with seed tier check" but doesn't specify:
-
-- Are seed tiers created during tenant provisioning? (Current: 3 seed packages are created)
-- If yes, what are their names? (Need equivalent of `SEED_PACKAGE_NAMES` for tiers)
-- What's the cleanup criteria? (`priceCents === 0`? Name match? Both?)
-
-**Fix:** Define: Will tenant provisioning create 3 seed tiers per default segment? If so, define `SEED_TIER_NAMES` constant and the cleanup logic in `build_first_draft`. If NOT creating seed tiers (because the agent builds them via conversation), update the provisioning service to NOT create any tiers -- and document this change.
+- File: `/Users/mikeyoung/CODING/MAIS/server/src/agent-v2/deploy/tenant/src/tools/navigate.ts`, line 50
+- The dashboard navigation description says "bookings (calendar & appointments)" — this implies the bookings view has calendar UI. If that is the case, directing tenants to "bookings" via `navigate_to_dashboard_section` is a valid short-term workaround while calendar tools are not yet implemented.
 
 ---
 
-### P2-9: `manage_segments` Missing `tenantId` in Schema -- Segment Model Requires It
+## Part 4: Recommended Tool Architecture for Calendar Integration
 
-**Location:** Plan Phase 4b, `manage_segments` tool (lines 412-417)
-**Cross-ref:** Schema `Segment.tenantId` (line 221) + `@@unique([tenantId, slug])` (line 254)
+### Tools to Add to `tenant-agent`
 
-The plan's `manage_segments` tool description says "Actions: list, create, update, delete" but doesn't show the parameter schema. The `Segment` model requires `tenantId`, and slug must be unique per tenant.
+1. **`get_calendar_status`** (T1, new file `tools/calendar.ts`)
+   - Calls: new internal route `GET /v1/internal/agent/calendar/status`
+   - Returns: `{ configured: boolean, calendarId: string | null }`
+   - Use: tenant asks "Is my Google Calendar connected?"
 
-The plan says the tool "Returns full state: `{ segment, totalSegments, maxSegments: 5 }`" but doesn't specify:
+2. **`configure_calendar`** (T3, same file)
+   - Calls: new internal route `POST /v1/internal/agent/calendar/config`
+   - Proxies to existing admin calendar config logic (encrypt + store)
+   - T3 because it modifies tenant secrets — requires explicit confirmation
+   - Use: "Connect my Google Calendar"
 
-- Does the tool auto-generate slug from name? (Like `packages.ts:77-83` does with `slugify`)
-- Is `tenantId` injected from context? (Must be -- never accept from LLM params, per multi-tenant isolation rules)
-- Are `heroTitle`, `heroSubtitle` required? (Current Segment schema has non-nullable `heroTitle`)
+3. **`test_calendar_connection`** (T1, same file)
+   - Calls: new internal route `POST /v1/internal/agent/calendar/test`
+   - Returns: `{ success: boolean, calendarName?: string, error?: string }`
+   - Use: troubleshooting after configuration
 
-**Fix:** Specify that `manage_segments` follows the same pattern as `manage_packages`: `tenantId` injected via `requireTenantId(context)`, slug auto-generated via `slugify(name)`, and `heroTitle` defaulted to segment name if not provided.
+4. **`remove_calendar`** (T3, same file)
+   - Calls: new internal route `DELETE /v1/internal/agent/calendar/config`
+   - T3 because it deletes tenant secrets
+   - Use: "Disconnect my Google Calendar"
 
----
+### Tools NOT needed in `customer-agent`
 
-## P3 -- Nice to Fix
+The customer-agent should not access calendar configuration. Calendar-aware availability is already transparently handled through `SchedulingAvailabilityService` once P1-CAL-01 (DATE booking gap) is fixed.
 
-### P3-1: Non-English Brain Dump -- Plan Acknowledges but Doesn't Address MVP Behavior
+### Internal Routes to Create
 
-**Location:** Plan Future Considerations (line 1008)
-**Cross-ref:** System prompt is entirely in English
+New file: `server/src/routes/internal-agent-calendar.routes.ts`
 
-The plan defers "multi-language brain dump" to future work, but doesn't specify MVP behavior. If a tenant writes their brain dump in Spanish, the English-prompted agent will attempt to parse it (Gemini 2.0 Flash supports multilingual). The agent might:
-
-- Respond in English (confusing)
-- Respond in Spanish (great, but system prompt says "got it | done | on it")
-- Mix languages (worst case)
-
-**Fix:** Add one line to the system prompt: "If the brain dump is in a non-English language, respond in that language but use English for tool calls. If you can't parse the brain dump, acknowledge it and ask in English."
-
----
-
-### P3-2: Brain Dump Max Length (2000 chars) Isn't Validated on Frontend
-
-**Location:** Plan Phase 2 acceptance criteria (line 268): "Brain dump max length: 2000 characters"
-**Cross-ref:** Backend validation at line 245-246 uses `z.string().optional()` -- no `.max(2000)`
-
-The plan adds a max length to acceptance criteria but the Zod schema shown on line 243 doesn't include it:
-
-```typescript
-brainDump: z.string().optional(), // Missing .max(2000)
-```
-
-**Fix:** Update both: backend Zod schema to `z.string().max(2000).optional()` AND frontend textarea to include `maxLength={2000}` with a character counter.
+- Must use `INTERNAL_API_SECRET` authentication (same pattern as all agent routes)
+- Must scope all operations by `tenantId` from request body
+- Wraps the same logic as `tenant-admin-calendar.routes.ts` but with internal auth
 
 ---
 
-### P3-3: Plan Phase 1 Schema Shows `photos Json` on Tier but No Migration for Existing Package Photos
+## Part 5: File Map
 
-**Location:** Plan Phase 1, Tier model (line 143): `photos Json @default("[]")`
-**Cross-ref:** Plan Phase 7 migration script (lines 666-786) -- no photo migration step
-
-The Tier model in Phase 1 includes a `photos` field to replace Package photos. But the Phase 7 migration script that converts Package->Tier doesn't copy `Package.photos` to `Tier.photos`. This means existing Package photos would be lost.
-
-**Fix:** Add a step to the Phase 7 migration: copy `Package.photos` (if the field exists) to the corresponding `Tier.photos` during the Package->Tier data migration.
+| File                                                     | Role         | Calendar Relevance                                                                       |
+| -------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------- |
+| `server/src/lib/ports/calendar.port.ts`                  | Interface    | Defines `CalendarProvider` with optional `createEvent`, `deleteEvent`, `getBusyTimes`    |
+| `server/src/adapters/gcal.adapter.ts`                    | Adapter      | Read-only FreeBusy, per-tenant config support                                            |
+| `server/src/adapters/google-calendar-sync.adapter.ts`    | Adapter      | Full sync: create/delete events, FreeBusy range queries                                  |
+| `server/src/services/google-calendar.service.ts`         | Service      | Wraps adapter with graceful degradation                                                  |
+| `server/src/services/scheduling-availability.service.ts` | Service      | Uses `getBusyTimes` for TIMESLOT slot generation; `getNextAvailableSlot` gap (P2-CAL-05) |
+| `server/src/services/availability.service.ts`            | Service      | Uses `isDateAvailable` for DATE booking availability                                     |
+| `server/src/adapters/mock/calendar.provider.ts`          | Mock         | Full mock including event creation/deletion                                              |
+| `server/src/routes/tenant-admin-calendar.routes.ts`      | HTTP routes  | Calendar config management (HTTP only, not agent-accessible)                             |
+| `server/src/routes/internal-agent-booking.routes.ts`     | Agent routes | `/availability` has DATE booking TODO — P1-CAL-01                                        |
+| `server/src/di.ts`                                       | Wiring       | Event-driven sync, calendar adapter instantiation                                        |
+| `server/src/config/env.schema.ts`                        | Config       | `GOOGLE_CALENDAR_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` env vars                      |
+| `server/src/agent-v2/deploy/tenant/src/agent.ts`         | Agent        | 36 tools, zero calendar tools                                                            |
+| `server/src/agent-v2/deploy/customer/src/agent.ts`       | Agent        | 13 tools, zero calendar tools                                                            |
+| `server/src/agent-v2/deploy/tenant/src/tools/`           | Tool dir     | 16 tool files, no `calendar.ts`                                                          |
+| `server/src/agent-v2/deploy/customer/src/tools/`         | Tool dir     | 2 tool files, no calendar tools                                                          |
 
 ---
 
-### P3-4: Slug Collision Detection Mentioned in Risk Table but Not in Tool Design
+## Finding Counts
 
-**Location:** Plan Risk Analysis (line 996): "LLM generates duplicate tier/segment slugs"
-**Cross-ref:** Current `packages.ts:77-83` has `slugify()` but no collision detection
+| Priority | Count | Findings                                                                                                                                                                                                             |
+| -------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1       | 3     | DATE booking ignores Google Calendar (P1-CAL-01); no agent calendar management tools (P1-CAL-02); no internal calendar routes for agents (P1-CAL-03)                                                                 |
+| P2       | 5     | Missing `get_calendar_status` (P2-CAL-01); missing `configure_calendar` (P2-CAL-02); DATE availability incomplete (P2-CAL-03); no upcoming events tool (P2-CAL-04); `getNextAvailableSlot` bypasses gcal (P2-CAL-05) |
+| P3       | 5     | System prompt gaps (P3-CAL-01); reason field not surfaced (P3-CAL-02); per-tenant `createEvent` bug (P3-CAL-03); tool architecture note (P3-CAL-04); navigate workaround exists (P3-CAL-05)                          |
 
-The plan's risk table says "Add slug collision detection in agent tool. Auto-append number: 'weddings-2'." But this isn't reflected in the Phase 4 tool design or acceptance criteria.
-
-**Fix:** Add to Phase 4 acceptance criteria: "Segment and Tier tools must detect slug collisions and auto-suffix with incrementing number (e.g., `weddings-2`, `weddings-3`). Collision check uses `@@unique([tenantId, slug])` constraint -- catch Prisma unique violation and retry with suffix."
-
----
-
-## Summary
-
-| Severity  | Count  | Key Themes                                                                                                                                                                                                |
-| --------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P1        | 5      | Price conversion safety, reveal trigger validation, state contract, customer-agent tool inventory, A2A unit ambiguity                                                                                     |
-| P2        | 9      | Empty brain dump fallback, session recovery state, research trigger definition, segmentId flow, Stripe window, constants drift, error handling consistency, seed tier cleanup, segment tenantId injection |
-| P3        | 4      | Non-English brain dump, max length validation, photo migration, slug collision                                                                                                                            |
-| **Total** | **18** |                                                                                                                                                                                                           |
-
-### Highest-Impact Recommendations
-
-1. **P1-1 + P1-5:** Establish a firm rule: LLMs NEVER do arithmetic. All tools accept human units (dollars, not cents) and convert in TypeScript. A2A JSON should include both `priceCents` and `priceFormatted`.
-
-2. **P1-2 + P1-3:** Define the complete `StoreFactResponse` contract and the reveal readiness check BEFORE starting implementation. These are the backbone of the new system -- getting them wrong means the agent can't make progress decisions.
-
-3. **P1-4:** Create the customer-agent tool migration table now. Phase 8 is listed last but has the most cross-cutting impact -- knowing the tool changes early will influence Phase 4 API design.
+**Total: 13 findings (3 P1, 5 P2, 5 P3)**

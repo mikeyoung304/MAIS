@@ -630,8 +630,17 @@ export class SchedulingAvailabilityService {
         continue; // No slots generated for this day
       }
 
-      // Filter slots against bookings (in memory)
-      const availableSlots = this.filterConflictingSlots(slots, activeBookings);
+      // Filter slots against MAIS bookings (in memory)
+      let availableSlots = this.filterConflictingSlots(slots, activeBookings);
+
+      // Filter slots against Google Calendar events (two-way sync, same as getAvailableSlots)
+      if (this.googleCalendarService) {
+        availableSlots = await this.filterGoogleCalendarConflicts(
+          tenantId,
+          checkDate,
+          availableSlots
+        );
+      }
 
       // Find first available slot
       const availableSlot = availableSlots.find((slot) => slot.available);

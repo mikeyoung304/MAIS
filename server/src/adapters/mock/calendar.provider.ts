@@ -21,7 +21,7 @@ export class MockCalendarProvider implements CalendarProvider {
     }
   >();
 
-  async isDateAvailable(date: string): Promise<boolean> {
+  async isDateAvailable(date: string, _tenantId?: string): Promise<boolean> {
     const dateKey = toUtcMidnight(date);
     return !calendarBusyDates.has(dateKey);
   }

@@ -139,7 +139,17 @@ const ConfigSchema = z.object({
   MEDIA_COST_CRITICAL_PERCENT: z.string().optional(),
 
   // --- Security ---
-  TENANT_SECRETS_ENCRYPTION_KEY: z.string().optional(),
+  TENANT_SECRETS_ENCRYPTION_KEY: z
+    .string()
+    .length(
+      64,
+      'TENANT_SECRETS_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32'
+    )
+    .regex(
+      /^[0-9a-f]+$/i,
+      'TENANT_SECRETS_ENCRYPTION_KEY must be hexadecimal characters only. Generate with: openssl rand -hex 32'
+    )
+    .optional(),
 
   // --- Testing ---
   E2E_TEST: z.string().optional(),

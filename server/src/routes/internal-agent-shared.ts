@@ -14,6 +14,7 @@ import { ConcurrentModificationError, NotFoundError, ValidationError } from '../
 import type { CatalogService } from '../services/catalog.service';
 import type { SchedulingAvailabilityService } from '../services/scheduling-availability.service';
 import type { BookingService } from '../services/booking.service';
+import type { AvailabilityService } from '../services/availability.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { ServiceRepository } from '../lib/ports';
 import type { ContextBuilderService } from '../services/context-builder.service';
@@ -213,6 +214,8 @@ export interface BookingRoutesDeps {
   bookingService: BookingService;
   tenantRepo: PrismaTenantRepository;
   serviceRepo?: ServiceRepository;
+  /** Availability service for DATE booking checks (blackouts + bookings + calendar) */
+  availabilityService?: AvailabilityService;
   internalApiSecret?: string;
 }
 

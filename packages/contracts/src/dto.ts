@@ -1196,7 +1196,24 @@ export type CalendarStatusResponse = z.infer<typeof CalendarStatusResponseSchema
  */
 export const CalendarConfigInputSchema = z.object({
   calendarId: z.string().min(1, 'Calendar ID is required'),
-  serviceAccountJson: z.string().min(1, 'Service account JSON is required'),
+  serviceAccountJson: z
+    .string()
+    .min(1, 'Service account JSON is required')
+    .refine(
+      (val) => {
+        try {
+          const parsed = JSON.parse(val) as Record<string, unknown>;
+          return (
+            typeof parsed['client_email'] === 'string' && typeof parsed['private_key'] === 'string'
+          );
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: 'Service account JSON must contain client_email and private_key fields',
+      }
+    ),
 });
 
 export type CalendarConfigInput = z.infer<typeof CalendarConfigInputSchema>;

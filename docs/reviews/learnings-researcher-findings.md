@@ -1,485 +1,297 @@
-# Learnings Researcher Findings — Storefront Frontend Changes (2026-02-18, Second Run)
+# Learnings Researcher Findings — Google Calendar Integration & OAuth/Auth Patterns
 
-**Date:** 2026-02-18 (second run — first run covered deploy pipeline issues)
-**Scope searched:** Nav derivation from section types, field name remapping in storefront-utils, domainParam removal, HowItWorksSection deletion, reveal-on-scroll removal, testimonials data transform
-**Solutions searched:** `docs/solutions/`, `docs/plans/`
+**Date:** 2026-02-20
+**Scope searched:** `docs/solutions/`, `docs/plans/`
+**Topics searched:** Google Calendar integration, OAuth flows, third-party auth, tenant settings / credential management, Stripe integration patterns, integration architecture decisions
 
 ---
 
-## Finding 1: Nav from Section Types — EXACT MATCH IN COMPOUND DOC
+## Finding 1: Google Calendar One-Way Sync — FULLY IMPLEMENTED
 
-The bug this change fixes is fully documented in `docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md` (Issue 2, PR #62):
+**Sources:**
 
-> Two incompatible derivation functions: TenantNav used getNavItemsFromHomeSections() (section-type scanning); TenantFooter used getNavigationItems() (page-level enabled flags). In single-page mode, sectionsToPages() sets about.enabled = false. Footer showed only "Home".
->
-> Fix: Unified footer to use getNavItemsFromHomeSections(). Deleted getNavigationItems(), buildNavHref(), PAGE_PATHS. Removed unused domainParam prop from TenantSiteShell.
+- `/Users/mikeyoung/CODING/MAIS/docs/setup/google-calendar-integration.md`
+- `/Users/mikeyoung/CODING/MAIS/docs/setup/google-calendar-implementation-summary.md`
+- `/Users/mikeyoung/CODING/MAIS/docs/setup/GOOGLE_CALENDAR_QUICK_START.md`
 
-**Known pattern (enforced rule):** Both TenantNav and TenantFooter must use the same derivation function. Single-page rule — never derive nav from page.enabled flags when sections live on home.
+**What exists:** A complete, production-ready Google Calendar one-way sync implementation (MAIS → Google). Implemented via `GoogleCalendarService` + `GoogleCalendarSyncAdapter`.
 
-**Prevention test to add:**
+**Architecture:**
+
+- Uses Google service account JWT authentication — no OAuth user flow required for the platform-level sync
+- Service account credentials stored as `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` (base64-encoded JSON)
+- `CalendarProvider` interface has optional `createEvent?()` and `deleteEvent?()` methods for backward compat
+- `Booking.googleEventId` field already exists in schema — no migration needed
+- MockCalendarProvider has full in-memory implementation for dev/test
+- Calendar sync failures are **never blocking** — booking succeeds even if sync fails (graceful degradation pattern)
+
+**Key patterns:**
 
 ```typescript
-it('nav and footer derive identical items', () => {
-  const navItems = getNavItemsFromHomeSections(buildTestPagesConfig());
-  expect(navItems.length).toBeGreaterThan(1);
+// Direct integration pattern
+const result = await googleCalendar.createAppointmentEvent(tenantId, {
+  id: booking.id,
+  serviceName, clientName, clientEmail, startTime, endTime, notes,
+});
+if (result) {
+  await bookingRepo.updateGoogleEventId(tenantId, booking.id, result.eventId);
+}
+
+// Event-driven alternative
+eventEmitter.subscribe('AppointmentBooked', async (payload) => { ... });
+```
+
+**Env vars:**
+
+- `GOOGLE_CALENDAR_ID` — optional, falls back to mock
+- `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` — optional, falls back to mock
+
+**Limitation noted:** Current implementation is a SINGLE shared calendar (platform-level). Per-tenant calendars are called out as a future enhancement (store `googleCalendarId` in Tenant model). OAuth2 user flow (letting couples sync to personal calendars) is listed as Phase 5+ future work.
+
+**Auth note:** The implementation uses **service account JWT**, NOT OAuth. Scope used: `https://www.googleapis.com/auth/calendar.events`.
+
+---
+
+## Finding 2: Archived Google Calendar Phased Implementation Plan
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/archive/2025-11/analysis/GOOGLE_CALENDAR_IMPLEMENTATION_PLAN.md`
+
+**What exists:** A detailed 4-phase implementation plan from November 2025. The setup docs indicate Phase 1 (event creation) and Phase 2 (event deletion) are now complete.
+
+**Per-tenant calendar enhancement plan (Phase 5+):**
+
+- Store `googleCalendarId` in Tenant model
+- Each vendor gets their own calendar
+- Requires DB migration
+
+**OAuth2 user flow (Phase 5+):**
+
+- Would allow customers to sync to personal Google Calendars
+- Requires OAuth2 consent screen setup, token storage, and refresh handling
+- This has NOT been implemented yet
+
+**Key design decision:** MAIS is the source of truth; Google Calendar is a view. This prevents sync conflicts.
+
+---
+
+## Finding 3: JWT ID Token for Cloud Run (Google Auth Pattern)
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/JWT_ID_TOKEN_FOR_CLOUD_RUN_AUTH.md`
+
+**What exists:** A critical solution for authenticating server-to-server calls to Google Cloud Run from non-GCP environments (Render).
+
+**Root cause documented:** `GoogleAuth.getIdTokenClient(audience).getRequestHeaders()` returns empty headers silently when running outside GCP. The fix is `JWT.fetchIdToken()` directly.
+
+**Correct pattern:**
+
+```typescript
+import { JWT } from 'google-auth-library';
+
+const jwtClient = new JWT({
+  email: credentials.client_email,
+  key: credentials.private_key,
+});
+const idToken = await jwtClient.fetchIdToken(CLOUD_RUN_URL); // audience = service URL
+```
+
+**Priority order:** JWT (service account) → GoogleAuth ADC → gcloud CLI
+
+**Relevant env vars:** `GOOGLE_SERVICE_ACCOUNT_JSON` (plain JSON, not base64 — different from calendar var)
+
+**Key lesson:** Store `client_email` and `private_key` separately from `GoogleAuth` instance for JWT use.
+
+---
+
+## Finding 4: NextAuth v5 OAuth/Session Pattern — Comprehensive Guide
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/authentication-issues/NEXTAUTH_V5_GUIDE.md`
+
+**What exists:** Full consolidated guide for NextAuth v5 JWT authentication in MAIS.
+
+**Critical pitfall documented:** Cookie prefix changes between HTTP and HTTPS:
+
+- HTTP (local): `authjs.session-token`
+- HTTPS (prod): `__Secure-authjs.session-token`
+- Code that only checks one variant **silently fails in production**
+
+**Correct cookie lookup pattern:**
+
+```typescript
+const possibleCookieNames = [
+  '__Secure-authjs.session-token', // HTTPS (production) — check FIRST
+  'authjs.session-token', // HTTP (development)
+  '__Secure-next-auth.session-token', // Legacy v4 HTTPS
+  'next-auth.session-token', // Legacy v4 HTTP
+];
+```
+
+**API proxy pattern:** Client components cannot access the backend token directly (HTTP-only cookie). ALL client API calls must route through Next.js API routes (`/api/*`) which retrieve the token server-side and forward with `Authorization: Bearer` header.
+
+**Security principle:** Backend token NEVER exposed to client-side JavaScript.
+
+---
+
+## Finding 5: Client Auth — Centralized Token Selection
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/CLIENT_AUTH_GUIDE.md`
+
+**What exists:** Guide covering the platform admin impersonation token-selection pattern.
+
+**Critical rule:** Always use `getAuthToken()` from `@/lib/auth` — never duplicate token selection logic. Code duplication in 5 files caused a production auth failure during impersonation.
+
+**Token decision tree:**
+
+```
+Is impersonationTenantKey set in localStorage?
+  YES → Return adminToken (contains impersonation context)
+  NO  → Return tenantToken
+```
+
+**This is relevant for any new integration feature:** Any per-tenant third-party auth token must respect this centralized selection pattern when accessed from the client.
+
+---
+
+## Finding 6: Stripe Connect — Per-Tenant Credential Encryption Pattern
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/archive/2025-11/phases/PHASE_3_STRIPE_CONNECT_COMPLETION_REPORT.md`
+
+**What exists:** Complete Stripe Connect implementation with per-tenant secret key encryption. This is the definitive pattern to follow for storing any per-tenant third-party credentials.
+
+**Encryption approach:**
+
+- Uses `EncryptionService` (AES-256-GCM)
+- Stored in `tenant.secrets` JSON field
+
+**Storage format:**
+
+```json
+{
+  "stripe": {
+    "ciphertext": "a3f8c9d2e1b4f7g8...",
+    "iv": "1a2b3c4d5e6f7g8h...",
+    "tag": "..."
+  }
+}
+```
+
+**Key methods on `StripeConnectService`:**
+
+- `storeRestrictedKey(tenantId, restrictedKey)` — encrypts and stores
+- `getRestrictedKey(tenantId)` — decrypts and retrieves
+
+**Env var:** `TENANT_SECRETS_ENCRYPTION_KEY` (required)
+
+**Reuse guidance:** The `tenant.secrets` JSON field + `EncryptionService` is the established pattern for any per-tenant third-party credentials. Google Calendar OAuth refresh tokens, per-tenant API keys, etc. should follow this same pattern.
+
+---
+
+## Finding 7: Multi-Tenant Stripe Checkout URL Routing — Static Config Anti-Pattern
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/integration-issues/multi-tenant-stripe-checkout-url-routing.md`
+
+**What exists:** Documented P1 fix where Stripe success/cancel URLs were static (same for all tenants). Pattern generalizes to ALL external service callback URLs.
+
+**The anti-pattern:**
+
+```typescript
+// WRONG — Static URL at construction time
+const paymentProvider = new StripePaymentAdapter({
+  successUrl: config.STRIPE_SUCCESS_URL, // same for all tenants!
 });
 ```
 
----
-
-## Finding 2: Field Name Remapping — KNOWN PATTERN, RECURRING RISK
-
-`docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md` documents the canonical field mapping:
-
-| Seed / DB field      | Component prop       | Via                            |
-| -------------------- | -------------------- | ------------------------------ |
-| `image`              | `imageUrl`           | `transformContentForSection()` |
-| `backgroundImage`    | `backgroundImageUrl` | Same                           |
-| `body` / `content`   | `content`            | Same                           |
-| `headline` / `title` | `headline`           | Same                           |
-
-The doc warns explicitly: "Don't try to use prop names directly in the seed."
-
-`docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md` (Bug 1) documented the same pattern for pricing (`items` → `tiers`) — a missing transform case killed the entire React tree. The fix requires: explicit case in `transformContentForSection()` + `Array.isArray()` guard (NOT `= []` default; null defeats defaults per JS semantics). TestimonialsSection was one of the files updated with Array.isArray guards in that fix.
-
-**Flag for current change:** If testimonials field names were remapped (e.g., `name` → `authorName`), verify the `testimonials` case in `transformContentForSection()` exists and uses Array.isArray guards. A missing or incorrect case causes a silent React tree crash.
-
----
-
-## Finding 3: domainParam Removal — DIRECTLY DOCUMENTED
-
-The same compound doc (`storefront-systemic-issues-seed-nav-cache-duplication-gap.md`, Issue 2 fix) explicitly states:
-
-> Removed unused domainParam prop from TenantSiteShell
-
-`docs/solutions/architecture/app-router-route-tree-deduplication-domain-vs-slug-pattern.md` (PR #55) documents the broader dedup via `tenant-redirect.ts` — the `_domain/` route tree resolves domain at the redirect layer, making threaded domainParam props redundant downstream.
-
-**Pitfall #14 check:** After removing the prop, run `grep -r "domainParam" apps/ --include="*.tsx" --include="*.ts"` to confirm no downstream consumers still reference it.
-
----
-
-## Finding 4: HowItWorksSection Deletion — DOCUMENTED CONVENTION
-
-`docs/solutions/architecture/storefront-systemic-issues-seed-nav-cache-duplication-gap.md` (Issue 4):
-
-> TenantLandingPage.tsx had a hardcoded HowItWorksSection at a fixed slot AND seeds created a FEATURES section rendering via SectionRenderer. Both rendered — "How It Works" appeared twice.
->
-> Fix: Deleted HowItWorksSection.tsx entirely. Convention: ALL sections render through SectionRenderer — no hardcoded section components in page layouts. If TenantLandingPage.tsx imports from ./sections/\*, that's a code smell.
-
-Deletion is the documented correct action. Verify no dead `case 'how-it-works':` remains in SectionRenderer, and no anchor ID entry persists for the old component.
-
----
-
-## Finding 5: Reveal-on-Scroll Removal — REGRESSION RISK
-
-`docs/plans/2026-02-17-feat-storefront-mvp-template-redesign-plan.md` (Phase 1a/1b) documents the scroll animation system as intentionally designed:
-
-- `storefront-reveal` CSS keyframe in `globals.css` (DISTINCT from `fade-in-up` used for chat — do NOT remove both)
-- `useScrollReveal.ts` hook — Intersection Observer with progressive enhancement
-- `prefers-reduced-motion` compliance required for accessibility
-
-If the animations are being removed in the current changes, this reverses deliberate MVP template work. The prior session findings file (`learnings-researcher-findings.md`, Issue 5) also documents a CSS inline-style specificity trap in `useScrollReveal` that causes Playwright screenshots to fail — this is a known bug in the hook, not a reason to remove it.
-
-**If removal is intentional:** delete `useScrollReveal.ts` entirely (no orphan), clean `globals.css` keyframes, confirm `fade-in-up` (chat animation) is NOT removed. If keeping the hook: the Playwright specificity fix requires `el.style.opacity = ''` + `el.classList.add('reveal-visible')`, not just the class alone.
-
----
-
-## Finding 6: Testimonials Data Transform — UNDOCUMENTED VARIANT, SAME PATTERN
-
-No dedicated compound doc exists for testimonials-specific field transforms. The pattern is identical to the documented pricing crash (Bug 1, smoke test compound doc). Required checklist:
-
-1. Explicit `case 'testimonials':` in `transformContentForSection()`
-2. `if (!Array.isArray(transformed.testimonials)) transformed.testimonials = [];` — never `= []` default
-3. Unit tests for the transform case (established pattern from pricing fix: 11 unit tests added)
-4. Verify no `JSON.stringify()` on testimonial items in seed files (Prisma Json columns auto-serialize)
-
----
-
-## REPEAT OF KNOWN MISTAKES — FLAGS FOR CODE REVIEW
-
-| Change                   | Risk                                                     | Known Pattern In                                                             |
-| ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Testimonials field remap | Missing transform case → silent React crash              | `PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md`                       |
-| Reveal animation removal | Orphan CSS keyframe or accidental chat animation removal | `2026-02-17-feat-storefront-mvp-template-redesign-plan.md`                   |
-| domainParam removal      | Orphan references in downstream consumers                | `storefront-systemic-issues-seed-nav-cache-duplication-gap.md` + Pitfall #14 |
-
-All three nav/HowItWorks/domainParam changes are confirmed correct per compound docs — no known mistakes being repeated there.
-
----
-
-# Learnings Researcher Findings — Production Storefront Hardening Plan
-
-**Date:** 2026-02-18
-**Context:** Searching compound docs for patterns relevant to 7 production storefront hardening issues
-**Solutions searched:** `docs/solutions/`, `docs/brainstorms/`, `docs/plans/`
-**Relevant compound docs found:** 11
-
----
-
-## Issue 1: Seed Data Field Mismatches (bookingType, field naming)
-
-**Relevant docs:**
-
-- `docs/solutions/database-issues/prisma-json-double-encoding-seed-cache-amplification.md`
-  - Direct match. Seed file called `JSON.stringify()` on Prisma `Json` columns (auto-serialize) causing double-encoding. Storefront crash pattern: `Cannot use 'in' operator to search for 'title'`. In-memory caches (5-min TTL and 900s `CatalogService` TTL) served stale bad data even after database was corrected.
-  - **Warning:** After any re-seed, restart the API server or wait 5 minutes. Stale cache creates false negatives — looks like the seed failed when it succeeded.
-
-- `docs/solutions/typescript-build-errors/ENTITY-FIELD-NAMING-PREVENTION.md`
-  - Field naming mismatch trap: schema defines `balancePaidAt`, entity uses `paidAt` — silent TypeScript error. `bookingType` / `booking_type` is the same class of error.
-  - **Warning:** Field renames must propagate to schema, entity types, services, tests, AND mock adapters. Missing even one causes runtime failures that TypeScript misses if mocks don't match production types.
-
-- `docs/solutions/data-issues/storefront-tier-names-silent-filter-MAIS-20251214.md`
-  - Seed data used human-readable names ("Elopement") where canonical values were required (`tier_1`). Frontend `extractTiers()` silently dropped unrecognized values — no error, no warning.
-  - **Warning:** Silent filtering is the danger pattern. Any field that drives a switch/filter/lookup must use canonical values in seed data. Grep: `JSON.stringify` in `server/prisma/seeds/`.
-
----
-
-## Issue 2: Removing Hardcoded UI Components (HowItWorksSection deletion)
-
-**Relevant docs:**
-
-- `docs/solutions/patterns/static-dynamic-section-heading-collision.md`
-  - Exact match. `HowItWorksSection` is a static component embedded directly in `TenantLandingPage.tsx` alongside dynamic `SectionRenderer`. When the agent authored an About section titled "How It Works", two consecutive identically-named `<h2>`s appeared — silent at the rendering layer, no console errors.
-  - **Warning:** Before deleting `HowItWorksSection`, verify `SECTION_TYPE_TO_ANCHOR_ID` mapping, agent system prompt reserved headings list, and `TenantLandingPage.tsx` composition order. Deleting the component without removing its anchor ID entry will break nav scroll targets.
-
-- `docs/solutions/build-errors/ORPHAN_IMPORTS_LARGE_DELETION_PREVENTION.md`
-  - After deleting a component file, incremental TypeScript build passes locally (unchanged importers are not re-checked) but CI clean build fails.
-  - **Warning:** Run `rm -rf server/dist packages/*/dist && npm run --workspace=server typecheck && npm run --workspace=apps/web typecheck` before committing any deletion. This is Pitfall #14 in CLAUDE.md.
-
----
-
-## Issue 3: Field Name Transform Bugs (testimonials: name → authorName)
-
-**Relevant docs:**
-
-- `docs/solutions/patterns/tenant-storefront-content-authoring-workflow.md`
-  - Documents the full field mapping table: seed file uses `image`/`backgroundImage`, component props use `imageUrl`/`backgroundImageUrl`. `transformContentForSection()` in `apps/web/src/lib/storefront-utils.ts` bridges them.
-  - **Warning:** `name` → `authorName` is exactly this pattern. If the seed uses `name` but the component expects `authorName`, `transformContentForSection()` must have a `testimonials` case that maps it. The transform is the single seam for all field name aliasing.
-
-- `docs/solutions/runtime-errors/PRODUCTION_SMOKE_TEST_6_BUGS_STOREFRONT_CHAT_SLUG.md`
-  - Bug 1 was a missing `pricing` case in `transformContentForSection()` — `items` field not mapped to `tiers`. The null then defeated the `= []` default (JS default params only activate for `undefined`, not `null`), crashing the React tree.
-  - **Warning (CRITICAL):** When adding a `testimonials` transform case, use `Array.isArray()` guards on the output arrays, NOT default parameter destructuring. `null` defeats `= []`. A missing transform case kills the entire React tree via the ErrorBoundary.
-
----
-
-## Issue 4: Google Fonts / Next.js `<link>` in Body Issues
-
-**Relevant docs:**
-
-- `docs/solutions/architecture/per-tenant-css-theming-semantic-tokens-and-branding-route-fix.md`
-  - Direct match and resolved pattern. `next/font/google` only works for build-time-known fonts. Per-tenant fonts are data-driven (stored as `fontPreset` column). The solution is `<link>` tags in the component body (in `TenantSiteShell`), not `next/font`. Google Fonts includes `font-display: swap` by default, preventing layout shift.
-  - **Warning:** React/Next.js emits a hydration warning for `<link>` in body (HTML spec requires it in `<head>`). This is a known acceptable tradeoff for data-driven fonts. The existing implementation in `TenantSiteShell` already uses this pattern — any new Google Fonts integration should follow the same approach rather than introducing `next/font/google` for dynamic fonts.
-
----
-
-## Issue 5: `reveal-on-scroll` / Scroll Animation Bugs
-
-**Relevant docs:**
-
-- `docs/solutions/ui-bugs/scroll-reveal-playwright-inline-opacity-specificity.md`
-  - Exact match. `useScrollReveal` hook sets `el.style.opacity = '0'` as an inline style (specificity 1000). Playwright full-page screenshots never fire IntersectionObserver (below-fold elements are never in viewport). Adding `.reveal-visible` class alone does NOT work — the inline style wins the cascade.
-  - **Warning (CRITICAL):** To fix scroll-reveal elements in Playwright or SSR contexts, you must BOTH clear the inline style AND add the class: `el.style.opacity = ''` (or `= '1'`) + `el.classList.add('reveal-visible')`. Adding only the class is a known-broken half-fix. The relevant hook is `apps/web/src/hooks/useScrollReveal.ts` lines 39 and 54.
-
----
-
-## Issue 6: Nav Derivation from Sections vs Page Flags
-
-**Relevant docs:**
-
-- `docs/solutions/patterns/SECTION_TYPES_CONSTANT_DRIFT_RESOLUTION.md`
-  - The 10-step checklist for adding any new section type includes adding anchor IDs to `SECTION_TYPE_TO_ANCHOR_ID` (step in SectionRenderer). Navigation links derived from sections depend on this mapping. If nav is derived from `KNOWN_SECTION_TYPES` or `BLOCK_TO_SECTION_MAP`, those lists must be in sync.
-  - **Warning:** A section type that exists in the DB but is missing from the frontend map will be silently excluded from navigation. This is the same constants-duplication trap that caused P1 section loss in the onboarding redesign.
-
-- `docs/solutions/patterns/CONSTANTS_DUPLICATION_TRAP_SECTION_TYPES.md`
-  - Root pattern doc. If nav items are derived from sections rather than page flags, the derivation logic is implicitly an 8th location for section type constants. Any new section type must update the nav derivation logic too.
-  - **Warning:** Use `Record<SectionTypeName, ...>` over `Set.has()` allowlist patterns. TypeScript exhaustiveness checking on a `Record` surfaces missing cases at compile time. `Set.has()` silently returns false for unknown types.
-
----
-
-## Issue 7: Checkout Price Display Confusion
-
-**Relevant docs:**
-
-- `docs/solutions/integration-issues/multi-tenant-stripe-checkout-url-routing.md`
-  - Checkout URLs and metadata must be generated per-request (dynamically, from tenant context) not at startup via static env vars. If price display shows wrong amounts, suspect static vs dynamic config — environment variables are for deployment config, not per-tenant pricing config.
-
-- `docs/solutions/database-issues/prisma-json-double-encoding-seed-cache-amplification.md`
-  - `scalingRules` (the per-person pricing config on Tier) is a `Json` column. The littlebit-farm seed had this double-encoded — `scalingRules` returned as a string, breaking "From $X +$Y/person beyond Z guests" display format.
-  - **Warning:** After fixing any seed or transform bug touching `scalingRules`, verify the API response returns a plain object (not stringified JSON): `typeof response.scalingRules === 'object'`.
-
----
-
-## Cross-Cutting Warnings
-
-1. **Silent filter pattern** is the highest-risk class of bug in this codebase. Field mismatches, section type drift, and transform gaps all fail silently — no error, no warning, just missing UI.
-
-2. **Cache invalidation gap after seed** — seeds write directly to Prisma, bypassing `SectionContentService.publishAll()`. After any seed run, the in-memory LRU cache serves stale data for up to 5 minutes (`SectionContentService`) or 15 minutes (`CatalogService.getAllTiers`). Restart API server after seeding to clear.
-
-3. **Orphan imports after deletion** (Pitfall #14) — always run clean typecheck after deleting any component or export. Incremental TypeScript passes locally, CI clean build fails.
-
-4. **Constants duplication trap** — every new section type or field transform touches 7+ locations. See `SECTION_TYPES_CONSTANT_DRIFT_RESOLUTION.md` for the full 10-step checklist.
-
----
-
-## Previous Session Findings (Deploy Pipeline, 2026-02-18)
-
-The remainder of this file contains findings from an earlier session about the deploy pipeline (IPv6 seed failures, cache staleness after seeding). Those findings remain valid and are not repeated above.
-
----
-
-## Issue 1: AUTH_SECRET Missing During Next.js Build
-
-### Prior Art Found
-
-**`docs/solutions/PRODUCTION_DEPLOYMENT_FIXES-20251206.md`**
-
-- Documents the exact pattern: runtime env vars missing during build.
-- Prior fix was for `BOOKING_TOKEN_SECRET`, `POSTMARK_SERVER_TOKEN`, `POSTMARK_FROM_EMAIL`.
-- The solution established the pattern of placeholder values for build-time-only vars.
-- **Status:** `deploy-production.yml` now has `AUTH_SECRET: production-build-placeholder-not-used-at-runtime` at line 211, matching the documented pattern. **RESOLVED.**
-
-### Assessment
-
-This was a NEW manifestation of a KNOWN pattern. NextAuth v5 requires `AUTH_SECRET` at build time for page data collection. The `main-pipeline.yml` already had this placeholder, but `deploy-production.yml` didn't. The compound doc from Dec 2025 only covered the 3 Render env vars, not the Next.js build-time vars.
-
-**Prevention gap:** The 2025-12-06 compound doc should have established a general rule: "Any new env var that's needed at build time must be added to BOTH `main-pipeline.yml` AND `deploy-production.yml`." Instead, it documented the specific vars, not the pattern.
-
----
-
-## Issue 2: Render Health Check Timeout
-
-### Prior Art Found
-
-**`docs/solutions/deployment-issues/render-supabase-client-database-verification.md`**
-
-- Documents Render deploy failing during startup with database verification errors.
-- Root cause was using Supabase JS client instead of Prisma for DB verification.
-- **Status:** Already fixed (commit `386dcdb`). Current health check at `/health/ready` uses Prisma `$queryRaw`.
-
-**`docs/solutions/HEALTH_CHECK_GROUPING_IMPLEMENTATION.md`**
-
-- Documents the health check architecture (3-tier: `/health/live`, `/health/ready`, `/health`).
-
-**`server/src/routes/health.routes.ts`** (current code)
-
-- The `/health/ready` endpoint checks:
-  1. Database connectivity via `prisma.$queryRaw`
-  2. Required env vars: `DATABASE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
-- Returns 503 if ANY check fails.
-
-### Assessment
-
-The health check timeout in the deploy workflow (`deploy-production.yml` lines 397-421) polls `/health/ready` with 30 attempts at 10-second intervals after a 45-second initial wait (total: ~345 seconds). Failure scenarios:
-
-1. **Render hasn't finished building/deploying** — The deploy hook triggers Render's build pipeline, which takes its own time. The 45-second wait may not be enough for Render to finish building.
-2. **Missing env vars on Render** — If `STRIPE_SECRET_KEY` or `STRIPE_WEBHOOK_SECRET` are not set on Render, `/health/ready` returns 503 forever.
-3. **Database connection failure** — If the Render service can't reach Supabase (see Issue 3).
-4. **Render cold start** — Free/starter tier services spin down. First request after deploy may take 30+ seconds.
-
-**Most likely cause:** Render's own build + deploy cycle takes longer than 45 seconds. The deploy hook triggers an async build on Render's side. The GitHub Actions job starts polling before Render's build even completes.
-
-**This is likely a NON-BLOCKING issue for the seed goal.** The API is already running on Render (auto-deployed from main). The `deploy-api-production` job in the workflow is secondary to the seed job. Seed success doesn't depend on this job passing.
-
----
-
-## Issue 3: ENETUNREACH IPv6 on Seed Job
-
-### Prior Art Found — EXTENSIVE (3 compound documents)
-
-**`docs/solutions/database-issues/supabase-ipv6-session-pooler-connection.md`** (2025-12-23)
-
-- **Exact same bug.** Documents ENETUNREACH errors when connecting to `db.*.supabase.co`.
-- Root cause: Direct Supabase hostnames resolve to IPv6 only; many environments lack IPv6.
-- Solution: Use session pooler URL (`*.pooler.supabase.com`) which has both IPv4 and IPv6.
-- **This solution was created 2 months ago and directly applies.**
-
-**`docs/solutions/database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md`** (2025-12-23)
-
-- 800+ line prevention strategy with diagnostics, doctor script enhancements, and environment-specific guidelines.
-- Explicitly documents: "CI uses local PostgreSQL containers (IPv4 localhost:5432) which always works. Local development / production use Supabase (remote host with DNS resolving to IPv6)."
-- **GitHub Actions runners are in the same category as "local dev" — they use public internet to reach Supabase, and lack IPv6.**
-
-**`docs/solutions/database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md`** (2025-12-23)
-
-- One-page cheat sheet: "IPv6 Error? Use Connection Pooler. Change: db.xxx.supabase.co:5432 To: pooler.supabase.com:6543"
-
-### Assessment
-
-This is a **RECURRING issue that was already fully documented and solved**. The `PRODUCTION_DATABASE_URL` GitHub secret was set to the direct Supabase URL (`db.*.supabase.co`) which is IPv6-only. GitHub Actions runners don't support IPv6.
-
-**Issue 4 (NODE_OPTIONS didn't help)** is also documented in the compound knowledge: "Prisma uses its own Rust query engine, ignores Node.js DNS settings." The `deploy-production.yml` has `NODE_OPTIONS: '--dns-result-order=ipv4first'` at line 51, but as the compound doc explains, this only affects Node.js's `dns.lookup()` — Prisma bypasses it.
-
-**Fix applied:** Updated `PRODUCTION_DATABASE_URL` GitHub secret to use the session pooler URL. Seed now succeeds.
-
-**Prevention failure analysis:** The compound doc from 2025-12-23 recommended:
-
-1. Add DATABASE_URL validation to doctor script — NOT DONE
-2. Use session pooler everywhere — NOT ENFORCED for GitHub secrets
-3. Add `.env.example` with pooler URL — PARTIALLY DONE (local .env but not GitHub secrets)
-
-The prevention gap is that GitHub secrets are invisible and can't be validated by doctor scripts or code review. The only defense is documentation + checklists.
-
----
-
-## Issue 5: Why Aren't New Sections Showing on the Storefront?
-
-### Data Flow Trace (Seed -> Database -> API -> Frontend)
-
-**Seed file analysis** (`server/prisma/seeds/little-bit-horse-farm.ts`):
-
-- Creates 6 sections: HERO, FEATURES (How It Works), ABOUT (The Story), SERVICES (Experiences), FAQ, CTA
-- All created with `isDraft: false` and `publishedAt: new Date()`
-- All created with correct `blockType` enum values
-- Content uses native JS objects (no `JSON.stringify` — the double-encoding bug from 2026-02-16 is already fixed)
-
-**Service layer** (`server/src/services/section-content.service.ts`):
-
-- `getPublishedSections()` filters by `isDraft: false` (line 286-296)
-- Results are cached in LRU cache with 5-minute TTL (key: `published:${tenantId}`)
-- Cache is only invalidated on `publishAll()` or `publishSection()` calls
-
-**API route** (`server/src/routes/public-tenant.routes.ts`):
-
-- `GET /v1/public/tenants/:slug/sections` calls `sectionContentService.getPublishedSections()`
-- Returns serialized sections with all fields
-
-**Frontend** (`apps/web/src/lib/storefront-utils.ts`):
-
-- `sectionsToPages()` converts `SectionContentDto[]` to `PagesConfig`
-- `BLOCK_TO_SECTION_TYPE` mapping handles all 12 block types correctly
-- `transformContentForSection()` handles field name remapping (title->headline, items->features, body->content, etc.)
-
-**Frontend rendering** (`apps/web/src/components/tenant/TenantLandingPage.tsx`):
-
-- `buildHomeSections()` splits sections into pre-tier (hero, about) and post-tier (features, faq, cta)
-- SERVICES section extracted as heading metadata for SegmentTiersSection
-- All section types have SectionRenderer cases
-
-**SectionRenderer** (`apps/web/src/components/tenant/SectionRenderer.tsx`):
-
-- Handles all types: hero, text, about, gallery, testimonials, faq, contact, cta, pricing, features, services, custom
-- Error boundaries isolate crashes per section
-
-### Root Cause Analysis
-
-The code path is complete and correct. The seed data uses the right `isDraft: false` flag. Section types are all synced (the 2026-02-13 drift was already fixed). The frontend handles all block types.
-
-**The most likely reasons the storefront still shows OLD data are, in order of probability:**
-
-#### Hypothesis 1: API Server Cache (LRU — 5 minute TTL) — MOST LIKELY
-
-The `SectionContentService.publishedCache` (line 187) is an in-memory LRU cache. After the seed writes new data directly to the database, the Render API server's in-memory cache still holds the old published sections. The cache is ONLY invalidated when `publishAll()` or `publishSection()` is called via the service layer — NOT when data changes via direct database writes (seeds).
-
-**Prior art:** `docs/solutions/database-issues/prisma-json-double-encoding-seed-cache-amplification.md` (2026-02-16) documents this EXACT pattern: "In-memory cache in SectionContentService.publishedCache was serving stale double-encoded data from an old seed run. The original seed had wrapped every Json column value with JSON.stringify(), causing double-encoding. Re-seeding with correct data didn't clear the cache."
-
-**Fix:** Restart the Render API service. This clears all in-memory caches. Alternatively, wait 5 minutes for the TTL to expire.
-
-#### Hypothesis 2: Next.js ISR Cache (60-second revalidation)
-
-The storefront page has `export const revalidate = 60` (line 156 of `page.tsx`). After the API cache clears, Next.js may still serve its own cached version for up to 60 seconds.
-
-**Fix:** Wait 60 seconds after API cache clears, or manually trigger revalidation.
-
-#### Hypothesis 3: Seed Transaction Didn't Commit
-
-If the seed job logged success but the `$transaction` threw after logging, the data wouldn't persist. The seed has a 120-second timeout (`{ timeout: 120000 }`). Check the GitHub Actions log for the seed job — look for:
-
-- "Little Bit Farm seed transaction committed successfully" (success)
-- vs. error messages about transaction timeout
-
-#### Hypothesis 4: Seed Ran Against Wrong Database
-
-If `PRODUCTION_DATABASE_URL` was recently changed (from direct to pooler), verify the new URL points to the same database. Session pooler and direct connection should point to the same underlying database, but different port/hostname.
-
-### Recommended Fix Sequence
-
-1. **Verify seed actually ran:** Check GitHub Actions logs for "LITTLE BIT FARM SEED COMPLETE" message
-2. **Restart Render API service:** Clears in-memory caches (published sections + catalog service)
-3. **Wait 60 seconds:** For Next.js ISR to expire
-4. **Hard refresh browser:** Clear any client-side HTTP cache
-5. **Verify via API directly:** `curl https://[API_URL]/v1/public/tenants/littlebit-farm/sections | jq '.sections | length'` — should return 6
-
----
-
-## Prior Solutions Consulted (Full Index)
-
-| #   | Solution Document                                                         | Relevance                                  | Status                                    |
-| --- | ------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------- |
-| 1   | `database-issues/supabase-ipv6-session-pooler-connection.md`              | **DIRECT** — Exact same IPv6 bug           | Should have been applied from the start   |
-| 2   | `database-issues/SUPABASE_IPV6_CONNECTION_PREVENTION.md`                  | **DIRECT** — Prevention strategy for IPv6  | Prevention measures not fully implemented |
-| 3   | `database-issues/SUPABASE_IPV6_QUICK_REFERENCE.md`                        | **DIRECT** — Quick fix reference           | Not consulted before deploy               |
-| 4   | `database-issues/prisma-json-double-encoding-seed-cache-amplification.md` | **DIRECT** — Cache staleness after seeding | Documents the exact cache issue           |
-| 5   | `PRODUCTION_DEPLOYMENT_FIXES-20251206.md`                                 | Related — Runtime env var patterns         | AUTH_SECRET is a new variant              |
-| 6   | `deployment-issues/render-supabase-client-database-verification.md`       | Related — Render startup failures          | Different root cause but same area        |
-| 7   | `HEALTH_CHECK_GROUPING_IMPLEMENTATION.md`                                 | Related — Health check architecture        | Context for Issue 2                       |
-| 8   | `patterns/CONSTANTS_DUPLICATION_TRAP_SECTION_TYPES.md`                    | Verified — Section types synced            | Already fixed, not causing current issue  |
-| 9   | `patterns/SECTION_TYPES_CONSTANT_DRIFT_RESOLUTION.md`                     | Verified — All types handled               | Already fixed                             |
-| 10  | `integration-issues/storefront-cors-and-tier-display-regression.md`       | Related — Prior storefront display bugs    | Different root cause                      |
-| 11  | `plans/HANDOFF-section-types-sync.md`                                     | Verified — Already executed                | All 6 fixes were applied                  |
-
----
-
-## Recurring Patterns
-
-### Pattern 1: Supabase IPv6 Keeps Biting
-
-This is the **third time** IPv6 issues have caused production problems:
-
-1. 2025-12-23: Local dev can't reach Supabase
-2. 2026-02-18: GitHub Actions seed job can't reach Supabase
-3. Future: Any new environment without IPv6 will hit this
-
-**Prevention:** Add a check to deploy-production.yml that validates the DATABASE_URL format before running any database operations:
-
-```yaml
-- name: Validate database URL uses pooler
-  run: |
-    if echo "$DATABASE_URL" | grep -q "db\..*\.supabase\.co"; then
-      echo "ERROR: DATABASE_URL uses direct Supabase connection (IPv6 only)"
-      echo "Change to pooler URL: *.pooler.supabase.com"
-      exit 1
-    fi
+**The correct pattern:**
+
+```typescript
+// CORRECT — Build at request time with tenant context
+const successUrl = `${this.frontendBaseUrl}/t/${tenant.slug}/book/success?session_id={CHECKOUT_SESSION_ID}`;
+// Pass tenantSlug in metadata for webhook routing
 ```
 
-### Pattern 2: In-Memory Cache After Direct DB Writes
+**Key rule:** Environment variables are for deployment config, NOT tenant config. Tenant-specific URLs MUST be built dynamically at request time.
 
-Every time data is written directly to the database (seeds, migrations, manual SQL), in-memory caches go stale. The compound doc from 2026-02-16 established this, but the seed workflow doesn't include a cache-clear step.
-
-**Prevention:** After the seed job, the deploy workflow should either:
-
-1. Restart the Render API service (clears all caches)
-2. Call a cache-invalidation endpoint (doesn't exist yet)
-3. At minimum, wait 5 minutes before testing the storefront
-
-### Pattern 3: Deploy Workflow Doesn't Match Production Architecture
-
-The deploy-production.yml assumes a linear pipeline (build -> migrate -> seed -> deploy API -> deploy web). But Render auto-deploys from main independently. The workflow's "deploy API" step triggers a deploy hook AND polls for health, but by the time the seed runs, Render may have already auto-deployed. The health check timeout may be because Render is mid-redeploy (triggered by auto-deploy) when the workflow starts polling.
-
-**Prevention:** Either disable Render auto-deploy and rely solely on the workflow's deploy hook, or remove the health check polling from the workflow and let Render handle it.
+**Generalizes to:** Any OAuth callback URL for per-tenant integrations (e.g., Google Calendar per-tenant OAuth redirect URIs must include tenant slug).
 
 ---
 
-## Pending Todos (Relevant)
+## Finding 8: Project Hub ADK Session & Auth Integration — Service Wiring Pattern
 
-| Todo                                                                              | Relevance                                              |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `11002-pending-p2-seed-deletemany-breaks-when-bookings-exist.md`                  | Related — seed cleanup fails if bookings exist         |
-| `11004-pending-p2-seed-missing-test-coverage-about-cta-services-hero-sections.md` | Related — test gaps for the exact sections in question |
-| `11006-pending-p2-move-existing-tenant-read-inside-transaction.md`                | Related — seed transaction isolation                   |
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/integration-issues/project-hub-chat-adk-session-and-auth-integration.md`
+
+**What exists:** Documented cascading bugs: new service file was created but never wired to routes, and session IDs were generated locally instead of calling the real session service.
+
+**Key lessons for new integrations:**
+
+1. Creating a new service/adapter file is NOT enough — verify it's imported and called in routes
+2. Use log prefix mismatches to detect when old code is still running
+3. Never generate integration-specific IDs locally (fake sessions, fake event IDs) — always call the external service
+4. Test multi-step flows: single-step tests pass with fake IDs, multi-step flows expose the bug
+
+**Detection pattern:**
+
+```bash
+grep -rn "import.*NewService\|createNewService" server/src/routes/
+```
 
 ---
 
-## Key Findings Summary
+## Finding 9: Stripe Growth Assistant Onboarding Tool — Agent Tool Pattern
 
-1. **IPv6 issue was fully documented 2 months ago** — 3 compound docs exist. The `PRODUCTION_DATABASE_URL` GitHub secret should have used the pooler URL from the start.
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/solutions/growth-assistant-error-messaging-stripe-onboarding-MAIS-20251228.md`
 
-2. **Storefront not showing new sections is almost certainly a cache issue** — The `SectionContentService.publishedCache` (5-min LRU) and Next.js ISR (60s) both cache published sections. Seeds bypass the service layer, so caches aren't invalidated. **Fix: Restart Render API, wait 60s.**
+**What exists:** Reference implementation for an agent tool that initiates a third-party OAuth/onboarding flow (Stripe Connect).
 
-3. **The seed data is correctly configured** — `isDraft: false`, `publishedAt: new Date()`, correct blockType values, no JSON.stringify double-encoding, all section types synced in frontend/backend.
+**Pattern for integration-initiating tools:**
 
-4. **The Render health check timeout is a separate issue** from the seed/storefront problem. It's likely caused by Render's build cycle being slower than the 45-second initial wait, or missing env vars on Render.
+- Trust tier T2 (soft confirm) — appropriate for "you'll be redirected to X anyway"
+- Check if already connected before creating proposal (early exit)
+- Use `createProposal()` system so user sees preview before redirect
+- Fallback to tenant profile data (email, name) if params not provided
+- Error code: `STRIPE_ONBOARDING_ERROR`
 
-5. **3 prevention gaps remain:**
-   - GitHub secrets can't be validated by code review or doctor scripts
-   - Seed workflow has no cache-invalidation step
-   - Deploy workflow timing assumptions don't match Render's async build cycle
+**Health check pattern** for integration availability:
+
+```typescript
+// Ordered by severity:
+1. Missing API key → 'missing_api_key' + user message
+2. Not authenticated → 'not_authenticated' + user message
+3. Context unavailable → 'context_unavailable' + user message
+```
+
+---
+
+## Finding 10: Secret Management — Credentials Never Committed
+
+**Source:** `/Users/mikeyoung/CODING/MAIS/docs/security/SECRETS.md`
+
+**Documented standards for all integration credentials:**
+
+- All service account keys: environment variables only, never committed
+- Google service account: base64-encoded in `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64`
+- Rotation schedule: Google service account every 365 days
+- `TENANT_SECRETS_ENCRYPTION_KEY`: must be backed up securely
+
+**For any new OAuth integration, the documented pattern is:**
+
+1. Platform-level: service account credentials in env vars
+2. Per-tenant: encrypted in `tenant.secrets` JSON field via `EncryptionService`
+3. Never store OAuth tokens in plain text — always encrypt with `TENANT_SECRETS_ENCRYPTION_KEY`
+
+---
+
+## Summary of Key Decisions for Google Calendar OAuth Integration
+
+If the project moves to per-tenant Google Calendar OAuth (each tenant connecting their own Google Calendar):
+
+1. **Token storage:** Use existing `tenant.secrets` JSON field + `EncryptionService` (AES-256-GCM) — exactly as done for Stripe Connect restricted keys
+2. **Callback URLs:** Must be tenant-scoped (include `tenantSlug`) — follow the Stripe checkout URL fix pattern
+3. **Cookie auth:** Follow NextAuth v5 guide — `__Secure-` prefix in production
+4. **Service wiring:** Verify new OAuth service is imported and called in routes, not orphaned
+5. **Agent tool:** Follow `initiate_stripe_onboarding` as the template for an `connect_google_calendar` tool — T2 trust tier, early exit if already connected
+6. **Graceful degradation:** Calendar features must not block core booking flows (established pattern)
+7. **Platform-level vs per-tenant:** Platform already has service account auth; per-tenant OAuth adds a new auth layer stored in `tenant.secrets`
+
+---
+
+**Total findings:** 10
+**High-relevance findings:** Findings 1, 3, 6, 7 are directly applicable to Google Calendar OAuth integration work.

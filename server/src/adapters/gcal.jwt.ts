@@ -52,6 +52,7 @@ export async function createGServiceAccountJWT(
 
   // Exchange JWT for access token
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    signal: AbortSignal.timeout(10_000),
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,

@@ -16,15 +16,10 @@
 
 import Stripe from 'stripe';
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
-import { encryptionService, type EncryptedData } from '../lib/encryption.service';
+import { encryptionService } from '../lib/encryption.service';
+import type { TenantSecrets } from '../types/prisma-json';
 import { logger } from '../lib/core/logger';
 import { getConfig } from '../lib/core/config';
-
-// TenantSecrets type - Stripe encrypted secret storage
-interface TenantSecrets {
-  stripe?: EncryptedData; // Encrypted Stripe restricted key
-  [key: string]: unknown;
-}
 
 /**
  * Service for managing Stripe Connect accounts (tenant payment processing)
@@ -241,6 +236,11 @@ export class StripeConnectService {
     });
 
     logger.info(
+      { event: 'integration.stripe.connected', tenantId, integration: 'stripe' },
+      'Stripe restricted key stored — integration connected'
+    );
+
+    logger.info(
       { tenantId, tenantSlug: tenant.slug },
       'Stored encrypted Stripe restricted key for tenant'
     );
@@ -345,15 +345,28 @@ export class StripeConnectService {
     // Delete from Stripe
     await this.stripe.accounts.del(tenant.stripeAccountId);
 
-    // Clear from database
+    // Surgical removal of only the stripe key — preserves other secrets (e.g. Google Calendar)
+    const existingTenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { secrets: true },
+    });
+    const existing = ((existingTenant?.secrets ?? {}) as TenantSecrets) || {};
+    const { stripe: _stripe, ...remaining } = existing;
+
+    // Clear Stripe fields from database
     await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
         stripeAccountId: null,
         stripeOnboarded: false,
-        secrets: {}, // Clear encrypted keys
+        secrets: remaining as Prisma.InputJsonValue,
       },
     });
+
+    logger.info(
+      { event: 'integration.stripe.disconnected', tenantId, integration: 'stripe' },
+      'Stripe Connect account disconnected for tenant'
+    );
 
     logger.warn(
       { tenantId, tenantSlug: tenant.slug, stripeAccountId: tenant.stripeAccountId },

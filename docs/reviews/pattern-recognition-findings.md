@@ -1,384 +1,518 @@
-# Pattern Recognition -- Plan Review Findings
+# Integration Landscape Review — Pattern Recognition Findings
 
-**Document:** `docs/plans/2026-02-11-feat-onboarding-conversation-redesign-plan.md`
-**Reviewer:** Pattern Recognition Specialist (Cross-Phase Consistency)
-**Date:** 2026-02-12
-**Scope:** All 9 phases post-patch (priceCents Int, sourcePackageId, onDelete:Restrict, TypeScript migration, Stripe dual-ID)
-
----
-
-## Summary
-
-| Severity       | Count  |
-| -------------- | ------ |
-| P1 (Critical)  | 6      |
-| P2 (Important) | 11     |
-| P3 (Minor)     | 5      |
-| **Total**      | **22** |
+**Reviewer:** Pattern Recognition Specialist
+**Date:** 2026-02-20
+**Scope:** Full integration audit — existing integrations, patterns, and gaps for a service professional membership platform (photographers, coaches, therapists, wedding planners)
 
 ---
 
-## P1 -- Critical Findings
+## Executive Summary
 
-### P1-1: A2A JSON price field is ambiguous (cents vs dollars)
+| Severity          | Count  |
+| ----------------- | ------ |
+| P1 (Critical)     | 3      |
+| P2 (Important)    | 7      |
+| P3 (Nice-to-Have) | 8      |
+| **Total**         | **18** |
 
-**Location:** Phase 8, line 843-845
-**Issue:** The A2A commerce JSON example shows `"price": 3500` and `"price": 500`. With the entire plan switching to `priceCents Int`, these values are ambiguous. Is 3500 = $35.00 (cents) or $3,500 (dollars)? The add-on `"price": 500` could be $5.00 or $500.
-
-The plan explicitly states Tier uses `priceCents` (Phase 1 schema, Decision #8), but the A2A JSON field is named `"price"` -- not `"priceCents"`. This naming inconsistency will cause misinterpretation by customer-agent LLMs and any future A2A consumers.
-
-**Fix required:**
-
-1. Rename the A2A JSON field to `"priceCents"` for consistency, OR
-2. Add an explicit unit comment in the JSON spec: `"priceCents": 350000` (for $3,500), OR
-3. If the values ARE in dollars for display purposes, document the conversion layer between Tier.priceCents (DB) and A2A display JSON.
-
-**Impact:** Customer-agent could display wrong prices to customers. Financial data integrity risk.
+The platform has a solid, consistent integration pattern but covers only ~25% of the integrations typical for a service professional membership platform. Payments (Stripe) and calendar sync (Google Calendar) are production-grade. Email (Postmark) and file storage (Supabase) are functional. Everything else is absent.
 
 ---
 
-### P1-2: Phase 7 migration resets BUILDING tenants to NOT_STARTED
+## Section 1: What Integrations Already Exist
 
-**Location:** Phase 7, lines 687-692; Phase 3, lines 349-355
-**Issue:** Phase 3 simplifies OnboardingPhase to `NOT_STARTED | BUILDING | COMPLETED | SKIPPED`. Phase 7 migration runs:
+### 1.1 Stripe — Payment Processing (Production-Grade)
 
-```sql
-UPDATE "Tenant" SET "onboardingPhase" = 'NOT_STARTED'
-WHERE "onboardingPhase" NOT IN ('NOT_STARTED', 'COMPLETED', 'SKIPPED')
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/stripe.adapter.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/stripe-connect.service.ts`
+
+**Coverage:**
+
+- One-time checkout sessions (`createCheckoutSession`)
+- Stripe Connect Express accounts (tenant-owned payouts with platform fee)
+- Subscription billing (`createSubscriptionCheckout`) with price IDs
+- Refunds (full and partial, with reason validation)
+- Webhook verification with HMAC signature checking
+- Idempotency keys on all mutations
+- BullMQ async queue for webhook processing (prevents Stripe 5s timeout)
+
+**Depth of implementation:** Very good. The adapter correctly handles both standard and Connect destination charges, validates application fee bounds (0.5%–50%), and retries on network errors. Stripe Connect onboarding is tracked via `stripeAccountId` and `stripeOnboarded` on the Tenant model.
+
+**Gap noted:** The `PaymentProvider` port interface exposes only checkout sessions and refunds — it does not expose subscription management methods (`cancelSubscription`, `updateSubscription`, `getSubscriptionStatus`). Those are handled ad-hoc inside `StripeConnectService` and billing routes, bypassing the port abstraction.
+
+---
+
+### 1.2 Google Calendar — Scheduling Sync (Production-Grade)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/gcal.adapter.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/google-calendar-sync.adapter.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/gcal.jwt.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/google-calendar.service.ts`
+
+**Coverage:**
+
+- Two-way sync: creates/deletes Google Calendar events when appointments are booked or cancelled
+- FreeBusy API: prevents double-booking with existing calendar events (reads tenant's calendar)
+- Per-tenant calendar configuration (encrypted in `tenant.secrets.calendar`)
+- Global fallback config via env vars (`GOOGLE_CALENDAR_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64`)
+- 60-second in-process cache for availability checks
+- Graceful degradation: all dates assumed available if calendar credentials missing
+
+**Gap noted:** Only Google Calendar is supported. No Outlook/Microsoft 365 Calendar, no Calendly/Acuity import of existing bookings. The `CalendarProvider` port interface is well-designed and could accept other implementations, but none exist.
+
+---
+
+### 1.3 Postmark — Email Notifications (Functional)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/postmark.adapter.ts`
+
+**Coverage:**
+
+- Booking confirmation email (plain text)
+- Booking reminder email (7-day pre-event, HTML + text)
+- Password reset email (HTML + text)
+- Generic `sendEmail()` for arbitrary HTML
+- File-sink fallback when `POSTMARK_SERVER_TOKEN` not configured (dev mode)
+- Retry with exponential backoff (3 attempts) on 5xx, 429, and network errors
+
+**Significant gap:** The `EmailProvider` port interface defines only `sendEmail({ to, subject, html })`. The Postmark adapter has four concrete methods (`sendBookingConfirm`, `sendBookingReminder`, `sendPasswordReset`, `sendEmail`), but only `sendEmail` is in the port. This means injecting any other email provider would require rewriting the event handlers in `di.ts` that call the concrete methods directly. The port abstraction is incomplete.
+
+**Missing email types for a membership platform:**
+
+- Welcome email on tenant signup
+- Invoice/receipt delivery
+- Post-session follow-up / review request
+- Onboarding checklist / drip sequence
+- Customer cancellation confirmation (currently only tenant receives event)
+
+---
+
+### 1.4 Supabase Storage — File Storage (Functional)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/upload.adapter.ts`
+
+**Coverage:**
+
+- Logo uploads (tenant branding)
+- Tier/service photos
+- Segment images
+- Landing page images
+- Dual-mode: Supabase Storage (production) vs local filesystem (dev/test)
+- MIME type validation with magic bytes verification
+- SVG sanitization (blocks XSS vectors)
+- Per-tenant path scoping (`tenantId/folder/filename`) with security check on delete
+
+**Gap noted:** Supabase is used purely for blob storage, not as an alternative to Prisma/PostgreSQL for querying. The `SUPABASE_JWT_SECRET` is validated in env but Supabase Auth is not used — the platform has its own JWT system. This dual authentication reality (Supabase for storage, custom JWT for auth) adds operational complexity with no structural benefit.
+
+---
+
+### 1.5 Redis — Caching and Job Queue (Production-Grade)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/redis/cache.adapter.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/jobs/webhook-queue.ts`
+
+**Coverage:**
+
+- `RedisCacheAdapter`: full TTL-based key-value caching via ioredis, SCAN-based pattern flush, health check via PING
+- `WebhookQueue` (BullMQ): async Stripe webhook processing with exponential backoff retry
+- Graceful degradation when `REDIS_URL` missing (in-memory fallback for cache, synchronous processing for webhooks)
+
+---
+
+### 1.6 Google Vertex AI / ADK — AI Agents (Production-Grade)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/agent-v2/deploy/` (three Cloud Run agents)
+- `/Users/mikeyoung/CODING/MAIS/server/src/llm/vertex-client.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/vocabulary-embedding.service.ts`
+
+**Coverage:**
+
+- Three production agents on Cloud Run: `customer-agent`, `tenant-agent`, `research-agent`
+- Gemini via Vertex AI (project/location config)
+- `text-embedding-005` for semantic vocabulary matching (pgvector)
+- Google ADK for agent orchestration
+- Per-tenant AI usage limits (`aiMessagesUsed`, `aiMessagesResetAt`)
+
+---
+
+### 1.7 Sentry — Error Monitoring (Functional)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/lib/errors/sentry.ts`
+- `@sentry/nextjs` in `apps/web/`
+
+**Coverage:** Both server and frontend instrumented. DSN via `SENTRY_DSN` env var.
+
+---
+
+### 1.8 Prometheus — Metrics (Minimal)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/routes/metrics.routes.ts`
+
+**Coverage:** `prom-client` is installed and the metrics route exists. Default Node.js metrics only. No custom business metrics (bookings/day, revenue, cancellation rate, AI message usage, etc.).
+
+---
+
+### 1.9 Outbound Webhooks — Third-Party Extensibility (Functional)
+
+**Files:**
+
+- `/Users/mikeyoung/CODING/MAIS/server/src/services/webhook-delivery.service.ts`
+- `/Users/mikeyoung/CODING/MAIS/server/src/adapters/prisma/webhook-subscription.repository.ts`
+
+**Coverage:** Tenants can register webhook endpoints to receive `appointment.created`, `appointment.canceled`, `appointment.rescheduled` events. HMAC-SHA256 signing. Database-backed delivery tracking with retry via `WebhookDelivery` table. This is the platform's primary extensibility mechanism for tenants who want to connect to their own CRMs, spreadsheets, or Zapier.
+
+---
+
+## Section 2: Integration Pattern Analysis
+
+### 2.1 The Pattern: Ports and Adapters (Hexagonal Architecture)
+
+The codebase follows a strict ports-and-adapters pattern documented in ADR-006:
+
+```
+Port Interface (lib/ports/*.ts)
+    ↓
+Adapter Implementation (adapters/*.ts)
+    ↓
+Injected via DI Container (di.ts)
 ```
 
-This query does NOT include `BUILDING` in the exclusion list. Any tenant who is actively in the `BUILDING` phase (added in Phase 3) will be forcibly reset to `NOT_STARTED` when Phase 7 migration runs.
+**Ports defined:**
 
-**Root cause:** The Phase 7 migration was written against the OLD enum (DISCOVERY/MARKET_RESEARCH/SERVICES/MARKETING). After Phase 3 adds BUILDING, the reset query needs to exclude it.
+- `PaymentProvider` (`payment.port.ts`)
+- `CalendarProvider` (`calendar.port.ts`)
+- `EmailProvider` (`email.port.ts`)
+- `StorageProvider` (`storage.port.ts`)
+- `CacheServicePort` (`cache.port.ts`)
 
-**Fix required:** Change the Phase 7 migration to:
+**Pattern consistency: 7/10.**
 
-```sql
-WHERE "onboardingPhase" NOT IN ('NOT_STARTED', 'BUILDING', 'COMPLETED', 'SKIPPED')
+The pattern is well-established for the core integrations but has documented drift:
+
+1. `EmailProvider` port only declares `sendEmail()`, but the Postmark adapter has 4 methods called directly in `di.ts`, bypassing the port.
+2. Stripe subscription management (`StripeConnectService`) bypasses `PaymentProvider` entirely — it holds its own `Stripe` instance and talks to the SDK directly.
+3. `HealthCheckService` casts the `StripePaymentAdapter` from `PaymentProvider` to access its internal `stripe.balance.retrieve()` — the port abstraction leaks at the seam.
+
+### 2.2 Mock-First Pattern (ADR-007)
+
+Every integration has a mock counterpart:
+
+- `adapters/mock/payment.provider.ts` — mock Stripe
+- `adapters/mock/calendar.provider.ts` — mock Google Calendar (all dates available)
+- `adapters/mock/email.provider.ts` — writes to filesystem
+- `adapters/mock/cache.adapter.ts` — in-memory Map
+
+**This is the best aspect of the integration architecture.** Adding a new integration means: write port interface → write real adapter → write mock adapter → wire in `di.ts`. The test suite can run entirely without any external service.
+
+### 2.3 Secrets Management for Per-Tenant Integrations
+
+The platform correctly handles per-tenant third-party credentials:
+
+- Stripe Connect `stripeAccountId` stored plaintext (public ID, safe)
+- Google Calendar service account JSON stored encrypted in `tenant.secrets.calendar` (AES-256-GCM)
+- Stripe restricted key also encrypted in `tenant.secrets.stripe`
+
+The `TENANT_SECRETS_ENCRYPTION_KEY` pattern is sound and documented. Any new per-tenant integration credentials (e.g., OAuth tokens for QuickBooks, Zoom, or DocuSign) should follow this same encrypted secrets pattern.
+
+---
+
+## Section 3: Missing Integrations
+
+### P1 Findings — Critical Gaps
+
+---
+
+**P1-1: No SMS / Mobile Notification Channel**
+
+Service professionals (photographers, therapists, coaches) rely on phone-based appointment reminders. Email reminders exist, but SMS has ~98% open rate vs ~20% for email. Wedding photographers lose deposits when clients no-show due to missed email confirmations.
+
+**What is missing:** No `SMSProvider` port, no Twilio/Vonage adapter. The `Customer` model has a `phone String?` field that is collected but never used for notifications. Collecting a phone number but never using it is a trust gap.
+
+**Implementation path:** Add `SMSProvider` port to `lib/ports/sms.port.ts`, implement `TwilioSMSAdapter` following the same pattern as `PostmarkMailAdapter`. Wire `BookingEvents.REMINDER_DUE` to also send SMS when the customer has a phone number on file. The `ReminderService` already fires the reminder event — it just needs a second listener.
+
+**Priority rationale:** No-shows are the top complaint from service professionals. The data collection (phone field) is in place. This is a high-ROI addition.
+
+---
+
+**P1-2: No Contract / eSignature Integration**
+
+Service professionals require signed contracts before sessions or on booking confirmation. Currently, the platform shows `FileCategory.CONTRACT` exists in the schema (a project file can be categorized as a contract), but there is no mechanism to:
+
+- Generate a contract from a template
+- Send it to the client for e-signature
+- Block booking confirmation until signed
+- Store the signed PDF with audit trail
+
+**What is missing:** No DocuSign, PandaDoc, or HelloSign integration. No contract template management.
+
+**Current workaround:** Tenants paste a contract PDF into a chat message or use a separate account manually. This breaks the "done-for-you" promise.
+
+**Implementation path:** Add `ContractProvider` port. Implement a DocuSign or PandaDoc adapter. Hook into the booking state machine (currently `PENDING → PAID → CONFIRMED`): add `AWAITING_SIGNATURE` state. The schema already has `FileCategory.CONTRACT` acknowledging contracts exist — it just does nothing with them.
+
+**Priority rationale:** For wedding photographers and therapists especially, an unsigned contract is a legal and financial liability. Competitors (HoneyBook, Dubsado) lead with contract signing as their #1 feature.
+
+---
+
+**P1-3: No Branded Invoice / Receipt Delivery**
+
+Stripe generates payment intents and sends Stripe-branded receipts by default, but:
+
+- Stripe receipts carry no tenant branding (no business logo, no custom terms)
+- There is no mechanism to issue a formal invoice (therapists need invoices for HSA/FSA reimbursement; coaches whose clients expense the coaching need formal invoices)
+- No invoice history in the tenant dashboard
+
+**What is missing:** No invoice generation or PDF delivery. The platform processes payment via Stripe but does not produce a formal invoice document.
+
+**Implementation path:** Either expose Stripe's hosted billing portal (which generates invoices automatically) or add lightweight PDF generation post-payment using a library like `pdfkit`. Trigger invoice email delivery on `BookingEvents.PAID`. Add an `Invoice` model to the schema or denormalize invoice data onto `Payment`.
+
+**Priority rationale:** Required for therapists with HSA/FSA clients and coaches with corporate-paying clients. These are high-value customer segments the platform targets.
+
+---
+
+### P2 Findings — Important Gaps
+
+---
+
+**P2-1: Outlook / Microsoft 365 Calendar Not Supported**
+
+Only Google Calendar is supported. Many service professionals (therapists, coaches, corporate-adjacent wedding planners) use Outlook. The `CalendarProvider` port is well-designed and could accept a Microsoft Graph API adapter with no changes to the rest of the system.
+
+**Implementation path:** Implement `OutlookCalendarAdapter implements CalendarProvider`, using the Microsoft Graph `calendarView` endpoint for FreeBusy and `events` for create/delete. OAuth2 token stored encrypted in `tenant.secrets.outlook`. The port interface already supports optional `createEvent`, `deleteEvent`, and `getBusyTimes` methods.
+
+---
+
+**P2-2: No Video Meeting Link Integration**
+
+Virtual coaching sessions, therapy consultations, and discovery calls require a unique video meeting link per booking. Currently:
+
+- The `Booking` model has no `meetingUrl` field
+- There is no `VideoProvider` port
+- Tenants manually paste a static Zoom link into emails, which means every client gets the same link (privacy/security problem)
+
+**Implementation path:** Add `VideoProvider` port with `createMeeting(input)` returning a meeting URL. Implement `ZoomVideoAdapter` and/or `GoogleMeetAdapter`. Hook into `AppointmentEvents.BOOKED` to create a unique meeting link per booking. Add `meetingUrl String?` to the `Booking` schema. Include meeting link in the confirmation email template.
+
+---
+
+**P2-3: Stripe Subscription Management Bypasses the Port**
+
+`StripeConnectService` holds its own `Stripe` SDK instance:
+
+```typescript
+// server/src/services/stripe-connect.service.ts — own Stripe instance, not injected
+this.stripe = new Stripe(apiKey, { apiVersion: '2025-10-29.clover' });
 ```
 
-**Impact:** Active onboarding tenants lose their progress mid-session. Data loss.
+This bypasses the `PaymentProvider` port entirely. Mocking subscription management in tests requires either real Stripe or a manual override — the existing `MockPaymentProvider` does not cover Connect/subscription operations.
+
+**Fix:** Either extend `PaymentProvider` with subscription/Connect methods, or create a separate `SubscriptionProvider` port. Document the intentional architectural split if the separation is by design.
 
 ---
 
-### P1-3: Stripe webhook processor hardcodes `packageId` in metadata schema
+**P2-4: EmailProvider Port Does Not Cover Booking Emails**
 
-**Location:** Phase 6 acceptance criteria vs actual code
-**Issue:** `server/src/jobs/webhook-processor.ts` lines 37 and 50 define Zod schemas with `packageId` as a required/optional metadata field. The risk table (line 981) acknowledges "Stripe metadata references packageId in checkout-session.factory.ts + 8 webhook handlers" and proposes a dual-ID fallback helper.
+The `EmailProvider` port declares only `sendEmail({ to, subject, html })`. The `di.ts` event handlers call `mailProvider.sendBookingConfirm(...)` and `mailProvider.sendBookingReminder(...)` directly on the concrete `PostmarkMailAdapter`, not through any port.
 
-However, no phase explicitly lists `server/src/jobs/webhook-processor.ts` in its "Files to modify" section. Phase 6c lists `server/src/routes/bookings.routes.ts` and `server/src/services/booking.service.ts` but omits the webhook processor entirely. The webhook processor contains the critical metadata validation schemas (`StripeSessionSchema`, `MetadataSchema`) that will fail once `packageId` is removed.
+**Consequence:** Any email provider swap requires modifying `di.ts` event subscriptions, not just swapping the adapter class. The port provides zero abstraction for the most important email flows.
 
-**Files missing from plan:**
-
-- `server/src/jobs/webhook-processor.ts` -- must update metadata schemas to accept `tierId`
-- `server/src/services/wedding-booking.orchestrator.ts` -- writes `packageId` into Stripe metadata (line 89)
-- `server/src/services/wedding-deposit.service.ts` -- likely references packageId in deposit metadata
-
-**Fix required:** Add these files to Phase 6c's file list. Add dual-ID migration window logic as described in the risk table.
-
-**Impact:** Stripe checkout sessions created BEFORE migration will fail webhook processing AFTER migration. Payment data loss.
+**Fix:** Extend `EmailProvider` with typed methods matching the concrete adapter, or move template rendering into a separate layer and have the port accept a template enum + payload.
 
 ---
 
-### P1-4: Phase 1 Tier schema missing `Tenant` relation in current schema
+**P2-5: No CRM or Lead Tracking Integration**
 
-**Location:** Phase 1, lines 119-156 vs current schema lines 264-285
-**Issue:** The current Tier model has NO `tenantId` field, NO `tenant` relation, NO `bookings` relation, and NO `TierAddOn` relation. Phase 1 adds all of these. However, the Phase 1 migration also needs to handle EXISTING Tier rows that have no `tenantId`.
+Service professionals accumulate repeat clients and leads. The `Customer` model is minimal (name, email, phone). There is no:
 
-The plan shows the Phase 1 Tier model with `tenantId String` (non-nullable), but existing Tier rows (created by the current GOOD/BETTER/BEST system) don't have this field. The migration will fail with `NOT NULL constraint violation` unless it either:
+- Client notes / session history visible to the tenant
+- Lifetime booking value tracking
+- Lead tracking (inquiry → consultation → booked → repeat)
+- Native export to HubSpot, Pipedrive, or even CSV
 
-1. Backfills `tenantId` from `Segment.tenantId` (since `Tier.segmentId -> Segment.tenantId`)
-2. Makes `tenantId` nullable initially
+The outbound webhook system (`WebhookDeliveryService`) is the closest thing — tenants could route events to Zapier → HubSpot. But this requires the tenant to configure Zapier workflows manually.
 
-Phase 1's acceptance criteria says "Existing Tier data migrated (level GOOD->1, BETTER->2, BEST->3)" but doesn't mention backfilling `tenantId`.
-
-**Fix required:** Add a data migration step in Phase 1:
-
-```sql
--- Backfill tenantId from parent Segment
-UPDATE "Tier" t SET "tenantId" = s."tenantId" FROM "Segment" s WHERE t."segmentId" = s.id;
-```
-
-This must run BEFORE the NOT NULL constraint is applied.
-
-**Impact:** Migration will fail on any database with existing Tier data. Blocks all subsequent phases.
+**Implementation path for MVP:** Expand outbound webhooks to include `customer.created` and `invoice.paid` event types, improving Zapier integration coverage. For a native CRM, this is a longer-term roadmap item.
 
 ---
 
-### P1-5: Customer-agent `recommend_package` tool not addressed in Phase 8
+**P2-6: No Deliverable Delivery Mechanism**
 
-**Location:** Phase 8, lines 826-858
-**Issue:** Phase 8 says "Update customer-agent to browse tiers instead of packages" and lists files in `server/src/agent-v2/deploy/customer/src/tools/`. However, the actual customer-agent code at `server/src/agent-v2/deploy/customer/src/tools/booking.ts` contains:
+The `FileCategory.DELIVERABLE` enum and `ProjectFile` model exist in the schema, but there is no delivery mechanism:
 
-1. `recommendPackageTool` (name: `recommend_package`) -- explicitly "recommend packages" by name
-2. `RecommendPackageParams` -- has `budget` enum referencing package concepts
+- No shareable gallery link for photo delivery
+- No notification when deliverables are uploaded
+- No integration with Pixieset, SmugMug, Google Drive, or Dropbox
 
-Phase 8 does not mention renaming `recommend_package` to `recommend_tier` or updating its schema. The tool description says "Recommend services based on customer preferences" but the tool name and parameter schema still reference "package".
+For photographers, delivering edited photos to the client is the final and most visible step of the project. Currently there is no native path from "tenant uploads files" to "client downloads finished work."
 
-**Fix required:** Add to Phase 8 file list:
-
-- Rename `recommendPackageTool` to `recommendTierTool`
-- Rename tool from `recommend_package` to `recommend_tier`
-- Update `RecommendPackageParams` to reference Tier/Segment concepts
-
-**Impact:** Post-migration, the customer-agent will have a tool named `recommend_package` that calls a backend endpoint returning Tier data. Semantic mismatch causes LLM confusion.
+**Implementation path:** Add a shareable project link (`/project/{token}`) where clients can view and download their deliverables. For large photo galleries, integrate with Pixieset (photography-native platform) via API, or implement Google Drive OAuth upload.
 
 ---
 
-### P1-6: Phase 6 references non-existent booking path
+**P2-7: No Review / Testimonial Collection Automation**
 
-**Location:** Phase 6a, line 578
-**Issue:** Phase 6 says the CURRENT booking path is:
+The platform has a `TESTIMONIALS` section type in the storefront and an AI agent that can write testimonial text for the storefront. However:
 
-```
-/t/[slug]/book/[packageSlug]/page.tsx
-```
+- No mechanism requests a Google Review after project completion
+- No platform-native testimonial form for customers
+- No sync with Google Business Profile reviews
 
-And references it at `apps/web/src/app/t/[slug]/book/[packageSlug]/page.tsx`.
+Testimonials are currently typed manually into the storefront editor via AI chat. For photographers who live on Google reviews, this is a significant missing workflow.
 
-Glob confirms the file DOES exist at this path. However, Phase 6 says "Rename to `[tierSlug]`" but does NOT mention creating 301 redirects from the old `[packageSlug]` URL. Open Question #1 (line 919) recommends "Add 301 redirects from `/book/[packageSlug]` -> `/book/[tierSlug]`" but this is listed as an "open question" -- not incorporated into any phase's acceptance criteria or file list.
-
-**Fix required:** Add redirect handling to Phase 6 acceptance criteria:
-
-- Create redirect route at `apps/web/src/app/t/[slug]/book/[packageSlug]/page.tsx` that 301s to `[tierSlug]`
-- Same for `apps/web/src/app/t/_domain/book/[packageSlug]/page.tsx`
-- Or resolve the open question and add a clear decision.
-
-**Impact:** All existing bookmarked/shared booking URLs break permanently. SEO damage.
+**Implementation path:** Trigger a `ReviewRequest` email 3 days after `Project.status = COMPLETED`. Include a Google review link + a short platform feedback form. Store platform testimonials in a new `Testimonial` model that feeds the `TESTIMONIALS` storefront section automatically.
 
 ---
 
-## P2 -- Important Findings
-
-### P2-1: Phase 4 deletes `packages.ts`, Phase 7 says "already deleted in Phase 4"
-
-**Location:** Phase 4 line 439, Phase 7 line 806
-**Issue:** Phase 4 file list says `server/src/agent-v2/deploy/tenant/src/tools/packages.ts -- **DELETE**`. Phase 7 also lists it in "Files to DELETE" with note "(already deleted in Phase 4)". This is consistent as documentation, but Phase 7 should NOT list it as a file to delete. Including already-deleted files in a deletion list is confusing and could cause script errors.
-
-**Fix:** Remove from Phase 7 deletion list or mark clearly as "verify deleted".
+### P3 Findings — Nice-to-Have
 
 ---
 
-### P2-2: Tier model missing `photos` field in current schema -- Phase 1 data migration gap
+**P3-1: No QuickBooks / Xero Accounting Integration**
 
-**Location:** Phase 1 line 143, Risk table line 983
-**Issue:** Risk table says "Package has `photos` JSON, Tier has none" and mitigation is "Add `photos Json @default("[]")` to Tier model in Phase 1 schema migration." Phase 1 Tier schema DOES include `photos Json @default("[]")`.
-
-However, there is no mention of MIGRATING existing Package photos to Tier during the Phase 7 data migration. The Phase 7 migration script (lines 725-735) inserts `'[]'::jsonb` for the features column but doesn't copy `Package.photos` to `Tier.photos`.
-
-**Fix:** Add photo migration to Phase 7 script:
-
-```sql
-UPDATE "Tier" t SET photos = p.photos
-FROM "Package" p WHERE t."sourcePackageId" = p.id AND p.photos != '[]'::jsonb;
-```
+Photographers and therapists need to reconcile Stripe payouts with accounting software. Currently, payment data lives in Stripe and the `Booking`/`Payment` models. No export path to QuickBooks or Xero exists. Lower priority because Stripe's revenue reports + manual export are workable.
 
 ---
 
-### P2-3: `tenant-admin.routes.ts` references PackageDraftService but not in Phase 7 file list
+**P3-2: No Social Media Scheduling Integration**
 
-**Location:** Phase 7, lines 789-801
-**Issue:** Grep shows `PackageDraftService` is imported in:
-
-- `server/src/di.ts` (listed in Phase 7)
-- `server/src/routes/index.ts` (not listed)
-- `server/src/routes/tenant-admin.routes.ts` (not listed)
-- `server/src/services/package-draft.service.ts` (listed for deletion)
-
-Phase 7 says to delete `package-draft.service.ts` and remove from `di.ts`, but omits:
-
-- `server/src/routes/tenant-admin.routes.ts` -- likely has draft publish/discard endpoints
-- `server/src/routes/index.ts` -- route registration
-
-**Fix:** Add both files to Phase 7's modification list.
+Coaches and wedding planners want to publish booking milestones or new service offerings to Instagram/Facebook. The `research-agent` does competitive research but there is no social publishing. P3 because this is a marketing accelerator, not a core workflow.
 
 ---
 
-### P2-4: Booking confirmation emails reference Package name (unaddressed)
+**P3-3: Prometheus Metrics Are Bare**
 
-**Location:** Risk table line 992
-**Issue:** Risk table says "Booking confirmation emails reference Package name" at P2 severity. The mitigation says "Store tier name in Booking record (denormalized) or update email builder to fetch Tier." However, no phase includes this work in its file list or acceptance criteria.
-
-**Fix:** Add email template updates to Phase 6c or Phase 7. Identify the email builder file and add it to the file list.
+`prom-client` is installed and a `/metrics` endpoint exists, but only Node.js default metrics are emitted. No custom business counters for `bookings_created_total`, `payments_failed_total`, `ai_messages_used_total`, or `calendar_sync_latency_ms`. Makes SLA monitoring and capacity planning difficult.
 
 ---
 
-### P2-5: `TierLevel` enum removal creates gap between Phase 1 and contracts
+**P3-4: No Apple Calendar / iCal Support**
 
-**Location:** Phase 1 line 199, current `packages/contracts/src/schemas/tier.schema.ts`
-**Issue:** Phase 1 acceptance criteria says "TierLevel enum removed, replaced with sortOrder." However, the contracts package at `packages/contracts/src/schemas/tier.schema.ts` exports:
-
-- `TierLevelSchema` (z.enum(['GOOD', 'BETTER', 'BEST']))
-- `TierLevel` type
-- `DEFAULT_TIER_FEATURES` keyed by TierLevel
-- `DEFAULT_TIER_NAMES` keyed by TierLevel
-
-Phase 1's file list says to modify `packages/contracts/src/schemas/tier.schema.ts` to "Update TierSchema (remove TierLevel, add sortOrder/slug/bookingType/active)". However, `DEFAULT_TIER_FEATURES` and `DEFAULT_TIER_NAMES` are keyed by `TierLevel` and used elsewhere. Phase 1 does not specify what replaces these constants.
-
-**Fix:** Specify replacement constants:
-
-- `DEFAULT_TIER_FEATURES` should be keyed by sortOrder (1, 2, 3) or renamed
-- `DEFAULT_TIER_NAMES` should be keyed by sortOrder or removed (names are now freeform)
+Apple Calendar is common among creative professionals. iCal export (`.ics` file) would cover the use case at low implementation cost — the `CalendarProvider` port could add an optional `exportICS()` method. No adapter changes needed to existing functionality.
 
 ---
 
-### P2-6: Phase 3 acceptance criteria missing OnboardingPhase migration for existing tenants
+**P3-5: No Pre-Booking Intake Questionnaire**
 
-**Location:** Phase 3, lines 348-379
-**Issue:** Phase 3 simplifies OnboardingPhase from 7 values to 4 (NOT_STARTED, BUILDING, COMPLETED, SKIPPED). The plan lists a Prisma migration (`npx prisma migrate dev --name simplify_onboarding_phase`), but Prisma cannot remove enum values from PostgreSQL without first ensuring no rows reference the removed values.
-
-Phase 7 has the migration that resets intermediate phases, but Phase 3 happens FIRST. If Phase 3 removes DISCOVERY/MARKET_RESEARCH/SERVICES/MARKETING from the enum without first migrating existing rows, the migration will fail.
-
-**Fix:** Phase 3 MUST include the same row-reset migration that Phase 7 currently has:
-
-```sql
-UPDATE "Tenant" SET "onboardingPhase" = 'NOT_STARTED'
-WHERE "onboardingPhase" IN ('DISCOVERY', 'MARKET_RESEARCH', 'SERVICES', 'MARKETING');
-```
-
-Then the Phase 7 migration for this becomes unnecessary (or a no-op safety net).
+Therapists, coaches, and photographers typically send intake questionnaires before the first session. Currently there is no way to attach a required questionnaire to a booking. The `ProjectRequest` system handles post-booking Q&A but not pre-booking intake. Required for therapists who need clinical intake information before accepting a client.
 
 ---
 
-### P2-7: Decision #4 says "Phase 5 adds tierId to Booking" but it is actually Phase 1
+**P3-6: No Email Marketing / Drip Sequence Integration**
 
-**Location:** Decision table line 58, Phase 1 lines 171-176
-**Issue:** Decision #4 states "Phase 5 adds `tierId` to Booking (nullable). Phase 7 migrates data + deletes Package model." But the actual implementation puts `tierId` on Booking in Phase 1 (line 171-176), not Phase 5.
-
-Phase 5 is the system prompt rewrite and has nothing to do with schema changes.
-
-**Fix:** Update Decision #4 text: "Phase **1** adds `tierId` to Booking (nullable)."
+Tenants cannot run email campaigns to their customer list. No Mailchimp, ConvertKit, or native bulk email capability. Postmark is transactional-only. Needed for coaches who run nurture sequences or photographers who want to send seasonal promotions.
 
 ---
 
-### P2-8: `server/src/adapters/prisma/catalog.repository.ts` missing from Phase 6 file list
+**P3-7: Phone Number Not Propagated to Booking Record**
 
-**Location:** Phase 6c line 641
-**Issue:** Phase 6c DOES list `server/src/adapters/prisma/catalog.repository.ts` in its file list. However, the current code in `catalog.repository.ts` has methods like `getPackageById`, `getPackageByIdWithAddOns`, `getAddOnsByPackageId` that are called from `booking.service.ts` and `wedding-booking.orchestrator.ts`. These methods need Tier equivalents.
-
-The file list says "Query tiers instead of packages" but Phase 6c acceptance criteria don't explicitly verify that Tier-based repository methods exist and are tested.
-
-**Fix:** Add explicit acceptance criteria: "catalog.repository.ts has `getTierById`, `getTierBySlug`, `getAddOnsByTierId` methods replacing Package equivalents."
+`Customer.phone` exists but the `Booking` model does not capture phone at booking time. If the customer's phone changes between bookings, there is no way to contact them for a specific booking. Minor schema gap needed before SMS reminders can be reliably implemented.
 
 ---
 
-### P2-9: Stripe dual-ID transition window not specified in any acceptance criteria
+**P3-8: Stripe Customer Portal Not Exposed**
 
-**Location:** Risk table line 981, Phase 6c
-**Issue:** The risk table describes a critical 48-hour transition window where webhook handlers must check for BOTH `metadata.tierId` AND `metadata.packageId`. It even provides a helper: `const tierId = metadata.tierId ?? await lookupTierByPackageId(metadata.packageId)`.
-
-However, this dual-ID logic is not in any phase's acceptance criteria. It's only in the risk table. The webhook processor Zod schemas need to accept both IDs, and the booking service needs the fallback lookup.
-
-**Fix:** Add to Phase 6c acceptance criteria:
-
-- "Webhook processor accepts both `tierId` and `packageId` in metadata"
-- "Fallback helper `lookupTierByPackageId` exists for transition window"
-- "After 48h (Phase 9), remove packageId fallback"
+Stripe's hosted customer portal allows self-service subscription management (upgrade, downgrade, cancel). The platform handles subscription state via webhooks but has no self-service subscription management UI. Tenants must contact support to cancel. This is a UX gap for platform subscriptions, not a third-party integration gap per se.
 
 ---
 
-### P2-10: Phase 9 E2E test timing -- "Rewrite E2E tests BEFORE migration" contradicts phase ordering
+## Section 4: Pattern Consistency Assessment
 
-**Location:** Phase 9, line 877
-**Issue:** Phase 9 says "IMPORTANT: Rewrite E2E tests BEFORE migration (not after). Update `e2e/tests/booking.spec.ts` and `booking-mock.spec.ts` to use Tier-based booking flow during Phase 6."
+### What Is Consistent
 
-This instruction is in Phase 9 but says to do the work in Phase 6. If this was already done in Phase 6, why repeat it in Phase 9? If not done in Phase 6, Phase 9 is too late (tests should already be updated by then).
+1. **Port/adapter separation** for all five production integrations (Stripe checkout, Google Calendar, Postmark, Supabase storage, Redis).
+2. **Mock-first**: every integration has a mock adapter that enables full test runs without any external service.
+3. **Tenant-scoped secrets**: per-tenant credentials encrypted with AES-256-GCM in `tenant.secrets` JSON column.
+4. **Graceful degradation**: all optional integrations (calendar, cache) fail open — the application continues without them.
+5. **Single wiring point**: all adapters instantiated in `di.ts`, never inside services.
 
-**Fix:** Move E2E test rewrite explicitly into Phase 6 file list and acceptance criteria. Phase 9 should only verify they pass.
+### Where Consistency Breaks Down
 
----
+1. **Email port is too narrow**: `EmailProvider` exposes only generic `sendEmail()`. The three booking-specific email methods bypass the port and are called directly on the concrete adapter in `di.ts`.
+2. **StripeConnectService is a sidecar**: holds its own Stripe instance, not injected through `PaymentProvider`. This may be intentional (Connect is architecturally separate from checkout) but it is undocumented and untestable via mock.
+3. **Supabase auth variables collected but unused**: `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET` are validated and required in real mode but Supabase Auth is not used. The platform uses its own JWT system. This creates operational confusion.
 
-### P2-11: `booking-management.spec.ts` and `booking-flow.spec.ts` not listed for update
+### Integration Readiness for New Adapters
 
-**Location:** Phase 6/7/9
-**Issue:** Glob found 4 E2E test files:
+The ports-and-adapters pattern means adding new integrations is structurally clear:
 
-- `e2e/tests/booking.spec.ts` (listed)
-- `e2e/tests/booking-mock.spec.ts` (listed)
-- `e2e/tests/booking-management.spec.ts` (NOT listed)
-- `e2e/tests/booking-flow.spec.ts` (NOT listed)
+1. Define `SMSProvider` / `VideoProvider` / `ContractProvider` port interface in `lib/ports/`
+2. Implement real adapter (Twilio, Zoom, DocuSign)
+3. Implement mock adapter returning predictable test data
+4. Wire in `di.ts`
+5. Add encrypted secret storage for per-tenant credentials in `tenant.secrets`
 
-The plan only mentions the first two. The other two likely reference Package concepts.
-
-**Fix:** Add `booking-management.spec.ts` and `booking-flow.spec.ts` to Phase 6 or Phase 9 file lists.
-
----
-
-## P3 -- Minor Findings
-
-### P3-1: Section blueprint still references slot machine in comments
-
-**Location:** `packages/contracts/src/schemas/section-blueprint.schema.ts`, lines 10-11, 41, 65
-**Issue:** Current file has comments like:
-
-- "Imported by: server/src/lib/slot-machine.ts (readiness computation)" (line 10)
-- "Lowercase section type (matches slot machine keys)" (line 41)
-- "8 canonical sections matching slot machine" (line 65)
-
-Phase 3 says to modify this file but only mentions removing `DISCOVERY_FACT_KEYS` and `computeSectionReadiness`. The slot machine references in comments will become stale.
-
-**Fix:** Add to Phase 3: "Update comments in section-blueprint.schema.ts to remove slot machine references."
+The architecture earns a **B+** for integration readiness. The main risk is that ad-hoc additions (like `StripeConnectService`) bypass the pattern and create operational debt.
 
 ---
 
-### P3-2: `SEED_PACKAGE_NAMES` in agent constants not mentioned for Phase 4 cleanup
+## Section 5: Recommended Priority Order
 
-**Location:** `server/src/agent-v2/deploy/tenant/src/constants/shared.ts` line 46
-**Issue:** The constants file exports `SEED_PACKAGE_NAMES` with a JSDoc referencing `contracts SEED_PACKAGE_NAMES`. Phase 4 says to update `shared.ts` to "Remove DISCOVERY_FACT_KEYS" but doesn't mention removing `SEED_PACKAGE_NAMES`.
+### Phase A — Before Broad Launch
 
-Phase 7 mentions removing `SEED_PACKAGE_NAMES` from the contracts package. But the agent constants copy should be removed in Phase 4 (when `first-draft.ts` is updated to use tiers instead of seed packages) or Phase 7.
+1. **SMS reminders** (Twilio/Vonage): `Customer.phone` already collected; port/adapter pattern is clear; directly addresses the #1 service professional pain point (no-shows)
+2. **Contract e-signature** (DocuSign/PandaDoc): schema acknowledges contracts exist; required for wedding photographers and therapists; competitors lead with this
+3. **Branded invoices** (Stripe billing portal or PDF generation): required for therapists with HSA clients and coaches with corporate clients
 
-**Fix:** Add `SEED_PACKAGE_NAMES` removal to Phase 4's constants update for `shared.ts`.
+### Phase B — Post-Launch
 
----
+4. **Fix EmailProvider port leak**: architectural debt; blocks swapping email providers
+5. **Outlook Calendar** (Microsoft Graph API): expand from Google-only to cover Microsoft-heavy verticals
+6. **Video meeting links** (Zoom/Google Meet): essential for virtual coaching and therapy
+7. **Deliverable delivery** (shareable project link): photographers need native delivery
 
-### P3-3: Constants barrel export (`constants/index.ts`) not listed for Phase 4 update
+### Phase C — Roadmap
 
-**Location:** `server/src/agent-v2/deploy/tenant/src/constants/index.ts`
-**Issue:** This file re-exports `DISCOVERY_FACT_KEYS`, `SEED_PACKAGE_NAMES`, and other constants. When Phase 4 modifies the individual constant files, the barrel export needs updating too. It is not listed in Phase 4's file list.
-
-**Fix:** Add `constants/index.ts` to Phase 4 file list.
-
----
-
-### P3-4: Design spec says "Package model is deleted" without phase reference
-
-**Location:** `docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md` line 21
-**Issue:** The design spec states "Tier replaces Package. Package model is deleted." This is a statement of intent, not a phased plan reference. After Phase 7, this statement becomes true. But during Phases 1-6, the Package model still exists. The design spec should note the transition period.
-
-**Fix:** Add "(deleted in Phase 7 of implementation plan)" after the statement.
+8. Review collection automation (Google Business Profile)
+9. Apple Calendar / iCal export
+10. Pre-booking intake forms
+11. Prometheus custom business metrics
+12. Email marketing / drip sequences (ConvertKit)
 
 ---
 
-### P3-5: Workstream table says "8 Workstreams" but lists items 1-8; plan has 9 phases
+## Section 6: Prior Documentation
 
-**Location:** Lines 30-42 (workstream table), Phases 1-9
-**Issue:** The overview says "8 Workstreams" and the workstream table lists 8 items. But the implementation has 9 phases (Phase 1-9). Workstream #7 ("Two-phase onboarding") maps to Phase 5 (system prompt), not a separate phase. Phase 8 (customer-agent) and Phase 9 (deployment) are not in the workstream table.
-
-This is a documentation inconsistency -- the workstreams describe conceptual buckets while phases describe execution order. Not a code issue, but could confuse implementers about scope.
-
-**Fix:** Add a note: "Workstreams map to multiple implementation phases. See phases below for execution order."
+No prior ADRs or `docs/solutions` documents address integration strategy at the platform level. ADR-011 (`PaymentProvider Interface`) is the only integration-focused ADR, and it covers only the payment abstraction pattern. The `docs/brainstorms/` and `docs/solutions/` directories contain no documents discussing SMS, contracts, invoices, video meetings, or CRM integrations. This is a genuine roadmap gap, not a consciously deferred decision.
 
 ---
 
-## Cross-Reference Verification
+## Appendix: Full Integration Inventory
 
-### Design Spec Alignment
-
-- **Package references surviving past Phase 7:** Design spec correctly states Package is deleted. Plan Phase 7 handles this. No Package references should survive in code after Phase 7. Verified.
-- **On-demand research:** Both design spec and plan agree. Verified.
-- **Brain dump at signup:** Both agree. Verified.
-- **3 tiers per segment default:** Design spec says "3 pricing options per segment". Plan Phase 4 says "max 5 tiers per segment (configurable)". Minor discrepancy -- plan is more flexible. Acceptable.
-
-### Risk Table vs Phase Mitigations
-
-- Risk "Booking.packageId FK cascade" (P1-CRITICAL): Mitigated in Phase 1 (tierId added) and Phase 7 (packageId dropped). **Verified.**
-- Risk "Stripe metadata references packageId" (P1-CRITICAL): Mitigation described in risk table BUT not in any phase acceptance criteria. **P2-9 above.**
-- Risk "Customer-agent browses Packages" (P1-CRITICAL): Phase 8 addresses this. **Partially verified** -- missing `recommend_package` rename (P1-5 above).
-- Risk "Package photo system" (P1): Mitigated in Phase 1 schema. Photo DATA migration missing from Phase 7. **P2-2 above.**
-
-### File Deletion Safety
-
-- `slot-machine.ts` deleted in Phase 3, no later references. **Verified.**
-- `packages.ts` (agent tool) deleted in Phase 4, referenced as "already deleted" in Phase 7. **P2-1 above.**
-- `package-draft.service.ts` deleted in Phase 7, imports exist in files not listed. **P2-3 above.**
+| Integration                               | Status      | Port Interface              | Mock Adapter    | Notes                    |
+| ----------------------------------------- | ----------- | --------------------------- | --------------- | ------------------------ |
+| Stripe (checkout, Connect, subscriptions) | Production  | `PaymentProvider` (partial) | Yes             | Connect bypasses port    |
+| Google Calendar (two-way sync)            | Production  | `CalendarProvider`          | Yes             | Service account auth     |
+| Postmark (transactional email)            | Production  | `EmailProvider` (partial)   | Yes (file sink) | Port too narrow          |
+| Supabase Storage (file uploads)           | Production  | `StorageProvider`           | Local FS        | Auth layer unused        |
+| Redis (cache + BullMQ queue)              | Production  | `CacheServicePort`          | In-memory       |                          |
+| Google Vertex AI / ADK (agents)           | Production  | None (direct SDK)           | No              | By design                |
+| Sentry (error monitoring)                 | Production  | None (direct SDK)           | No              | Standard practice        |
+| Prometheus (metrics)                      | Minimal     | None                        | No              | Default metrics only     |
+| Outbound Webhooks (tenant endpoints)      | Functional  | N/A                         | N/A             | Tenant-configured        |
+| DNS TXT Verification (custom domains)     | Functional  | None                        | No              | Internal service         |
+| **SMS (Twilio/Vonage)**                   | **MISSING** | None                        | None            | P1 Gap                   |
+| **Contract e-signature (DocuSign)**       | **MISSING** | None                        | None            | P1 Gap                   |
+| **Branded invoice / PDF**                 | **MISSING** | None                        | None            | P1 Gap                   |
+| **Outlook / Microsoft 365 Calendar**      | **MISSING** | None                        | None            | P2 Gap                   |
+| **Video meetings (Zoom/Google Meet)**     | **MISSING** | None                        | None            | P2 Gap                   |
+| **Deliverable delivery (Pixieset/Drive)** | **MISSING** | None                        | None            | P2 Gap                   |
+| **Review automation (Google Business)**   | **MISSING** | None                        | None            | P2 Gap                   |
+| **CRM integration (HubSpot/Zapier)**      | **PARTIAL** | None                        | None            | P2; covered via webhooks |
+| **QuickBooks / Xero**                     | **MISSING** | None                        | None            | P3 Gap                   |
+| **Apple Calendar / iCal**                 | **MISSING** | None                        | None            | P3 Gap                   |
+| **Intake questionnaires**                 | **MISSING** | None                        | None            | P3 Gap                   |
+| **Email marketing (ConvertKit)**          | **MISSING** | None                        | None            | P3 Gap                   |

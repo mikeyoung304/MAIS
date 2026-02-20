@@ -12,9 +12,17 @@
 
 import type { CalendarProvider, BusyTimeBlock } from '../lib/ports';
 import { logger } from '../lib/core/logger';
+import { encryptionService } from '../lib/encryption.service';
+import type { TenantSecrets, PrismaJson } from '../types/prisma-json';
+import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
+import { createGServiceAccountJWT } from '../adapters/gcal.jwt';
+import type { TenantCalendarConfig } from '../adapters/gcal.adapter';
 
 export class GoogleCalendarService {
-  constructor(private readonly calendarProvider: CalendarProvider) {}
+  constructor(
+    private readonly calendarProvider: CalendarProvider,
+    private readonly tenantRepo?: PrismaTenantRepository
+  ) {}
 
   /**
    * Create a calendar event for a new appointment
@@ -229,6 +237,97 @@ export class GoogleCalendarService {
         'Failed to fetch Google Calendar busy times - continuing without two-way sync'
       );
       return [];
+    }
+  }
+
+  /**
+   * Test the Google Calendar connection for a specific tenant.
+   *
+   * Decrypts the tenant's stored calendar credentials and makes a lightweight
+   * GET request to the Google Calendar API to verify they are valid.
+   *
+   * @param tenantId - Tenant ID whose calendar config should be tested
+   * @returns Result object with success flag and either calendarName or error message
+   */
+  async testConnection(
+    tenantId: string
+  ): Promise<
+    { success: true; calendarId: string; calendarName: string } | { success: false; error: string }
+  > {
+    if (!this.tenantRepo) {
+      return { success: false, error: 'Calendar service not configured with a tenant repository' };
+    }
+
+    const tenant = await this.tenantRepo.findById(tenantId);
+    if (!tenant) {
+      return { success: false, error: 'Tenant not found' };
+    }
+
+    const secrets = (tenant.secrets as PrismaJson<TenantSecrets>) ?? {};
+    const calendarSecret = secrets.calendar;
+    const hasConfig = !!(
+      calendarSecret?.ciphertext &&
+      calendarSecret?.iv &&
+      calendarSecret?.authTag
+    );
+
+    if (!hasConfig || !calendarSecret) {
+      return { success: false, error: 'No calendar configuration found' };
+    }
+
+    let calendarConfig: TenantCalendarConfig;
+    try {
+      calendarConfig = encryptionService.decryptObject<TenantCalendarConfig>(calendarSecret);
+    } catch (decryptErr) {
+      logger.error({ tenantId, error: decryptErr }, 'Failed to decrypt calendar config');
+      return { success: false, error: 'Failed to read calendar configuration' };
+    }
+
+    try {
+      const serviceAccountJson = JSON.parse(calendarConfig.serviceAccountJson) as unknown as {
+        client_email: string;
+        private_key: string;
+      };
+
+      const accessToken = await createGServiceAccountJWT(serviceAccountJson, [
+        'https://www.googleapis.com/auth/calendar.readonly',
+      ]);
+
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarConfig.calendarId)}`,
+        {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        logger.warn(
+          { tenantId, status: response.status, error: errorText },
+          'Google Calendar API test failed'
+        );
+        return {
+          success: false,
+          error: `Failed to connect to Google Calendar (status ${response.status})`,
+        };
+      }
+
+      const calendarData = (await response.json()) as { summary?: string };
+
+      logger.info({ tenantId }, 'Google Calendar connection test successful');
+
+      return {
+        success: true,
+        calendarId: calendarConfig.calendarId,
+        calendarName: calendarData.summary ?? 'Unknown',
+      };
+    } catch (error) {
+      logger.error({ tenantId, error }, 'Google Calendar connection test failed');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 

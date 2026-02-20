@@ -1,166 +1,366 @@
-# julik-frontend-races-reviewer Findings
+# julik-frontend-races-reviewer Findings — Google Calendar Integration Context
 
-**Reviewed:** 2026-02-18
+**Reviewed:** 2026-02-20
 **Reviewer:** julik-frontend-races-reviewer
-**Scope:** navigation.ts, TenantNav.tsx, TenantFooter.tsx, TenantSiteShell.tsx, TenantLandingPage.tsx, TestimonialsSection.tsx, storefront-utils.ts
+**Scope:** Tenant settings UI, existing settings forms (Stripe/billing), Next.js App Router patterns in settings pages, API key/secret input patterns, OAuth connection flow design for Google Calendar
 
 ---
 
 ## Summary
 
-- P1: 1 (hydration mismatch — year in server footer lands on client)
-- P2: 3 (dangling ref after class removal; `pages` object identity causes useMemo churn; testimonials transform only fires on `items`, silently passes through if field is already named `authorName` but `items` key was renamed earlier)
-- P3: 3 (Suspense does not catch synchronous errors in TenantFooter; `s.type as SectionTypeName` cast silences unknown types; `custom` excluded from SECTION_TYPE_TO_PAGE with no comment)
+- P1: 2 (missing Suspense boundaries around `useSearchParams` in billing/revenue pages; race condition in Stripe create+onboard chain)
+- P2: 4 (clipboard API called without error handling; `isCreating` / `isOnboarding` flags do not prevent double-submit; stale `fetchStatus` inside `handleCreateAccount`; settings page shows mock API key without fetching real data)
+- P3: 4 (no `loading.tsx` for billing or revenue; Payments/billing pages are re-exported as components then mounted conditionally causing remount churn; settings page lacks any integration section; Google Calendar backend uses service-account model, not OAuth — but UI will need to communicate this clearly)
 
-Total: 7 findings (1 P1, 3 P2, 3 P3)
+Total: 10 findings (2 P1, 4 P2, 4 P3)
+
+---
+
+## Context: Current State of Tenant Settings
+
+The settings page at `/tenant/settings` is minimal:
+
+- Account info (read-only email + tenantId display)
+- API key display (mock key derived from `tenantId.slice(0, 8)` — not fetched from API)
+- Business settings (stub, "coming soon")
+- Danger zone (Sign Out + disabled Delete Account)
+
+There is no "Integrations" section and no mention of Google Calendar anywhere in the frontend. The backend has a complete service-account-based Google Calendar API at:
+
+- `GET /v1/tenant-admin/calendar/status`
+- `POST /v1/tenant-admin/calendar/config`
+- `DELETE /v1/tenant-admin/calendar/config`
+- `POST /v1/tenant-admin/calendar/test`
+
+The billing page at `/tenant/billing` and the payments page at `/tenant/payments` represent the only existing "integration setup" patterns. The revenue page at `/tenant/revenue` wraps both as tabs. These are the best reference points for what a new Google Calendar settings section should look like.
 
 ---
 
 ## P1 Findings
 
-### P1-01 — Hydration Mismatch: `new Date().getFullYear()` in TenantFooter
+### P1-01 — Missing Suspense Boundary: `useSearchParams` in Billing and Revenue Pages
 
-**File:** `apps/web/src/components/tenant/TenantFooter.tsx:27`
+**Files:**
+
+- `apps/web/src/app/(protected)/tenant/billing/page.tsx:67`
+- `apps/web/src/app/(protected)/tenant/revenue/page.tsx:39`
 
 **Finding:**
-`TenantFooter` is declared without `'use client'` — it is a Server Component. However, `new Date().getFullYear()` is evaluated at request time on the server. If the rendered HTML is then rehydrated on the client after the year rolls over (e.g., a response cached across a new year boundary), or if the function is ever converted to a Client Component in the future, the year value will diverge between server and client, triggering React's hydration mismatch error.
 
-More immediately: `TenantFooter` is rendered inside a `<Suspense>` boundary wrapping `<EditModeGate>`, which is a `'use client'` component. In Next.js App Router, when a Server Component is a child of a Client Component (even via `children` prop through Suspense), it is serialized and sent as RSC payload. The `currentYear` is computed server-side, so this is safe today — but the enclosure inside an `<EditModeGate>` subtree means any future addition of `'use client'` to TenantFooter will silently break hydration. The bigger risk is that the value is not stable across long-lived cache entries.
+Both `BillingPage` and `RevenuePage` call `useSearchParams()` at the top level of their component functions without wrapping in a `<Suspense>` boundary. In Next.js 14 App Router, `useSearchParams()` opts the entire route segment into client-side rendering, and when called outside a Suspense boundary it will throw a warning (dev) and can fail static rendering (production build).
 
-**Reproduction path:** Statically render or cache the page across a year boundary (ISR or `cache: 'force-cache'`). The server returns year 2025, client JS rehydrates computing 2026. React throws hydration error, white-screening the footer.
+Contrast: `ResetPasswordPage` (`apps/web/src/app/reset-password/page.tsx`) does this correctly — it wraps the inner component that calls `useSearchParams` in `<Suspense fallback={<ResetPasswordSkeleton />}>`. The login page follows the same pattern.
 
-**Recommendation:** Replace inline `new Date().getFullYear()` with a build-time constant or ensure the footer is always server-rendered fresh. Alternatively, add `export const dynamic = 'force-dynamic'` to the route or use `<time suppressHydrationWarning>` with explicit client-side override. The safest approach for a footer year is a static constant updated at build time, or rendering it as a pure client component island.
+`BillingPage` and `RevenuePage` have no `loading.tsx` fallback files either (see P3-01). This means if Next.js attempts any prerendering for these routes, the missing Suspense boundary causes the build to fail with `useSearchParams() should be wrapped in a Suspense tag` or causes a waterfall on the client.
+
+**Reproduction path:** Run `npm run --workspace=apps/web build` — the build may warn or fail for these routes. Alternatively, navigate cold to `/tenant/billing?success=true` — the page may flash or throw a hydration error.
+
+**Fix for new Calendar settings page:** When Google Calendar adds an OAuth callback with a `?code=...` or `?state=...` query parameter, the component reading that param will need a Suspense boundary. Use the same pattern as `reset-password/page.tsx`:
+
+```tsx
+// apps/web/src/app/(protected)/tenant/settings/page.tsx (or a new integrations page)
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<IntegrationsSkeleton />}>
+      <IntegrationsContent /> {/* contains useSearchParams() */}
+    </Suspense>
+  );
+}
+```
+
+---
+
+### P1-02 — Race Condition: Stripe `handleCreateAccount` Calls `handleOnboard` Without Awaiting Fresh State
+
+**File:** `apps/web/src/app/(protected)/tenant/payments/page.tsx:130-132`
+
+**Finding:**
+
+```tsx
+if (response.ok || response.status === 201) {
+  await fetchStatus(); // re-fetches status, updates `status` state
+  await handleOnboard(); // immediately calls onboard endpoint
+}
+```
+
+`handleOnboard` is called immediately after `fetchStatus()`, but `fetchStatus()` only schedules a React state update — it does not synchronously change `status`. The `handleOnboard()` function does not depend on `status` (it just calls the onboard-link endpoint), so this is benign today. However, the intent is fragile: if `handleOnboard` were ever refactored to guard on `status.accountId`, it would read stale state because the `fetchStatus` update has not yet been committed by React.
+
+More concretely: if the POST to create the account is slow, the user can click "Continue to Stripe" multiple times before `isCreating` returns to `false`. The dialog is hidden (`setShowDialog(false)`) before `setIsCreating(true)`, so the user could reopen the dialog and click again.
+
+**Fix pattern:** The dialog `Continue to Stripe` button should be disabled while any operation is in-flight. The current code disables `isCreating` correctly on the CTA button in the empty state, but the dialog button only disables if `!dialogEmail || !dialogBusinessName`, not if `isCreating` is true:
+
+```tsx
+// Current (line 321) — bug:
+disabled={!dialogEmail || !dialogBusinessName}
+
+// Should be:
+disabled={!dialogEmail || !dialogBusinessName || isCreating}
+```
+
+**Impact for Google Calendar:** The same pattern — "save config, then test connection" — should not chain `saveConfig → testConnection` as direct sequential awaits on state-updating functions. Use a returned value from the fetch call directly, not React state.
 
 ---
 
 ## P2 Findings
 
-### P2-01 — Dangling `sectionRef` in TestimonialsSection After `reveal-on-scroll` Removal
+### P2-01 — Clipboard API Called Without Error Handling
 
-**File:** `apps/web/src/components/tenant/sections/TestimonialsSection.tsx:29,37`
-
-**Finding:**
-`useScrollReveal()` returns a callback ref that is attached to the `<section>` element at line 37 (`ref={sectionRef}`). The hook registers the element with an `IntersectionObserver` and sets `style.opacity = '0'` on mount, then adds `.reveal-visible` when the element enters the viewport.
-
-The PR removes the `reveal-on-scroll` CSS class from the `<section>` element but **keeps `ref={sectionRef}`**. This means:
-
-1. The `IntersectionObserver` still fires on the section element.
-2. `useScrollReveal` still sets `element.style.opacity = '0'` on mount (via the callback ref path in the hook, lines 54-55).
-3. The section becomes invisible on mount and only reappears when the `IntersectionObserver` triggers `reveal-visible`.
-4. `reveal-visible` presumably applies `opacity: 1` via a CSS class, but if `reveal-on-scroll` was the class gating that animation, and only `reveal-on-scroll` was removed without removing `reveal-visible` CSS, the behavior depends entirely on global CSS. If `reveal-visible` only activates when paired with `reveal-on-scroll`, the section will be permanently hidden (opacity: 0 set inline, never cleared).
-
-The card `div` elements retain `reveal-delay-1` / `reveal-delay-2` classes which are animation stagger classes, suggesting the intent was to preserve card-level animation. But the hook is attached to the section wrapper, not the cards — so it controls section-level visibility.
-
-**Net effect:** Testimonials section may render as invisible (`opacity: 0`) if the IntersectionObserver fires before the section is in viewport on initial load, depending on CSS.
-
-**Recommendation:** Either remove `ref={sectionRef}` entirely (removing the `useScrollReveal` call if no longer needed), or confirm that the global CSS for `reveal-visible` still applies the correct `opacity: 1` transition without the `reveal-on-scroll` parent class.
-
-### P2-02 — `useMemo` Object Identity: `pages` Prop Causes Every-Render Churn in TenantNav
-
-**File:** `apps/web/src/components/tenant/TenantNav.tsx:49-56`
+**File:** `apps/web/src/app/(protected)/tenant/settings/page.tsx:28`
 
 **Finding:**
-`useMemo([basePath, pages])` is correct in principle — the memo invalidates when `pages` changes. The problem is that `pages` is a `PagesConfig` object passed through from a Server Component (`TenantSiteShell`) via serialization boundary.
 
-In Next.js App Router, when a Server Component passes a plain object to a Client Component, the object is serialized as RSC payload and deserialized on the client. On subsequent navigations or re-renders (e.g., soft navigation, router refresh), React may recreate the RSC tree and pass a new object reference even if the data is identical. Since `useMemo` uses `Object.is` for dependency comparison, a new object reference — even with identical contents — invalidates the memo on every render.
+```tsx
+const handleCopyKey = (key: string, keyType: string) => {
+  navigator.clipboard.writeText(key); // Promise ignored, no try/catch
+  setCopiedKey(keyType);
+  setTimeout(() => setCopiedKey(null), 2000);
+};
+```
 
-This causes `getNavItemsFromHomeSections(pages)` to run on every render of `TenantNav`, defeating the purpose of `useMemo`. For a nav component that re-renders on scroll (via `useActiveSection` which uses `IntersectionObserver` state updates), this means the nav item derivation runs on every scroll event.
+`navigator.clipboard.writeText()` returns a `Promise<void>`. It rejects if:
 
-**Severity:** P2 — not a correctness bug, but a performance trap that grows worse with section count. With 7+ sections in `PAGE_ORDER`, `getNavItemsFromHomeSections` iterates the full section array N times (once per non-home page in `PAGE_ORDER`). This runs on every scroll-triggered `activeSection` state update.
+1. The page is not served over HTTPS (e.g., `http://localhost` without special flags)
+2. The user denies the clipboard permission
+3. The document is not focused
 
-**Recommendation:** The memoization is structurally sound; the issue is reference stability. Options:
+The current code ignores the promise entirely. If the write fails silently, the UI shows a checkmark ("copied!") but nothing was actually copied to the clipboard. This is a false-positive success state.
 
-1. Hoist `getNavItemsFromHomeSections(pages)` to the Server Component and pass the derived `navItems` array directly to TenantNav (arrays are stable if content is stable).
-2. Memoize with a deep-equality comparator (e.g., `useMemo` with a manual comparison via `JSON.stringify(pages)` as the dep — crude but effective for this size).
-3. Accept the current behavior if `TenantNav` rarely re-renders outside of explicit `pages` changes.
+**Fix:**
 
-### P2-03 — Testimonials Transform: Silent No-Op if `items` Key Was Renamed Upstream
+```tsx
+const handleCopyKey = async (key: string, keyType: string) => {
+  try {
+    await navigator.clipboard.writeText(key);
+    setCopiedKey(keyType);
+    setTimeout(() => setCopiedKey(null), 2000);
+  } catch {
+    // Fallback: show an error or use execCommand
+    setError('Could not copy to clipboard');
+  }
+};
+```
 
-**File:** `apps/web/src/lib/storefront-utils.ts:102-118`
+**Impact for Google Calendar:** The calendar config page will likely want a "copy calendar ID" button similar to the API key display. Apply this pattern there.
+
+---
+
+### P2-02 — Settings Page Shows Fabricated Mock API Key, Not Real Data
+
+**File:** `apps/web/src/app/(protected)/tenant/settings/page.tsx:25`
 
 **Finding:**
-The `testimonials` case in `transformContentForSection` maps `items → (authorName, authorRole)` by iterating `transformed.items`. However, the function receives `{ ...content }` as `transformed`, meaning it starts from the original DB content shape.
 
-The problem: earlier in the same switch, the `features`/`services` cases delete `items` and write `features`. The `gallery` case deletes `items` and writes `images`. The `pricing` case deletes `items` and writes `tiers`. These transforms are idempotent and isolated to their own case.
+```tsx
+// Mock API keys for display (in production these would come from the API)
+const apiKeyPublic = tenantId ? `pk_live_${tenantId.slice(0, 8)}...` : 'Not available';
+```
 
-For `testimonials`, the transform checks `if (Array.isArray(transformed.items))` — but the DB stores testimonials under `items`. This is correct _on first pass_. However, if a testimonial item already has `authorName` set (e.g., because the agent wrote normalized data), the guard `if (out.name && !out.authorName)` correctly skips. That part is fine.
+This is not a truncated display of a real API key — it is a fabricated placeholder that looks like a real key. This pattern:
 
-The actual gap: the `testimonials` case does NOT rename `items` to any canonical field name. After the transform, the field is still called `items` on the returned object. But `TestimonialsSection` destructures the prop typed as `TestimonialsSectionType`, which expects a field named `items` (standard TypeScript schema field). Checking the component at line 30: `const safeItems = Array.isArray(items) ? items : []` — so the field name `items` is correct at the component level.
+1. Misleads tenants who may copy and try to use this key — it will not work
+2. The `CLAUDE.md` notes that valid API key format is `pk_live_{slug}_{random}` but this generates `pk_live_{tenantId_prefix}` which does not match
+3. No actual fetch from `/api/tenant-admin/...` happens on the settings page
 
-However, the transform mutates `out.name` and `out.role` to `out.authorName` and `out.authorRole` inside a `{ ...item }` spread. This is safe — each iteration operates on a fresh shallow copy. The original DB objects are not mutated. No issue with mutation safety per se.
+Either the settings page should fetch the real key from the API and display a masked version (like the calendar config endpoint does with `maskCalendarId`), or it should show a placeholder with a clear "Not yet generated" state.
 
-The real gap is **incomplete field mapping for the `items` array itself**: after renaming `name → authorName` and `role → authorRole`, there is no remapping of `items` to the `TestimonialsSection.items` field name expected by contracts. This works today only because the field is coincidentally also named `items` in the contracts type. If the contracts type ever renames this field (e.g., to `testimonials`), this transform will silently produce an object with the wrong field name and `safeItems` will be `[]`.
+**Impact for Google Calendar:** When showing the masked calendar ID on the settings/integrations page, do not fabricate it client-side. Always fetch from `/api/tenant-admin/calendar/status` and display the server-masked value.
 
-Additionally: the `authorPhotoUrl` field used at `TestimonialsSection.tsx:54` has no corresponding transform. If DB stores it as `photo` or `photoUrl`, the image silently drops. There is no mapping for this field in the transform.
+---
 
-**Recommendation:** Audit the DB seed data for the actual field names for testimonial photos. Add an explicit `photo`/`photoUrl → authorPhotoUrl` remap alongside the existing `name` and `role` remaps. Add a comment in the transform specifying the exact DB field names expected.
+### P2-03 — Double-Submit Not Prevented on Stripe Dialog Continue Button
+
+**File:** `apps/web/src/app/(protected)/tenant/payments/page.tsx:321`
+
+**Finding:** (Related to P1-02 but a distinct UX issue.)
+
+The "Continue to Stripe" button inside the dialog disables only when fields are empty. If the user clicks the button while a previous in-flight request is processing (e.g., network is slow), `handleCreateAccount` will be called twice. The first call sets `setIsCreating(true)` but only after hiding the dialog (`setShowDialog(false)`) and after the validation passes.
+
+The window of opportunity is small (dialog hides before `setIsCreating(true)`) but not zero on slow networks where React batches updates across async boundaries.
+
+**Fix:** Add `isCreating` to the disabled guard on the dialog button, and consider using an `AbortController` to cancel the in-flight request if the component unmounts.
+
+---
+
+### P2-04 — `fetchStatus` Inside `useCallback` Creates Stale Closure in `handleCreateAccount`
+
+**File:** `apps/web/src/app/(protected)/tenant/payments/page.tsx:69-90`, 130-131
+
+**Finding:**
+
+`fetchStatus` is defined with `useCallback([isAuthenticated])`. `handleCreateAccount` is a regular (non-memoized) function that calls `fetchStatus`. This is fine because `handleCreateAccount` is redefined on each render and will close over the current `fetchStatus`.
+
+However, if the component is extended to memoize `handleCreateAccount` (e.g., via `useCallback` to pass to a child button), the dependency array must include `fetchStatus`. This is a latent bug that would be introduced by a straightforward refactor.
+
+More concrete today: after `await fetchStatus()`, React state is updated asynchronously. The call to `await handleOnboard()` on line 131 executes within the same closure — if `handleOnboard` were to read `status` (the React state), it would see the pre-fetch value. This is currently safe because `handleOnboard` does not read `status`, but it is a fragile dependency.
 
 ---
 
 ## P3 Findings
 
-### P3-01 — Suspense Does Not Protect TenantFooter From Synchronous Errors
+### P3-01 — No `loading.tsx` for Billing or Revenue Routes
 
-**File:** `apps/web/src/components/tenant/TenantSiteShell.tsx:63-74`
+**Directories:**
 
-**Finding:**
-The second `<Suspense>` boundary wraps `<EditModeGate>` which in turn wraps `<TenantFooter>`, `<TenantChatWidget>`, and `<StickyMobileCTA>`. The comment says Suspense is required because `useSearchParams()` triggers the client boundary in `EditModeGate`.
-
-This is correct — `useSearchParams()` in `EditModeGate` requires Suspense during static rendering. However, Suspense only catches _async_ suspensions (data fetching, lazy loading). It does not catch synchronous render errors. If `TenantFooter` throws synchronously (e.g., `tenant.branding` access on a malformed tenant object, or a future code change), the error propagates up and is **not caught by Suspense** — it would need an `ErrorBoundary` to be caught.
-
-Currently `TenantFooter` has no throwing paths on the read paths visible in the file, so this is not an active bug. It is a structural gap: the Suspense boundary gives a false sense of error containment for the footer. If a future developer adds async data fetching to `TenantFooter`, they may expect Suspense to handle loading states — but they also need to know that error states are unhandled.
-
-**Recommendation:** Add a comment to the Suspense boundary explicitly stating it covers only `useSearchParams` suspension, not error states. Consider co-locating an `ErrorBoundary` if the footer content ever becomes data-dependent.
-
-### P3-02 — `s.type as SectionTypeName` Cast Silences Unknown Section Types in Navigation
-
-**File:** `apps/web/src/components/tenant/navigation.ts:102`
+- `apps/web/src/app/(protected)/tenant/billing/` (only `error.tsx` + `page.tsx`)
+- `apps/web/src/app/(protected)/tenant/revenue/` (only `error.tsx` + `page.tsx`)
 
 **Finding:**
 
-```typescript
-const hasSection = pages.home.sections.some(
-  (s) => SECTION_TYPE_TO_PAGE[s.type as SectionTypeName] === page
-);
-```
+Both billing and revenue have `error.tsx` but no `loading.tsx`. In Next.js App Router, `loading.tsx` provides the automatic Suspense fallback for the route segment while the page data loads. Without it, there is no skeleton shown during initial load or navigation — the user sees a blank area.
 
-The cast `s.type as SectionTypeName` tells TypeScript the value is a valid `SectionTypeName`. If the DB or agent writes a section type that is not in `SectionTypeName` (e.g., `'grazing'` — referenced in todo #11005, or any future custom type), the cast succeeds at compile time, `SECTION_TYPE_TO_PAGE` lookup returns `undefined`, the nav item is silently excluded, and there is no observable error.
+Compare: `/tenant/scheduling/` and sub-routes all have `loading.tsx` skeletons. The billing pages skip this.
 
-This is currently low-risk because `sectionsToPages()` filters through `BLOCK_TO_SECTION_TYPE` which acts as a whitelist. But `getNavItemsFromHomeSections` can also be called with `pages` derived from other sources (legacy `landingPageConfig` fallback), where the filtering guarantee does not apply.
-
-**Recommendation:** Replace the cast with a type guard or an explicit `SECTION_TYPE_TO_PAGE[s.type as string]` access. The cast adds no runtime safety — it only suppresses a TypeScript error that would otherwise point to a real structural gap.
-
-### P3-03 — `custom` Section Type Exclusion Is Undocumented in SECTION_TYPE_TO_PAGE
-
-**File:** `apps/web/src/components/tenant/navigation.ts:76-84`
-
-**Finding:**
-The JSDoc comment above `SECTION_TYPE_TO_PAGE` documents that `hero`, `cta`, `features`, and `pricing` are intentionally excluded. However, `custom` is also absent from the map (and from `PAGE_ORDER`) but is not mentioned in the exclusion comment. This is an incomplete comment.
-
-Todo #11005 ("extract-grazing-constant-and-use-blocktype-enum") and the SECTION_TYPES drift history (MEMORY.md, onboarding smoke test #2) show that `custom` was a source of confusion in the past. The absence of `custom` from both `SECTION_TYPE_TO_PAGE` and `PAGE_ORDER` means any custom section the agent writes will never appear in the nav, with no diagnostic signal.
-
-**Recommendation:** Add `custom` to the JSDoc exclusion list with a rationale: "custom: no canonical nav label or anchor target." This is a documentation-only fix but prevents the next developer from assuming it was an oversight.
+**Impact for Google Calendar:** The new integrations section (whether on `/tenant/settings` or a dedicated page) should have a `loading.tsx` to show a skeleton while the calendar status is fetched. The fetch is async and has non-trivial latency (fetches from backend, which decrypts config from DB).
 
 ---
 
-## Cross-Cutting Observations
+### P3-02 — Revenue Page Mounts Full Page Components as Tab Children (Remount Churn)
 
-### No Race Condition in TenantNav `pages` Prop (Confirmed Safe)
+**File:** `apps/web/src/app/(protected)/tenant/revenue/page.tsx:80-82`
 
-The `pages` prop flows Server → Client as a serialized RSC prop. It is set once at render time and does not update asynchronously. There is no race between the server-rendered nav and the client-hydrated nav because both use the same serialized `pages` value. The `useMemo` churn noted in P2-02 is a performance issue, not a correctness race.
+**Finding:**
 
-### Server/Client Boundary — No Leakage Found
+```tsx
+{
+  activeTab === 'payments' && <PaymentsContent />;
+}
+{
+  activeTab === 'billing' && <BillingContent />;
+}
+```
 
-`TenantSiteShell` passes only serializable props (`TenantPublicDto`, `PagesConfig`, `string`, `React.ReactNode`) across the boundary. No `Symbol`, `Function`, `Date` object (only primitives derived from dates), or non-serializable value is passed. The `themeVars` CSS custom properties object is applied server-side via inline `style` prop and does not cross a client boundary. Clean.
+`PaymentsContent` and `BillingContent` are the default exports of the `payments/page.tsx` and `billing/page.tsx` files, imported directly and re-rendered as children of `RevenuePage`. This causes a full remount (and re-fetch) every time the user switches tabs because React unmounts the component when `activeTab !== 'payments'`.
 
-### `getNavItemsFromHomeSections` Null Safety (Confirmed Correct)
+`BillingPage` calls `useSubscription()` which fetches `GET /api/tenant-admin/billing/status` on mount. Switching from Payments to Billing and back will re-fetch three times total. Neither tab uses `display: none` / CSS visibility — they are fully unmounted.
 
-The `!pages?.home?.sections?.length` guard at line 94 correctly handles all null/undefined cases: `pages = undefined`, `pages = null`, `pages.home = undefined`, `pages.home.sections = undefined`, `pages.home.sections = []`. The fallback to `[{ label: 'Home', path: '' }]` is appropriate. No null-dereference risk in this function.
+**Fix for a new integrations tab:** Use `display` toggling (keep both tabs mounted) or a stable shared QueryClient cache key with TanStack Query so re-mounting reads from cache without network refetch.
 
-### `storefront-utils.ts` Mutation Safety (Confirmed Safe)
+---
 
-The `transformContentForSection` function starts with `const transformed = { ...content }` (shallow spread). The `testimonials` case does `const out = { ...item }` per item (another shallow spread). `delete out.name` operates on the local copy, not on the original DB object. The original `content` reference passed in is never mutated. Safe.
+### P3-03 — Settings Page Has No Integrations Section and No Calendar Entry Point
 
-### `TenantLandingPage` Dynamic Section Rendering (No New Issues)
+**File:** `apps/web/src/app/(protected)/tenant/settings/page.tsx`
 
-The removal of the static `HowItWorksSection` slot and switch to dynamic `postSections` is straightforward. `buildHomeSections` correctly filters using `postTierTypes` Set. The `indexOffset={preSections.length}` passed to the second `SectionRenderer` is correct for edit-mode data attributes. No race or ordering issue introduced.
+**Finding:**
+
+The settings page currently has: Account Information, API Keys, Business Settings (stub), and Danger Zone. There is no "Integrations" section. The Google Calendar API backend exists (`/v1/tenant-admin/calendar/`) but there is no frontend route or component that surfaces it.
+
+For the Google Calendar integration to be discoverable:
+
+1. The settings page needs a new "Integrations" card section
+2. Or a dedicated `/tenant/settings/integrations` sub-route
+3. Or the scheduling section gets a "Calendar Sync" sub-nav entry alongside Availability/Blackouts
+
+The scheduling sub-nav in `apps/web/src/app/(protected)/tenant/scheduling/layout.tsx` is the most contextually appropriate home. Calendar sync belongs next to availability rules.
+
+**Recommended structure:**
+
+```
+/tenant/scheduling/calendar   ← new sub-route
+```
+
+With a sub-nav entry:
+
+```tsx
+{
+  href: '/tenant/scheduling/calendar',
+  label: 'Calendar Sync',
+  icon: <CalendarCheck className="h-4 w-4" />,
+}
+```
+
+---
+
+### P3-04 — Backend Uses Service Account Model, Not OAuth — UI Must Communicate This Clearly
+
+**File:** `server/src/routes/tenant-admin-calendar.routes.ts`
+
+**Finding:**
+
+The backend calendar integration is service-account-based (the tenant provides a Google service account JSON key and a calendar ID), not OAuth-based (there is no OAuth redirect flow). This means:
+
+1. There is no "Connect with Google" OAuth popup flow to implement
+2. The UX is a form with two fields: a Calendar ID text input and a service account JSON file upload
+3. There is a "Test Connection" endpoint (`POST /v1/tenant-admin/calendar/test`) which should be surfaced as a "Test" button after save
+
+The billing/payments flow (Stripe Connect button → dialog → redirect to Stripe → return) is the wrong mental model for this integration. The correct model is:
+
+**Save secrets form pattern** (like an API key save):
+
+1. Tenant opens settings/calendar page
+2. Sees current status: "Not configured" or "Connected: `calendarid@g...e.com`"
+3. Fills Calendar ID + uploads/pastes service account JSON
+4. Clicks "Save" → POST to `/v1/tenant-admin/calendar/config`
+5. On success, status updates to show masked calendar ID
+6. Tenant clicks "Test Connection" → POST to `/v1/tenant-admin/calendar/test`
+7. Shows success with calendar name, or error message
+
+**Important UX guidance for the form:**
+
+- The service account JSON input should use `<textarea>` or file upload, not `<Input>`. It is ~2KB of JSON.
+- The JSON should never be echoed back to the UI after save (the backend only returns the masked calendar ID).
+- Use `type="password"` semantics (or a show/hide toggle) for the JSON textarea — it contains a private key.
+- Validate that the pasted text is valid JSON client-side before submitting (prevents unnecessary round-trips).
+- The 50KB server-side size guard is defensive but should also be enforced client-side (`serviceAccountJson.length > 50 * 1024`).
+
+**No OAuth popup flow is needed.** Do not build a popup/`window.open` flow. The `validateStripeUrl` pattern in payments is irrelevant here. The Google Calendar integration is entirely credential-based.
+
+---
+
+## Summary Table
+
+| ID    | Severity | File                                                 | Issue                                                                                                    |
+| ----- | -------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| P1-01 | P1       | `tenant/billing/page.tsx`, `tenant/revenue/page.tsx` | `useSearchParams` without Suspense boundary                                                              |
+| P1-02 | P1       | `tenant/payments/page.tsx:130-132`                   | Race: `fetchStatus` → `handleOnboard` chains on stale state; dialog button not disabled during in-flight |
+| P2-01 | P2       | `tenant/settings/page.tsx:28`                        | `navigator.clipboard.writeText` promise ignored (false-positive success)                                 |
+| P2-02 | P2       | `tenant/settings/page.tsx:25`                        | Fabricated mock API key displayed instead of real fetched data                                           |
+| P2-03 | P2       | `tenant/payments/page.tsx:321`                       | Dialog `Continue` button missing `isCreating` in disabled guard                                          |
+| P2-04 | P2       | `tenant/payments/page.tsx:130-131`                   | Stale closure risk: `fetchStatus` update not committed before `handleOnboard` call                       |
+| P3-01 | P3       | `tenant/billing/`, `tenant/revenue/`                 | No `loading.tsx` for these route segments                                                                |
+| P3-02 | P3       | `tenant/revenue/page.tsx:80-82`                      | Full remount of page components on tab switch causes re-fetches                                          |
+| P3-03 | P3       | `tenant/settings/page.tsx`                           | No integrations section; no calendar entry point                                                         |
+| P3-04 | P3       | n/a (architecture)                                   | Backend is service-account model not OAuth — UI form design must differ from Stripe flow                 |
+
+---
+
+## Recommended: Google Calendar Settings Page Architecture
+
+Based on the review, here is the recommended frontend structure for the calendar integration:
+
+**Route:** `apps/web/src/app/(protected)/tenant/scheduling/calendar/page.tsx`
+
+**Component pattern** (based on what works well in AvailabilityRuleForm and payments page):
+
+```tsx
+'use client';
+
+// 1. On mount: fetch /api/tenant-admin/calendar/status
+// 2. Render status card:
+//    - Not configured: show form with Calendar ID + JSON textarea
+//    - Configured: show masked calendar ID, "Test Connection" button, "Remove" button
+// 3. Save flow:
+//    - Validate JSON parse client-side before submit
+//    - POST /api/tenant-admin/calendar/config
+//    - On success: refetch status, show success message
+// 4. Test flow:
+//    - POST /api/tenant-admin/calendar/test
+//    - Show success with calendarName or error message
+// 5. Remove flow:
+//    - Confirm dialog → DELETE /api/tenant-admin/calendar/config
+//    - On success: refetch status
+```
+
+**No OAuth popup. No `window.location.href` redirect. No postMessage. Pure form + fetch.**
+
+Add to scheduling sub-nav in `apps/web/src/app/(protected)/tenant/scheduling/layout.tsx`:
+
+```tsx
+{
+  href: '/tenant/scheduling/calendar',
+  label: 'Calendar Sync',
+  icon: <CalendarCheck className="h-4 w-4" />,
+}
+```
+
+Fix P1-01 while building: the new page must wrap any `useSearchParams` usage in Suspense if a callback query param is added later (even if not needed today, add the pattern proactively).

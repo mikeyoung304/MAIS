@@ -97,6 +97,7 @@ import type { AvailabilityService } from '../services/availability.service';
 import type { ProjectHubService } from '../services/project-hub.service';
 import type { DiscoveryService } from '../services/discovery.service';
 import type { ResearchService } from '../services/research.service';
+import type { GoogleCalendarService } from '../services/google-calendar.service';
 import { VocabularyEmbeddingService } from '../services/vocabulary-embedding.service';
 
 interface Controllers {
@@ -127,6 +128,7 @@ interface Services {
   projectHub?: ProjectHubService;
   discovery?: DiscoveryService;
   research?: ResearchService;
+  googleCalendar?: GoogleCalendarService;
 }
 
 interface Repositories {
@@ -573,7 +575,10 @@ export function createV1Router(
 
     // Register tenant admin calendar routes (for per-tenant calendar configuration)
     // Requires tenant admin authentication
-    const tenantAdminCalendarRoutes = createTenantAdminCalendarRoutes(tenantRepo);
+    const tenantAdminCalendarRoutes = createTenantAdminCalendarRoutes(
+      tenantRepo,
+      services.googleCalendar
+    );
     app.use('/v1/tenant-admin/calendar', tenantAuthMiddleware, tenantAdminCalendarRoutes);
     logger.info('✅ Tenant admin calendar routes mounted at /v1/tenant-admin/calendar');
 

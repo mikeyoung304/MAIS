@@ -56,7 +56,14 @@ const tier1Schema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   TENANT_SECRETS_ENCRYPTION_KEY: z
     .string()
-    .min(32, 'TENANT_SECRETS_ENCRYPTION_KEY must be at least 32 characters'),
+    .length(
+      64,
+      'TENANT_SECRETS_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32'
+    )
+    .regex(
+      /^[0-9a-f]+$/i,
+      'TENANT_SECRETS_ENCRYPTION_KEY must be hexadecimal characters only. Generate with: openssl rand -hex 32'
+    ),
 
   // Adapters Preset
   ADAPTERS_PRESET: z.enum(['mock', 'real']).default('real'),

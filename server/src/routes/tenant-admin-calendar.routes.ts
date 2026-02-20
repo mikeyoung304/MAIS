@@ -11,6 +11,8 @@ import { encryptionService } from '../lib/encryption.service';
 import type { PrismaTenantRepository } from '../adapters/prisma/tenant.repository';
 import type { TenantCalendarConfig } from '../adapters/gcal.adapter';
 import type { TenantSecrets, PrismaJson } from '../types/prisma-json';
+import type { GoogleCalendarService } from '../services/google-calendar.service';
+import { requireAuth, getTenantId } from './tenant-admin-shared';
 
 // Constants
 const MAX_JSON_SIZE = 50 * 1024; // 50KB - service account JSON files are typically ~2KB
@@ -23,9 +25,12 @@ const calendarConfigSchema = z.object({
 
 export function createTenantAdminCalendarRoutes(
   tenantRepo: PrismaTenantRepository,
-  _calendarProvider?: unknown // GoogleCalendarAdapter instance for testing connection
+  googleCalendarService?: GoogleCalendarService
 ): Router {
   const router = Router();
+
+  // Require authentication for all calendar routes
+  router.use(requireAuth);
 
   /**
    * GET /v1/tenant-admin/calendar/status
@@ -33,12 +38,11 @@ export function createTenantAdminCalendarRoutes(
    */
   router.get('/status', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
         res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
         return;
       }
-      const tenantId = tenantAuth.tenantId;
 
       // Get tenant record
       const tenant = await tenantRepo.findById(tenantId);
@@ -88,12 +92,11 @@ export function createTenantAdminCalendarRoutes(
    */
   router.post('/config', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
         res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
         return;
       }
-      const tenantId = tenantAuth.tenantId;
 
       // Validate request body
       const validation = calendarConfigSchema.safeParse(req.body);
@@ -168,12 +171,11 @@ export function createTenantAdminCalendarRoutes(
    */
   router.delete('/config', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
         res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
         return;
       }
-      const tenantId = tenantAuth.tenantId;
 
       // Get tenant record
       const tenant = await tenantRepo.findById(tenantId);
@@ -201,100 +203,41 @@ export function createTenantAdminCalendarRoutes(
 
   /**
    * POST /v1/tenant-admin/calendar/test
-   * Test connection by attempting to authenticate with Google Calendar API
+   * Test connection by delegating to GoogleCalendarService.testConnection()
    */
   router.post('/test', async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenantAuth = res.locals.tenantAuth;
-      if (!tenantAuth) {
+      const tenantId = getTenantId(res);
+      if (!tenantId) {
         res.status(401).json({ error: 'Unauthorized: No tenant authentication' });
         return;
       }
-      const tenantId = tenantAuth.tenantId;
 
-      // Get tenant record
-      const tenant = await tenantRepo.findById(tenantId);
-      if (!tenant) {
-        res.status(404).json({ error: 'Tenant not found' });
+      if (!googleCalendarService) {
+        res.status(503).json({ error: 'Google Calendar service not available' });
         return;
       }
 
-      // Check if calendar config exists
-      const secrets = (tenant.secrets as PrismaJson<TenantSecrets>) ?? {};
-      const calendarSecretTest = secrets.calendar;
-      const hasConfig = !!(
-        calendarSecretTest?.ciphertext &&
-        calendarSecretTest?.iv &&
-        calendarSecretTest?.authTag
-      );
+      const result = await googleCalendarService.testConnection(tenantId);
 
-      if (!hasConfig || !calendarSecretTest) {
-        res.status(404).json({ error: 'No calendar configuration found' });
-        return;
-      }
-
-      // Decrypt config
-      let calendarConfig: TenantCalendarConfig;
-      try {
-        calendarConfig = encryptionService.decryptObject<TenantCalendarConfig>(calendarSecretTest);
-      } catch (error) {
-        logger.error({ tenantId, error }, 'Failed to decrypt calendar config');
-        res.status(500).json({ error: 'Failed to read calendar configuration' });
-        return;
-      }
-
-      // Test connection by making a simple API call to list calendars
-      try {
-        const serviceAccountJson = JSON.parse(calendarConfig.serviceAccountJson);
-
-        // Import JWT creation function
-        const { createGServiceAccountJWT } = await import('../adapters/gcal.jwt');
-
-        // Get access token
-        const accessToken = await createGServiceAccountJWT(serviceAccountJson, [
-          'https://www.googleapis.com/auth/calendar.readonly',
-        ]);
-
-        // Try to get calendar metadata
-        const response = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarConfig.calendarId)}`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => '');
-          logger.warn(
-            { tenantId, status: response.status, error: errorText },
-            'Google Calendar API test failed'
-          );
-          res.json({
-            success: false,
-            error: `Failed to connect to Google Calendar (status ${response.status})`,
-          });
+      if (!result.success) {
+        // Distinguish "not configured" errors (404) from other failures
+        if (
+          result.error === 'No calendar configuration found' ||
+          result.error === 'Tenant not found'
+        ) {
+          res.status(404).json({ error: result.error });
           return;
         }
-
-        const calendarData = (await response.json()) as { summary?: string };
-
-        logger.info({ tenantId }, 'Google Calendar connection test successful');
-
-        res.json({
-          success: true,
-          calendarId: maskCalendarId(calendarConfig.calendarId),
-          calendarName: calendarData.summary || 'Unknown',
-        });
-      } catch (error) {
-        logger.error({ tenantId, error }, 'Google Calendar connection test failed');
-        res.json({
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
+        res.json({ success: false, error: result.error });
+        return;
       }
+
+      res.json({
+        success: true,
+        calendarId: maskCalendarId(result.calendarId),
+        calendarName: result.calendarName,
+      });
     } catch (error) {
       next(error);
     }
@@ -304,14 +247,12 @@ export function createTenantAdminCalendarRoutes(
 }
 
 /**
- * Mask calendar ID for security (show first 8 and last 4 characters)
- * Example: test@group.calendar.google.com -> test@gro...e.com
+ * Mask calendar ID for display security.
+ * Shows first 8 characters followed by ellipsis.
+ * Works for all ID formats: "primary" (returned as-is, ≤8 chars),
+ * email IDs, and opaque group IDs.
  */
 function maskCalendarId(calendarId: string): string {
-  if (calendarId.length <= 12) {
-    return calendarId;
-  }
-  const start = calendarId.substring(0, 8);
-  const end = calendarId.substring(calendarId.length - 4);
-  return `${start}...${end}`;
+  if (calendarId.length <= 8) return calendarId;
+  return `${calendarId.slice(0, 8)}...`;
 }

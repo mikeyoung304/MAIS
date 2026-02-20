@@ -94,6 +94,8 @@ export default function TenantPaymentsPage() {
   }, [fetchStatus]);
 
   const handleCreateAccount = async () => {
+    if (isCreating) return;
+
     const errors: { email?: string; businessName?: string } = {};
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dialogEmail)) {
@@ -143,6 +145,7 @@ export default function TenantPaymentsPage() {
   };
 
   const handleOnboard = async () => {
+    if (isOnboarding) return;
     setIsOnboarding(true);
     setError(null);
 
@@ -318,7 +321,7 @@ export default function TenantPaymentsPage() {
               <Button
                 variant="sage"
                 onClick={handleCreateAccount}
-                disabled={!dialogEmail || !dialogBusinessName}
+                disabled={!dialogEmail || !dialogBusinessName || isCreating}
                 className="flex-1"
               >
                 Continue to Stripe

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-client';
@@ -49,6 +49,20 @@ interface TrialStatus {
  * (used when redirected from /tenant/build)
  */
 export default function TenantDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600" />
+        </div>
+      }
+    >
+      <TenantDashboardPageInner />
+    </Suspense>
+  );
+}
+
+function TenantDashboardPageInner() {
   const { tenantId, user, slug: authSlug, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
   const [stats, setStats] = useState<DashboardStats | null>(null);
