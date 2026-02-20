@@ -598,9 +598,7 @@ export function createV1Router(
         tenantAuthMiddleware,
         calendarOAuth.protectedRouter
       );
-      logger.info(
-        '✅ Google Calendar OAuth routes mounted at /v1/tenant-admin/calendar/oauth'
-      );
+      logger.info('✅ Google Calendar OAuth routes mounted at /v1/tenant-admin/calendar/oauth');
     }
 
     // Register tenant admin deposit settings routes (for deposit configuration)
@@ -764,6 +762,10 @@ export function createV1Router(
       sectionContentService: services.sectionContent,
       discoveryService: services.discovery,
       researchService: services.research,
+      // Calendar tools deps (customer-agent + tenant-agent)
+      availabilityService: services.availability,
+      googleCalendarService: services.googleCalendar,
+      blackoutRepo: new PrismaBlackoutRepository(prismaClient),
     });
     app.use('/v1/internal/agent', internalAgentRoutes);
     logger.info('✅ Internal agent routes mounted at /v1/internal/agent');

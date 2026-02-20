@@ -1,16 +1,71 @@
 /**
  * Prisma Webhook Subscription Repository Adapter
  * Handles tenant webhook subscription management and delivery tracking
+ *
+ * SECURITY: Webhook HMAC secrets are encrypted at rest using AES-256-GCM
+ * via EncryptionService (same pattern as Stripe keys and Google Calendar tokens).
+ * The DB column stores JSON-serialized EncryptedData; this repository handles
+ * encrypt-on-write and decrypt-on-read transparently.
  */
 
 import type { PrismaClient } from '../../generated/prisma/client';
 import type { WebhookSubscriptionRepository } from '../../lib/ports';
+import { encryptionService, type EncryptedData } from '../../lib/encryption.service';
 import { logger } from '../../lib/core/logger';
 import { QueryLimits } from '../../lib/core/query-limits';
 import { NotFoundError } from '../../lib/errors';
 
 export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  // ============================================================================
+  // Secret Encryption Helpers
+  // ============================================================================
+
+  /**
+   * Encrypt a plaintext HMAC secret for database storage.
+   * Returns JSON-serialized EncryptedData string.
+   */
+  private encryptSecret(plaintext: string): string {
+    const encrypted = encryptionService.encrypt(plaintext);
+    return JSON.stringify(encrypted);
+  }
+
+  /**
+   * Decrypt a stored secret back to plaintext.
+   * Handles backward compatibility: if the stored value is not valid
+   * EncryptedData JSON (i.e., a legacy plaintext secret), returns it as-is
+   * and logs a migration warning.
+   */
+  private decryptSecret(stored: string): string {
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      // Type guard: validate it has the EncryptedData shape
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        'ciphertext' in parsed &&
+        'iv' in parsed &&
+        'authTag' in parsed &&
+        typeof (parsed as EncryptedData).ciphertext === 'string' &&
+        typeof (parsed as EncryptedData).iv === 'string' &&
+        typeof (parsed as EncryptedData).authTag === 'string'
+      ) {
+        return encryptionService.decrypt(parsed as EncryptedData);
+      }
+      // Valid JSON but not EncryptedData shape — treat as legacy plaintext
+      logger.warn(
+        'Webhook secret is valid JSON but not EncryptedData — treating as legacy plaintext'
+      );
+      return stored;
+    } catch {
+      // Not valid JSON — legacy plaintext secret (pre-encryption migration)
+      // TODO: Run data migration to encrypt existing plaintext secrets in WebhookSubscription rows.
+      // Migration script should: SELECT all rows, encrypt each secret, UPDATE each row.
+      logger.warn('Webhook secret stored as plaintext (legacy) — decrypt skipped');
+      return stored;
+    }
+  }
 
   /**
    * Create a new webhook subscription for a tenant
@@ -36,12 +91,15 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
     createdAt: Date;
     updatedAt: Date;
   }> {
+    // Encrypt the HMAC secret before storing (AES-256-GCM, same as Stripe/GCal secrets)
+    const encryptedSecret = this.encryptSecret(data.secret);
+
     const subscription = await this.prisma.webhookSubscription.create({
       data: {
         tenantId,
         url: data.url,
         events: data.events,
-        secret: data.secret,
+        secret: encryptedSecret,
         active: true,
       },
     });
@@ -51,7 +109,11 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
       'Webhook subscription created'
     );
 
-    return subscription;
+    // Return the plaintext secret to the caller (shown once on creation)
+    return {
+      ...subscription,
+      secret: data.secret,
+    };
   }
 
   /**
@@ -117,7 +179,13 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
       },
     });
 
-    return subscription;
+    if (!subscription) return null;
+
+    // Decrypt the HMAC secret for the caller
+    return {
+      ...subscription,
+      secret: this.decryptSecret(subscription.secret),
+    };
   }
 
   /**
@@ -153,7 +221,11 @@ export class PrismaWebhookSubscriptionRepository implements WebhookSubscriptionR
       },
     });
 
-    return subscriptions;
+    // Decrypt each subscription's HMAC secret for delivery signing
+    return subscriptions.map((sub) => ({
+      ...sub,
+      secret: this.decryptSecret(sub.secret),
+    }));
   }
 
   /**

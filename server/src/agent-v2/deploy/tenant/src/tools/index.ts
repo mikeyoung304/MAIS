@@ -151,3 +151,11 @@ export { delegateToResearchTool } from './research.js';
 // @see docs/architecture/ONBOARDING_CONVERSATION_DESIGN.md
 
 export { buildFirstDraftTool } from './first-draft.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar Management Tools (T1/T2) - Google Calendar Integration
+// ─────────────────────────────────────────────────────────────────────────────
+// Check calendar availability and block dates. Gracefully handles
+// missing Google Calendar configuration.
+
+export { checkCalendarAvailabilityTool, blockCalendarDateTool } from './calendar.js';

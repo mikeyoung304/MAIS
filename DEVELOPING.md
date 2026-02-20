@@ -274,6 +274,66 @@ See CLAUDE.md pitfalls #32-53 for comprehensive ADK/A2A issues. Key ones:
 - **#39** ADK returns `[{ content: { role, parts }}]` array format
 - **#51** FunctionTool uses `parameters`/`execute`, not `inputSchema`/`func`
 
+### Verifying ADK Agent Connectivity
+
+After deploying agents or debugging chatbot issues, verify the full auth chain is working.
+
+**Automated health check (recommended):**
+
+```bash
+# Check all agents via the internal health endpoint
+# Replace INTERNAL_API_SECRET with your actual secret from server/.env
+curl -s -H "X-Internal-Secret: $INTERNAL_API_SECRET" \
+  http://localhost:3001/v1/internal/agents/health | jq .
+
+# Expected response when healthy:
+# {
+#   "healthy": true,
+#   "timestamp": "2026-02-20T...",
+#   "agents": [
+#     { "name": "customer", "status": "ok", "latencyMs": 312 },
+#     { "name": "tenant", "status": "ok", "latencyMs": 287 },
+#     { "name": "research", "status": "ok", "latencyMs": 245 }
+#   ]
+# }
+```
+
+**Possible per-agent statuses:**
+
+| Status           | Meaning                             | Action                                  |
+| ---------------- | ----------------------------------- | --------------------------------------- |
+| `ok`             | Agent reachable and authenticated   | None                                    |
+| `unreachable`    | Network error or agent down         | Check Cloud Run deployment              |
+| `unauthorized`   | 401/403 or token acquisition failed | Check service account credentials       |
+| `timeout`        | No response within 5 seconds        | Check Cloud Run scaling / cold start    |
+| `not_configured` | Agent URL env var not set           | Set `CUSTOMER_AGENT_URL` etc. in `.env` |
+
+**Manual verification with curl (for debugging):**
+
+```bash
+# 1. Get an identity token for Cloud Run authentication
+TOKEN=$(gcloud auth print-identity-token)
+
+# 2. Check if the customer agent is responding
+curl -s -H "Authorization: Bearer $TOKEN" \
+  https://customer-agent-506923455711.us-central1.run.app/list-apps | jq .
+
+# 3. Check tenant agent
+curl -s -H "Authorization: Bearer $TOKEN" \
+  https://tenant-agent-506923455711.us-central1.run.app/list-apps | jq .
+
+# 4. Check research agent
+curl -s -H "Authorization: Bearer $TOKEN" \
+  https://research-agent-506923455711.us-central1.run.app/list-apps | jq .
+```
+
+**Interpreting results:**
+
+- `200 OK` with JSON = agent is healthy
+- `401 Unauthorized` = identity token missing or invalid (re-run `gcloud auth application-default login`)
+- `403 Forbidden` = service account lacks Cloud Run invoker permission
+- Connection refused / timeout = Cloud Run service not deployed or scaled to zero
+
 ## Database Setup ✅ COMPLETE
 
 ### Prerequisites

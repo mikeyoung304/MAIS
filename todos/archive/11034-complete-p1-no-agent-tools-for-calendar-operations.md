@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: '11034'
 tags: [code-review, google-calendar, agent-tools, tenant-agent, customer-agent]
@@ -42,10 +42,11 @@ Add at minimum the `get_available_dates` tool to customer-agent so booking flow 
 
 ## Acceptance Criteria
 
-- [ ] customer-agent can return real Google Calendar availability
-- [ ] tenant-agent can check and manage calendar state through conversation
-- [ ] Tools handle case where calendar is not configured (graceful fallback)
+- [x] customer-agent can return real Google Calendar availability
+- [x] tenant-agent can check and manage calendar state through conversation
+- [x] Tools handle case where calendar is not configured (graceful fallback)
 
 ## Work Log
 
 - 2026-02-20: Identified by agent-native-reviewer. 0 calendar tools found across all agents.
+- 2026-02-20: Implemented 3 tools: `get_available_dates` (customer), `check_calendar_availability` + `block_calendar_date` (tenant). Backend routes at `/calendar/available-dates`, `/calendar/busy-times`, `/calendar/block-date`. All typecheck passes, all non-integration tests pass.

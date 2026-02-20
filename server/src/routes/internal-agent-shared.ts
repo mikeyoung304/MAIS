@@ -224,9 +224,20 @@ export interface ProjectHubRoutesDeps {
   internalApiSecret?: string;
 }
 
+export interface CalendarRoutesDeps {
+  /** Availability service for DATE booking checks (blackouts + bookings + calendar) */
+  availabilityService?: AvailabilityService;
+  /** Google Calendar service for busy time queries */
+  googleCalendarService?: import('../services/google-calendar.service').GoogleCalendarService;
+  /** Blackout repository for blocking dates */
+  blackoutRepo?: import('../lib/ports').BlackoutRepository;
+  internalApiSecret?: string;
+}
+
 /** Union type for the aggregator — satisfies all domain interfaces */
 export type InternalAgentRoutesDeps = DiscoveryRoutesDeps &
   StorefrontRoutesDeps &
   MarketingRoutesDeps &
   BookingRoutesDeps &
-  ProjectHubRoutesDeps;
+  ProjectHubRoutesDeps &
+  CalendarRoutesDeps;

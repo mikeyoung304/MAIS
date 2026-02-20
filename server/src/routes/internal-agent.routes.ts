@@ -12,6 +12,7 @@ import { createInternalAgentBookingRoutes } from './internal-agent-booking.route
 import { createInternalAgentStorefrontRoutes } from './internal-agent-storefront.routes';
 import { createInternalAgentContentGenerationRoutes } from './internal-agent-content-generation.routes';
 import { createInternalAgentProjectHubRoutes } from './internal-agent-project-hub.routes';
+import { createInternalAgentCalendarRoutes } from './internal-agent-calendar.routes';
 
 /**
  * Create internal agent routes by composing domain-specific routers.
@@ -28,6 +29,7 @@ export function createInternalAgentRoutes(deps: InternalAgentRoutesDeps): Router
   router.use('/content-generation', createInternalAgentContentGenerationRoutes(deps));
   router.use('/storefront', createInternalAgentStorefrontRoutes(deps));
   router.use('/project-hub', createInternalAgentProjectHubRoutes(deps));
+  router.use('/calendar', createInternalAgentCalendarRoutes(deps));
 
   return router;
 }

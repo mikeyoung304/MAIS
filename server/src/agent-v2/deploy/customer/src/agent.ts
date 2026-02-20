@@ -41,6 +41,9 @@ import {
   answerPrepQuestionTool,
   getTimelineTool,
   submitRequestTool,
+
+  // Calendar tools (T1 - Google Calendar availability)
+  getAvailableDatesTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,9 +57,10 @@ import {
  * customer journey from initial service discovery through post-booking
  * project management.
  *
- * Tool count: 13
+ * Tool count: 14
  * - 7 booking tools (from booking-agent)
  * - 6 project tools (from project-hub-agent customer view)
+ * - 1 calendar tool (Google Calendar availability)
  *
  * Trust Tiers:
  * - T1 (auto-execute): Most tools - read operations, queries
@@ -117,6 +121,13 @@ export const customerAgent = new LlmAgent({
     // T2 for reschedule, add-on, question
     // T3 for cancellation, refund (requires confirmation)
     submitRequestTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CALENDAR TOOLS (Google Calendar availability)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // T1: Get available dates for a service from Google Calendar
+    getAvailableDatesTool,
   ],
 
   // Lifecycle callbacks for observability

@@ -91,6 +91,10 @@ import {
 
   // First Draft (T2) - Onboarding Ecosystem Rebuild Phase 5
   buildFirstDraftTool,
+
+  // Calendar Management (T1/T2) - Google Calendar Integration
+  checkCalendarAvailabilityTool,
+  blockCalendarDateTool,
 } from './tools/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,7 +109,7 @@ import {
  * Project Hub agents.
  *
  * Current Phase: 9 (Onboarding Conversation Redesign)
- * Tool count: 36
+ * Tool count: 38
  * - Navigation tools (3)
  * - Vocabulary resolution (1)
  * - Storefront read/write tools (6)
@@ -117,6 +121,7 @@ import {
  * - Discovery/onboarding (3) - store_discovery_fact, get_known_facts, build_first_draft
  * - Catalog management (3) - manage_segments, manage_tiers, manage_addons
  * - Guided Refinement (4) - generate_section_variants, apply_section_variant, mark_section_complete, get_next_incomplete_section
+ * - Calendar management (2) - check_calendar_availability, block_calendar_date
  */
 export const tenantAgent = new LlmAgent({
   name: 'tenant',
@@ -260,6 +265,17 @@ export const tenantAgent = new LlmAgent({
 
     // T1: Delegate market research (on-demand for tier pricing context)
     delegateToResearchTool,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Calendar Management (T1/T2) - Google Calendar Integration
+    // Check availability and block dates. Gracefully handles missing config.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // T1: Check busy/free times from Google Calendar
+    checkCalendarAvailabilityTool,
+
+    // T2: Block a date from bookings (adds blackout)
+    blockCalendarDateTool,
   ],
 
   // Lifecycle callbacks for observability

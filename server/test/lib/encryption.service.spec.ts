@@ -42,18 +42,16 @@ describe('EncryptionService', () => {
     it('should throw if key is not 64 characters', () => {
       process.env.TENANT_SECRETS_ENCRYPTION_KEY = 'tooshort';
 
-      expect(() => new EncryptionService()).toThrow(
-        'TENANT_SECRETS_ENCRYPTION_KEY must be 64-character hex string'
-      );
+      // getConfig() Zod validation rejects invalid key before EncryptionService constructor runs
+      expect(() => new EncryptionService()).toThrow('Invalid environment configuration');
     });
 
     it('should throw if key is not valid hex', () => {
       process.env.TENANT_SECRETS_ENCRYPTION_KEY =
         'g123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
-      expect(() => new EncryptionService()).toThrow(
-        'TENANT_SECRETS_ENCRYPTION_KEY must be a valid hex string'
-      );
+      // getConfig() Zod validation rejects non-hex key before EncryptionService constructor runs
+      expect(() => new EncryptionService()).toThrow('Invalid environment configuration');
     });
 
     it('should accept valid 64-char hex key (lowercase)', () => {

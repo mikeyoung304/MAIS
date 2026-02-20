@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p3
 issue_id: '11028'
 tags: [code-review, customer-agent, chatbot, testing, ops]
@@ -88,11 +88,33 @@ runbook helps for manual verification during incidents.
 
 ## Acceptance Criteria
 
-- [ ] A health signal exists that reflects actual ADK reachability (not just env var presence)
-- [ ] Can distinguish between: agent reachable | agent unreachable | auth failure
-- [ ] Latency visible for on-call monitoring
+- [x] A health signal exists that reflects actual ADK reachability (not just env var presence)
+- [x] Can distinguish between: agent reachable | agent unreachable | auth failure
+- [x] Latency visible for on-call monitoring
+
+## Resolution
+
+Implemented Option A + Option C:
+
+**Option A:** Enhanced `GET /v1/internal/agents/health` endpoint in
+`server/src/routes/internal-agent-health.routes.ts` to:
+
+- Use Cloud Run identity tokens (via `CloudRunAuthService`) to test the full auth chain
+- Return per-agent status as `ok` | `unreachable` | `unauthorized` | `timeout` | `not_configured`
+- Include `latencyMs` per agent for monitoring
+- Use 5-second per-agent timeout to prevent health checks from hanging
+- Check all agents in parallel for faster response
+
+**Option C:** Added "Verifying ADK Agent Connectivity" section to `DEVELOPING.md` with:
+
+- curl commands for automated health check via internal endpoint
+- Status table explaining each possible status and recommended action
+- Manual curl commands for debugging with gcloud identity tokens
+- Interpretation guide for HTTP response codes
 
 ## Work Log
 
 - 2026-02-20: Found during customer chatbot end-to-end review. The chatbot was broken for
   weeks with no automated signal — this is the prevention measure.
+- 2026-02-20: Implemented Option A + C. Enhanced existing agent health endpoint with
+  authenticated Cloud Run checks and added connectivity docs to DEVELOPING.md.

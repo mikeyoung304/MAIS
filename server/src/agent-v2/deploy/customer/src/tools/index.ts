@@ -4,6 +4,7 @@
  * Exports all tools organized by capability area:
  * - Booking tools (service discovery, availability, booking creation)
  * - Project tools (status, prep, timeline, requests)
+ * - Calendar tools (Google Calendar availability)
  *
  * @see docs/plans/2026-01-30-feat-semantic-storefront-architecture-plan.md Phase 3
  */
@@ -28,3 +29,6 @@ export {
   getTimelineTool,
   submitRequestTool,
 } from './project.js';
+
+// Calendar tools (Google Calendar integration)
+export { getAvailableDatesTool } from './calendar.js';
