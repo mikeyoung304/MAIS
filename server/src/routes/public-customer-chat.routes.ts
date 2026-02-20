@@ -19,7 +19,6 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { logger } from '../lib/core/logger';
 import { getConfig } from '../lib/core/config';
@@ -37,28 +36,6 @@ const MessageRequestSchema = z.object({
     .min(1, 'Message is required')
     .max(2000, 'Message too long (max 2000 characters)'),
   sessionId: z.string().optional(),
-});
-
-/**
- * IP-based rate limiter for public chat endpoints
- * - 50 requests per 15 minutes per IP
- * - Protects against abuse from unauthenticated sources
- * - Separate from agent-level rate limiting (which is per-session)
- *
- * NOTE: Uses default keyGenerator (req.ip) which works correctly because
- * app.set('trust proxy', 1) is configured in app.ts. This makes Express
- * extract the real client IP from X-Forwarded-For in a secure way:
- * - Takes rightmost IP minus trusted proxy count (prevents spoofing)
- * - Falls back to socket address if no proxy headers
- * See: https://expressjs.com/en/guide/behind-proxies.html
- */
-const publicChatRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 requests per window per IP
-  message: { error: 'Too many requests. Please wait a moment before trying again.' },
-  standardHeaders: true, // Return rate limit info in headers
-  legacyHeaders: false, // Disable deprecated headers
-  // Default keyGenerator uses req.ip which is correctly set by trust proxy
 });
 
 /**
@@ -100,9 +77,6 @@ export function createPublicCustomerChatRoutes(deps: PublicCustomerChatDeps): Ro
   const agentService = new CustomerAgentService(prisma);
   const requireChatEnabled = createRequireChatEnabled(tenantOnboarding);
 
-  // Apply IP rate limiting to all routes
-  router.use(publicChatRateLimiter);
-
   // ============================================================================
   // Health Check
   // ============================================================================
@@ -124,8 +98,8 @@ export function createPublicCustomerChatRoutes(deps: PublicCustomerChatDeps): Ro
         return;
       }
 
-      // Check if LLM API is configured (Vertex AI via ADC)
-      const apiKeyConfigured = !!getConfig().GOOGLE_VERTEX_PROJECT;
+      // Check if the customer agent Cloud Run endpoint is configured
+      const agentConfigured = !!getConfig().CUSTOMER_AGENT_URL;
 
       // Check if tenant has chat enabled
       const chatInfo = await tenantOnboarding.getTenantChatInfo(tenantId);
@@ -148,7 +122,7 @@ export function createPublicCustomerChatRoutes(deps: PublicCustomerChatDeps): Ro
         return;
       }
 
-      if (!apiKeyConfigured) {
+      if (!agentConfigured) {
         res.json({
           available: false,
           reason: 'api_not_configured',

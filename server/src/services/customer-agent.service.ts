@@ -114,7 +114,7 @@ export class CustomerAgentService {
   async createSession(tenantId: string, customerId?: string): Promise<string> {
     // Create ADK session
     const adkUserId = customerId ? `${tenantId}:customer:${customerId}` : `${tenantId}:anonymous`;
-    let adkSessionId: string;
+    let adkSessionId: string | null = null;
 
     try {
       const token = await cloudRunAuth.getIdentityToken(getCustomerAgentUrl());
@@ -154,11 +154,10 @@ export class CustomerAgentService {
       if (error instanceof Error && error.name === 'AbortError') {
         logger.error({ tenantId }, '[CustomerAgent] ADK session creation timed out');
       }
-      // Fallback to local session ID
-      adkSessionId = `local:customer:${tenantId}:${Date.now()}`;
+      adkSessionId = null;
       logger.warn(
-        { tenantId, adkSessionId, error },
-        '[CustomerAgent] Using local session (ADK unreachable)'
+        { tenantId, error },
+        '[CustomerAgent] ADK unreachable during createSession — storing null; chat() will trigger recovery'
       );
     }
 
@@ -256,7 +255,15 @@ export class CustomerAgentService {
       where: { id: sessionId },
       select: { adkSessionId: true },
     });
-    let adkSessionId = sessionWithAdk?.adkSessionId;
+    let adkSessionId = sessionWithAdk?.adkSessionId ?? null;
+    // Sanitize legacy fallback values already in production DB (11023-B)
+    if (adkSessionId?.startsWith('local:')) {
+      logger.warn(
+        { adkSessionId },
+        '[CustomerAgent] Found local: fallback in DB — treating as null for recovery'
+      );
+      adkSessionId = null;
+    }
 
     logger.info(
       { tenantId, sessionId, adkSessionId, messageLength: userMessage.length },
@@ -490,6 +497,14 @@ export class CustomerAgentService {
         const parseResult = AdkSessionResponseSchema.safeParse(rawResponse);
         if (parseResult.success) {
           newAdkSessionId = parseResult.data.id;
+          await this.prisma.agentSession.update({
+            where: { id: dbSessionId },
+            data: { adkSessionId: newAdkSessionId },
+          });
+          logger.info(
+            { dbSessionId, newAdkSessionId },
+            '[CustomerAgent] Persisted new ADK session ID after retry'
+          );
         }
       }
     } catch {

@@ -52,3 +52,17 @@ services:
         sync: false  # Required for Gemini AI - set from Google Cloud project
       - key: GOOGLE_VERTEX_LOCATION
         sync: false  # Required for Gemini AI - e.g., us-central1
+      - key: BOOKING_TOKEN_SECRET
+        sync: false  # REQUIRED — server crashes at startup if unset (Zod min 32 chars)
+      - key: CUSTOMER_AGENT_URL
+        sync: false  # Cloud Run URL for customer-facing agent
+      - key: TENANT_AGENT_URL
+        sync: false  # Cloud Run URL for tenant admin agent
+      - key: RESEARCH_AGENT_URL
+        sync: false  # Cloud Run URL for web research agent (optional)
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false  # GCP service account JSON for Cloud Run auth (required on Render)
+      - key: GOOGLE_CLOUD_PROJECT
+        sync: false  # GCP project ID (e.g., handled-484216)
+      - key: GOOGLE_CLOUD_LOCATION
+        sync: false  # GCP region (e.g., us-central1)
